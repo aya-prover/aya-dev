@@ -7,13 +7,13 @@ import org.gradle.api.tasks.TaskAction
 
 class GenerateVersionTask extends DefaultTask {
   @Input
-  Object taskVersion = project.version
+  def taskVersion = project.version
   @Input
-  String basePackage = project.group
+  def basePackage = project.group
   @Input
-  String className = "GeneratedVersion"
+  def className = "GeneratedVersion"
   @OutputDirectory
-  File outputDir = project.file("src/main/java/org/mzi/prelude")
+  def outputDir = project.file("src/main/java/org/mzi/prelude")
 
   @TaskAction
   def run() {
