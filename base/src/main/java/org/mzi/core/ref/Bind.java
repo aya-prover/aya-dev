@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public interface Ref {
-  @NotNull String name();
+public record Bind(
+  @NotNull Ref ref
+) {
 }
