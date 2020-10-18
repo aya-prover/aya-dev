@@ -9,5 +9,9 @@ import java.util.List;
 /**
  * @author ice1000
  */
-public record FnDef(@NotNull String name, @NotNull List<@NotNull Bind> binds, @NotNull Term body) implements Def {
+public record FnDef(
+  @NotNull String name,
+  @NotNull List<@NotNull Bind> binds,
+  @NotNull Term body
+) implements Def {
 }

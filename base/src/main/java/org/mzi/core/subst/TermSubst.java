@@ -40,7 +40,7 @@ public final class TermSubst {
     return subst.get(ref);
   }
 
-  public @NotNull Term getOr(@NotNull Ref ref, @NotNull Term defaultVal) {
+  public @NotNull Term get(@NotNull Ref ref, @NotNull Term defaultVal) {
     return subst.getOrDefault(ref, defaultVal);
   }
 
