@@ -45,12 +45,12 @@ allprojects {
     options.compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
   }
 
-  tasks.withType<Test> {
-    jvmArgs = listOf("--enable-preview")
+  tasks.withType<Test>().configureEach {
+    jvmArgs.add("--enable-preview")
   }
 
-  tasks.withType<JavaExec> {
-    jvmArgs = listOf("--enable-preview")
+  tasks.withType<JavaExec>().configureEach {
+    jvmArgs.add("--enable-preview")
   }
 }
 
