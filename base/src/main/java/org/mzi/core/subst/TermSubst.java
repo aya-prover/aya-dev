@@ -2,12 +2,14 @@ package org.mzi.core.subst;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NotNull;
 import org.mzi.core.ref.Ref;
 import org.mzi.core.term.Term;
 
 import java.util.Map;
 
+/**
+ * @author ice1000
+ */
 public final class TermSubst {
   private final @NotNull Map<@NotNull Ref, @NotNull Term> subst;
 
@@ -31,6 +33,18 @@ public final class TermSubst {
 
   public void addAll(@NotNull TermSubst termSubst) {
     subst.putAll(termSubst.subst);
+  }
+
+  public @NotNull Term get(@NotNull Ref ref) {
+    return subst.get(ref);
+  }
+
+  public void clear() {
+    subst.clear();
+  }
+
+  public void remove(@NotNull Ref ref) {
+    subst.remove(ref);
   }
 
   public void add(@NotNull Ref ref, @NotNull Term term) {
