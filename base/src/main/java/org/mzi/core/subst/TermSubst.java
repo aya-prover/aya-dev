@@ -2,6 +2,7 @@ package org.mzi.core.subst;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.core.ref.Ref;
 import org.mzi.core.term.Term;
 
@@ -35,8 +36,12 @@ public final class TermSubst {
     subst.putAll(termSubst.subst);
   }
 
-  public @NotNull Term get(@NotNull Ref ref) {
+  public @Nullable Term get(@NotNull Ref ref) {
     return subst.get(ref);
+  }
+
+  public @NotNull Term getOr(@NotNull Ref ref, @NotNull Term defaultVal) {
+    return subst.getOrDefault(ref, defaultVal);
   }
 
   public void clear() {
