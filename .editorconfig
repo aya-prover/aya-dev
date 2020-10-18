@@ -262,7 +262,7 @@ ij_xml_align_attributes = true
 ij_xml_align_text = false
 ij_xml_attribute_wrap = normal
 ij_xml_block_comment_at_first_column = true
-ij_xml_keep_blank_lines = 2
+ij_xml_keep_blank_lines = 1
 ij_xml_keep_indents_on_empty_lines = false
 ij_xml_keep_line_breaks = true
 ij_xml_keep_line_breaks_in_text = true
@@ -454,7 +454,7 @@ ij_groovy_while_brace_force = never
 ij_groovy_while_on_new_line = false
 ij_groovy_wrap_long_lines = false
 
-[{*.gradle.kts,*.kt,*.kts}]
+[{*.kt,*.kts}]
 ij_kotlin_align_in_columns_case_branch = false
 ij_kotlin_align_multiline_binary_operation = false
 ij_kotlin_align_multiline_extends_list = false
@@ -462,7 +462,7 @@ ij_kotlin_align_multiline_method_parentheses = false
 ij_kotlin_align_multiline_parameters = true
 ij_kotlin_align_multiline_parameters_in_calls = false
 ij_kotlin_allow_trailing_comma = true
-ij_kotlin_allow_trailing_comma_on_call_site = false
+ij_kotlin_allow_trailing_comma_on_call_site = true
 ij_kotlin_assignment_wrap = off
 ij_kotlin_blank_lines_after_class_header = 0
 ij_kotlin_blank_lines_around_block_when_branches = 0
@@ -505,7 +505,7 @@ ij_kotlin_method_parameters_right_paren_on_new_line = false
 ij_kotlin_method_parameters_wrap = off
 ij_kotlin_name_count_to_use_star_import = 5
 ij_kotlin_name_count_to_use_star_import_for_members = 3
-ij_kotlin_packages_to_use_import_on_demand = java.util.*,kotlinx.android.synthetic.**,io.ktor.**
+ij_kotlin_packages_to_use_import_on_demand = java.util.*,io.ktor.**,java.awt.*,javax.swing.*
 ij_kotlin_parameter_annotation_wrap = off
 ij_kotlin_space_after_comma = true
 ij_kotlin_space_after_extend_colon = true
