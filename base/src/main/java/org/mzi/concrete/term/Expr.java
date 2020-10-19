@@ -5,14 +5,21 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author re-xyr
  */
-public interface Expr {
+public sealed interface Expr permits
+  AppExpr,
+  LamExpr,
+  PiExpr,
+  RefExpr,
+  UnivExpr,
+  UnresolvedExpr {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   interface Visitor<P, R> {
-    R visitRef(@NotNull RefExpr term, P p);
-    R visitLam(@NotNull LamExpr term, P p);
-    R visitPi(@NotNull PiExpr term, P p);
-    R visitUniv(@NotNull UnivExpr term, P p);
-    R visitApp(@NotNull AppExpr term, P p);
+    R visitRef(RefExpr refExpr, P p);
+    R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
+    R visitLam(@NotNull LamExpr expr, P p);
+    R visitPi(@NotNull PiExpr expr, P p);
+    R visitUniv(@NotNull UnivExpr expr, P p);
+    R visitApp(@NotNull AppExpr expr, P p);
   }
 }
