@@ -13,7 +13,8 @@ import java.util.List;
 public interface AppTerm extends Term {
   @NotNull Term function();
   @NotNull List<@NotNull Arg> arguments();
-  record TermAppTerm(
+
+  record Apply(
     @NotNull Term function,
     @NotNull Arg argument
   ) implements AppTerm {

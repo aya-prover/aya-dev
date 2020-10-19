@@ -42,8 +42,8 @@ public class LispToTerm extends LispBaseVisitor<Term> {
     var exprs = ctx.expr();
     return switch (rule) {
       case "U" -> new UnivTerm();
-      case "app" -> new AppTerm.TermAppTerm(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), true));
-      case "iapp" -> new AppTerm.TermAppTerm(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), false));
+      case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), true));
+      case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), false));
       default -> throw new IllegalArgumentException("Unexpected value: " + rule);
     };
   }
