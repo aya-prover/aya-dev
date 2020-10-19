@@ -10,7 +10,7 @@ import java.util.ArrayList;
  */
 public interface BaseTermVisitor<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
-    return new LamTerm(new ArrayList<>(term.binds()), term.body().accept(this, p));
+    return new LamTerm(new ArrayList<>(term.teles()), term.body().accept(this, p));
   }
 
   @Override default @NotNull Term visitUniv(@NotNull UnivTerm term, P p) {
@@ -18,7 +18,7 @@ public interface BaseTermVisitor<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
-    return new PiTerm(new ArrayList<>(term.binds()), term.body().accept(this, p));
+    return new PiTerm(new ArrayList<>(term.teles()), term.body().accept(this, p));
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
