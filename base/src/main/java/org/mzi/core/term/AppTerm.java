@@ -1,6 +1,5 @@
 package org.mzi.core.term;
 
-import asia.kala.collection.Seq;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

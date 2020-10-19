@@ -1,6 +1,5 @@
 package org.mzi.core.visitor;
 
-import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.tele.Tele;
 import org.mzi.core.term.*;

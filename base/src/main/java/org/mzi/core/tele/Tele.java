@@ -19,7 +19,7 @@ import org.mzi.core.term.Term;
  */
 public sealed interface Tele extends CoreBind {
   @Override @Nullable Tele next();
-  @NotNull Term type();
+  @Override @NotNull Term type();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
