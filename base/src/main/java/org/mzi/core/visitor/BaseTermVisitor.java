@@ -24,4 +24,6 @@ public interface BaseTermVisitor<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
     return term;
   }
+
+  @Override default @NotNull Term visitApp(@NotNull AppTerm.Apply term, P p) { return term; }
 }
