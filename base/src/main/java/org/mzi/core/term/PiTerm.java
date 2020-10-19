@@ -3,6 +3,7 @@ package org.mzi.core.term;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.tele.Tele;
 import org.mzi.core.tele.Telescopic;
+import org.mzi.util.Decision;
 
 /**
  * @author ice1000
@@ -10,5 +11,9 @@ import org.mzi.core.tele.Telescopic;
 public record PiTerm(@NotNull Tele telescope) implements Term, Telescopic {
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitPi(this, p);
+  }
+
+  @Override public @NotNull Decision whnf() {
+    return Decision.YES;
   }
 }

@@ -4,6 +4,7 @@ import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.subst.TermSubst;
+import org.mzi.util.Decision;
 
 /**
  * @author ice1000
@@ -12,6 +13,11 @@ import org.mzi.core.subst.TermSubst;
 public sealed interface AppTerm extends Term {
   @NotNull Term function();
   @NotNull ImmutableSeq<@NotNull Arg> arguments();
+
+  @Override default @NotNull Decision whnf() {
+    if (function() instanceof LamTerm) return Decision.NO;
+    return Decision.MAYBE;
+  }
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg arg) {
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
