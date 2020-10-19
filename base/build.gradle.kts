@@ -2,6 +2,7 @@ dependencies {
   val annotationsVersion: String by rootProject.ext
   api("org.jetbrains:annotations:$annotationsVersion")
   api(project(":api"))
+  testImplementation(project(":tester"))
 }
 
 val genDir = file("src/main/gen")

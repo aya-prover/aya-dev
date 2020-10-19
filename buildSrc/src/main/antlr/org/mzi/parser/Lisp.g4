@@ -1,6 +1,6 @@
 grammar Lisp;
 
-expr : atom EOF
+expr : atom
      | '(' IDENT expr* ')' EOF
      ;
 

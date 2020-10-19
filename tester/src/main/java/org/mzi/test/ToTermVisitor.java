@@ -2,6 +2,7 @@ package org.mzi.test;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -21,8 +22,17 @@ import java.util.function.BooleanSupplier;
  * @author ice1000
  */
 @TestOnly
-public class LispToTerm extends LispBaseVisitor<Term> {
-  private final @NotNull Map<String, @NotNull Ref> refs = new TreeMap<>();
+@ApiStatus.Internal
+public class ToTermVisitor extends LispBaseVisitor<Term> {
+  private final @NotNull Map<String, @NotNull Ref> refs;
+
+  public ToTermVisitor() {
+    this(new TreeMap<>());
+  }
+
+  public ToTermVisitor(@NotNull Map<String, @NotNull Ref> refs) {
+    this.refs = refs;
+  }
 
   private static @NotNull LispParser parser(@NotNull String text) {
     return new LispParser(new CommonTokenStream(lexer(text)));
@@ -32,12 +42,16 @@ public class LispToTerm extends LispBaseVisitor<Term> {
     return new LispLexer(CharStreams.fromString(text));
   }
 
-  public static @Nullable Term parse(@NotNull String text) {
-    return parser(text).getContext().accept(new LispToTerm());
+  static @Nullable Term parse(@NotNull String text) {
+    return parser(text).getContext().accept(new ToTermVisitor());
   }
 
-  public static @Nullable Tele parseTele(@NotNull String text) {
-    return new LispToTerm().exprToBind(parser(text).expr());
+  static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Ref> refs) {
+    return parser(text).getContext().accept(new ToTermVisitor(refs));
+  }
+
+  static @Nullable Tele parseTele(@NotNull String text) {
+    return new ToTermVisitor().exprToBind(parser(text).expr());
   }
 
   @Override
@@ -58,7 +72,10 @@ public class LispToTerm extends LispBaseVisitor<Term> {
 
   public Tele exprToBind(LispParser.ExprContext ctx) {
     var atom = ctx.atom();
-    if (atom != null) throw new IllegalArgumentException("Unexpected atom: " + atom.getText());
+    if (atom != null) {
+      if ("null".equals(atom.getText())) return null;
+      throw new IllegalArgumentException("Unexpected atom: " + atom.getText());
+    }
     var ident = ctx.IDENT().getText();
     var exprs = ctx.expr();
     return switch (exprs.size()) {
