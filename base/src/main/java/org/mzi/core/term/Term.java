@@ -1,9 +1,12 @@
 package org.mzi.core.term;
 
+import asia.kala.EmptyTuple;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.core.term.CoreTerm;
+import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.subst.TermSubst;
+import org.mzi.core.visitor.NormalizeVisitor;
 import org.mzi.core.visitor.SubstVisitor;
 import org.mzi.util.Decision;
 
@@ -15,7 +18,11 @@ public interface Term extends CoreTerm {
   @Contract(pure = true) @NotNull Decision whnf();
 
   default @NotNull Term subst(@NotNull TermSubst subst) {
-    return accept(new SubstVisitor(subst), null);
+    return accept(new SubstVisitor(subst), EmptyTuple.INSTANCE);
+  }
+
+  default @NotNull Term normalize(@NotNull NormalizeMode mode) {
+    return accept(NormalizeVisitor.INSTANCE, mode);
   }
 
   interface Visitor<P, R> {

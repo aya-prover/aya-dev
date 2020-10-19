@@ -1,13 +1,15 @@
 package org.mzi.util;
 
+import org.jetbrains.annotations.NotNull;
+
 public enum Decision {
   NO, MAYBE, YES;
 
-  public Decision max(Decision other) {
+  public @NotNull Decision max(Decision other) {
     return ordinal() >= other.ordinal() ? this : other;
   }
 
-  public Decision min(Decision other) {
+  public @NotNull Decision min(Decision other) {
     return ordinal() <= other.ordinal() ? this : other;
   }
 }

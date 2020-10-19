@@ -16,7 +16,7 @@ public sealed interface AppTerm extends Term {
 
   @Override default @NotNull Decision whnf() {
     if (function() instanceof LamTerm) return Decision.NO;
-    return Decision.MAYBE;
+    return function().whnf();
   }
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg arg) {
