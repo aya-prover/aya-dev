@@ -1,13 +1,14 @@
 package org.mzi.core.term;
 
 import org.jetbrains.annotations.NotNull;
+import org.mzi.api.core.term.CoreTerm;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.core.visitor.SubstVisitor;
 
 /**
  * @author ice1000
  */
-public interface Term {
+public interface Term extends CoreTerm {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   default @NotNull Term subst(@NotNull TermSubst subst) {

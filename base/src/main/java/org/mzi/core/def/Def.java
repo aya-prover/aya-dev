@@ -1,10 +1,9 @@
 package org.mzi.core.def;
 
-import org.jetbrains.annotations.NotNull;
+import org.mzi.api.core.def.CoreDef;
 
 /**
  * @author ice1000
  */
-public interface Def {
-  @NotNull String name();
+public interface Def extends CoreDef {
 }
