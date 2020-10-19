@@ -8,7 +8,7 @@ import org.mzi.core.term.Term;
 
 /**
  * @author ice1000
- *
+ * <p>
  * Similar to Arend <code>DependentLink</code>.
  */
 public interface Tele extends CoreBind {

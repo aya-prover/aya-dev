@@ -5,11 +5,11 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.mzi.api.ref.Ref;
 import org.mzi.core.term.*;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispLexer;
 import org.mzi.parser.LispParser;
-import org.mzi.api.ref.Ref;
 import org.mzi.ref.LocalRef;
 
 import java.util.Map;

@@ -7,6 +7,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public record Arg(
   @NotNull Term term,
-  boolean isExplicit
+  boolean explicit
 ) {
 }

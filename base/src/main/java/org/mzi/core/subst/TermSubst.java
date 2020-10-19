@@ -3,8 +3,8 @@ package org.mzi.core.subst;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.core.term.Term;
 import org.mzi.api.ref.Ref;
+import org.mzi.core.term.Term;
 
 import java.util.Map;
 
