@@ -1,5 +1,7 @@
 package org.mzi.core.tele;
 
+import asia.kala.Tuple;
+import asia.kala.Tuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,9 +15,21 @@ public interface Telescopic {
     return telescope();
   }
 
+  private static @NotNull Tuple2<@NotNull Integer, @NotNull Tele> lastInfo(@NotNull Telescopic telescopic) {
+    var tele = telescopic.telescope();
+    var i = 0;
+    while (tele.next() != null) {
+      tele = tele.next();
+      i++;
+    }
+    return Tuple.of(i, tele);
+  }
+
   default @NotNull Tele last() {
-    var tele = telescope();
-    while (tele.next() != null) tele = tele.next();
-    return tele;
+    return lastInfo(this)._2;
+  }
+
+  default int size() {
+    return lastInfo(this)._1;
   }
 }

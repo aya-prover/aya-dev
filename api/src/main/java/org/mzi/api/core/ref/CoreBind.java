@@ -15,5 +15,5 @@ public interface CoreBind {
   @Contract(pure = true) @NotNull Ref ref();
   @Contract(pure = true) @Nullable CoreBind next();
   @Contract(pure = true) @Nullable CoreTerm type();
-  boolean explicit();
+  @Contract(pure = true) boolean explicit();
 }
