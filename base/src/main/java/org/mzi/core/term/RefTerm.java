@@ -1,7 +1,7 @@
 package org.mzi.core.term;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.ref.Ref;
+import org.mzi.ref.Ref;
 
 /**
  * @author ice1000

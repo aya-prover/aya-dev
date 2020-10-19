@@ -1,10 +1,10 @@
-package org.mzi.core.ref;
+package org.mzi.api.ref;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author ice1000
+ * @author kiva
  */
-public interface Ref {
+public interface CoreRef {
   @NotNull String name();
 }

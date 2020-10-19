@@ -1,7 +1,7 @@
 rootProject.name = "mzi"
 
 include(
-  // "api",
+  "api",
   // "cli",
   // "proto",
   "parser",
