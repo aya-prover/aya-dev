@@ -7,9 +7,9 @@ import java.util.List;
 /**
  * @author re-xyr
  */
-public record LamTerm(@NotNull List<@NotNull String> binds, @NotNull Term body) implements Term {
+public record PiExpr(@NotNull List<@NotNull String> binds, @NotNull Expr body) implements Expr {
   @Override
   public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitLam(this, p);
+    return visitor.visitPi(this, p);
   }
 }

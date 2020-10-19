@@ -5,9 +5,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author re-xyr
  */
-public record RefTerm(@NotNull String ref) implements Term {
+// TODO: sort system - corresponding to the core syntax
+public record UnivExpr() implements Expr {
   @Override
   public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitRef(this, p);
+    return visitor.visitUniv(this, p);
   }
 }
