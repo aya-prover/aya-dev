@@ -1,5 +1,6 @@
 package org.mzi.core.term;
 
+import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.tele.Tele;
 import org.mzi.core.tele.Telescopic;
