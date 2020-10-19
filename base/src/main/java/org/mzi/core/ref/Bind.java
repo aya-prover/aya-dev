@@ -2,7 +2,7 @@ package org.mzi.core.ref;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.core.ref.CoreBind;
-import org.mzi.ref.Ref;
+import org.mzi.api.ref.Ref;
 
 /**
  * @author ice1000

@@ -9,7 +9,8 @@ import org.mzi.core.term.*;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispLexer;
 import org.mzi.parser.LispParser;
-import org.mzi.ref.Ref;
+import org.mzi.api.ref.Ref;
+import org.mzi.ref.LocalRef;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -53,7 +54,7 @@ public class LispToTerm extends LispBaseVisitor<Term> {
     var number = ctx.NUMBER();
     var ident = ctx.IDENT();
     if (ident != null) {
-      return new RefTerm(refs.computeIfAbsent(ident.getText(), Ref.LocalRef::new));
+      return new RefTerm(refs.computeIfAbsent(ident.getText(), LocalRef::new));
     } else if (number != null) {
       throw new UnsupportedOperationException("No numbers yet!");
     }

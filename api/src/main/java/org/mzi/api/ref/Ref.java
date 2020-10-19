@@ -5,6 +5,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-public interface CoreRef {
+public interface Ref {
   @NotNull String name();
 }
