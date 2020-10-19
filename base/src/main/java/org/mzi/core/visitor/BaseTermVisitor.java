@@ -10,10 +10,6 @@ import java.util.Optional;
  * @author ice1000
  */
 public interface BaseTermVisitor<P> extends Term.Visitor<P, @NotNull Term>, Tele.Visitor<P, @NotNull Tele> {
-  default @NotNull Tele visitTele(@NotNull Tele tele, P p) {
-    return tele.accept(this, p);
-  }
-
   @Override default @NotNull Tele visitNamed(Tele.@NotNull NamedTele named, P p) {
     return new Tele.NamedTele(named.ref(), named.next().accept(this, p));
   }
