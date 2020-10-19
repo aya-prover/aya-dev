@@ -5,5 +5,6 @@ include(
   // "cli",
   // "proto",
   "parser",
-  "base"
+  "base",
+  "pretty"
 )
