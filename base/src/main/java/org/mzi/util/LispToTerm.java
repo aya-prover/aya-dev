@@ -32,9 +32,12 @@ public class LispToTerm extends LispBaseVisitor<Term> {
     return new LispLexer(CharStreams.fromString(text));
   }
 
-  static @Nullable Term parse(@NotNull String text) {
-    var parser = parser(text);
-    return parser.getContext().accept(new LispToTerm());
+  public static @Nullable Term parse(@NotNull String text) {
+    return parser(text).getContext().accept(new LispToTerm());
+  }
+
+  public static @Nullable Tele parseTele(@NotNull String text) {
+    return new LispToTerm().exprToBind(parser(text).expr());
   }
 
   @Override
