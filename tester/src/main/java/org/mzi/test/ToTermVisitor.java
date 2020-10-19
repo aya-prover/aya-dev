@@ -43,11 +43,11 @@ public class ToTermVisitor extends LispBaseVisitor<Term> {
   }
 
   static @Nullable Term parse(@NotNull String text) {
-    return parser(text).getContext().accept(new ToTermVisitor());
+    return parser(text).expr().accept(new ToTermVisitor());
   }
 
   static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Ref> refs) {
-    return parser(text).getContext().accept(new ToTermVisitor(refs));
+    return parser(text).expr().accept(new ToTermVisitor(refs));
   }
 
   static @Nullable Tele parseTele(@NotNull String text) {

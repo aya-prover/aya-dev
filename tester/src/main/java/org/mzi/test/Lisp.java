@@ -27,6 +27,10 @@ public interface Lisp {
     return Objects.requireNonNull(somehowParse(code));
   }
 
+  static @NotNull Term reallyParse(@NotNull String code, @NotNull Map<String, @NotNull Ref> refs) {
+    return Objects.requireNonNull(somehowParse(code, refs));
+  }
+
   static @Nullable Tele somehowParseTele(@NotNull String code) {
     return ToTermVisitor.parseTele(code);
   }
