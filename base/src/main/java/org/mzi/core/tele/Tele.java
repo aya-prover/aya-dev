@@ -1,4 +1,4 @@
-package org.mzi.core.ref;
+package org.mzi.core.tele;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,12 +21,22 @@ public sealed interface Tele extends CoreBind {
   @Override @Nullable Tele next();
   @NotNull Term type();
 
+  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+
+  interface Visitor<P, R> {
+    R visitTyped(@NotNull TypedTele typed, P p);
+    R visitNamed(@NotNull NamedTele named, P p);
+  }
+
   record TypedTele(
     @NotNull Ref ref,
     @NotNull Term type,
     boolean explicit,
     @Nullable Tele next
-  ) {
+  ) implements Tele {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitTyped(this, p);
+    }
   }
 
   /**
@@ -42,6 +52,10 @@ public sealed interface Tele extends CoreBind {
 
     @Contract(pure = true) @Override public @NotNull Term type() {
       return next().type();
+    }
+
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitNamed(this, p);
     }
   }
 }
