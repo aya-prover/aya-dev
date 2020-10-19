@@ -1,4 +1,4 @@
-package org.mzi.api.core.ref;
+package org.mzi.api.ref;
 
 import org.jetbrains.annotations.NotNull;
 

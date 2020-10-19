@@ -5,11 +5,11 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.mzi.core.ref.Ref;
 import org.mzi.core.term.*;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispLexer;
 import org.mzi.parser.LispParser;
+import org.mzi.ref.Ref;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -53,7 +53,7 @@ public class LispToTerm extends LispBaseVisitor<Term> {
     var number = ctx.NUMBER();
     var ident = ctx.IDENT();
     if (ident != null) {
-      return new RefTerm(refs.computeIfAbsent(ident.getText(), s -> () -> s));
+      return new RefTerm(refs.computeIfAbsent(ident.getText(), Ref.LocalRef::new));
     } else if (number != null) {
       throw new UnsupportedOperationException("No numbers yet!");
     }
