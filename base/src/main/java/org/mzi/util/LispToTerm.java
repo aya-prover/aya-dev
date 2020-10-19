@@ -6,9 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.core.ref.Ref;
-import org.mzi.core.term.RefTerm;
-import org.mzi.core.term.Term;
-import org.mzi.core.term.UnivTerm;
+import org.mzi.core.term.*;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispLexer;
 import org.mzi.parser.LispParser;
@@ -41,8 +39,11 @@ public class LispToTerm extends LispBaseVisitor<Term> {
     var atom = ctx.atom();
     if (atom != null) return atom.accept(this);
     var rule = ctx.IDENT().getText();
+    var exprs = ctx.expr();
     return switch (rule) {
       case "U" -> new UnivTerm();
+      case "app" -> new AppTerm.TermAppTerm(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), true));
+      case "iapp" -> new AppTerm.TermAppTerm(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), false));
       default -> throw new IllegalArgumentException("Unexpected value: " + rule);
     };
   }

@@ -19,5 +19,6 @@ public interface Term {
     R visitLam(@NotNull LamTerm term, P p);
     R visitPi(@NotNull PiTerm term, P p);
     R visitUniv(@NotNull UnivTerm term, P p);
+    R visitApp(AppTerm.TermAppTerm term, P p);
   }
 }
