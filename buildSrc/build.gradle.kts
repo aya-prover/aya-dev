@@ -1,20 +1,20 @@
 plugins {
   java
   groovy
-//   antlr
+  antlr
 }
 
 repositories { jcenter() }
 
-// tasks.withType<AntlrTask>().configureEach {
-//   outputDirectory = projectDir.parentFile.resolve("parser/src/main/java")
-//   arguments.addAll(listOf(
-//     "-package", "org.arend.frontend.parser",
-//     "-no-listener",
-//     "-visitor"
-//   ))
-// }
+tasks.withType<AntlrTask>().configureEach {
+  outputDirectory = projectDir.parentFile.resolve("parser/src/main/java")
+  arguments.addAll(listOf(
+    "-package", "org.mzi.parser",
+    "-no-listener",
+    "-visitor"
+  ))
+}
 
-// dependencies {
-//   antlr("org.antlr:antlr4:4.8")
-// }
+dependencies {
+  antlr("org.antlr:antlr4:4.8")
+}

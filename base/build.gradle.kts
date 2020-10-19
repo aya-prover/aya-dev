@@ -1,6 +1,7 @@
 dependencies {
   val annotationsVersion: String by rootProject.ext
   api("org.jetbrains:annotations:$annotationsVersion")
+  implementation(project(":parser"))
 }
 
 val genDir = file("src/main/gen")
@@ -9,16 +10,12 @@ val generateVersion = tasks.register<org.mzi.gradle.GenerateVersionTask>("genera
 }
 
 idea {
-  module {
-    generatedSourceDirs.add(genDir)
-  }
+  module.generatedSourceDirs.add(genDir)
 }
 
 sourceSets {
   main {
-    java {
-      srcDirs(genDir)
-    }
+    java.srcDirs(genDir)
   }
 }
 

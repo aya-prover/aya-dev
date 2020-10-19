@@ -4,6 +4,6 @@ include(
   // "api",
   // "cli",
   // "proto",
-  // "parser",
+  "parser",
   "base"
 )
