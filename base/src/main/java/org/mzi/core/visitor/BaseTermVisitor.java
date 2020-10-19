@@ -9,7 +9,7 @@ import org.mzi.core.term.*;
  */
 public interface BaseTermVisitor<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
-    return new LamTerm(ImmutableSeq.from(term.binds()), term.body().accept(this, p));
+    return new LamTerm(term.binds(), term.body().accept(this, p));
   }
 
   @Override default @NotNull Term visitUniv(@NotNull UnivTerm term, P p) {
@@ -17,7 +17,7 @@ public interface BaseTermVisitor<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
-    return new PiTerm(ImmutableSeq.from(term.binds()), term.body().accept(this, p));
+    return new PiTerm(term.binds(), term.body().accept(this, p));
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
