@@ -1,18 +1,16 @@
 package org.mzi.core.term;
 
+import asia.kala.collection.Seq;
+import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author ice1000
  */
 public interface AppTerm extends Term {
   @NotNull Term function();
-  @NotNull List<@NotNull Arg> arguments();
+  @NotNull ImmutableSeq<@NotNull Arg> arguments();
 
   record Apply(
     @NotNull Term function,
@@ -23,8 +21,8 @@ public interface AppTerm extends Term {
     }
 
     @Contract(" -> new")
-    @Override public @NotNull @Unmodifiable List<@NotNull Arg> arguments() {
-      return Collections.singletonList(argument());
+    @Override public @NotNull ImmutableSeq<@NotNull Arg> arguments() {
+      return ImmutableSeq.of(argument());
     }
   }
 }
