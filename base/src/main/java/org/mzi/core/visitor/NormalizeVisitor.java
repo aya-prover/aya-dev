@@ -2,10 +2,8 @@ package org.mzi.core.visitor;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.util.NormalizeMode;
-import org.mzi.core.term.AppTerm;
-import org.mzi.core.term.LamTerm;
-import org.mzi.core.term.PiTerm;
-import org.mzi.core.term.Term;
+import org.mzi.core.term.*;
+import org.mzi.ref.EvalRef;
 
 public class NormalizeVisitor implements BaseTermVisitor<NormalizeMode> {
   public static final @NotNull NormalizeVisitor INSTANCE = new NormalizeVisitor();
@@ -18,6 +16,12 @@ public class NormalizeVisitor implements BaseTermVisitor<NormalizeMode> {
     var function = term.function();
     if (function instanceof LamTerm lam) return AppTerm.make(lam, visitArg(term.argument(), mode));
     else return AppTerm.make(function, mode == NormalizeMode.WHNF ? term.argument() : visitArg(term.argument(), mode));
+  }
+
+  @Override
+  public @NotNull Term visitRef(@NotNull RefTerm term, NormalizeMode mode) {
+    if (!(term.ref() instanceof EvalRef eval)) return term;
+    return eval.term().accept(this, mode);
   }
 
   @Override

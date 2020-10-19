@@ -2,6 +2,7 @@ package org.mzi.core.term;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Ref;
+import org.mzi.ref.EvalRef;
 import org.mzi.util.Decision;
 
 /**
@@ -12,8 +13,7 @@ public record RefTerm(@NotNull Ref ref) implements Term {
     return visitor.visitRef(this, p);
   }
 
-  @Override
-  public @NotNull Decision whnf() {
-    return Decision.YES;
+  @Override public @NotNull Decision whnf() {
+    return ref instanceof EvalRef ? Decision.NO : Decision.YES;
   }
 }
