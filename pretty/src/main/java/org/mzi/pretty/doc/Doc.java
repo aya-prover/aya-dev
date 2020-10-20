@@ -147,19 +147,24 @@ public sealed interface Doc {
   static @NotNull Doc group(@NotNull Doc doc) {
     if (doc instanceof Union) {
       return doc;
+
     } else if (doc instanceof FlatAlt alt) {
       var flattenResult = Flatten.flatDoc(alt.preferWhenFlatten());
       if (flattenResult instanceof Flatten.Flattened f) {
         return new Union(f.flattenedDoc(), alt.defaultDoc());
+
       } else if (flattenResult instanceof Flatten.AlreadyFlat) {
         return new Union(alt.preferWhenFlatten(), alt.defaultDoc());
+
       } else {
         return alt.defaultDoc();
       }
+
     } else {
       var flattenResult = Flatten.flatDoc(doc);
       if (flattenResult instanceof Flatten.Flattened f) {
         return new Union(f.flattenedDoc(), doc);
+
       } else {
         return doc;
       }
