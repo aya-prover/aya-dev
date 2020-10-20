@@ -7,14 +7,14 @@ import java.util.Arrays;
 import java.util.function.BinaryOperator;
 
 /**
- * This class reimplemented Haskel
+ * This class reimplemented Haskell
  * <a href="https://hackage.haskell.org/package/prettyprinter-1.7.0/docs/src/Prettyprinter.Internal.html">
  * PrettyPrint library's Doc module</a>.
  *
  * @author kiva
  */
 public sealed interface Doc {
-  /// --------------------------- Doc Variants
+  //region Doc Variants
 
   /**
    * The empty document; conceptually the unit of 'Cat'
@@ -75,7 +75,9 @@ public sealed interface Doc {
   record Union(@NotNull Doc first, @NotNull Doc second) implements Doc {
   }
 
-  /// --------------------------- DocFactory functions
+  //endregion
+
+  //region DocFactory functions
 
   /**
    * The empty document; conceptually the unit of 'Cat'
@@ -188,10 +190,10 @@ public sealed interface Doc {
   /**
    * vcat vertically concatenates the documents {@param docs}. If it is
    * 'group'ed, the line breaks are removed.
-   * <p>
    * In other words vcat is like vsep, with newlines removed instead of
    * replaced by 'space's.
-   * <p>
+   *
+   * <pre>
    * >>> let docs = Util.words "lorem ipsum dolor"
    * >>> vcat docs
    * lorem
@@ -199,6 +201,7 @@ public sealed interface Doc {
    * dolor
    * >>> group (vcat docs)
    * loremipsumdolor
+   * </pre>
    * <p>
    * Since 'group'ing a 'vcat' is rather common, 'cat' is a built-in shortcut for
    * it.
@@ -225,35 +228,23 @@ public sealed interface Doc {
     return concatWith(Doc::simpleCat, docs);
   }
 
-  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Doc... docs) {
-    return Arrays.stream(docs).reduce(empty(), f);
-  }
-
-  private static @NotNull Doc simpleCat(@NotNull Doc a, @NotNull Doc b) {
-    if (a instanceof Empty) {
-      return b;
-    }
-    if (b instanceof Empty) {
-      return a;
-    }
-    return new Cat(a, b);
-  }
-
   /**
-   * softline behaves like a {@code space()} if the resulting output fits the page,
+   * softline behaves like a {@code spaces(1)} if the resulting output fits the page,
    * otherwise like a {@code line()}.
-   * <p>
+   *
    * For example, here, we have enough space to put everything in one line:
-   * <p>
+   *
+   * <pre>
    * >>> let doc = "lorem ipsum" <> softline <> "dolor sit amet"
    * >>> putDocW 80 doc
    * lorem ipsum dolor sit amet
-   * <p>
+   * </pre>
    * If we narrow the page to width 10, the layouter produces a line break:
-   * <p>
+   * <pre>
    * >>> putDocW 10 doc
    * lorem ipsum
    * dolor sit amet
+   * </pre>
    *
    * @return soft line document
    */
@@ -263,12 +254,12 @@ public sealed interface Doc {
   }
 
   /**
-   * Another softLine but result nothing on page when 'group'ed.
+   * Another softLine but result nothing on page when flattened.
    *
    * @return soft line document
    */
   @Contract("-> new")
-  private static @NotNull Doc softLineEmpty() {
+  static @NotNull Doc softLineEmpty() {
     return new Union(empty(), line());
   }
 
@@ -294,12 +285,45 @@ public sealed interface Doc {
   }
 
   /**
-   * Another version of line() but result nothing on page when 'group'ed.
+   * Another version of line() but result nothing on page when flattened.
    *
    * @return line document
    */
   @Contract("-> new")
-  private static @NotNull Doc lineEmpty() {
+  static @NotNull Doc lineEmpty() {
     return new FlatAlt(new Line(), empty());
   }
+
+  /**
+   * Insert a number of spaces. Negative values count as 0.
+   *
+   * @param count count of spaces
+   * @return space document
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc spaces(int count) {
+    return count < 0
+      ? empty()
+      : plain(" ".repeat(count));
+  }
+
+  //endregion
+
+  //region utility functions
+
+  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Doc... docs) {
+    return Arrays.stream(docs).reduce(empty(), f);
+  }
+
+  private static @NotNull Doc simpleCat(@NotNull Doc a, @NotNull Doc b) {
+    if (a instanceof Empty) {
+      return b;
+    }
+    if (b instanceof Empty) {
+      return a;
+    }
+    return new Cat(a, b);
+  }
+
+  //endregion
 }
