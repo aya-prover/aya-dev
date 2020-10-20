@@ -1,5 +1,6 @@
 package org.mzi.concrete.term;
 
+import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.List;
  */
 public record AppExpr(
   @NotNull Expr function,
-  @NotNull List<@NotNull Arg> argument
+  @NotNull ImmutableSeq<@NotNull Arg> argument
 ) implements Expr {
   @Override
   public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
