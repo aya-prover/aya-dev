@@ -28,7 +28,7 @@ kalaVersion = "0.5.0"
 
 
 val nonJavaProjects = listOf("docs")
-val nonJigsawProject = listOf("mzi", "pretty") + nonJavaProjects
+val nonJigsawProjects = listOf("mzi", "pretty") + nonJavaProjects
 allprojects {
   group = "org.mzi"
   version = "0.1"
@@ -74,7 +74,7 @@ allprojects {
     jvmArgs = listOf("--enable-preview")
   }
 
-  if (name !in nonJigsawProject) {
+  if (name !in nonJigsawProjects) {
     val moduleName: String by project
 
     tasks.compileTestJava {
