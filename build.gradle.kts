@@ -28,6 +28,7 @@ kalaVersion = "0.4.0"
 
 
 val nonJavaProjects = listOf("docs")
+val nonJigsawProject = listOf("mzi", "pretty") + nonJavaProjects
 allprojects {
   group = "org.mzi"
   version = "0.1"
@@ -66,10 +67,30 @@ allprojects {
 
   tasks.withType<Test>().configureEach {
     jvmArgs = listOf("--enable-preview")
+    useJUnitPlatform()
   }
 
   tasks.withType<JavaExec>().configureEach {
     jvmArgs = listOf("--enable-preview")
+  }
+
+  if (name !in nonJigsawProject) {
+    val moduleName: String by project
+
+    tasks.compileTestJava {
+      extensions.configure(org.javamodularity.moduleplugin.extensions.ModuleOptions::class) {
+        addModules = listOf("org.mzi.test")
+        addReads = mapOf(
+          moduleName to "org.mzi.test"
+        )
+      }
+    }
+
+    tasks.test {
+      extensions.configure(org.javamodularity.moduleplugin.extensions.TestModuleOptions::class) {
+        runOnClasspath = true
+      }
+    }
   }
 }
 
