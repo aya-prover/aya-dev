@@ -1,7 +1,7 @@
 package org.mzi.core;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mzi.api.ref.Ref;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.core.term.AppTerm;
@@ -11,7 +11,7 @@ import org.mzi.test.Lisp;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SubstTest {
   @Test

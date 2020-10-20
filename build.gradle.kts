@@ -1,3 +1,14 @@
+buildscript {
+  repositories {
+    maven {
+      url = uri("https://plugins.gradle.org/m2/")
+    }
+  }
+  dependencies {
+    classpath("org.javamodularity:moduleplugin:1.7.0")
+  }
+}
+
 plugins {
   java
   idea
@@ -13,10 +24,11 @@ var kalaVersion: String by rootProject.ext
 annotationsVersion = "20.1.0"
 protobufVersion = "3.13.0"
 antlrVersion = "4.8"
-kalaVersion = "0.4.0"
+kalaVersion = "0.5.0"
 
 
 val nonJavaProjects = listOf("docs")
+val nonJigsawProjects = listOf("mzi", "pretty") + nonJavaProjects
 allprojects {
   group = "org.mzi"
   version = "0.1"
@@ -31,6 +43,7 @@ allprojects {
   apply {
     plugin("java")
     plugin("idea")
+    plugin("org.javamodularity.moduleplugin")
   }
 
   java {
@@ -54,10 +67,30 @@ allprojects {
 
   tasks.withType<Test>().configureEach {
     jvmArgs = listOf("--enable-preview")
+    useJUnitPlatform()
   }
 
   tasks.withType<JavaExec>().configureEach {
     jvmArgs = listOf("--enable-preview")
+  }
+
+  if (name !in nonJigsawProjects) {
+    val moduleName: String by project
+
+    tasks.compileTestJava {
+      extensions.configure(org.javamodularity.moduleplugin.extensions.ModuleOptions::class) {
+        addModules = listOf("org.mzi.test")
+        addReads = mapOf(
+          moduleName to "org.mzi.test"
+        )
+      }
+    }
+
+    tasks.test {
+      extensions.configure(org.javamodularity.moduleplugin.extensions.TestModuleOptions::class) {
+        runOnClasspath = true
+      }
+    }
   }
 }
 
