@@ -4,6 +4,7 @@ import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.subst.TermSubst;
+import org.mzi.generic.Arg;
 import org.mzi.util.Decision;
 
 /**
@@ -12,14 +13,14 @@ import org.mzi.util.Decision;
  */
 public sealed interface AppTerm extends Term {
   @NotNull Term function();
-  @NotNull ImmutableSeq<@NotNull Arg> arguments();
+  @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> arguments();
 
   @Override default @NotNull Decision whnf() {
     if (function() instanceof LamTerm) return Decision.NO;
     return function().whnf();
   }
 
-  @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg arg) {
+  @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<@NotNull Term> arg) {
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
     var tele = lam.telescope();
     var next = tele.next();
@@ -28,14 +29,14 @@ public sealed interface AppTerm extends Term {
 
   record Apply(
     @NotNull Term function,
-    @NotNull Arg argument
+    @NotNull Arg<@NotNull Term> argument
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }
 
     @Contract(" -> new")
-    @Override public @NotNull ImmutableSeq<@NotNull Arg> arguments() {
+    @Override public @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> arguments() {
       return ImmutableSeq.of(argument());
     }
   }

@@ -3,6 +3,7 @@ package org.mzi.core.visitor;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.tele.Tele;
 import org.mzi.core.term.*;
+import org.mzi.generic.Arg;
 
 import java.util.Optional;
 
@@ -44,10 +45,10 @@ public interface BaseTermVisitor<P> extends Term.Visitor<P, @NotNull Term>, Tele
     return term;
   }
 
-  default @NotNull Arg visitArg(@NotNull Arg arg, P p) {
+  default @NotNull Arg<@NotNull Term> visitArg(@NotNull Arg<@NotNull Term> arg, P p) {
     var term = arg.term().accept(this, p);
     if (term == arg.term()) return arg;
-    return new Arg(term, arg.explicit());
+    return new Arg<>(term, arg.explicit());
   }
 
   @Override default @NotNull Term visitApp(@NotNull AppTerm.Apply term, P p) {
