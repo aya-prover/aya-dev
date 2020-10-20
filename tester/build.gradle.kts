@@ -1,6 +1,6 @@
 dependencies {
-  api("junit:junit:4.12")
-  api("org.hamcrest:hamcrest-library:1.3")
+  api("org.junit.jupiter:junit-jupiter:5.7.0")
+  api("org.hamcrest:hamcrest:2.2")
   api(project(":base"))
   implementation(project(":parser"))
 }
