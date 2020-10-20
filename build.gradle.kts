@@ -1,3 +1,14 @@
+buildscript {
+  repositories {
+    maven {
+      url = uri("https://plugins.gradle.org/m2/")
+    }
+  }
+  dependencies {
+    classpath("org.javamodularity:moduleplugin:1.7.0")
+  }
+}
+
 plugins {
   java
   idea
@@ -31,6 +42,7 @@ allprojects {
   apply {
     plugin("java")
     plugin("idea")
+    plugin("org.javamodularity.moduleplugin")
   }
 
   java {
