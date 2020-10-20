@@ -31,7 +31,7 @@ public class NormalizeVisitor implements BaseTermVisitor<NormalizeMode> {
   }
 
   @Override
-  public @NotNull Term visitPi(@NotNull PiTerm term, NormalizeMode mode) {
+  public @NotNull Term visitPi(@NotNull DT term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
     else return BaseTermVisitor.super.visitPi(term, mode);
   }

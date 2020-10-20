@@ -65,7 +65,10 @@ public class ToTermVisitor extends LispBaseVisitor<Term> {
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), true));
       case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), false));
       case "lam" -> new LamTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this));
-      case "Pi" -> new PiTerm(exprToBind(exprs.get(0)));
+      case "Pi" -> new DT(exprToBind(exprs.get(0)), DT.Kind.Pi);
+      case "Copi" -> new DT(exprToBind(exprs.get(0)), DT.Kind.Copi);
+      case "Sigma" -> new DT(exprToBind(exprs.get(0)), DT.Kind.Sigma);
+      case "Cosigma" -> new DT(exprToBind(exprs.get(0)), DT.Kind.Cosigma);
       default -> throw new IllegalArgumentException("Unexpected lisp function: " + rule);
     };
   }

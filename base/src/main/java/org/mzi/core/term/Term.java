@@ -28,7 +28,7 @@ public interface Term extends CoreTerm {
   interface Visitor<P, R> {
     R visitRef(@NotNull RefTerm term, P p);
     R visitLam(@NotNull LamTerm term, P p);
-    R visitPi(@NotNull PiTerm term, P p);
+    R visitPi(@NotNull DT term, P p);
     R visitUniv(@NotNull UnivTerm term, P p);
     R visitApp(@NotNull AppTerm.Apply term, P p);
   }
