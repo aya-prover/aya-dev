@@ -18,7 +18,7 @@ public record AppExpr(
 
   public static record Arg(
     @NotNull Expr expr,
-    boolean isExplicit
+    boolean explicit
   ) {
   }
 }
