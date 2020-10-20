@@ -11,6 +11,9 @@ module org.mzi {
   exports org.mzi.core.term;
   exports org.mzi.core.visitor;
   exports org.mzi.ref;
+  exports org.mzi.generic;
+  exports org.mzi.concrete.visitor;
+  exports org.mzi.concrete.term;
   exports org.mzi.util;
   exports org.mzi.util.cancel;
 }

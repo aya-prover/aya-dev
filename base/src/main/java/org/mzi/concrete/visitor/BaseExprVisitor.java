@@ -3,8 +3,9 @@ package org.mzi.concrete.visitor;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.term.*;
+import org.mzi.generic.Arg;
 
-public interface BaseExprVisitor<P> extends Expr.Visitor<P, @NotNull Expr>, Param.Visitor<P, @NotNull ImmutableSeq<Param>> {
+public interface BaseExprVisitor<P> extends Expr.Visitor<P, @NotNull Expr>, Param.Visitor<P, @NotNull ImmutableSeq<@NotNull Param>> {
   @Override
   default @NotNull Expr visitRef(RefExpr refExpr, P p) {
     return refExpr;
@@ -18,6 +19,7 @@ public interface BaseExprVisitor<P> extends Expr.Visitor<P, @NotNull Expr>, Para
   @Override
   default @NotNull Expr visitLam(@NotNull LamExpr expr, P p) {
     // TODO[xyr]: This line below looks very strange. Any way to fix it?
+    //  ice: I don't get it. Wdym?
     var binds = visitParams(expr.binds(), p);
     var body = expr.body().accept(this, p);
     if (binds == expr.binds() && body == expr.body()) return expr;
@@ -39,17 +41,19 @@ public interface BaseExprVisitor<P> extends Expr.Visitor<P, @NotNull Expr>, Para
   }
 
   // TODO[xyr]: or visitArgs(ImmutableSeq<Arg>)?
-  default @NotNull AppExpr.Arg visitArg(@NotNull AppExpr.Arg arg, P p) {
-    var term = arg.expr().accept(this, p);
-    if (term == arg.expr()) return arg;
-    return new AppExpr.Arg(term, arg.explicit());
+  //  ice: no, this one is good.
+  default @NotNull Arg<Expr> visitArg(@NotNull Arg<Expr> arg, P p) {
+    var term = arg.term().accept(this, p);
+    if (term == arg.term()) return arg;
+    return new Arg<>(term, arg.explicit());
   }
 
   @Override
   default @NotNull Expr visitApp(@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
     var arg = expr.argument().map(x -> visitArg(x, p));
-    if (function == expr.function() && arg == expr.argument()) return expr;
+    // TODO[ice]: replace `sameElements` with a better alternative that compares references
+    if (function == expr.function() && arg.sameElements(expr.argument())) return expr;
     return new AppExpr(function, arg);
   }
 }
