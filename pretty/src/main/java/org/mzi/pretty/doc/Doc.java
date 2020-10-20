@@ -23,6 +23,12 @@ public sealed interface Doc {
   }
 
   /**
+   * Fail to flatten; used in {@link Flatten#flatDoc(Doc)}
+   */
+  record Fail() implements Doc {
+  }
+
+  /**
    * A plain text line without '\n'.
    */
   record PlainText(@NotNull String text) implements Doc {
