@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.term.*;
 import org.mzi.generic.Arg;
 
-public interface BaseExprVisitor<P> extends Expr.Visitor<P, @NotNull Expr>, Param.Visitor<P, @NotNull ImmutableSeq<@NotNull Param>> {
+public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr>, Param.Visitor<P, @NotNull ImmutableSeq<@NotNull Param>> {
   @Override
   default @NotNull Expr visitRef(RefExpr refExpr, P p) {
     return refExpr;

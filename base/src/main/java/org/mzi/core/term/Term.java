@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.subst.TermSubst;
-import org.mzi.core.visitor.NormalizeVisitor;
-import org.mzi.core.visitor.SubstVisitor;
+import org.mzi.core.visitor.NormalizeFixpoint;
+import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.util.Decision;
 
 /**
@@ -18,11 +18,11 @@ public interface Term extends CoreTerm {
   @Contract(pure = true) @NotNull Decision whnf();
 
   default @NotNull Term subst(@NotNull TermSubst subst) {
-    return accept(new SubstVisitor(subst), EmptyTuple.INSTANCE);
+    return accept(new SubstFixpoint(subst), EmptyTuple.INSTANCE);
   }
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
-    return accept(NormalizeVisitor.INSTANCE, mode);
+    return accept(NormalizeFixpoint.INSTANCE, mode);
   }
 
   interface Visitor<P, R> {

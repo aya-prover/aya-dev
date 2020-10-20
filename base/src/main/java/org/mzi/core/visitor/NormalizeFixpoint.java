@@ -5,10 +5,10 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
 import org.mzi.ref.EvalRef;
 
-public class NormalizeVisitor implements BaseTermVisitor<NormalizeMode> {
-  public static final @NotNull NormalizeVisitor INSTANCE = new NormalizeVisitor();
+public class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
+  public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
 
-  private NormalizeVisitor() {
+  private NormalizeFixpoint() {
   }
 
   @Override
@@ -27,12 +27,12 @@ public class NormalizeVisitor implements BaseTermVisitor<NormalizeMode> {
   @Override
   public @NotNull Term visitLam(@NotNull LamTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return BaseTermVisitor.super.visitLam(term, mode);
+    else return TermFixpoint.super.visitLam(term, mode);
   }
 
   @Override
   public @NotNull Term visitDT(@NotNull DT term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return BaseTermVisitor.super.visitDT(term, mode);
+    else return TermFixpoint.super.visitDT(term, mode);
   }
 }

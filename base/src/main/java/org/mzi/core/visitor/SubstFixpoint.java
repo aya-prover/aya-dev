@@ -9,7 +9,7 @@ import org.mzi.core.term.Term;
 /**
  * @author ice1000
  */
-public record SubstVisitor(@NotNull TermSubst subst) implements BaseTermVisitor<EmptyTuple> {
+public record SubstFixpoint(@NotNull TermSubst subst) implements TermFixpoint<EmptyTuple> {
   @Override
   public @NotNull Term visitRef(@NotNull RefTerm term, EmptyTuple unused) {
     return subst.get(term.ref(), term);
