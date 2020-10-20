@@ -41,12 +41,12 @@ public sealed interface Doc {
   }
 
   /**
-   * Lay out the first 'Doc', but when flattened (via 'group'), prefer
-   * the second.
-   * The layout algorithms work under the assumption that the first
-   * alternative is less wide than the flattened second alternative.
+   * Lay out the defaultDoc 'Doc', but when flattened (via 'group'), prefer
+   * the preferWhenFlatten.
+   * The layout algorithms work under the assumption that the defaultDoc
+   * alternative is less wide than the flattened preferWhenFlatten alternative.
    */
-  record FlatAlt(@NotNull Doc first, @NotNull Doc second) implements Doc {
+  record FlatAlt(@NotNull Doc defaultDoc, @NotNull Doc preferWhenFlatten) implements Doc {
   }
 
   /**
@@ -62,17 +62,36 @@ public sealed interface Doc {
   }
 
   /**
-   * The first lines of first document should be longer than the
-   * first lines of the second one, so the layout algorithm can pick the one
+   * The defaultDoc lines of defaultDoc document should be longer than the
+   * defaultDoc lines of the preferWhenFlatten one, so the layout algorithm can pick the one
    * that fits best. Used to implement layout alternatives for 'softline' and 'group'.
    */
   record Union(@NotNull Doc first, @NotNull Doc second) implements Doc {
   }
 
   /// --------------------------- DocFactory functions
+
+  /**
+   * The empty document; conceptually the unit of 'Cat'
+   *
+   * @return empty document
+   */
   @Contract("-> new")
   static @NotNull Doc empty() {
     return new Empty();
+  }
+
+  /**
+   * By default, flatAlt renders as {@param defaultDoc}. However when 'group'ed,
+   * {@param preferWhenFlattened} will be preferred, with {@param defaultDoc} as
+   * the fallback for the case when {@param preferWhenFlattened} doesn't fit.
+   *
+   * @param defaultDoc          default document
+   * @param preferWhenFlattened document selected when flattened
+   * @return alternative document
+   */
+  static @NotNull Doc flatAlt(@NotNull Doc defaultDoc, @NotNull Doc preferWhenFlattened) {
+    return new FlatAlt(defaultDoc, preferWhenFlattened);
   }
 
   /**
@@ -121,13 +140,13 @@ public sealed interface Doc {
     if (doc instanceof Union) {
       return doc;
     } else if (doc instanceof FlatAlt alt) {
-      var flattenResult = Flatten.flatDoc(alt.second);
+      var flattenResult = Flatten.flatDoc(alt.preferWhenFlatten());
       if (flattenResult instanceof Flatten.Flattened f) {
-        return new Union(f.flattenedDoc(), alt.first);
+        return new Union(f.flattenedDoc(), alt.defaultDoc());
       } else if (flattenResult instanceof Flatten.AlreadyFlat) {
-        return new Union(alt.second, alt.first);
+        return new Union(alt.preferWhenFlatten(), alt.defaultDoc());
       } else {
-        return alt.first;
+        return alt.defaultDoc();
       }
     } else {
       var flattenResult = Flatten.flatDoc(doc);
