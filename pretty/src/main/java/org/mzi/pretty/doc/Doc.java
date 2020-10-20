@@ -202,7 +202,7 @@ public sealed interface Doc {
    * >>> group (vcat docs)
    * loremipsumdolor
    * </pre>
-   * <p>
+   *
    * Since 'group'ing a 'vcat' is rather common, 'cat' is a built-in shortcut for
    * it.
    *
