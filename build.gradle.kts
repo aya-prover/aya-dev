@@ -8,14 +8,21 @@ plugins {
 var annotationsVersion: String by rootProject.ext
 var protobufVersion: String by rootProject.ext
 var antlrVersion: String by rootProject.ext
+var kalaVersion: String by rootProject.ext
 
 annotationsVersion = "20.1.0"
 protobufVersion = "3.13.0"
 antlrVersion = "4.8"
+kalaVersion = "0.4.0"
 
+
+val nonJavaProjects = listOf("docs")
 allprojects {
   group = "org.mzi"
   version = "0.1"
+
+  if (name in nonJavaProjects) return@allprojects
+
   repositories {
     jcenter()
     mavenCentral()
@@ -55,6 +62,8 @@ allprojects {
 }
 
 subprojects {
+  if (name in nonJavaProjects) return@subprojects
+
   apply {
     plugin("maven-publish")
     plugin("java-library")

@@ -3,9 +3,10 @@ package org.mzi.core.subst;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.ref.Ref;
 import org.mzi.core.term.Term;
-import org.mzi.ref.Ref;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -13,6 +14,7 @@ import java.util.Map;
  */
 public final class TermSubst {
   private final @NotNull Map<@NotNull Ref, @NotNull Term> subst;
+  public static final @NotNull TermSubst EMPTY = new TermSubst(Collections.emptyMap());
 
   public TermSubst(@NotNull Map<@NotNull Ref, @NotNull Term> subst) {
     this.subst = subst;

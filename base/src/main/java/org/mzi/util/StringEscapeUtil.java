@@ -10,19 +10,19 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public class StringEscapeUtils {
+public interface StringEscapeUtil {
   @Contract(pure = true)
-  public static boolean isHexDigit(char c) {
+  static boolean isHexDigit(char c) {
     return '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F';
   }
 
   @Contract(pure = true)
-  public static boolean isOctalDigit(char c) {
+  static boolean isOctalDigit(char c) {
     return '0' <= c && c <= '7';
   }
 
   @Contract(pure = true)
-  public static @NotNull String unescapeStringCharacters(@NotNull String s) {
+  static @NotNull String unescapeStringCharacters(@NotNull String s) {
     var buffer = new StringBuilder(s.length());
     unescapeStringCharacters(s.length(), s, buffer);
     return buffer.toString();
@@ -120,21 +120,21 @@ public class StringEscapeUtils {
   }
 
   @Contract(pure = true)
-  public static @NotNull String escapeStringCharacters(@NotNull String s) {
+  static @NotNull String escapeStringCharacters(@NotNull String s) {
     var buffer = new StringBuilder(s.length());
     escapeStringCharacters(s.length(), s, "\"", buffer);
     return buffer.toString();
   }
 
   @Contract(pure = true)
-  public static @NotNull String escapeCharCharacters(@NotNull String s) {
+  static @NotNull String escapeCharCharacters(@NotNull String s) {
     var buffer = new StringBuilder(s.length());
     escapeStringCharacters(s.length(), s, "'", buffer);
     return buffer.toString();
   }
 
-
-  public static @NotNull StringBuilder escapeStringCharacters(
+  @Contract("_, _, _, _ -> param4")
+  static @NotNull StringBuilder escapeStringCharacters(
     int length,
     @NotNull String str,
     @Nullable String additionalChars,
@@ -143,7 +143,8 @@ public class StringEscapeUtils {
     return escapeStringCharacters(length, str, additionalChars, true, buffer);
   }
 
-  public static @NotNull StringBuilder escapeStringCharacters(
+  @Contract("_, _, _, _, _ -> param5")
+  static @NotNull StringBuilder escapeStringCharacters(
     int length,
     @NotNull String str,
     @Nullable String additionalChars,
@@ -153,7 +154,8 @@ public class StringEscapeUtils {
     return escapeStringCharacters(length, str, additionalChars, escapeSlash, true, buffer);
   }
 
-  public static @NotNull StringBuilder escapeStringCharacters(
+  @Contract("_, _, _, _, _, _ -> param6")
+  static @NotNull StringBuilder escapeStringCharacters(
     int length,
     @NotNull String str,
     @Nullable String additionalChars,
@@ -208,7 +210,7 @@ public class StringEscapeUtils {
   }
 
   @Contract(pure = true)
-  public static boolean isPrintableUnicode(char c) {
+  static boolean isPrintableUnicode(char c) {
     var t = Character.getType(c);
     return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
       t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
