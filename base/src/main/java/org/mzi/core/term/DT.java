@@ -15,7 +15,7 @@ public record DT(
   @NotNull Kind kind
 ) implements Term, Telescopic {
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitPi(this, p);
+    return visitor.visitDT(this, p);
   }
 
   @Override public @NotNull Decision whnf() {

@@ -34,7 +34,7 @@ public interface BaseTermVisitor<P> extends Term.Visitor<P, @NotNull Term>, Tele
     return term;
   }
 
-  @Override default @NotNull Term visitPi(@NotNull DT term, P p) {
+  @Override default @NotNull Term visitDT(@NotNull DT term, P p) {
     var telescope = term.telescope().accept(this, p);
     if (telescope == term.telescope()) return term;
     return new DT(telescope, term.kind());

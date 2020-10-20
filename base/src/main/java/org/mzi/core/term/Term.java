@@ -21,14 +21,14 @@ public interface Term extends CoreTerm {
     return accept(new SubstVisitor(subst), EmptyTuple.INSTANCE);
   }
 
-  default @NotNull Term normalize(@NotNull NormalizeMode mode) {
+  @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
     return accept(NormalizeVisitor.INSTANCE, mode);
   }
 
   interface Visitor<P, R> {
     R visitRef(@NotNull RefTerm term, P p);
     R visitLam(@NotNull LamTerm term, P p);
-    R visitPi(@NotNull DT term, P p);
+    R visitDT(@NotNull DT term, P p);
     R visitUniv(@NotNull UnivTerm term, P p);
     R visitApp(@NotNull AppTerm.Apply term, P p);
   }
