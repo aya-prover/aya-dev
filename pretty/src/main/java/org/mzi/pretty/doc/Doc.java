@@ -90,6 +90,7 @@ public sealed interface Doc {
    * @param preferWhenFlattened document selected when flattened
    * @return alternative document
    */
+  @Contract("_, _ -> new")
   static @NotNull Doc flatAlt(@NotNull Doc defaultDoc, @NotNull Doc preferWhenFlattened) {
     return new FlatAlt(defaultDoc, preferWhenFlattened);
   }
@@ -136,6 +137,7 @@ public sealed interface Doc {
    * @param doc doc to flat
    * @return flatten document
    */
+  @Contract("_ -> new")
   static @NotNull Doc group(@NotNull Doc doc) {
     if (doc instanceof Union) {
       return doc;
