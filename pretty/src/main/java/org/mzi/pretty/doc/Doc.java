@@ -2,6 +2,9 @@ package org.mzi.pretty.doc;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.mzi.pretty.backend.DocStringPrinter;
+import org.mzi.pretty.printer.Printer;
+import org.mzi.pretty.printer.PrinterConfig;
 
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
@@ -14,6 +17,17 @@ import java.util.function.BinaryOperator;
  * @author kiva
  */
 public sealed interface Doc {
+  default String renderToString(@NotNull DocStringPrinter.Config config) {
+    var printer = new DocStringPrinter();
+    return this.render(printer, config);
+  }
+
+  default <Out, Config extends PrinterConfig>
+  @NotNull Out render(@NotNull Printer<Out, Config> printer,
+                      @NotNull Config config) {
+    return printer.render(config, this);
+  }
+
   //region Doc Variants
 
   /**
@@ -202,7 +216,7 @@ public sealed interface Doc {
    * >>> group (vcat docs)
    * loremipsumdolor
    * </pre>
-   *
+   * <p>
    * Since 'group'ing a 'vcat' is rather common, 'cat' is a built-in shortcut for
    * it.
    *
@@ -231,7 +245,7 @@ public sealed interface Doc {
   /**
    * softline behaves like a {@code spaces(1)} if the resulting output fits the page,
    * otherwise like a {@code line()}.
-   *
+   * <p>
    * For example, here, we have enough space to put everything in one line:
    *
    * <pre>
