@@ -23,7 +23,7 @@ antlrVersion = "4.8"
 kalaVersion = "0.5.0"
 
 val nonJavaProjects = listOf("docs")
-val nonJigsawProjects = listOf("mzi", "pretty") + nonJavaProjects
+val nonJigsawProjects = listOf("pretty") + nonJavaProjects
 allprojects {
   group = "org.mzi"
   version = "0.1"
@@ -68,24 +68,6 @@ allprojects {
   tasks.withType<JavaExec>().configureEach {
     jvmArgs = listOf("--enable-preview")
   }
-
-  if (name in nonJigsawProjects) return@allprojects
-  val moduleName: String by project
-
-  tasks.compileTestJava {
-    extensions.configure(org.javamodularity.moduleplugin.extensions.ModuleOptions::class) {
-      addModules = listOf("org.mzi.test")
-      addReads = mapOf(
-        moduleName to "org.mzi.test"
-      )
-    }
-  }
-
-  tasks.test {
-    extensions.configure(org.javamodularity.moduleplugin.extensions.TestModuleOptions::class) {
-      runOnClasspath = true
-    }
-  }
 }
 
 subprojects {
@@ -119,6 +101,24 @@ subprojects {
           }
         }
       }
+    }
+  }
+
+  if (name in nonJigsawProjects) return@subprojects
+  val moduleName: String by project
+
+  tasks.compileTestJava {
+    extensions.configure(org.javamodularity.moduleplugin.extensions.ModuleOptions::class) {
+      addModules = listOf("org.mzi.test")
+      addReads = mapOf(
+        moduleName to "org.mzi.test"
+      )
+    }
+  }
+
+  tasks.test {
+    extensions.configure(org.javamodularity.moduleplugin.extensions.TestModuleOptions::class) {
+      runOnClasspath = true
     }
   }
 }
