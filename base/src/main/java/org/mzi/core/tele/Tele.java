@@ -12,7 +12,7 @@ import org.mzi.core.term.Term;
  * If we have <code>{A : Type} (a b : A)</code>, then it should be translated into:
  * <pre>
  * {@link TypedTele}(A, {@link org.mzi.core.term.UnivTerm}, false,
- *   {@link NamedTele}(a, {@link TypedTele}(b, true, A, null)))
+ *   {@link NamedTele}(a, {@link TypedTele}(b, A, true, null)))
  * </pre>
  *
  * @author ice1000
