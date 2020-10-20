@@ -11,7 +11,7 @@ import org.mzi.core.term.Term;
  * Similar to Arend <code>DependentLink</code>.
  * If we have <code>{A : Type} (a b : A)</code>, then it should be translated into:
  * <pre>
- * {@link TypedTele}(A, false, {@link org.mzi.core.term.UnivTerm},
+ * {@link TypedTele}(A, {@link org.mzi.core.term.UnivTerm}, false,
  *   {@link NamedTele}(a, {@link TypedTele}(b, true, A, null)))
  * </pre>
  *
