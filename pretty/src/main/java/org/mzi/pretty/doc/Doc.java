@@ -105,7 +105,7 @@ public sealed interface Doc {
 
     return Arrays.stream(text.split("\n"))
       .map(Doc::plain)
-      .reduce(empty(), Doc::cat);
+      .reduce(empty(), (x, y) -> simpleCat(simpleCat(x, line()), y));
   }
 
   /**
@@ -171,8 +171,8 @@ public sealed interface Doc {
    * Since 'group'ing a 'vcat' is rather common, 'cat' is a built-in shortcut for
    * it.
    *
-   * @param docs
-   * @return
+   * @param docs documents to concat
+   * @return concat document
    */
   @Contract("_ -> new")
   static @NotNull Doc vcat(@NotNull Doc... docs) {
