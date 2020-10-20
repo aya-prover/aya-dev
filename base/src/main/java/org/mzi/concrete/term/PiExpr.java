@@ -3,8 +3,6 @@ package org.mzi.concrete.term;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author re-xyr
  */
