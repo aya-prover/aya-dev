@@ -66,7 +66,13 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term>, Tele.Vi
 
   @Override default @NotNull Term visitTup(@NotNull TupTerm term, P p) {
     var items = term.items().map(x -> x.accept(this, p));
-    if (term.items().sameElements(items)) return term;
+    if (term.items().sameElements(items, true)) return term;
     return new TupTerm(items);
+  }
+
+  @Override default @NotNull Term visitProj(@NotNull ProjTerm term, P p) {
+    var tuple = term.tup().accept(this, p);
+    if (tuple == term.tup()) return term;
+    return new ProjTerm(tuple, term.ix());
   }
 }
