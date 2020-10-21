@@ -1,6 +1,7 @@
 package org.mzi.core.visitor;
 
 import asia.kala.EmptyTuple;
+import asia.kala.Tuple;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.tele.Tele;
 import org.mzi.core.term.*;
@@ -24,7 +25,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   }
 
   @Override default EmptyTuple visitUniv(@NotNull UnivTerm term, P p) {
-    return EmptyTuple.INSTANCE;
+    return Tuple.of();
   }
 
   @Override default EmptyTuple visitDT(@NotNull DT term, P p) {
@@ -32,7 +33,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   }
 
   @Override default EmptyTuple visitRef(@NotNull RefTerm term, P p) {
-    return EmptyTuple.INSTANCE;
+    return Tuple.of();
   }
 
   default void visitArg(@NotNull Arg<Term> arg, P p) {

@@ -5,7 +5,7 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
 import org.mzi.ref.EvalRef;
 
-public class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
+public final class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
   public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
 
   private NormalizeFixpoint() {
