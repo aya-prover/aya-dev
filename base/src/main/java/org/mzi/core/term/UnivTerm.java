@@ -4,8 +4,10 @@ import asia.kala.collection.Seq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.concrete.term.Expr;
 import org.mzi.core.subst.LevelSubst;
 import org.mzi.ref.LevelVar;
+import org.mzi.util.CMP;
 import org.mzi.util.Decision;
 
 /**
@@ -97,39 +99,34 @@ public record UnivTerm() implements Term {
     }
 
     /*
-    public static boolean compare(Level level1, Level level2, CMP cmp, Equations equations, Concrete.SourceNode sourceNode) {
+    public static boolean compare(Level level1, Level level2, CMP cmp, Equations equations, Expr expr) {
       if (cmp == CMP.GE) {
-        return compare(level2, level1, CMP.LE, equations, sourceNode);
+        return compare(level2, level1, CMP.LE, equations, expr);
       }
 
-      if (level1 == INF) {
-        return level2 == INF || !level2.closed() && (equations == null || equations.addEquation(INFINITY, level2, CMP.LE, sourceNode));
-      }
-      if (level2 == INF) {
-        return cmp == CMP.LE || !level1.closed() && (equations == null || equations.addEquation(INFINITY, level1, CMP.LE, sourceNode));
-      }
+      if (level1 == INF)
+        return level2 == INF || !level2.closed() &&
+          (equations == null || equations.addEquation(INF, level2, CMP.LE, expr));
+      if (level2 == INF)
+        return cmp == CMP.LE || !level1.closed() &&
+          (equations == null || equations.addEquation(INF, level1, CMP.LE, expr));
 
-      if (level2.var() == null && level1.var() != null && !(level1.var() instanceof InferenceLevelVariable))
+      if (level2.var() == null && level1.var() != null && level1.var().hole() == null)
         return false;
 
       if (level1.var() == null && cmp == CMP.LE) {
-        if (level1.constant <= level2.constant + level2.max) {
-          return true;
-        }
+        if (level1.constant <= level2.constant + level2.max) return true;
       }
 
       if (level1.var() == level2.var()) {
-        if (cmp == CMP.LE) {
-          return level1.constant <= level2.constant && level1.getMaxAddedConstant() <= level2.getMaxAddedConstant();
-        } else {
-          return level1.constant == level2.constant && level1.getMaxConstant() == level2.getMaxConstant();
-        }
+        if (cmp == CMP.LE)
+          return level1.constant <= level2.constant
+            && level1.maxAddConstant() <= level2.maxAddConstant();
+        else return level1.constant == level2.constant && level1.max == level2.max;
       } else {
-        if (equations == null) {
-          return level1.var() instanceof InferenceLevelVariable || level2.var() instanceof InferenceLevelVariable;
-        } else {
-          return equations.addEquation(level1, level2, cmp, sourceNode);
-        }
+        if (equations == null)
+          return level1.var() != null && level1.var().hole() != null || level2.var().hole() != null;
+        else return equations.addEquation(level1, level2, cmp, expr);
       }
     }
     */
