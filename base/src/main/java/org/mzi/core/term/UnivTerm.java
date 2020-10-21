@@ -4,10 +4,9 @@ import asia.kala.collection.Seq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.concrete.term.Expr;
+import org.mzi.api.ref.Ref;
 import org.mzi.core.subst.LevelSubst;
 import org.mzi.ref.LevelVar;
-import org.mzi.util.CMP;
 import org.mzi.util.Decision;
 
 /**
@@ -20,6 +19,66 @@ public record UnivTerm() implements Term {
 
   @Override public @NotNull Decision whnf() {
     return Decision.YES;
+  }
+
+  public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements LevelSubst {
+    public static final @NotNull Sort PROP = new Sort(0, -1);
+    public static final @NotNull Sort SET0 = hSet(new Level(0));
+    public static final @NotNull Sort STD = new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP));
+
+    public static @NotNull Sort hSet(@NotNull Level uLevel) {
+      return new Sort(uLevel, new Level(0));
+    }
+
+    public static @NotNull Sort hType(@NotNull Level uLevel) {
+      return new Sort(uLevel, Level.INF);
+    }
+
+    public Sort(int uLevel, int hLevel) {
+      this(new Level(uLevel), new Level(hLevel));
+    }
+
+    @Contract(pure = true) public boolean isOmega() {
+      return uLevel.isInf();
+    }
+
+    public @NotNull Sort succ() {
+      return isProp() ? SET0 : new Sort(uLevel.plus(1), hLevel.plus(1));
+    }
+
+    public @NotNull Sort max(Sort sort) {
+      if (isProp()) return sort;
+      if (sort.isProp()) return this;
+      if (uLevel.var != null && sort.uLevel.var != null && uLevel.var != sort.uLevel.var ||
+        hLevel.var != null && sort.hLevel.var != null && hLevel.var != sort.hLevel.var) {
+        throw new UnsupportedOperationException();
+      } else return new Sort(uLevel.max(sort.uLevel), hLevel.max(sort.hLevel));
+    }
+
+    @Contract(pure = true) public boolean isProp() {
+      return hLevel.isProp();
+    }
+
+    @Contract(pure = true) public boolean isSet() {
+      return hLevel.closed() && hLevel.constant == 0;
+    }
+
+    public boolean isStd() {
+      return uLevel.varOnly() && uLevel.var == LevelVar.UP && hLevel.varOnly() && hLevel.var == LevelVar.HP;
+    }
+
+    @Override public boolean isEmpty() {
+      return uLevel.var() == LevelVar.UP && uLevel.varOnly() && hLevel.var() == LevelVar.HP && hLevel.varOnly();
+    }
+
+    @Override public Level get(@NotNull Ref ref) {
+      return ref == LevelVar.UP ? uLevel : ref == LevelVar.HP ? hLevel : null;
+    }
+
+    @Override
+    public @NotNull LevelSubst subst(@NotNull LevelSubst substitution) {
+      return new Sort(uLevel.subst(substitution), hLevel.subst(substitution));
+    }
   }
 
   public record Level(@Nullable LevelVar var, int constant, int max) {
@@ -52,6 +111,10 @@ public record UnivTerm() implements Term {
       return closed() && constant == -1;
     }
 
+    @Contract(pure = true) public boolean isInf() {
+      return this == INF;
+    }
+
     @Contract(pure = true) public boolean withMaxConstant() {
       return var != null && (max > 0 || var.kind() == LevelVar.Kind.H && max == 0);
     }
@@ -64,11 +127,11 @@ public record UnivTerm() implements Term {
       return constant + max;
     }
 
-    @Contract(pure = true) public @NotNull Level add(int constant) {
-      return constant == 0 || this == INF ? this : new Level(var, this.constant + constant, max);
+    @Contract(pure = true) public @NotNull Level plus(int constant) {
+      return constant == 0 || isInf() ? this : new Level(var, this.constant + constant, max);
     }
 
-    public @Nullable Level max(@NotNull Level level) {
+    public @NotNull Level max(@NotNull Level level) {
       if (Seq.of(this, level).contains(INF)) return INF;
 
       if (var != null && level.var != null) {
@@ -76,7 +139,8 @@ public record UnivTerm() implements Term {
           int newConstant = Math.max(constant, level.constant);
           return new Level(var, newConstant,
             Math.max(constant + max, level.constant + level.max) - newConstant);
-        } else return null;
+        } else throw new UnsupportedOperationException();
+        // ^ multiple variables, take the maximum
       }
       if (var == null && level.var == null) return new Level(Math.max(constant, level.constant));
 
@@ -88,10 +152,10 @@ public record UnivTerm() implements Term {
     }
 
     public Level subst(@NotNull LevelSubst subst) {
-      if (var == null || this == INF) return this;
+      if (var == null || isInf()) return this;
       var level = subst.get(var);
       if (level == null) return this;
-      if (level == INF || varOnly()) return level;
+      if (level.isInf() || varOnly()) return level;
       if (level.var != null)
         return new Level(level.var, level.constant + constant,
           Math.max(level.max, max - level.constant));
@@ -104,10 +168,10 @@ public record UnivTerm() implements Term {
         return compare(level2, level1, CMP.LE, equations, expr);
       }
 
-      if (level1 == INF)
-        return level2 == INF || !level2.closed() &&
+      if (level1.isInf())
+        return level2.isInf() || !level2.closed() &&
           (equations == null || equations.addEquation(INF, level2, CMP.LE, expr));
-      if (level2 == INF)
+      if (level2.isInf())
         return cmp == CMP.LE || !level1.closed() &&
           (equations == null || equations.addEquation(INF, level1, CMP.LE, expr));
 
