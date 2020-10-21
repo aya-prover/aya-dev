@@ -1,11 +1,19 @@
 package org.mzi.core.tele;
 
+import asia.kala.collection.Seq;
+import asia.kala.function.IndexedConsumer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.core.ref.CoreBind;
 import org.mzi.api.ref.Ref;
+import org.mzi.core.subst.TermSubst;
 import org.mzi.core.term.Term;
+import org.mzi.generic.Arg;
+
+import java.util.HashMap;
+import java.util.function.Consumer;
 
 /**
  * Similar to Arend <code>DependentLink</code>.
@@ -22,6 +30,31 @@ public sealed interface Tele extends CoreBind {
   @Override @NotNull Term type();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+
+  default void forEach(@NotNull IndexedConsumer<@NotNull Tele> consumer) {
+    var tele = this;
+    var i = 0;
+    do {
+      consumer.accept(i++, tele);
+      tele = tele.next();
+    } while (tele != null);
+  }
+
+  @TestOnly @Contract(pure = true)
+  default boolean checkSubst(@NotNull Seq<@NotNull Arg<Term>> args) {
+    var obj = new Object() {
+      boolean ok = true;
+    };
+    forEach((i, tele) -> obj.ok = obj.ok && tele.explicit() == args.get(i).explicit());
+    return obj.ok;
+  }
+
+  @Contract(pure = true)
+  default @NotNull TermSubst buildSubst(@NotNull Seq<@NotNull Arg<Term>> args) {
+    var subst = new TermSubst(new HashMap<>());
+    forEach((i, tele) -> subst.add(tele.ref(), args.get(i).term()));
+    return subst;
+  }
 
   interface Visitor<P, R> {
     R visitTyped(@NotNull TypedTele typed, P p);

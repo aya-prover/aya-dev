@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Ref;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.generic.Arg;
+import org.mzi.ref.DefRef;
 import org.mzi.util.Decision;
 
 /**
@@ -29,7 +30,7 @@ public sealed interface AppTerm extends Term {
   }
 
   record FnCall(
-    @NotNull Ref fnRef,
+    @NotNull DefRef fnRef,
     @NotNull ImmutableSeq<@NotNull Arg<Term>> args
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
