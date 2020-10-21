@@ -12,7 +12,7 @@ import org.mzi.util.Decision;
 /**
  * @author ice1000
  */
-public record UnivTerm() implements Term {
+public record UnivTerm(@NotNull Sort sort) implements Term {
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitUniv(this, p);
   }

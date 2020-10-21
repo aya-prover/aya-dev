@@ -25,7 +25,7 @@ public class SubstTest {
   public void unrelatedSubst() {
     var term = Lisp.reallyParse("(app beta lambda)");
     assertTrue(term instanceof AppTerm);
-    assertEquals(term, term.subst(new TermSubst(() -> "lambda", new UnivTerm())));
+    assertEquals(term, term.subst(new TermSubst(() -> "lambda", new UnivTerm(UnivTerm.Sort.SET0))));
   }
 
   @Test
@@ -33,6 +33,6 @@ public class SubstTest {
     @NotNull Map<String, @NotNull Ref> refs = new TreeMap<>();
     var term = Lisp.reallyParse("(app tony beta)", refs);
     assertTrue(term instanceof AppTerm);
-    assertNotEquals(term, term.subst(new TermSubst(refs.get("beta"), new UnivTerm())));
+    assertNotEquals(term, term.subst(new TermSubst(refs.get("beta"), new UnivTerm(UnivTerm.Sort.SET0))));
   }
 }
