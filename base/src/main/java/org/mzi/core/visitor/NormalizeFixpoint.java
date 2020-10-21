@@ -5,6 +5,8 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
 import org.mzi.ref.EvalRef;
 
+import static org.mzi.core.visitor.UnfoldFixpoint.unfold;
+
 public final class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
   public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
 
@@ -12,10 +14,15 @@ public final class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
   }
 
   @Override
+  public @NotNull Term visitFnCall(@NotNull AppTerm.FnCall fnCall, NormalizeMode mode) {
+    return unfold(fnCall).accept(this, mode);
+  }
+
+  @Override
   public @NotNull Term visitApp(AppTerm.@NotNull Apply term, NormalizeMode mode) {
-    var function = term.fn();
-    if (function instanceof LamTerm lam) return AppTerm.make(lam, visitArg(term.arg(), mode));
-    else return AppTerm.make(function, mode == NormalizeMode.WHNF ? term.arg() : visitArg(term.arg(), mode));
+    var fn = term.fn();
+    if (fn instanceof LamTerm lam) return AppTerm.make(lam, visitArg(term.arg(), mode));
+    else return AppTerm.make(fn, mode == NormalizeMode.WHNF ? term.arg() : visitArg(term.arg(), mode));
   }
 
   @Override
