@@ -3,7 +3,6 @@ package org.mzi.core.term;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.api.ref.Ref;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.generic.Arg;
 import org.mzi.ref.DefRef;
@@ -24,7 +23,7 @@ public sealed interface AppTerm extends Term {
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
-    var tele = lam.telescope();
+    var tele = lam.tele();
     var next = tele.next();
     return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new TermSubst(tele.ref(), arg.term()));
   }

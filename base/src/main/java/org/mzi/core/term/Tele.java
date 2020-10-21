@@ -1,5 +1,7 @@
-package org.mzi.core.tele;
+package org.mzi.core.term;
 
+import asia.kala.Tuple;
+import asia.kala.Tuple2;
 import asia.kala.collection.Seq;
 import asia.kala.function.IndexedConsumer;
 import org.jetbrains.annotations.Contract;
@@ -9,11 +11,9 @@ import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.core.ref.CoreBind;
 import org.mzi.api.ref.Ref;
 import org.mzi.core.subst.TermSubst;
-import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
 
 import java.util.HashMap;
-import java.util.function.Consumer;
 
 /**
  * Similar to Arend <code>DependentLink</code>.
@@ -31,13 +31,22 @@ public sealed interface Tele extends CoreBind {
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
-  default void forEach(@NotNull IndexedConsumer<@NotNull Tele> consumer) {
+  default @NotNull Tuple2<Integer, Tele> forEach(@NotNull IndexedConsumer<@NotNull Tele> consumer) {
     var tele = this;
     var i = 0;
     do {
       consumer.accept(i++, tele);
       tele = tele.next();
     } while (tele != null);
+    return Tuple.of(i, tele);
+  }
+
+  default @NotNull Tele last() {
+    return forEach((index, tele) -> {})._2;
+  }
+
+  default int size() {
+    return forEach((index, tele) -> {})._1;
   }
 
   @TestOnly @Contract(pure = true)

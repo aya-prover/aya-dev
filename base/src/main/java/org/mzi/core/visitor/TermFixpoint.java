@@ -1,7 +1,7 @@
 package org.mzi.core.visitor;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.tele.Tele;
+import org.mzi.core.term.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 
@@ -25,9 +25,9 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term>, Tele.Vi
   }
 
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
-    var telescope = term.telescope().accept(this, p);
+    var telescope = term.tele().accept(this, p);
     var body = term.body().accept(this, p);
-    if (telescope == term.telescope() && body == term.body()) return term;
+    if (telescope == term.tele() && body == term.body()) return term;
     return new LamTerm(telescope, body);
   }
 

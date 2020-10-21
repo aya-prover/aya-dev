@@ -7,7 +7,6 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.RefTerm;
-import org.mzi.core.term.Term;
 import org.mzi.test.Lisp;
 
 import java.util.Map;
@@ -66,7 +65,7 @@ public class NormalizeTest {
     var term = Lisp.reallyParse("(fncall id kiva)", refs);
     assertTrue(term instanceof AppTerm.FnCall);
     assertEquals("id", def.ref.name());
-    assertEquals(1, def.size());
+    assertEquals(1, def.telescope.size());
     var norm = term.normalize(NormalizeMode.WHNF);
     assertNotEquals(term, norm);
     assertEquals(new RefTerm(refs.get("kiva")), norm);

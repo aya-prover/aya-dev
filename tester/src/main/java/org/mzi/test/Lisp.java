@@ -7,9 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Ref;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.tele.Tele;
+import org.mzi.core.term.Tele;
 import org.mzi.core.term.Term;
-import org.mzi.ref.DefRef;
 
 import java.util.Map;
 import java.util.Objects;

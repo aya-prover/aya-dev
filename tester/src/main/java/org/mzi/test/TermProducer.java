@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Ref;
-import org.mzi.core.tele.Tele;
+import org.mzi.core.term.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.generic.DTKind;

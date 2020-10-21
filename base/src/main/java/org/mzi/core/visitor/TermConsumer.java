@@ -3,7 +3,7 @@ package org.mzi.core.visitor;
 import asia.kala.EmptyTuple;
 import asia.kala.Tuple;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.tele.Tele;
+import org.mzi.core.term.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 
@@ -20,7 +20,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   }
 
   @Override default EmptyTuple visitLam(@NotNull LamTerm term, P p) {
-    term.telescope().accept(this, p);
+    term.tele().accept(this, p);
     return term.body().accept(this, p);
   }
 

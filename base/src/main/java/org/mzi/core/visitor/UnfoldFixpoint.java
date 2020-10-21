@@ -18,7 +18,7 @@ public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
     var def = fnCall.fnRef().def();
     // This shouldn't happen
     if (!(def instanceof FnDef fn)) throw new IllegalStateException("`FnDef` expected, got: `" + def.getClass() + "`");
-    assert fnCall.args().sizeEquals(fn.size());
+    assert fnCall.args().sizeEquals(fn.telescope.size());
     assert fn.telescope.checkSubst(fnCall.args());
     var subst = fn.telescope.buildSubst(fnCall.args());
     return fn.body.subst(subst).accept(this, p);

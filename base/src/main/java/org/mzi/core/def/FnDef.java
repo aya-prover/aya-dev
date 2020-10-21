@@ -1,15 +1,14 @@
 package org.mzi.core.def;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.tele.Tele;
-import org.mzi.core.tele.Telescopic;
+import org.mzi.core.term.Tele;
 import org.mzi.core.term.Term;
 import org.mzi.ref.DefRef;
 
 /**
  * @author ice1000
  */
-public final class FnDef implements Def, Telescopic {
+public final class FnDef implements Def {
   public final @NotNull DefRef ref;
   public final @NotNull Tele telescope;
   public final @NotNull Term result;
@@ -24,9 +23,5 @@ public final class FnDef implements Def, Telescopic {
 
   @Override public @NotNull DefRef ref() {
     return ref;
-  }
-
-  @Override public @NotNull Tele telescope() {
-    return telescope;
   }
 }
