@@ -13,9 +13,9 @@ public final class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
 
   @Override
   public @NotNull Term visitApp(AppTerm.@NotNull Apply term, NormalizeMode mode) {
-    var function = term.function();
-    if (function instanceof LamTerm lam) return AppTerm.make(lam, visitArg(term.argument(), mode));
-    else return AppTerm.make(function, mode == NormalizeMode.WHNF ? term.argument() : visitArg(term.argument(), mode));
+    var function = term.fn();
+    if (function instanceof LamTerm lam) return AppTerm.make(lam, visitArg(term.arg(), mode));
+    else return AppTerm.make(function, mode == NormalizeMode.WHNF ? term.arg() : visitArg(term.arg(), mode));
   }
 
   @Override

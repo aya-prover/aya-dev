@@ -12,6 +12,7 @@ import org.mzi.core.term.Term;
 public record FnDef(
   @NotNull Ref ref,
   @NotNull Tele telescope,
+  @NotNull Term result,
   @NotNull Term body
 ) implements Def, Telescopic {
 }

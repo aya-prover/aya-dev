@@ -52,9 +52,9 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term>, Tele.Vi
   }
 
   @Override default @NotNull Term visitApp(AppTerm.@NotNull Apply term, P p) {
-    var function = term.function().accept(this, p);
-    var arg = visitArg(term.argument(), p);
-    if (function == term.function() && arg == term.argument()) return term;
+    var function = term.fn().accept(this, p);
+    var arg = visitArg(term.arg(), p);
+    if (function == term.fn() && arg == term.arg()) return term;
     return new AppTerm.Apply(function, arg);
   }
 }

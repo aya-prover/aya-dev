@@ -41,7 +41,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   }
 
   @Override default EmptyTuple visitApp(@NotNull AppTerm.Apply term, P p) {
-    visitArg(term.argument(), p);
-    return term.function().accept(this, p);
+    visitArg(term.arg(), p);
+    return term.fn().accept(this, p);
   }
 }
