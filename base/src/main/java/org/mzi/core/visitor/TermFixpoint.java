@@ -60,7 +60,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term>, Tele.Vi
 
   @Override default @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, P p) {
     var args = fnCall.args().map(arg -> visitArg(arg, p));
-    if (fnCall.args().sameElements(args)) return fnCall;
+    if (fnCall.args().sameElements(args, true)) return fnCall;
     return new AppTerm.FnCall(fnCall.fnRef(), args);
   }
 }
