@@ -44,7 +44,56 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
       return builder.toString();
     }
 
-    void renderDoc(@NotNull Doc doc) {
+    private int lineRemaining() {
+      return config.getPageWidth() - cursor;
+    }
+
+    private int predictWidth(@NotNull Doc doc) {
+      if (doc instanceof Doc.Fail) {
+        throw new IllegalArgumentException("Doc.Fail passed to renderer");
+
+      } else if (doc instanceof Doc.PlainText text) {
+        return text.text().length();
+
+      } else if (doc instanceof Doc.HyperText text) {
+        return text.text().length();
+
+      } else if (doc instanceof Doc.Line) {
+        // hard line break has 1 character '\n'
+        return 1;
+
+      } else if (doc instanceof Doc.FlatAlt alt) {
+        return predictWidth(alt.defaultDoc());
+
+      } else if (doc instanceof Doc.Cat cat) {
+        return predictWidth(cat.first()) + predictWidth(cat.second());
+
+      } else if (doc instanceof Doc.Nest nest) {
+        return predictWidth(nest.doc()) + nest.indent();
+
+      } else if (doc instanceof Doc.Union union) {
+        return predictWidth(union.longerOne());
+
+      } else if (doc instanceof Doc.Column column) {
+        return predictWidth(column.docBuilder().apply(cursor));
+
+      } else if (doc instanceof Doc.Nesting nesting) {
+        return predictWidth(nesting.docBuilder().apply(nestLevel));
+
+      } else if (doc instanceof Doc.PageWidth pageWidth) {
+        return predictWidth(pageWidth.docBuilder().apply(config.getPageWidth()));
+      }
+
+      throw new IllegalStateException("unreachable");
+    }
+
+    private @NotNull Doc fitsBetter(@NotNull Doc a, @NotNull Doc b) {
+      return predictWidth(a) <= lineRemaining()
+        ? a
+        : b;
+    }
+
+    private void renderDoc(@NotNull Doc doc) {
       if (doc instanceof Doc.Fail) {
         throw new IllegalArgumentException("Doc.Fail passed to renderer");
 
@@ -59,7 +108,7 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
         renderHardLineBreak();
 
       } else if (doc instanceof Doc.FlatAlt alt) {
-        // TODO: render flat alt
+        renderDoc(fitsBetter(alt.defaultDoc(), alt.preferWhenFlatten()));
 
       } else if (doc instanceof Doc.Cat cat) {
         renderDoc(cat.first());
@@ -70,7 +119,7 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
         renderDoc(nest.doc());
 
       } else if (doc instanceof Doc.Union union) {
-        // TODO: render union
+        renderDoc(fitsBetter(union.longerOne(), union.shorterOne()));
 
       } else if (doc instanceof Doc.Column column) {
         renderDoc(column.docBuilder().apply(cursor));
