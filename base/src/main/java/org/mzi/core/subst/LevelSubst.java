@@ -25,26 +25,26 @@ public interface LevelSubst {
   @NotNull LevelSubst EMPTY = new Simple(Collections.emptyMap());
 
   class Std implements LevelSubst {
-      private final @NotNull Level uLevel;
-      private final @NotNull Level hLevel;
+    private final @NotNull Level uLevel;
+    private final @NotNull Level hLevel;
 
-      public Std(@NotNull Level uLevel, @NotNull Level hLevel) {
-        this.uLevel = uLevel;
-        this.hLevel = hLevel;
-      }
+    public Std(@NotNull Level uLevel, @NotNull Level hLevel) {
+      this.uLevel = uLevel;
+      this.hLevel = hLevel;
+    }
 
-      @Override public boolean isEmpty() {
-        return uLevel.var() == LevelVar.UP && uLevel.varOnly() && hLevel.var() == LevelVar.HP && hLevel.varOnly();
-      }
+    @Override public boolean isEmpty() {
+      return uLevel.var() == LevelVar.UP && uLevel.varOnly() && hLevel.var() == LevelVar.HP && hLevel.varOnly();
+    }
 
-      @Override public Level get(@NotNull Ref ref) {
-        return ref == LevelVar.UP ? uLevel : ref == LevelVar.HP ? hLevel : null;
-      }
+    @Override public Level get(@NotNull Ref ref) {
+      return ref == LevelVar.UP ? uLevel : ref == LevelVar.HP ? hLevel : null;
+    }
 
-      @Override
-      public @NotNull LevelSubst subst(@NotNull LevelSubst substitution) {
-        return new Std(uLevel.subst(substitution), hLevel.subst(substitution));
-      }
+    @Override
+    public @NotNull LevelSubst subst(@NotNull LevelSubst substitution) {
+      return new Std(uLevel.subst(substitution), hLevel.subst(substitution));
+    }
   }
 
   class Simple implements LevelSubst {
