@@ -138,8 +138,7 @@ public sealed interface Doc {
 
   /**
    * Layout a document depending on which column it starts at.
-   * {@link Doc#align} is implemented in terms of
-   * {@link Doc#column(Function)}.
+   * {@link Doc#align(Doc)} is implemented in terms of {@code column}.
    *
    * <pre>
    * >>> column (\l -> "Columns are" <+> pretty l <> "-based.")
@@ -162,7 +161,7 @@ public sealed interface Doc {
 
   /**
    * Layout a document depending on the current 'nest'ing level.
-   * {@link Doc#align} is implemented in terms of 'nesting'.
+   * {@link Doc#align(Doc)} is implemented in terms of {@code nesting}.
    *
    * <pre>
    * >>> let doc = "prefix" <+> nesting (\l -> brackets ("Nested:" <+> pretty l))
@@ -214,6 +213,94 @@ public sealed interface Doc {
     return indent == 0
       ? doc
       : new Nest(indent, doc);
+  }
+
+  /**
+   * align lays out the document {@param doc} with the nesting level set to the
+   * current column. It is used for example to implement {@link Doc#hang(int, Doc)}.
+   * <p>
+   * As an example, we will put a document right above another one, regardless of
+   * the current nesting level. Without 'align'ment, the second line is put simply
+   * below everything we've had so far,
+   *
+   * <pre>
+   * >>> "lorem" <+> vsep ["ipsum", "dolor"]
+   * lorem ipsum
+   * dolor
+   * </pre>
+   * <p>
+   * If we add an 'align' to the mix, the @'vsep'@'s contents all start in the
+   * same column,
+   *
+   * <pre>
+   * >>> "lorem" <+> align (vsep ["ipsum", "dolor"])
+   * lorem ipsum
+   *       dolor
+   * </pre>
+   *
+   * @param doc document to be aligned
+   * @return aligned document
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc align(@NotNull Doc doc) {
+    // note: nesting might be negative
+    return column(k -> nesting(i -> nest(k - i, doc)));
+  }
+
+  /**
+   * hang lays out the document {@param doc} with a nesting level set to the
+   * /current column/ plus {@param deltaNest}.
+   * Negative values are allowed, and decrease the nesting level accordingly.
+   *
+   * <pre>
+   * >>> let doc = reflow "Indenting these words with hang"
+   * >>> putDocW 24 ("prefix" <+> hang 4 doc)
+   * prefix Indenting these
+   *            words with
+   *            hang
+   * </pre>
+   * <p>
+   * This differs from {@link Doc#nest(int, Doc)}, which is based on
+   * the /current nesting level/ plus {@code indent}.
+   * When you're not sure, try the more efficient 'nest' first. In our
+   * example, this would yield
+   *
+   * <pre>
+   * >>> let doc = reflow "Indenting these words with nest"
+   * >>> putDocW 24 ("prefix" <+> nest 4 doc)
+   * prefix Indenting these
+   *     words with nest
+   * </pre>
+   *
+   * @param deltaNest change of nesting level, relative to the start of the first line
+   * @param doc       document to indent
+   * @return hang-ed document
+   */
+  @Contract("_, _ -> new")
+  static @NotNull Doc hang(int deltaNest, @NotNull Doc doc) {
+    return align(nest(deltaNest, doc));
+  }
+
+  /**
+   * indent indents document {@param doc} by {@param indent} columns,
+   * starting from the current cursor position.
+   *
+   * <pre>
+   * >>> let doc = reflow "The indent function indents these words!"
+   * >>> putDocW 24 ("prefix" <> indent 4 doc)
+   * prefix    The indent
+   *           function
+   *           indents these
+   *           words!
+   * </pre>
+   *
+   * @param indent number of spaces to increase indentation by
+   * @param doc    document
+   * @return indented document
+   */
+  @Contract("_, _ -> new")
+  static @NotNull Doc indent(int indent, @NotNull Doc doc) {
+    return hang(indent, simpleCat(spaces(indent), doc));
   }
 
   /**
