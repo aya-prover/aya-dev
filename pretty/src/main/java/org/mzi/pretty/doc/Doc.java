@@ -413,6 +413,108 @@ public sealed interface Doc {
   }
 
   /**
+   * sep tries laying out the documents {@param docs} separated with 'space's,
+   * and if this does not fit the page, separates them with newlines. This is what
+   * differentiates it from 'vsep', which always lays out its contents beneath
+   * each other.
+   *
+   * <pre>
+   * >>> let doc = "prefix" <+> sep ["text", "to", "lay", "out"]
+   * >>> putDocW 80 doc
+   * prefix text to lay out
+   * </pre>
+   * <p>
+   * With a narrower layout, the entries are separated by newlines:
+   *
+   * <pre>
+   * >>> putDocW 20 doc
+   * prefix text
+   * to
+   * lay
+   * out
+   * </pre>
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc sep(Doc @NotNull ... docs) {
+    return group(vsep(docs));
+  }
+
+  /**
+   * vsep concatenates all documents {@param docs} above each other. If a
+   * 'group' undoes the line breaks inserted by vsep, the documents are
+   * separated with a 'space' instead.
+   * <p>
+   * Using 'vsep' alone yields
+   *
+   * <pre>
+   * >>> "prefix" <+> vsep ["text", "to", "lay", "out"]
+   * prefix text
+   * to
+   * lay
+   * out
+   * </pre>
+   * <p>
+   * 'group'ing a 'vsep' separates the documents with a 'space' if it fits the
+   * page (and does nothing otherwise). See the {@link Doc#sep(Doc...)} convenience
+   * function for this use case.
+   * <p>
+   * The 'align' function can be used to align the documents under their first
+   * element:
+   *
+   * <pre>
+   * >>> "prefix" <+> align (vsep ["text", "to", "lay", "out"])
+   * prefix text
+   *        to
+   *        lay
+   *        out
+   * </pre>
+   * <p>
+   * Since 'group'ing a 'vsep' is rather common, 'sep' is a built-in for doing
+   * that.
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc vsep(Doc @NotNull ... docs) {
+    return concatWith(
+      (x, y) -> simpleCat(simpleCat(x, line()), y),
+      docs
+    );
+  }
+
+  /**
+   * hsep concatenates all documents {@param docs} horizontally with a space,
+   * i.e. it puts a space between all entries.
+   *
+   * <pre>
+   * >>> let docs = Util.words "lorem ipsum dolor sit amet"
+   *
+   * >>> hsep docs
+   * lorem ipsum dolor sit amet
+   *
+   * </pre>
+   * <p>
+   * hsep does not introduce line breaks on its own, even when the page is too
+   * narrow:
+   *
+   * <pre>
+   * >>> putDocW 5 (hsep docs)
+   * lorem ipsum dolor sit amet
+   * </pre>
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc hsep(Doc @NotNull ... docs) {
+    return concatWith(Doc::simpleSpacedCat, docs);
+  }
+
+  /**
    * softline behaves like a {@code spaces(1)} if the resulting output fits the page,
    * otherwise like a {@code line()}.
    * <p>
@@ -507,6 +609,10 @@ public sealed interface Doc {
       return a;
     }
     return new Cat(a, b);
+  }
+
+  private static @NotNull Doc simpleSpacedCat(@NotNull Doc a, @NotNull Doc b) {
+    return simpleCat(simpleCat(a, plain(" ")), b);
   }
 
   //endregion
