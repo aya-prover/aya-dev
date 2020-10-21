@@ -181,6 +181,26 @@ public sealed interface Doc {
   }
 
   /**
+   * Layout a document depending on the page width, if one has been specified.
+   *
+   * <pre>
+   * >>> let prettyPageWidth (AvailablePerLine l r) = "Width:" <+> pretty l <> ", ribbon fraction:" <+> pretty r
+   * >>> let doc = "prefix" <+> pageWidth (brackets . prettyPageWidth)
+   * >>> putDocW 32 (vsep [indent n doc | n <- [0,4,8]])
+   * prefix [Width: 32, ribbon fraction: 1.0]
+   *     prefix [Width: 32, ribbon fraction: 1.0]
+   *         prefix [Width: 32, ribbon fraction: 1.0]
+   * </pre>
+   *
+   * @param docBuilder document generator when page width provided
+   * @return page width action document
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc pageWidth(@NotNull Function<Integer, Doc> docBuilder) {
+    return new PageWidth(docBuilder);
+  }
+
+  /**
    * lays out the document {@param doc} with the current nesting level
    * (indentation of the following lines) increased by {@param indent}.
    * Negative values are allowed, and decrease the nesting level accordingly.

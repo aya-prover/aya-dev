@@ -43,6 +43,11 @@ sealed interface Flatten {
         i -> flatten(c.docBuilder().apply(i))
       ));
 
+    } else if (doc instanceof Doc.PageWidth c) {
+      return new Flattened(new Doc.PageWidth(
+        i -> flatten(c.docBuilder().apply(i))
+      ));
+
     } else if (doc instanceof Doc.Cat c) {
       return flatCat(c);
 
@@ -110,6 +115,11 @@ sealed interface Flatten {
 
     } else if (doc instanceof Doc.Nesting n) {
       return new Doc.Nesting(
+        i -> flatten(n.docBuilder().apply(i))
+      );
+
+    } else if (doc instanceof Doc.PageWidth n) {
+      return new Doc.PageWidth(
         i -> flatten(n.docBuilder().apply(i))
       );
 
