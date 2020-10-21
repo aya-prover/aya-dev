@@ -21,9 +21,10 @@ public record UnivTerm(@NotNull Sort sort) implements Term {
     return Decision.YES;
   }
 
-  public static final @NotNull UnivTerm PROP = new UnivTerm(new Sort(0, -1));
-  public static final @NotNull UnivTerm SET0 = new UnivTerm(Sort.hSet(new Level(0)));
-  public static final @NotNull UnivTerm STD = new UnivTerm(new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP)));
+  // TODO[JDK-8247334]: uncomment when we move to JDK16
+  public static final /*@NotNull*/ UnivTerm PROP = new UnivTerm(new Sort(0, -1));
+  public static final /*@NotNull*/ UnivTerm SET0 = new UnivTerm(Sort.hSet(new Level(0)));
+  public static final /*@NotNull*/ UnivTerm STD = new UnivTerm(new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP)));
 
   public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements LevelSubst {
     public static @NotNull Sort hSet(@NotNull Level uLevel) {
@@ -82,7 +83,8 @@ public record UnivTerm(@NotNull Sort sort) implements Term {
   }
 
   public record Level(@Nullable LevelVar var, int constant, int max) {
-    public static final @NotNull Level INF = new Level(Integer.MAX_VALUE);
+    // TODO[JDK-8247334]: uncomment when we move to JDK16
+    public static final /*@NotNull*/ Level INF = new Level(Integer.MAX_VALUE);
 
     @Contract(pure = true) public Level {
       assert max + constant >= -1 && (var == null || constant >= 0 && (var.kind() != LevelVar.Kind.U || max + constant >= 0));

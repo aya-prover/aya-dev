@@ -3,13 +3,11 @@ package org.mzi.core.subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Ref;
-import org.mzi.ref.LevelVar;
+import org.mzi.core.term.UnivTerm.Level;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.mzi.core.term.UnivTerm.Level;
 
 /**
  * References in Arend:
