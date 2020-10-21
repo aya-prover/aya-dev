@@ -27,12 +27,12 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr>, Param.V
   }
 
   @Override
-  default @NotNull Expr visitPi(@NotNull PiExpr expr, P p) {
+  default @NotNull Expr visitDT(@NotNull DTExpr expr, P p) {
     // TODO[xyr]: also here.
     var binds = visitParams(expr.binds(), p);
     var body = expr.body().accept(this, p);
     if (binds == expr.binds() && body == expr.body()) return expr;
-    return new PiExpr(binds, body);
+    return new DTExpr(binds, body);
   }
 
   @Override

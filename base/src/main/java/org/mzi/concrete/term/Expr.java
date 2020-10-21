@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface Expr permits
   AppExpr,
   LamExpr,
-  PiExpr,
+    DTExpr,
   RefExpr,
   UnivExpr,
   UnresolvedExpr {
@@ -18,7 +18,7 @@ public sealed interface Expr permits
     R visitRef(RefExpr refExpr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
-    R visitPi(@NotNull PiExpr expr, P p);
+    R visitDT(@NotNull DTExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
   }
