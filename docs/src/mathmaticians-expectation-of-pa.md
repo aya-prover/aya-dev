@@ -149,4 +149,30 @@ Possible solutions are
   
   with a more clever design (for example, call it `assoc` instead of `*-assoc` in the definition of groups), we can write things like `goal (R : Ring) (x : R) : (zro + ide) + x = zro + (ide + x) => add.assoc _ _ _`, which looks concise and natural.
   
-  This also requires minimal support from the typechecker --- `\use add (* \as +)` can just be syntactic sugar for `+ => add.*`, etc.
+  This also requires minimal support from the typechecker --- `\use add (* \as +)` can just be syntactic sugar for `+ => add.*`, etc.  In fact this can be emulated in Arend:
+  
+  ````arend
+  \import Algebra.Group
+  \import Algebra.Monoid
+
+  \class RingInterface (E : \Set)
+    | \infixl 7 + : E -> E -> E
+    | negative : E -> E
+    | zro : E
+    | \infixl 8 * : E -> E -> E
+    | ide : E
+    | ldistr (x y z : E) : x * (y + z) = x * y + x * z
+    | rdistr (x y z : E) : (x + y) * z = x * z + y * z
+    | lann (x : E) : zro * x = zro
+    | rann (x : E) : x * zro = zro
+  
+  \class Ring \extends RingInterface
+    | add : CGroup E
+    | mult : Monoid E
+    | + => add.*
+    | negative => add.inverse
+    | zro => add.ide
+    | * => mult.*
+    | ide => mult.ide
+  ````
+  See [here](https://github.com/tonyxty/FunWithArend/blob/master/src/RingsDoneRight.ard) for a full version.
