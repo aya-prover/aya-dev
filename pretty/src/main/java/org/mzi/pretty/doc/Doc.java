@@ -8,7 +8,7 @@ import org.mzi.pretty.printer.PrinterConfig;
 
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
-import java.util.function.Function;
+import java.util.function.IntFunction;
 
 /**
  * This class reimplemented Haskell
@@ -93,19 +93,19 @@ public sealed interface Doc {
   /**
    * A document that will react on the current cursor position.
    */
-  record Column(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  record Column(@NotNull IntFunction<Doc> docBuilder) implements Doc {
   }
 
   /**
    * A document that will react on the current nest level.
    */
-  record Nesting(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  record Nesting(@NotNull IntFunction<Doc> docBuilder) implements Doc {
   }
 
   /**
    * A document that will react on the page width.
    */
-  record PageWidth(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  record PageWidth(@NotNull IntFunction<Doc> docBuilder) implements Doc {
   }
 
   //endregion
@@ -155,7 +155,7 @@ public sealed interface Doc {
    * @return column action document
    */
   @Contract("_ -> new")
-  static @NotNull Doc column(@NotNull Function<Integer, Doc> docBuilder) {
+  static @NotNull Doc column(@NotNull IntFunction<Doc> docBuilder) {
     return new Column(docBuilder);
   }
 
@@ -175,7 +175,7 @@ public sealed interface Doc {
    * @return nest level action document
    */
   @Contract("_ -> new")
-  static @NotNull Doc nesting(@NotNull Function<Integer, Doc> docBuilder) {
+  static @NotNull Doc nesting(@NotNull IntFunction<Doc> docBuilder) {
     return new Nesting(docBuilder);
   }
 
@@ -195,7 +195,7 @@ public sealed interface Doc {
    * @return page width action document
    */
   @Contract("_ -> new")
-  static @NotNull Doc pageWidth(@NotNull Function<Integer, Doc> docBuilder) {
+  static @NotNull Doc pageWidth(@NotNull IntFunction<Doc> docBuilder) {
     return new PageWidth(docBuilder);
   }
 
@@ -367,7 +367,7 @@ public sealed interface Doc {
    * @return cat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc cat(@NotNull Doc... docs) {
+  static @NotNull Doc cat(Doc @NotNull ... docs) {
     return group(vcat(docs));
   }
 
@@ -394,7 +394,7 @@ public sealed interface Doc {
    * @return concat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc vcat(@NotNull Doc... docs) {
+  static @NotNull Doc vcat(Doc @NotNull ... docs) {
     return concatWith(
       (x, y) -> simpleCat(simpleCat(x, lineEmpty()), y),
       docs
@@ -408,7 +408,7 @@ public sealed interface Doc {
    * @return concat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc hcat(@NotNull Doc... docs) {
+  static @NotNull Doc hcat(Doc @NotNull ... docs) {
     return concatWith(Doc::simpleCat, docs);
   }
 

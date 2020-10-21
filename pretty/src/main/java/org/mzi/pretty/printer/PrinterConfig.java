@@ -35,11 +35,11 @@ public interface PrinterConfig {
     return INFINITE_SIZE;
   }
 
-  class Default implements PrinterConfig {
+  class Basic implements PrinterConfig {
     private final int pageWidth;
     private final int pageHeight;
 
-    public Default(int pageWidth, int pageHeight) {
+    public Basic(int pageWidth, int pageHeight) {
       this.pageWidth = pageWidth;
       this.pageHeight = pageHeight;
     }

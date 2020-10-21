@@ -12,7 +12,7 @@ import org.mzi.pretty.printer.PrinterConfig;
  * @author kiva
  */
 public class DocStringPrinter implements Printer<String, DocStringPrinter.Config> {
-  public static class Config extends PrinterConfig.Default {
+  public static class Config extends PrinterConfig.Basic {
     public Config() {
       this(PrinterConfig.INFINITE_SIZE);
     }
