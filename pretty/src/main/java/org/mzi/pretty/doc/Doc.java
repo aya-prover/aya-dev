@@ -8,6 +8,7 @@ import org.mzi.pretty.printer.PrinterConfig;
 
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
+import java.util.function.Function;
 
 /**
  * This class reimplemented Haskell
@@ -89,6 +90,12 @@ public sealed interface Doc {
   record Union(@NotNull Doc shorterOne, @NotNull Doc longerOne) implements Doc {
   }
 
+  /**
+   * A document that will react on the current cursor position.
+   */
+  record Column(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  }
+
   //endregion
 
   //region DocFactory functions
@@ -115,6 +122,29 @@ public sealed interface Doc {
   @Contract("_, _ -> new")
   static @NotNull Doc flatAlt(@NotNull Doc defaultDoc, @NotNull Doc preferWhenFlattened) {
     return new FlatAlt(defaultDoc, preferWhenFlattened);
+  }
+
+  /**
+   * Layout a document depending on which column it starts at.
+   * {@link Doc#align} is implemented in terms of
+   * {@link Doc#column(Function)}.
+   *
+   * <pre>
+   * >>> column (\l -> "Columns are" <+> pretty l <> "-based.")
+   * Columns are 0-based.
+   *
+   * >>> let doc = "prefix" <+> column (\l -> "| <- column" <+> pretty l)
+   * >>> vsep [indent n doc | n <- [0,4,8]]
+   * prefix | <- column 7
+   *     prefix | <- column 11
+   *         prefix | <- column 15
+   * </pre>
+   *
+   * @param f document generator when current position provided
+   * @return column action document
+   */
+  static @NotNull Doc column(@NotNull Function<Integer, Doc> f) {
+    return new Column(f);
   }
 
   /**

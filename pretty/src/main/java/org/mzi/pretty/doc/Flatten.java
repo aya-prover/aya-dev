@@ -33,6 +33,11 @@ sealed interface Flatten {
         return result;
       }
 
+    } else if (doc instanceof Doc.Column c) {
+      return new Flattened(new Doc.Column(
+        i -> flatten(c.docBuilder().apply(i))
+      ));
+
     } else if (doc instanceof Doc.Cat c) {
       return flatCat(c);
 
@@ -92,6 +97,11 @@ sealed interface Flatten {
 
     } else if (doc instanceof Doc.Union u) {
       return flatten(u.shorterOne());
+
+    } else if (doc instanceof Doc.Column c) {
+      return new Doc.Column(
+        i -> flatten(c.docBuilder().apply(i))
+      );
 
     } else {
       return doc;
