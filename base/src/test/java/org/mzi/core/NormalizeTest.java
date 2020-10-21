@@ -1,12 +1,17 @@
 package org.mzi.core;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+import org.mzi.api.ref.Ref;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.RefTerm;
 import org.mzi.core.term.Term;
 import org.mzi.test.Lisp;
+
+import java.util.Map;
+import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,10 +49,26 @@ public class NormalizeTest {
 
   @Test
   public void nfNormalizeCanonical() {
+    // \x : U. (\a : U. a) b
     var term = Lisp.reallyParse("(lam (x (U) ex null) (app (lam (a (U) ex null) a) b))");
     assertTrue(((LamTerm) term).body() instanceof AppTerm);
     var nf = term.normalize(NormalizeMode.NF);
     assertNotEquals(term, nf);
     assertTrue(((LamTerm) nf).body() instanceof RefTerm);
+  }
+
+  @Test
+  public void unfoldDef() {
+    // (x y : U)
+    @NotNull Map<String, @NotNull Ref> refs = new TreeMap<>();
+    var def = Lisp.reallyParseDef("id",
+      "(y (U) ex null)", "y", "y", refs);
+    var term = Lisp.reallyParse("(fncall id kiva)", refs);
+    assertTrue(term instanceof AppTerm.FnCall);
+    assertEquals("id", def.ref.name());
+    assertEquals(1, def.size());
+    var norm = term.normalize(NormalizeMode.WHNF);
+    assertNotEquals(term, norm);
+    assertEquals(new RefTerm(refs.get("kiva")), norm);
   }
 }

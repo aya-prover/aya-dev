@@ -1,5 +1,6 @@
 package org.mzi.test;
 
+import asia.kala.collection.immutable.ImmutableSeq;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,10 +15,10 @@ import org.mzi.generic.DTKind;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispLexer;
 import org.mzi.parser.LispParser;
+import org.mzi.ref.DefRef;
 import org.mzi.ref.LocalRef;
 
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -27,10 +28,6 @@ import java.util.function.BooleanSupplier;
 @ApiStatus.Internal
 public class TermProducer extends LispBaseVisitor<Term> {
   private final @NotNull Map<String, @NotNull Ref> refs;
-
-  public TermProducer() {
-    this(new TreeMap<>());
-  }
 
   public TermProducer(@NotNull Map<String, @NotNull Ref> refs) {
     this.refs = refs;
@@ -44,16 +41,12 @@ public class TermProducer extends LispBaseVisitor<Term> {
     return new LispLexer(CharStreams.fromString(text));
   }
 
-  static @Nullable Term parse(@NotNull String text) {
-    return parser(text).expr().accept(new TermProducer());
-  }
-
   static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Ref> refs) {
     return parser(text).expr().accept(new TermProducer(refs));
   }
 
-  static @Nullable Tele parseTele(@NotNull String text) {
-    return new TermProducer().exprToBind(parser(text).expr());
+  static @Nullable Tele parseTele(@NotNull String text, @NotNull Map<String, @NotNull Ref> refs) {
+    return new TermProducer(refs).exprToBind(parser(text).expr());
   }
 
   @Override
@@ -65,6 +58,12 @@ public class TermProducer extends LispBaseVisitor<Term> {
     return switch (rule) {
       case "U" -> new UnivTerm();
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), true));
+      case "fncall" -> new AppTerm.FnCall(
+        (DefRef) ((RefTerm) exprs.get(0).accept(this)).ref(),
+        exprs.subList(1, exprs.size())
+          .stream()
+          .map(c -> new Arg<>(c.accept(this), true))
+          .collect(ImmutableSeq.factory()));
       case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), false));
       case "lam" -> new LamTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this));
       case "Pi" -> new DT(exprToBind(exprs.get(0)), DTKind.Pi);

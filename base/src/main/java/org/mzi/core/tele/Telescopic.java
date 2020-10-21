@@ -30,6 +30,6 @@ public interface Telescopic {
   }
 
   default int size() {
-    return lastInfo(this)._1;
+    return lastInfo(this)._1 + 1;
   }
 }
