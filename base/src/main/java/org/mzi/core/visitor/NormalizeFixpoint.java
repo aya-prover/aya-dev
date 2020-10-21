@@ -5,8 +5,6 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
 import org.mzi.ref.EvalRef;
 
-import static org.mzi.core.visitor.UnfoldFixpoint.unfold;
-
 public final class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
   public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
 
@@ -15,7 +13,7 @@ public final class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
 
   @Override
   public @NotNull Term visitFnCall(@NotNull AppTerm.FnCall fnCall, NormalizeMode mode) {
-    return unfold(fnCall).accept(this, mode);
+    return unfold(fnCall, mode);
   }
 
   @Override
