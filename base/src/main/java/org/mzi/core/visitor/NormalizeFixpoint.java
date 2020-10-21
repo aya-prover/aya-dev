@@ -5,15 +5,10 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
 import org.mzi.ref.EvalRef;
 
-public final class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
+public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
   public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
 
   private NormalizeFixpoint() {
-  }
-
-  @Override
-  public @NotNull Term visitFnCall(@NotNull AppTerm.FnCall fnCall, NormalizeMode mode) {
-    return unfold(fnCall, mode);
   }
 
   @Override
@@ -32,12 +27,12 @@ public final class NormalizeFixpoint implements TermFixpoint<NormalizeMode> {
   @Override
   public @NotNull Term visitLam(@NotNull LamTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return TermFixpoint.super.visitLam(term, mode);
+    else return UnfoldFixpoint.super.visitLam(term, mode);
   }
 
   @Override
   public @NotNull Term visitDT(@NotNull DT term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return TermFixpoint.super.visitDT(term, mode);
+    else return UnfoldFixpoint.super.visitDT(term, mode);
   }
 }

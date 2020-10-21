@@ -1,7 +1,6 @@
 package org.mzi.core.visitor;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.def.FnDef;
 import org.mzi.core.tele.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
@@ -64,16 +63,4 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term>, Tele.Vi
     if (fnCall.args().sameElements(args)) return fnCall;
     return new AppTerm.FnCall(fnCall.fnRef(), args);
   }
-
-  //region Helper methods
-  default @NotNull Term unfold(AppTerm.@NotNull FnCall fnCall, P p) {
-    var def = fnCall.fnRef().def();
-    // This shouldn't happen
-    if (!(def instanceof FnDef fn)) return fnCall;
-    assert fnCall.args().sizeEquals(fn.size());
-    assert fn.telescope.checkSubst(fnCall.args());
-    var subst = fn.telescope.buildSubst(fnCall.args());
-    return fn.body.subst(subst).accept(this, p);
-  }
-  //endregion Helper methods
 }
