@@ -32,5 +32,6 @@ public interface Term extends CoreTerm {
     R visitUniv(@NotNull UnivTerm term, P p);
     R visitApp(AppTerm.@NotNull Apply term, P p);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p);
+    R visitTup(@NotNull TupTerm term, P p);
   }
 }

@@ -49,4 +49,9 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
     fnCall.args().forEach(arg -> visitArg(arg, p));
     return fnCall.fn().accept(this, p);
   }
+
+  @Override default EmptyTuple visitTup(@NotNull TupTerm term, P p) {
+    term.items().forEach(item -> item.accept(this, p));
+    return term.accept(this, p);
+  }
 }
