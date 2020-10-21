@@ -23,7 +23,7 @@ sealed interface Flatten {
       return new NeverFlat();
 
     } else if (doc instanceof Doc.Union u) {
-      return new Flattened(u.first());
+      return new Flattened(u.shorterOne());
 
     } else if (doc instanceof Doc.Nest n) {
       var result = flatDoc(n.doc());
@@ -91,7 +91,7 @@ sealed interface Flatten {
       return new Doc.Fail();
 
     } else if (doc instanceof Doc.Union u) {
-      return flatten(u.first());
+      return flatten(u.shorterOne());
 
     } else {
       return doc;

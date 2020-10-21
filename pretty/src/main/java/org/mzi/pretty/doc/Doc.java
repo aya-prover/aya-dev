@@ -82,11 +82,11 @@ public sealed interface Doc {
   }
 
   /**
-   * The first lines of first document should be longer than the
+   * The first lines of first document should be shorter than the
    * first lines of the second one, so the layout algorithm can pick the one
    * that fits best. Used to implement layout alternatives for 'softline' and 'group'.
    */
-  record Union(@NotNull Doc first, @NotNull Doc second) implements Doc {
+  record Union(@NotNull Doc shorterOne, @NotNull Doc longerOne) implements Doc {
   }
 
   //endregion
