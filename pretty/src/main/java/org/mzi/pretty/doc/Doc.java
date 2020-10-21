@@ -82,8 +82,8 @@ public sealed interface Doc {
   }
 
   /**
-   * The defaultDoc lines of defaultDoc document should be longer than the
-   * defaultDoc lines of the preferWhenFlatten one, so the layout algorithm can pick the one
+   * The first lines of first document should be longer than the
+   * first lines of the second one, so the layout algorithm can pick the one
    * that fits best. Used to implement layout alternatives for 'softline' and 'group'.
    */
   record Union(@NotNull Doc first, @NotNull Doc second) implements Doc {
