@@ -59,8 +59,7 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
         return text.text().length();
 
       } else if (doc instanceof Doc.Line) {
-        // hard line break has 1 character '\n'
-        return 1;
+        return 0;
 
       } else if (doc instanceof Doc.FlatAlt alt) {
         return predictWidth(alt.defaultDoc());
@@ -130,8 +129,6 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
       } else if (doc instanceof Doc.PageWidth pageWidth) {
         renderDoc(pageWidth.docBuilder().apply(config.getPageWidth()));
       }
-
-      throw new IllegalStateException("unreachable");
     }
 
     private void renderHardLineBreak() {

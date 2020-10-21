@@ -74,6 +74,15 @@ public sealed interface Doc {
    * Concatenation of two documents
    */
   record Cat(@NotNull Doc first, @NotNull Doc second) implements Doc {
+    static @NotNull Doc makeRaw(@NotNull Doc first, @NotNull Doc second) {
+      if (first instanceof Empty) {
+        return second;
+      }
+      if (second instanceof Empty) {
+        return first;
+      }
+      return new Cat(first, second);
+    }
   }
 
   /**
@@ -315,9 +324,10 @@ public sealed interface Doc {
       return new PlainText(text);
     }
 
-    return Arrays.stream(text.split("\n"))
+    return Arrays.stream(text.split("\n", -1))
       .map(Doc::plain)
-      .reduce(empty(), (x, y) -> simpleCat(x, line(), y));
+      .reduce((x, y) -> simpleCat(x, line(), y))
+      .get(); // never null
   }
 
   /**
@@ -674,26 +684,21 @@ public sealed interface Doc {
 
   //region utility functions
 
-  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Doc... docs) {
-    return Arrays.stream(docs).reduce(empty(), f);
+  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Doc... xs) {
+    assert xs.length > 0;
+    if (xs.length == 1) {
+      return xs[0];
+    }
+    return Arrays.stream(xs).reduce(f).get(); // never null
   }
 
   private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
-    return Arrays.stream(xs)
-      .reduce(empty(), (a, b) -> {
-        if (a instanceof Empty) {
-          return b;
-        }
-        if (b instanceof Empty) {
-          return a;
-        }
-        return new Cat(a, b);
-      });
+    return concatWith(Cat::makeRaw, xs);
   }
 
   private static @NotNull Doc simpleSpacedCat(Doc @NotNull ... xs) {
-    return Arrays.stream(xs)
-      .reduce(empty(), (a, b) -> {
+    return concatWith(
+      (a, b) -> {
         if (a instanceof Empty) {
           return b;
         }
@@ -701,7 +706,9 @@ public sealed interface Doc {
           return a;
         }
         return simpleCat(a, plain(" "), b);
-      });
+      },
+      xs
+    );
   }
 
   //endregion
