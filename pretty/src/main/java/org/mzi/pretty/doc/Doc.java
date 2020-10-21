@@ -317,7 +317,7 @@ public sealed interface Doc {
 
     return Arrays.stream(text.split("\n"))
       .map(Doc::plain)
-      .reduce(empty(), (x, y) -> simpleCat(simpleCat(x, line()), y));
+      .reduce(empty(), (x, y) -> simpleCat(x, line(), y));
   }
 
   /**
@@ -396,7 +396,7 @@ public sealed interface Doc {
   @Contract("_ -> new")
   static @NotNull Doc vcat(Doc @NotNull ... docs) {
     return concatWith(
-      (x, y) -> simpleCat(simpleCat(x, lineEmpty()), y),
+      (x, y) -> simpleCat(x, lineEmpty(), y),
       docs
     );
   }
@@ -448,7 +448,7 @@ public sealed interface Doc {
   @Contract("_ -> new")
   static @NotNull Doc fillCat(Doc @NotNull ... docs) {
     return concatWith(
-      (x, y) -> simpleCat(simpleCat(x, softLineEmpty()), y),
+      (x, y) -> simpleCat(x, softLineEmpty(), y),
       docs
     );
   }
@@ -522,7 +522,7 @@ public sealed interface Doc {
   @Contract("_ -> new")
   static @NotNull Doc vsep(Doc @NotNull ... docs) {
     return concatWith(
-      (x, y) -> simpleCat(simpleCat(x, line()), y),
+      (x, y) -> simpleCat(x, line(), y),
       docs
     );
   }
@@ -586,7 +586,7 @@ public sealed interface Doc {
   @Contract("_ -> new")
   static @NotNull Doc fillSep(Doc @NotNull ... docs) {
     return concatWith(
-      (x, y) -> simpleCat(simpleCat(x, softLine()), y),
+      (x, y) -> simpleCat(x, softLine(), y),
       docs
     );
   }
@@ -678,18 +678,30 @@ public sealed interface Doc {
     return Arrays.stream(docs).reduce(empty(), f);
   }
 
-  private static @NotNull Doc simpleCat(@NotNull Doc a, @NotNull Doc b) {
-    if (a instanceof Empty) {
-      return b;
-    }
-    if (b instanceof Empty) {
-      return a;
-    }
-    return new Cat(a, b);
+  private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
+    return Arrays.stream(xs)
+      .reduce(empty(), (a, b) -> {
+        if (a instanceof Empty) {
+          return b;
+        }
+        if (b instanceof Empty) {
+          return a;
+        }
+        return new Cat(a, b);
+      });
   }
 
-  private static @NotNull Doc simpleSpacedCat(@NotNull Doc a, @NotNull Doc b) {
-    return simpleCat(simpleCat(a, plain(" ")), b);
+  private static @NotNull Doc simpleSpacedCat(Doc @NotNull ... xs) {
+    return Arrays.stream(xs)
+      .reduce(empty(), (a, b) -> {
+        if (a instanceof Empty) {
+          return b;
+        }
+        if (b instanceof Empty) {
+          return a;
+        }
+        return simpleCat(a, plain(" "), b);
+      });
   }
 
   //endregion
