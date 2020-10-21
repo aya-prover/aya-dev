@@ -413,6 +413,47 @@ public sealed interface Doc {
   }
 
   /**
+   * fillCat concatenates documents {@param docs} horizontally with simpleCat() as
+   * long as it fits the page, then inserts a 'line' and continues doing that
+   * for all documents in {@param docs}. This is similar to how an ordinary word processor
+   * lays out the text if you just keep typing after you hit the maximum line
+   * length. ('line' means that if 'group'ed, the documents are separated with nothing
+   * instead of newlines. See 'fillSep' if you want a 'space' instead.)
+   * <p>
+   * Observe the difference between 'fillSep' and 'fillCat'. 'fillSep'
+   * concatenates the entries 'space'd when 'group'ed,
+   *
+   * <pre>
+   *
+   * >>> let docs = take 20 (cycle (["lorem", "ipsum", "dolor", "sit", "amet"]))
+   * >>> putDocW 40 ("Grouped:" <+> group (fillSep docs))
+   * Grouped: lorem ipsum dolor sit amet
+   * lorem ipsum dolor sit amet lorem ipsum
+   * dolor sit amet lorem ipsum dolor sit
+   * amet
+   *
+   * On the other hand, 'fillCat' concatenates the entries directly when
+   * 'group'ed,
+   *
+   * >>> putDocW 40 ("Grouped:" <+> group (fillCat docs))
+   * Grouped: loremipsumdolorsitametlorem
+   * ipsumdolorsitametloremipsumdolorsitamet
+   * loremipsumdolorsitamet
+   *
+   * </pre>
+   *
+   * @param docs documents to concat
+   * @return concat document
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc fillCat(Doc @NotNull ... docs) {
+    return concatWith(
+      (x, y) -> simpleCat(simpleCat(x, softLineEmpty()), y),
+      docs
+    );
+  }
+
+  /**
    * sep tries laying out the documents {@param docs} separated with 'space's,
    * and if this does not fit the page, separates them with newlines. This is what
    * differentiates it from 'vsep', which always lays out its contents beneath
@@ -512,6 +553,42 @@ public sealed interface Doc {
   @Contract("_ -> new")
   static @NotNull Doc hsep(Doc @NotNull ... docs) {
     return concatWith(Doc::simpleSpacedCat, docs);
+  }
+
+  /**
+   * fillSep concatenates the documents {@param docs} horizontally with a space
+   * as long as it fits the page, then inserts a 'line' and continues doing that
+   * for all documents in {@param docs}. ('line' means that if 'group'ed, the documents
+   * are separated with a 'space' instead of newlines. Use {@link Doc#fillCat}
+   * if you do not want a 'space'.
+   * <p>
+   * Let's print some words to fill the line:
+   *
+   * <pre>
+   *
+   * >>> let docs = take 20 (cycle ["lorem", "ipsum", "dolor", "sit", "amet"])
+   * >>> putDocW 80 ("Docs:" <+> fillSep docs)
+   * Docs: lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor
+   * sit amet lorem ipsum dolor sit amet
+   *
+   * The same document, printed at a width of only 40, yields
+   *
+   * >>> putDocW 40 ("Docs:" <+> fillSep docs)
+   * Docs: lorem ipsum dolor sit amet lorem
+   * ipsum dolor sit amet lorem ipsum dolor
+   * sit amet lorem ipsum dolor sit amet
+   *
+   * </pre>
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc fillSep(Doc @NotNull ... docs) {
+    return concatWith(
+      (x, y) -> simpleCat(simpleCat(x, softLine()), y),
+      docs
+    );
   }
 
   /**
