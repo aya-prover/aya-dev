@@ -96,6 +96,18 @@ public sealed interface Doc {
   record Column(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
   }
 
+  /**
+   * A document that will react on the current nest level.
+   */
+  record Nesting(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  }
+
+  /**
+   * A document that will react on the page width.
+   */
+  record PageWidth(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  }
+
   //endregion
 
   //region DocFactory functions
@@ -140,11 +152,32 @@ public sealed interface Doc {
    *         prefix | <- column 15
    * </pre>
    *
-   * @param f document generator when current position provided
+   * @param docBuilder document generator when current position provided
    * @return column action document
    */
-  static @NotNull Doc column(@NotNull Function<Integer, Doc> f) {
-    return new Column(f);
+  @Contract("_ -> new")
+  static @NotNull Doc column(@NotNull Function<Integer, Doc> docBuilder) {
+    return new Column(docBuilder);
+  }
+
+  /**
+   * Layout a document depending on the current 'nest'ing level.
+   * {@link Doc#align} is implemented in terms of 'nesting'.
+   *
+   * <pre>
+   * >>> let doc = "prefix" <+> nesting (\l -> brackets ("Nested:" <+> pretty l))
+   * >>> vsep [indent n doc | n <- [0,4,8]]
+   * prefix [Nested: 0]
+   *     prefix [Nested: 4]
+   *         prefix [Nested: 8]
+   * </pre>
+   *
+   * @param docBuilder document generator when current nest level provided
+   * @return nest level action document
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc nesting(@NotNull Function<Integer, Doc> docBuilder) {
+    return new Nesting(docBuilder);
   }
 
   /**

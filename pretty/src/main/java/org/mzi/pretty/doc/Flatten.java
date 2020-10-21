@@ -38,6 +38,11 @@ sealed interface Flatten {
         i -> flatten(c.docBuilder().apply(i))
       ));
 
+    } else if (doc instanceof Doc.Nesting c) {
+      return new Flattened(new Doc.Nesting(
+        i -> flatten(c.docBuilder().apply(i))
+      ));
+
     } else if (doc instanceof Doc.Cat c) {
       return flatCat(c);
 
@@ -101,6 +106,11 @@ sealed interface Flatten {
     } else if (doc instanceof Doc.Column c) {
       return new Doc.Column(
         i -> flatten(c.docBuilder().apply(i))
+      );
+
+    } else if (doc instanceof Doc.Nesting n) {
+      return new Doc.Nesting(
+        i -> flatten(n.docBuilder().apply(i))
       );
 
     } else {
