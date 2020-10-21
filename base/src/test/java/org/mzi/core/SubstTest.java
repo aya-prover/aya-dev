@@ -16,23 +16,23 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SubstTest {
   @Test
   public void emptySubst() {
-    var term = Lisp.reallyParse("(app f a)");
+    var term = Lisp.reallyParse("(app tony lambda)");
     assertTrue(term instanceof AppTerm);
     assertEquals(term, term.subst(TermSubst.EMPTY));
   }
 
   @Test
   public void unrelatedSubst() {
-    var term = Lisp.reallyParse("(app f a)");
+    var term = Lisp.reallyParse("(app beta lambda)");
     assertTrue(term instanceof AppTerm);
-    assertEquals(term, term.subst(new TermSubst(() -> "a", new UnivTerm())));
+    assertEquals(term, term.subst(new TermSubst(() -> "lambda", new UnivTerm())));
   }
 
   @Test
   public void relatedSubst() {
     @NotNull Map<String, @NotNull Ref> refs = new TreeMap<>();
-    var term = Lisp.reallyParse("(app f a)", refs);
+    var term = Lisp.reallyParse("(app tony beta)", refs);
     assertTrue(term instanceof AppTerm);
-    assertNotEquals(term, term.subst(new TermSubst(refs.get("a"), new UnivTerm())));
+    assertNotEquals(term, term.subst(new TermSubst(refs.get("beta"), new UnivTerm())));
   }
 }
