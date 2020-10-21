@@ -1,5 +1,7 @@
 package org.mzi.test;
 
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -15,27 +17,27 @@ import java.util.Objects;
  */
 @TestOnly
 public interface Lisp {
-  static @Nullable Term somehowParse(@NotNull String code) {
+  static @Nullable Term somehowParse(@NotNull @NonNls @Language("TEXT") String code) {
     return TermProducer.parse(code);
   }
 
-  static @Nullable Term somehowParse(@NotNull String code, @NotNull Map<String, @NotNull Ref> refs) {
+  static @Nullable Term somehowParse(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Ref> refs) {
     return TermProducer.parse(code, refs);
   }
 
-  static @NotNull Term reallyParse(@NotNull String code) {
+  static @NotNull Term reallyParse(@NotNull @NonNls @Language("TEXT") String code) {
     return Objects.requireNonNull(somehowParse(code));
   }
 
-  static @NotNull Term reallyParse(@NotNull String code, @NotNull Map<String, @NotNull Ref> refs) {
+  static @NotNull Term reallyParse(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Ref> refs) {
     return Objects.requireNonNull(somehowParse(code, refs));
   }
 
-  static @Nullable Tele somehowParseTele(@NotNull String code) {
+  static @Nullable Tele somehowParseTele(@NotNull @NonNls @Language("TEXT") String code) {
     return TermProducer.parseTele(code);
   }
 
-  static @NotNull Tele reallyParseTele(@NotNull String code) {
+  static @NotNull Tele reallyParseTele(@NotNull @NonNls @Language("TEXT") String code) {
     return Objects.requireNonNull(somehowParseTele(code));
   }
 }
