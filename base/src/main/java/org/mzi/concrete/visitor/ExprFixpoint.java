@@ -1,6 +1,5 @@
 package org.mzi.concrete.visitor;
 
-import asia.kala.collection.Seq;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.term.*;

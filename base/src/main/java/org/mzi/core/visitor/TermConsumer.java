@@ -3,7 +3,6 @@ package org.mzi.core.visitor;
 import asia.kala.EmptyTuple;
 import asia.kala.Tuple;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.term.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 

@@ -2,7 +2,6 @@ package org.mzi.core.visitor;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.sort.Sort;
-import org.mzi.core.term.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 
