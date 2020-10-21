@@ -14,7 +14,7 @@ import static org.mzi.core.term.UnivTerm.Level;
 /**
  * References in Arend:
  * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/subst/StdLevelSubstitution.java"
- * >StdLevelSubstitution.java</a> (as ),
+ * >StdLevelSubstitution.java</a> (as {@link org.mzi.core.term.UnivTerm}),
  * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/subst/SimpleLevelSubstitution.java"
  * >SimpleLevelSubstitution.java</a>, etc.
  */

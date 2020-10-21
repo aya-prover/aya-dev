@@ -56,7 +56,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
     var rule = ctx.IDENT().getText();
     var exprs = ctx.expr();
     return switch (rule) {
-      case "U" -> new UnivTerm(UnivTerm.SET0);
+      case "U" -> UnivTerm.SET0;
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), true));
       case "fncall" -> new AppTerm.FnCall(
         (DefRef) ((RefTerm) exprs.get(0).accept(this)).ref(),

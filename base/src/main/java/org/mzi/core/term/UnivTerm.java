@@ -21,9 +21,9 @@ public record UnivTerm(@NotNull Sort sort) implements Term {
     return Decision.YES;
   }
 
-  public static final @NotNull Sort PROP = new Sort(0, -1);
-  public static final @NotNull Sort SET0 = Sort.hSet(new Level(0));
-  public static final @NotNull Sort STD = new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP));
+  public static final @NotNull UnivTerm PROP = new UnivTerm(new Sort(0, -1));
+  public static final @NotNull UnivTerm SET0 = new UnivTerm(Sort.hSet(new Level(0)));
+  public static final @NotNull UnivTerm STD = new UnivTerm(new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP)));
 
   public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements LevelSubst {
     public static @NotNull Sort hSet(@NotNull Level uLevel) {
@@ -43,7 +43,7 @@ public record UnivTerm(@NotNull Sort sort) implements Term {
     }
 
     public @NotNull Sort succ() {
-      return isProp() ? SET0 : new Sort(uLevel.plus(1), hLevel.plus(1));
+      return isProp() ? SET0.sort : new Sort(uLevel.plus(1), hLevel.plus(1));
     }
 
     public @NotNull Sort max(Sort sort) {
