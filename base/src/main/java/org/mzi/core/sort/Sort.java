@@ -69,6 +69,10 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
     return new Sort(uLevel.subst(substitution), hLevel.subst(substitution));
   }
 
+  public @NotNull Sort substSort(@NotNull LevelSubst subst) {
+    return subst.isEmpty() || uLevel.closed() && hLevel.closed() ? this : new Sort(uLevel.subst(subst), hLevel.subst(subst));
+  }
+
   public record Level(@Nullable LevelVar var, int constant, int max) {
     // TODO[JDK-8247334]: uncomment when we move to JDK16
     public static final /*@NotNull*/ Level INF = new Level(Integer.MAX_VALUE);

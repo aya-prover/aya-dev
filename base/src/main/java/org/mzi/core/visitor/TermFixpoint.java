@@ -1,6 +1,7 @@
 package org.mzi.core.visitor;
 
 import org.jetbrains.annotations.NotNull;
+import org.mzi.core.sort.Sort;
 import org.mzi.core.term.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
@@ -10,7 +11,9 @@ import java.util.Optional;
 /**
  * @author ice1000
  */
-public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term>, Tele.Visitor<P, @NotNull Tele> {
+public interface TermFixpoint<P> extends
+  Term.Visitor<P, @NotNull Term>,
+  Tele.Visitor<P, @NotNull Tele> {
   @Override default @NotNull Tele visitNamed(Tele.@NotNull NamedTele named, P p) {
     var next = named.next().accept(this, p);
     if (next == named.next()) return named;
@@ -32,7 +35,9 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term>, Tele.Vi
   }
 
   @Override default @NotNull Term visitUniv(@NotNull UnivTerm term, P p) {
-    return term;
+    var sort = visitSort(term.sort(), p);
+    if (sort == term.sort()) return term;
+    return new UnivTerm(sort);
   }
 
   @Override default @NotNull Term visitDT(@NotNull DT term, P p) {
@@ -49,6 +54,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term>, Tele.Vi
     var term = arg.term().accept(this, p);
     if (term == arg.term()) return arg;
     return new Arg<>(term, arg.explicit());
+  }
+
+  default @NotNull Sort visitSort(@NotNull Sort sort, P p) {
+    return sort;
   }
 
   @Override default @NotNull Term visitApp(AppTerm.@NotNull Apply term, P p) {

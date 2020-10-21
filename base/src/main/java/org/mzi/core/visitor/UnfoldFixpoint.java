@@ -13,8 +13,7 @@ import org.mzi.core.term.Term;
  * @author ice1000
  */
 public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
-  @Override
-  default @NotNull Term visitFnCall(@NotNull AppTerm.FnCall fnCall, P p) {
+  @Override default @NotNull Term visitFnCall(@NotNull AppTerm.FnCall fnCall, P p) {
     var def = fnCall.fnRef().def();
     // This shouldn't happen
     if (!(def instanceof FnDef fn)) throw new IllegalStateException("`FnDef` expected, got: `" + def.getClass() + "`");
