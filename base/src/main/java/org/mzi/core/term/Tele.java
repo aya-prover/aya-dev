@@ -1,7 +1,6 @@
 package org.mzi.core.term;
 
-import asia.kala.Tuple;
-import asia.kala.Tuple2;
+import asia.kala.PrimitiveTuples.IntObjTuple2;
 import asia.kala.collection.Seq;
 import asia.kala.function.IndexedConsumer;
 import org.jetbrains.annotations.Contract;
@@ -31,7 +30,7 @@ public sealed interface Tele extends CoreBind {
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
-  default @NotNull Tuple2<Integer, Tele> forEach(@NotNull IndexedConsumer<@NotNull Tele> consumer) {
+  default @NotNull IntObjTuple2<Tele> forEach(@NotNull IndexedConsumer<@NotNull Tele> consumer) {
     var tele = this;
     var i = 0;
     while (true) {
@@ -39,7 +38,7 @@ public sealed interface Tele extends CoreBind {
       if (tele.next() == null) break;
       else tele = tele.next();
     }
-    return Tuple.of(i, tele);
+    return new IntObjTuple2<>(i, tele);
   }
 
   default @NotNull Tele last() {
