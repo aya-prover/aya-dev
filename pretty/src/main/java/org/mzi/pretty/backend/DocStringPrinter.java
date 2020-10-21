@@ -56,8 +56,7 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
         renderPlainText(text.text());
 
       } else if (doc instanceof Doc.Line) {
-        cursor = 0;
-        builder.append('\n');
+        renderHardLineBreak();
 
       } else if (doc instanceof Doc.FlatAlt alt) {
         // TODO: render flat alt
@@ -86,9 +85,22 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
       throw new IllegalStateException("unreachable");
     }
 
+    private void renderHardLineBreak() {
+      cursor = 0;
+      builder.append('\n');
+    }
+
     private void renderPlainText(String content) {
+      if (cursor == 0) {
+        renderIndent(nestLevel);
+      }
       builder.append(content);
       cursor += content.length();
+    }
+
+    private void renderIndent(int indent) {
+      builder.append(" ".repeat(indent));
+      cursor += indent;
     }
   }
 }
