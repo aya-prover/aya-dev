@@ -30,6 +30,6 @@ public interface Term extends CoreTerm {
     R visitLam(@NotNull LamTerm term, P p);
     R visitDT(@NotNull DT term, P p);
     R visitUniv(@NotNull UnivTerm term, P p);
-    R visitApp(@NotNull AppTerm.Apply term, P p);
+    R visitApp(AppTerm.@NotNull Apply term, P p);
   }
 }
