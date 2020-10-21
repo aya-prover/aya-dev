@@ -34,10 +34,11 @@ public sealed interface Tele extends CoreBind {
   default @NotNull Tuple2<Integer, Tele> forEach(@NotNull IndexedConsumer<@NotNull Tele> consumer) {
     var tele = this;
     var i = 0;
-    do {
+    while (true) {
       consumer.accept(i++, tele);
-      tele = tele.next();
-    } while (tele != null);
+      if (tele.next() == null) break;
+      else tele = tele.next();
+    }
     return Tuple.of(i, tele);
   }
 
