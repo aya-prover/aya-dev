@@ -30,9 +30,8 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr>, Param.V
   default @NotNull Expr visitDT(@NotNull DTExpr expr, P p) {
     // TODO[xyr]: also here.
     var binds = visitParams(expr.binds(), p);
-    var body = expr.body().accept(this, p);
-    if (binds == expr.binds() && body == expr.body()) return expr;
-    return new DTExpr(binds, body);
+    if (binds == expr.binds()) return expr;
+    return new DTExpr(binds, expr.kind());
   }
 
   @Override

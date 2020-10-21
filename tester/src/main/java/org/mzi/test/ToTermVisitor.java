@@ -9,6 +9,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Ref;
 import org.mzi.core.tele.Tele;
 import org.mzi.core.term.*;
+import org.mzi.generic.Arg;
 import org.mzi.generic.DTKind;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispLexer;
@@ -63,8 +64,8 @@ public class ToTermVisitor extends LispBaseVisitor<Term> {
     var exprs = ctx.expr();
     return switch (rule) {
       case "U" -> new UnivTerm();
-      case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), true));
-      case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg(exprs.get(1).accept(this), false));
+      case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), true));
+      case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), false));
       case "lam" -> new LamTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this));
       case "Pi" -> new DT(exprToBind(exprs.get(0)), DTKind.Pi);
       case "Copi" -> new DT(exprToBind(exprs.get(0)), DTKind.Copi);
