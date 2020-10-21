@@ -23,7 +23,6 @@ antlrVersion = "4.8"
 kalaVersion = "0.5.0"
 
 val nonJavaProjects = listOf("docs")
-val nonJigsawProjects = listOf("pretty") + nonJavaProjects
 allprojects {
   group = "org.mzi"
   version = "0.1"
@@ -104,15 +103,12 @@ subprojects {
     }
   }
 
-  if (name in nonJigsawProjects) return@subprojects
-  val moduleName: String by project
+  val moduleName: String by this
 
   tasks.compileTestJava {
     extensions.configure(org.javamodularity.moduleplugin.extensions.ModuleOptions::class) {
       addModules = listOf("org.mzi.test")
-      addReads = mapOf(
-        moduleName to "org.mzi.test"
-      )
+      addReads = mapOf(moduleName to "org.mzi.test")
     }
   }
 
