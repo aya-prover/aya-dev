@@ -35,6 +35,9 @@ public interface PrinterConfig {
     return INFINITE_SIZE;
   }
 
+  /**
+   * Basic configure for other configs to easily extend config flags.
+   */
   class Basic implements PrinterConfig {
     private final int pageWidth;
     private final int pageHeight;
