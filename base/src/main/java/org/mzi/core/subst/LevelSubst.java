@@ -3,7 +3,8 @@ package org.mzi.core.subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Ref;
-import org.mzi.core.term.UnivTerm.Level;
+import org.mzi.core.sort.Sort;
+import org.mzi.core.sort.Sort.Level;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,7 +13,7 @@ import java.util.Map;
 /**
  * References in Arend:
  * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/subst/StdLevelSubstitution.java"
- * >StdLevelSubstitution.java</a> (as {@link org.mzi.core.term.UnivTerm}),
+ * >StdLevelSubstitution.java</a> (as {@link Sort}),
  * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/subst/SimpleLevelSubstitution.java"
  * >SimpleLevelSubstitution.java</a>, etc.
  */

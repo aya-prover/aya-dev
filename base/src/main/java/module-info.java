@@ -8,6 +8,7 @@ module org.mzi {
   exports org.mzi.core.def;
   exports org.mzi.core.subst;
   exports org.mzi.core.term;
+  exports org.mzi.core.sort;
   exports org.mzi.core.visitor;
   exports org.mzi.ref;
   exports org.mzi.generic;
