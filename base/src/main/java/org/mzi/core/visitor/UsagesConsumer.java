@@ -4,6 +4,7 @@ import asia.kala.EmptyTuple;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Ref;
+import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.RefTerm;
 
 public final class UsagesConsumer implements TermConsumer<EmptyTuple> {
@@ -18,9 +19,12 @@ public final class UsagesConsumer implements TermConsumer<EmptyTuple> {
     return usageCount;
   }
 
-  @Contract(value = "_, _ -> param2", mutates = "this") @Override
-  public EmptyTuple visitRef(@NotNull RefTerm term, EmptyTuple emptyTuple) {
+  @Override public EmptyTuple visitRef(@NotNull RefTerm term, EmptyTuple emptyTuple) {
     if (ref == term.ref()) usageCount++;
+    return emptyTuple;
+  }
+
+  @Override public EmptyTuple visitFnCall(AppTerm.@NotNull FnCall fnCall, EmptyTuple emptyTuple) {
     return emptyTuple;
   }
 }

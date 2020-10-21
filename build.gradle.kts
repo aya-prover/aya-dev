@@ -20,7 +20,7 @@ var kalaVersion: String by rootProject.ext
 annotationsVersion = "20.1.0"
 protobufVersion = "3.13.0"
 antlrVersion = "4.8"
-kalaVersion = "0.5.0"
+kalaVersion = "0.5.1"
 
 val nonJavaProjects = listOf("docs")
 allprojects {

@@ -7,7 +7,7 @@ import org.mzi.generic.Arg;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr>, Param.Visitor<P, @NotNull ImmutableSeq<@NotNull Param>> {
   @Override
-  default @NotNull Expr visitRef(RefExpr refExpr, P p) {
+  default @NotNull Expr visitRef(@NotNull RefExpr refExpr, P p) {
     return refExpr;
   }
 
@@ -51,8 +51,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr>, Param.V
   default @NotNull Expr visitApp(@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
     var arg = expr.argument().map(x -> visitArg(x, p));
-    // TODO[ice]: replace `sameElements` with a better alternative that compares references
-    if (function == expr.function() && arg.sameElements(expr.argument())) return expr;
+    if (function == expr.function() && arg.sameElements(expr.argument(), true)) return expr;
     return new AppExpr(function, arg);
   }
 }

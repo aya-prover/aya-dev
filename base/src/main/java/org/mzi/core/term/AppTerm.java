@@ -28,6 +28,20 @@ public sealed interface AppTerm extends Term {
     return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new TermSubst(tele.ref(), arg.term()));
   }
 
+  record FnCall(
+    @NotNull Ref fnRef,
+    @NotNull ImmutableSeq<@NotNull Arg<Term>> args
+  ) implements AppTerm {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitFnCall(this, p);
+    }
+
+    @Contract(value = " -> new", pure = true)
+    @Override public @NotNull Term fn() {
+      return new RefTerm(fnRef);
+    }
+  }
+
   record Apply(
     @NotNull Term fn,
     @NotNull Arg<Term> arg

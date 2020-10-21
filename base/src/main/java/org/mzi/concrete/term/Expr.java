@@ -15,7 +15,7 @@ public sealed interface Expr permits
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   interface Visitor<P, R> {
-    R visitRef(RefExpr refExpr, P p);
+    R visitRef(@NotNull RefExpr refExpr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
     R visitDT(@NotNull DTExpr expr, P p);
