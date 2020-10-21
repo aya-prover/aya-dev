@@ -24,7 +24,71 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
 
   @Override
   public @NotNull String render(@NotNull Config config, @NotNull Doc doc) {
-    // TODO: render doc to string
-    throw new IllegalStateException("unimplemented");
+    var renderer = new RendererImpl(config);
+    return renderer.render(doc);
+  }
+
+  private static class RendererImpl {
+    StringBuilder builder = new StringBuilder();
+    Config config;
+
+    int nestLevel = 0;
+    int cursor = 0;
+
+    public RendererImpl(Config config) {
+      this.config = config;
+    }
+
+    @NotNull String render(@NotNull Doc doc) {
+      renderDoc(doc);
+      return builder.toString();
+    }
+
+    void renderDoc(@NotNull Doc doc) {
+      if (doc instanceof Doc.Fail) {
+        throw new IllegalArgumentException("Doc.Fail passed to renderer");
+
+      } else if (doc instanceof Doc.PlainText text) {
+        renderPlainText(text.text());
+
+      } else if (doc instanceof Doc.HyperText text) {
+        // we ignore hyper text link because we are plain text renderer
+        renderPlainText(text.text());
+
+      } else if (doc instanceof Doc.Line) {
+        cursor = 0;
+        builder.append('\n');
+
+      } else if (doc instanceof Doc.FlatAlt alt) {
+        // TODO: render flat alt
+
+      } else if (doc instanceof Doc.Cat cat) {
+        renderDoc(cat.first());
+        renderDoc(cat.second());
+
+      } else if (doc instanceof Doc.Nest nest) {
+        nestLevel += nest.indent();
+        renderDoc(nest.doc());
+
+      } else if (doc instanceof Doc.Union union) {
+        // TODO: render union
+
+      } else if (doc instanceof Doc.Column column) {
+        renderDoc(column.docBuilder().apply(cursor));
+
+      } else if (doc instanceof Doc.Nesting nesting) {
+        renderDoc(nesting.docBuilder().apply(nestLevel));
+
+      } else if (doc instanceof Doc.PageWidth pageWidth) {
+        renderDoc(pageWidth.docBuilder().apply(config.getPageWidth()));
+      }
+
+      throw new IllegalStateException("unreachable");
+    }
+
+    private void renderPlainText(String content) {
+      builder.append(content);
+      cursor += content.length();
+    }
   }
 }
