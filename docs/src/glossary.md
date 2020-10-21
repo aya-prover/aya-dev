@@ -12,14 +12,15 @@
 ## 表达式相关
 
 + 函数 -- 指函数或者 Visitor
-+ `Term` -- 类型正确的表达式，或者说 core language 里的表达式
++ `Term` -- 类型正确的表达式，或者说 core language 里的表达式，可以解释执行
   + Agda 中叫做 `Internal`
   + Arend 中叫做 Core
++ `Def` -- 类型正确的全局定义，或者说包含 `Term` 的全局定义
+  + Agda 中叫做 `Defn`
 + `Expr` -- 语法正确、类型尚且不知道正不正确的表达式，又叫 concrete syntax
   + Agda 中叫做 `Abstract`
   + Arend 中叫做 `Concrete`
-+ Fixpoint -- 输入和返回类型相同的函数，往往是 Visitor
-+ Consumer -- 不直接返回值（而是修改自身状态作为输出）的函数，往往是 Visitor
++ `Decl` -- 语法正确、类型尚且不知道正不正确的全局定义，或者说包含 `Expr` 的全局定义
 + `TermSubst` -- binding 到表达式的映射，又叫替换
   + Arend 中叫 `ExprSubstitution`
   + Agda 中叫 `Substitution`
@@ -27,6 +28,12 @@
   在实例化时，需要按顺序从左到右依次实例化，每次实例化需要对后面的 binding 跑 substitution。
   + Arend 中叫 `DependentLink`
 + `DT` -- 依赖类型，一般来说都是包含一个 `Tele` 的 canonical 的类型表达式
+
+### 各种 Visitor
+
++ Fixpoint -- 输入和返回类型相同的函数
++ Consumer -- 不直接返回值（而是修改自身状态作为输出）的函数
++ Producer -- 只返回值的函数（相对来说参数很简单的）的函数
 
 ## 类型检查时用到的状态
 

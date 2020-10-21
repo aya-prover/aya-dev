@@ -25,14 +25,14 @@ import java.util.function.BooleanSupplier;
  */
 @TestOnly
 @ApiStatus.Internal
-public class ToTermVisitor extends LispBaseVisitor<Term> {
+public class TermProducer extends LispBaseVisitor<Term> {
   private final @NotNull Map<String, @NotNull Ref> refs;
 
-  public ToTermVisitor() {
+  public TermProducer() {
     this(new TreeMap<>());
   }
 
-  public ToTermVisitor(@NotNull Map<String, @NotNull Ref> refs) {
+  public TermProducer(@NotNull Map<String, @NotNull Ref> refs) {
     this.refs = refs;
   }
 
@@ -45,15 +45,15 @@ public class ToTermVisitor extends LispBaseVisitor<Term> {
   }
 
   static @Nullable Term parse(@NotNull String text) {
-    return parser(text).expr().accept(new ToTermVisitor());
+    return parser(text).expr().accept(new TermProducer());
   }
 
   static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Ref> refs) {
-    return parser(text).expr().accept(new ToTermVisitor(refs));
+    return parser(text).expr().accept(new TermProducer(refs));
   }
 
   static @Nullable Tele parseTele(@NotNull String text) {
-    return new ToTermVisitor().exprToBind(parser(text).expr());
+    return new TermProducer().exprToBind(parser(text).expr());
   }
 
   @Override

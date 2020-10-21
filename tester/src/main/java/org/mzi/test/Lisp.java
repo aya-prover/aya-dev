@@ -16,11 +16,11 @@ import java.util.Objects;
 @TestOnly
 public interface Lisp {
   static @Nullable Term somehowParse(@NotNull String code) {
-    return ToTermVisitor.parse(code);
+    return TermProducer.parse(code);
   }
 
   static @Nullable Term somehowParse(@NotNull String code, @NotNull Map<String, @NotNull Ref> refs) {
-    return ToTermVisitor.parse(code, refs);
+    return TermProducer.parse(code, refs);
   }
 
   static @NotNull Term reallyParse(@NotNull String code) {
@@ -32,7 +32,7 @@ public interface Lisp {
   }
 
   static @Nullable Tele somehowParseTele(@NotNull String code) {
-    return ToTermVisitor.parseTele(code);
+    return TermProducer.parseTele(code);
   }
 
   static @NotNull Tele reallyParseTele(@NotNull String code) {
