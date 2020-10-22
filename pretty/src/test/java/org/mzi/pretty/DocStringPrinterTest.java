@@ -49,6 +49,24 @@ public class DocStringPrinterTest {
   }
 
   @Test
+  public void testSep() {
+    var doc = sep(plain("text"), plain("to"), plain("lay"), plain("out"));
+    assertEquals("text to lay out", withPageWidth(80, doc));
+  }
+
+  @Test
+  public void testCat() {
+    var doc = cat(plain("text"), plain("to"), plain("lay"), plain("out"));
+    assertEquals("texttolayout", withPageWidth(80, doc));
+  }
+
+  @Test
+  public void testGroup() {
+    var doc = group(new Cat(new Cat(plain("hello"), line()), plain("world")));
+    assertEquals("hello world", withPageWidth(80, doc));
+  }
+
+  @Test
   public void testSepNarrow() {
     var doc = hsep(plain("prefix"), sep(plain("text"), plain("to"), plain("lay"), plain("out")));
     assertEquals("prefix text\nto\nlay\nout", withPageWidth(20, doc));

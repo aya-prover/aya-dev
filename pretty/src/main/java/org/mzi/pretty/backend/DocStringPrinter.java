@@ -52,6 +52,9 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
       if (doc instanceof Doc.Fail) {
         throw new IllegalArgumentException("Doc.Fail passed to renderer");
 
+      } else if (doc instanceof Doc.Empty) {
+        return 0;
+
       } else if (doc instanceof Doc.PlainText text) {
         return text.text().length();
 
@@ -118,7 +121,8 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
         renderDoc(nest.doc());
 
       } else if (doc instanceof Doc.Union union) {
-        renderDoc(fitsBetter(union.longerOne(), union.shorterOne()));
+        // renderDoc(fitsBetter(union.longerOne(), union.shorterOne()));
+        renderDoc(fitsBetter(union.shorterOne(), union.longerOne()));
 
       } else if (doc instanceof Doc.Column column) {
         renderDoc(column.docBuilder().apply(cursor));

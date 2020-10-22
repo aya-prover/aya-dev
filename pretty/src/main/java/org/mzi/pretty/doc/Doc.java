@@ -623,7 +623,7 @@ public sealed interface Doc {
    */
   @Contract("-> new")
   static @NotNull Doc softLine() {
-    return new Union(plain(" "), line());
+    return new Union(line(), plain(" "));
   }
 
   /**
@@ -633,7 +633,7 @@ public sealed interface Doc {
    */
   @Contract("-> new")
   static @NotNull Doc softLineEmpty() {
-    return new Union(empty(), line());
+    return new Union(line(), empty());
   }
 
   /**
