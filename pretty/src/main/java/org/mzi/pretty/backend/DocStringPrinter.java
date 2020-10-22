@@ -48,6 +48,10 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
       return config.getPageWidth() - cursor;
     }
 
+    private boolean isAtLineStart() {
+      return cursor == 0;
+    }
+
     private int predictWidth(@NotNull Doc doc) {
       if (doc instanceof Doc.Fail) {
         throw new IllegalArgumentException("Doc.Fail passed to renderer");
@@ -119,9 +123,9 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
       } else if (doc instanceof Doc.Nest nest) {
         nestLevel += nest.indent();
         renderDoc(nest.doc());
+        nestLevel -= nest.indent();
 
       } else if (doc instanceof Doc.Union union) {
-        // renderDoc(fitsBetter(union.longerOne(), union.shorterOne()));
         renderDoc(fitsBetter(union.shorterOne(), union.longerOne()));
 
       } else if (doc instanceof Doc.Column column) {
@@ -141,7 +145,7 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
     }
 
     private void renderPlainText(String content) {
-      if (cursor == 0) {
+      if (isAtLineStart()) {
         renderIndent(nestLevel);
       }
       builder.append(content);

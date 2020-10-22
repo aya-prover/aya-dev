@@ -10,6 +10,12 @@ import static org.mzi.pretty.doc.Doc.*;
  */
 public class DocStringPrinterTest {
   @Test
+  public void testAlign() {
+    var doc = hsep(plain("lorem"), align(vsep(plain("ipsum"), plain("dolor"))));
+    assertEquals("lorem ipsum\n      dolor", doc.withPageWidth(80));
+  }
+
+  @Test
   public void testHang() {
     var doc = hang(4, plain("boynextdoor"));
     assertEquals("    boynextdoor", doc.withPageWidth(80));
