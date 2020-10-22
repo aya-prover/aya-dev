@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Ref;
 import org.mzi.core.subst.LevelSubst;
-import org.mzi.core.term.UnivTerm;
 import org.mzi.ref.LevelVar;
 
 /**
@@ -15,6 +14,11 @@ import org.mzi.ref.LevelVar;
  * >Sort.java</a>
  */
 public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements LevelSubst {
+  // TODO[JDK-8247334]: uncomment when we move to JDK16
+  public static final /*@NotNull*/ Sort PROP = new Sort(0, -1);
+  public static final /*@NotNull*/ Sort SET0 = (hSet(new Level(0)));
+  public static final /*@NotNull*/ Sort STD = (new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP)));
+
   public static @NotNull Sort hSet(@NotNull Level uLevel) {
     return new Sort(uLevel, new Level(0));
   }
@@ -32,10 +36,10 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
   }
 
   public @NotNull Sort succ() {
-    return isProp() ? UnivTerm.SET0.sort() : new Sort(uLevel.plus(1), hLevel.plus(1));
+    return isProp() ? SET0 : new Sort(uLevel.plus(1), hLevel.plus(1));
   }
 
-  public @NotNull Sort max(Sort sort) {
+  public @NotNull Sort max(@NotNull Sort sort) {
     if (isProp()) return sort;
     if (sort.isProp()) return this;
     if (uLevel.var != null && sort.uLevel.var != null && uLevel.var != sort.uLevel.var ||
@@ -73,6 +77,10 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
     return subst.isEmpty() || uLevel.closed() && hLevel.closed() ? this : new Sort(uLevel.subst(subst), hLevel.subst(subst));
   }
 
+  /**
+   * A level is represented as max({@link Level#var} + {@link Level#constant}, {@link Level#max}).
+   *
+   */
   public record Level(@Nullable LevelVar var, int constant, int max) {
     // TODO[JDK-8247334]: uncomment when we move to JDK16
     public static final /*@NotNull*/ Level INF = new Level(Integer.MAX_VALUE);
