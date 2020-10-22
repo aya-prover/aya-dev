@@ -1,4 +1,4 @@
-package org.mzi.tyck.sort;
+package org.mzi.tyck;
 
 /**
  * Intended to be modified only when the compiler starts.
