@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.core.ref.Bind;
 import org.mzi.api.ref.Ref;
-import org.mzi.core.subst.TermSubst;
-
-import java.util.HashMap;
 
 /**
  * Similar to Arend <code>DependentLink</code>.
@@ -29,7 +26,7 @@ public interface Tele<Term> extends Bind<Term> {
 
   <P, R> R accept(@NotNull Tele.Visitor<Term, P, R> visitor, P p);
 
-  default @NotNull PrimitiveTuples.IntObjTuple2<Tele<Term>>
+  default PrimitiveTuples.@NotNull IntObjTuple2<@NotNull Tele<Term>>
   forEach(@NotNull IndexedConsumer<@NotNull Tele<Term>> consumer) {
     var tele = this;
     var i = 0;
@@ -50,7 +47,7 @@ public interface Tele<Term> extends Bind<Term> {
   }
 
   @TestOnly @Contract(pure = true)
-  default boolean checkSubst(@NotNull Seq<@NotNull Arg<org.mzi.core.term.Term>> args) {
+  default boolean checkSubst(@NotNull Seq<@NotNull Arg<Term>> args) {
     var obj = new Object() {
       boolean ok = true;
     };

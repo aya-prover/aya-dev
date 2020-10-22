@@ -2,14 +2,9 @@ package org.mzi.core.visitor;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.sort.Sort;
-import org.mzi.core.term.AppTerm;
-import org.mzi.core.term.DT;
-import org.mzi.core.term.LamTerm;
-import org.mzi.core.term.RefTerm;
-import org.mzi.generic.Tele;
-import org.mzi.core.term.Term;
-import org.mzi.core.term.UnivTerm;
+import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
+import org.mzi.generic.Tele;
 
 import java.util.Optional;
 
