@@ -41,4 +41,15 @@ public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
     if (mode != NormalizeMode.NF) return term;
     else return UnfoldFixpoint.super.visitTup(term, mode);
   }
+
+  @Override
+  public @NotNull Term visitProj(@NotNull ProjTerm term, NormalizeMode mode) {
+    var tup = term.tup();
+    var ix = term.ix();
+    // should not happen
+    if (!(tup instanceof TupTerm t)) throw new IllegalStateException("`TupTerm` expected, got: `" + tup.getClass() + "`");
+    assert ix <= ((TupTerm) tup).items().size();
+    assert ix > 0;
+    return ((TupTerm) tup).items().get(ix).accept(this, mode);
+  }
 }
