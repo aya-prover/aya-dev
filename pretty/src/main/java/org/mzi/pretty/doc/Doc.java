@@ -18,7 +18,9 @@ import java.util.function.IntFunction;
  * @author kiva
  */
 public sealed interface Doc {
-  default String renderToString(@NotNull DocStringPrinter.Config config) {
+  //region Doc Member Functions
+
+  default @NotNull String renderToString(@NotNull DocStringPrinter.Config config) {
     var printer = new DocStringPrinter();
     return this.render(printer, config);
   }
@@ -28,6 +30,13 @@ public sealed interface Doc {
                       @NotNull Config config) {
     return printer.render(config, this);
   }
+
+  default @NotNull String withPageWidth(int pageWidth) {
+    var config = new DocStringPrinter.Config(pageWidth);
+    return this.renderToString(config);
+  }
+
+  //endregion
 
   //region Doc Variants
 
