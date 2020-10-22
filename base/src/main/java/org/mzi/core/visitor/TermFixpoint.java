@@ -2,7 +2,13 @@ package org.mzi.core.visitor;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.sort.Sort;
-import org.mzi.core.term.*;
+import org.mzi.core.term.AppTerm;
+import org.mzi.core.term.DT;
+import org.mzi.core.term.LamTerm;
+import org.mzi.core.term.RefTerm;
+import org.mzi.generic.Tele;
+import org.mzi.core.term.Term;
+import org.mzi.core.term.UnivTerm;
 import org.mzi.generic.Arg;
 
 import java.util.Optional;
@@ -12,18 +18,18 @@ import java.util.Optional;
  */
 public interface TermFixpoint<P> extends
   Term.Visitor<P, @NotNull Term>,
-  Tele.Visitor<P, @NotNull Tele> {
-  @Override default @NotNull Tele visitNamed(Tele.@NotNull NamedTele named, P p) {
+  Tele.Visitor<Term, P, @NotNull Tele<Term>> {
+  @Override default @NotNull Tele<Term> visitNamed(Tele.@NotNull NamedTele<Term> named, P p) {
     var next = named.next().accept(this, p);
     if (next == named.next()) return named;
-    return new Tele.NamedTele(named.ref(), next);
+    return new Tele.NamedTele<>(named.ref(), next);
   }
 
-  @Override default @NotNull Tele visitTyped(Tele.@NotNull TypedTele typed, P p) {
+  @Override default @NotNull Tele<Term> visitTyped(Tele.@NotNull TypedTele<Term> typed, P p) {
     var next = Optional.ofNullable(typed.next()).map(tele -> tele.accept(this, p)).orElse(null);
     var type = typed.type().accept(this, p);
     if (next == typed.next() && type == typed.type()) return typed;
-    return new Tele.TypedTele(typed.ref(), type, typed.explicit(), next);
+    return new Tele.TypedTele<>(typed.ref(), type, typed.explicit(), next);
   }
 
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
