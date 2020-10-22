@@ -1,6 +1,7 @@
 package org.mzi.concrete.term;
 
 import org.jetbrains.annotations.NotNull;
+import org.mzi.api.error.SourcePos;
 
 /**
  * @author re-xyr
@@ -13,6 +14,8 @@ public sealed interface Expr permits
   UnivExpr,
   UnresolvedExpr {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+
+  @NotNull SourcePos sourcePos();
 
   interface Visitor<P, R> {
     R visitRef(@NotNull RefExpr refExpr, P p);
