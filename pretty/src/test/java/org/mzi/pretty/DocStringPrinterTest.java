@@ -40,6 +40,16 @@ public class DocStringPrinterTest {
   }
 
   @Test
+  public void testIndentWithPrefixAndSuffix() {
+    var doc = hcat(
+      plain("prefix"),
+      indent(4, plain("boynextdoor\ndooooor")),
+      indent(4, plain("postfix"))
+    );
+    assertEquals("prefix    boynextdoor\n          dooooor    postfix", doc.withPageWidth(80));
+  }
+
+  @Test
   public void testVCat() {
     var doc = vcat(plain("11"), plain("45"), plain("14"));
     assertEquals("11\n45\n14", doc.withPageWidth(80));
