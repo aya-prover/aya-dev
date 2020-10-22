@@ -62,10 +62,12 @@ allprojects {
   tasks.withType<Test>().configureEach {
     jvmArgs = listOf("--enable-preview")
     useJUnitPlatform()
+    enableAssertions = true
   }
 
   tasks.withType<JavaExec>().configureEach {
     jvmArgs = listOf("--enable-preview")
+    enableAssertions = true
   }
 }
 
