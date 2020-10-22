@@ -13,11 +13,11 @@ import java.util.Map;
  * @author ice1000
  */
 public final class TermSubst {
-  private final @NotNull Map<@NotNull Ref, @NotNull Term> subst;
+  private final @NotNull Map<@NotNull Ref, @NotNull Term> map;
   public static final @NotNull TermSubst EMPTY = new TermSubst(Collections.emptyMap());
 
-  public TermSubst(@NotNull Map<@NotNull Ref, @NotNull Term> subst) {
-    this.subst = subst;
+  public TermSubst(@NotNull Map<@NotNull Ref, @NotNull Term> map) {
+    this.map = map;
   }
 
   public TermSubst(@NotNull Ref ref, @NotNull Term term) {
@@ -26,47 +26,47 @@ public final class TermSubst {
 
   @Contract(pure = true)
   public boolean isEmpty() {
-    return subst.isEmpty();
+    return map.isEmpty();
   }
 
-  public void subst(@NotNull TermSubst termSubst) {
-    if (subst.isEmpty()) return;
-    for (var entry : subst.entrySet()) entry.setValue(entry.getValue().subst(termSubst));
+  public void subst(@NotNull TermSubst subst) {
+    if (map.isEmpty()) return;
+    for (var entry : map.entrySet()) entry.setValue(entry.getValue().subst(subst));
   }
 
-  public void addAll(@NotNull TermSubst termSubst) {
-    subst.putAll(termSubst.subst);
+  public void addAll(@NotNull TermSubst subst) {
+    map.putAll(subst.map);
   }
 
   public @Nullable Term get(@NotNull Ref ref) {
-    return subst.get(ref);
+    return map.get(ref);
   }
 
   public @NotNull Term get(@NotNull Ref ref, @NotNull Term defaultVal) {
-    return subst.getOrDefault(ref, defaultVal);
+    return map.getOrDefault(ref, defaultVal);
   }
 
   public void clear() {
-    subst.clear();
+    map.clear();
   }
 
   public void remove(@NotNull Ref ref) {
-    subst.remove(ref);
+    map.remove(ref);
   }
 
   public void add(@NotNull Ref ref, @NotNull Term term) {
     subst(new TermSubst(ref, term));
-    subst.put(ref, term);
+    map.put(ref, term);
   }
 
-  public void add(@NotNull TermSubst termSubst) {
-    if (termSubst.isEmpty()) return;
-    subst(termSubst);
-    addAll(termSubst);
+  public void add(@NotNull TermSubst subst) {
+    if (subst.isEmpty()) return;
+    subst(subst);
+    addAll(subst);
   }
 
   @Override
   public String toString() {
-    return subst.toString();
+    return map.toString();
   }
 }

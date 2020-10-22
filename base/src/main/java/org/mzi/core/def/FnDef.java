@@ -1,8 +1,8 @@
 package org.mzi.core.def;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.term.Tele;
 import org.mzi.core.term.Term;
+import org.mzi.generic.Tele;
 import org.mzi.ref.DefRef;
 
 /**
@@ -10,11 +10,11 @@ import org.mzi.ref.DefRef;
  */
 public final class FnDef implements Def {
   public final @NotNull DefRef ref;
-  public final @NotNull Tele telescope;
+  public final @NotNull Tele<Term> telescope;
   public final @NotNull Term result;
   public final @NotNull Term body;
 
-  public FnDef(@NotNull String name, @NotNull Tele telescope, @NotNull Term result, @NotNull Term body) {
+  public FnDef(@NotNull String name, @NotNull Tele<Term> telescope, @NotNull Term result, @NotNull Term body) {
     this.ref = new DefRef(this, name);
     this.telescope = telescope;
     this.result = result;

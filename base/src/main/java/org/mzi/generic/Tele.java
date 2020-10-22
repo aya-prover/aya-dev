@@ -1,37 +1,33 @@
-package org.mzi.core.term;
+package org.mzi.generic;
 
-import asia.kala.Tuple;
-import asia.kala.Tuple2;
+import asia.kala.PrimitiveTuples;
 import asia.kala.collection.Seq;
 import asia.kala.function.IndexedConsumer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.mzi.api.core.ref.CoreBind;
+import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Ref;
-import org.mzi.core.subst.TermSubst;
-import org.mzi.generic.Arg;
-
-import java.util.HashMap;
 
 /**
  * Similar to Arend <code>DependentLink</code>.
- * If we have <code>{A : Type} (a b : A)</code>, then it should be translated into:
+ * If we have <code>{A : U} (a b : A)</code>, then it should be translated into:
  * <pre>
- * {@link TypedTele}(A, {@link org.mzi.core.term.UnivTerm}, false,
- *   {@link NamedTele}(a, {@link TypedTele}(b, A, true, null)))
+ * {@link Tele.TypedTele}(A, {@link org.mzi.core.term.UnivTerm}, false,
+ *   {@link Tele.NamedTele}(a, {@link Tele.TypedTele}(b, A, true, null)))
  * </pre>
  *
  * @author ice1000
  */
-public sealed interface Tele extends CoreBind {
-  @Override @Nullable Tele next();
+public interface Tele<Term> extends Bind<Term> {
+  @Override @Nullable Tele<Term> next();
   @Override @NotNull Term type();
 
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+  <P, R> R accept(@NotNull Tele.Visitor<Term, P, R> visitor, P p);
 
-  default @NotNull Tuple2<Integer, Tele> forEach(@NotNull IndexedConsumer<@NotNull Tele> consumer) {
+  default PrimitiveTuples.@NotNull IntObjTuple2<@NotNull Tele<Term>>
+  forEach(@NotNull IndexedConsumer<@NotNull Tele<Term>> consumer) {
     var tele = this;
     var i = 0;
     while (true) {
@@ -39,10 +35,10 @@ public sealed interface Tele extends CoreBind {
       if (tele.next() == null) break;
       else tele = tele.next();
     }
-    return Tuple.of(i, tele);
+    return new PrimitiveTuples.IntObjTuple2<>(i, tele);
   }
 
-  default @NotNull Tele last() {
+  default @NotNull Tele<Term> last() {
     return forEach((index, tele) -> {})._2;
   }
 
@@ -59,25 +55,18 @@ public sealed interface Tele extends CoreBind {
     return obj.ok;
   }
 
-  @Contract(pure = true)
-  default @NotNull TermSubst buildSubst(@NotNull Seq<@NotNull Arg<Term>> args) {
-    var subst = new TermSubst(new HashMap<>());
-    forEach((i, tele) -> subst.add(tele.ref(), args.get(i).term()));
-    return subst;
+  interface Visitor<Term, P, R> {
+    R visitTyped(@NotNull TypedTele<Term> typed, P p);
+    R visitNamed(@NotNull NamedTele<Term> named, P p);
   }
 
-  interface Visitor<P, R> {
-    R visitTyped(@NotNull TypedTele typed, P p);
-    R visitNamed(@NotNull NamedTele named, P p);
-  }
-
-  record TypedTele(
+  record TypedTele<Term>(
     @NotNull Ref ref,
     @NotNull Term type,
     boolean explicit,
-    @Nullable Tele next
-  ) implements Tele {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Nullable Tele<Term> next
+  ) implements Tele<Term> {
+    @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
       return visitor.visitTyped(this, p);
     }
   }
@@ -85,10 +74,10 @@ public sealed interface Tele extends CoreBind {
   /**
    * @author ice1000
    */
-  record NamedTele(
+  record NamedTele<Term>(
     @NotNull Ref ref,
-    @NotNull Tele next
-  ) implements Tele {
+    @NotNull Tele<Term> next
+  ) implements Tele<Term> {
     @Contract(pure = true) @Override public boolean explicit() {
       return next().explicit();
     }
@@ -97,7 +86,7 @@ public sealed interface Tele extends CoreBind {
       return next().type();
     }
 
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
       return visitor.visitNamed(this, p);
     }
   }

@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.util.NormalizeMode;
+import org.mzi.core.subst.LevelSubst;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.core.visitor.NormalizeFixpoint;
 import org.mzi.core.visitor.SubstFixpoint;
@@ -18,7 +19,11 @@ public interface Term extends CoreTerm {
   @Contract(pure = true) @NotNull Decision whnf();
 
   default @NotNull Term subst(@NotNull TermSubst subst) {
-    return accept(new SubstFixpoint(subst), EmptyTuple.INSTANCE);
+    return subst(subst, LevelSubst.EMPTY);
+  }
+
+  default @NotNull Term subst(@NotNull TermSubst subst, @NotNull LevelSubst levelSubst) {
+    return accept(new SubstFixpoint(subst, levelSubst), EmptyTuple.INSTANCE);
   }
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {

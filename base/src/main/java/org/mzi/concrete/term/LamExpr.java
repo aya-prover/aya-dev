@@ -6,9 +6,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author re-xyr
  */
-public record LamExpr(@NotNull ImmutableSeq<@NotNull Param> binds, @NotNull Expr body) implements Expr {
-  @Override
-  public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+public record LamExpr(
+  @NotNull ImmutableSeq<@NotNull Param> binds,
+  @NotNull Expr body
+) implements Expr {
+  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitLam(this, p);
   }
 }

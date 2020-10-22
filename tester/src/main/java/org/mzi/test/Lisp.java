@@ -7,8 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Ref;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.term.Tele;
 import org.mzi.core.term.Term;
+import org.mzi.generic.Tele;
 
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +31,7 @@ public interface Lisp {
     return Objects.requireNonNull(somehowParse(code, refs));
   }
 
-  static @Nullable Tele somehowParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Ref> refs) {
+  static @Nullable Tele<Term> somehowParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Ref> refs) {
     return TermProducer.parseTele(code, refs);
   }
 
@@ -50,7 +50,7 @@ public interface Lisp {
     return def;
   }
 
-  static @NotNull Tele reallyParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Ref> refs) {
+  static @NotNull Tele<Term> reallyParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Ref> refs) {
     return Objects.requireNonNull(somehowParseTele(code, refs));
   }
 }

@@ -8,7 +8,7 @@ import org.mzi.pretty.printer.PrinterConfig;
 
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
-import java.util.function.Function;
+import java.util.function.IntFunction;
 
 /**
  * This class reimplemented Haskell
@@ -18,7 +18,9 @@ import java.util.function.Function;
  * @author kiva
  */
 public sealed interface Doc {
-  default String renderToString(@NotNull DocStringPrinter.Config config) {
+  //region Doc Member Functions
+
+  default @NotNull String renderToString(@NotNull DocStringPrinter.Config config) {
     var printer = new DocStringPrinter();
     return this.render(printer, config);
   }
@@ -28,6 +30,13 @@ public sealed interface Doc {
                       @NotNull Config config) {
     return printer.render(config, this);
   }
+
+  default @NotNull String withPageWidth(int pageWidth) {
+    var config = new DocStringPrinter.Config(pageWidth);
+    return this.renderToString(config);
+  }
+
+  //endregion
 
   //region Doc Variants
 
@@ -93,19 +102,19 @@ public sealed interface Doc {
   /**
    * A document that will react on the current cursor position.
    */
-  record Column(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  record Column(@NotNull IntFunction<Doc> docBuilder) implements Doc {
   }
 
   /**
    * A document that will react on the current nest level.
    */
-  record Nesting(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  record Nesting(@NotNull IntFunction<Doc> docBuilder) implements Doc {
   }
 
   /**
    * A document that will react on the page width.
    */
-  record PageWidth(@NotNull Function<Integer, Doc> docBuilder) implements Doc {
+  record PageWidth(@NotNull IntFunction<Doc> docBuilder) implements Doc {
   }
 
   //endregion
@@ -155,7 +164,7 @@ public sealed interface Doc {
    * @return column action document
    */
   @Contract("_ -> new")
-  static @NotNull Doc column(@NotNull Function<Integer, Doc> docBuilder) {
+  static @NotNull Doc column(@NotNull IntFunction<Doc> docBuilder) {
     return new Column(docBuilder);
   }
 
@@ -175,7 +184,7 @@ public sealed interface Doc {
    * @return nest level action document
    */
   @Contract("_ -> new")
-  static @NotNull Doc nesting(@NotNull Function<Integer, Doc> docBuilder) {
+  static @NotNull Doc nesting(@NotNull IntFunction<Doc> docBuilder) {
     return new Nesting(docBuilder);
   }
 
@@ -195,7 +204,7 @@ public sealed interface Doc {
    * @return page width action document
    */
   @Contract("_ -> new")
-  static @NotNull Doc pageWidth(@NotNull Function<Integer, Doc> docBuilder) {
+  static @NotNull Doc pageWidth(@NotNull IntFunction<Doc> docBuilder) {
     return new PageWidth(docBuilder);
   }
 
@@ -315,9 +324,10 @@ public sealed interface Doc {
       return new PlainText(text);
     }
 
-    return Arrays.stream(text.split("\n"))
+    return Arrays.stream(text.split("\n", -1))
       .map(Doc::plain)
-      .reduce(empty(), (x, y) -> simpleCat(simpleCat(x, line()), y));
+      .reduce((x, y) -> simpleCat(x, line(), y))
+      .get(); // never null
   }
 
   /**
@@ -367,7 +377,7 @@ public sealed interface Doc {
    * @return cat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc cat(@NotNull Doc... docs) {
+  static @NotNull Doc cat(Doc @NotNull ... docs) {
     return group(vcat(docs));
   }
 
@@ -394,9 +404,9 @@ public sealed interface Doc {
    * @return concat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc vcat(@NotNull Doc... docs) {
+  static @NotNull Doc vcat(Doc @NotNull ... docs) {
     return concatWith(
-      (x, y) -> simpleCat(simpleCat(x, lineEmpty()), y),
+      (x, y) -> simpleCat(x, lineEmpty(), y),
       docs
     );
   }
@@ -408,8 +418,187 @@ public sealed interface Doc {
    * @return concat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc hcat(@NotNull Doc... docs) {
+  static @NotNull Doc hcat(Doc @NotNull ... docs) {
     return concatWith(Doc::simpleCat, docs);
+  }
+
+  /**
+   * fillCat concatenates documents {@param docs} horizontally with simpleCat() as
+   * long as it fits the page, then inserts a 'line' and continues doing that
+   * for all documents in {@param docs}. This is similar to how an ordinary word processor
+   * lays out the text if you just keep typing after you hit the maximum line
+   * length. ('line' means that if 'group'ed, the documents are separated with nothing
+   * instead of newlines. See 'fillSep' if you want a 'space' instead.)
+   * <p>
+   * Observe the difference between 'fillSep' and 'fillCat'. 'fillSep'
+   * concatenates the entries 'space'd when 'group'ed,
+   *
+   * <pre>
+   *
+   * >>> let docs = take 20 (cycle (["lorem", "ipsum", "dolor", "sit", "amet"]))
+   * >>> putDocW 40 ("Grouped:" <+> group (fillSep docs))
+   * Grouped: lorem ipsum dolor sit amet
+   * lorem ipsum dolor sit amet lorem ipsum
+   * dolor sit amet lorem ipsum dolor sit
+   * amet
+   *
+   * On the other hand, 'fillCat' concatenates the entries directly when
+   * 'group'ed,
+   *
+   * >>> putDocW 40 ("Grouped:" <+> group (fillCat docs))
+   * Grouped: loremipsumdolorsitametlorem
+   * ipsumdolorsitametloremipsumdolorsitamet
+   * loremipsumdolorsitamet
+   *
+   * </pre>
+   *
+   * @param docs documents to concat
+   * @return concat document
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc fillCat(Doc @NotNull ... docs) {
+    return concatWith(
+      (x, y) -> simpleCat(x, softLineEmpty(), y),
+      docs
+    );
+  }
+
+  /**
+   * sep tries laying out the documents {@param docs} separated with 'space's,
+   * and if this does not fit the page, separates them with newlines. This is what
+   * differentiates it from 'vsep', which always lays out its contents beneath
+   * each other.
+   *
+   * <pre>
+   * >>> let doc = "prefix" <+> sep ["text", "to", "lay", "out"]
+   * >>> putDocW 80 doc
+   * prefix text to lay out
+   * </pre>
+   * <p>
+   * With a narrower layout, the entries are separated by newlines:
+   *
+   * <pre>
+   * >>> putDocW 20 doc
+   * prefix text
+   * to
+   * lay
+   * out
+   * </pre>
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc sep(Doc @NotNull ... docs) {
+    return group(vsep(docs));
+  }
+
+  /**
+   * vsep concatenates all documents {@param docs} above each other. If a
+   * 'group' undoes the line breaks inserted by vsep, the documents are
+   * separated with a 'space' instead.
+   * <p>
+   * Using 'vsep' alone yields
+   *
+   * <pre>
+   * >>> "prefix" <+> vsep ["text", "to", "lay", "out"]
+   * prefix text
+   * to
+   * lay
+   * out
+   * </pre>
+   * <p>
+   * 'group'ing a 'vsep' separates the documents with a 'space' if it fits the
+   * page (and does nothing otherwise). See the {@link Doc#sep(Doc...)} convenience
+   * function for this use case.
+   * <p>
+   * The 'align' function can be used to align the documents under their first
+   * element:
+   *
+   * <pre>
+   * >>> "prefix" <+> align (vsep ["text", "to", "lay", "out"])
+   * prefix text
+   *        to
+   *        lay
+   *        out
+   * </pre>
+   * <p>
+   * Since 'group'ing a 'vsep' is rather common, 'sep' is a built-in for doing
+   * that.
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc vsep(Doc @NotNull ... docs) {
+    return concatWith(
+      (x, y) -> simpleCat(x, line(), y),
+      docs
+    );
+  }
+
+  /**
+   * hsep concatenates all documents {@param docs} horizontally with a space,
+   * i.e. it puts a space between all entries.
+   *
+   * <pre>
+   * >>> let docs = Util.words "lorem ipsum dolor sit amet"
+   *
+   * >>> hsep docs
+   * lorem ipsum dolor sit amet
+   *
+   * </pre>
+   * <p>
+   * hsep does not introduce line breaks on its own, even when the page is too
+   * narrow:
+   *
+   * <pre>
+   * >>> putDocW 5 (hsep docs)
+   * lorem ipsum dolor sit amet
+   * </pre>
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc hsep(Doc @NotNull ... docs) {
+    return concatWith(Doc::simpleSpacedCat, docs);
+  }
+
+  /**
+   * fillSep concatenates the documents {@param docs} horizontally with a space
+   * as long as it fits the page, then inserts a 'line' and continues doing that
+   * for all documents in {@param docs}. ('line' means that if 'group'ed, the documents
+   * are separated with a 'space' instead of newlines. Use {@link Doc#fillCat}
+   * if you do not want a 'space'.
+   * <p>
+   * Let's print some words to fill the line:
+   *
+   * <pre>
+   *
+   * >>> let docs = take 20 (cycle ["lorem", "ipsum", "dolor", "sit", "amet"])
+   * >>> putDocW 80 ("Docs:" <+> fillSep docs)
+   * Docs: lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor
+   * sit amet lorem ipsum dolor sit amet
+   *
+   * The same document, printed at a width of only 40, yields
+   *
+   * >>> putDocW 40 ("Docs:" <+> fillSep docs)
+   * Docs: lorem ipsum dolor sit amet lorem
+   * ipsum dolor sit amet lorem ipsum dolor
+   * sit amet lorem ipsum dolor sit amet
+   *
+   * </pre>
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc fillSep(Doc @NotNull ... docs) {
+    return concatWith(
+      (x, y) -> simpleCat(x, softLine(), y),
+      docs
+    );
   }
 
   /**
@@ -434,7 +623,7 @@ public sealed interface Doc {
    */
   @Contract("-> new")
   static @NotNull Doc softLine() {
-    return new Union(plain(" "), line());
+    return new Union(line(), plain(" "));
   }
 
   /**
@@ -444,7 +633,7 @@ public sealed interface Doc {
    */
   @Contract("-> new")
   static @NotNull Doc softLineEmpty() {
-    return new Union(empty(), line());
+    return new Union(line(), empty());
   }
 
   /**
@@ -495,18 +684,44 @@ public sealed interface Doc {
 
   //region utility functions
 
-  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Doc... docs) {
-    return Arrays.stream(docs).reduce(empty(), f);
+  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Doc... xs) {
+    assert xs.length > 0;
+    if (xs.length == 1) {
+      return xs[0];
+    }
+    return Arrays.stream(xs).reduce(f).get(); // never null
   }
 
-  private static @NotNull Doc simpleCat(@NotNull Doc a, @NotNull Doc b) {
-    if (a instanceof Empty) {
-      return b;
+  private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
+    return concatWith(Doc::makeCat, xs);
+  }
+
+  private static @NotNull Doc simpleSpacedCat(Doc @NotNull ... xs) {
+    return concatWith(
+      (first, second) ->
+        makeCat(
+          first,
+          second,
+          (a, b) -> simpleCat(a, plain(" "), b)
+        ),
+      xs
+    );
+  }
+
+  private static @NotNull Doc makeCat(@NotNull Doc first, @NotNull Doc second) {
+    return makeCat(first, second, Cat::new);
+  }
+
+  private static @NotNull Doc makeCat(@NotNull Doc first,
+                                      @NotNull Doc second,
+                                      @NotNull BinaryOperator<Doc> maker) {
+    if (first instanceof Empty) {
+      return second;
     }
-    if (b instanceof Empty) {
-      return a;
+    if (second instanceof Empty) {
+      return first;
     }
-    return new Cat(a, b);
+    return maker.apply(first, second);
   }
 
   //endregion

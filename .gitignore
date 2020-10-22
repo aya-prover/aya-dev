@@ -2,6 +2,7 @@ build/
 out/
 /.idea/
 /.gradle/
+/.fleet/
 *.iml
 gradle.properties
 .DS_Store
