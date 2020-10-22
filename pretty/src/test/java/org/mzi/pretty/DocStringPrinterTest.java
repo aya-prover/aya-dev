@@ -50,6 +50,16 @@ public class DocStringPrinterTest {
   }
 
   @Test
+  public void testVCatHang() {
+    var doc = vcat(
+      plain("boy"),
+      hang(4, plain("boynextdoor\ndooooor")),
+      hang(2, plain("114514"))
+    );
+    assertEquals("boy\n    boynextdoor\n    dooooor\n  114514", doc.withPageWidth(80));
+  }
+
+  @Test
   public void testVCat() {
     var doc = vcat(plain("11"), plain("45"), plain("14"));
     assertEquals("11\n45\n14", doc.withPageWidth(80));
