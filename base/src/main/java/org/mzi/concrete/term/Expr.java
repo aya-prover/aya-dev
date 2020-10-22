@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface Expr permits
   AppExpr,
   LamExpr,
-    DTExpr,
+  DTExpr,
   RefExpr,
   UnivExpr,
   UnresolvedExpr {
