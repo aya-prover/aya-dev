@@ -14,8 +14,8 @@ import org.mzi.api.ref.Ref;
  * Similar to Arend <code>DependentLink</code>.
  * If we have <code>{A : U} (a b : A)</code>, then it should be translated into:
  * <pre>
- * {@link Tele<Term>.TypedTele}(A, {@link org.mzi.core.term.UnivTerm}, false,
- *   {@link Tele<Term>.NamedTele}(a, {@link Tele<Term>.TypedTele}(b, A, true, null)))
+ * {@link Tele.TypedTele}(A, {@link org.mzi.core.term.UnivTerm}, false,
+ *   {@link Tele.NamedTele}(a, {@link Tele.TypedTele}(b, A, true, null)))
  * </pre>
  *
  * @author ice1000
