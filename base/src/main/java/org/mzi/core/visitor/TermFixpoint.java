@@ -72,4 +72,16 @@ public interface TermFixpoint<P> extends
     if (fnCall.args().sameElements(args, true)) return fnCall;
     return new AppTerm.FnCall(fnCall.fnRef(), args);
   }
+
+  @Override default @NotNull Term visitTup(@NotNull TupTerm term, P p) {
+    var items = term.items().map(x -> x.accept(this, p));
+    if (term.items().sameElements(items, true)) return term;
+    return new TupTerm(items);
+  }
+
+  @Override default @NotNull Term visitProj(@NotNull ProjTerm term, P p) {
+    var tuple = term.tup().accept(this, p);
+    if (tuple == term.tup()) return term;
+    return new ProjTerm(tuple, term.ix());
+  }
 }
