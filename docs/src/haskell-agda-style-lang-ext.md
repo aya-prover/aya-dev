@@ -24,3 +24,17 @@ The current status of Agda libraries, that having separate cubical, HoTT library
 implementing the basic features individually, is yelling at us that Agda is far away from a single programming language.
 Each flag that enables a certain language feature makes Agda a different language,
 and it is difficult in general to make two different language source-compatible (see Kotlin-Java, Scala-Java, etc).
+
+It is good to keep your language evolving like Agda (adding new features aggressively), and indeed Agda is **the** proof
+assistant with the richest set of language features I've known so far.
+However, this also negatively impacts Agda's reputation to some extent,
+that people say it's an experiment in type theory.
+Well, maybe it's not a negative impact, but it prevents big customers
+(such as Mathematicians looking for a tool to formalize math) from choosing the language.
+At least, we don't want this to happen to our language.
+
+## Decision
+
+So, we will not use those flags, and will have only one standard library.
+
+[comment]: <> (TODO: more to write)
