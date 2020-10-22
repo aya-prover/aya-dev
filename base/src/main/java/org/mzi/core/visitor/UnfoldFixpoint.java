@@ -20,8 +20,7 @@ import java.util.HashMap;
  * @author ice1000
  */
 public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
-  @Contract(pure = true)
-  static @NotNull TermSubst buildSubst(
+  @Contract(pure = true) static @NotNull TermSubst buildSubst(
     @NotNull Tele<Term> self,
     @NotNull Seq<@NotNull Arg<Term>> args
   ) {
