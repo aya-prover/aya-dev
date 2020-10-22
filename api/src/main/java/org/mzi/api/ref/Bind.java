@@ -1,10 +1,9 @@
-package org.mzi.api.core.ref;
+package org.mzi.api.ref;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.api.ref.Ref;
 
 /**
  * @author kiva

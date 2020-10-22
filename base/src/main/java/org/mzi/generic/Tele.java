@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.mzi.api.core.ref.Bind;
+import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Ref;
 
 /**
