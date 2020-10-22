@@ -7,6 +7,7 @@ import org.mzi.pretty.printer.Printer;
 import org.mzi.pretty.printer.PrinterConfig;
 
 import java.util.Arrays;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
 
@@ -74,15 +75,6 @@ public sealed interface Doc {
    * Concatenation of two documents
    */
   record Cat(@NotNull Doc first, @NotNull Doc second) implements Doc {
-    static @NotNull Doc makeRaw(@NotNull Doc first, @NotNull Doc second) {
-      if (first instanceof Empty) {
-        return second;
-      }
-      if (second instanceof Empty) {
-        return first;
-      }
-      return new Cat(first, second);
-    }
   }
 
   /**
@@ -693,22 +685,35 @@ public sealed interface Doc {
   }
 
   private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
-    return concatWith(Cat::makeRaw, xs);
+    return concatWith(Doc::makeCat, xs);
   }
 
   private static @NotNull Doc simpleSpacedCat(Doc @NotNull ... xs) {
     return concatWith(
-      (a, b) -> {
-        if (a instanceof Empty) {
-          return b;
-        }
-        if (b instanceof Empty) {
-          return a;
-        }
-        return simpleCat(a, plain(" "), b);
-      },
+      (first, second) ->
+        makeCat(
+          first,
+          second,
+          (a, b) -> simpleCat(a, plain(" "), b)
+        ),
       xs
     );
+  }
+
+  private static @NotNull Doc makeCat(@NotNull Doc first, @NotNull Doc second) {
+    return makeCat(first, second, Cat::new);
+  }
+
+  private static @NotNull Doc makeCat(@NotNull Doc first,
+                                      @NotNull Doc second,
+                                      @NotNull BiFunction<Doc, Doc, Doc> maker) {
+    if (first instanceof Empty) {
+      return second;
+    }
+    if (second instanceof Empty) {
+      return first;
+    }
+    return maker.apply(first, second);
   }
 
   //endregion
