@@ -7,7 +7,6 @@ import org.mzi.pretty.printer.Printer;
 import org.mzi.pretty.printer.PrinterConfig;
 
 import java.util.Arrays;
-import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
 
@@ -706,7 +705,7 @@ public sealed interface Doc {
 
   private static @NotNull Doc makeCat(@NotNull Doc first,
                                       @NotNull Doc second,
-                                      @NotNull BiFunction<Doc, Doc, Doc> maker) {
+                                      @NotNull BinaryOperator<Doc> maker) {
     if (first instanceof Empty) {
       return second;
     }
