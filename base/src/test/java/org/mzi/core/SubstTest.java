@@ -3,7 +3,7 @@ package org.mzi.core;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.ref.Ref;
-import org.mzi.core.sort.Sort;
+import org.mzi.tyck.sort.Sort;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.UnivTerm;

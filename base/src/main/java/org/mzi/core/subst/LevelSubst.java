@@ -3,8 +3,8 @@ package org.mzi.core.subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Ref;
-import org.mzi.core.sort.Sort;
-import org.mzi.core.sort.Sort.Level;
+import org.mzi.tyck.sort.Sort;
+import org.mzi.tyck.sort.Sort.Level;
 
 import java.util.Collections;
 import java.util.HashMap;

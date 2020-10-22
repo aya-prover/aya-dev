@@ -1,7 +1,7 @@
 package org.mzi.core.visitor;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.sort.Sort;
+import org.mzi.tyck.sort.Sort;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Tele;

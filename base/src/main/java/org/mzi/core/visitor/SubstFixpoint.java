@@ -2,7 +2,7 @@ package org.mzi.core.visitor;
 
 import asia.kala.EmptyTuple;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.sort.Sort;
+import org.mzi.tyck.sort.Sort;
 import org.mzi.core.subst.LevelSubst;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.core.term.RefTerm;

@@ -1,4 +1,4 @@
-package org.mzi.core.sort;
+package org.mzi.tyck.sort;
 
 import asia.kala.collection.Seq;
 import org.jetbrains.annotations.Contract;
