@@ -10,6 +10,36 @@ import static org.mzi.pretty.doc.Doc.*;
  */
 public class DocStringPrinterTest {
   @Test
+  public void testHang() {
+    var doc = hang(4, plain("boynextdoor"));
+    assertEquals("    boynextdoor", doc.withPageWidth(80));
+  }
+
+  @Test
+  public void testHangMultiline() {
+    var doc = hang(4, plain("boynextdoor\ndooooor"));
+    assertEquals("    boynextdoor\n    dooooor", doc.withPageWidth(80));
+  }
+
+  @Test
+  public void testIndent() {
+    var doc = indent(4, plain("boynextdoor"));
+    assertEquals("        boynextdoor", doc.withPageWidth(80));
+  }
+
+  @Test
+  public void testIndentMultiline() {
+    var doc = indent(4, plain("boynextdoor\ndooooor"));
+    assertEquals("        boynextdoor\n    dooooor", doc.withPageWidth(80));
+  }
+
+  @Test
+  public void testIndentWithPrefix() {
+    var doc = hcat(plain("prefix"), indent(4, plain("boynextdoor\ndooooor")));
+    assertEquals("prefix    boynextdoor\n          dooooor", doc.withPageWidth(80));
+  }
+
+  @Test
   public void testVCat() {
     var doc = vcat(plain("11"), plain("45"), plain("14"));
     assertEquals("11\n45\n14", doc.withPageWidth(80));
