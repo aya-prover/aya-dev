@@ -5,8 +5,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
+import org.mzi.concrete.Expr;
 import org.mzi.core.subst.LevelSubst;
 import org.mzi.ref.LevelVar;
+import org.mzi.util.Ordering;
 
 /**
  * Highly inspired from Arend.
@@ -163,37 +165,36 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
       else return new Level(Math.max(level.constant, max) + constant);
     }
 
-    /*
-    public static boolean compare(Level level1, Level level2, CMP cmp, Equations equations, Expr expr) {
-      if (cmp == CMP.GE) {
-        return compare(level2, level1, CMP.LE, equations, expr);
-      }
+    public static boolean compare(
+      @NotNull Level level1, @NotNull Level level2, @NotNull Ordering cmp,
+      @Nullable LevelEqn.Set equations, Expr expr
+    ) {
+      if (cmp == Ordering.Gt) return compare(level2, level1, Ordering.Lt, equations, expr);
 
       if (level1.isInf())
         return level2.isInf() || !level2.closed() &&
-          (equations == null || equations.addEquation(INF, level2, CMP.LE, expr));
+          (equations == null || equations.add(INF, level2, Ordering.Lt, expr));
       if (level2.isInf())
-        return cmp == CMP.LE || !level1.closed() &&
-          (equations == null || equations.addEquation(INF, level1, CMP.LE, expr));
+        return cmp == Ordering.Lt || !level1.closed() &&
+          (equations == null || equations.add(INF, level1, Ordering.Lt, expr));
 
       if (level2.var() == null && level1.var() != null && level1.var().hole() == null)
         return false;
 
-      if (level1.var() == null && cmp == CMP.LE) {
+      if (level1.var() == null && cmp == Ordering.Lt) {
         if (level1.constant <= level2.constant + level2.max) return true;
       }
 
       if (level1.var() == level2.var()) {
-        if (cmp == CMP.LE)
+        if (cmp == Ordering.Lt)
           return level1.constant <= level2.constant
             && level1.maxAddConstant() <= level2.maxAddConstant();
         else return level1.constant == level2.constant && level1.max == level2.max;
       } else {
         if (equations == null)
           return level1.var() != null && level1.var().hole() != null || level2.var().hole() != null;
-        else return equations.addEquation(level1, level2, cmp, expr);
+        else return equations.add(level1, level2, cmp, expr);
       }
     }
-    */
   }
 }
