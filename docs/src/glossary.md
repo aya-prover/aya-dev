@@ -37,11 +37,11 @@
 
 ### 各种 Visitor
 
+有的特殊 Visitor 可能不会使用这些后缀，比如 `DefEq`。
+
 + Fixpoint -- 输入和返回类型相同的函数
 + Consumer -- 不直接返回值（而是修改自身状态作为输出）的函数
 + Producer -- 只返回值的函数（相对来说参数很简单的）的函数
-+ Predicate -- 返回 `boolean` 的函数
-  + Consumer 可以视为永远返回 `true` 的 Predicate
 
 ## 类型检查时用到的状态
 
