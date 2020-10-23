@@ -12,6 +12,10 @@ public record RefTerm(@NotNull Var var) implements Term {
     return visitor.visitRef(this, p);
   }
 
+  @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    return visitor.visitRef(this, p, q);
+  }
+
   @Override public @NotNull Decision whnf() {
     return Decision.YES;
   }

@@ -12,6 +12,10 @@ public record UnivTerm(@NotNull Sort sort) implements Term {
     return visitor.visitUniv(this, p);
   }
 
+  @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    return visitor.visitUniv(this, p, q);
+  }
+
   @Override public @NotNull Decision whnf() {
     return Decision.YES;
   }

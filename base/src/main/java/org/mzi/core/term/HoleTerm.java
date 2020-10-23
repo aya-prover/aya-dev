@@ -24,6 +24,10 @@ public record HoleTerm(
     return visitor.visitHole(this, p);
   }
 
+  @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    return visitor.visitHole(this, p, q);
+  }
+
   @Contract(pure = true) @Override public @NotNull Decision whnf() {
     return Decision.MAYBE;
   }

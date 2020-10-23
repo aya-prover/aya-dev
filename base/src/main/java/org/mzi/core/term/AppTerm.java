@@ -36,6 +36,10 @@ public sealed interface AppTerm extends Term {
       return visitor.visitFnCall(this, p);
     }
 
+    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+      return visitor.visitFnCall(this, p, q);
+    }
+
     @Contract(value = " -> new", pure = true)
     @Override public @NotNull Term fn() {
       return new RefTerm(fnRef);
@@ -48,6 +52,10 @@ public sealed interface AppTerm extends Term {
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
+    }
+
+    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+      return visitor.visitApp(this, p, q);
     }
 
     @Contract(" -> new")

@@ -16,6 +16,7 @@ import org.mzi.util.Decision;
  */
 public interface Term extends CoreTerm {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+  <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
   @Contract(pure = true) @NotNull Decision whnf();
 
   default @NotNull Term subst(@NotNull TermSubst subst) {
@@ -40,5 +41,17 @@ public interface Term extends CoreTerm {
     R visitTup(@NotNull TupTerm term, P p);
     R visitProj(@NotNull ProjTerm term, P p);
     R visitHole(@NotNull HoleTerm term, P p);
+  }
+
+  interface BiVisitor<P, Q, R> {
+    R visitRef(@NotNull RefTerm term, P p, Q q);
+    R visitLam(@NotNull LamTerm term, P p, Q q);
+    R visitDT(@NotNull DT term, P p, Q q);
+    R visitUniv(@NotNull UnivTerm term, P p, Q q);
+    R visitApp(AppTerm.@NotNull Apply term, P p, Q q);
+    R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p, Q q);
+    R visitTup(@NotNull TupTerm term, P p, Q q);
+    R visitProj(@NotNull ProjTerm term, P p, Q q);
+    R visitHole(@NotNull HoleTerm holeTerm, P p, Q q);
   }
 }

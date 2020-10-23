@@ -12,6 +12,10 @@ public record LamTerm(@NotNull Tele<Term> tele, @NotNull Term body) implements T
     return visitor.visitLam(this, p);
   }
 
+  @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    return visitor.visitLam(this, p, q);
+  }
+
   @Override public @NotNull Decision whnf() {
     return Decision.YES;
   }

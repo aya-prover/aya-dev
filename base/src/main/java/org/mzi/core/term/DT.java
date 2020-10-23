@@ -19,6 +19,10 @@ public record DT(
     return visitor.visitDT(this, p);
   }
 
+  @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    return visitor.visitDT(this, p, q);
+  }
+
   @Override public @NotNull Decision whnf() {
     return Decision.YES;
   }
