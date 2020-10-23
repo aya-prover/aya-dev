@@ -18,8 +18,8 @@ import org.mzi.util.Ordering;
 public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements LevelSubst {
   // TODO[JDK-8247334]: uncomment when we move to JDK16
   public static final /*@NotNull*/ Sort PROP = new Sort(0, -1);
-  public static final /*@NotNull*/ Sort SET0 = (hSet(new Level(0)));
-  public static final /*@NotNull*/ Sort STD = (new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP)));
+  public static final /*@NotNull*/ Sort SET0 = hSet(new Level(0));
+  public static final /*@NotNull*/ Sort STD = new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP));
 
   public static @NotNull Sort hSet(@NotNull Level uLevel) {
     return new Sort(uLevel, new Level(0));
@@ -77,6 +77,26 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
 
   public @NotNull Sort substSort(@NotNull LevelSubst subst) {
     return subst.isEmpty() || uLevel.closed() && hLevel.closed() ? this : new Sort(uLevel.subst(subst), hLevel.subst(subst));
+  }
+
+  private static boolean compareProp(@NotNull Sort sort, LevelEqn.Set equations, Expr expr) {
+    if (sort.isProp()) return true;
+    if (!LevelEqn.hasHole(sort.hLevel.var) || sort.hLevel.maxAddConstant() > -1) return false;
+    if (equations == null) return true;
+    return equations.add(new Level(sort.hLevel.var), new Level(-1), Ordering.Lt, expr);
+  }
+
+  public static boolean compare(@NotNull Sort sort1, @NotNull Sort sort2, Ordering cmp, LevelEqn.Set equations, Expr expr) {
+    if (sort1.isProp()) {
+      if (cmp == Ordering.Lt || sort2.isProp()) return true;
+      return compareProp(sort2, equations, expr);
+    }
+    if (sort2.isProp()) {
+      if (cmp == Ordering.Gt) return true;
+      return compareProp(sort1, equations, expr);
+    }
+    return Level.compare(sort1.uLevel, sort2.uLevel, cmp, equations, expr)
+      && Level.compare(sort1.hLevel, sort2.hLevel, cmp, equations, expr);
   }
 
   /**

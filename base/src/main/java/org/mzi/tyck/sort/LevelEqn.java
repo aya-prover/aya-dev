@@ -10,7 +10,6 @@ import org.mzi.concrete.Expr;
 import org.mzi.ref.LevelVar;
 import org.mzi.util.Ordering;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +25,10 @@ public record LevelEqn<V extends Var>(
 
   public LevelEqn(@NotNull LevelEqn<? extends V> copy) {
     this(copy.v1, copy.v2, copy.constant, copy.max);
+  }
+
+  @Contract(value = "null -> false", pure = true) public static boolean hasHole(@Nullable LevelVar var) {
+    return var != null && var.hole() != null;
   }
 
   @Contract(pure = true) public @Nullable V v1() {
@@ -59,10 +62,6 @@ public record LevelEqn<V extends Var>(
     private void addLevelEquation(@Nullable LevelVar var, Expr expr) {
       if (hasHole(var)) eqns.append(new LevelEqn<>(var));
       // TODO[ice]: report an error otherwise
-    }
-
-    @Contract(value = "null -> false", pure = true) private boolean hasHole(@Nullable LevelVar var) {
-      return var != null && var.hole() != null;
     }
 
     private void addLevelEquation(LevelVar var1, LevelVar var2, int constant, int maxConstant, Expr expr) {
