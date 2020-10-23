@@ -1,12 +1,28 @@
 package org.mzi.concrete.visitor;
 
-import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
+import org.mzi.generic.Tele;
 
-public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
+public interface ExprFixpoint<P> extends
+  Expr.Visitor<P, @NotNull Expr>,
+  Tele.Visitor<Expr, P, @NotNull Tele<Expr>> {
+  @Override default @NotNull Tele<Expr> visitNamed(Tele.@NotNull NamedTele<Expr> named, P p) {
+    var next = named.next().accept(this, p);
+    if (next == named.next()) return named;
+    return new Tele.NamedTele<>(named.ref(), next);
+  }
+
+  @Override default @NotNull Tele<Expr> visitTyped(Tele.@NotNull TypedTele<Expr> typed, P p) {
+    var next = Option.of(typed.next()).map(tele -> tele.accept(this, p)).getOrNull();
+    var type = typed.type().accept(this, p);
+    if (next == typed.next() && type == typed.type()) return typed;
+    return new Tele.TypedTele<>(typed.ref(), type, typed.explicit(), next);
+  }
+
   @Override default @NotNull Expr visitRef(Expr.@NotNull RefExpr expr, P p) {
     return expr;
   }
@@ -22,28 +38,15 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   }
 
   @Override default @NotNull Expr visitLam(Expr.@NotNull LamExpr expr, P p) {
-    var binds = visitParams(expr.binds(), p);
+    var binds = expr.tele().accept(this, p);
     var body = expr.body().accept(this, p);
-    if (binds == expr.binds() && body == expr.body()) return expr;
+    if (binds == expr.tele() && body == expr.body()) return expr;
     return new Expr.LamExpr(expr.sourcePos(), binds, body);
   }
 
-  default @NotNull ImmutableSeq<@NotNull Param>
-  visitParams(@NotNull ImmutableSeq<@NotNull Param> binds, P p) {
-    var newBinds = binds.map(param -> visitParam(param, p));
-    if (newBinds.sameElements(binds, true)) return binds;
-    else return newBinds;
-  }
-
-  default @NotNull Param visitParam(@NotNull Param param, P p) {
-    var type = param.type().accept(this, p);
-    if (type == param.type()) return param;
-    else return new Param(param.sourcePos(), param.var(), type, param.explicit());
-  }
-
   @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {
-    var binds = visitParams(expr.binds(), p);
-    if (binds == expr.binds()) return expr;
+    var binds = expr.tele().accept(this, p);
+    if (binds == expr.tele()) return expr;
     return new Expr.DTExpr(expr.sourcePos(), binds, expr.kind());
   }
 
@@ -62,5 +65,17 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     var arg = expr.argument().map(x -> visitArg(x, p));
     if (function == expr.function() && arg.sameElements(expr.argument(), true)) return expr;
     return new Expr.AppExpr(expr.sourcePos(), function, arg);
+  }
+
+  @Override default @NotNull Expr visitTup(Expr.@NotNull TupExpr expr, P p) {
+    var items = expr.items().map(item -> item.accept(this, p));
+    if (items.sameElements(expr.items(), true)) return expr;
+    return new Expr.TupExpr(expr.sourcePos(), items);
+  }
+
+  @Override default @NotNull Expr visitProj(Expr.@NotNull ProjExpr expr, P p) {
+    var tup = expr.tup().accept(this, p);
+    if (tup == expr.tup()) return expr;
+    return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix());
   }
 }
