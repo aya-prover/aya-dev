@@ -18,7 +18,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     var binds = visitParams(expr.binds(), p);
     var body = expr.body().accept(this, p);
     if (binds == expr.binds() && body == expr.body()) return expr;
-    return new Expr.LamExpr(binds, body);
+    return new Expr.LamExpr(expr.sourcePos(), binds, body);
   }
 
   default @NotNull ImmutableSeq<@NotNull Param>
@@ -31,13 +31,13 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   default @NotNull Param visitParam(@NotNull Param param, P p) {
     var type = param.type().accept(this, p);
     if (type == param.type()) return param;
-    else return new Param(param.ref(), type, param.explicit());
+    else return new Param(param.sourcePos(), param.ref(), type, param.explicit());
   }
 
   @Override default @NotNull Expr visitDT(@NotNull Expr.DTExpr expr, P p) {
     var binds = visitParams(expr.binds(), p);
     if (binds == expr.binds()) return expr;
-    return new Expr.DTExpr(binds, expr.kind());
+    return new Expr.DTExpr(expr.sourcePos(), binds, expr.kind());
   }
 
   @Override default @NotNull Expr visitUniv(@NotNull Expr.UnivExpr expr, P p) {
@@ -54,6 +54,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     var function = expr.function().accept(this, p);
     var arg = expr.argument().map(x -> visitArg(x, p));
     if (function == expr.function() && arg.sameElements(expr.argument(), true)) return expr;
-    return new Expr.AppExpr(function, arg);
+    return new Expr.AppExpr(expr.sourcePos(), function, arg);
   }
 }
