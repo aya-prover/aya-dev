@@ -79,14 +79,16 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
     return subst.isEmpty() || uLevel.closed() && hLevel.closed() ? this : new Sort(uLevel.subst(subst), hLevel.subst(subst));
   }
 
-  private static boolean compareProp(@NotNull Sort sort, LevelEqn.Set equations, Expr expr) {
+  private static boolean compareProp(@NotNull Sort sort, @NotNull LevelEqn.Set equations, Expr expr) {
     if (sort.isProp()) return true;
     if (!LevelEqn.hasHole(sort.hLevel.var) || sort.hLevel.maxAddConstant() > -1) return false;
-    if (equations == null) return true;
     return equations.add(new Level(sort.hLevel.var), new Level(-1), Ordering.Lt, expr);
   }
 
-  public static boolean compare(@NotNull Sort sort1, @NotNull Sort sort2, Ordering cmp, LevelEqn.Set equations, Expr expr) {
+  public static boolean compare(
+    @NotNull Sort sort1, @NotNull Sort sort2, @NotNull Ordering cmp,
+    @NotNull LevelEqn.Set equations, Expr expr
+  ) {
     if (sort1.isProp()) {
       if (cmp == Ordering.Lt || sort2.isProp()) return true;
       return compareProp(sort2, equations, expr);
