@@ -1,12 +1,11 @@
 package org.mzi.core.visitor;
 
+import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Tele;
-
-import java.util.Optional;
 
 /**
  * @author ice1000
@@ -21,7 +20,7 @@ public interface TermFixpoint<P> extends
   }
 
   @Override default @NotNull Tele<Term> visitTyped(Tele.@NotNull TypedTele<Term> typed, P p) {
-    var next = Optional.ofNullable(typed.next()).map(tele -> tele.accept(this, p)).orElse(null);
+    var next = Option.of(typed.next()).map(tele -> tele.accept(this, p)).getOrNull();
     var type = typed.type().accept(this, p);
     if (next == typed.next() && type == typed.type()) return typed;
     return new Tele.TypedTele<>(typed.ref(), type, typed.explicit(), next);

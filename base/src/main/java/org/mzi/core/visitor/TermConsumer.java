@@ -2,12 +2,11 @@ package org.mzi.core.visitor;
 
 import asia.kala.EmptyTuple;
 import asia.kala.Tuple;
+import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Tele;
-
-import java.util.Optional;
 
 public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visitor<Term, P, EmptyTuple> {
   @Override default EmptyTuple visitNamed(Tele.@NotNull NamedTele<Term> named, P p) {
@@ -21,7 +20,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   }
 
   @Override default EmptyTuple visitTyped(Tele.@NotNull TypedTele<Term> typed, P p) {
-    Optional.ofNullable(typed.next()).map(tele -> tele.accept(this, p));
+    Option.of(typed.next()).forEach(tele -> tele.accept(this, p) );
     return typed.type().accept(this, p);
   }
 
