@@ -5,8 +5,8 @@ module org.mzi {
   requires transitive asia.kala.base;
   requires transitive asia.kala.collection;
 
-  exports org.mzi.concrete.term;
   exports org.mzi.concrete.visitor;
+  exports org.mzi.concrete;
   exports org.mzi.core.def;
   exports org.mzi.core.subst;
   exports org.mzi.core.term;

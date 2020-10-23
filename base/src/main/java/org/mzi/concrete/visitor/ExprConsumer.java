@@ -4,7 +4,8 @@ import asia.kala.EmptyTuple;
 import asia.kala.Tuple;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.concrete.term.*;
+import org.mzi.concrete.Expr;
+import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple> {

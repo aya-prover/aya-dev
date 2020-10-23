@@ -2,7 +2,8 @@ package org.mzi.concrete.visitor;
 
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.concrete.term.*;
+import org.mzi.concrete.Expr;
+import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {

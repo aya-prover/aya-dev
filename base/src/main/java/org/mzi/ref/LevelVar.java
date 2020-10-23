@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
-import org.mzi.concrete.term.Expr;
+import org.mzi.concrete.Expr;
 
 public record LevelVar(
   @NotNull String name,

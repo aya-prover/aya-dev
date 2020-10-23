@@ -1,4 +1,4 @@
-package org.mzi.concrete.term;
+package org.mzi.concrete;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;

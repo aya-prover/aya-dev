@@ -1,4 +1,4 @@
-package org.mzi.concrete.term;
+package org.mzi.concrete;
 
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
