@@ -14,6 +14,11 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
     return named.next().accept(this, p);
   }
 
+  @Override
+  default EmptyTuple visitHole(@NotNull HoleTerm holeTerm, P p) {
+    return Tuple.of();
+  }
+
   @Override default EmptyTuple visitTyped(Tele.@NotNull TypedTele<Term> typed, P p) {
     Optional.ofNullable(typed.next()).map(tele -> tele.accept(this, p));
     return typed.type().accept(this, p);

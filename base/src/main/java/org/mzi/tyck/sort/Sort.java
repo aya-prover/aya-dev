@@ -4,7 +4,7 @@ import asia.kala.collection.Seq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 import org.mzi.core.subst.LevelSubst;
 import org.mzi.ref.LevelVar;
 
@@ -64,8 +64,8 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
     return uLevel.var() == LevelVar.UP && uLevel.varOnly() && hLevel.var() == LevelVar.HP && hLevel.varOnly();
   }
 
-  @Override public Level get(@NotNull Ref ref) {
-    return ref == LevelVar.UP ? uLevel : ref == LevelVar.HP ? hLevel : null;
+  @Override public Level get(@NotNull Var var) {
+    return var == LevelVar.UP ? uLevel : var == LevelVar.HP ? hLevel : null;
   }
 
   @Override

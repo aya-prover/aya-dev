@@ -3,14 +3,14 @@ package org.mzi.ref;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 import org.mzi.concrete.term.Expr;
 
 public record LevelVar(
   @NotNull String name,
   @NotNull Kind kind,
   @Nullable LevelHole hole
-) implements Ref {
+) implements Var {
   public LevelVar(@NotNull String name, @NotNull Kind kind) {
     this(name, kind, null);
   }

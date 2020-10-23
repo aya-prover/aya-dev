@@ -2,7 +2,7 @@ package org.mzi.core;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
@@ -59,7 +59,7 @@ public class NormalizeTest {
   @Test
   public void unfoldDef() {
     // (x y : U)
-    @NotNull Map<String, @NotNull Ref> refs = new TreeMap<>();
+    @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
     var def = Lisp.reallyParseDef("id",
       "(y (U) ex null)", "y", "y", refs);
     var term = Lisp.reallyParse("(fncall id kiva)", refs);

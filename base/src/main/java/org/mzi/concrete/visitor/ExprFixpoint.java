@@ -37,7 +37,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   default @NotNull Param visitParam(@NotNull Param param, P p) {
     var type = param.type().accept(this, p);
     if (type == param.type()) return param;
-    else return new Param(param.sourcePos(), param.ref(), type, param.explicit());
+    else return new Param(param.sourcePos(), param.var(), type, param.explicit());
   }
 
   @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {

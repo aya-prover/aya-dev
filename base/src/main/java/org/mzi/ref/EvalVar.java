@@ -1,7 +1,7 @@
 package org.mzi.ref;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 import org.mzi.core.term.Term;
 
 /**
@@ -9,5 +9,5 @@ import org.mzi.core.term.Term;
  *
  * @author ice1000
  */
-public record EvalRef(@NotNull String name, @NotNull Term term) implements Ref {
+public record EvalVar(@NotNull String name, @NotNull Term term) implements Var {
 }

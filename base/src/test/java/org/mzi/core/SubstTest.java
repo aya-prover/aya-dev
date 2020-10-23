@@ -2,7 +2,7 @@ package org.mzi.core;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.core.term.AppTerm;
@@ -31,7 +31,7 @@ public class SubstTest {
 
   @Test
   public void relatedSubst() {
-    @NotNull Map<String, @NotNull Ref> refs = new TreeMap<>();
+    @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
     var term = Lisp.reallyParse("(app tony beta)", refs);
     assertTrue(term instanceof AppTerm);
     assertNotEquals(term, term.subst(new TermSubst(refs.get("beta"), new UnivTerm(Sort.SET0))));

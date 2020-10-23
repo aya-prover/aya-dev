@@ -5,34 +5,34 @@ import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public record LevelEqn<Var extends Ref>(
-  @Nullable Var var1, @Nullable Var var2,
-  int constant, int maxConstant
+public record LevelEqn<V extends Var>(
+  @Nullable V v1, @Nullable V v2,
+  int constant, int max
 ) {
   private static final int INVALID = -114514;
 
-  public LevelEqn(@NotNull LevelEqn<? extends Var> copy) {
-    this(copy.var1, copy.var2, copy.constant, copy.maxConstant);
+  public LevelEqn(@NotNull LevelEqn<? extends V> copy) {
+    this(copy.v1, copy.v2, copy.constant, copy.max);
   }
 
-  @Contract(pure = true) @Override public @Nullable Var var1() {
+  @Contract(pure = true) public @Nullable V v1() {
     assert !isInf();
-    return var1;
+    return v1;
   }
 
-  @Contract(pure = true) @Override public @Nullable Var var2() {
+  @Contract(pure = true) public @Nullable V v2() {
     assert !isInf();
-    return var2;
+    return v2;
   }
 
-  @Contract(pure = true) public @Nullable Var var() {
+  @Contract(pure = true) public @Nullable V var() {
     assert isInf();
-    return var2;
+    return v2;
   }
 
   @Contract(pure = true) public boolean isInf() {
@@ -42,15 +42,15 @@ public record LevelEqn<Var extends Ref>(
   /**
    * A set of level equations.
    *
-   * @param <Var> the level variable stored inside.
+   * @param <V> the level variable stored inside.
    */
-  public record Set<Var extends Ref>(
-    @NotNull Buffer<@NotNull Var> vars,
-    @NotNull Buffer<@NotNull LevelEqn<Var>> eqns
+  public record Set<V extends Var>(
+    @NotNull Buffer<@NotNull V> vars,
+    @NotNull Buffer<@NotNull LevelEqn<V>> eqns
   ) {
     public static final int INF = Integer.MAX_VALUE;
 
-    public void add(@NotNull LevelEqn.Set<Var> other) {
+    public void add(@NotNull LevelEqn.Set<V> other) {
       vars.appendAll(other.vars);
       eqns.appendAll(other.eqns);
     }
@@ -64,8 +64,8 @@ public record LevelEqn<Var extends Ref>(
       return vars.isEmpty() && eqns.isEmpty();
     }
 
-    public @Nullable Seq<LevelEqn<Var>> solve(@NotNull Map<Var, Integer> solution) {
-      Map<Var, Seq<LevelEqn<Var>>> paths = new HashMap<>();
+    public @Nullable Seq<LevelEqn<V>> solve(@NotNull Map<V, Integer> solution) {
+      Map<V, Seq<LevelEqn<V>>> paths = new HashMap<>();
 
       solution.put(null, 0);
       paths.put(null, Buffer.of());
@@ -81,21 +81,21 @@ public record LevelEqn<Var extends Ref>(
             var prev = solution.put(equation.var(), INF);
             if (prev == null || prev != INF) updated = true;
           } else {
-            int a = solution.get(equation.var1());
-            int b = solution.get(equation.var2());
-            int m = equation.maxConstant;
+            int a = solution.get(equation.v1());
+            int b = solution.get(equation.v2());
+            int m = equation.max;
             if (b != INF && (a == INF || (m == INVALID || a + m < 0) && b > a + equation.constant)) {
               if (a != INF) {
-                var newPath = Buffer.from(paths.get(equation.var1()));
+                var newPath = Buffer.from(paths.get(equation.v1()));
                 newPath.append(equation);
-                paths.put(equation.var2(), newPath);
+                paths.put(equation.v2(), newPath);
               }
-              if (i == 0 || equation.var2() == null && a != INF) {
+              if (i == 0 || equation.v2() == null && a != INF) {
                 solution.remove(null);
-                return paths.get(equation.var2());
+                return paths.get(equation.v2());
               }
 
-              solution.put(equation.var2(), a == INF ? INF : a + equation.constant);
+              solution.put(equation.v2(), a == INF ? INF : a + equation.constant);
               updated = true;
             }
           }

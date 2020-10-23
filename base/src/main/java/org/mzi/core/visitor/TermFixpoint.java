@@ -27,6 +27,10 @@ public interface TermFixpoint<P> extends
     return new Tele.TypedTele<>(typed.ref(), type, typed.explicit(), next);
   }
 
+  @Override default @NotNull Term visitHole(@NotNull HoleTerm holeTerm, P p) {
+    return holeTerm;
+  }
+
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
     var telescope = term.tele().accept(this, p);
     var body = term.body().accept(this, p);

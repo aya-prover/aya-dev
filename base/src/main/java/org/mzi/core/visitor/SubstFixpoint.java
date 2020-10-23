@@ -28,6 +28,6 @@ public class SubstFixpoint implements TermFixpoint<EmptyTuple> {
 
   @Override
   public @NotNull Term visitRef(@NotNull RefTerm term, EmptyTuple unused) {
-    return termSubst.get(term.ref(), term);
+    return termSubst.get(term.var(), term);
   }
 }

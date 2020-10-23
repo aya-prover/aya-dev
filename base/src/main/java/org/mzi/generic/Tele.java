@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Bind;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 
 /**
  * Similar to Arend <code>DependentLink</code>.
@@ -61,7 +61,7 @@ public interface Tele<Term> extends Bind<Term> {
   }
 
   record TypedTele<Term>(
-    @NotNull Ref ref,
+    @NotNull Var ref,
     @NotNull Term type,
     boolean explicit,
     @Nullable Tele<Term> next
@@ -75,7 +75,7 @@ public interface Tele<Term> extends Bind<Term> {
    * @author ice1000
    */
   record NamedTele<Term>(
-    @NotNull Ref ref,
+    @NotNull Var ref,
     @NotNull Tele<Term> next
   ) implements Tele<Term> {
     @Contract(pure = true) @Override public boolean explicit() {

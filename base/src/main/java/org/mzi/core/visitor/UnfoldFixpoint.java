@@ -6,7 +6,7 @@ import asia.kala.collection.Set;
 import asia.kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.subst.TermSubst;
 import org.mzi.core.term.AppTerm;
@@ -45,8 +45,8 @@ public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
    * @author ice1000
    */
   record Tracked(
-    @NotNull Set<@NotNull Ref> unfolding,
-    @NotNull MutableSet<@NotNull Ref> unfolded
+    @NotNull Set<@NotNull Var> unfolding,
+    @NotNull MutableSet<@NotNull Var> unfolded
   ) implements UnfoldFixpoint<EmptyTuple> {
     @Override
     public @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, EmptyTuple emptyTuple) {

@@ -4,7 +4,7 @@ import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 import org.mzi.generic.Arg;
 import org.mzi.generic.DTKind;
 
@@ -105,7 +105,7 @@ public sealed interface Expr permits
    */
   record RefExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Ref resolvedRef
+    @NotNull Var resolvedVar
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitRef(this, p);

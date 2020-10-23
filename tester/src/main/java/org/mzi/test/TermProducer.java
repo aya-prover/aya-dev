@@ -7,7 +7,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
+import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.generic.Tele;
 import org.mzi.core.term.*;
@@ -16,8 +17,7 @@ import org.mzi.generic.DTKind;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispLexer;
 import org.mzi.parser.LispParser;
-import org.mzi.ref.DefRef;
-import org.mzi.ref.LocalRef;
+import org.mzi.ref.DefVar;
 
 import java.util.Map;
 import java.util.function.BooleanSupplier;
@@ -28,9 +28,9 @@ import java.util.function.BooleanSupplier;
 @TestOnly
 @ApiStatus.Internal
 public class TermProducer extends LispBaseVisitor<Term> {
-  private final @NotNull Map<String, @NotNull Ref> refs;
+  private final @NotNull Map<String, @NotNull Var> refs;
 
-  public TermProducer(@NotNull Map<String, @NotNull Ref> refs) {
+  public TermProducer(@NotNull Map<String, @NotNull Var> refs) {
     this.refs = refs;
   }
 
@@ -42,11 +42,11 @@ public class TermProducer extends LispBaseVisitor<Term> {
     return new LispLexer(CharStreams.fromString(text));
   }
 
-  static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Ref> refs) {
+  static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
     return parser(text).expr().accept(new TermProducer(refs));
   }
 
-  static @Nullable Tele<Term> parseTele(@NotNull String text, @NotNull Map<String, @NotNull Ref> refs) {
+  static @Nullable Tele<Term> parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
     return new TermProducer(refs).exprToBind(parser(text).expr());
   }
 
@@ -60,7 +60,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
       case "U" -> new UnivTerm(Sort.SET0);
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), true));
       case "fncall" -> new AppTerm.FnCall(
-        (DefRef) ((RefTerm) exprs.get(0).accept(this)).ref(),
+        (DefVar) ((RefTerm) exprs.get(0).accept(this)).var(),
         exprs.subList(1, exprs.size())
           .stream()
           .map(c -> new Arg<>(c.accept(this), true))
@@ -113,7 +113,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
     throw new IllegalArgumentException(ctx.getText());
   }
 
-  private @NotNull Ref ref(String ident) {
-    return refs.computeIfAbsent(ident, LocalRef::new);
+  private @NotNull Var ref(String ident) {
+    return refs.computeIfAbsent(ident, LocalVar::new);
   }
 }

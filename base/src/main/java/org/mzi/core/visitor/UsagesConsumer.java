@@ -3,16 +3,16 @@ package org.mzi.core.visitor;
 import asia.kala.EmptyTuple;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.api.ref.Ref;
+import org.mzi.api.ref.Var;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.RefTerm;
 
 public final class UsagesConsumer implements TermConsumer<EmptyTuple> {
-  public final @NotNull Ref ref;
+  public final @NotNull Var var;
   private int usageCount = 0;
 
-  public UsagesConsumer(@NotNull Ref ref) {
-    this.ref = ref;
+  public UsagesConsumer(@NotNull Var var) {
+    this.var = var;
   }
 
   @Contract(pure = true) public int usageCount() {
@@ -20,7 +20,7 @@ public final class UsagesConsumer implements TermConsumer<EmptyTuple> {
   }
 
   @Override public EmptyTuple visitRef(@NotNull RefTerm term, EmptyTuple emptyTuple) {
-    if (ref == term.ref()) usageCount++;
+    if (var == term.var()) usageCount++;
     return emptyTuple;
   }
 

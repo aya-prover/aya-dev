@@ -3,7 +3,7 @@ package org.mzi.core.visitor;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
-import org.mzi.ref.EvalRef;
+import org.mzi.ref.EvalVar;
 
 public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
   public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
@@ -20,7 +20,7 @@ public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
 
   @Override
   public @NotNull Term visitRef(@NotNull RefTerm term, NormalizeMode mode) {
-    if (!(term.ref() instanceof EvalRef eval)) return term;
+    if (!(term.var() instanceof EvalVar eval)) return term;
     return eval.term().accept(this, mode);
   }
 
