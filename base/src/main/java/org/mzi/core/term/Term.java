@@ -52,6 +52,6 @@ public interface Term extends CoreTerm {
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p, Q q);
     R visitTup(@NotNull TupTerm term, P p, Q q);
     R visitProj(@NotNull ProjTerm term, P p, Q q);
-    R visitHole(@NotNull HoleTerm holeTerm, P p, Q q);
+    R visitHole(@NotNull HoleTerm term, P p, Q q);
   }
 }
