@@ -46,8 +46,9 @@ public interface ExprFixpoint<P> extends
 
   @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {
     var binds = expr.tele().accept(this, p);
-    if (binds == expr.tele()) return expr;
-    return new Expr.DTExpr(expr.sourcePos(), binds, expr.kind());
+    var last = expr.last().accept(this, p);
+    if (binds == expr.tele() && last == expr.last()) return expr;
+    return new Expr.DTExpr(expr.sourcePos(), binds, last, expr.kind());
   }
 
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {

@@ -49,7 +49,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit>, Tele.Visitor<Exp
 
   @Override default Unit visitDT(Expr.@NotNull DTExpr expr, P p) {
     expr.tele().accept(this, p);
-    return Unit.unit();
+    return expr.last().accept(this, p);
   }
 
   @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {

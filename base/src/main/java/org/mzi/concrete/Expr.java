@@ -86,6 +86,7 @@ public sealed interface Expr permits
   record DTExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Tele<Expr> tele,
+    @NotNull Expr last,
     @NotNull DTKind kind
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
