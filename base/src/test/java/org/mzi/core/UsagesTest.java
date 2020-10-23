@@ -1,6 +1,6 @@
 package org.mzi.core;
 
-import asia.kala.Tuple;
+import asia.kala.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.ref.Var;
@@ -18,7 +18,7 @@ public class UsagesTest {
     @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
     var term = Lisp.reallyParse("(app glavo glavo)", refs);
     var consumer = new UsagesConsumer(refs.get("glavo"));
-    term.accept(consumer, Tuple.empty());
+    term.accept(consumer, Unit.unit());
     assertEquals(2, consumer.usageCount());
   }
 
@@ -27,7 +27,7 @@ public class UsagesTest {
     @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
     var term = Lisp.reallyParse("(app xy r)", refs);
     var consumer = new UsagesConsumer(refs.get("a"));
-    term.accept(consumer, Tuple.empty());
+    term.accept(consumer, Unit.unit());
     assertEquals(0, consumer.usageCount());
   }
 }

@@ -1,6 +1,6 @@
 package org.mzi.core.visitor;
 
-import asia.kala.EmptyTuple;
+import asia.kala.Unit;
 import asia.kala.collection.Seq;
 import asia.kala.collection.Set;
 import asia.kala.collection.mutable.MutableSet;
@@ -47,9 +47,9 @@ public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
   record Tracked(
     @NotNull Set<@NotNull Var> unfolding,
     @NotNull MutableSet<@NotNull Var> unfolded
-  ) implements UnfoldFixpoint<EmptyTuple> {
+  ) implements UnfoldFixpoint<Unit> {
     @Override
-    public @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, EmptyTuple emptyTuple) {
+    public @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, Unit emptyTuple) {
       if (!unfolding.contains(fnCall.fnRef())) return fnCall;
       unfolded.add(fnCall.fnRef());
       return UnfoldFixpoint.super.visitFnCall(fnCall, emptyTuple);

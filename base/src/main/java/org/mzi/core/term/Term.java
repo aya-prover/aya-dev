@@ -1,6 +1,6 @@
 package org.mzi.core.term;
 
-import asia.kala.EmptyTuple;
+import asia.kala.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.core.term.CoreTerm;
@@ -23,7 +23,7 @@ public interface Term extends CoreTerm {
   }
 
   default @NotNull Term subst(@NotNull TermSubst subst, @NotNull LevelSubst levelSubst) {
-    return accept(new SubstFixpoint(subst, levelSubst), EmptyTuple.INSTANCE);
+    return accept(new SubstFixpoint(subst, levelSubst), Unit.INSTANCE);
   }
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
