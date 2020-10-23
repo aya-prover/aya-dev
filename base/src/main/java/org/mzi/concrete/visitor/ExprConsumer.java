@@ -8,15 +8,15 @@ import org.mzi.concrete.term.*;
 import org.mzi.generic.Arg;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple> {
-  @Override default EmptyTuple visitRef(@NotNull RefExpr refExpr, P p) {
+  @Override default EmptyTuple visitRef(@NotNull Expr.RefExpr refExpr, P p) {
     return Tuple.of();
   }
 
-  @Override default EmptyTuple visitUnresolved(@NotNull UnresolvedExpr expr, P p) {
+  @Override default EmptyTuple visitUnresolved(@NotNull Expr.UnresolvedExpr expr, P p) {
     return Tuple.of();
   }
 
-  @Override default EmptyTuple visitUniv(@NotNull UnivExpr expr, P p) {
+  @Override default EmptyTuple visitUniv(@NotNull Expr.UnivExpr expr, P p) {
     return Tuple.of();
   }
 
@@ -24,7 +24,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple> {
     arg.term().accept(this, p);
   }
 
-  @Override default EmptyTuple visitApp(@NotNull AppExpr expr, P p) {
+  @Override default EmptyTuple visitApp(@NotNull Expr.AppExpr expr, P p) {
     expr.argument().forEach(arg -> visitArg(arg, p));
     return expr.function().accept(this, p);
   }
@@ -33,12 +33,12 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple> {
     param.type().accept(this, p);
   }
 
-  @Override default EmptyTuple visitDT(@NotNull DTExpr expr, P p) {
+  @Override default EmptyTuple visitDT(@NotNull Expr.DTExpr expr, P p) {
     visitBinds(p, expr.binds());
     return Tuple.of();
   }
 
-  @Override default EmptyTuple visitLam(@NotNull LamExpr expr, P p) {
+  @Override default EmptyTuple visitLam(@NotNull Expr.LamExpr expr, P p) {
     visitBinds(p, expr.binds());
     return expr.body().accept(this, p);
   }
