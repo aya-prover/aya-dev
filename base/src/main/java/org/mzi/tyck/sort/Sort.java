@@ -20,6 +20,7 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
   public static final /*@NotNull*/ Sort PROP = new Sort(0, -1);
   public static final /*@NotNull*/ Sort SET0 = hSet(new Level(0));
   public static final /*@NotNull*/ Sort STD = new Sort(new Level(LevelVar.UP), new Level(LevelVar.HP));
+  public static final /*@NotNull*/ Sort OMEGA = new Sort(Level.INF, Level.INF);
 
   public static @NotNull Sort hSet(@NotNull Level uLevel) {
     return new Sort(uLevel, new Level(0));
