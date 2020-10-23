@@ -50,8 +50,9 @@ public interface TermFixpoint<P> extends
 
   @Override default @NotNull Term visitDT(@NotNull DT term, P p) {
     var telescope = term.telescope().accept(this, p);
-    if (telescope == term.telescope()) return term;
-    return new DT(telescope, term.kind());
+    var last = term.last().accept(this, p);
+    if (telescope == term.telescope() && last == term.last()) return term;
+    return new DT(telescope, last, term.kind());
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {

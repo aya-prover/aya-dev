@@ -34,7 +34,8 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<Ter
   }
 
   @Override default Unit visitDT(@NotNull DT term, P p) {
-    return term.telescope().accept(this, p);
+    term.telescope().accept(this, p);
+    return term.last().accept(this, p);
   }
 
   @Override default Unit visitRef(@NotNull RefTerm term, P p) {

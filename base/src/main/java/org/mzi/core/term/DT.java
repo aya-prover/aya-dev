@@ -12,6 +12,7 @@ import org.mzi.util.Decision;
  */
 public record DT(
   @NotNull Tele<Term> telescope,
+  @NotNull Term last,
   @NotNull DTKind kind
 ) implements Term {
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
