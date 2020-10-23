@@ -6,15 +6,21 @@ import org.mzi.concrete.term.*;
 import org.mzi.generic.Arg;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
-  @Override default @NotNull Expr visitRef(@NotNull Expr.RefExpr refExpr, P p) {
+  @Override default @NotNull Expr visitRef(Expr.@NotNull RefExpr refExpr, P p) {
     return refExpr;
   }
 
-  @Override default @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, P p) {
+  @Override default @NotNull Expr visitUnresolved(Expr.@NotNull UnresolvedExpr expr, P p) {
     return expr;
   }
 
-  @Override default @NotNull Expr visitLam(@NotNull Expr.LamExpr expr, P p) {
+  @Override default @NotNull Expr visitHole(Expr.@NotNull HoleExpr expr, P p) {
+    var h = expr.holeExpr() != null ? expr.holeExpr().accept(this, p) : null;
+    if (h == expr.holeExpr()) return expr;
+    return new Expr.HoleExpr(expr.sourcePos(), expr.name(), h);
+  }
+
+  @Override default @NotNull Expr visitLam(Expr.@NotNull LamExpr expr, P p) {
     var binds = visitParams(expr.binds(), p);
     var body = expr.body().accept(this, p);
     if (binds == expr.binds() && body == expr.body()) return expr;
@@ -34,13 +40,13 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     else return new Param(param.sourcePos(), param.ref(), type, param.explicit());
   }
 
-  @Override default @NotNull Expr visitDT(@NotNull Expr.DTExpr expr, P p) {
+  @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {
     var binds = visitParams(expr.binds(), p);
     if (binds == expr.binds()) return expr;
     return new Expr.DTExpr(expr.sourcePos(), binds, expr.kind());
   }
 
-  @Override default @NotNull Expr visitUniv(@NotNull Expr.UnivExpr expr, P p) {
+  @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
     return expr;
   }
 
@@ -50,7 +56,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Arg<>(term, arg.explicit());
   }
 
-  @Override default @NotNull Expr visitApp(@NotNull Expr.AppExpr expr, P p) {
+  @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
     var arg = expr.argument().map(x -> visitArg(x, p));
     if (function == expr.function() && arg.sameElements(expr.argument(), true)) return expr;

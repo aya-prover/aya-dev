@@ -2,6 +2,7 @@ package org.mzi.concrete.term;
 
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Ref;
 import org.mzi.generic.Arg;
@@ -14,6 +15,7 @@ public sealed interface Expr permits
   Expr.AppExpr,
   Expr.DTExpr,
   Expr.UnresolvedExpr,
+  Expr.HoleExpr,
   Expr.LamExpr,
   Expr.RefExpr,
   Expr.UnivExpr {
@@ -28,6 +30,7 @@ public sealed interface Expr permits
     R visitDT(@NotNull DTExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
+    R visitHole(@NotNull HoleExpr holeExpr, P p);
   }
 
   /**
@@ -40,6 +43,20 @@ public sealed interface Expr permits
     @Override
     public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnresolved(this, p);
+    }
+  }
+
+  /**
+   * @author ice1000
+   */
+  record HoleExpr(
+    @NotNull SourcePos sourcePos,
+    @Nullable String name,
+    @Nullable Expr holeExpr
+  ) implements Expr {
+    @Override
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitHole(this, p);
     }
   }
 
