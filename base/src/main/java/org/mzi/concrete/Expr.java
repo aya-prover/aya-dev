@@ -7,6 +7,7 @@ import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.generic.Arg;
 import org.mzi.generic.DTKind;
+import org.mzi.generic.Tele;
 
 /**
  * @author re-xyr
@@ -79,7 +80,7 @@ public sealed interface Expr permits
    */
   record DTExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<@NotNull Param> binds,
+    @NotNull Tele<Expr> tele,
     @NotNull DTKind kind
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -92,7 +93,7 @@ public sealed interface Expr permits
    */
   record LamExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<@NotNull Param> binds,
+    @NotNull Tele<Expr> tele,
     @NotNull Expr body
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
