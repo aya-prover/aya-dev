@@ -19,7 +19,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple> {
 
   @Override
   default EmptyTuple visitHole(Expr.@NotNull HoleExpr holeExpr, P p) {
-    var expr = holeExpr.holeExpr();
+    var expr = holeExpr.filling();
     if (expr != null) expr.accept(this, p);
     return Tuple.empty();
   }

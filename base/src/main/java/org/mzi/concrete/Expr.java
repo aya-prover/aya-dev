@@ -52,7 +52,7 @@ public sealed interface Expr permits
   record HoleExpr(
     @NotNull SourcePos sourcePos,
     @Nullable String name,
-    @Nullable Expr holeExpr
+    @Nullable Expr filling
   ) implements Expr {
     @Override
     public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
