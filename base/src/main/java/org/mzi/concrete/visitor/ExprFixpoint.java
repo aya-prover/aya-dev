@@ -44,12 +44,6 @@ public interface ExprFixpoint<P> extends
     return new Expr.LamExpr(expr.sourcePos(), binds, body);
   }
 
-  default @NotNull Param visitParam(@NotNull Param param, P p) {
-    var type = param.type().accept(this, p);
-    if (type == param.type()) return param;
-    else return new Param(param.sourcePos(), param.var(), type, param.explicit());
-  }
-
   @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {
     var binds = expr.tele().accept(this, p);
     if (binds == expr.tele()) return expr;

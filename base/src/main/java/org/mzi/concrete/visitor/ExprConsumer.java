@@ -47,10 +47,6 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple>, Tele.Visit
     return expr.function().accept(this, p);
   }
 
-  default void visitParam(@NotNull Param param, P p) {
-    param.type().accept(this, p);
-  }
-
   @Override default EmptyTuple visitDT(Expr.@NotNull DTExpr expr, P p) {
     expr.tele().accept(this, p);
     return Tuple.empty();
