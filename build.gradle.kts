@@ -22,25 +22,32 @@ protobufVersion = "3.13.0"
 antlrVersion = "4.8"
 kalaVersion = "0.6.2"
 
-val nonJavaProjects = listOf("docs")
 allprojects {
   group = "org.mzi"
   version = "0.1"
+}
 
-  if (name in nonJavaProjects) return@allprojects
+val nonJavaProjects = listOf("docs")
+subprojects {
+  if (name in nonJavaProjects) return@subprojects
+
+  apply {
+    plugin("java")
+    plugin("idea")
+    plugin("org.javamodularity.moduleplugin")
+    plugin("maven-publish")
+    plugin("java-library")
+  }
 
   repositories {
     jcenter()
     mavenCentral()
   }
 
-  apply {
-    plugin("java")
-    plugin("idea")
-    plugin("org.javamodularity.moduleplugin")
-  }
-
   java {
+    withSourcesJar()
+    // Enable on-demand
+    // withJavadocJar()
     sourceCompatibility = JavaVersion.VERSION_15
     targetCompatibility = JavaVersion.VERSION_15
   }
@@ -68,21 +75,6 @@ allprojects {
   tasks.withType<JavaExec>().configureEach {
     jvmArgs = listOf("--enable-preview")
     enableAssertions = true
-  }
-}
-
-subprojects {
-  if (name in nonJavaProjects) return@subprojects
-
-  apply {
-    plugin("maven-publish")
-    plugin("java-library")
-  }
-
-  java {
-    withSourcesJar()
-    // Enable on-demand
-    // withJavadocJar()
   }
 
   publishing {
