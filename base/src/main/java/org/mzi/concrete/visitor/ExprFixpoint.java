@@ -72,4 +72,16 @@ public interface ExprFixpoint<P> extends
     if (function == expr.function() && arg.sameElements(expr.argument(), true)) return expr;
     return new Expr.AppExpr(expr.sourcePos(), function, arg);
   }
+
+  @Override default @NotNull Expr visitTup(Expr.@NotNull TupExpr expr, P p) {
+    var items = expr.items().map(item -> item.accept(this, p));
+    if (items.sameElements(expr.items(), true)) return expr;
+    return new Expr.TupExpr(expr.sourcePos(), items);
+  }
+
+  @Override default @NotNull Expr visitProj(Expr.@NotNull ProjExpr expr, P p) {
+    var tup = expr.tup().accept(this, p);
+    if (tup == expr.tup()) return expr;
+    return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix());
+  }
 }

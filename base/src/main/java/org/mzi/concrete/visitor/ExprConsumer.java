@@ -60,4 +60,13 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple>, Tele.Visit
     expr.tele().accept(this, p);
     return expr.body().accept(this, p);
   }
+
+  @Override default EmptyTuple visitTup(Expr.@NotNull TupExpr expr, P p) {
+    expr.items().forEach(item -> item.accept(this, p));
+    return Tuple.empty();
+  }
+
+  @Override default EmptyTuple visitProj(Expr.@NotNull ProjExpr expr, P p) {
+    return expr.tup().accept(this, p);
+  }
 }

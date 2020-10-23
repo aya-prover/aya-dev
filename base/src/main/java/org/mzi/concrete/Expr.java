@@ -1,6 +1,7 @@
 package org.mzi.concrete;
 
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.collection.immutable.ImmutableVector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
@@ -19,7 +20,9 @@ public sealed interface Expr permits
   Expr.HoleExpr,
   Expr.LamExpr,
   Expr.RefExpr,
-  Expr.UnivExpr {
+  Expr.UnivExpr,
+  Expr.TupExpr,
+  Expr.ProjExpr {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   @NotNull SourcePos sourcePos();
@@ -32,6 +35,8 @@ public sealed interface Expr permits
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
+    R visitTup(@NotNull TupExpr expr, P p);
+    R visitProj(@NotNull ProjExpr expr, P p);
   }
 
   /**
@@ -122,6 +127,31 @@ public sealed interface Expr permits
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
+    }
+  }
+
+  /**
+   * @author re-xyr
+   */
+  record TupExpr(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableVector<Expr> items
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitTup(this, p);
+    }
+  }
+
+  /**
+   * @author re-xyr
+   */
+  record ProjExpr(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr tup,
+    @NotNull int ix
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitProj(this, p);
     }
   }
 }
