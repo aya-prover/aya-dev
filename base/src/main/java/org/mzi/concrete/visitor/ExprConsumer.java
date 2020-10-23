@@ -9,7 +9,7 @@ import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple> {
-  @Override default EmptyTuple visitRef(Expr.@NotNull RefExpr refExpr, P p) {
+  @Override default EmptyTuple visitRef(Expr.@NotNull RefExpr expr, P p) {
     return Tuple.empty();
   }
 

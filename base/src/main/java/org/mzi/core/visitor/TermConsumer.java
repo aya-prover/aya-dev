@@ -14,8 +14,8 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   }
 
   @Override
-  default EmptyTuple visitHole(@NotNull HoleTerm holeTerm, P p) {
-    holeTerm.solution().forEach(sol -> sol.accept(this, p));
+  default EmptyTuple visitHole(@NotNull HoleTerm term, P p) {
+    term.solution().forEach(sol -> sol.accept(this, p));
     return Tuple.empty();
   }
 

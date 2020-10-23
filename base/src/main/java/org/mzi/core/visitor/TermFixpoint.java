@@ -26,13 +26,13 @@ public interface TermFixpoint<P> extends
     return new Tele.TypedTele<>(typed.ref(), type, typed.explicit(), next);
   }
 
-  @Override default @NotNull Term visitHole(@NotNull HoleTerm holeTerm, P p) {
-    var sol = holeTerm.solution().getOrNull();
+  @Override default @NotNull Term visitHole(@NotNull HoleTerm term, P p) {
+    var sol = term.solution().getOrNull();
     if (sol != null) {
       var newSol = sol.accept(this, p);
-      if (newSol != sol) return new HoleTerm(newSol, holeTerm.var());
+      if (newSol != sol) return new HoleTerm(newSol, term.var());
     }
-    return holeTerm;
+    return term;
   }
 
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {

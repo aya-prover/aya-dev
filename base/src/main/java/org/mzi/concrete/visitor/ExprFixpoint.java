@@ -7,8 +7,8 @@ import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
-  @Override default @NotNull Expr visitRef(Expr.@NotNull RefExpr refExpr, P p) {
-    return refExpr;
+  @Override default @NotNull Expr visitRef(Expr.@NotNull RefExpr expr, P p) {
+    return expr;
   }
 
   @Override default @NotNull Expr visitUnresolved(Expr.@NotNull UnresolvedExpr expr, P p) {

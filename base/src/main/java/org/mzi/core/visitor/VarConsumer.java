@@ -17,8 +17,8 @@ public interface VarConsumer extends TermConsumer<EmptyTuple> {
     return emptyTuple;
   }
 
-  default EmptyTuple visitHole(@NotNull HoleTerm holeTerm, EmptyTuple emptyTuple) {
-    visitVar(holeTerm.var());
+  default EmptyTuple visitHole(@NotNull HoleTerm term, EmptyTuple emptyTuple) {
+    visitVar(term.var());
     return emptyTuple;
   }
 

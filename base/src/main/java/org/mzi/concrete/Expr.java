@@ -24,13 +24,13 @@ public sealed interface Expr permits
   @NotNull SourcePos sourcePos();
 
   interface Visitor<P, R> {
-    R visitRef(@NotNull RefExpr refExpr, P p);
+    R visitRef(@NotNull RefExpr expr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
     R visitDT(@NotNull DTExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
-    R visitHole(@NotNull HoleExpr holeExpr, P p);
+    R visitHole(@NotNull HoleExpr expr, P p);
   }
 
   /**
