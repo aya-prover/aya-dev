@@ -18,7 +18,7 @@ public final class StripFixpoint implements TermFixpoint<EmptyTuple> {
   }
 
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull HoleTerm holeTerm, EmptyTuple emptyTuple) {
-    var value = holeTerm.solution().value;
+    var value = holeTerm.solution().get();
     assert value != null;
     return value;
   }
