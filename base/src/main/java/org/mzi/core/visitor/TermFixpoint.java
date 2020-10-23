@@ -28,6 +28,11 @@ public interface TermFixpoint<P> extends
   }
 
   @Override default @NotNull Term visitHole(@NotNull HoleTerm holeTerm, P p) {
+    var sol = holeTerm.solution().value;
+    if (sol != null) {
+      var newSol = sol.accept(this, p);
+      if (newSol != sol) return new HoleTerm(newSol, holeTerm.var());
+    }
     return holeTerm;
   }
 

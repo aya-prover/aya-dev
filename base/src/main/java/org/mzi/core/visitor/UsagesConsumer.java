@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
 import org.mzi.core.term.AppTerm;
+import org.mzi.core.term.HoleTerm;
 import org.mzi.core.term.RefTerm;
 
 public final class UsagesConsumer implements TermConsumer<EmptyTuple> {
@@ -19,12 +20,22 @@ public final class UsagesConsumer implements TermConsumer<EmptyTuple> {
     return usageCount;
   }
 
+  @Contract(mutates = "this") private void visitVar(Var usage) {
+    if (var == usage) usageCount++;
+  }
+
   @Override public EmptyTuple visitRef(@NotNull RefTerm term, EmptyTuple emptyTuple) {
-    if (var == term.var()) usageCount++;
+    visitVar(term.var());
+    return emptyTuple;
+  }
+
+  @Override public EmptyTuple visitHole(@NotNull HoleTerm holeTerm, EmptyTuple emptyTuple) {
+    visitVar(holeTerm.var());
     return emptyTuple;
   }
 
   @Override public EmptyTuple visitFnCall(AppTerm.@NotNull FnCall fnCall, EmptyTuple emptyTuple) {
+    visitVar(fnCall.fnRef());
     return emptyTuple;
   }
 }
