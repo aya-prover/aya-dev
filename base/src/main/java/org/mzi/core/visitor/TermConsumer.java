@@ -17,7 +17,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   @Override
   default EmptyTuple visitHole(@NotNull HoleTerm holeTerm, P p) {
     holeTerm.solution().forEach(sol -> sol.accept(this, p));
-    return Tuple.of();
+    return Tuple.empty();
   }
 
   @Override default EmptyTuple visitTyped(Tele.@NotNull TypedTele<Term> typed, P p) {
@@ -31,7 +31,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   }
 
   @Override default EmptyTuple visitUniv(@NotNull UnivTerm term, P p) {
-    return Tuple.of();
+    return Tuple.empty();
   }
 
   @Override default EmptyTuple visitDT(@NotNull DT term, P p) {
@@ -39,7 +39,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, EmptyTuple>, Tele.Visit
   }
 
   @Override default EmptyTuple visitRef(@NotNull RefTerm term, P p) {
-    return Tuple.of();
+    return Tuple.empty();
   }
 
   default void visitArg(@NotNull Arg<Term> arg, P p) {

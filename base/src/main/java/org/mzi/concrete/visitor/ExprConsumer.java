@@ -10,22 +10,22 @@ import org.mzi.generic.Arg;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple> {
   @Override default EmptyTuple visitRef(Expr.@NotNull RefExpr refExpr, P p) {
-    return Tuple.of();
+    return Tuple.empty();
   }
 
   @Override default EmptyTuple visitUnresolved(Expr.@NotNull UnresolvedExpr expr, P p) {
-    return Tuple.of();
+    return Tuple.empty();
   }
 
   @Override
   default EmptyTuple visitHole(Expr.@NotNull HoleExpr holeExpr, P p) {
     var expr = holeExpr.holeExpr();
     if (expr != null) expr.accept(this, p);
-    return Tuple.of();
+    return Tuple.empty();
   }
 
   @Override default EmptyTuple visitUniv(Expr.@NotNull UnivExpr expr, P p) {
-    return Tuple.of();
+    return Tuple.empty();
   }
 
   default void visitArg(@NotNull Arg<Expr> arg, P p) {
@@ -43,7 +43,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, EmptyTuple> {
 
   @Override default EmptyTuple visitDT(Expr.@NotNull DTExpr expr, P p) {
     visitBinds(p, expr.binds());
-    return Tuple.of();
+    return Tuple.empty();
   }
 
   @Override default EmptyTuple visitLam(Expr.@NotNull LamExpr expr, P p) {
