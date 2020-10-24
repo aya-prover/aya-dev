@@ -5,6 +5,7 @@ package org.mzi.core.term;
 import asia.kala.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.subst.LevelSubst;
@@ -31,6 +32,21 @@ public interface Term extends CoreTerm {
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
     return accept(NormalizeFixpoint.INSTANCE, mode);
+  }
+
+  default @Nullable Term dropTele(int n) {
+    if (n == 0) return this;
+    var term = this;
+    while (term instanceof DT dt && dt.kind().function) {
+      var tele = dt.telescope();
+      while (n > 0 && tele.next() != null) {
+        tele = tele.next();
+        n--;
+      }
+      if (n == 0) return tele.next() != null ? new DT(tele.next(), dt.last(), dt.kind()) : dt.last();
+      term = dt.last().normalize(NormalizeMode.WHNF);
+    }
+    return null;
   }
 
   interface Visitor<P, R> {

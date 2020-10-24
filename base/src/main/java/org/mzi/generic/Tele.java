@@ -2,7 +2,9 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.generic;
 
-import asia.kala.PrimitiveTuples;
+import asia.kala.PrimitiveTuples.IntObjTuple2;
+import asia.kala.Tuple;
+import asia.kala.Tuple2;
 import asia.kala.collection.Seq;
 import asia.kala.function.IndexedConsumer;
 import org.jetbrains.annotations.Contract;
@@ -11,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
+
+import java.util.function.BiConsumer;
 
 /**
  * Similar to Arend <code>DependentLink</code>.
@@ -28,7 +32,7 @@ public interface Tele<Term> extends Bind<Term> {
 
   <P, R> R accept(@NotNull Tele.Visitor<Term, P, R> visitor, P p);
 
-  default PrimitiveTuples.@NotNull IntObjTuple2<@NotNull Tele<Term>>
+  default @NotNull IntObjTuple2<@NotNull Tele<Term>>
   forEach(@NotNull IndexedConsumer<@NotNull Tele<Term>> consumer) {
     var tele = this;
     var i = 0;
@@ -37,7 +41,24 @@ public interface Tele<Term> extends Bind<Term> {
       if (tele.next() == null) break;
       else tele = tele.next();
     }
-    return new PrimitiveTuples.IntObjTuple2<>(i, tele);
+    return new IntObjTuple2<>(i, tele);
+  }
+
+  /**
+   * @param <T>      term or expr
+   * @param consumer that traverses the telescopes
+   * @return a tuple containing the lhs and rhs left.
+   */
+  static @NotNull <T> Tuple2<@Nullable Tele<T>, @Nullable Tele<T>> biForEach(
+    @NotNull Tele<T> lhs, @NotNull Tele<T> rhs,
+    @NotNull BiConsumer<@NotNull Tele<T>, @NotNull Tele<T>> consumer
+  ) {
+    while (lhs != null && rhs != null) {
+      consumer.accept(lhs, rhs);
+      lhs = lhs.next();
+      rhs = rhs.next();
+    }
+    return Tuple.of(lhs, rhs);
   }
 
   default @NotNull Tele<Term> last() {

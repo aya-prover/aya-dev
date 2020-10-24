@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.*;
+import org.mzi.generic.Arg;
+import org.mzi.generic.Tele;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Ordering;
@@ -50,6 +52,35 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (!(preRhs instanceof UnivTerm rhs)) return false;
     return Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
+  }
+
+  @Override
+  public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (!(preRhs instanceof LamTerm rhs)) return false;
+    return visitLam(lhs, rhs, type, false);
+  }
+
+  private boolean visitLam(@NotNull LamTerm lhs, @NotNull LamTerm rhs, @Nullable Term type, boolean order) {
+    var params = Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) ->
+      varSubst.put((order ? r : l).ref(), (order ? l : r).ref()));
+    var lBody = lhs.body();
+    var rBody = rhs.body();
+    var lTele = params._1;
+    while (lTele != null) {
+      lBody = AppTerm.make(lBody, new Arg<>(new RefTerm(lTele.ref()), lTele.explicit()));
+      lTele = lTele.next();
+    }
+    var rTele = params._2;
+    while (rTele != null) {
+      rBody = AppTerm.make(rBody, new Arg<>(new RefTerm(rTele.ref()), rTele.explicit()));
+      rTele = rTele.next();
+    }
+    // TODO[ice]: maybe we can optimize this computation? We've already traversed lhs.tele and rhs.tele
+    if (type != null) type = type.dropTele(Math.max(lhs.tele().size(), rhs.tele().size()));
+    var result = compare(order ? lBody : rBody, order ? rBody : lBody, type);
+    Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) ->
+      varSubst.remove((order ? r : l).ref()));
+    return result;
   }
 
   @Contract(pure = true) protected DefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
