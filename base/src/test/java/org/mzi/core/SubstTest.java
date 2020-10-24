@@ -5,8 +5,8 @@ package org.mzi.core;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.ref.Var;
+import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.tyck.sort.Sort;
-import org.mzi.core.subst.TermSubst;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.UnivTerm;
 import org.mzi.test.Lisp;
@@ -21,14 +21,14 @@ public class SubstTest {
   public void emptySubst() {
     var term = Lisp.reallyParse("(app tony lambda)");
     assertTrue(term instanceof AppTerm);
-    assertEquals(term, term.subst(TermSubst.EMPTY));
+    assertEquals(term, term.subst(SubstFixpoint.TermSubst.EMPTY));
   }
 
   @Test
   public void unrelatedSubst() {
     var term = Lisp.reallyParse("(app beta lambda)");
     assertTrue(term instanceof AppTerm);
-    assertEquals(term, term.subst(new TermSubst(() -> "lambda", new UnivTerm(Sort.SET0))));
+    assertEquals(term, term.subst(new SubstFixpoint.TermSubst(() -> "lambda", new UnivTerm(Sort.SET0))));
   }
 
   @Test
@@ -36,6 +36,6 @@ public class SubstTest {
     @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
     var term = Lisp.reallyParse("(app tony beta)", refs);
     assertTrue(term instanceof AppTerm);
-    assertNotEquals(term, term.subst(new TermSubst(refs.get("beta"), new UnivTerm(Sort.SET0))));
+    assertNotEquals(term, term.subst(new SubstFixpoint.TermSubst(refs.get("beta"), new UnivTerm(Sort.SET0))));
   }
 }

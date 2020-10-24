@@ -8,8 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.util.NormalizeMode;
-import org.mzi.core.subst.LevelSubst;
-import org.mzi.core.subst.TermSubst;
+import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.core.visitor.NormalizeFixpoint;
 import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.util.Decision;
@@ -22,11 +21,11 @@ public interface Term extends CoreTerm {
   <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
   @Contract(pure = true) @NotNull Decision whnf();
 
-  default @NotNull Term subst(@NotNull TermSubst subst) {
+  default @NotNull Term subst(@NotNull SubstFixpoint.TermSubst subst) {
     return subst(subst, LevelSubst.EMPTY);
   }
 
-  default @NotNull Term subst(@NotNull TermSubst subst, @NotNull LevelSubst levelSubst) {
+  default @NotNull Term subst(@NotNull SubstFixpoint.TermSubst subst, @NotNull LevelSubst levelSubst) {
     return accept(new SubstFixpoint(subst, levelSubst), Unit.INSTANCE);
   }
 

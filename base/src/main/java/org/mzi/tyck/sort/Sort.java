@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Expr;
-import org.mzi.core.subst.LevelSubst;
 import org.mzi.ref.LevelVar;
 import org.mzi.util.Ordering;
 

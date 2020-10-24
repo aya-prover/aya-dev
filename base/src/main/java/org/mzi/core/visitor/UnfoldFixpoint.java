@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.subst.TermSubst;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
@@ -22,11 +21,11 @@ import java.util.HashMap;
  * @author ice1000
  */
 public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
-  @Contract(pure = true) static @NotNull TermSubst buildSubst(
+  @Contract(pure = true) static @NotNull SubstFixpoint.TermSubst buildSubst(
     @NotNull Tele<Term> self,
     @NotNull Seq<@NotNull Arg<Term>> args
   ) {
-    var subst = new TermSubst(new HashMap<>());
+    var subst = new SubstFixpoint.TermSubst(new HashMap<>());
     self.forEach((i, tele) -> subst.add(tele.ref(), args.get(i).term()));
     return subst;
   }

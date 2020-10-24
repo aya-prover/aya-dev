@@ -5,7 +5,7 @@ package org.mzi.core.term;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.subst.TermSubst;
+import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.generic.Arg;
 import org.mzi.ref.DefVar;
 import org.mzi.util.Decision;
@@ -27,7 +27,7 @@ public sealed interface AppTerm extends Term {
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
     var tele = lam.tele();
     var next = tele.next();
-    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new TermSubst(tele.ref(), arg.term()));
+    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new SubstFixpoint.TermSubst(tele.ref(), arg.term()));
   }
 
   record FnCall(
