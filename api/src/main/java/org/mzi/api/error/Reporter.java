@@ -8,5 +8,10 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public interface Reporter {
-  void report(@NotNull Error error);
+  /**
+   * Report an problem
+   *
+   * @param problem problem to report
+   */
+  void report(@NotNull Problem problem);
 }

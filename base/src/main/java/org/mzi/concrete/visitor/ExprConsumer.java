@@ -3,11 +3,9 @@
 package org.mzi.concrete.visitor;
 
 import asia.kala.Unit;
-import asia.kala.Tuple;
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Tele;
 

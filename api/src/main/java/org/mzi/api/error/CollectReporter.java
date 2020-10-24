@@ -9,12 +9,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public record CollectReporter(@NotNull Buffer<@NotNull Error> errors) implements Reporter {
+public record CollectReporter(@NotNull Buffer<@NotNull Problem> errors) implements Reporter {
   public CollectReporter() {
     this(new ArrayBuffer<>());
   }
 
-  @Override public void report(@NotNull Error error) {
-    errors.append(error);
+  /**
+   * {@inheritDoc}
+   */
+  @Override public void report(@NotNull Problem problem) {
+    errors.append(problem);
   }
 }
