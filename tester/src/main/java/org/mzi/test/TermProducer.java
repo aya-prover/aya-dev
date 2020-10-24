@@ -67,10 +67,10 @@ public class TermProducer extends LispBaseVisitor<Term> {
           .collect(ImmutableSeq.factory()));
       case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), false));
       case "lam" -> new LamTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this));
-      case "Pi" -> new DT(exprToBind(exprs.get(0)), DTKind.Pi);
-      case "Copi" -> new DT(exprToBind(exprs.get(0)), DTKind.Copi);
-      case "Sigma" -> new DT(exprToBind(exprs.get(0)), DTKind.Sigma);
-      case "Cosigma" -> new DT(exprToBind(exprs.get(0)), DTKind.Cosigma);
+      case "Pi" -> new DT(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Pi);
+      case "Copi" -> new DT(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Copi);
+      case "Sigma" -> new DT(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Sigma);
+      case "Cosigma" -> new DT(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Cosigma);
       default -> throw new IllegalArgumentException("Unexpected lisp function: " + rule);
     };
   }
