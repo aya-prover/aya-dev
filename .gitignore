@@ -1,6 +1,8 @@
 build/
 out/
-/.idea/
+/.idea/*.xml
+/.idea/.gitignore
+/.idea/modules/*
 /.gradle/
 /.fleet/
 *.iml
