@@ -2,7 +2,6 @@ package org.mzi.core.term;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
-import org.mzi.ref.EvalVar;
 import org.mzi.util.Decision;
 
 /**
@@ -14,6 +13,6 @@ public record RefTerm(@NotNull Var var) implements Term {
   }
 
   @Override public @NotNull Decision whnf() {
-    return var instanceof EvalVar ? Decision.NO : Decision.YES;
+    return Decision.YES;
   }
 }
