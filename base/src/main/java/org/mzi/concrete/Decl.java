@@ -10,10 +10,10 @@ import org.mzi.ref.DefVar;
 
 /**
  * concrete definition, corresponding to {@link org.mzi.core.def.Def}.
+ *
  * @author re-xyr
  */
-public sealed interface Decl permits
-  Decl.FnDecl {
+public sealed interface Decl {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
   @Contract(pure = true) @NotNull DefVar<Decl> ref();
 
@@ -21,9 +21,9 @@ public sealed interface Decl permits
    * concrete function definition, corresponding to {@link org.mzi.core.def.FnDef}.
    * @author re-xyr
    */
-   final class FnDecl implements Decl {
-     public final @NotNull SourcePos sourcePos;
-     public final @NotNull DefVar<Decl> ref;
+  final class FnDecl implements Decl {
+    public final @NotNull SourcePos sourcePos;
+    public final @NotNull DefVar<Decl> ref;
      public final @NotNull Tele<Expr> telescope;
      public final @NotNull Expr result;
      public final @NotNull Expr body;

@@ -15,16 +15,7 @@ import org.mzi.generic.Tele;
 /**
  * @author re-xyr
  */
-public sealed interface Expr permits
-  Expr.AppExpr,
-  Expr.DTExpr,
-  Expr.UnresolvedExpr,
-  Expr.HoleExpr,
-  Expr.LamExpr,
-  Expr.RefExpr,
-  Expr.UnivExpr,
-  Expr.TupExpr,
-  Expr.ProjExpr {
+public sealed interface Expr {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   @NotNull SourcePos sourcePos();
