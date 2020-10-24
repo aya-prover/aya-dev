@@ -7,9 +7,11 @@ import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Expr;
 import org.mzi.ref.LevelVar;
+import org.mzi.tyck.error.LevelSolverError;
 import org.mzi.util.Ordering;
 
 import java.util.HashMap;
@@ -56,31 +58,36 @@ public record LevelEqn<V extends Var>(
    * A set of level equations.
    */
   public record Set(
+    @NotNull Reporter reporter,
     @NotNull Buffer<@NotNull LevelVar> vars,
     @NotNull Buffer<@NotNull LevelEqn<LevelVar>> eqns
   ) {
     public static final int INF = Integer.MAX_VALUE;
 
     private void addLevelEquation(@Nullable LevelVar var, Expr expr) {
-      if (hasHole(var)) eqns.append(new LevelEqn<>(var));
-      // TODO[ice]: report an error otherwise
+      if (hasHole(var)) {
+        eqns.append(new LevelEqn<>(var));
+        return;
+      }
+      assert var != null;
+      reporter.report(new LevelSolverError(expr, Seq.of(new LevelEqn<>(var))));
     }
 
-    private void addLevelEquation(LevelVar var1, LevelVar var2, int constant, int maxConstant, Expr expr) {
+    private void addLevelEquation(LevelVar var1, LevelVar var2, int constant, int max, Expr expr) {
       // _ <= max(-c, -d), _ <= max(l - c, -d) // 6
-      if (!hasHole(var2) && maxConstant < 0 && (constant < 0 || constant == 0 && var2 == LevelVar.HP && var1 == null) &&
-        !(var2 == null && hasHole(var1) && var1.kind() == LevelVar.Kind.H && constant >= -1 && maxConstant >= -1)) {
-        // TODO[ice]: report error
+      if (!hasHole(var2) && max < 0 && (constant < 0 || constant == 0 && var2 == LevelVar.HP && var1 == null) &&
+        !(var2 == null && hasHole(var1) && var1.kind() == LevelVar.Kind.H && constant >= -1 && max >= -1)) {
+        reporter.report(new LevelSolverError(expr, Seq.of(new LevelEqn<>(var1, var2, constant, INVALID))));
         return;
       }
 
       // l <= max(l - c, +d), l <= max(+-c, +-d) // 4
       if ((var1 == LevelVar.UP || var1 == LevelVar.HP) && !hasHole(var2) && (var2 == null || constant < 0)) {
-        // TODO[ice]: report error
+        reporter.report(new LevelSolverError(expr, Seq.of(new LevelEqn<>(var1, var2, constant, max))));
         return;
       }
 
-      eqns.append(new LevelEqn<>(var1, var2, constant, maxConstant));
+      eqns.append(new LevelEqn<>(var1, var2, constant, max));
     }
 
     public boolean add(Sort.@NotNull Level level1, @NotNull Sort.Level level2, @NotNull Ordering cmp, Expr expr) {
