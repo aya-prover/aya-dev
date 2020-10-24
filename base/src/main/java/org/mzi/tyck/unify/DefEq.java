@@ -2,12 +2,14 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.unify;
 
+import asia.kala.collection.Seq;
 import asia.kala.collection.mutable.MutableHashMap;
 import asia.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
@@ -19,9 +21,7 @@ import org.mzi.util.Ordering;
 /**
  * @author ice1000
  */
-public abstract class DefEq implements
-  Tele.BiVisitor<@NotNull Term, @NotNull Term, @Nullable Term, @NotNull Boolean>,
-  Term.BiVisitor<@NotNull Term, @Nullable Term, @NotNull Boolean> {
+public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable Term, @NotNull Boolean> {
   protected @NotNull Ordering ord;
   protected final @NotNull LevelEqn.Set equations;
   protected final @NotNull MutableMap<@NotNull Var, @NotNull Var> varSubst = new MutableHashMap<>();
@@ -71,6 +71,27 @@ public abstract class DefEq implements
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (!(preRhs instanceof UnivTerm rhs)) return false;
     return Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
+  }
+
+  @Override
+  public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (!(preRhs instanceof TupTerm rhs)) return false;
+    // TODO[ice]: eta-rule
+    // TODO[ice]: make type-directed
+    return visitLists(lhs.items(), rhs.items());
+  }
+
+  private boolean visitLists(Seq<Term> l, Seq<Term> r) {
+    if (!l.sizeEquals(r)) return false;
+    for (int i = 0; i < l.size(); i++) if (!compare(l.get(i), r.get(i), null)) return false;
+    return true;
+  }
+
+  @Override
+  public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (preRhs instanceof AppTerm.FnCall rhs && rhs.fnRef() == lhs.fnRef())
+      return visitLists(lhs.args().map(Arg::term), rhs.args().map(Arg::term));
+    return lhs.normalize(NormalizeMode.WHNF).accept(this, preRhs, type);
   }
 
   @Override
