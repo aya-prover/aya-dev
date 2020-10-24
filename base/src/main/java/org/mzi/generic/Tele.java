@@ -6,6 +6,7 @@ import asia.kala.PrimitiveTuples.IntObjTuple2;
 import asia.kala.Tuple;
 import asia.kala.Tuple2;
 import asia.kala.collection.Seq;
+import asia.kala.collection.mutable.Buffer;
 import asia.kala.function.IndexedConsumer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,13 @@ public interface Tele<Term> extends Bind<Term> {
   @Override @NotNull Term type();
 
   <P, R> R accept(@NotNull Tele.Visitor<Term, P, R> visitor, P p);
+  <P, Q, R> R accept(@NotNull Tele.BiVisitor<Term, P, Q, R> visitor, P p, Q q);
+
+  default @NotNull Buffer<@NotNull Tele<Term>> toBuffer() {
+    var buf = Buffer.<Tele<Term>>of();
+    forEach((i, x) -> buf.append(x));
+    return buf;
+  }
 
   default @NotNull IntObjTuple2<@NotNull Tele<Term>>
   forEach(@NotNull IndexedConsumer<@NotNull Tele<Term>> consumer) {
@@ -83,6 +91,11 @@ public interface Tele<Term> extends Bind<Term> {
     R visitNamed(@NotNull NamedTele<Term> named, P p);
   }
 
+  interface BiVisitor<Term, P, Q, R> {
+    R visitTyped(@NotNull TypedTele<Term> typed, P p, Q q);
+    R visitNamed(@NotNull NamedTele<Term> named, P p, Q q);
+  }
+
   record TypedTele<Term>(
     @NotNull Var ref,
     @NotNull Term type,
@@ -91,6 +104,10 @@ public interface Tele<Term> extends Bind<Term> {
   ) implements Tele<Term> {
     @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
       return visitor.visitTyped(this, p);
+    }
+
+    @Override public <P, Q, R> R accept(@NotNull BiVisitor<Term, P, Q, R> visitor, P p, Q q) {
+      return visitor.visitTyped(this, p, q);
     }
   }
 
@@ -111,6 +128,10 @@ public interface Tele<Term> extends Bind<Term> {
 
     @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
       return visitor.visitNamed(this, p);
+    }
+
+    @Override public <P, Q, R> R accept(@NotNull BiVisitor<Term, P, Q, R> visitor, P p, Q q) {
+      return visitor.visitNamed(this, p, q);
     }
   }
 }

@@ -19,7 +19,9 @@ import org.mzi.util.Ordering;
 /**
  * @author ice1000
  */
-public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable Term, @NotNull Boolean> {
+public abstract class DefEq implements
+  Tele.BiVisitor<@NotNull Term, @NotNull Term, @Nullable Term, @NotNull Boolean>,
+  Term.BiVisitor<@NotNull Term, @Nullable Term, @NotNull Boolean> {
   protected @NotNull Ordering ord;
   protected final @NotNull LevelEqn.Set equations;
   protected final @NotNull MutableMap<@NotNull Var, @NotNull Var> varSubst = new MutableHashMap<>();
@@ -28,6 +30,23 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @Nullable Term type) {
     if (lhs == rhs) return true;
     return lhs.accept(this, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitDT(@NotNull DT lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (!(preRhs instanceof DT rhs)) return false;
+    var l = lhs.telescope().toBuffer();
+    var r = rhs.telescope().toBuffer();
+    if (!l.sizeEquals(r)) return false;
+    for (int i = 0; i < l.size(); i++) {
+      if (!compare(l.get(i).type(), r.get(i).type(), UnivTerm.OMEGA)) {
+        for (int j = 0; j < i; j++) varSubst.remove(r.get(j).ref());
+        return false;
+      }
+      varSubst.put(r.get(i).ref(), l.get(i).ref());
+    }
+
+    return true;
   }
 
   @Override
@@ -57,12 +76,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   @Override
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (!(preRhs instanceof LamTerm rhs)) return false;
-    return visitLam(lhs, rhs, type, false);
-  }
-
-  private boolean visitLam(@NotNull LamTerm lhs, @NotNull LamTerm rhs, @Nullable Term type, boolean order) {
-    var params = Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) ->
-      varSubst.put((order ? r : l).ref(), (order ? l : r).ref()));
+    var params = Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) -> varSubst.put(l.ref(), r.ref()));
     var lBody = lhs.body();
     var rBody = rhs.body();
     var lTele = params._1;
@@ -77,9 +91,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     }
     // TODO[ice]: maybe we can optimize this computation? We've already traversed lhs.tele and rhs.tele
     if (type != null) type = type.dropTele(Math.max(lhs.tele().size(), rhs.tele().size()));
-    var result = compare(order ? lBody : rBody, order ? rBody : lBody, type);
-    Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) ->
-      varSubst.remove((order ? r : l).ref()));
+    var result = compare(rBody, lBody, type);
+    Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) -> varSubst.remove(l.ref()));
     return result;
   }
 
