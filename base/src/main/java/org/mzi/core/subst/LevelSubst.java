@@ -25,13 +25,7 @@ public interface LevelSubst {
   @NotNull LevelSubst subst(@NotNull LevelSubst subst);
   @NotNull LevelSubst EMPTY = new Simple(Collections.emptyMap());
 
-  class Simple implements LevelSubst {
-    private final @NotNull Map<@NotNull Var, @NotNull Level> map;
-
-    public Simple(@NotNull Map<@NotNull Var, @NotNull Level> map) {
-      this.map = map;
-    }
-
+  record Simple(@NotNull Map<@NotNull Var, @NotNull Level> map) implements LevelSubst {
     public void add(@NotNull Var var, @NotNull Level level) {
       map.put(var, level);
     }
