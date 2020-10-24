@@ -3,9 +3,7 @@
 package org.mzi.core.visitor;
 
 import asia.kala.Unit;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.core.term.RefTerm;
@@ -27,26 +25,17 @@ public record SubstFixpoint(
   }
 
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
-    return termSubst.get(term.var(), term);
+    return termSubst.map.getOrDefault(term.var(), term);
   }
 
   /**
    * @author ice1000
    */
-  public static final class TermSubst {
-    private final @NotNull Map<@NotNull Var, @NotNull Term> map;
-    public static final @NotNull TermSubst EMPTY = new TermSubst(Collections.emptyMap());
-
-    public TermSubst(@NotNull Map<@NotNull Var, @NotNull Term> map) {
-      this.map = map;
-    }
-
+  public static record TermSubst(@NotNull Map<@NotNull Var, @NotNull Term> map) {
+    // TODO[JDK-8247334]: uncomment when we move to JDK16
+    public static final /*@NotNull*/ TermSubst EMPTY = new TermSubst(Collections.emptyMap());
     public TermSubst(@NotNull Var var, @NotNull Term term) {
       this(Map.of(var, term));
-    }
-
-    @Contract(pure = true) public boolean isEmpty() {
-      return map.isEmpty();
     }
 
     public void subst(@NotNull TermSubst subst) {
@@ -59,35 +48,15 @@ public record SubstFixpoint(
       map.putAll(subst.map);
     }
 
-    public @Nullable Term get(@NotNull Var var) {
-      return map.get(var);
-    }
-
-    public @NotNull Term get(@NotNull Var var, @NotNull Term defaultVal) {
-      return map.getOrDefault(var, defaultVal);
-    }
-
-    public void clear() {
-      map.clear();
-    }
-
-    public void remove(@NotNull Var var) {
-      map.remove(var);
-    }
-
     public void add(@NotNull Var var, @NotNull Term term) {
       subst(new TermSubst(var, term));
       map.put(var, term);
     }
 
     public void add(@NotNull TermSubst subst) {
-      if (subst.isEmpty()) return;
+      if (subst.map.isEmpty()) return;
       subst(subst);
       addAll(subst);
-    }
-
-    @Override public String toString() {
-      return map.toString();
     }
   }
 }
