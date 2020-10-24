@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public interface Problem {
-  enum Level {
+  enum Severity {
     INFO,
     GOAL,
     ERROR,
@@ -31,43 +31,43 @@ public interface Problem {
 
   @NotNull SourcePos sourcePos();
   @NotNull String describe();
-  @NotNull Level level();
+  @NotNull Severity level();
   default @NotNull Stage stage() {
     return Stage.OTHER;
   }
 
   interface Error extends Problem {
     @Override
-    default @NotNull Level level() {
-      return Level.ERROR;
+    default @NotNull Severity level() {
+      return Severity.ERROR;
     }
   }
 
   interface Warn extends Problem {
     @Override
-    default @NotNull Level level() {
-      return Level.WARN;
+    default @NotNull Severity level() {
+      return Severity.WARN;
     }
   }
 
   interface WarnUnused extends Problem {
     @Override
-    default @NotNull Level level() {
-      return Level.WARN_UNUSED;
+    default @NotNull Severity level() {
+      return Severity.WARN_UNUSED;
     }
   }
 
   interface Goal extends Problem {
     @Override
-    default @NotNull Level level() {
-      return Level.GOAL;
+    default @NotNull Severity level() {
+      return Severity.GOAL;
     }
   }
 
   interface Info extends Problem {
     @Override
-    default @NotNull Level level() {
-      return Level.INFO;
+    default @NotNull Severity level() {
+      return Severity.INFO;
     }
   }
 }

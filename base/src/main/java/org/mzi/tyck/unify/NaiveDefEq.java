@@ -21,7 +21,7 @@ public class NaiveDefEq extends DefEq {
   @Override
   public @NotNull Boolean visitApp(@NotNull AppTerm.Apply lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (lhs.fn() instanceof HoleTerm holeTerm) {
-      equations.reporter().report(new HoleAppWarn(holeTerm));
+      equations.reporter().report(new HoleAppWarn(holeTerm, expr));
       return false;
     }
     if (lhs.whnf() == Decision.YES && preRhs instanceof AppTerm.Apply rhs)

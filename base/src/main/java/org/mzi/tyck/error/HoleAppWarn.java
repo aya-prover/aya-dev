@@ -3,11 +3,20 @@
 package org.mzi.tyck.error;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.api.error.Error;
+import org.mzi.concrete.Expr;
 import org.mzi.core.term.HoleTerm;
 
-public record HoleAppWarn(@NotNull HoleTerm term) implements Error {
-  @Override public @NotNull Error.Severity level() {
+/**
+ * @author ice1000
+ */
+public record HoleAppWarn(@NotNull HoleTerm term, @NotNull Expr expr) implements TyckProblem {
+  @Override public @NotNull Severity level() {
     return Severity.WARN;
+  }
+
+  @Override
+  public @NotNull String describe() {
+    return "Attempting to unify a hole applied with argument: `" + term.var() + "`," +
+      "this is not supported by the naive unifier. Please use pattern unifier instead.";
   }
 }
