@@ -33,12 +33,14 @@ associativity : '\\infix'               # nonAssocInfix
               ;
 operatorDecl : associativity NUMBER ID;
 
-fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? fnBody;
+where : '\\where' ('{' stmt* '}' | stmt);
+
+fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? fnBody where?;
 fnBody : rightEqArrow expr;
 fnModifiers : '\\erased'                # fnErased
             ;
 
-classDecl : '\\structure' ID fieldTele* ('\\extends' id_list)? ('|' classFieldOrImpl)*;
+classDecl : '\\structure' ID fieldTele* ('\\extends' id_list)? ('|' classFieldOrImpl)* where?;
 
 fieldTele : '(' '\\coerce'? ID+ ':' expr ')'        # explicitFieldTele
           | '{' '\\coerce'? ID+ ':' expr '}'        # implicitFieldTele
@@ -52,7 +54,7 @@ classFieldDef : '\\coerce'? ID tele* ':' expr;
 
 classImplDef : ID tele* rightEqArrow expr;
 
-dataDecl : '\\data' ID tele* (':' expr)? dataBody;
+dataDecl : '\\data' ID tele* (':' expr)? dataBody where?;
 
 dataBody : ('|' ctor)*                               # dataCtors
          | elim ctorClause*                          # dataClauses
@@ -85,7 +87,7 @@ expr : appExpr                                                           # app
      | piKw tele+ rightArrow expr                                        # pi
      | sigmaKw tele*                                                     # sigma
      | lambdaKw tele+ (rightEqArrow expr?)?                              # lam
-     | '\\matchy' expr? ( '|' clause)*                                   # matchy
+     | '\\match' expr? ( '|' clause)*                                    # match
      ;
 
 appExpr : atom argument*      # appArg
