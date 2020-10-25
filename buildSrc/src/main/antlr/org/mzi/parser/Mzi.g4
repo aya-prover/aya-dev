@@ -1,5 +1,21 @@
 grammar Mzi;
 
+// statements
+stmt : decl
+     | cmd
+     ;
+
+cmd : cmdName moduleName using? hiding?;
+
+cmdName : '\\open'         # cmdOpen
+        | '\\import'       # cmdImport
+        ;
+
+using : '\\using'? '(' id_list ')';
+hiding : '\\hiding' '(' id_list ')';
+
+moduleName : ID ('.' ID)*;
+
 // declarations
 
 decl : operatorDecl
@@ -93,6 +109,9 @@ tele : literal                          # teleLiteral
      ;
 
 typedExpr : expr (':' expr)? ;
+
+// utilities
+id_list : (ID ',')* ID?;
 
 // operators
 INFIX : '`' ID '`';
