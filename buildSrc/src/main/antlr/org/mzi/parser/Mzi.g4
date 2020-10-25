@@ -25,12 +25,32 @@ lambdaKw : '\\lam'
          | 'λ'
          ;
 
-expr : <assoc=right> expr '->' expr                                      # arr
+expr : appExpr                                                           # app
+     | <assoc=right> expr '->' expr                                      # arr
+     | <assoc=right> expr '.' NUMBER                                     # proj
      | '\\Pi' tele+ '->' expr                                            # pi
      | sigmaKw tele*                                                     # sigma
      | lambdaKw tele+ ('=>' expr?)?                                      # lam
      | '\\matchy' expr? ( '|' matchyClause)*                             # matchy
      ;
+
+appExpr : atom argument*      # appArg
+        | UNIVERSE            # appUniverse
+        | SET                 # appSetUniverse
+        ;
+
+tupleExpr : expr (':' expr)?;
+
+atom : literal                                     # atomLiteral
+     | '(' (tupleExpr (',' tupleExpr)* ','?)? ')'  # tuple
+     | NUMBER                                      # atomNumber
+     | STRING                                      # atomString
+     ;
+
+argument : expr                                     # argumentExplicit
+         | universeAtom                             # argumentUniverse
+         | '{' tupleExpr (',' tupleExpr)* ','? '}'  # argumentImplicit
+         ;
 
 matchyClause : pattern '=>' expr;
 
