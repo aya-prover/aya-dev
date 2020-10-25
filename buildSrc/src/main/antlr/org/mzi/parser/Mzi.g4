@@ -85,13 +85,15 @@ piKw : '\\Pi'
      | 'Π'
      ;
 
+matchKw : '\\matchy' | '\\match' ;
+
 expr : appExpr                                                           # app
      | <assoc=right> expr rightArrow expr                                # arr
      | <assoc=right> expr '.' NUMBER                                     # proj
      | piKw tele+ rightArrow expr                                        # pi
      | sigmaKw tele*                                                     # sigma
      | lambdaKw tele+ (rightEqArrow expr?)?                              # lam
-     | '\\match' matchArg (',' matchArg)* ( '|' clause)*                 # match
+     | matchKw matchArg (',' matchArg)* ( '|' clause)*                   # match
      ;
 
 matchArg : elim          #matchElim
