@@ -56,9 +56,7 @@ matchyClause : pattern '=>' expr;
 
 pattern : '{?}';
 
-longName : ID ('.' ID)*;
-
-literal : longName ('.' (INFIX | POSTFIX))? # name
+literal : ID ('.' (INFIX | POSTFIX))?       # name
         | '\\Prop'                          # prop
         | '_'                               # unknown
         | INFIX                             # infix
