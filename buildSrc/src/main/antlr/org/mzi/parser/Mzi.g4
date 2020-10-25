@@ -75,12 +75,16 @@ lambdaKw : '\\lam'
          | 'λ'
          ;
 
+piKw : '\\Pi'
+     | 'Π'
+     ;
+
 expr : appExpr                                                           # app
-     | <assoc=right> expr rightArrow expr                                      # arr
+     | <assoc=right> expr rightArrow expr                                # arr
      | <assoc=right> expr '.' NUMBER                                     # proj
-     | '\\Pi' tele+ rightArrow expr                                            # pi
+     | piKw tele+ rightArrow expr                                        # pi
      | sigmaKw tele*                                                     # sigma
-     | lambdaKw tele+ (rightEqArrow expr?)?                                      # lam
+     | lambdaKw tele+ (rightEqArrow expr?)?                              # lam
      | '\\matchy' expr? ( '|' clause)*                                   # matchy
      ;
 
