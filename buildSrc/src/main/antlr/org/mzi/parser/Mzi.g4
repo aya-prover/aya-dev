@@ -1,5 +1,76 @@
 grammar Mzi;
 
+// declarations
+
+associativity : '\\infix'               # nonAssocInfix
+              | '\\infixl'              # leftAssocInfix
+              | '\\infixr'              # rightAssocInfix
+              | '\\fix'                 # nonAssoc
+              | '\\fixl'                # leftAssoc
+              | '\\fixr'                # rightAssoc
+              ;
+operatorDecl : associativity NUMBER ID;
+
+fnModifiers : '{?}';
+fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? '=>' fnBody;
+fnBody : '{?}';
+
+// expressions
+
+sigmaKw : '\\Sigma'
+        | 'Σ'
+        ;
+
+lambdaKw : '\\lam'
+         | 'λ'
+         ;
+
+expr : <assoc=right> expr '->' expr                                      # arr
+     | '\\Pi' tele+ '->' expr                                            # pi
+     | sigmaKw tele*                                                     # sigma
+     | lambdaKw tele+ ('=>' expr?)?                                      # lam
+     | '\\matchy' expr? ( '|' matchyClause)*                             # matchy
+     ;
+
+matchyClause : pattern '=>' expr;
+
+pattern : '{?}';
+
+longName : ID ('.' ID)*;
+
+literal : longName ('.' (INFIX | POSTFIX))? # name
+        | '\\Prop'                          # prop
+        | '_'                               # unknown
+        | INFIX                             # infix
+        | POSTFIX                           # postfix
+        | '{?' ID? ('(' expr? ')')? '}'     # goal
+        ;
+
+universeAtom : TRUNCATED_UNIVERSE       # uniTruncatedUniverse
+             | UNIVERSE                 # uniUniverse
+             | SET                      # uniSetUniverse
+             ;
+
+tele : literal                          # teleLiteral
+     | universeAtom                     # teleUniverse
+     | '(' typedExpr ')'                # explicit
+     | '{' typedExpr '}'                # implicit
+     ;
+
+typedExpr : expr (':' expr)? ;
+
+// operators
+INFIX : '`' ID '`';
+POSTFIX : '`' ID;
+
+// universe
+UNIVERSE : '\\Type' [0-9]*;
+TRUNCATED_UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h') 'Type' [0-9]*;
+SET : '\\Set' [0-9]*;
+
+// numbers
+NUMBER : [0-9]+;
+
 // string
 STRING : INCOMPLETE_STRING '"';
 INCOMPLETE_STRING : '"' (~["\\\r\n] | ESCAPE_SEQ | EOF)*;
