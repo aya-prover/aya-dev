@@ -1,5 +1,7 @@
 grammar Mzi;
 
+program : stmt* EOF;
+
 // statements
 stmt : decl
      | cmd
@@ -36,7 +38,9 @@ operatorDecl : associativity NUMBER ID;
 where : '\\where' ('{' stmt* '}' | stmt);
 
 fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? fnBody where?;
+
 fnBody : rightEqArrow expr;
+
 fnModifiers : '\\erased'                # fnErased
             ;
 
@@ -87,8 +91,12 @@ expr : appExpr                                                           # app
      | piKw tele+ rightArrow expr                                        # pi
      | sigmaKw tele*                                                     # sigma
      | lambdaKw tele+ (rightEqArrow expr?)?                              # lam
-     | '\\match' expr? ( '|' clause)*                                    # match
+     | '\\match' matchArg (',' matchArg)* ( '|' clause)*                 # match
      ;
+
+matchArg : elim          #matchElim
+         | expr          #matchExpr
+         ;
 
 appExpr : atom argument*      # appArg
         | UNIVERSE            # appUniverse
@@ -108,7 +116,7 @@ argument : expr                                     # argumentExplicit
          | '{' tupleExpr (',' tupleExpr)* ','? '}'  # argumentImplicit
          ;
 
-clause : pattern rightEqArrow expr;
+clause : pattern (',' pattern)* rightEqArrow expr;
 
 pattern : atomPattern ('\\as' ID (':' expr)?)?          # patAtom
         | ID atomPatternOrID* ('\\as' ID)? (':' expr)?  # patCtor
