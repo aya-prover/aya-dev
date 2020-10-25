@@ -20,45 +20,39 @@ moduleName : ID ('.' ID)*;
 
 // declarations
 
-decl : operatorDecl
-     | fnDecl
-     | classDecl
+decl : fnDecl
+     | structDecl
      | dataDecl
      ;
 
-associativity : '\\infix'               # nonAssocInfix
-              | '\\infixl'              # leftAssocInfix
-              | '\\infixr'              # rightAssocInfix
-              | '\\fix'                 # nonAssoc
-              | '\\fixl'                # leftAssoc
-              | '\\fixr'                # rightAssoc
-              ;
-operatorDecl : associativity NUMBER ID;
+assoc : '\\infix'               # nonAssocInfix
+      | '\\infixl'              # leftAssocInfix
+      | '\\infixr'              # rightAssocInfix
+      | '\\fix'                 # nonAssoc
+      | '\\fixl'                # leftAssoc
+      | '\\fixr'                # rightAssoc
+      ;
 
 where : '\\where' ('{' stmt* '}' | stmt);
 
-fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? fnBody where?;
+fnDecl : '\\def' fnModifiers* assoc? ID tele* type? fnBody where?;
 
 fnBody : rightEqArrow expr;
 
 fnModifiers : '\\erased'                # fnErased
             ;
 
-classDecl : '\\structure' ID fieldTele* ('\\extends' id_list)? ('|' classFieldOrImpl)* where?;
+structDecl : '\\structure' ID fieldTele* ('\\extends' id_list)? ('|' structFieldOrImpl)* where?;
 
-fieldTele : '(' '\\coerce'? ID+ ':' expr ')'        # explicitFieldTele
-          | '{' '\\coerce'? ID+ ':' expr '}'        # implicitFieldTele
+fieldTele : '(' '\\coerce'? ID+ type')'        # explicitFieldTele
+          | '{' '\\coerce'? ID+ type '}'        # implicitFieldTele
           ;
 
-classFieldOrImpl : classFieldDef    # classField
-                 | classImplDef     # classImpl
-                 ;
+structFieldOrImpl : '\\coerce'? ID tele* type        # classField
+                  | ID tele* rightEqArrow expr       # classImpl
+                  ;
 
-classFieldDef : '\\coerce'? ID tele* ':' expr;
-
-classImplDef : ID tele* rightEqArrow expr;
-
-dataDecl : '\\data' ID tele* (':' expr)? dataBody where?;
+dataDecl : '\\data' ID tele* type? dataBody where?;
 
 dataBody : ('|' ctor)*                               # dataCtors
          | elim ctorClause*                          # dataClauses
@@ -107,7 +101,7 @@ appExpr : atom argument*      # appArg
         | SET                 # appSetUniverse
         ;
 
-tupleExpr : expr (':' expr)?;
+tupleExpr : expr type? ;
 
 atom : literal                                     # atomLiteral
      | '(' (tupleExpr (',' tupleExpr)* ','?)? ')'  # tuple
@@ -122,8 +116,8 @@ argument : expr                                     # argumentExplicit
 
 clause : pattern (',' pattern)* rightEqArrow expr;
 
-pattern : atomPattern ('\\as' ID (':' expr)?)?          # patAtom
-        | ID atomPatternOrID* ('\\as' ID)? (':' expr)?  # patCtor
+pattern : atomPattern ('\\as' ID type?)?          # patAtom
+        | ID atomPatternOrID* ('\\as' ID)? type?  # patCtor
         ;
 
 atomPattern : '(' (pattern (',' pattern)*)? ')'   # atomPatExplicit
@@ -155,12 +149,13 @@ tele : literal                          # teleLiteral
      | '{' typedExpr '}'                # implicit
      ;
 
-typedExpr : expr (':' expr)? ;
+typedExpr : expr type? ;
 
 // utilities
 id_list : (ID ',')* ID?;
 rightArrow : '->' | '→';
 rightEqArrow : '=>' | '⇒';
+type : ':' expr;
 
 // operators
 INFIX : '`' ID '`';
