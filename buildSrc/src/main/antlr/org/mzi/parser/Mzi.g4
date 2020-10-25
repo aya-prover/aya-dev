@@ -11,9 +11,10 @@ associativity : '\\infix'               # nonAssocInfix
               ;
 operatorDecl : associativity NUMBER ID;
 
-fnModifiers : '{?}';
-fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? '=>' fnBody;
-fnBody : '{?}';
+fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? fnBody;
+fnBody : '=>' expr;
+fnModifiers : '\\erased'                # fnErased
+            ;
 
 // expressions
 
@@ -54,7 +55,19 @@ argument : expr                                     # argumentExplicit
 
 matchyClause : pattern '=>' expr;
 
-pattern : '{?}';
+pattern : atomPattern ('\\as' ID (':' expr)?)?          # patAtom
+        | ID atomPatternOrID* ('\\as' ID)? (':' expr)?  # patCtor
+        ;
+
+atomPattern : '(' (pattern (',' pattern)*)? ')'   # atomPatExplicit
+            | '{' pattern '}'                     # atomPatImplicit
+            | NUMBER                              # atomPatNumbers
+            | '_'                                 # atomPatWildcard
+            ;
+
+atomPatternOrID : atomPattern     # patternOrIDAtom
+                | ID              # patternID
+                ;
 
 literal : ID ('.' (INFIX | POSTFIX))?       # name
         | '\\Prop'                          # prop
