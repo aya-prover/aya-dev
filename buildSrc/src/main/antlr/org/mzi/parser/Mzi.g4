@@ -34,7 +34,7 @@ associativity : '\\infix'               # nonAssocInfix
 operatorDecl : associativity NUMBER ID;
 
 fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? fnBody;
-fnBody : '=>' expr;
+fnBody : rightEqArrow expr;
 fnModifiers : '\\erased'                # fnErased
             ;
 
@@ -50,7 +50,7 @@ classFieldOrImpl : classFieldDef    # classField
 
 classFieldDef : '\\coerce'? ID tele* ':' expr;
 
-classImplDef : ID tele* '=>' expr;
+classImplDef : ID tele* rightEqArrow expr;
 
 dataDecl : '\\data' ID tele* (':' expr)? dataBody;
 
@@ -63,7 +63,7 @@ ctor : '\\coerce'? ID tele* (elim? '{' clause? ('|' clause)* '}')?;
 
 elim : '\\elim' ID (',' ID)*;
 
-ctorClause : '|' pattern '=>' ctor;
+ctorClause : '|' pattern rightEqArrow ctor;
 
 // expressions
 
@@ -76,11 +76,11 @@ lambdaKw : '\\lam'
          ;
 
 expr : appExpr                                                           # app
-     | <assoc=right> expr '->' expr                                      # arr
+     | <assoc=right> expr rightArrow expr                                      # arr
      | <assoc=right> expr '.' NUMBER                                     # proj
-     | '\\Pi' tele+ '->' expr                                            # pi
+     | '\\Pi' tele+ rightArrow expr                                            # pi
      | sigmaKw tele*                                                     # sigma
-     | lambdaKw tele+ ('=>' expr?)?                                      # lam
+     | lambdaKw tele+ (rightEqArrow expr?)?                                      # lam
      | '\\matchy' expr? ( '|' clause)*                                   # matchy
      ;
 
@@ -102,7 +102,7 @@ argument : expr                                     # argumentExplicit
          | '{' tupleExpr (',' tupleExpr)* ','? '}'  # argumentImplicit
          ;
 
-clause : pattern '=>' expr;
+clause : pattern rightEqArrow expr;
 
 pattern : atomPattern ('\\as' ID (':' expr)?)?          # patAtom
         | ID atomPatternOrID* ('\\as' ID)? (':' expr)?  # patCtor
@@ -141,6 +141,8 @@ typedExpr : expr (':' expr)? ;
 
 // utilities
 id_list : (ID ',')* ID?;
+rightArrow : '->' | '→';
+rightEqArrow : '=>' | '⇒';
 
 // operators
 INFIX : '`' ID '`';
