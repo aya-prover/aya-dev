@@ -21,6 +21,7 @@ moduleName : ID ('.' ID)*;
 decl : operatorDecl
      | fnDecl
      | classDecl
+     | dataDecl
      ;
 
 associativity : '\\infix'               # nonAssocInfix
@@ -51,6 +52,19 @@ classFieldDef : '\\coerce'? ID tele* ':' expr;
 
 classImplDef : ID tele* '=>' expr;
 
+dataDecl : '\\data' ID tele* (':' expr)? dataBody;
+
+dataBody : ('|' ctor)*                               # dataCtors
+         | elim ctorClause*                          # dataClauses
+         ;
+
+// TODO[imkiva]: some code commented in Arend.g4
+ctor : '\\coerce'? ID tele* (elim? '{' clause? ('|' clause)* '}')?;
+
+elim : '\\elim' ID (',' ID)*;
+
+ctorClause : '|' pattern '=>' ctor;
+
 // expressions
 
 sigmaKw : '\\Sigma'
@@ -67,7 +81,7 @@ expr : appExpr                                                           # app
      | '\\Pi' tele+ '->' expr                                            # pi
      | sigmaKw tele*                                                     # sigma
      | lambdaKw tele+ ('=>' expr?)?                                      # lam
-     | '\\matchy' expr? ( '|' matchyClause)*                             # matchy
+     | '\\matchy' expr? ( '|' clause)*                                   # matchy
      ;
 
 appExpr : atom argument*      # appArg
@@ -88,7 +102,7 @@ argument : expr                                     # argumentExplicit
          | '{' tupleExpr (',' tupleExpr)* ','? '}'  # argumentImplicit
          ;
 
-matchyClause : pattern '=>' expr;
+clause : pattern '=>' expr;
 
 pattern : atomPattern ('\\as' ID (':' expr)?)?          # patAtom
         | ID atomPatternOrID* ('\\as' ID)? (':' expr)?  # patCtor
