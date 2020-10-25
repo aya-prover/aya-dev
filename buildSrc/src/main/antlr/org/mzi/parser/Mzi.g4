@@ -20,6 +20,7 @@ moduleName : ID ('.' ID)*;
 
 decl : operatorDecl
      | fnDecl
+     | classDecl
      ;
 
 associativity : '\\infix'               # nonAssocInfix
@@ -35,6 +36,20 @@ fnDecl : '\\def' fnModifiers* ID tele* (':' expr)? fnBody;
 fnBody : '=>' expr;
 fnModifiers : '\\erased'                # fnErased
             ;
+
+classDecl : '\\structure' ID fieldTele* ('\\extends' id_list)? ('|' classFieldOrImpl)*;
+
+fieldTele : '(' '\\coerce'? ID+ ':' expr ')'        # explicitFieldTele
+          | '{' '\\coerce'? ID+ ':' expr '}'        # implicitFieldTele
+          ;
+
+classFieldOrImpl : classFieldDef    # classField
+                 | classImplDef     # classImpl
+                 ;
+
+classFieldDef : '\\coerce'? ID tele* ':' expr;
+
+classImplDef : ID tele* '=>' expr;
 
 // expressions
 
