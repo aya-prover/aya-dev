@@ -1,0 +1,46 @@
+package org.mzi.concrete.resolve.context;
+
+import asia.kala.collection.mutable.MutableMap;
+import org.jetbrains.annotations.Nullable;
+import org.mzi.api.ref.Var;
+
+/**
+ * @author re-xyr
+ */
+public final class SimpleContext implements Context {
+  private MutableMap<String, Var> variables;
+  private MutableMap<String, Context> subContexts;
+  private Context superContext;
+
+  @Override public @Nullable Var getLocal(String name) {
+    return variables.get(name);
+  }
+
+  @Override public boolean containsLocal(String name) {
+    return variables.containsKey(name);
+  }
+
+  @Override public void unsafePutLocal(String name, Var ref) {
+    variables.put(name, ref);
+  }
+
+  @Override public boolean containsSubContextLocal(String name) {
+    return subContexts.containsKey(name);
+  }
+
+  @Override public @Nullable Context getSubContextLocal(String name) {
+    return subContexts.get(name);
+  }
+
+  @Override public void unsafePutSubContextLocal(String name, Context ctx) {
+    subContexts.put(name, ctx);
+  }
+
+  @Override public @Nullable Context getSuperContext() {
+    return superContext;
+  }
+
+  @Override public void putSuperContext(Context ctx) {
+    superContext = ctx;
+  }
+}
