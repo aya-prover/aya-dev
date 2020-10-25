@@ -2,6 +2,10 @@ grammar Mzi;
 
 // declarations
 
+decl : operatorDecl
+     | fnDecl
+     ;
+
 associativity : '\\infix'               # nonAssocInfix
               | '\\infixl'              # leftAssocInfix
               | '\\infixr'              # rightAssocInfix
