@@ -7,6 +7,7 @@ module org.mzi {
   requires transitive asia.kala.collection;
   requires org.mzi.parser;
 
+  exports org.mzi.concrete.parse;
   exports org.mzi.concrete.visitor;
   exports org.mzi.concrete;
   exports org.mzi.core.def;

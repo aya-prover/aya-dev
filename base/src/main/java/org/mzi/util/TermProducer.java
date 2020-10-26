@@ -3,8 +3,6 @@
 package org.mzi.util;
 
 import asia.kala.collection.immutable.ImmutableSeq;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,12 +15,13 @@ import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.generic.DTKind;
 import org.mzi.parser.LispBaseVisitor;
-import org.mzi.parser.LispLexer;
 import org.mzi.parser.LispParser;
 import org.mzi.ref.DefVar;
 
 import java.util.Map;
 import java.util.function.BooleanSupplier;
+
+import static org.mzi.concrete.parse.LispParsing.parser;
 
 /**
  * @author ice1000
@@ -34,14 +33,6 @@ public class TermProducer extends LispBaseVisitor<Term> {
 
   public TermProducer(@NotNull Map<String, @NotNull Var> refs) {
     this.refs = refs;
-  }
-
-  private static @NotNull LispParser parser(@NotNull String text) {
-    return new LispParser(new CommonTokenStream(lexer(text)));
-  }
-
-  private static @NotNull LispLexer lexer(@NotNull String text) {
-    return new LispLexer(CharStreams.fromString(text));
   }
 
   public static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
