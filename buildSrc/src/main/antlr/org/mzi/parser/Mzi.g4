@@ -9,14 +9,8 @@ stmt : decl
      | cmd
      ;
 
-cmd : cmdName moduleName using? hiding?;
-
-cmdName : '\\open'   # cmdOpen
-        | '\\import' # cmdImport
-        ;
-
-using : '\\using' '(' ids ')';
-hiding : '\\hiding' '(' ids ')';
+cmd : (OPEN | IMPORT) moduleName useHide*;
+useHide : (USING | HIDING) '(' ids ')';
 
 moduleName : ID ('.' ID)*;
 
@@ -27,13 +21,13 @@ decl : fnDecl
      | dataDecl
      ;
 
-assoc : '\\infix'  # nonAssocInfix
-      | '\\infixl' # leftAssocInfix
-      | '\\infixr' # rightAssocInfix
-      | '\\fix'    # nonAssoc
-      | '\\fixl'   # leftAssoc
-      | '\\fixr'   # rightAssoc
-      | '\\twin'   # twinAssoc
+assoc : INFIX
+      | INFIXL
+      | INFIXR
+      | FIX
+      | FIXL
+      | FIXR
+      | TWIN
       ;
 
 abuse : '\\abusing' ('{' stmt* '}' | stmt);
@@ -42,18 +36,19 @@ fnDecl : '\\def' fnModifiers* assoc? ID tele* type? fnBody abuse?;
 
 fnBody : rightEqArrow expr;
 
-fnModifiers : '\\erase'     # fnErased
-            | '\\inline'    # fnInlined
+fnModifiers : ERASE
+            | INLINE
             ;
 
 structDecl : '\\structure' ID fieldTele* ('\\extends' ids)? ('|' field)* abuse?;
 
-fieldTele : '(' '\\coerce'? ID+ type ')'        # explicitFieldTele
-          | '{' '\\coerce'? ID+ type '}'        # implicitFieldTele
+fieldTeleInner : COERCE? ID+ type;
+fieldTele : '(' fieldTeleInner ')'        # explicitFieldTele
+          | '{' fieldTeleInner '}'        # implicitFieldTele
           ;
 
-field : '\\coerce'? ID tele* type        # fieldDecl
-      | ID tele* rightEqArrow expr       # fieldImpl
+field : COERCE? ID tele* type        # fieldDecl
+      | ID tele* rightEqArrow expr   # fieldImpl
       ;
 
 dataDecl : '\\data' ID tele* type? dataBody abuse?;
@@ -63,17 +58,17 @@ dataBody : ('|' ctor)*       # dataCtors
          ;
 
 // TODO[imkiva]: some code commented in Arend.g4
-ctor : '\\coerce'? ID tele* (elim? '{' clause? ('|' clause)* '}')?;
+ctor : COERCE? ID tele* (elim? '{' clause? ('|' clause)* '}')?;
 
 elim : '\\elim' ID (',' ID)*;
 
 ctorClause : '|' pattern rightEqArrow ctor;
 
 // expressions
-sigmaKw : '\\Sig' | 'Σ' ;
-lambdaKw : '\\lam' | 'λ' ;
-piKw : '\\Pi' | 'Π' ;
-matchKw : '\\matchy' ;
+sigmaKw : '\\Sig' | 'Σ';
+lambdaKw : '\\lam' | 'λ';
+piKw : '\\Pi' | 'Π';
+matchKw : '\\matchy';
 
 expr : atom argument*                                         # app
      | <assoc=right> expr rightArrow expr                     # arr
@@ -98,7 +93,7 @@ argument : expr
          | '{' (typed ',')? typed? '}'
          ;
 
-clause : pattern (',' pattern)* rightEqArrow expr;
+clause : patterns rightEqArrow expr;
 
 patterns : pattern (',' pattern)* ;
 pattern : atomPattern ('\\as' ID type?)?             # patAtom
@@ -127,7 +122,7 @@ tele : literal           # teleLiteral
      | '{' typedExpr '}' # implicit
      ;
 
-typedExpr : expr type? ;
+typedExpr : expr type?;
 
 // utilities
 ids : (ID ',')* ID?;
@@ -136,14 +131,32 @@ rightEqArrow : '=>' | '⇒';
 type : ':' expr;
 
 // operators
-idFix : INFIX | POSTFIX ;
+idFix : INFIX | POSTFIX;
 INFIX : '`' ID '`';
 POSTFIX : '`' ID;
+
+// associativities
+INFIXN : '\\infix';
+INFIXL : '\\infixl';
+INFIXR : '\\infixr';
+FIX : '\\fix';
+FIXL : '\\fixl';
+FIXR : '\\fixr';
+TWIN : '\\twin';
 
 // universe
 UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h')? 'Type' [0-9]*;
 SET : '\\Set' [0-9]*;
 PROP : '\\Prop';
+
+// other keywords
+OPEN : '\\open';
+IMPORT : '\\import';
+USING : '\\using';
+HIDING : '\\hiding';
+COERCE : '\\coerce';
+ERASE : '\\erase';
+INLINE : '\\inline';
 
 // literals
 NUMBER : [0-9]+;
