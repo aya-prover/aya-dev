@@ -2,8 +2,7 @@ module org.mzi {
   requires static org.jetbrains.annotations;
 
   requires transitive org.mzi.api;
-  requires transitive asia.kala.base;
-  requires transitive asia.kala.collection;
+  requires transitive asia.kala.common;
 
   exports org.mzi.concrete.visitor;
   exports org.mzi.concrete;

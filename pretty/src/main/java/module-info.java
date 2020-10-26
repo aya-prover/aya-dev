@@ -1,8 +1,7 @@
 module org.mzi.pretty {
   requires org.jetbrains.annotations;
 
-  requires transitive asia.kala.base;
-  requires transitive asia.kala.collection;
+  requires transitive asia.kala.common;
 
   exports org.mzi.pretty.backend;
   exports org.mzi.pretty.doc;
