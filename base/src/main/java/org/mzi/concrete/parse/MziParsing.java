@@ -6,15 +6,12 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.parser.LispLexer;
-import org.mzi.parser.LispParser;
+import org.mzi.parser.MziLexer;
+import org.mzi.parser.MziParser;
 
-/**
- * @author ice1000
- */
-public interface LispParsing {
-  @Contract("_ -> new") static @NotNull LispParser parser(@NotNull String text) {
-    return new LispParser(new CommonTokenStream(
-      new LispLexer(CharStreams.fromString(text))));
+public interface MziParsing {
+  @Contract("_ -> new") static @NotNull MziParser parser(@NotNull String text) {
+    return new MziParser(new CommonTokenStream(
+      new MziLexer(CharStreams.fromString(text))));
   }
 }
