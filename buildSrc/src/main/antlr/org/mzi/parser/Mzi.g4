@@ -3,18 +3,18 @@ grammar Mzi;
 program : stmt* EOF;
 
 // statements
-stmt : decl           # stmtDecl
-     | cmd            # stmtCmd
+stmt : decl
+     | cmd
      ;
 
 cmd : cmdName moduleName using? hiding?;
 
-cmdName : '\\open'         # cmdOpen
-        | '\\import'       # cmdImport
+cmdName : '\\open'   # cmdOpen
+        | '\\import' # cmdImport
         ;
 
-using : '\\using'? '(' id_list ')';
-hiding : '\\hiding' '(' id_list ')';
+using : '\\using' '(' ids ')';
+hiding : '\\hiding' '(' ids ')';
 
 moduleName : ID ('.' ID)*;
 
@@ -25,37 +25,39 @@ decl : fnDecl
      | dataDecl
      ;
 
-assoc : '\\infix'               # nonAssocInfix
-      | '\\infixl'              # leftAssocInfix
-      | '\\infixr'              # rightAssocInfix
-      | '\\fix'                 # nonAssoc
-      | '\\fixl'                # leftAssoc
-      | '\\fixr'                # rightAssoc
+assoc : '\\infix'  # nonAssocInfix
+      | '\\infixl' # leftAssocInfix
+      | '\\infixr' # rightAssocInfix
+      | '\\fix'    # nonAssoc
+      | '\\fixl'   # leftAssoc
+      | '\\fixr'   # rightAssoc
+      | '\\twin'   # twinAssoc
       ;
 
-where : '\\where' ('{' stmt* '}' | stmt);
+abuse : '\\abusing' ('{' stmt* '}' | stmt);
 
-fnDecl : '\\def' fnModifiers* assoc? ID tele* type? fnBody where?;
+fnDecl : '\\def' fnModifiers* assoc? ID tele* type? fnBody abuse?;
 
 fnBody : rightEqArrow expr;
 
-fnModifiers : '\\erased'                # fnErased
+fnModifiers : '\\erase'     # fnErased
+            | '\\inline'    # fnInlined
             ;
 
-structDecl : '\\structure' ID fieldTele* ('\\extends' id_list)? ('|' structFieldOrImpl)* where?;
+structDecl : '\\structure' ID fieldTele* ('\\extends' ids)? ('|' field)* abuse?;
 
-fieldTele : '(' '\\coerce'? ID+ type')'        # explicitFieldTele
+fieldTele : '(' '\\coerce'? ID+ type ')'        # explicitFieldTele
           | '{' '\\coerce'? ID+ type '}'        # implicitFieldTele
           ;
 
-structFieldOrImpl : '\\coerce'? ID tele* type        # classField
-                  | ID tele* rightEqArrow expr       # classImpl
-                  ;
+field : '\\coerce'? ID tele* type        # fieldDecl
+      | ID tele* rightEqArrow expr       # fieldImpl
+      ;
 
-dataDecl : '\\data' ID tele* type? dataBody where?;
+dataDecl : '\\data' ID tele* type? dataBody abuse?;
 
-dataBody : ('|' ctor)*                               # dataCtors
-         | elim ctorClause*                          # dataClauses
+dataBody : ('|' ctor)*       # dataCtors
+         | elim ctorClause*  # dataClauses
          ;
 
 // TODO[imkiva]: some code commented in Arend.g4
@@ -66,22 +68,10 @@ elim : '\\elim' ID (',' ID)*;
 ctorClause : '|' pattern rightEqArrow ctor;
 
 // expressions
-
-sigmaKw : '\\Sigma'
-        | 'Σ'
-        ;
-
-lambdaKw : '\\lam'
-         | 'λ'
-         ;
-
-piKw : '\\Pi'
-     | 'Π'
-     ;
-
-matchKw : '\\matchy'
-        | '\\match'
-        ;
+sigmaKw : '\\Sigma' | 'Σ' ;
+lambdaKw : '\\lam' | 'λ' ;
+piKw : '\\Pi' | 'Π' ;
+matchKw : '\\matchy' ;
 
 expr : appExpr                                                # app
      | <assoc=right> expr rightArrow expr                     # arr
@@ -92,8 +82,8 @@ expr : appExpr                                                # app
      | matchKw matchArg (',' matchArg)* ( '|' clause)*        # match
      ;
 
-matchArg : elim          # matchElim
-         | expr          # matchExpr
+matchArg : elim
+         | expr
          ;
 
 appExpr : atom argument*      # appArg
@@ -103,15 +93,15 @@ appExpr : atom argument*      # appArg
 
 tupleExpr : expr type? ;
 
-atom : literal                                     # atomLiteral
-     | '(' (tupleExpr (',' tupleExpr)* ','?)? ')'  # tuple
-     | NUMBER                                      # atomNumber
-     | STRING                                      # atomString
+atom : literal
+     | '(' (tupleExpr (',' tupleExpr)* ','?)? ')'
+     | NUMBER
+     | STRING
      ;
 
-argument : expr                                     # argumentExplicit
-         | universeAtom                             # argumentUniverse
-         | '{' tupleExpr (',' tupleExpr)* ','? '}'  # argumentImplicit
+argument : expr
+         | universeAtom
+         | '{' tupleExpr (',' tupleExpr)* ','? '}'
          ;
 
 clause : pattern (',' pattern)* rightEqArrow expr;
@@ -126,38 +116,38 @@ atomPattern : '(' (pattern (',' pattern)*)? ')'   # atomPatExplicit
             | '_'                                 # atomPatWildcard
             ;
 
-atomPatternOrID : atomPattern     # patternOrIDAtom
-                | ID              # patternID
+atomPatternOrID : atomPattern
+                | ID
                 ;
 
-literal : ID ('.' (INFIX | POSTFIX))?       # name
-        | '\\Prop'                          # prop
-        | '_'                               # unknown
-        | INFIX                             # infix
-        | POSTFIX                           # postfix
-        | '{?' ID? ('(' expr? ')')? '}'     # goal
+literal : ID ('.' idFix)? # name
+        | '\\Prop'        # prop
+        | '_'             # unknown
+        | idFix           # infix
+        | '{?' expr? '?}' # goal
         ;
 
-universeAtom : TRUNCATED_UNIVERSE       # uniTruncatedUniverse
-             | UNIVERSE                 # uniUniverse
-             | SET                      # uniSetUniverse
+universeAtom : TRUNCATED_UNIVERSE
+             | UNIVERSE
+             | SET
              ;
 
-tele : literal                          # teleLiteral
-     | universeAtom                     # teleUniverse
-     | '(' typedExpr ')'                # explicit
-     | '{' typedExpr '}'                # implicit
+tele : literal           # teleLiteral
+     | universeAtom      # teleUniverse
+     | '(' typedExpr ')' # explicit
+     | '{' typedExpr '}' # implicit
      ;
 
 typedExpr : expr type? ;
 
 // utilities
-id_list : (ID ',')* ID?;
+ids : (ID ',')* ID?;
 rightArrow : '->' | '→';
 rightEqArrow : '=>' | '⇒';
 type : ':' expr;
 
 // operators
+idFix : INFIX | POSTFIX ;
 INFIX : '`' ID '`';
 POSTFIX : '`' ID;
 
