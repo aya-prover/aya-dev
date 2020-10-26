@@ -7,10 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 
 class WriteFileTask extends DefaultTask {
-  @OutputDirectory
-  File outputDir
-  @Input
-  String className
-  @Input
-  def basePackage = project.group
+  @OutputDirectory File outputDir
+  @Input String className
+  @Input def basePackage = project.group
 }

@@ -11,11 +11,9 @@ class GenerateVersionTask extends WriteFileTask {
     group = "build setup"
   }
 
-  @Input
-  def taskVersion = project.version
+  @Input def taskVersion = project.version
 
-  @TaskAction
-  def run() {
+  @TaskAction def run() {
     def code = """\
       package ${basePackage}.prelude;
       import ${basePackage}.util.Version;
