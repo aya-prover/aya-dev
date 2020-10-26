@@ -13,6 +13,7 @@ module org.mzi {
   exports org.mzi.core.def;
   exports org.mzi.core.term;
   exports org.mzi.core.visitor;
+  exports org.mzi.core;
   exports org.mzi.generic;
   exports org.mzi.ref;
   exports org.mzi.tyck.sort;

@@ -11,7 +11,7 @@ import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Tele;
-import org.mzi.util.TermProducer;
+import org.mzi.core.TermProducer;
 
 import java.util.Map;
 import java.util.Objects;
