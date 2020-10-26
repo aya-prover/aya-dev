@@ -8,8 +8,17 @@ plugins {
 
 repositories { jcenter() }
 
+val parserDir = projectDir.parentFile.resolve("parser")
+val genDir = parserDir.resolve("src/main/java")
+val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
+  group = "build setup"
+  from(parserDir.resolve("module-info.java"))
+  into(genDir)
+}
+
 tasks.withType<AntlrTask>().configureEach {
-  outputDirectory = projectDir.parentFile.resolve("parser/src/main/java")
+  dependsOn(copyModuleInfo)
+  outputDirectory = genDir
   arguments.addAll(listOf(
     "-package", "org.mzi.parser",
     "-no-listener",
