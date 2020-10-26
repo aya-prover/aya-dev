@@ -70,12 +70,12 @@ elim : '\\elim' ID (',' ID)*;
 ctorClause : '|' pattern rightEqArrow ctor;
 
 // expressions
-sigmaKw : '\\Sigma' | 'Σ' ;
+sigmaKw : '\\Sig' | 'Σ' ;
 lambdaKw : '\\lam' | 'λ' ;
 piKw : '\\Pi' | 'Π' ;
 matchKw : '\\matchy' ;
 
-expr : appExpr                                                # app
+expr : atom argument*                                         # app
      | <assoc=right> expr rightArrow expr                     # arr
      | <assoc=right> expr '.' NUMBER                          # proj
      | piKw tele+ rightArrow expr                             # pi
@@ -88,54 +88,41 @@ matchArg : elim
          | expr
          ;
 
-appExpr : atom argument*      # appArg
-        | UNIVERSE            # appUniverse
-        | SET                 # appSetUniverse
-        ;
-
-tupleExpr : expr type? ;
+typed : expr type? ;
 
 atom : literal
-     | '(' (tupleExpr (',' tupleExpr)* ','?)? ')'
-     | NUMBER
-     | STRING
+     | '(' (typed ',')? typed? ')'
      ;
 
 argument : expr
-         | universeAtom
-         | '{' tupleExpr (',' tupleExpr)* ','? '}'
+         | '{' (typed ',')? typed? '}'
          ;
 
 clause : pattern (',' pattern)* rightEqArrow expr;
 
-pattern : atomPattern ('\\as' ID type?)?          # patAtom
-        | ID atomPatternOrID* ('\\as' ID)? type?  # patCtor
+patterns : pattern (',' pattern)* ;
+pattern : atomPattern ('\\as' ID type?)?             # patAtom
+        | ID (atomPattern | ID)* ('\\as' ID)? type?  # patCtor
         ;
 
-atomPattern : '(' (pattern (',' pattern)*)? ')'   # atomPatExplicit
-            | '{' pattern '}'                     # atomPatImplicit
-            | NUMBER                              # atomPatNumbers
-            | '_'                                 # atomPatWildcard
+atomPattern : '(' patterns? ')' # atomPatExplicit
+            | '{' patterns '}'  # atomPatImplicit
+            | NUMBER            # atomPatNumber
+            | CALM_FACE         # atomPatWildcard
             ;
 
-atomPatternOrID : atomPattern
-                | ID
-                ;
-
-literal : ID ('.' idFix)? # name
-        | '\\Prop'        # prop
-        | '_'             # unknown
-        | idFix           # infix
-        | '{?' expr? '?}' # goal
+literal : ID ('.' idFix)?
+        | PROP
+        | CALM_FACE
+        | idFix
+        | '{?' expr? '?}'
+        | NUMBER
+        | STRING
+        | UNIVERSE
+        | SET
         ;
 
-universeAtom : TRUNCATED_UNIVERSE
-             | UNIVERSE
-             | SET
-             ;
-
 tele : literal           # teleLiteral
-     | universeAtom      # teleUniverse
      | '(' typedExpr ')' # explicit
      | '{' typedExpr '}' # implicit
      ;
@@ -154,14 +141,13 @@ INFIX : '`' ID '`';
 POSTFIX : '`' ID;
 
 // universe
-UNIVERSE : '\\Type' [0-9]*;
-TRUNCATED_UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h') 'Type' [0-9]*;
+UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h')? 'Type' [0-9]*;
 SET : '\\Set' [0-9]*;
+PROP : '\\Prop';
 
-// numbers
+// literals
 NUMBER : [0-9]+;
-
-// string
+CALM_FACE : '_';
 STRING : INCOMPLETE_STRING '"';
 INCOMPLETE_STRING : '"' (~["\\\r\n] | ESCAPE_SEQ | EOF)*;
 fragment ESCAPE_SEQ : '\\' [btnfr"'\\] | OCT_ESCAPE | UNICODE_ESCAPE;
