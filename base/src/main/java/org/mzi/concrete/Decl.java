@@ -15,7 +15,7 @@ import org.mzi.ref.DefVar;
  */
 public sealed interface Decl {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
-  @Contract(pure = true) @NotNull DefVar<Decl> ref();
+  @Contract(pure = true) @NotNull DefVar<? extends Decl> ref();
 
   /**
    * concrete function definition, corresponding to {@link org.mzi.core.def.FnDef}.
@@ -23,7 +23,7 @@ public sealed interface Decl {
    */
   final class FnDecl implements Decl {
     public final @NotNull SourcePos sourcePos;
-    public final @NotNull DefVar<Decl> ref;
+    public final @NotNull DefVar<FnDecl> ref;
      public final @NotNull Tele<Expr> telescope;
      public final @NotNull Expr result;
      public final @NotNull Expr body;
@@ -40,7 +40,7 @@ public sealed interface Decl {
        return this.sourcePos;
      }
 
-     public @NotNull DefVar<Decl> ref() {
+     public @NotNull DefVar<FnDecl> ref() {
        return this.ref;
      }
   }
