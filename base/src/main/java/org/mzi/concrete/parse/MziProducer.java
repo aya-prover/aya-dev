@@ -110,17 +110,17 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     var type = visitType(ctx.type());
 
-    // when parsing (a b : T), only `b` should be TypedExpr
-    // and `a` should be NamedExpr,
+    // when parsing (a b : T), only `b` should be TypedTele
+    // and `a` should be NamedTele,
     var ids = visitExprLiteral(ctx.expr());
     var last = ids.get(ids.size() - 1);
     ids.remove(ids.size() - 1);
     Collections.reverse(ids);
 
-    // build the last TypedExpr
+    // build the last TypedTele
     var lastTyped = new Tele.TypedTele<>(new LocalVar(last), type, explicit, next);
 
-    // others should be NamedExpr
+    // others should be NamedTele
     return ids.stream()
       .map(LocalVar::new)
       .reduce(
