@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
+import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ public sealed interface Decl {
     public final @NotNull Tele<Expr> telescope;
     public final @NotNull Expr result;
     public final @NotNull Expr body;
+    public final @NotNull Buffer<Stmt> abuseBlock;
 
     public FnDecl(@NotNull SourcePos sourcePos,
                   @NotNull EnumSet<Modifier> modifiers,
@@ -42,7 +44,8 @@ public sealed interface Decl {
                   @NotNull String name,
                   @NotNull Tele<Expr> telescope,
                   @NotNull Expr result,
-                  @NotNull Expr body
+                  @NotNull Expr body,
+                  @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
       this.modifiers = modifiers;
@@ -51,6 +54,7 @@ public sealed interface Decl {
       this.telescope = telescope;
       this.result = result;
       this.body = body;
+      this.abuseBlock = abuseBlock;
     }
 
     public @NotNull SourcePos sourcePos() {
