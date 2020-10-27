@@ -117,12 +117,12 @@ literal : ID ('.' idFix)?
         | SET
         ;
 
-tele : literal           # teleLiteral
-     | '(' typedExpr ')' # explicit
-     | '{' typedExpr '}' # implicit
+tele : literal                # teleLiteral
+     | '(' teleTypedExpr ')'  # explicit
+     | '{' teleTypedExpr '}'  # implicit
      ;
 
-typedExpr : expr type?;
+teleTypedExpr : expr type?;
 
 // utilities
 ids : (ID ',')* ID?;
