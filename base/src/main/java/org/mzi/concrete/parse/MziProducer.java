@@ -6,6 +6,7 @@ import asia.kala.Tuple;
 import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableList;
 import asia.kala.collection.mutable.ArrayBuffer;
+import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
@@ -62,15 +63,28 @@ public class MziProducer extends MziBaseVisitor<Object> {
       .collect(Collectors.toCollection(() -> EnumSet.noneOf(Modifier.class)));
     var assoc = ctx.assoc() == null ? null : visitAssoc(ctx.assoc());
     var tele = parseTeles(ctx.tele());
+    var type = ctx.type() == null
+      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null) // TODO: is that correct to use HoleExpr?
+      : visitType(ctx.type());
+    Buffer<Stmt> abuse = ctx.abuse() == null ? Buffer.of() : visitAbuse(ctx.abuse());
+
     return new Decl.FnDecl(
       sourcePosOf(ctx),
       modifiers,
       assoc,
       ctx.ID().getText(),
       tele,
-      visitType(ctx.type()),
-      visitFnBody(ctx.fnBody())
+      type,
+      visitFnBody(ctx.fnBody()),
+      abuse
     );
+  }
+
+  @Override
+  public Buffer<Stmt> visitAbuse(MziParser.AbuseContext ctx) {
+    return ctx.stmt().stream()
+      .map(this::visitStmt)
+      .collect(Buffer.factory());
   }
 
   @Override
