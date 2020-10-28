@@ -22,6 +22,7 @@ import org.mzi.parser.MziParser;
 import org.mzi.ref.LocalVar;
 
 import java.util.EnumSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -105,14 +106,15 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var literal = ctx.literal();
     if (literal != null) return new Param(sourcePosOf(ctx), Buffer.of(new LocalVar("_")), visitLiteral(literal), true);
     var teleTypedExpr = ctx.teleTypedExpr();
-    if (ctx.LPAREN() != null) return visitTeleTypedExpr(teleTypedExpr, true);
+    if (ctx.LPAREN() != null) return visitTeleTypedExpr(teleTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
-    return visitTeleTypedExpr(teleTypedExpr, false);
+    return visitTeleTypedExpr(teleTypedExpr).apply(false);
   }
 
-  public Param visitTeleTypedExpr(MziParser.TeleTypedExprContext ctx, boolean explicit) {
+  @Override
+  public Function<Boolean, Param> visitTeleTypedExpr(MziParser.TeleTypedExprContext ctx) {
     var type = visitType(ctx.type());
-    return new Param(sourcePosOf(ctx), visitIds(ctx.ids())
+    return explicit -> new Param(sourcePosOf(ctx), visitIds(ctx.ids())
       .<Var>map(LocalVar::new)
       .collect(Buffer.factory()), type, explicit);
   }
