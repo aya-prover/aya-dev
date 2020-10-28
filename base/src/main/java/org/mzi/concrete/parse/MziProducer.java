@@ -178,11 +178,10 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     for (var useHind : ctx.useHide()) {
       var useOrHide = visitUseHide(useHind);
-      var ref = switch (useOrHide.component1()) {
+      (switch (useOrHide._1) {
         case Use -> using;
         case Hide -> hiding;
-      };
-      ref.appendAll(useOrHide.component2());
+      }).appendAll(useOrHide._2);
     }
 
     return new Stmt.CmdStmt(
