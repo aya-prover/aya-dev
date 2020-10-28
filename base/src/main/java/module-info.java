@@ -3,6 +3,7 @@ module org.mzi {
   requires static org.antlr.antlr4.runtime;
 
   requires transitive org.mzi.api;
+  requires transitive org.mzi.parser;
   requires transitive asia.kala.common;
 
   exports org.mzi.concrete.parse;

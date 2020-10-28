@@ -33,7 +33,7 @@ public final class ResolveFixpoint implements ExprFixpoint<Buffer<@NotNull Strin
   private void dropFromContext(String name) {
     if (context.containsKey(name)) {
       var stack = context.get(name);
-      stack.remove(0);
+      stack.removeAt(0);
       if (stack.isEmpty()) context.remove(name);
     } else throw new IllegalStateException("trying to remove non-existing reference to `" + name + "`"); // Should not happen
   }
