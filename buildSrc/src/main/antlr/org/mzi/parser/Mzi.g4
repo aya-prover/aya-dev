@@ -10,7 +10,7 @@ stmt : decl
      ;
 
 cmd : (OPEN | IMPORT) moduleName useHide*;
-useHide : (USING | HIDING) '(' ids ')';
+useHide : (USING | HIDING) LPAREN ids ')';
 
 moduleName : ID ('.' ID)*;
 
@@ -30,11 +30,11 @@ assoc : INFIX
       | TWIN
       ;
 
-abuse : '\\abusing' ('{' stmt* '}' | stmt);
+abuse : '\\abusing' (LBRACE stmt* '}' | stmt);
 
 fnDecl : '\\def' fnModifiers* assoc? ID tele* type? fnBody abuse?;
 
-fnBody : rightEqArrow expr;
+fnBody : IMPLIES expr;
 
 fnModifiers : ERASE
             | INLINE
@@ -43,12 +43,12 @@ fnModifiers : ERASE
 structDecl : '\\structure' ID fieldTele* ('\\extends' ids)? ('|' field)* abuse?;
 
 fieldTeleInner : COERCE? ID+ type;
-fieldTele : '(' fieldTeleInner ')'        # explicitFieldTele
-          | '{' fieldTeleInner '}'        # implicitFieldTele
+fieldTele : LPAREN fieldTeleInner ')'
+          | LBRACE fieldTeleInner '}'
           ;
 
-field : COERCE? ID tele* type        # fieldDecl
-      | ID tele* rightEqArrow expr   # fieldImpl
+field : COERCE? ID tele* type   # fieldDecl
+      | ID tele* IMPLIES expr   # fieldImpl
       ;
 
 dataDecl : '\\data' ID tele* type? dataBody abuse?;
@@ -58,25 +58,20 @@ dataBody : ('|' ctor)*       # dataCtors
          ;
 
 // TODO[imkiva]: some code commented in Arend.g4
-ctor : COERCE? ID tele* (elim? '{' clause? ('|' clause)* '}')?;
+ctor : COERCE? ID tele* (elim? LBRACE clause? ('|' clause)* '}')?;
 
 elim : '\\elim' ID (',' ID)*;
 
-ctorClause : '|' pattern rightEqArrow ctor;
+ctorClause : '|' pattern IMPLIES ctor;
 
 // expressions
-sigmaKw : '\\Sig' | 'Σ';
-lambdaKw : '\\lam' | 'λ';
-piKw : '\\Pi' | 'Π';
-matchKw : '\\matchy';
-
-expr : atom argument*                                         # app
-     | <assoc=right> expr rightArrow expr                     # arr
-     | <assoc=right> expr '.' NUMBER                          # proj
-     | piKw tele+ rightArrow expr                             # pi
-     | sigmaKw tele*                                          # sigma
-     | lambdaKw tele+ (rightEqArrow expr?)?                   # lam
-     | matchKw matchArg (',' matchArg)* ( '|' clause)*        # match
+expr : atom argument*                                 # app
+     | <assoc=right> expr TO expr                     # arr
+     | <assoc=right> expr '.' NUMBER                  # proj
+     | PI tele+ TO expr                               # pi
+     | SIGMA tele*                                    # sigma
+     | LAMBDA tele+ (IMPLIES expr?)?                  # lam
+     | MATCH matchArg (',' matchArg)* ('|' clause)*   # match
      ;
 
 matchArg : elim
@@ -86,48 +81,46 @@ matchArg : elim
 typed : expr type? ;
 
 atom : literal
-     | '(' (typed ',')? typed? ')'
+     | LPAREN (typed ',')? typed? ')'
      ;
 
 argument : expr
-         | '{' (typed ',')? typed? '}'
+         | LBRACE (typed ',')? typed? '}'
          ;
 
-clause : patterns rightEqArrow expr;
+clause : patterns IMPLIES expr;
 
 patterns : pattern (',' pattern)* ;
 pattern : atomPattern ('\\as' ID type?)?             # patAtom
         | ID (atomPattern | ID)* ('\\as' ID)? type?  # patCtor
         ;
 
-atomPattern : '(' patterns? ')' # atomPatExplicit
-            | '{' patterns '}'  # atomPatImplicit
-            | NUMBER            # atomPatNumber
-            | CALM_FACE         # atomPatWildcard
+atomPattern : LPAREN patterns? ')' # atomPatExplicit
+            | LBRACE patterns '}'  # atomPatImplicit
+            | NUMBER               # atomPatNumber
+            | CALM_FACE            # atomPatWildcard
             ;
 
 literal : ID ('.' idFix)?
         | PROP
         | CALM_FACE
         | idFix
-        | '{?' expr? '?}'
+        | LGOAL expr? '?}'
         | NUMBER
         | STRING
         | UNIVERSE
         | SET
         ;
 
-tele : literal                # teleLiteral
-     | '(' teleTypedExpr ')'  # explicit
-     | '{' teleTypedExpr '}'  # implicit
+tele : literal
+     | LPAREN teleTypedExpr ')'
+     | LBRACE teleTypedExpr '}'
      ;
 
-teleTypedExpr : expr type?;
+teleTypedExpr : ids type?;
 
 // utilities
 ids : (ID ',')* ID?;
-rightArrow : '->' | '→';
-rightEqArrow : '=>' | '⇒';
 type : ':' expr;
 
 // operators
@@ -157,6 +150,17 @@ HIDING : '\\hiding';
 COERCE : '\\coerce';
 ERASE : '\\erase';
 INLINE : '\\inline';
+SIGMA : '\\Sig' | 'Σ';
+LAMBDA : '\\lam' | 'λ';
+PI : '\\Pi' | 'Π';
+MATCH : '\\match';
+TO : '->' | '→';
+IMPLIES : '=>' | '⇒';
+
+// markers
+LBRACE : '{';
+LPAREN : '(';
+LGOAL : '{?';
 
 // literals
 NUMBER : [0-9]+;

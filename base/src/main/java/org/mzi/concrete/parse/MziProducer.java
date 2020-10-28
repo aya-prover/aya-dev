@@ -102,19 +102,19 @@ public class MziProducer extends MziBaseVisitor<Object> {
     return next;
   }
 
+  @Override
+  public Expr visitLiteral(MziParser.LiteralContext ctx) {
+    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
+    throw new IllegalArgumentException("TODO");
+  }
+
   public Tele<Expr> parseTele(Tele<Expr> next, MziParser.TeleContext ctx) {
-    if (ctx instanceof MziParser.TeleLiteralContext teleLit) {
-      var id = visitLiteralId(teleLit.literal());
-      var var = new LocalVar(id);
-      return new Tele.NamedTele<>(var, next);
-
-    } else if (ctx instanceof MziParser.ExplicitContext ex) {
-      return newTele(next, true, ex.teleTypedExpr());
-
-    } else if (ctx instanceof MziParser.ImplicitContext im) {
-      return newTele(next, false, im.teleTypedExpr());
-
-    } else throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    var literal = ctx.literal();
+    if (literal != null) return new Tele.TypedTele<>(new LocalVar("_"), visitLiteral(literal), true, next);
+    var teleTypedExpr = ctx.teleTypedExpr();
+    if (ctx.LPAREN() != null) return newTele(next, true, teleTypedExpr);
+    assert ctx.LBRACE() != null;
+    return newTele(next, false, teleTypedExpr);
   }
 
   public Tele<Expr> newTele(Tele<Expr> next, boolean explicit, MziParser.TeleTypedExprContext ctx) {
@@ -127,7 +127,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     // when parsing (a b : T), only `b` should be TypedTele
     // and `a` should be NamedTele,
-    var ids = visitExprLiteral(ctx.expr());
+    var ids = visitIds(ctx.ids());
     var last = ids.last();
 
     // build the last TypedTele
@@ -229,26 +229,6 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (ctx.ERASE() != null) return Modifier.Erase;
     else if (ctx.INLINE() != null) return Modifier.Inline;
     else throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
-  }
-
-  private Buffer<String> visitExprLiteral(MziParser.ExprContext ctx) {
-    if (ctx instanceof MziParser.AppContext app) {
-      var list = Buffer.<String>of();
-      list.append(visitLiteralId(app.atom().literal()));
-      app.argument().forEach(a -> list.appendAll(visitExprLiteral(a.expr())));
-      return list;
-    }
-    // TODO: should report an error instead of throw
-    throw new IllegalArgumentException("not an literal expr");
-  }
-
-  private String visitLiteralId(MziParser.LiteralContext ctx) {
-    var id = ctx.ID();
-    if (id == null) {
-      // TODO: should report an error instead of throw
-      throw new IllegalArgumentException("not an literal id");
-    }
-    return id.getText();
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
