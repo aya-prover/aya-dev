@@ -3,6 +3,8 @@
 package org.mzi.generic;
 
 /**
+ * What kind of (co)dependent type ({@link org.mzi.core.term.DT}) is it?
+ *
  * @author ice1000
  */
 public enum DTKind {
@@ -11,7 +13,22 @@ public enum DTKind {
   Copi(true, false),
   Cosigma(false, false);
 
-  public final boolean function, forward;
+  /**
+   * This value is:
+   * <ul>
+   *   <li>true if this is a function-like (co)dependent type</li>
+   *   <li>false if this is a tuple-like (co)dependent type</li>
+   * </ul>
+   */
+  public final boolean function;
+  /**
+   * This value is:
+   * <ul>
+   *   <li>true if this is a dependent type (say, latter member depends on prior ones)</li>
+   *   <li>false if this is a codependent type (former depends on latter)</li>
+   * </ul>
+   */
+  public final boolean forward;
 
   DTKind(boolean function, boolean forward) {
     this.function = function;

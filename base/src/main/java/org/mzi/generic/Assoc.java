@@ -17,6 +17,9 @@ public enum Assoc {
   FixL(false),
   FixR(false);
 
+  /**
+   * That this fixity is infix.
+   */
   public final boolean infix;
 
   Assoc(boolean infix) {
