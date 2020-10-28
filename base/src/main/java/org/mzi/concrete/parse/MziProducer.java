@@ -99,7 +99,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   @Override
   public Expr visitLiteral(MziParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
-    throw new IllegalArgumentException("TODO");
+    throw new UnsupportedOperationException();
   }
 
   public Param parseTele(MziParser.TeleContext ctx) {
@@ -131,13 +131,13 @@ public class MziProducer extends MziBaseVisitor<Object> {
   @Override
   public Decl visitDataDecl(MziParser.DataDeclContext ctx) {
     // TODO: visit data decl
-    throw new IllegalStateException("unimplemented");
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public Decl visitStructDecl(MziParser.StructDeclContext ctx) {
     // TODO: visit struct decl
-    throw new IllegalStateException("unimplemented");
+    throw new UnsupportedOperationException();
   }
 
   @Override
