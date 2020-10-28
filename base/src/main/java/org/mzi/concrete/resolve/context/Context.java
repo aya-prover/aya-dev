@@ -14,8 +14,9 @@ public interface Context {
   @Nullable Var getLocal(String name);
 
   default @Nullable Var getLocal(Seq<String> path) {
+    assert path.size() > 0; // should not happen
     return Option.of(getSubContextLocal(path.view().dropLast(1)))
-      .flatMap(ctx -> Option.of(ctx.get(path.last())))
+      .flatMap(ctx -> Option.of(ctx.getLocal(path.last())))
       .getOrNull();
   }
 
@@ -50,6 +51,7 @@ public interface Context {
   @Nullable Context getSubContextLocal(String name);
 
   default @Nullable Context getSubContextLocal(Seq<String> path) {
+    if (path.size() == 0) return this;
     return Option.of(getSubContextLocal(path.first()))
       .flatMap(ctx -> Option.of(ctx.getSubContextLocal(path.view().drop(1))))
       .getOrNull();
@@ -78,13 +80,13 @@ public interface Context {
   }
 
   default void linkSubContext(String name, Context ctx) {
-    ctx.putSuperContext(this);
+    ctx.setSuperContext(this);
     putSubContextLocal(name, ctx);
   }
 
   @Nullable Context getSuperContext();
 
-  void putSuperContext(Context ctx);
+  void setSuperContext(Context ctx);
 
   default @Nullable Context getTopContext() {
     return Option.of(getSuperContext())

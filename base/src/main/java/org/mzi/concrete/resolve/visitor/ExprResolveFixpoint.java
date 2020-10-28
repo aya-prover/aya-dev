@@ -35,7 +35,7 @@ public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
 
   @Override public @NotNull Expr visitLam(@NotNull Expr.LamExpr expr, Context ctx) {
     var local = new SimpleContext();
-    local.putSuperContext(ctx);
+    local.setSuperContext(ctx);
     expr.tele().accept(this, local);
     var body = expr.body().accept(this, local);
     return new Expr.LamExpr(expr.sourcePos(), expr.tele(), body);
@@ -43,7 +43,7 @@ public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
 
   @Override public @NotNull Expr visitDT(@NotNull Expr.DTExpr expr, Context ctx) {
     var local = new SimpleContext();
-    local.putSuperContext(ctx);
+    local.setSuperContext(ctx);
     expr.tele().accept(this, local);
     var last = expr.last().accept(this, local);
     return new Expr.LamExpr(expr.sourcePos(), expr.tele(), last);

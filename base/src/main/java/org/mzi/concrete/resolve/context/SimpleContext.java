@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.context;
 
+import asia.kala.collection.mutable.MutableHashMap;
 import asia.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
@@ -10,8 +11,8 @@ import org.mzi.api.ref.Var;
  * @author re-xyr
  */
 public final class SimpleContext implements Context {
-  private MutableMap<String, Var> variables;
-  private MutableMap<String, Context> subContexts;
+  private final MutableMap<String, Var> variables = new MutableHashMap<>();
+  private final MutableMap<String, Context> subContexts = new MutableHashMap<>();
   private Context superContext;
 
   @Override public @Nullable Var getLocal(String name) {
@@ -42,7 +43,7 @@ public final class SimpleContext implements Context {
     return superContext;
   }
 
-  @Override public void putSuperContext(Context ctx) {
+  @Override public void setSuperContext(Context ctx) {
     superContext = ctx;
   }
 }
