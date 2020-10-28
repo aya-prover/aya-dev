@@ -11,7 +11,7 @@ import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.generic.Arg;
 import org.mzi.generic.DTKind;
-import org.mzi.core.Tele;
+import org.mzi.tyck.sort.LevelEqn;
 
 /**
  * @author re-xyr
@@ -93,7 +93,7 @@ public sealed interface Expr {
    */
   record LamExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Buffer<Param> params,
+    @NotNull Buffer<@NotNull Param> params,
     @NotNull Expr body
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -114,12 +114,19 @@ public sealed interface Expr {
   }
 
   /**
-   * @author re-xyr
+   * @author re-xyr, ice1000
+   * @param hLevel specified hLevel, {@link LevelEqn#INVALID} if not specified.
+   * @param uLevel specified uLevel, {@link LevelEqn#INVALID} if not specified.
    */
-  // TODO: sort system - corresponding to the core syntax
   record UnivExpr(
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    int uLevel,
+    int hLevel
   ) implements Expr {
+    public UnivExpr(@NotNull SourcePos sourcePos) {
+      this(sourcePos, LevelEqn.INVALID, LevelEqn.INVALID);
+    }
+
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }
@@ -130,7 +137,7 @@ public sealed interface Expr {
    */
   record TupExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableVector<Expr> items
+    @NotNull ImmutableVector<@NotNull Expr> items
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTup(this, p);

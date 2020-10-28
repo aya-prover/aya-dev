@@ -7,6 +7,9 @@ import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableList;
 import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
@@ -20,8 +23,10 @@ import org.mzi.generic.Modifier;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
 import org.mzi.ref.LocalVar;
+import org.mzi.tyck.sort.LevelEqn;
 
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,7 +69,10 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var assoc = assocCtx == null
       ? null
       : visitAssoc(assocCtx);
-    var tele = ctx.tele().stream().map(this::parseTele).collect(Buffer.factory());
+    // TODO[ice]: replacing this with `var` will compile, but IDEA shows error
+    Buffer<Param> tele = ctx.tele().stream()
+      .map(this::visitTele)
+      .collect(Buffer.factory());
     var typeCtx = ctx.type();
     var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null) // TODO: is that correct to use HoleExpr?
@@ -99,10 +107,37 @@ public class MziProducer extends MziBaseVisitor<Object> {
   @Override
   public Expr visitLiteral(MziParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
+    var id = ctx.ID();
+    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(ctx), id.getText());
+    var universe = ctx.universe();
+    if (universe != null) {
+      var univTrunc = Optional.ofNullable(universe.univTrunc())
+        .map(RuleContext::getText)
+        .orElse("h");
+      var hLevel = switch (univTrunc) {
+        default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
+        case "h-" -> LevelEqn.INVALID;
+        case "oo-" -> Integer.MAX_VALUE;
+      };
+      var uLevel = visitNumber(universe.NUMBER());
+      return new Expr.UnivExpr(sourcePosOf(ctx), uLevel, hLevel);
+    }
+    var set = ctx.setUniv();
+    if (set != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitNumber(set.NUMBER()), 0);
+    var prop = ctx.PROP();
+    if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
     throw new UnsupportedOperationException();
   }
 
-  public Param parseTele(MziParser.TeleContext ctx) {
+  public int visitNumber(TerminalNode number) {
+    return Optional.ofNullable(number)
+      .map(ParseTree::getText)
+      .map(Integer::parseInt)
+      .orElse(LevelEqn.INVALID);
+  }
+
+  @Override
+  public Param visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
     if (literal != null) return new Param(sourcePosOf(ctx), Buffer.of(new LocalVar("_")), visitLiteral(literal), true);
     var teleTypedExpr = ctx.teleTypedExpr();
@@ -120,12 +155,17 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   public Expr visitExpr(MziParser.ExprContext ctx) {
-    if (ctx instanceof MziParser.ProjContext proj) return new Expr.ProjExpr(
+    if (ctx instanceof MziParser.ProjContext proj) return visitProj(proj);
+    return new Expr.HoleExpr(sourcePosOf(ctx), null, null);
+  }
+
+  @Override
+  public @NotNull Expr.ProjExpr visitProj(MziParser.ProjContext proj) {
+    return new Expr.ProjExpr(
       sourcePosOf(proj),
       visitExpr(proj.expr()),
       Integer.parseInt(proj.NUMBER().getText())
     );
-    return new Expr.HoleExpr(sourcePosOf(ctx), null, null);
   }
 
   @Override

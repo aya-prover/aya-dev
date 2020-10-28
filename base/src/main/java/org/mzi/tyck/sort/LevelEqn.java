@@ -21,7 +21,7 @@ public record LevelEqn<V extends Var>(
   @Nullable V v1, @Nullable V v2,
   int constant, int max
 ) {
-  private static final int INVALID = -114514;
+  public static final int INVALID = -114514;
 
   public LevelEqn(@NotNull V v) {
     this(null, v, INVALID, INVALID);

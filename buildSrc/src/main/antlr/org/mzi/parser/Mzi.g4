@@ -71,7 +71,7 @@ expr : atom argument*                                 # app
      | PI tele+ TO expr                               # pi
      | SIGMA tele*                                    # sigma
      | LAMBDA tele+ (IMPLIES expr?)?                  # lam
-     | MATCH matchArg (',' matchArg)* ('|' clause)*   # match
+     | MATCH matchArg (',' matchArg)* ('|' clause)+   # match
      ;
 
 matchArg : elim
@@ -84,32 +84,34 @@ atom : literal
      | LPAREN (typed ',')? typed? ')'
      ;
 
-argument : expr
+argument : atom
          | LBRACE (typed ',')? typed? '}'
+         | '.' idFix
          ;
 
-clause : patterns IMPLIES expr;
+clause : patterns IMPLIES expr
+       | ABSURD;
 
 patterns : pattern (',' pattern)* ;
 pattern : atomPattern ('\\as' ID type?)?             # patAtom
         | ID (atomPattern | ID)* ('\\as' ID)? type?  # patCtor
         ;
 
-atomPattern : LPAREN patterns? ')' # atomPatExplicit
-            | LBRACE patterns '}'  # atomPatImplicit
-            | NUMBER               # atomPatNumber
-            | CALM_FACE            # atomPatWildcard
+atomPattern : LPAREN patterns? ')'
+            | LBRACE patterns '}'
+            | NUMBER
+            | CALM_FACE
             ;
 
-literal : ID ('.' idFix)?
+literal : ID
         | PROP
         | CALM_FACE
         | idFix
         | LGOAL expr? '?}'
         | NUMBER
         | STRING
-        | UNIVERSE
-        | SET
+        | universe
+        | setUniv
         ;
 
 tele : literal
@@ -124,7 +126,7 @@ ids : (ID ',')* ID?;
 type : ':' expr;
 
 // operators
-idFix : INFIX | POSTFIX;
+idFix : INFIX | POSTFIX | ID;
 INFIX : '`' ID '`';
 POSTFIX : '`' ID;
 
@@ -138,8 +140,9 @@ FIXR : '\\fixr';
 TWIN : '\\twin';
 
 // universe
-UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h')? 'Type' [0-9]*;
-SET : '\\Set' [0-9]*;
+univTrunc : NUMBER '-' | 'oo-' | 'h';
+universe : '\\' univTrunc? 'Type' NUMBER?;
+setUniv : '\\Set' NUMBER?;
 PROP : '\\Prop';
 
 // other keywords
@@ -154,6 +157,7 @@ SIGMA : '\\Sig' | 'Σ';
 LAMBDA : '\\lam' | 'λ';
 PI : '\\Pi' | 'Π';
 MATCH : '\\match';
+ABSURD : '\\impossible';
 TO : '->' | '→';
 IMPLIES : '=>' | '⇒';
 
