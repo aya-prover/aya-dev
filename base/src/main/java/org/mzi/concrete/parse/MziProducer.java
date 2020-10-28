@@ -146,7 +146,10 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   public Expr visitExpr(MziParser.ExprContext ctx) {
-    // TODO: visit expr
+    if (ctx instanceof MziParser.ProjContext proj) return new Expr.ProjExpr(
+      sourcePosOf(proj),
+      visitExpr(proj.expr()),
+      Integer.parseInt(proj.NUMBER().getText()));
     return new Expr.HoleExpr(sourcePosOf(ctx), null, null);
   }
 
