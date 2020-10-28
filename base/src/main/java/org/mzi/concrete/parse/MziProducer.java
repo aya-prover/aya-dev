@@ -22,7 +22,6 @@ import org.mzi.ref.LocalVar;
 
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -60,14 +59,16 @@ public class MziProducer extends MziBaseVisitor<Object> {
       .distinct()
       .collect(Collectors.toCollection(() -> EnumSet.noneOf(Modifier.class)));
     var assocCtx = ctx.assoc();
-    var assoc = assocCtx == null ? null : visitAssoc(assocCtx);
+    var assoc = assocCtx == null
+      ? null
+      : visitAssoc(assocCtx);
     var tele = parseTeles(ctx.tele());
     var typeCtx = ctx.type();
     var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null) // TODO: is that correct to use HoleExpr?
       : visitType(typeCtx);
     var abuseCtx = ctx.abuse();
-    Buffer<Stmt> abuse = abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx);
+    var abuse = abuseCtx == null ? Buffer.<Stmt>of() : visitAbuse(abuseCtx);
 
     return new Decl.FnDecl(
       sourcePosOf(ctx),
@@ -149,7 +150,8 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (ctx instanceof MziParser.ProjContext proj) return new Expr.ProjExpr(
       sourcePosOf(proj),
       visitExpr(proj.expr()),
-      Integer.parseInt(proj.NUMBER().getText()));
+      Integer.parseInt(proj.NUMBER().getText())
+    );
     return new Expr.HoleExpr(sourcePosOf(ctx), null, null);
   }
 
@@ -212,7 +214,8 @@ public class MziProducer extends MziBaseVisitor<Object> {
       .collect(Collectors.joining("."));
   }
 
-  @Override public @NotNull Assoc visitAssoc(MziParser.AssocContext ctx) {
+  @Override
+  public @NotNull Assoc visitAssoc(MziParser.AssocContext ctx) {
     if (ctx.FIX() != null) return Assoc.Fix;
     if (ctx.FIXL() != null) return Assoc.FixL;
     if (ctx.FIXR() != null) return Assoc.FixR;
