@@ -16,14 +16,14 @@ import org.mzi.util.Decision;
  */
 public sealed interface AppTerm extends Term {
   @NotNull Term fn();
-  @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
+  @NotNull ImmutableSeq<@NotNull Arg<? extends Term>> args();
 
   @Override default @NotNull Decision whnf() {
     if (fn() instanceof LamTerm) return Decision.NO;
     return fn().whnf();
   }
 
-  @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
+  @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<? extends Term> arg) {
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
     var tele = lam.tele();
     var next = tele.next();
@@ -50,7 +50,7 @@ public sealed interface AppTerm extends Term {
 
   record Apply(
     @NotNull Term fn,
-    @NotNull Arg<Term> arg
+    @NotNull Arg<? extends Term> arg
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
@@ -61,7 +61,7 @@ public sealed interface AppTerm extends Term {
     }
 
     @Contract(" -> new")
-    @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> args() {
+    @Override public @NotNull ImmutableSeq<@NotNull Arg<? extends Term>> args() {
       return ImmutableSeq.of(arg());
     }
   }

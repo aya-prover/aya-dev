@@ -15,6 +15,7 @@ import org.mzi.concrete.Expr;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.core.Tele;
+import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Ordering;
@@ -43,7 +44,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       }
       varSubst.put(r.get(i).ref(), l.get(i).ref());
     }
-    return true;
+
+    return compare(lhs.last(), rhs.last(), type);
   }
 
   @Override
@@ -71,7 +73,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitHole(@NotNull HoleTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (lhs.solution().isDefined()) return lhs.solution().get().accept(this, preRhs, type);
+    if (lhs.solution().isDefined()) return compare(lhs.solution().get(), preRhs, type);
     return preRhs instanceof HoleTerm rhs && lhs.var() == rhs.var();
   }
 
@@ -104,12 +106,16 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (preRhs instanceof AppTerm.FnCall rhs && rhs.fnRef() == lhs.fnRef())
       return visitLists(lhs.args().map(Arg::term), rhs.args().map(Arg::term));
-    return lhs.normalize(NormalizeMode.WHNF).accept(this, preRhs, type);
+    return compare(lhs.normalize(NormalizeMode.WHNF), preRhs, type);
   }
 
   @Override
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof LamTerm rhs)) return false;
+    if (!(preRhs instanceof LamTerm rhs)) {
+      if (!(type instanceof DT dt && dt.kind().function)) return false;
+      var mockTerm = new Arg<>(new RefTerm(new LocalVar("tql")), dt.telescope().explicit());
+      return compare(AppTerm.make(lhs, mockTerm), AppTerm.make(preRhs, mockTerm), dt.dropTele(1));
+    }
     var params = Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) -> varSubst.put(l.ref(), r.ref()));
     var lBody = lhs.body();
     var rBody = rhs.body();
