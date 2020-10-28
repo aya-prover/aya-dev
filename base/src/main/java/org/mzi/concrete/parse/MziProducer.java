@@ -5,7 +5,6 @@ package org.mzi.concrete.parse;
 import asia.kala.Tuple;
 import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableList;
-import asia.kala.collection.mutable.ArrayBuffer;
 import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.NotNull;
@@ -171,8 +170,8 @@ public class MziProducer extends MziBaseVisitor<Object> {
   @Override
   public Stmt visitCmd(MziParser.CmdContext ctx) {
     var cmd = ctx.OPEN() != null ? Cmd.Open : Cmd.Import;
-    var using = new ArrayBuffer<String>();
-    var hiding = new ArrayBuffer<String>();
+    var using = Buffer.<String>of();
+    var hiding = Buffer.<String>of();
 
     for (var useHind : ctx.useHide()) {
       var useOrHide = visitUseHide(useHind);
@@ -249,7 +248,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     return id.getText();
   }
 
-  private SourcePos sourcePosOf(ParserRuleContext ctx) {
+  private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
     var interval = ctx.getSourceInterval();
     var start = ctx.getStart();
     var end = ctx.getStop();
