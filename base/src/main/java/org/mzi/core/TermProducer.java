@@ -50,14 +50,14 @@ public class TermProducer extends LispBaseVisitor<Term> {
     var exprs = ctx.expr();
     return switch (rule) {
       case "U" -> new UnivTerm(Sort.SET0);
-      case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), true));
+      case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new AppTerm.FnCall(
         (DefVar) ((RefTerm) exprs.get(0).accept(this)).var(),
         exprs.subList(1, exprs.size())
           .stream()
-          .map(c -> new Arg<>(c.accept(this), true))
+          .map(c -> Arg.explicit(c.accept(this)))
           .collect(ImmutableSeq.factory()));
-      case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), new Arg<>(exprs.get(1).accept(this), false));
+      case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.implicit(exprs.get(1).accept(this)));
       case "lam" -> new LamTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this));
       case "Pi" -> new DT(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Pi);
       case "Copi" -> new DT(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Copi);
