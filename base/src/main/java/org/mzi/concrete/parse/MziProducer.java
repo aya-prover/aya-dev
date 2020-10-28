@@ -21,7 +21,6 @@ import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
 import org.mzi.ref.LocalVar;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -37,22 +36,22 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public Stmt visitStmt(MziParser.StmtContext ctx) {
-    if (ctx.cmd() != null) {
-      return visitCmd(ctx.cmd());
-    } else if (ctx.decl() != null) {
-      return visitDecl(ctx.decl());
-    } else throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    var cmd = ctx.cmd();
+    if (cmd != null) return visitCmd(cmd);
+    var decl = ctx.decl();
+    if (decl != null) return visitDecl(decl);
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
   public Decl visitDecl(MziParser.DeclContext ctx) {
-    if (ctx.fnDecl() != null) {
-      return visitFnDecl(ctx.fnDecl());
-    } else if (ctx.dataDecl() != null) {
-      return visitDataDecl(ctx.dataDecl());
-    } else if (ctx.structDecl() != null) {
-      return visitStructDecl(ctx.structDecl());
-    } else throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    var fnDecl = ctx.fnDecl();
+    if (fnDecl != null) return visitFnDecl(fnDecl);
+    var dataDecl = ctx.dataDecl();
+    if (dataDecl != null) return visitDataDecl(dataDecl);
+    var structDecl = ctx.structDecl();
+    if (structDecl != null) return visitStructDecl(structDecl);
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
@@ -61,12 +60,15 @@ public class MziProducer extends MziBaseVisitor<Object> {
       .map(this::visitFnModifiers)
       .distinct()
       .collect(Collectors.toCollection(() -> EnumSet.noneOf(Modifier.class)));
-    var assoc = ctx.assoc() == null ? null : visitAssoc(ctx.assoc());
+    var assocCtx = ctx.assoc();
+    var assoc = assocCtx == null ? null : visitAssoc(assocCtx);
     var tele = parseTeles(ctx.tele());
-    var type = ctx.type() == null
+    var typeCtx = ctx.type();
+    var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null) // TODO: is that correct to use HoleExpr?
-      : visitType(ctx.type());
-    Buffer<Stmt> abuse = ctx.abuse() == null ? Buffer.of() : visitAbuse(ctx.abuse());
+      : visitType(typeCtx);
+    var abuseCtx = ctx.abuse();
+    Buffer<Stmt> abuse = abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx);
 
     return new Decl.FnDecl(
       sourcePosOf(ctx),
@@ -127,18 +129,18 @@ public class MziProducer extends MziBaseVisitor<Object> {
     // when parsing (a b : T), only `b` should be TypedTele
     // and `a` should be NamedTele,
     var ids = visitExprLiteral(ctx.expr());
-    var last = ids.get(ids.size() - 1);
-    ids.remove(ids.size() - 1);
-    Collections.reverse(ids);
+    var last = ids.last();
 
     // build the last TypedTele
     var lastTyped = new Tele.TypedTele<>(new LocalVar(last), type, explicit, next);
 
     // others should be NamedTele
-    return ids.stream()
+    return ids.view().reversed()
+      .drop(1)
+      .stream()
       .map(LocalVar::new)
-      .reduce(
-        (Tele<Expr>) lastTyped,
+      .<Tele<Expr>>reduce(
+        lastTyped,
         (n, var) -> new Tele.NamedTele<>(var, n),
         (a, b) -> a
       );
@@ -227,11 +229,11 @@ public class MziProducer extends MziBaseVisitor<Object> {
     else throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  private List<String> visitExprLiteral(MziParser.ExprContext ctx) {
+  private Buffer<String> visitExprLiteral(MziParser.ExprContext ctx) {
     if (ctx instanceof MziParser.AppContext app) {
-      var list = new ArrayList<String>();
-      list.add(visitLiteralId(app.atom().literal()));
-      app.argument().forEach(a -> list.addAll(visitExprLiteral(a.expr())));
+      var list = Buffer.<String>of();
+      list.append(visitLiteralId(app.atom().literal()));
+      app.argument().forEach(a -> list.appendAll(visitExprLiteral(a.expr())));
       return list;
     }
     // TODO: should report an error instead of throw
