@@ -20,7 +20,6 @@ import java.util.EnumSet;
  * @author re-xyr
  */
 public sealed interface Decl extends Stmt {
-  @Contract(pure = true) @NotNull SourcePos sourcePos();
   @Contract(pure = true) @NotNull DefVar<? extends Decl> ref();
 
   /**
@@ -38,14 +37,15 @@ public sealed interface Decl extends Stmt {
     public final @NotNull Expr body;
     public final @NotNull Buffer<Stmt> abuseBlock;
 
-    public FnDecl(@NotNull SourcePos sourcePos,
-                  @NotNull EnumSet<Modifier> modifiers,
-                  @Nullable Assoc assoc,
-                  @NotNull String name,
-                  @NotNull Tele<Expr> telescope,
-                  @NotNull Expr result,
-                  @NotNull Expr body,
-                  @NotNull Buffer<Stmt> abuseBlock
+    public FnDecl(
+      @NotNull SourcePos sourcePos,
+      @NotNull EnumSet<Modifier> modifiers,
+      @Nullable Assoc assoc,
+      @NotNull String name,
+      @NotNull Tele<Expr> telescope,
+      @NotNull Expr result,
+      @NotNull Expr body,
+      @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
       this.modifiers = modifiers;

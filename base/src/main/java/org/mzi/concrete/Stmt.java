@@ -3,13 +3,18 @@
 package org.mzi.concrete;
 
 import asia.kala.collection.immutable.ImmutableList;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.mzi.api.error.SourcePos;
 
 /**
  * @author kiva
  */
 public sealed interface Stmt permits Decl, Stmt.CmdStmt {
+  @Contract(pure = true) @NotNull SourcePos sourcePos();
+
   record CmdStmt(
+    @NotNull SourcePos sourcePos,
     @NotNull Cmd cmd,
     @NotNull String qualifiedModuleName,
     @NotNull ImmutableList<@NotNull String> using,

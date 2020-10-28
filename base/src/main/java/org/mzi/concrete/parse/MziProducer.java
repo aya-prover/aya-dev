@@ -185,6 +185,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     }
 
     return new Stmt.CmdStmt(
+      sourcePosOf(ctx),
       cmd,
       visitModuleName(ctx.moduleName()),
       using.toImmutableList(),
