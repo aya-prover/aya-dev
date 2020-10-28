@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Decl;
@@ -19,6 +20,7 @@ import org.mzi.concrete.Param;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Assoc;
+import org.mzi.generic.DTKind;
 import org.mzi.generic.Modifier;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
@@ -70,9 +72,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
       ? null
       : visitAssoc(assocCtx);
     // TODO[ice]: replacing this with `var` will compile, but IDEA shows error
-    Buffer<Param> tele = ctx.tele().stream()
-      .map(this::visitTele)
-      .collect(Buffer.factory());
+    var tele = visitTelescope(ctx.tele().stream());
     var typeCtx = ctx.type();
     var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null) // TODO: is that correct to use HoleExpr?
@@ -90,6 +90,12 @@ public class MziProducer extends MziBaseVisitor<Object> {
       visitFnBody(ctx.fnBody()),
       abuse
     );
+  }
+
+  public Buffer<Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
+    return stream
+      .map(this::visitTele)
+      .collect(Buffer.factory());
   }
 
   @Override
@@ -119,17 +125,17 @@ public class MziProducer extends MziBaseVisitor<Object> {
         case "h-" -> LevelEqn.INVALID;
         case "oo-" -> Integer.MAX_VALUE;
       };
-      var uLevel = visitNumber(universe.NUMBER());
+      var uLevel = visitOptNumber(universe.NUMBER());
       return new Expr.UnivExpr(sourcePosOf(ctx), uLevel, hLevel);
     }
     var set = ctx.setUniv();
-    if (set != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitNumber(set.NUMBER()), 0);
+    if (set != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(set.NUMBER()), 0);
     var prop = ctx.PROP();
     if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
     throw new UnsupportedOperationException();
   }
 
-  public int visitNumber(TerminalNode number) {
+  public int visitOptNumber(@Nullable TerminalNode number) {
     return Optional.ofNullable(number)
       .map(ParseTree::getText)
       .map(Integer::parseInt)
@@ -156,11 +162,22 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   public Expr visitExpr(MziParser.ExprContext ctx) {
     if (ctx instanceof MziParser.ProjContext proj) return visitProj(proj);
+    if (ctx instanceof MziParser.PiContext pi) return visitPi(pi);
     return new Expr.HoleExpr(sourcePosOf(ctx), null, null);
   }
 
   @Override
-  public @NotNull Expr.ProjExpr visitProj(MziParser.ProjContext proj) {
+  public Expr.@NotNull DTExpr visitPi(MziParser.PiContext ctx) {
+    return new Expr.DTExpr(
+      sourcePosOf(ctx),
+      visitTelescope(ctx.tele().stream()),
+      visitExpr(ctx.expr()),
+      DTKind.Pi
+    );
+  }
+
+  @Override
+  public Expr.@NotNull ProjExpr visitProj(MziParser.ProjContext proj) {
     return new Expr.ProjExpr(
       sourcePosOf(proj),
       visitExpr(proj.expr()),
