@@ -214,20 +214,20 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override public @NotNull Assoc visitAssoc(MziParser.AssocContext ctx) {
     if (ctx.FIX() != null) return Assoc.Fix;
-    else if (ctx.FIXL() != null) return Assoc.FixL;
-    else if (ctx.FIXR() != null) return Assoc.FixR;
-    else if (ctx.INFIX() != null) return Assoc.Infix;
-    else if (ctx.INFIXL() != null) return Assoc.InfixL;
-    else if (ctx.INFIXR() != null) return Assoc.InfixR;
-    else if (ctx.TWIN() != null) return Assoc.Twin;
-    else throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    if (ctx.FIXL() != null) return Assoc.FixL;
+    if (ctx.FIXR() != null) return Assoc.FixR;
+    if (ctx.INFIX() != null) return Assoc.Infix;
+    if (ctx.INFIXL() != null) return Assoc.InfixL;
+    if (ctx.INFIXR() != null) return Assoc.InfixR;
+    if (ctx.TWIN() != null) return Assoc.Twin;
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
   public Modifier visitFnModifiers(MziParser.FnModifiersContext ctx) {
     if (ctx.ERASE() != null) return Modifier.Erase;
-    else if (ctx.INLINE() != null) return Modifier.Inline;
-    else throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    if (ctx.INLINE() != null) return Modifier.Inline;
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
