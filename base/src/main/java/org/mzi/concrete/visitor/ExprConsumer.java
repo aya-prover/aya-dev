@@ -7,7 +7,7 @@ import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.generic.Arg;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, Unit>, Tele.Visitor<Expr, P, Unit> {
   @Override default Unit visitNamed(Tele.@NotNull NamedTele<Expr> named, P p) {

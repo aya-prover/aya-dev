@@ -15,7 +15,7 @@ import org.mzi.concrete.Stmt;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Assoc;
 import org.mzi.generic.Modifier;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
 import org.mzi.ref.LocalVar;

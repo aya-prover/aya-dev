@@ -3,12 +3,11 @@
 package org.mzi.core.visitor;
 
 import asia.kala.Unit;
-import asia.kala.Tuple;
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 
 public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<Term, P, Unit> {
   @Override default Unit visitNamed(Tele.@NotNull NamedTele<Term> named, P p) {

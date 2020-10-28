@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 
 /**
  * @author ice1000

@@ -13,7 +13,7 @@ import org.mzi.core.def.FnDef;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 
 import java.util.HashMap;
 

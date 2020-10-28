@@ -8,7 +8,7 @@ import org.mzi.concrete.Expr;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.concrete.visitor.ExprFixpoint;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 
 /**
  * Resolves bindings.

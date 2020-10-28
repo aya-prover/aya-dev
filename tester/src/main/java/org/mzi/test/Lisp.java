@@ -10,7 +10,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.Term;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 import org.mzi.core.TermProducer;
 
 import java.util.Map;

@@ -4,7 +4,7 @@ package org.mzi.core.def;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.term.Term;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 import org.mzi.ref.DefVar;
 
 /**

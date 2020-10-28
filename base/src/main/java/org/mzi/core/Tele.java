@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
-package org.mzi.generic;
+package org.mzi.core;
 
 import asia.kala.PrimitiveTuples.IntObjTuple2;
 import asia.kala.Tuple;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
+import org.mzi.generic.Arg;
 
 import java.util.function.BiConsumer;
 

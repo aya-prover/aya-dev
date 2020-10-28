@@ -13,7 +13,7 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Ordering;

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Var;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.Sort;
-import org.mzi.generic.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.generic.DTKind;

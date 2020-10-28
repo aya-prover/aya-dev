@@ -10,7 +10,7 @@ import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.generic.Arg;
 import org.mzi.generic.DTKind;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 
 /**
  * @author re-xyr

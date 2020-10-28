@@ -3,7 +3,7 @@
 package org.mzi.core.term;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 import org.mzi.util.Decision;
 
 /**

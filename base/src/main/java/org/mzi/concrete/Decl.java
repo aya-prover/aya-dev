@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.generic.Assoc;
 import org.mzi.generic.Modifier;
-import org.mzi.generic.Tele;
+import org.mzi.core.Tele;
 import org.mzi.ref.DefVar;
 
 import java.util.EnumSet;
