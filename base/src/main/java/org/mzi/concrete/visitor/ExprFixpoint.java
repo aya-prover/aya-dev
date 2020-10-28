@@ -3,29 +3,12 @@
 package org.mzi.concrete.visitor;
 
 import asia.kala.collection.mutable.Buffer;
-import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
-import org.mzi.core.Tele;
 
-public interface ExprFixpoint<P> extends
-  Expr.Visitor<P, @NotNull Expr>,
-  Tele.Visitor<Expr, P, @NotNull Tele<Expr>> {
-  @Override default @NotNull Tele<Expr> visitNamed(Tele.@NotNull NamedTele<Expr> named, P p) {
-    var next = named.next().accept(this, p);
-    if (next == named.next()) return named;
-    return new Tele.NamedTele<>(named.ref(), next);
-  }
-
-  @Override default @NotNull Tele<Expr> visitTyped(Tele.@NotNull TypedTele<Expr> typed, P p) {
-    var next = Option.of(typed.next()).map(tele -> tele.accept(this, p)).getOrNull();
-    var type = typed.type().accept(this, p);
-    if (next == typed.next() && type == typed.type()) return typed;
-    return new Tele.TypedTele<>(typed.ref(), type, typed.explicit(), next);
-  }
-
+public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitRef(Expr.@NotNull RefExpr expr, P p) {
     return expr;
   }

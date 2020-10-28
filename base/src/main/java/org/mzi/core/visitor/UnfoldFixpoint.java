@@ -22,7 +22,7 @@ import java.util.HashMap;
  */
 public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
   @Contract(pure = true) static @NotNull SubstFixpoint.TermSubst buildSubst(
-    @NotNull Tele<Term> self,
+    @NotNull Tele self,
     @NotNull Seq<@NotNull Arg<Term>> args
   ) {
     var subst = new SubstFixpoint.TermSubst(new HashMap<>());

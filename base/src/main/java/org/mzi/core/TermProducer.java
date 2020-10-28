@@ -38,7 +38,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
     return parser(text).expr().accept(new TermProducer(refs));
   }
 
-  public static @Nullable Tele<Term> parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
+  public static @Nullable Tele parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
     return new TermProducer(refs).exprToBind(parser(text).expr());
   }
 
@@ -67,7 +67,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
     };
   }
 
-  public Tele<Term> exprToBind(LispParser.ExprContext ctx) {
+  public Tele exprToBind(LispParser.ExprContext ctx) {
     var atom = ctx.atom();
     if (atom != null) {
       if ("null".equals(atom.getText())) return null;
@@ -76,7 +76,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
     var ident = ctx.IDENT().getText();
     var exprs = ctx.expr();
     return switch (exprs.size()) {
-      case 1 -> new Tele.NamedTele<>(ref(ident), exprToBind(exprs.get(0)));
+      case 1 -> new Tele.NamedTele(ref(ident), exprToBind(exprs.get(0)));
       case 3 -> {
         var licit = exprs.get(1);
         var licitAtom = licit.atom();
@@ -90,7 +90,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
           case "im" -> false;
           default -> err.getAsBoolean();
         };
-        yield new Tele.TypedTele<>(ref(ident), exprs.get(0).accept(this), explicit, exprToBind(exprs.get(2)));
+        yield new Tele.TypedTele(ref(ident), exprs.get(0).accept(this), explicit, exprToBind(exprs.get(2)));
       }
       default -> throw new IllegalArgumentException("Expected 1 or 3 arguments, got: " + exprs.size());
     };

@@ -6,14 +6,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.core.term.CoreTerm;
 
 /**
  * @author kiva
  */
 @ApiStatus.NonExtendable
-public interface Bind<T> {
+public interface Bind {
   @Contract(pure = true) @NotNull Var ref();
-  @Contract(pure = true) @Nullable Bind<T> next();
-  @Contract(pure = true) @Nullable T type();
+  @Contract(pure = true) @Nullable Bind next();
+  @Contract(pure = true) @Nullable CoreTerm type();
   @Contract(pure = true) boolean explicit();
 }

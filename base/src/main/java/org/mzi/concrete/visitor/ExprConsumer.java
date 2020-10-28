@@ -4,23 +4,12 @@ package org.mzi.concrete.visitor;
 
 import asia.kala.Unit;
 import asia.kala.collection.mutable.Buffer;
-import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
-import org.mzi.core.Tele;
 
-public interface ExprConsumer<P> extends Expr.Visitor<P, Unit>, Tele.Visitor<Expr, P, Unit> {
-  @Override default Unit visitNamed(Tele.@NotNull NamedTele<Expr> named, P p) {
-    return named.next().accept(this, p);
-  }
-
-  @Override default Unit visitTyped(Tele.@NotNull TypedTele<Expr> typed, P p) {
-    Option.of(typed.next()).forEach(tele -> tele.accept(this, p));
-    return typed.type().accept(this, p);
-  }
-
+public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   @Override default Unit visitRef(Expr.@NotNull RefExpr expr, P p) {
     return Unit.unit();
   }
@@ -29,8 +18,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit>, Tele.Visitor<Exp
     return Unit.unit();
   }
 
-  @Override
-  default Unit visitHole(Expr.@NotNull HoleExpr holeExpr, P p) {
+  @Override default Unit visitHole(Expr.@NotNull HoleExpr holeExpr, P p) {
     var expr = holeExpr.filling();
     if (expr != null) expr.accept(this, p);
     return Unit.unit();
@@ -49,9 +37,8 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit>, Tele.Visitor<Exp
     return expr.function().accept(this, p);
   }
 
-  default Unit visitParams(Buffer<Param> params, P p) {
+  default void visitParams(Buffer<Param> params, P p) {
     params.forEach(param -> param.type().accept(this, p));
-    return Unit.unit();
   }
 
   @Override default Unit visitDT(Expr.@NotNull DTExpr expr, P p) {

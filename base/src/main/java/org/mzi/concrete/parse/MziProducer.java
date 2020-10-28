@@ -9,21 +9,21 @@ import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
+import org.mzi.api.ref.Var;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
+import org.mzi.concrete.Param;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Assoc;
 import org.mzi.generic.Modifier;
-import org.mzi.core.Tele;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
 import org.mzi.ref.LocalVar;
 
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author ice1000
@@ -63,7 +63,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var assoc = assocCtx == null
       ? null
       : visitAssoc(assocCtx);
-    var tele = parseTeles(ctx.tele());
+    var tele = ctx.tele().stream().map(this::parseTele).collect(Buffer.factory());
     var typeCtx = ctx.type();
     var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null) // TODO: is that correct to use HoleExpr?
@@ -95,56 +95,26 @@ public class MziProducer extends MziBaseVisitor<Object> {
     return visitExpr(ctx.expr());
   }
 
-  public Tele<Expr> parseTeles(List<MziParser.TeleContext> teles) {
-    Tele<Expr> next = null;
-    Collections.reverse(teles);
-    for (var ctx : teles) {
-      next = parseTele(next, ctx);
-    }
-    return next;
-  }
-
   @Override
   public Expr visitLiteral(MziParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
     throw new IllegalArgumentException("TODO");
   }
 
-  public Tele<Expr> parseTele(Tele<Expr> next, MziParser.TeleContext ctx) {
+  public Param parseTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
-    if (literal != null) return new Tele.TypedTele<>(new LocalVar("_"), visitLiteral(literal), true, next);
+    if (literal != null) return new Param(sourcePosOf(ctx), Buffer.of(new LocalVar("_")), visitLiteral(literal), true);
     var teleTypedExpr = ctx.teleTypedExpr();
-    if (ctx.LPAREN() != null) return newTele(next, true, teleTypedExpr);
+    if (ctx.LPAREN() != null) return visitTeleTypedExpr(teleTypedExpr, true);
     assert ctx.LBRACE() != null;
-    return newTele(next, false, teleTypedExpr);
+    return visitTeleTypedExpr(teleTypedExpr, false);
   }
 
-  public Tele<Expr> newTele(Tele<Expr> next, boolean explicit, MziParser.TeleTypedExprContext ctx) {
-    if (ctx.type() == null) {
-      // TODO: should report an error instead of throw
-      throw new IllegalArgumentException("explicit/implicit tele should have type");
-    }
-
+  public Param visitTeleTypedExpr(MziParser.TeleTypedExprContext ctx, boolean explicit) {
     var type = visitType(ctx.type());
-
-    // when parsing (a b : T), only `b` should be TypedTele
-    // and `a` should be NamedTele,
-    var ids = visitIds(ctx.ids());
-    var last = ids.last();
-
-    // build the last TypedTele
-    var lastTyped = new Tele.TypedTele<>(new LocalVar(last), type, explicit, next);
-
-    // others should be NamedTele
-    return ids.view().reversed()
-      .drop(1)
-      .stream()
-      .map(LocalVar::new)
-      .<Tele<Expr>>reduce(
-        lastTyped,
-        (n, var) -> new Tele.NamedTele<>(var, n),
-        (a, b) -> a
-      );
+    return new Param(sourcePosOf(ctx), visitIds(ctx.ids())
+      .<Var>map(LocalVar::new)
+      .collect(Buffer.factory()), type, explicit);
   }
 
   public Expr visitExpr(MziParser.ExprContext ctx) {
@@ -199,14 +169,12 @@ public class MziProducer extends MziBaseVisitor<Object> {
   @Override
   public Tuple2<UseHide, ImmutableList<String>> visitUseHide(MziParser.UseHideContext ctx) {
     var type = ctx.USING() != null ? UseHide.Use : UseHide.Hide;
-    return Tuple.of(type, visitIds(ctx.ids()));
+    return Tuple.of(type, visitIds(ctx.ids()).collect(ImmutableList.factory()));
   }
 
   @Override
-  public ImmutableList<String> visitIds(MziParser.IdsContext ctx) {
-    return ctx.ID().stream()
-      .map(t -> t.getSymbol().getText())
-      .collect(ImmutableList.factory());
+  public Stream<String> visitIds(MziParser.IdsContext ctx) {
+    return ctx.ID().stream().map(t -> t.getSymbol().getText());
   }
 
   @Override

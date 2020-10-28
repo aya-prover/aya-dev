@@ -34,7 +34,7 @@ public interface Lisp {
     return Objects.requireNonNull(somehowParse(code, refs));
   }
 
-  static @Nullable Tele<Term> somehowParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
+  static @Nullable Tele somehowParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
     return TermProducer.parseTele(code, refs);
   }
 
@@ -53,7 +53,7 @@ public interface Lisp {
     return def;
   }
 
-  static @NotNull Tele<Term> reallyParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
+  static @NotNull Tele reallyParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
     return Objects.requireNonNull(somehowParseTele(code, refs));
   }
 }

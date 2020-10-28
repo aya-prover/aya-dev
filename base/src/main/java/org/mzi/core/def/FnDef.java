@@ -12,11 +12,11 @@ import org.mzi.ref.DefVar;
  */
 public final class FnDef implements Def {
   public final @NotNull DefVar<FnDef> ref;
-  public final @NotNull Tele<Term> telescope;
+  public final @NotNull Tele telescope;
   public final @NotNull Term result;
   public final @NotNull Term body;
 
-  public FnDef(@NotNull String name, @NotNull Tele<Term> telescope, @NotNull Term result, @NotNull Term body) {
+  public FnDef(@NotNull String name, @NotNull Tele telescope, @NotNull Term result, @NotNull Term body) {
     this.ref = new DefVar<>(this, name);
     this.telescope = telescope;
     this.result = result;

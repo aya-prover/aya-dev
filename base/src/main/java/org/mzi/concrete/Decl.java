@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.generic.Assoc;
 import org.mzi.generic.Modifier;
-import org.mzi.core.Tele;
 import org.mzi.ref.DefVar;
 
 import java.util.EnumSet;
@@ -32,7 +31,7 @@ public sealed interface Decl extends Stmt {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
-    public final @NotNull Tele<Expr> telescope;
+    public final @NotNull Buffer<Param> telescope;
     public final @NotNull Expr result;
     public final @NotNull Expr body;
     public final @NotNull Buffer<Stmt> abuseBlock;
@@ -42,7 +41,7 @@ public sealed interface Decl extends Stmt {
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Assoc assoc,
       @NotNull String name,
-      @NotNull Tele<Expr> telescope,
+      @NotNull Buffer<Param> telescope,
       @NotNull Expr result,
       @NotNull Expr body,
       @NotNull Buffer<Stmt> abuseBlock

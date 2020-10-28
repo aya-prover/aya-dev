@@ -13,7 +13,7 @@ import org.mzi.util.Decision;
  * @author ice1000
  */
 public record DT(
-  @NotNull Tele<Term> telescope,
+  @NotNull Tele telescope,
   @NotNull Term last,
   @NotNull DTKind kind
 ) implements Term {

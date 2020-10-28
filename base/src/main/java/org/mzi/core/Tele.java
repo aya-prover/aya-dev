@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
+import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
 
 import java.util.function.BiConsumer;
@@ -28,21 +29,21 @@ import java.util.function.BiConsumer;
  *
  * @author ice1000
  */
-public interface Tele<Term> extends Bind<Term> {
-  @Override @Nullable Tele<Term> next();
+public interface Tele extends Bind {
+  @Override @Nullable Tele next();
   @Override @NotNull Term type();
 
-  <P, R> R accept(@NotNull Tele.Visitor<Term, P, R> visitor, P p);
-  <P, Q, R> R accept(@NotNull Tele.BiVisitor<Term, P, Q, R> visitor, P p, Q q);
+  <P, R> R accept(@NotNull Tele.Visitor<P, R> visitor, P p);
+  <P, Q, R> R accept(@NotNull Tele.BiVisitor<P, Q, R> visitor, P p, Q q);
 
-  default @NotNull Buffer<@NotNull Tele<Term>> toBuffer() {
-    var buf = Buffer.<Tele<Term>>of();
+  default @NotNull Buffer<@NotNull Tele> toBuffer() {
+    var buf = Buffer.<Tele>of();
     forEach((i, x) -> buf.append(x));
     return buf;
   }
 
-  default @NotNull IntObjTuple2<@NotNull Tele<Term>>
-  forEach(@NotNull IndexedConsumer<@NotNull Tele<Term>> consumer) {
+  default @NotNull IntObjTuple2<@NotNull Tele>
+  forEach(@NotNull IndexedConsumer<@NotNull Tele> consumer) {
     var tele = this;
     var i = 0;
     while (true) {
@@ -54,13 +55,12 @@ public interface Tele<Term> extends Bind<Term> {
   }
 
   /**
-   * @param <T>      term or expr
    * @param consumer that traverses the telescopes
    * @return a tuple containing the lhs and rhs left.
    */
-  static @NotNull <T> Tuple2<@Nullable Tele<T>, @Nullable Tele<T>> biForEach(
-    @NotNull Tele<T> lhs, @NotNull Tele<T> rhs,
-    @NotNull BiConsumer<@NotNull Tele<T>, @NotNull Tele<T>> consumer
+  static @NotNull Tuple2<@Nullable Tele, @Nullable Tele> biForEach(
+    @NotNull Tele lhs, @NotNull Tele rhs,
+    @NotNull BiConsumer<@NotNull Tele, @NotNull Tele> consumer
   ) {
     while (lhs != null && rhs != null) {
       consumer.accept(lhs, rhs);
@@ -70,7 +70,7 @@ public interface Tele<Term> extends Bind<Term> {
     return Tuple.of(lhs, rhs);
   }
 
-  default @NotNull Tele<Term> last() {
+  default @NotNull Tele last() {
     return forEach((index, tele) -> {})._2;
   }
 
@@ -87,27 +87,27 @@ public interface Tele<Term> extends Bind<Term> {
     return obj.ok;
   }
 
-  interface Visitor<Term, P, R> {
-    R visitTyped(@NotNull TypedTele<Term> typed, P p);
-    R visitNamed(@NotNull NamedTele<Term> named, P p);
+  interface Visitor<P, R> {
+    R visitTyped(@NotNull TypedTele typed, P p);
+    R visitNamed(@NotNull NamedTele named, P p);
   }
 
-  interface BiVisitor<Term, P, Q, R> {
-    R visitTyped(@NotNull TypedTele<Term> typed, P p, Q q);
-    R visitNamed(@NotNull NamedTele<Term> named, P p, Q q);
+  interface BiVisitor<P, Q, R> {
+    R visitTyped(@NotNull TypedTele typed, P p, Q q);
+    R visitNamed(@NotNull NamedTele named, P p, Q q);
   }
 
-  record TypedTele<Term>(
+  record TypedTele(
     @NotNull Var ref,
     @NotNull Term type,
     boolean explicit,
-    @Nullable Tele<Term> next
-  ) implements Tele<Term> {
-    @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
+    @Nullable Tele next
+  ) implements Tele {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTyped(this, p);
     }
 
-    @Override public <P, Q, R> R accept(@NotNull BiVisitor<Term, P, Q, R> visitor, P p, Q q) {
+    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitTyped(this, p, q);
     }
   }
@@ -115,10 +115,10 @@ public interface Tele<Term> extends Bind<Term> {
   /**
    * @author ice1000
    */
-  record NamedTele<Term>(
+  record NamedTele(
     @NotNull Var ref,
-    @NotNull Tele<Term> next
-  ) implements Tele<Term> {
+    @NotNull Tele next
+  ) implements Tele {
     @Contract(pure = true) @Override public boolean explicit() {
       return next().explicit();
     }
@@ -127,11 +127,11 @@ public interface Tele<Term> extends Bind<Term> {
       return next().type();
     }
 
-    @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNamed(this, p);
     }
 
-    @Override public <P, Q, R> R accept(@NotNull BiVisitor<Term, P, Q, R> visitor, P p, Q q) {
+    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitNamed(this, p, q);
     }
   }

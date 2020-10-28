@@ -14,18 +14,18 @@ import org.mzi.core.Tele;
  */
 public interface TermFixpoint<P> extends
   Term.Visitor<P, @NotNull Term>,
-  Tele.Visitor<Term, P, @NotNull Tele<Term>> {
-  @Override default @NotNull Tele<Term> visitNamed(Tele.@NotNull NamedTele<Term> named, P p) {
+  Tele.Visitor<P, @NotNull Tele> {
+  @Override default @NotNull Tele visitNamed(Tele.@NotNull NamedTele named, P p) {
     var next = named.next().accept(this, p);
     if (next == named.next()) return named;
-    return new Tele.NamedTele<>(named.ref(), next);
+    return new Tele.NamedTele(named.ref(), next);
   }
 
-  @Override default @NotNull Tele<Term> visitTyped(Tele.@NotNull TypedTele<Term> typed, P p) {
+  @Override default @NotNull Tele visitTyped(Tele.@NotNull TypedTele typed, P p) {
     var next = Option.of(typed.next()).map(tele -> tele.accept(this, p)).getOrNull();
     var type = typed.type().accept(this, p);
     if (next == typed.next() && type == typed.type()) return typed;
-    return new Tele.TypedTele<>(typed.ref(), type, typed.explicit(), next);
+    return new Tele.TypedTele(typed.ref(), type, typed.explicit(), next);
   }
 
   @Override default @NotNull Term visitHole(@NotNull HoleTerm term, P p) {

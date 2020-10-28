@@ -9,8 +9,8 @@ import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.core.Tele;
 
-public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<Term, P, Unit> {
-  @Override default Unit visitNamed(Tele.@NotNull NamedTele<Term> named, P p) {
+public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<P, Unit> {
+  @Override default Unit visitNamed(Tele.@NotNull NamedTele named, P p) {
     return named.next().accept(this, p);
   }
 
@@ -20,7 +20,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<Ter
     return Unit.unit();
   }
 
-  @Override default Unit visitTyped(Tele.@NotNull TypedTele<Term> typed, P p) {
+  @Override default Unit visitTyped(Tele.@NotNull TypedTele typed, P p) {
     Option.of(typed.next()).forEach(tele -> tele.accept(this, p) );
     return typed.type().accept(this, p);
   }
