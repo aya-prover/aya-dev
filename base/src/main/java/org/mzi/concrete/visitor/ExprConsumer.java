@@ -3,9 +3,11 @@
 package org.mzi.concrete.visitor;
 
 import asia.kala.Unit;
+import asia.kala.collection.mutable.Buffer;
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
+import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 import org.mzi.core.Tele;
 
@@ -47,13 +49,18 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit>, Tele.Visitor<Exp
     return expr.function().accept(this, p);
   }
 
+  default Unit visitParams(Buffer<Param> params, P p) {
+    params.forEach(param -> param.type().accept(this, p));
+    return Unit.unit();
+  }
+
   @Override default Unit visitDT(Expr.@NotNull DTExpr expr, P p) {
-    expr.tele().accept(this, p);
+    visitParams(expr.params(), p);
     return expr.last().accept(this, p);
   }
 
   @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {
-    expr.tele().accept(this, p);
+    visitParams(expr.params(), p);
     return expr.body().accept(this, p);
   }
 

@@ -4,6 +4,7 @@ package org.mzi.concrete;
 
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
+import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
@@ -78,7 +79,7 @@ public sealed interface Expr {
    */
   record DTExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Tele<Expr> tele,
+    @NotNull Buffer<Param> params,
     @NotNull Expr last,
     @NotNull DTKind kind
   ) implements Expr {
@@ -92,7 +93,7 @@ public sealed interface Expr {
    */
   record LamExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Tele<Expr> tele,
+    @NotNull Buffer<Param> params,
     @NotNull Expr body
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

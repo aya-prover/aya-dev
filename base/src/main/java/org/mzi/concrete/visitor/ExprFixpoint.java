@@ -2,9 +2,11 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.visitor;
 
+import asia.kala.collection.mutable.Buffer;
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
+import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 import org.mzi.core.Tele;
 
@@ -38,17 +40,25 @@ public interface ExprFixpoint<P> extends
     return new Expr.HoleExpr(expr.sourcePos(), expr.name(), h);
   }
 
+  default @NotNull Buffer<Param> visitParams(@NotNull Buffer<Param> params, P p) {
+    return params.view().map(param -> {
+      var type = param.type().accept(this, p);
+      if (type == param.type()) return param;
+      return new Param(param.sourcePos(), param.vars(), type, param.explicit());
+    }).collect(Buffer.factory());
+  }
+
   @Override default @NotNull Expr visitLam(Expr.@NotNull LamExpr expr, P p) {
-    var binds = expr.tele().accept(this, p);
+    var binds = visitParams(expr.params(), p);
     var body = expr.body().accept(this, p);
-    if (binds == expr.tele() && body == expr.body()) return expr;
+    if (binds.sameElements(expr.params(), true) && body == expr.body()) return expr;
     return new Expr.LamExpr(expr.sourcePos(), binds, body);
   }
 
   @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {
-    var binds = expr.tele().accept(this, p);
+    var binds = visitParams(expr.params(), p);
     var last = expr.last().accept(this, p);
-    if (binds == expr.tele() && last == expr.last()) return expr;
+    if (binds.sameElements(expr.params(), true) && last == expr.last()) return expr;
     return new Expr.DTExpr(expr.sourcePos(), binds, last, expr.kind());
   }
 
