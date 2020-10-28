@@ -10,63 +10,65 @@ package org.mzi.api.error;
  * @author kiva
  */
 public record SourcePos(
-  int start,
-  int end,
+  int tokenStartIndex,
+  int tokenEndIndex,
   int startLine,
-  int startColumn
+  int startColumn,
+  int endLine,
+  int endColumn
 ) {
   /**
    * Single instance SourcePos for mocking tests and other usages.
    */
-  public static final SourcePos NONE = new SourcePos(-1, -1, -1, -1);
+  public static final SourcePos NONE = new SourcePos(-1, -1, -1, -1, -1, -1);
 
   public int length() {
-    return end < start
+    return tokenEndIndex < tokenStartIndex
       ? 0
-      : end - start + 1;
+      : tokenEndIndex - tokenStartIndex + 1;
   }
 
   /**
-   * Does start end before other.start? May or may not be disjoint
+   * Does tokenStartIndex tokenEndIndex before other.tokenStartIndex? May or may not be disjoint
    */
   public boolean startsBefore(SourcePos other) {
-    return start < other.start;
+    return tokenStartIndex < other.tokenStartIndex;
   }
 
   /**
-   * Does this start completely before other? Disjoint
+   * Does this tokenStartIndex completely before other? Disjoint
    */
   public boolean startsBeforeDisjoint(SourcePos other) {
-    return start < other.start && end < other.start;
+    return tokenStartIndex < other.tokenStartIndex && tokenEndIndex < other.tokenStartIndex;
   }
 
   /**
-   * Does this start at or before other? Nondisjoint
+   * Does this tokenStartIndex at or before other? Nondisjoint
    */
   public boolean startsBeforeNonDisjoint(SourcePos other) {
-    return start <= other.start && end >= other.start;
+    return tokenStartIndex <= other.tokenStartIndex && tokenEndIndex >= other.tokenStartIndex;
   }
 
   /**
-   * Does start start after other.end? May or may not be disjoint
+   * Does tokenStartIndex tokenStartIndex after other.tokenEndIndex? May or may not be disjoint
    */
   public boolean startsAfter(SourcePos other) {
-    return start > other.start;
+    return tokenStartIndex > other.tokenStartIndex;
   }
 
   /**
-   * Does this start completely after other? Disjoint
+   * Does this tokenStartIndex completely after other? Disjoint
    */
   public boolean startsAfterDisjoint(SourcePos other) {
-    return start > other.end;
+    return tokenStartIndex > other.tokenEndIndex;
   }
 
   /**
-   * Does this start after other? NonDisjoint
+   * Does this tokenStartIndex after other? NonDisjoint
    */
   public boolean startsAfterNonDisjoint(SourcePos other) {
-    // this.end >= other.end implied
-    return start > other.start && start <= other.end;
+    // this.tokenEndIndex >= other.tokenEndIndex implied
+    return tokenStartIndex > other.tokenStartIndex && tokenStartIndex <= other.tokenEndIndex;
   }
 
   /**
@@ -80,11 +82,11 @@ public record SourcePos(
    * Are two SourcePoss adjacent such as 0..41 and 42..42?
    */
   public boolean adjacent(SourcePos other) {
-    return start == other.end + 1 || end == other.start - 1;
+    return tokenStartIndex == other.tokenEndIndex + 1 || tokenEndIndex == other.tokenStartIndex - 1;
   }
 
   public boolean properlyContains(SourcePos other) {
-    return other.start >= start && other.end <= end;
+    return other.tokenStartIndex >= tokenStartIndex && other.tokenEndIndex <= tokenEndIndex;
   }
 
   /**
@@ -92,10 +94,12 @@ public record SourcePos(
    */
   public SourcePos union(SourcePos other) {
     return new SourcePos(
-      Math.min(start, other.start),
-      Math.max(end, other.end),
+      Math.min(tokenStartIndex, other.tokenStartIndex),
+      Math.max(tokenEndIndex, other.tokenEndIndex),
       Math.min(startLine, other.startLine),
-      Math.max(startColumn, other.startColumn)
+      Math.max(startColumn, other.startColumn),
+      Math.max(endLine, other.endLine),
+      Math.max(endColumn, other.endColumn)
     );
   }
 
@@ -104,10 +108,12 @@ public record SourcePos(
    */
   public SourcePos intersection(SourcePos other) {
     return new SourcePos(
-      Math.max(start, other.start),
-      Math.min(end, other.end),
+      Math.max(tokenStartIndex, other.tokenStartIndex),
+      Math.min(tokenEndIndex, other.tokenEndIndex),
       Math.max(startLine, other.startLine),
-      Math.min(startColumn, other.startColumn)
+      Math.min(startColumn, other.startColumn),
+      Math.min(endLine, other.endLine),
+      Math.min(endColumn, other.endColumn)
     );
   }
 
@@ -119,23 +125,27 @@ public record SourcePos(
    */
   public SourcePos differenceNotProperlyContained(SourcePos other) {
     SourcePos diff = null;
-    // other.start to left of start (or same)
+    // other.tokenStartIndex to left of tokenStartIndex (or same)
     if (other.startsBeforeNonDisjoint(this)) {
       diff = new SourcePos(
-        Math.max(start, other.end + 1),
-        end,
+        Math.max(tokenStartIndex, other.tokenEndIndex + 1),
+        tokenEndIndex,
         startLine,
-        startColumn
+        startColumn,
+        endLine,
+        endColumn
       );
     }
 
-    // other.start to right of start
+    // other.tokenStartIndex to right of tokenStartIndex
     else if (other.startsAfterNonDisjoint(this)) {
       diff = new SourcePos(
-        start,
-        other.start - 1,
+        tokenStartIndex,
+        other.tokenStartIndex - 1,
         startLine,
-        startColumn
+        startColumn,
+        endLine,
+        endColumn
       );
     }
     return diff;
