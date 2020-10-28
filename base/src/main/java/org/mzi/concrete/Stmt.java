@@ -4,22 +4,23 @@ package org.mzi.concrete;
 
 import asia.kala.collection.immutable.ImmutableList;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.generic.Cmd;
 
 /**
  * @author kiva
  */
-public sealed interface Stmt {
+public sealed interface Stmt permits Decl, Stmt.CmdStmt {
   record CmdStmt(
     @NotNull Cmd cmd,
     @NotNull String qualifiedModuleName,
     @NotNull ImmutableList<@NotNull String> using,
     @NotNull ImmutableList<@NotNull String> hiding
   ) implements Stmt {
-  }
-
-  record DeclStmt(
-    @NotNull Decl decl
-  ) implements Stmt {
+    /**
+     * @author kiva
+     */
+    public enum Cmd {
+      Open,
+      Import,
+    }
   }
 }

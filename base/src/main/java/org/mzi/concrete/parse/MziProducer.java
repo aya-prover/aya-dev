@@ -13,8 +13,8 @@ import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Stmt;
+import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Assoc;
-import org.mzi.generic.Cmd;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Tele;
 import org.mzi.parser.MziBaseVisitor;
@@ -40,7 +40,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (ctx.cmd() != null) {
       return visitCmd(ctx.cmd());
     } else if (ctx.decl() != null) {
-      return new Stmt.DeclStmt(visitDecl(ctx.decl()));
+      return visitDecl(ctx.decl());
     } else throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
@@ -239,11 +239,12 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   private String visitLiteralId(MziParser.LiteralContext ctx) {
-    if (ctx.ID() == null) {
+    var id = ctx.ID();
+    if (id == null) {
       // TODO: should report an error instead of throw
       throw new IllegalArgumentException("not an literal id");
     }
-    return ctx.ID().getText();
+    return id.getText();
   }
 
   private SourcePos sourcePosOf(ParserRuleContext ctx) {

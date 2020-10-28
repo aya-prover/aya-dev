@@ -19,7 +19,7 @@ import java.util.EnumSet;
  *
  * @author re-xyr
  */
-public sealed interface Decl {
+public sealed interface Decl extends Stmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
   @Contract(pure = true) @NotNull DefVar<? extends Decl> ref();
 
