@@ -2,8 +2,10 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.generic;
 
+import org.mzi.core.term.PiTerm;
+
 /**
- * What kind of (co)dependent type ({@link org.mzi.core.term.DT}) is it?
+ * What kind of (co)dependent type ({@link PiTerm}) is it?
  *
  * @author ice1000
  */

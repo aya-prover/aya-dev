@@ -3,6 +3,7 @@
 package org.mzi.tyck.unify;
 
 import asia.kala.collection.Seq;
+import asia.kala.collection.mutable.Buffer;
 import asia.kala.collection.mutable.MutableHashMap;
 import asia.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
@@ -32,11 +33,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     return lhs.accept(this, rhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitDT(@NotNull DT lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof DT rhs)) return false;
-    var l = lhs.telescope().toBuffer();
-    var r = rhs.telescope().toBuffer();
+  @NotNull
+  private Boolean checkTele(Buffer<@NotNull Tele> l, Buffer<@NotNull Tele> r) {
     if (!l.sizeEquals(r)) return false;
     for (int i = 0; i < l.size(); i++) {
       if (!compare(l.get(i).type(), r.get(i).type(), UnivTerm.OMEGA)) {
@@ -45,8 +43,23 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       }
       varSubst.put(r.get(i).ref(), l.get(i).ref());
     }
-
     return true;
+  }
+
+  @Override
+  public @NotNull Boolean visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (!(preRhs instanceof PiTerm rhs)) return false;
+    var l = lhs.telescope().toBuffer();
+    var r = rhs.telescope().toBuffer();
+    return checkTele(l, r);
+  }
+
+  @Override
+  public @NotNull Boolean visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (!(preRhs instanceof SigmaTerm rhs)) return false;
+    var l = lhs.telescope().toBuffer();
+    var r = rhs.telescope().toBuffer();
+    return checkTele(l, r);
   }
 
   @Override
