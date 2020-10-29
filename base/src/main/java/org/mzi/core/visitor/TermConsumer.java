@@ -48,7 +48,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<P, 
     return Unit.unit();
   }
 
-  default void visitArg(@NotNull Arg<Term> arg, P p) {
+  default void visitArg(@NotNull Arg<? extends Term> arg, P p) {
     arg.term().accept(this, p);
   }
 

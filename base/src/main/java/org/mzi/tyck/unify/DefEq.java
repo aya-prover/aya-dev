@@ -15,6 +15,7 @@ import org.mzi.concrete.Expr;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.core.Tele;
+import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Ordering;
@@ -48,30 +49,26 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof PiTerm rhs)) return false;
-    var l = lhs.telescope().toBuffer();
-    var r = rhs.telescope().toBuffer();
-    return checkTele(l, r);
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof PiTerm rhs)) return false;
+    return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer()) && compare(lhs.last(), rhs.last(), type);
   }
 
   @Override
   public @NotNull Boolean visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof SigmaTerm rhs)) return false;
-    var l = lhs.telescope().toBuffer();
-    var r = rhs.telescope().toBuffer();
-    return checkTele(l, r);
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof SigmaTerm rhs)) return false;
+    return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer());
   }
 
   @Override
   public @NotNull Boolean visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof RefTerm rhs)) return false;
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof RefTerm rhs)) return false;
     var var2 = varSubst.getOrDefault(rhs.var(), rhs.var());
     return var2 == lhs.var();
   }
 
   @Override
   public @NotNull Boolean visitHole(@NotNull HoleTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (lhs.solution().isDefined()) return lhs.solution().get().accept(this, preRhs, type);
+    if (lhs.solution().isDefined()) return compare(lhs.solution().get(), preRhs, type);
     return preRhs instanceof HoleTerm rhs && lhs.var() == rhs.var();
   }
 
@@ -82,7 +79,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof UnivTerm rhs)) return false;
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof UnivTerm rhs)) return false;
     return Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
   }
 
@@ -94,7 +91,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     return visitLists(lhs.items(), rhs.items());
   }
 
-  private boolean visitLists(Seq<Term> l, Seq<Term> r) {
+  private boolean visitLists(Seq<? extends Term> l, Seq<? extends Term> r) {
     if (!l.sizeEquals(r)) return false;
     for (int i = 0; i < l.size(); i++) if (!compare(l.get(i), r.get(i), null)) return false;
     return true;
@@ -104,12 +101,17 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (preRhs instanceof AppTerm.FnCall rhs && rhs.fnRef() == lhs.fnRef())
       return visitLists(lhs.args().map(Arg::term), rhs.args().map(Arg::term));
-    return lhs.normalize(NormalizeMode.WHNF).accept(this, preRhs, type);
+    return compare(lhs.normalize(NormalizeMode.WHNF), preRhs, type);
   }
 
   @Override
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof LamTerm rhs)) return false;
+    // Eta-rule
+    if (!(preRhs instanceof LamTerm rhs)) {
+      if (!(type instanceof PiTerm pi)) return false;
+      var mockTerm = new Arg<>(new RefTerm(new LocalVar("tql")), pi.telescope().explicit());
+      return compare(AppTerm.make(lhs, mockTerm), AppTerm.make(preRhs, mockTerm), pi.dropTele(1));
+    }
     var params = Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) -> varSubst.put(l.ref(), r.ref()));
     var lBody = lhs.body();
     var rBody = rhs.body();

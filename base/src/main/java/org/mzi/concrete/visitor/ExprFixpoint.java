@@ -36,21 +36,21 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitLam(Expr.@NotNull LamExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     var body = expr.body().accept(this, p);
-    if (binds.sameElements(expr.params(), true) && Objects.equals(body, expr.body())) return expr;
+    if (binds.sameElements(expr.params()) && Objects.equals(body, expr.body())) return expr;
     return new Expr.LamExpr(expr.sourcePos(), binds, body);
   }
 
   @Override default @NotNull Expr visitPi(Expr.@NotNull PiExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     var last = expr.last().accept(this, p);
-    if (binds.sameElements(expr.params(), true) && Objects.equals(last, expr.last())) return expr;
-    return new Expr.PiExpr(expr.sourcePos(), binds, last, expr.kind());
+    if (binds.sameElements(expr.params()) && Objects.equals(last, expr.last())) return expr;
+    return new Expr.PiExpr(expr.sourcePos(), binds, last, expr.co());
   }
 
   @Override default @NotNull Expr visitSigma(Expr.@NotNull SigmaExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
-    if (binds.sameElements(expr.params(), true)) return expr;
-    return new Expr.SigmaExpr(expr.sourcePos(), binds, expr.kind());
+    if (binds.sameElements(expr.params())) return expr;
+    return new Expr.SigmaExpr(expr.sourcePos(), binds, expr.co());
   }
 
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
@@ -66,13 +66,13 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
     var arg = expr.argument().map(x -> visitArg(x, p));
-    if (Objects.equals(function, expr.function()) && arg.sameElements(expr.argument(), true)) return expr;
+    if (Objects.equals(function, expr.function()) && arg.sameElements(expr.argument())) return expr;
     return new Expr.AppExpr(expr.sourcePos(), function, arg);
   }
 
   @Override default @NotNull Expr visitTup(Expr.@NotNull TupExpr expr, P p) {
     var items = expr.items().map(item -> item.accept(this, p));
-    if (items.sameElements(expr.items(), true)) return expr;
+    if (items.sameElements(expr.items())) return expr;
     return new Expr.TupExpr(expr.sourcePos(), items);
   }
 

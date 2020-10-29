@@ -4,12 +4,15 @@ package org.mzi.core.term;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.Tele;
-import org.mzi.generic.DTKind;
 
 /**
  * @author kiva
  */
 public interface DT extends Term {
   @NotNull Tele telescope();
-  @NotNull DTKind kind();
+
+  /**
+   * @return that if it's a copi or a cosigma.
+   */
+  boolean co();
 }

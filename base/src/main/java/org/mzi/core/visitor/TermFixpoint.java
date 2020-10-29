@@ -54,20 +54,20 @@ public interface TermFixpoint<P> extends
     var telescope = term.telescope().accept(this, p);
     var last = term.last().accept(this, p);
     if (telescope == term.telescope() && last == term.last()) return term;
-    return new PiTerm(telescope, last, term.kind());
+    return new PiTerm(telescope, last, term.co());
   }
 
   @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
     var telescope = term.telescope().accept(this, p);
     if (telescope == term.telescope()) return term;
-    return new SigmaTerm(telescope, term.kind());
+    return new SigmaTerm(telescope, term.co());
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
     return term;
   }
 
-  default @NotNull Arg<Term> visitArg(@NotNull Arg<Term> arg, P p) {
+  default @NotNull Arg<? extends Term> visitArg(@NotNull Arg<? extends Term> arg, P p) {
     var term = arg.term().accept(this, p);
     if (term == arg.term()) return arg;
     return new Arg<>(term, arg.explicit());

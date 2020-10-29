@@ -20,7 +20,6 @@ import org.mzi.concrete.*;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Assoc;
-import org.mzi.generic.DTKind;
 import org.mzi.generic.Modifier;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
@@ -260,7 +259,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     return new Expr.SigmaExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
-      DTKind.Sigma
+      false
     );
   }
 
@@ -270,7 +269,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
       visitExpr(ctx.expr()),
-      DTKind.Pi
+      false
     );
   }
 
