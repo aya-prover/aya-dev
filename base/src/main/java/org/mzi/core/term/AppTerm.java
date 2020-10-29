@@ -31,7 +31,7 @@ public sealed interface AppTerm extends Term {
   }
 
   record FnCall(
-    @NotNull DefVar fnRef,
+    @NotNull DefVar<FnCall> fnRef,
     @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

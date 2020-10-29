@@ -51,7 +51,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
       case "U" -> new UnivTerm(Sort.SET0);
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new AppTerm.FnCall(
-        (DefVar) ((RefTerm) exprs.get(0).accept(this)).var(),
+        DefVar.cast(AppTerm.FnCall.class, ((RefTerm) exprs.get(0).accept(this)).var()),
         exprs.subList(1, exprs.size())
           .stream()
           .map(c -> Arg.explicit(c.accept(this)))
