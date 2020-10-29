@@ -64,7 +64,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Decl visitFnDecl(MziParser.FnDeclContext ctx) {
+  public Decl.@NotNull FnDecl visitFnDecl(MziParser.FnDeclContext ctx) {
     var modifiers = ctx.fnModifiers().stream()
       .map(this::visitFnModifiers)
       .distinct()
