@@ -334,13 +334,13 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public @NotNull Stream<String> visitIds(MziParser.IdsContext ctx) {
-    return ctx.ID().stream().map(t -> t.getSymbol().getText());
+    return ctx.ID().stream().map(ParseTree::getText);
   }
 
   @Override
   public @NotNull String visitModuleName(MziParser.ModuleNameContext ctx) {
     return ctx.ID().stream()
-      .map(t -> t.getSymbol().getText())
+      .map(ParseTree::getText)
       .collect(Collectors.joining("."));
   }
 
