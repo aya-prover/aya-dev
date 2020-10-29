@@ -16,10 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
-import org.mzi.concrete.Decl;
-import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
-import org.mzi.concrete.Stmt;
+import org.mzi.concrete.*;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Assoc;
@@ -287,9 +284,100 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Decl visitDataDecl(MziParser.DataDeclContext ctx) {
-    // TODO: visit data decl
+  public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx) {
+    var resultTypeCtx = ctx.type();
+    var result = resultTypeCtx == null
+      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
+      : visitType(resultTypeCtx);
+
+    return new Decl.DataDecl(
+      sourcePosOf(ctx),
+      ctx.ID().getText(),
+      visitTelescope(ctx.tele().stream()),
+      result,
+      visitDataBody(ctx.dataBody()),
+      visitAbuse(ctx.abuse())
+    );
+  }
+
+  private @NotNull Decl.DataBody visitDataBody(MziParser.DataBodyContext ctx) {
+    if (ctx instanceof MziParser.DataCtorsContext dcc) return visitDataCtors(dcc);
+    if (ctx instanceof MziParser.DataClausesContext dcc) return visitDataClauses(dcc);
+
+    throw new IllegalStateException("unreachable");
+  }
+
+  @Override
+  public Decl.DataBody visitDataCtors(MziParser.DataCtorsContext ctx) {
+    return new Decl.DataBody.Ctors(
+      ctx.dataCtor().stream()
+        .map(this::visitDataCtor)
+        .collect(Buffer.factory())
+    );
+  }
+
+  @Override
+  public Decl.DataBody visitDataClauses(MziParser.DataClausesContext ctx) {
+    var elim = visitElim(ctx.elim());
+    // TODO[imkiva]: use var will compile, but IDEA shows error
+    Buffer<Tuple2<Pattern, Decl.DataCtor>> clauses = ctx.dataCtorClause().stream()
+      .map(this::visitDataCtorClause)
+      .collect(Buffer.factory());
+    return new Decl.DataBody.Clauses(elim, clauses);
+  }
+
+  @Override
+  public Decl.@NotNull DataCtor visitDataCtor(MziParser.DataCtorContext ctx) {
+    var elimCtx = ctx.elim();
+    var elim = elimCtx == null
+      ? Buffer.<String>of()
+      : visitElim(elimCtx);
+
+    return new Decl.DataCtor(
+      ctx.ID().getText(),
+      visitTelescope(ctx.tele().stream()),
+      elim,
+      ctx.clause().stream()
+        .map(this::visitClause)
+        .collect(Buffer.factory()),
+      ctx.COERCE() != null
+    );
+  }
+
+  @Override
+  public @NotNull Tuple2<@NotNull Pattern, Decl.@NotNull DataCtor> visitDataCtorClause(MziParser.DataCtorClauseContext ctx) {
+    return Tuple.of(
+      visitPattern(ctx.pattern()),
+      visitDataCtor(ctx.dataCtor())
+    );
+  }
+
+  private @NotNull Pattern visitPattern(MziParser.PatternContext pattern) {
+    // TODO[kiva]: parse it!!!
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull Buffer<@NotNull Pattern> visitPatterns(MziParser.PatternsContext ctx) {
+    return ctx.pattern().stream()
+      .map(this::visitPattern)
+      .collect(Buffer.factory());
+  }
+
+  @Override
+  public @NotNull Clause visitClause(MziParser.ClauseContext ctx) {
+    if (ctx.ABSURD() != null) return new Clause.Impossible();
+    return new Clause.Possible(
+      visitPatterns(ctx.patterns()),
+      visitExpr(ctx.expr())
+    );
+  }
+
+  @Override
+  public Buffer<String> visitElim(MziParser.ElimContext ctx) {
+    return ctx.ID().stream()
+      .map(ParseTree::getText)
+      .collect(Buffer.factory());
   }
 
   @Override

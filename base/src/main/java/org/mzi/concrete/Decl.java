@@ -22,16 +22,21 @@ import java.util.EnumSet;
 public sealed interface Decl extends Stmt {
   @Contract(pure = true) @NotNull DefVar<? extends Decl> ref();
 
+  record DataCtor(
+    @NotNull String name,
+    @NotNull Buffer<Param> telescope,
+    @NotNull Buffer<String> elim,
+    @NotNull Buffer<Clause> clauses,
+    boolean coerce
+  ) {
+  }
+
   sealed interface DataBody {
-    record DataCtor(
-      @NotNull String name,
-      @NotNull Buffer<Param> telescope,
-      @NotNull Buffer<String> elim,
-      @NotNull Buffer<Clause> clauses,
-      boolean coerce
+    record Ctors(
+      @NotNull Buffer<DataCtor> ctors
     ) implements DataBody {}
 
-    record DataClause(
+    record Clauses(
       @NotNull Buffer<String> elim,
       @NotNull Buffer<Tuple2<Pattern, DataCtor>> clauses
     ) implements DataBody {}
@@ -47,7 +52,7 @@ public sealed interface Decl extends Stmt {
     public final @NotNull DefVar<DataDecl> ref;
     public final @NotNull Buffer<Param> telescope;
     public final @NotNull Expr result;
-    public final @NotNull Buffer<DataBody> body;
+    public final @NotNull DataBody body;
     public final @NotNull Buffer<Stmt> abuseBlock;
 
     public DataDecl(
@@ -55,7 +60,7 @@ public sealed interface Decl extends Stmt {
       @NotNull String name,
       @NotNull Buffer<Param> telescope,
       @NotNull Expr result,
-      @NotNull Buffer<DataBody> body,
+      @NotNull DataBody body,
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
