@@ -5,6 +5,7 @@ package org.mzi.concrete.parse;
 import asia.kala.Tuple;
 import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableList;
+import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
@@ -19,6 +20,7 @@ import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
+import org.mzi.generic.Arg;
 import org.mzi.generic.Assoc;
 import org.mzi.generic.DTKind;
 import org.mzi.generic.Modifier;
@@ -161,9 +163,105 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   public Expr visitExpr(MziParser.ExprContext ctx) {
+    if (ctx instanceof MziParser.AppContext app) return visitApp(app);
     if (ctx instanceof MziParser.ProjContext proj) return visitProj(proj);
     if (ctx instanceof MziParser.PiContext pi) return visitPi(pi);
+    if (ctx instanceof MziParser.SigmaContext sig) return visitSigma(sig);
+    if (ctx instanceof MziParser.LamContext lam) return visitLam(lam);
     return new Expr.HoleExpr(sourcePosOf(ctx), null, null);
+  }
+
+  @Override
+  public Expr.@NotNull AppExpr visitApp(MziParser.AppContext ctx) {
+    return new Expr.AppExpr(
+      sourcePosOf(ctx),
+      visitAtom(ctx.atom()),
+      ctx.argument().stream()
+        .flatMap(a -> this.visitArgument(a).stream())
+        .collect(ImmutableSeq.factory())
+    );
+  }
+
+  @Override
+  public @NotNull Expr visitAtom(MziParser.AtomContext ctx) {
+    var literal = ctx.literal();
+    if (literal != null) return visitLiteral(literal);
+
+    return new Expr.TupExpr(
+      sourcePosOf(ctx),
+      ctx.typed().stream().map(this::visitTyped).collect(ImmutableSeq.factory())
+    );
+  }
+
+  public @NotNull Buffer<Arg<Expr>> visitArgumentAtom(MziParser.AtomContext ctx) {
+    var literal = ctx.literal();
+    if (literal != null) return Buffer.of(Arg.explicit(visitLiteral(literal)));
+    return ctx.typed().stream()
+      .map(this::visitTyped)
+      .map(Arg::explicit)
+      .collect(Buffer.factory());
+  }
+
+  @Override
+  public Expr.@NotNull TypedExpr visitTyped(MziParser.TypedContext ctx) {
+    var typeCtx = ctx.type();
+    var type = typeCtx == null
+      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
+      : visitType(typeCtx);
+
+    return new Expr.TypedExpr(
+      sourcePosOf(ctx),
+      visitExpr(ctx.expr()),
+      type
+    );
+  }
+
+  @Override
+  public @NotNull Buffer<Arg<Expr>> visitArgument(MziParser.ArgumentContext ctx) {
+    var atom = ctx.atom();
+    if (atom != null) return visitArgumentAtom(atom);
+    if (ctx.LBRACE() != null) {
+      return ctx.typed().stream()
+        .map(this::visitTyped)
+        .map(Arg::implicit)
+        .collect(Buffer.factory());
+    }
+    // TODO: . idFix
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Expr.@NotNull LamExpr visitLam(MziParser.LamContext ctx) {
+    return new Expr.LamExpr(
+      sourcePosOf(ctx),
+      visitTelescope(ctx.tele().stream()),
+      visitLamBody(ctx)
+    );
+  }
+
+  private @NotNull Expr visitLamBody(@NotNull MziParser.LamContext ctx) {
+    var bodyExpr = ctx.expr();
+
+    if (bodyExpr == null) {
+      var impliesToken = ctx.IMPLIES();
+      var bodyHolePos = impliesToken == null
+        ? sourcePosOf(ctx)
+        : sourcePosOf(impliesToken);
+
+      return new Expr.HoleExpr(bodyHolePos, null, null);
+    }
+
+    return visitExpr(bodyExpr);
+  }
+
+  @Override
+  public Expr.@NotNull DTExpr visitSigma(MziParser.SigmaContext ctx) {
+    return new Expr.DTExpr(
+      sourcePosOf(ctx),
+      visitTelescope(ctx.tele().stream()),
+      /* TODO: last */,
+      DTKind.Sigma
+    );
   }
 
   @Override
@@ -273,6 +371,19 @@ public class MziProducer extends MziBaseVisitor<Object> {
       start.getCharPositionInLine(),
       end.getLine(),
       end.getCharPositionInLine()
+    );
+  }
+
+  private @NotNull SourcePos sourcePosOf(TerminalNode node) {
+    var interval = node.getSourceInterval();
+    var token = node.getSymbol();
+    return new SourcePos(
+      interval.a,
+      interval.b,
+      token.getLine(),
+      token.getCharPositionInLine(),
+      token.getLine(),
+      token.getCharPositionInLine() + token.getText().length()
     );
   }
 }
