@@ -31,6 +31,7 @@ public sealed interface Expr {
     R visitHole(@NotNull HoleExpr expr, P p);
     R visitTup(@NotNull TupExpr expr, P p);
     R visitProj(@NotNull ProjExpr expr, P p);
+    R visitTyped(@NotNull TypedExpr expr, P p);
   }
 
   /**
@@ -114,9 +115,9 @@ public sealed interface Expr {
   }
 
   /**
-   * @author re-xyr, ice1000
    * @param hLevel specified hLevel, {@link LevelEqn#INVALID} if not specified.
    * @param uLevel specified uLevel, {@link LevelEqn#INVALID} if not specified.
+   * @author re-xyr, ice1000
    */
   record UnivExpr(
     @NotNull SourcePos sourcePos,
@@ -154,6 +155,19 @@ public sealed interface Expr {
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);
+    }
+  }
+
+  /**
+   * @author kiva
+   */
+  record TypedExpr(
+    @NotNull SourcePos sourcePos,
+    @NotNull Expr expr,
+    @NotNull Expr type
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitTyped(this, p);
     }
   }
 }

@@ -73,4 +73,10 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     if (tup == expr.tup()) return expr;
     return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix());
   }
+
+  @Override default @NotNull Expr visitTyped(Expr.@NotNull TypedExpr expr, P p) {
+    var e = expr.expr().accept(this, p);
+    if (e == expr.expr()) return expr;
+    return new Expr.TypedExpr(expr.sourcePos(), e, expr.type());
+  }
 }

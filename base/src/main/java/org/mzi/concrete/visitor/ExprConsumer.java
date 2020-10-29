@@ -59,4 +59,10 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   @Override default Unit visitProj(Expr.@NotNull ProjExpr expr, P p) {
     return expr.tup().accept(this, p);
   }
+
+  @Override default Unit visitTyped(Expr.@NotNull TypedExpr expr, P p) {
+    expr.expr().accept(this, p);
+    expr.type().accept(this, p);
+    return Unit.unit();
+  }
 }
