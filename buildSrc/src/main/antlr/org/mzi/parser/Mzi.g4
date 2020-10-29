@@ -53,16 +53,16 @@ field : COERCE? ID tele* type   # fieldDecl
 
 dataDecl : '\\data' ID tele* type? dataBody abuse?;
 
-dataBody : ('|' ctor)*       # dataCtors
-         | elim ctorClause*  # dataClauses
+dataBody : ('|' dataCtor)*       # dataCtors
+         | elim dataCtorClause*  # dataClauses
          ;
 
 // TODO[imkiva]: some code commented in Arend.g4
-ctor : COERCE? ID tele* (elim? LBRACE clause? ('|' clause)* '}')?;
+dataCtor : COERCE? ID tele* (elim? LBRACE clause? ('|' clause)* '}')?;
 
 elim : '\\elim' ID (',' ID)*;
 
-ctorClause : '|' pattern IMPLIES ctor;
+dataCtorClause : '|' pattern IMPLIES dataCtor;
 
 // expressions
 expr : atom argument*                                 # app
@@ -93,9 +93,10 @@ clause : patterns IMPLIES expr
        | ABSURD;
 
 patterns : pattern (',' pattern)* ;
-pattern : atomPattern ('\\as' ID type?)?             # patAtom
-        | ID (atomPattern | ID)* ('\\as' ID)? type?  # patCtor
+pattern : atomPattern (AS ID type?)?                 # patAtom
+        | ID patternCtorParam* (AS ID)? type?        # patCtor
         ;
+patternCtorParam : atomPattern | ID;
 
 atomPattern : LPAREN patterns? ')'
             | LBRACE patterns '}'
@@ -146,6 +147,7 @@ setUniv : '\\Set' NUMBER?;
 PROP : '\\Prop';
 
 // other keywords
+AS : '\\as';
 OPEN : '\\open';
 IMPORT : '\\import';
 USING : '\\using';

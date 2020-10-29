@@ -79,7 +79,7 @@ public interface Tele extends Bind {
   }
 
   @TestOnly @Contract(pure = true)
-  default boolean checkSubst(@NotNull Seq<@NotNull Arg<Term>> args) {
+  default boolean checkSubst(@NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
     var obj = new Object() {
       boolean ok = true;
     };

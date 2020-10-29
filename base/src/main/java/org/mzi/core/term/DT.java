@@ -3,29 +3,16 @@
 package org.mzi.core.term;
 
 import org.jetbrains.annotations.NotNull;
-import org.mzi.generic.DTKind;
 import org.mzi.core.Tele;
-import org.mzi.util.Decision;
 
 /**
- * A (co)dependent type.
- *
- * @author ice1000
+ * @author kiva
  */
-public record DT(
-  @NotNull Tele telescope,
-  @NotNull Term last,
-  @NotNull DTKind kind
-) implements Term {
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    return visitor.visitDT(this, p);
-  }
+public interface DT extends Term {
+  @NotNull Tele telescope();
 
-  @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-    return visitor.visitDT(this, p, q);
-  }
-
-  @Override public @NotNull Decision whnf() {
-    return Decision.YES;
-  }
+  /**
+   * @return that if it's a copi or a cosigma.
+   */
+  boolean co();
 }

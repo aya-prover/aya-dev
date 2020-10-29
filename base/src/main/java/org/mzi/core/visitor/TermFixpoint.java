@@ -4,10 +4,10 @@ package org.mzi.core.visitor;
 
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.tyck.sort.Sort;
+import org.mzi.core.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
-import org.mzi.core.Tele;
+import org.mzi.tyck.sort.Sort;
 
 /**
  * @author ice1000
@@ -50,18 +50,24 @@ public interface TermFixpoint<P> extends
     return new UnivTerm(sort);
   }
 
-  @Override default @NotNull Term visitDT(@NotNull DT term, P p) {
+  @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
     var telescope = term.telescope().accept(this, p);
     var last = term.last().accept(this, p);
     if (telescope == term.telescope() && last == term.last()) return term;
-    return new DT(telescope, last, term.kind());
+    return new PiTerm(telescope, last, term.co());
+  }
+
+  @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
+    var telescope = term.telescope().accept(this, p);
+    if (telescope == term.telescope()) return term;
+    return new SigmaTerm(telescope, term.co());
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
     return term;
   }
 
-  default @NotNull Arg<Term> visitArg(@NotNull Arg<Term> arg, P p) {
+  default @NotNull Arg<? extends Term> visitArg(@NotNull Arg<? extends Term> arg, P p) {
     var term = arg.term().accept(this, p);
     if (term == arg.term()) return arg;
     return new Arg<>(term, arg.explicit());

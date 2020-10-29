@@ -6,6 +6,7 @@ import asia.kala.Tuple;
 import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableList;
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
@@ -15,14 +16,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
-import org.mzi.concrete.Decl;
-import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
-import org.mzi.concrete.Stmt;
+import org.mzi.concrete.*;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Assoc;
-import org.mzi.generic.DTKind;
 import org.mzi.generic.Modifier;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
@@ -190,7 +187,9 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     return new Expr.TupExpr(
       sourcePosOf(ctx),
-      ctx.typed().stream().map(this::visitTyped).collect(ImmutableSeq.factory())
+      ctx.typed().stream()
+        .<Expr>map(this::visitTyped)
+        .collect(ImmutableVector.factory())
     );
   }
 
@@ -198,7 +197,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var literal = ctx.literal();
     if (literal != null) return Buffer.of(Arg.explicit(visitLiteral(literal)));
     return ctx.typed().stream()
-      .map(this::visitTyped)
+      .<Expr>map(this::visitTyped)
       .map(Arg::explicit)
       .collect(Buffer.factory());
   }
@@ -223,7 +222,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (atom != null) return visitArgumentAtom(atom);
     if (ctx.LBRACE() != null) {
       return ctx.typed().stream()
-        .map(this::visitTyped)
+        .<Expr>map(this::visitTyped)
         .map(Arg::implicit)
         .collect(Buffer.factory());
     }
@@ -256,21 +255,21 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull DTExpr visitSigma(MziParser.SigmaContext ctx) {
+  public Expr.@NotNull SigmaExpr visitSigma(MziParser.SigmaContext ctx) {
     return new Expr.SigmaExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
-      DTKind.Sigma
+      false
     );
   }
 
   @Override
-  public Expr.@NotNull DTExpr visitPi(MziParser.PiContext ctx) {
+  public Expr.@NotNull PiExpr visitPi(MziParser.PiContext ctx) {
     return new Expr.PiExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
       visitExpr(ctx.expr()),
-      DTKind.Pi
+      false
     );
   }
 
@@ -284,9 +283,159 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Decl visitDataDecl(MziParser.DataDeclContext ctx) {
-    // TODO: visit data decl
-    throw new UnsupportedOperationException();
+  public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx) {
+    var resultTypeCtx = ctx.type();
+    var result = resultTypeCtx == null
+      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
+      : visitType(resultTypeCtx);
+
+    return new Decl.DataDecl(
+      sourcePosOf(ctx),
+      ctx.ID().getText(),
+      visitTelescope(ctx.tele().stream()),
+      result,
+      visitDataBody(ctx.dataBody()),
+      visitAbuse(ctx.abuse())
+    );
+  }
+
+  private @NotNull Decl.DataBody visitDataBody(MziParser.DataBodyContext ctx) {
+    if (ctx instanceof MziParser.DataCtorsContext dcc) return visitDataCtors(dcc);
+    if (ctx instanceof MziParser.DataClausesContext dcc) return visitDataClauses(dcc);
+
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+  }
+
+  @Override
+  public Decl.DataBody visitDataCtors(MziParser.DataCtorsContext ctx) {
+    return new Decl.DataBody.Ctors(
+      ctx.dataCtor().stream()
+        .map(this::visitDataCtor)
+        .collect(Buffer.factory())
+    );
+  }
+
+  @Override
+  public Decl.DataBody visitDataClauses(MziParser.DataClausesContext ctx) {
+    var elim = visitElim(ctx.elim());
+    // TODO[imkiva]: use var will compile, but IDEA shows error
+    Buffer<Tuple2<Pattern, Decl.DataCtor>> clauses = ctx.dataCtorClause().stream()
+      .map(this::visitDataCtorClause)
+      .collect(Buffer.factory());
+    return new Decl.DataBody.Clauses(elim, clauses);
+  }
+
+  @Override
+  public Decl.@NotNull DataCtor visitDataCtor(MziParser.DataCtorContext ctx) {
+    var elimCtx = ctx.elim();
+    var elim = elimCtx == null
+      ? Buffer.<String>of()
+      : visitElim(elimCtx);
+
+    return new Decl.DataCtor(
+      ctx.ID().getText(),
+      visitTelescope(ctx.tele().stream()),
+      elim,
+      ctx.clause().stream()
+        .map(this::visitClause)
+        .collect(Buffer.factory()),
+      ctx.COERCE() != null
+    );
+  }
+
+  @Override
+  public @NotNull Tuple2<@NotNull Pattern, Decl.@NotNull DataCtor> visitDataCtorClause(MziParser.DataCtorClauseContext ctx) {
+    return Tuple.of(
+      visitPattern(ctx.pattern()),
+      visitDataCtor(ctx.dataCtor())
+    );
+  }
+
+  private @NotNull Pattern visitPattern(MziParser.PatternContext ctx) {
+    if (ctx instanceof MziParser.PatAtomContext pa) return visitPatAtom(pa);
+    if (ctx instanceof MziParser.PatCtorContext pc) return visitPatCtor(pc);
+
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+  }
+
+  @Override
+  public Pattern.@NotNull PatAtom visitPatAtom(MziParser.PatAtomContext ctx) {
+    if (ctx.AS() == null) {
+      return new Pattern.PatAtom(visitAtomPattern(ctx.atomPattern()), null);
+    }
+
+    var asIdCtx = ctx.ID();
+    var asId = asIdCtx.getText();
+    var asTypeCtx = ctx.type();
+    var asType = asTypeCtx == null
+      ? new Expr.HoleExpr(sourcePosOf(asIdCtx), null, null)
+      : visitType(asTypeCtx);
+
+    return new Pattern.PatAtom(
+      visitAtomPattern(ctx.atomPattern()),
+      Tuple.of(asId, asType)
+    );
+  }
+
+  @Override
+  public Pattern.@NotNull PatCtor visitPatCtor(MziParser.PatCtorContext ctx) {
+    var typeCtx = ctx.type();
+    var type = typeCtx == null
+      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
+      : visitType(typeCtx);
+
+    return new Pattern.PatCtor(
+      ctx.ID(0).getText(),
+      ctx.patternCtorParam().stream()
+        .map(this::visitPatternCtorParam)
+        .collect(Buffer.factory()),
+      ctx.AS() == null ? null : ctx.ID(1).getText(),
+      type
+    );
+  }
+
+  @Override
+  public Pattern.@NotNull Atom visitPatternCtorParam(MziParser.PatternCtorParamContext ctx) {
+    var id = ctx.ID();
+    if (id != null) return new Pattern.Ident(id.getText());
+    var atomPattern = ctx.atomPattern();
+    if (atomPattern != null) return visitAtomPattern(atomPattern);
+
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+  }
+
+  @Override
+  public Pattern.@NotNull Atom visitAtomPattern(MziParser.AtomPatternContext ctx) {
+    if (ctx.LPAREN() != null) return new Pattern.Tuple(visitPatterns(ctx.patterns()));
+    if (ctx.LBRACE() != null) return new Pattern.Braced(visitPatterns(ctx.patterns()));
+    if (ctx.CALM_FACE() != null) return new Pattern.CalmFace();
+    var number = ctx.NUMBER();
+    if (number != null) return new Pattern.Number(Integer.parseInt(number.getText()));
+
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+  }
+
+  @Override
+  public @NotNull Buffer<@NotNull Pattern> visitPatterns(MziParser.PatternsContext ctx) {
+    return ctx.pattern().stream()
+      .map(this::visitPattern)
+      .collect(Buffer.factory());
+  }
+
+  @Override
+  public @NotNull Clause visitClause(MziParser.ClauseContext ctx) {
+    if (ctx.ABSURD() != null) return new Clause.Impossible();
+    return new Clause.Possible(
+      visitPatterns(ctx.patterns()),
+      visitExpr(ctx.expr())
+    );
+  }
+
+  @Override
+  public Buffer<String> visitElim(MziParser.ElimContext ctx) {
+    return ctx.ID().stream()
+      .map(ParseTree::getText)
+      .collect(Buffer.factory());
   }
 
   @Override
@@ -331,13 +480,13 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public @NotNull Stream<String> visitIds(MziParser.IdsContext ctx) {
-    return ctx.ID().stream().map(t -> t.getSymbol().getText());
+    return ctx.ID().stream().map(ParseTree::getText);
   }
 
   @Override
   public @NotNull String visitModuleName(MziParser.ModuleNameContext ctx) {
     return ctx.ID().stream()
-      .map(t -> t.getSymbol().getText())
+      .map(ParseTree::getText)
       .collect(Collectors.joining("."));
   }
 
