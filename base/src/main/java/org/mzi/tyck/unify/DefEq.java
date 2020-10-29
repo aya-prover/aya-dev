@@ -108,9 +108,9 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     // Eta-rule
     if (!(preRhs instanceof LamTerm rhs)) {
-      if (!(type instanceof DT dt && dt.kind().function)) return false;
-      var mockTerm = new Arg<>(new RefTerm(new LocalVar("tql")), dt.telescope().explicit());
-      return compare(AppTerm.make(lhs, mockTerm), AppTerm.make(preRhs, mockTerm), dt.dropTele(1));
+      if (!(type instanceof PiTerm pi)) return false;
+      var mockTerm = new Arg<>(new RefTerm(new LocalVar("tql")), pi.telescope().explicit());
+      return compare(AppTerm.make(lhs, mockTerm), AppTerm.make(preRhs, mockTerm), pi.dropTele(1));
     }
     var params = Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) -> varSubst.put(l.ref(), r.ref()));
     var lBody = lhs.body();

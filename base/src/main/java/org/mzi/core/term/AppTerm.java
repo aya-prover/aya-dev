@@ -5,6 +5,7 @@ package org.mzi.core.term;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.mzi.core.def.FnDef;
 import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.generic.Arg;
 import org.mzi.ref.DefVar;
@@ -31,7 +32,7 @@ public sealed interface AppTerm extends Term {
   }
 
   record FnCall(
-    @NotNull DefVar<FnCall> fnRef,
+    @NotNull DefVar<FnDef> fnRef,
     @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

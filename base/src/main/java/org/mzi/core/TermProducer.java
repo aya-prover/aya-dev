@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Var;
+import org.mzi.core.def.FnDef;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.parser.LispBaseVisitor;
@@ -51,7 +52,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
       case "U" -> new UnivTerm(Sort.SET0);
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new AppTerm.FnCall(
-        DefVar.cast(AppTerm.FnCall.class, ((RefTerm) exprs.get(0).accept(this)).var()),
+        DefVar.cast(FnDef.class, ((RefTerm) exprs.get(0).accept(this)).var()),
         exprs.subList(1, exprs.size())
           .stream()
           .map(c -> Arg.explicit(c.accept(this)))

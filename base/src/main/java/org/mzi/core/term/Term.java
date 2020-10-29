@@ -36,13 +36,13 @@ public interface Term extends CoreTerm {
   default @Nullable Term dropTele(int n) {
     if (n == 0) return this;
     var term = this;
-    while (term instanceof PiTerm dt && dt.kind().function) {
+    while (term instanceof PiTerm dt) {
       var tele = dt.telescope();
       while (n > 0 && tele.next() != null) {
         tele = tele.next();
         n--;
       }
-      if (n == 0) return tele.next() != null ? new PiTerm(tele.next(), dt.last(), dt.kind()) : dt.last();
+      if (n == 0) return tele.next() != null ? new PiTerm(tele.next(), dt.last(), dt.co()) : dt.last();
       term = dt.last().normalize(NormalizeMode.WHNF);
     }
     return null;
