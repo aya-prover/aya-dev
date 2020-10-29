@@ -6,6 +6,7 @@ import asia.kala.Tuple;
 import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableList;
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
@@ -190,7 +191,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     return new Expr.TupExpr(
       sourcePosOf(ctx),
-      ctx.typed().stream().map(this::visitTyped).collect(ImmutableSeq.factory())
+      ctx.typed().stream().map(this::visitTyped).collect(ImmutableVector.factory())
     );
   }
 
@@ -199,6 +200,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (literal != null) return Buffer.of(Arg.explicit(visitLiteral(literal)));
     return ctx.typed().stream()
       .map(this::visitTyped)
+      .map(e -> (Expr) e)
       .map(Arg::explicit)
       .collect(Buffer.factory());
   }
@@ -224,6 +226,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (ctx.LBRACE() != null) {
       return ctx.typed().stream()
         .map(this::visitTyped)
+        .map(e -> (Expr) e)
         .map(Arg::implicit)
         .collect(Buffer.factory());
     }
