@@ -303,7 +303,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (ctx instanceof MziParser.DataCtorsContext dcc) return visitDataCtors(dcc);
     if (ctx instanceof MziParser.DataClausesContext dcc) return visitDataClauses(dcc);
 
-    throw new IllegalStateException("unreachable");
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
@@ -355,7 +355,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (ctx instanceof MziParser.PatAtomContext pa) return visitPatAtom(pa);
     if (ctx instanceof MziParser.PatCtorContext pc) return visitPatCtor(pc);
 
-    throw new IllegalStateException("unreachable");
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
@@ -401,7 +401,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var atomPattern = ctx.atomPattern();
     if (atomPattern != null) return visitAtomPattern(atomPattern);
 
-    throw new IllegalStateException("unreachable");
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
@@ -412,7 +412,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var number = ctx.NUMBER();
     if (number != null) return new Pattern.Number(Integer.parseInt(number.getText()));
 
-    throw new IllegalStateException("unreachable");
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
