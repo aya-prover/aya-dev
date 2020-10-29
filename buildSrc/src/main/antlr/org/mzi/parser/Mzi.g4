@@ -93,9 +93,10 @@ clause : patterns IMPLIES expr
        | ABSURD;
 
 patterns : pattern (',' pattern)* ;
-pattern : atomPattern ('\\as' ID type?)?             # patAtom
-        | ID (atomPattern | ID)* ('\\as' ID)? type?  # patCtor
+pattern : atomPattern (AS ID type?)?                 # patAtom
+        | ID patternCtorParam* (AS ID)? type?        # patCtor
         ;
+patternCtorParam : atomPattern | ID;
 
 atomPattern : LPAREN patterns? ')'
             | LBRACE patterns '}'
@@ -146,6 +147,7 @@ setUniv : '\\Set' NUMBER?;
 PROP : '\\Prop';
 
 // other keywords
+AS : '\\as';
 OPEN : '\\open';
 IMPORT : '\\import';
 USING : '\\using';

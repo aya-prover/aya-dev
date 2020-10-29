@@ -255,7 +255,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull DTExpr visitSigma(MziParser.SigmaContext ctx) {
+  public Expr.@NotNull SigmaExpr visitSigma(MziParser.SigmaContext ctx) {
     return new Expr.SigmaExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
@@ -264,7 +264,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull DTExpr visitPi(MziParser.PiContext ctx) {
+  public Expr.@NotNull PiExpr visitPi(MziParser.PiContext ctx) {
     return new Expr.PiExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
@@ -351,9 +351,68 @@ public class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  private @NotNull Pattern visitPattern(MziParser.PatternContext pattern) {
-    // TODO[kiva]: parse it!!!
-    throw new UnsupportedOperationException();
+  private @NotNull Pattern visitPattern(MziParser.PatternContext ctx) {
+    if (ctx instanceof MziParser.PatAtomContext pa) return visitPatAtom(pa);
+    if (ctx instanceof MziParser.PatCtorContext pc) return visitPatCtor(pc);
+
+    throw new IllegalStateException("unreachable");
+  }
+
+  @Override
+  public Pattern.@NotNull PatAtom visitPatAtom(MziParser.PatAtomContext ctx) {
+    if (ctx.AS() == null) {
+      return new Pattern.PatAtom(visitAtomPattern(ctx.atomPattern()), null);
+    }
+
+    var asIdCtx = ctx.ID();
+    var asId = asIdCtx.getText();
+    var asTypeCtx = ctx.type();
+    var asType = asTypeCtx == null
+      ? new Expr.HoleExpr(sourcePosOf(asIdCtx), null, null)
+      : visitType(asTypeCtx);
+
+    return new Pattern.PatAtom(
+      visitAtomPattern(ctx.atomPattern()),
+      Tuple.of(asId, asType)
+    );
+  }
+
+  @Override
+  public Pattern.@NotNull PatCtor visitPatCtor(MziParser.PatCtorContext ctx) {
+    var typeCtx = ctx.type();
+    var type = typeCtx == null
+      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
+      : visitType(typeCtx);
+
+    return new Pattern.PatCtor(
+      ctx.ID(0).getText(),
+      ctx.patternCtorParam().stream()
+        .map(this::visitPatternCtorParam)
+        .collect(Buffer.factory()),
+      ctx.AS() == null ? null : ctx.ID(1).getText(),
+      type
+    );
+  }
+
+  @Override
+  public Pattern.@NotNull Atom visitPatternCtorParam(MziParser.PatternCtorParamContext ctx) {
+    var id = ctx.ID();
+    if (id != null) return new Pattern.Ident(id.getText());
+    var atomPattern = ctx.atomPattern();
+    if (atomPattern != null) return visitAtomPattern(atomPattern);
+
+    throw new IllegalStateException("unreachable");
+  }
+
+  @Override
+  public Pattern.@NotNull Atom visitAtomPattern(MziParser.AtomPatternContext ctx) {
+    if (ctx.LPAREN() != null) return new Pattern.Tuple(visitPatterns(ctx.patterns()));
+    if (ctx.LBRACE() != null) return new Pattern.Braced(visitPatterns(ctx.patterns()));
+    if (ctx.CALM_FACE() != null) return new Pattern.CalmFace();
+    var number = ctx.NUMBER();
+    if (number != null) return new Pattern.Number(Integer.parseInt(number.getText()));
+
+    throw new IllegalStateException("unreachable");
   }
 
   @Override

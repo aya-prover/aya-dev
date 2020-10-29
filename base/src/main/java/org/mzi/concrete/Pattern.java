@@ -35,7 +35,7 @@ public sealed interface Pattern {
 
   record PatAtom(
     @NotNull Atom atom,
-    @Nullable Tuple2<String, Expr> as
+    @Nullable Tuple2<@NotNull String, @NotNull Expr> as
   ) implements Pattern {
   }
 
