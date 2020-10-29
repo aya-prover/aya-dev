@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * @author ice1000
+ * @author ice1000, kiva
  */
 public class MziProducer extends MziBaseVisitor<Object> {
   public enum UseHide {
@@ -256,17 +256,16 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public Expr.@NotNull DTExpr visitSigma(MziParser.SigmaContext ctx) {
-    return new Expr.DTExpr(
+    return new Expr.SigmaExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
-      /* TODO: last */,
       DTKind.Sigma
     );
   }
 
   @Override
   public Expr.@NotNull DTExpr visitPi(MziParser.PiContext ctx) {
-    return new Expr.DTExpr(
+    return new Expr.PiExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
       visitExpr(ctx.expr()),
