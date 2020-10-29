@@ -44,7 +44,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Stmt visitStmt(MziParser.StmtContext ctx) {
+  public @NotNull Stmt visitStmt(MziParser.StmtContext ctx) {
     var cmd = ctx.cmd();
     if (cmd != null) return visitCmd(cmd);
     var decl = ctx.decl();
@@ -53,7 +53,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Decl visitDecl(MziParser.DeclContext ctx) {
+  public @NotNull Decl visitDecl(MziParser.DeclContext ctx) {
     var fnDecl = ctx.fnDecl();
     if (fnDecl != null) return visitFnDecl(fnDecl);
     var dataDecl = ctx.dataDecl();
@@ -64,7 +64,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Decl visitFnDecl(MziParser.FnDeclContext ctx) {
+  public @NotNull Decl visitFnDecl(MziParser.FnDeclContext ctx) {
     var modifiers = ctx.fnModifiers().stream()
       .map(this::visitFnModifiers)
       .distinct()
@@ -94,26 +94,26 @@ public class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public Buffer<Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
+  public @NotNull Buffer<@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
     return stream
       .map(this::visitTele)
       .collect(Buffer.factory());
   }
 
   @Override
-  public Buffer<Stmt> visitAbuse(MziParser.AbuseContext ctx) {
+  public @NotNull Buffer<@NotNull Stmt> visitAbuse(MziParser.AbuseContext ctx) {
     return ctx.stmt().stream()
       .map(this::visitStmt)
       .collect(Buffer.factory());
   }
 
   @Override
-  public Expr visitFnBody(MziParser.FnBodyContext ctx) {
+  public @NotNull Expr visitFnBody(MziParser.FnBodyContext ctx) {
     return visitExpr(ctx.expr());
   }
 
   @Override
-  public Expr visitLiteral(MziParser.LiteralContext ctx) {
+  public @NotNull Expr visitLiteral(MziParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
     var id = ctx.ID();
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(ctx), id.getText());
@@ -145,7 +145,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Param visitTele(MziParser.TeleContext ctx) {
+  public @NotNull Param visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
     if (literal != null) return new Param(sourcePosOf(ctx), Buffer.of(new LocalVar("_")), visitLiteral(literal), true);
     var teleTypedExpr = ctx.teleTypedExpr();
@@ -155,19 +155,20 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Function<Boolean, Param> visitTeleTypedExpr(MziParser.TeleTypedExprContext ctx) {
+  public @NotNull Function<Boolean, Param> visitTeleTypedExpr(MziParser.TeleTypedExprContext ctx) {
     var type = visitType(ctx.type());
     return explicit -> new Param(sourcePosOf(ctx), visitIds(ctx.ids())
       .<Var>map(LocalVar::new)
       .collect(Buffer.factory()), type, explicit);
   }
 
-  public Expr visitExpr(MziParser.ExprContext ctx) {
+  public @NotNull Expr visitExpr(MziParser.ExprContext ctx) {
     if (ctx instanceof MziParser.AppContext app) return visitApp(app);
     if (ctx instanceof MziParser.ProjContext proj) return visitProj(proj);
     if (ctx instanceof MziParser.PiContext pi) return visitPi(pi);
     if (ctx instanceof MziParser.SigmaContext sig) return visitSigma(sig);
     if (ctx instanceof MziParser.LamContext lam) return visitLam(lam);
+    // TODO: match and arr
     return new Expr.HoleExpr(sourcePosOf(ctx), null, null);
   }
 
@@ -283,24 +284,24 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Decl visitDataDecl(MziParser.DataDeclContext ctx) {
+  public @NotNull Decl visitDataDecl(MziParser.DataDeclContext ctx) {
     // TODO: visit data decl
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Decl visitStructDecl(MziParser.StructDeclContext ctx) {
+  public @NotNull Decl visitStructDecl(MziParser.StructDeclContext ctx) {
     // TODO: visit struct decl
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Expr visitType(MziParser.TypeContext ctx) {
+  public @NotNull Expr visitType(MziParser.TypeContext ctx) {
     return visitExpr(ctx.expr());
   }
 
   @Override
-  public Stmt visitCmd(MziParser.CmdContext ctx) {
+  public @NotNull Stmt visitCmd(MziParser.CmdContext ctx) {
     var cmd = ctx.OPEN() != null ? Cmd.Open : Cmd.Import;
     var using = Buffer.<String>of();
     var hiding = Buffer.<String>of();
@@ -323,18 +324,18 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Tuple2<UseHide, ImmutableList<String>> visitUseHide(MziParser.UseHideContext ctx) {
+  public @NotNull Tuple2<@NotNull UseHide, @NotNull ImmutableList<String>> visitUseHide(MziParser.UseHideContext ctx) {
     var type = ctx.USING() != null ? UseHide.Use : UseHide.Hide;
     return Tuple.of(type, visitIds(ctx.ids()).collect(ImmutableList.factory()));
   }
 
   @Override
-  public Stream<String> visitIds(MziParser.IdsContext ctx) {
+  public @NotNull Stream<String> visitIds(MziParser.IdsContext ctx) {
     return ctx.ID().stream().map(t -> t.getSymbol().getText());
   }
 
   @Override
-  public String visitModuleName(MziParser.ModuleNameContext ctx) {
+  public @NotNull String visitModuleName(MziParser.ModuleNameContext ctx) {
     return ctx.ID().stream()
       .map(t -> t.getSymbol().getText())
       .collect(Collectors.joining("."));
@@ -353,7 +354,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Modifier visitFnModifiers(MziParser.FnModifiersContext ctx) {
+  public @NotNull Modifier visitFnModifiers(MziParser.FnModifiersContext ctx) {
     if (ctx.ERASE() != null) return Modifier.Erase;
     if (ctx.INLINE() != null) return Modifier.Inline;
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
