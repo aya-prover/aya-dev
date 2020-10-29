@@ -67,7 +67,7 @@ public interface TermFixpoint<P> extends
     return term;
   }
 
-  default @NotNull Arg<Term> visitArg(@NotNull Arg<Term> arg, P p) {
+  default @NotNull Arg<? extends Term> visitArg(@NotNull Arg<? extends Term> arg, P p) {
     var term = arg.term().accept(this, p);
     if (term == arg.term()) return arg;
     return new Arg<>(term, arg.explicit());

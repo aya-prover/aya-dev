@@ -16,7 +16,7 @@ import org.mzi.util.Decision;
  */
 public sealed interface AppTerm extends Term {
   @NotNull Term fn();
-  @NotNull ImmutableSeq<@NotNull Arg<? extends Term>> args();
+  @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args();
 
   @Override default @NotNull Decision whnf() {
     if (fn() instanceof LamTerm) return Decision.NO;
@@ -32,7 +32,7 @@ public sealed interface AppTerm extends Term {
 
   record FnCall(
     @NotNull DefVar fnRef,
-    @NotNull ImmutableSeq<@NotNull Arg<Term>> args
+    @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFnCall(this, p);
