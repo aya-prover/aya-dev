@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.generic.Arg;
-import org.mzi.generic.DTKind;
 import org.mzi.tyck.sort.LevelEqn;
 
 /**
@@ -81,19 +80,17 @@ public sealed interface Expr {
    */
   sealed interface DTExpr extends Expr {
     @NotNull Buffer<Param> params();
-    @NotNull DTKind kind();
+    boolean co();
   }
 
   /**
-   * @author re-xyr
-   *
-   * @param kind should always be {@link DTKind#Pi} or {@link DTKind#Copi}
+   * @author re-xyr, kiva
    */
   record PiExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Buffer<Param> params,
     @NotNull Expr last,
-    @NotNull DTKind kind
+    boolean co
   ) implements DTExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPi(this, p);
@@ -102,13 +99,11 @@ public sealed interface Expr {
 
   /**
    * @author kiva
-   *
-   * @param kind should always be {@link DTKind#Sigma} or {@link DTKind#Cosigma}
    */
   record SigmaExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Buffer<Param> params,
-    @NotNull DTKind kind
+    boolean co
   ) implements DTExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitSigma(this, p);

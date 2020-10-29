@@ -8,14 +8,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Var;
-import org.mzi.ref.LocalVar;
-import org.mzi.tyck.sort.Sort;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
-import org.mzi.generic.DTKind;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispParser;
 import org.mzi.ref.DefVar;
+import org.mzi.ref.LocalVar;
+import org.mzi.tyck.sort.Sort;
 
 import java.util.Map;
 import java.util.function.BooleanSupplier;
@@ -59,10 +58,10 @@ public class TermProducer extends LispBaseVisitor<Term> {
           .collect(ImmutableSeq.factory()));
       case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.implicit(exprs.get(1).accept(this)));
       case "lam" -> new LamTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this));
-      case "Pi" -> new PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Pi);
-      case "Copi" -> new PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Copi);
-      case "Sigma" -> new PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Sigma);
-      case "Cosigma" -> new PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), DTKind.Cosigma);
+      case "Pi" -> new PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), false);
+      case "Copi" -> new PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), true);
+      case "Sigma" -> new SigmaTerm(exprToBind(exprs.get(0)), false);
+      case "Cosigma" -> new SigmaTerm(exprToBind(exprs.get(0)), true);
       default -> throw new IllegalArgumentException("Unexpected lisp function: " + rule);
     };
   }

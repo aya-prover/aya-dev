@@ -4,16 +4,17 @@ package org.mzi.core.term;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.Tele;
-import org.mzi.generic.DTKind;
 import org.mzi.util.Decision;
 
 /**
+ * A (co)dependent sigma type.
+ *
  * @author kiva
- * note: {@param kind} should always be {@link DTKind#Sigma} or {@link DTKind#Cosigma}
+ * @apiNote telescope might be empty or longer than one.
  */
 public record SigmaTerm(
   @NotNull Tele telescope,
-  @NotNull DTKind kind
+  boolean co
 ) implements DT {
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitSigma(this, p);
