@@ -191,7 +191,9 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     return new Expr.TupExpr(
       sourcePosOf(ctx),
-      ctx.typed().stream().map(this::visitTyped).collect(ImmutableVector.factory())
+      ctx.typed().stream()
+        .<Expr>map(this::visitTyped)
+        .collect(ImmutableVector.factory())
     );
   }
 
@@ -199,8 +201,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var literal = ctx.literal();
     if (literal != null) return Buffer.of(Arg.explicit(visitLiteral(literal)));
     return ctx.typed().stream()
-      .map(this::visitTyped)
-      .map(e -> (Expr) e)
+      .<Expr>map(this::visitTyped)
       .map(Arg::explicit)
       .collect(Buffer.factory());
   }
@@ -225,8 +226,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (atom != null) return visitArgumentAtom(atom);
     if (ctx.LBRACE() != null) {
       return ctx.typed().stream()
-        .map(this::visitTyped)
-        .map(e -> (Expr) e)
+        .<Expr>map(this::visitTyped)
         .map(Arg::implicit)
         .collect(Buffer.factory());
     }
