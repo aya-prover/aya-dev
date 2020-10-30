@@ -93,9 +93,11 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    return preRhs instanceof ProjTerm rhs
-        && lhs.ix() == rhs.ix()
-        && compare(lhs.tup(), rhs.tup(), null);
+    if (lhs.whnf() == Decision.YES && preRhs instanceof ProjTerm rhs)
+      return lhs.ix() == rhs.ix() && compare(lhs.tup(), rhs.tup(), null);
+    var whnf = lhs.normalize(NormalizeMode.WHNF);
+    if (Objects.equals(whnf, lhs)) return false;
+    return compare(whnf, preRhs, type);
   }
 
   @Override
@@ -113,8 +115,6 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       for (int i = lhs.items().size(); i > 0; i--) {
         tupRhs.push(new ProjTerm(preRhs, i));
       }
-      System.out.println(lhs.toString());
-      System.out.println(new TupTerm(tupRhs.toImmutableVector()).toString());
       return compare(lhs, new TupTerm(tupRhs.toImmutableVector()), type);
     }
     return visitLists(lhs.items(), rhs.items());

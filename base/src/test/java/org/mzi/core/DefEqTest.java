@@ -55,4 +55,9 @@ public class DefEqTest {
   public void etaTupRhs() {
     assertTrue(eq.compare(Lisp.reallyParse("t", vars), Lisp.reallyParse("(tup (proj t 1) (proj t 2))", vars), Lisp.reallyParse("(Sigma (x (U) ex (y (U) ex null)")));
   }
+
+  @Test
+  public void projReduce() {
+    assertTrue(eq.compare(Lisp.reallyParse("(proj (tup (app (lam (a (U) ex null) a) x) b) 1)", vars), Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), null));
+  }
 }
