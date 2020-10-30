@@ -18,10 +18,13 @@ import org.mzi.core.Tele;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
+import org.mzi.util.Decision;
 import org.mzi.util.Ordering;
 
 /**
  * @author ice1000
+ * @implNote Do not call <code>expr.accept(this, bla)</code> directly.
+ * Instead, invoke {@link DefEq#compare(Term, Term, Term)} to do so.
  */
 public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable Term, @NotNull Boolean> {
   protected @NotNull Ordering ord;
@@ -31,6 +34,13 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @Nullable Term type) {
     if (lhs == rhs) return true;
+    var lhsWHNF = lhs.whnf() != Decision.NO;
+    var rhsWHNF = rhs.whnf() != Decision.NO;
+    // One of 'em clearly not WHNF but the other isn't that clear
+    if (lhsWHNF != rhsWHNF) {
+      lhs = lhs.normalize(NormalizeMode.WHNF);
+      rhs = rhs.normalize(NormalizeMode.WHNF);
+    }
     return lhs.accept(this, rhs, type);
   }
 
@@ -49,19 +59,19 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof PiTerm rhs)) return false;
+    if (!(preRhs instanceof PiTerm rhs)) return false;
     return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer()) && compare(lhs.last(), rhs.last(), type);
   }
 
   @Override
   public @NotNull Boolean visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof SigmaTerm rhs)) return false;
+    if (!(preRhs instanceof SigmaTerm rhs)) return false;
     return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer());
   }
 
   @Override
   public @NotNull Boolean visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof RefTerm rhs)) return false;
+    if (!(preRhs instanceof RefTerm rhs)) return false;
     var var2 = varSubst.getOrDefault(rhs.var(), rhs.var());
     return var2 == lhs.var();
   }
@@ -79,7 +89,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof UnivTerm rhs)) return false;
+    if (!(preRhs instanceof UnivTerm rhs)) return false;
     return Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
   }
 
@@ -100,7 +110,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   @Override
   public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (preRhs instanceof AppTerm.FnCall rhs && rhs.fnRef() == lhs.fnRef())
-      return visitLists(lhs.args().map(Arg::term), rhs.args().map(Arg::term));
+      if (visitLists(lhs.args().map(Arg::term), rhs.args().map(Arg::term)))
+        return true;
     return compare(lhs.normalize(NormalizeMode.WHNF), preRhs, type);
   }
 
