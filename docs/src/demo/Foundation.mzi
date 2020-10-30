@@ -1,27 +1,32 @@
 \data Empty
-  \where {
-    \abuse \level 1 => [ \match \elim \0 \with ]
+  \abusing {
+    \level 1 => [ \match \elim \0 \with ]
+    -- Alternative:
+    -- \abuse \level 1 (a b : Empty) : a = b
     -- I'm using VV's convention for h-levels: h-level 0 = contractible, h-level 1 = \Prop in arend, h-level 2 = \Set
     -- h-level n = \(n+2)-Type
-
-    \def elim (A : \Type) (x : Empty) : A => [ \match \elim x \with ]
-    -- I want to eliminate the `\def foo (A : \Type) (x : A) \elim x` syntax
-    -- since it's just sugar for `=> \match \elim x \with`
-    -- and does not save much typing
+    -- ice: no pattern means absurd pattern
   }
+
+\def elim (A : \Type) (x : Empty) : A => [ \match \elim x \with ]
+-- Alternative:
+-- \def elim (A : \Type) (x : Empty) : A
+-- I want to eliminate the `\def foo (A : \Type) (x : A) \elim x` syntax
+-- since it's just sugar for `=> \match \elim x \with`
+-- and does not save much typing
+-- ice: but in case you have 10 params and you wanna elim 3 of 'em,
+-- you actually saved something
 
 \data Unit
   | tt
-  \where {
-    \abuse \level 0 => [ \match \elim \0 | \1 \with
-    -- I use '|' to separate multiple terms in a \match since I don't want to reserve ','
+  \abusing {
+    \level 0 => [ \match \elim \0, \1 \with
       | tt, tt => idp
     ]
-
-    \def intro (A : \Type) : A -> Unit => [ tt ]
-    \def elim {A : \Type} (x : A) : Unit -> A => [ x ]
   }
 
+\def intro (A : \Type) : A -> Unit => [ tt ]
+\def elim {A : \Type} (x : A) : Unit -> A => [ x ]
 
 \def id {A : \Type} : A -> A => [ \0 ]
 
@@ -31,35 +36,36 @@
 \def \infix ∘ : {A B C : \Type} (f : B -> C) (g : A -> B) : A -> C => [ f (g \0) ]
 
 \data Pair (A B : \Type)
-  | \infix , A B
-  \where {
-    \def fst {A B : \Type} : A × B -> A => \match \0 \with
-    -- FIXME: × has not been declared.  The problem is × should be toplevel, but toplevel
-    -- definitions cannot be inserted before \where blocks
-      | (x , _) => x
-    \def snd {A B : \Type} : A × B -> B => \match \0 \with
-      | (_ , y) => y
-  }
-\bind , \looser ∘
-\bind , \looser ->
-\bind , \tighter =
-\bind , \looser @
--- since `f, g ∘ h` should be interpreted as a pair
+  | \infix ,, A B
+
+\def fst {A B : \Type} : A × B -> A => \match \0 \with
+-- FIXME: × has not been declared.  The problem is × should be toplevel, but toplevel
+--  definitions cannot be inserted before \where blocks
+  | (x ,, _) => x
+\def snd {A B : \Type} : A × B -> B => \match \0 \with
+  | (_ ,, y) => y
+
+\bind ,, \looser ∘
+\bind ,, \looser ->
+\bind ,, \tighter =
+\bind ,, \looser @
+-- since `f ,, g ∘ h` should be interpreted as a pair
+-- ice: I think we should put \bind as part of \abuse
 
 \def \infix × : \Type -> \Type -> \Type => Pair
-\bind × \looser ,
+\bind × \looser ,,
 \bind × \looser ->
 \bind × \tighter =
 
-
 \def curry {A B : \Type} (f : A × B -> C) : A -> B -> C =>
-  \ x y => f (x , y)
+  \lam x y => f (x ,, y)
   -- mzi keywords can be represented by `\\(\w*)`, and instead of `\lam` we can just use `\`
+  -- ice: but I still propose \lam
 
 \def pairExt {A B : \Type} (p1 p2 : A × B) : p1 .fst = p2 .fst -> p1 .snd = p2 .snd -> p1 = p2 =>
 -- .fst is the postfix application of fst
 -- the corresponding syntax in Arend is `fst
-  \ e1 e2 => path \(i : \Interval) => (e1 @ i , e2 @ i)
+  \ e1 e2 => path \(i : \Interval) => (e1 @ i ,, e2 @ i)
 
 
 \data ℕ
@@ -69,8 +75,8 @@
 \record isContr (A : \Type)
   | center : A
   | contr (x : A) : center = x
-  \where {
-    \abuse \level 1 => \mzi
+  \abusing {
+    \level 1 => \mzi
     -- this should make mzi put (isContr A) in \Prop for any A
   }
 -- Ok, I reconsidered the issue and think `\record` are still dependent pairs with named projections, not codata.
