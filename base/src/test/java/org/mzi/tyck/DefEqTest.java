@@ -15,6 +15,8 @@ public class DefEqTest extends LispTestCase {
     identical("(proj (lam (a (U) ex null) a) 1)");
     identical("(lam (a (U) ex null) a)");
     identical("xyren");
+    identical("(Pi (a (U) ex null) a)");
+    identical("(Sigma (a (U) ex null))");
   }
 
   private void identical(@Language("TEXT") String code) {
@@ -24,6 +26,13 @@ public class DefEqTest extends LispTestCase {
   @Test
   public void reduceApp() {
     assertTrue(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) a)", vars), Lisp.reallyParse("a", vars), null));
+  }
+
+  @Test
+  public void alphaLam() {
+    assertTrue(eq().compare(
+      Lisp.reallyParse("(lam (x (U) ex null) (app f x))", vars),
+      Lisp.reallyParse("(lam (y (U) ex null) (app f y))", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
   }
 
   @Test
