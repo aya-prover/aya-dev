@@ -2,21 +2,17 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.RefTerm;
 import org.mzi.test.Lisp;
-
-import java.util.Map;
-import java.util.TreeMap;
+import org.mzi.test.LispTestCase;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class NormalizeTest {
+public class NormalizeTest extends LispTestCase {
   @Test
   public void noNormalizeNeutral() {
     var term = Lisp.reallyParse("(app f a)");
@@ -61,15 +57,14 @@ public class NormalizeTest {
   @Test
   public void unfoldDef() {
     // (x y : U)
-    @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
     var def = Lisp.reallyParseDef("id",
-      "(y (U) ex null)", "y", "y", refs);
-    var term = Lisp.reallyParse("(fncall id kiva)", refs);
+      "(y (U) ex null)", "y", "y", vars);
+    var term = Lisp.reallyParse("(fncall id kiva)", vars);
     assertTrue(term instanceof AppTerm.FnCall);
     assertEquals("id", def.ref.name());
     assertEquals(1, def.telescope.size());
     var norm = term.normalize(NormalizeMode.WHNF);
     assertNotEquals(term, norm);
-    assertEquals(new RefTerm(refs.get("kiva")), norm);
+    assertEquals(new RefTerm(vars.get("kiva")), norm);
   }
 }

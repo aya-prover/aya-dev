@@ -3,32 +3,26 @@
 package org.mzi.core;
 
 import asia.kala.Unit;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import org.mzi.api.ref.Var;
 import org.mzi.core.visitor.UsagesConsumer;
 import org.mzi.test.Lisp;
-
-import java.util.Map;
-import java.util.TreeMap;
+import org.mzi.test.LispTestCase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class UsagesTest {
+public class UsagesTest extends LispTestCase {
   @Test
   public void someUsages() {
-    @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
-    var term = Lisp.reallyParse("(app glavo glavo)", refs);
-    var consumer = new UsagesConsumer(refs.get("glavo"));
+    var term = Lisp.reallyParse("(app glavo glavo)", vars);
+    var consumer = new UsagesConsumer(vars.get("glavo"));
     term.accept(consumer, Unit.unit());
     assertEquals(2, consumer.usageCount());
   }
 
   @Test
   public void noUsages() {
-    @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
-    var term = Lisp.reallyParse("(app xy r)", refs);
-    var consumer = new UsagesConsumer(refs.get("a"));
+    var term = Lisp.reallyParse("(app xy r)", vars);
+    var consumer = new UsagesConsumer(vars.get("a"));
     term.accept(consumer, Unit.unit());
     assertEquals(0, consumer.usageCount());
   }
