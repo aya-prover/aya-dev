@@ -3,19 +3,16 @@
 package org.mzi.tyck.unify;
 
 import asia.kala.collection.Seq;
-import asia.kala.collection.mutable.Buffer;
-import asia.kala.collection.mutable.LinkedBuffer;
-import asia.kala.collection.mutable.MutableHashMap;
-import asia.kala.collection.mutable.MutableMap;
+import asia.kala.collection.mutable.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
+import org.mzi.core.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
-import org.mzi.core.Tele;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Decision;
@@ -148,14 +145,13 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     assert lhs2 != null;
     assert rhs2 != null;
     var exTele = extraParams._1 == null ? extraParams._2 : extraParams._1;
+    var exArgs = new ArrayBuffer<Arg<RefTerm>>();
     while (exTele != null) {
-      var arg = new Arg<>(new RefTerm(exTele.ref()), exTele.explicit());
-      lhs2 = AppTerm.make(lhs2, arg);
-      rhs2 = AppTerm.make(rhs2, arg);
+      exArgs.append(new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
       exTele = exTele.next();
     }
     if (type != null) type = type.dropTelePi(maxTeleSize);
-    return compare(rhs2, lhs2, type);
+    return compare(AppTerm.make(rhs2, exArgs.view()), AppTerm.make(lhs2, exArgs.view()), type);
   }
 
   @Contract(pure = true) protected DefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
