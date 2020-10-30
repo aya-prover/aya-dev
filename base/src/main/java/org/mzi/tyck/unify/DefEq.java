@@ -114,7 +114,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       for (int i = lhs.items().size(); i > 0; i--) {
         tupRhs.push(new ProjTerm(preRhs, i));
       }
-      return compare(lhs, new TupTerm(tupRhs.toImmutableVector()), type);
+      return visitLists(lhs.items(), tupRhs);
+      // TODO[ice]: make type-directed
     }
     return visitLists(lhs.items(), rhs.items());
   }
@@ -140,9 +141,11 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     var minTeleSize = Math.min(lhs.tele().size(), rTeleSize);
     var maxTeleSize = Math.max(lhs.tele().size(), rTeleSize);
     var extraParams = Tele.biForEach(lhs.tele(), rTele, (l, r) -> varSubst.put(l.ref(), r.ref()));
-    // Won't get null because of min size
     Term lhs2 = lhs.dropTeleLam(minTeleSize);
     Term rhs2 = preRhs.dropTeleLam(minTeleSize);
+    // Won't get null because of min size
+    assert lhs2 != null;
+    assert rhs2 != null;
     var lExTele = extraParams._1;
     var rExTele = extraParams._2;
     var exTele = lExTele == null ? rExTele : lExTele;
