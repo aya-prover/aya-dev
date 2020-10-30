@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
+import asia.kala.collection.mutable.Buffer;
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.Tele;
@@ -30,10 +31,10 @@ public interface TermFixpoint<P> extends
 
   @Override default @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, P p) {
     var sol = term.solution().getOrNull();
-    var args = term.args().map(arg -> visitArg(arg, p));
+    var args = term.args().view().map(arg -> visitArg(arg, p));
     if (sol != null && !args.sameElements(term.args())) {
       var newSol = sol.accept(this, p);
-      if (newSol != sol) return new AppTerm.HoleApp(newSol, term.var(), args);
+      if (newSol != sol) return new AppTerm.HoleApp(newSol, term.var(), args.collect(Buffer.factory()));
     }
     return term;
   }

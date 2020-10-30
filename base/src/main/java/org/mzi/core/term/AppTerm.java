@@ -3,6 +3,7 @@
 package org.mzi.core.term;
 
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.collection.mutable.Buffer;
 import asia.kala.control.Option;
 import asia.kala.ref.OptionRef;
 import org.jetbrains.annotations.Contract;
@@ -29,6 +30,10 @@ public sealed interface AppTerm extends Term {
   }
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<? extends Term> arg) {
+    if (f instanceof HoleApp holeApp) {
+      holeApp.args().append(arg);
+      return holeApp;
+    }
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
     var tele = lam.tele();
     var next = tele.next();
@@ -77,10 +82,10 @@ public sealed interface AppTerm extends Term {
   record HoleApp(
     @NotNull OptionRef<@NotNull Term> solution,
     @NotNull Var var,
-    @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args
+    @NotNull Buffer<@NotNull Arg<? extends Term>> args
   ) implements AppTerm {
     public HoleApp(@Nullable Term solution, @NotNull Var var,
-                   @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
+                   @NotNull Buffer<@NotNull Arg<? extends Term>> args) {
       this(new OptionRef<>(Option.of(solution)), var, args);
     }
 
