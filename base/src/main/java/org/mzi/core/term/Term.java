@@ -36,13 +36,13 @@ public interface Term extends CoreTerm {
   default @Nullable Term dropTele(int n) {
     if (n == 0) return this;
     var term = this;
-    while (term instanceof PiTerm dt) {
+    while (term instanceof DT.PiTerm dt) {
       var tele = dt.telescope();
       while (n > 0 && tele.next() != null) {
         tele = tele.next();
         n--;
       }
-      if (n == 0) return tele.next() != null ? new PiTerm(tele.next(), dt.last(), dt.co()) : dt.last();
+      if (n == 0) return tele.next() != null ? new DT.PiTerm(tele.next(), dt.last(), dt.co()) : dt.last();
       term = dt.last().normalize(NormalizeMode.WHNF);
     }
     return null;
@@ -51,8 +51,8 @@ public interface Term extends CoreTerm {
   interface Visitor<P, R> {
     R visitRef(@NotNull RefTerm term, P p);
     R visitLam(@NotNull LamTerm term, P p);
-    R visitPi(@NotNull PiTerm term, P p);
-    R visitSigma(@NotNull SigmaTerm term, P p);
+    R visitPi(@NotNull DT.PiTerm term, P p);
+    R visitSigma(@NotNull DT.SigmaTerm term, P p);
     R visitUniv(@NotNull UnivTerm term, P p);
     R visitApp(AppTerm.@NotNull Apply term, P p);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p);
@@ -64,8 +64,8 @@ public interface Term extends CoreTerm {
   interface BiVisitor<P, Q, R> {
     R visitRef(@NotNull RefTerm term, P p, Q q);
     R visitLam(@NotNull LamTerm term, P p, Q q);
-    R visitPi(@NotNull PiTerm term, P p, Q q);
-    R visitSigma(@NotNull SigmaTerm term, P p, Q q);
+    R visitPi(@NotNull DT.PiTerm term, P p, Q q);
+    R visitSigma(@NotNull DT.SigmaTerm term, P p, Q q);
     R visitUniv(@NotNull UnivTerm term, P p, Q q);
     R visitApp(AppTerm.@NotNull Apply term, P p, Q q);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p, Q q);

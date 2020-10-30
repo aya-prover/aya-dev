@@ -60,14 +60,14 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   }
 
   @Override
-  public @NotNull Boolean visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof PiTerm rhs)) return false;
+  public @NotNull Boolean visitPi(@NotNull DT.PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (!(preRhs instanceof DT.PiTerm rhs)) return false;
     return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer()) && compare(lhs.last(), rhs.last(), type);
   }
 
   @Override
-  public @NotNull Boolean visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof SigmaTerm rhs)) return false;
+  public @NotNull Boolean visitSigma(@NotNull DT.SigmaTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (!(preRhs instanceof DT.SigmaTerm rhs)) return false;
     return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer());
   }
 
@@ -124,7 +124,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     // Eta-rule
     if (!(preRhs instanceof LamTerm rhs)) {
-      if (!(type instanceof PiTerm pi)) return false;
+      if (!(type instanceof DT.PiTerm pi)) return false;
       var mockTerm = new Arg<>(new RefTerm(new LocalVar("tql")), pi.telescope().explicit());
       return compare(AppTerm.make(lhs, mockTerm), AppTerm.make(preRhs, mockTerm), pi.dropTele(1));
     }

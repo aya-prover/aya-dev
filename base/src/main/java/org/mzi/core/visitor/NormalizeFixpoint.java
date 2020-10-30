@@ -31,13 +31,13 @@ public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
   }
 
   @Override
-  public @NotNull Term visitPi(@NotNull PiTerm term, NormalizeMode mode) {
+  public @NotNull Term visitPi(@NotNull DT.PiTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
     else return UnfoldFixpoint.super.visitPi(term, mode);
   }
 
   @Override
-  public @NotNull Term visitSigma(@NotNull SigmaTerm term, NormalizeMode mode) {
+  public @NotNull Term visitSigma(@NotNull DT.SigmaTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
     else return UnfoldFixpoint.super.visitSigma(term, mode);
   }

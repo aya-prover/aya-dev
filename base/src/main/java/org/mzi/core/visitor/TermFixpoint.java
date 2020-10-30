@@ -52,17 +52,17 @@ public interface TermFixpoint<P> extends
     return new UnivTerm(sort);
   }
 
-  @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
+  @Override default @NotNull Term visitPi(@NotNull DT.PiTerm term, P p) {
     var telescope = term.telescope().accept(this, p);
     var last = term.last().accept(this, p);
     if (telescope == term.telescope() && last == term.last()) return term;
-    return new PiTerm(telescope, last, term.co());
+    return new DT.PiTerm(telescope, last, term.co());
   }
 
-  @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
+  @Override default @NotNull Term visitSigma(@NotNull DT.SigmaTerm term, P p) {
     var telescope = term.telescope().accept(this, p);
     if (telescope == term.telescope()) return term;
-    return new SigmaTerm(telescope, term.co());
+    return new DT.SigmaTerm(telescope, term.co());
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
