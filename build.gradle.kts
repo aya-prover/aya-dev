@@ -1,5 +1,6 @@
 // Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+import java.util.Properties
 
 buildscript {
   repositories {
@@ -15,19 +16,14 @@ plugins {
   `maven-publish`
 }
 
-var annotationsVersion: String by rootProject.ext
-var protobufVersion: String by rootProject.ext
-var antlrVersion: String by rootProject.ext
-var kalaVersion: String by rootProject.ext
+var deps: Properties by rootProject.ext
 
-annotationsVersion = "20.1.0"
-protobufVersion = "3.13.0"
-antlrVersion = "4.8"
-kalaVersion = "0.9.0"
+deps = Properties()
+deps.load(file("gradle/deps.properties").reader())
 
 allprojects {
   group = "org.mzi"
-  version = "0.1"
+  version = deps.getProperty("version.project")
 }
 
 val nonJavaProjects = listOf("docs")
@@ -92,7 +88,7 @@ subprojects {
           licenses {
             license {
               name.set("Apache-2.0")
-              // url.set("https://github.com/JetBrains/Arend/blob/master/LICENSE")
+              url.set("https://github.com/ice1000/mzi/blob/master/LICENSE")
             }
           }
         }
@@ -116,6 +112,6 @@ subprojects {
   }
 }
 
-tasks.withType<Wrapper> {
+tasks.withType<Wrapper>().configureEach {
   gradleVersion = "6.7"
 }
