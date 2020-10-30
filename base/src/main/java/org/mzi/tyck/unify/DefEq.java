@@ -4,6 +4,7 @@ package org.mzi.tyck.unify;
 
 import asia.kala.collection.Seq;
 import asia.kala.collection.mutable.Buffer;
+import asia.kala.collection.mutable.LinkedBuffer;
 import asia.kala.collection.mutable.MutableHashMap;
 import asia.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
@@ -100,9 +101,15 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof TupTerm rhs)) return false;
-    // TODO[ice]: eta-rule
-    // TODO[ice]: make type-directed
+    if (!(type instanceof DT.SigmaTerm sigma)) return false;
+    if (!(preRhs instanceof TupTerm rhs)) {
+      // Eta-rule
+      var tupRhs = new LinkedBuffer<Term>();
+      for (int i = 0; i < lhs.items().size(); i++) {
+        tupRhs.push(new ProjTerm(preRhs, i));
+      }
+      return compare(lhs, new TupTerm(tupRhs.toImmutableVector()), type);
+    }
     return visitLists(lhs.items(), rhs.items());
   }
 
