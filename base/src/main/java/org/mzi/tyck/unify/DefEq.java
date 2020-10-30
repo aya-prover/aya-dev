@@ -73,8 +73,13 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    return preRhs instanceof RefTerm rhs
-        && varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var();
+    if (!(preRhs instanceof RefTerm rhs)) {
+      ord = ord.invert();
+      var result = compare(preRhs, lhs, type);
+      ord = ord.invert();
+      return result;
+    }
+    return varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var();
   }
 
   @Override
