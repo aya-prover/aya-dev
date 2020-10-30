@@ -4,12 +4,12 @@ package org.mzi.tyck.error;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
-import org.mzi.core.term.HoleTerm;
+import org.mzi.core.term.AppTerm;
 
 /**
  * @author ice1000
  */
-public record HoleAppWarn(@NotNull HoleTerm term, @NotNull Expr expr) implements TyckProblem {
+public record HoleAppWarn(@NotNull AppTerm.HoleApp term, @NotNull Expr expr) implements TyckProblem {
   @Override public @NotNull Severity level() {
     return Severity.WARN;
   }

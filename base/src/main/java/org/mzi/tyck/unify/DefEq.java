@@ -21,6 +21,8 @@ import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Decision;
 import org.mzi.util.Ordering;
 
+import java.util.Objects;
+
 /**
  * @author ice1000
  * @implNote Do not call <code>expr.accept(this, bla)</code> directly.
@@ -77,9 +79,12 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   }
 
   @Override
-  public @NotNull Boolean visitHole(@NotNull HoleTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (lhs.solution().isDefined()) return compare(lhs.solution().get(), preRhs, type);
-    return preRhs instanceof HoleTerm rhs && lhs.var() == rhs.var();
+  public @NotNull Boolean visitApp(@NotNull AppTerm.Apply lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (lhs.whnf() == Decision.YES && preRhs instanceof AppTerm.Apply rhs)
+      return compare(lhs.fn(), rhs.fn(), null) && compare(lhs.arg().term(), rhs.arg().term(), null);
+    var whnf = lhs.normalize(NormalizeMode.WHNF);
+    if (Objects.equals(whnf, lhs)) return false;
+    return compare(whnf, preRhs, type);
   }
 
   @Override

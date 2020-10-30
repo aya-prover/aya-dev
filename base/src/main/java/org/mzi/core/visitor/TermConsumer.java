@@ -15,7 +15,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<P, 
   }
 
   @Override
-  default Unit visitHole(@NotNull HoleTerm term, P p) {
+  default Unit visitHole(@NotNull AppTerm.HoleApp term, P p) {
     term.solution().forEach(sol -> sol.accept(this, p));
     term.args().forEach(arg -> visitArg(arg, p));
     return Unit.unit();

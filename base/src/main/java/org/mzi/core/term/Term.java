@@ -58,7 +58,7 @@ public interface Term extends CoreTerm {
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p);
     R visitTup(@NotNull TupTerm term, P p);
     R visitProj(@NotNull ProjTerm term, P p);
-    R visitHole(@NotNull HoleTerm term, P p);
+    R visitHole(@NotNull AppTerm.HoleApp term, P p);
   }
 
   interface BiVisitor<P, Q, R> {
@@ -71,6 +71,6 @@ public interface Term extends CoreTerm {
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p, Q q);
     R visitTup(@NotNull TupTerm term, P p, Q q);
     R visitProj(@NotNull ProjTerm term, P p, Q q);
-    R visitHole(@NotNull HoleTerm term, P p, Q q);
+    R visitHole(@NotNull AppTerm.HoleApp term, P p, Q q);
   }
 }

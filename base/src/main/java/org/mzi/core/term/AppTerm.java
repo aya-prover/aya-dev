@@ -3,8 +3,12 @@
 package org.mzi.core.term;
 
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.control.Option;
+import asia.kala.ref.OptionRef;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.generic.Arg;
@@ -64,6 +68,36 @@ public sealed interface AppTerm extends Term {
     @Contract(" -> new")
     @Override public @NotNull ImmutableSeq<@NotNull Arg<? extends Term>> args() {
       return ImmutableSeq.of(arg());
+    }
+  }
+
+  /**
+   * @author ice1000
+   */
+  record HoleApp(
+    @NotNull OptionRef<@NotNull Term> solution,
+    @NotNull Var var,
+    @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args
+  ) implements AppTerm {
+    public HoleApp(@Nullable Term solution, @NotNull Var var,
+                   @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
+      this(new OptionRef<>(Option.of(solution)), var, args);
+    }
+
+    @Contract(" -> new") @Override public @NotNull Term fn() {
+      return new RefTerm(var);
+    }
+
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitHole(this, p);
+    }
+
+    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+      return visitor.visitHole(this, p, q);
+    }
+
+    @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      return Decision.MAYBE;
     }
   }
 }
