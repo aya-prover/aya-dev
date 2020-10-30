@@ -5,6 +5,7 @@ package org.mzi.generic;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
+import org.mzi.core.term.Term;
 
 /**
  * @author ice1000
@@ -17,5 +18,9 @@ public record Arg<T>(@NotNull T term, boolean explicit) {
 
   @Contract("_ -> new") public static <T> @NotNull Arg<T> implicit(@NotNull T term) {
     return new Arg<>(term, false);
+  }
+
+  @Contract("_ -> new") public static @NotNull Arg<Term> uncapture(@NotNull Arg<? extends Term> arg) {
+    return new Arg<>(arg.term(), arg.explicit());
   }
 }

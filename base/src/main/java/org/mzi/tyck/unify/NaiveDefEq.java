@@ -20,7 +20,7 @@ public class NaiveDefEq extends DefEq {
 
   @Override
   public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!lhs.args().isEmpty()) {
+    if (!lhs.argsBuf().isEmpty()) {
       equations.reporter().report(new HoleAppWarn(lhs, expr));
       return false;
     }

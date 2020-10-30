@@ -31,8 +31,8 @@ public interface TermFixpoint<P> extends
 
   @Override default @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, P p) {
     var sol = term.solution().getOrNull();
-    var args = term.args().view().map(arg -> visitArg(arg, p));
-    if (sol != null && !args.sameElements(term.args())) {
+    var args = term.argsBuf().view().map(arg -> visitArgUncapture(arg, p));
+    if (sol != null && !args.sameElements(term.argsBuf())) {
       var newSol = sol.accept(this, p);
       if (newSol != sol) return new AppTerm.HoleApp(newSol, term.var(), args.collect(Buffer.factory()));
     }
@@ -67,6 +67,12 @@ public interface TermFixpoint<P> extends
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
     return term;
+  }
+
+  default @NotNull Arg<Term> visitArgUncapture(@NotNull Arg<Term> arg, P p) {
+    var term = arg.term().accept(this, p);
+    if (term == arg.term()) return arg;
+    return new Arg<>(term, arg.explicit());
   }
 
   default @NotNull Arg<? extends Term> visitArg(@NotNull Arg<? extends Term> arg, P p) {

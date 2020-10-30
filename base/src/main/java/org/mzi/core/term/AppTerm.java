@@ -31,7 +31,7 @@ public sealed interface AppTerm extends Term {
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<? extends Term> arg) {
     if (f instanceof HoleApp holeApp) {
-      holeApp.args().append(arg);
+      holeApp.argsBuf().append(Arg.uncapture(arg));
       return holeApp;
     }
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
@@ -82,11 +82,16 @@ public sealed interface AppTerm extends Term {
   record HoleApp(
     @NotNull OptionRef<@NotNull Term> solution,
     @NotNull Var var,
-    @NotNull Buffer<@NotNull Arg<? extends Term>> args
+    @NotNull Buffer<@NotNull Arg<Term>> argsBuf
   ) implements AppTerm {
     public HoleApp(@Nullable Term solution, @NotNull Var var,
-                   @NotNull Buffer<@NotNull Arg<? extends Term>> args) {
+                   @NotNull Buffer<@NotNull Arg<Term>> args) {
       this(new OptionRef<>(Option.of(solution)), var, args);
+    }
+
+    @Override @Deprecated
+    public @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args() {
+      return argsBuf.view().collect(ImmutableSeq.factory());
     }
 
     @Contract(" -> new") @Override public @NotNull Term fn() {
