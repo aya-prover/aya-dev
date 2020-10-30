@@ -58,5 +58,5 @@
   + Agda, Arend 里面都是这么叫的
 + Unfold -- 展开一个函数调用表达式
   + Agda, Arend 里面都是这么叫的
-+ Defeq -- 其实就是 conversion check 或者 unification
++ DefEq -- 其实就是 conversion check 或者 unification
   + 很多地方叫 definitional equality 或者 judgemental equality
