@@ -43,7 +43,7 @@ public sealed interface AppTerm extends Term {
     return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new SubstFixpoint.TermSubst(tele.ref(), arg.term()));
   }
 
-   @Contract(pure = true) static @NotNull <T extends Term> Term make(@NotNull Term f, @NotNull Seq<Arg<T>> args) {
+   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Seq<? extends Arg<? extends Term>> args) {
     if (args.isEmpty()) return f;
     if (f instanceof HoleApp holeApp) {
       holeApp.argsBuf().appendAll(args.view().map(Arg::uncapture));

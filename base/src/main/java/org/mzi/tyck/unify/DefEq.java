@@ -145,13 +145,13 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     assert lhs2 != null;
     assert rhs2 != null;
     var exTele = extraParams._1 == null ? extraParams._2 : extraParams._1;
-    var exArgs = new ArrayBuffer<Arg<RefTerm>>();
+    var exArgs = Buffer.<Arg<RefTerm>>of();
     while (exTele != null) {
       exArgs.append(new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
       exTele = exTele.next();
     }
     if (type != null) type = type.dropTelePi(maxTeleSize);
-    return compare(AppTerm.make(rhs2, exArgs.view()), AppTerm.make(lhs2, exArgs.view()), type);
+    return compare(AppTerm.make(rhs2, exArgs), AppTerm.make(lhs2, exArgs), type);
   }
 
   @Contract(pure = true) protected DefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
