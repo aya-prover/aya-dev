@@ -56,6 +56,6 @@ public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
     // should not fail due to tycking
     assert ix <= t.items().size();
     assert ix > 0;
-    return t.items().get(ix).accept(this, mode);
+    return t.items().get(ix - 1).accept(this, mode);
   }
 }
