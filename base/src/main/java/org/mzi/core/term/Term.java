@@ -33,7 +33,7 @@ public interface Term extends CoreTerm {
     return accept(NormalizeFixpoint.INSTANCE, mode);
   }
 
-  default @Nullable Term dropTeleDT(int n) {
+  default @Nullable Term dropTelePi(int n) {
     if (n == 0) return this;
     var term = this;
     while (term instanceof DT.PiTerm dt) {

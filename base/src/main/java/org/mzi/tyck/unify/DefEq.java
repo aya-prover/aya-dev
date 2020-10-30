@@ -107,8 +107,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(type instanceof DT.SigmaTerm sigma)) return false;
     if (!(preRhs instanceof TupTerm rhs)) {
+      if (!(type instanceof DT.SigmaTerm)) return false;
       // Eta-rule
       var tupRhs = new LinkedBuffer<Term>();
       for (int i = lhs.items().size(); i > 0; i--) {
@@ -138,23 +138,23 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     var rTele = preRhs instanceof LamTerm rhs ? rhs.tele() : null;
     var rTeleSize = rTele == null ? 0 : rTele.size();
-    var minTeleSize = Math.min(lhs.tele().size(), rTeleSize);
-    var maxTeleSize = Math.max(lhs.tele().size(), rTeleSize);
+    int lTeleSize = lhs.tele().size();
+    var minTeleSize = Math.min(lTeleSize, rTeleSize);
+    var maxTeleSize = Math.max(lTeleSize, rTeleSize);
     var extraParams = Tele.biForEach(lhs.tele(), rTele, (l, r) -> varSubst.put(l.ref(), r.ref()));
-    Term lhs2 = lhs.dropTeleLam(minTeleSize);
-    Term rhs2 = preRhs.dropTeleLam(minTeleSize);
+    var lhs2 = lhs.dropTeleLam(minTeleSize);
+    var rhs2 = preRhs.dropTeleLam(minTeleSize);
     // Won't get null because of min size
     assert lhs2 != null;
     assert rhs2 != null;
-    var lExTele = extraParams._1;
-    var rExTele = extraParams._2;
-    var exTele = lExTele == null ? rExTele : lExTele;
+    var exTele = extraParams._1 == null ? extraParams._2 : extraParams._1;
     while (exTele != null) {
-      lhs2 = AppTerm.make(lhs2, new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
-      rhs2 = AppTerm.make(rhs2, new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
+      var arg = new Arg<>(new RefTerm(exTele.ref()), exTele.explicit());
+      lhs2 = AppTerm.make(lhs2, arg);
+      rhs2 = AppTerm.make(rhs2, arg);
       exTele = exTele.next();
     }
-    if (type != null) type = type.dropTeleDT(maxTeleSize);
+    if (type != null) type = type.dropTelePi(maxTeleSize);
     return compare(rhs2, lhs2, type);
   }
 
