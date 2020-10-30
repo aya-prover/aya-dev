@@ -3,13 +3,11 @@
 package org.mzi.core;
 
 import asia.kala.collection.mutable.Buffer;
-import asia.kala.collection.mutable.MutableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.CollectReporter;
 
 import org.mzi.api.ref.Var;
-import org.mzi.ref.LocalVar;
 import org.mzi.test.Lisp;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.unify.NaiveDefEq;
@@ -59,5 +57,14 @@ public class DefEqTest {
   @Test
   public void projReduce() {
     assertTrue(eq.compare(Lisp.reallyParse("(proj (tup (app (lam (a (U) ex null) a) x) b) 1)", vars), Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), null));
+  }
+
+  @Test
+  public void telescopeSplit() {
+    assertTrue(eq.compare(
+      Lisp.reallyParse("(lam (a (U) ex (b (U) ex null)) a)"),
+      Lisp.reallyParse("(lam (a (U) ex null) (lam (b (U) ex null) a))"),
+      null
+    ));
   }
 }
