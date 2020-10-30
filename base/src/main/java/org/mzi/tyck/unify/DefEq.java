@@ -37,10 +37,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @Nullable Term type) {
     if (lhs == rhs) return true;
-    var lhsWHNF = lhs.whnf() != Decision.NO;
-    var rhsWHNF = rhs.whnf() != Decision.NO;
-    // One of 'em clearly not WHNF but the other isn't that clear
-    if (lhsWHNF != rhsWHNF) {
+    // One of 'em clearly not WHNF but the other is or may be
+    if ((lhs.whnf() == Decision.NO) == (rhs.whnf() != Decision.NO)) {
       lhs = lhs.normalize(NormalizeMode.WHNF);
       rhs = rhs.normalize(NormalizeMode.WHNF);
     }
@@ -62,21 +60,21 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitPi(@NotNull DT.PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof DT.PiTerm rhs)) return false;
-    return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer()) && compare(lhs.last(), rhs.last(), type);
+    return preRhs instanceof DT.PiTerm rhs
+        && checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer())
+        && compare(lhs.last(), rhs.last(), type);
   }
 
   @Override
   public @NotNull Boolean visitSigma(@NotNull DT.SigmaTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof DT.SigmaTerm rhs)) return false;
-    return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer());
+    return preRhs instanceof DT.SigmaTerm rhs
+        && checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer());
   }
 
   @Override
   public @NotNull Boolean visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof RefTerm rhs)) return false;
-    var var2 = varSubst.getOrDefault(rhs.var(), rhs.var());
-    return var2 == lhs.var();
+    return preRhs instanceof RefTerm rhs
+        && varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var();
   }
 
   @Override
@@ -90,13 +88,15 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    return preRhs instanceof ProjTerm rhs && lhs.ix() == rhs.ix() && compare(lhs, rhs, null);
+    return preRhs instanceof ProjTerm rhs
+        && lhs.ix() == rhs.ix()
+        && compare(lhs, rhs, null);
   }
 
   @Override
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof UnivTerm rhs)) return false;
-    return Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
+    return preRhs instanceof UnivTerm rhs
+        && Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
   }
 
   @Override
