@@ -23,9 +23,10 @@ public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
   }
 
   @Override public @NotNull Buffer<Param> visitParams(@NotNull Buffer<Param> params, Context ctx) {
-    params.forEach(param ->
-      param.vars().forEach(var -> ctx.putLocal(var.name(), var)));
-    return params;
+    return params.view().map(param -> {
+      param.vars().forEach(var -> ctx.putLocal(var.name(), var));
+      return new Param(param.sourcePos(), param.vars(), param.type().accept(this, ctx), param.explicit());
+    }).collect(Buffer.factory());
   }
 
   @Override public @NotNull Expr visitLam(@NotNull Expr.LamExpr expr, Context ctx) {
@@ -39,8 +40,16 @@ public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
   @Override public @NotNull Expr visitPi(@NotNull Expr.PiExpr expr, Context ctx) {
     var local = new SimpleContext();
     local.setSuperContext(ctx);
-    visitParams(expr.params(), local);
+    var params = visitParams(expr.params(), local);
     var last = expr.last().accept(this, local);
-    return new Expr.LamExpr(expr.sourcePos(), expr.params(), last);
+    return new Expr.PiExpr(expr.sourcePos(), params, last, expr.co());
+  }
+
+  @Override public @NotNull Expr visitSigma(@NotNull Expr.SigmaExpr expr, Context ctx) {
+    var local = new SimpleContext();
+    local.setSuperContext(ctx);
+    var params = visitParams(expr.params(), local);
+    var last = expr.last().accept(this, local);
+    return new Expr.SigmaExpr(expr.sourcePos(), params, last, expr.co());
   }
 }
