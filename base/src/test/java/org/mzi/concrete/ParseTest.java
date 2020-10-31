@@ -27,11 +27,12 @@ public class ParseTest {
     assertTrue(MziProducer.parseExpr("\\Prop") instanceof Expr.UnivExpr);
     assertTrue(MziProducer.parseExpr("\\Set") instanceof Expr.UnivExpr);
     assertTrue(MziProducer.parseExpr("\\Set0") instanceof Expr.UnivExpr);
-    // The following should be fixed
-    // assertTrue(MziProducer.parseExpr("\\2-Type") instanceof Expr.UnivExpr);
-    // assertTrue(MziProducer.parseExpr("\\2-Type2") instanceof Expr.UnivExpr);
-    // assertTrue(MziProducer.parseExpr("\\hType2") instanceof Expr.UnivExpr);
-    // assertTrue(MziProducer.parseExpr("\\h-Type2") instanceof Expr.UnivExpr);
-    // assertTrue(MziProducer.parseExpr("\\oo-Type2") instanceof Expr.UnivExpr);
+    assertTrue(MziProducer.parseExpr("\\Set233") instanceof Expr.UnivExpr);
+    assertTrue(MziProducer.parseExpr("\\2-Type") instanceof Expr.UnivExpr);
+    assertTrue(MziProducer.parseExpr("\\2-Type2") instanceof Expr.UnivExpr);
+    assertTrue(MziProducer.parseExpr("\\114-Type514") instanceof Expr.UnivExpr);
+    assertTrue(MziProducer.parseExpr("\\hType2") instanceof Expr.UnivExpr);
+    assertTrue(MziProducer.parseExpr("\\h-Type2") instanceof Expr.UnivExpr);
+    assertTrue(MziProducer.parseExpr("\\oo-Type2") instanceof Expr.UnivExpr);
   }
 }
