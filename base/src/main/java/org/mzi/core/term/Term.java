@@ -52,7 +52,7 @@ public interface Term extends CoreTerm {
     if (n == 0) return this;
     var term = this;
     while (term instanceof LamTerm lam) {
-      var tele = lam.tele();
+      var tele = lam.telescope();
       while (n > 0 && tele != null) {
         tele = tele.next();
         n--;

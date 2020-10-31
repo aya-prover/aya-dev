@@ -107,7 +107,9 @@ public class DefEqTest extends LispTestCase {
   public void telescopeSplit() {
     var lhs = Lisp.reallyParse("(lam (a (U) ex (b (U) ex null)) a)");
     var rhs = Lisp.reallyParse("(lam (a (U) ex null) (lam (b (U) ex null) a))");
+    var rhs2 = Lisp.reallyParse("(lam (a (U) ex null) (lam (b (Pi (n (U) ex null) U) ex null) a))");
     assertTrue(eq().compare(lhs, rhs, null));
+    assertFalse(eq().compare(lhs, rhs2, null));
     assertTrue(eq().compare(rhs, lhs, null));
   }
 }

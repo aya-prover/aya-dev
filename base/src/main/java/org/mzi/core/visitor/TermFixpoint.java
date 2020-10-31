@@ -40,9 +40,9 @@ public interface TermFixpoint<P> extends
   }
 
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
-    var telescope = term.tele().accept(this, p);
+    var telescope = term.telescope().accept(this, p);
     var body = term.body().accept(this, p);
-    if (telescope == term.tele() && body == term.body()) return term;
+    if (telescope == term.telescope() && body == term.body()) return term;
     return new LamTerm(telescope, body);
   }
 

@@ -37,7 +37,7 @@ public sealed interface AppTerm extends Term {
       return holeApp;
     }
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
-    var tele = lam.tele();
+    var tele = lam.telescope();
     var next = tele.next();
     return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new SubstFixpoint.TermSubst(tele.ref(), arg.term()));
   }
@@ -49,7 +49,7 @@ public sealed interface AppTerm extends Term {
       return holeApp;
     }
     if (!(f instanceof LamTerm lam)) return make(new Apply(f, args.first()), args.view().drop(1));
-    var next = lam.tele();
+    var next = lam.telescope();
     var subst = new SubstFixpoint.TermSubst(new HashMap<>());
     for (int i = 0; i < args.size(); i++) {
       if (next != null) {

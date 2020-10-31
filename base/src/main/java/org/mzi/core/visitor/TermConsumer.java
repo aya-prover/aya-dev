@@ -27,7 +27,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<P, 
   }
 
   @Override default Unit visitLam(@NotNull LamTerm term, P p) {
-    term.tele().accept(this, p);
+    term.telescope().accept(this, p);
     return term.body().accept(this, p);
   }
 
