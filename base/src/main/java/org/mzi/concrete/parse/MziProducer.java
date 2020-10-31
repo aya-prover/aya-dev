@@ -85,7 +85,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var tele = visitTelescope(ctx.tele().stream());
     var typeCtx = ctx.type();
     var type = typeCtx == null
-      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null) // TODO: is that correct to use HoleExpr?
+      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
       : visitType(typeCtx);
     var abuseCtx = ctx.abuse();
     var abuse = abuseCtx == null ? Buffer.<Stmt>of() : visitAbuse(abuseCtx);
@@ -309,18 +309,20 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx) {
-    var resultTypeCtx = ctx.type();
-    var result = resultTypeCtx == null
+    var typeCtx = ctx.type();
+    var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
-      : visitType(resultTypeCtx);
+      : visitType(typeCtx);
+    var abuseCtx = ctx.abuse();
+    var abuse = abuseCtx == null ? Buffer.<Stmt>of() : visitAbuse(abuseCtx);
 
     return new Decl.DataDecl(
       sourcePosOf(ctx),
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
-      result,
+      type,
       visitDataBody(ctx.dataBody()),
-      visitAbuse(ctx.abuse())
+      abuse
     );
   }
 
