@@ -3,6 +3,7 @@
 package org.mzi.concrete;
 
 import asia.kala.collection.mutable.Buffer;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,6 +16,10 @@ public sealed interface Clause {
   ) implements Clause {
   }
 
-  record Impossible() implements Clause {
+  final class Impossible implements Clause {
+    public static final @NotNull Impossible INSTANCE = new Impossible();
+
+    @Contract(pure = true) private Impossible() {
+    }
   }
 }

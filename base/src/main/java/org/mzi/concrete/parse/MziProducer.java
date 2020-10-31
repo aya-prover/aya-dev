@@ -433,7 +433,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public @NotNull Clause visitClause(MziParser.ClauseContext ctx) {
-    if (ctx.ABSURD() != null) return new Clause.Impossible();
+    if (ctx.ABSURD() != null) return Clause.Impossible.INSTANCE;
     return new Clause.Possible(
       visitPatterns(ctx.patterns()),
       visitExpr(ctx.expr())
