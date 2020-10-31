@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
-import java.util.Properties
+import java.util.*
 
 plugins {
   java
@@ -10,7 +10,7 @@ plugins {
 
 repositories { jcenter() }
 
-val rootDir = projectDir.parentFile
+val rootDir = projectDir.parentFile!!
 val parserDir = rootDir.resolve("parser")
 val genDir = parserDir.resolve("src/main/java")
 val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
@@ -32,5 +32,5 @@ tasks.withType<AntlrTask>().configureEach {
 dependencies {
   val deps = Properties()
   deps.load(rootDir.resolve("gradle/deps.properties").reader())
-  antlr("org.antlr:antlr4:${deps.getProperty("version.antlr")}")
+  antlr("org.antlr", "antlr4", deps.getProperty("version.antlr"))
 }

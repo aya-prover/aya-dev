@@ -111,8 +111,8 @@ literal : ID
         | LGOAL expr? '?}'
         | NUMBER
         | STRING
-        | universe
-        | setUniv
+        | UNIVERSE
+        | SET_UNIV
         ;
 
 tele : literal
@@ -141,9 +141,8 @@ FIXR : '\\fixr';
 TWIN : '\\twin';
 
 // universe
-univTrunc : NUMBER '-' | 'oo-' | 'h';
-universe : '\\' univTrunc? 'Type' NUMBER?;
-setUniv : '\\Set' NUMBER?;
+UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h' | 'h-')? 'Type' NUMBER?;
+SET_UNIV : '\\Set' NUMBER?;
 PROP : '\\Prop';
 
 // other keywords

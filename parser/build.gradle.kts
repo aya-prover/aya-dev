@@ -2,7 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 dependencies {
   val deps: java.util.Properties by rootProject.ext
-  api("org.antlr:antlr4-runtime:${deps.getProperty("version.antlr")}")
+  api("org.antlr", "antlr4-runtime", version = deps.getProperty("version.antlr"))
 }
 
 idea {

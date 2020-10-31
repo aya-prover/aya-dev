@@ -8,11 +8,9 @@ import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.DTKind;
@@ -29,6 +27,7 @@ import org.mzi.tyck.sort.LevelEqn;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -122,29 +121,31 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
     var id = ctx.ID();
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(ctx), id.getText());
-    var universe = ctx.universe();
+    var universe = ctx.UNIVERSE();
     if (universe != null) {
-      var univTrunc = Optional.ofNullable(universe.univTrunc())
-        .map(RuleContext::getText)
-        .orElse("h");
+      String universeText = universe.getText();
+      var univTrunc = universeText.substring(1, universeText.indexOf("T"));
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
         case "h-", "h" -> LevelEqn.INVALID;
         case "oo-" -> Integer.MAX_VALUE;
       };
-      var uLevel = visitOptNumber(universe.NUMBER());
+      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1));
       return new Expr.UnivExpr(sourcePosOf(ctx), uLevel, hLevel);
     }
-    var set = ctx.setUniv();
-    if (set != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(set.NUMBER()), 0);
+    var set = ctx.SET_UNIV();
+    if (set != null) {
+      var text = set.getText().substring("\\Set".length());
+      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text), 0);
+    }
     var prop = ctx.PROP();
     if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
     throw new UnsupportedOperationException();
   }
 
-  public int visitOptNumber(@Nullable TerminalNode number) {
-    return Optional.ofNullable(number)
-      .map(ParseTree::getText)
+  public int visitOptNumber(@NotNull String number) {
+    return Optional.of(number)
+      .filter(Predicate.not(String::isEmpty))
       .map(Integer::parseInt)
       .orElse(LevelEqn.INVALID);
   }
