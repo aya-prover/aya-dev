@@ -104,12 +104,35 @@ public class DefEqTest extends LispTestCase {
   }
 
   @Test
-  public void telescopeSplit() {
+  public void telescopeSplitLam() {
     var lhs = Lisp.reallyParse("(lam (a (U) ex (b (U) ex null)) a)");
     var rhs = Lisp.reallyParse("(lam (a (U) ex null) (lam (b (U) ex null) a))");
     var rhs2 = Lisp.reallyParse("(lam (a (U) ex null) (lam (b (Pi (n (U) ex null) U) ex null) a))");
     assertTrue(eq().compare(lhs, rhs, null));
     assertFalse(eq().compare(lhs, rhs2, null));
     assertTrue(eq().compare(rhs, lhs, null));
+    assertFalse(eq().compare(rhs2, lhs, null));
+  }
+
+  @Test
+  public void telescopeSplitPi() {
+    var lhs = Lisp.reallyParse("(Pi (a (U) ex (b (U) ex null)) a)");
+    var rhs = Lisp.reallyParse("(Pi (a (U) ex null) (Pi (b (U) ex null) a))");
+    var rhs2 = Lisp.reallyParse("(Pi (a (U) ex null) (Pi (b (Pi (n (U) ex null) U) ex null) a))");
+    assertTrue(eq().compare(lhs, rhs, null));
+    assertFalse(eq().compare(lhs, rhs2, null));
+    assertTrue(eq().compare(rhs, lhs, null));
+    assertFalse(eq().compare(rhs2, lhs, null));
+  }
+
+  @Test
+  public void telescopeNoSplitSigma() {
+    var lhs = Lisp.reallyParse("(Sigma (a (U) ex (b (U) ex null)) a)");
+    var rhs = Lisp.reallyParse("(Sigma (a (U) ex null) (Sigma (b (U) ex null) a))");
+    var rhs2 = Lisp.reallyParse("(Sigma (a (U) ex null) (Sigma (b (Pi (n (U) ex null) U) ex null) a))");
+    assertFalse(eq().compare(lhs, rhs, null));
+    assertFalse(eq().compare(lhs, rhs2, null));
+    assertFalse(eq().compare(rhs, lhs, null));
+    assertFalse(eq().compare(rhs2, lhs, null));
   }
 }

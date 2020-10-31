@@ -43,9 +43,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   }
 
   @NotNull
-  private Boolean checkTele(Buffer<@NotNull Tele> l, Buffer<@NotNull Tele> r) {
-    if (!l.sizeEquals(r)) return false;
-    for (int i = 0; i < l.size(); i++) {
+  private Boolean checkTele(Buffer<@NotNull Tele> l, Buffer<@NotNull Tele> r, int length) {
+    for (int i = 0; i < length; i++) {
       if (!compare(l.get(i).type(), r.get(i).type(), UnivTerm.OMEGA)) {
         for (int j = 0; j < i; j++) varSubst.remove(r.get(j).ref());
         return false;
@@ -55,11 +54,31 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     return true;
   }
 
+  @NotNull
+  private Boolean checkTeleStrict(Buffer<@NotNull Tele> l, Buffer<@NotNull Tele> r) {
+    if (!l.sizeEquals(r)) return false;
+    return checkTele(l, r, l.size());
+  }
+
   @Override
   public @NotNull Boolean visitDT(@NotNull DT lhs, @NotNull Term preRhs, @Nullable Term type) {
-    return preRhs instanceof DT rhs
-        && checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer())
-        && compare(lhs.last(), rhs.last(), type);
+    if (lhs.kind().isSigma()) {
+      return preRhs instanceof DT rhs
+          && rhs.kind().isSigma()
+          && checkTeleStrict(lhs.telescope().toBuffer(), rhs.telescope().toBuffer())
+          && compare(lhs.last(), rhs.last(), type);
+    } else {
+      if (!(preRhs instanceof DT rhs && rhs.kind().isPi())) return false;
+      var minTeleSize = Math.min(lhs.telescope().size(), rhs.telescope().size());
+      if (!checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer(), minTeleSize)) return false;
+      var lhs2 = lhs.dropTeleDT(minTeleSize);
+      var rhs2 = preRhs.dropTeleDT(minTeleSize);
+      // Won't get null because of min size
+      assert lhs2 != null;
+      assert rhs2 != null;
+      // TODO[xyr]: should we do something with `type`?
+      return compare(lhs2, rhs2, type);
+    }
   }
 
   @Override
@@ -136,32 +155,24 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    var rTele = preRhs instanceof LamTerm rhs ? rhs.tele() : null;
-    var rTeleSize = rTele == null ? 0 : rTele.size();
-    int lTeleSize = lhs.tele().size();
-    var minTeleSize = Math.min(lTeleSize, rTeleSize);
-    var maxTeleSize = Math.max(lTeleSize, rTeleSize);
-    var lExParams = lhs.tele();
-    var rExParams = rTele;
-    while (lExParams != null && rExParams != null) {
-      if (!(compare(lExParams.type(), rExParams.type(), UnivTerm.OMEGA))) return false;
-      varSubst.put(rExParams.ref(), lExParams.ref());
-      lExParams = lExParams.next();
-      rExParams = rExParams.next();
+    if (!(preRhs instanceof LamTerm rhs)) {
+      var exTele = lhs.telescope();
+      var exArgs = Buffer.<Arg<RefTerm>>of();
+      while (exTele != null) {
+        exArgs.append(new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
+        exTele = exTele.next();
+      }
+      return compare(AppTerm.make(lhs, exArgs), AppTerm.make(preRhs, exArgs), type);
     }
+    var minTeleSize = Math.min(lhs.telescope().size(), rhs.telescope().size());
+    if (!checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer(), minTeleSize)) return false;
     var lhs2 = lhs.dropTeleLam(minTeleSize);
     var rhs2 = preRhs.dropTeleLam(minTeleSize);
     // Won't get null because of min size
     assert lhs2 != null;
     assert rhs2 != null;
-    var exTele = lExParams != null ? lExParams : rExParams;
-    var exArgs = Buffer.<Arg<RefTerm>>of();
-    while (exTele != null) {
-      exArgs.append(new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
-      exTele = exTele.next();
-    }
-    if (type != null) type = type.dropTeleDT(maxTeleSize);
-    return compare(AppTerm.make(lhs2, exArgs), AppTerm.make(rhs2, exArgs), type);
+    if (type != null) type = type.dropTeleDT(minTeleSize);
+    return compare(lhs2, rhs2, type);
   }
 
   @Contract(pure = true) protected DefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
