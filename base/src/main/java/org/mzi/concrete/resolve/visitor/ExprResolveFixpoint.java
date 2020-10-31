@@ -37,19 +37,11 @@ public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
     return new Expr.LamExpr(expr.sourcePos(), expr.params(), body);
   }
 
-  @Override public @NotNull Expr visitPi(@NotNull Expr.PiExpr expr, Context ctx) {
+  @Override public @NotNull Expr visitDT(@NotNull Expr.DTExpr expr, Context ctx) {
     var local = new SimpleContext();
     local.setSuperContext(ctx);
     var params = visitParams(expr.params(), local);
     var last = expr.last().accept(this, local);
-    return new Expr.PiExpr(expr.sourcePos(), params, last, expr.co());
-  }
-
-  @Override public @NotNull Expr visitSigma(@NotNull Expr.SigmaExpr expr, Context ctx) {
-    var local = new SimpleContext();
-    local.setSuperContext(ctx);
-    var params = visitParams(expr.params(), local);
-    var last = expr.last().accept(this, local);
-    return new Expr.SigmaExpr(expr.sourcePos(), params, last, expr.co());
+    return new Expr.DTExpr(expr.sourcePos(), expr.kind(), params, last);
   }
 }

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.DTKind;
 import org.mzi.concrete.*;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
@@ -264,22 +265,22 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull SigmaExpr visitSigma(MziParser.SigmaContext ctx) {
-    return new Expr.SigmaExpr(
+  public Expr.@NotNull DTExpr visitSigma(MziParser.SigmaContext ctx) {
+    return new Expr.DTExpr(
       sourcePosOf(ctx),
+      DTKind.Sigma,
       visitTelescope(ctx.tele().stream()),
-      visitExpr(ctx.expr()),
-      false
+      visitExpr(ctx.expr())
     );
   }
 
   @Override
-  public Expr.@NotNull PiExpr visitPi(MziParser.PiContext ctx) {
-    return new Expr.PiExpr(
+  public Expr.@NotNull DTExpr visitPi(MziParser.PiContext ctx) {
+    return new Expr.DTExpr(
       sourcePosOf(ctx),
+      DTKind.Pi,
       visitTelescope(ctx.tele().stream()),
-      visitExpr(ctx.expr()),
-      false
+      visitExpr(ctx.expr())
     );
   }
 

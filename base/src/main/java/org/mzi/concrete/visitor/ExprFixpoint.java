@@ -40,18 +40,11 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.LamExpr(expr.sourcePos(), binds, body);
   }
 
-  @Override default @NotNull Expr visitPi(Expr.@NotNull PiExpr expr, P p) {
+  @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     var last = expr.last().accept(this, p);
     if (binds.sameElements(expr.params()) && Objects.equals(last, expr.last())) return expr;
-    return new Expr.PiExpr(expr.sourcePos(), binds, last, expr.co());
-  }
-
-  @Override default @NotNull Expr visitSigma(Expr.@NotNull SigmaExpr expr, P p) {
-    var binds = visitParams(expr.params(), p);
-    var last = expr.last().accept(this, p);
-    if (binds.sameElements(expr.params()) && Objects.equals(last, expr.last())) return expr;
-    return new Expr.SigmaExpr(expr.sourcePos(), binds, last, expr.co());
+    return new Expr.DTExpr(expr.sourcePos(), expr.kind(), binds, last);
   }
 
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {

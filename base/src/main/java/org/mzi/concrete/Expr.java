@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.DTKind;
 import org.mzi.generic.Arg;
 import org.mzi.tyck.sort.LevelEqn;
 
@@ -24,8 +25,7 @@ public sealed interface Expr {
     R visitRef(@NotNull RefExpr expr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
-    R visitPi(@NotNull PiExpr expr, P p);
-    R visitSigma(@NotNull SigmaExpr expr, P p);
+    R visitDT(@NotNull DTExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
@@ -76,38 +76,16 @@ public sealed interface Expr {
   }
 
   /**
-   * @author kiva
-   */
-  sealed interface DTExpr extends Expr {
-    @NotNull Buffer<Param> params();
-    boolean co();
-  }
-
-  /**
    * @author re-xyr, kiva
    */
-  record PiExpr(
+  record DTExpr(
     @NotNull SourcePos sourcePos,
+    @NotNull DTKind kind,
     @NotNull Buffer<Param> params,
-    @NotNull Expr last,
-    boolean co
-  ) implements DTExpr {
+    @NotNull Expr last
+  ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitPi(this, p);
-    }
-  }
-
-  /**
-   * @author kiva
-   */
-  record SigmaExpr(
-    @NotNull SourcePos sourcePos,
-    @NotNull Buffer<Param> params,
-    @NotNull Expr last,
-    boolean co
-  ) implements DTExpr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitSigma(this, p);
+      return visitor.visitDT(this, p);
     }
   }
 
