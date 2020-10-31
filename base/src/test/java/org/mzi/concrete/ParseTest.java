@@ -9,6 +9,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
   @Test
+  public void successCmd() {
+    assertTrue(MziProducer.parseStmt("\\open A") instanceof Stmt.CmdStmt);
+    assertTrue(MziProducer.parseStmt("\\open A.B") instanceof Stmt.CmdStmt);
+    assertTrue(MziProducer.parseStmt("\\open A \\using ()") instanceof Stmt.CmdStmt);
+    assertTrue(MziProducer.parseStmt("\\open A \\using () \\hiding ()") instanceof Stmt.CmdStmt);
+    assertTrue(MziProducer.parseStmt("\\open A \\hiding ()") instanceof Stmt.CmdStmt);
+    assertTrue(MziProducer.parseStmt("\\open A \\hiding () \\using ()") instanceof Stmt.CmdStmt);
+    assertTrue(MziProducer.parseStmt("\\import A") instanceof Stmt.CmdStmt);
+    assertTrue(MziProducer.parseStmt("\\import A.B") instanceof Stmt.CmdStmt);
+    assertTrue(MziProducer.parseStmt("\\import A.B \\using ()") instanceof Stmt.CmdStmt);
+  }
+
+  @Test
   public void successLiteral() {
     assertTrue(MziProducer.parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
     assertTrue(MziProducer.parseExpr("\\Prop") instanceof Expr.UnivExpr);

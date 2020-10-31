@@ -4,7 +4,6 @@ package org.mzi.concrete.parse;
 
 import asia.kala.Tuple;
 import asia.kala.Tuple2;
-import asia.kala.collection.immutable.ImmutableList;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
@@ -483,9 +482,9 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Tuple2<@NotNull UseHide, @NotNull ImmutableList<String>> visitUseHide(MziParser.UseHideContext ctx) {
+  public @NotNull Tuple2<@NotNull UseHide, @NotNull Buffer<String>> visitUseHide(MziParser.UseHideContext ctx) {
     var type = ctx.USING() != null ? UseHide.Use : UseHide.Hide;
-    return Tuple.of(type, visitIds(ctx.ids()).collect(ImmutableList.factory()));
+    return Tuple.of(type, visitIds(ctx.ids()).collect(Buffer.factory()));
   }
 
   @Override
