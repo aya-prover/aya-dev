@@ -104,14 +104,15 @@ public sealed interface AppTerm extends Term {
     @NotNull Var var,
     @NotNull Buffer<@NotNull Arg<Term>> argsBuf
   ) implements AppTerm {
-    public HoleApp(@Nullable Term solution, @NotNull Var var,
-                   @NotNull Buffer<@NotNull Arg<Term>> args) {
+    public HoleApp(
+      @Nullable Term solution, @NotNull Var var,
+      @NotNull Buffer<@NotNull Arg<Term>> args
+    ) {
       this(new OptionRef<>(Option.of(solution)), var, args);
     }
 
-    @Override @Deprecated
-    public @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args() {
-      return argsBuf.view().collect(Seq.factory());
+    @Override public @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args() {
+      return argsBuf;
     }
 
     @Contract(" -> new") @Override public @NotNull Term fn() {
