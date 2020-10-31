@@ -76,7 +76,6 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       // Won't get null because of min size
       assert lhs2 != null;
       assert rhs2 != null;
-      // TODO[xyr]: should we do something with `type`?
       return compare(lhs2, rhs2, type);
     }
   }
@@ -158,10 +157,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     if (!(preRhs instanceof LamTerm rhs)) {
       var exTele = lhs.telescope();
       var exArgs = Buffer.<Arg<RefTerm>>of();
-      while (exTele != null) {
-        exArgs.append(new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
-        exTele = exTele.next();
-      }
+      exTele.forEach((ix, tele) -> exArgs.append(new Arg<>(new RefTerm(tele.ref()), tele.explicit())));
       return compare(AppTerm.make(lhs, exArgs), AppTerm.make(preRhs, exArgs), type);
     }
     var minTeleSize = Math.min(lhs.telescope().size(), rhs.telescope().size());
