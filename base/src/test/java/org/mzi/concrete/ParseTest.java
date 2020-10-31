@@ -55,13 +55,13 @@ public class ParseTest {
   public void successDecl() {
     assertTrue(MziProducer.parseDecl("\\def a => 1") instanceof Decl.FnDecl);
     assertTrue(MziProducer.parseDecl("\\data Unit") instanceof Decl.DataDecl);
-    parseTo("\\def id {A : \\Set0} (a : A) : A => a", new Decl.FnDecl(
+    parseTo("\\def id {A : \\114-Type514} (a : A) : A => a", new Decl.FnDecl(
       SourcePos.NONE,
       EnumSet.noneOf(Modifier.class),
       null,
       "id",
       Buffer.of(
-        new Param(SourcePos.NONE, Buffer.of(new LocalVar("A")), new Expr.UnivExpr(SourcePos.NONE, 0, 0), false),
+        new Param(SourcePos.NONE, Buffer.of(new LocalVar("A")), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
         new Param(SourcePos.NONE, Buffer.of(new LocalVar("a")), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true)
       ),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),

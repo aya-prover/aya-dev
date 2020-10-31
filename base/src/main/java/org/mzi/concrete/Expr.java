@@ -117,8 +117,8 @@ public sealed interface Expr {
   }
 
   /**
-   * @param hLevel specified hLevel, {@link LevelEqn#INVALID} if not specified.
-   * @param uLevel specified uLevel, {@link LevelEqn#INVALID} if not specified.
+   * @param hLevel specified hLevel, {@link LevelEqn#UNSPECIFIED} if not specified.
+   * @param uLevel specified uLevel, {@link LevelEqn#UNSPECIFIED} if not specified.
    * @author re-xyr, ice1000
    */
   record UnivExpr(
@@ -127,7 +127,7 @@ public sealed interface Expr {
     int hLevel
   ) implements Expr {
     public UnivExpr(@NotNull SourcePos sourcePos) {
-      this(sourcePos, LevelEqn.INVALID, LevelEqn.INVALID);
+      this(sourcePos, LevelEqn.UNSPECIFIED, LevelEqn.UNSPECIFIED);
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

@@ -131,7 +131,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
       var univTrunc = universeText.substring(1, universeText.indexOf("T"));
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
-        case "h-", "h" -> LevelEqn.INVALID;
+        case "h-", "h" -> LevelEqn.UNSPECIFIED;
         case "oo-" -> Integer.MAX_VALUE;
       };
       var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1));
@@ -160,7 +160,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     return Optional.of(number)
       .filter(Predicate.not(String::isEmpty))
       .map(Integer::parseInt)
-      .orElse(LevelEqn.INVALID);
+      .orElse(LevelEqn.UNSPECIFIED);
   }
 
   @Override
