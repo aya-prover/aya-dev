@@ -62,13 +62,13 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitDT(@NotNull DT lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (lhs.kind().isSigma()) {
+    if (lhs.kind().isSigma) {
       return preRhs instanceof DT rhs
-          && rhs.kind().isSigma()
+          && rhs.kind().isSigma
           && checkTeleStrict(lhs.telescope().toBuffer(), rhs.telescope().toBuffer())
           && compare(lhs.last(), rhs.last(), type);
     } else {
-      if (!(preRhs instanceof DT rhs && rhs.kind().isPi())) return false;
+      if (!(preRhs instanceof DT rhs && rhs.kind().isPi)) return false;
       var minTeleSize = Math.min(lhs.telescope().size(), rhs.telescope().size());
       if (!checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer(), minTeleSize)) return false;
       var lhs2 = lhs.dropTeleDT(minTeleSize);
@@ -119,7 +119,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   @Override
   public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (!(preRhs instanceof TupTerm rhs)) {
-      if (!(type instanceof DT sigma && sigma.kind().isSigma())) return false;
+      if (!(type instanceof DT sigma && sigma.kind().isSigma)) return false;
       // Eta-rule
       var tupRhs = LinkedBuffer.<Term>of();
       for (int i = lhs.items().size(); i > 0; i--) {

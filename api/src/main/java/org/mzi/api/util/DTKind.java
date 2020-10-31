@@ -2,18 +2,23 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.api.util;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+
 /**
  * @author re-xyr
  */
 public enum DTKind {
-  Pi, Copi,
-  Sigma, Cosigma;
+  Pi(true, false), Copi(true, true),
+  Sigma(false, false), Cosigma(false, true);
 
-  public boolean isPi() {
-    return this == Pi || this == Copi;
-  }
+  public final boolean isPi;
+  public final boolean isSigma;
+  public final boolean co;
 
-  public boolean isSigma() {
-    return this == Sigma || this == Cosigma;
+  DTKind(boolean isPi, boolean co) {
+    this.isPi = isPi;
+    this.isSigma = !isPi;
+    this.co = co;
   }
 }
