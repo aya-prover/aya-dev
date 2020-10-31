@@ -56,16 +56,10 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   }
 
   @Override
-  public @NotNull Boolean visitPi(@NotNull DT.PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    return preRhs instanceof DT.PiTerm rhs
+  public @NotNull Boolean visitDT(@NotNull DT lhs, @NotNull Term preRhs, @Nullable Term type) {
+    return preRhs instanceof DT rhs
         && checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer())
         && compare(lhs.last(), rhs.last(), type);
-  }
-
-  @Override
-  public @NotNull Boolean visitSigma(@NotNull DT.SigmaTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    return preRhs instanceof DT.SigmaTerm rhs
-        && checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer());
   }
 
   @Override
@@ -106,13 +100,14 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   @Override
   public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (!(preRhs instanceof TupTerm rhs)) {
-      if (!(type instanceof DT.SigmaTerm sigma)) return false;
+      if (!(type instanceof DT sigma && sigma.kind().isSigma())) return false;
       // Eta-rule
       var tupRhs = LinkedBuffer.<Term>of();
       for (int i = lhs.items().size(); i > 0; i--) {
         tupRhs.push(new ProjTerm(preRhs, i));
       }
-      return visitLists(lhs.items(), tupRhs, sigma.telescope());
+      return visitLists(lhs.items(), tupRhs,
+        sigma.telescope().toBuffer().view().map(Tele::type).appended(sigma.last()));
     }
     return visitLists(lhs.items(), rhs.items());
   }
@@ -122,14 +117,12 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     return IntStream.range(0, l.size()).allMatch(i -> compare(l.get(i), r.get(i), null));
   }
 
-  private boolean visitLists(Seq<? extends Term> l, Seq<? extends Term> r, @NotNull Tele types) {
+  private boolean visitLists(Seq<? extends Term> l, Seq<? extends Term> r, @NotNull Seq<? extends Term> types) {
     if (!l.sizeEquals(r)) return false;
+    if (!r.sizeEquals(types)) return false;
     for (int i = 0; i < l.size(); i++) {
-      assert types != null;
-      if (!compare(l.get(i), r.get(i), types.type())) return false;
-      types = types.next();
+      if (!compare(l.get(i), r.get(i), types.get(i))) return false;
     }
-    assert types == null;
     return true;
   }
 
@@ -167,7 +160,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       exArgs.append(new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
       exTele = exTele.next();
     }
-    if (type != null) type = type.dropTelePi(maxTeleSize);
+    if (type != null) type = type.dropTeleDT(maxTeleSize);
     return compare(AppTerm.make(lhs2, exArgs), AppTerm.make(rhs2, exArgs), type);
   }
 

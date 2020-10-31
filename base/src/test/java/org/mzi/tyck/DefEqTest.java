@@ -31,7 +31,7 @@ public class DefEqTest extends LispTestCase {
     identical("(lam (a (U) ex null) a)");
     identical("xyren");
     identical("(Pi (a (U) ex null) a)");
-    identical("(Sigma (a (U) ex null))");
+    identical("(Sigma (a (U) ex null) a)");
     identical("(U)");
     identical("(tup (proj t 1) (proj t 2))");
     identical("(proj t 1)");
@@ -76,7 +76,7 @@ public class DefEqTest extends LispTestCase {
   @Test
   public void etaTup() {
     var etaed = Lisp.reallyParse("(tup (proj t 1) (proj t 2))", vars);
-    var type = Lisp.reallyParse("(Sigma (x (U) ex (y (U) ex null)))");
+    var type = Lisp.reallyParse("(Sigma (x (U) ex null) U)");
     assertTrue(eq().compare(etaed, Lisp.reallyParse("t", vars), type));
     assertTrue(eq().compare(Lisp.reallyParse("t", vars), etaed, type));
     assertFalse(eq().compare(etaed, Lisp.reallyParse("t", vars), null));

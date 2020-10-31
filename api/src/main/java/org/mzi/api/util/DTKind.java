@@ -7,5 +7,13 @@ package org.mzi.api.util;
  */
 public enum DTKind {
   Pi, Copi,
-  Sigma, Cosigma,
+  Sigma, Cosigma;
+
+  public boolean isPi() {
+    return this == Pi || this == Copi;
+  }
+
+  public boolean isSigma() {
+    return this == Sigma || this == Cosigma;
+  }
 }

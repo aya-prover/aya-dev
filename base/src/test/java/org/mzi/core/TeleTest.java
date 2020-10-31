@@ -23,12 +23,12 @@ public class TeleTest extends LispTestCase {
   @Test
   public void dropTelescope() {
     var term = Lisp.reallyParse("(Pi (a (U) ex (b (U) ex null)) a)");
-    assertEquals(term, term.dropTelePi(0));
-    assertNotNull(term.dropTelePi(1));
-    assertNotEquals(term, term.dropTelePi(1));
-    assertNotNull(term.dropTelePi(2));
-    assertNotEquals(term, term.dropTelePi(2));
-    assertNull(term.dropTelePi(3));
+    assertEquals(term, term.dropTeleDT(0));
+    assertNotNull(term.dropTeleDT(1));
+    assertNotEquals(term, term.dropTeleDT(1));
+    assertNotNull(term.dropTeleDT(2));
+    assertNotEquals(term, term.dropTeleDT(2));
+    assertNull(term.dropTeleDT(3));
   }
 
   @Test
