@@ -138,7 +138,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     int lTeleSize = lhs.tele().size();
     var minTeleSize = Math.min(lTeleSize, rTeleSize);
     var maxTeleSize = Math.max(lTeleSize, rTeleSize);
-    var extraParams = Tele.biForEach(lhs.tele(), rTele, (l, r) -> varSubst.put(l.ref(), r.ref()));
+    var extraParams = Tele.biForEach(lhs.tele(), rTele, (l, r) -> varSubst.put(r.ref(), l.ref()));
     var lhs2 = lhs.dropTeleLam(minTeleSize);
     var rhs2 = preRhs.dropTeleLam(minTeleSize);
     // Won't get null because of min size
@@ -151,7 +151,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       exTele = exTele.next();
     }
     if (type != null) type = type.dropTelePi(maxTeleSize);
-    return compare(AppTerm.make(rhs2, exArgs), AppTerm.make(lhs2, exArgs), type);
+    return compare(AppTerm.make(lhs2, exArgs), AppTerm.make(rhs2, exArgs), type);
   }
 
   @Contract(pure = true) protected DefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
