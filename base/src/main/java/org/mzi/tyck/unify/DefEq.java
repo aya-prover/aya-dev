@@ -138,13 +138,20 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     int lTeleSize = lhs.tele().size();
     var minTeleSize = Math.min(lTeleSize, rTeleSize);
     var maxTeleSize = Math.max(lTeleSize, rTeleSize);
-    var extraParams = Tele.biForEach(lhs.tele(), rTele, (l, r) -> varSubst.put(r.ref(), l.ref()));
+    var lExParams = lhs.tele();
+    var rExParams = rTele;
+    while (lExParams != null && rExParams != null) {
+      if (!(compare(lExParams.type(), rExParams.type(), UnivTerm.OMEGA))) return false;
+      varSubst.put(rExParams.ref(), lExParams.ref());
+      lExParams = lExParams.next();
+      rExParams = rExParams.next();
+    }
     var lhs2 = lhs.dropTeleLam(minTeleSize);
     var rhs2 = preRhs.dropTeleLam(minTeleSize);
     // Won't get null because of min size
     assert lhs2 != null;
     assert rhs2 != null;
-    var exTele = extraParams._1 == null ? extraParams._2 : extraParams._1;
+    var exTele = lExParams != null ? lExParams : rExParams;
     var exArgs = Buffer.<Arg<RefTerm>>of();
     while (exTele != null) {
       exArgs.append(new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
