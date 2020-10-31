@@ -5,9 +5,9 @@ package org.mzi.core.visitor;
 import asia.kala.Unit;
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
+import org.mzi.core.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
-import org.mzi.core.Tele;
 
 public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<P, Unit> {
   @Override default Unit visitNamed(Tele.@NotNull NamedTele named, P p) {

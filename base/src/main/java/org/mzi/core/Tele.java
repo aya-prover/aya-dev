@@ -59,7 +59,7 @@ public interface Tele extends Bind {
    * @return a tuple containing the lhs and rhs left.
    */
   static @NotNull Tuple2<@Nullable Tele, @Nullable Tele> biForEach(
-    @NotNull Tele lhs, @NotNull Tele rhs,
+    @Nullable Tele lhs, @Nullable Tele rhs,
     @NotNull BiConsumer<@NotNull Tele, @NotNull Tele> consumer
   ) {
     while (lhs != null && rhs != null) {

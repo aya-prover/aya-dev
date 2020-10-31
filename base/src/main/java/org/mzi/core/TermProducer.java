@@ -3,6 +3,7 @@
 package org.mzi.core;
 
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.collection.immutable.ImmutableVector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import org.mzi.tyck.sort.Sort;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 
+import static java.lang.Integer.parseInt;
 import static org.mzi.concrete.parse.LispParsing.parser;
 
 /**
@@ -63,6 +65,8 @@ public class TermProducer extends LispBaseVisitor<Term> {
       case "Copi" -> new DT.PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), true);
       case "Sigma" -> new DT.SigmaTerm(exprToBind(exprs.get(0)), false);
       case "Cosigma" -> new DT.SigmaTerm(exprToBind(exprs.get(0)), true);
+      case "tup" -> new TupTerm(exprs.stream().collect(ImmutableVector.factory()).map(expr -> expr.accept(this)));
+      case "proj" -> new ProjTerm(exprs.get(0).accept(this), parseInt(exprs.get(1).getText()));
       default -> throw new IllegalArgumentException("Unexpected lisp function: " + rule);
     };
   }

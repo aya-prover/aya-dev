@@ -33,17 +33,32 @@ public interface Term extends CoreTerm {
     return accept(NormalizeFixpoint.INSTANCE, mode);
   }
 
-  default @Nullable Term dropTele(int n) {
+  default @Nullable Term dropTelePi(int n) {
     if (n == 0) return this;
     var term = this;
     while (term instanceof DT.PiTerm dt) {
       var tele = dt.telescope();
-      while (n > 0 && tele.next() != null) {
+      while (n > 0 && tele != null) {
         tele = tele.next();
         n--;
       }
-      if (n == 0) return tele.next() != null ? new DT.PiTerm(tele.next(), dt.last(), dt.co()) : dt.last();
+      if (n == 0) return tele != null ? new DT.PiTerm(tele, dt.last(), dt.co()) : dt.last();
       term = dt.last().normalize(NormalizeMode.WHNF);
+    }
+    return null;
+  }
+
+  default @Nullable Term dropTeleLam(int n) {
+    if (n == 0) return this;
+    var term = this;
+    while (term instanceof LamTerm lam) {
+      var tele = lam.tele();
+      while (n > 0 && tele != null) {
+        tele = tele.next();
+        n--;
+      }
+      if (n == 0) return tele != null ? new LamTerm(tele, lam.body()) : lam.body();
+      term = lam.body().normalize(NormalizeMode.WHNF);
     }
     return null;
   }

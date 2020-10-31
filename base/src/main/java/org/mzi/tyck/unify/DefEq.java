@@ -3,19 +3,16 @@
 package org.mzi.tyck.unify;
 
 import asia.kala.collection.Seq;
-import asia.kala.collection.mutable.Buffer;
-import asia.kala.collection.mutable.MutableHashMap;
-import asia.kala.collection.mutable.MutableMap;
+import asia.kala.collection.mutable.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
+import org.mzi.core.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
-import org.mzi.core.Tele;
-import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Decision;
@@ -36,10 +33,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @Nullable Term type) {
     if (lhs == rhs) return true;
-    var lhsWHNF = lhs.whnf() != Decision.NO;
-    var rhsWHNF = rhs.whnf() != Decision.NO;
-    // One of 'em clearly not WHNF but the other isn't that clear
-    if (lhsWHNF != rhsWHNF) {
+    // One of 'em clearly not WHNF but the other is or may be
+    if ((lhs.whnf() == Decision.NO) == (rhs.whnf() != Decision.NO)) {
       lhs = lhs.normalize(NormalizeMode.WHNF);
       rhs = rhs.normalize(NormalizeMode.WHNF);
     }
@@ -61,21 +56,26 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitPi(@NotNull DT.PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof DT.PiTerm rhs)) return false;
-    return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer()) && compare(lhs.last(), rhs.last(), type);
+    return preRhs instanceof DT.PiTerm rhs
+        && checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer())
+        && compare(lhs.last(), rhs.last(), type);
   }
 
   @Override
   public @NotNull Boolean visitSigma(@NotNull DT.SigmaTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof DT.SigmaTerm rhs)) return false;
-    return checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer());
+    return preRhs instanceof DT.SigmaTerm rhs
+        && checkTele(lhs.telescope().toBuffer(), rhs.telescope().toBuffer());
   }
 
   @Override
   public @NotNull Boolean visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof RefTerm rhs)) return false;
-    var var2 = varSubst.getOrDefault(rhs.var(), rhs.var());
-    return var2 == lhs.var();
+    if (!(preRhs instanceof RefTerm rhs)) {
+      ord = ord.invert();
+      var result = compare(preRhs, lhs, type);
+      ord = ord.invert();
+      return result;
+    }
+    return varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var();
   }
 
   @Override
@@ -89,20 +89,31 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    return preRhs instanceof ProjTerm rhs && lhs.ix() == rhs.ix() && compare(lhs, rhs, null);
+    if (lhs.whnf() == Decision.YES && preRhs instanceof ProjTerm rhs)
+      return lhs.ix() == rhs.ix() && compare(lhs.tup(), rhs.tup(), null);
+    var whnf = lhs.normalize(NormalizeMode.WHNF);
+    if (Objects.equals(whnf, lhs)) return false;
+    return compare(whnf, preRhs, type);
   }
 
   @Override
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof UnivTerm rhs)) return false;
-    return Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
+    return preRhs instanceof UnivTerm rhs
+        && Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
   }
 
   @Override
   public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (!(preRhs instanceof TupTerm rhs)) return false;
-    // TODO[ice]: eta-rule
-    // TODO[ice]: make type-directed
+    if (!(preRhs instanceof TupTerm rhs)) {
+      if (!(type instanceof DT.SigmaTerm)) return false;
+      // Eta-rule
+      var tupRhs = new LinkedBuffer<Term>();
+      for (int i = lhs.items().size(); i > 0; i--) {
+        tupRhs.push(new ProjTerm(preRhs, i));
+      }
+      return visitLists(lhs.items(), tupRhs);
+      // TODO[ice]: make type-directed
+    }
     return visitLists(lhs.items(), rhs.items());
   }
 
@@ -122,30 +133,32 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-    // Eta-rule
-    if (!(preRhs instanceof LamTerm rhs)) {
-      if (!(type instanceof DT.PiTerm pi)) return false;
-      var mockTerm = new Arg<>(new RefTerm(new LocalVar("tql")), pi.telescope().explicit());
-      return compare(AppTerm.make(lhs, mockTerm), AppTerm.make(preRhs, mockTerm), pi.dropTele(1));
+    var rTele = preRhs instanceof LamTerm rhs ? rhs.tele() : null;
+    var rTeleSize = rTele == null ? 0 : rTele.size();
+    int lTeleSize = lhs.tele().size();
+    var minTeleSize = Math.min(lTeleSize, rTeleSize);
+    var maxTeleSize = Math.max(lTeleSize, rTeleSize);
+    var lExParams = lhs.tele();
+    var rExParams = rTele;
+    while (lExParams != null && rExParams != null) {
+      if (!(compare(lExParams.type(), rExParams.type(), UnivTerm.OMEGA))) return false;
+      varSubst.put(rExParams.ref(), lExParams.ref());
+      lExParams = lExParams.next();
+      rExParams = rExParams.next();
     }
-    var params = Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) -> varSubst.put(l.ref(), r.ref()));
-    var lBody = lhs.body();
-    var rBody = rhs.body();
-    var lTele = params._1;
-    while (lTele != null) {
-      lBody = AppTerm.make(lBody, new Arg<>(new RefTerm(lTele.ref()), lTele.explicit()));
-      lTele = lTele.next();
+    var lhs2 = lhs.dropTeleLam(minTeleSize);
+    var rhs2 = preRhs.dropTeleLam(minTeleSize);
+    // Won't get null because of min size
+    assert lhs2 != null;
+    assert rhs2 != null;
+    var exTele = lExParams != null ? lExParams : rExParams;
+    var exArgs = Buffer.<Arg<RefTerm>>of();
+    while (exTele != null) {
+      exArgs.append(new Arg<>(new RefTerm(exTele.ref()), exTele.explicit()));
+      exTele = exTele.next();
     }
-    var rTele = params._2;
-    while (rTele != null) {
-      rBody = AppTerm.make(rBody, new Arg<>(new RefTerm(rTele.ref()), rTele.explicit()));
-      rTele = rTele.next();
-    }
-    // TODO[ice]: maybe we can optimize this computation? We've already traversed lhs.tele and rhs.tele
-    if (type != null) type = type.dropTele(Math.max(lhs.tele().size(), rhs.tele().size()));
-    var result = compare(rBody, lBody, type);
-    Tele.biForEach(lhs.tele(), rhs.tele(), (l, r) -> varSubst.remove(l.ref()));
-    return result;
+    if (type != null) type = type.dropTelePi(maxTeleSize);
+    return compare(AppTerm.make(lhs2, exArgs), AppTerm.make(rhs2, exArgs), type);
   }
 
   @Contract(pure = true) protected DefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {

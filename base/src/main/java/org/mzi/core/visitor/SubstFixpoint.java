@@ -5,9 +5,9 @@ package org.mzi.core.visitor;
 import asia.kala.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
-import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.core.term.RefTerm;
 import org.mzi.core.term.Term;
+import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.tyck.sort.Sort;
 
 import java.util.Collections;

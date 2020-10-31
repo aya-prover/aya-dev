@@ -10,7 +10,6 @@ import org.mzi.concrete.Param;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.concrete.visitor.ExprFixpoint;
-import org.mzi.core.Tele;
 
 /**
  * Resolves bindings.

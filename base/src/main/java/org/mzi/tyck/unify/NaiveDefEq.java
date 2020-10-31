@@ -14,7 +14,7 @@ import org.mzi.util.Ordering;
  * @author ice1000
  */
 public class NaiveDefEq extends DefEq {
-  protected NaiveDefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
+  public NaiveDefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
     super(ord, equations);
   }
 

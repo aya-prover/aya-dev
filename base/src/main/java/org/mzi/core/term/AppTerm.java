@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
+import asia.kala.collection.Seq;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.mutable.Buffer;
 import asia.kala.control.Option;
@@ -15,6 +16,8 @@ import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.generic.Arg;
 import org.mzi.ref.DefVar;
 import org.mzi.util.Decision;
+
+import java.util.HashMap;
 
 /**
  * @author ice1000
@@ -38,6 +41,24 @@ public sealed interface AppTerm extends Term {
     var tele = lam.tele();
     var next = tele.next();
     return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new SubstFixpoint.TermSubst(tele.ref(), arg.term()));
+  }
+
+   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Seq<? extends Arg<? extends Term>> args) {
+    if (args.isEmpty()) return f;
+    if (f instanceof HoleApp holeApp) {
+      holeApp.argsBuf().appendAll(args.view().map(Arg::uncapture));
+      return holeApp;
+    }
+    if (!(f instanceof LamTerm lam)) return make(new Apply(f, args.first()), args.view().drop(1));
+    var next = lam.tele();
+    var subst = new SubstFixpoint.TermSubst(new HashMap<>());
+    for (int i = 0; i < args.size(); i++) {
+      if (next != null) {
+        subst.add(next.ref(), args.get(i).term());
+        next = next.next();
+      } else return make(lam.body().subst(subst), args.view().drop(i));
+    }
+    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(subst);
   }
 
   record FnCall(

@@ -4,15 +4,14 @@ package org.mzi.core;
 
 import org.junit.jupiter.api.Test;
 import org.mzi.test.Lisp;
-
-import java.util.TreeMap;
+import org.mzi.test.LispTestCase;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TeleTest {
+public class TeleTest extends LispTestCase {
   @Test
   public void biTelescope() {
-    var tele = Lisp.reallyParseTele("(x (y ren ex null))", new TreeMap<>());
+    var tele = Lisp.reallyParseTele("(x (y ren ex null))", vars);
     assertTrue(tele.explicit());
     assertNotNull(tele.next());
     assertEquals(tele.next(), tele.last());
@@ -23,7 +22,7 @@ public class TeleTest {
 
   @Test
   public void uniTelescope() {
-    var tele = Lisp.reallyParseTele("(xy ren ex null)", new TreeMap<>());
+    var tele = Lisp.reallyParseTele("(xy ren ex null)", vars);
     assertTrue(tele.explicit());
     assertNull(tele.next());
     assertEquals(tele, tele.last());

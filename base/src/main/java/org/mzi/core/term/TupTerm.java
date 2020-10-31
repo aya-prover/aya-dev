@@ -2,14 +2,14 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
-import asia.kala.collection.immutable.ImmutableVector;
+import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.util.Decision;
 
 /**
  * @author re-xyr
  */
-public record TupTerm(@NotNull ImmutableVector<Term> items) implements Term {
+public record TupTerm(@NotNull ImmutableSeq<Term> items) implements Term {
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitTup(this, p);
   }

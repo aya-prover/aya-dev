@@ -11,6 +11,7 @@ buildscript {
 
 plugins {
   java
+  jacoco
   idea
   `java-library`
   `maven-publish`
@@ -27,12 +28,14 @@ allprojects {
 }
 
 val nonJavaProjects = listOf("docs")
+@Suppress("UnstableApiUsage")
 subprojects {
   if (name in nonJavaProjects) return@subprojects
 
   apply {
     plugin("java")
     plugin("idea")
+    plugin("jacoco")
     plugin("org.javamodularity.moduleplugin")
     plugin("maven-publish")
     plugin("java-library")
@@ -51,11 +54,13 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_15
   }
 
-  idea {
-    module {
-      outputDir = file("out/production")
-      testOutputDir = file("out/test")
-    }
+  jacoco {
+    toolVersion = deps.getProperty("version.jacoco")
+  }
+
+  idea.module {
+    outputDir = file("out/production")
+    testOutputDir = file("out/test")
   }
 
   tasks.withType<JavaCompile>().configureEach {
@@ -63,6 +68,16 @@ subprojects {
     options.isDeprecation = true
     options.release.set(15)
     options.compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
+  }
+
+  tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+      xml.isEnabled = false
+      csv.isEnabled = false
+      html.isEnabled = true
+      html.destination = buildDir.resolve("jacocoHtml")
+    }
   }
 
   tasks.withType<Test>().configureEach {
@@ -76,20 +91,18 @@ subprojects {
     enableAssertions = true
   }
 
-  publishing {
-    publications {
-      create<MavenPublication>("maven") {
-        groupId = this@subprojects.group.toString()
-        version = this@subprojects.version.toString()
-        artifactId = this@subprojects.name
-        from(components["java"])
-        pom {
-          // url.set("https://arend-lang.github.io")
-          licenses {
-            license {
-              name.set("Apache-2.0")
-              url.set("https://github.com/ice1000/mzi/blob/master/LICENSE")
-            }
+  publishing.publications {
+    create<MavenPublication>("maven") {
+      groupId = this@subprojects.group.toString()
+      version = this@subprojects.version.toString()
+      artifactId = this@subprojects.name
+      from(components["java"])
+      pom {
+        // url.set("https://arend-lang.github.io")
+        licenses {
+          license {
+            name.set("Apache-2.0")
+            url.set("https://github.com/ice1000/mzi/blob/master/LICENSE")
           }
         }
       }

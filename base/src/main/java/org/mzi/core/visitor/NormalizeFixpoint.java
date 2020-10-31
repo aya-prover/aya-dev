@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
@@ -9,7 +10,7 @@ import org.mzi.core.term.*;
 public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
   public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
 
-  private NormalizeFixpoint() {
+  @Contract(pure = true) private NormalizeFixpoint() {
   }
 
   @Override
@@ -56,6 +57,6 @@ public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
     // should not fail due to tycking
     assert ix <= t.items().size();
     assert ix > 0;
-    return t.items().get(ix).accept(this, mode);
+    return t.items().get(ix - 1).accept(this, mode);
   }
 }
