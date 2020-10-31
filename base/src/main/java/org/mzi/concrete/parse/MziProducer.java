@@ -47,6 +47,10 @@ public class MziProducer extends MziBaseVisitor<Object> {
     return new MziProducer().visitStmt(MziParsing.parser(code).stmt());
   }
 
+  public static @NotNull Decl parseDecl(@NotNull String code) {
+    return new MziProducer().visitDecl(MziParsing.parser(code).decl());
+  }
+
   @Override
   public @NotNull Stmt visitStmt(MziParser.StmtContext ctx) {
     var cmd = ctx.cmd();
