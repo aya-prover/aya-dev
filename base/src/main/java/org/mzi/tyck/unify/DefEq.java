@@ -19,6 +19,7 @@ import org.mzi.util.Decision;
 import org.mzi.util.Ordering;
 
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 /**
  * @author ice1000
@@ -105,21 +106,30 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   @Override
   public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (!(preRhs instanceof TupTerm rhs)) {
-      if (!(type instanceof DT.SigmaTerm)) return false;
+      if (!(type instanceof DT.SigmaTerm sigma)) return false;
       // Eta-rule
-      var tupRhs = new LinkedBuffer<Term>();
+      var tupRhs = LinkedBuffer.<Term>of();
       for (int i = lhs.items().size(); i > 0; i--) {
         tupRhs.push(new ProjTerm(preRhs, i));
       }
-      return visitLists(lhs.items(), tupRhs);
-      // TODO[ice]: make type-directed
+      return visitLists(lhs.items(), tupRhs, sigma.telescope());
     }
     return visitLists(lhs.items(), rhs.items());
   }
 
   private boolean visitLists(Seq<? extends Term> l, Seq<? extends Term> r) {
     if (!l.sizeEquals(r)) return false;
-    for (int i = 0; i < l.size(); i++) if (!compare(l.get(i), r.get(i), null)) return false;
+    return IntStream.range(0, l.size()).allMatch(i -> compare(l.get(i), r.get(i), null));
+  }
+
+  private boolean visitLists(Seq<? extends Term> l, Seq<? extends Term> r, @NotNull Tele types) {
+    if (!l.sizeEquals(r)) return false;
+    for (int i = 0; i < l.size(); i++) {
+      assert types != null;
+      if (!compare(l.get(i), r.get(i), types.type())) return false;
+      types = types.next();
+    }
+    assert types == null;
     return true;
   }
 
