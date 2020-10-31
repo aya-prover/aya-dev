@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core;
 
+import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.AppTerm;
@@ -13,18 +14,22 @@ import org.mzi.test.LispTestCase;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NormalizeTest extends LispTestCase {
-  @Test
-  public void noNormalizeNeutral() {
-    var term = Lisp.reallyParse("(app f a)");
+  private void unchanged(@Language("TEXT") String code) {
+    var term = Lisp.reallyParse(code);
     assertEquals(term, term.normalize(NormalizeMode.NF));
     assertEquals(term, term.normalize(NormalizeMode.WHNF));
   }
 
   @Test
+  public void noNormalizeNeutral() {
+    unchanged("(app f a)");
+  }
+
+  @Test
   public void noNormalizeCanonical() {
-    var term = Lisp.reallyParse("(lam (a (U) ex null) a)");
-    assertEquals(term, term.normalize(NormalizeMode.NF));
-    assertEquals(term, term.normalize(NormalizeMode.WHNF));
+    unchanged("(lam (a (U) ex null) a)");
+    unchanged("(Pi (a (U) ex null) a)");
+    unchanged("(Sigma (a (U) ex null) a)");
   }
 
   @Test

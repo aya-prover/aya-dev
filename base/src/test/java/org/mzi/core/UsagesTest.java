@@ -5,6 +5,7 @@ package org.mzi.core;
 import asia.kala.Unit;
 import org.junit.jupiter.api.Test;
 import org.mzi.core.visitor.UsagesConsumer;
+import org.mzi.ref.LocalVar;
 import org.mzi.test.Lisp;
 import org.mzi.test.LispTestCase;
 
@@ -20,9 +21,17 @@ public class UsagesTest extends LispTestCase {
   }
 
   @Test
+  public void lambdaUsages() {
+    var term = Lisp.reallyParse("(lam (dio (U) ex null) dio)", vars);
+    var consumer = new UsagesConsumer(vars.get("dio"));
+    term.accept(consumer, Unit.unit());
+    assertEquals(1, consumer.usageCount());
+  }
+
+  @Test
   public void noUsages() {
     var term = Lisp.reallyParse("(app xy r)", vars);
-    var consumer = new UsagesConsumer(vars.get("a"));
+    var consumer = new UsagesConsumer(new LocalVar("a"));
     term.accept(consumer, Unit.unit());
     assertEquals(0, consumer.usageCount());
   }

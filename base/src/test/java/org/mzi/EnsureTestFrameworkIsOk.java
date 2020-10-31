@@ -13,5 +13,6 @@ public class EnsureTestFrameworkIsOk {
     assertThrows(NullPointerException.class, () -> Lisp.reallyParse("("));
     assertThrows(NullPointerException.class, () -> Lisp.reallyParse(")"));
     assertThrows(Exception.class, () -> Lisp.reallyParse("233"));
+    assertThrows(IndexOutOfBoundsException.class, () -> Lisp.reallyParse("(Pi )"));
   }
 }
