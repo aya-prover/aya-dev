@@ -83,6 +83,17 @@ public class DefEqTest extends LispTestCase {
   }
 
   @Test
+  public void fnCall() {
+    Lisp.reallyParseDef("id",
+      "(y (U) ex null)", "y", "y", vars);
+    var fnCall = Lisp.reallyParse("(fncall id kiva)", vars);
+    assertTrue(eq().compare(fnCall, Lisp.reallyParse("kiva", vars), null));
+    assertTrue(eq().compare(fnCall, Lisp.reallyParse("(fncall id kiva)", vars), null));
+    assertFalse(eq().compare(fnCall, Lisp.reallyParse("(app id kiva)"), null));
+    assertFalse(eq().compare(fnCall, Lisp.reallyParse("kiva"), null));
+  }
+
+  @Test
   public void telescopeSplit() {
     var lhs = Lisp.reallyParse("(lam (a (U) ex (b (U) ex null)) a)");
     var rhs = Lisp.reallyParse("(lam (a (U) ex null) (lam (b (U) ex null) a))");
