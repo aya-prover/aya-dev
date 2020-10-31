@@ -28,6 +28,14 @@ public record Position(
     return new Span(input, this.pos, other.pos);
   }
 
+  public boolean atStart() {
+    return pos == 0;
+  }
+
+  public boolean atEnd() {
+    return pos == input.length();
+  }
+
   private void sameInput(@NotNull Position other) {
     if (!this.input.equals(other.input)) {
       throw new IllegalArgumentException();
