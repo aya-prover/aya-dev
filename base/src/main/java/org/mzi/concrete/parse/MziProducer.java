@@ -40,6 +40,14 @@ public class MziProducer extends MziBaseVisitor<Object> {
     Use, Hide,
   }
 
+  public static @NotNull Expr parseExpr(@NotNull String code) {
+    return new MziProducer().visitExpr(MziParsing.parser(code).expr());
+  }
+
+  public static @NotNull Stmt parseStmt(@NotNull String code) {
+    return new MziProducer().visitStmt(MziParsing.parser(code).stmt());
+  }
+
   @Override
   public @NotNull Stmt visitStmt(MziParser.StmtContext ctx) {
     var cmd = ctx.cmd();
@@ -121,7 +129,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
         .orElse("h");
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
-        case "h-" -> LevelEqn.INVALID;
+        case "h-", "h" -> LevelEqn.INVALID;
         case "oo-" -> Integer.MAX_VALUE;
       };
       var uLevel = visitOptNumber(universe.NUMBER());
@@ -170,11 +178,13 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull AppExpr visitApp(MziParser.AppContext ctx) {
+  public @NotNull Expr visitApp(MziParser.AppContext ctx) {
+    var argument = ctx.argument();
+    if (argument.isEmpty()) return visitAtom(ctx.atom());
     return new Expr.AppExpr(
       sourcePosOf(ctx),
       visitAtom(ctx.atom()),
-      ctx.argument().stream()
+      argument.stream()
         .flatMap(a -> this.visitArgument(a).stream())
         .collect(ImmutableSeq.factory())
     );
