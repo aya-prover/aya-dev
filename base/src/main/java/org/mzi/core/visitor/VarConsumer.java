@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
 import org.mzi.core.term.AppTerm;
-import org.mzi.core.term.HoleTerm;
 import org.mzi.core.term.RefTerm;
 
 /**
@@ -19,7 +18,7 @@ public interface VarConsumer extends TermConsumer<Unit> {
     return emptyTuple;
   }
 
-  default Unit visitHole(@NotNull HoleTerm term, Unit emptyTuple) {
+  default Unit visitHole(@NotNull AppTerm.HoleApp term, Unit emptyTuple) {
     visitVar(term.var());
     return emptyTuple;
   }

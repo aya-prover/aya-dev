@@ -5,7 +5,7 @@ package org.mzi.core.visitor;
 import asia.kala.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.term.HoleTerm;
+import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
 
 /**
@@ -19,7 +19,7 @@ public final class StripFixpoint implements TermFixpoint<Unit> {
   @Contract(pure = true) private StripFixpoint() {
   }
 
-  @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull HoleTerm term, Unit emptyTuple) {
+  @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, Unit emptyTuple) {
     return term.solution().get();
   }
 }

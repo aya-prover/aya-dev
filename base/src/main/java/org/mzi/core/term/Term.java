@@ -33,17 +33,32 @@ public interface Term extends CoreTerm {
     return accept(NormalizeFixpoint.INSTANCE, mode);
   }
 
-  default @Nullable Term dropTele(int n) {
+  default @Nullable Term dropTeleDT(int n) {
     if (n == 0) return this;
     var term = this;
-    while (term instanceof PiTerm dt) {
+    while (term instanceof DT dt) {
       var tele = dt.telescope();
-      while (n > 0 && tele.next() != null) {
+      while (n > 0 && tele != null) {
         tele = tele.next();
         n--;
       }
-      if (n == 0) return tele.next() != null ? new PiTerm(tele.next(), dt.last(), dt.co()) : dt.last();
+      if (n == 0) return tele != null ? new DT(dt.kind(), tele, dt.last()) : dt.last();
       term = dt.last().normalize(NormalizeMode.WHNF);
+    }
+    return null;
+  }
+
+  default @Nullable Term dropTeleLam(int n) {
+    if (n == 0) return this;
+    var term = this;
+    while (term instanceof LamTerm lam) {
+      var tele = lam.telescope();
+      while (n > 0 && tele != null) {
+        tele = tele.next();
+        n--;
+      }
+      if (n == 0) return tele != null ? new LamTerm(tele, lam.body()) : lam.body();
+      term = lam.body().normalize(NormalizeMode.WHNF);
     }
     return null;
   }
@@ -51,26 +66,24 @@ public interface Term extends CoreTerm {
   interface Visitor<P, R> {
     R visitRef(@NotNull RefTerm term, P p);
     R visitLam(@NotNull LamTerm term, P p);
-    R visitPi(@NotNull PiTerm term, P p);
-    R visitSigma(@NotNull SigmaTerm term, P p);
+    R visitDT(@NotNull DT term, P p);
     R visitUniv(@NotNull UnivTerm term, P p);
     R visitApp(AppTerm.@NotNull Apply term, P p);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p);
     R visitTup(@NotNull TupTerm term, P p);
     R visitProj(@NotNull ProjTerm term, P p);
-    R visitHole(@NotNull HoleTerm term, P p);
+    R visitHole(@NotNull AppTerm.HoleApp term, P p);
   }
 
   interface BiVisitor<P, Q, R> {
     R visitRef(@NotNull RefTerm term, P p, Q q);
     R visitLam(@NotNull LamTerm term, P p, Q q);
-    R visitPi(@NotNull PiTerm term, P p, Q q);
-    R visitSigma(@NotNull SigmaTerm term, P p, Q q);
+    R visitDT(@NotNull DT term, P p, Q q);
     R visitUniv(@NotNull UnivTerm term, P p, Q q);
     R visitApp(AppTerm.@NotNull Apply term, P p, Q q);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p, Q q);
     R visitTup(@NotNull TupTerm term, P p, Q q);
     R visitProj(@NotNull ProjTerm term, P p, Q q);
-    R visitHole(@NotNull HoleTerm term, P p, Q q);
+    R visitHole(@NotNull AppTerm.HoleApp term, P p, Q q);
   }
 }

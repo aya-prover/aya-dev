@@ -21,10 +21,10 @@ public record LevelEqn<V extends Var>(
   @Nullable V v1, @Nullable V v2,
   int constant, int max
 ) {
-  public static final int INVALID = -114514;
+  public static final int UNSPECIFIED = -114514;
 
   public LevelEqn(@NotNull V v) {
-    this(null, v, INVALID, INVALID);
+    this(null, v, UNSPECIFIED, UNSPECIFIED);
   }
 
   public LevelEqn(@NotNull LevelEqn<? extends V> copy) {
@@ -51,7 +51,7 @@ public record LevelEqn<V extends Var>(
   }
 
   @Contract(pure = true) public boolean isInf() {
-    return constant == INVALID;
+    return constant == UNSPECIFIED;
   }
 
   /**
@@ -77,7 +77,7 @@ public record LevelEqn<V extends Var>(
       // _ <= max(-c, -d), _ <= max(l - c, -d) // 6
       if (!hasHole(var2) && max < 0 && (constant < 0 || constant == 0 && var2 == LevelVar.HP && var1 == null) &&
         !(var2 == null && hasHole(var1) && var1.kind() == LevelVar.Kind.H && constant >= -1 && max >= -1)) {
-        reporter.report(new LevelSolverError(expr, Seq.of(new LevelEqn<>(var1, var2, constant, INVALID))));
+        reporter.report(new LevelSolverError(expr, Seq.of(new LevelEqn<>(var1, var2, constant, UNSPECIFIED))));
         return;
       }
 
@@ -153,7 +153,7 @@ public record LevelEqn<V extends Var>(
             int a = solution.get(equation.v1());
             int b = solution.get(equation.v2());
             int m = equation.max;
-            if (b != INF && (a == INF || (m == INVALID || a + m < 0) && b > a + equation.constant)) {
+            if (b != INF && (a == INF || (m == UNSPECIFIED || a + m < 0) && b > a + equation.constant)) {
               if (a != INF) {
                 var newPath = Buffer.from(paths.get(equation.v1()));
                 newPath.append(equation);

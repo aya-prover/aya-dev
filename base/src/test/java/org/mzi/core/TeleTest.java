@@ -4,15 +4,14 @@ package org.mzi.core;
 
 import org.junit.jupiter.api.Test;
 import org.mzi.test.Lisp;
-
-import java.util.TreeMap;
+import org.mzi.test.LispTestCase;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TeleTest {
+public class TeleTest extends LispTestCase {
   @Test
   public void biTelescope() {
-    var tele = Lisp.reallyParseTele("(x (y ren ex null))", new TreeMap<>());
+    var tele = Lisp.reallyParseTele("(x (y ren ex null))", vars);
     assertTrue(tele.explicit());
     assertNotNull(tele.next());
     assertEquals(tele.next(), tele.last());
@@ -22,8 +21,30 @@ public class TeleTest {
   }
 
   @Test
+  public void dropTelescope() {
+    var term = Lisp.reallyParse("(Pi (a (U) ex (b (U) ex null)) a)");
+    assertEquals(term, term.dropTeleDT(0));
+    assertNotNull(term.dropTeleDT(1));
+    assertNotEquals(term, term.dropTeleDT(1));
+    assertNotNull(term.dropTeleDT(2));
+    assertNotEquals(term, term.dropTeleDT(2));
+    assertNull(term.dropTeleDT(3));
+  }
+
+  @Test
+  public void dropLamTelescope() {
+    var term = Lisp.reallyParse("(lam (a (U) ex (b (U) ex null)) a)");
+    assertEquals(term, term.dropTeleLam(0));
+    assertNotNull(term.dropTeleLam(1));
+    assertNotEquals(term, term.dropTeleLam(1));
+    assertNotNull(term.dropTeleLam(2));
+    assertNotEquals(term, term.dropTeleLam(2));
+    assertNull(term.dropTeleLam(3));
+  }
+
+  @Test
   public void uniTelescope() {
-    var tele = Lisp.reallyParseTele("(xy ren ex null)", new TreeMap<>());
+    var tele = Lisp.reallyParseTele("(xy ren ex null)", vars);
     assertTrue(tele.explicit());
     assertNull(tele.next());
     assertEquals(tele, tele.last());

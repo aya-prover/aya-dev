@@ -41,14 +41,9 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     params.forEach(param -> param.type().accept(this, p));
   }
 
-  @Override default Unit visitPi(Expr.@NotNull PiExpr expr, P p) {
+  @Override default Unit visitDT(Expr.@NotNull DTExpr expr, P p) {
     visitParams(expr.params(), p);
     return expr.last().accept(this, p);
-  }
-
-  @Override default Unit visitSigma(Expr.@NotNull SigmaExpr expr, P p) {
-    visitParams(expr.params(), p);
-    return Unit.unit();
   }
 
   @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {
@@ -68,6 +63,14 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   @Override default Unit visitTyped(Expr.@NotNull TypedExpr expr, P p) {
     expr.expr().accept(this, p);
     expr.type().accept(this, p);
+    return Unit.unit();
+  }
+
+  @Override default Unit visitLitInt(Expr.@NotNull LitIntExpr expr, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitLitString(Expr.@NotNull LitStringExpr expr, P p) {
     return Unit.unit();
   }
 }

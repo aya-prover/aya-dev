@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
+import asia.kala.collection.mutable.Buffer;
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.Tele;
@@ -28,19 +29,20 @@ public interface TermFixpoint<P> extends
     return new Tele.TypedTele(typed.ref(), type, typed.explicit(), next);
   }
 
-  @Override default @NotNull Term visitHole(@NotNull HoleTerm term, P p) {
+  @Override default @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, P p) {
     var sol = term.solution().getOrNull();
-    if (sol != null) {
+    var args = term.argsBuf().view().map(arg -> visitArgUncapture(arg, p));
+    if (sol != null && !args.sameElements(term.argsBuf())) {
       var newSol = sol.accept(this, p);
-      if (newSol != sol) return new HoleTerm(newSol, term.var());
+      if (newSol != sol) return new AppTerm.HoleApp(newSol, term.var(), args.collect(Buffer.factory()));
     }
     return term;
   }
 
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
-    var telescope = term.tele().accept(this, p);
+    var telescope = term.telescope().accept(this, p);
     var body = term.body().accept(this, p);
-    if (telescope == term.tele() && body == term.body()) return term;
+    if (telescope == term.telescope() && body == term.body()) return term;
     return new LamTerm(telescope, body);
   }
 
@@ -50,21 +52,21 @@ public interface TermFixpoint<P> extends
     return new UnivTerm(sort);
   }
 
-  @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
+  @Override default @NotNull Term visitDT(@NotNull DT term, P p) {
     var telescope = term.telescope().accept(this, p);
     var last = term.last().accept(this, p);
     if (telescope == term.telescope() && last == term.last()) return term;
-    return new PiTerm(telescope, last, term.co());
-  }
-
-  @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
-    var telescope = term.telescope().accept(this, p);
-    if (telescope == term.telescope()) return term;
-    return new SigmaTerm(telescope, term.co());
+    return new DT(term.kind(), telescope, last);
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
     return term;
+  }
+
+  default @NotNull Arg<Term> visitArgUncapture(@NotNull Arg<Term> arg, P p) {
+    var term = arg.term().accept(this, p);
+    if (term == arg.term()) return arg;
+    return new Arg<>(term, arg.explicit());
   }
 
   default @NotNull Arg<? extends Term> visitArg(@NotNull Arg<? extends Term> arg, P p) {
@@ -85,7 +87,7 @@ public interface TermFixpoint<P> extends
   }
 
   @Override default @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, P p) {
-    var args = fnCall.args().map(arg -> visitArg(arg, p));
+    var args = fnCall.args().view().map(arg -> visitArg(arg, p));
     if (fnCall.args().sameElements(args, true)) return fnCall;
     return new AppTerm.FnCall(fnCall.fnRef(), args);
   }

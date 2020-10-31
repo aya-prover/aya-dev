@@ -2,21 +2,17 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import org.mzi.api.ref.Var;
-import org.mzi.core.visitor.SubstFixpoint;
-import org.mzi.tyck.sort.Sort;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.UnivTerm;
+import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.test.Lisp;
-
-import java.util.Map;
-import java.util.TreeMap;
+import org.mzi.test.LispTestCase;
+import org.mzi.tyck.sort.Sort;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SubstTest {
+public class SubstTest extends LispTestCase {
   @Test
   public void emptySubst() {
     var term = Lisp.reallyParse("(app tony lambda)");
@@ -33,9 +29,8 @@ public class SubstTest {
 
   @Test
   public void relatedSubst() {
-    @NotNull Map<String, @NotNull Var> refs = new TreeMap<>();
-    var term = Lisp.reallyParse("(app tony beta)", refs);
+    var term = Lisp.reallyParse("(app tony beta)", vars);
     assertTrue(term instanceof AppTerm);
-    assertNotEquals(term, term.subst(new SubstFixpoint.TermSubst(refs.get("beta"), new UnivTerm(Sort.SET0))));
+    assertNotEquals(term, term.subst(new SubstFixpoint.TermSubst(vars.get("beta"), new UnivTerm(Sort.SET0))));
   }
 }

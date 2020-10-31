@@ -8,14 +8,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Var;
-import org.mzi.core.def.FnDef;
-import org.mzi.core.term.Term;
 import org.mzi.core.Tele;
 import org.mzi.core.TermProducer;
+import org.mzi.core.def.FnDef;
+import org.mzi.core.term.Term;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 
 /**
  * @author ice1000
@@ -27,7 +27,7 @@ public interface Lisp {
   }
 
   static @NotNull Term reallyParse(@NotNull @NonNls @Language("TEXT") String code) {
-    return reallyParse(code, new TreeMap<>());
+    return reallyParse(code, new HashMap<>());
   }
 
   static @NotNull Term reallyParse(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {

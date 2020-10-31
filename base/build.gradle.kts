@@ -15,10 +15,8 @@ idea {
   module.generatedSourceDirs.add(genDir)
 }
 
-sourceSets {
-  main {
-    java.srcDirs(genDir)
-  }
+sourceSets.main {
+  java.srcDirs(genDir)
 }
 
 tasks.compileJava {

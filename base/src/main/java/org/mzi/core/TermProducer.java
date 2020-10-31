@@ -3,11 +3,13 @@
 package org.mzi.core;
 
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.collection.immutable.ImmutableVector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.DTKind;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
@@ -20,6 +22,7 @@ import org.mzi.tyck.sort.Sort;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 
+import static java.lang.Integer.parseInt;
 import static org.mzi.concrete.parse.LispParsing.parser;
 
 /**
@@ -59,10 +62,12 @@ public class TermProducer extends LispBaseVisitor<Term> {
           .collect(ImmutableSeq.factory()));
       case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.implicit(exprs.get(1).accept(this)));
       case "lam" -> new LamTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this));
-      case "Pi" -> new PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), false);
-      case "Copi" -> new PiTerm(exprToBind(exprs.get(0)), exprs.get(1).accept(this), true);
-      case "Sigma" -> new SigmaTerm(exprToBind(exprs.get(0)), false);
-      case "Cosigma" -> new SigmaTerm(exprToBind(exprs.get(0)), true);
+      case "Pi" -> new DT(DTKind.Pi, exprToBind(exprs.get(0)), exprs.get(1).accept(this));
+      case "Copi" -> new DT(DTKind.Copi, exprToBind(exprs.get(0)), exprs.get(1).accept(this));
+      case "Sigma" -> new DT(DTKind.Sigma, exprToBind(exprs.get(0)), exprs.get(1).accept(this));
+      case "Cosigma" -> new DT(DTKind.Cosigma, exprToBind(exprs.get(0)), exprs.get(1).accept(this));
+      case "tup" -> new TupTerm(exprs.stream().collect(ImmutableVector.factory()).map(expr -> expr.accept(this)));
+      case "proj" -> new ProjTerm(exprs.get(0).accept(this), parseInt(exprs.get(1).getText()));
       default -> throw new IllegalArgumentException("Unexpected lisp function: " + rule);
     };
   }

@@ -4,18 +4,16 @@ package org.mzi.concrete.parse;
 
 import asia.kala.Tuple;
 import asia.kala.Tuple2;
-import asia.kala.collection.immutable.ImmutableList;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.DTKind;
 import org.mzi.concrete.*;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
@@ -29,6 +27,7 @@ import org.mzi.tyck.sort.LevelEqn;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,6 +37,18 @@ import java.util.stream.Stream;
 public class MziProducer extends MziBaseVisitor<Object> {
   public enum UseHide {
     Use, Hide,
+  }
+
+  public static @NotNull Expr parseExpr(@NotNull String code) {
+    return new MziProducer().visitExpr(MziParsing.parser(code).expr());
+  }
+
+  public static @NotNull Stmt parseStmt(@NotNull String code) {
+    return new MziProducer().visitStmt(MziParsing.parser(code).stmt());
+  }
+
+  public static @NotNull Decl parseDecl(@NotNull String code) {
+    return new MziProducer().visitDecl(MziParsing.parser(code).decl());
   }
 
   @Override
@@ -74,7 +85,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var tele = visitTelescope(ctx.tele().stream());
     var typeCtx = ctx.type();
     var type = typeCtx == null
-      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null) // TODO: is that correct to use HoleExpr?
+      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
       : visitType(typeCtx);
     var abuseCtx = ctx.abuse();
     var abuse = abuseCtx == null ? Buffer.<Stmt>of() : visitAbuse(abuseCtx);
@@ -114,31 +125,42 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
     var id = ctx.ID();
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(ctx), id.getText());
-    var universe = ctx.universe();
+    var universe = ctx.UNIVERSE();
     if (universe != null) {
-      var univTrunc = Optional.ofNullable(universe.univTrunc())
-        .map(RuleContext::getText)
-        .orElse("h");
+      String universeText = universe.getText();
+      var univTrunc = universeText.substring(1, universeText.indexOf("T"));
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
-        case "h-" -> LevelEqn.INVALID;
+        case "h-", "h" -> LevelEqn.UNSPECIFIED;
         case "oo-" -> Integer.MAX_VALUE;
       };
-      var uLevel = visitOptNumber(universe.NUMBER());
+      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1));
       return new Expr.UnivExpr(sourcePosOf(ctx), uLevel, hLevel);
     }
-    var set = ctx.setUniv();
-    if (set != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(set.NUMBER()), 0);
+    var set = ctx.SET_UNIV();
+    if (set != null) {
+      var text = set.getText().substring("\\Set".length());
+      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text), 0);
+    }
     var prop = ctx.PROP();
     if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
-    throw new UnsupportedOperationException();
+    if (ctx.LGOAL() != null) {
+      var fillingExpr = ctx.expr();
+      var filling = fillingExpr == null? null : visitExpr(fillingExpr);
+      return new Expr.HoleExpr(sourcePosOf(ctx), null, filling);
+    }
+    var number = ctx.NUMBER();
+    if (number != null) return new Expr.LitIntExpr(sourcePosOf(ctx), Integer.parseInt(number.getText()));
+    var string = ctx.STRING();
+    if (string != null) return new Expr.LitStringExpr(sourcePosOf(ctx), string.getText());
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  public int visitOptNumber(@Nullable TerminalNode number) {
-    return Optional.ofNullable(number)
-      .map(ParseTree::getText)
+  public int visitOptNumber(@NotNull String number) {
+    return Optional.of(number)
+      .filter(Predicate.not(String::isEmpty))
       .map(Integer::parseInt)
-      .orElse(LevelEqn.INVALID);
+      .orElse(LevelEqn.UNSPECIFIED);
   }
 
   @Override
@@ -170,11 +192,13 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull AppExpr visitApp(MziParser.AppContext ctx) {
+  public @NotNull Expr visitApp(MziParser.AppContext ctx) {
+    var argument = ctx.argument();
+    if (argument.isEmpty()) return visitAtom(ctx.atom());
     return new Expr.AppExpr(
       sourcePosOf(ctx),
       visitAtom(ctx.atom()),
-      ctx.argument().stream()
+      argument.stream()
         .flatMap(a -> this.visitArgument(a).stream())
         .collect(ImmutableSeq.factory())
     );
@@ -255,21 +279,22 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull SigmaExpr visitSigma(MziParser.SigmaContext ctx) {
-    return new Expr.SigmaExpr(
+  public Expr.@NotNull DTExpr visitSigma(MziParser.SigmaContext ctx) {
+    return new Expr.DTExpr(
       sourcePosOf(ctx),
+      DTKind.Sigma,
       visitTelescope(ctx.tele().stream()),
-      false
+      visitExpr(ctx.expr())
     );
   }
 
   @Override
-  public Expr.@NotNull PiExpr visitPi(MziParser.PiContext ctx) {
-    return new Expr.PiExpr(
+  public Expr.@NotNull DTExpr visitPi(MziParser.PiContext ctx) {
+    return new Expr.DTExpr(
       sourcePosOf(ctx),
+      DTKind.Pi,
       visitTelescope(ctx.tele().stream()),
-      visitExpr(ctx.expr()),
-      false
+      visitExpr(ctx.expr())
     );
   }
 
@@ -284,18 +309,20 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx) {
-    var resultTypeCtx = ctx.type();
-    var result = resultTypeCtx == null
+    var typeCtx = ctx.type();
+    var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
-      : visitType(resultTypeCtx);
+      : visitType(typeCtx);
+    var abuseCtx = ctx.abuse();
+    var abuse = abuseCtx == null ? Buffer.<Stmt>of() : visitAbuse(abuseCtx);
 
     return new Decl.DataDecl(
       sourcePosOf(ctx),
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
-      result,
+      type,
       visitDataBody(ctx.dataBody()),
-      visitAbuse(ctx.abuse())
+      abuse
     );
   }
 
@@ -424,7 +451,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public @NotNull Clause visitClause(MziParser.ClauseContext ctx) {
-    if (ctx.ABSURD() != null) return new Clause.Impossible();
+    if (ctx.ABSURD() != null) return Clause.Impossible.INSTANCE;
     return new Clause.Possible(
       visitPatterns(ctx.patterns()),
       visitExpr(ctx.expr())
@@ -473,9 +500,9 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Tuple2<@NotNull UseHide, @NotNull ImmutableList<String>> visitUseHide(MziParser.UseHideContext ctx) {
+  public @NotNull Tuple2<@NotNull UseHide, @NotNull Buffer<String>> visitUseHide(MziParser.UseHideContext ctx) {
     var type = ctx.USING() != null ? UseHide.Use : UseHide.Hide;
-    return Tuple.of(type, visitIds(ctx.ids()).collect(ImmutableList.factory()));
+    return Tuple.of(type, visitIds(ctx.ids()).collect(Buffer.factory()));
   }
 
   @Override

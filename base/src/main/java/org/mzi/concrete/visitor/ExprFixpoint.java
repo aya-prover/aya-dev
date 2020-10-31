@@ -40,17 +40,11 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.LamExpr(expr.sourcePos(), binds, body);
   }
 
-  @Override default @NotNull Expr visitPi(Expr.@NotNull PiExpr expr, P p) {
+  @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     var last = expr.last().accept(this, p);
     if (binds.sameElements(expr.params()) && Objects.equals(last, expr.last())) return expr;
-    return new Expr.PiExpr(expr.sourcePos(), binds, last, expr.co());
-  }
-
-  @Override default @NotNull Expr visitSigma(Expr.@NotNull SigmaExpr expr, P p) {
-    var binds = visitParams(expr.params(), p);
-    if (binds.sameElements(expr.params())) return expr;
-    return new Expr.SigmaExpr(expr.sourcePos(), binds, expr.co());
+    return new Expr.DTExpr(expr.sourcePos(), expr.kind(), binds, last);
   }
 
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
@@ -86,5 +80,13 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     var e = expr.expr().accept(this, p);
     if (Objects.equals(e, expr.expr())) return expr;
     return new Expr.TypedExpr(expr.sourcePos(), e, expr.type());
+  }
+
+  @Override default @NotNull Expr visitLitInt(Expr.@NotNull LitIntExpr expr, P p) {
+    return expr;
+  }
+
+  @Override default @NotNull Expr visitLitString(Expr.@NotNull LitStringExpr expr, P p) {
+    return expr;
   }
 }

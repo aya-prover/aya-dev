@@ -13,6 +13,7 @@ import org.mzi.generic.Modifier;
 import org.mzi.ref.DefVar;
 
 import java.util.EnumSet;
+import java.util.Objects;
 
 /**
  * concrete definition, corresponding to {@link org.mzi.core.def.Def}.
@@ -80,6 +81,32 @@ public sealed interface Decl extends Stmt {
     public @NotNull SourcePos sourcePos() {
       return this.sourcePos;
     }
+
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DataDecl dataDecl = (DataDecl) o;
+      return sourcePos.equals(dataDecl.sourcePos) &&
+        telescope.equals(dataDecl.telescope) &&
+        result.equals(dataDecl.result) &&
+        body.equals(dataDecl.body) &&
+        abuseBlock.equals(dataDecl.abuseBlock);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(sourcePos, telescope, result, body, abuseBlock);
+    }
+
+    @Override public String toString() {
+      return "DataDecl{" +
+        "sourcePos=" + sourcePos +
+        ", telescope=" + telescope +
+        ", result=" + result +
+        ", body=" + body +
+        ", abuseBlock=" + abuseBlock +
+        '}';
+    }
   }
 
   /**
@@ -123,6 +150,36 @@ public sealed interface Decl extends Stmt {
 
     public @NotNull DefVar<FnDecl> ref() {
       return this.ref;
+    }
+
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      FnDecl fnDecl = (FnDecl) o;
+      return sourcePos.equals(fnDecl.sourcePos) &&
+        modifiers.equals(fnDecl.modifiers) &&
+        assoc == fnDecl.assoc &&
+        telescope.equals(fnDecl.telescope) &&
+        result.equals(fnDecl.result) &&
+        body.equals(fnDecl.body) &&
+        abuseBlock.equals(fnDecl.abuseBlock);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
+    }
+
+    @Override public String toString() {
+      return "FnDecl{" +
+        "sourcePos=" + sourcePos +
+        ", modifiers=" + modifiers +
+        ", assoc=" + assoc +
+        ", telescope=" + telescope +
+        ", result=" + result +
+        ", body=" + body +
+        ", abuseBlock=" + abuseBlock +
+        '}';
     }
   }
 }

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.DTKind;
 import org.mzi.generic.Arg;
 import org.mzi.tyck.sort.LevelEqn;
 
@@ -24,14 +25,15 @@ public sealed interface Expr {
     R visitRef(@NotNull RefExpr expr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
-    R visitPi(@NotNull PiExpr expr, P p);
-    R visitSigma(@NotNull SigmaExpr expr, P p);
+    R visitDT(@NotNull DTExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
     R visitTup(@NotNull TupExpr expr, P p);
     R visitProj(@NotNull ProjExpr expr, P p);
     R visitTyped(@NotNull TypedExpr expr, P p);
+    R visitLitInt(@NotNull LitIntExpr expr, P p);
+    R visitLitString(@NotNull LitStringExpr expr, P p);
   }
 
   /**
@@ -76,37 +78,16 @@ public sealed interface Expr {
   }
 
   /**
-   * @author kiva
-   */
-  sealed interface DTExpr extends Expr {
-    @NotNull Buffer<Param> params();
-    boolean co();
-  }
-
-  /**
    * @author re-xyr, kiva
    */
-  record PiExpr(
+  record DTExpr(
     @NotNull SourcePos sourcePos,
+    @NotNull DTKind kind,
     @NotNull Buffer<Param> params,
-    @NotNull Expr last,
-    boolean co
-  ) implements DTExpr {
+    @NotNull Expr last
+  ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitPi(this, p);
-    }
-  }
-
-  /**
-   * @author kiva
-   */
-  record SigmaExpr(
-    @NotNull SourcePos sourcePos,
-    @NotNull Buffer<Param> params,
-    boolean co
-  ) implements DTExpr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitSigma(this, p);
+      return visitor.visitDT(this, p);
     }
   }
 
@@ -136,8 +117,8 @@ public sealed interface Expr {
   }
 
   /**
-   * @param hLevel specified hLevel, {@link LevelEqn#INVALID} if not specified.
-   * @param uLevel specified uLevel, {@link LevelEqn#INVALID} if not specified.
+   * @param hLevel specified hLevel, {@link LevelEqn#UNSPECIFIED} if not specified.
+   * @param uLevel specified uLevel, {@link LevelEqn#UNSPECIFIED} if not specified.
    * @author re-xyr, ice1000
    */
   record UnivExpr(
@@ -146,7 +127,7 @@ public sealed interface Expr {
     int hLevel
   ) implements Expr {
     public UnivExpr(@NotNull SourcePos sourcePos) {
-      this(sourcePos, LevelEqn.INVALID, LevelEqn.INVALID);
+      this(sourcePos, LevelEqn.UNSPECIFIED, LevelEqn.UNSPECIFIED);
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -189,6 +170,27 @@ public sealed interface Expr {
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTyped(this, p);
+    }
+  }
+
+  /**
+   * @author kiva
+   */
+  record LitIntExpr(
+    @NotNull SourcePos sourcePos,
+    int integer
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLitInt(this, p);
+    }
+  }
+
+  record LitStringExpr(
+    @NotNull SourcePos sourcePos,
+    @NotNull String string
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLitString(this, p);
     }
   }
 }
