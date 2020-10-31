@@ -3,10 +3,13 @@
 package org.mzi.concrete;
 
 import asia.kala.collection.immutable.ImmutableList;
+import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.mutable.Buffer;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
+import org.mzi.api.util.DTKind;
 import org.mzi.concrete.parse.MziProducer;
+import org.mzi.generic.Arg;
 import org.mzi.generic.Modifier;
 import org.mzi.ref.LocalVar;
 
@@ -54,7 +57,13 @@ public class ParseTest {
   @Test
   public void successDecl() {
     assertTrue(MziProducer.parseDecl("\\def a => 1") instanceof Decl.FnDecl);
+    assertTrue(MziProducer.parseDecl("\\def a (b : X) => b") instanceof Decl.FnDecl);
+    assertTrue(MziProducer.parseDecl("\\def a (f : \\Pi a b c d -> a) => b") instanceof Decl.FnDecl);
+    assertTrue(MziProducer.parseDecl("\\def a (t : \\Sigma a b ** s) => b") instanceof Decl.FnDecl);
     assertTrue(MziProducer.parseDecl("\\data Unit") instanceof Decl.DataDecl);
+    assertTrue(MziProducer.parseDecl("\\data Unit \\abusing {}") instanceof Decl.DataDecl);
+    assertTrue(MziProducer.parseDecl("\\data Unit : A \\abusing {}") instanceof Decl.DataDecl);
+    assertTrue(MziProducer.parseDecl("\\data T {A : \\114-Type514} : A \\abusing {}") instanceof Decl.DataDecl);
     parseTo("\\def id {A : \\114-Type514} (a : A) : A => a", new Decl.FnDecl(
       SourcePos.NONE,
       EnumSet.noneOf(Modifier.class),
@@ -67,6 +76,49 @@ public class ParseTest {
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
       Buffer.of()
+    ));
+    parseTo("\\data Nat | Z | S Nat", new Decl.DataDecl(
+      SourcePos.NONE,
+      "Nat",
+      Buffer.of(),
+      new Expr.HoleExpr(SourcePos.NONE, null, null),
+      new Decl.DataBody.Ctors(Buffer.of(
+        new Decl.DataCtor("Z", Buffer.of(), Buffer.of(), Buffer.of(), false),
+        new Decl.DataCtor("S",
+          Buffer.of(
+            new Param(SourcePos.NONE, Buffer.of(new LocalVar("_")), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
+          ),
+          Buffer.of(), Buffer.of(), false
+        )
+      )),
+      Buffer.of()
+    ));
+  }
+
+  @Test
+  public void successExpr() {
+    assertTrue(MziProducer.parseExpr("boy") instanceof Expr.UnresolvedExpr);
+    assertTrue(MziProducer.parseExpr("f a") instanceof Expr.AppExpr);
+    assertTrue(MziProducer.parseExpr("f a b c") instanceof Expr.AppExpr);
+    assertTrue(MziProducer.parseExpr("a.1") instanceof Expr.ProjExpr);
+    assertTrue(MziProducer.parseExpr("a.1.2") instanceof Expr.ProjExpr);
+    assertTrue(MziProducer.parseExpr("λ a => a") instanceof Expr.LamExpr);
+    assertTrue(MziProducer.parseExpr("\\lam a => a") instanceof Expr.LamExpr);
+    assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
+    assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Pi);
+    assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Pi);
+    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Pi);
+    assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Sigma);
+    assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Sigma);
+    assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Sigma);
+    parseTo("f a . 1", new Expr.ProjExpr(
+      SourcePos.NONE,
+      new Expr.AppExpr(
+        SourcePos.NONE,
+        new Expr.UnresolvedExpr(SourcePos.NONE, "f"),
+        ImmutableSeq.of(Arg.explicit(new Expr.UnresolvedExpr(SourcePos.NONE, "a")))
+      ),
+      1
     ));
   }
 
