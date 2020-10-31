@@ -14,12 +14,15 @@ public class DefEqTest extends LispTestCase {
   @Test
   public void basicFailure() {
     assertFalse(eq().compare(Lisp.reallyParse("(U)"), Lisp.reallyParse("jojo"), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)"), Lisp.reallyParse("(app g y)"), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)"), Lisp.reallyParse("(app g x)"), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)"), Lisp.reallyParse("(app f y)"), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), Lisp.reallyParse("(app g y)", vars), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), Lisp.reallyParse("(app g x)", vars), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), Lisp.reallyParse("(app f y)", vars), null));
     assertFalse(eq().compare(Lisp.reallyParse("(Pi (a (U) ex (b (U) ex null)) a)"), Lisp.reallyParse("(Pi (a (U) ex null) a)"), null));
     assertFalse(eq().compare(Lisp.reallyParse("(Sigma (a (U) ex (b (U) ex null)) a)"), Lisp.reallyParse("(Sigma (a (U) ex null) a)"), null));
     assertFalse(eq().compare(Lisp.reallyParse("(Pi (a (U) ex (b (U) ex null)) a)"), Lisp.reallyParse("(Pi (a (U) ex (b a ex null)) a)"), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(proj (tup (app (lam (a (U) ex null) a) x) b) 1)"), Lisp.reallyParse("(U)"), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(proj t 1)"), Lisp.reallyParse("(U)"), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(proj t 1)", vars), Lisp.reallyParse("(proj t 2)", vars ), null));
   }
 
   @Test
@@ -30,6 +33,9 @@ public class DefEqTest extends LispTestCase {
     identical("(Pi (a (U) ex null) a)");
     identical("(Sigma (a (U) ex null))");
     identical("(U)");
+    identical("(tup (proj t 1) (proj t 2))");
+    identical("(proj t 1)");
+    identical("(proj (tup (app (lam (a (U) ex null) a) x) b) 1)");
   }
 
   private void identical(@Language("TEXT") String code) {
@@ -86,9 +92,13 @@ public class DefEqTest extends LispTestCase {
   public void fnCall() {
     Lisp.reallyParseDef("id",
       "(y (U) ex null)", "y", "y", vars);
+    Lisp.reallyParseDef("id2",
+      "(y (U) ex null)", "y", "y", vars);
     var fnCall = Lisp.reallyParse("(fncall id kiva)", vars);
     assertTrue(eq().compare(fnCall, Lisp.reallyParse("kiva", vars), null));
     assertTrue(eq().compare(fnCall, Lisp.reallyParse("(fncall id kiva)", vars), null));
+    assertTrue(eq().compare(fnCall, Lisp.reallyParse("(fncall id2 kiva)", vars), null));
+    assertFalse(eq().compare(fnCall, Lisp.reallyParse("(fncall id kiwa)", vars), null));
     assertFalse(eq().compare(fnCall, Lisp.reallyParse("(app id kiva)"), null));
     assertFalse(eq().compare(fnCall, Lisp.reallyParse("kiva"), null));
   }
