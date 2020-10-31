@@ -93,7 +93,7 @@ public interface TermFixpoint<P> extends
   }
 
   @Override default @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, P p) {
-    var args = fnCall.args().map(arg -> visitArg(arg, p));
+    var args = fnCall.args().view().map(arg -> visitArg(arg, p));
     if (fnCall.args().sameElements(args, true)) return fnCall;
     return new AppTerm.FnCall(fnCall.fnRef(), args);
   }

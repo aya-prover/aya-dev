@@ -3,7 +3,6 @@
 package org.mzi.core.term;
 
 import asia.kala.collection.Seq;
-import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.mutable.Buffer;
 import asia.kala.control.Option;
 import asia.kala.ref.OptionRef;
@@ -25,7 +24,7 @@ import java.util.HashMap;
  */
 public sealed interface AppTerm extends Term {
   @NotNull Term fn();
-  @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args();
+  @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args();
 
   @Override default @NotNull Decision whnf() {
     if (fn() instanceof LamTerm) return Decision.NO;
@@ -63,7 +62,7 @@ public sealed interface AppTerm extends Term {
 
   record FnCall(
     @NotNull DefVar<FnDef> fnRef,
-    @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args
+    @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFnCall(this, p);
@@ -92,8 +91,8 @@ public sealed interface AppTerm extends Term {
     }
 
     @Contract(" -> new")
-    @Override public @NotNull ImmutableSeq<@NotNull Arg<? extends Term>> args() {
-      return ImmutableSeq.of(arg());
+    @Override public @NotNull Seq<@NotNull Arg<? extends Term>> args() {
+      return Seq.of(arg());
     }
   }
 
@@ -111,8 +110,8 @@ public sealed interface AppTerm extends Term {
     }
 
     @Override @Deprecated
-    public @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args() {
-      return argsBuf.view().collect(ImmutableSeq.factory());
+    public @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args() {
+      return argsBuf.view().collect(Seq.factory());
     }
 
     @Contract(" -> new") @Override public @NotNull Term fn() {
