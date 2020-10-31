@@ -48,7 +48,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
 
   @Override default Unit visitSigma(Expr.@NotNull SigmaExpr expr, P p) {
     visitParams(expr.params(), p);
-    return Unit.unit();
+    return expr.last().accept(this, p);
   }
 
   @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {

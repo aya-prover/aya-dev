@@ -268,6 +268,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     return new Expr.SigmaExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
+      visitExpr(ctx.expr()),
       false
     );
   }

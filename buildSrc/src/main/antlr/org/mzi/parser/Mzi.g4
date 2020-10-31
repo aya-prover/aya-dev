@@ -69,7 +69,7 @@ expr : atom argument*                                 # app
      | <assoc=right> expr TO expr                     # arr
      | <assoc=right> expr '.' NUMBER                  # proj
      | PI tele+ TO expr                               # pi
-     | SIGMA tele*                                    # sigma
+     | SIGMA tele+ '**' expr                          # sigma
      | LAMBDA tele+ (IMPLIES expr?)?                  # lam
      | MATCH matchArg (',' matchArg)* ('|' clause)+   # match
      ;

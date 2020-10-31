@@ -103,6 +103,7 @@ public sealed interface Expr {
   record SigmaExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Buffer<Param> params,
+    @NotNull Expr last,
     boolean co
   ) implements DTExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
