@@ -53,6 +53,8 @@ public class ParseTest {
 
   @Test
   public void successDecl() {
+    assertTrue(MziProducer.parseDecl("\\def a => 1") instanceof Decl.FnDecl);
+    assertTrue(MziProducer.parseDecl("\\data Unit") instanceof Decl.DataDecl);
     parseTo("\\def id {A : \\Set0} (a : A) : A => a", new Decl.FnDecl(
       SourcePos.NONE,
       EnumSet.noneOf(Modifier.class),

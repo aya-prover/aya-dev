@@ -65,4 +65,12 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     expr.type().accept(this, p);
     return Unit.unit();
   }
+
+  @Override default Unit visitLitInt(Expr.@NotNull LitIntExpr expr, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitLitString(Expr.@NotNull LitStringExpr expr, P p) {
+    return Unit.unit();
+  }
 }

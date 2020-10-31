@@ -81,4 +81,12 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     if (Objects.equals(e, expr.expr())) return expr;
     return new Expr.TypedExpr(expr.sourcePos(), e, expr.type());
   }
+
+  @Override default @NotNull Expr visitLitInt(Expr.@NotNull LitIntExpr expr, P p) {
+    return expr;
+  }
+
+  @Override default @NotNull Expr visitLitString(Expr.@NotNull LitStringExpr expr, P p) {
+    return expr;
+  }
 }

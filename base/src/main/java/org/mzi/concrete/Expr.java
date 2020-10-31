@@ -32,6 +32,8 @@ public sealed interface Expr {
     R visitTup(@NotNull TupExpr expr, P p);
     R visitProj(@NotNull ProjExpr expr, P p);
     R visitTyped(@NotNull TypedExpr expr, P p);
+    R visitLitInt(@NotNull LitIntExpr expr, P p);
+    R visitLitString(@NotNull LitStringExpr expr, P p);
   }
 
   /**
@@ -168,6 +170,27 @@ public sealed interface Expr {
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTyped(this, p);
+    }
+  }
+
+  /**
+   * @author kiva
+   */
+  record LitIntExpr(
+    @NotNull SourcePos sourcePos,
+    int integer
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLitInt(this, p);
+    }
+  }
+
+  record LitStringExpr(
+    @NotNull SourcePos sourcePos,
+    @NotNull String string
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLitString(this, p);
     }
   }
 }

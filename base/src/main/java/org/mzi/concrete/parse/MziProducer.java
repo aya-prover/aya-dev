@@ -144,7 +144,16 @@ public class MziProducer extends MziBaseVisitor<Object> {
     }
     var prop = ctx.PROP();
     if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
-    throw new UnsupportedOperationException();
+    if (ctx.LGOAL() != null) {
+      var fillingExpr = ctx.expr();
+      var filling = fillingExpr == null? null : visitExpr(fillingExpr);
+      return new Expr.HoleExpr(sourcePosOf(ctx), null, filling);
+    }
+    var number = ctx.NUMBER();
+    if (number != null) return new Expr.LitIntExpr(sourcePosOf(ctx), Integer.parseInt(number.getText()));
+    var string = ctx.STRING();
+    if (string != null) return new Expr.LitStringExpr(sourcePosOf(ctx), string.getText());
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   public int visitOptNumber(@NotNull String number) {
