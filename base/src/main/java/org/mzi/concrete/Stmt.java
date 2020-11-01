@@ -2,7 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
-import asia.kala.collection.immutable.ImmutableList;
+import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
@@ -17,8 +17,8 @@ public sealed interface Stmt permits Decl, Stmt.CmdStmt {
     @NotNull SourcePos sourcePos,
     @NotNull Cmd cmd,
     @NotNull String qualifiedModuleName,
-    @NotNull ImmutableList<@NotNull String> using,
-    @NotNull ImmutableList<@NotNull String> hiding
+    @NotNull ImmutableSeq<@NotNull String> using,
+    @NotNull ImmutableSeq<@NotNull String> hiding
   ) implements Stmt {
     /**
      * @author kiva

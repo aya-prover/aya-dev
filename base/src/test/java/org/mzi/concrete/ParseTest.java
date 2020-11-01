@@ -2,7 +2,6 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
-import asia.kala.collection.immutable.ImmutableList;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.mutable.Buffer;
 import org.intellij.lang.annotations.Language;
@@ -39,8 +38,8 @@ public class ParseTest {
         SourcePos.NONE,
         Stmt.CmdStmt.Cmd.Open,
         "Boy.Next.Door",
-        ImmutableList.of("door"),
-        ImmutableList.of("boy")
+        ImmutableSeq.of("door"),
+        ImmutableSeq.of("boy")
       ));
     });
   }

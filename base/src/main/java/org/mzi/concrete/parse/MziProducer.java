@@ -496,8 +496,8 @@ public class MziProducer extends MziBaseVisitor<Object> {
       sourcePosOf(ctx),
       cmd,
       visitModuleName(ctx.moduleName()),
-      using.toImmutableList(),
-      hiding.toImmutableList()
+      using.toImmutableSeq(),
+      hiding.toImmutableSeq()
     );
   }
 
