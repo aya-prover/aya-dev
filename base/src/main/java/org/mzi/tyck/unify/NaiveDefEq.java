@@ -24,7 +24,11 @@ public class NaiveDefEq extends DefEq {
       equations.reporter().report(new HoleAppWarn(lhs, expr));
       return false;
     }
-    if (lhs.solution().isDefined()) return compare(lhs.solution().get(), preRhs, type);
-    return preRhs instanceof AppTerm.HoleApp rhs && lhs.var() == rhs.var();
+    var solution = lhs.solution();
+    if (solution.isDefined()) return compare(solution.get(), preRhs, type);
+    if (preRhs instanceof AppTerm.HoleApp rhs) return rhs.args().isEmpty() && lhs.var() == rhs.var();
+    // TODO[ice]: check for recursive solution
+    solution.set(preRhs);
+    return true;
   }
 }

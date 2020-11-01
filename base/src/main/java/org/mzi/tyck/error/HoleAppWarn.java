@@ -15,7 +15,7 @@ import org.mzi.pretty.doc.Doc;
 public record HoleAppWarn(@NotNull AppTerm.HoleApp term, @NotNull Expr expr) implements TyckProblem, Problem.Warn {
   @Override @Contract(" -> new")
   public @NotNull Doc describe() {
-    return Doc.plain("Attempting to unify a hole applied with argument: `" + term.var() + "`," +
+    return Doc.plain("Attempting to unify a hole applied with argument: `" + term.var().name() + "`," +
       "this is not supported by the naive unifier. Please use pattern unifier instead.");
   }
 }
