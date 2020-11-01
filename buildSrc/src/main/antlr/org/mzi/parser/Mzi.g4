@@ -9,7 +9,7 @@ stmt : decl
      | cmd
      ;
 
-cmd : PUBLIC? (OPEN | IMPORT) moduleName useHide*;
+cmd : PUBLIC? (OPEN | OPEN? IMPORT) moduleName useHide*;
 useHide : (USING | HIDING) LPAREN ids ')';
 
 moduleName : ID ('.' ID)*;
@@ -20,6 +20,7 @@ decl : PRIVATE?
      ( fnDecl
      | structDecl
      | dataDecl
+     | moduleDecl
      );
 
 assoc : INFIX
@@ -64,6 +65,8 @@ dataCtor : COERCE? ID tele* (elim? LBRACE clause? ('|' clause)* '}')?;
 elim : '\\elim' ID (',' ID)*;
 
 dataCtorClause : '|' pattern IMPLIES dataCtor;
+
+moduleDecl : '\\module' ID LBRACE program '}';
 
 // expressions
 expr : atom argument*                                 # app
