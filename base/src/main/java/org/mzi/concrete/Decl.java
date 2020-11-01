@@ -75,6 +75,33 @@ public sealed interface Decl extends Stmt {
       this.ref = new DefVar<>(this, name);
     }
 
+    @Contract(pure = true) private DataDecl(
+      @NotNull SourcePos sourcePos,
+      @NotNull DefVar<DataDecl> ref,
+      @NotNull Buffer<Param> telescope,
+      @NotNull Expr result,
+      @NotNull DataBody body,
+      @NotNull Buffer<Stmt> abuseBlock
+    ) {
+      this.sourcePos = sourcePos;
+      this.ref = ref;
+      this.telescope = telescope;
+      this.result = result;
+      this.body = body;
+      this.abuseBlock = abuseBlock;
+    }
+
+    @Contract(value = "_, _, _, _, _, _ -> new", pure = true) public @NotNull DataDecl copy(
+      @NotNull SourcePos sourcePos,
+      @NotNull DefVar<DataDecl> ref,
+      @NotNull Buffer<Param> telescope,
+      @NotNull Expr result,
+      @NotNull DataBody body,
+      @NotNull Buffer<Stmt> abuseBlock
+    ) {
+      return new DataDecl(sourcePos, ref, telescope, result, body, abuseBlock);
+    }
+
     @Override
     public @NotNull DefVar<? extends Decl> ref() {
       return this.ref;
@@ -156,6 +183,38 @@ public sealed interface Decl extends Stmt {
       this.abuseBlock = abuseBlock;
     }
 
+    private FnDecl(
+      @NotNull SourcePos sourcePos,
+      @NotNull EnumSet<Modifier> modifiers,
+      @Nullable Assoc assoc,
+      @NotNull DefVar<FnDecl> ref,
+      @NotNull Buffer<Param> telescope,
+      @NotNull Expr result,
+      @NotNull Expr body,
+      @NotNull Buffer<Stmt> abuseBlock
+    ) {
+      this.sourcePos = sourcePos;
+      this.modifiers = modifiers;
+      this.assoc = assoc;
+      this.ref = ref;
+      this.telescope = telescope;
+      this.result = result;
+      this.body = body;
+      this.abuseBlock = abuseBlock;
+    }
+
+    @Contract(value = "_, _, _, _, _, _, _ -> new", pure = true) public @NotNull FnDecl copy(
+      @NotNull SourcePos sourcePos,
+      @NotNull EnumSet<Modifier> modifiers,
+      @Nullable Assoc assoc,
+      @NotNull Buffer<Param> telescope,
+      @NotNull Expr result,
+      @NotNull Expr body,
+      @NotNull Buffer<Stmt> abuseBlock
+    ) {
+      return new FnDecl(sourcePos, modifiers, assoc, ref, telescope, result, body, abuseBlock);
+    }
+
     public @NotNull SourcePos sourcePos() {
       return this.sourcePos;
     }
@@ -170,8 +229,7 @@ public sealed interface Decl extends Stmt {
 
     @Override public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      FnDecl fnDecl = (FnDecl) o;
+      if (!(o instanceof FnDecl fnDecl)) return false;
       return sourcePos.equals(fnDecl.sourcePos) &&
         modifiers.equals(fnDecl.modifiers) &&
         assoc == fnDecl.assoc &&
