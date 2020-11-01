@@ -146,7 +146,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @Nullable Term type) {
-    if (preRhs instanceof AppTerm.FnCall rhs && rhs.fnRef().def() == lhs.fnRef().def())
+    if (preRhs instanceof AppTerm.FnCall rhs && rhs.fnRef() == lhs.fnRef())
       if (visitLists(lhs.args().view().map(Arg::term), rhs.args().view().map(Arg::term)))
         return true;
     return compare(lhs.normalize(NormalizeMode.WHNF), preRhs, type);

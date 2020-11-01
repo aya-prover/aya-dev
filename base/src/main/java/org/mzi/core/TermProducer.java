@@ -46,6 +46,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public Term visitExpr(LispParser.ExprContext ctx) {
     var atom = ctx.atom();
     if (atom != null) return atom.accept(this);
@@ -55,7 +56,7 @@ public class TermProducer extends LispBaseVisitor<Term> {
       case "U" -> new UnivTerm(Sort.SET0);
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new AppTerm.FnCall(
-        DefVar.cast(FnDef.class, ((RefTerm) exprs.get(0).accept(this)).var()),
+        (DefVar<FnDef>) ((RefTerm) exprs.get(0).accept(this)).var(),
         exprs.subList(1, exprs.size())
           .stream()
           .map(c -> Arg.explicit(c.accept(this)))
