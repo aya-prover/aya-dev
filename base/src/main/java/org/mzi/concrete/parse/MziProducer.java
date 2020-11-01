@@ -10,6 +10,8 @@ import asia.kala.collection.mutable.Buffer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
@@ -39,15 +41,15 @@ public class MziProducer extends MziBaseVisitor<Object> {
     Use, Hide,
   }
 
-  public static @NotNull Expr parseExpr(@NotNull String code) {
+  public static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
     return new MziProducer().visitExpr(MziParsing.parser(code).expr());
   }
 
-  public static @NotNull Stmt parseStmt(@NotNull String code) {
+  public static @NotNull Stmt parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
     return new MziProducer().visitStmt(MziParsing.parser(code).stmt());
   }
 
-  public static @NotNull Decl parseDecl(@NotNull String code) {
+  public static @NotNull Decl parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
     return new MziProducer().visitDecl(MziParsing.parser(code).decl());
   }
 

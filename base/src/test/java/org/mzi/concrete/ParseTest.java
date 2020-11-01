@@ -5,6 +5,9 @@ package org.mzi.concrete;
 import asia.kala.collection.immutable.ImmutableList;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.mutable.Buffer;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.Global;
 import org.mzi.api.error.SourcePos;
@@ -131,15 +134,15 @@ public class ParseTest {
     });
   }
 
-  private void parseTo(String code, Stmt stmt) {
+  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Stmt stmt) {
     assertEquals(stmt, MziProducer.parseStmt(code));
   }
 
-  private void parseTo(String code, Expr expr) {
+  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Expr expr) {
     assertEquals(expr, MziProducer.parseExpr(code));
   }
 
-  private void parseTo(String code, Decl decl) {
+  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Decl decl) {
     assertEquals(decl, MziProducer.parseDecl(code));
   }
 }
