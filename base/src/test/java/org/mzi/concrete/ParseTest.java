@@ -41,6 +41,7 @@ public class ParseTest {
     parseCmd("\\import A.B \\using ()");
     parseTo("\\open Boy.Next.Door \\hiding (boy) \\using (door)", new Stmt.CmdStmt(
       SourcePos.NONE,
+      false,
       Stmt.CmdStmt.Cmd.Open,
       "Boy.Next.Door",
       ImmutableVector.of("door"),
@@ -73,8 +74,9 @@ public class ParseTest {
     assertTrue(MziProducer.parseDecl("\\data Unit \\abusing {}") instanceof Decl.DataDecl);
     assertTrue(MziProducer.parseDecl("\\data Unit : A \\abusing {}") instanceof Decl.DataDecl);
     assertTrue(MziProducer.parseDecl("\\data T {A : \\114-Type514} : A \\abusing {}") instanceof Decl.DataDecl);
-    parseTo("\\def id {A : \\114-Type514} (a : A) : A => a", new Decl.FnDecl(
+    parseTo("\\public \\def id {A : \\114-Type514} (a : A) : A => a", new Decl.FnDecl(
       SourcePos.NONE,
+      true,
       EnumSet.noneOf(Modifier.class),
       null,
       "id",
@@ -88,6 +90,7 @@ public class ParseTest {
     ));
     parseTo("\\data Nat | Z | S Nat", new Decl.DataDecl(
       SourcePos.NONE,
+      false,
       "Nat",
       Buffer.of(),
       new Expr.HoleExpr(SourcePos.NONE, null, null),

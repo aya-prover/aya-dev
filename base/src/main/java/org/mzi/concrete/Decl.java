@@ -77,6 +77,7 @@ public sealed interface Decl extends Stmt {
 
     @Contract(pure = true) private DataDecl(
       @NotNull SourcePos sourcePos,
+      boolean isPublic,
       @NotNull DefVar<DataDecl> ref,
       @NotNull Buffer<Param> telescope,
       @NotNull Expr result,
@@ -84,6 +85,7 @@ public sealed interface Decl extends Stmt {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
+      this.isPublic = isPublic;
       this.ref = ref;
       this.telescope = telescope;
       this.result = result;
@@ -91,19 +93,17 @@ public sealed interface Decl extends Stmt {
       this.abuseBlock = abuseBlock;
     }
 
-    @Contract(value = "_, _, _, _, _, _ -> new", pure = true) public @NotNull DataDecl copy(
-      @NotNull SourcePos sourcePos,
-      @NotNull DefVar<DataDecl> ref,
+    @Contract(value = "_, _, _, _ -> new", pure = true) public @NotNull DataDecl copy(
       @NotNull Buffer<Param> telescope,
       @NotNull Expr result,
       @NotNull DataBody body,
       @NotNull Buffer<Stmt> abuseBlock
     ) {
-      return new DataDecl(sourcePos, ref, telescope, result, body, abuseBlock);
+      return new DataDecl(sourcePos, isPublic, ref, telescope, result, body, abuseBlock);
     }
 
     @Override
-    public @NotNull DefVar<? extends Decl> ref() {
+    public @NotNull DefVar<DataDecl> ref() {
       return this.ref;
     }
 
@@ -119,8 +119,7 @@ public sealed interface Decl extends Stmt {
 
     @Override public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      DataDecl dataDecl = (DataDecl) o;
+      if (!(o instanceof DataDecl dataDecl)) return false;
       return sourcePos.equals(dataDecl.sourcePos) &&
         telescope.equals(dataDecl.telescope) &&
         result.equals(dataDecl.result) &&
@@ -185,6 +184,7 @@ public sealed interface Decl extends Stmt {
 
     private FnDecl(
       @NotNull SourcePos sourcePos,
+      boolean isPublic,
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Assoc assoc,
       @NotNull DefVar<FnDecl> ref,
@@ -194,6 +194,7 @@ public sealed interface Decl extends Stmt {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
+      this.isPublic = isPublic;
       this.modifiers = modifiers;
       this.assoc = assoc;
       this.ref = ref;
@@ -203,16 +204,13 @@ public sealed interface Decl extends Stmt {
       this.abuseBlock = abuseBlock;
     }
 
-    @Contract(value = "_, _, _, _, _, _, _ -> new", pure = true) public @NotNull FnDecl copy(
-      @NotNull SourcePos sourcePos,
-      @NotNull EnumSet<Modifier> modifiers,
-      @Nullable Assoc assoc,
+    @Contract(value = "_, _, _, _ -> new", pure = true) public @NotNull FnDecl copy(
       @NotNull Buffer<Param> telescope,
       @NotNull Expr result,
       @NotNull Expr body,
       @NotNull Buffer<Stmt> abuseBlock
     ) {
-      return new FnDecl(sourcePos, modifiers, assoc, ref, telescope, result, body, abuseBlock);
+      return new FnDecl(sourcePos, isPublic, modifiers, assoc, ref, telescope, result, body, abuseBlock);
     }
 
     public @NotNull SourcePos sourcePos() {
