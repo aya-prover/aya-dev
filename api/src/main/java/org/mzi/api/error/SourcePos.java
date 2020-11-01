@@ -2,6 +2,8 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.api.error;
 
+import org.mzi.api.Global;
+
 import java.util.Objects;
 
 /**
@@ -153,18 +155,28 @@ public record SourcePos(
     return diff;
   }
 
-  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass") @Override
-  public boolean equals(Object unused) {
-    // we always return true because we have mock tests
-    // and we don't want to check source pos manually
+  @Override public boolean equals(Object o) {
+    // we return true when in tests because we
+    // don't want to check source pos manually
     // as it is guaranteed to be correct by antlr.
-    return true;
+    if (Global.TEST) return true;
+
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SourcePos sourcePos = (SourcePos) o;
+    return tokenStartIndex == sourcePos.tokenStartIndex &&
+      tokenEndIndex == sourcePos.tokenEndIndex &&
+      startLine == sourcePos.startLine &&
+      startColumn == sourcePos.startColumn &&
+      endLine == sourcePos.endLine &&
+      endColumn == sourcePos.endColumn;
   }
 
   @Override
   public int hashCode() {
-    // the equals() always return true, so hashCode() should
+    // the equals() returns true in tests, so hashCode() should
     // be a constant according to JavaSE documentation.
-    return 0;
+    if (Global.TEST) return 0;
+    return Objects.hash(tokenStartIndex, tokenEndIndex, startLine, startColumn, endLine, endColumn);
   }
 }
