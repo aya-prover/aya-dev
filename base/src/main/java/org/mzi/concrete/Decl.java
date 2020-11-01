@@ -50,6 +50,7 @@ public sealed interface Decl extends Stmt {
    */
   final class DataDecl implements Decl {
     public final @NotNull SourcePos sourcePos;
+    public final boolean isPublic;
     public final @NotNull DefVar<DataDecl> ref;
     public final @NotNull Buffer<Param> telescope;
     public final @NotNull Expr result;
@@ -58,6 +59,7 @@ public sealed interface Decl extends Stmt {
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
+      boolean isPublic,
       @NotNull String name,
       @NotNull Buffer<Param> telescope,
       @NotNull Expr result,
@@ -65,6 +67,7 @@ public sealed interface Decl extends Stmt {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
+      this.isPublic = isPublic;
       this.telescope = telescope;
       this.result = result;
       this.body = body;
@@ -75,6 +78,11 @@ public sealed interface Decl extends Stmt {
     @Override
     public @NotNull DefVar<? extends Decl> ref() {
       return this.ref;
+    }
+
+    @Override
+    public boolean isPublic() {
+      return this.isPublic;
     }
 
     @Override
@@ -101,6 +109,7 @@ public sealed interface Decl extends Stmt {
     @Override public String toString() {
       return "DataDecl{" +
         "sourcePos=" + sourcePos +
+        ", isPublic=" + isPublic +
         ", telescope=" + telescope +
         ", result=" + result +
         ", body=" + body +
@@ -116,6 +125,7 @@ public sealed interface Decl extends Stmt {
    */
   final class FnDecl implements Decl {
     public final @NotNull SourcePos sourcePos;
+    public final boolean isPublic;
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
@@ -126,6 +136,7 @@ public sealed interface Decl extends Stmt {
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
+      boolean isPublic,
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Assoc assoc,
       @NotNull String name,
@@ -135,6 +146,7 @@ public sealed interface Decl extends Stmt {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
+      this.isPublic = isPublic;
       this.modifiers = modifiers;
       this.assoc = assoc;
       this.ref = new DefVar<>(this, name);
@@ -150,6 +162,10 @@ public sealed interface Decl extends Stmt {
 
     public @NotNull DefVar<FnDecl> ref() {
       return this.ref;
+    }
+
+    public boolean isPublic() {
+      return this.isPublic;
     }
 
     @Override public boolean equals(Object o) {

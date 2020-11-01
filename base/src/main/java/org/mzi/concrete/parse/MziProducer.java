@@ -50,31 +50,30 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   public static @NotNull Decl parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
-    return new MziProducer().visitDecl(MziParsing.parser(code).decl());
+    return new MziProducer().visitDecl(MziParsing.parser(code).decl(), false);
   }
 
   @Override
   public @NotNull Stmt visitStmt(MziParser.StmtContext ctx) {
+    var isPublic = ctx.PUBLIC() != null;
     var cmd = ctx.cmd();
-    if (cmd != null) return visitCmd(cmd);
+    if (cmd != null) return visitCmd(cmd, isPublic);
     var decl = ctx.decl();
-    if (decl != null) return visitDecl(decl);
+    if (decl != null) return visitDecl(decl, isPublic);
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  @Override
-  public @NotNull Decl visitDecl(MziParser.DeclContext ctx) {
+  public @NotNull Decl visitDecl(MziParser.DeclContext ctx, boolean isPublic) {
     var fnDecl = ctx.fnDecl();
-    if (fnDecl != null) return visitFnDecl(fnDecl);
+    if (fnDecl != null) return visitFnDecl(fnDecl, isPublic);
     var dataDecl = ctx.dataDecl();
-    if (dataDecl != null) return visitDataDecl(dataDecl);
+    if (dataDecl != null) return visitDataDecl(dataDecl, isPublic);
     var structDecl = ctx.structDecl();
-    if (structDecl != null) return visitStructDecl(structDecl);
+    if (structDecl != null) return visitStructDecl(structDecl, isPublic);
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  @Override
-  public Decl.@NotNull FnDecl visitFnDecl(MziParser.FnDeclContext ctx) {
+  public Decl.@NotNull FnDecl visitFnDecl(MziParser.FnDeclContext ctx, boolean isPrivate) {
     var modifiers = ctx.fnModifiers().stream()
       .map(this::visitFnModifiers)
       .distinct()
@@ -94,6 +93,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     return new Decl.FnDecl(
       sourcePosOf(ctx),
+      isPrivate,
       modifiers,
       assoc,
       ctx.ID().getText(),
@@ -309,8 +309,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx) {
+  public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx, boolean isPrivate) {
     var typeCtx = ctx.type();
     var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
@@ -320,6 +319,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     return new Decl.DataDecl(
       sourcePosOf(ctx),
+      isPrivate,
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
       type,
@@ -467,8 +467,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
       .collect(Buffer.factory());
   }
 
-  @Override
-  public @NotNull Decl visitStructDecl(MziParser.StructDeclContext ctx) {
+  public @NotNull Decl visitStructDecl(MziParser.StructDeclContext ctx, boolean isPrivate) {
     // TODO: visit struct decl
     throw new UnsupportedOperationException();
   }
@@ -478,8 +477,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     return visitExpr(ctx.expr());
   }
 
-  @Override
-  public @NotNull Stmt visitCmd(MziParser.CmdContext ctx) {
+  public @NotNull Stmt visitCmd(MziParser.CmdContext ctx, boolean isPublic) {
     var cmd = ctx.OPEN() != null ? Cmd.Open : Cmd.Import;
     var using = Buffer.<String>of();
     var hiding = Buffer.<String>of();
@@ -494,6 +492,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     return new Stmt.CmdStmt(
       sourcePosOf(ctx),
+      isPublic,
       cmd,
       visitModuleName(ctx.moduleName()),
       using.toImmutableList(),

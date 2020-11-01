@@ -5,9 +5,10 @@ grammar Mzi;
 program : stmt* EOF;
 
 // statements
-stmt : decl
+stmt : PUBLIC?
+     ( decl
      | cmd
-     ;
+     );
 
 cmd : (OPEN | IMPORT) moduleName useHide*;
 useHide : (USING | HIDING) LPAREN ids ')';
@@ -149,6 +150,7 @@ PROP : '\\Prop';
 AS : '\\as';
 OPEN : '\\open';
 IMPORT : '\\import';
+PUBLIC : '\\public';
 USING : '\\using';
 HIDING : '\\hiding';
 COERCE : '\\coerce';

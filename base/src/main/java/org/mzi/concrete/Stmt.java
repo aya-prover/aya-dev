@@ -13,8 +13,11 @@ import org.mzi.api.error.SourcePos;
 public sealed interface Stmt permits Decl, Stmt.CmdStmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
+  @Contract(pure = true) boolean isPublic();
+
   record CmdStmt(
     @NotNull SourcePos sourcePos,
+    boolean isPublic,
     @NotNull Cmd cmd,
     @NotNull String qualifiedModuleName,
     @NotNull ImmutableList<@NotNull String> using,
