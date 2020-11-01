@@ -3,6 +3,7 @@ module org.mzi.api {
 
   requires transitive asia.kala.common;
 
+  exports org.mzi.api;
   exports org.mzi.api.core.def;
   exports org.mzi.api.core.term;
   exports org.mzi.api.error;

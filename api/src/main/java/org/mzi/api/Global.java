@@ -9,5 +9,14 @@ public final class Global {
   /**
    * Indicate that whether we are in tests.
    */
-  public static final boolean TEST = false;
+  public static boolean TEST = false;
+
+  public static void runInTestMode(Runnable r) {
+    Global.TEST = true;
+    try {
+      r.run();
+    } finally {
+      Global.TEST = false;
+    }
+  }
 }
