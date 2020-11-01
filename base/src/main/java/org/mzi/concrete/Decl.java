@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
-import org.mzi.generic.Assoc;
+import org.mzi.api.util.Assoc;
 import org.mzi.generic.Modifier;
 import org.mzi.ref.DefVar;
 
