@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.util.Assoc;
 import org.mzi.generic.Modifier;
-import org.mzi.ref.DefVar;
+import org.mzi.api.ref.DefVar;
 
 import java.util.EnumSet;
 import java.util.Objects;

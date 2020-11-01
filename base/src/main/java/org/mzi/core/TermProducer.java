@@ -15,7 +15,7 @@ import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispParser;
-import org.mzi.ref.DefVar;
+import org.mzi.api.ref.DefVar;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.Sort;
 

@@ -13,7 +13,7 @@ import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.generic.Arg;
-import org.mzi.ref.DefVar;
+import org.mzi.api.ref.DefVar;
 import org.mzi.util.Decision;
 
 import java.util.HashMap;

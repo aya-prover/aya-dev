@@ -4,7 +4,7 @@ package org.mzi.core.def;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.core.def.CoreDef;
-import org.mzi.ref.DefVar;
+import org.mzi.api.ref.DefVar;
 
 /**
  * @author ice1000
