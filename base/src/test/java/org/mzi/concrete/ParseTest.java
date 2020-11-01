@@ -26,15 +26,15 @@ public class ParseTest {
   @Test
   public void successCmd() {
     Global.runInTestMode(() -> {
-      assertTrue(MziProducer.parseStmt("\\open A") instanceof Stmt.CmdStmt);
-      assertTrue(MziProducer.parseStmt("\\open A.B") instanceof Stmt.CmdStmt);
-      assertTrue(MziProducer.parseStmt("\\open A \\using ()") instanceof Stmt.CmdStmt);
-      assertTrue(MziProducer.parseStmt("\\open A \\using () \\hiding ()") instanceof Stmt.CmdStmt);
-      assertTrue(MziProducer.parseStmt("\\open A \\hiding ()") instanceof Stmt.CmdStmt);
-      assertTrue(MziProducer.parseStmt("\\open A \\hiding () \\using ()") instanceof Stmt.CmdStmt);
-      assertTrue(MziProducer.parseStmt("\\import A") instanceof Stmt.CmdStmt);
-      assertTrue(MziProducer.parseStmt("\\import A.B") instanceof Stmt.CmdStmt);
-      assertTrue(MziProducer.parseStmt("\\import A.B \\using ()") instanceof Stmt.CmdStmt);
+      parseCmd("\\open A");
+      parseCmd("\\open A.B");
+      parseCmd("\\open A \\using ()");
+      parseCmd("\\open A \\using () \\hiding ()");
+      parseCmd("\\open A \\hiding ()");
+      parseCmd("\\open A \\hiding () \\using ()");
+      parseCmd("\\import A");
+      parseCmd("\\import A.B");
+      parseCmd("\\import A.B \\using ()");
       parseTo("\\open Boy.Next.Door \\hiding (boy) \\using (door)", new Stmt.CmdStmt(
         SourcePos.NONE,
         Stmt.CmdStmt.Cmd.Open,
@@ -49,16 +49,16 @@ public class ParseTest {
   public void successLiteral() {
     Global.runInTestMode(() -> {
       assertTrue(MziProducer.parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
-      assertTrue(MziProducer.parseExpr("\\Prop") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\Set") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\Set0") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\Set233") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\2-Type") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\2-Type2") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\114-Type514") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\hType2") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\h-Type2") instanceof Expr.UnivExpr);
-      assertTrue(MziProducer.parseExpr("\\oo-Type2") instanceof Expr.UnivExpr);
+      parseUniv("\\Prop");
+      parseUniv("\\Set");
+      parseUniv("\\Set0");
+      parseUniv("\\Set233");
+      parseUniv("\\2-Type");
+      parseUniv("\\2-Type2");
+      parseUniv("\\114-Type514");
+      parseUniv("\\hType2");
+      parseUniv("\\h-Type2");
+      parseUniv("\\oo-Type2");
     });
   }
 
@@ -134,15 +134,15 @@ public class ParseTest {
     });
   }
 
-  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Stmt stmt) {
-    assertEquals(stmt, MziProducer.parseStmt(code));
+  private void parseCmd(@Language("TEXT") String code) {
+    assertTrue(MziProducer.parseStmt(code) instanceof Stmt.CmdStmt);
   }
 
-  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Expr expr) {
-    assertEquals(expr, MziProducer.parseExpr(code));
+  private void parseUniv(@Language("TEXT") String code) {
+    assertTrue(MziProducer.parseExpr(code) instanceof Expr.UnivExpr);
   }
 
-  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Decl decl) {
-    assertEquals(decl, MziProducer.parseDecl(code));
+  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Object obj) {
+    assertEquals(obj, MziProducer.parseStmt(code));
   }
 }
