@@ -5,22 +5,22 @@ grammar Mzi;
 program : stmt* EOF;
 
 // statements
-stmt : PUBLIC?
-     ( decl
+stmt : decl
      | cmd
-     );
+     ;
 
-cmd : (OPEN | IMPORT) moduleName useHide*;
+cmd : PUBLIC? (OPEN | IMPORT) moduleName useHide*;
 useHide : (USING | HIDING) LPAREN ids ')';
 
 moduleName : ID ('.' ID)*;
 
 // declarations
 
-decl : fnDecl
+decl : PRIVATE?
+     ( fnDecl
      | structDecl
      | dataDecl
-     ;
+     );
 
 assoc : INFIX
       | INFIXL
@@ -151,6 +151,7 @@ AS : '\\as';
 OPEN : '\\open';
 IMPORT : '\\import';
 PUBLIC : '\\public';
+PRIVATE : '\\private';
 USING : '\\using';
 HIDING : '\\hiding';
 COERCE : '\\coerce';
