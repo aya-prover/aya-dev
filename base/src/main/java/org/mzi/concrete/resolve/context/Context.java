@@ -9,14 +9,19 @@ import org.mzi.api.ref.Var;
 
 /**
  * @author re-xyr
+ * @implNote subContext and superContext are NOT dual concepts. subContexts are local or imported modules. superContext is the "parent" lexical scope.
  */
 public interface Context {
-  @Nullable Var getLocal(String name);
+  @Nullable Var getLocal(String name, boolean withPrivate);
+
+  default @Nullable Var getLocal(String name) {
+    return getLocal(name, true);
+  }
 
   default @Nullable Var getLocal(Seq<String> path) {
     assert path.size() > 0; // should not happen
     return Option.of(getSubContextLocal(path.view().dropLast(1)))
-      .flatMap(ctx -> Option.of(ctx.getLocal(path.last())))
+      .flatMap(ctx -> Option.of(ctx.getLocal(path.last(), path.size() == 1)))
       .getOrNull();
   }
 
@@ -38,23 +43,31 @@ public interface Context {
           .getOrNull());
   }
 
-  void unsafePutLocal(String name, Var ref);
+  void unsafePutLocal(String name, Var ref, boolean isPublic);
 
-  default void putLocal(String name, Var ref) {
+  default void putLocal(String name, Var ref, boolean isPublic) {
     // TODO[xyr]: should report instead of throw
     if (containsLocal(name)) throw new IllegalStateException("Trying to add duplicate ref `" + name + "` to a context");
-    unsafePutLocal(name, ref);
+    unsafePutLocal(name, ref, isPublic);
   }
 
   boolean containsSubContextLocal(String name);
 
-  @Nullable Context getSubContextLocal(String name);
+  @Nullable Context getSubContextLocal(String name, boolean withPrivate);
+
+  default @Nullable Context getSubContextLocal(String name) {
+    return getSubContextLocal(name, true);
+  }
+
+  default @Nullable Context getSubContextLocal(Seq<String> path, boolean withPrivate) {
+    if (path.size() == 0) return this;
+    return Option.of(getSubContextLocal(path.first(), withPrivate))
+      .flatMap(ctx -> Option.of(ctx.getSubContextLocal(path.view().drop(1), false)))
+      .getOrNull();
+  }
 
   default @Nullable Context getSubContextLocal(Seq<String> path) {
-    if (path.size() == 0) return this;
-    return Option.of(getSubContextLocal(path.first()))
-      .flatMap(ctx -> Option.of(ctx.getSubContextLocal(path.view().drop(1))))
-      .getOrNull();
+    return getSubContextLocal(path, true);
   }
 
   default @Nullable Context getSubContext(String name) {
@@ -71,17 +84,12 @@ public interface Context {
       .getOrNull();
   }
 
-  void unsafePutSubContextLocal(String name, Context ctx);
+  void unsafePutSubContextLocal(String name, Context ctx, boolean isPublic);
 
-  default void putSubContextLocal(String name, Context ctx) {
+  default void putSubContextLocal(String name, Context ctx, boolean isPublic) {
     // TODO[xyr]: should report instead of throw
     if (containsSubContextLocal(name)) throw new IllegalStateException("Trying to add duplicate sub context `" + name + "` to a context");
-    unsafePutSubContextLocal(name, ctx);
-  }
-
-  default void linkSubContext(String name, Context ctx) {
-    ctx.setSuperContext(this);
-    putSubContextLocal(name, ctx);
+    unsafePutSubContextLocal(name, ctx, isPublic);
   }
 
   @Nullable Context getSuperContext();

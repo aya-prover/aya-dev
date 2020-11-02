@@ -24,7 +24,7 @@ public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
 
   @Override public @NotNull Buffer<Param> visitParams(@NotNull Buffer<Param> params, Context ctx) {
     return params.view().map(param -> {
-      param.vars().forEach(var -> ctx.putLocal(var.name(), var));
+      param.vars().forEach(var -> ctx.putLocal(var.name(), var, true));
       return new Param(param.sourcePos(), param.vars(), param.type().accept(this, ctx), param.explicit());
     }).collect(Buffer.factory());
   }
