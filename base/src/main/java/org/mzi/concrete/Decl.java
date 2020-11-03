@@ -50,7 +50,7 @@ public sealed interface Decl extends Stmt {
    */
   final class DataDecl implements Decl {
     public final @NotNull SourcePos sourcePos;
-    public final boolean isPublic;
+    public final @NotNull Accessibility accessibility;
     public final @NotNull DefVar<DataDecl> ref;
     public final @NotNull Buffer<Param> telescope;
     public final @NotNull Expr result;
@@ -59,7 +59,7 @@ public sealed interface Decl extends Stmt {
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
-      boolean isPublic,
+      @NotNull Accessibility accessibility,
       @NotNull String name,
       @NotNull Buffer<Param> telescope,
       @NotNull Expr result,
@@ -67,7 +67,7 @@ public sealed interface Decl extends Stmt {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
-      this.isPublic = isPublic;
+      this.accessibility = accessibility;
       this.telescope = telescope;
       this.result = result;
       this.body = body;
@@ -75,31 +75,9 @@ public sealed interface Decl extends Stmt {
       this.ref = new DefVar<>(this, name);
     }
 
-    @Contract(pure = true) private DataDecl(
-      @NotNull SourcePos sourcePos,
-      boolean isPublic,
-      @NotNull DefVar<DataDecl> ref,
-      @NotNull Buffer<Param> telescope,
-      @NotNull Expr result,
-      @NotNull DataBody body,
-      @NotNull Buffer<Stmt> abuseBlock
-    ) {
-      this.sourcePos = sourcePos;
-      this.isPublic = isPublic;
-      this.ref = ref;
-      this.telescope = telescope;
-      this.result = result;
-      this.body = body;
-      this.abuseBlock = abuseBlock;
-    }
-
-    @Contract(value = "_, _, _, _ -> new", pure = true) public @NotNull DataDecl copy(
-      @NotNull Buffer<Param> telescope,
-      @NotNull Expr result,
-      @NotNull DataBody body,
-      @NotNull Buffer<Stmt> abuseBlock
-    ) {
-      return new DataDecl(sourcePos, isPublic, ref, telescope, result, body, abuseBlock);
+    @Override
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitDataDecl(this, p);
     }
 
     @Override
@@ -108,8 +86,8 @@ public sealed interface Decl extends Stmt {
     }
 
     @Override
-    public boolean isPublic() {
-      return this.isPublic;
+    public @NotNull Accessibility accessibility() {
+      return this.accessibility;
     }
 
     @Override
@@ -135,7 +113,7 @@ public sealed interface Decl extends Stmt {
     @Override public String toString() {
       return "DataDecl{" +
         "sourcePos=" + sourcePos +
-        ", isPublic=" + isPublic +
+        ", accessibility=" + accessibility +
         ", telescope=" + telescope +
         ", result=" + result +
         ", body=" + body +
@@ -151,7 +129,7 @@ public sealed interface Decl extends Stmt {
    */
   final class FnDecl implements Decl {
     public final @NotNull SourcePos sourcePos;
-    public final boolean isPublic;
+    public final @NotNull Accessibility accessibility;
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
@@ -162,7 +140,7 @@ public sealed interface Decl extends Stmt {
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
-      boolean isPublic,
+      @NotNull Accessibility accessibility,
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Assoc assoc,
       @NotNull String name,
@@ -172,7 +150,7 @@ public sealed interface Decl extends Stmt {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
-      this.isPublic = isPublic;
+      this.accessibility = accessibility;
       this.modifiers = modifiers;
       this.assoc = assoc;
       this.ref = new DefVar<>(this, name);
@@ -182,35 +160,9 @@ public sealed interface Decl extends Stmt {
       this.abuseBlock = abuseBlock;
     }
 
-    private FnDecl(
-      @NotNull SourcePos sourcePos,
-      boolean isPublic,
-      @NotNull EnumSet<Modifier> modifiers,
-      @Nullable Assoc assoc,
-      @NotNull DefVar<FnDecl> ref,
-      @NotNull Buffer<Param> telescope,
-      @NotNull Expr result,
-      @NotNull Expr body,
-      @NotNull Buffer<Stmt> abuseBlock
-    ) {
-      this.sourcePos = sourcePos;
-      this.isPublic = isPublic;
-      this.modifiers = modifiers;
-      this.assoc = assoc;
-      this.ref = ref;
-      this.telescope = telescope;
-      this.result = result;
-      this.body = body;
-      this.abuseBlock = abuseBlock;
-    }
-
-    @Contract(value = "_, _, _, _ -> new", pure = true) public @NotNull FnDecl copy(
-      @NotNull Buffer<Param> telescope,
-      @NotNull Expr result,
-      @NotNull Expr body,
-      @NotNull Buffer<Stmt> abuseBlock
-    ) {
-      return new FnDecl(sourcePos, isPublic, modifiers, assoc, ref, telescope, result, body, abuseBlock);
+    @Override
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitFnDecl(this, p);
     }
 
     public @NotNull SourcePos sourcePos() {
@@ -221,9 +173,7 @@ public sealed interface Decl extends Stmt {
       return this.ref;
     }
 
-    public boolean isPublic() {
-      return this.isPublic;
-    }
+    public @NotNull Accessibility accessibility() { return this.accessibility; }
 
     @Override public boolean equals(Object o) {
       if (this == o) return true;
@@ -245,6 +195,7 @@ public sealed interface Decl extends Stmt {
     @Override public String toString() {
       return "FnDecl{" +
         "sourcePos=" + sourcePos +
+        ", accessibility=" + accessibility +
         ", modifiers=" + modifiers +
         ", assoc=" + assoc +
         ", telescope=" + telescope +

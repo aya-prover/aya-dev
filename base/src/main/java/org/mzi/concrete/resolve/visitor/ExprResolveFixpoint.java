@@ -7,6 +7,7 @@ import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
+import org.mzi.concrete.Stmt;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.concrete.visitor.ExprFixpoint;
@@ -24,7 +25,7 @@ public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
 
   @Override public @NotNull Buffer<Param> visitParams(@NotNull Buffer<Param> params, Context ctx) {
     return params.view().map(param -> {
-      param.vars().forEach(var -> ctx.putLocal(var.name(), var, true));
+      param.vars().forEach(var -> ctx.putLocal(var.name(), var, Stmt.Accessibility.Public));
       return new Param(param.sourcePos(), param.vars(), param.type().accept(this, ctx), param.explicit());
     }).collect(Buffer.factory());
   }

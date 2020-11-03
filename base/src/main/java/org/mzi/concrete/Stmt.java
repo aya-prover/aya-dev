@@ -13,22 +13,58 @@ import org.mzi.api.error.SourcePos;
 public sealed interface Stmt permits Decl, Stmt.CmdStmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
-  @Contract(pure = true) boolean isPublic();
+  @Contract(pure = true) @NotNull Accessibility accessibility();
+
+  /**
+   * @author re-xyr
+   */
+  interface Visitor<P, R> {
+    R visitCmd(@NotNull CmdStmt cmd, P p);
+    R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
+    R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
+  }
+
+  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+
+  /**
+   * @author re-xyr
+   */
+  enum Accessibility {
+    Private,
+    Public,
+  }
 
   record CmdStmt(
     @NotNull SourcePos sourcePos,
-    boolean isPublic,
+    @NotNull Accessibility accessibility,
     @NotNull Cmd cmd,
     @NotNull String qualifiedModuleName,
-    @NotNull ImmutableSeq<@NotNull String> using,
-    @NotNull ImmutableSeq<@NotNull String> hiding
+    @NotNull ImmutableSeq<@NotNull String> useHideList,
+    @NotNull Strategy strategy
   ) implements Stmt {
+    @Override
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitCmd(this, p);
+    }
+
+    public ImmutableSeq<String> modulePath() {
+      return ImmutableSeq.from(qualifiedModuleName().split("\\."));
+    }
+
     /**
      * @author kiva
      */
     public enum Cmd {
       Open,
       Import,
+    }
+
+    /**
+     * @author re-xyr
+     */
+    public enum Strategy {
+      Using,
+      Hiding,
     }
   }
 }

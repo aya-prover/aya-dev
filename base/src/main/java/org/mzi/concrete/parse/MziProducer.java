@@ -37,10 +37,6 @@ import java.util.stream.Stream;
  * @author ice1000, kiva
  */
 public class MziProducer extends MziBaseVisitor<Object> {
-  public enum UseHide {
-    Use, Hide,
-  }
-
   public static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
     return new MziProducer().visitExpr(MziParsing.parser(code).expr());
   }
@@ -64,17 +60,17 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public @NotNull Decl visitDecl(MziParser.DeclContext ctx) {
-    var isPublic = ctx.PRIVATE() == null;
+    var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
-    if (fnDecl != null) return visitFnDecl(fnDecl, isPublic);
+    if (fnDecl != null) return visitFnDecl(fnDecl, accessibility);
     var dataDecl = ctx.dataDecl();
-    if (dataDecl != null) return visitDataDecl(dataDecl, isPublic);
+    if (dataDecl != null) return visitDataDecl(dataDecl, accessibility);
     var structDecl = ctx.structDecl();
-    if (structDecl != null) return visitStructDecl(structDecl, isPublic);
+    if (structDecl != null) return visitStructDecl(structDecl, accessibility);
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  public Decl.@NotNull FnDecl visitFnDecl(MziParser.FnDeclContext ctx, boolean isPublic) {
+  public Decl.@NotNull FnDecl visitFnDecl(MziParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
     var modifiers = ctx.fnModifiers().stream()
       .map(this::visitFnModifiers)
       .distinct()
@@ -94,7 +90,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     return new Decl.FnDecl(
       sourcePosOf(ctx),
-      isPublic,
+      accessibility,
       modifiers,
       assoc,
       ctx.ID().getText(),
@@ -310,7 +306,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx, boolean isPublic) {
+  public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var typeCtx = ctx.type();
     var type = typeCtx == null
       ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
@@ -320,7 +316,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
     return new Decl.DataDecl(
       sourcePosOf(ctx),
-      isPublic,
+      accessibility,
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
       type,
@@ -468,7 +464,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
       .collect(Buffer.factory());
   }
 
-  public @NotNull Decl visitStructDecl(MziParser.StructDeclContext ctx, boolean isPublic) {
+  public @NotNull Decl visitStructDecl(MziParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     // TODO: visit struct decl
     throw new UnsupportedOperationException();
   }
@@ -480,32 +476,24 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public @NotNull Stmt visitCmd(MziParser.CmdContext ctx) {
-    var isPublic = ctx.PUBLIC() != null;
+    var accessibility = ctx.PUBLIC() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var cmd = ctx.OPEN() != null ? Cmd.Open : Cmd.Import;
-    var using = Buffer.<String>of();
-    var hiding = Buffer.<String>of();
-
-    for (var useHind : ctx.useHide()) {
-      var useOrHide = visitUseHide(useHind);
-      (switch (useOrHide._1) {
-        case Use -> using;
-        case Hide -> hiding;
-      }).appendAll(useOrHide._2);
-    }
+    var useHide = visitUseHide(ctx.useHide());
 
     return new Stmt.CmdStmt(
       sourcePosOf(ctx),
-      isPublic,
+      accessibility,
       cmd,
       visitModuleName(ctx.moduleName()),
-      using.toImmutableSeq(),
-      hiding.toImmutableSeq()
+      useHide._2.toImmutableSeq(),
+      useHide._1
     );
   }
 
   @Override
-  public @NotNull Tuple2<@NotNull UseHide, @NotNull Buffer<String>> visitUseHide(MziParser.UseHideContext ctx) {
-    var type = ctx.USING() != null ? UseHide.Use : UseHide.Hide;
+  public @NotNull Tuple2<Stmt.CmdStmt.@NotNull Strategy, @NotNull Buffer<String>> visitUseHide(MziParser.UseHideContext ctx) {
+    if (ctx == null) return Tuple.of(Stmt.CmdStmt.Strategy.Hiding, Buffer.of());
+    var type = ctx.USING() != null ? Stmt.CmdStmt.Strategy.Using : Stmt.CmdStmt.Strategy.Hiding;
     return Tuple.of(type, visitIds(ctx.ids()).collect(Buffer.factory()));
   }
 

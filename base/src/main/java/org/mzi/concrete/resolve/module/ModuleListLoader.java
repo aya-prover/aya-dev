@@ -11,14 +11,14 @@ import org.mzi.concrete.resolve.context.Context;
  * @author re-xyr
  */
 public class ModuleListLoader implements ModuleLoader {
-  ImmutableSeq<ModuleLoader> loaders;
+  @NotNull ImmutableSeq<@NotNull ModuleLoader> loaders;
 
-  public ModuleListLoader(ImmutableSeq<ModuleLoader> loaders) {
+  public ModuleListLoader(@NotNull ImmutableSeq<@NotNull ModuleLoader> loaders) {
     this.loaders = loaders;
   }
 
   @Override
-  public @Nullable Context load(@NotNull ImmutableSeq<String> path) {
+  public @Nullable Context load(@NotNull ImmutableSeq<@NotNull String> path) {
     for (var loader : loaders) {
       var mod = loader.load(path);
       if (mod != null) return mod;

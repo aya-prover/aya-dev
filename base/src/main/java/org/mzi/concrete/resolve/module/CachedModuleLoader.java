@@ -3,6 +3,7 @@
 package org.mzi.concrete.resolve.module;
 
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.collection.mutable.MutableHashMap;
 import asia.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,10 +13,10 @@ import org.mzi.concrete.resolve.context.Context;
  * @author re-xyr
  */
 public class CachedModuleLoader implements ModuleLoader {
-  MutableMap<String, Context> cache;
-  ModuleLoader loader;
+  @NotNull MutableMap<@NotNull String, Context> cache = new MutableHashMap<>();
+  @NotNull ModuleLoader loader;
 
-  CachedModuleLoader(ModuleLoader loader) {
+  CachedModuleLoader(@NotNull ModuleLoader loader) {
     this.loader = loader;
   }
 
