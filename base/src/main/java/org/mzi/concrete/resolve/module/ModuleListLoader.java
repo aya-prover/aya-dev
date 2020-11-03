@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.concrete.resolve.context.Context;
 
+/**
+ * @author re-xyr
+ */
 public class ModuleListLoader implements ModuleLoader {
   ImmutableSeq<ModuleLoader> loaders;
 

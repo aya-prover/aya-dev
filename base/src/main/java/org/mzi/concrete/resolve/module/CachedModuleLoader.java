@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.concrete.resolve.context.Context;
 
+/**
+ * @author re-xyr
+ */
 public class CachedModuleLoader implements ModuleLoader {
   MutableMap<String, Context> cache;
   ModuleLoader loader;
