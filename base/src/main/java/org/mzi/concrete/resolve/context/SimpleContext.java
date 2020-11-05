@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Stmt;
 
+import java.util.function.BiConsumer;
+
 /**
  * @author re-xyr
  */
@@ -26,6 +28,11 @@ public final class SimpleContext implements Context {
 
   @Override public boolean containsLocal(@NotNull String name) {
     return variables.containsKey(name);
+  }
+
+  @Override
+  public void forEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f) {
+    variables.forEach(f);
   }
 
   @Override public void unsafePutLocal(@NotNull String name, @NotNull Var ref, Stmt.@NotNull Accessibility accessibility) {

@@ -485,16 +485,15 @@ public class MziProducer extends MziBaseVisitor<Object> {
       accessibility,
       cmd,
       visitModuleName(ctx.moduleName()),
-      useHide._2.toImmutableSeq(),
-      useHide._1
+      useHide
     );
   }
 
   @Override
-  public @NotNull Tuple2<Stmt.CmdStmt.@NotNull Strategy, @NotNull Buffer<String>> visitUseHide(MziParser.UseHideContext ctx) {
-    if (ctx == null) return Tuple.of(Stmt.CmdStmt.Strategy.Hiding, Buffer.of());
-    var type = ctx.USING() != null ? Stmt.CmdStmt.Strategy.Using : Stmt.CmdStmt.Strategy.Hiding;
-    return Tuple.of(type, visitIds(ctx.ids()).collect(Buffer.factory()));
+  public @NotNull Stmt.CmdStmt.UseHide visitUseHide(MziParser.UseHideContext ctx) {
+    if (ctx == null) return new Stmt.CmdStmt.UseHide(ImmutableSeq.empty(), Stmt.CmdStmt.UseHide.Strategy.Hiding);
+    var type = ctx.USING() != null ? Stmt.CmdStmt.UseHide.Strategy.Using : Stmt.CmdStmt.UseHide.Strategy.Hiding;
+    return new Stmt.CmdStmt.UseHide(visitIds(ctx.ids()).collect(ImmutableSeq.factory()), type);
   }
 
   @Override
@@ -503,10 +502,10 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull String visitModuleName(MziParser.ModuleNameContext ctx) {
+  public @NotNull ImmutableSeq<@NotNull String> visitModuleName(MziParser.ModuleNameContext ctx) {
     return ctx.ID().stream()
       .map(ParseTree::getText)
-      .collect(Collectors.joining("."));
+      .collect(ImmutableSeq.factory());
   }
 
   @Override

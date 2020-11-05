@@ -41,9 +41,8 @@ public class ParseTest {
       SourcePos.NONE,
       Stmt.Accessibility.Private,
       Stmt.CmdStmt.Cmd.Open,
-      "Boy.Next.Door",
-      ImmutableVector.of("door"),
-      Stmt.CmdStmt.Strategy.Using
+      ImmutableSeq.of("Boy", "Next", "Door"),
+      new Stmt.CmdStmt.UseHide(ImmutableVector.of("door"), Stmt.CmdStmt.UseHide.Strategy.Using)
     ));
   }
 

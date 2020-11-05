@@ -2,12 +2,15 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.context;
 
+import asia.kala.Tuple2;
 import asia.kala.collection.Seq;
 import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Stmt;
+
+import java.util.function.BiConsumer;
 
 /**
  * @author re-xyr
@@ -29,12 +32,18 @@ public interface Context {
 
   boolean containsLocal(@NotNull String name);
 
-  default @Nullable Var get(@NotNull String name) {
-    return Option.of(getLocal(name))
+  void forEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f);
+
+  default @Nullable Var get(@NotNull String name, @NotNull Stmt.Accessibility accessibility) {
+    return Option.of(getLocal(name, accessibility))
       .getOrElse(() ->
         Option.of(getSuperContext())
-          .map(sup -> sup.get(name))
+          .map(sup -> sup.get(name, accessibility))
           .getOrNull());
+  }
+
+  default @Nullable Var get(@NotNull String name) {
+    return get(name, Stmt.Accessibility.Private);
   }
 
   default @Nullable Var get(@NotNull Seq<@NotNull String> path) {
@@ -52,8 +61,6 @@ public interface Context {
     if (containsLocal(name)) throw new IllegalStateException("Trying to add duplicate ref `" + name + "` to a context");
     unsafePutLocal(name, ref, accessibility);
   }
-
-
 
   boolean containsSubContextLocal(@NotNull String name);
 

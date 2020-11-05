@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.context;
 
+import asia.kala.Tuple2;
 import asia.kala.collection.Set;
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
@@ -9,37 +10,38 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Stmt;
 
+import java.util.function.BiConsumer;
+
 /**
  * @author re-xyr
  */
 public final class ModuleContext implements Context {
   @NotNull Context ctx;
-  @NotNull Set<@NotNull String> useHide;
-  @NotNull Stmt.CmdStmt.Strategy strategy;
+  @NotNull Stmt.CmdStmt.UseHide useHide;
 
-  public ModuleContext(@NotNull Context ctx, @NotNull ImmutableSeq<@NotNull String> useHide, @NotNull Stmt.CmdStmt.Strategy strategy) {
+  public ModuleContext(@NotNull Context ctx, @NotNull Stmt.CmdStmt.UseHide useHide) {
     this.ctx = ctx;
-    this.useHide = useHide.collect(Set.factory());
-    this.strategy = strategy;
+    this.useHide = useHide;
   }
 
   @Override
   public @Nullable Var getLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility) {
     var pre = ctx.getLocal(name, accessibility);
-    return switch (strategy) {
-      case Using -> useHide.contains(name) ? pre : null;
-      case Hiding -> useHide.contains(name) ? null : pre;
-    };
+    return useHide.uses(name) ? pre : null;
   }
 
   @Override
   public boolean containsLocal(@NotNull String name) {
     var pre = ctx.containsLocal(name);
-    if (pre) return switch (strategy) {
-      case Using -> useHide.contains(name);
-      case Hiding -> !useHide.contains(name);
-    };
+    if (pre) return useHide.uses(name);
     else return false;
+  }
+
+  @Override
+  public void forEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f) {
+    ctx.forEachLocal((name, data) -> {
+      if (useHide.uses(name)) f.accept(name, data);
+    });
   }
 
   @Override

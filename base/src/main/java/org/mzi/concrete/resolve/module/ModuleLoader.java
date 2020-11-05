@@ -3,6 +3,7 @@
 package org.mzi.concrete.resolve.module;
 
 import asia.kala.collection.immutable.ImmutableSeq;
+import asia.kala.collection.immutable.ImmutableSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.concrete.Stmt;
@@ -17,23 +18,21 @@ public interface ModuleLoader {
   @Nullable Context unsafeLoad(@NotNull ImmutableSeq<@NotNull String> path);
 
   default @Nullable Context load(@NotNull ImmutableSeq<@NotNull String> path,
-                                 @NotNull ImmutableSeq<@NotNull String> useHideList,
-                                 @NotNull Stmt.CmdStmt.Strategy strategy) {
+                                 @NotNull Stmt.CmdStmt.UseHide useHide) {
     var ctx = unsafeLoad(path);
     if (ctx == null) return null;
-    return new ModuleContext(ctx, useHideList, strategy);
+    return new ModuleContext(ctx, useHide);
   }
 
   default @Nullable Context load(@NotNull ImmutableSeq<@NotNull String> path) {
-    return load(path, ImmutableSeq.of(), Stmt.CmdStmt.Strategy.Hiding);
+    return load(path, new Stmt.CmdStmt.UseHide(ImmutableSeq.empty(), Stmt.CmdStmt.UseHide.Strategy.Hiding));
   }
 
   default boolean loadIntoContext(@NotNull Context context,
                                   @NotNull ImmutableSeq<@NotNull String> path,
-                                  @NotNull ImmutableSeq<@NotNull String> useHideList,
-                                  @NotNull Stmt.CmdStmt.Strategy strategy,
+                                  @NotNull Stmt.CmdStmt.UseHide useHide,
                                   @NotNull Stmt.Accessibility accessibility) {
-    var subCtx = load(path, useHideList, strategy);
+    var subCtx = load(path, useHide);
     if (subCtx == null) return false;
     var ctx = context;
     for (var nm : path.dropLast(1)) {

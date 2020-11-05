@@ -38,17 +38,12 @@ public sealed interface Stmt permits Decl, Stmt.CmdStmt {
     @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
     @NotNull Cmd cmd,
-    @NotNull String qualifiedModuleName,
-    @NotNull ImmutableSeq<@NotNull String> useHideList,
-    @NotNull Strategy strategy
+    @NotNull ImmutableSeq<@NotNull String> path,
+    @NotNull UseHide useHide
   ) implements Stmt {
     @Override
     public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCmd(this, p);
-    }
-
-    public ImmutableSeq<String> modulePath() {
-      return ImmutableSeq.from(qualifiedModuleName().split("\\."));
     }
 
     /**
@@ -62,9 +57,21 @@ public sealed interface Stmt permits Decl, Stmt.CmdStmt {
     /**
      * @author re-xyr
      */
-    public enum Strategy {
-      Using,
-      Hiding,
+    public record UseHide(@NotNull ImmutableSeq<@NotNull String> list, @NotNull Strategy strategy) {
+      public boolean uses(String name) {
+        return switch (strategy) {
+          case Using -> list.contains(name);
+          case Hiding -> !list.contains(name);
+        };
+      }
+
+      /**
+       * @author re-xyr
+       */
+      public enum Strategy {
+        Using,
+        Hiding,
+      }
     }
   }
 }
