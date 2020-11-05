@@ -10,7 +10,7 @@ import org.mzi.concrete.resolve.context.Context;
 /**
  * @author re-xyr
  */
-public class ModuleListLoader implements ModuleLoader {
+public final class ModuleListLoader implements ModuleLoader {
   @NotNull ImmutableSeq<@NotNull ModuleLoader> loaders;
 
   public ModuleListLoader(@NotNull ImmutableSeq<@NotNull ModuleLoader> loaders) {
@@ -18,7 +18,7 @@ public class ModuleListLoader implements ModuleLoader {
   }
 
   @Override
-  public @Nullable Context load(@NotNull ImmutableSeq<@NotNull String> path) {
+  public @Nullable Context unsafeLoad(@NotNull ImmutableSeq<@NotNull String> path) {
     for (var loader : loaders) {
       var mod = loader.load(path);
       if (mod != null) return mod;

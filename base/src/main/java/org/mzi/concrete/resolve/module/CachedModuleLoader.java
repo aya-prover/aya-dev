@@ -12,7 +12,7 @@ import org.mzi.concrete.resolve.context.Context;
 /**
  * @author re-xyr
  */
-public class CachedModuleLoader implements ModuleLoader {
+public final class CachedModuleLoader implements ModuleLoader {
   @NotNull MutableMap<@NotNull String, Context> cache = new MutableHashMap<>();
   @NotNull ModuleLoader loader;
 
@@ -21,7 +21,7 @@ public class CachedModuleLoader implements ModuleLoader {
   }
 
   @Override
-  public @Nullable Context load(@NotNull ImmutableSeq<String> path) {
+  public @Nullable Context unsafeLoad(@NotNull ImmutableSeq<String> path) {
     var stringifiedPath = path.joinToString(".");
     return cache.getOrElseGet(stringifiedPath, () -> {
       var ctx = loader.load(path);
