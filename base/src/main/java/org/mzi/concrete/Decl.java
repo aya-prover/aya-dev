@@ -53,8 +53,8 @@ public sealed interface Decl extends Stmt {
     public final @NotNull Accessibility accessibility;
     public final @NotNull DefVar<DataDecl> ref;
     public final @NotNull Buffer<Param> telescope;
-    public final @NotNull Expr result;
-    public final @NotNull DataBody body;
+    public @NotNull Expr result;
+    public @NotNull DataBody body;
     public final @NotNull Buffer<Stmt> abuseBlock;
 
     public DataDecl(
@@ -134,8 +134,8 @@ public sealed interface Decl extends Stmt {
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
     public final @NotNull Buffer<Param> telescope;
-    public final @NotNull Expr result;
-    public final @NotNull Expr body;
+    public @NotNull Expr result;
+    public @NotNull Expr body;
     public final @NotNull Buffer<Stmt> abuseBlock;
 
     public FnDecl(

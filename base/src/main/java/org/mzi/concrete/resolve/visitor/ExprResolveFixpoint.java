@@ -17,6 +17,10 @@ import org.mzi.concrete.visitor.ExprFixpoint;
  * @author re-xyr
  */
 public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
+  public static final ExprResolveFixpoint INSTANCE = new ExprResolveFixpoint();
+
+  private ExprResolveFixpoint() {}
+
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     return new Expr.RefExpr(expr.sourcePos(), Option.of(ctx.get(expr.name()))
       // TODO[xyr]: report instead of throw

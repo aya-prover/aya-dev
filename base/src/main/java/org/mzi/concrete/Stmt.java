@@ -19,6 +19,9 @@ public sealed interface Stmt permits Decl, Stmt.CmdStmt {
    * @author re-xyr
    */
   interface Visitor<P, R> {
+    default @NotNull ImmutableSeq<R> visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
+      return stmts.map(stmt -> stmt.accept(this, p)); // [xyr]: Is this OK? The order of visiting must be preserved.
+    }
     R visitCmd(@NotNull CmdStmt cmd, P p);
     R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);

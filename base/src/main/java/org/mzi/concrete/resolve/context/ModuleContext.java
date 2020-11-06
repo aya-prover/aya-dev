@@ -20,6 +20,9 @@ public final class ModuleContext implements Context {
   @NotNull Stmt.CmdStmt.UseHide useHide;
 
   public ModuleContext(@NotNull Context ctx, @NotNull Stmt.CmdStmt.UseHide useHide) {
+    useHide.list().forEach(name -> {
+      if (!ctx.containsLocal(name)) throw new IllegalStateException("Module does not contain name `" + name + "`"); // TODO[xyr]: report instead of throw
+    });
     this.ctx = ctx;
     this.useHide = useHide;
   }
