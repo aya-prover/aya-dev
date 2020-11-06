@@ -37,12 +37,12 @@ public class ParseTest {
     parseCmd("\\import A");
     parseCmd("\\import A.B");
     parseCmd("\\import A.B \\using ()");
-    parseTo("\\open Boy.Next.Door \\using (door)", new Stmt.CmdStmt(
+    parseTo("\\open Boy.Next.Door \\using (door) \\using (next)", new Stmt.CmdStmt(
       SourcePos.NONE,
       Stmt.Accessibility.Private,
       Stmt.CmdStmt.Cmd.Open,
       ImmutableSeq.of("Boy", "Next", "Door"),
-      new Stmt.CmdStmt.UseHide(ImmutableVector.of("door"), Stmt.CmdStmt.UseHide.Strategy.Using)
+      new Stmt.CmdStmt.UseHide(ImmutableVector.of("door", "next"), Stmt.CmdStmt.UseHide.Strategy.Using)
     ));
   }
 

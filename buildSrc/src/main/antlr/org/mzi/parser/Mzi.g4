@@ -10,7 +10,11 @@ stmt : decl
      ;
 
 cmd : PUBLIC? (OPEN | OPEN? IMPORT) moduleName useHide?;
-useHide : (USING | HIDING) LPAREN ids ')';
+useHide : use+
+        | hide+;
+use : USING useHideList;
+hide : HIDING useHideList;
+useHideList : LPAREN ids ')';
 
 moduleName : ID ('.' ID)*;
 

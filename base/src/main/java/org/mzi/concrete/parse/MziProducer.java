@@ -27,6 +27,7 @@ import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.LevelEqn;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -476,10 +477,9 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public @NotNull Stmt visitCmd(MziParser.CmdContext ctx) {
-    var accessibility = ctx.PUBLIC() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
+    var accessibility = ctx.PUBLIC() == null ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
     var cmd = ctx.OPEN() != null ? Cmd.Open : Cmd.Import;
     var useHide = visitUseHide(ctx.useHide());
-
     return new Stmt.CmdStmt(
       sourcePosOf(ctx),
       accessibility,
@@ -489,11 +489,23 @@ public class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
+  public Stmt.CmdStmt.UseHide visitUse(List<MziParser.UseContext> ctxs) {
+    var names = Buffer.<String>of();
+    ctxs.forEach(ctx -> visitIds(ctx.useHideList().ids()).forEach(names::append));
+    return new Stmt.CmdStmt.UseHide(names.toImmutableSeq(), Stmt.CmdStmt.UseHide.Strategy.Using);
+  }
+
+  public Stmt.CmdStmt.UseHide visitHide(List<MziParser.HideContext> ctxs) {
+    var names = Buffer.<String>of();
+    ctxs.forEach(ctx -> visitIds(ctx.useHideList().ids()).forEach(names::append));
+    return new Stmt.CmdStmt.UseHide(names.toImmutableSeq(), Stmt.CmdStmt.UseHide.Strategy.Hiding);
+  }
+
   @Override
   public @NotNull Stmt.CmdStmt.UseHide visitUseHide(MziParser.UseHideContext ctx) {
     if (ctx == null) return new Stmt.CmdStmt.UseHide(ImmutableSeq.empty(), Stmt.CmdStmt.UseHide.Strategy.Hiding);
-    var type = ctx.USING() != null ? Stmt.CmdStmt.UseHide.Strategy.Using : Stmt.CmdStmt.UseHide.Strategy.Hiding;
-    return new Stmt.CmdStmt.UseHide(visitIds(ctx.ids()).collect(ImmutableSeq.factory()), type);
+    if (ctx.use() != null) return visitUse(ctx.use());
+    return visitHide(ctx.hide());
   }
 
   @Override
