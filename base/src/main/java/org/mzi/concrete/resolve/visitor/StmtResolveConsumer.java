@@ -3,10 +3,8 @@
 package org.mzi.concrete.resolve.visitor;
 
 import asia.kala.Unit;
-import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Decl;
-import org.mzi.concrete.Param;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.SimpleContext;
@@ -31,7 +29,7 @@ public final class StmtResolveConsumer implements Stmt.Visitor<@NotNull Context,
   @Override
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, @NotNull Context context) {
     var local = new SimpleContext();
-    local.setSuperContext(context);
+    local.setGlobal(context);
     ExprResolveFixpoint.INSTANCE.visitParams(decl.telescope, local);
     decl.result = decl.result.accept(ExprResolveFixpoint.INSTANCE, local);
     decl.body = decl.body.accept(ExprResolveFixpoint.INSTANCE, local);

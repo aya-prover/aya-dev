@@ -3,7 +3,6 @@
 package org.mzi.concrete.resolve.module;
 
 import asia.kala.collection.immutable.ImmutableSeq;
-import asia.kala.collection.immutable.ImmutableSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.concrete.Stmt;
@@ -30,21 +29,20 @@ public interface ModuleLoader {
 
   default boolean loadIntoContext(@NotNull Context context,
                                   @NotNull ImmutableSeq<@NotNull String> path,
-                                  @NotNull Stmt.CmdStmt.UseHide useHide,
-                                  @NotNull Stmt.Accessibility accessibility) {
+                                  @NotNull Stmt.CmdStmt.UseHide useHide) {
     var subCtx = load(path, useHide);
     if (subCtx == null) return false;
     var ctx = context;
     for (var nm : path.dropLast(1)) {
-      if (ctx.containsSubContextLocal(nm)) ctx = ctx.getSubContextLocal(nm);
+      if (ctx.containsModuleLocal(nm)) ctx = ctx.getModuleLocal(nm);
       else {
         var nextCtx = new SimpleContext();
-        ctx.putSubContextLocal(nm, nextCtx, Stmt.Accessibility.Public);
+        ctx.putModuleLocal(nm, nextCtx);
         ctx = nextCtx;
       }
       assert ctx != null;
     }
-    ctx.putSubContextLocal(path.last(), subCtx, accessibility);
+    ctx.putModuleLocal(path.last(), subCtx);
     return true;
   }
 }

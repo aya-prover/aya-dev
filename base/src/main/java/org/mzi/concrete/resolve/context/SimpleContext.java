@@ -17,7 +17,7 @@ import java.util.function.BiConsumer;
  */
 public final class SimpleContext implements Context {
   private final MutableMap<String, Tuple2<Var, Stmt.Accessibility>> variables = new MutableHashMap<>();
-  private final MutableMap<String, Tuple2<Context, Stmt.Accessibility>> subContexts = new MutableHashMap<>();
+  private final MutableMap<String, Context> modules = new MutableHashMap<>();
   private Context superContext;
 
   @Override public @Nullable Var getLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility) {
@@ -39,25 +39,23 @@ public final class SimpleContext implements Context {
     variables.put(name, Tuple2.of(ref, accessibility));
   }
 
-  @Override public boolean containsSubContextLocal(@NotNull String name) {
-    return subContexts.containsKey(name);
+  @Override public boolean containsModuleLocal(@NotNull String name) {
+    return modules.containsKey(name);
   }
 
-  @Override public @Nullable Context getSubContextLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility) {
-    var ctx = subContexts.get(name);
-    if (ctx == null || ctx._2.ordinal() < accessibility.ordinal()) return null;
-    return ctx._1;
+  @Override public @Nullable Context getModuleLocal(@NotNull String name) {
+    return modules.get(name);
   }
 
-  @Override public void unsafePutSubContextLocal(@NotNull String name, @NotNull Context ctx, Stmt.@NotNull Accessibility accessibility) {
-    subContexts.put(name, Tuple2.of(ctx, accessibility));
+  @Override public void unsafePutModuleLocal(@NotNull String name, @NotNull Context ctx) {
+    modules.put(name, ctx);
   }
 
-  @Override public @Nullable Context getSuperContext() {
+  @Override public @Nullable Context getGlobal() {
     return superContext;
   }
 
-  @Override public void setSuperContext(@NotNull Context ctx) {
+  @Override public void setGlobal(@NotNull Context ctx) {
     superContext = ctx;
   }
 }

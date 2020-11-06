@@ -7,9 +7,10 @@ program : stmt* EOF;
 // statements
 stmt : decl
      | cmd
+     | module
      ;
 
-cmd : PUBLIC? (OPEN | OPEN? IMPORT) moduleName useHide?;
+cmd : (PUBLIC? OPEN | (PUBLIC? OPEN)? IMPORT) moduleName useHide?;
 useHide : use+
         | hide+;
 use : USING useHideList;
@@ -24,7 +25,6 @@ decl : PRIVATE?
      ( fnDecl
      | structDecl
      | dataDecl
-     | moduleDecl
      );
 
 assoc : INFIX
@@ -70,7 +70,7 @@ elim : '\\elim' ID (',' ID)*;
 
 dataCtorClause : '|' pattern IMPLIES dataCtor;
 
-moduleDecl : '\\module' ID LBRACE program '}';
+module : '\\module' ID LBRACE program '}';
 
 // expressions
 expr : atom argument*                                 # app

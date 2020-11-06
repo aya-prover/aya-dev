@@ -14,7 +14,6 @@ import java.util.function.BiConsumer;
 
 /**
  * @author re-xyr
- * @implNote subContext and superContext are NOT dual concepts. subContexts are local or imported modules. superContext is the "parent" lexical scope.
  */
 public interface Context {
   @Nullable Var getLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility);
@@ -25,7 +24,7 @@ public interface Context {
 
   default @Nullable Var getLocal(@NotNull Seq<@NotNull String> path) {
     assert path.size() > 0; // should not happen
-    return Option.of(getSubContextLocal(path.view().dropLast(1)))
+    return Option.of(getModuleLocal(path.view().dropLast(1)))
       .flatMap(ctx -> Option.of(ctx.getLocal(path.last(), path.size() == 1 ? Stmt.Accessibility.Private : Stmt.Accessibility.Public)))
       .getOrNull();
   }
@@ -37,7 +36,7 @@ public interface Context {
   default @Nullable Var get(@NotNull String name, @NotNull Stmt.Accessibility accessibility) {
     return Option.of(getLocal(name, accessibility))
       .getOrElse(() ->
-        Option.of(getSuperContext())
+        Option.of(getGlobal())
           .map(sup -> sup.get(name, accessibility))
           .getOrNull());
   }
@@ -49,7 +48,7 @@ public interface Context {
   default @Nullable Var get(@NotNull Seq<@NotNull String> path) {
     return Option.of(getLocal(path))
       .getOrElse(() ->
-        Option.of(getSuperContext())
+        Option.of(getGlobal())
           .map(sup -> sup.get(path))
           .getOrNull());
   }
@@ -62,54 +61,40 @@ public interface Context {
     unsafePutLocal(name, ref, accessibility);
   }
 
-  boolean containsSubContextLocal(@NotNull String name);
+  boolean containsModuleLocal(@NotNull String name);
 
-  @Nullable Context getSubContextLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility);
+  @Nullable Context getModuleLocal(@NotNull String name);
 
-  default @Nullable Context getSubContextLocal(@NotNull String name) {
-    return getSubContextLocal(name, Stmt.Accessibility.Private);
-  }
-
-  default @Nullable Context getSubContextLocal(@NotNull Seq<@NotNull String> path, Stmt.@NotNull Accessibility accessibility) {
+  default @Nullable Context getModuleLocal(@NotNull Seq<@NotNull String> path) {
     if (path.size() == 0) return this;
-    return Option.of(getSubContextLocal(path.first(), accessibility))
-      .flatMap(ctx -> Option.of(ctx.getSubContextLocal(path.view().drop(1), Stmt.Accessibility.Public)))
+    return Option.of(getModuleLocal(path.first()))
+      .flatMap(ctx -> Option.of(ctx.getModuleLocal(path.view().drop(1))))
       .getOrNull();
   }
 
-  default @Nullable Context getSubContextLocal(@NotNull Seq<@NotNull String> path) {
-    return getSubContextLocal(path, Stmt.Accessibility.Private);
-  }
-
-  default @Nullable Context getSubContext(@NotNull String name) {
-    return Option.of(getSubContextLocal(name))
+  default @Nullable Context getModule(@NotNull String name) {
+    return Option.of(getModuleLocal(name))
       .getOrElse(() ->
-        Option.of(getSuperContext())
-          .map(sup -> sup.getSubContext(name))
+        Option.of(getGlobal())
+          .map(sup -> sup.getModule(name))
           .getOrNull());
   }
 
-  default @Nullable Context getSubContext(@NotNull Seq<@NotNull String> path) {
-    return Option.of(getSubContext(path.first()))
-      .flatMap(ctx -> Option.of(ctx.getSubContextLocal(path.view().drop(1))))
+  default @Nullable Context getModule(@NotNull Seq<@NotNull String> path) {
+    return Option.of(getModule(path.first()))
+      .flatMap(ctx -> Option.of(ctx.getModuleLocal(path.view().drop(1))))
       .getOrNull();
   }
 
-  void unsafePutSubContextLocal(@NotNull String name, @NotNull Context ctx, Stmt.@NotNull Accessibility accessibility);
+  void unsafePutModuleLocal(@NotNull String name, @NotNull Context ctx);
 
-  default void putSubContextLocal(@NotNull String name, @NotNull Context ctx, Stmt.@NotNull Accessibility accessibility) {
+  default void putModuleLocal(@NotNull String name, @NotNull Context ctx) {
     // TODO[xyr]: should report instead of throw
-    if (containsSubContextLocal(name)) throw new IllegalStateException("Trying to add duplicate sub context `" + name + "` to a context");
-    unsafePutSubContextLocal(name, ctx, accessibility);
+    if (containsModuleLocal(name)) throw new IllegalStateException("Trying to add duplicate sub context `" + name + "` to a context");
+    unsafePutModuleLocal(name, ctx);
   }
 
-  @Nullable Context getSuperContext();
+  @Nullable Context getGlobal();
 
-  void setSuperContext(@NotNull Context ctx);
-
-  default @Nullable Context getTopContext() {
-    return Option.of(getSuperContext())
-      .map(Context::getTopContext)
-      .getOrDefault(this);
-  }
+  void setGlobal(@NotNull Context ctx);
 }

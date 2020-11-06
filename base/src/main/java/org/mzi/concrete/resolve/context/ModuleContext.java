@@ -53,27 +53,27 @@ public final class ModuleContext implements Context {
   }
 
   @Override
-  public boolean containsSubContextLocal(@NotNull String name) {
+  public boolean containsModuleLocal(@NotNull String name) {
     return false;
   }
 
   @Override
-  public @Nullable Context getSubContextLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility) {
+  public @Nullable Context getModuleLocal(@NotNull String name) {
     return null;
   }
 
   @Override
-  public void unsafePutSubContextLocal(@NotNull String name, @NotNull Context ctx, Stmt.@NotNull Accessibility accessibility) {
+  public void unsafePutModuleLocal(@NotNull String name, @NotNull Context ctx) {
     throw new IllegalStateException("Unable to extend a ModuleContext");
   }
 
   @Override
-  public @Nullable Context getSuperContext() {
+  public @Nullable Context getGlobal() {
     return null;
   }
 
   @Override
-  public void setSuperContext(@NotNull Context ctx) {
+  public void setGlobal(@NotNull Context ctx) {
     throw new IllegalStateException("Unable to extend a ModuleContext");
   }
 }
