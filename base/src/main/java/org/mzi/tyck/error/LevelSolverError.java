@@ -5,6 +5,7 @@ package org.mzi.tyck.error;
 import asia.kala.collection.Collection;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
+import org.mzi.pretty.doc.Doc;
 import org.mzi.tyck.sort.LevelEqn;
 
 /**
@@ -14,9 +15,9 @@ public record LevelSolverError(
   @NotNull Expr expr,
   @NotNull Collection<? extends LevelEqn<?>> eqn
 ) implements TyckProblem {
-  @Override public @NotNull String describe() {
+  @Override public @NotNull Doc describe() {
     // TODO[ice]: improve this
-    return "Cannot solve equation: " + eqn;
+    return Doc.plain("Cannot solve equation: " + eqn);
   }
 
   @Override public @NotNull Severity level() {
