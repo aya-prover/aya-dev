@@ -10,7 +10,8 @@ stmt : decl
      | module
      ;
 
-cmd : (PUBLIC? OPEN | (PUBLIC? OPEN)? IMPORT) moduleName useHide?;
+cmdModifier : PUBLIC? OPEN;
+cmd : (cmdModifier | cmdModifier? IMPORT) moduleName useHide?;
 useHide : use+
         | hide+;
 use : USING useHideList;

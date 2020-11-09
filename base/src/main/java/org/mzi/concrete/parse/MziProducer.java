@@ -477,8 +477,10 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public @NotNull Stmt visitCmd(MziParser.CmdContext ctx) {
-    var accessibility = ctx.PUBLIC() == null ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
-    var cmd = ctx.OPEN() != null ? Cmd.Open : Cmd.Import;
+    var modifier = ctx.cmdModifier();
+    var isImport = ctx.IMPORT() != null;
+    var accessibility = modifier.PUBLIC() == null ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
+    var cmd = modifier.OPEN() != null ? Cmd.Open : Cmd.Import;
     var useHide = visitUseHide(ctx.useHide());
     return new Stmt.CmdStmt(
       sourcePosOf(ctx),
