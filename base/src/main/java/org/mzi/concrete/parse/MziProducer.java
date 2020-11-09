@@ -77,28 +77,18 @@ public class MziProducer extends MziBaseVisitor<Object> {
       .distinct()
       .collect(Collectors.toCollection(() -> EnumSet.noneOf(Modifier.class)));
     var assocCtx = ctx.assoc();
-    var assoc = assocCtx == null
-      ? null
-      : visitAssoc(assocCtx);
-    // TODO[ice]: replacing this with `var` will compile, but IDEA shows error
-    var tele = visitTelescope(ctx.tele().stream());
-    var typeCtx = ctx.type();
-    var type = typeCtx == null
-      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
-      : visitType(typeCtx);
     var abuseCtx = ctx.abuse();
-    var abuse = abuseCtx == null ? Buffer.<Stmt>of() : visitAbuse(abuseCtx);
 
     return new Decl.FnDecl(
       sourcePosOf(ctx),
       accessibility,
       modifiers,
-      assoc,
+      assocCtx == null ? null : visitAssoc(assocCtx),
       ctx.ID().getText(),
-      tele,
-      type,
+      visitTelescope(ctx.tele().stream()),
+      type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
-      abuse
+      abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx)
     );
   }
 
@@ -228,15 +218,10 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public Expr.@NotNull TypedExpr visitTyped(MziParser.TypedContext ctx) {
-    var typeCtx = ctx.type();
-    var type = typeCtx == null
-      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
-      : visitType(typeCtx);
-
     return new Expr.TypedExpr(
       sourcePosOf(ctx),
       visitExpr(ctx.expr()),
-      type
+      type(ctx.type(), sourcePosOf(ctx))
     );
   }
 
@@ -308,22 +293,23 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
-    var typeCtx = ctx.type();
-    var type = typeCtx == null
-      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
-      : visitType(typeCtx);
     var abuseCtx = ctx.abuse();
-    var abuse = abuseCtx == null ? Buffer.<Stmt>of() : visitAbuse(abuseCtx);
 
     return new Decl.DataDecl(
       sourcePosOf(ctx),
       accessibility,
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
-      type,
+      type(ctx.type(), sourcePosOf(ctx)),
       visitDataBody(ctx.dataBody()),
-      abuse
+      abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx)
     );
+  }
+
+  public @NotNull Expr type(MziParser.TypeContext typeCtx, SourcePos sourcePos) {
+    return typeCtx == null
+      ? new Expr.HoleExpr(sourcePos, null, null)
+      : visitType(typeCtx);
   }
 
   private @NotNull Decl.DataBody visitDataBody(MziParser.DataBodyContext ctx) {
@@ -392,24 +378,16 @@ public class MziProducer extends MziBaseVisitor<Object> {
     }
 
     var asIdCtx = ctx.ID();
-    var asId = asIdCtx.getText();
-    var asTypeCtx = ctx.type();
-    var asType = asTypeCtx == null
-      ? new Expr.HoleExpr(sourcePosOf(asIdCtx), null, null)
-      : visitType(asTypeCtx);
 
     return new Pattern.PatAtom(
       visitAtomPattern(ctx.atomPattern()),
-      Tuple.of(asId, asType)
+      Tuple.of(asIdCtx.getText(), type(ctx.type(), sourcePosOf(asIdCtx)))
     );
   }
 
   @Override
   public Pattern.@NotNull PatCtor visitPatCtor(MziParser.PatCtorContext ctx) {
     var typeCtx = ctx.type();
-    var type = typeCtx == null
-      ? new Expr.HoleExpr(sourcePosOf(ctx), null, null)
-      : visitType(typeCtx);
 
     return new Pattern.PatCtor(
       ctx.ID(0).getText(),
@@ -417,7 +395,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
         .map(this::visitPatternCtorParam)
         .collect(Buffer.factory()),
       ctx.AS() == null ? null : ctx.ID(1).getText(),
-      type
+      type(typeCtx, sourcePosOf(ctx))
     );
   }
 
