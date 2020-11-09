@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.DTKind;
@@ -306,7 +307,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public @NotNull Expr type(MziParser.TypeContext typeCtx, SourcePos sourcePos) {
+  public @NotNull Expr type(@Nullable MziParser.TypeContext typeCtx, SourcePos sourcePos) {
     return typeCtx == null
       ? new Expr.HoleExpr(sourcePos, null, null)
       : visitType(typeCtx);
@@ -387,15 +388,13 @@ public class MziProducer extends MziBaseVisitor<Object> {
 
   @Override
   public Pattern.@NotNull PatCtor visitPatCtor(MziParser.PatCtorContext ctx) {
-    var typeCtx = ctx.type();
-
     return new Pattern.PatCtor(
       ctx.ID(0).getText(),
       ctx.patternCtorParam().stream()
         .map(this::visitPatternCtorParam)
         .collect(Buffer.factory()),
       ctx.AS() == null ? null : ctx.ID(1).getText(),
-      type(typeCtx, sourcePosOf(ctx))
+      type(ctx.type(), sourcePosOf(ctx))
     );
   }
 
@@ -449,7 +448,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Expr visitType(MziParser.TypeContext ctx) {
+  public @NotNull Expr visitType(@NotNull MziParser.TypeContext ctx) {
     return visitExpr(ctx.expr());
   }
 
@@ -458,12 +457,13 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var modifier = ctx.cmdModifier();
     var isImport = ctx.IMPORT() != null;
     var accessibility = modifier.PUBLIC() == null ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
+    var useHide = ctx.useHide();
     return new Stmt.CmdStmt(
       sourcePosOf(ctx),
       accessibility,
       modifier.OPEN() != null ? Cmd.Open : Cmd.Import,
       visitModuleName(ctx.moduleName()),
-      visitUseHide(ctx.useHide())
+      useHide != null ? visitUseHide(useHide) : Stmt.CmdStmt.UseHide.EMPTY
     );
   }
 
@@ -484,9 +484,9 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Stmt.CmdStmt.UseHide visitUseHide(MziParser.UseHideContext ctx) {
-    if (ctx == null) return new Stmt.CmdStmt.UseHide(ImmutableSeq.empty(), Stmt.CmdStmt.UseHide.Strategy.Hiding);
-    if (ctx.use() != null) return visitUse(ctx.use());
+  public @NotNull Stmt.CmdStmt.UseHide visitUseHide(@NotNull MziParser.UseHideContext ctx) {
+    var use = ctx.use();
+    if (use != null) return visitUse(use);
     return visitHide(ctx.hide());
   }
 
@@ -538,12 +538,13 @@ public class MziProducer extends MziBaseVisitor<Object> {
   private @NotNull SourcePos sourcePosOf(TerminalNode node) {
     var interval = node.getSourceInterval();
     var token = node.getSymbol();
+    var line = token.getLine();
     return new SourcePos(
       interval.a,
       interval.b,
-      token.getLine(),
+      line,
       token.getCharPositionInLine(),
-      token.getLine(),
+      line,
       token.getCharPositionInLine() + token.getText().length()
     );
   }

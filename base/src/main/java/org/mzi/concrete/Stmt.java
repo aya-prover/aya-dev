@@ -63,6 +63,8 @@ public sealed interface Stmt permits Decl, Stmt.CmdStmt {
      * @author re-xyr
      */
     public record UseHide(@NotNull ImmutableSeq<@NotNull String> list, @NotNull Strategy strategy) {
+      public static final UseHide EMPTY = new Stmt.CmdStmt.UseHide(ImmutableSeq.empty(), Stmt.CmdStmt.UseHide.Strategy.Hiding);
+
       public boolean uses(String name) {
         return switch (strategy) {
           case Using -> list.contains(name);
