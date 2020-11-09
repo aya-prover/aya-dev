@@ -12,32 +12,32 @@ import org.mzi.concrete.resolve.module.ModuleLoader;
 
 /**
  * simply adds all top-level names to the context
+ *
  * @author re-xyr
  */
-public final class StmtShallowResolveConsumer implements Stmt.Visitor<@NotNull Context, Unit> {
-  private final @NotNull ModuleLoader loader;
-
-  public StmtShallowResolveConsumer(@NotNull ModuleLoader loader) {
-    this.loader = loader;
-  }
+public final record StmtShallowResolveConsumer(@NotNull ModuleLoader loader)
+  implements Stmt.Visitor<@NotNull Context, Unit> {
 
   @Override
   public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, @NotNull Context context) {
     switch (cmd.cmd()) {
       case Open -> {
         var preMod = context.getModule(cmd.path());
-        if (preMod == null) throw new IllegalStateException("Opening non-existing module `" + cmd.path().joinToString(".") + "`"); // TODO[xyr]: report instead of throw
+        if (preMod == null)
+          throw new IllegalStateException("Opening non-existing module `" + cmd.path().joinToString(".") + "`"); // TODO[xyr]: report instead of throw
         var mod = new ModuleContext(preMod, cmd.useHide());
         mod.forEachLocal((name, data) -> {
           if (cmd.useHide().uses(name)) {
             if (data._2 == Stmt.Accessibility.Public) context.putLocal(name, data._1, cmd.accessibility());
-            else throw new IllegalStateException("Access to private name `" + name + "`"); // TODO[xyr]: report instead of throw
+            else
+              throw new IllegalStateException("Access to private name `" + name + "`"); // TODO[xyr]: report instead of throw
           }
         });
       }
       case Import -> {
         var success = loader.loadIntoContext(context, cmd.path(), cmd.useHide());
-        if (!success) throw new IllegalStateException("Importing non-existing module `" + cmd.path().joinToString(".") + "`"); // TODO[xyr]: report instead of throw
+        if (!success)
+          throw new IllegalStateException("Importing non-existing module `" + cmd.path().joinToString(".") + "`"); // TODO[xyr]: report instead of throw
       }
     }
     return Unit.unit();

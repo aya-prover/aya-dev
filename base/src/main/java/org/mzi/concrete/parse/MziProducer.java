@@ -458,27 +458,29 @@ public class MziProducer extends MziBaseVisitor<Object> {
     var modifier = ctx.cmdModifier();
     var isImport = ctx.IMPORT() != null;
     var accessibility = modifier.PUBLIC() == null ? Stmt.Accessibility.Private : Stmt.Accessibility.Public;
-    var cmd = modifier.OPEN() != null ? Cmd.Open : Cmd.Import;
-    var useHide = visitUseHide(ctx.useHide());
     return new Stmt.CmdStmt(
       sourcePosOf(ctx),
       accessibility,
-      cmd,
+      modifier.OPEN() != null ? Cmd.Open : Cmd.Import,
       visitModuleName(ctx.moduleName()),
-      useHide
+      visitUseHide(ctx.useHide())
     );
   }
 
   public Stmt.CmdStmt.UseHide visitUse(List<MziParser.UseContext> ctxs) {
-    var names = Buffer.<String>of();
-    ctxs.forEach(ctx -> visitIds(ctx.useHideList().ids()).forEach(names::append));
-    return new Stmt.CmdStmt.UseHide(names.toImmutableSeq(), Stmt.CmdStmt.UseHide.Strategy.Using);
+    return new Stmt.CmdStmt.UseHide(
+      ctxs.stream()
+        .flatMap(ctx -> visitIds(ctx.useHideList().ids()))
+        .collect(ImmutableSeq.factory()),
+      Stmt.CmdStmt.UseHide.Strategy.Using);
   }
 
   public Stmt.CmdStmt.UseHide visitHide(List<MziParser.HideContext> ctxs) {
-    var names = Buffer.<String>of();
-    ctxs.forEach(ctx -> visitIds(ctx.useHideList().ids()).forEach(names::append));
-    return new Stmt.CmdStmt.UseHide(names.toImmutableSeq(), Stmt.CmdStmt.UseHide.Strategy.Hiding);
+    return new Stmt.CmdStmt.UseHide(
+      ctxs.stream()
+        .flatMap(ctx -> visitIds(ctx.useHideList().ids()))
+        .collect(ImmutableSeq.factory()),
+      Stmt.CmdStmt.UseHide.Strategy.Hiding);
   }
 
   @Override
