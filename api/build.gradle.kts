@@ -4,4 +4,5 @@ dependencies {
   val deps: java.util.Properties by rootProject.ext
   api("org.jetbrains", "annotations", version = deps.getProperty("version.annotations"))
   api("asia.kala", "kala-common", version = deps.getProperty("version.kala"))
+  implementation(project(":pretty"))
 }
