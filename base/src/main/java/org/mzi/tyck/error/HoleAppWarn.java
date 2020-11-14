@@ -5,6 +5,7 @@ package org.mzi.tyck.error;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.AppTerm;
+import org.mzi.pretty.doc.Doc;
 
 /**
  * @author ice1000
@@ -15,8 +16,8 @@ public record HoleAppWarn(@NotNull AppTerm.HoleApp term, @NotNull Expr expr) imp
   }
 
   @Override
-  public @NotNull String describe() {
-    return "Attempting to unify a hole applied with argument: `" + term.var() + "`," +
-      "this is not supported by the naive unifier. Please use pattern unifier instead.";
+  public @NotNull Doc describe() {
+    return Doc.plain("Attempting to unify a hole applied with argument: `" + term.var() + "`," +
+      "this is not supported by the naive unifier. Please use pattern unifier instead.");
   }
 }

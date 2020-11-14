@@ -3,6 +3,7 @@
 package org.mzi.api.error;
 
 import org.jetbrains.annotations.NotNull;
+import org.mzi.pretty.doc.Doc;
 
 /**
  * @author ice1000
@@ -30,7 +31,7 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  @NotNull String describe();
+  @NotNull Doc describe();
   @NotNull Severity level();
   default @NotNull Stage stage() {
     return Stage.OTHER;

@@ -20,7 +20,7 @@ import org.mzi.api.util.DTKind;
 import org.mzi.concrete.*;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
-import org.mzi.generic.Assoc;
+import org.mzi.api.util.Assoc;
 import org.mzi.generic.Modifier;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;

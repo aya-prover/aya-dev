@@ -5,6 +5,7 @@ package org.mzi.concrete.error;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Problem;
 import org.mzi.api.error.SourcePos;
+import org.mzi.pretty.doc.Doc;
 
 /**
  * @author kiva
@@ -14,7 +15,7 @@ public record SyntaxError(
   @NotNull String reason
 ) implements Problem.Error {
   @Override
-  public @NotNull String describe() {
-    return "Syntax error: " + reason;
+  public @NotNull Doc describe() {
+    return Doc.plain("Syntax error: " + reason);
   }
 }

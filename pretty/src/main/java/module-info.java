@@ -1,5 +1,5 @@
 module org.mzi.pretty {
-  requires org.jetbrains.annotations;
+  requires static org.jetbrains.annotations;
 
   requires transitive asia.kala.common;
 
