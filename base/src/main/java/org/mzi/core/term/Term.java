@@ -7,7 +7,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.core.term.CoreTerm;
+import org.mzi.api.util.DTKind;
 import org.mzi.api.util.NormalizeMode;
+import org.mzi.core.Tele;
 import org.mzi.core.visitor.NormalizeFixpoint;
 import org.mzi.core.visitor.SubstFixpoint;
 import org.mzi.tyck.sort.LevelSubst;
@@ -33,34 +35,34 @@ public interface Term extends CoreTerm {
     return accept(NormalizeFixpoint.INSTANCE, mode);
   }
 
+  // This method is intended NOT to drop nested telescopes
   default @Nullable Term dropTeleDT(int n) {
     if (n == 0) return this;
-    var term = this;
-    while (term instanceof DT dt) {
-      var tele = dt.telescope();
-      while (n > 0 && tele != null) {
-        tele = tele.next();
-        n--;
-      }
-      if (n == 0) return tele != null ? new DT(dt.kind(), tele, dt.last()) : dt.last();
-      term = dt.last().normalize(NormalizeMode.WHNF);
+    if (!(this instanceof DT dt)) return null;
+    var last = dt.last();
+    var tele = dt.telescope();
+    while (n != 0) {
+      if (tele == null) return null;
+      tele = tele.next();
+      n--;
     }
-    return null;
+    // This ensures returning WHNF
+    return tele == null ? last.normalize(NormalizeMode.WHNF) : new DT(dt.kind(), tele, last);
   }
 
+  // This method is intended NOT to drop nested telescopes
   default @Nullable Term dropTeleLam(int n) {
     if (n == 0) return this;
-    var term = this;
-    while (term instanceof LamTerm lam) {
-      var tele = lam.telescope();
-      while (n > 0 && tele != null) {
-        tele = tele.next();
-        n--;
-      }
-      if (n == 0) return tele != null ? new LamTerm(tele, lam.body()) : lam.body();
-      term = lam.body().normalize(NormalizeMode.WHNF);
+    if (!(this instanceof LamTerm lam)) return null;
+    var body = lam.body();
+    var tele = lam.telescope();
+    while (n != 0) {
+      if (tele == null) return null;
+      tele = tele.next();
+      n--;
     }
-    return null;
+    // This ensures returning WHNF
+    return tele == null ? body.normalize(NormalizeMode.WHNF) : new LamTerm(tele, body);
   }
 
   interface Visitor<P, R> {
