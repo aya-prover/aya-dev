@@ -95,9 +95,9 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public @NotNull Boolean visitApp(@NotNull AppTerm.Apply lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (lhs.whnf() == Decision.YES && preRhs instanceof AppTerm.Apply rhs)
       return compare(lhs.fn(), rhs.fn(), null) && compare(lhs.arg().term(), rhs.arg().term(), null);
-    var whnf = lhs.normalize(NormalizeMode.WHNF);
-    if (Objects.equals(whnf, lhs)) return false;
-    return compare(whnf, preRhs, type);
+    var lhsWhnf = lhs.normalize(NormalizeMode.WHNF);
+    if (Objects.equals(lhsWhnf, lhs)) return false;
+    return compare(lhsWhnf, preRhs.normalize(NormalizeMode.WHNF), type);
   }
 
   @Override
@@ -106,7 +106,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       return lhs.ix() == rhs.ix() && compare(lhs.tup(), rhs.tup(), null);
     var whnf = lhs.normalize(NormalizeMode.WHNF);
     if (Objects.equals(whnf, lhs)) return false;
-    return compare(whnf, preRhs, type);
+    return compare(whnf, preRhs.normalize(NormalizeMode.WHNF), type);
   }
 
   @Override
@@ -149,7 +149,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     if (preRhs instanceof AppTerm.FnCall rhs && rhs.fnRef() == lhs.fnRef())
       if (visitLists(lhs.args().view().map(Arg::term), rhs.args().view().map(Arg::term)))
         return true;
-    return compare(lhs.normalize(NormalizeMode.WHNF), preRhs, type);
+    return compare(lhs.normalize(NormalizeMode.WHNF), preRhs.normalize(NormalizeMode.WHNF), type);
   }
 
   @Override
