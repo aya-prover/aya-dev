@@ -10,7 +10,7 @@ import org.mzi.api.error.SourcePos;
 /**
  * @author kiva
  */
-public sealed interface Stmt permits Decl, Stmt.CmdStmt {
+public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
   /** @apiNote the \import and \module stmts do not have a meaningful accessibility, do not refer to this in those cases */
@@ -26,6 +26,7 @@ public sealed interface Stmt permits Decl, Stmt.CmdStmt {
       // [ice]: I guess so, map should preserve the order.
     }
     R visitCmd(@NotNull CmdStmt cmd, P p);
+    R visitModule(@NotNull ModuleStmt mod, P p);
     R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
   }
@@ -41,6 +42,25 @@ public sealed interface Stmt permits Decl, Stmt.CmdStmt {
 
     public boolean lessThan(Accessibility accessibility) {
       return ordinal() < accessibility.ordinal();
+    }
+  }
+
+  /**
+   * @author re-xyr
+   */
+  record ModuleStmt(
+    @NotNull SourcePos sourcePos,
+    @NotNull String name,
+    @NotNull ImmutableSeq<@NotNull Stmt> contents
+  ) implements Stmt {
+    @Override
+    public @NotNull Accessibility accessibility() {
+      return Accessibility.Public;
+    }
+
+    @Override
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitModule(this, p);
     }
   }
 

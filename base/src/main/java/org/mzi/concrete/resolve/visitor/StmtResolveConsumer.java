@@ -15,6 +15,11 @@ import org.mzi.concrete.resolve.context.SimpleContext;
  */
 public final class StmtResolveConsumer implements Stmt.Visitor<@NotNull Context, Unit> {
   @Override
+  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull Context context) {
+    throw new UnsupportedOperationException(); // TODO[xyr]: implement
+  }
+
+  @Override
   public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, @NotNull Context context) {
     return Unit.unit();
   }

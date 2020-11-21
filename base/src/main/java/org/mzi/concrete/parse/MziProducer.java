@@ -491,6 +491,15 @@ public class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
+  public @NotNull Stmt.ModuleStmt visitModule(MziParser.ModuleContext ctx) {
+    return new Stmt.ModuleStmt(
+      sourcePosOf(ctx),
+      ctx.ID().getText(),
+      ImmutableSeq.from(ctx.program().stmt()).map(this::visitStmt)
+    );
+  }
+
+  @Override
   public @NotNull Stream<String> visitIds(MziParser.IdsContext ctx) {
     return ctx.ID().stream().map(ParseTree::getText);
   }

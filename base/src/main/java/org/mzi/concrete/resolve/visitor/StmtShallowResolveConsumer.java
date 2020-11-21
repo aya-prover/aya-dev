@@ -17,6 +17,10 @@ import org.mzi.concrete.resolve.module.ModuleLoader;
  */
 public final record StmtShallowResolveConsumer(@NotNull ModuleLoader loader)
   implements Stmt.Visitor<@NotNull Context, Unit> {
+  @Override
+  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull Context context) {
+    throw new UnsupportedOperationException(); // TODO[xyr]: implement
+  }
 
   @Override
   public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, @NotNull Context context) {
