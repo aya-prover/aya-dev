@@ -42,7 +42,7 @@ public interface Term extends CoreTerm {
     if (!(this instanceof DT dt)) return null;
     var last = dt.last();
     var tele = dt.telescope();
-    while (n != 0) {
+    while (n > 0) {
       if (tele == null) return null;
       tele = tele.next();
       n--;
@@ -57,7 +57,7 @@ public interface Term extends CoreTerm {
     if (!(this instanceof LamTerm lam)) return null;
     var body = lam.body();
     var tele = lam.telescope();
-    while (n != 0) {
+    while (n > 0) {
       if (tele == null) return null;
       tele = tele.next();
       n--;
