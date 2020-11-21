@@ -26,11 +26,6 @@ public sealed interface AppTerm extends Term {
   @NotNull Term fn();
   @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args();
 
-  @Override default @NotNull Decision whnf() {
-    if (fn() instanceof LamTerm) return Decision.NO;
-    return fn().whnf();
-  }
-
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<? extends Term> arg) {
     if (f instanceof HoleApp holeApp) {
       holeApp.argsBuf().append(Arg.uncapture(arg));
@@ -72,6 +67,11 @@ public sealed interface AppTerm extends Term {
       return visitor.visitFnCall(this, p, q);
     }
 
+    @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      // TODO[xyr]: after adding inductive datatypes, we need to check if the function pattern matches.
+      return Decision.NO;
+    }
+
     @Contract(value = " -> new", pure = true)
     @Override public @NotNull Term fn() {
       return new RefTerm(fnRef);
@@ -82,6 +82,11 @@ public sealed interface AppTerm extends Term {
     @NotNull Term fn,
     @NotNull Arg<? extends Term> arg
   ) implements AppTerm {
+    @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      if (fn() instanceof LamTerm) return Decision.NO;
+      return fn().whnf();
+    }
+
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }
