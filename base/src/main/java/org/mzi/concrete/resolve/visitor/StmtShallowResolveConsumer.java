@@ -26,13 +26,8 @@ public final record StmtShallowResolveConsumer(@NotNull ModuleLoader loader)
         if (preMod == null)
           throw new IllegalStateException("Opening non-existing module `" + cmd.path().joinToString(".") + "`"); // TODO[xyr]: report instead of throw
         var mod = new ModuleContext(preMod, cmd.useHide());
-        mod.forEachLocal((name, data) -> {
-          if (cmd.useHide().uses(name)) {
-            if (data._2 == Stmt.Accessibility.Public) context.putLocal(name, data._1, cmd.accessibility());
-            else
-              throw new IllegalStateException("Access to private name `" + name + "`"); // TODO[xyr]: report instead of throw
-          }
-        });
+        mod.forEachLocal((name, data) ->
+          context.putLocal(name, data, cmd.accessibility()), Stmt.Accessibility.Public);
       }
       case Import -> {
         var success = loader.loadIntoContext(context, cmd.path(), cmd.useHide());

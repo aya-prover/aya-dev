@@ -5,6 +5,7 @@ package org.mzi.concrete.resolve.context;
 import asia.kala.Tuple2;
 import asia.kala.collection.mutable.MutableHashMap;
 import asia.kala.collection.mutable.MutableMap;
+import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
@@ -20,18 +21,18 @@ public final class SimpleContext implements Context {
   private final MutableMap<String, Context> modules = new MutableHashMap<>();
   private Context superContext;
 
-  @Override public @Nullable Var getLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility) {
-    var variable = variables.get(name);
-    if (variable == null || variable._2.ordinal() < accessibility.ordinal()) return null;
-    return variable._1;
+  @Override public @Nullable Tuple2<Var, Stmt.Accessibility> unsafeGetLocal(@NotNull String name) {
+    return variables.get(name);
   }
 
-  @Override public boolean containsLocal(@NotNull String name) {
-    return variables.containsKey(name);
+  @Override public @Nullable Stmt.Accessibility unsafeContainsLocal(@NotNull String name) {
+    return Option.of(variables.get(name))
+      .map(i -> i._2)
+      .getOrNull();
   }
 
   @Override
-  public void forEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f) {
+  public void unsafeForEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f) {
     variables.forEach(f);
   }
 
@@ -51,11 +52,11 @@ public final class SimpleContext implements Context {
     modules.put(name, ctx);
   }
 
-  @Override public @Nullable Context getGlobal() {
+  @Override public @Nullable Context getOuterContext() {
     return superContext;
   }
 
-  @Override public void setGlobal(@NotNull Context ctx) {
+  @Override public void setOuterContext(@NotNull Context ctx) {
     superContext = ctx;
   }
 }

@@ -13,6 +13,7 @@ import org.mzi.api.error.SourcePos;
 public sealed interface Stmt permits Decl, Stmt.CmdStmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
+  /** @apiNote the \import and \module stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
   /**
@@ -36,7 +37,11 @@ public sealed interface Stmt permits Decl, Stmt.CmdStmt {
    */
   enum Accessibility {
     Private,
-    Public,
+    Public;
+
+    public boolean lessThan(Accessibility accessibility) {
+      return ordinal() < accessibility.ordinal();
+    }
   }
 
   record CmdStmt(

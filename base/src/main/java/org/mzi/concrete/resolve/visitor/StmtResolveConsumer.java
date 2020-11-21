@@ -29,7 +29,7 @@ public final class StmtResolveConsumer implements Stmt.Visitor<@NotNull Context,
   @Override
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, @NotNull Context context) {
     var local = new SimpleContext();
-    local.setGlobal(context);
+    local.setOuterContext(context);
     ExprResolveFixpoint.INSTANCE.visitParams(decl.telescope, local);
     decl.result = decl.result.accept(ExprResolveFixpoint.INSTANCE, local);
     decl.body = decl.body.accept(ExprResolveFixpoint.INSTANCE, local);

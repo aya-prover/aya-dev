@@ -14,6 +14,9 @@ import java.util.function.BiConsumer;
 
 /**
  * @author re-xyr
+ *
+ * Wraps a context with a given useHide mask.
+ * @apiNote This will hide all private names.
  */
 public final class ModuleContext implements Context {
   @NotNull Context ctx;
@@ -21,28 +24,30 @@ public final class ModuleContext implements Context {
 
   public ModuleContext(@NotNull Context ctx, @NotNull Stmt.CmdStmt.UseHide useHide) {
     useHide.list().forEach(name -> {
-      if (!ctx.containsLocal(name)) throw new IllegalStateException("Module does not contain name `" + name + "`"); // TODO[xyr]: report instead of throw
+      if (!ctx.containsLocal(name, Stmt.Accessibility.Public)) {
+        throw new IllegalStateException("Module does not contain name `" + name + "`"); // TODO[xyr]: report instead of throw
+      }
     });
     this.ctx = ctx;
     this.useHide = useHide;
   }
 
   @Override
-  public @Nullable Var getLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility) {
-    var pre = ctx.getLocal(name, accessibility);
+  public @Nullable Tuple2<Var, Stmt.Accessibility> unsafeGetLocal(@NotNull String name) {
+    var pre = ctx.unsafeGetLocal(name);
     return useHide.uses(name) ? pre : null;
   }
 
   @Override
-  public boolean containsLocal(@NotNull String name) {
-    var pre = ctx.containsLocal(name);
-    if (pre) return useHide.uses(name);
-    else return false;
+  public @Nullable Stmt.Accessibility unsafeContainsLocal(@NotNull String name) {
+    var pre = ctx.containsLocal(name, Stmt.Accessibility.Public);
+    if (pre) return useHide.uses(name) ? Stmt.Accessibility.Public : null;
+    else return null;
   }
 
   @Override
-  public void forEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f) {
-    ctx.forEachLocal((name, data) -> {
+  public void unsafeForEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f) {
+    ctx.unsafeForEachLocal((name, data) -> {
       if (useHide.uses(name)) f.accept(name, data);
     });
   }
@@ -68,12 +73,12 @@ public final class ModuleContext implements Context {
   }
 
   @Override
-  public @Nullable Context getGlobal() {
+  public @Nullable Context getOuterContext() {
     return null;
   }
 
   @Override
-  public void setGlobal(@NotNull Context ctx) {
+  public void setOuterContext(@NotNull Context ctx) {
     throw new IllegalStateException("Unable to extend a ModuleContext");
   }
 }

@@ -16,7 +16,13 @@ import java.util.function.BiConsumer;
  * @author re-xyr
  */
 public interface Context {
-  @Nullable Var getLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility);
+  @Nullable Tuple2<Var, Stmt.Accessibility> unsafeGetLocal(@NotNull String name);
+
+  default @Nullable Var getLocal(@NotNull String name, Stmt.@NotNull Accessibility accessibility) {
+    var variable = unsafeGetLocal(name);
+    if (variable == null || variable._2.lessThan(accessibility)) return null;
+    return variable._1;
+  }
 
   default @Nullable Var getLocal(@NotNull String name) {
     return getLocal(name, Stmt.Accessibility.Private);
@@ -29,14 +35,29 @@ public interface Context {
       .getOrNull();
   }
 
-  boolean containsLocal(@NotNull String name);
+  @Nullable Stmt.Accessibility unsafeContainsLocal(@NotNull String name);
 
-  void forEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f);
+  default boolean containsLocal(@NotNull String name, @NotNull Stmt.Accessibility accessibility) {
+    var acc = unsafeContainsLocal(name);
+    return acc != null && !acc.lessThan(accessibility);
+  }
+
+  default boolean containsLocal(@NotNull String name) {
+    return containsLocal(name, Stmt.Accessibility.Private);
+  }
+
+  void unsafeForEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Tuple2<@NotNull Var, Stmt.@NotNull Accessibility>> f);
+
+  default void forEachLocal(@NotNull BiConsumer<@NotNull String, @NotNull Var> f, Stmt.@NotNull Accessibility accessibility) {
+    unsafeForEachLocal((s, v) -> {
+      if (v._2.ordinal() >= accessibility.ordinal()) f.accept(s, v._1);
+    });
+  }
 
   default @Nullable Var get(@NotNull String name, @NotNull Stmt.Accessibility accessibility) {
     return Option.of(getLocal(name, accessibility))
       .getOrElse(() ->
-        Option.of(getGlobal())
+        Option.of(getOuterContext())
           .map(sup -> sup.get(name, accessibility))
           .getOrNull());
   }
@@ -48,7 +69,7 @@ public interface Context {
   default @Nullable Var get(@NotNull Seq<@NotNull String> path) {
     return Option.of(getLocal(path))
       .getOrElse(() ->
-        Option.of(getGlobal())
+        Option.of(getOuterContext())
           .map(sup -> sup.get(path))
           .getOrNull());
   }
@@ -75,7 +96,7 @@ public interface Context {
   default @Nullable Context getModule(@NotNull String name) {
     return Option.of(getModuleLocal(name))
       .getOrElse(() ->
-        Option.of(getGlobal())
+        Option.of(getOuterContext())
           .map(sup -> sup.getModule(name))
           .getOrNull());
   }
@@ -94,7 +115,7 @@ public interface Context {
     unsafePutModuleLocal(name, ctx);
   }
 
-  @Nullable Context getGlobal();
+  @Nullable Context getOuterContext();
 
-  void setGlobal(@NotNull Context ctx);
+  void setOuterContext(@NotNull Context ctx);
 }
