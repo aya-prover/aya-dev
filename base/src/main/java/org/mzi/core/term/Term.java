@@ -17,6 +17,7 @@ import org.mzi.util.Decision;
 
 /**
  * @author ice1000
+ * A well-typed and terminating term.
  */
 public interface Term extends CoreTerm {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
@@ -35,7 +36,7 @@ public interface Term extends CoreTerm {
     return accept(NormalizeFixpoint.INSTANCE, mode);
   }
 
-  // This method is intended NOT to drop nested telescopes
+  /** @apiNote This method is intended NOT to drop nested telescopes */
   default @Nullable Term dropTeleDT(int n) {
     if (n == 0) return this;
     if (!(this instanceof DT dt)) return null;
@@ -50,7 +51,7 @@ public interface Term extends CoreTerm {
     return tele == null ? last.normalize(NormalizeMode.WHNF) : new DT(dt.kind(), tele, last);
   }
 
-  // This method is intended NOT to drop nested telescopes
+  /** @apiNote This method is intended NOT to drop nested telescopes */
   default @Nullable Term dropTeleLam(int n) {
     if (n == 0) return this;
     if (!(this instanceof LamTerm lam)) return null;

@@ -19,13 +19,13 @@ public final class StmtResolveConsumer implements Stmt.Visitor<@NotNull Context,
     return Unit.unit();
   }
 
-  // Note that this function MUTATES the decl.
+  /** @apiNote Note that this function MUTATES the decl. */
   @Override
   public Unit visitDataDecl(Decl.@NotNull DataDecl decl, @NotNull Context context) {
     throw new UnsupportedOperationException(); // TODO[xyr]: implement
   }
 
-  // Note that this function MUTATES the decl.
+  /** @apiNote Note that this function MUTATES the decl. */
   @Override
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, @NotNull Context context) {
     var local = new SimpleContext();
