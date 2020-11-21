@@ -165,14 +165,17 @@ public sealed interface Decl extends Stmt {
       return visitor.visitFnDecl(this, p);
     }
 
+    @Override
     public @NotNull SourcePos sourcePos() {
       return this.sourcePos;
     }
 
+    @Override
     public @NotNull DefVar<FnDecl> ref() {
       return this.ref;
     }
 
+    @Override
     public @NotNull Accessibility accessibility() { return this.accessibility; }
 
     @Override public boolean equals(Object o) {
