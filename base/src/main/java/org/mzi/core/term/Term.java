@@ -36,29 +36,33 @@ public interface Term extends CoreTerm {
     return accept(NormalizeFixpoint.INSTANCE, mode);
   }
 
-  /** @apiNote This method is intended NOT to drop nested telescopes */
   default @Nullable Term dropTeleDT(int n) {
-    if (n == 0) return this;
-    if (!(this instanceof DT dt)) return null;
-    var last = dt.last();
-    var tele = dt.telescope();
+    var last = this;
+    Tele tele = null;
+    DTKind kind = null;
     while (n > 0) {
-      if (tele == null) return null;
+      if (tele == null) {
+        if (!(last.normalize(NormalizeMode.WHNF) instanceof DT dt)) return null;
+        last = dt.last();
+        kind = dt.kind();
+        tele = dt.telescope();
+      }
       tele = tele.next();
       n--;
     }
     // This ensures returning WHNF
-    return tele == null ? last.normalize(NormalizeMode.WHNF) : new DT(dt.kind(), tele, last);
+    return tele == null ? last.normalize(NormalizeMode.WHNF) : new DT(kind, tele, last);
   }
 
-  /** @apiNote This method is intended NOT to drop nested telescopes */
   default @Nullable Term dropTeleLam(int n) {
-    if (n == 0) return this;
-    if (!(this instanceof LamTerm lam)) return null;
-    var body = lam.body();
-    var tele = lam.telescope();
+    var body = this;
+    Tele tele = null;
     while (n > 0) {
-      if (tele == null) return null;
+      if (tele == null) {
+        if (!(body.normalize(NormalizeMode.WHNF) instanceof LamTerm lam)) return null;
+        body = lam.body();
+        tele = lam.telescope();
+      }
       tele = tele.next();
       n--;
     }
