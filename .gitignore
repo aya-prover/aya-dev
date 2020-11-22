@@ -8,3 +8,4 @@ out/
 *.iml
 gradle.properties
 .DS_Store
+lombok.config
