@@ -8,6 +8,7 @@ plugins {
   idea
   `java-library`
   `maven-publish`
+  id("io.freefair.lombok") version "5.3.0"
 }
 
 var deps: Properties by rootProject.ext
@@ -31,6 +32,7 @@ subprojects {
     plugin("jacoco")
     plugin("maven-publish")
     plugin("java-library")
+    plugin("io.freefair.lombok")
   }
 
   repositories {
