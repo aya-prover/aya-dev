@@ -14,12 +14,6 @@ public interface Problem {
     GOAL,
     ERROR,
     WARN,
-    WARN_UNUSED {
-      @Override
-      public String toString() {
-        return "WARN";
-      }
-    },
   }
 
   enum Stage {
@@ -48,13 +42,6 @@ public interface Problem {
     @Override
     default @NotNull Severity level() {
       return Severity.WARN;
-    }
-  }
-
-  interface WarnUnused extends Problem {
-    @Override
-    default @NotNull Severity level() {
-      return Severity.WARN_UNUSED;
     }
   }
 
