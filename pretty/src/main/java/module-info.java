@@ -1,5 +1,6 @@
 module org.mzi.pretty {
   requires static org.jetbrains.annotations;
+  requires static lombok;
 
   requires transitive asia.kala.common;
 
