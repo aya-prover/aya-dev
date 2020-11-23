@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Var;
 import org.mzi.core.Tele;
-import org.mzi.core.TermProducer;
+import org.mzi.core.TermDsl;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.Term;
 
@@ -23,7 +23,7 @@ import java.util.Objects;
 @TestOnly
 public interface Lisp {
   static @Nullable Term somehowParse(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
-    return TermProducer.parse(code, refs);
+    return TermDsl.parse(code, refs);
   }
 
   static @NotNull Term reallyParse(@NotNull @NonNls @Language("TEXT") String code) {
@@ -35,7 +35,7 @@ public interface Lisp {
   }
 
   static @Nullable Tele somehowParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
-    return TermProducer.parseTele(code, refs);
+    return TermDsl.parseTele(code, refs);
   }
 
   static @NotNull FnDef reallyParseDef(

@@ -8,10 +8,10 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
 import org.mzi.util.Decision;
 
-public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
-  public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
+public final class Normalizer implements Unfolder<NormalizeMode> {
+  public static final @NotNull Normalizer INSTANCE = new Normalizer();
 
-  @Contract(pure = true) private NormalizeFixpoint() {
+  @Contract(pure = true) private Normalizer() {
   }
 
   @Override
@@ -33,19 +33,19 @@ public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
   @Override
   public @NotNull Term visitLam(@NotNull LamTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return UnfoldFixpoint.super.visitLam(term, mode);
+    else return Unfolder.super.visitLam(term, mode);
   }
 
   @Override
   public @NotNull Term visitDT(@NotNull DT term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return UnfoldFixpoint.super.visitDT(term, mode);
+    else return Unfolder.super.visitDT(term, mode);
   }
 
   @Override
   public @NotNull Term visitTup(@NotNull TupTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return UnfoldFixpoint.super.visitTup(term, mode);
+    else return Unfolder.super.visitTup(term, mode);
   }
 
   @Override

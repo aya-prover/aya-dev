@@ -30,19 +30,19 @@ import static org.mzi.concrete.parse.LispParsing.parser;
  */
 @TestOnly
 @ApiStatus.Internal
-public class TermProducer extends LispBaseVisitor<Term> {
+public class TermDsl extends LispBaseVisitor<Term> {
   private final @NotNull Map<String, @NotNull Var> refs;
 
-  public TermProducer(@NotNull Map<String, @NotNull Var> refs) {
+  public TermDsl(@NotNull Map<String, @NotNull Var> refs) {
     this.refs = refs;
   }
 
   public static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
-    return parser(text).expr().accept(new TermProducer(refs));
+    return parser(text).expr().accept(new TermDsl(refs));
   }
 
   public static @Nullable Tele parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
-    return new TermProducer(refs).exprToBind(parser(text).expr());
+    return new TermDsl(refs).exprToBind(parser(text).expr());
   }
 
   @Override

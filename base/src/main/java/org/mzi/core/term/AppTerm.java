@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.visitor.SubstFixpoint;
+import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.api.ref.DefVar;
 import org.mzi.util.Decision;
@@ -34,7 +34,7 @@ public sealed interface AppTerm extends Term {
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
     var tele = lam.telescope();
     var next = tele.next();
-    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new SubstFixpoint.TermSubst(tele.ref(), arg.term()));
+    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new Substituter.TermSubst(tele.ref(), arg.term()));
   }
 
    @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Seq<? extends Arg<? extends Term>> args) {
@@ -45,7 +45,7 @@ public sealed interface AppTerm extends Term {
     }
     if (!(f instanceof LamTerm lam)) return make(new Apply(f, args.first()), args.view().drop(1));
     var next = lam.telescope();
-    var subst = new SubstFixpoint.TermSubst(new HashMap<>());
+    var subst = new Substituter.TermSubst(new HashMap<>());
     for (int i = 0; i < args.size(); i++) {
       if (next != null) {
         subst.add(next.ref(), args.get(i).term());

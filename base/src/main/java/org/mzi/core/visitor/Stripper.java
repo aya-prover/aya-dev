@@ -13,10 +13,10 @@ import org.mzi.core.term.Term;
  *
  * @author ice1000
  */
-public final class StripFixpoint implements TermFixpoint<Unit> {
-  public static final @NotNull StripFixpoint INSTANCE = new StripFixpoint();
+public final class Stripper implements TermFixpoint<Unit> {
+  public static final @NotNull Stripper INSTANCE = new Stripper();
 
-  @Contract(pure = true) private StripFixpoint() {
+  @Contract(pure = true) private Stripper() {
   }
 
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, Unit emptyTuple) {

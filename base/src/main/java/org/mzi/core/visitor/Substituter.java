@@ -18,7 +18,7 @@ import java.util.Map;
  *
  * @author ice1000
  */
-public record SubstFixpoint(
+public record Substituter(
   @NotNull TermSubst termSubst, @NotNull LevelSubst levelSubst) implements TermFixpoint<Unit> {
   @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unused) {
     return sort.substSort(levelSubst);

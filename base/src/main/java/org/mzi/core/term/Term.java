@@ -10,8 +10,8 @@ import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.util.DTKind;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.Tele;
-import org.mzi.core.visitor.NormalizeFixpoint;
-import org.mzi.core.visitor.SubstFixpoint;
+import org.mzi.core.visitor.Normalizer;
+import org.mzi.core.visitor.Substituter;
 import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.util.Decision;
 
@@ -24,16 +24,16 @@ public interface Term extends CoreTerm {
   <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
   @Contract(pure = true) @NotNull Decision whnf();
 
-  default @NotNull Term subst(@NotNull SubstFixpoint.TermSubst subst) {
+  default @NotNull Term subst(@NotNull Substituter.TermSubst subst) {
     return subst(subst, LevelSubst.EMPTY);
   }
 
-  default @NotNull Term subst(@NotNull SubstFixpoint.TermSubst subst, @NotNull LevelSubst levelSubst) {
-    return accept(new SubstFixpoint(subst, levelSubst), Unit.INSTANCE);
+  default @NotNull Term subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
+    return accept(new Substituter(subst, levelSubst), Unit.INSTANCE);
   }
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
-    return accept(NormalizeFixpoint.INSTANCE, mode);
+    return accept(Normalizer.INSTANCE, mode);
   }
 
   default @Nullable Term dropTeleDT(int n) {

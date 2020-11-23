@@ -19,12 +19,12 @@ import java.util.HashMap;
 /**
  * @author ice1000
  */
-public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
-  @Contract(pure = true) static @NotNull SubstFixpoint.TermSubst buildSubst(
+public interface Unfolder<P> extends TermFixpoint<P> {
+  @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
     @NotNull Tele self,
     @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) {
-    var subst = new SubstFixpoint.TermSubst(new HashMap<>());
+    var subst = new Substituter.TermSubst(new HashMap<>());
     self.forEach((i, tele) -> subst.add(tele.ref(), args.get(i).term()));
     return subst;
   }
@@ -46,12 +46,12 @@ public interface UnfoldFixpoint<P> extends TermFixpoint<P> {
   record Tracked(
     @NotNull Set<@NotNull Var> unfolding,
     @NotNull MutableSet<@NotNull Var> unfolded
-  ) implements UnfoldFixpoint<Unit> {
+  ) implements Unfolder<Unit> {
     @Override
     public @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, Unit emptyTuple) {
       if (!unfolding.contains(fnCall.fnRef())) return fnCall;
       unfolded.add(fnCall.fnRef());
-      return UnfoldFixpoint.super.visitFnCall(fnCall, emptyTuple);
+      return Unfolder.super.visitFnCall(fnCall, emptyTuple);
     }
   }
 }

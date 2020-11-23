@@ -6,11 +6,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
 
-public final class UsagesConsumer implements VarConsumer {
+public final class UsageCounter implements VarConsumer {
   public final @NotNull Var var;
   private int usageCount = 0;
 
-  @Contract(pure = true) public UsagesConsumer(@NotNull Var var) {
+  @Contract(pure = true) public UsageCounter(@NotNull Var var) {
     this.var = var;
   }
 
