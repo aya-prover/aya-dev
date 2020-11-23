@@ -16,10 +16,10 @@ import org.mzi.concrete.visitor.ExprFixpoint;
  * Resolves bindings.
  * @author re-xyr
  */
-public final class ExprResolveFixpoint implements ExprFixpoint<Context> {
-  public static final ExprResolveFixpoint INSTANCE = new ExprResolveFixpoint();
+public final class ExprResolver implements ExprFixpoint<Context> {
+  public static final @NotNull ExprResolver INSTANCE = new ExprResolver();
 
-  private ExprResolveFixpoint() {}
+  private ExprResolver() {}
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     return new Expr.RefExpr(expr.sourcePos(), Option.of(ctx.get(expr.name()))

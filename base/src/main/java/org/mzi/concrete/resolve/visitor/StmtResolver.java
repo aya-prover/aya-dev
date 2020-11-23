@@ -13,7 +13,7 @@ import org.mzi.concrete.resolve.context.SimpleContext;
  * resolves expressions inside stmts, after StmtShallowResolveConsumer
  * @author re-xyr
  */
-public final class StmtResolveConsumer implements Stmt.Visitor<@NotNull Context, Unit> {
+public final class StmtResolver implements Stmt.Visitor<@NotNull Context, Unit> {
   @Override
   public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull Context context) {
     throw new UnsupportedOperationException(); // TODO[xyr]: implement
@@ -35,9 +35,9 @@ public final class StmtResolveConsumer implements Stmt.Visitor<@NotNull Context,
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, @NotNull Context context) {
     var local = new SimpleContext();
     local.setOuterContext(context);
-    ExprResolveFixpoint.INSTANCE.visitParams(decl.telescope, local);
-    decl.result = decl.result.accept(ExprResolveFixpoint.INSTANCE, local);
-    decl.body = decl.body.accept(ExprResolveFixpoint.INSTANCE, local);
+    ExprResolver.INSTANCE.visitParams(decl.telescope, local);
+    decl.result = decl.result.accept(ExprResolver.INSTANCE, local);
+    decl.body = decl.body.accept(ExprResolver.INSTANCE, local);
     return Unit.unit();
   }
 }

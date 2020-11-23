@@ -3,8 +3,6 @@
 package org.mzi.concrete.resolve.context;
 
 import asia.kala.Tuple2;
-import asia.kala.collection.Set;
-import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;

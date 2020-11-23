@@ -15,7 +15,7 @@ import org.mzi.concrete.resolve.module.ModuleLoader;
  *
  * @author re-xyr
  */
-public final record StmtShallowResolveConsumer(@NotNull ModuleLoader loader)
+public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   implements Stmt.Visitor<@NotNull Context, Unit> {
   @Override
   public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull Context context) {
