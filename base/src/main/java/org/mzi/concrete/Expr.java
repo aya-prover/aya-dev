@@ -36,6 +36,46 @@ public sealed interface Expr {
     R visitLitString(@NotNull LitStringExpr expr, P p);
   }
 
+  interface BaseVisitor<P, R> extends Visitor<P, R> {
+    R catchAll(@NotNull Expr expr, P p);
+    @Override default R visitRef(@NotNull RefExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitUnresolved(@NotNull UnresolvedExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitLam(@NotNull LamExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitDT(@NotNull DTExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitUniv(@NotNull UnivExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitApp(@NotNull AppExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitHole(@NotNull HoleExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitTup(@NotNull TupExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitProj(@NotNull ProjExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitTyped(@NotNull TypedExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitLitInt(@NotNull LitIntExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitLitString(@NotNull LitStringExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+  }
+
   /**
    * @author re-xyr
    */
@@ -153,7 +193,7 @@ public sealed interface Expr {
   record ProjExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
-    @NotNull int ix
+    int ix
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);
