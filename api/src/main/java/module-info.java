@@ -1,8 +1,8 @@
 module org.mzi.api {
   requires static org.jetbrains.annotations;
+  requires static lombok;
 
   requires transitive asia.kala.common;
-  requires transitive lombok;
 
   requires org.mzi.pretty;
 
