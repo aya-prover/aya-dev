@@ -7,6 +7,7 @@ import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
+import lombok.Singular;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -38,17 +39,22 @@ import java.util.stream.Stream;
 /**
  * @author ice1000, kiva
  */
-public class MziProducer extends MziBaseVisitor<Object> {
+public final class MziProducer extends MziBaseVisitor<Object> {
+  public static final @NotNull MziProducer INSTANCE = new MziProducer();
+
+  private MziProducer() {
+  }
+
   public static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
-    return new MziProducer().visitExpr(MziParsing.parser(code).expr());
+    return INSTANCE.visitExpr(MziParsing.parser(code).expr());
   }
 
   public static @NotNull Stmt parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return new MziProducer().visitStmt(MziParsing.parser(code).stmt());
+    return INSTANCE.visitStmt(MziParsing.parser(code).stmt());
   }
 
   public static @NotNull Decl parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
-    return new MziProducer().visitDecl(MziParsing.parser(code).decl());
+    return INSTANCE.visitDecl(MziParsing.parser(code).decl());
   }
 
   @Override
@@ -137,7 +143,7 @@ public class MziProducer extends MziBaseVisitor<Object> {
     if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
-      var filling = fillingExpr == null? null : visitExpr(fillingExpr);
+      var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
       return new Expr.HoleExpr(sourcePosOf(ctx), null, filling);
     }
     var number = ctx.NUMBER();

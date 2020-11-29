@@ -40,18 +40,23 @@ public interface Term extends CoreTerm {
   }
 
   default Tuple2<@Nullable Term, @NotNull Buffer<@NotNull Tele>> splitTeleDT(int n) {
+    return splitTeleDT(n, true);
+  }
+
+  default Tuple2<@Nullable Term, Buffer<@NotNull Tele>> splitTeleDT(int n, boolean buildTele) {
     var last = this;
     Tele tele = null;
     DTKind kind = null;
-    var buf = Buffer.<@NotNull Tele>of();
+    var buf = buildTele ? Buffer.<@NotNull Tele>of() : null;
     while (n > 0) {
       if (tele == null) {
-        if (!(last.normalize(NormalizeMode.WHNF) instanceof DT dt)) return null;
+        if (!(last.normalize(NormalizeMode.WHNF) instanceof DT dt))
+          return Tuple.of(null, buf);
         last = dt.last();
         kind = dt.kind();
         tele = dt.telescope();
       }
-      buf.append(tele);
+      if (buf != null) buf.append(tele);
       tele = tele.next();
       n--;
     }
@@ -60,7 +65,7 @@ public interface Term extends CoreTerm {
   }
 
   default @Nullable Term dropTeleDT(int n) {
-    return splitTeleDT(n)._1;
+    return splitTeleDT(n, false)._1;
   }
 
   default @NotNull Buffer<@NotNull Tele> takeTeleDT(int n) {
