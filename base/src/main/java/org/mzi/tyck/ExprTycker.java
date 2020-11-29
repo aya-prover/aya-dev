@@ -11,6 +11,7 @@ import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.DT;
+import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.Term;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.tyck.error.BadTypeError;
@@ -36,7 +37,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckerException();
     }
     // TODO[ice]: add local bindings to context
-    return expr.body().accept(this, expected._1);
+    var rec = expr.body().accept(this, expected._1);
+    // FIXME[ice]: use bindings from `expr.params()`
+    return new Result(new LamTerm(dt.telescope(), rec.wellTyped), dt);
   }
 
   @Override
@@ -47,6 +50,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public static class TyckerException extends RuntimeException {
   }
 
-  public static class Result {
+  public static record Result(
+    @NotNull Term wellTyped,
+    @NotNull Term type
+  ) {
   }
 }
