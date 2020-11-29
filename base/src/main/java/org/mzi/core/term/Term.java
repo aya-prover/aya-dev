@@ -2,7 +2,10 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
+import asia.kala.Tuple;
+import asia.kala.Tuple2;
 import asia.kala.Unit;
+import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,10 +39,11 @@ public interface Term extends CoreTerm {
     return accept(Normalizer.INSTANCE, mode);
   }
 
-  default @Nullable Term dropTeleDT(int n) {
+  default Tuple2<@Nullable Term, @NotNull Buffer<@NotNull Tele>> splitTeleDT(int n) {
     var last = this;
     Tele tele = null;
     DTKind kind = null;
+    var buf = Buffer.<@NotNull Tele>of();
     while (n > 0) {
       if (tele == null) {
         if (!(last.normalize(NormalizeMode.WHNF) instanceof DT dt)) return null;
@@ -47,11 +51,20 @@ public interface Term extends CoreTerm {
         kind = dt.kind();
         tele = dt.telescope();
       }
+      buf.append(tele);
       tele = tele.next();
       n--;
     }
-    // This ensures returning WHNF
-    return tele == null ? last.normalize(NormalizeMode.WHNF) : new DT(kind, tele, last);
+    var term = tele == null ? last : new DT(kind, tele, last);
+    return Tuple.of(term, buf);
+  }
+
+  default @Nullable Term dropTeleDT(int n) {
+    return splitTeleDT(n)._1;
+  }
+
+  default @NotNull Buffer<@NotNull Tele> takeTeleDT(int n) {
+    return splitTeleDT(n)._2;
   }
 
   default @Nullable Term dropTeleLam(int n) {
@@ -66,8 +79,7 @@ public interface Term extends CoreTerm {
       tele = tele.next();
       n--;
     }
-    // This ensures returning WHNF
-    return tele == null ? body.normalize(NormalizeMode.WHNF) : new LamTerm(tele, body);
+    return tele == null ? body : new LamTerm(tele, body);
   }
 
   interface Visitor<P, R> {
