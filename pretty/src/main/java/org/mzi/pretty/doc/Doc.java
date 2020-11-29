@@ -320,6 +320,7 @@ public sealed interface Doc {
    * @param text text that may contain '\n'
    * @return text document of the whole text
    */
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Contract("_ -> new")
   static @NotNull Doc plain(String text) {
     if (!text.contains("\n")) {

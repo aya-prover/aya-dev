@@ -16,6 +16,6 @@ public record SyntaxError(
 ) implements Problem.Error {
   @Override
   public @NotNull Doc describe() {
-    return Doc.plain("Syntax error: " + reason);
+    return Doc.cat(Doc.plain("Syntax error: "), Doc.plain(reason));
   }
 }

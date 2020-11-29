@@ -10,11 +10,17 @@ import org.mzi.pretty.doc.Doc;
 
 public record BadTypeError(
   @NotNull Expr expr,
-  @NotNull String expectedType,
+  @NotNull Doc expectedType,
   @NotNull Term actualType
 ) implements Problem.Error, TyckProblem {
   @Override
   public @NotNull Doc describe() {
-    return Doc.plain("The expected type " + actualType + " is not a " + expectedType + ", therefore cannot type a lambda such as " + expr);
+    return Doc.cat(
+      Doc.plain("The expected type "),
+      Doc.plain(actualType.toString()),
+      Doc.plain(" is not a "),
+      expectedType,
+      Doc.plain(", therefore cannot type a lambda such as "),
+      Doc.plain(expr.toString()));
   }
 }

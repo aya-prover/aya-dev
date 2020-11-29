@@ -12,6 +12,7 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.DT;
 import org.mzi.core.term.Term;
+import org.mzi.pretty.doc.Doc;
 import org.mzi.tyck.error.BadTypeError;
 
 @AllArgsConstructor
@@ -26,7 +27,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override
   public Result visitLam(Expr.@NotNull LamExpr expr, Term term) {
     if (!(term.normalize(NormalizeMode.WHNF) instanceof DT dt && dt.kind().isPi)) {
-      reporter.report(new BadTypeError(expr, "pi type", term));
+      reporter.report(new BadTypeError(expr, Doc.plain("pi type"), term));
       throw new TyckerException();
     }
     var expected = term.splitTeleDT(expr.params().size());
