@@ -26,4 +26,9 @@ public final class FnDef implements Def {
   @Override public @NotNull DefVar<FnDef> ref() {
     return ref;
   }
+
+  @Override
+  public <P, R> R accept(Visitor<P, R> visitor, P p) {
+    return visitor.visitFn(this, p);
+  }
 }

@@ -11,4 +11,13 @@ import org.mzi.api.ref.DefVar;
  */
 public interface Def extends CoreDef {
   @Override @NotNull DefVar<? extends Def> ref();
+
+  <P, R> R accept(Visitor<P, R> visitor, P p);
+
+  /**
+   * @author re-xyr
+   */
+  interface Visitor<P, R> {
+    R visitFn(@NotNull FnDef def, P p);
+  }
 }
