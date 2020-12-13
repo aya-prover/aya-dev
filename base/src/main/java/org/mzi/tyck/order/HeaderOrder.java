@@ -6,9 +6,7 @@ import asia.kala.collection.Seq;
 import asia.kala.collection.mutable.Buffer;
 import asia.kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.core.Tele;
 import org.mzi.core.def.Def;
-import org.mzi.core.def.FnDef;
 import org.mzi.core.visitor.RefFinder;
 
 /**
@@ -21,13 +19,8 @@ public final class HeaderOrder {
     visited.add(def);
     inStack.add(def);
     order.append(def);
-    if (!(def instanceof FnDef fn)) throw new IllegalStateException("This should not happen"); // TODO[xyr]: Implement sth like DefVisitor and replace this.
     var references = Buffer.<Def>of();
-    fn.telescope.forEach((ix, tele) -> {
-      if (!(tele instanceof Tele.TypedTele typed)) return;
-      typed.type().accept(RefFinder.INSTANCE, references);
-    });
-    fn.result.accept(RefFinder.INSTANCE, references);
+    def.accept(RefFinder.HEADER_ONLY, references);
     for (var nextDef : references) {
       if (visited.contains(nextDef)) continue;
       visit(nextDef, visited, inStack, order);
@@ -35,7 +28,7 @@ public final class HeaderOrder {
     inStack.remove(def);
   }
 
-  public static @Nullable Seq<Def> genHeaderOrder(Seq<Def> defs) {
+  public static @Nullable Buffer<Def> genHeaderOrder(Seq<Def> defs) {
     var visited = MutableSet.<Def>of();
     var inStack = MutableSet.<Def>of();
     var order = Buffer.<Def>of();
