@@ -14,8 +14,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
+import org.mzi.core.term.AppTerm;
+import org.mzi.core.term.RefTerm;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
+import org.mzi.ref.LocalVar;
 
 import java.util.function.BiConsumer;
 
@@ -32,6 +35,10 @@ import java.util.function.BiConsumer;
 public interface Tele extends Bind {
   @Override @Nullable Tele next();
   @Override @NotNull Term type();
+
+  static @NotNull TypedTele mock(@NotNull Var hole, boolean explicit) {
+    return new TypedTele(new LocalVar("_"), new AppTerm.HoleApp(hole), explicit, null);
+  }
 
   <P, R> R accept(@NotNull Tele.Visitor<P, R> visitor, P p);
   <P, Q, R> R accept(@NotNull Tele.BiVisitor<P, Q, R> visitor, P p, Q q);

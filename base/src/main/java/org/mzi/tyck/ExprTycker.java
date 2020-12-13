@@ -8,12 +8,13 @@ import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.DTKind;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
-import org.mzi.core.term.DT;
-import org.mzi.core.term.LamTerm;
-import org.mzi.core.term.Term;
+import org.mzi.core.Tele;
+import org.mzi.core.term.*;
 import org.mzi.pretty.doc.Doc;
+import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
 
 @AllArgsConstructor
@@ -27,6 +28,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override
   public Result visitLam(Expr.@NotNull LamExpr expr, Term term) {
+    if (term == null) {
+      var domain = new LocalVar("_");
+      var codomain = new LocalVar("_");
+      term = new DT(DTKind.Pi, Tele.mock(domain, expr.params().first().explicit()), new AppTerm.HoleApp(codomain));
+    }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof DT dt && dt.kind().isPi)) {
       reporter.report(new BadTypeError(expr, Doc.plain("pi type"), term));
       throw new TyckerException();

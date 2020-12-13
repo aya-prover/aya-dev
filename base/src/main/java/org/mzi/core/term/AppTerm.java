@@ -116,6 +116,10 @@ public sealed interface AppTerm extends Term {
       this(new OptionRef<>(Option.of(solution)), var, args);
     }
 
+    public HoleApp(@NotNull Var var) {
+      this((Term) null, var, Buffer.of());
+    }
+
     @Override public @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args() {
       return argsBuf;
     }
