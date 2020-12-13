@@ -15,7 +15,7 @@ import org.mzi.core.term.*;
  * @author re-xyr
  */
 public final class RefFinder implements Def.Visitor<@NotNull Buffer<Def>, Unit> {
-  private final class TermRefFinder implements TermConsumer<@NotNull Buffer<Def>> {
+  private static final class TermRefFinder implements TermConsumer<@NotNull Buffer<Def>> {
     @Override
     public Unit visitRef(@NotNull RefTerm term, @NotNull Buffer<Def> defs) {
       if (term.var() instanceof DefVar<?> ref && ref.def() instanceof Def def) defs.append(def);
