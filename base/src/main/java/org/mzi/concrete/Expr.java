@@ -2,6 +2,8 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
+import asia.kala.Tuple;
+import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
@@ -12,6 +14,8 @@ import org.mzi.api.ref.Var;
 import org.mzi.api.util.DTKind;
 import org.mzi.generic.Arg;
 import org.mzi.tyck.sort.LevelEqn;
+
+import java.util.stream.Stream;
 
 /**
  * @author re-xyr
@@ -139,6 +143,11 @@ public sealed interface Expr {
     @NotNull Buffer<@NotNull Param> params,
     @NotNull Expr body
   ) implements Expr {
+    public Stream<Tuple2<Var, Expr>> paramsStream() {
+      return params.stream().flatMap(p -> p.vars().stream()
+        .map(var -> Tuple.of(var, p.type())));
+    }
+
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLam(this, p);
     }

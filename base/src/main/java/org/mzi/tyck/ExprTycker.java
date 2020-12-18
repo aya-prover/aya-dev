@@ -2,10 +2,15 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
-import asia.kala.collection.Map;
+import asia.kala.Tuple;
+import asia.kala.Tuple2;
+import asia.kala.collection.mutable.Buffer;
 import asia.kala.collection.mutable.MutableHashMap;
+import asia.kala.collection.mutable.MutableMap;
+import asia.kala.ref.Ref;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.DTKind;
@@ -16,14 +21,20 @@ import org.mzi.core.term.*;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
+import org.mzi.tyck.sort.LevelEqn;
+import org.mzi.tyck.unify.DefEq;
+import org.mzi.tyck.unify.NaiveDefEq;
+import org.mzi.util.Ordering;
 
-@AllArgsConstructor
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
-  public final @NotNull Map<Var, Term> localCtx;
+  public final @NotNull MutableMap<Var, Term> localCtx;
+  public final @NotNull LevelEqn.Set levelEqns;
 
   public ExprTycker(@NotNull Reporter reporter) {
-    this(reporter, new MutableHashMap<>());
+    this.reporter = reporter;
+    localCtx = new MutableHashMap<>();
+    levelEqns = new LevelEqn.Set(reporter, Buffer.of(), Buffer.of());
   }
 
   @Override
@@ -37,13 +48,33 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       reporter.report(new BadTypeError(expr, Doc.plain("pi type"), term));
       throw new TyckerException();
     }
-    var expected = term.splitTeleDT(expr.params().size());
-    if (expected._1 == null) {
-      // TODO[ice]: the expected type doesn't have enough parameters
+    var tyRef = new Ref<>(term);
+    var resultTele = Buffer.<Tuple2<Var, Term>>of();
+    expr.paramsStream().forEach(tuple -> {
+      if (tyRef.value instanceof DT pi && pi.kind().isPi) {
+        var type = pi.telescope().type();
+        if (tuple._2 != null) {
+          var result = tuple._2.accept(this, UnivTerm.OMEGA);
+          var comparison = new NaiveDefEq(Ordering.Lt, levelEqns).compare(result.wellTyped, type, UnivTerm.OMEGA);
+          if (!comparison) {
+            // TODO[ice]: expected type mismatch lambda type annotation
+            throw new TyckerException();
+          } else type = result.wellTyped;
+        }
+        // FIXME[glavo]: https://github.com/Glavo/kala-common/issues/3
+        resultTele.append(Tuple.of(tuple._1, type));
+        localCtx.put(tuple._1, type);
+        tyRef.value = pi.dropTeleDT(1);
+      } else {
+        // TODO[ice]: error message on not enough pi parameters
+        throw new TyckerException();
+      }
+    });
+    if (tyRef.value == null) {
+      // TODO[ice]: error message on not enough pi parameters
       throw new TyckerException();
     }
-    // TODO[ice]: add local bindings to context
-    var rec = expr.body().accept(this, expected._1);
+    var rec = expr.body().accept(this, tyRef.value);
     // FIXME[ice]: use bindings from `expr.params()`
     return new Result(new LamTerm(dt.telescope(), rec.wellTyped), dt);
   }
