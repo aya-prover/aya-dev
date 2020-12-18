@@ -8,6 +8,7 @@ import asia.kala.Tuple2;
 import asia.kala.Tuple3;
 import asia.kala.collection.Seq;
 import asia.kala.collection.mutable.Buffer;
+import asia.kala.control.Option;
 import asia.kala.function.IndexedConsumer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
 
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 /**
  * Similar to Arend <code>DependentLink</code>.
@@ -51,6 +53,21 @@ public interface Tele extends Bind {
 
   static @NotNull Tele fromBuffer(@NotNull Buffer<Tuple3<Var, Boolean, Term>> buffer) {
     return buffer.foldRight(null, (t, o) -> new TypedTele(t._1, t._3, t._2, o));
+  }
+
+  /**
+   * @param n to find the n-th tele.
+   * @return none if n is too large,
+   * some(null) if n is equal to the size of the tele,
+   * some(obj) otherwise.
+   */
+  default @NotNull Option<@Nullable Tele> skip(int n) {
+    var tele = this;
+    while (n-- > 0) {
+      if (tele == null) return Option.none();
+      tele = tele.next();
+    }
+    return Option.some(tele);
   }
 
   default @NotNull IntObjTuple2<@NotNull Tele>

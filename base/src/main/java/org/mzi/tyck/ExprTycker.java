@@ -91,15 +91,19 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth
   @Override public Result visitRef(Expr.@NotNull RefExpr expr, Term term) {
-    Term ty = localCtx.get(expr.resolvedVar());
+    var ty = localCtx.get(expr.resolvedVar());
     if (ty == null) throw new IllegalStateException("Unresolved var `" + expr.resolvedVar().name() + "` tycked.");
     if (term == null) return new Result(new RefTerm(expr.resolvedVar()), ty);
-    var unification = new NaiveDefEq(Ordering.Lt, levelEqns).compare(ty, term, UnivTerm.OMEGA);
+    unify(term, ty);
+    return new Result(new RefTerm(expr.resolvedVar()), ty);
+  }
+
+  private void unify(Term upper, Term lower) {
+    var unification = new NaiveDefEq(Ordering.Lt, levelEqns).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
-      // TODO[ice]: expected type mismatch lambda type annotation
+      // TODO[ice]: expected type mismatch synthesized type
       throw new TyckerException();
     }
-    return new Result(new RefTerm(expr.resolvedVar()), ty);
   }
 
   @Rule.Synth
@@ -111,9 +115,28 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
     });
     var last = expr.last().accept(this, against);
-    return new Result(
-      new DT(expr.kind(), Tele.fromBuffer(resultTele), last.wellTyped),
-      against);
+    return new Result(new DT(expr.kind(), Tele.fromBuffer(resultTele), last.wellTyped), against);
+  }
+
+  @Rule.Synth
+  @Override public Result visitProj(Expr.@NotNull ProjExpr expr, Term term) {
+    var tupleRes = expr.tup().accept(this, null);
+    if (!(tupleRes.type instanceof DT dt && dt.kind().isSigma))
+      return wantButNo(expr.tup(), tupleRes.type, "sigma type");
+    var telescope = dt.telescope();
+    if (expr.ix() <= 0) {
+      // TODO[ice]: too small index
+      throw new TyckerException();
+    }
+    var teleOpt = telescope.skip(expr.ix() - 1);
+    // TODO[ice]: too large index
+    if (teleOpt.isEmpty()) {
+      throw new TyckerException();
+    }
+    var tele = teleOpt.get();
+    var type = tele == null ? dt.last() : tele.type();
+    unify(term, type);
+    return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
 
   @Override
