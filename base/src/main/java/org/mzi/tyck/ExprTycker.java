@@ -20,6 +20,7 @@ import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
 import org.mzi.tyck.sort.LevelEqn;
+import org.mzi.tyck.sort.Sort;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.util.Ordering;
 
@@ -42,7 +43,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       term = new DT(DTKind.Pi, Tele.mock(domain, expr.params().first().explicit()), new AppTerm.HoleApp(codomain));
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof DT dt && dt.kind().isPi)) {
-      return wantPi(expr, term);
+      return wantButNo(expr, term, "pi type");
     }
     var tyRef = new Ref<>(term);
     var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
@@ -64,16 +65,37 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), type));
         localCtx.put(tuple._1, type);
         tyRef.value = pi.dropTeleDT(1);
-      } else wantPi(expr, tyRef.value);
+      } else wantButNo(expr, tyRef.value, "pi type");
     });
     assert tyRef.value != null;
     var rec = expr.body().accept(this, tyRef.value);
     return new Result(new LamTerm(Tele.fromBuffer(resultTele), rec.wellTyped), dt);
   }
 
-  private <T> T wantPi(Expr.@NotNull LamExpr expr, Term term) {
-    reporter.report(new BadTypeError(expr, Doc.plain("pi type"), term));
+  private <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
+    reporter.report(new BadTypeError(expr, Doc.plain(expectedText), term));
     throw new TyckerException();
+  }
+
+  @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, Term term) {
+    if (term == null) return new Result(new UnivTerm(Sort.OMEGA), new UnivTerm(Sort.OMEGA));
+    if (term.normalize(NormalizeMode.WHNF) instanceof UnivTerm univ) {
+      // TODO[level]
+      return new Result(new UnivTerm(Sort.OMEGA), univ);
+    }
+    return wantButNo(expr, term, "universe term");
+  }
+
+  @Override public Result visitRef(Expr.@NotNull RefExpr expr, Term term) {
+    Term ty = localCtx.get(expr.resolvedVar());
+    if (ty == null) throw new IllegalStateException("Unresolved var `" + expr.resolvedVar().name() + "` tycked.");
+    if (term == null) return new Result(new RefTerm(expr.resolvedVar()), ty);
+    var unification = new NaiveDefEq(Ordering.Lt, levelEqns).compare(ty, term, UnivTerm.OMEGA);
+    if (!unification) {
+      // TODO[ice]: expected type mismatch lambda type annotation
+      throw new TyckerException();
+    }
+    return new Result(new RefTerm(expr.resolvedVar()), ty);
   }
 
   @Override
