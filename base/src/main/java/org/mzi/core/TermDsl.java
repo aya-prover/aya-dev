@@ -53,7 +53,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var rule = ctx.IDENT().getText();
     var exprs = ctx.expr();
     return switch (rule) {
-      case "U" -> new UnivTerm(Sort.SET0);
+      case "U" -> new UnivTerm(Sort.OMEGA);
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new AppTerm.FnCall(
         (DefVar<FnDef>) ((RefTerm) exprs.get(0).accept(this)).var(),
