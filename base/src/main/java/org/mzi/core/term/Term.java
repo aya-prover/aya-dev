@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.core.term.CoreTerm;
+import org.mzi.api.ref.Var;
 import org.mzi.api.util.DTKind;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.Tele;
@@ -26,6 +27,10 @@ public interface Term extends CoreTerm {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
   @Contract(pure = true) @NotNull Decision whnf();
+
+  default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
+    return subst(new Substituter.TermSubst(var, term));
+  }
 
   default @NotNull Term subst(@NotNull Substituter.TermSubst subst) {
     return subst(subst, LevelSubst.EMPTY);

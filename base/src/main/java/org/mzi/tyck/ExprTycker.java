@@ -60,7 +60,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
             throw new TyckerException();
           } else type = result.wellTyped;
         }
-        // FIXME[glavo]: https://github.com/Glavo/kala-common/issues/3
+        type = type.subst(pi.telescope().ref(), new RefTerm(tuple._1));
         resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), type));
         localCtx.put(tuple._1, type);
         tyRef.value = pi.dropTeleDT(1);
