@@ -22,6 +22,7 @@ import org.mzi.tyck.error.BadTypeError;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.tyck.unify.NaiveDefEq;
+import org.mzi.tyck.unify.Rule;
 import org.mzi.util.Ordering;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
@@ -35,6 +36,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     levelEqns = new LevelEqn.Set(reporter, Buffer.of(), Buffer.of());
   }
 
+  @Rule.Check(partialSynth = true)
   @Override
   public Result visitLam(Expr.@NotNull LamExpr expr, Term term) {
     if (term == null) {
@@ -77,6 +79,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     throw new TyckerException();
   }
 
+  @Rule.Synth
   @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, Term term) {
     if (term == null) return new Result(new UnivTerm(Sort.OMEGA), new UnivTerm(Sort.OMEGA));
     if (term.normalize(NormalizeMode.WHNF) instanceof UnivTerm univ) {
@@ -86,6 +89,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return wantButNo(expr, term, "universe term");
   }
 
+  @Rule.Synth
   @Override public Result visitRef(Expr.@NotNull RefExpr expr, Term term) {
     Term ty = localCtx.get(expr.resolvedVar());
     if (ty == null) throw new IllegalStateException("Unresolved var `" + expr.resolvedVar().name() + "` tycked.");
