@@ -13,7 +13,6 @@ import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.DTKind;
 import org.mzi.generic.Arg;
-import org.mzi.tyck.sort.LevelEqn;
 
 import java.util.stream.Stream;
 
@@ -108,6 +107,18 @@ public sealed interface Expr {
   }
 
   /**
+   * @author ice1000
+   */
+  interface TelescopicExpr {
+    @NotNull Buffer<Param> params();
+
+    default @NotNull Stream<@NotNull Tuple2<@NotNull Var, Param>> paramsStream() {
+      return params().stream().flatMap(p -> p.vars().stream()
+        .map(var -> Tuple.of(var, p)));
+    }
+  }
+
+  /**
    * @author re-xyr
    */
   record AppExpr(
@@ -129,7 +140,7 @@ public sealed interface Expr {
     @NotNull DTKind kind,
     @NotNull Buffer<Param> params,
     @NotNull Expr last
-  ) implements Expr {
+  ) implements Expr, TelescopicExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitDT(this, p);
     }
@@ -142,12 +153,7 @@ public sealed interface Expr {
     @NotNull SourcePos sourcePos,
     @NotNull Buffer<@NotNull Param> params,
     @NotNull Expr body
-  ) implements Expr {
-    public Stream<Tuple2<Var, Param>> paramsStream() {
-      return params.stream().flatMap(p -> p.vars().stream()
-        .map(var -> Tuple.of(var, p)));
-    }
-
+  ) implements Expr, TelescopicExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLam(this, p);
     }

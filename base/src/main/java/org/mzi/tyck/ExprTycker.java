@@ -102,6 +102,20 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new RefTerm(expr.resolvedVar()), ty);
   }
 
+  @Rule.Synth
+  @Override public Result visitDT(Expr.@NotNull DTExpr expr, Term term) {
+    final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
+    var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
+    expr.paramsStream().forEach(tuple -> {
+      var result = tuple._2.type().accept(this, against);
+      resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
+    });
+    var last = expr.last().accept(this, against);
+    return new Result(
+      new DT(expr.kind(), Tele.fromBuffer(resultTele), last.wellTyped),
+      against);
+  }
+
   @Override
   public Result catchAll(@NotNull Expr expr, Term term) {
     throw new UnsupportedOperationException(expr.toString());
