@@ -3,14 +3,12 @@
 package org.mzi.tyck;
 
 import asia.kala.Tuple;
-import asia.kala.Tuple2;
+import asia.kala.Tuple3;
 import asia.kala.collection.mutable.Buffer;
 import asia.kala.collection.mutable.MutableHashMap;
 import asia.kala.collection.mutable.MutableMap;
 import asia.kala.ref.Ref;
-import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.DTKind;
@@ -22,7 +20,6 @@ import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
 import org.mzi.tyck.sort.LevelEqn;
-import org.mzi.tyck.unify.DefEq;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.util.Ordering;
 
@@ -49,12 +46,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckerException();
     }
     var tyRef = new Ref<>(term);
-    var resultTele = Buffer.<Tuple2<Var, Term>>of();
+    var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
     expr.paramsStream().forEach(tuple -> {
       if (tyRef.value instanceof DT pi && pi.kind().isPi) {
         var type = pi.telescope().type();
-        if (tuple._2 != null) {
-          var result = tuple._2.accept(this, UnivTerm.OMEGA);
+        var lamParam = tuple._2.type();
+        // FIXME[xyr]: https://github.com/ice1000/mzi/issues/92
+        //noinspection ConstantConditions
+        if (lamParam != null) {
+          var result = lamParam.accept(this, UnivTerm.OMEGA);
           var comparison = new NaiveDefEq(Ordering.Lt, levelEqns).compare(result.wellTyped, type, UnivTerm.OMEGA);
           if (!comparison) {
             // TODO[ice]: expected type mismatch lambda type annotation
@@ -62,7 +62,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           } else type = result.wellTyped;
         }
         // FIXME[glavo]: https://github.com/Glavo/kala-common/issues/3
-        resultTele.append(Tuple.of(tuple._1, type));
+        resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), type));
         localCtx.put(tuple._1, type);
         tyRef.value = pi.dropTeleDT(1);
       } else {
@@ -75,8 +75,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckerException();
     }
     var rec = expr.body().accept(this, tyRef.value);
-    // FIXME[ice]: use bindings from `expr.params()`
-    return new Result(new LamTerm(dt.telescope(), rec.wellTyped), dt);
+    return new Result(new LamTerm(Tele.fromBuffer(resultTele), rec.wellTyped), dt);
   }
 
   @Override

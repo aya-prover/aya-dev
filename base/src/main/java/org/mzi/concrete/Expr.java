@@ -143,9 +143,9 @@ public sealed interface Expr {
     @NotNull Buffer<@NotNull Param> params,
     @NotNull Expr body
   ) implements Expr {
-    public Stream<Tuple2<Var, Expr>> paramsStream() {
+    public Stream<Tuple2<Var, Param>> paramsStream() {
       return params.stream().flatMap(p -> p.vars().stream()
-        .map(var -> Tuple.of(var, p.type())));
+        .map(var -> Tuple.of(var, p)));
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

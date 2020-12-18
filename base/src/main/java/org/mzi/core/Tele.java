@@ -5,6 +5,7 @@ package org.mzi.core;
 import asia.kala.PrimitiveTuples.IntObjTuple2;
 import asia.kala.Tuple;
 import asia.kala.Tuple2;
+import asia.kala.Tuple3;
 import asia.kala.collection.Seq;
 import asia.kala.collection.mutable.Buffer;
 import asia.kala.function.IndexedConsumer;
@@ -15,7 +16,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
 import org.mzi.core.term.AppTerm;
-import org.mzi.core.term.RefTerm;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
@@ -47,6 +47,10 @@ public interface Tele extends Bind {
     var buf = Buffer.<Tele>of();
     forEach((i, x) -> buf.append(x));
     return buf;
+  }
+
+  static @NotNull Tele fromBuffer(@NotNull Buffer<Tuple3<Var, Boolean, Term>> buffer) {
+    return buffer.foldRight(null, (t, o) -> new TypedTele(t._1, t._3, t._2, o));
   }
 
   default @NotNull IntObjTuple2<@NotNull Tele>
