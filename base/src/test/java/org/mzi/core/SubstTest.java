@@ -24,13 +24,13 @@ public class SubstTest extends LispTestCase {
   public void unrelatedSubst() {
     var term = Lisp.reallyParse("(app beta lambda)");
     assertTrue(term instanceof AppTerm);
-    assertEquals(term, term.subst(new Substituter.TermSubst(() -> "lambda", new UnivTerm(Sort.SET0))));
+    assertEquals(term, term.subst(new Substituter.TermSubst(() -> "lambda", UnivTerm.OMEGA)));
   }
 
   @Test
   public void relatedSubst() {
     var term = Lisp.reallyParse("(app tony beta)", vars);
     assertTrue(term instanceof AppTerm);
-    assertNotEquals(term, term.subst(new Substituter.TermSubst(vars.get("beta"), new UnivTerm(Sort.SET0))));
+    assertNotEquals(term, term.subst(new Substituter.TermSubst(vars.get("beta"), UnivTerm.OMEGA)));
   }
 }
