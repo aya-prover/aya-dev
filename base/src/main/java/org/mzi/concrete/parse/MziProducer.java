@@ -128,16 +128,16 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       var univTrunc = universeText.substring(1, universeText.indexOf("T"));
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
-        case "h-", "h" -> LevelEqn.UNSPECIFIED;
+        case "h-", "h" -> -3;
         case "oo-" -> Integer.MAX_VALUE;
       };
-      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1));
+      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), -3);
       return new Expr.UnivExpr(sourcePosOf(ctx), uLevel, hLevel);
     }
     var set = ctx.SET_UNIV();
     if (set != null) {
       var text = set.getText().substring("\\Set".length());
-      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text), 0);
+      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text, -3), -3);
     }
     var prop = ctx.PROP();
     if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
@@ -153,11 +153,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  public int visitOptNumber(@NotNull String number) {
+  public int visitOptNumber(@NotNull String number, int defaultVal) {
     return Optional.of(number)
       .filter(Predicate.not(String::isEmpty))
       .map(Integer::parseInt)
-      .orElse(LevelEqn.UNSPECIFIED);
+      .orElse(defaultVal);
   }
 
   @Override
