@@ -42,8 +42,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       term = new DT(DTKind.Pi, Tele.mock(domain, expr.params().first().explicit()), new AppTerm.HoleApp(codomain));
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof DT dt && dt.kind().isPi)) {
-      reporter.report(new BadTypeError(expr, Doc.plain("pi type"), term));
-      throw new TyckerException();
+      return wantPi(expr, term);
     }
     var tyRef = new Ref<>(term);
     var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
@@ -65,17 +64,16 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), type));
         localCtx.put(tuple._1, type);
         tyRef.value = pi.dropTeleDT(1);
-      } else {
-        // TODO[ice]: error message on not enough pi parameters
-        throw new TyckerException();
-      }
+      } else wantPi(expr, tyRef.value);
     });
-    if (tyRef.value == null) {
-      // TODO[ice]: error message on not enough pi parameters
-      throw new TyckerException();
-    }
+    assert tyRef.value != null;
     var rec = expr.body().accept(this, tyRef.value);
     return new Result(new LamTerm(Tele.fromBuffer(resultTele), rec.wellTyped), dt);
+  }
+
+  private <T> T wantPi(Expr.@NotNull LamExpr expr, Term term) {
+    reporter.report(new BadTypeError(expr, Doc.plain("pi type"), term));
+    throw new TyckerException();
   }
 
   @Override
