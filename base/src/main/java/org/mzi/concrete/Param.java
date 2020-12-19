@@ -4,6 +4,7 @@ package org.mzi.concrete;
 
 import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 
@@ -13,7 +14,7 @@ import org.mzi.api.ref.Var;
 public record Param(
   @NotNull SourcePos sourcePos,
   @NotNull Buffer<Var> vars,
-  @NotNull Expr type,
+  @Nullable Expr type,
   boolean explicit
 ) {
 }

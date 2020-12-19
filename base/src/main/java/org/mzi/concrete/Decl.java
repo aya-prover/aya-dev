@@ -134,7 +134,7 @@ public sealed interface Decl extends Stmt {
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
     public final @NotNull Buffer<Param> telescope;
-    public @NotNull Expr result;
+    public @Nullable Expr result;
     public @NotNull Expr body;
     public final @NotNull Buffer<Stmt> abuseBlock;
 
@@ -185,7 +185,7 @@ public sealed interface Decl extends Stmt {
         modifiers.equals(fnDecl.modifiers) &&
         assoc == fnDecl.assoc &&
         telescope.equals(fnDecl.telescope) &&
-        result.equals(fnDecl.result) &&
+        Objects.equals(result, fnDecl.result) &&
         body.equals(fnDecl.body) &&
         abuseBlock.equals(fnDecl.abuseBlock);
     }
