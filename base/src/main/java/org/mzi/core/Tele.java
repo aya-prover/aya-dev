@@ -6,6 +6,7 @@ import asia.kala.PrimitiveTuples.IntObjTuple2;
 import asia.kala.Tuple;
 import asia.kala.Tuple2;
 import asia.kala.Tuple3;
+import asia.kala.Unit;
 import asia.kala.collection.Seq;
 import asia.kala.collection.mutable.Buffer;
 import asia.kala.control.Option;
@@ -18,11 +19,12 @@ import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
+import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
+import org.mzi.tyck.sort.LevelSubst;
 
 import java.util.function.BiConsumer;
-import java.util.function.Predicate;
 
 /**
  * Similar to Arend <code>DependentLink</code>.
@@ -37,6 +39,18 @@ import java.util.function.Predicate;
 public interface Tele extends Bind {
   @Override @Nullable Tele next();
   @Override @NotNull Term type();
+
+  default @NotNull Tele subst(@NotNull Var var, @NotNull Term term) {
+    return subst(new Substituter.TermSubst(var, term));
+  }
+
+  default @NotNull Tele subst(@NotNull Substituter.TermSubst subst) {
+    return subst(subst, LevelSubst.EMPTY);
+  }
+
+  default @NotNull Tele subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
+    return accept(new Substituter(subst, levelSubst), Unit.INSTANCE);
+  }
 
   static @NotNull TypedTele mock(@NotNull Var hole, boolean explicit) {
     return new TypedTele(new LocalVar("_"), new AppTerm.HoleApp(hole), explicit, null);

@@ -16,6 +16,7 @@ import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
 import org.mzi.core.Tele;
 import org.mzi.core.term.*;
+import org.mzi.core.visitor.Substituter;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
@@ -137,6 +138,58 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var type = tele == null ? dt.last() : tele.type();
     unify(term, type);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
+  }
+
+  @Rule.Check(partialSynth = true)
+  @Override public Result visitTup(Expr.@NotNull TupExpr expr, Term term) {
+    var items = Buffer.<Term>of();
+    final var resultLast = new Ref<Term>();
+    final Tele resultTele;
+    if (term == null) {
+      final var typesTele = new Ref<Tele>();
+      // TODO[ice]: forbid one-variable tuple maybe?
+      expr.items()
+        .map(item -> item.accept(this, null))
+        .forEach(result -> {
+          items.append(result.wellTyped);
+          if (resultLast.value == null) resultLast.value = result.type;
+          else typesTele.value = new Tele.TypedTele(new LocalVar("_"), result.type, true, typesTele.value);
+        });
+      items.reverse();
+      resultTele = typesTele.value;
+    } else if (!(term instanceof DT dt && dt.kind().isSigma)) {
+      return wantButNo(expr, term, "sigma type");
+    } else {
+      var againstTele = dt.telescope();
+      var last = dt.last();
+      var buffer = Buffer.<Tuple3<Var, Boolean, Term>>of();
+      for (var iterator = expr.items().iterator(); iterator.hasNext(); ) {
+        var item = iterator.next();
+        if (againstTele == null) {
+          if (iterator.hasNext()) {
+            // TODO[ice]: not enough sigma elements
+            throw new TyckerException();
+          } else {
+            var result = item.accept(this, last);
+            items.append(result.wellTyped);
+            resultLast.value = result.type;
+          }
+        } else {
+          var result = item.accept(this, againstTele.type());
+          items.append(result.wellTyped);
+          var ref = againstTele.ref();
+          buffer.append(Tuple.of(ref, againstTele.explicit(), result.type));
+          againstTele = againstTele.next();
+          if (againstTele != null) {
+            final var subst = new Substituter.TermSubst(ref, result.wellTyped);
+            againstTele = againstTele.subst(subst);
+            last = last.subst(subst);
+          }
+        }
+      }
+      resultTele = Tele.fromBuffer(buffer);
+    }
+    return new Result(new TupTerm(items.toImmutableSeq()), new DT(DTKind.Sigma, resultTele, resultLast.value));
   }
 
   @Override
