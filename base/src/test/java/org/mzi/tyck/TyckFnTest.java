@@ -2,6 +2,8 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.Unit;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
@@ -17,7 +19,6 @@ import org.mzi.ref.LocalVar;
 import org.mzi.test.Lisp;
 import org.mzi.test.ThrowingReporter;
 
-import static org.glavo.kala.collection.mutable.Buffer.of;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -64,5 +65,23 @@ public class TyckFnTest {
     assertTrue(dt.body() instanceof PiTerm pi
       && pi.body() instanceof RefTerm ref
       && ref.var() == dt.param().ref());
+  }
+
+  @Test
+  public void uncurryLam() {
+    var p = new LocalVar("p");
+    var pRef = new Expr.RefExpr(SourcePos.NONE, p);
+    var f = new LocalVar("f");
+    // \A B C f p. f(p.1, p.2)
+    var uncurry = new Expr.LamExpr(SourcePos.NONE,
+      Buffer.of(new Param(SourcePos.NONE, Buffer.of(() -> "A", () -> "B", () -> "C", f, p), true)),
+      new Expr.AppExpr(SourcePos.NONE,
+        new Expr.RefExpr(SourcePos.NONE, f),
+        ImmutableSeq.of(new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 1), true),
+          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 2), true))));
+    // Pi(A B C : U)(f : A -> B -> C)(p : A ** B) -> C
+    var uncurryTy = Lisp.reallyParse("(Pi (A (U) ex (B (U) ex (C (U) ex (f (Pi (a A ex (b B ex null)) C)" +
+      " ex (p (Sigma (a A ex null) B) ex null))))) C)");
+    uncurry.accept(new ExprTycker(ThrowingReporter.INSTANCE), uncurryTy);
   }
 }
