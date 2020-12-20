@@ -38,7 +38,9 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   }
 
   default void visitParams(Buffer<Param> params, P p) {
-    params.forEach(param -> param.type().accept(this, p));
+    params.forEach(param -> {
+      if (param.type() != null) param.type().accept(this, p);
+    });
   }
 
   @Override default Unit visitDT(Expr.@NotNull DTExpr expr, P p) {

@@ -55,7 +55,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         var type = pi.telescope().type();
         var lamParam = tuple._2.type();
         // FIXME[xyr]: https://github.com/ice1000/mzi/issues/92
-        //noinspection ConstantConditions
         if (lamParam != null) {
           var result = lamParam.accept(this, UnivTerm.OMEGA);
           var comparison = new NaiveDefEq(Ordering.Lt, levelEqns).compare(result.wellTyped, type, UnivTerm.OMEGA);
@@ -112,6 +111,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
     var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
     expr.paramsStream().forEach(tuple -> {
+      // TODO: check if tuple._2.type() is null
       var result = tuple._2.type().accept(this, against);
       resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
     });

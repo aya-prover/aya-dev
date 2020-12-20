@@ -27,8 +27,10 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   default @NotNull Buffer<Param> visitParams(@NotNull Buffer<Param> params, P p) {
     return params.view().map(param -> {
-      var type = param.type().accept(this, p);
-      if (Objects.equals(type, param.type())) return param;
+      var oldType = param.type();
+      if (oldType == null) return param;
+      var type = oldType.accept(this, p);
+      if (Objects.equals(type, oldType)) return param;
       return new Param(param.sourcePos(), param.vars(), type, param.explicit());
     }).collect(Buffer.factory());
   }
