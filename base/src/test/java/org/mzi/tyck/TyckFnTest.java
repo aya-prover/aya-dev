@@ -25,14 +25,27 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class TyckFnTest {
   @Test
-  public void idLam() {
+  public void idLamConnected() {
     var a = new LocalVar("a");
-    // \A.\a.a
-    var lamAaa = new Expr.LamExpr(SourcePos.NONE,
+    // \A a.a
+    idLamTestCase(new Expr.LamExpr(SourcePos.NONE,
       of(
         new Param(SourcePos.NONE, of(() -> "_"), true),
         new Param(SourcePos.NONE, of(a), true)),
-      new Expr.RefExpr(SourcePos.NONE, a));
+      new Expr.RefExpr(SourcePos.NONE, a)));
+  }
+
+  @Test
+  public void idLamDisconnected() {
+    var a = new LocalVar("a");
+    // \A.\a.a
+    idLamTestCase(new Expr.LamExpr(SourcePos.NONE,
+      of(new Param(SourcePos.NONE, of(() -> "_"), true)),
+      new Expr.LamExpr(SourcePos.NONE, of(new Param(SourcePos.NONE, of(a), true)),
+        new Expr.RefExpr(SourcePos.NONE, a))));
+  }
+
+  private void idLamTestCase(Expr.LamExpr lamAaa) {
     var piUAA = Lisp.reallyParse("(Pi (A (U) ex (a A ex null)) A)");
     var result = lamAaa.accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
     assertNotNull(result);
