@@ -6,4 +6,5 @@ dependencies {
   api("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
   api(project(":base"))
   implementation(project(":parser"))
+  implementation(project(":pretty"))
 }

@@ -6,6 +6,7 @@ module org.mzi.test {
   requires transitive lombok;
   requires transitive org.mzi;
   requires transitive org.mzi.parser;
+  requires transitive org.mzi.pretty;
 
   exports org.mzi.test;
 }

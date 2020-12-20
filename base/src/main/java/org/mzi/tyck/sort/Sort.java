@@ -34,14 +34,16 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
   }
 
   public @NotNull Sort substSort(@NotNull LevelSubst subst) {
-    throw new UnsupportedOperationException("#93");
+    // TODO[level]
+    return this;
   }
 
   public static boolean compare(
     @NotNull Sort sort1, @NotNull Sort sort2, @NotNull Ordering cmp,
     @NotNull LevelEqn.Set equations, Expr expr
   ) {
-    throw new UnsupportedOperationException("#93");
+    // TODO[level]
+    return true;
   }
 
   public static class Level {

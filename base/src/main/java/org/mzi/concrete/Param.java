@@ -17,4 +17,7 @@ public record Param(
   @Nullable Expr type,
   boolean explicit
 ) {
+  public Param(@NotNull SourcePos sourcePos, @NotNull Buffer<Var> vars, boolean explicit) {
+    this(sourcePos, vars, null, explicit);
+  }
 }
