@@ -6,11 +6,17 @@ import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
+import org.mzi.core.term.AppTerm;
+import org.mzi.core.term.DT;
+import org.mzi.core.term.LamTerm;
+import org.mzi.core.term.RefTerm;
+import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
 import org.mzi.test.Lisp;
 import org.mzi.test.ThrowingReporter;
 
 import static asia.kala.collection.mutable.Buffer.of;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test if the tycker is functioning, say, working for simple cases.
@@ -29,6 +35,15 @@ public class TyckFnTest {
       new Expr.RefExpr(SourcePos.NONE, a));
     var piUAA = Lisp.reallyParse("(Pi (A (U) ex (a A ex null)) A)");
     var result = lamAaa.accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
-    System.out.println(result);
+    assertNotNull(result);
+    if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof DT dt)) {
+      fail();
+      return;
+    }
+    var lam_aa = AppTerm.make(lam, new Arg<>(new RefTerm(() -> "_"), true));
+    assertEquals(lam.dropTeleLam(1), lam_aa);
+    var newVar = new RefTerm(new LocalVar("xyr"));
+    assertEquals(newVar, AppTerm.make(lam_aa, new Arg<>(newVar, true)));
+    assertTrue(dt.last() instanceof RefTerm);
   }
 }
