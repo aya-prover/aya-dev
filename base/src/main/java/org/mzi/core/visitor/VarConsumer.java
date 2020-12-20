@@ -12,21 +12,21 @@ import org.mzi.core.term.RefTerm;
 /**
  * @author ice1000
  */
-public interface VarConsumer extends TermConsumer<Unit> {
-  default Unit visitRef(@NotNull RefTerm term, Unit emptyTuple) {
-    visitVar(term.var());
-    return emptyTuple;
+public interface VarConsumer<P> extends TermConsumer<P> {
+  default Unit visitRef(@NotNull RefTerm term, P p) {
+    visitVar(term.var(), p);
+    return Unit.unit();
   }
 
-  default Unit visitHole(@NotNull AppTerm.HoleApp term, Unit emptyTuple) {
-    visitVar(term.var());
-    return emptyTuple;
+  default Unit visitHole(@NotNull AppTerm.HoleApp term, P p) {
+    visitVar(term.var(), p);
+    return Unit.unit();
   }
 
-  default Unit visitFnCall(AppTerm.@NotNull FnCall fnCall, Unit emptyTuple) {
-    visitVar(fnCall.fnRef());
-    return emptyTuple;
+  default Unit visitFnCall(AppTerm.@NotNull FnCall fnCall, P p) {
+    visitVar(fnCall.fnRef(), p);
+    return Unit.unit();
   }
 
-  @Contract(mutates = "this") void visitVar(Var usage);
+  @Contract(mutates = "this,param2") void visitVar(Var usage, P p);
 }

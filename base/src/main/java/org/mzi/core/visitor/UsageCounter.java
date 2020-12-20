@@ -2,11 +2,12 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
+import asia.kala.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
 
-public final class UsageCounter implements VarConsumer {
+public final class UsageCounter implements VarConsumer<Unit> {
   public final @NotNull Var var;
   private int usageCount = 0;
 
@@ -18,7 +19,7 @@ public final class UsageCounter implements VarConsumer {
     return usageCount;
   }
 
-  @Contract(mutates = "this") @Override public void visitVar(Var usage) {
+  @Contract(mutates = "this") @Override public void visitVar(Var usage, Unit unit) {
     if (var == usage) usageCount++;
   }
 }
