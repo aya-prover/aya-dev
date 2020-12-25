@@ -1,5 +1,11 @@
 name: Gradle Check
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 jobs:
   gradle-check:
     runs-on: ubuntu-20.04
