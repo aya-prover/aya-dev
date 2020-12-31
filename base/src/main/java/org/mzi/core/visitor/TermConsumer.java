@@ -3,16 +3,11 @@
 package org.mzi.core.visitor;
 
 import asia.kala.Unit;
-import asia.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.Tele;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 
-public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<P, Unit> {
-  @Override default Unit visitNamed(Tele.@NotNull NamedTele named, P p) {
-    return named.next().accept(this, p);
-  }
+public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override
   default Unit visitHole(@NotNull AppTerm.HoleApp term, P p) {
@@ -21,13 +16,8 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<P, 
     return Unit.unit();
   }
 
-  @Override default Unit visitTyped(Tele.@NotNull TypedTele typed, P p) {
-    Option.of(typed.next()).forEach(tele -> tele.accept(this, p) );
-    return typed.type().accept(this, p);
-  }
-
   @Override default Unit visitLam(@NotNull LamTerm term, P p) {
-    term.telescope().accept(this, p);
+    term.param().type().accept(this, p);
     return term.body().accept(this, p);
   }
 
@@ -35,9 +25,14 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit>, Tele.Visitor<P, 
     return Unit.unit();
   }
 
-  @Override default Unit visitDT(@NotNull DT term, P p) {
-    term.telescope().accept(this, p);
-    return term.last().accept(this, p);
+  @Override default Unit visitPi(@NotNull PiTerm term, P p) {
+    term.param().type().accept(this, p);
+    return term.body().accept(this, p);
+  }
+
+  @Override default Unit visitSigma(@NotNull SigmaTerm term, P p) {
+    term.params().forEach(param -> param.type().accept(this, p));
+    return term.body().accept(this, p);
   }
 
   @Override default Unit visitRef(@NotNull RefTerm term, P p) {
