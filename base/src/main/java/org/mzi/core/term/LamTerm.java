@@ -2,14 +2,15 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
+import asia.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.Tele;
+import org.mzi.core.Param;
 import org.mzi.util.Decision;
 
 /**
  * @author ice1000
  */
-public record LamTerm(@NotNull Tele telescope, @NotNull Term body) implements Term {
+public record LamTerm(@NotNull Param param, @NotNull Term body) implements Term {
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitLam(this, p);
   }

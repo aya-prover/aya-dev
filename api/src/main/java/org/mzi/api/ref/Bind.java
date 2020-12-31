@@ -14,7 +14,6 @@ import org.mzi.api.core.term.CoreTerm;
 @ApiStatus.NonExtendable
 public interface Bind {
   @Contract(pure = true) @NotNull Var ref();
-  @Contract(pure = true) @Nullable Bind next();
   @Contract(pure = true) @Nullable CoreTerm type();
   @Contract(pure = true) boolean explicit();
 }

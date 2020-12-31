@@ -32,9 +32,8 @@ public sealed interface AppTerm extends Term {
       return holeApp;
     }
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
-    var tele = lam.telescope();
-    var next = tele.next();
-    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new Substituter.TermSubst(tele.ref(), arg.term()));
+    var param = lam.param();
+    return lam.body().subst(new Substituter.TermSubst(param.ref(), arg.term()));
   }
 
    @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Seq<? extends Arg<? extends Term>> args) {
@@ -44,15 +43,7 @@ public sealed interface AppTerm extends Term {
       return holeApp;
     }
     if (!(f instanceof LamTerm lam)) return make(new Apply(f, args.first()), args.view().drop(1));
-    var next = lam.telescope();
-    var subst = new Substituter.TermSubst(new HashMap<>());
-    for (int i = 0; i < args.size(); i++) {
-      if (next != null) {
-        subst.add(next.ref(), args.get(i).term());
-        next = next.next();
-      } else return make(lam.body().subst(subst), args.view().drop(i));
-    }
-    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(subst);
+    return make(make(lam, args.first()), args.view().drop(1));
   }
 
   record FnCall(
