@@ -27,14 +27,14 @@ public class NormalizeTest extends LispTestCase {
 
   @Test
   public void noNormalizeCanonical() {
-    unchanged("(lam (a (U) ex null) a)");
-    unchanged("(Pi (a (U) ex null) a)");
+    unchanged("(lam (a (U) ex) a)");
+    unchanged("(Pi (a (U) ex) a)");
     unchanged("(Sigma (a (U) ex null) a)");
   }
 
   @Test
   public void redexNormalize() {
-    var term = Lisp.reallyParse("(app (lam (a (U) ex null) a) b)");
+    var term = Lisp.reallyParse("(app (lam (a (U) ex) a) b)");
     assertTrue(term instanceof AppTerm);
     var whnf = term.normalize(NormalizeMode.WHNF);
     var nf = term.normalize(NormalizeMode.NF);
@@ -45,14 +45,14 @@ public class NormalizeTest extends LispTestCase {
 
   @Test
   public void whnfNoNormalize() {
-    var term = Lisp.reallyParse("(lam (x (U) ex null) (app (lam (a (U) ex null) a) b))");
+    var term = Lisp.reallyParse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
     assertEquals(term, term.normalize(NormalizeMode.WHNF));
   }
 
   @Test
   public void nfNormalizeCanonical() {
     // \x : U. (\a : U. a) b
-    var term = Lisp.reallyParse("(lam (x (U) ex null) (app (lam (a (U) ex null) a) b))");
+    var term = Lisp.reallyParse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
     assertTrue(((LamTerm) term).body() instanceof AppTerm);
     var nf = term.normalize(NormalizeMode.NF);
     assertNotEquals(term, nf);

@@ -14,28 +14,28 @@ public class DefEqTest extends LispTestCase {
   @Test
   public void basicFailure() {
     assertFalse(eq().compare(Lisp.reallyParse("(U)"), Lisp.reallyParse("jojo"), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), Lisp.reallyParse("(app g y)", vars), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), Lisp.reallyParse("(app g x)", vars), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), Lisp.reallyParse("(app f y)", vars), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(Pi (a (U) ex (b (U) ex null)) a)"), Lisp.reallyParse("(Pi (a (U) ex null) a)"), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex) a) x)", vars), Lisp.reallyParse("(app g y)", vars), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex) a) x)", vars), Lisp.reallyParse("(app g x)", vars), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex) a) x)", vars), Lisp.reallyParse("(app f y)", vars), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(Pi (a (U) ex) (Pi (b (U) ex) a))"), Lisp.reallyParse("(Pi (a (U) ex) a)"), null));
     assertFalse(eq().compare(Lisp.reallyParse("(Sigma (a (U) ex (b (U) ex null)) a)"), Lisp.reallyParse("(Sigma (a (U) ex null) a)"), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(Pi (a (U) ex (b (U) ex null)) a)"), Lisp.reallyParse("(Pi (a (U) ex (b a ex null)) a)"), null));
-    assertFalse(eq().compare(Lisp.reallyParse("(proj (tup (app (lam (a (U) ex null) a) x) b) 1)"), Lisp.reallyParse("(U)"), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(Pi (a (U) ex) (Pi (b (U) ex) a))"), Lisp.reallyParse("(Pi (a (U) ex) (Pi (b a ex) a))"), null));
+    assertFalse(eq().compare(Lisp.reallyParse("(proj (tup (app (lam (a (U) ex) a) x) b) 1)"), Lisp.reallyParse("(U)"), null));
     assertFalse(eq().compare(Lisp.reallyParse("(proj t 1)"), Lisp.reallyParse("(U)"), null));
     assertFalse(eq().compare(Lisp.reallyParse("(proj t 1)", vars), Lisp.reallyParse("(proj t 2)", vars ), null));
   }
 
   @Test
   public void identical() {
-    identical("(proj (lam (a (U) ex null) a) 1)");
-    identical("(lam (a (U) ex null) a)");
+    identical("(proj (lam (a (U) ex) a) 1)");
+    identical("(lam (a (U) ex) a)");
     identical("xyren");
-    identical("(Pi (a (U) ex null) a)");
+    identical("(Pi (a (U) ex) a)");
     identical("(Sigma (a (U) ex null) a)");
     identical("(U)");
     identical("(tup (proj t 1) (proj t 2))");
     identical("(proj t 1)");
-    identical("(proj (tup (app (lam (a (U) ex null) a) x) b) 1)");
+    identical("(proj (tup (app (lam (a (U) ex) a) x) b) 1)");
   }
 
   private void identical(@Language("TEXT") String code) {
@@ -44,32 +44,32 @@ public class DefEqTest extends LispTestCase {
 
   @Test
   public void reduceApp() {
-    assertTrue(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex null) a) a)", vars), Lisp.reallyParse("a", vars), null));
+    assertTrue(eq().compare(Lisp.reallyParse("(app (lam (a (U) ex) a) a)", vars), Lisp.reallyParse("a", vars), null));
   }
 
   @Test
   public void alphaLam() {
     assertTrue(eq().compare(
-      Lisp.reallyParse("(lam (x (U) ex null) (app f x))", vars),
-      Lisp.reallyParse("(lam (y (U) ex null) (app f y))", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
+      Lisp.reallyParse("(lam (x (U) ex) (app f x))", vars),
+      Lisp.reallyParse("(lam (y (U) ex) (app f y))", vars), Lisp.reallyParse("(Pi (x (U) ex) U)")));
     assertFalse(eq().compare(
-      Lisp.reallyParse("(lam (x (U) ex null) (app f x))", vars),
-      Lisp.reallyParse("(lam (y (U) ex null) (app f z))", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
+      Lisp.reallyParse("(lam (x (U) ex) (app f x))", vars),
+      Lisp.reallyParse("(lam (y (U) ex) (app f z))", vars), Lisp.reallyParse("(Pi (x (U) ex) U)")));
   }
 
   @Test
   public void etaLamLhs() {
-    assertTrue(eq().compare(Lisp.reallyParse("(lam (x (U) ex null) (app f x))", vars), Lisp.reallyParse("f", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
-    assertFalse(eq().compare(Lisp.reallyParse("(lam (x (U) ex null) (app f y))", vars), Lisp.reallyParse("f", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
-    assertFalse(eq().compare(Lisp.reallyParse("(lam (x (U) ex null) (app g x))", vars), Lisp.reallyParse("f", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
+    assertTrue(eq().compare(Lisp.reallyParse("(lam (x (U) ex) (app f x))", vars), Lisp.reallyParse("f", vars), Lisp.reallyParse("(Pi (x (U) ex) U)")));
+    assertFalse(eq().compare(Lisp.reallyParse("(lam (x (U) ex) (app f y))", vars), Lisp.reallyParse("f", vars), Lisp.reallyParse("(Pi (x (U) ex) U)")));
+    assertFalse(eq().compare(Lisp.reallyParse("(lam (x (U) ex) (app g x))", vars), Lisp.reallyParse("f", vars), Lisp.reallyParse("(Pi (x (U) ex) U)")));
   }
 
   // ref: commit 03befddc
   @Test
   public void etaLamRhs() {
-    assertTrue(eq().compare(Lisp.reallyParse("f", vars), Lisp.reallyParse("(lam (x (U) ex null) (app f x))", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
-    assertFalse(eq().compare(Lisp.reallyParse("f", vars), Lisp.reallyParse("(lam (x (U) ex null) (app f y))", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
-    assertFalse(eq().compare(Lisp.reallyParse("f", vars), Lisp.reallyParse("(lam (x (U) ex null) (app g x))", vars), Lisp.reallyParse("(Pi (x (U) ex null) U)")));
+    assertTrue(eq().compare(Lisp.reallyParse("f", vars), Lisp.reallyParse("(lam (x (U) ex) (app f x))", vars), Lisp.reallyParse("(Pi (x (U) ex) U)")));
+    assertFalse(eq().compare(Lisp.reallyParse("f", vars), Lisp.reallyParse("(lam (x (U) ex) (app f y))", vars), Lisp.reallyParse("(Pi (x (U) ex) U)")));
+    assertFalse(eq().compare(Lisp.reallyParse("f", vars), Lisp.reallyParse("(lam (x (U) ex) (app g x))", vars), Lisp.reallyParse("(Pi (x (U) ex) U)")));
   }
 
   // ref: commit e3601934, cbcee4cc
@@ -85,7 +85,7 @@ public class DefEqTest extends LispTestCase {
 
   @Test
   public void projReduce() {
-    assertTrue(eq().compare(Lisp.reallyParse("(proj (tup (app (lam (a (U) ex null) a) x) b) 1)", vars), Lisp.reallyParse("(app (lam (a (U) ex null) a) x)", vars), null));
+    assertTrue(eq().compare(Lisp.reallyParse("(proj (tup (app (lam (a (U) ex) a) x) b) 1)", vars), Lisp.reallyParse("(app (lam (a (U) ex) a) x)", vars), null));
   }
 
   @Test
@@ -101,28 +101,6 @@ public class DefEqTest extends LispTestCase {
     assertFalse(eq().compare(fnCall, Lisp.reallyParse("(fncall id kiwa)", vars), null));
     assertFalse(eq().compare(fnCall, Lisp.reallyParse("(app id kiva)"), null));
     assertFalse(eq().compare(fnCall, Lisp.reallyParse("kiva"), null));
-  }
-
-  @Test
-  public void telescopeSplitLam() {
-    var lhs = Lisp.reallyParse("(lam (a (U) ex (b (U) ex null)) a)");
-    var rhs = Lisp.reallyParse("(lam (a (U) ex null) (lam (b (U) ex null) a))");
-    var rhs2 = Lisp.reallyParse("(lam (a (U) ex null) (lam (b (Pi (n (U) ex null) U) ex null) a))");
-    assertTrue(eq().compare(lhs, rhs, null));
-    assertFalse(eq().compare(lhs, rhs2, null));
-    assertTrue(eq().compare(rhs, lhs, null));
-    assertFalse(eq().compare(rhs2, lhs, null));
-  }
-
-  @Test
-  public void telescopeSplitPi() {
-    var lhs = Lisp.reallyParse("(Pi (a (U) ex (b (U) ex null)) a)");
-    var rhs = Lisp.reallyParse("(Pi (a (U) ex null) (Pi (b (U) ex null) a))");
-    var rhs2 = Lisp.reallyParse("(Pi (a (U) ex null) (Pi (b (Pi (n (U) ex null) U) ex null) a))");
-    assertTrue(eq().compare(lhs, rhs, null));
-    assertFalse(eq().compare(lhs, rhs2, null));
-    assertTrue(eq().compare(rhs, lhs, null));
-    assertFalse(eq().compare(rhs2, lhs, null));
   }
 
   @Test
