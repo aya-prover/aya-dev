@@ -11,10 +11,9 @@ import asia.kala.ref.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
-import org.mzi.api.util.DTKind;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
-import org.mzi.core.Tele;
+import org.mzi.core.Param;
 import org.mzi.core.term.*;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.pretty.doc.Doc;
@@ -43,34 +42,32 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) {
       var domain = new LocalVar("_");
       var codomain = new LocalVar("_");
-      term = new DT(DTKind.Pi, Tele.mock(domain, expr.params().first().explicit()), new AppTerm.HoleApp(codomain));
+      term = new PiTerm(false, Param.mock(domain, expr.param().explicit()), new AppTerm.HoleApp(codomain));
     }
-    if (!(term.normalize(NormalizeMode.WHNF) instanceof DT dt && dt.kind().isPi)) {
+    if (!(term.normalize(NormalizeMode.WHNF) instanceof PiTerm dt && !dt.co())) {
       return wantButNo(expr, term, "pi type");
     }
     var tyRef = new Ref<>(term);
-    var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
-    expr.paramsStream().forEach(tuple -> {
-      if (tyRef.value instanceof DT pi && pi.kind().isPi) {
-        var type = pi.telescope().type();
-        var lamParam = tuple._2.type();
-        if (lamParam != null) {
-          var result = lamParam.accept(this, UnivTerm.OMEGA);
-          var comparison = new NaiveDefEq(Ordering.Lt, levelEqns).compare(result.wellTyped, type, UnivTerm.OMEGA);
-          if (!comparison) {
-            // TODO[ice]: expected type mismatch lambda type annotation
-            throw new TyckerException();
-          } else type = result.wellTyped;
-        }
-        type = type.subst(pi.telescope().ref(), new RefTerm(tuple._1));
-        resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), type));
-        localCtx.put(tuple._1, type);
-        tyRef.value = pi.dropTeleDT(1);
-      } else wantButNo(expr, tyRef.value, "pi type");
-    });
-    assert tyRef.value != null;
-    var rec = expr.body().accept(this, tyRef.value);
-    return new Result(new LamTerm(Tele.fromBuffer(resultTele), rec.wellTyped), dt);
+    var var = expr.param().var();
+    var param = expr.param();
+    if (tyRef.value instanceof PiTerm pi && !pi.co()) {
+      var type = pi.param().type();
+      var lamParam = param.type();
+      if (lamParam != null) {
+        var result = lamParam.accept(this, UnivTerm.OMEGA);
+        var comparison = new NaiveDefEq(Ordering.Lt, levelEqns).compare(result.wellTyped, type, UnivTerm.OMEGA);
+        if (!comparison) {
+          // TODO[ice]: expected type mismatch lambda type annotation
+          throw new TyckerException();
+        } else type = result.wellTyped;
+      }
+      type = type.subst(pi.param().ref(), new RefTerm(var));
+      var resultParam = new Param(var, type, param.explicit());
+      localCtx.put(var, type);
+      tyRef.value = pi.body();
+      var rec = expr.body().accept(this, tyRef.value);
+      return new Result(new LamTerm(resultParam, rec.wellTyped), dt);
+    } else return wantButNo(expr, tyRef.value, "pi type");
   }
 
   private <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
@@ -106,7 +103,24 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
-  @Override public Result visitDT(Expr.@NotNull DTExpr expr, Term term) {
+  @Override public Result visitPi(Expr.@NotNull PiExpr expr, Term term) {
+    final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
+    var var = expr.param().var();
+    var param = expr.param();
+    final var type = param.type();
+    if (type == null) {
+      // TODO[ice]: report error or generate meta?
+      //  I guess probably report error for now.
+      throw new TyckerException();
+    }
+    var result = type.accept(this, against);
+    var resultParam = new Param(var, result.wellTyped, param.explicit());
+    var last = expr.last().accept(this, against);
+    return new Result(new PiTerm(expr.co(), resultParam, last.wellTyped), against);
+  }
+
+  @Rule.Synth
+  @Override public Result visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Term term) {
     final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
     var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
     expr.paramsStream().forEach(tuple -> {
@@ -120,26 +134,26 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
     });
     var last = expr.last().accept(this, against);
-    return new Result(new DT(expr.kind(), Tele.fromBuffer(resultTele), last.wellTyped), against);
+    return new Result(new SigmaTerm(expr.co(), Param.fromBuffer(resultTele), last.wellTyped), against);
   }
 
   @Rule.Synth
   @Override public Result visitProj(Expr.@NotNull ProjExpr expr, Term term) {
     var tupleRes = expr.tup().accept(this, null);
-    if (!(tupleRes.type instanceof DT dt && dt.kind().isSigma))
+    if (!(tupleRes.type instanceof SigmaTerm dt && !dt.co()))
       return wantButNo(expr.tup(), tupleRes.type, "sigma type");
-    var telescope = dt.telescope();
+    var telescope = dt.params();
     if (expr.ix() <= 0) {
       // TODO[ice]: too small index
       throw new TyckerException();
     }
-    var teleOpt = telescope.skip(expr.ix() - 1);
+    var teleOpt = telescope.drop(expr.ix() - 1);
     // TODO[ice]: too large index
     if (teleOpt.isEmpty()) {
       throw new TyckerException();
     }
-    var tele = teleOpt.get();
-    var type = tele == null ? dt.last() : tele.type();
+    var tele = teleOpt.get(0);
+    var type = tele != null ? dt.body() : tele.type();
     unify(term, type);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
@@ -148,25 +162,25 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitTup(Expr.@NotNull TupExpr expr, Term term) {
     var items = Buffer.<Term>of();
     final var resultLast = new Ref<Term>();
-    final Tele resultTele;
+    final Buffer<@NotNull Param> resultTele;
     if (term == null) {
-      final var typesTele = new Ref<Tele>();
+      var typesTele = Buffer.<@NotNull Param>of();
       // TODO[ice]: forbid one-variable tuple maybe?
       expr.items()
         .map(item -> item.accept(this, null))
         .forEach(result -> {
           items.append(result.wellTyped);
           if (resultLast.value == null) resultLast.value = result.type;
-          else typesTele.value = new Tele.TypedTele(new LocalVar("_"), result.type, true, typesTele.value);
+          else typesTele.append(new Param(new LocalVar("_"), result.type,true));
         });
       items.reverse();
-      resultTele = typesTele.value;
-    } else if (!(term instanceof DT dt && dt.kind().isSigma)) {
+      resultTele = typesTele;
+    } else if (!(term instanceof SigmaTerm dt && !dt.co())) {
       return wantButNo(expr, term, "sigma type");
     } else {
-      var againstTele = dt.telescope();
-      var last = dt.last();
-      var buffer = Buffer.<Tuple3<Var, Boolean, Term>>of();
+      var againstTele = dt.params();
+      var last = dt.body();
+      var buffer = Buffer.<@NotNull Param>of();
       for (var iterator = expr.items().iterator(); iterator.hasNext(); ) {
         var item = iterator.next();
         if (againstTele == null) {
@@ -179,21 +193,21 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
             resultLast.value = result.type;
           }
         } else {
-          var result = item.accept(this, againstTele.type());
+          var result = item.accept(this, againstTele.first().type());
           items.append(result.wellTyped);
-          var ref = againstTele.ref();
-          buffer.append(Tuple.of(ref, againstTele.explicit(), result.type));
-          againstTele = againstTele.next();
-          if (againstTele != null) {
+          var ref = againstTele.first().ref();
+          buffer.append(new Param(ref, result.type, againstTele.first().explicit()));
+          againstTele = againstTele.drop(1);
+          if (!againstTele.isEmpty()) {
             final var subst = new Substituter.TermSubst(ref, result.wellTyped);
-            againstTele = againstTele.subst(subst);
+            againstTele = againstTele.map(param -> param.subst(subst));
             last = last.subst(subst);
           }
         }
       }
-      resultTele = Tele.fromBuffer(buffer);
+      resultTele = buffer;
     }
-    return new Result(new TupTerm(items.toImmutableSeq()), new DT(DTKind.Sigma, resultTele, resultLast.value));
+    return new Result(new TupTerm(items.toImmutableSeq()), new SigmaTerm(false, resultTele.toImmutableSeq(), resultLast.value));
   }
 
   @Override

@@ -44,50 +44,6 @@ public interface Term extends CoreTerm {
     return accept(Normalizer.INSTANCE, mode);
   }
 
-  default Tuple2<@Nullable Term, @NotNull Buffer<@NotNull Param>> splitTeleDT(int n) {
-    return splitTeleDT(n, true);
-  }
-
-  default Tuple2<@Nullable Term, Buffer<@NotNull Param>> splitTeleDT(int n, boolean buildTele) {
-    var last = this;
-    Param tele = null;
-    DTKind kind = null;
-    var buf = buildTele ? Buffer.<@NotNull Param>of() : null;
-    while (n > 0) {
-      if (tele == null) {
-        if (!(last.normalize(NormalizeMode.WHNF) instanceof PiTerm dt))
-          return Tuple.of(null, buf);
-        last = dt.body();
-        kind = dt.kind();
-        tele = dt.param();
-      }
-      if (buf != null) buf.append(tele);
-      tele = tele.next();
-      n--;
-    }
-    var term = tele == null ? last : new PiTerm(kind, tele, last);
-    return Tuple.of(term, buf);
-  }
-
-  default @Nullable Term dropTeleDT(int n) {
-    return splitTeleDT(n, false)._1;
-  }
-
-  default @Nullable Term dropTeleLam(int n) {
-    var body = this;
-    Param tele = null;
-    while (n > 0) {
-      if (tele == null) {
-        if (!(body.normalize(NormalizeMode.WHNF) instanceof LamTerm lam)) return null;
-        body = lam.body();
-        tele = lam.param();
-      }
-      tele = tele.next();
-      n--;
-    }
-    return tele == null ? body : new LamTerm(tele, body);
-  }
-
   interface Visitor<P, R> {
     R visitRef(@NotNull RefTerm term, P p);
     R visitLam(@NotNull LamTerm term, P p);
