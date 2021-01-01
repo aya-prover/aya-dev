@@ -25,28 +25,43 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.HoleExpr(expr.sourcePos(), expr.name(), h);
   }
 
-  default @NotNull Buffer<Param> visitParams(@NotNull Buffer<Param> params, P p) {
+  default @NotNull Buffer<@NotNull Param> visitParams(@NotNull Buffer<@NotNull Param> params, P p) {
     return params.view().map(param -> {
       var oldType = param.type();
       if (oldType == null) return param;
       var type = oldType.accept(this, p);
       if (Objects.equals(type, oldType)) return param;
-      return new Param(param.sourcePos(), param.vars(), type, param.explicit());
+      return new Param(param.sourcePos(), param.var(), type, param.explicit());
     }).collect(Buffer.factory());
   }
 
   @Override default @NotNull Expr visitLam(Expr.@NotNull LamExpr expr, P p) {
-    var binds = visitParams(expr.params(), p);
+    var bind = visitParams(Buffer.of(expr.param()), p).get(0);
     var body = expr.body().accept(this, p);
-    if (binds.sameElements(expr.params()) && Objects.equals(body, expr.body())) return expr;
-    return new Expr.LamExpr(expr.sourcePos(), binds, body);
+    if (bind == expr.param() && Objects.equals(body, expr.body())) return expr;
+    return new Expr.LamExpr(expr.sourcePos(), bind, body);
   }
 
-  @Override default @NotNull Expr visitDT(Expr.@NotNull DTExpr expr, P p) {
+  @Override default @NotNull Expr visitPi(Expr.@NotNull PiExpr expr, P p) {
+    var bind = visitParams(Buffer.of(expr.param()), p).get(0);
+    var body = expr.last().accept(this, p);
+    if (bind == expr.param() && Objects.equals(body, expr.last())) return expr;
+    return new Expr.LamExpr(expr.sourcePos(), bind, body);
+  }
+
+  @Override default @NotNull Expr visitTelescopicLam(Expr.@NotNull TelescopicLamExpr expr, P p) {
+    throw new IllegalStateException("Found sugared expression. this should not happen");
+  }
+
+  @Override default @NotNull Expr visitTelescopicPi(Expr.@NotNull TelescopicPiExpr expr, P p) {
+    throw new IllegalStateException("Found sugared expression. this should not happen");
+  }
+
+  @Override default @NotNull Expr visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     var last = expr.last().accept(this, p);
     if (binds.sameElements(expr.params()) && Objects.equals(last, expr.last())) return expr;
-    return new Expr.DTExpr(expr.sourcePos(), expr.kind(), binds, last);
+    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), binds, last);
   }
 
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {

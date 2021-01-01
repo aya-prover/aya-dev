@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
-import org.mzi.api.util.DTKind;
 import org.mzi.generic.Arg;
 
 import java.util.stream.Stream;
@@ -28,7 +27,10 @@ public sealed interface Expr {
     R visitRef(@NotNull RefExpr expr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
-    R visitDT(@NotNull DTExpr expr, P p);
+    R visitPi(@NotNull Expr.PiExpr expr, P p);
+    R visitTelescopicLam(@NotNull TelescopicLamExpr expr, P p);
+    R visitTelescopicPi(@NotNull Expr.TelescopicPiExpr expr, P p);
+    R visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
@@ -47,10 +49,13 @@ public sealed interface Expr {
     @Override default R visitUnresolved(@NotNull UnresolvedExpr expr, P p) {
       return catchAll(expr, p);
     }
-    @Override default R visitLam(@NotNull LamExpr expr, P p) {
+    @Override default R visitTelescopicLam(@NotNull Expr.TelescopicLamExpr expr, P p) {
       return catchAll(expr, p);
     }
-    @Override default R visitDT(@NotNull DTExpr expr, P p) {
+    @Override default R visitTelescopicPi(@NotNull Expr.TelescopicPiExpr expr, P p) {
+      return catchAll(expr, p);
+    }
+    @Override default R visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, P p) {
       return catchAll(expr, p);
     }
     @Override default R visitUniv(@NotNull UnivExpr expr, P p) {
@@ -113,8 +118,7 @@ public sealed interface Expr {
     @NotNull Buffer<Param> params();
 
     default @NotNull Stream<@NotNull Tuple2<@NotNull Var, Param>> paramsStream() {
-      return params().stream().flatMap(p -> p.vars().stream()
-        .map(var -> Tuple.of(var, p)));
+      return params().stream().map(p -> Tuple.of(p.var(), p));
     }
   }
 
@@ -133,16 +137,30 @@ public sealed interface Expr {
   }
 
   /**
+   * @author re-xyr
+   */
+  record PiExpr(
+    @NotNull SourcePos sourcePos,
+    boolean co,
+    @NotNull Param param,
+    @NotNull Expr last
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitPi(this, p);
+    }
+  }
+
+  /**
    * @author re-xyr, kiva
    */
-  record DTExpr(
+  record TelescopicPiExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull DTKind kind,
+    boolean co,
     @NotNull Buffer<Param> params,
     @NotNull Expr last
   ) implements Expr, TelescopicExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitDT(this, p);
+      return visitor.visitTelescopicPi(this, p);
     }
   }
 
@@ -151,11 +169,38 @@ public sealed interface Expr {
    */
   record LamExpr(
     @NotNull SourcePos sourcePos,
+    @NotNull Param param,
+    @NotNull Expr body
+  ) implements Expr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLam(this, p);
+    }
+  }
+
+  /**
+   * @author re-xyr
+   */
+  record TelescopicLamExpr(
+    @NotNull SourcePos sourcePos,
     @NotNull Buffer<@NotNull Param> params,
     @NotNull Expr body
   ) implements Expr, TelescopicExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitLam(this, p);
+      return visitor.visitTelescopicLam(this, p);
+    }
+  }
+
+  /**
+   * @author re-xyr
+   */
+  record TelescopicSigmaExpr(
+    @NotNull SourcePos sourcePos,
+    boolean co,
+    @NotNull Buffer<@NotNull Param> params,
+    @NotNull Expr last
+  ) implements Expr, TelescopicExpr {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitTelescopicSigma(this, p);
     }
   }
 

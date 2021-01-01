@@ -13,11 +13,11 @@ import org.mzi.api.ref.Var;
  */
 public record Param(
   @NotNull SourcePos sourcePos,
-  @NotNull Buffer<Var> vars,
+  @NotNull Var var,
   @Nullable Expr type,
   boolean explicit
 ) {
-  public Param(@NotNull SourcePos sourcePos, @NotNull Buffer<Var> vars, boolean explicit) {
-    this(sourcePos, vars, null, explicit);
+  public Param(@NotNull SourcePos sourcePos, @NotNull Var var, boolean explicit) {
+    this(sourcePos, var, null, explicit);
   }
 }
