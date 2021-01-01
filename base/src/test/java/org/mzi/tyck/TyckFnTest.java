@@ -30,8 +30,8 @@ public class TyckFnTest {
     // \A a.a
     idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
       of(
-        new Param(SourcePos.NONE, of(() -> "_"), true),
-        new Param(SourcePos.NONE, of(a), true)),
+        new Param(SourcePos.NONE, new LocalVar("_"), true),
+        new Param(SourcePos.NONE, a, true)),
       new Expr.RefExpr(SourcePos.NONE, a)));
   }
 
@@ -40,8 +40,8 @@ public class TyckFnTest {
     var a = new LocalVar("a");
     // \A.\a.a
     idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
-      of(new Param(SourcePos.NONE, of(() -> "_"), true)),
-      new Expr.TelescopicLamExpr(SourcePos.NONE, of(new Param(SourcePos.NONE, of(a), true)),
+      of(new Param(SourcePos.NONE, new LocalVar("_"), true)),
+      new Expr.TelescopicLamExpr(SourcePos.NONE, of(new Param(SourcePos.NONE, a, true)),
         new Expr.RefExpr(SourcePos.NONE, a))));
   }
 
@@ -54,7 +54,7 @@ public class TyckFnTest {
       return;
     }
     var lam_aa = AppTerm.make(lam, new Arg<>(new RefTerm(() -> "_"), true));
-    assertEquals(lam.dropTeleLam(1), lam_aa);
+    assertEquals(lam.body(), lam_aa);
     var newVar = new RefTerm(new LocalVar("xyr"));
     assertEquals(newVar, AppTerm.make(lam_aa, new Arg<>(newVar, true)));
     assertTrue(dt.body() instanceof RefTerm);

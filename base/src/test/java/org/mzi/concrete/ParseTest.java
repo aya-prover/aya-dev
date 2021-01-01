@@ -78,8 +78,8 @@ public class ParseTest {
       null,
       "id",
       Buffer.of(
-        new Param(SourcePos.NONE, Buffer.of(new LocalVar("A")), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
-        new Param(SourcePos.NONE, Buffer.of(new LocalVar("a")), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true)
+        new Param(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
+        new Param(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true)
       ),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
@@ -95,7 +95,7 @@ public class ParseTest {
         new Decl.DataCtor("Z", Buffer.of(), Buffer.of(), Buffer.of(), false),
         new Decl.DataCtor("S",
           Buffer.of(
-            new Param(SourcePos.NONE, Buffer.of(new LocalVar("_")), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
+            new Param(SourcePos.NONE, new LocalVar("_"), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
           ),
           Buffer.of(), Buffer.of(), false
         )
@@ -114,12 +114,12 @@ public class ParseTest {
     assertTrue(MziProducer.parseExpr("λ a => a") instanceof Expr.TelescopicLamExpr);
     assertTrue(MziProducer.parseExpr("\\lam a => a") instanceof Expr.TelescopicLamExpr);
     assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.TelescopicLamExpr);
-    assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Pi);
-    assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Pi);
-    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Pi);
-    assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Sigma);
-    assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Sigma);
-    assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Sigma);
+    assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.TelescopicPiExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.TelescopicPiExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.TelescopicPiExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     parseTo("f a . 1", new Expr.ProjExpr(
       SourcePos.NONE,
       new Expr.AppExpr(

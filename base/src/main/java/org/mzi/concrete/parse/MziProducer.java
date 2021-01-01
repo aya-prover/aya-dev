@@ -7,7 +7,6 @@ import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
-import asia.kala.factory.Factory;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -16,8 +15,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
-import org.mzi.api.ref.Var;
-import org.mzi.api.util.DTKind;
 import org.mzi.concrete.*;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
@@ -100,7 +97,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
 
   public @NotNull Buffer<@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
     return stream
-      .map(this::visitTele)
+      .collect(ImmutableSeq.factory())
+      .flatMap(this::visitTele)
       .collect(Buffer.factory());
   }
 
@@ -160,7 +158,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Buffer<Param> visitTele(MziParser.TeleContext ctx) {
+  public @NotNull Buffer<@NotNull Param> visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
     if (literal != null) return Buffer.of(new Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
     var teleTypedExpr = ctx.teleTypedExpr();
