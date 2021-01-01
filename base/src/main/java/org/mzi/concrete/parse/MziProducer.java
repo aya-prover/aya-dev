@@ -7,7 +7,7 @@ import asia.kala.Tuple2;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
 import asia.kala.collection.mutable.Buffer;
-import lombok.Singular;
+import asia.kala.factory.Factory;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -26,7 +26,6 @@ import org.mzi.generic.Modifier;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
 import org.mzi.ref.LocalVar;
-import org.mzi.tyck.sort.LevelEqn;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -161,9 +160,9 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Param visitTele(MziParser.TeleContext ctx) {
+  public @NotNull Buffer<Param> visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
-    if (literal != null) return new Param(sourcePosOf(ctx), Buffer.of(new LocalVar("_")), visitLiteral(literal), true);
+    if (literal != null) return Buffer.of(new Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
     var teleTypedExpr = ctx.teleTypedExpr();
     if (ctx.LPAREN() != null) return visitTeleTypedExpr(teleTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
@@ -171,11 +170,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Function<Boolean, Param> visitTeleTypedExpr(MziParser.TeleTypedExprContext ctx) {
+  public @NotNull Function<Boolean, Buffer<Param>> visitTeleTypedExpr(MziParser.TeleTypedExprContext ctx) {
     var type = visitType(ctx.type());
-    return explicit -> new Param(sourcePosOf(ctx), visitIds(ctx.ids())
-      .<Var>map(LocalVar::new)
-      .collect(Buffer.factory()), type, explicit);
+    return explicit -> visitIds(ctx.ids())
+      .map(var -> new Param(sourcePosOf(ctx), new LocalVar(var), type, explicit))
+      .collect(Buffer.factory());
   }
 
   public @NotNull Expr visitExpr(MziParser.ExprContext ctx) {
@@ -247,8 +246,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull LamExpr visitLam(MziParser.LamContext ctx) {
-    return new Expr.LamExpr(
+  public Expr.@NotNull TelescopicLamExpr visitLam(MziParser.LamContext ctx) {
+    return new Expr.TelescopicLamExpr(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
       visitLamBody(ctx)
@@ -271,20 +270,20 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull DTExpr visitSigma(MziParser.SigmaContext ctx) {
-    return new Expr.DTExpr(
+  public Expr.@NotNull TelescopicSigmaExpr visitSigma(MziParser.SigmaContext ctx) {
+    return new Expr.TelescopicSigmaExpr(
       sourcePosOf(ctx),
-      DTKind.Sigma,
+      false,
       visitTelescope(ctx.tele().stream()),
       visitExpr(ctx.expr())
     );
   }
 
   @Override
-  public Expr.@NotNull DTExpr visitPi(MziParser.PiContext ctx) {
-    return new Expr.DTExpr(
+  public Expr.@NotNull TelescopicPiExpr visitPi(MziParser.PiContext ctx) {
+    return new Expr.TelescopicPiExpr(
       sourcePosOf(ctx),
-      DTKind.Pi,
+      false,
       visitTelescope(ctx.tele().stream()),
       visitExpr(ctx.expr())
     );

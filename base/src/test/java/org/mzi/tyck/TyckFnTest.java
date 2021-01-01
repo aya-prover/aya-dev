@@ -28,7 +28,7 @@ public class TyckFnTest {
   public void idLamConnected() {
     var a = new LocalVar("a");
     // \A a.a
-    idLamTestCase(new Expr.LamExpr(SourcePos.NONE,
+    idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
       of(
         new Param(SourcePos.NONE, of(() -> "_"), true),
         new Param(SourcePos.NONE, of(a), true)),
@@ -39,13 +39,13 @@ public class TyckFnTest {
   public void idLamDisconnected() {
     var a = new LocalVar("a");
     // \A.\a.a
-    idLamTestCase(new Expr.LamExpr(SourcePos.NONE,
+    idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
       of(new Param(SourcePos.NONE, of(() -> "_"), true)),
-      new Expr.LamExpr(SourcePos.NONE, of(new Param(SourcePos.NONE, of(a), true)),
+      new Expr.TelescopicLamExpr(SourcePos.NONE, of(new Param(SourcePos.NONE, of(a), true)),
         new Expr.RefExpr(SourcePos.NONE, a))));
   }
 
-  private void idLamTestCase(Expr.LamExpr lamAaa) {
+  private void idLamTestCase(Expr.TelescopicLamExpr lamAaa) {
     var piUAA = Lisp.reallyParse("(Pi (A (U) ex) (Pi (a A ex) A))");
     var result = lamAaa.accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
     assertNotNull(result);

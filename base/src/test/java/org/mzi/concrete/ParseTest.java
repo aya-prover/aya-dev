@@ -111,15 +111,15 @@ public class ParseTest {
     assertTrue(MziProducer.parseExpr("f a b c") instanceof Expr.AppExpr);
     assertTrue(MziProducer.parseExpr("a.1") instanceof Expr.ProjExpr);
     assertTrue(MziProducer.parseExpr("a.1.2") instanceof Expr.ProjExpr);
-    assertTrue(MziProducer.parseExpr("λ a => a") instanceof Expr.LamExpr);
-    assertTrue(MziProducer.parseExpr("\\lam a => a") instanceof Expr.LamExpr);
-    assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
-    assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Pi);
-    assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Pi);
-    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Pi);
-    assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Sigma);
-    assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Sigma);
-    assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.DTExpr dt && dt.kind() == DTKind.Sigma);
+    assertTrue(MziProducer.parseExpr("λ a => a") instanceof Expr.TelescopicLamExpr);
+    assertTrue(MziProducer.parseExpr("\\lam a => a") instanceof Expr.TelescopicLamExpr);
+    assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.TelescopicLamExpr);
+    assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Pi);
+    assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Pi);
+    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Pi);
+    assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Sigma);
+    assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Sigma);
+    assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicPiExpr dt && dt.co() == DTKind.Sigma);
     parseTo("f a . 1", new Expr.ProjExpr(
       SourcePos.NONE,
       new Expr.AppExpr(
