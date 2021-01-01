@@ -8,7 +8,6 @@ import org.mzi.core.term.UnivTerm;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.test.Lisp;
 import org.mzi.test.LispTestCase;
-import org.mzi.tyck.sort.Sort;
 
 import static org.junit.jupiter.api.Assertions.*;
 

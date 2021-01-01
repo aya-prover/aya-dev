@@ -7,7 +7,6 @@ import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
-import org.mzi.core.Param;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 

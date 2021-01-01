@@ -2,21 +2,19 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core;
 
-import asia.kala.collection.Seq;
 import asia.kala.collection.immutable.ImmutableSeq;
 import asia.kala.collection.immutable.ImmutableVector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
-import org.mzi.api.util.DTKind;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispParser;
-import org.mzi.api.ref.DefVar;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.Sort;
 

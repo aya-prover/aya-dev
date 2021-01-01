@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.Global;
 import org.mzi.api.error.SourcePos;
-import org.mzi.api.util.DTKind;
 import org.mzi.concrete.parse.MziProducer;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Modifier;

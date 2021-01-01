@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.resolve.context.Context;
-import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.concrete.resolve.context.ModuleContext;
+import org.mzi.concrete.resolve.context.SimpleContext;
 
 /**
  * @author re-xyr

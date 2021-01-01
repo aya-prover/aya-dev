@@ -2,18 +2,12 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
-import asia.kala.Tuple;
-import asia.kala.Tuple2;
 import asia.kala.Unit;
-import asia.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.ref.Var;
-import org.mzi.api.util.DTKind;
 import org.mzi.api.util.NormalizeMode;
-import org.mzi.core.Param;
 import org.mzi.core.visitor.Normalizer;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.tyck.sort.LevelSubst;

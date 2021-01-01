@@ -9,14 +9,12 @@ import asia.kala.ref.OptionRef;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
-import org.mzi.api.ref.DefVar;
 import org.mzi.util.Decision;
-
-import java.util.HashMap;
 
 /**
  * @author ice1000

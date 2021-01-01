@@ -4,7 +4,9 @@ package org.mzi.tyck.unify;
 
 import asia.kala.collection.Seq;
 import asia.kala.collection.immutable.ImmutableSeq;
-import asia.kala.collection.mutable.*;
+import asia.kala.collection.mutable.LinkedBuffer;
+import asia.kala.collection.mutable.MutableHashMap;
+import asia.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

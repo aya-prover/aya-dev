@@ -4,9 +4,9 @@ package org.mzi.core.def;
 
 import asia.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
+import org.mzi.api.ref.DefVar;
 import org.mzi.core.Param;
 import org.mzi.core.term.Term;
-import org.mzi.api.ref.DefVar;
 
 /**
  * @author ice1000
