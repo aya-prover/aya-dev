@@ -2,12 +2,12 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
-import asia.kala.Tuple;
-import asia.kala.Tuple3;
-import asia.kala.collection.mutable.Buffer;
-import asia.kala.collection.mutable.MutableHashMap;
-import asia.kala.collection.mutable.MutableMap;
-import asia.kala.ref.Ref;
+import org.glavo.kala.Tuple;
+import org.glavo.kala.Tuple3;
+import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.ref.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;

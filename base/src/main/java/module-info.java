@@ -5,7 +5,7 @@ module org.mzi {
 
   requires transitive org.mzi.api;
   requires transitive org.mzi.parser;
-  requires transitive asia.kala.common;
+  requires transitive org.glavo.kala.common;
 
   requires org.mzi.pretty;
 

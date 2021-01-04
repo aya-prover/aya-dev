@@ -2,15 +2,15 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core;
 
-import asia.kala.PrimitiveTuples.IntObjTuple2;
-import asia.kala.Tuple;
-import asia.kala.Tuple2;
-import asia.kala.Tuple3;
-import asia.kala.Unit;
-import asia.kala.collection.Seq;
-import asia.kala.collection.mutable.Buffer;
-import asia.kala.control.Option;
-import asia.kala.function.IndexedConsumer;
+import org.glavo.kala.PrimitiveTuples.IntObjTuple2;
+import org.glavo.kala.Tuple;
+import org.glavo.kala.Tuple2;
+import org.glavo.kala.Tuple3;
+import org.glavo.kala.Unit;
+import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Option;
+import org.glavo.kala.function.IndexedConsumer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
