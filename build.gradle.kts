@@ -38,6 +38,7 @@ subprojects {
   repositories {
     jcenter()
     mavenCentral()
+    maven(url = "https://dl.bintray.com/glavo/maven")
   }
 
   java {

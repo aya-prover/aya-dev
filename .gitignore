@@ -3,6 +3,7 @@ out/
 /.idea/*.xml
 /.idea/.gitignore
 /.idea/modules/*
+/.idea/codeStyles/*
 /.gradle/
 /.fleet/
 *.iml

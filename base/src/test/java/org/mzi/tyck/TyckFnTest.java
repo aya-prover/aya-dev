@@ -15,7 +15,7 @@ import org.mzi.ref.LocalVar;
 import org.mzi.test.Lisp;
 import org.mzi.test.ThrowingReporter;
 
-import static asia.kala.collection.mutable.Buffer.of;
+import static org.glavo.kala.collection.mutable.Buffer.of;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

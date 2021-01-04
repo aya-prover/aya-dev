@@ -2,8 +2,8 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
-import asia.kala.collection.mutable.Buffer;
-import asia.kala.control.Option;
+import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.Tele;
 import org.mzi.core.term.*;

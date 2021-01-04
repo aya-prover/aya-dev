@@ -2,10 +2,10 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.context;
 
-import asia.kala.Tuple2;
-import asia.kala.collection.mutable.MutableHashMap;
-import asia.kala.collection.mutable.MutableMap;
-import asia.kala.control.Option;
+import org.glavo.kala.Tuple2;
+import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
