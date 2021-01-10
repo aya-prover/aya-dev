@@ -165,13 +165,13 @@ HIDING : '\\hiding';
 COERCE : '\\coerce';
 ERASE : '\\erase';
 INLINE : '\\inline';
-SIGMA : '\\Sig' | 'Σ';
-LAMBDA : '\\lam' | 'λ';
-PI : '\\Pi' | 'Π';
+SIGMA : '\\Sig' | '\u03A3';
+LAMBDA : '\\lam' | '\u03BB';
+PI : '\\Pi' | '\u03A0';
 MATCH : '\\match';
 ABSURD : '\\impossible';
-TO : '->' | '→';
-IMPLIES : '=>' | '⇒';
+TO : '->' | '\u2192';
+IMPLIES : '=>' | '\u21D2';
 
 // markers
 LBRACE : '{';
