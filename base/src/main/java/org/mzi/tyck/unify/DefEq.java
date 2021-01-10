@@ -159,6 +159,9 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       var exArg = new Arg<>(new RefTerm(exParam.ref()), exParam.explicit());
       return compare(AppTerm.make(lhs, exArg), AppTerm.make(preRhs, exArg), type);
     }
+    // TODO[xyr]: please verify and improve this fix.
+    //  I guess you need to add some extra checks that was done in checkTele.
+    varSubst.put(rhs.param().ref(), lhs.param().ref());
     return checkParam(lhs.param(), rhs.param())
       && compare(lhs.body(), rhs.body(), type);
   }
