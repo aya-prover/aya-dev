@@ -7,7 +7,6 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
-import org.mzi.core.Tele;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 
@@ -34,10 +33,8 @@ public final class RefFinder implements Def.Visitor<@NotNull Buffer<Def>, Unit> 
 
   @Override
   public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
-    fn.telescope.forEach((ix, tele) -> {
-      if (!(tele instanceof Tele.TypedTele typed)) return;
-      typed.type().accept(TermRefFinder.INSTANCE, references);
-    });
+    fn.telescope.forEach(param ->
+      param.type().accept(TermRefFinder.INSTANCE, references));
     fn.result.accept(TermRefFinder.INSTANCE, references);
     if (withBody) {
       fn.body.accept(TermRefFinder.INSTANCE, references);

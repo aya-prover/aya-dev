@@ -9,7 +9,7 @@ import org.glavo.kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
-import org.mzi.core.Tele;
+import org.mzi.core.Param;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
@@ -21,11 +21,11 @@ import java.util.HashMap;
  */
 public interface Unfolder<P> extends TermFixpoint<P> {
   @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
-    @NotNull Tele self,
+    @NotNull Seq<@NotNull Param> self,
     @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) {
     var subst = new Substituter.TermSubst(new HashMap<>());
-    self.forEach((i, tele) -> subst.add(tele.ref(), args.get(i).term()));
+    self.forEachIndexed((i, param) -> subst.add(param.ref(), args.get(i).term()));
     return subst;
   }
 
@@ -33,7 +33,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = fnCall.fnRef().def();
     // This shouldn't happen
     assert fnCall.args().sizeEquals(def.telescope.size());
-    assert def.telescope.checkSubst(fnCall.args());
+    assert Param.checkSubst(fnCall.fnRef().def().telescope, fnCall.args());
     var subst = buildSubst(def.telescope, fnCall.args());
     return def.body.subst(subst).accept(this, p);
   }

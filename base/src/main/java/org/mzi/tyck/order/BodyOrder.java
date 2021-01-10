@@ -8,9 +8,7 @@ import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.core.Tele;
 import org.mzi.core.def.Def;
-import org.mzi.core.def.FnDef;
 import org.mzi.core.visitor.RefFinder;
 
 /**

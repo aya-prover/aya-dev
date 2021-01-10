@@ -37,20 +37,33 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return expr.function().accept(this, p);
   }
 
-  default void visitParams(Buffer<Param> params, P p) {
+  default void visitParams(@NotNull Buffer<@NotNull Param> params, P p) {
     params.forEach(param -> {
       if (param.type() != null) param.type().accept(this, p);
     });
   }
 
-  @Override default Unit visitDT(Expr.@NotNull DTExpr expr, P p) {
-    visitParams(expr.params(), p);
+  @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {
+    visitParams(Buffer.of(expr.param()), p);
+    return expr.body().accept(this, p);
+  }
+
+  @Override default Unit visitPi(Expr.@NotNull PiExpr expr, P p) {
+    visitParams(Buffer.of(expr.param()), p);
     return expr.last().accept(this, p);
   }
 
-  @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {
+  @Override default Unit visitTelescopicPi(Expr.@NotNull TelescopicPiExpr expr, P p) {
+    throw new IllegalStateException("Found sugared expression. this should not happen");
+  }
+
+  @Override default Unit visitTelescopicLam(Expr.@NotNull TelescopicLamExpr expr, P p) {
+    throw new IllegalStateException("Found sugared expression. this should not happen");
+  }
+
+  @Override default Unit visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
     visitParams(expr.params(), p);
-    return expr.body().accept(this, p);
+    return expr.last().accept(this, p);
   }
 
   @Override default Unit visitTup(Expr.@NotNull TupExpr expr, P p) {

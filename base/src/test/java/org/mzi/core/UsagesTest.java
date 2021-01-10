@@ -22,7 +22,7 @@ public class UsagesTest extends LispTestCase {
 
   @Test
   public void lambdaUsages() {
-    var term = Lisp.reallyParse("(lam (dio (U) ex null) dio)", vars);
+    var term = Lisp.reallyParse("(lam (dio (U) ex) dio)", vars);
     var consumer = new UsageCounter(vars.get("dio"));
     term.accept(consumer, Unit.unit());
     assertEquals(1, consumer.usageCount());

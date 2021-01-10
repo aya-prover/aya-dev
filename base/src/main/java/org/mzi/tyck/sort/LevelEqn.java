@@ -4,7 +4,6 @@ package org.mzi.tyck.sort;
 
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
