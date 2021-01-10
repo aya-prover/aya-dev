@@ -2,7 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.def;
 
-import asia.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.core.Param;
