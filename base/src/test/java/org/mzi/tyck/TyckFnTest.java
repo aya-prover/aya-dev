@@ -82,8 +82,10 @@ public class TyckFnTest {
         ImmutableSeq.of(new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 1), true),
           new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 2), true))));
     // Pi(A B C : U)(f : A -> B -> C)(p : A ** B) -> C
-    var uncurryTy = Lisp.reallyParse("(Pi (A (U) ex (B (U) ex (C (U) ex (f (Pi (a A ex (b B ex null)) C)" +
-      " ex (p (Sigma (a A ex null) B) ex null))))) C)");
+    var uncurryTy = Lisp.reallyParse("""
+      (Pi (A (U) ex) (Pi (B (U) ex) (Pi (C (U) ex)
+       (Pi (f (Pi (a A ex) (Pi (b B ex) C)) ex)
+        (Pi (p (Sigma (a A ex null) B) ex) C)))))""");
     uncurry.accept(new ExprTycker(ThrowingReporter.INSTANCE), uncurryTy);
   }
 }
