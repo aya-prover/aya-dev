@@ -18,6 +18,7 @@ import org.mzi.parser.LispParser;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.sort.Sort;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 
@@ -80,18 +81,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var ident = ctx.IDENT().getText();
     var exprs = ctx.expr();
     assert exprs.size() == 2;
-    var licit = exprs.get(1);
-    var licitAtom = licit.atom();
-    boolean explicit;
-    BooleanSupplier err = () -> {
-      System.err.println("Expected ex or im (treated as ex), got: " + licit.getText());
-      return true;
-    };
-    explicit = licitAtom == null || licitAtom.NUMBER() != null ? err.getAsBoolean() : switch (licitAtom.IDENT().getText()) {
-      case "ex" -> true;
-      case "im" -> false;
-      default -> err.getAsBoolean();
-    };
+    boolean explicit = licit(exprs);
     return new Param(ref(ident), exprs.get(0).accept(this), explicit);
   }
 
@@ -104,19 +94,22 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var ident = ctx.IDENT().getText();
     var exprs = ctx.expr();
     assert exprs.size() == 3;
+    boolean explicit = licit(exprs);
+    return exprToParams(exprs.get(2)).prepended(new Param(ref(ident), exprs.get(0).accept(this), explicit));
+  }
+
+  private boolean licit(List<LispParser.ExprContext> exprs) {
     var licit = exprs.get(1);
     var licitAtom = licit.atom();
-    boolean explicit;
     BooleanSupplier err = () -> {
       System.err.println("Expected ex or im (treated as ex), got: " + licit.getText());
       return true;
     };
-    explicit = licitAtom == null || licitAtom.NUMBER() != null ? err.getAsBoolean() : switch (licitAtom.IDENT().getText()) {
+    return licitAtom == null || licitAtom.NUMBER() != null ? err.getAsBoolean() : switch (licitAtom.IDENT().getText()) {
       case "ex" -> true;
       case "im" -> false;
       default -> err.getAsBoolean();
     };
-    return exprToParams(exprs.get(2)).prepended(new Param(ref(ident), exprs.get(0).accept(this), explicit));
   }
 
   @Override
