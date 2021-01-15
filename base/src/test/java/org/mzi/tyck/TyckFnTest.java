@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.Unit;
@@ -32,7 +33,7 @@ public class TyckFnTest {
     var a = new LocalVar("a");
     // \A a.a
     idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
-      of(
+      Buffer.of(
         new Param(SourcePos.NONE, new LocalVar("_"), true),
         new Param(SourcePos.NONE, a, true)),
       new Expr.RefExpr(SourcePos.NONE, a)));
@@ -43,8 +44,8 @@ public class TyckFnTest {
     var a = new LocalVar("a");
     // \A.\a.a
     idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
-      of(new Param(SourcePos.NONE, new LocalVar("_"), true)),
-      new Expr.TelescopicLamExpr(SourcePos.NONE, of(new Param(SourcePos.NONE, a, true)),
+      Buffer.of(new Param(SourcePos.NONE, new LocalVar("_"), true)),
+      new Expr.TelescopicLamExpr(SourcePos.NONE, Buffer.of(new Param(SourcePos.NONE, a, true)),
         new Expr.RefExpr(SourcePos.NONE, a))));
   }
 
@@ -73,8 +74,9 @@ public class TyckFnTest {
     var pRef = new Expr.RefExpr(SourcePos.NONE, p);
     var f = new LocalVar("f");
     // \A B C f p. f(p.1, p.2)
-    var uncurry = new Expr.LamExpr(SourcePos.NONE,
-      Buffer.of(new Param(SourcePos.NONE, Buffer.of(() -> "A", () -> "B", () -> "C", f, p), true)),
+    var uncurry = new Expr.TelescopicLamExpr(SourcePos.NONE,
+      Seq.of(new LocalVar("A"), new LocalVar("B"), new LocalVar("C"), f, p)
+        .stream().map(v -> new Param(SourcePos.NONE, v, true)).collect(Buffer.factory()),
       new Expr.AppExpr(SourcePos.NONE,
         new Expr.RefExpr(SourcePos.NONE, f),
         ImmutableSeq.of(new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 1), true),
