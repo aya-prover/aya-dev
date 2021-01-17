@@ -20,6 +20,11 @@ public class ReporterErrorListener extends BaseErrorListener {
 
   @Override
   public void syntaxError(Recognizer<?, ?> recognizer, Object o, int line, int pos, String msg, RecognitionException e) {
-    reporter.report(new ParseError(new SourcePos(-1, -1, line, pos, line, pos + 1), msg));
+    reporter.report(new ParseError(
+      new SourcePos(
+        e.getOffendingToken().getStartIndex(),
+        e.getOffendingToken().getStopIndex(),
+        line, pos, line, pos + e.getOffendingToken().getText().length()),
+      msg));
   }
 }
