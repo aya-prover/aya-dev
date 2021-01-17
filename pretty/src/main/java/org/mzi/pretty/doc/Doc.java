@@ -33,7 +33,7 @@ public sealed interface Doc {
     return printer.render(config, this);
   }
 
-  default @NotNull String withPageWidth(int pageWidth) {
+  default @NotNull String renderWithPageWidth(int pageWidth) {
     var config = new DocStringPrinter.Config(pageWidth);
     return this.renderToString(config);
   }
