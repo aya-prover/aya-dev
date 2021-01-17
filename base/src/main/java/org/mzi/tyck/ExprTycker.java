@@ -211,7 +211,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Override
-  public Result catchAll(@NotNull Expr expr, Term term) {
+  public Result catchUnhandled(@NotNull Expr expr, Term term) {
     throw new UnsupportedOperationException(expr.toString());
   }
 

@@ -42,45 +42,45 @@ public sealed interface Expr {
   }
 
   interface BaseVisitor<P, R> extends Visitor<P, R> {
-    R catchAll(@NotNull Expr expr, P p);
+    R catchUnhandled(@NotNull Expr expr, P p);
     @Override default R visitRef(@NotNull RefExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitUnresolved(@NotNull UnresolvedExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitTelescopicLam(@NotNull Expr.TelescopicLamExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitTelescopicPi(@NotNull Expr.TelescopicPiExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitUniv(@NotNull UnivExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitApp(@NotNull AppExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitHole(@NotNull HoleExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitTup(@NotNull TupExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitProj(@NotNull ProjExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitTyped(@NotNull TypedExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitLitInt(@NotNull LitIntExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
     @Override default R visitLitString(@NotNull LitStringExpr expr, P p) {
-      return catchAll(expr, p);
+      return catchUnhandled(expr, p);
     }
   }
 
