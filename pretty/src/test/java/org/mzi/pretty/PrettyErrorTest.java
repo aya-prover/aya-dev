@@ -92,6 +92,7 @@ public class PrettyErrorTest {
         3 | import org.mzi.pretty.PrettyError
        \s
       Error: package 'org.junit.jupiter.apt.Test' not found
-      note: Did you mean 'org.junit.jupiter.api.Test'""", text);
+      note: Did you mean 'org.junit.jupiter.api.Test'
+      """, text);
   }
 }

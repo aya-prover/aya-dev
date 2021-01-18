@@ -23,13 +23,14 @@ public record PrettyError(
 
   public Doc toDoc() {
     var sourceRange = getSourceRange();
-    return Doc.vcat(
+    var doc = Doc.vcat(
       Doc.plain("In file " + filePath + ":" + sourceRange._1 + ":" + sourceRange._2 + " -> "),
       Doc.plain(""),
       Doc.hang(2, visualizeCode(sourceRange)),
-      Doc.plain("Error: " + errorMessage),
-      Doc.plain(noteMessage != null ? "note: " + noteMessage : "")
-    );
+      Doc.plain("Error: " + errorMessage));
+    return noteMessage != null
+      ? Doc.vcat(doc, Doc.plain("note: " + noteMessage), Doc.empty())
+      : Doc.vcat(doc, Doc.empty());
   }
 
   private @NotNull Doc visualizeCode(Tuple4<Integer, Integer, Integer, Integer> sourceRange) {
