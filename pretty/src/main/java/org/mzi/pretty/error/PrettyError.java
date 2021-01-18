@@ -64,9 +64,7 @@ public record PrettyError(
     } else {
       int lineNo = Math.max(startLine - SHOW_MORE_LINE, 1);
       for (String line : lines) {
-        builder.append(String.format("%" + linenoWidth + "d | ", lineNo));
-        builder.append(line);
-        builder.append('\n');
+        renderLine(builder, line, lineNo, linenoWidth);
 
         if (lineNo == startLine) {
           builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
