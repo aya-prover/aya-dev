@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public record Position(
-  @NotNull String input,
+  @NotNull String sourceCode,
   int pos
 ) {
 
@@ -25,7 +25,7 @@ public record Position(
 
   public @NotNull Span span(@NotNull Position other) {
     sameInput(other);
-    return new Span(input, this.pos, other.pos);
+    return new Span(sourceCode, this.pos, other.pos);
   }
 
   public boolean atStart() {
@@ -33,11 +33,11 @@ public record Position(
   }
 
   public boolean atEnd() {
-    return pos == input.length();
+    return pos == sourceCode.length();
   }
 
   private void sameInput(@NotNull Position other) {
-    if (!this.input.equals(other.input)) {
+    if (!this.sourceCode.equals(other.sourceCode)) {
       throw new IllegalArgumentException();
     }
   }
