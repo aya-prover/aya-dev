@@ -2,8 +2,8 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.api.error;
 
-import asia.kala.collection.mutable.ArrayBuffer;
-import asia.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.mutable.ArrayBuffer;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 
 /**

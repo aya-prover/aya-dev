@@ -1,3 +1,4 @@
+
 # 术语表
 
 ### 编写指南
@@ -37,11 +38,8 @@
 
 ### 各种 Visitor
 
-有的特殊 Visitor 可能不会使用这些后缀，比如 `DefEq`。
-
-+ Fixpoint -- 输入和返回类型相同的函数
-+ Consumer -- 不直接返回值（而是修改自身状态作为输出）的函数
-+ Producer -- 只返回值的函数（相对来说参数很简单的）的函数
++ Fixpoint -- 输入和返回类型相同的函数，包含 `Substituter`, `Stripper`, `Normalizer` 等
++ Consumer -- 不直接返回值（而是修改自身状态作为输出）的函数，比如 `UsageCounter`
 
 ## 类型检查时用到的状态
 
@@ -57,6 +55,6 @@
 + Normalize -- 表达式化简求值
   + Agda, Arend 里面都是这么叫的
 + Unfold -- 展开一个函数调用表达式
-  + Agda, Arend 里面都是这么叫的
+  + Agda, Coq, Arend 里面都是这么叫的
 + DefEq -- 其实就是 conversion check 或者 unification
   + 很多地方叫 definitional equality 或者 judgemental equality

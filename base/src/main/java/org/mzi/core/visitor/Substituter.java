@@ -2,7 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
-import asia.kala.Unit;
+import org.glavo.kala.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
 import org.mzi.core.term.RefTerm;
@@ -18,7 +18,7 @@ import java.util.Map;
  *
  * @author ice1000
  */
-public record SubstFixpoint(
+public record Substituter(
   @NotNull TermSubst termSubst, @NotNull LevelSubst levelSubst) implements TermFixpoint<Unit> {
   @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unused) {
     return sort.substSort(levelSubst);

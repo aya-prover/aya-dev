@@ -2,8 +2,8 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.visitor;
 
-import asia.kala.Unit;
-import asia.kala.collection.mutable.Buffer;
+import org.glavo.kala.Unit;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
@@ -37,18 +37,33 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return expr.function().accept(this, p);
   }
 
-  default void visitParams(Buffer<Param> params, P p) {
-    params.forEach(param -> param.type().accept(this, p));
-  }
-
-  @Override default Unit visitDT(Expr.@NotNull DTExpr expr, P p) {
-    visitParams(expr.params(), p);
-    return expr.last().accept(this, p);
+  default void visitParams(@NotNull Buffer<@NotNull Param> params, P p) {
+    params.forEach(param -> {
+      if (param.type() != null) param.type().accept(this, p);
+    });
   }
 
   @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {
-    visitParams(expr.params(), p);
+    visitParams(Buffer.of(expr.param()), p);
     return expr.body().accept(this, p);
+  }
+
+  @Override default Unit visitPi(Expr.@NotNull PiExpr expr, P p) {
+    visitParams(Buffer.of(expr.param()), p);
+    return expr.last().accept(this, p);
+  }
+
+  @Override default Unit visitTelescopicPi(Expr.@NotNull TelescopicPiExpr expr, P p) {
+    throw new IllegalStateException("Found sugared expression. this should not happen");
+  }
+
+  @Override default Unit visitTelescopicLam(Expr.@NotNull TelescopicLamExpr expr, P p) {
+    throw new IllegalStateException("Found sugared expression. this should not happen");
+  }
+
+  @Override default Unit visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
+    visitParams(expr.params(), p);
+    return expr.last().accept(this, p);
   }
 
   @Override default Unit visitTup(Expr.@NotNull TupExpr expr, P p) {

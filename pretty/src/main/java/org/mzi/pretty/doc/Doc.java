@@ -33,7 +33,7 @@ public sealed interface Doc {
     return printer.render(config, this);
   }
 
-  default @NotNull String withPageWidth(int pageWidth) {
+  default @NotNull String renderWithPageWidth(int pageWidth) {
     var config = new DocStringPrinter.Config(pageWidth);
     return this.renderToString(config);
   }
@@ -320,6 +320,7 @@ public sealed interface Doc {
    * @param text text that may contain '\n'
    * @return text document of the whole text
    */
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Contract("_ -> new")
   static @NotNull Doc plain(String text) {
     if (!text.contains("\n")) {

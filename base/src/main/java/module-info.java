@@ -1,10 +1,13 @@
 module org.mzi {
   requires static org.jetbrains.annotations;
   requires static org.antlr.antlr4.runtime;
+  requires static lombok;
 
   requires transitive org.mzi.api;
   requires transitive org.mzi.parser;
-  requires transitive asia.kala.common;
+  requires transitive org.glavo.kala.common;
+
+  requires org.mzi.pretty;
 
   exports org.mzi.concrete.parse;
   exports org.mzi.concrete.visitor;

@@ -3,6 +3,7 @@
 package org.mzi.api.error;
 
 import org.jetbrains.annotations.NotNull;
+import org.mzi.pretty.doc.Doc;
 
 /**
  * @author ice1000
@@ -13,12 +14,6 @@ public interface Problem {
     GOAL,
     ERROR,
     WARN,
-    WARN_UNUSED {
-      @Override
-      public String toString() {
-        return "WARN";
-      }
-    },
   }
 
   enum Stage {
@@ -30,7 +25,7 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  @NotNull String describe();
+  @NotNull Doc describe();
   @NotNull Severity level();
   default @NotNull Stage stage() {
     return Stage.OTHER;
@@ -47,13 +42,6 @@ public interface Problem {
     @Override
     default @NotNull Severity level() {
       return Severity.WARN;
-    }
-  }
-
-  interface WarnUnused extends Problem {
-    @Override
-    default @NotNull Severity level() {
-      return Severity.WARN_UNUSED;
     }
   }
 

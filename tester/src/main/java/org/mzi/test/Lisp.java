@@ -2,14 +2,15 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.test;
 
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.Var;
-import org.mzi.core.Tele;
-import org.mzi.core.TermProducer;
+import org.mzi.core.Param;
+import org.mzi.core.TermDsl;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.Term;
 
@@ -23,7 +24,7 @@ import java.util.Objects;
 @TestOnly
 public interface Lisp {
   static @Nullable Term somehowParse(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
-    return TermProducer.parse(code, refs);
+    return TermDsl.parse(code, refs);
   }
 
   static @NotNull Term reallyParse(@NotNull @NonNls @Language("TEXT") String code) {
@@ -34,8 +35,8 @@ public interface Lisp {
     return Objects.requireNonNull(somehowParse(code, refs));
   }
 
-  static @Nullable Tele somehowParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
-    return TermProducer.parseTele(code, refs);
+  static @Nullable ImmutableSeq<@NotNull Param> somehowParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
+    return TermDsl.parseTele(code, refs);
   }
 
   static @NotNull FnDef reallyParseDef(
@@ -53,7 +54,7 @@ public interface Lisp {
     return def;
   }
 
-  static @NotNull Tele reallyParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
+  static @NotNull ImmutableSeq<@NotNull Param> reallyParseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
     return Objects.requireNonNull(somehowParseTele(code, refs));
   }
 }

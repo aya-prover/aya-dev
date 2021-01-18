@@ -3,6 +3,6 @@
 /**
  * This should be the only package that can access the antlr4 runtime.
  * The <code>parser</code> module is supposed to be used only in this package
- * and {@link org.mzi.core.TermProducer}.
+ * and {@link org.mzi.core.TermDsl}.
  */
 package org.mzi.concrete.parse;

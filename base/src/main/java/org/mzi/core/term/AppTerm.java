@@ -2,21 +2,19 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
-import asia.kala.collection.Seq;
-import asia.kala.collection.mutable.Buffer;
-import asia.kala.control.Option;
-import asia.kala.ref.OptionRef;
+import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Option;
+import org.glavo.kala.ref.OptionRef;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.visitor.SubstFixpoint;
+import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
-import org.mzi.ref.DefVar;
 import org.mzi.util.Decision;
-
-import java.util.HashMap;
 
 /**
  * @author ice1000
@@ -26,20 +24,14 @@ public sealed interface AppTerm extends Term {
   @NotNull Term fn();
   @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args();
 
-  @Override default @NotNull Decision whnf() {
-    if (fn() instanceof LamTerm) return Decision.NO;
-    return fn().whnf();
-  }
-
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<? extends Term> arg) {
     if (f instanceof HoleApp holeApp) {
       holeApp.argsBuf().append(Arg.uncapture(arg));
       return holeApp;
     }
     if (!(f instanceof LamTerm lam)) return new Apply(f, arg);
-    var tele = lam.telescope();
-    var next = tele.next();
-    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(new SubstFixpoint.TermSubst(tele.ref(), arg.term()));
+    var param = lam.param();
+    return lam.body().subst(new Substituter.TermSubst(param.ref(), arg.term()));
   }
 
    @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Seq<? extends Arg<? extends Term>> args) {
@@ -49,15 +41,7 @@ public sealed interface AppTerm extends Term {
       return holeApp;
     }
     if (!(f instanceof LamTerm lam)) return make(new Apply(f, args.first()), args.view().drop(1));
-    var next = lam.telescope();
-    var subst = new SubstFixpoint.TermSubst(new HashMap<>());
-    for (int i = 0; i < args.size(); i++) {
-      if (next != null) {
-        subst.add(next.ref(), args.get(i).term());
-        next = next.next();
-      } else return make(lam.body().subst(subst), args.view().drop(i));
-    }
-    return (next != null ? new LamTerm(next, lam.body()) : lam.body()).subst(subst);
+    return make(make(lam, args.first()), args.view().drop(1));
   }
 
   record FnCall(
@@ -72,6 +56,11 @@ public sealed interface AppTerm extends Term {
       return visitor.visitFnCall(this, p, q);
     }
 
+    @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      // TODO[xyr]: after adding inductive datatypes, we need to check if the function pattern matches.
+      return Decision.NO;
+    }
+
     @Contract(value = " -> new", pure = true)
     @Override public @NotNull Term fn() {
       return new RefTerm(fnRef);
@@ -82,6 +71,11 @@ public sealed interface AppTerm extends Term {
     @NotNull Term fn,
     @NotNull Arg<? extends Term> arg
   ) implements AppTerm {
+    @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      if (fn() instanceof LamTerm) return Decision.NO;
+      return fn().whnf();
+    }
+
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }
@@ -109,6 +103,10 @@ public sealed interface AppTerm extends Term {
       @NotNull Buffer<@NotNull Arg<Term>> args
     ) {
       this(new OptionRef<>(Option.of(solution)), var, args);
+    }
+
+    public HoleApp(@NotNull Var var) {
+      this((Term) null, var, Buffer.of());
     }
 
     @Override public @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args() {

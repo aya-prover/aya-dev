@@ -7,19 +7,26 @@ program : stmt* EOF;
 // statements
 stmt : decl
      | cmd
+     | module
      ;
 
-cmd : (OPEN | IMPORT) moduleName useHide*;
-useHide : (USING | HIDING) LPAREN ids ')';
+cmdModifier : PUBLIC? OPEN;
+cmd : (cmdModifier | cmdModifier? IMPORT) moduleName useHide?;
+useHide : use+
+        | hide+;
+use : USING useHideList;
+hide : HIDING useHideList;
+useHideList : LPAREN ids ')';
 
 moduleName : ID ('.' ID)*;
 
 // declarations
 
-decl : fnDecl
+decl : PRIVATE?
+     ( fnDecl
      | structDecl
      | dataDecl
-     ;
+     );
 
 assoc : INFIX
       | INFIXL
@@ -63,6 +70,8 @@ dataCtor : COERCE? ID tele* (elim? LBRACE clause? ('|' clause)* '}')?;
 elim : '\\elim' ID (',' ID)*;
 
 dataCtorClause : '|' pattern IMPLIES dataCtor;
+
+module : '\\module' ID LBRACE program '}';
 
 // expressions
 expr : atom argument*                                 # app
@@ -149,18 +158,20 @@ PROP : '\\Prop';
 AS : '\\as';
 OPEN : '\\open';
 IMPORT : '\\import';
+PUBLIC : '\\public';
+PRIVATE : '\\private';
 USING : '\\using';
 HIDING : '\\hiding';
 COERCE : '\\coerce';
 ERASE : '\\erase';
 INLINE : '\\inline';
-SIGMA : '\\Sig' | 'Σ';
-LAMBDA : '\\lam' | 'λ';
-PI : '\\Pi' | 'Π';
+SIGMA : '\\Sig' | '\u03A3';
+LAMBDA : '\\lam' | '\u03BB';
+PI : '\\Pi' | '\u03A0';
 MATCH : '\\match';
 ABSURD : '\\impossible';
-TO : '->' | '→';
-IMPLIES : '=>' | '⇒';
+TO : '->' | '\u2192';
+IMPLIES : '=>' | '\u21D2';
 
 // markers
 LBRACE : '{';

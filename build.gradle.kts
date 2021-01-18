@@ -2,19 +2,13 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 import java.util.Properties
 
-buildscript {
-  repositories {
-    maven(url = "https://plugins.gradle.org/m2/")
-  }
-  dependencies.classpath("org.javamodularity:moduleplugin:1.7.0")
-}
-
 plugins {
   java
   jacoco
   idea
   `java-library`
   `maven-publish`
+  id("io.freefair.lombok") version "5.3.0"
 }
 
 var deps: Properties by rootProject.ext
@@ -36,14 +30,15 @@ subprojects {
     plugin("java")
     plugin("idea")
     plugin("jacoco")
-    plugin("org.javamodularity.moduleplugin")
     plugin("maven-publish")
     plugin("java-library")
+    plugin("io.freefair.lombok")
   }
 
   repositories {
     jcenter()
     mavenCentral()
+    maven(url = "https://dl.bintray.com/glavo/maven")
   }
 
   java {
@@ -64,6 +59,8 @@ subprojects {
   }
 
   tasks.withType<JavaCompile>().configureEach {
+    modularity.inferModulePath.set(true)
+
     options.encoding = "UTF-8"
     options.isDeprecation = true
     options.release.set(15)
@@ -106,21 +103,6 @@ subprojects {
           }
         }
       }
-    }
-  }
-
-  val moduleName: String by this
-
-  tasks.compileTestJava {
-    extensions.configure(org.javamodularity.moduleplugin.extensions.ModuleOptions::class) {
-      addModules = listOf("org.mzi.test")
-      addReads = mapOf(moduleName to "org.mzi.test")
-    }
-  }
-
-  tasks.test {
-    extensions.configure(org.javamodularity.moduleplugin.extensions.TestModuleOptions::class) {
-      runOnClasspath = true
     }
   }
 }

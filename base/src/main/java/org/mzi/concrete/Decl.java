@@ -2,15 +2,15 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
-import asia.kala.Tuple2;
-import asia.kala.collection.mutable.Buffer;
+import org.glavo.kala.Tuple2;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
-import org.mzi.generic.Assoc;
+import org.mzi.api.ref.DefVar;
+import org.mzi.api.util.Assoc;
 import org.mzi.generic.Modifier;
-import org.mzi.ref.DefVar;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -50,14 +50,16 @@ public sealed interface Decl extends Stmt {
    */
   final class DataDecl implements Decl {
     public final @NotNull SourcePos sourcePos;
+    public final @NotNull Accessibility accessibility;
     public final @NotNull DefVar<DataDecl> ref;
     public final @NotNull Buffer<Param> telescope;
-    public final @NotNull Expr result;
-    public final @NotNull DataBody body;
+    public @NotNull Expr result;
+    public @NotNull DataBody body;
     public final @NotNull Buffer<Stmt> abuseBlock;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
+      @NotNull Accessibility accessibility,
       @NotNull String name,
       @NotNull Buffer<Param> telescope,
       @NotNull Expr result,
@@ -65,6 +67,7 @@ public sealed interface Decl extends Stmt {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
+      this.accessibility = accessibility;
       this.telescope = telescope;
       this.result = result;
       this.body = body;
@@ -73,8 +76,18 @@ public sealed interface Decl extends Stmt {
     }
 
     @Override
-    public @NotNull DefVar<? extends Decl> ref() {
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitDataDecl(this, p);
+    }
+
+    @Override
+    public @NotNull DefVar<DataDecl> ref() {
       return this.ref;
+    }
+
+    @Override
+    public @NotNull Accessibility accessibility() {
+      return this.accessibility;
     }
 
     @Override
@@ -84,8 +97,7 @@ public sealed interface Decl extends Stmt {
 
     @Override public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      DataDecl dataDecl = (DataDecl) o;
+      if (!(o instanceof DataDecl dataDecl)) return false;
       return sourcePos.equals(dataDecl.sourcePos) &&
         telescope.equals(dataDecl.telescope) &&
         result.equals(dataDecl.result) &&
@@ -101,6 +113,7 @@ public sealed interface Decl extends Stmt {
     @Override public String toString() {
       return "DataDecl{" +
         "sourcePos=" + sourcePos +
+        ", accessibility=" + accessibility +
         ", telescope=" + telescope +
         ", result=" + result +
         ", body=" + body +
@@ -116,16 +129,18 @@ public sealed interface Decl extends Stmt {
    */
   final class FnDecl implements Decl {
     public final @NotNull SourcePos sourcePos;
+    public final @NotNull Accessibility accessibility;
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
     public final @NotNull Buffer<Param> telescope;
-    public final @NotNull Expr result;
-    public final @NotNull Expr body;
+    public @Nullable Expr result;
+    public @NotNull Expr body;
     public final @NotNull Buffer<Stmt> abuseBlock;
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
+      @NotNull Accessibility accessibility,
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Assoc assoc,
       @NotNull String name,
@@ -135,6 +150,7 @@ public sealed interface Decl extends Stmt {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       this.sourcePos = sourcePos;
+      this.accessibility = accessibility;
       this.modifiers = modifiers;
       this.assoc = assoc;
       this.ref = new DefVar<>(this, name);
@@ -144,23 +160,32 @@ public sealed interface Decl extends Stmt {
       this.abuseBlock = abuseBlock;
     }
 
+    @Override
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitFnDecl(this, p);
+    }
+
+    @Override
     public @NotNull SourcePos sourcePos() {
       return this.sourcePos;
     }
 
+    @Override
     public @NotNull DefVar<FnDecl> ref() {
       return this.ref;
     }
 
+    @Override
+    public @NotNull Accessibility accessibility() { return this.accessibility; }
+
     @Override public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      FnDecl fnDecl = (FnDecl) o;
+      if (!(o instanceof FnDecl fnDecl)) return false;
       return sourcePos.equals(fnDecl.sourcePos) &&
         modifiers.equals(fnDecl.modifiers) &&
         assoc == fnDecl.assoc &&
         telescope.equals(fnDecl.telescope) &&
-        result.equals(fnDecl.result) &&
+        Objects.equals(result, fnDecl.result) &&
         body.equals(fnDecl.body) &&
         abuseBlock.equals(fnDecl.abuseBlock);
     }
@@ -173,6 +198,7 @@ public sealed interface Decl extends Stmt {
     @Override public String toString() {
       return "FnDecl{" +
         "sourcePos=" + sourcePos +
+        ", accessibility=" + accessibility +
         ", modifiers=" + modifiers +
         ", assoc=" + assoc +
         ", telescope=" + telescope +

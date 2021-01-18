@@ -5,10 +5,9 @@ package org.mzi.core;
 import org.junit.jupiter.api.Test;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.UnivTerm;
-import org.mzi.core.visitor.SubstFixpoint;
+import org.mzi.core.visitor.Substituter;
 import org.mzi.test.Lisp;
 import org.mzi.test.LispTestCase;
-import org.mzi.tyck.sort.Sort;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,20 +16,20 @@ public class SubstTest extends LispTestCase {
   public void emptySubst() {
     var term = Lisp.reallyParse("(app tony lambda)");
     assertTrue(term instanceof AppTerm);
-    assertEquals(term, term.subst(SubstFixpoint.TermSubst.EMPTY));
+    assertEquals(term, term.subst(Substituter.TermSubst.EMPTY));
   }
 
   @Test
   public void unrelatedSubst() {
     var term = Lisp.reallyParse("(app beta lambda)");
     assertTrue(term instanceof AppTerm);
-    assertEquals(term, term.subst(new SubstFixpoint.TermSubst(() -> "lambda", new UnivTerm(Sort.SET0))));
+    assertEquals(term, term.subst(new Substituter.TermSubst(() -> "lambda", UnivTerm.OMEGA)));
   }
 
   @Test
   public void relatedSubst() {
     var term = Lisp.reallyParse("(app tony beta)", vars);
     assertTrue(term instanceof AppTerm);
-    assertNotEquals(term, term.subst(new SubstFixpoint.TermSubst(vars.get("beta"), new UnivTerm(Sort.SET0))));
+    assertNotEquals(term, term.subst(new Substituter.TermSubst(vars.get("beta"), UnivTerm.OMEGA)));
   }
 }

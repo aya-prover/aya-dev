@@ -18,6 +18,12 @@ public record RefTerm(@NotNull Var var) implements Term {
     return visitor.visitRef(this, p, q);
   }
 
+  /**
+   * @apiNote This is, theoretically incorrect, because {@link org.mzi.api.ref.DefVar}s can be reduced.
+   * However, in those cases it is always in a {@link org.mzi.core.term.AppTerm.FnCall},
+   * so here we only care about the {@link org.mzi.ref.LevelVar} and {@link org.mzi.ref.LocalVar} cases,
+   * in which the term is a WHNF.
+   */
   @Override public @NotNull Decision whnf() {
     return Decision.YES;
   }

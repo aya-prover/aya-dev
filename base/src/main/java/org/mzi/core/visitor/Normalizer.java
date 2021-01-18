@@ -6,18 +6,23 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
+import org.mzi.util.Decision;
 
-public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
-  public static final @NotNull NormalizeFixpoint INSTANCE = new NormalizeFixpoint();
+public final class Normalizer implements Unfolder<NormalizeMode> {
+  public static final @NotNull Normalizer INSTANCE = new Normalizer();
 
-  @Contract(pure = true) private NormalizeFixpoint() {
+  @Contract(pure = true) private Normalizer() {
   }
 
   @Override
   public @NotNull Term visitApp(AppTerm.@NotNull Apply term, NormalizeMode mode) {
     var fn = term.fn();
-    if (fn instanceof LamTerm lam) return AppTerm.make(lam, visitArg(term.arg(), mode));
-    else return AppTerm.make(fn, mode == NormalizeMode.WHNF ? term.arg() : visitArg(term.arg(), mode));
+    if (term.whnf() != Decision.NO) {
+      if (mode != NormalizeMode.NF) return term;
+      else return AppTerm.make(fn, visitArg(term.arg(), mode));
+    }
+    if (fn instanceof LamTerm lam) return AppTerm.make(lam, term.arg()).accept(this, mode);
+    else return AppTerm.make(fn.accept(this, mode), term.arg()).accept(this, mode);
   }
 
   @Override
@@ -28,19 +33,25 @@ public final class NormalizeFixpoint implements UnfoldFixpoint<NormalizeMode> {
   @Override
   public @NotNull Term visitLam(@NotNull LamTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return UnfoldFixpoint.super.visitLam(term, mode);
+    else return Unfolder.super.visitLam(term, mode);
   }
 
   @Override
-  public @NotNull Term visitDT(@NotNull DT term, NormalizeMode mode) {
+  public @NotNull Term visitPi(@NotNull PiTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return UnfoldFixpoint.super.visitDT(term, mode);
+    else return Unfolder.super.visitPi(term, mode);
+  }
+
+  @Override
+  public @NotNull Term visitSigma(@NotNull SigmaTerm term, NormalizeMode mode) {
+    if (mode != NormalizeMode.NF) return term;
+    else return Unfolder.super.visitSigma(term, mode);
   }
 
   @Override
   public @NotNull Term visitTup(@NotNull TupTerm term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
-    else return UnfoldFixpoint.super.visitTup(term, mode);
+    else return Unfolder.super.visitTup(term, mode);
   }
 
   @Override

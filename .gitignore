@@ -3,8 +3,10 @@ out/
 /.idea/*.xml
 /.idea/.gitignore
 /.idea/modules/*
+/.idea/codeStyles/*
 /.gradle/
 /.fleet/
 *.iml
 gradle.properties
 .DS_Store
+lombok.config

@@ -2,10 +2,9 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
-import asia.kala.collection.mutable.Buffer;
-import asia.kala.control.Option;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.Tele;
+import org.mzi.core.Param;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.tyck.sort.Sort;
@@ -14,21 +13,7 @@ import org.mzi.tyck.sort.Sort;
  * @author ice1000
  */
 public interface TermFixpoint<P> extends
-  Term.Visitor<P, @NotNull Term>,
-  Tele.Visitor<P, @NotNull Tele> {
-  @Override default @NotNull Tele visitNamed(Tele.@NotNull NamedTele named, P p) {
-    var next = named.next().accept(this, p);
-    if (next == named.next()) return named;
-    return new Tele.NamedTele(named.ref(), next);
-  }
-
-  @Override default @NotNull Tele visitTyped(Tele.@NotNull TypedTele typed, P p) {
-    var next = Option.of(typed.next()).map(tele -> tele.accept(this, p)).getOrNull();
-    var type = typed.type().accept(this, p);
-    if (next == typed.next() && type == typed.type()) return typed;
-    return new Tele.TypedTele(typed.ref(), type, typed.explicit(), next);
-  }
-
+  Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, P p) {
     var sol = term.solution().getOrNull();
     var args = term.argsBuf().view().map(arg -> visitArgUncapture(arg, p));
@@ -40,10 +25,10 @@ public interface TermFixpoint<P> extends
   }
 
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
-    var telescope = term.telescope().accept(this, p);
+    var param = new Param(term.param().ref(), term.param().type().accept(this, p), term.param().explicit());
     var body = term.body().accept(this, p);
-    if (telescope == term.telescope() && body == term.body()) return term;
-    return new LamTerm(telescope, body);
+    if (param == term.param() && body == term.body()) return term;
+    return new LamTerm(param, body);
   }
 
   @Override default @NotNull Term visitUniv(@NotNull UnivTerm term, P p) {
@@ -52,11 +37,19 @@ public interface TermFixpoint<P> extends
     return new UnivTerm(sort);
   }
 
-  @Override default @NotNull Term visitDT(@NotNull DT term, P p) {
-    var telescope = term.telescope().accept(this, p);
-    var last = term.last().accept(this, p);
-    if (telescope == term.telescope() && last == term.last()) return term;
-    return new DT(term.kind(), telescope, last);
+  @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
+    var param = new Param(term.param().ref(), term.param().type().accept(this, p), term.param().explicit());
+    var body = term.body().accept(this, p);
+    if (param == term.param() && body == term.body()) return term;
+    return new PiTerm(term.co(), param, body);
+  }
+
+  @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
+    var params = term.params().map(param ->
+      new Param(param.ref(), param.type().accept(this, p), param.explicit()));
+    var body = term.body().accept(this, p);
+    if (params.sameElements(term.params(), true) || body == term.body()) return term;
+    return new SigmaTerm(term.co(), params, body);
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
