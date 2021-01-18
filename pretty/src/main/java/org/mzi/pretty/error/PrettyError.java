@@ -5,6 +5,7 @@ package org.mzi.pretty.error;
 import org.glavo.kala.Tuple;
 import org.glavo.kala.Tuple4;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.pretty.doc.Doc;
@@ -45,19 +46,18 @@ public record PrettyError(
 
     StringBuilder builder = new StringBuilder();
     if (lines.sizeGreaterThanOrEquals(9)) {
-      for (int i = 0; i < 2; ++i) {
-        builder.append(String.format("%" + linenoWidth + "d | ", startLine + i));
-        builder.append(lines.get(i));
-        builder.append('\n');
+      for (int i = 0; i < SHOW_MORE_LINE; ++i) {
+        renderLine(builder, lines.get(i), Math.max(startLine + i - SHOW_MORE_LINE, 1), linenoWidth);
       }
 
-      builder.append(String.format("%" + linenoWidth + "s | ", " "));
-      builder.append("...");
+      for (int i = 0; i < 3; ++i) {
+        renderLine(builder, lines.get(i + SHOW_MORE_LINE), startLine + i, linenoWidth);
+      }
 
-      for (int i = 1; i >= 0; --i) {
-        builder.append(String.format("%" + linenoWidth + "d | ", endLine - i));
-        builder.append(lines.get(lines.size() - i - 1));
-        builder.append('\n');
+      renderLine(builder, "...", Option.none(), linenoWidth);
+
+      for (int i = 3; i > 0; --i) {
+        renderLine(builder, lines.get(lines.size() - i), endLine - i + 1, linenoWidth);
       }
 
     } else {
@@ -80,6 +80,20 @@ public record PrettyError(
     }
 
     return Doc.plain(builder.toString());
+  }
+
+  private void renderLine(StringBuilder builder, String line, int lineNo, int linenoWidth) {
+    renderLine(builder, line, Option.of(lineNo), linenoWidth);
+  }
+
+  private void renderLine(StringBuilder builder, String line, Option<Integer> lineNo, int linenoWidth) {
+    if (lineNo.isDefined()) {
+      builder.append(String.format("%" + linenoWidth + "d | ", lineNo.get()));
+    } else {
+      builder.append(String.format("%" + linenoWidth + "s | ", ""));
+    }
+    builder.append(line);
+    builder.append('\n');
   }
 
   private @NotNull Tuple4<Integer, Integer, Integer, Integer> getSourceRange() {
