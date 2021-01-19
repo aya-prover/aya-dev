@@ -16,6 +16,7 @@ import org.mzi.concrete.Expr;
 import org.mzi.core.Param;
 import org.mzi.core.term.*;
 import org.mzi.core.visitor.Substituter;
+import org.mzi.generic.Arg;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
@@ -156,6 +157,39 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var type = tele != null ? dt.body() : tele.type();
     unify(term, type);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
+  }
+
+  @Rule.Synth
+  @Override public Result visitApp(Expr.@NotNull AppExpr expr, Term term) {
+    var f = expr.function().accept(this, null);
+    var resultTerm = f.wellTyped;
+    if (!(f.type instanceof PiTerm piTerm)) return wantButNo(expr, f.type, "pi type");
+    var pi = piTerm;
+    for (var iter = expr.argument().iterator(); iter.hasNext(); ) {
+      var arg = iter.next();
+      var param = pi.param();
+      var paramLicit = param.explicit();
+      var argLicit = arg.explicit();
+      if (paramLicit == argLicit) {
+        var elabArg = arg.term().accept(this, param.type());
+        resultTerm = new AppTerm.Apply(resultTerm, new Arg<>(elabArg.wellTyped, argLicit));
+      } else if (argLicit) {
+        // that implies paramLicit == false
+        var holeApp = new AppTerm.HoleApp(new LocalVar("_"));
+        // TODO: maybe we should create a concrete hole and check it against the type
+        //  in case we can synthesize this term via its type only
+        resultTerm = new AppTerm.Apply(resultTerm, new Arg<>(holeApp, false));
+      } else {
+        // TODO[ice]: no implicit argument expected, but inserted.
+        throw new TyckerException();
+      }
+      // so, in the end, the pi term is not updated, its body would be the eliminated type
+      if (iter.hasNext()) {
+        if (pi.body() instanceof PiTerm newPi) pi = newPi;
+        else wantButNo(expr, pi.body(), "pi type");
+      }
+    }
+    return new Result(resultTerm, pi.body());
   }
 
   @Rule.Check(partialSynth = true)
