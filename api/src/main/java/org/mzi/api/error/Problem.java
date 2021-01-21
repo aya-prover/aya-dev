@@ -4,6 +4,8 @@ package org.mzi.api.error;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.pretty.doc.Doc;
+import org.mzi.pretty.error.PrettyError;
+import org.mzi.pretty.error.Span;
 
 /**
  * @author ice1000
@@ -29,6 +31,18 @@ public interface Problem {
   @NotNull Severity level();
   default @NotNull Stage stage() {
     return Stage.OTHER;
+  }
+
+  default @NotNull PrettyError toPrettyError(@NotNull String filePath,
+                                             @NotNull String sourceCode,
+                                             @NotNull Doc noteMessage) {
+    var sourcePos = sourcePos();
+    return new PrettyError(
+      filePath,
+      Span.from(sourceCode, sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex()),
+      describe(),
+      noteMessage
+    );
   }
 
   interface Error extends Problem {
