@@ -96,4 +96,37 @@ public class PrettyErrorTest {
       note: Did you mean 'org.junit.jupiter.api.Test'
       """, text);
   }
+
+  @Test
+  public void testErrorMessageAligned() {
+    String code = """
+      package org.mzi.pretty
+      import org.junit.jupiter.apt.Test
+      import org.mzi.pretty.PrettyError
+      """;
+    var doc = new PrettyError(
+      "<stdin>",
+      Span.from(code, 48, 50),
+      Doc.plain("package\n'org.junit.jupiter.apt.Test'\nnot found"),
+      Doc.plain("Did you mean\n'org.junit.jupiter.api.Test'")
+    ).toDoc();
+
+    String text = doc.renderWithPageWidth(80);
+    System.out.println(text);
+
+    assertEquals("""
+      In file <stdin>:2:25 ->\s
+            
+        1 | package org.mzi.pretty
+        2 | import org.junit.jupiter.apt.Test
+                                     ^-^
+        3 | import org.mzi.pretty.PrettyError
+       \s
+      Error: package 
+             'org.junit.jupiter.apt.Test'
+             not found
+      note: Did you mean
+            'org.junit.jupiter.api.Test'
+      """, text);
+  }
 }
