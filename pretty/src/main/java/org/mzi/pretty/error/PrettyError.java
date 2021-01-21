@@ -128,6 +128,8 @@ public record PrettyError(
     int endLine = -1;
     int endCol = -1;
 
+    int tabWidth = config.tabWidth();
+
     for (char c : input.toCharArray()) {
       pos++;
       switch (c) {
@@ -136,7 +138,7 @@ public record PrettyError(
           col = 0;
         }
         // treat tab as tabWidth-length-ed spaces
-        case '\t' -> col += config.tabWidth();
+        case '\t' -> col += tabWidth;
         default -> col++;
       }
 
