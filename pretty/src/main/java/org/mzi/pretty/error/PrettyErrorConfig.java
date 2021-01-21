@@ -15,6 +15,14 @@ public interface PrettyErrorConfig {
     return 4;
   }
 
+  /**
+   * Show more lines before startLine and after endLine
+   * @return line count
+   */
+  default int showMore() {
+    return 2;
+  }
+
   class Default implements PrettyErrorConfig {
   }
 }

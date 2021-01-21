@@ -17,8 +17,6 @@ public record PrettyError(
   @NotNull String errorMessage,
   @Nullable String noteMessage
 ) {
-  private static final int SHOW_MORE_LINE = 2;
-
   public Doc toDoc(PrettyErrorConfig config) {
     var sourceRange = getPrettyCode(config);
     var doc = Doc.vcat(
@@ -46,6 +44,7 @@ public record PrettyError(
     int startCol = prettyCode.startCol;
     int endLine = prettyCode.endLine;
     int endCol = prettyCode.endCol;
+    int showMore = config.showMore();
 
     // calculate the maximum char width of line number
     int linenoWidth = Math.max(widthOfLineNumber(startLine), widthOfLineNumber(endLine));
@@ -53,8 +52,8 @@ public record PrettyError(
     // collect lines from (startLine - SHOW_MORE_LINE) to (endLine + SHOW_MORE_LINE)
     Buffer<String> lines = errorRange.input()
       .lines()
-      .skip(Math.max(startLine - 1 - SHOW_MORE_LINE, 0))
-      .limit(endLine - startLine + 1 + SHOW_MORE_LINE)
+      .skip(Math.max(startLine - 1 - showMore, 0))
+      .limit(endLine - startLine + 1 + showMore)
       .map(line -> visualizeLine(config, line))
       .collect(Buffer.factory());
 
@@ -64,13 +63,13 @@ public record PrettyError(
     // the first few lines and the last few lines, omitting the middle.
     if (lines.sizeGreaterThanOrEquals(9)) {
       // render SHOW_MORE_LINE before startLine
-      for (int i = 0; i < SHOW_MORE_LINE; ++i) {
-        renderLine(builder, lines.get(i), Math.max(startLine + i - SHOW_MORE_LINE, 1), linenoWidth);
+      for (int i = 0; i < showMore; ++i) {
+        renderLine(builder, lines.get(i), Math.max(startLine + i - showMore, 1), linenoWidth);
       }
 
       // render first few lions from startLine
       for (int i = 0; i < 3; ++i) {
-        renderLine(builder, lines.get(i + SHOW_MORE_LINE), startLine + i, linenoWidth);
+        renderLine(builder, lines.get(i + showMore), startLine + i, linenoWidth);
       }
 
       // omitting the middle
@@ -83,7 +82,7 @@ public record PrettyError(
 
     } else {
       // here we print all lines because the code is shorter.
-      int lineNo = Math.max(startLine - SHOW_MORE_LINE, 1);
+      int lineNo = Math.max(startLine - showMore, 1);
       for (String line : lines) {
         renderLine(builder, line, lineNo, linenoWidth);
 
