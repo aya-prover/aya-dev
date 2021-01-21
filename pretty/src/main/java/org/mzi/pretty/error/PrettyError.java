@@ -14,19 +14,20 @@ import org.mzi.pretty.doc.Doc;
 public record PrettyError(
   @NotNull String filePath,
   @NotNull Span errorRange,
-  @NotNull String errorMessage,
-  @Nullable String noteMessage
+  @NotNull Doc errorMessage,
+  @NotNull Doc noteMessage
 ) {
   public Doc toDoc(PrettyErrorConfig config) {
     var sourceRange = getPrettyCode(config);
     var doc = Doc.vcat(
       Doc.plain("In file " + filePath + ":" + sourceRange.startLine + ":" + sourceRange.startCol + " -> "),
-      Doc.plain(""),
+      Doc.empty(),
       Doc.hang(2, visualizeCode(sourceRange)),
-      Doc.plain("Error: " + errorMessage));
-    return noteMessage != null
-      ? Doc.vcat(doc, Doc.plain("note: " + noteMessage), Doc.empty())
-      : Doc.vcat(doc, Doc.empty());
+      Doc.hsep(Doc.plain("Error:"), Doc.align(errorMessage))
+    );
+    return noteMessage instanceof Doc.Empty
+      ? Doc.vcat(doc, Doc.empty())
+      : Doc.vcat(doc, Doc.hsep(Doc.plain("note:"), Doc.align(noteMessage)), Doc.empty());
   }
 
   public Doc toDoc() {

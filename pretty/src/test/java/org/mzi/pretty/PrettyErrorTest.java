@@ -3,6 +3,7 @@
 package org.mzi.pretty;
 
 import org.junit.jupiter.api.Test;
+import org.mzi.pretty.doc.Doc;
 import org.mzi.pretty.error.PrettyError;
 import org.mzi.pretty.error.Span;
 
@@ -42,8 +43,8 @@ public class PrettyErrorTest {
     var doc = new PrettyError(
       "<stdin>",
       Span.from(code, 71, 357),
-      "No, you don't want to write tests",
-      null
+      Doc.plain("No, you don't want to write tests"),
+      Doc.empty()
     ).toDoc();
 
     String text = doc.renderWithPageWidth(80);
@@ -76,8 +77,8 @@ public class PrettyErrorTest {
     var doc = new PrettyError(
       "<stdin>",
       Span.from(code, 48, 50),
-      "package 'org.junit.jupiter.apt.Test' not found",
-      "Did you mean 'org.junit.jupiter.api.Test'"
+      Doc.plain("package 'org.junit.jupiter.apt.Test' not found"),
+      Doc.plain("Did you mean 'org.junit.jupiter.api.Test'")
     ).toDoc();
 
     String text = doc.renderWithPageWidth(80);
