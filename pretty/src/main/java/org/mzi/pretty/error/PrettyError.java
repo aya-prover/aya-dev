@@ -5,7 +5,6 @@ package org.mzi.pretty.error;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mzi.pretty.doc.Doc;
 
 /**
