@@ -19,15 +19,16 @@ public record PrettyError(
 ) {
   public Doc toDoc(PrettyErrorConfig config) {
     var sourceRange = getPrettyCode(config);
-    var doc = Doc.vcat(
+
+    return Doc.vcat(
       Doc.plain("In file " + filePath + ":" + sourceRange.startLine + ":" + sourceRange.startCol + " -> "),
       Doc.empty(),
       Doc.hang(2, visualizeCode(sourceRange)),
-      Doc.hsep(Doc.plain("Error:"), Doc.align(errorMessage))
+      Doc.hsep(Doc.plain("Error:"), Doc.align(errorMessage)),
+      Doc.emptyIf(noteMessage instanceof Doc.Empty,
+        Doc.vcat(Doc.hsep(Doc.plain("note:"), Doc.align(noteMessage)), Doc.empty())
+      )
     );
-    return noteMessage instanceof Doc.Empty
-      ? Doc.vcat(doc, Doc.empty())
-      : Doc.vcat(doc, Doc.hsep(Doc.plain("note:"), Doc.align(noteMessage)), Doc.empty());
   }
 
   public Doc toDoc() {

@@ -124,6 +124,17 @@ public sealed interface Doc {
   //region DocFactory functions
 
   /**
+   * Return conditional {@link Doc#empty()}
+   * @param cond condition
+   * @param otherwise otherwise
+   * @return {@link Empty} when {@code cond} is true, otherwise {@code otherwise}
+   */
+  @Contract("_, _ -> new")
+  static @NotNull Doc emptyIf(boolean cond, Doc otherwise) {
+    return cond ? empty() : otherwise;
+  }
+
+  /**
    * The empty document; conceptually the unit of 'Cat'
    *
    * @return empty document
