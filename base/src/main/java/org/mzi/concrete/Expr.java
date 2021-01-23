@@ -49,6 +49,12 @@ public sealed interface Expr {
     @Override default R visitUnresolved(@NotNull UnresolvedExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
+    @Override default R visitLam(@NotNull LamExpr expr, P p) {
+      return catchUnhandled(expr, p);
+    }
+    @Override default R visitPi(@NotNull Expr.PiExpr expr, P p) {
+      return catchUnhandled(expr, p);
+    }
     @Override default R visitTelescopicLam(@NotNull Expr.TelescopicLamExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
