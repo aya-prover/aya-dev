@@ -2,10 +2,9 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
-import org.glavo.kala.collection.Seq;
+import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.Unit;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Expr;
@@ -19,6 +18,8 @@ import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
 import org.mzi.test.Lisp;
 import org.mzi.test.ThrowingReporter;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -75,8 +76,11 @@ public class TyckFnTest {
     var f = new LocalVar("f");
     // \A B C f p. f(p.1, p.2)
     var uncurry = new Expr.TelescopicLamExpr(SourcePos.NONE,
-      Seq.of(new LocalVar("A"), new LocalVar("B"), new LocalVar("C"), f, p)
-        .stream()
+      Stream
+        .concat(
+          Stream.of("A", "B", "C").map(LocalVar::new),
+          Stream.of(f, p)
+        )
         .map(v -> new Param(SourcePos.NONE, v, true))
         .collect(Buffer.factory()),
       new Expr.AppExpr(SourcePos.NONE,
