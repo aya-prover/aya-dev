@@ -6,5 +6,6 @@ module org.mzi.pretty {
 
   exports org.mzi.pretty.backend;
   exports org.mzi.pretty.doc;
+  exports org.mzi.pretty.error;
   exports org.mzi.pretty.printer;
 }
