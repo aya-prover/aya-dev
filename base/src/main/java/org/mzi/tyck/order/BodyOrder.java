@@ -7,7 +7,7 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.collection.mutable.MutableSet;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.mzi.core.def.Def;
 import org.mzi.core.visitor.RefFinder;
 
@@ -24,6 +24,7 @@ public final class BodyOrder {
                             MutableMap<Def, Integer> low,
                             int n,
                             Buffer<Buffer<Def>> order) {
+    visited.add(def);
     dfn.put(def, n);
     low.put(def, n);
     inStack.add(def);
@@ -48,7 +49,7 @@ public final class BodyOrder {
     }
   }
 
-  public static @Nullable Buffer<Buffer<Def>> genBodyOrder(Seq<Def> defs) {
+  public static @NotNull Buffer<Buffer<Def>> genBodyOrder(@NotNull Seq<Def> defs) {
     var visited = MutableSet.<Def>of();
     var inStack = MutableSet.<Def>of();
     var stack = Buffer.<Def>of();
