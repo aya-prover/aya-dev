@@ -144,16 +144,17 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (!(tupleRes.type instanceof SigmaTerm dt && !dt.co()))
       return wantButNo(expr.tup(), tupleRes.type, "sigma type");
     var telescope = dt.params();
-    if (expr.ix() <= 0) {
+    var index = expr.ix() - 1;
+    if (index < 0) {
       // TODO[ice]: too small index
       throw new TyckerException();
-    } else if (expr.ix() > telescope.size()) {
+    } else if (index > telescope.size()) {
       // TODO[ice]: too large index
       throw new TyckerException();
     }
-    var type = expr.ix() == telescope.size() ? dt.body() : telescope.get(expr.ix() - 1).type();
+    var type = index == telescope.size() ? dt.body() : telescope.get(index).type();
     // TODO[ice]: instantiate the type
-    var fieldsBefore = telescope.take(expr.ix() - 1);
+    var fieldsBefore = telescope.take(index);
     unify(term, type);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
