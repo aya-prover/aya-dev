@@ -46,7 +46,7 @@ public class TyckFnTest {
   }
 
   private void idLamTestCase(Expr.TelescopicLamExpr lamAaa) {
-    var piUAA = Lisp.reallyParse("(Pi (A (U) ex) (Pi (a A ex) A))");
+    var piUAA = Lisp.parse("(Pi (A (U) ex) (Pi (a A ex) A))");
     var result = lamAaa.accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
     assertNotNull(result);
     if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof PiTerm dt)) {

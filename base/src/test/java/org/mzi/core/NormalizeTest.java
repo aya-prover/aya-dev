@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class NormalizeTest extends LispTestCase {
   private void unchanged(@Language("TEXT") String code) {
-    var term = Lisp.reallyParse(code);
+    var term = Lisp.parse(code);
     assertEquals(term, term.normalize(NormalizeMode.NF));
     assertEquals(term, term.normalize(NormalizeMode.WHNF));
   }
@@ -34,7 +34,7 @@ public class NormalizeTest extends LispTestCase {
 
   @Test
   public void redexNormalize() {
-    var term = Lisp.reallyParse("(app (lam (a (U) ex) a) b)");
+    var term = Lisp.parse("(app (lam (a (U) ex) a) b)");
     assertTrue(term instanceof AppTerm);
     var whnf = term.normalize(NormalizeMode.WHNF);
     var nf = term.normalize(NormalizeMode.NF);
@@ -45,14 +45,14 @@ public class NormalizeTest extends LispTestCase {
 
   @Test
   public void whnfNoNormalize() {
-    var term = Lisp.reallyParse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
+    var term = Lisp.parse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
     assertEquals(term, term.normalize(NormalizeMode.WHNF));
   }
 
   @Test
   public void nfNormalizeCanonical() {
     // \x : U. (\a : U. a) b
-    var term = Lisp.reallyParse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
+    var term = Lisp.parse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
     assertTrue(((LamTerm) term).body() instanceof AppTerm);
     var nf = term.normalize(NormalizeMode.NF);
     assertNotEquals(term, nf);
@@ -64,7 +64,7 @@ public class NormalizeTest extends LispTestCase {
     // (x y : U)
     var def = Lisp.reallyParseDef("id",
       "(y (U) ex null)", "y", "y", vars);
-    var term = Lisp.reallyParse("(fncall id kiva)", vars);
+    var term = Lisp.parse("(fncall id kiva)", vars);
     assertTrue(term instanceof AppTerm.FnCall);
     assertEquals("id", def.ref.name());
     assertEquals(1, def.telescope.size());

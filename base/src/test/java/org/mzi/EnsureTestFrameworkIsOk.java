@@ -10,9 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class EnsureTestFrameworkIsOk {
   @Test
   public void ensureParseErrorReported() {
-    assertThrows(NullPointerException.class, () -> Lisp.reallyParse("("));
-    assertThrows(NullPointerException.class, () -> Lisp.reallyParse(")"));
-    assertThrows(Exception.class, () -> Lisp.reallyParse("233"));
-    assertThrows(IndexOutOfBoundsException.class, () -> Lisp.reallyParse("(Pi )"));
+    assertThrows(NullPointerException.class, () -> Lisp.parse("("));
+    assertThrows(NullPointerException.class, () -> Lisp.parse(")"));
+    assertThrows(Exception.class, () -> Lisp.parse("233"));
+    assertThrows(IndexOutOfBoundsException.class, () -> Lisp.parse("(Pi )"));
   }
 }

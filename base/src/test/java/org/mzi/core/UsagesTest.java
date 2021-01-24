@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class UsagesTest extends LispTestCase {
   @Test
   public void someUsages() {
-    var term = Lisp.reallyParse("(app glavo glavo)", vars);
+    var term = Lisp.parse("(app glavo glavo)", vars);
     var consumer = new UsageCounter(vars.get("glavo"));
     term.accept(consumer, Unit.unit());
     assertEquals(2, consumer.usageCount());
@@ -22,7 +22,7 @@ public class UsagesTest extends LispTestCase {
 
   @Test
   public void lambdaUsages() {
-    var term = Lisp.reallyParse("(lam (dio (U) ex) dio)", vars);
+    var term = Lisp.parse("(lam (dio (U) ex) dio)", vars);
     var consumer = new UsageCounter(vars.get("dio"));
     term.accept(consumer, Unit.unit());
     assertEquals(1, consumer.usageCount());
@@ -30,7 +30,7 @@ public class UsagesTest extends LispTestCase {
 
   @Test
   public void noUsages() {
-    var term = Lisp.reallyParse("(app xy r)", vars);
+    var term = Lisp.parse("(app xy r)", vars);
     var consumer = new UsageCounter(new LocalVar("a"));
     term.accept(consumer, Unit.unit());
     assertEquals(0, consumer.usageCount());

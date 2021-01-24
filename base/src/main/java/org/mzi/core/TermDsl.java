@@ -40,7 +40,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     return parser(text).expr().accept(new TermDsl(refs));
   }
 
-  public static @Nullable ImmutableSeq<@NotNull Param> parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
+  public static @NotNull ImmutableSeq<@NotNull Param> parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
     return new TermDsl(refs).exprToParams(parser(text).expr());
   }
 

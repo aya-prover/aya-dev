@@ -9,6 +9,7 @@ module org.mzi {
 
   requires org.mzi.pretty;
 
+  exports org.mzi.concrete.desugar;
   exports org.mzi.concrete.parse;
   exports org.mzi.concrete.visitor;
   exports org.mzi.concrete;

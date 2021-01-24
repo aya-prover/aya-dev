@@ -14,21 +14,21 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SubstTest extends LispTestCase {
   @Test
   public void emptySubst() {
-    var term = Lisp.reallyParse("(app tony lambda)");
+    var term = Lisp.parse("(app tony lambda)");
     assertTrue(term instanceof AppTerm);
     assertEquals(term, term.subst(Substituter.TermSubst.EMPTY));
   }
 
   @Test
   public void unrelatedSubst() {
-    var term = Lisp.reallyParse("(app beta lambda)");
+    var term = Lisp.parse("(app beta lambda)");
     assertTrue(term instanceof AppTerm);
     assertEquals(term, term.subst(new Substituter.TermSubst(() -> "lambda", UnivTerm.OMEGA)));
   }
 
   @Test
   public void relatedSubst() {
-    var term = Lisp.reallyParse("(app tony beta)", vars);
+    var term = Lisp.parse("(app tony beta)", vars);
     assertTrue(term instanceof AppTerm);
     assertNotEquals(term, term.subst(new Substituter.TermSubst(vars.get("beta"), UnivTerm.OMEGA)));
   }
