@@ -76,16 +76,23 @@ public class TyckFnTest {
     // \A B C f p. f(p.1, p.2)
     var uncurry = new Expr.TelescopicLamExpr(SourcePos.NONE,
       Seq.of(new LocalVar("A"), new LocalVar("B"), new LocalVar("C"), f, p)
-        .stream().map(v -> new Param(SourcePos.NONE, v, true)).collect(Buffer.factory()),
+        .stream()
+        .map(v -> new Param(SourcePos.NONE, v, true))
+        .collect(Buffer.factory()),
       new Expr.AppExpr(SourcePos.NONE,
         new Expr.RefExpr(SourcePos.NONE, f),
-        ImmutableSeq.of(new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 1), true),
-          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 2), true))));
+        ImmutableSeq.of(
+          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 1), true),
+          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 2), true))))
+      .accept(ExprDesugarer.INSTANCE, Unit.unit());
     // Pi(A B C : U)(f : A -> B -> C)(p : A ** B) -> C
-    var uncurryTy = Lisp.reallyParse("""
-      (Pi (A (U) ex) (Pi (B (U) ex) (Pi (C (U) ex)
-       (Pi (f (Pi (a A ex) (Pi (b B ex) C)) ex)
-        (Pi (p (Sigma (a A ex null) B) ex) C)))))""");
+    var uncurryTy = Lisp.parse("""
+      (Pi (A (U) ex)
+       (Pi (B (U) ex)
+        (Pi (C (U) ex)
+         (Pi (f (Pi (a A ex)
+                 (Pi (b B ex) C)) ex)
+          (Pi (p (Sigma (a A ex null) B) ex) C)))))""");
     uncurry.accept(new ExprTycker(ThrowingReporter.INSTANCE), uncurryTy);
   }
 }

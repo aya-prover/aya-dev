@@ -147,14 +147,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (expr.ix() <= 0) {
       // TODO[ice]: too small index
       throw new TyckerException();
-    }
-    var teleOpt = telescope.drop(expr.ix() - 1);
-    // TODO[ice]: too large index
-    if (teleOpt.isEmpty()) {
+    } else if (expr.ix() > telescope.size()) {
+      // TODO[ice]: too large index
       throw new TyckerException();
     }
-    var tele = teleOpt.get(0);
-    var type = tele != null ? dt.body() : tele.type();
+    var type = expr.ix() == telescope.size() ? dt.body() : telescope.get(expr.ix() - 1).type();
+    // TODO[ice]: instantiate the type
+    var fieldsBefore = telescope.take(expr.ix() - 1);
     unify(term, type);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
@@ -205,7 +204,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         .forEach(result -> {
           items.append(result.wellTyped);
           if (resultLast.value == null) resultLast.value = result.type;
-          else typesTele.append(new Param(new LocalVar("_"), result.type,true));
+          else typesTele.append(new Param(new LocalVar("_"), result.type, true));
         });
       items.reverse();
       resultTele = typesTele;
