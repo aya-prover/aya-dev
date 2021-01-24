@@ -2,10 +2,12 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
+import org.glavo.kala.Unit;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
+import org.mzi.concrete.desugar.ExprDesugarer;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.PiTerm;
@@ -45,9 +47,11 @@ public class TyckFnTest {
         new Expr.RefExpr(SourcePos.NONE, a))));
   }
 
-  private void idLamTestCase(Expr.TelescopicLamExpr lamAaa) {
+  private void idLamTestCase(Expr lamAaa) {
     var piUAA = Lisp.parse("(Pi (A (U) ex) (Pi (a A ex) A))");
-    var result = lamAaa.accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
+    var result = lamAaa
+      .accept(ExprDesugarer.INSTANCE, Unit.unit())
+      .accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
     assertNotNull(result);
     if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof PiTerm dt)) {
       fail();
@@ -57,6 +61,8 @@ public class TyckFnTest {
     assertEquals(lam.body(), lam_aa);
     var newVar = new RefTerm(new LocalVar("xyr"));
     assertEquals(newVar, AppTerm.make(lam_aa, new Arg<>(newVar, true)));
-    assertTrue(dt.body() instanceof RefTerm);
+    assertTrue(dt.body() instanceof PiTerm pi
+      && pi.body() instanceof RefTerm ref
+      && ref.var() == dt.param().ref());
   }
 }
