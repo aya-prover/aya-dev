@@ -2,13 +2,9 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.unify;
 
-import asia.kala.collection.Seq;
-import asia.kala.collection.mutable.ArrayBuffer;
-import asia.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.api.ref.Var;
-import org.mzi.core.Tele;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.RefTerm;
