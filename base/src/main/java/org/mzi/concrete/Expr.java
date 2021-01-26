@@ -4,6 +4,7 @@ package org.mzi.concrete;
 
 import org.glavo.kala.Tuple;
 import org.glavo.kala.Tuple2;
+import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
+import org.mzi.concrete.desugar.ExprDesugarer;
 import org.mzi.generic.Arg;
 
 import java.util.stream.Stream;
@@ -22,6 +24,10 @@ public sealed interface Expr {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   @NotNull SourcePos sourcePos();
+
+  default @NotNull Expr desugar() {
+    return accept(ExprDesugarer.INSTANCE, Unit.INSTANCE);
+  }
 
   interface Visitor<P, R> {
     R visitRef(@NotNull RefExpr expr, P p);

@@ -52,8 +52,7 @@ public class TyckFnTest {
 
   private void idLamTestCase(Expr lamAaa) {
     var piUAA = Lisp.parse("(Pi (A (U) ex) (Pi (a A ex) A))");
-    var result = lamAaa
-      .accept(ExprDesugarer.INSTANCE, Unit.unit())
+    var result = lamAaa.desugar()
       .accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
     assertNotNull(result);
     if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof PiTerm dt)) {
@@ -87,8 +86,7 @@ public class TyckFnTest {
         new Expr.RefExpr(SourcePos.NONE, f),
         ImmutableSeq.of(
           new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 1), true),
-          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 2), true))))
-      .accept(ExprDesugarer.INSTANCE, Unit.unit());
+          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 2), true))));
     // Pi(A B C : U)(f : A -> B -> C)(p : A ** B) -> C
     var uncurryTy = Lisp.parse("""
       (Pi (A (U) ex)
@@ -97,6 +95,6 @@ public class TyckFnTest {
          (Pi (f (Pi (a A ex)
                  (Pi (b B ex) C)) ex)
           (Pi (p (Sigma (a A ex null) B) ex) C)))))""");
-    uncurry.accept(new ExprTycker(ThrowingReporter.INSTANCE), uncurryTy);
+    uncurry.desugar().accept(new ExprTycker(ThrowingReporter.INSTANCE), uncurryTy);
   }
 }

@@ -53,7 +53,6 @@ public class PatDefEq extends DefEq {
     }
     var solution = lhs.solution();
     if (solution.isDefined()) return compare(AppTerm.make(solution.get(), lhs.args()), rhs, type);
-    // TODO[ice]: substitute these variables into new vars
     solution.set(solved);
     return true;
   }

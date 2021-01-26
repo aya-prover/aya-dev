@@ -25,7 +25,7 @@ public class DesugarTest {
         new Expr.LamExpr(SourcePos.NONE, p3,
           new Expr.LamExpr(SourcePos.NONE, p1,
             new Expr.RefExpr(SourcePos.NONE, p2Var)))));
-    assertEquals(teleLam.accept(ExprDesugarer.INSTANCE, Unit.unit()), lam);
+    assertEquals(teleLam.desugar(), lam);
   }
 
   @Test
@@ -41,6 +41,6 @@ public class DesugarTest {
         new Expr.PiExpr(SourcePos.NONE, true, p3,
           new Expr.PiExpr(SourcePos.NONE, false, p1,
             new Expr.RefExpr(SourcePos.NONE, p2Var)))));
-    assertEquals(telePi.accept(ExprDesugarer.INSTANCE, Unit.unit()), pi);
+    assertEquals(telePi.desugar(), pi);
   }
 }
