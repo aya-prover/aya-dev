@@ -10,11 +10,14 @@ import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.RefTerm;
 import org.mzi.core.term.Term;
+import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.HoleBadSpineError;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.util.Ordering;
+
+import java.util.HashMap;
 
 /**
  * The implementation of untyped pattern unification for holes.
@@ -28,14 +31,17 @@ public class PatDefEq extends DefEq {
   }
 
   private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
+    var subst = new Substituter.TermSubst(new HashMap<>(spine.size() * 2));
     for (var arg : spine.view()) {
       if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
         var type = new AppTerm.HoleApp(new LocalVar("_"));
-        var param = new Param(var, type, arg.explicit());
+        var abstracted = new LocalVar(var.name());
+        var param = new Param(abstracted, type, arg.explicit());
         rhs = new LamTerm(param, rhs);
+        subst.add(abstracted, ref);
       } else return null;
     }
-    return rhs;
+    return rhs.subst(subst);
   }
 
   @Override
