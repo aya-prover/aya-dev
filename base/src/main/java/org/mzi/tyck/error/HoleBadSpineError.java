@@ -5,14 +5,15 @@ package org.mzi.tyck.error;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.AppTerm;
+import org.mzi.pretty.doc.Doc;
 
 /**
  * @author ice1000
  */
 public record HoleBadSpineError(@NotNull AppTerm.HoleApp term, @NotNull Expr expr) implements TyckProblem {
   @Override
-  public @NotNull String describe() {
-    return "Can't perform pattern unification on hole with spine " + term.args() + ".";
+  public @NotNull Doc describe() {
+    return Doc.plain("Can't perform pattern unification on hole with spine " + term.args() + ".");
   }
 
   @Override public @NotNull Severity level() {

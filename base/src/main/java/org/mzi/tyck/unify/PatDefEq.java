@@ -29,9 +29,11 @@ public class PatDefEq extends DefEq {
 
   private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
     for (var arg : spine.view()) {
-      if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var)
-        rhs = new LamTerm(new Param(var, new AppTerm.HoleApp(new LocalVar("_")), arg.explicit()), rhs);
-      else return null;
+      if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
+        var type = new AppTerm.HoleApp(new LocalVar("_"));
+        var param = new Param(var, type, arg.explicit());
+        rhs = new LamTerm(param, rhs);
+      } else return null;
     }
     return rhs;
   }
