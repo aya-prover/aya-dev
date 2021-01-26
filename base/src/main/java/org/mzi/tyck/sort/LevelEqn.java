@@ -10,10 +10,8 @@ import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Expr;
 import org.mzi.ref.LevelVar;
-import org.mzi.tyck.error.LevelSolverError;
 import org.mzi.util.Ordering;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class LevelEqn<V extends Var> {
