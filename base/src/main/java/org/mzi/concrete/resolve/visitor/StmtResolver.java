@@ -36,8 +36,8 @@ public final class StmtResolver implements Stmt.Visitor<@NotNull Context, Unit> 
     var local = new SimpleContext();
     local.setOuterContext(context);
     ExprResolver.INSTANCE.visitParams(decl.telescope, local);
-    decl.result = decl.result.accept(ExprResolver.INSTANCE, local);
-    decl.body = decl.body.accept(ExprResolver.INSTANCE, local);
+    decl.result = decl.result.resolve(local);
+    decl.body = decl.body.resolve(local);
     return Unit.unit();
   }
 }

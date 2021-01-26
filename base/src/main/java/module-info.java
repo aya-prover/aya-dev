@@ -11,6 +11,8 @@ module org.mzi {
 
   exports org.mzi.concrete.desugar;
   exports org.mzi.concrete.parse;
+  exports org.mzi.concrete.resolve.context;
+  exports org.mzi.concrete.resolve.module;
   exports org.mzi.concrete.visitor;
   exports org.mzi.concrete;
   exports org.mzi.core.def;

@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.desugar.ExprDesugarer;
+import org.mzi.concrete.resolve.context.Context;
+import org.mzi.concrete.resolve.context.SimpleContext;
+import org.mzi.concrete.resolve.visitor.ExprResolver;
 import org.mzi.generic.Arg;
 
 import java.util.stream.Stream;
@@ -27,6 +30,14 @@ public sealed interface Expr {
 
   default @NotNull Expr desugar() {
     return accept(ExprDesugarer.INSTANCE, Unit.INSTANCE);
+  }
+
+  default @NotNull Expr resolve(@NotNull Context context) {
+    return accept(ExprResolver.INSTANCE, context);
+  }
+
+  default @NotNull Expr resolve() {
+    return resolve(new SimpleContext());
   }
 
   interface Visitor<P, R> {

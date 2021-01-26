@@ -48,7 +48,7 @@ public class PatDefEq extends DefEq {
       return null;
     }
     var type = new AppTerm.HoleApp(new LocalVar("_"));
-    var abstracted = new LocalVar(var.name());
+    var abstracted = new LocalVar(var.name() + "'");
     var param = new Param(abstracted, type, arg.explicit());
     subst.add(var, new RefTerm(abstracted));
     return new LamTerm(param, new LamTerm(param, rhs));
