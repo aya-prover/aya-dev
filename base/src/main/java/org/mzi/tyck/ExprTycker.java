@@ -241,7 +241,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       }
       resultTele = buffer;
     }
-    return new Result(new TupTerm(items.toImmutableSeq()), new SigmaTerm(false, resultTele.toImmutableSeq(), resultLast.value));
+    var resultType = new SigmaTerm(false, resultTele.toImmutableSeq(), resultLast.value);
+    return new Result(new TupTerm(items.toImmutableSeq()), resultType);
   }
 
   @Override

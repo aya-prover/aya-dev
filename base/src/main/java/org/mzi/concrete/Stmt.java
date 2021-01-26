@@ -6,6 +6,8 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
+import org.mzi.concrete.resolve.context.Context;
+import org.mzi.concrete.resolve.visitor.StmtResolver;
 
 /**
  * @author kiva
@@ -15,6 +17,10 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
 
   /** @apiNote the \import and \module stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
+
+  default void resolve(@NotNull Context context) {
+    accept(StmtResolver.INSTANCE, context);
+  }
 
   /**
    * @author re-xyr

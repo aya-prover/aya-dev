@@ -14,6 +14,11 @@ import org.mzi.concrete.resolve.context.SimpleContext;
  * @author re-xyr
  */
 public final class StmtResolver implements Stmt.Visitor<@NotNull Context, Unit> {
+  public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
+
+  private StmtResolver() {
+  }
+
   @Override
   public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull Context context) {
     throw new UnsupportedOperationException(); // TODO[xyr]: implement

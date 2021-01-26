@@ -14,6 +14,7 @@ import org.mzi.concrete.visitor.ExprFixpoint;
 
 /**
  * Resolves bindings.
+ *
  * @author re-xyr
  */
 public final class ExprResolver implements ExprFixpoint<Context> {
