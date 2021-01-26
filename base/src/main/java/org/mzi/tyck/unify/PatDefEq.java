@@ -5,6 +5,7 @@ package org.mzi.tyck.unify;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.core.Param;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.RefTerm;
@@ -26,26 +27,26 @@ public class PatDefEq extends DefEq {
     super(ord, equations);
   }
 
-  private @Nullable Tele extract(Seq<? extends Arg<? extends Term>> spine) {
-    Tele buf = null;
-    for (var arg : spine.view().reversed()) {
-      if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) buf = new Tele.NamedTele(var, buf);
+  private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
+    for (var arg : spine.view()) {
+      if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var)
+        rhs = new LamTerm(new Param(var, new AppTerm.HoleApp(new LocalVar("_")), arg.explicit()), rhs);
       else return null;
     }
-    return buf;
+    return rhs;
   }
 
   @Override
   public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @Nullable Term type) {
-    var patterns = extract(lhs.args());
-    if (patterns == null) {
+    var solved = extract(lhs.args(), rhs);
+    if (solved == null) {
       equations.reporter().report(new HoleBadSpineError(lhs, expr));
       return false;
     }
     var solution = lhs.solution();
     if (solution.isDefined()) return compare(AppTerm.make(solution.get(), lhs.args()), rhs, type);
     // TODO[ice]: substitute these variables into new vars
-    solution.set(new LamTerm(patterns, rhs));
+    solution.set(solved);
     return true;
   }
 }
