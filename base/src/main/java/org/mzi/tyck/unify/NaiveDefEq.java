@@ -26,7 +26,13 @@ public class NaiveDefEq extends DefEq {
     }
     var solution = lhs.solution();
     if (solution.isDefined()) return compare(solution.get(), preRhs, type);
-    if (preRhs instanceof AppTerm.HoleApp rhs) return rhs.args().isEmpty() && lhs.var() == rhs.var();
+    if (preRhs instanceof AppTerm.HoleApp rhs) {
+      if (!rhs.args().isEmpty()) {
+        equations.reporter().report(new HoleAppWarn(lhs, expr));
+        return false;
+      }
+      if (lhs.var() == rhs.var()) return true;
+    }
     // TODO[ice]: check for recursive solution
     solution.set(preRhs);
     return true;

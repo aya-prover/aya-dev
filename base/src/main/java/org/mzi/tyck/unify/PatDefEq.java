@@ -34,14 +34,24 @@ public class PatDefEq extends DefEq {
     var subst = new Substituter.TermSubst(new HashMap<>(spine.size() * 2));
     for (var arg : spine.view()) {
       if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
-        var type = new AppTerm.HoleApp(new LocalVar("_"));
-        var abstracted = new LocalVar(var.name());
-        var param = new Param(abstracted, type, arg.explicit());
-        rhs = new LamTerm(param, rhs);
-        subst.add(var, new RefTerm(abstracted));
+        rhs = extractVar(rhs, subst, arg, var);
+        if (rhs == null) return null;
       } else return null;
+      // TODO[ice]: ^ eta var
     }
     return rhs.subst(subst);
+  }
+
+  private @Nullable Term extractVar(Term rhs, Substituter.TermSubst subst, Arg<? extends Term> arg, LocalVar var) {
+    if (subst.map().containsKey(var)) {
+      // TODO[ice]: report errors for duplicated vars in spine
+      return null;
+    }
+    var type = new AppTerm.HoleApp(new LocalVar("_"));
+    var abstracted = new LocalVar(var.name());
+    var param = new Param(abstracted, type, arg.explicit());
+    subst.add(var, new RefTerm(abstracted));
+    return new LamTerm(param, new LamTerm(param, rhs));
   }
 
   @Override
