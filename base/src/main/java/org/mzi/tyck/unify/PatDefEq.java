@@ -38,7 +38,7 @@ public class PatDefEq extends DefEq {
         var abstracted = new LocalVar(var.name());
         var param = new Param(abstracted, type, arg.explicit());
         rhs = new LamTerm(param, rhs);
-        subst.add(abstracted, ref);
+        subst.add(var, new RefTerm(abstracted));
       } else return null;
     }
     return rhs.subst(subst);
