@@ -90,9 +90,9 @@ public class DefEqTest extends LispTestCase {
 
   @Test
   public void fnCall() {
-    Lisp.reallyParseDef("id",
+    Lisp.parseDef("id",
       "(y (U) ex null)", "y", "y", vars);
-    Lisp.reallyParseDef("id2",
+    Lisp.parseDef("id2",
       "(y (U) ex null)", "y", "y", vars);
     var fnCall = Lisp.parse("(fncall id kiva)", vars);
     assertTrue(eq().compare(fnCall, Lisp.parse("kiva", vars), null));

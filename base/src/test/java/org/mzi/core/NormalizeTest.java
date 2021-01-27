@@ -62,7 +62,7 @@ public class NormalizeTest extends LispTestCase {
   @Test
   public void unfoldDef() {
     // (x y : U)
-    var def = Lisp.reallyParseDef("id",
+    var def = Lisp.parseDef("id",
       "(y (U) ex null)", "y", "y", vars);
     var term = Lisp.parse("(fncall id kiva)", vars);
     assertTrue(term instanceof AppTerm.FnCall);
