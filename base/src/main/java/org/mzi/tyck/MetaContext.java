@@ -12,26 +12,16 @@ import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
 import org.mzi.tyck.sort.LevelEqn;
 
-public class MetaContext {
-  private final LevelEqn.@NotNull Set levelEqns;
-  private final @NotNull Reporter reporter;
-  private final MutableMap<AppTerm.HoleApp, Term> solutions;
-
+public record MetaContext(
+  @NotNull Reporter reporter,
+  LevelEqn.@NotNull Set levelEqns,
+  MutableMap<AppTerm.HoleApp, Term> solutions
+) {
   public MetaContext(@NotNull Reporter reporter) {
-    this.reporter = reporter;
-    levelEqns = new LevelEqn.Set(reporter, Buffer.of(), Buffer.of());
-    solutions = new MutableHashMap<>();
-  }
-
-  public LevelEqn.@NotNull Set levelEqns() {
-    return levelEqns;
+    this(reporter, new LevelEqn.Set(reporter, Buffer.of(), Buffer.of()), new MutableHashMap<>());
   }
 
   public void report(@NotNull Problem problem) {
     reporter.report(problem);
-  }
-
-  public @NotNull MutableMap<AppTerm.HoleApp, Term> solutions() {
-    return solutions;
   }
 }
