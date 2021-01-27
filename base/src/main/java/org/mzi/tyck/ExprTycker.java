@@ -20,7 +20,6 @@ import org.mzi.generic.Arg;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
-import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.Rule;
@@ -37,6 +36,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public ExprTycker(@NotNull Reporter reporter) {
     this(new MetaContext(reporter));
+  }
+
+  public @NotNull Result finalize(@NotNull Result result) {
+    return new Result(
+      result.wellTyped.strip(metaContext),
+      result.type.strip(metaContext)
+    );
   }
 
   @Rule.Check(partialSynth = true)

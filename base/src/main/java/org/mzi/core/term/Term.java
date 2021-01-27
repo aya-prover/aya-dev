@@ -9,7 +9,9 @@ import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.visitor.Normalizer;
+import org.mzi.core.visitor.Stripper;
 import org.mzi.core.visitor.Substituter;
+import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.util.Decision;
 
@@ -32,6 +34,10 @@ public interface Term extends CoreTerm {
 
   default @NotNull Term subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
     return accept(new Substituter(subst, levelSubst), Unit.INSTANCE);
+  }
+
+  default @NotNull Term strip(@NotNull MetaContext context) {
+    return accept(new Stripper(context), Unit.INSTANCE);
   }
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
