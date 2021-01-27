@@ -5,8 +5,10 @@ package org.mzi.core.visitor;
 import org.glavo.kala.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.mzi.api.error.Reporter;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
+import org.mzi.tyck.ExprTycker;
 import org.mzi.tyck.MetaContext;
 
 /**
@@ -14,21 +16,16 @@ import org.mzi.tyck.MetaContext;
  *
  * @author ice1000
  */
-public final class Stripper implements TermFixpoint<Unit> {
-  public static @NotNull Stripper INSTANCE(@NotNull MetaContext metaContext) {
-    return new Stripper(metaContext);
-  }
-
-  private final @NotNull MetaContext metaContext;
-
-  @Contract(pure = true) private Stripper(@NotNull MetaContext metaContext) {
-    this.metaContext = metaContext;
-  }
-
+public final record Stripper(
+  @NotNull MetaContext metaContext,
+  @NotNull Reporter reporter
+  ) implements TermFixpoint<Unit> {
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, Unit emptyTuple) {
     var sol = metaContext.solutions().getOption(term);
-    // assuming all holes are solved
-    assert sol.isDefined();
+    if (sol.isEmpty()) {
+      // TODO[ice]: unsolved meta
+      throw new ExprTycker.TyckerException();
+    }
     return sol.get();
   }
 }
