@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
+import org.mzi.tyck.MetaContext;
 
 /**
  * Instantiates holes (assuming all holes are solved).
@@ -14,12 +15,20 @@ import org.mzi.core.term.Term;
  * @author ice1000
  */
 public final class Stripper implements TermFixpoint<Unit> {
-  public static final @NotNull Stripper INSTANCE = new Stripper();
+  public static @NotNull Stripper INSTANCE(@NotNull MetaContext metaContext) {
+    return new Stripper(metaContext);
+  }
 
-  @Contract(pure = true) private Stripper() {
+  private final @NotNull MetaContext metaContext;
+
+  @Contract(pure = true) private Stripper(@NotNull MetaContext metaContext) {
+    this.metaContext = metaContext;
   }
 
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, Unit emptyTuple) {
-    return term.solution().get();
+    var sol = metaContext.solutions().getOption(term);
+    // assuming all holes are solved
+    assert sol.isDefined();
+    return sol.get();
   }
 }

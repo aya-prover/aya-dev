@@ -13,6 +13,7 @@ import org.mzi.core.term.Term;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
+import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.error.HoleBadSpineError;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.util.Ordering;
@@ -26,8 +27,8 @@ import java.util.HashMap;
  * @author ice1000
  */
 public class PatDefEq extends DefEq {
-  public PatDefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
-    super(ord, equations);
+  public PatDefEq(@NotNull Ordering ord, @NotNull MetaContext metaContext) {
+    super(ord, metaContext);
   }
 
   private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
@@ -58,12 +59,12 @@ public class PatDefEq extends DefEq {
   public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @Nullable Term type) {
     var solved = extract(lhs.args(), rhs);
     if (solved == null) {
-      equations.reporter().report(new HoleBadSpineError(lhs, expr));
+      metaContext.report(new HoleBadSpineError(lhs, expr));
       return false;
     }
-    var solution = lhs.solution();
+    var solution = metaContext.solutions().getOption(lhs);
     if (solution.isDefined()) return compare(AppTerm.make(solution.get(), lhs.args()), rhs, type);
-    solution.set(solved);
+    metaContext.solutions().put(lhs, solved);
     return true;
   }
 }

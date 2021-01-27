@@ -16,6 +16,7 @@ import org.mzi.concrete.Expr;
 import org.mzi.core.Param;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
+import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Decision;
@@ -31,7 +32,7 @@ import java.util.stream.IntStream;
  */
 public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable Term, @NotNull Boolean> {
   protected @NotNull Ordering ord;
-  protected final @NotNull LevelEqn.Set equations;
+  protected final @NotNull MetaContext metaContext;
   protected final @NotNull MutableMap<@NotNull Var, @NotNull Var> varSubst = new MutableHashMap<>();
   public Expr expr;
 
@@ -114,7 +115,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   @Override
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     return preRhs instanceof UnivTerm rhs
-        && Sort.compare(lhs.sort(), rhs.sort(), ord, equations, expr);
+        && Sort.compare(lhs.sort(), rhs.sort(), ord, metaContext.levelEqns(), expr);
   }
 
   @Override
@@ -168,8 +169,8 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
       && compare(lhs.body(), rhs.body(), type);
   }
 
-  @Contract(pure = true) protected DefEq(@NotNull Ordering ord, LevelEqn.@NotNull Set equations) {
+  @Contract(pure = true) protected DefEq(@NotNull Ordering ord, @NotNull MetaContext metaContext) {
     this.ord = ord;
-    this.equations = equations;
+    this.metaContext = metaContext;
   }
 }

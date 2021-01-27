@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mzi.api.error.CollectReporter;
 import org.mzi.api.ref.Var;
+import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.util.Ordering;
@@ -22,7 +23,7 @@ public class LispTestCase {
   protected final CollectReporter reporter = new CollectReporter();
 
   protected @NotNull NaiveDefEq eq() {
-    return new NaiveDefEq(Ordering.Eq, new LevelEqn.Set(reporter, Buffer.of(), Buffer.of()));
+    return new NaiveDefEq(Ordering.Eq, new MetaContext(reporter));
   }
 
   @BeforeEach

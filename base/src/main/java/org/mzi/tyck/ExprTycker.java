@@ -27,14 +27,16 @@ import org.mzi.tyck.unify.Rule;
 import org.mzi.util.Ordering;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
-  public final @NotNull Reporter reporter;
+  public final @NotNull MetaContext metaContext;
   public final @NotNull MutableMap<Var, Term> localCtx;
-  public final @NotNull LevelEqn.Set levelEqns;
+
+  public ExprTycker(@NotNull MetaContext metaContext) {
+    localCtx = new MutableHashMap<>();
+    this.metaContext = metaContext;
+  }
 
   public ExprTycker(@NotNull Reporter reporter) {
-    this.reporter = reporter;
-    localCtx = new MutableHashMap<>();
-    levelEqns = new LevelEqn.Set(reporter, Buffer.of(), Buffer.of());
+    this(new MetaContext(reporter));
   }
 
   @Rule.Check(partialSynth = true)
@@ -56,7 +58,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var lamParam = param.type();
       if (lamParam != null) {
         var result = lamParam.accept(this, UnivTerm.OMEGA);
-        var comparison = new NaiveDefEq(Ordering.Lt, levelEqns).compare(result.wellTyped, type, UnivTerm.OMEGA);
+        var comparison = new NaiveDefEq(Ordering.Lt, metaContext).compare(result.wellTyped, type, UnivTerm.OMEGA);
         if (!comparison) {
           // TODO[ice]: expected type mismatch lambda type annotation
           throw new TyckerException();
@@ -72,7 +74,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
-    reporter.report(new BadTypeError(expr, Doc.plain(expectedText), term));
+    metaContext.report(new BadTypeError(expr, Doc.plain(expectedText), term));
     throw new TyckerException();
   }
 
@@ -96,7 +98,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private void unify(Term upper, Term lower) {
-    var unification = new NaiveDefEq(Ordering.Lt, levelEqns).compare(lower, upper, UnivTerm.OMEGA);
+    var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
       // TODO[ice]: expected type mismatch synthesized type
       throw new TyckerException();

@@ -94,19 +94,11 @@ public sealed interface AppTerm extends Term {
    * @author ice1000
    */
   record HoleApp(
-    @NotNull OptionRef<@NotNull Term> solution,
     @NotNull Var var,
     @NotNull Buffer<@NotNull Arg<Term>> argsBuf
   ) implements AppTerm {
-    public HoleApp(
-      @Nullable Term solution, @NotNull Var var,
-      @NotNull Buffer<@NotNull Arg<Term>> args
-    ) {
-      this(new OptionRef<>(Option.of(solution)), var, args);
-    }
-
     public HoleApp(@NotNull Var var) {
-      this((Term) null, var, Buffer.of());
+      this(var, Buffer.of());
     }
 
     @Override public @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args() {

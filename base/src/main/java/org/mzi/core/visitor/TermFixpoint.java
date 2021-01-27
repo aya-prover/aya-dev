@@ -15,11 +15,9 @@ import org.mzi.tyck.sort.Sort;
 public interface TermFixpoint<P> extends
   Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, P p) {
-    var sol = term.solution().getOrNull();
     var args = term.argsBuf().view().map(arg -> visitArgUncapture(arg, p));
-    if (sol != null && !args.sameElements(term.argsBuf())) {
-      var newSol = sol.accept(this, p);
-      if (newSol != sol) return new AppTerm.HoleApp(newSol, term.var(), args.collect(Buffer.factory()));
+    if (!args.sameElements(term.argsBuf())) {
+      return new AppTerm.HoleApp(term.var(), args.collect(Buffer.factory()));
     }
     return term;
   }
