@@ -18,7 +18,7 @@ public record MetaContext(
   MutableMap<AppTerm.HoleApp, Term> solutions
 ) {
   public MetaContext(@NotNull Reporter reporter) {
-    this(reporter, new LevelEqn.Set(reporter, Buffer.of(), Buffer.of()), new MutableHashMap<>());
+    this(reporter, new LevelEqn.Set(Buffer.of(), Buffer.of()), new MutableHashMap<>());
   }
 
   public void report(@NotNull Problem problem) {

@@ -19,7 +19,6 @@ public class LevelEqn<V extends Var> {
    * A set of level equations.
    */
   public record Set(
-    @NotNull Reporter reporter,
     @NotNull Buffer<@NotNull LevelVar> vars,
     @NotNull Buffer<@NotNull LevelEqn<LevelVar>> eqns
   ) {
