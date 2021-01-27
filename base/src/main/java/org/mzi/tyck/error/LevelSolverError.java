@@ -14,7 +14,7 @@ import org.mzi.tyck.sort.LevelEqn;
  */
 public record LevelSolverError(
   @NotNull Expr expr,
-  @NotNull Collection<? extends LevelEqn<?>> eqn
+  @NotNull Collection<? extends LevelEqn> eqn
 ) implements TyckProblem, Problem.Error {
   @Override public @NotNull Doc describe() {
     // TODO[ice]: improve this

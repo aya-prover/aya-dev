@@ -6,7 +6,6 @@ import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Expr;
 import org.mzi.ref.LevelVar;
@@ -14,13 +13,13 @@ import org.mzi.util.Ordering;
 
 import java.util.Map;
 
-public class LevelEqn<V extends Var> {
+public class LevelEqn {
   /**
    * A set of level equations.
    */
   public record Set(
     @NotNull Buffer<@NotNull LevelVar> vars,
-    @NotNull Buffer<@NotNull LevelEqn<LevelVar>> eqns
+    @NotNull Buffer<@NotNull LevelEqn> eqns
   ) {
     public boolean add(Sort.@NotNull Level level1, @NotNull Sort.Level level2, @NotNull Ordering cmp, Expr expr) {
       throw new UnsupportedOperationException("#93");
@@ -40,7 +39,7 @@ public class LevelEqn<V extends Var> {
       return vars.isEmpty() && eqns.isEmpty();
     }
 
-    public @Nullable Seq<LevelEqn<LevelVar>> solve(@NotNull Map<Var, Integer> solution) {
+    public @Nullable Seq<LevelEqn> solve(@NotNull Map<Var, Integer> solution) {
       throw new UnsupportedOperationException("#93");
     }
   }
