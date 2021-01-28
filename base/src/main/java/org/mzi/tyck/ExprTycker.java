@@ -45,6 +45,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     );
   }
 
+  public @NotNull Result checkExpr(@NotNull Expr expr, @NotNull Term type) {
+    return finalize(expr.accept(this, type));
+  }
+
   @Rule.Check(partialSynth = true)
   @Override
   public Result visitLam(Expr.@NotNull LamExpr expr, Term term) {

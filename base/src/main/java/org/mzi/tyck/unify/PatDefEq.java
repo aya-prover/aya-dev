@@ -15,7 +15,6 @@ import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.error.HoleBadSpineError;
-import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.util.Ordering;
 
 import java.util.HashMap;
