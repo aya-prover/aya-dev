@@ -3,6 +3,14 @@
 
 rootProject.name = "mzi"
 
+dependencyResolutionManagement {
+  repositories {
+    jcenter()
+    mavenCentral()
+    maven(url = "https://dl.bintray.com/glavo/maven")
+  }
+}
+
 include(
   "api",
   "tester",

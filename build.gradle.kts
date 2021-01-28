@@ -35,12 +35,6 @@ subprojects {
     plugin("io.freefair.lombok")
   }
 
-  repositories {
-    jcenter()
-    mavenCentral()
-    maven(url = "https://dl.bintray.com/glavo/maven")
-  }
-
   java {
     withSourcesJar()
     // Enable on-demand
@@ -81,6 +75,7 @@ subprojects {
     jvmArgs = listOf("--enable-preview")
     useJUnitPlatform()
     enableAssertions = true
+    reports.junitXml.mergeReruns.set(true)
   }
 
   tasks.withType<JavaExec>().configureEach {
