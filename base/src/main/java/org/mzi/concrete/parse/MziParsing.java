@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.parse;
 
@@ -10,14 +10,18 @@ import org.mzi.api.error.Reporter;
 import org.mzi.parser.MziLexer;
 import org.mzi.parser.MziParser;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 public interface MziParsing {
   @Contract("_ -> new") static @NotNull MziParser parser(@NotNull String text) {
     return new MziParser(new CommonTokenStream(
       new MziLexer(CharStreams.fromString(text))));
   }
 
-  @Contract("_, _ -> new") static @NotNull MziParser parser(@NotNull String text, @NotNull Reporter reporter) {
-    var lexer = new MziLexer(CharStreams.fromString(text));
+  @Contract("_, _ -> new")
+  static @NotNull MziParser parser(@NotNull Path path, @NotNull Reporter reporter) throws IOException {
+    var lexer = new MziLexer(CharStreams.fromPath(path));
     lexer.removeErrorListeners();
     var listener = new ReporterErrorListener(reporter);
     lexer.addErrorListener(listener);

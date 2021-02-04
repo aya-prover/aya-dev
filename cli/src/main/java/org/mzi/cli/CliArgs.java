@@ -9,4 +9,6 @@ public class CliArgs {
   public boolean version = false;
   @Parameter(names = {"--help", "-h"}, description = "Show this message", help = true)
   public boolean help = false;
+  @Parameter(names = {"--file", "-f"}, description = "The input file")
+  public String inputFile;
 }

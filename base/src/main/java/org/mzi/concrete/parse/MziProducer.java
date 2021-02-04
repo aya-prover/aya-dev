@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.parse;
 
@@ -14,6 +14,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.util.Assoc;
 import org.mzi.concrete.*;
@@ -41,16 +42,23 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   private MziProducer() {
   }
 
+  @TestOnly
   public static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitExpr(MziParsing.parser(code).expr());
   }
 
+  @TestOnly
   public static @NotNull Stmt parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitStmt(MziParsing.parser(code).stmt());
   }
 
+  @TestOnly
   public static @NotNull Decl parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitDecl(MziParsing.parser(code).decl());
+  }
+
+  @Override public List<Stmt> visitProgram(MziParser.ProgramContext ctx) {
+    return ctx.stmt().stream().map(this::visitStmt).collect(Collectors.toList());
   }
 
   @Override
