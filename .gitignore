@@ -5,8 +5,11 @@ out/
 /.idea/modules/*
 /.idea/shelf/*
 /.idea/codeStyles/*
+/.idea/dictionaries/*
 /.gradle/
 /.fleet/
+/.vs/
+/.vscode/
 *.iml
 gradle.properties
 .DS_Store
