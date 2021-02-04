@@ -6,19 +6,10 @@ import org.glavo.kala.Unit;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Decl;
-import org.mzi.concrete.Stmt;
 import org.mzi.core.def.Def;
 
-public class StmtTycker implements Stmt.Visitor<Unit, Unit> {
+public class StmtTycker implements Decl.Visitor<Unit, Unit> {
   public final @NotNull Buffer<Def> defs = Buffer.of();
-  @Override public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, Unit unit) {
-    return null;
-  }
-
-  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
-    return null;
-  }
-
   @Override public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
     return null;
   }

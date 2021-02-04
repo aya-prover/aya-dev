@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
@@ -22,6 +22,16 @@ import java.util.Objects;
  */
 public sealed interface Decl extends Stmt {
   @Contract(pure = true) @NotNull DefVar<? extends Decl> ref();
+
+  <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
+  default @Override <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
+    return accept((Decl.Visitor<P, R>) visitor, p);
+  }
+
+  interface Visitor<P, R> {
+    R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
+    R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
+  }
 
   record DataCtor(
     @NotNull String name,
@@ -76,7 +86,7 @@ public sealed interface Decl extends Stmt {
     }
 
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R accept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitDataDecl(this, p);
     }
 
@@ -161,7 +171,7 @@ public sealed interface Decl extends Stmt {
     }
 
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R accept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitFnDecl(this, p);
     }
 
