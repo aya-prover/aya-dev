@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
-import org.mzi.concrete.desugar.ExprDesugarer;
+import org.mzi.concrete.desugar.Desugarer;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.concrete.resolve.visitor.ExprResolver;
@@ -29,7 +29,7 @@ public sealed interface Expr {
   @NotNull SourcePos sourcePos();
 
   default @NotNull Expr desugar() {
-    return accept(ExprDesugarer.INSTANCE, Unit.INSTANCE);
+    return accept(Desugarer.INSTANCE, Unit.INSTANCE);
   }
 
   default @NotNull Expr resolve(@NotNull Context context) {

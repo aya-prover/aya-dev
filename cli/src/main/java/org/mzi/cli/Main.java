@@ -26,7 +26,10 @@ public class Main {
       var parser = MziParsing.parser(Paths.get(inputFile), reporter);
       var program = MziProducer.INSTANCE.visitProgram(parser.program());
       var context = new SimpleContext();
-      program.forEach(s -> s.resolve(context));
+      program.forEach(s -> {
+        s.resolve(context);
+        s.desugar();
+      });
     }
   }
 }
