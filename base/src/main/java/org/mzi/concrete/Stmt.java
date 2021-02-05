@@ -1,11 +1,13 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
+import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
+import org.mzi.concrete.desugar.Desugarer;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.visitor.StmtResolver;
 
@@ -20,6 +22,10 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
 
   default void resolve(@NotNull Context context) {
     accept(StmtResolver.INSTANCE, context);
+  }
+
+  default void desugar() {
+    accept(Desugarer.INSTANCE, Unit.unit());
   }
 
   /**

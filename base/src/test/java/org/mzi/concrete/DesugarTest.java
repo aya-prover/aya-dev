@@ -2,14 +2,12 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
-import org.glavo.kala.Unit;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
-import org.mzi.concrete.desugar.ExprDesugarer;
 import org.mzi.ref.LocalVar;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DesugarTest {
   @Test

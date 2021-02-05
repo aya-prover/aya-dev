@@ -3,10 +3,16 @@
 package org.mzi.cli;
 
 import com.beust.jcommander.JCommander;
+import org.mzi.concrete.parse.MziParsing;
+import org.mzi.concrete.parse.MziProducer;
+import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.prelude.GeneratedVersion;
 
+import java.io.IOException;
+import java.nio.file.Paths;
+
 public class Main {
-  public static void main(String... args) {
+  public static void main(String... args) throws IOException {
     var cli = new CliArgs();
     JCommander.newBuilder().addObject(cli).build().parse(args);
     if (cli.version) {
@@ -14,6 +20,16 @@ public class Main {
       return;
     }
     if (cli.help) return;
-    System.out.println("Hello, Aya!");
+    var reporter = new CliReporter();
+    var inputFile = cli.inputFile;
+    if (inputFile != null) {
+      var parser = MziParsing.parser(Paths.get(inputFile), reporter);
+      var program = MziProducer.INSTANCE.visitProgram(parser.program());
+      var context = new SimpleContext();
+      program.forEach(s -> {
+        s.resolve(context);
+        s.desugar();
+      });
+    }
   }
 }

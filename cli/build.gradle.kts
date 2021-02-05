@@ -4,4 +4,6 @@ dependencies {
   val deps: java.util.Properties by rootProject.ext
   api("com.beust", "jcommander", version = deps.getProperty("version.jcommander"))
   implementation(project(":base"))
+  implementation(project(":parser"))
+  implementation(project(":pretty"))
 }

@@ -4,11 +4,13 @@ package org.mzi.concrete.desugar;
 
 import org.glavo.kala.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
+import org.mzi.concrete.Stmt;
 import org.mzi.concrete.visitor.ExprFixpoint;
 
-public final class ExprDesugarer implements ExprFixpoint<Unit> {
-  public static final ExprDesugarer INSTANCE = new ExprDesugarer();
+public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, Unit> {
+  public static final Desugarer INSTANCE = new Desugarer();
 
   private @NotNull Expr makeNestingLam(Expr.@NotNull TelescopicLamExpr expr, int pos) {
     if (pos == expr.params().size()) return expr.body().accept(this, Unit.unit());
@@ -30,5 +32,30 @@ public final class ExprDesugarer implements ExprFixpoint<Unit> {
     return makeNestingPi(expr, 0);
   }
 
-  private ExprDesugarer() {}
+  private Desugarer() {}
+
+  @Override public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, Unit unit) {
+    return unit;
+  }
+
+  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
+    mod.contents().forEach(stmt -> stmt.accept(this, unit));
+    return unit;
+  }
+
+  @Override public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+    decl.abuseBlock.forEach(stmt -> stmt.accept(this, unit));
+    decl.result = decl.result.desugar();
+    // TODO this type is not yet finished
+    return unit;
+  }
+
+  @Override public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
+    decl.abuseBlock.forEach(stmt -> stmt.accept(this, unit));
+    if (decl.result != null) decl.result = decl.result.desugar();
+    for (int i = 0, size = decl.telescope.size(); i < size; i++)
+      decl.telescope.set(i, decl.telescope.get(i).mapExpr(Expr::desugar));
+    decl.body = decl.body.desugar();
+    return unit;
+  }
 }
