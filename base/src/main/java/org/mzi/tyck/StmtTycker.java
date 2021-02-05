@@ -3,14 +3,11 @@
 package org.mzi.tyck;
 
 import org.glavo.kala.Unit;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
-import org.mzi.core.def.Def;
 
 public class StmtTycker implements Decl.Visitor<Unit, Unit> {
-  public final @NotNull Buffer<Def> defs = Buffer.of();
   public final @NotNull Reporter reporter;
 
   public StmtTycker(@NotNull Reporter reporter) {

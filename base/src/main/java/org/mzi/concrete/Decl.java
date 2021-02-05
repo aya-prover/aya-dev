@@ -23,24 +23,25 @@ import java.util.Objects;
  *
  * @author re-xyr
  */
-public sealed interface Decl extends Stmt {
-  @Contract(pure = true) @NotNull DefVar<? extends Decl> ref();
+public sealed abstract class Decl implements Stmt {
+  @Contract(pure = true) public @NotNull abstract DefVar<? extends Decl> ref();
 
-  <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
-  default @Override <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
+  abstract <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
+
+  public final @Override <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
     return accept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  default void tyck(@NotNull Reporter reporter) {
+  public void tyck(@NotNull Reporter reporter) {
     accept(new StmtTycker(reporter), Unit.unit());
   }
 
-  interface Visitor<P, R> {
+  public interface Visitor<P, R> {
     R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
   }
 
-  record DataCtor(
+  public static record DataCtor(
     @NotNull String name,
     @NotNull Buffer<Param> telescope,
     @NotNull Buffer<String> elim,
@@ -49,7 +50,7 @@ public sealed interface Decl extends Stmt {
   ) {
   }
 
-  sealed interface DataBody {
+  public sealed interface DataBody {
     record Ctors(
       @NotNull Buffer<DataCtor> ctors
     ) implements DataBody {}
@@ -65,7 +66,7 @@ public sealed interface Decl extends Stmt {
    *
    * @author kiva
    */
-  final class DataDecl implements Decl {
+  public static final class DataDecl extends Decl {
     public final @NotNull SourcePos sourcePos;
     public final @NotNull Accessibility accessibility;
     public final @NotNull DefVar<DataDecl> ref;
@@ -144,7 +145,7 @@ public sealed interface Decl extends Stmt {
    *
    * @author re-xyr
    */
-  final class FnDecl implements Decl {
+  public static final class FnDecl extends Decl {
     public final @NotNull SourcePos sourcePos;
     public final @NotNull Accessibility accessibility;
     public final @NotNull EnumSet<Modifier> modifiers;
