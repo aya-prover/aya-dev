@@ -24,6 +24,31 @@ import java.util.Objects;
  * @author re-xyr
  */
 public sealed abstract class Decl implements Stmt {
+  public final @NotNull SourcePos sourcePos;
+  public final @NotNull Accessibility accessibility;
+  public final @NotNull Buffer<Stmt> abuseBlock;
+  public final @NotNull Buffer<Param> telescope;
+
+  @Override public @NotNull SourcePos sourcePos() {
+    return sourcePos;
+  }
+
+  @Override public @NotNull Accessibility accessibility() {
+    return accessibility;
+  }
+
+  protected Decl(
+    @NotNull SourcePos sourcePos,
+    @NotNull Accessibility accessibility,
+    @NotNull Buffer<Stmt> abuseBlock,
+    @NotNull Buffer<Param> telescope
+  ) {
+    this.sourcePos = sourcePos;
+    this.accessibility = accessibility;
+    this.abuseBlock = abuseBlock;
+    this.telescope = telescope;
+  }
+
   @Contract(pure = true) public @NotNull abstract DefVar<? extends Decl> ref();
 
   abstract <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
@@ -67,13 +92,9 @@ public sealed abstract class Decl implements Stmt {
    * @author kiva
    */
   public static final class DataDecl extends Decl {
-    public final @NotNull SourcePos sourcePos;
-    public final @NotNull Accessibility accessibility;
     public final @NotNull DefVar<DataDecl> ref;
-    public final @NotNull Buffer<Param> telescope;
     public @NotNull Expr result;
     public @NotNull DataBody body;
-    public final @NotNull Buffer<Stmt> abuseBlock;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
@@ -84,12 +105,9 @@ public sealed abstract class Decl implements Stmt {
       @NotNull DataBody body,
       @NotNull Buffer<Stmt> abuseBlock
     ) {
-      this.sourcePos = sourcePos;
-      this.accessibility = accessibility;
-      this.telescope = telescope;
+      super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
-      this.abuseBlock = abuseBlock;
       this.ref = new DefVar<>(this, name);
     }
 
@@ -101,16 +119,6 @@ public sealed abstract class Decl implements Stmt {
     @Override
     public @NotNull DefVar<DataDecl> ref() {
       return this.ref;
-    }
-
-    @Override
-    public @NotNull Accessibility accessibility() {
-      return this.accessibility;
-    }
-
-    @Override
-    public @NotNull SourcePos sourcePos() {
-      return this.sourcePos;
     }
 
     @Override public boolean equals(Object o) {
@@ -146,15 +154,11 @@ public sealed abstract class Decl implements Stmt {
    * @author re-xyr
    */
   public static final class FnDecl extends Decl {
-    public final @NotNull SourcePos sourcePos;
-    public final @NotNull Accessibility accessibility;
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
-    public final @NotNull Buffer<Param> telescope;
     public @Nullable Expr result;
     public @NotNull Expr body;
-    public final @NotNull Buffer<Stmt> abuseBlock;
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
@@ -167,15 +171,12 @@ public sealed abstract class Decl implements Stmt {
       @NotNull Expr body,
       @NotNull Buffer<Stmt> abuseBlock
     ) {
-      this.sourcePos = sourcePos;
-      this.accessibility = accessibility;
+      super(sourcePos, accessibility, abuseBlock, telescope);
       this.modifiers = modifiers;
       this.assoc = assoc;
       this.ref = new DefVar<>(this, name);
-      this.telescope = telescope;
       this.result = result;
       this.body = body;
-      this.abuseBlock = abuseBlock;
     }
 
     @Override
@@ -194,7 +195,9 @@ public sealed abstract class Decl implements Stmt {
     }
 
     @Override
-    public @NotNull Accessibility accessibility() { return this.accessibility; }
+    public @NotNull Accessibility accessibility() {
+      return this.accessibility;
+    }
 
     @Override public boolean equals(Object o) {
       if (this == o) return true;
