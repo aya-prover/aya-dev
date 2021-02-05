@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
@@ -184,13 +184,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var argLicit = arg.explicit();
       if (paramLicit == argLicit) {
         var elabArg = arg.term().accept(this, param.type());
-        resultTerm = new AppTerm.Apply(resultTerm, new Arg<>(elabArg.wellTyped, argLicit));
+        resultTerm = AppTerm.make(resultTerm, new Arg<>(elabArg.wellTyped, argLicit));
       } else if (argLicit) {
         // that implies paramLicit == false
         var holeApp = new AppTerm.HoleApp(new LocalVar("_"));
         // TODO: maybe we should create a concrete hole and check it against the type
         //  in case we can synthesize this term via its type only
-        resultTerm = new AppTerm.Apply(resultTerm, new Arg<>(holeApp, false));
+        resultTerm = AppTerm.make(resultTerm, new Arg<>(holeApp, false));
       } else {
         // TODO[ice]: no implicit argument expected, but inserted.
         throw new TyckerException();

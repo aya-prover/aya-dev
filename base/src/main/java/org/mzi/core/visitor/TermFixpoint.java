@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
@@ -74,7 +74,7 @@ public interface TermFixpoint<P> extends
     var function = term.fn().accept(this, p);
     var arg = visitArg(term.arg(), p);
     if (function == term.fn() && arg == term.arg()) return term;
-    return new AppTerm.Apply(function, arg);
+    return AppTerm.make(function, arg);
   }
 
   @Override default @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, P p) {
