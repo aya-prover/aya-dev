@@ -6,13 +6,16 @@ import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Problem;
 import org.mzi.api.error.Reporter;
+import org.mzi.pretty.doc.Doc;
+
+import java.nio.file.Path;
 
 /**
  * @author ice1000
  */
-public class CliReporter implements Reporter {
+public record CliReporter(@NotNull Path filePath) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
     (Seq.of(Problem.Severity.ERROR, Problem.Severity.WARN).contains(problem.level()) ? System.err : System.out)
-      .println(problem.describe());
+      .println(problem.toPrettyError(filePath, Doc.empty()).toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
   }
 }

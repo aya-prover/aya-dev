@@ -20,10 +20,11 @@ public class Main {
       return;
     }
     if (cli.help) return;
-    var reporter = new CliReporter();
     var inputFile = cli.inputFile;
     if (inputFile != null) {
-      var parser = MziParsing.parser(Paths.get(inputFile), reporter);
+      var filePath = Paths.get(inputFile);
+      var reporter = new CliReporter(filePath);
+      var parser = MziParsing.parser(filePath, reporter);
       var program = MziProducer.INSTANCE.visitProgram(parser.program());
       var context = new SimpleContext();
       program.forEach(s -> {
