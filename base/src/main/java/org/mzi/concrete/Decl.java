@@ -3,14 +3,17 @@
 package org.mzi.concrete;
 
 import org.glavo.kala.Tuple2;
+import org.glavo.kala.Unit;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
 import org.mzi.generic.Modifier;
+import org.mzi.tyck.StmtTycker;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -26,6 +29,10 @@ public sealed interface Decl extends Stmt {
   <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
   default @Override <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
     return accept((Decl.Visitor<P, R>) visitor, p);
+  }
+
+  default void tyck(@NotNull Reporter reporter) {
+    accept(new StmtTycker(reporter), Unit.unit());
   }
 
   interface Visitor<P, R> {

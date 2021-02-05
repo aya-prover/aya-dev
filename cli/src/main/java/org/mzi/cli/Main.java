@@ -3,6 +3,7 @@
 package org.mzi.cli;
 
 import com.beust.jcommander.JCommander;
+import org.mzi.concrete.Decl;
 import org.mzi.concrete.parse.MziParsing;
 import org.mzi.concrete.parse.MziProducer;
 import org.mzi.concrete.resolve.context.SimpleContext;
@@ -30,6 +31,9 @@ public class Main {
       program.forEach(s -> {
         s.resolve(context);
         s.desugar();
+      });
+      program.forEach(s -> {
+        if (s instanceof Decl decl) decl.tyck(reporter);
       });
     }
   }
