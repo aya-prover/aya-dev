@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.def;
 
@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.core.Param;
 import org.mzi.core.term.Term;
+
+import java.util.Objects;
 
 /**
  * @author ice1000
@@ -31,5 +33,27 @@ public final class FnDef implements Def {
   @Override
   public <P, R> R accept(Visitor<P, R> visitor, P p) {
     return visitor.visitFn(this, p);
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FnDef fnDef = (FnDef) o;
+    return telescope.equals(fnDef.telescope)
+      && result.equals(fnDef.result)
+      && body.equals(fnDef.body);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(telescope, result, body);
+  }
+
+  @Override public String toString() {
+    return "FnDef{" +
+      "telescope=" + telescope +
+      ", result=" + result +
+      ", body=" + body +
+      '}';
   }
 }

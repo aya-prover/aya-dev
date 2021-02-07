@@ -21,7 +21,7 @@ public class StmtTycker implements Decl.Visitor<Unit, Unit> {
   }
 
   @Override public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
-    // TODO
+    // TODO[kiva]: implement
     return Unit.unit();
   }
 
