@@ -25,6 +25,8 @@ import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.Rule;
 import org.mzi.util.Ordering;
 
+import java.util.HashMap;
+
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
   public final @NotNull MutableMap<Var, Term> localCtx;
@@ -165,7 +167,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckerException();
     }
     var type = index == telescope.size() ? dt.body() : telescope.get(index).type();
-    // TODO[ice]: instantiate the type
+    // instantiate the type
+    var fieldsBefore = telescope.take(index);
+    var subst = new Substituter.TermSubst(new HashMap<>());
+    fieldsBefore.forEachIndexed((i, param) ->
+      subst.add(param.ref(), new ProjTerm(tupleRes.wellTyped, i + 1)));
+    type = type.subst(subst);
     unify(term, type);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
