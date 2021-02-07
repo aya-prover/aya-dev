@@ -12,6 +12,7 @@ import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
+import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
 import org.mzi.tyck.StmtTycker;
 
@@ -159,6 +160,7 @@ public sealed abstract class Decl implements Stmt {
     public final @NotNull DefVar<FnDecl> ref;
     public @NotNull Expr result;
     public @NotNull Expr body;
+    public @Nullable FnDef wellTyped;
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
