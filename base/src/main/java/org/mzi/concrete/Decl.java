@@ -28,7 +28,9 @@ public sealed abstract class Decl implements Stmt {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull Accessibility accessibility;
   public final @NotNull Buffer<Stmt> abuseBlock;
-  public final @NotNull Buffer<Param> telescope;
+
+  // will change after resolve
+  public @NotNull Buffer<Param> telescope;
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
