@@ -9,6 +9,7 @@ import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.ref.Ref;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
@@ -29,13 +30,21 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
   public final @NotNull MutableMap<Var, Term> localCtx;
 
-  public ExprTycker(@NotNull MetaContext metaContext) {
-    localCtx = new MutableHashMap<>();
-    this.metaContext = metaContext;
-  }
-
   public ExprTycker(@NotNull Reporter reporter) {
     this(new MetaContext(reporter));
+  }
+
+  public ExprTycker(@NotNull MetaContext metaContext) {
+    this(metaContext, new MutableHashMap<>());
+  }
+
+  public ExprTycker(@NotNull Reporter reporter, @NotNull MutableMap<Var, Term> localCtx) {
+    this(new MetaContext(reporter), localCtx);
+  }
+
+  public ExprTycker(@NotNull MetaContext metaContext, @NotNull MutableMap<Var, Term> localCtx) {
+    this.localCtx = localCtx;
+    this.metaContext = metaContext;
   }
 
   public @NotNull Result finalize(@NotNull Result result) {
@@ -45,13 +54,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     );
   }
 
-  public @NotNull Result checkExpr(@NotNull Expr expr, @NotNull Term type) {
+  public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
     return finalize(expr.accept(this, type));
   }
 
   @Rule.Check(partialSynth = true)
   @Override
-  public Result visitLam(Expr.@NotNull LamExpr expr, Term term) {
+  public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
     if (term == null) {
       var domain = new LocalVar("_");
       var codomain = new LocalVar("_");
@@ -89,7 +98,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
-  @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, Term term) {
+  @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
     if (term == null) return new Result(new UnivTerm(Sort.OMEGA), new UnivTerm(Sort.OMEGA));
     if (term.normalize(NormalizeMode.WHNF) instanceof UnivTerm univ) {
       // TODO[level]
@@ -99,7 +108,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
-  @Override public Result visitRef(Expr.@NotNull RefExpr expr, Term term) {
+  @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
     var ty = localCtx.get(expr.resolvedVar());
     if (ty == null) throw new IllegalStateException("Unresolved var `" + expr.resolvedVar().name() + "` tycked.");
     if (term == null) return new Result(new RefTerm(expr.resolvedVar()), ty);
@@ -116,7 +125,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
-  @Override public Result visitPi(Expr.@NotNull PiExpr expr, Term term) {
+  @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
     final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
     var var = expr.param().var();
     var param = expr.param();
@@ -133,7 +142,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
-  @Override public Result visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Term term) {
+  @Override public Result visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, @Nullable Term term) {
     final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
     var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
     expr.paramsStream().forEach(tuple -> {
@@ -151,7 +160,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
-  @Override public Result visitProj(Expr.@NotNull ProjExpr expr, Term term) {
+  @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
     var tupleRes = expr.tup().accept(this, null);
     if (!(tupleRes.type instanceof SigmaTerm dt && !dt.co()))
       return wantButNo(expr.tup(), tupleRes.type, "sigma type");
@@ -172,7 +181,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
-  @Override public Result visitApp(Expr.@NotNull AppExpr expr, Term term) {
+  @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
     var f = expr.function().accept(this, null);
     var resultTerm = f.wellTyped;
     if (!(f.type instanceof PiTerm piTerm)) return wantButNo(expr, f.type, "pi type");
@@ -205,7 +214,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Check(partialSynth = true)
-  @Override public Result visitTup(Expr.@NotNull TupExpr expr, Term term) {
+  @Override public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
     var items = Buffer.<Term>of();
     final var resultLast = new Ref<Term>();
     final Buffer<@NotNull Param> resultTele;
@@ -258,7 +267,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Override
-  public Result catchUnhandled(@NotNull Expr expr, Term term) {
+  public Result catchUnhandled(@NotNull Expr expr, @Nullable Term term) {
     throw new UnsupportedOperationException(expr.toString());
   }
 

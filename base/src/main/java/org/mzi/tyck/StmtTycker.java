@@ -3,9 +3,15 @@
 package org.mzi.tyck;
 
 import org.glavo.kala.Unit;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
+import org.mzi.concrete.Expr;
+import org.mzi.concrete.Param;
+import org.mzi.core.def.FnDef;
+import org.mzi.core.term.Term;
 
 public class StmtTycker implements Decl.Visitor<Unit, Unit> {
   public final @NotNull Reporter reporter;
@@ -16,10 +22,43 @@ public class StmtTycker implements Decl.Visitor<Unit, Unit> {
 
   @Override public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
     // TODO
-    return null;
+    return Unit.unit();
   }
 
   @Override public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
-    return null;
+    // TODO[kiva]: is it ok to reuse the exprTycker?
+    ExprTycker exprTycker = new ExprTycker(reporter);
+
+    var resultTele = checkTele(exprTycker, decl.telescope);
+
+    Term resultType;
+    Term resultBody;
+
+    // the function doesn't have a result type annotation
+    if (decl.result instanceof Expr.HoleExpr) {
+      var bodyRes = exprTycker.checkExpr(decl.body, null);
+      resultBody = bodyRes.wellTyped();
+      resultType = bodyRes.type();
+    } else {
+      var resultRes = exprTycker.checkExpr(decl.result, null);
+      resultType = resultRes.wellTyped();
+      var bodyRes = exprTycker.checkExpr(decl.body, resultType);
+      resultBody = bodyRes.wellTyped();
+    }
+
+    decl.wellTyped = new FnDef(decl.ref.name(), resultTele, resultType, resultBody);
+    return Unit.unit();
+  }
+
+  private @NotNull ImmutableSeq<org.mzi.core.Param> checkTele(@NotNull ExprTycker exprTycker,
+                                                              @NotNull Buffer<Param> tele) {
+    return tele.stream()
+      .map(param -> {
+        assert param.type() != null; // guaranteed by MziProducer
+        var paramRes = exprTycker.checkExpr(param.type(), null);
+        exprTycker.localCtx.put(param.var(), paramRes.wellTyped());
+        return new org.mzi.core.Param(param.var(), paramRes.wellTyped(), param.explicit());
+      })
+      .collect(ImmutableSeq.factory());
   }
 }
