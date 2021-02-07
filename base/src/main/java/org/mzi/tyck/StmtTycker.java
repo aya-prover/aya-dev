@@ -10,22 +10,23 @@ import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
+import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.Term;
 
-public class StmtTycker implements Decl.Visitor<Unit, Unit> {
+public class StmtTycker implements Decl.Visitor<Unit, Def> {
   public final @NotNull Reporter reporter;
 
   public StmtTycker(@NotNull Reporter reporter) {
     this.reporter = reporter;
   }
 
-  @Override public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+  @Override public Def visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
     // TODO[kiva]: implement
-    return Unit.unit();
+    throw new UnsupportedOperationException();
   }
 
-  @Override public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
+  @Override public Def visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
     // TODO[kiva]: is it ok to reuse the exprTycker?
     ExprTycker exprTycker = new ExprTycker(reporter);
 
@@ -46,8 +47,9 @@ public class StmtTycker implements Decl.Visitor<Unit, Unit> {
       resultBody = bodyRes.wellTyped();
     }
 
-    decl.wellTyped = new FnDef(decl.ref.name(), resultTele, resultType, resultBody);
-    return Unit.unit();
+    var def = new FnDef(decl.ref.name(), resultTele, resultType, resultBody);
+    decl.wellTyped = def;
+    return def;
   }
 
   private @NotNull ImmutableSeq<org.mzi.core.Param> checkTele(@NotNull ExprTycker exprTycker,

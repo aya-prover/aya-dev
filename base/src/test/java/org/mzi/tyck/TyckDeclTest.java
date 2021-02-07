@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.ref.Var;
-import org.mzi.concrete.Decl;
 import org.mzi.concrete.parse.MziProducer;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.core.def.FnDef;
@@ -37,11 +36,9 @@ public class TyckDeclTest {
     var decl = MziProducer.parseDecl(code);
     decl.desugar();
     decl.resolve(new SimpleContext());
-    decl.tyck(ThrowingReporter.INSTANCE);
-
-    assertTrue(decl instanceof Decl.FnDecl);
-    Decl.FnDecl fnDecl = ((Decl.FnDecl) decl);
-    assertNotNull(fnDecl.wellTyped);
-    return fnDecl.wellTyped;
+    var def = decl.tyck(ThrowingReporter.INSTANCE);
+    assertNotNull(def);
+    assertTrue(def instanceof FnDef);
+    return ((FnDef) def);
   }
 }

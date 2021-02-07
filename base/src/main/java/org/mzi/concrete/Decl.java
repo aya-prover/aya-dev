@@ -12,6 +12,7 @@ import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
+import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
 import org.mzi.tyck.StmtTycker;
@@ -60,8 +61,8 @@ public sealed abstract class Decl implements Stmt {
     return accept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  public void tyck(@NotNull Reporter reporter) {
-    accept(new StmtTycker(reporter), Unit.unit());
+  public Def tyck(@NotNull Reporter reporter) {
+    return accept(new StmtTycker(reporter), Unit.unit());
   }
 
   public interface Visitor<P, R> {
