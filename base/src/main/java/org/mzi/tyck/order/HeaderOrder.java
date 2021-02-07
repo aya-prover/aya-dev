@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.order;
 
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableSet;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.mzi.core.def.Def;
 import org.mzi.core.visitor.RefFinder;
 
@@ -15,7 +15,8 @@ import org.mzi.core.visitor.RefFinder;
  */
 public final class HeaderOrder {
   private static void visit(Def def, MutableSet<Def> visited, MutableSet<Def> inStack, Buffer<Def> order) {
-    if (inStack.contains(def)) throw new IllegalStateException("Circular reference in definition header."); // TODO[xyr]: report instead of throw
+    if (inStack.contains(def))
+      throw new IllegalStateException("Circular reference in definition header."); // TODO[xyr]: report instead of throw
     visited.add(def);
     inStack.add(def);
     order.append(def);
@@ -28,7 +29,7 @@ public final class HeaderOrder {
     inStack.remove(def);
   }
 
-  public static @Nullable Buffer<Def> genHeaderOrder(Seq<Def> defs) {
+  public static @NotNull Buffer<Def> genHeaderOrder(@NotNull Seq<Def> defs) {
     var visited = MutableSet.<Def>of();
     var inStack = MutableSet.<Def>of();
     var order = Buffer.<Def>of();
