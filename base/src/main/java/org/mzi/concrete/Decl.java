@@ -157,7 +157,7 @@ public sealed abstract class Decl implements Stmt {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
-    public @Nullable Expr result;
+    public @NotNull Expr result;
     public @NotNull Expr body;
 
     public FnDecl(
