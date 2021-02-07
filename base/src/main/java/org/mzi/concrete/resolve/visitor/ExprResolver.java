@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
@@ -62,8 +62,8 @@ public final class ExprResolver implements ExprFixpoint<Context> {
   @Override public @NotNull Expr visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, Context ctx) {
     var local = new SimpleContext();
     local.setOuterContext(ctx);
-    var params = visitParams(expr.params(), local).get(0);
+    var params = visitParams(expr.params(), local);
     var last = expr.last().accept(this, local);
-    return new Expr.PiExpr(expr.sourcePos(), expr.co(), params, last);
+    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), params, last);
   }
 }
