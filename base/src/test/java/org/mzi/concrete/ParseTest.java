@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
@@ -78,6 +78,21 @@ public class ParseTest {
       "id",
       Buffer.of(
         new Param(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
+        new Param(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true)
+      ),
+      new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
+      new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
+      Buffer.of()
+    ));
+    parseTo("\\public \\def xx {A, B : \\114-Type514} (a : A) : A => a", new Decl.FnDecl(
+      SourcePos.NONE,
+      Stmt.Accessibility.Public,
+      EnumSet.noneOf(Modifier.class),
+      null,
+      "xx",
+      Buffer.of(
+        new Param(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
+        new Param(SourcePos.NONE, new LocalVar("B"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
         new Param(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true)
       ),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
