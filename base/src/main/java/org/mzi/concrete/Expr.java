@@ -13,10 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.desugar.Desugarer;
+import org.mzi.concrete.pretty.ExprPrettyConsumer;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.concrete.resolve.visitor.ExprResolver;
 import org.mzi.generic.Arg;
+import org.mzi.pretty.doc.Doc;
 
 import java.util.stream.Stream;
 
@@ -38,6 +40,10 @@ public sealed interface Expr {
 
   default @NotNull Expr resolve() {
     return resolve(new SimpleContext());
+  }
+
+  default @NotNull Doc toDoc() {
+    return accept(ExprPrettyConsumer.INSTANCE, Unit.unit());
   }
 
   interface Visitor<P, R> {
