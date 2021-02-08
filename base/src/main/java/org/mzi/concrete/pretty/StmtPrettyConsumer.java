@@ -95,13 +95,13 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
     };
   }
 
-  private Doc visitTele(@NotNull Buffer<Param> telescope) {
+  /*package-private*/ Doc visitTele(@NotNull Buffer<Param> telescope) {
     return telescope.stream()
       .map(this::visitParam)
       .reduce(Doc.empty(), Doc::hsep);
   }
 
-  private Doc visitParam(@NotNull Param param) {
+  /*package-private*/ Doc visitParam(@NotNull Param param) {
     return Doc.cat(
       param.explicit() ? Doc.plain("(") : Doc.plain("{"),
       Doc.plain(param.var().name()),
