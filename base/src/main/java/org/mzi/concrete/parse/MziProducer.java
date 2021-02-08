@@ -137,13 +137,13 @@ public final class MziProducer extends MziBaseVisitor<Object> {
         case "" -> throw new UnsupportedOperationException("TODO");
         case "oo-" -> Integer.MAX_VALUE;
       };
-      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), -3);
+      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), 0);
       return new Expr.UnivExpr(sourcePosOf(ctx), uLevel, hLevel);
     }
     var set = ctx.SET_UNIV();
     if (set != null) {
       var text = set.getText().substring("\\Set".length());
-      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text, -3), -3);
+      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text, 0), 0);
     }
     var prop = ctx.PROP();
     if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);

@@ -13,10 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.desugar.Desugarer;
+import org.mzi.concrete.pretty.ExprPrettyConsumer;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.concrete.resolve.visitor.ExprResolver;
 import org.mzi.generic.Arg;
+import org.mzi.pretty.doc.Doc;
 
 import java.util.stream.Stream;
 
@@ -38,6 +40,10 @@ public sealed interface Expr {
 
   default @NotNull Expr resolve() {
     return resolve(new SimpleContext());
+  }
+
+  default @NotNull Doc toDoc() {
+    return accept(ExprPrettyConsumer.INSTANCE, Unit.unit());
   }
 
   interface Visitor<P, R> {
@@ -240,8 +246,8 @@ public sealed interface Expr {
   }
 
   /**
-   * @param hLevel specified hLevel, <= -3 if not specified.
-   * @param uLevel specified uLevel, <= -3 if not specified.
+   * @param hLevel specified hLevel
+   * @param uLevel specified uLevel
    * @author re-xyr, ice1000
    */
   record UnivExpr(
@@ -249,11 +255,6 @@ public sealed interface Expr {
     int uLevel,
     int hLevel
   ) implements Expr {
-    public UnivExpr(@NotNull SourcePos sourcePos) {
-      // TODO[level]: initialize the levels
-      this(sourcePos, -3, -3);
-    }
-
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }

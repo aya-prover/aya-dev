@@ -8,8 +8,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.desugar.Desugarer;
+import org.mzi.concrete.pretty.StmtPrettyConsumer;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.visitor.StmtResolver;
+import org.mzi.pretty.doc.Doc;
 
 /**
  * @author kiva
@@ -26,6 +28,10 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
 
   default void desugar() {
     accept(Desugarer.INSTANCE, Unit.unit());
+  }
+
+  default @NotNull Doc toDoc() {
+    return accept(StmtPrettyConsumer.INSTANCE, Unit.unit());
   }
 
   /**
