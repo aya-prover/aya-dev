@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.pretty.doc;
 
@@ -419,10 +419,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc vcat(Doc @NotNull ... docs) {
-    return concatWith(
-      (x, y) -> simpleCat(x, lineEmpty(), y),
-      docs
-    );
+    return join(lineEmpty(), docs);
   }
 
   /**
@@ -471,10 +468,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc fillCat(Doc @NotNull ... docs) {
-    return concatWith(
-      (x, y) -> simpleCat(x, softLineEmpty(), y),
-      docs
-    );
+    return join(softLineEmpty(), docs);
   }
 
   /**
@@ -545,10 +539,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc vsep(Doc @NotNull ... docs) {
-    return concatWith(
-      (x, y) -> simpleCat(x, line(), y),
-      docs
-    );
+    return join(line(), docs);
   }
 
   /**
@@ -609,8 +600,13 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc fillSep(Doc @NotNull ... docs) {
+    return join(softLine(), docs);
+  }
+
+  @Contract("_, _ -> new")
+  static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
     return concatWith(
-      (x, y) -> simpleCat(x, softLine(), y),
+      (x, y) -> simpleCat(x, delim, y),
       docs
     );
   }
