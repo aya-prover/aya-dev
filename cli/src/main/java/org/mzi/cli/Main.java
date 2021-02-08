@@ -49,7 +49,7 @@ public class Main {
       System.err.println("""
         A type error was discovered during type checking.
         Please report the stacktrace to the developers so a better error handling could be made.
-        Don't forget to inform the version of Mzi you're using.""");
+        Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
       System.exit(1);
     }
     if (reporter.isEmpty()) System.out.println("tql");

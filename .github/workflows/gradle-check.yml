@@ -18,3 +18,11 @@ jobs:
         with:
           dependencies-cache-enabled: true
           arguments: check --info --no-daemon --stacktrace --warning-mode all
+      - uses: eskatos/gradle-command-action@v1
+        with:
+          dependencies-cache-enabled: true
+          arguments: :cli:copyJarHere --no-daemon
+      - uses: actions/upload-artifact@master
+        with:
+          name: nightly-build
+          path: "*.jar"
