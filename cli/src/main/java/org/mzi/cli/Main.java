@@ -8,6 +8,7 @@ import org.mzi.concrete.parse.MziParsing;
 import org.mzi.concrete.parse.MziProducer;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.prelude.GeneratedVersion;
+import org.mzi.tyck.TyckOptions;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -25,6 +26,8 @@ public class Main {
       commander.usage();
       return;
     }
+
+    TyckOptions.VERBOSE = cli.verbose;
 
     var inputFile = cli.inputFile;
     var filePath = Paths.get(inputFile);

@@ -9,6 +9,8 @@ public class CliArgs {
   public boolean version = false;
   @Parameter(names = {"--help", "-h"}, description = "Show this message", help = true)
   public boolean help = false;
+  @Parameter(names = {"--verbose", "-V"}, description = "Print typechecking process")
+  public boolean verbose;
   @Parameter(description = "<input-file>")
   public String inputFile;
 }
