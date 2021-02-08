@@ -8,7 +8,9 @@ import org.mzi.concrete.parse.MziParsing;
 import org.mzi.concrete.parse.MziProducer;
 import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.prelude.GeneratedVersion;
+import org.mzi.tyck.ExprTycker;
 import org.mzi.tyck.TyckOptions;
+import org.mzi.tyck.error.CountingReporter;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -30,16 +32,27 @@ public class Main {
 
     var inputFile = cli.inputFile;
     var filePath = Paths.get(inputFile);
-    var reporter = new CliReporter(filePath);
+    var reporter = new CountingReporter(new CliReporter(filePath));
     var parser = MziParsing.parser(filePath, reporter);
     var program = MziProducer.INSTANCE.visitProgram(parser.program());
     var context = new SimpleContext();
-    program.forEach(s -> {
-      s.desugar();
-      s.resolve(context);
-    });
-    program.forEach(s -> {
-      if (s instanceof Decl decl) decl.tyck(reporter);
-    });
+    try {
+      program.forEach(s -> {
+        s.desugar();
+        s.resolve(context);
+      });
+      program.forEach(s -> {
+        if (s instanceof Decl decl) decl.tyck(reporter);
+      });
+    } catch (ExprTycker.TyckerException e) {
+      e.printStackTrace();
+      System.err.println("""
+        A type error was discovered during type checking.
+        Please report the stacktrace to the developers so a better error handling could be made.
+        Don't forget to inform the version of Mzi you're using.""");
+      System.exit(1);
+    }
+    if (reporter.isEmpty()) System.out.println("tql");
+    else System.err.println("nmsl");
   }
 }

@@ -134,6 +134,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
         case "h-", "h" -> -3;
+        case "" -> throw new UnsupportedOperationException("TODO");
         case "oo-" -> Integer.MAX_VALUE;
       };
       var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), -3);
