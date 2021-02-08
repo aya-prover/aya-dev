@@ -8,11 +8,9 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
-import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.term.Term;
 
 public class StmtTycker implements Decl.Visitor<Unit, Def> {
   public final @NotNull Reporter reporter;
@@ -27,27 +25,15 @@ public class StmtTycker implements Decl.Visitor<Unit, Def> {
   }
 
   @Override public Def visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
-    // TODO[kiva]: is it ok to reuse the exprTycker?
-    ExprTycker exprTycker = new ExprTycker(reporter);
-
+    var exprTycker = new ExprTycker(reporter);
     var resultTele = checkTele(exprTycker, decl.telescope);
 
-    Term resultType;
-    Term resultBody;
+    // It might contain unsolved holes, but that's acceptable.
+    var resultRes = decl.result.accept(exprTycker, null);
+    var resultType = resultRes.wellTyped();
+    var bodyRes = exprTycker.checkExpr(decl.body, resultType);
 
-    // the function doesn't have a result type annotation
-    if (decl.result instanceof Expr.HoleExpr) {
-      var bodyRes = exprTycker.checkExpr(decl.body, null);
-      resultBody = bodyRes.wellTyped();
-      resultType = bodyRes.type();
-    } else {
-      var resultRes = exprTycker.checkExpr(decl.result, null);
-      resultType = resultRes.wellTyped();
-      var bodyRes = exprTycker.checkExpr(decl.body, resultType);
-      resultBody = bodyRes.wellTyped();
-    }
-
-    var def = new FnDef(decl.ref.name(), resultTele, resultType, resultBody);
+    var def = new FnDef(decl.ref.name(), resultTele, resultType, bodyRes.wellTyped());
     decl.wellTyped = def;
     return def;
   }
