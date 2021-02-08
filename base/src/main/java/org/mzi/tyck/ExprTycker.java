@@ -258,7 +258,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override
   public Result catchUnhandled(@NotNull Expr expr, Term term) {
-    throw new UnsupportedOperationException(expr.toString());
+    throw new UnsupportedOperationException(expr.toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
   }
 
   public static class TyckerException extends RuntimeException {
