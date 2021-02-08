@@ -133,16 +133,16 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       var univTrunc = universeText.substring(1, universeText.indexOf("T"));
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
-        case "h-", "h" -> -3;
+        case "h-", "h" -> 0;
         case "oo-" -> Integer.MAX_VALUE;
       };
-      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), -3);
+      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), 0);
       return new Expr.UnivExpr(sourcePosOf(ctx), uLevel, hLevel);
     }
     var set = ctx.SET_UNIV();
     if (set != null) {
       var text = set.getText().substring("\\Set".length());
-      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text, -3), -3);
+      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text, 0), 0);
     }
     var prop = ctx.PROP();
     if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);

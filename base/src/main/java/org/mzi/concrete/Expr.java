@@ -246,8 +246,8 @@ public sealed interface Expr {
   }
 
   /**
-   * @param hLevel specified hLevel, <= -3 if not specified.
-   * @param uLevel specified uLevel, <= -3 if not specified.
+   * @param hLevel specified hLevel
+   * @param uLevel specified uLevel
    * @author re-xyr, ice1000
    */
   record UnivExpr(
@@ -255,11 +255,6 @@ public sealed interface Expr {
     int uLevel,
     int hLevel
   ) implements Expr {
-    public UnivExpr(@NotNull SourcePos sourcePos) {
-      // TODO[level]: initialize the levels
-      this(sourcePos, -3, -3);
-    }
-
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }
