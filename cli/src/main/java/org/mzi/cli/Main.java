@@ -18,8 +18,10 @@ public class Main {
     var cli = new CliArgs();
     var commander = JCommander.newBuilder().addObject(cli).build();
     commander.parse(args);
-    if (cli.version) System.out.println("Mzi v" + GeneratedVersion.VERSION_STRING);
-    if (cli.help || cli.inputFile == null) {
+    if (cli.version) {
+      System.out.println("Mzi v" + GeneratedVersion.VERSION_STRING);
+      if (cli.inputFile == null) return;
+    } else if (cli.help || cli.inputFile == null) {
       commander.usage();
       return;
     }
