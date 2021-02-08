@@ -7,3 +7,17 @@ dependencies {
   implementation(project(":parser"))
   implementation(project(":pretty"))
 }
+
+plugins {
+  id("com.github.johnrengelman.shadow") version "6.1.0"
+}
+
+tasks.withType<Jar>().configureEach {
+  manifest.attributes["Main-Class"] = "${project.group}.cli.Main"
+}
+
+task<Copy>("copyJarHere") {
+  dependsOn("shadowJar")
+  from(buildDir.resolve("libs").resolve("${project.name}-$version-all.jar"))
+  into(rootProject.projectDir)
+}

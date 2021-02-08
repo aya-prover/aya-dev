@@ -1,16 +1,21 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
 import org.glavo.kala.Tuple2;
+import org.glavo.kala.Unit;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
+import org.mzi.core.def.Def;
+import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
+import org.mzi.tyck.StmtTycker;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -20,10 +25,52 @@ import java.util.Objects;
  *
  * @author re-xyr
  */
-public sealed interface Decl extends Stmt {
-  @Contract(pure = true) @NotNull DefVar<? extends Decl> ref();
+public sealed abstract class Decl implements Stmt {
+  public final @NotNull SourcePos sourcePos;
+  public final @NotNull Accessibility accessibility;
+  public final @NotNull Buffer<Stmt> abuseBlock;
 
-  record DataCtor(
+  // will change after resolve
+  public @NotNull Buffer<Param> telescope;
+
+  @Override public @NotNull SourcePos sourcePos() {
+    return sourcePos;
+  }
+
+  @Override public @NotNull Accessibility accessibility() {
+    return accessibility;
+  }
+
+  protected Decl(
+    @NotNull SourcePos sourcePos,
+    @NotNull Accessibility accessibility,
+    @NotNull Buffer<Stmt> abuseBlock,
+    @NotNull Buffer<Param> telescope
+  ) {
+    this.sourcePos = sourcePos;
+    this.accessibility = accessibility;
+    this.abuseBlock = abuseBlock;
+    this.telescope = telescope;
+  }
+
+  @Contract(pure = true) public @NotNull abstract DefVar<? extends Decl> ref();
+
+  abstract <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
+
+  public final @Override <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
+    return accept((Decl.Visitor<P, R>) visitor, p);
+  }
+
+  public Def tyck(@NotNull Reporter reporter) {
+    return accept(new StmtTycker(reporter), Unit.unit());
+  }
+
+  public interface Visitor<P, R> {
+    R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
+    R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
+  }
+
+  public static record DataCtor(
     @NotNull String name,
     @NotNull Buffer<Param> telescope,
     @NotNull Buffer<String> elim,
@@ -32,7 +79,7 @@ public sealed interface Decl extends Stmt {
   ) {
   }
 
-  sealed interface DataBody {
+  public sealed interface DataBody {
     record Ctors(
       @NotNull Buffer<DataCtor> ctors
     ) implements DataBody {}
@@ -48,14 +95,10 @@ public sealed interface Decl extends Stmt {
    *
    * @author kiva
    */
-  final class DataDecl implements Decl {
-    public final @NotNull SourcePos sourcePos;
-    public final @NotNull Accessibility accessibility;
+  public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDecl> ref;
-    public final @NotNull Buffer<Param> telescope;
     public @NotNull Expr result;
     public @NotNull DataBody body;
-    public final @NotNull Buffer<Stmt> abuseBlock;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
@@ -66,33 +109,20 @@ public sealed interface Decl extends Stmt {
       @NotNull DataBody body,
       @NotNull Buffer<Stmt> abuseBlock
     ) {
-      this.sourcePos = sourcePos;
-      this.accessibility = accessibility;
-      this.telescope = telescope;
+      super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
-      this.abuseBlock = abuseBlock;
       this.ref = new DefVar<>(this, name);
     }
 
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R accept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitDataDecl(this, p);
     }
 
     @Override
     public @NotNull DefVar<DataDecl> ref() {
       return this.ref;
-    }
-
-    @Override
-    public @NotNull Accessibility accessibility() {
-      return this.accessibility;
-    }
-
-    @Override
-    public @NotNull SourcePos sourcePos() {
-      return this.sourcePos;
     }
 
     @Override public boolean equals(Object o) {
@@ -127,16 +157,13 @@ public sealed interface Decl extends Stmt {
    *
    * @author re-xyr
    */
-  final class FnDecl implements Decl {
-    public final @NotNull SourcePos sourcePos;
-    public final @NotNull Accessibility accessibility;
+  public static final class FnDecl extends Decl {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDecl> ref;
-    public final @NotNull Buffer<Param> telescope;
-    public @Nullable Expr result;
+    public @NotNull Expr result;
     public @NotNull Expr body;
-    public final @NotNull Buffer<Stmt> abuseBlock;
+    public @Nullable FnDef wellTyped;
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
@@ -149,19 +176,16 @@ public sealed interface Decl extends Stmt {
       @NotNull Expr body,
       @NotNull Buffer<Stmt> abuseBlock
     ) {
-      this.sourcePos = sourcePos;
-      this.accessibility = accessibility;
+      super(sourcePos, accessibility, abuseBlock, telescope);
       this.modifiers = modifiers;
       this.assoc = assoc;
       this.ref = new DefVar<>(this, name);
-      this.telescope = telescope;
       this.result = result;
       this.body = body;
-      this.abuseBlock = abuseBlock;
     }
 
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R accept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitFnDecl(this, p);
     }
 
@@ -176,7 +200,9 @@ public sealed interface Decl extends Stmt {
     }
 
     @Override
-    public @NotNull Accessibility accessibility() { return this.accessibility; }
+    public @NotNull Accessibility accessibility() {
+      return this.accessibility;
+    }
 
     @Override public boolean equals(Object o) {
       if (this == o) return true;

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
@@ -40,7 +40,7 @@ public final class StmtResolver implements Stmt.Visitor<@NotNull Context, Unit> 
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, @NotNull Context context) {
     var local = new SimpleContext();
     local.setOuterContext(context);
-    ExprResolver.INSTANCE.visitParams(decl.telescope, local);
+    decl.telescope = ExprResolver.INSTANCE.visitParams(decl.telescope, local);
     decl.result = decl.result.resolve(local);
     decl.body = decl.body.resolve(local);
     return Unit.unit();

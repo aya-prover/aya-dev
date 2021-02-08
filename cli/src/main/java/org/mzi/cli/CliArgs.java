@@ -5,10 +5,12 @@ package org.mzi.cli;
 import com.beust.jcommander.Parameter;
 
 public class CliArgs {
-  @Parameter(names = {"--version", "-V"}, description = "Display the current version")
+  @Parameter(names = {"--version"}, description = "Display the current version")
   public boolean version = false;
   @Parameter(names = {"--help", "-h"}, description = "Show this message", help = true)
   public boolean help = false;
-  @Parameter(names = {"--file", "-f"}, description = "The input file")
+  @Parameter(names = {"--verbose", "-v"}, description = "Print typechecking process")
+  public boolean verbose;
+  @Parameter(description = "<input-file>")
   public String inputFile;
 }

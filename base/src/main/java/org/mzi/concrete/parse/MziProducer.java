@@ -133,7 +133,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       var univTrunc = universeText.substring(1, universeText.indexOf("T"));
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
-        case "h-", "h" -> 0;
+        case "h-", "h" -> -3;
+        case "" -> throw new UnsupportedOperationException("TODO");
         case "oo-" -> Integer.MAX_VALUE;
       };
       var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), 0);
@@ -169,15 +170,15 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   public @NotNull Buffer<@NotNull Param> visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
     if (literal != null) return Buffer.of(new Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
-    var teleTypedExpr = ctx.teleTypedExpr();
-    if (ctx.LPAREN() != null) return visitTeleTypedExpr(teleTypedExpr).apply(true);
+    var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
+    if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
-    return visitTeleTypedExpr(teleTypedExpr).apply(false);
+    return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(false);
   }
 
   @Override
-  public @NotNull Function<Boolean, Buffer<Param>> visitTeleTypedExpr(MziParser.TeleTypedExprContext ctx) {
-    var type = visitType(ctx.type());
+  public @NotNull Function<Boolean, Buffer<Param>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
+    var type = type(ctx.type(), sourcePosOf(ctx.ids()));
     return explicit -> visitIds(ctx.ids())
       .map(var -> new Param(sourcePosOf(ctx), new LocalVar(var), type, explicit))
       .collect(Buffer.factory());

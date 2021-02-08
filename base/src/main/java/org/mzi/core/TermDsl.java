@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core;
 
@@ -69,7 +69,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
       case "Cosigma" -> new SigmaTerm(true, exprToParams(exprs.get(0)), exprs.get(1).accept(this));
       case "tup" -> new TupTerm(exprs.stream().collect(ImmutableVector.factory()).map(expr -> expr.accept(this)));
       case "proj" -> new ProjTerm(exprs.get(0).accept(this), parseInt(exprs.get(1).getText()));
-      default -> throw new IllegalArgumentException("Unexpected lisp function: " + rule);
+      default -> new RefTerm(ref(rule));
     };
   }
 

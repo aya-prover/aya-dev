@@ -125,11 +125,11 @@ literal : ID
         ;
 
 tele : literal
-     | LPAREN teleTypedExpr ')'
-     | LBRACE teleTypedExpr '}'
+     | LPAREN teleMaybeTypedExpr ')'
+     | LBRACE teleMaybeTypedExpr '}'
      ;
 
-teleTypedExpr : ids type?;
+teleMaybeTypedExpr : ids type?;
 
 // utilities
 ids : (ID ',')* ID?;

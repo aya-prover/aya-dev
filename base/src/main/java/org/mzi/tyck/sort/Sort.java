@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.sort;
 
@@ -49,6 +49,10 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
   public static class Level {
     public Level subst(@NotNull LevelSubst subst) {
       throw new UnsupportedOperationException("#93");
+    }
+
+    @Override public String toString() {
+      return "Level";
     }
 
     public static boolean compare(

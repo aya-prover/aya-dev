@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.context;
 
 import org.glavo.kala.Tuple2;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
@@ -22,11 +21,11 @@ public final class SimpleContext implements Context {
   private Context superContext;
 
   @Override public @Nullable Tuple2<Var, Stmt.Accessibility> unsafeGetLocal(@NotNull String name) {
-    return variables.get(name);
+    return variables.getOrNull(name);
   }
 
   @Override public @Nullable Stmt.Accessibility unsafeContainsLocal(@NotNull String name) {
-    return Option.of(variables.get(name))
+    return variables.getOption(name)
       .map(i -> i._2)
       .getOrNull();
   }
