@@ -21,7 +21,7 @@ public final class SimpleContext implements Context {
   private Context superContext;
 
   @Override public @Nullable Tuple2<Var, Stmt.Accessibility> unsafeGetLocal(@NotNull String name) {
-    return variables.get(name);
+    return variables.getOrNull(name);
   }
 
   @Override public @Nullable Stmt.Accessibility unsafeContainsLocal(@NotNull String name) {
