@@ -30,10 +30,9 @@ public class StmtTycker implements Decl.Visitor<Unit, Def> {
 
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(exprTycker, null);
-    var resultType = resultRes.wellTyped();
-    var bodyRes = exprTycker.checkExpr(decl.body, resultType);
+    var bodyRes = exprTycker.checkExpr(decl.body, resultRes.wellTyped());
 
-    var def = new FnDef(decl.ref.name(), resultTele, resultType, bodyRes.wellTyped());
+    var def = new FnDef(decl.ref.name(), resultTele, bodyRes.wellTyped(), bodyRes.wellTyped());
     decl.wellTyped = def;
     return def;
   }
