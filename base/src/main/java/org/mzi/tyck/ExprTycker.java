@@ -186,6 +186,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
 
+  @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
+    // TODO[ice]: deal with unit type
+    var name = expr.name();
+    if (name == null) name = "_";
+    if (term == null) term = new AppTerm.HoleApp(new LocalVar(name + "_ty"));
+    return new Result(new AppTerm.HoleApp(new LocalVar(name)), term);
+  }
+
   @Rule.Synth
   @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
     var f = expr.function().accept(this, null);

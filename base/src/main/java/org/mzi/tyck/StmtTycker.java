@@ -32,7 +32,7 @@ public class StmtTycker implements Decl.Visitor<Unit, Def> {
     var resultRes = decl.result.accept(exprTycker, null);
     var bodyRes = exprTycker.checkExpr(decl.body, resultRes.wellTyped());
 
-    var def = new FnDef(decl.ref.name(), resultTele, bodyRes.wellTyped(), bodyRes.wellTyped());
+    var def = new FnDef(decl.ref.name(), resultTele, bodyRes.type(), bodyRes.wellTyped());
     decl.wellTyped = def;
     return def;
   }
