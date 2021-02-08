@@ -88,12 +88,12 @@ public class ExprPrettyConsumer implements Expr.Visitor<Unit, Doc> {
     if (u == 0 && h == -1) {
       return Doc.plain("\\Prop");
     }
-    if (h <= -3) {
-      return Doc.plain("\\Set" + (u <= -3 ? "" : u));
+    if (h == 0) {
+      return Doc.plain("\\Set" + (u == 0 ? "" : u));
     }
     return switch (h) {
-      case Integer.MAX_VALUE -> Doc.plain("\\oo-Type" + (u <= -3 ? "" : u));
-      default -> Doc.plain("\\" + h + "-Type" + (u <= -3 ? "" : u));
+      case Integer.MAX_VALUE -> Doc.plain("\\oo-Type" + (u == 0 ? "" : u));
+      default -> Doc.plain("\\" + h + "-Type" + (u == 0 ? "" : u));
     };
   }
 
