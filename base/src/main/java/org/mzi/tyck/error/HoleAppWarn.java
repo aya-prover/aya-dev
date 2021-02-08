@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.error;
 
@@ -12,7 +12,10 @@ import org.mzi.pretty.doc.Doc;
 /**
  * @author ice1000
  */
-public record HoleAppWarn(@NotNull AppTerm.HoleApp term, @NotNull Expr expr) implements TyckProblem, Problem.Warn {
+public record HoleAppWarn(
+  @NotNull AppTerm.HoleApp term,
+  @NotNull Expr expr
+) implements TyckProblem, Problem.Warn {
   @Override @Contract(" -> new")
   public @NotNull Doc describe() {
     return Doc.plain("Attempting to unify a hole applied with argument: `" + term.var().name() + "`," +

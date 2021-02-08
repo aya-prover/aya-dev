@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.error;
 
@@ -20,7 +20,9 @@ public record BadTypeError(
       Doc.plain(actualType.toString()),
       Doc.plain(" is not a "),
       expectedType,
-      Doc.plain(", therefore cannot type a lambda such as "),
-      Doc.plain(expr.toString()));
+      Doc.plain(", therefore cannot type a lambda such as `"),
+      expr.toDoc(),
+      Doc.plain("`")
+    );
   }
 }
