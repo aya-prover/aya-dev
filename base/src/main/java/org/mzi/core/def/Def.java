@@ -20,5 +20,6 @@ public interface Def extends CoreDef {
    */
   interface Visitor<P, R> {
     R visitFn(@NotNull FnDef def, P p);
+    R visitData(@NotNull DataDef def, P p);
   }
 }

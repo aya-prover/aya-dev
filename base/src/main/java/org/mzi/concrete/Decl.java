@@ -8,10 +8,12 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.concrete.def.ConcreteDecl;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
+import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
@@ -25,7 +27,7 @@ import java.util.Objects;
  *
  * @author re-xyr
  */
-public sealed abstract class Decl implements Stmt {
+public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull Accessibility accessibility;
   public final @NotNull Buffer<Stmt> abuseBlock;
@@ -53,7 +55,7 @@ public sealed abstract class Decl implements Stmt {
     this.telescope = telescope;
   }
 
-  @Contract(pure = true) public abstract DefVar<? extends Def, ? extends Decl> ref();
+  @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
   abstract <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
 
@@ -96,8 +98,7 @@ public sealed abstract class Decl implements Stmt {
    * @author kiva
    */
   public static final class DataDecl extends Decl {
-    // TODO: data def type in generics
-    public final @NotNull DefVar<? extends Def, DataDecl> ref;
+    public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
     public @NotNull DataBody body;
 
@@ -121,8 +122,7 @@ public sealed abstract class Decl implements Stmt {
       return visitor.visitDataDecl(this, p);
     }
 
-    // TODO: data def type in generics
-    @Override public @NotNull DefVar<? extends Def, DataDecl> ref() {
+    @Override public @NotNull DefVar<DataDef, DataDecl> ref() {
       return this.ref;
     }
 
@@ -194,7 +194,6 @@ public sealed abstract class Decl implements Stmt {
       return this.sourcePos;
     }
 
-    // TODO: data def type in generics
     @Override public @NotNull DefVar<FnDef, FnDecl> ref() {
       return this.ref;
     }
