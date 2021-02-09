@@ -4,9 +4,14 @@ package org.mzi.cli;
 
 import com.beust.jcommander.JCommander;
 import org.mzi.concrete.Decl;
+import org.mzi.concrete.Stmt;
 import org.mzi.concrete.parse.MziParsing;
 import org.mzi.concrete.parse.MziProducer;
-import org.mzi.concrete.resolve.context.SimpleContext;
+import org.mzi.concrete.resolve.context.BindContext;
+import org.mzi.concrete.resolve.context.Context;
+import org.mzi.concrete.resolve.context.EmptyContext;
+import org.mzi.concrete.resolve.module.EmptyModuleLoader;
+import org.mzi.concrete.resolve.visitor.StmtShallowResolver;
 import org.mzi.prelude.GeneratedVersion;
 import org.mzi.tyck.ExprTycker;
 import org.mzi.tyck.TyckOptions;
@@ -35,12 +40,14 @@ public class Main {
     var reporter = new CountingReporter(new CliReporter(filePath));
     var parser = MziParsing.parser(filePath, reporter);
     var program = MziProducer.INSTANCE.visitProgram(parser.program());
-    var context = new SimpleContext();
+    var context = new EmptyContext(reporter).derive();
+    var shallowResolver = new StmtShallowResolver(new EmptyModuleLoader());
     try {
       program.forEach(s -> {
         s.desugar();
-        s.resolve(context);
+        s.accept(shallowResolver, context);
       });
+      program.forEach(Stmt::resolve);
       program.forEach(s -> {
         if (s instanceof Decl decl) decl.tyck(reporter);
       });
@@ -48,6 +55,13 @@ public class Main {
       e.printStackTrace();
       System.err.println("""
         A type error was discovered during type checking.
+        Please report the stacktrace to the developers so a better error handling could be made.
+        Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
+      System.exit(1);
+    } catch (Context.ContextException e) {
+      e.printStackTrace();
+      System.err.println("""
+        A reference error was discovered during resolving.
         Please report the stacktrace to the developers so a better error handling could be made.
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
       System.exit(1);
