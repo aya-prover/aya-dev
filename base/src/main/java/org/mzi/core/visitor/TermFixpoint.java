@@ -12,7 +12,6 @@ import org.mzi.tyck.sort.Sort;
 /**
  * @author ice1000
  */
-@SuppressWarnings("NewObjectEquality")
 public interface TermFixpoint<P> extends
   Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, P p) {
@@ -26,7 +25,7 @@ public interface TermFixpoint<P> extends
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
     var param = new Param(term.param().ref(), term.param().type().accept(this, p), term.param().explicit());
     var body = term.body().accept(this, p);
-    if (param == term.param() && body == term.body()) return term;
+    if (param.type() == term.param().type() && body == term.body()) return term;
     return new LamTerm(param, body);
   }
 

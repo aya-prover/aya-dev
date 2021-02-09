@@ -13,6 +13,8 @@ import org.mzi.core.def.FnDef;
 
 /**
  * @author re-xyr
+ * @see RefFinder#HEADER_ONLY
+ * @see RefFinder#HEADER_AND_BODY
  */
 public record RefFinder(boolean withBody) implements Def.Visitor<@NotNull Buffer<Def>, Unit> {
   private static final class TermRefFinder implements VarConsumer<@NotNull Buffer<Def>> {
