@@ -52,7 +52,7 @@ public class Main {
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
       System.exit(1);
     }
-    if (reporter.isEmpty()) System.out.println("tql");
-    else System.err.println("nmsl");
+    if (reporter.isEmpty()) System.out.println("\uD83D\uDC02\uD83C\uDF7A");
+    else System.err.println("\uD83D\uDD28");
   }
 }
