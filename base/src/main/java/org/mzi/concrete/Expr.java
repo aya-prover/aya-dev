@@ -10,12 +10,13 @@ import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.desugar.Desugarer;
 import org.mzi.concrete.pretty.ExprPrettyConsumer;
 import org.mzi.concrete.resolve.context.Context;
-import org.mzi.concrete.resolve.context.SimpleContext;
+import org.mzi.concrete.resolve.context.EmptyContext;
 import org.mzi.concrete.resolve.visitor.ExprResolver;
 import org.mzi.generic.Arg;
 import org.mzi.pretty.doc.Doc;
@@ -38,8 +39,8 @@ public sealed interface Expr {
     return accept(ExprResolver.INSTANCE, context);
   }
 
-  default @NotNull Expr resolve() {
-    return resolve(new SimpleContext());
+  default @NotNull Expr resolve(Reporter reporter) {
+    return resolve(new EmptyContext(reporter));
   }
 
   default @NotNull Doc toDoc() {

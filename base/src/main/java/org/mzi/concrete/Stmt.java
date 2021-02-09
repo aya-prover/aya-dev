@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.desugar.Desugarer;
 import org.mzi.concrete.pretty.StmtPrettyConsumer;
-import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.visitor.StmtResolver;
 import org.mzi.pretty.doc.Doc;
 
@@ -22,8 +21,8 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
   /** @apiNote the \import and \module stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
-  default void resolve(@NotNull Context context) {
-    accept(StmtResolver.INSTANCE, context);
+  default void resolve() {
+    accept(StmtResolver.INSTANCE, Unit.unit());
   }
 
   default void desugar() {
@@ -69,6 +68,7 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
     @NotNull String name,
     @NotNull ImmutableSeq<@NotNull Stmt> contents
   ) implements Stmt {
+
     @Override
     public @NotNull Accessibility accessibility() {
       return Accessibility.Public;
