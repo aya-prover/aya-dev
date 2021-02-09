@@ -3,6 +3,7 @@
 package org.mzi.concrete.resolve.context;
 
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
@@ -57,6 +58,16 @@ public interface Context {
       throw new ContextException();
     }
     return result;
+  }
+
+  @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos);
+  default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
+    var p = getParent();
+    var ref = getModuleLocalMaybe(modName, sourcePos);
+    if (ref == null) {
+      if (p == null) return null;
+      else return p.getModuleMaybe(modName, sourcePos);
+    } else return ref;
   }
 
   default @NotNull BindContext bind(@NotNull String name, @NotNull LocalVar ref, @NotNull SourcePos sourcePos) {

@@ -66,6 +66,11 @@ public final class ModuleContext implements Context {
     else return ref;
   }
 
+  @Override
+  public @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
+    return modules.get(modName);
+  }
+
   public @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> export() {
     return exports;
   }
@@ -78,9 +83,12 @@ public final class ModuleContext implements Context {
   ) {
     module.forEach((name, mod) -> {
       var componentName = modName.concat(name);
-      if (modules.containsKey(modName.concat(name))) {
+      if (modules.containsKey(componentName)) {
         getReporter().report(new DuplicateModNameError(modName, sourcePos));
         throw new ContextException();
+      }
+      if (getModuleMaybe(componentName, sourcePos) != null) {
+        getReporter().report(new ModShadowingWarn(componentName, sourcePos));
       }
       modules.set(componentName, mod);
       if (accessibility == Stmt.Accessibility.Public) exports.set(componentName, mod);
