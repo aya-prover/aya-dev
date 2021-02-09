@@ -14,7 +14,7 @@ import org.mzi.core.def.FnDef;
 /**
  * @author re-xyr
  */
-public final class RefFinder implements Def.Visitor<@NotNull Buffer<Def>, Unit> {
+public record RefFinder(boolean withBody) implements Def.Visitor<@NotNull Buffer<Def>, Unit> {
   private static final class TermRefFinder implements VarConsumer<@NotNull Buffer<Def>> {
     public static final @NotNull TermRefFinder INSTANCE = new TermRefFinder();
 
@@ -26,15 +26,8 @@ public final class RefFinder implements Def.Visitor<@NotNull Buffer<Def>, Unit> 
   public static RefFinder HEADER_ONLY = new RefFinder(false);
   public static RefFinder HEADER_AND_BODY = new RefFinder(true);
 
-  private final boolean withBody;
-
-  private RefFinder(boolean withBody) {
-    this.withBody = withBody;
-  }
-
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
-    fn.telescope().forEach(param ->
-      param.type().accept(TermRefFinder.INSTANCE, references));
+    fn.telescope().forEach(param -> param.type().accept(TermRefFinder.INSTANCE, references));
     fn.result().accept(TermRefFinder.INSTANCE, references);
     if (withBody) {
       fn.body().accept(TermRefFinder.INSTANCE, references);
@@ -43,8 +36,7 @@ public final class RefFinder implements Def.Visitor<@NotNull Buffer<Def>, Unit> 
   }
 
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
-    def.telescope().forEach(param ->
-      param.type().accept(TermRefFinder.INSTANCE, references));
+    def.telescope().forEach(param -> param.type().accept(TermRefFinder.INSTANCE, references));
     // TODO: data def
     return Unit.unit();
   }
