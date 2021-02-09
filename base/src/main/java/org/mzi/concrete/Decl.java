@@ -12,6 +12,7 @@ import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
+import org.mzi.concrete.resolve.context.Context;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
@@ -29,6 +30,7 @@ public sealed abstract class Decl implements Stmt {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull Accessibility accessibility;
   public final @NotNull Buffer<Stmt> abuseBlock;
+  public @Nullable Context ctx = null;
 
   // will change after resolve
   public @NotNull Buffer<Param> telescope;
@@ -164,6 +166,7 @@ public sealed abstract class Decl implements Stmt {
     public @NotNull Expr result;
     public @NotNull Expr body;
     public @Nullable FnDef wellTyped;
+
 
     public FnDecl(
       @NotNull SourcePos sourcePos,

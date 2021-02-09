@@ -3,46 +3,45 @@
 package org.mzi.concrete.resolve.visitor;
 
 import org.glavo.kala.Unit;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Stmt;
-import org.mzi.concrete.resolve.context.Context;
-import org.mzi.concrete.resolve.context.SimpleContext;
 
 /**
  * resolves expressions inside stmts, after StmtShallowResolveConsumer
  * @author re-xyr
  */
-public final class StmtResolver implements Stmt.Visitor<@NotNull Context, Unit> {
+public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
 
   private StmtResolver() {
   }
 
   @Override
-  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull Context context) {
-    throw new UnsupportedOperationException(); // TODO[xyr]: implement
+  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
+    visitAll(mod.contents(), unit);
+    return unit;
   }
 
   @Override
-  public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, @NotNull Context context) {
-    return Unit.unit();
-  }
-
-  /** @apiNote Note that this function MUTATES the decl. */
-  @Override
-  public Unit visitDataDecl(Decl.@NotNull DataDecl decl, @NotNull Context context) {
-    throw new UnsupportedOperationException(); // TODO[xyr]: implement
+  public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, Unit unit) {
+    return unit;
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override
-  public Unit visitFnDecl(Decl.@NotNull FnDecl decl, @NotNull Context context) {
-    var local = new SimpleContext();
-    local.setOuterContext(context);
-    decl.telescope = ExprResolver.INSTANCE.visitParams(decl.telescope, local);
-    decl.result = decl.result.resolve(local);
-    decl.body = decl.body.resolve(local);
+  public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+    throw new UnsupportedOperationException(); // TODO[xyr]: implement
+  }
+
+  /** @apiNote Note that this function MUTATES the decl. */
+  @Override
+  public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
+    var local = ExprResolver.INSTANCE.visitParams(decl.telescope.toImmutableSeq(), decl.ctx);
+    decl.telescope = local._1.collect(Buffer.factory());
+    decl.result = decl.result.resolve(local._2);
+    decl.body = decl.body.resolve(local._2);
     return Unit.unit();
   }
 }
