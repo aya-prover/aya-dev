@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.util;
 
@@ -124,15 +124,13 @@ public interface StringEscapeUtil {
   @Contract(pure = true)
   static @NotNull String escapeStringCharacters(@NotNull String s) {
     var buffer = new StringBuilder(s.length());
-    escapeStringCharacters(s.length(), s, "\"", buffer);
-    return buffer.toString();
+    return escapeStringCharacters(s.length(), s, "\"", buffer).toString();
   }
 
   @Contract(pure = true)
   static @NotNull String escapeCharCharacters(@NotNull String s) {
     var buffer = new StringBuilder(s.length());
-    escapeStringCharacters(s.length(), s, "'", buffer);
-    return buffer.toString();
+    return escapeStringCharacters(s.length(), s, "'", buffer).toString();
   }
 
   @Contract("_, _, _, _ -> param4")
