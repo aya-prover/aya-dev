@@ -1,16 +1,14 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.control.Option;
-import org.glavo.kala.ref.OptionRef;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
+import org.mzi.concrete.Decl;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
@@ -45,7 +43,7 @@ public sealed interface AppTerm extends Term {
   }
 
   record FnCall(
-    @NotNull DefVar<FnDef> fnRef,
+    @NotNull DefVar<FnDef, Decl.FnDecl> fnRef,
     @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

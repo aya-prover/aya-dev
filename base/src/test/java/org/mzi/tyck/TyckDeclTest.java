@@ -27,6 +27,7 @@ public class TyckDeclTest {
   public void idFuncTestCase(@NotNull @NonNls @Language("TEXT") String code) {
     var fnDef = successTyckFn(code);
     var vars = new HashMap<String, @NotNull Var>();
+    vars.put(fnDef.ref().name(), fnDef.ref());
     var expected = Lisp.parseDef("id",
       "(A (U) im (a (A) ex null))", "A", "a", vars);
     assertEquals(expected, fnDef);

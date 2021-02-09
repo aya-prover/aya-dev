@@ -53,7 +53,7 @@ public sealed abstract class Decl implements Stmt {
     this.telescope = telescope;
   }
 
-  @Contract(pure = true) public @NotNull abstract DefVar<? extends Decl> ref();
+  @Contract(pure = true) public abstract DefVar<? extends Def, ? extends Decl> ref();
 
   abstract <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
 
@@ -96,7 +96,8 @@ public sealed abstract class Decl implements Stmt {
    * @author kiva
    */
   public static final class DataDecl extends Decl {
-    public final @NotNull DefVar<DataDecl> ref;
+    // TODO: data def type in generics
+    public final @NotNull DefVar<? extends Def, DataDecl> ref;
     public @NotNull Expr result;
     public @NotNull DataBody body;
 
@@ -112,7 +113,7 @@ public sealed abstract class Decl implements Stmt {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
-      this.ref = new DefVar<>(this, name);
+      this.ref = DefVar.concrete(this, name);
     }
 
     @Override
@@ -120,8 +121,8 @@ public sealed abstract class Decl implements Stmt {
       return visitor.visitDataDecl(this, p);
     }
 
-    @Override
-    public @NotNull DefVar<DataDecl> ref() {
+    // TODO: data def type in generics
+    @Override public @NotNull DefVar<? extends Def, DataDecl> ref() {
       return this.ref;
     }
 
@@ -160,10 +161,9 @@ public sealed abstract class Decl implements Stmt {
   public static final class FnDecl extends Decl {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
-    public final @NotNull DefVar<FnDecl> ref;
+    public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Expr result;
     public @NotNull Expr body;
-    public @Nullable FnDef wellTyped;
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
@@ -179,7 +179,7 @@ public sealed abstract class Decl implements Stmt {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.modifiers = modifiers;
       this.assoc = assoc;
-      this.ref = new DefVar<>(this, name);
+      this.ref = DefVar.concrete(this, name);
       this.result = result;
       this.body = body;
     }
@@ -194,8 +194,8 @@ public sealed abstract class Decl implements Stmt {
       return this.sourcePos;
     }
 
-    @Override
-    public @NotNull DefVar<FnDecl> ref() {
+    // TODO: data def type in generics
+    @Override public @NotNull DefVar<FnDef, FnDecl> ref() {
       return this.ref;
     }
 

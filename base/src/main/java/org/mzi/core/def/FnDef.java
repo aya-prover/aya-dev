@@ -5,55 +5,25 @@ package org.mzi.core.def;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
+import org.mzi.concrete.Decl;
 import org.mzi.core.Param;
 import org.mzi.core.term.Term;
-
-import java.util.Objects;
 
 /**
  * @author ice1000
  */
-public final class FnDef implements Def {
-  public final @NotNull DefVar<FnDef> ref;
-  public final @NotNull ImmutableSeq<Param> telescope;
-  public final @NotNull Term result;
-  public final @NotNull Term body;
-
-  public FnDef(@NotNull String name, @NotNull ImmutableSeq<@NotNull Param> telescope, @NotNull Term result, @NotNull Term body) {
-    this.ref = new DefVar<>(this, name);
-    this.telescope = telescope;
-    this.result = result;
-    this.body = body;
-  }
-
-  @Override public @NotNull DefVar<FnDef> ref() {
-    return ref;
+public record FnDef(
+  @NotNull DefVar<FnDef, Decl.FnDecl> ref,
+  @NotNull ImmutableSeq<Param> telescope,
+  @NotNull Term result,
+  @NotNull Term body
+) implements Def {
+  public FnDef {
+    ref.core = this;
   }
 
   @Override
   public <P, R> R accept(Visitor<P, R> visitor, P p) {
     return visitor.visitFn(this, p);
-  }
-
-  @Override public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    FnDef fnDef = (FnDef) o;
-    return telescope.equals(fnDef.telescope)
-      && result.equals(fnDef.result)
-      && body.equals(fnDef.body);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(telescope, result, body);
-  }
-
-  @Override public String toString() {
-    return "FnDef{" +
-      "telescope=" + telescope +
-      ", result=" + result +
-      ", body=" + body +
-      '}';
   }
 }

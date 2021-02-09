@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
@@ -18,7 +18,7 @@ public final class RefFinder implements Def.Visitor<@NotNull Buffer<Def>, Unit> 
     public static final @NotNull TermRefFinder INSTANCE = new TermRefFinder();
 
     @Override public void visitVar(Var usage, @NotNull Buffer<Def> defs) {
-      if (usage instanceof DefVar<?> ref && ref.def() instanceof Def def) defs.append(def);
+      if (usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def) defs.append(def);
     }
   }
 
@@ -33,11 +33,11 @@ public final class RefFinder implements Def.Visitor<@NotNull Buffer<Def>, Unit> 
 
   @Override
   public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
-    fn.telescope.forEach(param ->
+    fn.telescope().forEach(param ->
       param.type().accept(TermRefFinder.INSTANCE, references));
-    fn.result.accept(TermRefFinder.INSTANCE, references);
+    fn.result().accept(TermRefFinder.INSTANCE, references);
     if (withBody) {
-      fn.body.accept(TermRefFinder.INSTANCE, references);
+      fn.body().accept(TermRefFinder.INSTANCE, references);
     }
     return Unit.unit();
   }

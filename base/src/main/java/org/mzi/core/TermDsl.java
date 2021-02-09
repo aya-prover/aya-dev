@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
+import org.mzi.concrete.Decl;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
@@ -56,7 +57,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
       case "U" -> new UnivTerm(Sort.OMEGA);
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new AppTerm.FnCall(
-        (DefVar<FnDef>) ((RefTerm) exprs.get(0).accept(this)).var(),
+        (DefVar<FnDef, Decl.FnDecl>) ((RefTerm) exprs.get(0).accept(this)).var(),
         exprs.subList(1, exprs.size())
           .stream()
           .map(c -> Arg.explicit(c.accept(this)))
