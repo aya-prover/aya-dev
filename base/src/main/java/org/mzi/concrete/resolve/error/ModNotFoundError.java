@@ -14,7 +14,7 @@ public record ModNotFoundError(
 ) implements Problem.Error {
   @Override
   public @NotNull Doc describe() {
-    return Doc.cat(
+    return Doc.hcat(
       Doc.plain("The module name referred to by `"),
       Doc.plain(modName.joinToString("::")),
       Doc.plain("` is not found")

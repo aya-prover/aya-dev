@@ -15,7 +15,7 @@ public record QualifiedNameNotFoundError(
 ) implements Problem.Error {
   @Override
   public @NotNull Doc describe() {
-    return Doc.cat(
+    return Doc.hcat(
       Doc.plain("The qualified name referred to by `"),
       Doc.plain(modName.joinToString("::")),
       Doc.plain(name),

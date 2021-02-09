@@ -13,7 +13,7 @@ public record UnqualifiedNameNotFoundError(
   ) implements Problem.Error {
   @Override
   public @NotNull Doc describe() {
-    return Doc.cat(
+    return Doc.hcat(
       Doc.plain("The unqualified name referred to by `"),
       Doc.plain(name),
       Doc.plain("` is not defined in the current scope")

@@ -13,7 +13,7 @@ public record AmbiguousNameWarn(
 ) implements Problem.Warn {
   @Override
   public @NotNull Doc describe() {
-    return Doc.cat(
+    return Doc.hcat(
       Doc.plain("The name being defined `"),
       Doc.plain(name),
       Doc.plain("` introduces ambiguity. "),

@@ -14,7 +14,7 @@ public record ModShadowingWarn(
 ) implements Problem.Warn {
   @Override
   public @NotNull Doc describe() {
-    return Doc.cat(
+    return Doc.hcat(
       Doc.plain("The newly created module name `"),
       Doc.plain(modName.joinToString("::")),
       Doc.plain("` shadows a previous definition from outer scope")

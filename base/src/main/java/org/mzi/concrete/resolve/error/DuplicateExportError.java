@@ -13,7 +13,7 @@ public record DuplicateExportError(
 ) implements Problem.Error {
   @Override
   public @NotNull Doc describe() {
-    return Doc.cat(
+    return Doc.hcat(
       Doc.plain("The name being exported `"),
       Doc.plain(name),
       Doc.plain("` clashes with another exported definition with the same name.")

@@ -13,7 +13,7 @@ public record ShadowingWarn(
 ) implements Problem.Warn {
   @Override
   public @NotNull Doc describe() {
-    return Doc.cat(
+    return Doc.hcat(
       Doc.plain("The newly bound name `"),
       Doc.plain(name),
       Doc.plain("` shadows a previous definition from outer scope")

@@ -14,7 +14,7 @@ public record DuplicateModNameError(
 ) implements Problem.Error {
   @Override
   public @NotNull Doc describe() {
-    return Doc.cat(
+    return Doc.hcat(
       Doc.plain("The module name being added `"),
       Doc.plain(modName.joinToString("::")),
       Doc.plain("` is already defined elsewhere")
