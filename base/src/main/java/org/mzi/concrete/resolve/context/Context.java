@@ -22,7 +22,7 @@ import org.mzi.ref.LocalVar;
 public interface Context {
   Seq<String> TOP_LEVEL_MOD_NAME = Seq.of();
 
-  @Nullable Context getParent();
+  @Nullable Context parent();
 
   @NotNull Reporter reporter();
 
@@ -34,7 +34,7 @@ public interface Context {
 
   @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);
   default @Nullable Var getUnqualifiedMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    var p = getParent();
+    var p = parent();
     var ref = getUnqualifiedLocalMaybe(name, sourcePos);
     if (ref == null) {
       if (p == null) return null;
@@ -49,7 +49,7 @@ public interface Context {
 
   @Nullable Var getQualifiedLocalMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos);
   default @Nullable Var getQualifiedMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
-    var p = getParent();
+    var p = parent();
     var ref = getQualifiedLocalMaybe(modName, name, sourcePos);
     if (ref == null) {
       if (p == null) return null;
@@ -64,7 +64,7 @@ public interface Context {
 
   @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos);
   default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
-    var p = getParent();
+    var p = parent();
     var ref = getModuleLocalMaybe(modName, sourcePos);
     if (ref == null) {
       if (p == null) return null;

@@ -22,7 +22,7 @@ public record BindContext(
   @NotNull LocalVar ref
 ) implements Context {
   @Override
-  public @NotNull Context getParent() {
+  public @NotNull Context parent() {
     return parent;
   }
 

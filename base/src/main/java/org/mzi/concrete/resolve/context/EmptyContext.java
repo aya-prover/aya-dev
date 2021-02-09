@@ -20,7 +20,7 @@ public record EmptyContext(
   @NotNull Reporter reporter
 ) implements Context {
   @Override
-  public @Nullable Context getParent() {
+  public @Nullable Context parent() {
     return null;
   }
 

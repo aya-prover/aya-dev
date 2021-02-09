@@ -21,19 +21,14 @@ import java.util.function.Function;
 /**
  * @author re-xyr
  */
-public final class ModuleContext implements Context {
-  private final @NotNull Context parent;
-  private final MutableMap<String, MutableMap<Seq<String>, Var>> globals = MutableHashMap.of();
-  private final MutableMap<Seq<String>, MutableMap<String, Var>> modules = MutableHashMap.of();
-  private final MutableMap<Seq<String>, MutableMap<String, Var>> exports = MutableHashMap.of();
-
+public record ModuleContext(
+  @NotNull Context parent,
+  @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> globals,
+  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules,
+  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> exports
+) implements Context {
   public ModuleContext(@NotNull Context parent) {
-    this.parent = parent;
-  }
-
-  @Override
-  public @NotNull Context getParent() {
-    return parent;
+    this(parent, MutableHashMap.of(), MutableHashMap.of(), MutableHashMap.of());
   }
 
   @Override
@@ -65,10 +60,6 @@ public final class ModuleContext implements Context {
   @Override
   public @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
     return modules.get(modName);
-  }
-
-  public @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> export() {
-    return exports;
   }
 
   public void importModule(

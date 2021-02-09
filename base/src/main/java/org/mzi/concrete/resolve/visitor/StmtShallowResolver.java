@@ -24,7 +24,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();
     visitAll(mod.contents(), newCtx);
-    context.importModule(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.export(), mod.sourcePos());
+    context.importModule(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports(), mod.sourcePos());
     return Unit.unit();
   }
 
@@ -35,7 +35,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
         context.openModule(
           cmd.path(),
           cmd.accessibility(),
-          (x) -> cmd.useHide().uses(x),
+          cmd.useHide()::uses,
           MutableHashMap.of(), // TODO handle renaming
           cmd.sourcePos()
         );
