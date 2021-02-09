@@ -35,9 +35,9 @@ public interface Context {
 
   @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);
   default @Nullable Var getUnqualifiedMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    var p = parent();
     var ref = getUnqualifiedLocalMaybe(name, sourcePos);
     if (ref == null) {
+      var p = parent();
       if (p == null) return null;
       else return p.getUnqualifiedMaybe(name, sourcePos);
     } else return ref;
@@ -50,9 +50,9 @@ public interface Context {
 
   @Nullable Var getQualifiedLocalMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos);
   default @Nullable Var getQualifiedMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
-    var p = parent();
     var ref = getQualifiedLocalMaybe(modName, name, sourcePos);
     if (ref == null) {
+      var p = parent();
       if (p == null) return null;
       else return p.getQualifiedMaybe(modName, name, sourcePos);
     } else return ref;
@@ -65,9 +65,9 @@ public interface Context {
 
   @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos);
   default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
-    var p = parent();
     var ref = getModuleLocalMaybe(modName, sourcePos);
     if (ref == null) {
+      var p = parent();
       if (p == null) return null;
       else return p.getModuleMaybe(modName, sourcePos);
     } else return ref;
