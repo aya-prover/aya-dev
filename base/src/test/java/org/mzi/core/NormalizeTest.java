@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core;
 
@@ -66,8 +66,8 @@ public class NormalizeTest extends LispTestCase {
       "(y (U) ex null)", "y", "y", vars);
     var term = Lisp.parse("(fncall id kiva)", vars);
     assertTrue(term instanceof AppTerm.FnCall);
-    assertEquals("id", def.ref.name());
-    assertEquals(1, def.telescope.size());
+    assertEquals("id", def.ref().name());
+    assertEquals(1, def.telescope().size());
     var norm = term.normalize(NormalizeMode.WHNF);
     assertNotEquals(term, norm);
     assertEquals(new RefTerm(vars.get("kiva")), norm);

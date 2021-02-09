@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.test;
 
@@ -7,7 +7,9 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
+import org.mzi.concrete.Decl;
 import org.mzi.core.Param;
 import org.mzi.core.TermDsl;
 import org.mzi.core.def.FnDef;
@@ -30,6 +32,7 @@ public interface Lisp {
     return Objects.requireNonNull(TermDsl.parse(code, refs));
   }
 
+  @SuppressWarnings("unchecked")
   static @NotNull FnDef parseDef(
     @NotNull @NonNls String name,
     @NotNull @NonNls @Language("TEXT") String teleCode,
@@ -39,7 +42,8 @@ public interface Lisp {
     var tele = parseTele(teleCode, refs);
     var result = parse(resultTypeCode, refs);
     var body = parse(bodyCode, refs);
-    var def = new FnDef(name, tele, result, body);
+    var existingRef = (DefVar<FnDef, Decl.FnDecl>) refs.getOrDefault(name, DefVar.core(null, name));
+    var def = new FnDef(existingRef, tele, result, body);
     var ref = def.ref();
     refs.put(name, ref);
     return def;

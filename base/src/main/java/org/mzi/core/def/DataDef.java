@@ -7,23 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.concrete.Decl;
 import org.mzi.core.Param;
-import org.mzi.core.term.Term;
 
-/**
- * @author ice1000
- */
-public record FnDef(
-  @NotNull DefVar<FnDef, Decl.FnDecl> ref,
-  @NotNull ImmutableSeq<Param> telescope,
-  @NotNull Term result,
-  @NotNull Term body
+public record DataDef(
+  @NotNull DefVar<DataDef, Decl.DataDecl> ref,
+  @NotNull ImmutableSeq<Param> telescope
+  // TODO: add other information
+  //  See also org.mzi.core.visitor.RefFinder.visitData
 ) implements Def {
-  public FnDef {
-    ref.core = this;
-  }
-
-  @Override
-  public <P, R> R accept(Visitor<P, R> visitor, P p) {
-    return visitor.visitFn(this, p);
+  @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {
+    return visitor.visitData(this, p);
   }
 }

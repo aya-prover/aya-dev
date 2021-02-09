@@ -8,11 +8,13 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.concrete.def.ConcreteDecl;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
 import org.mzi.concrete.resolve.context.Context;
+import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
@@ -26,7 +28,7 @@ import java.util.Objects;
  *
  * @author re-xyr
  */
-public sealed abstract class Decl implements Stmt {
+public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull Accessibility accessibility;
   public final @NotNull Buffer<Stmt> abuseBlock;
@@ -55,7 +57,7 @@ public sealed abstract class Decl implements Stmt {
     this.telescope = telescope;
   }
 
-  @Contract(pure = true) public @NotNull abstract DefVar<? extends Decl> ref();
+  @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
   abstract <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
 
@@ -98,7 +100,7 @@ public sealed abstract class Decl implements Stmt {
    * @author kiva
    */
   public static final class DataDecl extends Decl {
-    public final @NotNull DefVar<DataDecl> ref;
+    public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
     public @NotNull DataBody body;
 
@@ -114,7 +116,7 @@ public sealed abstract class Decl implements Stmt {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
-      this.ref = new DefVar<>(this, name);
+      this.ref = DefVar.concrete(this, name);
     }
 
     @Override
@@ -122,8 +124,7 @@ public sealed abstract class Decl implements Stmt {
       return visitor.visitDataDecl(this, p);
     }
 
-    @Override
-    public @NotNull DefVar<DataDecl> ref() {
+    @Override public @NotNull DefVar<DataDef, DataDecl> ref() {
       return this.ref;
     }
 
@@ -162,11 +163,9 @@ public sealed abstract class Decl implements Stmt {
   public static final class FnDecl extends Decl {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Assoc assoc;
-    public final @NotNull DefVar<FnDecl> ref;
+    public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Expr result;
     public @NotNull Expr body;
-    public @Nullable FnDef wellTyped;
-
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
@@ -182,7 +181,7 @@ public sealed abstract class Decl implements Stmt {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.modifiers = modifiers;
       this.assoc = assoc;
-      this.ref = new DefVar<>(this, name);
+      this.ref = DefVar.concrete(this, name);
       this.result = result;
       this.body = body;
     }
@@ -197,8 +196,7 @@ public sealed abstract class Decl implements Stmt {
       return this.sourcePos;
     }
 
-    @Override
-    public @NotNull DefVar<FnDecl> ref() {
+    @Override public @NotNull DefVar<FnDef, FnDecl> ref() {
       return this.ref;
     }
 

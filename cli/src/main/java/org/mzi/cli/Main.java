@@ -3,6 +3,7 @@
 package org.mzi.cli;
 
 import com.beust.jcommander.JCommander;
+import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.parse.MziParsing;
@@ -21,6 +22,9 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 public class Main {
+  public static final @NotNull String TQL = "\uD83D\uDC02\uD83C\uDF7A";
+  public static final @NotNull String NMSL = "\uD83D\uDD28";
+
   public static void main(String... args) throws IOException {
     var cli = new CliArgs();
     var commander = JCommander.newBuilder().addObject(cli).build();
@@ -66,7 +70,7 @@ public class Main {
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
       System.exit(1);
     }
-    if (reporter.isEmpty()) System.out.println("tql");
-    else System.err.println("nmsl");
+    if (reporter.isEmpty()) System.out.println(TQL);
+    else System.err.println(NMSL);
   }
 }

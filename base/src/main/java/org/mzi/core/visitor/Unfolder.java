@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
@@ -30,12 +30,12 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   @Override default @NotNull Term visitFnCall(@NotNull AppTerm.FnCall fnCall, P p) {
-    var def = fnCall.fnRef().def();
+    var def = fnCall.fnRef().core;
     // This shouldn't happen
-    assert fnCall.args().sizeEquals(def.telescope.size());
-    assert Param.checkSubst(fnCall.fnRef().def().telescope, fnCall.args());
-    var subst = buildSubst(def.telescope, fnCall.args());
-    return def.body.subst(subst).accept(this, p);
+    assert fnCall.args().sizeEquals(def.telescope().size());
+    assert Param.checkSubst(def.telescope(), fnCall.args());
+    var subst = buildSubst(def.telescope(), fnCall.args());
+    return def.body().subst(subst).accept(this, p);
   }
 
   /**
