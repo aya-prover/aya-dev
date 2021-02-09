@@ -5,7 +5,7 @@ package org.mzi.concrete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
-import org.mzi.api.ref.Var;
+import org.mzi.ref.LocalVar;
 
 import java.util.function.Function;
 
@@ -14,11 +14,11 @@ import java.util.function.Function;
  */
 public record Param(
   @NotNull SourcePos sourcePos,
-  @NotNull Var var,
+  @NotNull LocalVar var,
   @Nullable Expr type,
   boolean explicit
 ) {
-  public Param(@NotNull SourcePos sourcePos, @NotNull Var var, boolean explicit) {
+  public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
     this(sourcePos, var, null, explicit);
   }
 
