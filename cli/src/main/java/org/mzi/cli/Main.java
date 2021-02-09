@@ -8,7 +8,6 @@ import org.mzi.concrete.Decl;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.parse.MziParsing;
 import org.mzi.concrete.parse.MziProducer;
-import org.mzi.concrete.resolve.context.BindContext;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.EmptyContext;
 import org.mzi.concrete.resolve.module.EmptyModuleLoader;
@@ -55,20 +54,13 @@ public class Main {
       program.forEach(s -> {
         if (s instanceof Decl decl) decl.tyck(reporter);
       });
-    } catch (ExprTycker.TyckerException e) {
+    } catch (ExprTycker.TyckerException | Context.ContextException e) {
       e.printStackTrace();
+      e.printHint();
       System.err.println("""
-        A type error was discovered during type checking.
         Please report the stacktrace to the developers so a better error handling could be made.
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
-      System.exit(1);
-    } catch (Context.ContextException e) {
-      e.printStackTrace();
-      System.err.println("""
-        A reference error was discovered during resolving.
-        Please report the stacktrace to the developers so a better error handling could be made.
-        Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
-      System.exit(1);
+      System.exit(e.exitCode());
     }
     if (reporter.isEmpty()) System.out.println(TQL);
     else System.err.println(NMSL);

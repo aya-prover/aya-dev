@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.MziBreakingException;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
 import org.mzi.core.Param;
@@ -285,7 +286,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     throw new UnsupportedOperationException(expr.toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
   }
 
-  public static class TyckerException extends RuntimeException {
+  public static class TyckerException extends MziBreakingException {
+    @Override public void printHint() {
+      System.err.println("A type error was discovered during type checking.");
+    }
+
+    @Override public int exitCode() {
+      return 2;
+    }
   }
 
   public static record Result(

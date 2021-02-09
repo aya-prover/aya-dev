@@ -11,6 +11,7 @@ import org.mzi.api.error.Problem;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
+import org.mzi.api.util.MziBreakingException;
 import org.mzi.concrete.resolve.error.QualifiedNameNotFoundError;
 import org.mzi.concrete.resolve.error.ShadowingWarn;
 import org.mzi.concrete.resolve.error.UnqualifiedNameNotFoundError;
@@ -83,6 +84,13 @@ public interface Context {
     return new ModuleContext(this);
   }
 
-  class ContextException extends RuntimeException {
+  class ContextException extends MziBreakingException {
+    @Override public void printHint() {
+      System.err.println("A reference error was discovered during resolving.");
+    }
+
+    @Override public int exitCode() {
+      return 1;
+    }
   }
 }
