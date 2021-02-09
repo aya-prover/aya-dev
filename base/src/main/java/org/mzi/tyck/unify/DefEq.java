@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.unify;
 
@@ -17,7 +17,6 @@ import org.mzi.core.Param;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.tyck.MetaContext;
-import org.mzi.tyck.sort.LevelEqn;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Decision;
 import org.mzi.util.Ordering;

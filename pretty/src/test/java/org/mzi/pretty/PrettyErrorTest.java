@@ -122,7 +122,7 @@ public class PrettyErrorTest {
                                      ^-^
         3 | import org.mzi.pretty.PrettyError
        \s
-      Error: package 
+      Error: package
              'org.junit.jupiter.apt.Test'
              not found
       note: Did you mean

@@ -2,7 +2,7 @@
 
 This was a thread discussed originally on [a commit](https://github.com/ice1000/mzi/commit/c57a7c75882da5023772903b8f4decbca90ef598#r43459719).
 
-[The existing proposal on class system design](mathmaticians-expectation-of-pa.md),
+[The existing proposal on class system design](mathmaticians-expectation-of-pa/01-class-system.md),
 has one more disappointing aspect: it makes `Ring` no longer a `Monoid` or an `AbGroup`.
 
 On master branch Arend, you can do
