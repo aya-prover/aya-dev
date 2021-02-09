@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
-import java.util.Properties
+import java.util.*
 
 plugins {
   java
@@ -8,7 +8,6 @@ plugins {
   idea
   `java-library`
   `maven-publish`
-  id("io.freefair.lombok") version "5.3.0"
 }
 
 var deps: Properties by rootProject.ext
@@ -32,7 +31,6 @@ subprojects {
     plugin("jacoco")
     plugin("maven-publish")
     plugin("java-library")
-    plugin("io.freefair.lombok")
   }
 
   java {
