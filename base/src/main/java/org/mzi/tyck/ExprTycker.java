@@ -253,7 +253,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var buffer = Buffer.<@NotNull Param>of();
       for (var iterator = expr.items().iterator(); iterator.hasNext(); ) {
         var item = iterator.next();
-        if (againstTele == null) {
+        if (againstTele.isEmpty()) {
           if (iterator.hasNext()) {
             // TODO[ice]: not enough sigma elements
             throw new TyckerException();

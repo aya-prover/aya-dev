@@ -85,14 +85,10 @@ public class ExprPrettyConsumer implements Expr.Visitor<Unit, Doc> {
   public Doc visitUniv(Expr.@NotNull UnivExpr expr, Unit unit) {
     int u = expr.uLevel();
     int h = expr.hLevel();
-    if (u == 0 && h == -1) {
-      return Doc.plain("\\Prop");
-    }
-    if (h == 0) {
-      return Doc.plain("\\Set" + (u == 0 ? "" : u));
-    }
+    if (u == 0 && h == -1) return Doc.plain("\\Prop");
     return switch (h) {
       case Integer.MAX_VALUE -> Doc.plain("\\oo-Type" + (u == 0 ? "" : u));
+      case 0 -> Doc.plain("\\Set" + (u == 0 ? "" : u));
       default -> Doc.plain("\\" + h + "-Type" + (u == 0 ? "" : u));
     };
   }
