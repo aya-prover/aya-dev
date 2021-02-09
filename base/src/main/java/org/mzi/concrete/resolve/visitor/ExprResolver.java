@@ -2,14 +2,13 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
+import org.glavo.kala.Tuple2;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
-import org.mzi.concrete.Stmt;
 import org.mzi.concrete.resolve.context.Context;
-import org.mzi.concrete.resolve.context.SimpleContext;
 import org.mzi.concrete.visitor.ExprFixpoint;
 
 /**
@@ -23,47 +22,46 @@ public final class ExprResolver implements ExprFixpoint<Context> {
   private ExprResolver() {}
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
-    return new Expr.RefExpr(expr.sourcePos(), Option.of(ctx.get(expr.name()))
-      // TODO[xyr]: report instead of throw
-      .getOrThrowException(new IllegalStateException("reference to non-existing variable `" + expr.name() + "`")));
+    return new Expr.RefExpr(expr.sourcePos(), ctx.getUnqualified(expr.name(), expr.sourcePos()));
   }
 
-  public @NotNull Param visitParam(@NotNull Param param, Context ctx) {
-    var var = param.var();
+  public @NotNull Tuple2<Param, Context> visitParam(@NotNull Param param, Context ctx) {
     var type = param.type();
-    ctx.putLocal(var.name(), var, Stmt.Accessibility.Public);
-    return new Param(param.sourcePos(), param.var(), type != null ? type.accept(this, ctx) : null, param.explicit());
+    type = type == null ? null : type.accept(this, ctx);
+    return Tuple2.of(
+      new Param(param.sourcePos(), param.var(), type, param.explicit()),
+      ctx.bind(param.var().name(), param.var(), param.sourcePos())
+    );
   }
 
-  @Override public @NotNull Buffer<@NotNull Param> visitParams(@NotNull Buffer<@NotNull Param> params, Context ctx) {
-    return params.view().map(param -> {
-      ctx.putLocal(param.var().name(), param.var(), Stmt.Accessibility.Public);
-      var type = param.type();
-      return new Param(param.sourcePos(), param.var(), type != null ? type.accept(this, ctx) : null, param.explicit());
-    }).collect(Buffer.factory());
+  public @NotNull Tuple2<ImmutableSeq<Param>, Context> visitParams(@NotNull ImmutableSeq<Param> params, Context ctx) {
+    if (params.isEmpty()) return Tuple2.of(ImmutableSeq.of(), ctx);
+    var first = params.first();
+    var type = first.type();
+    type = type == null ? null : type.accept(this, ctx);
+    var newCtx = ctx.bind(first.var().name(), first.var(), first.sourcePos());
+    var result = visitParams(params.drop(1), newCtx);
+    return Tuple2.of(
+      result._1.prepended(new Param(first.sourcePos(), first.var(), type, first.explicit())),
+      result._2
+    );
   }
 
   @Override public @NotNull Expr visitLam(@NotNull Expr.LamExpr expr, Context ctx) {
-    var local = new SimpleContext();
-    local.setOuterContext(ctx);
-    var param = visitParams(Buffer.of(expr.param()), local).get(0);
-    var body = expr.body().accept(this, local);
-    return new Expr.LamExpr(expr.sourcePos(), param, body);
+    var param = visitParam(expr.param(), ctx);
+    var body = expr.body().accept(this, param._2);
+    return new Expr.LamExpr(expr.sourcePos(), param._1, body);
   }
 
   @Override public @NotNull Expr visitPi(@NotNull Expr.PiExpr expr, Context ctx) {
-    var local = new SimpleContext();
-    local.setOuterContext(ctx);
-    var param = visitParams(Buffer.of(expr.param()), local).get(0);
-    var last = expr.last().accept(this, local);
-    return new Expr.PiExpr(expr.sourcePos(), expr.co(), param, last);
+    var param = visitParam(expr.param(), ctx);
+    var last = expr.last().accept(this, param._2);
+    return new Expr.PiExpr(expr.sourcePos(), expr.co(), param._1, last);
   }
 
   @Override public @NotNull Expr visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, Context ctx) {
-    var local = new SimpleContext();
-    local.setOuterContext(ctx);
-    var params = visitParams(expr.params(), local);
-    var last = expr.last().accept(this, local);
-    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), params, last);
+    var params = visitParams(expr.params().toImmutableSeq(), ctx);
+    var last = expr.last().accept(this, params._2);
+    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), params._1.collect(Buffer.factory()), last);
   }
 }
