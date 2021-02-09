@@ -19,4 +19,8 @@ public record DuplicateExportError(
       Doc.plain("` clashes with another exported definition with the same name.")
     );
   }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.RESOLVE;
+  }
 }

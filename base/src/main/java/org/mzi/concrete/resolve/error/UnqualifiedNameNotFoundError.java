@@ -10,7 +10,7 @@ import org.mzi.pretty.doc.Doc;
 public record UnqualifiedNameNotFoundError(
   @NotNull String name,
   @NotNull SourcePos sourcePos
-  ) implements Problem.Error {
+) implements Problem.Error {
   @Override
   public @NotNull Doc describe() {
     return Doc.hcat(
@@ -18,5 +18,9 @@ public record UnqualifiedNameNotFoundError(
       Doc.plain(name),
       Doc.plain("` is not defined in the current scope")
     );
+  }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.RESOLVE;
   }
 }

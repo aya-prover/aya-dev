@@ -20,5 +20,9 @@ public record ModNameNotFoundError(
       Doc.plain("` is not defined in the current scope")
     );
   }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.RESOLVE;
+  }
 }
 

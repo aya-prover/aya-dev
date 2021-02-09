@@ -20,4 +20,8 @@ public record ModNotFoundError(
       Doc.plain("` is not found")
     );
   }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.RESOLVE;
+  }
 }

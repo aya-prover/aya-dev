@@ -1,7 +1,6 @@
 module org.mzi {
   requires static org.jetbrains.annotations;
   requires static org.antlr.antlr4.runtime;
-  requires static lombok;
 
   requires transitive org.mzi.api;
   requires transitive org.mzi.parser;

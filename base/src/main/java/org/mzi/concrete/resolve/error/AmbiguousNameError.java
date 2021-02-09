@@ -24,4 +24,8 @@ public record AmbiguousNameError(
       Doc.nest(1, Doc.vcat(disambiguation.map(a -> Doc.plain(a.joinToString("::"))).toArray(Doc.class)))
     );
   }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.RESOLVE;
+  }
 }

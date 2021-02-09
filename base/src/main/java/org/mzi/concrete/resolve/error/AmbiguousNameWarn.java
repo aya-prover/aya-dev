@@ -20,4 +20,8 @@ public record AmbiguousNameWarn(
       Doc.plain("It can only be accessed through a qualified name.")
     );
   }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.RESOLVE;
+  }
 }

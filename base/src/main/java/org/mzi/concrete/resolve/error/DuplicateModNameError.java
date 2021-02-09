@@ -20,4 +20,8 @@ public record DuplicateModNameError(
       Doc.plain("` is already defined elsewhere")
     );
   }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.RESOLVE;
+  }
 }

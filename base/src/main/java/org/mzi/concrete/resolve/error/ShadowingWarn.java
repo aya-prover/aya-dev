@@ -19,4 +19,8 @@ public record ShadowingWarn(
       Doc.plain("` shadows a previous definition from outer scope")
     );
   }
+
+  @Override public @NotNull Stage stage() {
+    return Stage.RESOLVE;
+  }
 }

@@ -1,6 +1,5 @@
 module org.mzi.api {
   requires static org.jetbrains.annotations;
-  requires static lombok;
 
   requires transitive org.glavo.kala.common;
 
