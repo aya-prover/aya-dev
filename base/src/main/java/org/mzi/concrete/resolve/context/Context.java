@@ -1,11 +1,13 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.context;
 
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mzi.api.error.Problem;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
@@ -22,7 +24,13 @@ public interface Context {
 
   @Nullable Context getParent();
 
-  @NotNull Reporter getReporter();
+  @NotNull Reporter reporter();
+
+  @Contract("_->fail")
+  default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
+    reporter().report(problem);
+    throw new ContextException();
+  }
 
   @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);
   default @Nullable Var getUnqualifiedMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
@@ -35,10 +43,7 @@ public interface Context {
   }
   default @NotNull Var getUnqualified(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getUnqualifiedMaybe(name, sourcePos);
-    if (result == null) {
-      getReporter().report(new UnqualifiedNameNotFoundError(name, sourcePos));
-      throw new ContextException();
-    }
+    if (result == null) reportAndThrow(new UnqualifiedNameNotFoundError(name, sourcePos));
     return result;
   }
 
@@ -53,10 +58,7 @@ public interface Context {
   }
   default @NotNull Var getQualified(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getQualifiedMaybe(modName, name, sourcePos);
-    if (result == null) {
-      getReporter().report(new QualifiedNameNotFoundError(modName, name, sourcePos));
-      throw new ContextException();
-    }
+    if (result == null) reportAndThrow(new QualifiedNameNotFoundError(modName, name, sourcePos));
     return result;
   }
 
@@ -72,7 +74,7 @@ public interface Context {
 
   default @NotNull BindContext bind(@NotNull String name, @NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
     if (getUnqualifiedMaybe(name, sourcePos) != null) {
-      getReporter().report(new ShadowingWarn(name, sourcePos));
+      reporter().report(new ShadowingWarn(name, sourcePos));
     }
     return new BindContext(this, name, ref);
   }

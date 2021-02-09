@@ -27,8 +27,8 @@ public record BindContext(
   }
 
   @Override
-  public @NotNull Reporter getReporter() {
-    return parent.getReporter();
+  public @NotNull Reporter reporter() {
+    return parent.reporter();
   }
 
   @Override

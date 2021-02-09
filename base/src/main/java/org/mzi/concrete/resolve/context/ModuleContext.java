@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.context;
 
@@ -37,8 +37,8 @@ public final class ModuleContext implements Context {
   }
 
   @Override
-  public @NotNull Reporter getReporter() {
-    return parent.getReporter();
+  public @NotNull Reporter reporter() {
+    return parent.reporter();
   }
 
   @Override
@@ -49,8 +49,7 @@ public final class ModuleContext implements Context {
     else {
       var disamb = Buffer.<Seq<String>>of();
       result.forEach((k, v) -> disamb.append(k));
-      getReporter().report(new AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
-      throw new ContextException();
+      return reportAndThrow(new AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
     }
   }
 
@@ -59,11 +58,8 @@ public final class ModuleContext implements Context {
     var mod = modules.get(modName);
     if (mod == null) return null;
     var ref = mod.getOrNull(name);
-    if (ref == null) {
-      getReporter().report(new QualifiedNameNotFoundError(modName, name, sourcePos));
-      throw new ContextException();
-    }
-    else return ref;
+    if (ref == null) reportAndThrow(new QualifiedNameNotFoundError(modName, name, sourcePos));
+    return ref;
   }
 
   @Override
@@ -84,11 +80,10 @@ public final class ModuleContext implements Context {
     module.forEach((name, mod) -> {
       var componentName = modName.concat(name);
       if (modules.containsKey(componentName)) {
-        getReporter().report(new DuplicateModNameError(modName, sourcePos));
-        throw new ContextException();
+        reportAndThrow(new DuplicateModNameError(modName, sourcePos));
       }
       if (getModuleMaybe(componentName, sourcePos) != null) {
-        getReporter().report(new ModShadowingWarn(componentName, sourcePos));
+        reporter().report(new ModShadowingWarn(componentName, sourcePos));
       }
       modules.set(componentName, mod);
       if (accessibility == Stmt.Accessibility.Public) exports.set(componentName, mod);
@@ -103,10 +98,7 @@ public final class ModuleContext implements Context {
     @NotNull SourcePos sourcePos
   ) {
     var mod = modules.getOrNull(modName);
-    if (mod == null) {
-      getReporter().report(new ModNameNotFoundError(modName, sourcePos));
-      throw new ContextException();
-    }
+    if (mod == null) reportAndThrow(new ModNameNotFoundError(modName, sourcePos));
     mod.forEach((name, ref) -> {
       if (using.apply(name)) {
         var newName = rename.getOrDefault(name, name);
@@ -124,18 +116,17 @@ public final class ModuleContext implements Context {
   ) {
     if (!globals.containsKey(name)) {
       if (getUnqualifiedMaybe(name, sourcePos) != null) {
-        getReporter().report(new ShadowingWarn(name, sourcePos));
+        reporter().report(new ShadowingWarn(name, sourcePos));
       }
       globals.set(name, MutableHashMap.of());
     } else {
-      getReporter().report(new AmbiguousNameWarn(name, sourcePos));
+      reporter().report(new AmbiguousNameWarn(name, sourcePos));
     }
     globals.get(name).set(modName, ref);
     if (accessibility == Stmt.Accessibility.Public) {
       if (exports.get(TOP_LEVEL_MOD_NAME).containsKey(name)) {
-        getReporter().report(new DuplicateExportError(name, sourcePos));
-      }
-      else exports.get(TOP_LEVEL_MOD_NAME).set(name, ref);
+        reporter().report(new DuplicateExportError(name, sourcePos));
+      } else exports.get(TOP_LEVEL_MOD_NAME).set(name, ref);
     }
   }
 }

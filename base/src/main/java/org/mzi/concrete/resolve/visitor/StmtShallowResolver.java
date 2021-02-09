@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
@@ -41,10 +41,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
         );
       case Import -> {
         var success = loader.load(cmd.path());
-        if (success == null) {
-          context.getReporter().report(new ModNotFoundError(cmd.path(), cmd.sourcePos()));
-          throw new Context.ContextException();
-        }
+        if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path(), cmd.sourcePos()));
         context.importModule(cmd.path(), Stmt.Accessibility.Private, success, cmd.sourcePos());
       }
     }

@@ -25,11 +25,6 @@ public record EmptyContext(
   }
 
   @Override
-  public @NotNull Reporter getReporter() {
-    return reporter;
-  }
-
-  @Override
   public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     return null;
   }
