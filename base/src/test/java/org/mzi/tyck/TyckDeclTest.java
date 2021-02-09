@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.parse.MziProducer;
-import org.mzi.concrete.resolve.context.SimpleContext;
+import org.mzi.concrete.resolve.context.EmptyContext;
 import org.mzi.core.def.FnDef;
 import org.mzi.test.Lisp;
 import org.mzi.test.ThrowingReporter;
@@ -35,7 +35,8 @@ public class TyckDeclTest {
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = MziProducer.parseDecl(code);
     decl.desugar();
-    decl.resolve(new SimpleContext());
+    decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
+    decl.resolve();
     var def = decl.tyck(ThrowingReporter.INSTANCE);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
