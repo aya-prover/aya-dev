@@ -70,31 +70,27 @@ public class ParseTest {
     assertTrue(MziProducer.parseDecl("\\data Unit \\abusing {}") instanceof Decl.DataDecl);
     assertTrue(MziProducer.parseDecl("\\data Unit : A \\abusing {}") instanceof Decl.DataDecl);
     assertTrue(MziProducer.parseDecl("\\data T {A : \\114-Type514} : A \\abusing {}") instanceof Decl.DataDecl);
+    final var A = new Param(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
+    final var a = new Param(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true);
     parseTo("\\public \\def id {A : \\114-Type514} (a : A) : A => a", new Decl.FnDecl(
       SourcePos.NONE,
       Stmt.Accessibility.Public,
       EnumSet.noneOf(Modifier.class),
       null,
       "id",
-      Buffer.of(
-        new Param(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
-        new Param(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true)
-      ),
+      Buffer.of(A, a),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
       Buffer.of()
     ));
+    final var b = new Param(SourcePos.NONE, new LocalVar("B"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
     parseTo("\\public \\def xx {A, B : \\114-Type514} (a : A) : A => a", new Decl.FnDecl(
       SourcePos.NONE,
       Stmt.Accessibility.Public,
       EnumSet.noneOf(Modifier.class),
       null,
       "xx",
-      Buffer.of(
-        new Param(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
-        new Param(SourcePos.NONE, new LocalVar("B"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false),
-        new Param(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true)
-      ),
+      Buffer.of(A, b, a),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
       Buffer.of()

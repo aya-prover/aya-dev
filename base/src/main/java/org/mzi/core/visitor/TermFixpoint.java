@@ -12,6 +12,7 @@ import org.mzi.tyck.sort.Sort;
 /**
  * @author ice1000
  */
+@SuppressWarnings("NewObjectEquality")
 public interface TermFixpoint<P> extends
   Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, P p) {
