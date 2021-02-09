@@ -9,7 +9,7 @@ import org.mzi.concrete.Decl;
 import org.mzi.core.Param;
 
 public record DataDef(
-  @NotNull DefVar<FnDef, Decl.FnDecl> ref,
+  @NotNull DefVar<DataDef, Decl.DataDecl> ref,
   @NotNull ImmutableSeq<Param> telescope
   // TODO: add other information
   //  See also org.mzi.core.visitor.RefFinder.visitData
