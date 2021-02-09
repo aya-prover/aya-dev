@@ -5,6 +5,6 @@ dependencies {
   api("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   api("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
   api(project(":base"))
-  // implementation(project(":parser"))
-  // implementation(project(":pretty"))
+  implementation(project(":parser"))
+  implementation(project(":pretty"))
 }
