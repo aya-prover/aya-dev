@@ -18,9 +18,9 @@ import org.mzi.concrete.resolve.context.Context;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
-import org.mzi.generic.Clause;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
+import org.mzi.ref.LocalVar;
 import org.mzi.tyck.StmtTycker;
 
 import java.util.EnumSet;
@@ -78,10 +78,10 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   }
 
   public static record DataCtor(
-    @NotNull String name,
+    @NotNull LocalVar name,
     @NotNull ImmutableSeq<Param> telescope,
     @NotNull Buffer<String> elim,
-    @NotNull Buffer<Clause<Expr>> clauses,
+    @NotNull Buffer<Pat.Clause<Expr>> clauses,
     boolean coerce
   ) {
   }
@@ -98,7 +98,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   }
 
   /**
-   * concrete data definition
+   * concrete data definition, corresponding {@link org.mzi.core.def.DataDef}
    *
    * @author kiva
    */

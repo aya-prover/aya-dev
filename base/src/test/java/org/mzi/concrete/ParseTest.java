@@ -102,8 +102,8 @@ public class ParseTest {
       ImmutableSeq.of(),
       new Expr.HoleExpr(SourcePos.NONE, null, null),
       new Decl.DataBody.Ctors(Buffer.of(
-        new Decl.DataCtor("Z", ImmutableSeq.of(), Buffer.of(), Buffer.of(), false),
-        new Decl.DataCtor("S",
+        new Decl.DataCtor(new LocalVar("Z"), ImmutableSeq.of(), Buffer.of(), Buffer.of(), false),
+        new Decl.DataCtor(new LocalVar("S"),
           ImmutableSeq.of(
             new Param(SourcePos.NONE, new LocalVar("_"), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
           ),

@@ -23,7 +23,6 @@ import org.mzi.concrete.Param;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
-import org.mzi.generic.Clause;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
 import org.mzi.parser.MziBaseVisitor;
@@ -174,7 +173,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   @Override
   public @NotNull ImmutableSeq<@NotNull Param> visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
-    if (literal != null) return ImmutableSeq.of(new Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
+    if (literal != null)
+      return ImmutableSeq.of(new Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
@@ -364,7 +364,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       : visitElim(elimCtx);
 
     return new Decl.DataCtor(
-      ctx.ID().getText(),
+      new LocalVar(ctx.ID().getText()),
       visitTelescope(ctx.tele().stream()),
       elim,
       ctx.clause().stream()
@@ -416,9 +416,9 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Clause<Expr> visitClause(MziParser.ClauseContext ctx) {
-    if (ctx.ABSURD() != null) return new Clause.Impossible<>();
-    return new Clause.Possible<>(
+  public @NotNull Pat.Clause<Expr> visitClause(MziParser.ClauseContext ctx) {
+    if (ctx.ABSURD() != null) return new Pat.Clause.Impossible<>();
+    return new Pat.Clause.Possible<>(
       visitPatterns(ctx.patterns()),
       visitExpr(ctx.expr())
     );
