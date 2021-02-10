@@ -316,6 +316,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return new Decl.DataDecl(
       sourcePosOf(ctx),
       accessibility,
+      ctx.OPEN() != null,
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
       type(ctx.type(), sourcePosOf(ctx)),

@@ -23,7 +23,8 @@ public record DataDef(
   @NotNull Term result,
   @NotNull Buffer<String> elim,
   @NotNull Buffer<Ctor> ctors,
-  @NotNull ImmutableMap<Pat<Term>, Ctor> clauses
+  @NotNull ImmutableMap<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
+  // TODO: also see RefFinder
 ) implements Def {
   @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {
     return visitor.visitData(this, p);

@@ -98,6 +98,7 @@ public class ParseTest {
     parseTo("\\data Nat | Z | S Nat", new Decl.DataDecl(
       SourcePos.NONE,
       Stmt.Accessibility.Public,
+      false,
       "Nat",
       ImmutableSeq.of(),
       new Expr.HoleExpr(SourcePos.NONE, null, null),
