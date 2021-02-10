@@ -62,7 +62,17 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
 
   @Override
   public Unit visitDataDecl(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
-    return visitDecl(decl, context);
+    visitDecl(decl, context);
+    if (decl.open && decl.body instanceof Decl.DataBody.Ctors ctors) {
+      ctors.ctors().forEach(ctor -> context.addGlobal(
+        Context.TOP_LEVEL_MOD_NAME,
+        ctor.ref.name(),
+        decl.accessibility(),
+        ctor.ref,
+        ctor.sourcePos
+      ));
+    }
+    return Unit.unit();
   }
 
   @Override

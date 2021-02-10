@@ -39,7 +39,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   /** @apiNote Note that this function MUTATES the decl. */
   @Override
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
-    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope.toImmutableSeq(), decl.ctx);
+    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1.collect(ImmutableSeq.factory());
     decl.result = decl.result.resolve(local._2);
     decl.body = decl.body.resolve(local._2);
