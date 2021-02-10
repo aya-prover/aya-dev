@@ -2,7 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
-import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
 import org.mzi.ref.LocalVar;
@@ -16,8 +16,8 @@ public class DesugarTest {
     var p1 = new Param(SourcePos.NONE, new LocalVar("p1"), false);
     var p2 = new Param(SourcePos.NONE, p2Var, false);
     var p3 = new Param(SourcePos.NONE, new LocalVar("p3"), true);
-    var teleLam = new Expr.TelescopicLamExpr(SourcePos.NONE, Buffer.of(p1, p2, p3),
-      new Expr.TelescopicLamExpr(SourcePos.NONE, Buffer.of(p1), new Expr.RefExpr(SourcePos.NONE, p2Var)));
+    var teleLam = new Expr.TelescopicLamExpr(SourcePos.NONE, ImmutableSeq.of(p1, p2, p3),
+      new Expr.TelescopicLamExpr(SourcePos.NONE, ImmutableSeq.of(p1), new Expr.RefExpr(SourcePos.NONE, p2Var)));
     var lam = new Expr.LamExpr(SourcePos.NONE, p1,
       new Expr.LamExpr(SourcePos.NONE, p2,
         new Expr.LamExpr(SourcePos.NONE, p3,
@@ -32,8 +32,8 @@ public class DesugarTest {
     var p1 = new Param(SourcePos.NONE, new LocalVar("p1"), false);
     var p2 = new Param(SourcePos.NONE, p2Var, false);
     var p3 = new Param(SourcePos.NONE, new LocalVar("p3"), true);
-    var telePi = new Expr.TelescopicPiExpr(SourcePos.NONE, true, Buffer.of(p1, p2, p3),
-      new Expr.TelescopicPiExpr(SourcePos.NONE, false, Buffer.of(p1), new Expr.RefExpr(SourcePos.NONE, p2Var)));
+    var telePi = new Expr.TelescopicPiExpr(SourcePos.NONE, true, ImmutableSeq.of(p1, p2, p3),
+      new Expr.TelescopicPiExpr(SourcePos.NONE, false, ImmutableSeq.of(p1), new Expr.RefExpr(SourcePos.NONE, p2Var)));
     var pi = new Expr.PiExpr(SourcePos.NONE, true, p1,
       new Expr.PiExpr(SourcePos.NONE, true, p2,
         new Expr.PiExpr(SourcePos.NONE, true, p3,

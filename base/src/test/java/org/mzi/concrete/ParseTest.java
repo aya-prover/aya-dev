@@ -78,7 +78,7 @@ public class ParseTest {
       EnumSet.noneOf(Modifier.class),
       null,
       "id",
-      Buffer.of(A, a),
+      ImmutableSeq.of(A, a),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
       Buffer.of()
@@ -90,7 +90,7 @@ public class ParseTest {
       EnumSet.noneOf(Modifier.class),
       null,
       "xx",
-      Buffer.of(A, b, a),
+      ImmutableSeq.of(A, b, a),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
       Buffer.of()
@@ -99,12 +99,12 @@ public class ParseTest {
       SourcePos.NONE,
       Stmt.Accessibility.Public,
       "Nat",
-      Buffer.of(),
+      ImmutableSeq.of(),
       new Expr.HoleExpr(SourcePos.NONE, null, null),
       new Decl.DataBody.Ctors(Buffer.of(
-        new Decl.DataCtor("Z", Buffer.of(), Buffer.of(), Buffer.of(), false),
+        new Decl.DataCtor("Z", ImmutableSeq.of(), Buffer.of(), Buffer.of(), false),
         new Decl.DataCtor("S",
-          Buffer.of(
+          ImmutableSeq.of(
             new Param(SourcePos.NONE, new LocalVar("_"), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
           ),
           Buffer.of(), Buffer.of(), false

@@ -1,9 +1,8 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Expr;
@@ -32,7 +31,7 @@ public class TyckFnTest {
     var a = new LocalVar("a");
     // \A a.a
     idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
-      Buffer.of(
+      ImmutableSeq.of(
         new Param(SourcePos.NONE, new LocalVar("_"), true),
         new Param(SourcePos.NONE, a, true)),
       new Expr.RefExpr(SourcePos.NONE, a)));
@@ -43,8 +42,8 @@ public class TyckFnTest {
     var a = new LocalVar("a");
     // \A.\a.a
     idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
-      Buffer.of(new Param(SourcePos.NONE, new LocalVar("_"), true)),
-      new Expr.TelescopicLamExpr(SourcePos.NONE, Buffer.of(new Param(SourcePos.NONE, a, true)),
+      ImmutableSeq.of(new Param(SourcePos.NONE, new LocalVar("_"), true)),
+      new Expr.TelescopicLamExpr(SourcePos.NONE, ImmutableSeq.of(new Param(SourcePos.NONE, a, true)),
         new Expr.RefExpr(SourcePos.NONE, a))));
   }
 
@@ -79,7 +78,7 @@ public class TyckFnTest {
           Stream.of(f, p)
         )
         .map(v -> new Param(SourcePos.NONE, v, true))
-        .collect(Buffer.factory()),
+        .collect(ImmutableSeq.factory()),
       new Expr.AppExpr(SourcePos.NONE,
         new Expr.RefExpr(SourcePos.NONE, f),
         ImmutableSeq.of(

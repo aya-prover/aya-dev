@@ -4,6 +4,7 @@ package org.mzi.concrete;
 
 import org.glavo.kala.Tuple2;
 import org.glavo.kala.Unit;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public @Nullable Context ctx = null;
 
   // will change after resolve
-  public @NotNull Buffer<Param> telescope;
+  public @NotNull ImmutableSeq<Param> telescope;
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
@@ -51,7 +52,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
     @NotNull Buffer<Stmt> abuseBlock,
-    @NotNull Buffer<Param> telescope
+    @NotNull ImmutableSeq<Param> telescope
   ) {
     this.sourcePos = sourcePos;
     this.accessibility = accessibility;
@@ -78,7 +79,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
 
   public static record DataCtor(
     @NotNull String name,
-    @NotNull Buffer<Param> telescope,
+    @NotNull ImmutableSeq<Param> telescope,
     @NotNull Buffer<String> elim,
     @NotNull Buffer<Clause<Expr>> clauses,
     boolean coerce
@@ -110,7 +111,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull SourcePos sourcePos,
       @NotNull Accessibility accessibility,
       @NotNull String name,
-      @NotNull Buffer<Param> telescope,
+      @NotNull ImmutableSeq<Param> telescope,
       @NotNull Expr result,
       @NotNull DataBody body,
       @NotNull Buffer<Stmt> abuseBlock
@@ -175,7 +176,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Assoc assoc,
       @NotNull String name,
-      @NotNull Buffer<Param> telescope,
+      @NotNull ImmutableSeq<Param> telescope,
       @NotNull Expr result,
       @NotNull Expr body,
       @NotNull Buffer<Stmt> abuseBlock

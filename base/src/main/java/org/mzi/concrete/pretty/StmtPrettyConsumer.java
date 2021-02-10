@@ -3,6 +3,7 @@
 package org.mzi.concrete.pretty;
 
 import org.glavo.kala.Unit;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Decl;
@@ -95,7 +96,7 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
     };
   }
 
-  /*package-private*/ Doc visitTele(@NotNull Buffer<Param> telescope) {
+  /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Param> telescope) {
     return telescope.stream()
       .map(this::visitParam)
       .reduce(Doc.empty(), Doc::hsep);

@@ -1,8 +1,8 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.visitor;
 
-import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
@@ -25,25 +25,25 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.HoleExpr(expr.sourcePos(), expr.name(), h);
   }
 
-  default @NotNull Buffer<@NotNull Param> visitParams(@NotNull Buffer<@NotNull Param> params, P p) {
+  default @NotNull ImmutableSeq<@NotNull Param> visitParams(@NotNull ImmutableSeq<@NotNull Param> params, P p) {
     return params.view().map(param -> {
       var oldType = param.type();
       if (oldType == null) return param;
       var type = oldType.accept(this, p);
       if (Objects.equals(type, oldType)) return param;
       return new Param(param.sourcePos(), param.var(), type, param.explicit());
-    }).collect(Buffer.factory());
+    }).collect(ImmutableSeq.factory());
   }
 
   @Override default @NotNull Expr visitLam(Expr.@NotNull LamExpr expr, P p) {
-    var bind = visitParams(Buffer.of(expr.param()), p).get(0);
+    var bind = visitParams(ImmutableSeq.of(expr.param()), p).get(0);
     var body = expr.body().accept(this, p);
     if (bind == expr.param() && Objects.equals(body, expr.body())) return expr;
     return new Expr.LamExpr(expr.sourcePos(), bind, body);
   }
 
   @Override default @NotNull Expr visitPi(Expr.@NotNull PiExpr expr, P p) {
-    var bind = visitParams(Buffer.of(expr.param()), p).get(0);
+    var bind = visitParams(ImmutableSeq.of(expr.param()), p).get(0);
     var body = expr.last().accept(this, p);
     if (bind == expr.param() && Objects.equals(body, expr.last())) return expr;
     return new Expr.LamExpr(expr.sourcePos(), bind, body);

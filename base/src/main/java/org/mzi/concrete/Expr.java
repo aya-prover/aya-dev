@@ -7,7 +7,6 @@ import org.glavo.kala.Tuple2;
 import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
@@ -145,7 +144,7 @@ public sealed interface Expr {
    * @author ice1000
    */
   interface TelescopicExpr {
-    @NotNull Buffer<Param> params();
+    @NotNull ImmutableSeq<Param> params();
 
     default @NotNull Stream<@NotNull Tuple2<@NotNull Var, Param>> paramsStream() {
       return params().stream().map(p -> Tuple.of(p.var(), p));
@@ -186,7 +185,7 @@ public sealed interface Expr {
   record TelescopicPiExpr(
     @NotNull SourcePos sourcePos,
     boolean co,
-    @NotNull Buffer<Param> params,
+    @NotNull ImmutableSeq<Param> params,
     @NotNull Expr last
   ) implements Expr, TelescopicExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -212,7 +211,7 @@ public sealed interface Expr {
    */
   record TelescopicLamExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Buffer<@NotNull Param> params,
+    @NotNull ImmutableSeq<@NotNull Param> params,
     @NotNull Expr body
   ) implements Expr, TelescopicExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -226,7 +225,7 @@ public sealed interface Expr {
   record TelescopicSigmaExpr(
     @NotNull SourcePos sourcePos,
     boolean co,
-    @NotNull Buffer<@NotNull Param> params,
+    @NotNull ImmutableSeq<@NotNull Param> params,
     @NotNull Expr last
   ) implements Expr, TelescopicExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

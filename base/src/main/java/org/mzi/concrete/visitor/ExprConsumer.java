@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.visitor;
 
 import org.glavo.kala.Unit;
-import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
@@ -37,19 +37,19 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return expr.function().accept(this, p);
   }
 
-  default void visitParams(@NotNull Buffer<@NotNull Param> params, P p) {
+  default void visitParams(@NotNull ImmutableSeq<@NotNull Param> params, P p) {
     params.forEach(param -> {
       if (param.type() != null) param.type().accept(this, p);
     });
   }
 
   @Override default Unit visitLam(Expr.@NotNull LamExpr expr, P p) {
-    visitParams(Buffer.of(expr.param()), p);
+    visitParams(ImmutableSeq.of(expr.param()), p);
     return expr.body().accept(this, p);
   }
 
   @Override default Unit visitPi(Expr.@NotNull PiExpr expr, P p) {
-    visitParams(Buffer.of(expr.param()), p);
+    visitParams(ImmutableSeq.of(expr.param()), p);
     return expr.last().accept(this, p);
   }
 

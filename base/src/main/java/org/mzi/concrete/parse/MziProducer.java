@@ -108,11 +108,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public @NotNull Buffer<@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
+  public @NotNull ImmutableSeq<@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
     return stream
       .collect(ImmutableSeq.factory())
       .flatMap(this::visitTele)
-      .collect(Buffer.factory());
+      .collect(ImmutableSeq.factory());
   }
 
   @Override
@@ -172,9 +172,9 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Buffer<@NotNull Param> visitTele(MziParser.TeleContext ctx) {
+  public @NotNull ImmutableSeq<@NotNull Param> visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
-    if (literal != null) return Buffer.of(new Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
+    if (literal != null) return ImmutableSeq.of(new Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
@@ -182,11 +182,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Function<Boolean, Buffer<Param>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
+  public @NotNull Function<Boolean, ImmutableSeq<Param>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
     var type = type(ctx.type(), sourcePosOf(ctx.ids()));
     return explicit -> visitIds(ctx.ids())
       .map(var -> new Param(sourcePosOf(ctx), new LocalVar(var), type, explicit))
-      .collect(Buffer.factory());
+      .collect(ImmutableSeq.factory());
   }
 
   public @NotNull Expr visitExpr(MziParser.ExprContext ctx) {

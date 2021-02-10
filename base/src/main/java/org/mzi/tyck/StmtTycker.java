@@ -4,7 +4,6 @@ package org.mzi.tyck;
 
 import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
@@ -32,7 +31,7 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
 
   private @NotNull Stream<org.mzi.core.Param> checkTele(
     @NotNull ExprTycker exprTycker,
-    @NotNull Buffer<Param> tele
+    @NotNull ImmutableSeq<Param> tele
   ) {
     return tele.stream().map(param -> {
       assert param.type() != null; // guaranteed by MziProducer

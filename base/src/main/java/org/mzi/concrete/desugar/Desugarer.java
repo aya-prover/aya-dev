@@ -53,8 +53,7 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
   @Override public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
     decl.abuseBlock.forEach(stmt -> stmt.accept(this, unit));
     decl.result = decl.result.desugar();
-    for (int i = 0, size = decl.telescope.size(); i < size; i++)
-      decl.telescope.set(i, decl.telescope.get(i).mapExpr(Expr::desugar));
+    decl.telescope = decl.telescope.map(p -> p.mapExpr(Expr::desugar));
     decl.body = decl.body.desugar();
     return unit;
   }

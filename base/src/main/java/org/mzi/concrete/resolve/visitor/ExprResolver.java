@@ -4,7 +4,6 @@ package org.mzi.concrete.resolve.visitor;
 
 import org.glavo.kala.Tuple2;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
@@ -19,7 +18,8 @@ import org.mzi.concrete.visitor.ExprFixpoint;
 public final class ExprResolver implements ExprFixpoint<Context> {
   public static final @NotNull ExprResolver INSTANCE = new ExprResolver();
 
-  private ExprResolver() {}
+  private ExprResolver() {
+  }
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     return new Expr.RefExpr(expr.sourcePos(), ctx.getUnqualified(expr.name(), expr.sourcePos()));
@@ -34,13 +34,13 @@ public final class ExprResolver implements ExprFixpoint<Context> {
     );
   }
 
-  public @NotNull Tuple2<ImmutableSeq<Param>, Context> visitParams(@NotNull ImmutableSeq<Param> params, Context ctx) {
+  public @NotNull Tuple2<ImmutableSeq<Param>, Context> resolveParams(@NotNull ImmutableSeq<Param> params, Context ctx) {
     if (params.isEmpty()) return Tuple2.of(ImmutableSeq.of(), ctx);
     var first = params.first();
     var type = first.type();
     type = type == null ? null : type.accept(this, ctx);
     var newCtx = ctx.bind(first.var().name(), first.var(), first.sourcePos());
-    var result = visitParams(params.drop(1), newCtx);
+    var result = resolveParams(params.drop(1), newCtx);
     return Tuple2.of(
       result._1.prepended(new Param(first.sourcePos(), first.var(), type, first.explicit())),
       result._2
@@ -60,8 +60,8 @@ public final class ExprResolver implements ExprFixpoint<Context> {
   }
 
   @Override public @NotNull Expr visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, Context ctx) {
-    var params = visitParams(expr.params().toImmutableSeq(), ctx);
+    var params = resolveParams(expr.params(), ctx);
     var last = expr.last().accept(this, params._2);
-    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), params._1.collect(Buffer.factory()), last);
+    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), params._1.collect(ImmutableSeq.factory()), last);
   }
 }
