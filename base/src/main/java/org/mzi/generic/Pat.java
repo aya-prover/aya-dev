@@ -42,6 +42,9 @@ public sealed interface Pat<Term> {
   ) implements Pat<Term> {
   }
 
+  /**
+   * @author kiva
+   */
   sealed interface Atom<Pat> {
     record Tuple<Pat>(@NotNull Buffer<Pat> patterns) implements Atom<Pat> {
     }
@@ -56,6 +59,20 @@ public sealed interface Pat<Term> {
     }
 
     record Bind<Pat>(@NotNull LocalVar bind) implements Atom<Pat> {
+    }
+  }
+
+  /**
+   * @author kiva
+   */
+  public sealed interface Clause<Term> {
+    record Possible<Term>(
+      @NotNull Buffer<Pat<Term>> patterns,
+      @NotNull Term expr
+    ) implements Clause<Term> {
+    }
+
+    record Impossible<Term>() implements Clause<Term> {
     }
   }
 }
