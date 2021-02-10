@@ -25,6 +25,10 @@ public record DataDef(
   @NotNull ImmutableMap<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
   // TODO: also see RefFinder
 ) implements Def {
+  public DataDef {
+    ref.core = this;
+  }
+
   @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {
     return visitor.visitData(this, p);
   }

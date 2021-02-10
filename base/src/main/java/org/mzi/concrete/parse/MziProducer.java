@@ -365,7 +365,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       : visitElim(elimCtx);
 
     return new Decl.DataCtor(
-      new LocalVar(ctx.ID().getText()),
+      sourcePosOf(ctx),
+      ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
       elim,
       ctx.clause().stream()

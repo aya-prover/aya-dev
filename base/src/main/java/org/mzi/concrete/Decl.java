@@ -20,7 +20,6 @@ import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
-import org.mzi.ref.LocalVar;
 import org.mzi.tyck.StmtTycker;
 
 import java.util.EnumSet;
@@ -77,24 +76,61 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
   }
 
-  public static record DataCtor(
-    @NotNull LocalVar name,
-    @NotNull ImmutableSeq<Param> telescope,
-    @NotNull Buffer<String> elim,
-    @NotNull Buffer<Pat.Clause<Expr>> clauses,
-    boolean coerce
-  ) {
+  public static class DataCtor {
+    public @NotNull SourcePos sourcePos;
+    public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
+    public @NotNull ImmutableSeq<Param> telescope;
+    public @NotNull Buffer<String> elim;
+    public @NotNull Buffer<Pat.Clause<Expr>> clauses;
+    public boolean coerce;
+
+    public DataCtor(@NotNull SourcePos sourcePos,
+                    @NotNull String name,
+                    @NotNull ImmutableSeq<Param> telescope,
+                    @NotNull Buffer<String> elim,
+                    @NotNull Buffer<Pat.Clause<Expr>> clauses,
+                    boolean coerce) {
+      this.sourcePos = sourcePos;
+      this.telescope = telescope;
+      this.elim = elim;
+      this.clauses = clauses;
+      this.coerce = coerce;
+      this.ref = DefVar.concrete(this, name);
+    }
+
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DataCtor dataCtor = (DataCtor) o;
+      return coerce == dataCtor.coerce && telescope.equals(dataCtor.telescope) && elim.equals(dataCtor.elim) && clauses.equals(dataCtor.clauses);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(telescope, elim, clauses, coerce);
+    }
+
+    @Override public String toString() {
+      return "DataCtor{" +
+        "telescope=" + telescope +
+        ", elim=" + elim +
+        ", clauses=" + clauses +
+        ", coerce=" + coerce +
+        '}';
+    }
   }
 
   public sealed interface DataBody {
     record Ctors(
       @NotNull Buffer<DataCtor> ctors
-    ) implements DataBody {}
+    ) implements DataBody {
+    }
 
     record Clauses(
       @NotNull Buffer<String> elim,
       @NotNull Buffer<Tuple2<Pat<Expr>, DataCtor>> clauses
-    ) implements DataBody {}
+    ) implements DataBody {
+    }
   }
 
   /**
