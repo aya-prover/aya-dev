@@ -11,7 +11,6 @@ import org.mzi.concrete.Decl;
 import org.mzi.core.Param;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Pat;
-import org.mzi.ref.LocalVar;
 
 /**
  * core data definition, corresponding to {@link org.mzi.concrete.Decl.DataDecl}
@@ -31,7 +30,7 @@ public record DataDef(
   }
 
   public static record Ctor(
-    @NotNull LocalVar name,
+    @NotNull DefVar<Ctor, Decl.DataCtor> name,
     @NotNull ImmutableSeq<Param> telescope,
     @NotNull Buffer<String> elim,
     @NotNull Buffer<Pat.Clause<Term>> clauses,
