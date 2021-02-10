@@ -17,7 +17,9 @@ import org.mzi.concrete.resolve.context.Context;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
+import org.mzi.generic.Clause;
 import org.mzi.generic.Modifier;
+import org.mzi.generic.Pat;
 import org.mzi.tyck.StmtTycker;
 
 import java.util.EnumSet;
@@ -78,7 +80,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     @NotNull String name,
     @NotNull Buffer<Param> telescope,
     @NotNull Buffer<String> elim,
-    @NotNull Buffer<Clause> clauses,
+    @NotNull Buffer<Clause<Expr>> clauses,
     boolean coerce
   ) {
   }
@@ -90,7 +92,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
 
     record Clauses(
       @NotNull Buffer<String> elim,
-      @NotNull Buffer<Tuple2<Pattern, DataCtor>> clauses
+      @NotNull Buffer<Tuple2<Pat<Expr>, DataCtor>> clauses
     ) implements DataBody {}
   }
 

@@ -17,10 +17,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.util.Assoc;
-import org.mzi.concrete.*;
+import org.mzi.concrete.Decl;
+import org.mzi.concrete.Expr;
+import org.mzi.concrete.Param;
+import org.mzi.concrete.Stmt;
 import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
+import org.mzi.generic.Clause;
 import org.mzi.generic.Modifier;
+import org.mzi.generic.Pat;
 import org.mzi.parser.MziBaseVisitor;
 import org.mzi.parser.MziParser;
 import org.mzi.ref.LocalVar;
@@ -345,7 +350,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   public Decl.DataBody visitDataClauses(MziParser.DataClausesContext ctx) {
     var elim = visitElim(ctx.elim());
     // TODO[imkiva]: use var will compile, but IDEA shows error
-    Buffer<Tuple2<Pattern, Decl.DataCtor>> clauses = ctx.dataCtorClause().stream()
+    Buffer<Tuple2<Pat<Expr>, Decl.DataCtor>> clauses = ctx.dataCtorClause().stream()
       .map(this::visitDataCtorClause)
       .collect(Buffer.factory());
     return new Decl.DataBody.Clauses(elim, clauses);
@@ -370,78 +375,50 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Tuple2<@NotNull Pattern, Decl.@NotNull DataCtor> visitDataCtorClause(MziParser.DataCtorClauseContext ctx) {
+  public @NotNull Tuple2<@NotNull Pat<Expr>, Decl.@NotNull DataCtor> visitDataCtorClause(MziParser.DataCtorClauseContext ctx) {
     return Tuple.of(
       visitPattern(ctx.pattern()),
       visitDataCtor(ctx.dataCtor())
     );
   }
 
-  private @NotNull Pattern visitPattern(MziParser.PatternContext ctx) {
-    if (ctx instanceof MziParser.PatAtomContext pa) return visitPatAtom(pa);
-    if (ctx instanceof MziParser.PatCtorContext pc) return visitPatCtor(pc);
-
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
-  }
-
   @Override
-  public Pattern.@NotNull PatAtom visitPatAtom(MziParser.PatAtomContext ctx) {
-    if (ctx.AS() == null) {
-      return new Pattern.PatAtom(visitAtomPattern(ctx.atomPattern()), null);
-    }
-
-    var asIdCtx = ctx.ID();
-
-    return new Pattern.PatAtom(
-      visitAtomPattern(ctx.atomPattern()),
-      Tuple.of(asIdCtx.getText(), type(ctx.type(), sourcePosOf(asIdCtx)))
-    );
-  }
-
-  @Override
-  public Pattern.@NotNull PatCtor visitPatCtor(MziParser.PatCtorContext ctx) {
-    return new Pattern.PatCtor(
-      ctx.ID(0).getText(),
-      ctx.patternCtorParam().stream()
-        .map(this::visitPatternCtorParam)
-        .collect(Buffer.factory()),
-      ctx.AS() == null ? null : ctx.ID(1).getText(),
+  public @NotNull Pat<Expr> visitPattern(MziParser.PatternContext ctx) {
+    // TODO[imkiva]: use var will compile, but IDEA shows error
+    ImmutableSeq<Pat.Atom<Pat<Expr>>> atoms = ctx.atomPattern().stream()
+      .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
+    return new Pat.UnresolvedPat<>(
+      atoms.first(),
+      atoms.drop(1).collect(Buffer.factory()),
+      ctx.ID() != null ? new LocalVar(ctx.ID().getText()) : null,
       type(ctx.type(), sourcePosOf(ctx))
     );
   }
 
   @Override
-  public Pattern.@NotNull Atom visitPatternCtorParam(MziParser.PatternCtorParamContext ctx) {
-    var id = ctx.ID();
-    if (id != null) return new Pattern.Ident(id.getText());
-    var atomPattern = ctx.atomPattern();
-    if (atomPattern != null) return visitAtomPattern(atomPattern);
-
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
-  }
-
-  @Override
-  public Pattern.@NotNull Atom visitAtomPattern(MziParser.AtomPatternContext ctx) {
-    if (ctx.LPAREN() != null) return new Pattern.Tuple(visitPatterns(ctx.patterns()));
-    if (ctx.LBRACE() != null) return new Pattern.Braced(visitPatterns(ctx.patterns()));
-    if (ctx.CALM_FACE() != null) return new Pattern.CalmFace();
+  public Pat.@NotNull Atom<Pat<Expr>> visitAtomPattern(MziParser.AtomPatternContext ctx) {
+    if (ctx.LPAREN() != null) return new Pat.Atom.Tuple<>(visitPatterns(ctx.patterns()));
+    if (ctx.LBRACE() != null) return new Pat.Atom.Braced<>(visitPatterns(ctx.patterns()));
+    if (ctx.CALM_FACE() != null) return new Pat.Atom.CalmFace<>();
     var number = ctx.NUMBER();
-    if (number != null) return new Pattern.Number(Integer.parseInt(number.getText()));
+    if (number != null) return new Pat.Atom.Number<>(Integer.parseInt(number.getText()));
+    var id = ctx.ID();
+    if (id != null) return new Pat.Atom.Bind<>(new LocalVar(id.getText()));
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
-  public @NotNull Buffer<@NotNull Pattern> visitPatterns(MziParser.PatternsContext ctx) {
+  public @NotNull Buffer<@NotNull Pat<Expr>> visitPatterns(MziParser.PatternsContext ctx) {
     return ctx.pattern().stream()
       .map(this::visitPattern)
       .collect(Buffer.factory());
   }
 
   @Override
-  public @NotNull Clause visitClause(MziParser.ClauseContext ctx) {
-    if (ctx.ABSURD() != null) return Clause.Impossible.INSTANCE;
-    return new Clause.Possible(
+  public @NotNull Clause<Expr> visitClause(MziParser.ClauseContext ctx) {
+    if (ctx.ABSURD() != null) return new Clause.Impossible<>();
+    return new Clause.Possible<>(
       visitPatterns(ctx.patterns()),
       visitExpr(ctx.expr())
     );

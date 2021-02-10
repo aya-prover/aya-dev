@@ -47,7 +47,7 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : '\\structure' ID fieldTele* ('\\extends' ids)? ('|' field)* abuse?;
+structDecl : OPEN? '\\structure' ID fieldTele* ('\\extends' ids)? ('|' field)* abuse?;
 
 fieldTeleInner : COERCE? ID+ type;
 fieldTele : LPAREN fieldTeleInner ')'
@@ -58,7 +58,7 @@ field : COERCE? ID tele* type   # fieldDecl
       | ID tele* IMPLIES expr   # fieldImpl
       ;
 
-dataDecl : '\\data' ID tele* type? dataBody abuse?;
+dataDecl : OPEN? '\\data' ID tele* type? dataBody abuse?;
 
 dataBody : ('|' dataCtor)*       # dataCtors
          | elim dataCtorClause*  # dataClauses
@@ -102,14 +102,13 @@ clause : patterns IMPLIES expr
        | ABSURD;
 
 patterns : pattern (',' pattern)* ;
-pattern : atomPattern (AS ID type?)?                 # patAtom
-        | ID patternCtorParam* (AS ID)? type?        # patCtor
+pattern : atomPattern+ (AS ID type?)?
         ;
-patternCtorParam : atomPattern | ID;
 
 atomPattern : LPAREN patterns? ')'
             | LBRACE patterns '}'
             | NUMBER
+            | ID
             | CALM_FACE
             ;
 
