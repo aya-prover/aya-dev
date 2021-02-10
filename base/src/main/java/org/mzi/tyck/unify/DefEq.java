@@ -16,6 +16,7 @@ import org.mzi.concrete.Expr;
 import org.mzi.core.Param;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
+import org.mzi.ref.LocalVar;
 import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.util.Decision;
@@ -45,10 +46,16 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     return lhs.accept(this, rhs, type);
   }
 
+  private boolean compareWHNF(Term lhs, Term preRhs, @Nullable Term type) {
+    var whnf = lhs.normalize(NormalizeMode.WHNF);
+    if (Objects.equals(whnf, lhs)) return false;
+    return compare(whnf, preRhs.normalize(NormalizeMode.WHNF), type);
+  }
+
   @NotNull
   private Boolean checkParam(@NotNull Param l, @NotNull Param r) {
     if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return false;
-    varSubst.put(l.ref(), r.ref());
+    varSubst.put(r.ref(), l.ref());
     return true;
   }
 
@@ -57,11 +64,13 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     if (!l.sizeEquals(r)) return false;
     var length = l.size();
     for (int i = 0; i < length; i++) {
-      if (!compare(l.get(i).type(), r.get(i).type(), UnivTerm.OMEGA)) {
+      final var rhs = r.get(i);
+      final var lhs = l.get(i);
+      if (!compare(lhs.type(), rhs.type(), UnivTerm.OMEGA)) {
         for (int j = 0; j < i; j++) varSubst.remove(r.get(j).ref());
         return false;
       }
-      varSubst.put(r.get(i).ref(), l.get(i).ref());
+      varSubst.put(rhs.ref(), lhs.ref());
     }
     return true;
   }
@@ -97,18 +106,14 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   public @NotNull Boolean visitApp(@NotNull AppTerm.Apply lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (lhs.whnf() == Decision.YES && preRhs instanceof AppTerm.Apply rhs)
       return compare(lhs.fn(), rhs.fn(), null) && compare(lhs.arg().term(), rhs.arg().term(), null);
-    var lhsWhnf = lhs.normalize(NormalizeMode.WHNF);
-    if (Objects.equals(lhsWhnf, lhs)) return false;
-    return compare(lhsWhnf, preRhs.normalize(NormalizeMode.WHNF), type);
+    return compareWHNF(lhs, preRhs, type);
   }
 
   @Override
   public @NotNull Boolean visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (lhs.whnf() == Decision.YES && preRhs instanceof ProjTerm rhs)
       return lhs.ix() == rhs.ix() && compare(lhs.tup(), rhs.tup(), null);
-    var whnf = lhs.normalize(NormalizeMode.WHNF);
-    if (Objects.equals(whnf, lhs)) return false;
-    return compare(whnf, preRhs.normalize(NormalizeMode.WHNF), type);
+    return compareWHNF(lhs, preRhs, type);
   }
 
   @Override
@@ -132,6 +137,10 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     return visitLists(lhs.items(), rhs.items());
   }
 
+  private boolean visitArgs(Seq<? extends Arg<? extends Term>> l, Seq<? extends Arg<? extends Term>> r) {
+    return visitLists(l.view().map(Arg::term), r.view().map(Arg::term));
+  }
+
   private boolean visitLists(Seq<? extends Term> l, Seq<? extends Term> r) {
     if (!l.sizeEquals(r)) return false;
     return IntStream.range(0, l.size()).allMatch(i -> compare(l.get(i), r.get(i), null));
@@ -149,30 +158,28 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   @Override
   public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (preRhs instanceof AppTerm.FnCall rhs && rhs.fnRef() == lhs.fnRef())
-      if (visitLists(lhs.args().view().map(Arg::term), rhs.args().view().map(Arg::term)))
-        return true;
-    return compare(lhs.normalize(NormalizeMode.WHNF), preRhs.normalize(NormalizeMode.WHNF), type);
+      if (visitArgs(lhs.args(), rhs.args())) return true;
+    return compareWHNF(lhs, preRhs, type);
   }
 
   @Override
   public @NotNull Boolean visitDataCall(@NotNull AppTerm.DataCall lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (preRhs instanceof AppTerm.DataCall rhs && rhs.dataRef() == lhs.dataRef())
-      if (visitLists(lhs.args().view().map(Arg::term), rhs.args().view().map(Arg::term)))
-        return true;
-    return compare(lhs.normalize(NormalizeMode.WHNF), preRhs.normalize(NormalizeMode.WHNF), type);
+      if (visitArgs(lhs.args(), rhs.args())) return true;
+    return compareWHNF(lhs, preRhs, type);
   }
 
   @Override
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
+    var exParam = lhs.param();
     if (!(preRhs instanceof LamTerm rhs)) {
-      var exParam = lhs.param();
-      var exArg = new Arg<>(new RefTerm(exParam.ref()), exParam.explicit());
+      var exArg = new Arg<>(new RefTerm(new LocalVar(exParam.ref().name())), exParam.explicit());
       return compare(AppTerm.make(lhs, exArg), AppTerm.make(preRhs, exArg), type);
     }
     // TODO[xyr]: please verify and improve this fix.
     //  I guess you need to add some extra checks that was done in checkTele.
-    varSubst.put(rhs.param().ref(), lhs.param().ref());
-    return checkParam(lhs.param(), rhs.param())
+    //  [ice]: what checks?
+    return checkParam(exParam, rhs.param())
       && compare(lhs.body(), rhs.body(), type);
   }
 
