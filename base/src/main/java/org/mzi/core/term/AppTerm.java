@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Decl;
+import org.mzi.core.def.DataDef;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
@@ -62,6 +63,28 @@ public sealed interface AppTerm extends Term {
     @Contract(value = " -> new", pure = true)
     @Override public @NotNull Term fn() {
       return new RefTerm(fnRef);
+    }
+  }
+
+  record DataCall(
+    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
+    @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args
+  ) implements AppTerm {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitDataCall(this, p);
+    }
+
+    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+      return visitor.visitDataCall(this, p, q);
+    }
+
+    @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      return Decision.YES;
+    }
+
+    @Contract(value = " -> new", pure = true)
+    @Override public @NotNull Term fn() {
+      return new RefTerm(dataRef);
     }
   }
 

@@ -9,6 +9,8 @@ import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.tyck.sort.Sort;
 
+import java.util.function.BiFunction;
+
 /**
  * @author ice1000
  */
@@ -22,11 +24,24 @@ public interface TermFixpoint<P> extends
     return term;
   }
 
+  @Override default @NotNull Term visitDataCall(@NotNull AppTerm.DataCall dataCall, P p) {
+    var args = dataCall.args().view().map(arg -> visitArg(arg, p));
+    if (dataCall.args().sameElements(args, true)) return dataCall;
+    return new AppTerm.DataCall(dataCall.dataRef(), args);
+  }
+
+  private <T> T visitParameterized(
+    @NotNull Param theParam, @NotNull Term theBody, @NotNull P p, @NotNull T original,
+    @NotNull BiFunction<@NotNull Param, @NotNull Term, T> callback
+  ) {
+    var param = new Param(theParam.ref(), theParam.type().accept(this, p), theParam.explicit());
+    var body = theBody.accept(this, p);
+    if (param.type() == theParam.type() && body == theBody) return original;
+    return callback.apply(param, body);
+  }
+
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
-    var param = new Param(term.param().ref(), term.param().type().accept(this, p), term.param().explicit());
-    var body = term.body().accept(this, p);
-    if (param.type() == term.param().type() && body == term.body()) return term;
-    return new LamTerm(param, body);
+    return visitParameterized(term.param(), term.body(), p, term, LamTerm::new);
   }
 
   @Override default @NotNull Term visitUniv(@NotNull UnivTerm term, P p) {
@@ -36,10 +51,7 @@ public interface TermFixpoint<P> extends
   }
 
   @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
-    var param = new Param(term.param().ref(), term.param().type().accept(this, p), term.param().explicit());
-    var body = term.body().accept(this, p);
-    if (param == term.param() && body == term.body()) return term;
-    return new PiTerm(term.co(), param, body);
+    return visitParameterized(term.param(), term.body(), p, term, (a, t) -> new PiTerm(term.co(), a, t));
   }
 
   @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
