@@ -155,6 +155,14 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   }
 
   @Override
+  public @NotNull Boolean visitDataCall(@NotNull AppTerm.DataCall lhs, @NotNull Term preRhs, @Nullable Term type) {
+    if (preRhs instanceof AppTerm.DataCall rhs && rhs.dataRef() == lhs.dataRef())
+      if (visitLists(lhs.args().view().map(Arg::term), rhs.args().view().map(Arg::term)))
+        return true;
+    return compare(lhs.normalize(NormalizeMode.WHNF), preRhs.normalize(NormalizeMode.WHNF), type);
+  }
+
+  @Override
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     if (!(preRhs instanceof LamTerm rhs)) {
       var exParam = lhs.param();

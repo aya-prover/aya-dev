@@ -22,6 +22,12 @@ public interface TermFixpoint<P> extends
     return term;
   }
 
+  @Override default @NotNull Term visitDataCall(@NotNull AppTerm.DataCall dataCall, P p) {
+    var args = dataCall.args().view().map(arg -> visitArg(arg, p));
+    if (dataCall.args().sameElements(args, true)) return dataCall;
+    return new AppTerm.DataCall(dataCall.dataRef(), args);
+  }
+
   @Override default @NotNull Term visitLam(@NotNull LamTerm term, P p) {
     var param = new Param(term.param().ref(), term.param().type().accept(this, p), term.param().explicit());
     var body = term.body().accept(this, p);
@@ -38,7 +44,7 @@ public interface TermFixpoint<P> extends
   @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
     var param = new Param(term.param().ref(), term.param().type().accept(this, p), term.param().explicit());
     var body = term.body().accept(this, p);
-    if (param == term.param() && body == term.body()) return term;
+    if (param.type() == term.param().type() && body == term.body()) return term;
     return new PiTerm(term.co(), param, body);
   }
 
