@@ -10,6 +10,7 @@ import org.glavo.kala.Tuple2;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.traversable.Traversable;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -109,8 +110,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
 
   public @NotNull ImmutableSeq<@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
     return stream
-      .collect(ImmutableSeq.factory())
-      .flatMap(this::visitTele)
+      .map(this::visitTele)
+      .flatMap(Traversable::stream)
       .collect(ImmutableSeq.factory());
   }
 
