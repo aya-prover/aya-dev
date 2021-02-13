@@ -95,7 +95,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     var abuseCtx = ctx.abuse();
 
     return new Decl.FnDecl(
-      sourcePosOf(ctx),
+      sourcePosOf(ctx.ID()),
       accessibility,
       modifiers,
       assocCtx == null ? null : visitAssoc(assocCtx),
@@ -195,8 +195,21 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     if (ctx instanceof MziParser.PiContext pi) return visitPi(pi);
     if (ctx instanceof MziParser.SigmaContext sig) return visitSigma(sig);
     if (ctx instanceof MziParser.LamContext lam) return visitLam(lam);
-    // TODO: match and arr
-    return new Expr.HoleExpr(sourcePosOf(ctx), null, null);
+    if (ctx instanceof MziParser.ArrContext arr) return visitArr(arr);
+    // TODO: match
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override
+  public @NotNull Expr visitArr(MziParser.ArrContext ctx) {
+    var from = visitExpr(ctx.expr(0));
+    var to = visitExpr(ctx.expr(1));
+    return new Expr.PiExpr(
+      sourcePosOf(ctx),
+      false,
+      new Param(sourcePosOf(ctx.expr(0)), new LocalVar("_"), from, true),
+      to
+    );
   }
 
   @Override
@@ -314,7 +327,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     var abuseCtx = ctx.abuse();
 
     return new Decl.DataDecl(
-      sourcePosOf(ctx),
+      sourcePosOf(ctx.ID()),
       accessibility,
       ctx.OPEN() != null,
       ctx.ID().getText(),
@@ -537,12 +550,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   private @NotNull SourcePos sourcePosOf(TerminalNode node) {
-    var interval = node.getSourceInterval();
     var token = node.getSymbol();
     var line = token.getLine();
     return new SourcePos(
-      interval.a,
-      interval.b,
+      token.getStartIndex(),
+      token.getStopIndex(),
       line,
       token.getCharPositionInLine(),
       line,

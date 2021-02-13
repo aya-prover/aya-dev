@@ -43,6 +43,7 @@ public class PrettyErrorTest {
     var doc = new PrettyError(
       "<stdin>",
       Span.from(code, 71, 357),
+      Doc.plain("Error:"),
       Doc.plain("No, you don't want to write tests"),
       Doc.empty()
     ).toDoc();
@@ -59,9 +60,9 @@ public class PrettyErrorTest {
          7 |   // congratulations!
          8 |   // I finally bought a cat today!
            | ...
-        13 |   // this makes sense?
         14 |   // this makes no sense.
         15 | }
+        16 |\s
        \s
       Error: No, you don't want to write tests
       """, text);
@@ -77,6 +78,7 @@ public class PrettyErrorTest {
     var doc = new PrettyError(
       "<stdin>",
       Span.from(code, 48, 50),
+      Doc.plain("Error:"),
       Doc.plain("package 'org.junit.jupiter.apt.Test' not found"),
       Doc.plain("Did you mean 'org.junit.jupiter.api.Test'")
     ).toDoc();
@@ -107,6 +109,7 @@ public class PrettyErrorTest {
     var doc = new PrettyError(
       "<stdin>",
       Span.from(code, 48, 50),
+      Doc.plain("Error:"),
       Doc.plain("package\n'org.junit.jupiter.apt.Test'\nnot found"),
       Doc.plain("Did you mean\n'org.junit.jupiter.api.Test'")
     ).toDoc();

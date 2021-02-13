@@ -50,6 +50,12 @@ public interface Problem {
     return new PrettyError(
       filePath.toString(),
       Span.from(sourceCode, sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex()),
+      switch (level()) {
+        case WARN -> Doc.plain("Warning:");
+        case GOAL -> Doc.plain("Goal:");
+        case INFO -> Doc.plain("Info:");
+        case ERROR -> Doc.plain("Error:");
+      },
       describe(),
       noteMessage
     );

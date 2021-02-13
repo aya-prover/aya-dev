@@ -41,10 +41,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this(metaContext, new MutableHashMap<>());
   }
 
-  public ExprTycker(@NotNull Reporter reporter, @NotNull MutableMap<Var, Term> localCtx) {
-    this(new MetaContext(reporter), localCtx);
-  }
-
   public ExprTycker(@NotNull MetaContext metaContext, @NotNull MutableMap<Var, Term> localCtx) {
     this.localCtx = localCtx;
     this.metaContext = metaContext;

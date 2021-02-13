@@ -13,7 +13,8 @@ import org.mzi.pretty.doc.Doc;
 public record PrettyError(
   @NotNull String filePath,
   @NotNull Span errorRange,
-  @NotNull Doc errorMessage,
+  @NotNull Doc tag,
+  @NotNull Doc tagMessage,
   @NotNull Doc noteMessage
 ) {
   public Doc toDoc(PrettyErrorConfig config) {
@@ -23,7 +24,7 @@ public record PrettyError(
       Doc.plain("In file " + filePath + ":" + sourceRange.startLine + ":" + sourceRange.startCol + " -> "),
       Doc.empty(),
       Doc.hang(2, visualizeCode(sourceRange)),
-      Doc.hsep(Doc.plain("Error:"), Doc.align(errorMessage)),
+      Doc.hsep(tag, Doc.align(tagMessage)),
       Doc.emptyIf(noteMessage instanceof Doc.Empty,
         Doc.vcat(Doc.hsep(Doc.plain("note:"), Doc.align(noteMessage)), Doc.empty())
       )
@@ -91,7 +92,11 @@ public record PrettyError(
         if (lineNo == startLine) {
           builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
           builder.append("^");
-          builder.append("-".repeat(endCol - startCol - 1));
+          int length = endCol - startCol - 1;
+          if (length > 0) {
+            // endCol is in the next line
+            builder.append("-".repeat(length));
+          }
           builder.append("^");
           builder.append('\n');
         }
@@ -131,7 +136,8 @@ public record PrettyError(
     int tabWidth = config.tabWidth();
 
     for (char c : input.toCharArray()) {
-      pos++;
+      int oldPos = pos++;
+      int oldCol = col;
       switch (c) {
         case '\n' -> {
           line++;
@@ -142,12 +148,12 @@ public record PrettyError(
         default -> col++;
       }
 
-      if (pos == errorRange.start()) {
+      if (oldPos == errorRange.start()) {
         startLine = line;
-        startCol = col;
-      } else if (pos == errorRange.end()) {
+        startCol = oldCol;
+      } else if (oldPos == errorRange.end()) {
         endLine = line;
-        endCol = col;
+        endCol = oldCol;
       }
     }
 

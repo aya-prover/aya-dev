@@ -340,7 +340,7 @@ public sealed interface Doc {
 
     return Arrays.stream(text.split("\n", -1))
       .map(Doc::plain)
-      .reduce((x, y) -> simpleCat(x, line(), y))
+      .reduce((x, y) -> simpleCat(x, hardLine(), y))
       .get(); // never null
   }
 
