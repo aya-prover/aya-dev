@@ -91,7 +91,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     var abuseCtx = ctx.abuse();
 
     return new Decl.FnDecl(
-      sourcePosOf(ctx),
+      sourcePosOf(ctx.ID()),
       accessibility,
       modifiers,
       assocCtx == null ? null : visitAssoc(assocCtx),
@@ -322,7 +322,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     var abuseCtx = ctx.abuse();
 
     return new Decl.DataDecl(
-      sourcePosOf(ctx),
+      sourcePosOf(ctx.ID()),
       accessibility,
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
@@ -571,12 +571,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   private @NotNull SourcePos sourcePosOf(TerminalNode node) {
-    var interval = node.getSourceInterval();
     var token = node.getSymbol();
     var line = token.getLine();
     return new SourcePos(
-      interval.a,
-      interval.b,
+      token.getStartIndex(),
+      token.getStopIndex(),
       line,
       token.getCharPositionInLine(),
       line,

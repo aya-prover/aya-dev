@@ -91,7 +91,11 @@ public record PrettyError(
         if (lineNo == startLine) {
           builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
           builder.append("^");
-          builder.append("-".repeat(endCol - startCol - 1));
+          int length = endCol - startCol - 1;
+          if (length > 0) {
+            // endCol is in the next line
+            builder.append("-".repeat(length));
+          }
           builder.append("^");
           builder.append('\n');
         }
