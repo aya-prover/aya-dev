@@ -54,7 +54,7 @@ public record ModuleContext(
 
   @Override
   public @Nullable Var getQualifiedLocalMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
-    var mod = modules.get(modName);
+    var mod = modules.getOrNull(modName);
     if (mod == null) return null;
     var ref = mod.getOrNull(name);
     if (ref == null) reportAndThrow(new QualifiedNameNotFoundError(modName, name, sourcePos));
@@ -63,7 +63,7 @@ public record ModuleContext(
 
   @Override
   public @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
-    return modules.get(modName);
+    return modules.getOrNull(modName);
   }
 
   public void importModule(
@@ -114,10 +114,16 @@ public record ModuleContext(
         reporter().report(new ShadowingWarn(name, sourcePos));
       }
       globals.set(name, MutableHashMap.of());
+    } else if (globals.get(name).containsKey(modName)) {
+      reporter().report(new DuplicateNameError(name, sourcePos));
     } else {
       reporter().report(new AmbiguousNameWarn(name, sourcePos));
     }
     globals.get(name).set(modName, ref);
+    if (modName.equals(TOP_LEVEL_MOD_NAME)) {
+      // Defined, not imported.
+      modules.get(TOP_LEVEL_MOD_NAME).set(name, ref);
+    }
     if (accessibility == Stmt.Accessibility.Public) {
       if (exports.get(TOP_LEVEL_MOD_NAME).containsKey(name)) {
         reporter().report(new DuplicateExportError(name, sourcePos));
