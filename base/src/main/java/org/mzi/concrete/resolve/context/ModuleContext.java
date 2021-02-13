@@ -28,7 +28,11 @@ public record ModuleContext(
   @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> exports
 ) implements Context {
   public ModuleContext(@NotNull Context parent) {
-    this(parent, MutableHashMap.of(), MutableHashMap.of(), MutableHashMap.of());
+    this(parent,
+      MutableHashMap.of(),
+      MutableHashMap.of(),
+      MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of())
+    );
   }
 
   @Override
