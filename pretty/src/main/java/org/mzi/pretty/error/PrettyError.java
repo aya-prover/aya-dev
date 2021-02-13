@@ -13,7 +13,8 @@ import org.mzi.pretty.doc.Doc;
 public record PrettyError(
   @NotNull String filePath,
   @NotNull Span errorRange,
-  @NotNull Doc errorMessage,
+  @NotNull Doc tag,
+  @NotNull Doc tagMessage,
   @NotNull Doc noteMessage
 ) {
   public Doc toDoc(PrettyErrorConfig config) {
@@ -23,7 +24,7 @@ public record PrettyError(
       Doc.plain("In file " + filePath + ":" + sourceRange.startLine + ":" + sourceRange.startCol + " -> "),
       Doc.empty(),
       Doc.hang(2, visualizeCode(sourceRange)),
-      Doc.hsep(Doc.plain("Error:"), Doc.align(errorMessage)),
+      Doc.hsep(tag, Doc.align(tagMessage)),
       Doc.emptyIf(noteMessage instanceof Doc.Empty,
         Doc.vcat(Doc.hsep(Doc.plain("note:"), Doc.align(noteMessage)), Doc.empty())
       )
