@@ -60,9 +60,9 @@ public class PrettyErrorTest {
          7 |   // congratulations!
          8 |   // I finally bought a cat today!
            | ...
-        13 |   // this makes sense?
         14 |   // this makes no sense.
         15 | }
+        16 |\s
        \s
       Error: No, you don't want to write tests
       """, text);
