@@ -136,7 +136,8 @@ public record PrettyError(
     int tabWidth = config.tabWidth();
 
     for (char c : input.toCharArray()) {
-      pos++;
+      int oldPos = pos++;
+      int oldCol = col;
       switch (c) {
         case '\n' -> {
           line++;
@@ -147,12 +148,12 @@ public record PrettyError(
         default -> col++;
       }
 
-      if (pos == errorRange.start()) {
+      if (oldPos == errorRange.start()) {
         startLine = line;
-        startCol = col;
-      } else if (pos == errorRange.end()) {
+        startCol = oldCol;
+      } else if (oldPos == errorRange.end()) {
         endLine = line;
-        endCol = col;
+        endCol = oldCol;
       }
     }
 
