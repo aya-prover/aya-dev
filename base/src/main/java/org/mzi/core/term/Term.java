@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
@@ -52,6 +52,7 @@ public interface Term extends CoreTerm {
     R visitUniv(@NotNull UnivTerm term, P p);
     R visitApp(AppTerm.@NotNull Apply term, P p);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p);
+    R visitDataCall(AppTerm.@NotNull DataCall dataCall, P p);
     R visitTup(@NotNull TupTerm term, P p);
     R visitProj(@NotNull ProjTerm term, P p);
     R visitHole(@NotNull AppTerm.HoleApp term, P p);
@@ -65,6 +66,7 @@ public interface Term extends CoreTerm {
     R visitUniv(@NotNull UnivTerm term, P p, Q q);
     R visitApp(AppTerm.@NotNull Apply term, P p, Q q);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p, Q q);
+    R visitDataCall(AppTerm.@NotNull DataCall dataCall, P p, Q q);
     R visitTup(@NotNull TupTerm term, P p, Q q);
     R visitProj(@NotNull ProjTerm term, P p, Q q);
     R visitHole(@NotNull AppTerm.HoleApp term, P p, Q q);
