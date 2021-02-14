@@ -24,7 +24,7 @@ public sealed interface Pat<Term> {
 
   record PatCtor<Term>(
     @NotNull String name,
-    @NotNull Buffer<Atom<Pat<Term>>> params,
+    @NotNull Buffer<Pat<Term>> params,
     @Nullable LocalVar as,
     @NotNull Term type
   ) implements Pat<Term> {
