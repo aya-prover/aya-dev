@@ -134,8 +134,9 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   }
 
   /**
-   * concrete data definition, corresponding {@link org.mzi.core.def.DataDef}
+   * Concrete data definition
    *
+   * @see DataDef
    * @author kiva
    */
   public static final class DataDecl extends Decl {
@@ -198,8 +199,9 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   }
 
   /**
-   * concrete function definition, corresponding to {@link org.mzi.core.def.FnDef}.
+   * Concrete function definition
    *
+   * @see FnDef
    * @author re-xyr
    */
   public static final class FnDecl extends Decl {
