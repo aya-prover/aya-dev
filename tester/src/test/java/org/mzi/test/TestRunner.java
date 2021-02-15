@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.Global;
+import org.mzi.cli.CompilerFlags;
 import org.mzi.cli.SingleFileCompiler;
 
 import java.io.ByteArrayOutputStream;
@@ -18,14 +19,8 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestRunner {
-  public static final String TEST_TQL = "TQL";
-  public static final String TEST_NMSL = "NMSL";
-
   @BeforeAll public static void enterTestMode() {
     Global.enterTestMode();
-    // avoid windows console unicode problem
-    SingleFileCompiler.TQL = TEST_TQL;
-    SingleFileCompiler.NMSL = TEST_NMSL;
   }
 
   @Test
@@ -55,7 +50,7 @@ public class TestRunner {
     System.setErr(new PrintStream(hookOut));
 
     try {
-      SingleFileCompiler.compile(file);
+      SingleFileCompiler.compile(CompilerFlags.asciiOnlyFlags(), file);
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }
