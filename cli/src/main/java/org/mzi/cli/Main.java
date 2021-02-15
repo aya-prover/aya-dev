@@ -25,7 +25,10 @@ public class Main {
     TyckOptions.VERBOSE = cli.verbose;
 
     var inputFile = cli.inputFile;
+    var flags = cli.asciiOnly
+      ? CompilerFlags.asciiOnlyFlags()
+      : CompilerFlags.defaultFlags();
     var filePath = Paths.get(inputFile);
-    SingleFileCompiler.compile(filePath);
+    SingleFileCompiler.compile(flags, filePath);
   }
 }

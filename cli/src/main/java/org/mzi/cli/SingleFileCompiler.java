@@ -18,10 +18,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class SingleFileCompiler {
-  public static @NotNull String TQL = "\uD83D\uDC02\uD83C\uDF7A";
-  public static @NotNull String NMSL = "\uD83D\uDD28";
-
-  public static void compile(@NotNull Path filePath) throws IOException {
+  public static void compile(@NotNull CompilerFlags flags, @NotNull Path filePath) throws IOException {
     var reporter = new CountingReporter(new CliReporter(filePath));
     var parser = MziParsing.parser(filePath, reporter);
     var program = MziProducer.INSTANCE.visitProgram(parser.program());
@@ -43,7 +40,7 @@ public class SingleFileCompiler {
         Please report the stacktrace to the developers so a better error handling could be made.
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
     }
-    if (reporter.isEmpty()) System.out.println(TQL);
-    else System.err.println(NMSL);
+    if (reporter.isEmpty()) System.out.println(flags.successNotion());
+    else System.err.println(flags.failNotion());
   }
 }
