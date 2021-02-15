@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mzi.api.Global;
 import org.mzi.cli.CompilerFlags;
 import org.mzi.cli.SingleFileCompiler;
+import org.mzi.cli.StreamReporter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class TestRunner {
 
     Files.walk(path)
       .skip(1)
+      .filter(Files::isRegularFile)
       .filter(f -> f.getFileName().toString().endsWith(".mzi"))
       .forEach(this::runFile);
   }
@@ -44,13 +46,10 @@ public class TestRunner {
     var expectedOutFile = file.resolveSibling(file.getFileName() + ".txt");
 
     var hookOut = new ByteArrayOutputStream();
-    var stdout = System.out;
-    var stderr = System.err;
-    System.setOut(new PrintStream(hookOut));
-    System.setErr(new PrintStream(hookOut));
 
     try {
-      SingleFileCompiler.compile(CompilerFlags.asciiOnlyFlags(), file);
+      new SingleFileCompiler(new StreamReporter(file, new PrintStream(hookOut)), file)
+        .compile(CompilerFlags.asciiOnlyFlags());
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }
@@ -62,9 +61,6 @@ public class TestRunner {
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
     }
-
-    System.setOut(stdout);
-    System.setErr(stderr);
 
     System.out.println(file.getFileName() + " ---> " + " success");
   }

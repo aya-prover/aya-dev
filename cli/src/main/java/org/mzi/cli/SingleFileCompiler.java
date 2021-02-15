@@ -3,6 +3,7 @@
 package org.mzi.cli;
 
 import org.jetbrains.annotations.NotNull;
+import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.parse.MziParsing;
@@ -18,8 +19,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class SingleFileCompiler {
-  public static void compile(@NotNull CompilerFlags flags, @NotNull Path filePath) throws IOException {
-    var reporter = new CountingReporter(new CliReporter(filePath));
+  private final @NotNull Reporter reporter;
+  private final @NotNull Path filePath;
+
+  public SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath) {
+    this.reporter = reporter;
+    this.filePath = filePath;
+  }
+
+  public void compile(@NotNull CompilerFlags flags) throws IOException {
+    var reporter = new CountingReporter(this.reporter);
     var parser = MziParsing.parser(filePath, reporter);
     var program = MziProducer.INSTANCE.visitProgram(parser.program());
     var context = new EmptyContext(reporter).derive();
@@ -40,7 +49,7 @@ public class SingleFileCompiler {
         Please report the stacktrace to the developers so a better error handling could be made.
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
     }
-    if (reporter.isEmpty()) System.out.println(flags.successNotion());
-    else System.err.println(flags.failNotion());
+    if (reporter.isEmpty()) reporter.reportString(flags.successNotion());
+    else reporter.reportString(flags.failNotion());
   }
 }
