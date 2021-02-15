@@ -29,6 +29,7 @@ public class Main {
       ? CompilerFlags.asciiOnlyFlags()
       : CompilerFlags.defaultFlags();
     var filePath = Paths.get(inputFile);
-    new SingleFileCompiler(new CliReporter(filePath), filePath).compile(flags);
+    var compiler = new SingleFileCompiler(new CliReporter(filePath), filePath);
+    compiler.compile(flags);
   }
 }

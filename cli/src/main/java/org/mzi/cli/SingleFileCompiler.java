@@ -18,15 +18,7 @@ import org.mzi.tyck.error.CountingReporter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class SingleFileCompiler {
-  private final @NotNull Reporter reporter;
-  private final @NotNull Path filePath;
-
-  public SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath) {
-    this.reporter = reporter;
-    this.filePath = filePath;
-  }
-
+public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath) {
   public void compile(@NotNull CompilerFlags flags) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var parser = MziParsing.parser(filePath, reporter);
