@@ -52,7 +52,7 @@ public class PrettyErrorTest {
     System.out.println(text);
 
     assertEquals("""
-      In file <stdin>:6:7 ->\s
+      In file <stdin>:6:7 ->
             
          4 | pub mod test2;
          5 |\s
@@ -87,7 +87,7 @@ public class PrettyErrorTest {
     System.out.println(text);
 
     assertEquals("""
-      In file <stdin>:2:25 ->\s
+      In file <stdin>:2:25 ->
             
         1 | package org.mzi.pretty
         2 | import org.junit.jupiter.apt.Test
@@ -118,7 +118,7 @@ public class PrettyErrorTest {
     System.out.println(text);
 
     assertEquals("""
-      In file <stdin>:2:25 ->\s
+      In file <stdin>:2:25 ->
             
         1 | package org.mzi.pretty
         2 | import org.junit.jupiter.apt.Test

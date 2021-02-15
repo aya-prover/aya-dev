@@ -1,0 +1,7 @@
+In file 00-syntax-error.mzi:1:0 ->
+
+  1 | hammer
+      ^----^
+  
+Error: Parser error: extraneous input 'hammer' expecting {<EOF>, '\def', '\structure', '\data', '\module', '\open', '\import', '\public', '\private'}
+NMSL

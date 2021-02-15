@@ -3,6 +3,7 @@
 package org.mzi.api.error;
 
 import org.jetbrains.annotations.NotNull;
+import org.mzi.api.Global;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.pretty.error.PrettyError;
 import org.mzi.pretty.error.Span;
@@ -48,7 +49,7 @@ public interface Problem {
 
     var sourcePos = sourcePos();
     return new PrettyError(
-      filePath.toString(),
+      Global.isTest() ? filePath.getFileName().toString() : filePath.toString(),
       Span.from(sourceCode, sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex()),
       switch (level()) {
         case WARN -> Doc.plain("Warning:");
