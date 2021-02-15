@@ -36,7 +36,6 @@ public class TestRunner {
     assertTrue(path.toFile().isDirectory(), "should be a directory");
 
     Files.walk(path)
-      .skip(1)
       .filter(Files::isRegularFile)
       .filter(f -> f.getFileName().toString().endsWith(".mzi"))
       .forEach(this::runFile);
