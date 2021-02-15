@@ -71,7 +71,7 @@ elim : '\\elim' ID (',' ID)*;
 
 dataCtorClause : '|' pattern IMPLIES dataCtor;
 
-module : '\\module' ID LBRACE program '}';
+module : '\\module' ID LBRACE stmt* '}';
 
 // expressions
 expr : atom argument*                                 # app

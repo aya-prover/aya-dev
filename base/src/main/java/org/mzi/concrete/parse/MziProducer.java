@@ -72,6 +72,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     if (cmd != null) return visitCmd(cmd);
     var decl = ctx.decl();
     if (decl != null) return visitDecl(decl);
+    var mod = ctx.module();
+    if (mod != null) return visitModule(mod);
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
@@ -501,7 +503,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return new Stmt.ModuleStmt(
       sourcePosOf(ctx),
       ctx.ID().getText(),
-      ImmutableSeq.from(ctx.program().stmt()).map(this::visitStmt)
+      ImmutableSeq.from(ctx.stmt()).map(this::visitStmt)
     );
   }
 

@@ -28,6 +28,12 @@ public class ParseTest {
   }
 
   @Test
+  public void successModule() {
+    assertEquals(MziProducer.parseStmt("\\module a {}"),
+      new Stmt.ModuleStmt(SourcePos.NONE, "a", ImmutableSeq.empty()));
+  }
+
+  @Test
   public void successCmd() {
     parseCmd("\\open A");
     parseCmd("\\open A.B");
