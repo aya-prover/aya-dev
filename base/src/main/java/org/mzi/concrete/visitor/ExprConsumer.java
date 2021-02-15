@@ -53,14 +53,6 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return expr.last().accept(this, p);
   }
 
-  @Override default Unit visitTelescopicPi(Expr.@NotNull TelescopicPiExpr expr, P p) {
-    throw new IllegalStateException("Found sugared expression. this should not happen");
-  }
-
-  @Override default Unit visitTelescopicLam(Expr.@NotNull TelescopicLamExpr expr, P p) {
-    throw new IllegalStateException("Found sugared expression. this should not happen");
-  }
-
   @Override default Unit visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
     visitParams(expr.params(), p);
     return expr.last().accept(this, p);

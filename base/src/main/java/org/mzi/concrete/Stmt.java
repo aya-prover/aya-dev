@@ -7,7 +7,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.SourcePos;
-import org.mzi.concrete.desugar.Desugarer;
 import org.mzi.concrete.pretty.StmtPrettyConsumer;
 import org.mzi.concrete.resolve.visitor.StmtResolver;
 import org.mzi.pretty.doc.Doc;
@@ -23,10 +22,6 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
 
   default void resolve() {
     accept(StmtResolver.INSTANCE, Unit.unit());
-  }
-
-  default void desugar() {
-    accept(Desugarer.INSTANCE, Unit.unit());
   }
 
   default @NotNull Doc toDoc() {

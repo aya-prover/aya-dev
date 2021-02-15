@@ -49,14 +49,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.LamExpr(expr.sourcePos(), bind, body);
   }
 
-  @Override default @NotNull Expr visitTelescopicLam(Expr.@NotNull TelescopicLamExpr expr, P p) {
-    throw new IllegalStateException("Found sugared expression. this should not happen");
-  }
-
-  @Override default @NotNull Expr visitTelescopicPi(Expr.@NotNull TelescopicPiExpr expr, P p) {
-    throw new IllegalStateException("Found sugared expression. this should not happen");
-  }
-
   @Override default @NotNull Expr visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     var last = expr.last().accept(this, p);

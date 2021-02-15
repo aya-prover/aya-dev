@@ -274,11 +274,24 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull TelescopicLamExpr visitLam(MziParser.LamContext ctx) {
-    return new Expr.TelescopicLamExpr(
+  public Expr.@NotNull LamExpr visitLam(MziParser.LamContext ctx) {
+    return (Expr.LamExpr) buildLam(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
       visitLamBody(ctx)
+    );
+  }
+
+  public static @NotNull Expr buildLam(
+    SourcePos sourcePos,
+    ImmutableSeq<Param> params,
+    Expr body
+  ) {
+    if (params.isEmpty()) return body;
+    return new Expr.LamExpr(
+      sourcePos,
+      params.first(),
+      buildLam(sourcePos, params.drop(1), body)
     );
   }
 
@@ -308,12 +321,27 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull TelescopicPiExpr visitPi(MziParser.PiContext ctx) {
-    return new Expr.TelescopicPiExpr(
+  public Expr.@NotNull PiExpr visitPi(MziParser.PiContext ctx) {
+    return (Expr.PiExpr) buildPi(
       sourcePosOf(ctx),
       false,
       visitTelescope(ctx.tele().stream()),
       visitExpr(ctx.expr())
+    );
+  }
+
+  public static @NotNull Expr buildPi(
+    SourcePos sourcePos,
+    boolean co,
+    ImmutableSeq<Param> params,
+    Expr body
+  ) {
+    if (params.isEmpty()) return body;
+    return new Expr.PiExpr(
+      sourcePos,
+      co,
+      params.first(),
+      buildLam(sourcePos, params.drop(1), body)
     );
   }
 

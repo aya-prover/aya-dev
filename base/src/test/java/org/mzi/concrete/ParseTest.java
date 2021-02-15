@@ -128,12 +128,12 @@ public class ParseTest {
     assertTrue(MziProducer.parseExpr("f a b c") instanceof Expr.AppExpr);
     assertTrue(MziProducer.parseExpr("a.1") instanceof Expr.ProjExpr);
     assertTrue(MziProducer.parseExpr("a.1.2") instanceof Expr.ProjExpr);
-    assertTrue(MziProducer.parseExpr("λ a => a") instanceof Expr.TelescopicLamExpr);
-    assertTrue(MziProducer.parseExpr("\\lam a => a") instanceof Expr.TelescopicLamExpr);
-    assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.TelescopicLamExpr);
-    assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.TelescopicPiExpr dt && !dt.co());
-    assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.TelescopicPiExpr dt && !dt.co());
-    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.TelescopicPiExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("λ a => a") instanceof Expr.LamExpr);
+    assertTrue(MziProducer.parseExpr("\\lam a => a") instanceof Expr.LamExpr);
+    assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
+    assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.PiExpr dt && !dt.co());
     assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());

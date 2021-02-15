@@ -35,7 +35,6 @@ public class TyckDeclTest {
 
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = MziProducer.parseDecl(code);
-    decl.desugar();
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     decl.resolve();
     var def = decl.tyck(ThrowingReporter.INSTANCE);
