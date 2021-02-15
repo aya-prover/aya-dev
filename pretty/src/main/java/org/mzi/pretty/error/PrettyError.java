@@ -21,7 +21,7 @@ public record PrettyError(
     var sourceRange = getPrettyCode(config);
 
     return Doc.vcat(
-      Doc.plain("In file " + filePath + ":" + sourceRange.startLine + ":" + sourceRange.startCol + " -> "),
+      Doc.plain("In file " + filePath + ":" + sourceRange.startLine + ":" + sourceRange.startCol + " ->"),
       Doc.empty(),
       Doc.hang(2, visualizeCode(sourceRange)),
       Doc.hsep(tag, Doc.align(tagMessage)),

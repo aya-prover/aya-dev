@@ -11,6 +11,8 @@ public class CliArgs {
   public boolean help = false;
   @Parameter(names = {"--verbose", "-v"}, description = "Print typechecking process")
   public boolean verbose;
+  @Parameter(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")
+  public boolean asciiOnly;
   @Parameter(description = "<input-file>")
   public String inputFile;
 }
