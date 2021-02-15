@@ -28,7 +28,7 @@ public class ParseTest {
   }
 
   @Test
-  public void successModule() {
+  public void issue141() {
     assertEquals(MziProducer.parseStmt("\\module a {}"),
       new Stmt.ModuleStmt(SourcePos.NONE, "a", ImmutableSeq.empty()));
   }
