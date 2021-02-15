@@ -63,7 +63,7 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
   /**
    * @author re-xyr
    */
-  record ModuleStmt(
+  final record ModuleStmt(
     @NotNull SourcePos sourcePos,
     @NotNull String name,
     @NotNull ImmutableSeq<@NotNull Stmt> contents
@@ -80,7 +80,7 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
     }
   }
 
-  record CmdStmt(
+  final record CmdStmt(
     @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
     @NotNull Cmd cmd,
