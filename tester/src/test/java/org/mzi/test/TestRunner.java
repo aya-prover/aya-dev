@@ -28,7 +28,7 @@ public class TestRunner {
   void runAllMziTests() throws IOException {
     var testSourceDir = Paths.get("src", "test", "mzi");
     runDir(testSourceDir.resolve("success"));
-    runDir(testSourceDir.resolve("fail"));
+    runDir(testSourceDir.resolve("failure"));
   }
 
   private void runDir(@NotNull Path path) throws IOException {
