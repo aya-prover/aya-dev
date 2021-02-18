@@ -6,6 +6,7 @@ import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.pretty.StmtPrettyConsumer;
 import org.mzi.concrete.resolve.visitor.StmtResolver;
@@ -14,10 +15,10 @@ import org.mzi.pretty.doc.Doc;
 /**
  * @author kiva
  */
-public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
+public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stmt.OpenStmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
-  /** @apiNote the \import and \module stmts do not have a meaningful accessibility, do not refer to this in those cases */
+  /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
   default void resolve() {
@@ -37,7 +38,8 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
       // [xyr]: Is this OK? The order of visiting must be preserved.
       // [ice]: I guess so, map should preserve the order.
     }
-    R visitCmd(@NotNull CmdStmt cmd, P p);
+    R visitImport(@NotNull ImportStmt cmd, P p);
+    R visitOpen(@NotNull OpenStmt cmd, P p);
     R visitModule(@NotNull ModuleStmt mod, P p);
   }
 
@@ -75,31 +77,44 @@ public sealed interface Stmt permits Decl, Stmt.ModuleStmt, Stmt.CmdStmt {
     }
   }
 
-  final record CmdStmt(
+  /**
+   * @author re-xyr
+   */
+  final record ImportStmt(
     @NotNull SourcePos sourcePos,
-    @NotNull Accessibility accessibility,
-    @NotNull Cmd cmd,
-    @NotNull ImmutableSeq<@NotNull String> path,
-    @NotNull UseHide useHide
+    @NotNull ImmutableSeq<String> path,
+    @Nullable String asName
   ) implements Stmt {
+
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitCmd(this, p);
+    public @NotNull Accessibility accessibility() {
+      return Accessibility.Private;
     }
 
-    /**
-     * @author kiva
-     */
-    public enum Cmd {
-      Open,
-      Import,
+    @Override
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitImport(this, p);
+    }
+  }
+
+  /**
+   * @author re-xyr
+   */
+  final record OpenStmt(
+    @NotNull SourcePos sourcePos,
+    @NotNull Accessibility accessibility,
+    @NotNull ImmutableSeq<String> path,
+    @NotNull UseHide useHide
+  ) implements Stmt {
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitOpen(this, p);
     }
 
     /**
      * @author re-xyr
      */
-    public record UseHide(@NotNull ImmutableSeq<@NotNull String> list, @NotNull Strategy strategy) {
-      public static final UseHide EMPTY = new Stmt.CmdStmt.UseHide(ImmutableSeq.empty(), Stmt.CmdStmt.UseHide.Strategy.Hiding);
+    public record UseHide(@NotNull ImmutableSeq<@NotNull String> list, @NotNull UseHide.Strategy strategy) {
+      public static final UseHide EMPTY = new UseHide(ImmutableSeq.empty(), UseHide.Strategy.Hiding);
 
       public boolean uses(String name) {
         return switch (strategy) {

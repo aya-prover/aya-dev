@@ -143,12 +143,10 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
     public @NotNull DataBody body;
-    public boolean open;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
       @NotNull Accessibility accessibility,
-      boolean open,
       @NotNull String name,
       @NotNull ImmutableSeq<Param> telescope,
       @NotNull Expr result,
@@ -156,7 +154,6 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull Buffer<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
-      this.open = open;
       this.result = result;
       this.body = body;
       this.ref = DefVar.concrete(this, name);

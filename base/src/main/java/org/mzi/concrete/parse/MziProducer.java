@@ -22,7 +22,6 @@ import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.Param;
 import org.mzi.concrete.Stmt;
-import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
@@ -53,39 +52,44 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @TestOnly
-  public static @NotNull Stmt parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
+  public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitStmt(MziParsing.parser(code).stmt());
   }
 
   @TestOnly
-  public static @NotNull Decl parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
+  public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitDecl(MziParsing.parser(code).decl());
   }
 
   @Override public List<Stmt> visitProgram(MziParser.ProgramContext ctx) {
-    return ctx.stmt().stream().map(this::visitStmt).collect(Collectors.toList());
+    return ctx.stmt().stream().map(this::visitStmt).reduce(ImmutableSeq.of(), ImmutableSeq::appendedAll).collect(Collectors.toList());
   }
 
   @Override
-  public @NotNull Stmt visitStmt(MziParser.StmtContext ctx) {
-    var cmd = ctx.cmd();
-    if (cmd != null) return visitCmd(cmd);
+  public @NotNull ImmutableSeq<Stmt> visitStmt(MziParser.StmtContext ctx) {
+    var importCmd = ctx.importCmd();
+    if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
+    var openCmd = ctx.openCmd();
+    if (openCmd != null) return visitOpenCmd(openCmd);
     var decl = ctx.decl();
-    if (decl != null) return visitDecl(decl);
+    if (decl != null) {
+      var result = visitDecl(decl);
+      return result._2.prepended(result._1);
+    }
     var mod = ctx.module();
-    if (mod != null) return visitModule(mod);
+    if (mod != null) return ImmutableSeq.of(visitModule(mod));
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
-  public @NotNull Decl visitDecl(MziParser.DeclContext ctx) {
+  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(MziParser.DeclContext ctx) {
     var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
-    if (fnDecl != null) return visitFnDecl(fnDecl, accessibility);
+    if (fnDecl != null) return Tuple2.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.of());
     var dataDecl = ctx.dataDecl();
     if (dataDecl != null) return visitDataDecl(dataDecl, accessibility);
     var structDecl = ctx.structDecl();
-    if (structDecl != null) return visitStructDecl(structDecl, accessibility);
+    if (structDecl != null) return Tuple2.of(visitStructDecl(structDecl, accessibility), ImmutableSeq.of());
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
@@ -121,6 +125,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   public @NotNull Buffer<@NotNull Stmt> visitAbuse(MziParser.AbuseContext ctx) {
     return ctx.stmt().stream()
       .map(this::visitStmt)
+      .reduce(ImmutableSeq.of(), ImmutableSeq::appendedAll)
       .collect(Buffer.factory());
   }
 
@@ -354,19 +359,28 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(MziParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
-
-    return new Decl.DataDecl(
+    var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
-      ctx.OPEN() != null,
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitDataBody(ctx.dataBody()),
       abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx)
     );
+    if (ctx.OPEN() != null) {
+      return Tuple2.of(
+        data,
+        ImmutableSeq.of(new Stmt.OpenStmt(
+          sourcePosOf(ctx),
+          accessibility,
+          ImmutableSeq.of(ctx.ID().getText()),
+          Stmt.OpenStmt.UseHide.EMPTY
+        ))
+      );
+    } else return Tuple2.of(data, ImmutableSeq.of());
   }
 
   public @NotNull Expr type(@Nullable MziParser.TypeContext typeCtx, SourcePos sourcePos) {
@@ -488,39 +502,57 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Stmt visitCmd(MziParser.CmdContext ctx) {
-    var modifier = ctx.cmdModifier();
-    var accessibility = (modifier == null || modifier.PUBLIC() == null)
-      ? Stmt.Accessibility.Private
-      : Stmt.Accessibility.Public;
-    var useHide = ctx.useHide();
-    return new Stmt.CmdStmt(
+  public @NotNull Stmt visitImportCmd(MziParser.ImportCmdContext ctx) {
+    return new Stmt.ImportStmt(
       sourcePosOf(ctx),
-      accessibility,
-      (modifier != null && modifier.OPEN() != null) ? Cmd.Open : Cmd.Import,
       visitModuleName(ctx.moduleName()),
-      useHide != null ? visitUseHide(useHide) : Stmt.CmdStmt.UseHide.EMPTY
+      ctx.ID() == null ? null : ctx.ID().getText()
     );
   }
 
-  public Stmt.CmdStmt.UseHide visitUse(List<MziParser.UseContext> ctxs) {
-    return new Stmt.CmdStmt.UseHide(
-      ctxs.stream()
-        .flatMap(ctx -> visitIds(ctx.useHideList().ids()))
-        .collect(ImmutableSeq.factory()),
-      Stmt.CmdStmt.UseHide.Strategy.Using);
+  @Override
+  public @NotNull ImmutableSeq<Stmt> visitOpenCmd(MziParser.OpenCmdContext ctx) {
+    var accessibility = ctx.PUBLIC() == null
+      ? Stmt.Accessibility.Private
+      : Stmt.Accessibility.Public;
+    var useHide = ctx.useHide();
+    var modName = visitModuleName(ctx.moduleName());
+    var open = new Stmt.OpenStmt(
+      sourcePosOf(ctx),
+      accessibility,
+      modName,
+      useHide != null ? visitUseHide(useHide) : Stmt.OpenStmt.UseHide.EMPTY
+    );
+    if (ctx.IMPORT() != null) {
+      return ImmutableSeq.of(
+        new Stmt.ImportStmt(
+          sourcePosOf(ctx),
+          modName,
+          null
+        ),
+        open
+      );
+    } else return ImmutableSeq.of(open);
   }
 
-  public Stmt.CmdStmt.UseHide visitHide(List<MziParser.HideContext> ctxs) {
-    return new Stmt.CmdStmt.UseHide(
+  public Stmt.OpenStmt.UseHide visitUse(List<MziParser.UseContext> ctxs) {
+    return new Stmt.OpenStmt.UseHide(
       ctxs.stream()
         .flatMap(ctx -> visitIds(ctx.useHideList().ids()))
         .collect(ImmutableSeq.factory()),
-      Stmt.CmdStmt.UseHide.Strategy.Hiding);
+      Stmt.OpenStmt.UseHide.Strategy.Using);
+  }
+
+  public Stmt.OpenStmt.UseHide visitHide(List<MziParser.HideContext> ctxs) {
+    return new Stmt.OpenStmt.UseHide(
+      ctxs.stream()
+        .flatMap(ctx -> visitIds(ctx.useHideList().ids()))
+        .collect(ImmutableSeq.factory()),
+      Stmt.OpenStmt.UseHide.Strategy.Hiding);
   }
 
   @Override
-  public @NotNull Stmt.CmdStmt.UseHide visitUseHide(@NotNull MziParser.UseHideContext ctx) {
+  public @NotNull Stmt.OpenStmt.UseHide visitUseHide(@NotNull MziParser.UseHideContext ctx) {
     var use = ctx.use();
     if (use != null) return visitUse(use);
     return visitHide(ctx.hide());
@@ -531,7 +563,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return new Stmt.ModuleStmt(
       sourcePosOf(ctx),
       ctx.ID().getText(),
-      ImmutableSeq.from(ctx.stmt()).map(this::visitStmt)
+      ctx.stmt().stream().map(this::visitStmt).reduce(ImmutableSeq.of(), ImmutableSeq::appendedAll)
     );
   }
 

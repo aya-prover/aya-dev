@@ -6,12 +6,13 @@ program : stmt* EOF;
 
 // statements
 stmt : decl
-     | cmd
+     | importCmd
+     | openCmd
      | module
      ;
 
-cmdModifier : PUBLIC? OPEN;
-cmd : (cmdModifier | cmdModifier? IMPORT) moduleName useHide?;
+importCmd : IMPORT moduleName (AS ID)?;
+openCmd : PUBLIC? OPEN IMPORT? moduleName useHide?;
 useHide : use+
         | hide+;
 use : USING useHideList;

@@ -26,8 +26,13 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   }
 
   @Override
-  public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, Unit unit) {
-    return unit;
+  public Unit visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
+    return Unit.unit();
+  }
+
+  @Override
+  public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
+    return Unit.unit();
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
