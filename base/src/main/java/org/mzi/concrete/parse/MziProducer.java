@@ -361,6 +361,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
 
   public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(MziParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
+    var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
@@ -375,7 +376,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
         data,
         ImmutableSeq.of(new Stmt.OpenStmt(
           sourcePosOf(ctx),
-          accessibility,
+          openAccessibility,
           ImmutableSeq.of(ctx.ID().getText()),
           Stmt.OpenStmt.UseHide.EMPTY
         ))
