@@ -110,7 +110,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       visitTelescope(ctx.tele().stream()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
-      abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx)
+      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
   }
 
@@ -122,11 +122,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Buffer<@NotNull Stmt> visitAbuse(MziParser.AbuseContext ctx) {
+  public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(MziParser.AbuseContext ctx) {
     return ctx.stmt().stream()
       .map(this::visitStmt)
-      .reduce(ImmutableSeq.of(), ImmutableSeq::appendedAll)
-      .collect(Buffer.factory());
+      .flatMap(Traversable::stream)
+      .collect(ImmutableSeq.factory());
   }
 
   @Override
@@ -368,7 +368,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       visitTelescope(ctx.tele().stream()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitDataBody(ctx.dataBody()),
-      abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx)
+      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
     if (ctx.OPEN() != null) {
       return Tuple2.of(

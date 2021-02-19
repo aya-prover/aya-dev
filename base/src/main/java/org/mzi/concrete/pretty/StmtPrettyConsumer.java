@@ -4,7 +4,6 @@ package org.mzi.concrete.pretty;
 
 import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
@@ -123,7 +122,7 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
     );
   }
 
-  private Doc visitAbuse(@NotNull Buffer<Stmt> block) {
+  private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
     return block.sizeEquals(1)
       ? block.get(0).toDoc()
       : block.stream().map(Stmt::toDoc).reduce(Doc.empty(), Doc::vcat);
