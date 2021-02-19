@@ -86,7 +86,7 @@ public class ParseTest {
       ImmutableSeq.of(A, a),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
-      Buffer.of()
+      ImmutableSeq.of()
     )));
     final var b = new Param(SourcePos.NONE, new LocalVar("B"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
     parseTo("\\def xx {A, B : \\114-Type514} (a : A) : A => a", ImmutableSeq.of(new Decl.FnDecl(
@@ -98,7 +98,7 @@ public class ParseTest {
       ImmutableSeq.of(A, b, a),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
-      Buffer.of()
+      ImmutableSeq.of()
     )));
     parseTo("\\data Nat | Z | S Nat", ImmutableSeq.of(new Decl.DataDecl(
       SourcePos.NONE,
@@ -115,7 +115,7 @@ public class ParseTest {
           Buffer.of(), Buffer.of(), false
         )
       )),
-      Buffer.of()
+      ImmutableSeq.of()
     )));
   }
 
