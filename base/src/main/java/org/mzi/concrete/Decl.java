@@ -33,7 +33,7 @@ import java.util.Objects;
 public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull Accessibility accessibility;
-  public final @NotNull Buffer<Stmt> abuseBlock;
+  public final @NotNull ImmutableSeq<Stmt> abuseBlock;
   public @Nullable Context ctx = null;
 
   // will change after resolve
@@ -50,7 +50,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   protected Decl(
     @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
-    @NotNull Buffer<Stmt> abuseBlock,
+    @NotNull ImmutableSeq<Stmt> abuseBlock,
     @NotNull ImmutableSeq<Param> telescope
   ) {
     this.sourcePos = sourcePos;
@@ -143,20 +143,17 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
     public @NotNull DataBody body;
-    public boolean open;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
       @NotNull Accessibility accessibility,
-      boolean open,
       @NotNull String name,
       @NotNull ImmutableSeq<Param> telescope,
       @NotNull Expr result,
       @NotNull DataBody body,
-      @NotNull Buffer<Stmt> abuseBlock
+      @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
-      this.open = open;
       this.result = result;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
@@ -220,7 +217,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull ImmutableSeq<Param> telescope,
       @NotNull Expr result,
       @NotNull Expr body,
-      @NotNull Buffer<Stmt> abuseBlock
+      @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.modifiers = modifiers;

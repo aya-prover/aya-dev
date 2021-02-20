@@ -6,12 +6,13 @@ program : stmt* EOF;
 
 // statements
 stmt : decl
-     | cmd
+     | importCmd
+     | openCmd
      | module
      ;
 
-cmdModifier : PUBLIC? OPEN;
-cmd : (cmdModifier | cmdModifier? IMPORT) moduleName useHide?;
+importCmd : IMPORT moduleName (AS ID)?;
+openCmd : PUBLIC? OPEN IMPORT? moduleName useHide?;
 useHide : use+
         | hide+;
 use : USING useHideList;
@@ -58,7 +59,7 @@ field : COERCE? ID tele* type   # fieldDecl
       | ID tele* IMPLIES expr   # fieldImpl
       ;
 
-dataDecl : OPEN? '\\data' ID tele* type? dataBody abuse?;
+dataDecl : (PUBLIC? OPEN)? '\\data' ID tele* type? dataBody abuse?;
 
 dataBody : ('|' dataCtor)*       # dataCtors
          | elim dataCtorClause*  # dataClauses

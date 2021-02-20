@@ -26,10 +26,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var context = new EmptyContext(reporter).derive();
     var shallowResolver = new StmtShallowResolver(new EmptyModuleLoader());
     try {
-      program.forEach(s -> {
-        s.desugar();
-        s.accept(shallowResolver, context);
-      });
+      program.forEach(s -> s.accept(shallowResolver, context));
       program.forEach(Stmt::resolve);
       program.forEach(s -> {
         if (s instanceof Decl decl) decl.tyck(reporter);
