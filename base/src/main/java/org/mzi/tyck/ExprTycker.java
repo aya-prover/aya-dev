@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
 import org.glavo.kala.Tuple;
@@ -11,10 +11,14 @@ import org.glavo.kala.ref.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
+import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.MziBreakingException;
 import org.mzi.api.util.NormalizeMode;
+import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
+import org.mzi.core.def.DataDef;
+import org.mzi.core.def.FnDef;
 import org.mzi.core.term.*;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
@@ -107,11 +111,31 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth
   @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
-    var ty = localCtx.get(expr.resolvedVar());
-    if (ty == null) throw new IllegalStateException("Unresolved var `" + expr.resolvedVar().name() + "` tycked.");
-    if (term == null) return new Result(new RefTerm(expr.resolvedVar()), ty);
+    final var var = expr.resolvedVar();
+    if (var instanceof DefVar<?, ?> defVar) {
+      if (defVar.core instanceof FnDef fn) {
+        // TODO[ice]: should we rename the vars in this telescope?
+        @SuppressWarnings("unchecked") var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar,
+          fn.telescope().map(param -> new Arg<>(new RefTerm(param.ref()), param.explicit())));
+        var lam = fn.telescope().reversed().<Term>foldLeft(call, (t, p) -> new LamTerm(p, t));
+        var ty = fn.telescope().reversed().<Term>foldLeft(call, (t, p) -> new PiTerm(false, p, t));
+        return new Result(lam, ty);
+      } else if (defVar.core instanceof DataDef data) {
+        @SuppressWarnings("unchecked") var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar,
+          data.telescope().map(param -> new Arg<>(new RefTerm(param.ref()), param.explicit())));
+        var lam = data.telescope().reversed().<Term>foldLeft(call, (t, p) -> new LamTerm(p, t));
+        var ty = data.telescope().reversed().<Term>foldLeft(call, (t, p) -> new PiTerm(false, p, t));
+        return new Result(lam, ty);
+      } else {
+        final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't like.";
+        throw new IllegalStateException(msg);
+      }
+    }
+    var ty = localCtx.get(var);
+    if (ty == null) throw new IllegalStateException("Unresolved var `" + var.name() + "` tycked.");
+    if (term == null) return new Result(new RefTerm(var), ty);
     unify(term, ty);
-    return new Result(new RefTerm(expr.resolvedVar()), ty);
+    return new Result(new RefTerm(var), ty);
   }
 
   private void unify(Term upper, Term lower) {
