@@ -6,7 +6,6 @@ import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.ExprParam;
 import org.mzi.generic.Arg;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
@@ -37,7 +36,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return expr.function().accept(this, p);
   }
 
-  default void visitParams(@NotNull ImmutableSeq<@NotNull ExprParam> params, P p) {
+  default void visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, P p) {
     params.forEach(param -> {
       if (param.type() != null) param.type().accept(this, p);
     });

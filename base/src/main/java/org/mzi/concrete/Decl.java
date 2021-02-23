@@ -37,7 +37,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public @Nullable Context ctx = null;
 
   // will change after resolve
-  public @NotNull ImmutableSeq<ExprParam> telescope;
+  public @NotNull ImmutableSeq<Expr.Param> telescope;
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
@@ -51,7 +51,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
     @NotNull ImmutableSeq<Stmt> abuseBlock,
-    @NotNull ImmutableSeq<ExprParam> telescope
+    @NotNull ImmutableSeq<Expr.Param> telescope
   ) {
     this.sourcePos = sourcePos;
     this.accessibility = accessibility;
@@ -79,14 +79,14 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public static class DataCtor {
     public @NotNull SourcePos sourcePos;
     public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
-    public @NotNull ImmutableSeq<ExprParam> telescope;
+    public @NotNull ImmutableSeq<Expr.Param> telescope;
     public @NotNull Buffer<String> elim;
     public @NotNull Buffer<Pat.Clause<Expr>> clauses;
     public boolean coerce;
 
     public DataCtor(@NotNull SourcePos sourcePos,
                     @NotNull String name,
-                    @NotNull ImmutableSeq<ExprParam> telescope,
+                    @NotNull ImmutableSeq<Expr.Param> telescope,
                     @NotNull Buffer<String> elim,
                     @NotNull Buffer<Pat.Clause<Expr>> clauses,
                     boolean coerce) {
@@ -136,8 +136,8 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   /**
    * Concrete data definition
    *
-   * @see DataDef
    * @author kiva
+   * @see DataDef
    */
   public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
@@ -148,7 +148,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull SourcePos sourcePos,
       @NotNull Accessibility accessibility,
       @NotNull String name,
-      @NotNull ImmutableSeq<ExprParam> telescope,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull DataBody body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
@@ -198,8 +198,8 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   /**
    * Concrete function definition
    *
-   * @see FnDef
    * @author re-xyr
+   * @see FnDef
    */
   public static final class FnDecl extends Decl {
     public final @NotNull EnumSet<Modifier> modifiers;
@@ -214,7 +214,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Assoc assoc,
       @NotNull String name,
-      @NotNull ImmutableSeq<ExprParam> telescope,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull Expr body,
       @NotNull ImmutableSeq<Stmt> abuseBlock

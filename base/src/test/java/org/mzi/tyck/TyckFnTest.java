@@ -6,7 +6,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.ExprParam;
 import org.mzi.concrete.parse.MziProducer;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
@@ -33,8 +32,8 @@ public class TyckFnTest {
     // \A a.a
     idLamTestCase(MziProducer.buildLam(SourcePos.NONE,
       ImmutableSeq.of(
-        new ExprParam(SourcePos.NONE, new LocalVar("_"), true),
-        new ExprParam(SourcePos.NONE, a, true)),
+        new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
+        new Expr.Param(SourcePos.NONE, a, true)),
       new Expr.RefExpr(SourcePos.NONE, a)));
   }
 
@@ -43,8 +42,8 @@ public class TyckFnTest {
     var a = new LocalVar("a");
     // \A.\a.a
     idLamTestCase(new Expr.LamExpr(SourcePos.NONE,
-      new ExprParam(SourcePos.NONE, new LocalVar("_"), true),
-      new Expr.LamExpr(SourcePos.NONE, new ExprParam(SourcePos.NONE, a, true),
+      new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
+      new Expr.LamExpr(SourcePos.NONE, new Expr.Param(SourcePos.NONE, a, true),
         new Expr.RefExpr(SourcePos.NONE, a))));
   }
 
@@ -78,7 +77,7 @@ public class TyckFnTest {
           Stream.of("A", "B", "C").map(LocalVar::new),
           Stream.of(f, p)
         )
-        .map(v -> new ExprParam(SourcePos.NONE, v, true))
+        .map(v -> new Expr.Param(SourcePos.NONE, v, true))
         .collect(ImmutableSeq.factory()),
       new Expr.AppExpr(SourcePos.NONE,
         new Expr.RefExpr(SourcePos.NONE, f),

@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
-import org.mzi.core.CoreParam;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
@@ -53,14 +52,14 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   }
 
   @NotNull
-  private Boolean checkParam(@NotNull CoreParam l, @NotNull CoreParam r) {
+  private Boolean checkParam(Term.@NotNull Param l, Term.@NotNull Param r) {
     if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return false;
     varSubst.put(r.ref(), l.ref());
     return true;
   }
 
   @NotNull
-  private Boolean checkParams(ImmutableSeq<@NotNull CoreParam> l, ImmutableSeq<@NotNull CoreParam> r) {
+  private Boolean checkParams(ImmutableSeq<Term.@NotNull Param> l, ImmutableSeq<Term.@NotNull Param> r) {
     if (!l.sizeEquals(r)) return false;
     var length = l.size();
     for (int i = 0; i < length; i++) {
@@ -77,10 +76,10 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
 
   @Override
   public @NotNull Boolean visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
-      return preRhs instanceof PiTerm rhs
-          && lhs.co() == rhs.co()
-          && checkParam(lhs.param(), rhs.param())
-          && compare(lhs.body(), rhs.body(), type);
+    return preRhs instanceof PiTerm rhs
+      && lhs.co() == rhs.co()
+      && checkParam(lhs.param(), rhs.param())
+      && compare(lhs.body(), rhs.body(), type);
   }
 
   @Override
@@ -119,7 +118,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   @Override
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @Nullable Term type) {
     return preRhs instanceof UnivTerm rhs
-        && Sort.compare(lhs.sort(), rhs.sort(), ord, metaContext.levelEqns(), expr);
+      && Sort.compare(lhs.sort(), rhs.sort(), ord, metaContext.levelEqns(), expr);
   }
 
   @Override
@@ -132,7 +131,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
         tupRhs.push(new ProjTerm(preRhs, i));
       }
       return visitLists(lhs.items(), tupRhs,
-        sigma.params().view().map(CoreParam::type).appended(sigma.body()));
+        sigma.params().view().map(Term.Param::type).appended(sigma.body()));
     }
     return visitLists(lhs.items(), rhs.items());
   }

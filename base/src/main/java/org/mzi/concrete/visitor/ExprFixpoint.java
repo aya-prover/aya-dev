@@ -5,7 +5,6 @@ package org.mzi.concrete.visitor;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.ExprParam;
 import org.mzi.generic.Arg;
 
 import java.util.Objects;
@@ -25,13 +24,13 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.HoleExpr(expr.sourcePos(), expr.name(), h);
   }
 
-  default @NotNull ImmutableSeq<@NotNull ExprParam> visitParams(@NotNull ImmutableSeq<@NotNull ExprParam> params, P p) {
+  default @NotNull ImmutableSeq<Expr.@NotNull Param> visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, P p) {
     return params.view().map(param -> {
       var oldType = param.type();
       if (oldType == null) return param;
       var type = oldType.accept(this, p);
       if (Objects.equals(type, oldType)) return param;
-      return new ExprParam(param.sourcePos(), param.ref(), type, param.explicit());
+      return new Expr.Param(param.sourcePos(), param.ref(), type, param.explicit());
     }).collect(ImmutableSeq.factory());
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
@@ -34,6 +34,7 @@ public record Substituter(
   public static record TermSubst(@NotNull Map<@NotNull Var, @NotNull Term> map) {
     // TODO[JDK-8247334]: uncomment when we move to JDK16
     public static final /*@NotNull*/ TermSubst EMPTY = new TermSubst(Collections.emptyMap());
+
     public TermSubst(@NotNull Var var, @NotNull Term term) {
       this(Map.of(var, term));
     }

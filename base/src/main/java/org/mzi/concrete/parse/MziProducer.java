@@ -20,7 +20,6 @@ import org.mzi.api.error.SourcePos;
 import org.mzi.api.util.Assoc;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.ExprParam;
 import org.mzi.concrete.Stmt;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Modifier;
@@ -114,7 +113,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public @NotNull ImmutableSeq<@NotNull ExprParam> visitTelescope(Stream<MziParser.TeleContext> stream) {
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
     return stream
       .map(this::visitTele)
       .flatMap(Traversable::stream)
@@ -179,10 +178,10 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull ImmutableSeq<@NotNull ExprParam> visitTele(MziParser.TeleContext ctx) {
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
     if (literal != null)
-      return ImmutableSeq.of(new ExprParam(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
+      return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
@@ -190,10 +189,10 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Function<Boolean, ImmutableSeq<ExprParam>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
+  public @NotNull Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
     var type = type(ctx.type(), sourcePosOf(ctx.ids()));
     return explicit -> visitIds(ctx.ids())
-      .map(var -> new ExprParam(sourcePosOf(ctx), new LocalVar(var), type, explicit))
+      .map(var -> new Expr.Param(sourcePosOf(ctx), new LocalVar(var), type, explicit))
       .collect(ImmutableSeq.factory());
   }
 
@@ -215,7 +214,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return new Expr.PiExpr(
       sourcePosOf(ctx),
       false,
-      new ExprParam(sourcePosOf(ctx.expr(0)), new LocalVar("_"), from, true),
+      new Expr.Param(sourcePosOf(ctx.expr(0)), new LocalVar("_"), from, true),
       to
     );
   }
@@ -289,7 +288,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
 
   public static @NotNull Expr buildLam(
     SourcePos sourcePos,
-    ImmutableSeq<ExprParam> params,
+    ImmutableSeq<Expr.Param> params,
     Expr body
   ) {
     if (params.isEmpty()) return body;
@@ -338,7 +337,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   public static @NotNull Expr buildPi(
     SourcePos sourcePos,
     boolean co,
-    ImmutableSeq<ExprParam> params,
+    ImmutableSeq<Expr.Param> params,
     Expr body
   ) {
     if (params.isEmpty()) return body;

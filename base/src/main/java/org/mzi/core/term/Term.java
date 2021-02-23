@@ -2,15 +2,24 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
+import org.glavo.kala.Tuple3;
 import org.glavo.kala.Unit;
+import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.core.term.CoreTerm;
+import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.visitor.Normalizer;
 import org.mzi.core.visitor.Stripper;
 import org.mzi.core.visitor.Substituter;
+import org.mzi.generic.Arg;
+import org.mzi.generic.ParamLike;
+import org.mzi.ref.LocalVar;
 import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.util.Decision;
@@ -70,5 +79,43 @@ public interface Term extends CoreTerm {
     R visitTup(@NotNull TupTerm term, P p, Q q);
     R visitProj(@NotNull ProjTerm term, P p, Q q);
     R visitHole(@NotNull AppTerm.HoleApp term, P p, Q q);
+  }
+
+  /**
+   * @author re-xyr
+   */
+  record Param(
+    @NotNull Var ref,
+    @NotNull Term type,
+    boolean explicit
+  ) implements Bind, ParamLike<Term> {
+    public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(Buffer<Tuple3<Var, Boolean, Term>> buf) {
+      return buf.toImmutableSeq().map(tup -> new Param(tup._1, tup._3, tup._2));
+    }
+
+    public @NotNull Term.Param subst(@NotNull Var var, @NotNull Term term) {
+      return subst(new Substituter.TermSubst(var, term));
+    }
+
+    public @NotNull Term.Param subst(@NotNull Substituter.TermSubst subst) {
+      return subst(subst, LevelSubst.EMPTY);
+    }
+
+    public @NotNull Term.Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
+      return new Param(ref, type.accept(new Substituter(subst, levelSubst), Unit.unit()), explicit);
+    }
+
+    public static @NotNull Term.Param mock(@NotNull Var hole, boolean explicit) {
+      return new Param(new LocalVar("_"), new AppTerm.HoleApp(hole), explicit);
+    }
+
+    @TestOnly @Contract(pure = true)
+    public static boolean checkSubst(@NotNull Seq<@NotNull Param> params, @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
+      var obj = new Object() {
+        boolean ok = true;
+      };
+      params.forEachIndexed((i, param) -> obj.ok = obj.ok && param.explicit() == args.get(i).explicit());
+      return obj.ok;
+    }
   }
 }

@@ -75,8 +75,8 @@ public class ParseTest {
     parseData("\\data Unit \\abusing {}");
     parseData("\\data Unit : A \\abusing {}");
     parseData("\\data T {A : \\114-Type514} : A \\abusing {}");
-    final var A = new ExprParam(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
-    final var a = new ExprParam(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true);
+    final var A = new Expr.Param(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
+    final var a = new Expr.Param(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true);
     parseTo("\\def id {A : \\114-Type514} (a : A) : A => a", ImmutableSeq.of(new Decl.FnDecl(
       SourcePos.NONE,
       Stmt.Accessibility.Public,
@@ -88,7 +88,7 @@ public class ParseTest {
       new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
       ImmutableSeq.of()
     )));
-    final var b = new ExprParam(SourcePos.NONE, new LocalVar("B"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
+    final var b = new Expr.Param(SourcePos.NONE, new LocalVar("B"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
     parseTo("\\def xx {A, B : \\114-Type514} (a : A) : A => a", ImmutableSeq.of(new Decl.FnDecl(
       SourcePos.NONE,
       Stmt.Accessibility.Public,
@@ -110,7 +110,7 @@ public class ParseTest {
         new Decl.DataCtor(SourcePos.NONE,"Z", ImmutableSeq.of(), Buffer.of(), Buffer.of(), false),
         new Decl.DataCtor(SourcePos.NONE,"S",
           ImmutableSeq.of(
-            new ExprParam(SourcePos.NONE, new LocalVar("_"), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
+            new Expr.Param(SourcePos.NONE, new LocalVar("_"), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
           ),
           Buffer.of(), Buffer.of(), false
         )

@@ -10,7 +10,7 @@ import org.mzi.api.ref.Var;
  *               {@link org.mzi.core.term.Term} or {@link org.mzi.concrete.Expr}.
  * @author ice1000
  */
-public interface Param<Expr> {
+public interface ParamLike<Expr> {
   boolean explicit();
   @NotNull Var ref();
   @NotNull Expr type();

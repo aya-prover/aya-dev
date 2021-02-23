@@ -7,8 +7,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
-import org.mzi.concrete.ExprParam;
-import org.mzi.core.CoreParam;
+import org.mzi.concrete.Expr;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.PiTerm;
@@ -37,22 +36,22 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 
-  private @NotNull Term buildFnType(ImmutableSeq<CoreParam> tele, Term result) {
+  private @NotNull Term buildFnType(ImmutableSeq<Term.Param> tele, Term result) {
     if (tele.isEmpty()) {
       return result;
     }
     return new PiTerm(false, tele.first(), buildFnType(tele.drop(1), result));
   }
 
-  private @NotNull Stream<CoreParam> checkTele(
+  private @NotNull Stream<Term.Param> checkTele(
     @NotNull ExprTycker exprTycker,
-    @NotNull ImmutableSeq<ExprParam> tele
+    @NotNull ImmutableSeq<Expr.Param> tele
   ) {
     return tele.stream().map(param -> {
       assert param.type() != null; // guaranteed by MziProducer
       var paramRes = exprTycker.checkExpr(param.type(), null);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
-      return new CoreParam(param.ref(), paramRes.wellTyped(), param.explicit());
+      return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
     });
   }
 }

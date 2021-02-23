@@ -196,7 +196,7 @@ public interface StringEscapeUtil {
             var hexCode = Integer.toHexString(ch).toUpperCase();
             buffer.append("\\u");
             var paddingCount = 4 - hexCode.length();
-            while (paddingCount --> 0) {
+            while (paddingCount-- > 0) {
               buffer.append(0);
             }
             buffer.append(hexCode);

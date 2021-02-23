@@ -9,7 +9,6 @@ import org.glavo.kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
-import org.mzi.core.CoreParam;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
@@ -21,7 +20,7 @@ import java.util.HashMap;
  */
 public interface Unfolder<P> extends TermFixpoint<P> {
   @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
-    @NotNull Seq<@NotNull CoreParam> self,
+    @NotNull Seq<Term.@NotNull Param> self,
     @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) {
     var subst = new Substituter.TermSubst(new HashMap<>());
@@ -33,7 +32,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = fnCall.fnRef().core;
     // This shouldn't happen
     assert fnCall.args().sizeEquals(def.telescope().size());
-    assert CoreParam.checkSubst(def.telescope(), fnCall.args());
+    assert Term.Param.checkSubst(def.telescope(), fnCall.args());
     var subst = buildSubst(def.telescope(), fnCall.args());
     return def.body().subst(subst).accept(this, p);
   }
