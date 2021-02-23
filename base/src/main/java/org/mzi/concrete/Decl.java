@@ -37,7 +37,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public @Nullable Context ctx = null;
 
   // will change after resolve
-  public @NotNull ImmutableSeq<Param> telescope;
+  public @NotNull ImmutableSeq<ExprParam> telescope;
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
@@ -51,7 +51,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
     @NotNull ImmutableSeq<Stmt> abuseBlock,
-    @NotNull ImmutableSeq<Param> telescope
+    @NotNull ImmutableSeq<ExprParam> telescope
   ) {
     this.sourcePos = sourcePos;
     this.accessibility = accessibility;
@@ -79,14 +79,14 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public static class DataCtor {
     public @NotNull SourcePos sourcePos;
     public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
-    public @NotNull ImmutableSeq<Param> telescope;
+    public @NotNull ImmutableSeq<ExprParam> telescope;
     public @NotNull Buffer<String> elim;
     public @NotNull Buffer<Pat.Clause<Expr>> clauses;
     public boolean coerce;
 
     public DataCtor(@NotNull SourcePos sourcePos,
                     @NotNull String name,
-                    @NotNull ImmutableSeq<Param> telescope,
+                    @NotNull ImmutableSeq<ExprParam> telescope,
                     @NotNull Buffer<String> elim,
                     @NotNull Buffer<Pat.Clause<Expr>> clauses,
                     boolean coerce) {
@@ -148,7 +148,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull SourcePos sourcePos,
       @NotNull Accessibility accessibility,
       @NotNull String name,
-      @NotNull ImmutableSeq<Param> telescope,
+      @NotNull ImmutableSeq<ExprParam> telescope,
       @NotNull Expr result,
       @NotNull DataBody body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
@@ -214,7 +214,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Assoc assoc,
       @NotNull String name,
-      @NotNull ImmutableSeq<Param> telescope,
+      @NotNull ImmutableSeq<ExprParam> telescope,
       @NotNull Expr result,
       @NotNull Expr body,
       @NotNull ImmutableSeq<Stmt> abuseBlock

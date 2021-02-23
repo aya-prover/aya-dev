@@ -12,17 +12,17 @@ import java.util.function.Function;
 /**
  * @author re-xyr
  */
-public record Param(
+public record ExprParam(
   @NotNull SourcePos sourcePos,
-  @NotNull LocalVar var,
+  @NotNull LocalVar ref,
   @Nullable Expr type,
   boolean explicit
 ) {
-  public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
+  public ExprParam(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
     this(sourcePos, var, null, explicit);
   }
 
-  public @NotNull Param mapExpr(@NotNull Function<@Nullable Expr, @Nullable Expr> mapper) {
-    return new Param(sourcePos, var, mapper.apply(type), explicit);
+  public @NotNull ExprParam mapExpr(@NotNull Function<@Nullable Expr, @Nullable Expr> mapper) {
+    return new ExprParam(sourcePos, ref, mapper.apply(type), explicit);
   }
 }

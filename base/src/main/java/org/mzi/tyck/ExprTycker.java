@@ -15,7 +15,7 @@ import org.mzi.api.ref.Var;
 import org.mzi.api.util.MziBreakingException;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
-import org.mzi.core.Param;
+import org.mzi.core.CoreParam;
 import org.mzi.core.term.*;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
@@ -63,13 +63,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) {
       var domain = new LocalVar("_");
       var codomain = new LocalVar("_");
-      term = new PiTerm(false, Param.mock(domain, expr.param().explicit()), new AppTerm.HoleApp(codomain));
+      term = new PiTerm(false, CoreParam.mock(domain, expr.param().explicit()), new AppTerm.HoleApp(codomain));
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof PiTerm dt && !dt.co())) {
       return wantButNo(expr, term, "pi type");
     }
     var tyRef = new Ref<>(term);
-    var var = expr.param().var();
+    var var = expr.param().ref();
     var param = expr.param();
     if (tyRef.value instanceof PiTerm pi && !pi.co()) {
       var type = pi.param().type();
@@ -83,7 +83,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         } else type = result.wellTyped;
       }
       type = type.subst(pi.param().ref(), new RefTerm(var));
-      var resultParam = new Param(var, type, param.explicit());
+      var resultParam = new CoreParam(var, type, param.explicit());
       localCtx.put(var, type);
       tyRef.value = pi.body();
       var rec = expr.body().accept(this, tyRef.value);
@@ -126,7 +126,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Synth
   @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
     final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
-    var var = expr.param().var();
+    var var = expr.param().ref();
     var param = expr.param();
     final var type = param.type();
     if (type == null) {
@@ -135,7 +135,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckerException();
     }
     var result = type.accept(this, against);
-    var resultParam = new Param(var, result.wellTyped, param.explicit());
+    var resultParam = new CoreParam(var, result.wellTyped, param.explicit());
     var last = expr.last().accept(this, against);
     return new Result(new PiTerm(expr.co(), resultParam, last.wellTyped), against);
   }
@@ -155,7 +155,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
     });
     var last = expr.last().accept(this, against);
-    return new Result(new SigmaTerm(expr.co(), Param.fromBuffer(resultTele), last.wellTyped), against);
+    return new Result(new SigmaTerm(expr.co(), CoreParam.fromBuffer(resultTele), last.wellTyped), against);
   }
 
   @Rule.Synth
@@ -228,16 +228,16 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
     var items = Buffer.<Term>of();
     final var resultLast = new Ref<Term>();
-    final Buffer<@NotNull Param> resultTele;
+    final Buffer<@NotNull CoreParam> resultTele;
     if (term == null) {
-      var typesTele = Buffer.<@NotNull Param>of();
+      var typesTele = Buffer.<@NotNull CoreParam>of();
       // TODO[ice]: forbid one-variable tuple maybe?
       expr.items()
         .map(item -> item.accept(this, null))
         .forEach(result -> {
           items.append(result.wellTyped);
           if (resultLast.value == null) resultLast.value = result.type;
-          else typesTele.append(new Param(new LocalVar("_"), result.type, true));
+          else typesTele.append(new CoreParam(new LocalVar("_"), result.type, true));
         });
       items.reverse();
       resultTele = typesTele;
@@ -246,7 +246,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     } else {
       var againstTele = dt.params();
       var last = dt.body();
-      var buffer = Buffer.<@NotNull Param>of();
+      var buffer = Buffer.<@NotNull CoreParam>of();
       for (var iterator = expr.items().iterator(); iterator.hasNext(); ) {
         var item = iterator.next();
         if (againstTele.isEmpty()) {
@@ -262,7 +262,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           var result = item.accept(this, againstTele.first().type());
           items.append(result.wellTyped);
           var ref = againstTele.first().ref();
-          buffer.append(new Param(ref, result.type, againstTele.first().explicit()));
+          buffer.append(new CoreParam(ref, result.type, againstTele.first().explicit()));
           againstTele = againstTele.drop(1);
           if (!againstTele.isEmpty()) {
             final var subst = new Substituter.TermSubst(ref, result.wellTyped);

@@ -8,7 +8,7 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.concrete.Decl;
-import org.mzi.core.Param;
+import org.mzi.core.CoreParam;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Pat;
 
@@ -18,7 +18,7 @@ import org.mzi.generic.Pat;
  */
 public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-  @NotNull ImmutableSeq<Param> telescope,
+  @NotNull ImmutableSeq<CoreParam> telescope,
   @NotNull Term result,
   @NotNull Buffer<String> elim,
   @NotNull Buffer<Ctor> ctors,
@@ -35,7 +35,7 @@ public record DataDef(
 
   public static record Ctor(
     @NotNull DefVar<Ctor, Decl.DataCtor> name,
-    @NotNull ImmutableSeq<Param> telescope,
+    @NotNull ImmutableSeq<CoreParam> telescope,
     @NotNull Buffer<String> elim,
     @NotNull Buffer<Pat.Clause<Term>> clauses,
     boolean coerce

@@ -6,7 +6,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.concrete.Decl;
-import org.mzi.core.Param;
+import org.mzi.core.CoreParam;
 import org.mzi.core.term.Term;
 
 /**
@@ -14,7 +14,7 @@ import org.mzi.core.term.Term;
  */
 public record FnDef(
   @NotNull DefVar<FnDef, Decl.FnDecl> ref,
-  @NotNull ImmutableSeq<Param> telescope,
+  @NotNull ImmutableSeq<CoreParam> telescope,
   @NotNull Term result,
   @NotNull Term body
 ) implements Def {

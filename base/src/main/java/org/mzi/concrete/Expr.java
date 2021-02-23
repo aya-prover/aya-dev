@@ -131,10 +131,10 @@ public sealed interface Expr {
    * @author ice1000
    */
   interface TelescopicExpr {
-    @NotNull ImmutableSeq<Param> params();
+    @NotNull ImmutableSeq<ExprParam> params();
 
-    default @NotNull Stream<@NotNull Tuple2<@NotNull Var, Param>> paramsStream() {
-      return params().stream().map(p -> Tuple.of(p.var(), p));
+    default @NotNull Stream<@NotNull Tuple2<@NotNull Var, ExprParam>> paramsStream() {
+      return params().stream().map(p -> Tuple.of(p.ref(), p));
     }
   }
 
@@ -158,7 +158,7 @@ public sealed interface Expr {
   record PiExpr(
     @NotNull SourcePos sourcePos,
     boolean co,
-    @NotNull Param param,
+    @NotNull ExprParam param,
     @NotNull Expr last
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -171,7 +171,7 @@ public sealed interface Expr {
    */
   record LamExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Param param,
+    @NotNull ExprParam param,
     @NotNull Expr body
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -184,7 +184,7 @@ public sealed interface Expr {
   record TelescopicSigmaExpr(
     @NotNull SourcePos sourcePos,
     boolean co,
-    @NotNull ImmutableSeq<@NotNull Param> params,
+    @NotNull ImmutableSeq<@NotNull ExprParam> params,
     @NotNull Expr last
   ) implements Expr, TelescopicExpr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

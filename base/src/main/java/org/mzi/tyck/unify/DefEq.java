@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Expr;
-import org.mzi.core.Param;
+import org.mzi.core.CoreParam;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
@@ -53,14 +53,14 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
   }
 
   @NotNull
-  private Boolean checkParam(@NotNull Param l, @NotNull Param r) {
+  private Boolean checkParam(@NotNull CoreParam l, @NotNull CoreParam r) {
     if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return false;
     varSubst.put(r.ref(), l.ref());
     return true;
   }
 
   @NotNull
-  private Boolean checkParams(ImmutableSeq<@NotNull Param> l, ImmutableSeq<@NotNull Param> r) {
+  private Boolean checkParams(ImmutableSeq<@NotNull CoreParam> l, ImmutableSeq<@NotNull CoreParam> r) {
     if (!l.sizeEquals(r)) return false;
     var length = l.size();
     for (int i = 0; i < length; i++) {
@@ -132,7 +132,7 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
         tupRhs.push(new ProjTerm(preRhs, i));
       }
       return visitLists(lhs.items(), tupRhs,
-        sigma.params().view().map(Param::type).appended(sigma.body()));
+        sigma.params().view().map(CoreParam::type).appended(sigma.body()));
     }
     return visitLists(lhs.items(), rhs.items());
   }

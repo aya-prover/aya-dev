@@ -7,7 +7,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
+import org.mzi.concrete.ExprParam;
 import org.mzi.concrete.Stmt;
 import org.mzi.generic.Modifier;
 import org.mzi.pretty.doc.Doc;
@@ -105,16 +105,16 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
     };
   }
 
-  /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Param> telescope) {
+  /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<ExprParam> telescope) {
     return telescope.stream()
       .map(this::visitParam)
       .reduce(Doc.empty(), Doc::hsep);
   }
 
-  /*package-private*/ Doc visitParam(@NotNull Param param) {
+  /*package-private*/ Doc visitParam(@NotNull ExprParam param) {
     return Doc.cat(
       param.explicit() ? Doc.plain("(") : Doc.plain("{"),
-      Doc.plain(param.var().name()),
+      Doc.plain(param.ref().name()),
       param.type() == null
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), param.type().toDoc()),

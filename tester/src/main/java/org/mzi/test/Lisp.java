@@ -10,7 +10,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
 import org.mzi.concrete.Decl;
-import org.mzi.core.Param;
+import org.mzi.core.CoreParam;
 import org.mzi.core.TermDsl;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.Term;
@@ -49,7 +49,7 @@ public interface Lisp {
     return def;
   }
 
-  static @NotNull ImmutableSeq<@NotNull Param> parseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
+  static @NotNull ImmutableSeq<@NotNull CoreParam> parseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
     return Objects.requireNonNull(TermDsl.parseTele(code, refs));
   }
 }
