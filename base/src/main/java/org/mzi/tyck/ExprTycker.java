@@ -116,20 +116,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       if (defVar.core instanceof FnDef fn) {
         // TODO[ice]: should we rename the vars in this telescope?
         var tele = fn.telescope();
-        @SuppressWarnings("unchecked") var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar,
-          tele.map(param -> new Arg<>(new RefTerm(param.ref()), param.explicit())));
+        @SuppressWarnings("unchecked") var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, tele.map(Term.Param::toArg));
         var lam = LamTerm.make(tele, call);
-        var ty = tele.reversed().<Term>foldLeft(call, (t, p) -> new PiTerm(false, p, t));
+        var ty = PiTerm.make(false, tele, fn.result());
         return new Result(lam, ty);
       } else if (defVar.core instanceof DataDef data) {
         var tele = data.telescope();
-        @SuppressWarnings("unchecked") var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar,
-          tele.map(param -> new Arg<>(new RefTerm(param.ref()), param.explicit())));
+        @SuppressWarnings("unchecked") var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, tele.map(Term.Param::toArg));
         var lam = LamTerm.make(tele, call);
-        var ty = tele.reversed().<Term>foldLeft(call, (t, p) -> new PiTerm(false, p, t));
+        var ty = PiTerm.make(false, tele, data.result());
         return new Result(lam, ty);
       } else {
-        final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't like.";
+        final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
       }
     }
