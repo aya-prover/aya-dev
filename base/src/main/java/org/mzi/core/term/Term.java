@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
 import org.glavo.kala.Tuple3;
@@ -25,8 +25,9 @@ import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.util.Decision;
 
 /**
- * @author ice1000
  * A well-typed and terminating term.
+ *
+ * @author ice1000
  */
 public interface Term extends CoreTerm {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
@@ -91,6 +92,10 @@ public interface Term extends CoreTerm {
   ) implements Bind, ParamLike<Term> {
     public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(Buffer<Tuple3<Var, Boolean, Term>> buf) {
       return buf.toImmutableSeq().map(tup -> new Param(tup._1, tup._3, tup._2));
+    }
+
+    @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
+      return new Arg<>(new RefTerm(ref), explicit);
     }
 
     public @NotNull Term.Param subst(@NotNull Var var, @NotNull Term term) {

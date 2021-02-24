@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
 import org.glavo.kala.Tuple;
@@ -11,16 +11,21 @@ import org.glavo.kala.ref.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
+import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.MziBreakingException;
 import org.mzi.api.util.NormalizeMode;
+import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
+import org.mzi.core.def.DataDef;
+import org.mzi.core.def.FnDef;
 import org.mzi.core.term.*;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
+import org.mzi.tyck.error.UnifyError;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.Rule;
@@ -107,18 +112,38 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth
   @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
-    var ty = localCtx.get(expr.resolvedVar());
-    if (ty == null) throw new IllegalStateException("Unresolved var `" + expr.resolvedVar().name() + "` tycked.");
-    if (term == null) return new Result(new RefTerm(expr.resolvedVar()), ty);
-    unify(term, ty);
-    return new Result(new RefTerm(expr.resolvedVar()), ty);
+    final var var = expr.resolvedVar();
+    if (var instanceof DefVar<?, ?> defVar) {
+      if (defVar.core instanceof FnDef fn) {
+        // TODO[ice]: should we rename the vars in this telescope?
+        var tele = fn.telescope();
+        @SuppressWarnings("unchecked") var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, tele.map(Term.Param::toArg));
+        var lam = LamTerm.make(tele, call);
+        var ty = PiTerm.make(false, tele, fn.result());
+        return new Result(lam, ty);
+      } else if (defVar.core instanceof DataDef data) {
+        var tele = data.telescope();
+        @SuppressWarnings("unchecked") var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, tele.map(Term.Param::toArg));
+        var lam = LamTerm.make(tele, call);
+        var ty = PiTerm.make(false, tele, data.result());
+        return new Result(lam, ty);
+      } else {
+        final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
+        throw new IllegalStateException(msg);
+      }
+    }
+    var ty = localCtx.get(var);
+    if (ty == null) throw new IllegalStateException("Unresolved var `" + var.name() + "` tycked.");
+    if (term == null) return new Result(new RefTerm(var), ty);
+    unify(term, ty, expr);
+    return new Result(new RefTerm(var), ty);
   }
 
-  private void unify(Term upper, Term lower) {
+  private void unify(Term upper, Term lower, Expr errorReportLocation) {
     var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
-      // TODO[ice]: expected type mismatch synthesized type
-      throw new TyckerException();
+      metaContext.report(new UnifyError(errorReportLocation, upper, lower));
+      // TODO[ice]: stop tycking?
     }
   }
 
@@ -178,7 +203,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     fieldsBefore.forEachIndexed((i, param) ->
       subst.add(param.ref(), new ProjTerm(tupleRes.wellTyped, i + 1)));
     type = type.subst(subst);
-    unify(term, type);
+    unify(term, type, expr);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
 
@@ -196,26 +221,30 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var resultTerm = f.wellTyped;
     if (!(f.type instanceof PiTerm piTerm)) return wantButNo(expr, f.type, "pi type");
     var pi = piTerm;
-    for (var iter = expr.argument().iterator(); iter.hasNext(); ) {
+    var subst = new Substituter.TermSubst(new HashMap<>());
+    for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
-      var param = pi.param();
+      var param = pi.param().subst(subst);
       var paramLicit = param.explicit();
       var argLicit = arg.explicit();
+      Arg<Term> newArg;
       if (paramLicit == argLicit) {
         var elabArg = arg.term().accept(this, param.type());
-        resultTerm = AppTerm.make(resultTerm, new Arg<>(elabArg.wellTyped, argLicit));
+        newArg = new Arg<>(elabArg.wellTyped, argLicit);
       } else if (argLicit) {
         // that implies paramLicit == false
         var holeApp = new AppTerm.HoleApp(new LocalVar("_"));
         // TODO: maybe we should create a concrete hole and check it against the type
         //  in case we can synthesize this term via its type only
-        resultTerm = AppTerm.make(resultTerm, new Arg<>(holeApp, false));
+        newArg = new Arg<>(holeApp, false);
       } else {
         // TODO[ice]: no implicit argument expected, but inserted.
         throw new TyckerException();
       }
+      resultTerm = AppTerm.make(resultTerm, newArg);
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) {
+        subst.add(param.ref(), newArg.term());
         if (pi.body() instanceof PiTerm newPi) pi = newPi;
         else wantButNo(expr, pi.body(), "pi type");
       }

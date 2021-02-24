@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck.unify;
 
 import org.glavo.kala.collection.Seq;
@@ -13,7 +13,7 @@ import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.MetaContext;
-import org.mzi.tyck.error.HoleBadSpineError;
+import org.mzi.tyck.error.HoleBadSpineWarn;
 import org.mzi.util.Ordering;
 
 import java.util.HashMap;
@@ -57,7 +57,7 @@ public class PatDefEq extends DefEq {
   public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @Nullable Term type) {
     var solved = extract(lhs.args(), rhs);
     if (solved == null) {
-      metaContext.report(new HoleBadSpineError(lhs, expr));
+      metaContext.report(new HoleBadSpineWarn(lhs, expr));
       return false;
     }
     var solution = metaContext.solutions().getOption(lhs);

@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
 import org.glavo.kala.Tuple;
@@ -147,7 +147,7 @@ public sealed interface Expr {
   record AppExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr function,
-    @NotNull ImmutableSeq<@NotNull Arg<Expr>> argument
+    @NotNull ImmutableSeq<@NotNull Arg<Expr>> arguments
   ) implements Expr {
     @Override
     public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

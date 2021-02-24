@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete.parse;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -204,7 +204,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     if (ctx instanceof MziParser.LamContext lam) return visitLam(lam);
     if (ctx instanceof MziParser.ArrContext arr) return visitArr(arr);
     // TODO: match
-    throw new UnsupportedOperationException("TODO");
+    throw new UnsupportedOperationException("TODO: " + ctx.getClass());
   }
 
   @Override

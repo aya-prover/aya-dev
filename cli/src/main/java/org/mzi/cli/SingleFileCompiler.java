@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.cli;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath) {
-  public void compile(@NotNull CompilerFlags flags) throws IOException {
+  public int compile(@NotNull CompilerFlags flags) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var parser = MziParsing.parser(filePath, reporter);
     var program = MziProducer.INSTANCE.visitProgram(parser.program());
@@ -37,8 +37,14 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       System.err.println("""
         Please report the stacktrace to the developers so a better error handling could be made.
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
+      return e.exitCode();
     }
-    if (reporter.isEmpty()) reporter.reportString(flags.successNotion());
-    else reporter.reportString(flags.failNotion());
+    if (reporter.isEmpty()) {
+      reporter.reportString(flags.successNotion());
+      return 0;
+    } else {
+      reporter.reportString(flags.failNotion());
+      return -1;
+    }
   }
 }
