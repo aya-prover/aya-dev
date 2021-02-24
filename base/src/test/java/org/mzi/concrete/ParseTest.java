@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -70,7 +70,12 @@ public class ParseTest {
     parseFn("\\def a => 1");
     parseFn("\\def a (b : X) => b");
     parseFn("\\def a (f : \\Pi a b c d -> a) => b");
-    parseFn("\\def a (t : \\Sigma a b ** s) => b");
+    parseFn("\\def a (t : \\Sig a b ** s) => b");
+    parseFn("""
+      \\def uncurry (A : \\Set) (B : \\Set) (C : \\Set)
+                   (f : \\Pi A B -> C)
+                   (p : \\Sig A ** B) : C
+        => f p.1 p.2""");
     parseData("\\data Unit");
     parseData("\\data Unit \\abusing {}");
     parseData("\\data Unit : A \\abusing {}");
@@ -107,8 +112,8 @@ public class ParseTest {
       ImmutableSeq.of(),
       new Expr.HoleExpr(SourcePos.NONE, null, null),
       new Decl.DataBody.Ctors(Buffer.of(
-        new Decl.DataCtor(SourcePos.NONE,"Z", ImmutableSeq.of(), Buffer.of(), Buffer.of(), false),
-        new Decl.DataCtor(SourcePos.NONE,"S",
+        new Decl.DataCtor(SourcePos.NONE, "Z", ImmutableSeq.of(), Buffer.of(), Buffer.of(), false),
+        new Decl.DataCtor(SourcePos.NONE, "S",
           ImmutableSeq.of(
             new Expr.Param(SourcePos.NONE, new LocalVar("_"), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
           ),
@@ -135,6 +140,7 @@ public class ParseTest {
     assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("\\Pi (x : \\Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.TelescopicSigmaExpr);
     parseTo("f a . 1", new Expr.ProjExpr(
       SourcePos.NONE,
       new Expr.AppExpr(
