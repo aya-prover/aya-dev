@@ -151,7 +151,8 @@ public record PrettyError(
       if (oldPos == errorRange.start()) {
         startLine = line;
         startCol = oldCol;
-      } else if (oldPos == errorRange.end()) {
+      }
+      if (oldPos == errorRange.end()) {
         endLine = line;
         endCol = oldCol;
       }
