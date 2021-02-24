@@ -56,36 +56,45 @@ public class TestRunner {
       fail("error reading file " + file.toAbsolutePath());
     }
 
-    if (!Files.exists(expectedOutFile)) {
+    if (Files.exists(expectedOutFile)) {
+      checkOutput(file, expectedOutFile, hookOut.toString());
+    } else {
       if (expectSuccess) {
         assertTrue(reporter.isEmpty(), "The test case <" + file.getFileName() + "> should pass, but it fails.");
       } else {
-        var workflowFile = file.resolveSibling(file.getFileName() + ".txt.todo");
-        var outputToConfirm = hookOut.toString();
-        try {
-          Files.writeString(workflowFile, outputToConfirm);
-        } catch (IOException e) {
-          fail("error generating todo file " + workflowFile.toAbsolutePath());
-        }
-        System.out.printf(Locale.getDefault(),
-          """
-            NOTE: write the following output to `%s`
-            Move it to `%s` to accept it as correct.
-            ----------------------------------------
-            %s
-            ----------------------------------------
-            """,
-          workflowFile.getFileName(),
-          expectedOutFile.getFileName(),
-          outputToConfirm
-        );
-        showStatus(file.getFileName().toString(), "todo generated");
+        generateWorkflow(file, expectedOutFile, hookOut.toString());
       }
-    } else try {
-      var output = trimCRLF(hookOut.toString());
+    }
+  }
+
+  private void generateWorkflow(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
+    var workflowFile = testFile.resolveSibling(testFile.getFileName() + ".txt.todo");
+    try {
+      Files.writeString(workflowFile, hookOut);
+    } catch (IOException e) {
+      fail("error generating todo file " + workflowFile.toAbsolutePath());
+    }
+    System.out.printf(Locale.getDefault(),
+      """
+        NOTE: write the following output to `%s`
+        Move it to `%s` to accept it as correct.
+        ----------------------------------------
+        %s
+        ----------------------------------------
+        """,
+      workflowFile.getFileName(),
+      expectedOutFile.getFileName(),
+      hookOut
+    );
+    showStatus(testFile.getFileName().toString(), "todo generated");
+  }
+
+  private void checkOutput(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
+    try {
+      var output = trimCRLF(hookOut);
       var expected = trimCRLF(Files.readString(expectedOutFile));
-      assertEquals(expected, output, file.getFileName().toString());
-      showStatus(file.getFileName().toString(), "success");
+      assertEquals(expected, output, testFile.getFileName().toString());
+      showStatus(testFile.getFileName().toString(), "success");
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
     }
