@@ -17,6 +17,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,17 +56,43 @@ public class TestRunner {
       fail("error reading file " + file.toAbsolutePath());
     }
 
-    if (expectSuccess && !Files.exists(expectedOutFile)) {
-      assertTrue(reporter.isEmpty(), "The test case <" + file.getFileName() + "> should pass, but it fails.");
+    if (!Files.exists(expectedOutFile)) {
+      if (expectSuccess) {
+        assertTrue(reporter.isEmpty(), "The test case <" + file.getFileName() + "> should pass, but it fails.");
+      } else {
+        var workflowFile = file.resolveSibling(file.getFileName() + ".txt.todo");
+        var outputToConfirm = hookOut.toString();
+        try {
+          Files.writeString(workflowFile, outputToConfirm);
+        } catch (IOException e) {
+          fail("error generating todo file " + workflowFile.toAbsolutePath());
+        }
+        System.out.printf(Locale.getDefault(),
+          """
+            NOTE: write the following output to `%s`
+            Move it to `%s` to accept it as correct.
+            ----------------------------------------
+            %s
+            ----------------------------------------
+            """,
+          workflowFile.getFileName(),
+          expectedOutFile.getFileName(),
+          outputToConfirm
+        );
+        showStatus(file.getFileName().toString(), "todo generated");
+      }
     } else try {
       var output = trimCRLF(hookOut.toString());
       var expected = trimCRLF(Files.readString(expectedOutFile));
       assertEquals(expected, output, file.getFileName().toString());
+      showStatus(file.getFileName().toString(), "success");
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
     }
+  }
 
-    System.out.println(file.getFileName() + " ---> " + " success");
+  private void showStatus(String testName, String status) {
+    System.out.println(testName + " ---> " + status);
   }
 
   private String trimCRLF(String string) {
