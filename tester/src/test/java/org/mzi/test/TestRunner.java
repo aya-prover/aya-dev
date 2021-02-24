@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.test;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +9,7 @@ import org.mzi.api.Global;
 import org.mzi.cli.CompilerFlags;
 import org.mzi.cli.SingleFileCompiler;
 import org.mzi.cli.StreamReporter;
+import org.mzi.tyck.error.CountingReporter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,33 +28,36 @@ public class TestRunner {
   @Test
   void runAllMziTests() throws IOException {
     var testSourceDir = Paths.get("src", "test", "mzi");
-    runDir(testSourceDir.resolve("success"));
-    runDir(testSourceDir.resolve("failure"));
+    runDir(testSourceDir.resolve("success"), true);
+    runDir(testSourceDir.resolve("failure"), false);
   }
 
-  private void runDir(@NotNull Path path) throws IOException {
+  private void runDir(@NotNull Path path, boolean expectSuccess) throws IOException {
     System.out.println(":: Running tests under " + path.toAbsolutePath());
     assertTrue(path.toFile().isDirectory(), "should be a directory");
 
     Files.walk(path)
       .filter(Files::isRegularFile)
       .filter(f -> f.getFileName().toString().endsWith(".mzi"))
-      .forEach(this::runFile);
+      .forEach(file -> runFile(file, expectSuccess));
   }
 
-  private void runFile(@NotNull Path file) {
+  private void runFile(@NotNull Path file, boolean expectSuccess) {
     var expectedOutFile = file.resolveSibling(file.getFileName() + ".txt");
 
     var hookOut = new ByteArrayOutputStream();
+    final var reporter = new CountingReporter(new StreamReporter(file, new PrintStream(hookOut)));
 
     try {
-      new SingleFileCompiler(new StreamReporter(file, new PrintStream(hookOut)), file)
+      new SingleFileCompiler(reporter, file)
         .compile(CompilerFlags.asciiOnlyFlags());
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }
 
-    try {
+    if (expectSuccess && !Files.exists(expectedOutFile)) {
+      assertTrue(reporter.isEmpty(), "The test case <" + file.getFileName() + "> should pass, but it fails.");
+    } else try {
       var output = trimCRLF(hookOut.toString());
       var expected = trimCRLF(Files.readString(expectedOutFile));
       assertEquals(expected, output, file.getFileName().toString());
