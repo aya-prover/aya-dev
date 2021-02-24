@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete.visitor;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -67,8 +67,8 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
-    var arg = expr.argument().map(x -> visitArg(x, p));
-    if (Objects.equals(function, expr.function()) && arg.sameElements(expr.argument())) return expr;
+    var arg = expr.arguments().map(x -> visitArg(x, p));
+    if (Objects.equals(function, expr.function()) && arg.sameElements(expr.arguments())) return expr;
     return new Expr.AppExpr(expr.sourcePos(), function, arg);
   }
 

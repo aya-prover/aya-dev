@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete.pretty;
 
 import org.glavo.kala.Unit;
@@ -74,7 +74,7 @@ public class ExprPrettyConsumer implements Expr.Visitor<Unit, Doc> {
     return Doc.cat(
       expr.function().toDoc(),
       Doc.plain(" "),
-      expr.argument().stream()
+      expr.arguments().stream()
         .map(arg -> arg.explicit()
           ? arg.term().toDoc()
           : Doc.cat(Doc.plain("{"), arg.term().toDoc(), Doc.plain("}")))

@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete.visitor;
 
 import org.glavo.kala.Unit;
@@ -32,7 +32,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   }
 
   @Override default Unit visitApp(Expr.@NotNull AppExpr expr, P p) {
-    expr.argument().forEach(arg -> visitArg(arg, p));
+    expr.arguments().forEach(arg -> visitArg(arg, p));
     return expr.function().accept(this, p);
   }
 

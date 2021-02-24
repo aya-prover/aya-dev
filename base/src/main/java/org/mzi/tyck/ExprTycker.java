@@ -221,26 +221,30 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var resultTerm = f.wellTyped;
     if (!(f.type instanceof PiTerm piTerm)) return wantButNo(expr, f.type, "pi type");
     var pi = piTerm;
-    for (var iter = expr.argument().iterator(); iter.hasNext(); ) {
+    var subst = new Substituter.TermSubst(new HashMap<>());
+    for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
-      var param = pi.param();
+      var param = pi.param().subst(subst);
       var paramLicit = param.explicit();
       var argLicit = arg.explicit();
+      Arg<Term> newArg;
       if (paramLicit == argLicit) {
         var elabArg = arg.term().accept(this, param.type());
-        resultTerm = AppTerm.make(resultTerm, new Arg<>(elabArg.wellTyped, argLicit));
+        newArg = new Arg<>(elabArg.wellTyped, argLicit);
       } else if (argLicit) {
         // that implies paramLicit == false
         var holeApp = new AppTerm.HoleApp(new LocalVar("_"));
         // TODO: maybe we should create a concrete hole and check it against the type
         //  in case we can synthesize this term via its type only
-        resultTerm = AppTerm.make(resultTerm, new Arg<>(holeApp, false));
+        newArg = new Arg<>(holeApp, false);
       } else {
         // TODO[ice]: no implicit argument expected, but inserted.
         throw new TyckerException();
       }
+      resultTerm = AppTerm.make(resultTerm, newArg);
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) {
+        subst.add(param.ref(), newArg.term());
         if (pi.body() instanceof PiTerm newPi) pi = newPi;
         else wantButNo(expr, pi.body(), "pi type");
       }
