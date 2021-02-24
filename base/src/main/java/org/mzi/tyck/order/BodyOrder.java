@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.order;
 
@@ -13,6 +13,7 @@ import org.mzi.core.visitor.RefFinder;
 
 /**
  * Generate the order of dependency of both headers and bodies. Each SCC is in one subgroup.
+ *
  * @author re-xyr
  */
 public final class BodyOrder {

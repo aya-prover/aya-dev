@@ -4,13 +4,12 @@ package org.mzi.core.term;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.Param;
 import org.mzi.util.Decision;
 
 /**
  * @author re-xyr, kiva
  */
-public record PiTerm(boolean co, @NotNull Param param, @NotNull Term body) implements Term {
+public record PiTerm(boolean co, @NotNull Term.Param param, @NotNull Term body) implements Term {
   @Override @Contract(pure = true) public @NotNull Decision whnf() {
     return Decision.YES;
   }

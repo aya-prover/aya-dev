@@ -42,7 +42,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     return parser(text).expr().accept(new TermDsl(refs));
   }
 
-  public static @NotNull ImmutableSeq<@NotNull Param> parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
+  public static @NotNull ImmutableSeq<Term.@NotNull Param> parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
     return new TermDsl(refs).exprToParams(parser(text).expr());
   }
 
@@ -74,7 +74,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     };
   }
 
-  public @NotNull Param exprToParam(LispParser.ExprContext ctx) {
+  public Term.@NotNull Param exprToParam(LispParser.ExprContext ctx) {
     var atom = ctx.atom();
     if (atom != null) {
       throw new IllegalArgumentException("Unexpected atom: " + atom.getText());
@@ -83,10 +83,10 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var exprs = ctx.expr();
     assert exprs.size() == 2;
     boolean explicit = licit(exprs);
-    return new Param(ref(ident), exprs.get(0).accept(this), explicit);
+    return new Term.Param(ref(ident), exprs.get(0).accept(this), explicit);
   }
 
-  public @NotNull ImmutableSeq<@NotNull Param> exprToParams(LispParser.ExprContext ctx) {
+  public @NotNull ImmutableSeq<Term.@NotNull Param> exprToParams(LispParser.ExprContext ctx) {
     var atom = ctx.atom();
     if (atom != null) {
       if ("null".equals(atom.getText())) return ImmutableSeq.of();
@@ -96,7 +96,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var exprs = ctx.expr();
     assert exprs.size() == 3;
     boolean explicit = licit(exprs);
-    return exprToParams(exprs.get(2)).prepended(new Param(ref(ident), exprs.get(0).accept(this), explicit));
+    return exprToParams(exprs.get(2)).prepended(new Term.Param(ref(ident), exprs.get(0).accept(this), explicit));
   }
 
   private boolean licit(List<LispParser.ExprContext> exprs) {

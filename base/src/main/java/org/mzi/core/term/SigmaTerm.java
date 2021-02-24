@@ -5,7 +5,6 @@ package org.mzi.core.term;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.Param;
 import org.mzi.util.Decision;
 
 /**

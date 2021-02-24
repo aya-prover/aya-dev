@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck.unify;
 
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mzi.core.Param;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.RefTerm;
@@ -49,7 +48,7 @@ public class PatDefEq extends DefEq {
     }
     var type = new AppTerm.HoleApp(new LocalVar("_"));
     var abstracted = new LocalVar(var.name() + "'");
-    var param = new Param(abstracted, type, arg.explicit());
+    var param = new Term.Param(abstracted, type, arg.explicit());
     subst.add(var, new RefTerm(abstracted));
     return new LamTerm(param, new LamTerm(param, rhs));
   }

@@ -6,7 +6,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
+import org.mzi.concrete.parse.MziProducer;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.LamTerm;
 import org.mzi.core.term.PiTerm;
@@ -30,10 +30,10 @@ public class TyckFnTest {
   public void idLamConnected() {
     var a = new LocalVar("a");
     // \A a.a
-    idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
+    idLamTestCase(MziProducer.buildLam(SourcePos.NONE,
       ImmutableSeq.of(
-        new Param(SourcePos.NONE, new LocalVar("_"), true),
-        new Param(SourcePos.NONE, a, true)),
+        new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
+        new Expr.Param(SourcePos.NONE, a, true)),
       new Expr.RefExpr(SourcePos.NONE, a)));
   }
 
@@ -41,15 +41,15 @@ public class TyckFnTest {
   public void idLamDisconnected() {
     var a = new LocalVar("a");
     // \A.\a.a
-    idLamTestCase(new Expr.TelescopicLamExpr(SourcePos.NONE,
-      ImmutableSeq.of(new Param(SourcePos.NONE, new LocalVar("_"), true)),
-      new Expr.TelescopicLamExpr(SourcePos.NONE, ImmutableSeq.of(new Param(SourcePos.NONE, a, true)),
+    idLamTestCase(new Expr.LamExpr(SourcePos.NONE,
+      new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
+      new Expr.LamExpr(SourcePos.NONE, new Expr.Param(SourcePos.NONE, a, true),
         new Expr.RefExpr(SourcePos.NONE, a))));
   }
 
   private void idLamTestCase(Expr lamAaa) {
     var piUAA = Lisp.parse("(Pi (A (U) ex) (Pi (a A ex) A))");
-    var result = lamAaa.desugar()
+    var result = lamAaa
       .accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
     assertNotNull(result);
     if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof PiTerm dt)) {
@@ -71,13 +71,13 @@ public class TyckFnTest {
     var pRef = new Expr.RefExpr(SourcePos.NONE, p);
     var f = new LocalVar("f");
     // \A B C f p. f(p.1, p.2)
-    var uncurry = new Expr.TelescopicLamExpr(SourcePos.NONE,
+    var uncurry = MziProducer.buildLam(SourcePos.NONE,
       Stream
         .concat(
           Stream.of("A", "B", "C").map(LocalVar::new),
           Stream.of(f, p)
         )
-        .map(v -> new Param(SourcePos.NONE, v, true))
+        .map(v -> new Expr.Param(SourcePos.NONE, v, true))
         .collect(ImmutableSeq.factory()),
       new Expr.AppExpr(SourcePos.NONE,
         new Expr.RefExpr(SourcePos.NONE, f),
@@ -92,6 +92,6 @@ public class TyckFnTest {
          (Pi (f (Pi (a A ex)
                  (Pi (b B ex) C)) ex)
           (Pi (p (Sigma (a A ex null) B) ex) C)))))""");
-    uncurry.desugar().accept(new ExprTycker(ThrowingReporter.INSTANCE), uncurryTy);
+    uncurry.accept(new ExprTycker(ThrowingReporter.INSTANCE), uncurryTy);
   }
 }

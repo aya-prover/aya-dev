@@ -5,7 +5,6 @@ package org.mzi.concrete.visitor;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 
 import java.util.Objects;
@@ -25,13 +24,13 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.HoleExpr(expr.sourcePos(), expr.name(), h);
   }
 
-  default @NotNull ImmutableSeq<@NotNull Param> visitParams(@NotNull ImmutableSeq<@NotNull Param> params, P p) {
+  default @NotNull ImmutableSeq<Expr.@NotNull Param> visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, P p) {
     return params.view().map(param -> {
       var oldType = param.type();
       if (oldType == null) return param;
       var type = oldType.accept(this, p);
       if (Objects.equals(type, oldType)) return param;
-      return new Param(param.sourcePos(), param.var(), type, param.explicit());
+      return new Expr.Param(param.sourcePos(), param.ref(), type, param.explicit());
     }).collect(ImmutableSeq.factory());
   }
 
@@ -47,14 +46,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     var body = expr.last().accept(this, p);
     if (bind == expr.param() && Objects.equals(body, expr.last())) return expr;
     return new Expr.LamExpr(expr.sourcePos(), bind, body);
-  }
-
-  @Override default @NotNull Expr visitTelescopicLam(Expr.@NotNull TelescopicLamExpr expr, P p) {
-    throw new IllegalStateException("Found sugared expression. this should not happen");
-  }
-
-  @Override default @NotNull Expr visitTelescopicPi(Expr.@NotNull TelescopicPiExpr expr, P p) {
-    throw new IllegalStateException("Found sugared expression. this should not happen");
   }
 
   @Override default @NotNull Expr visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {

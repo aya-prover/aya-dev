@@ -6,7 +6,6 @@ import org.glavo.kala.Tuple2;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.visitor.ExprFixpoint;
 
@@ -25,24 +24,24 @@ public final class ExprResolver implements ExprFixpoint<Context> {
     return new Expr.RefExpr(expr.sourcePos(), ctx.getUnqualified(expr.name(), expr.sourcePos()));
   }
 
-  public @NotNull Tuple2<Param, Context> visitParam(@NotNull Param param, Context ctx) {
+  public @NotNull Tuple2<Expr.Param, Context> visitParam(@NotNull Expr.Param param, Context ctx) {
     var type = param.type();
     type = type == null ? null : type.accept(this, ctx);
     return Tuple2.of(
-      new Param(param.sourcePos(), param.var(), type, param.explicit()),
-      ctx.bind(param.var().name(), param.var(), param.sourcePos())
+      new Expr.Param(param.sourcePos(), param.ref(), type, param.explicit()),
+      ctx.bind(param.ref().name(), param.ref(), param.sourcePos())
     );
   }
 
-  public @NotNull Tuple2<ImmutableSeq<Param>, Context> resolveParams(@NotNull ImmutableSeq<Param> params, Context ctx) {
+  public @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context> resolveParams(@NotNull ImmutableSeq<Expr.Param> params, Context ctx) {
     if (params.isEmpty()) return Tuple2.of(ImmutableSeq.of(), ctx);
     var first = params.first();
     var type = first.type();
     type = type == null ? null : type.accept(this, ctx);
-    var newCtx = ctx.bind(first.var().name(), first.var(), first.sourcePos());
+    var newCtx = ctx.bind(first.ref().name(), first.ref(), first.sourcePos());
     var result = resolveParams(params.drop(1), newCtx);
     return Tuple2.of(
-      result._1.prepended(new Param(first.sourcePos(), first.var(), type, first.explicit())),
+      result._1.prepended(new Expr.Param(first.sourcePos(), first.ref(), type, first.explicit())),
       result._2
     );
   }

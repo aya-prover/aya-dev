@@ -12,9 +12,9 @@ import org.mzi.api.ref.Var;
 import org.mzi.ref.LocalVar;
 
 /**
- * @author re-xyr
- *
  * Introduces a locally bound variable to the context.
+ *
+ * @author re-xyr
  */
 public record BindContext(
   @NotNull Context parent,

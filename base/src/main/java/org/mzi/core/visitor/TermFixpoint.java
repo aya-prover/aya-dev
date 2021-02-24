@@ -4,7 +4,6 @@ package org.mzi.core.visitor;
 
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.core.Param;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;
 import org.mzi.tyck.sort.Sort;
@@ -31,10 +30,10 @@ public interface TermFixpoint<P> extends
   }
 
   private <T> T visitParameterized(
-    @NotNull Param theParam, @NotNull Term theBody, @NotNull P p, @NotNull T original,
-    @NotNull BiFunction<@NotNull Param, @NotNull Term, T> callback
+    @NotNull Term.Param theParam, @NotNull Term theBody, @NotNull P p, @NotNull T original,
+    @NotNull BiFunction<Term.@NotNull Param, @NotNull Term, T> callback
   ) {
-    var param = new Param(theParam.ref(), theParam.type().accept(this, p), theParam.explicit());
+    var param = new Term.Param(theParam.ref(), theParam.type().accept(this, p), theParam.explicit());
     var body = theBody.accept(this, p);
     if (param.type() == theParam.type() && body == theBody) return original;
     return callback.apply(param, body);
@@ -56,7 +55,7 @@ public interface TermFixpoint<P> extends
 
   @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
     var params = term.params().map(param ->
-      new Param(param.ref(), param.type().accept(this, p), param.explicit()));
+      new Term.Param(param.ref(), param.type().accept(this, p), param.explicit()));
     var body = term.body().accept(this, p);
     if (params.sameElements(term.params(), true) || body == term.body()) return term;
     return new SigmaTerm(term.co(), params, body);

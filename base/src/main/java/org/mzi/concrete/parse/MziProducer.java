@@ -20,9 +20,7 @@ import org.mzi.api.error.SourcePos;
 import org.mzi.api.util.Assoc;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
 import org.mzi.concrete.Stmt;
-import org.mzi.concrete.Stmt.CmdStmt.Cmd;
 import org.mzi.generic.Arg;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
@@ -53,39 +51,44 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @TestOnly
-  public static @NotNull Stmt parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
+  public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitStmt(MziParsing.parser(code).stmt());
   }
 
   @TestOnly
-  public static @NotNull Decl parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
+  public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitDecl(MziParsing.parser(code).decl());
   }
 
-  @Override public List<Stmt> visitProgram(MziParser.ProgramContext ctx) {
-    return ctx.stmt().stream().map(this::visitStmt).collect(Collectors.toList());
+  @Override public ImmutableSeq<Stmt> visitProgram(MziParser.ProgramContext ctx) {
+    return ctx.stmt().stream().map(this::visitStmt).flatMap(Traversable::stream).collect(ImmutableSeq.factory());
   }
 
   @Override
-  public @NotNull Stmt visitStmt(MziParser.StmtContext ctx) {
-    var cmd = ctx.cmd();
-    if (cmd != null) return visitCmd(cmd);
+  public @NotNull ImmutableSeq<Stmt> visitStmt(MziParser.StmtContext ctx) {
+    var importCmd = ctx.importCmd();
+    if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
+    var openCmd = ctx.openCmd();
+    if (openCmd != null) return visitOpenCmd(openCmd);
     var decl = ctx.decl();
-    if (decl != null) return visitDecl(decl);
+    if (decl != null) {
+      var result = visitDecl(decl);
+      return result._2.prepended(result._1);
+    }
     var mod = ctx.module();
-    if (mod != null) return visitModule(mod);
+    if (mod != null) return ImmutableSeq.of(visitModule(mod));
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
-  public @NotNull Decl visitDecl(MziParser.DeclContext ctx) {
+  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(MziParser.DeclContext ctx) {
     var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
-    if (fnDecl != null) return visitFnDecl(fnDecl, accessibility);
+    if (fnDecl != null) return Tuple2.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.of());
     var dataDecl = ctx.dataDecl();
     if (dataDecl != null) return visitDataDecl(dataDecl, accessibility);
     var structDecl = ctx.structDecl();
-    if (structDecl != null) return visitStructDecl(structDecl, accessibility);
+    if (structDecl != null) return Tuple2.of(visitStructDecl(structDecl, accessibility), ImmutableSeq.of());
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
@@ -106,11 +109,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       visitTelescope(ctx.tele().stream()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
-      abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx)
+      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
   }
 
-  public @NotNull ImmutableSeq<@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
     return stream
       .map(this::visitTele)
       .flatMap(Traversable::stream)
@@ -118,10 +121,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Buffer<@NotNull Stmt> visitAbuse(MziParser.AbuseContext ctx) {
+  public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(MziParser.AbuseContext ctx) {
     return ctx.stmt().stream()
       .map(this::visitStmt)
-      .collect(Buffer.factory());
+      .flatMap(Traversable::stream)
+      .collect(ImmutableSeq.factory());
   }
 
   @Override
@@ -174,10 +178,10 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull ImmutableSeq<@NotNull Param> visitTele(MziParser.TeleContext ctx) {
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(MziParser.TeleContext ctx) {
     var literal = ctx.literal();
     if (literal != null)
-      return ImmutableSeq.of(new Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
+      return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
@@ -185,10 +189,10 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Function<Boolean, ImmutableSeq<Param>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
+  public @NotNull Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
     var type = type(ctx.type(), sourcePosOf(ctx.ids()));
     return explicit -> visitIds(ctx.ids())
-      .map(var -> new Param(sourcePosOf(ctx), new LocalVar(var), type, explicit))
+      .map(var -> new Expr.Param(sourcePosOf(ctx), new LocalVar(var), type, explicit))
       .collect(ImmutableSeq.factory());
   }
 
@@ -210,7 +214,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return new Expr.PiExpr(
       sourcePosOf(ctx),
       false,
-      new Param(sourcePosOf(ctx.expr(0)), new LocalVar("_"), from, true),
+      new Expr.Param(sourcePosOf(ctx.expr(0)), new LocalVar("_"), from, true),
       to
     );
   }
@@ -274,11 +278,24 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull TelescopicLamExpr visitLam(MziParser.LamContext ctx) {
-    return new Expr.TelescopicLamExpr(
+  public Expr.@NotNull LamExpr visitLam(MziParser.LamContext ctx) {
+    return (Expr.LamExpr) buildLam(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()),
       visitLamBody(ctx)
+    );
+  }
+
+  public static @NotNull Expr buildLam(
+    SourcePos sourcePos,
+    ImmutableSeq<Expr.Param> params,
+    Expr body
+  ) {
+    if (params.isEmpty()) return body;
+    return new Expr.LamExpr(
+      sourcePos,
+      params.first(),
+      buildLam(sourcePos, params.drop(1), body)
     );
   }
 
@@ -308,12 +325,27 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull TelescopicPiExpr visitPi(MziParser.PiContext ctx) {
-    return new Expr.TelescopicPiExpr(
+  public Expr.@NotNull PiExpr visitPi(MziParser.PiContext ctx) {
+    return (Expr.PiExpr) buildPi(
       sourcePosOf(ctx),
       false,
       visitTelescope(ctx.tele().stream()),
       visitExpr(ctx.expr())
+    );
+  }
+
+  public static @NotNull Expr buildPi(
+    SourcePos sourcePos,
+    boolean co,
+    ImmutableSeq<Expr.Param> params,
+    Expr body
+  ) {
+    if (params.isEmpty()) return body;
+    return new Expr.PiExpr(
+      sourcePos,
+      co,
+      params.first(),
+      buildLam(sourcePos, params.drop(1), body)
     );
   }
 
@@ -326,19 +358,29 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public Decl.@NotNull DataDecl visitDataDecl(MziParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(MziParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
-
-    return new Decl.DataDecl(
+    var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
+    var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
-      ctx.OPEN() != null,
       ctx.ID().getText(),
       visitTelescope(ctx.tele().stream()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitDataBody(ctx.dataBody()),
-      abuseCtx == null ? Buffer.of() : visitAbuse(abuseCtx)
+      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
+    if (ctx.OPEN() != null) {
+      return Tuple2.of(
+        data,
+        ImmutableSeq.of(new Stmt.OpenStmt(
+          sourcePosOf(ctx),
+          openAccessibility,
+          ImmutableSeq.of(ctx.ID().getText()),
+          Stmt.OpenStmt.UseHide.EMPTY
+        ))
+      );
+    } else return Tuple2.of(data, ImmutableSeq.of());
   }
 
   public @NotNull Expr type(@Nullable MziParser.TypeContext typeCtx, SourcePos sourcePos) {
@@ -392,8 +434,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public @NotNull Tuple2<@NotNull Pat<Expr>, Decl.@NotNull DataCtor> visitDataCtorClause(MziParser.DataCtorClauseContext ctx) {
+  @Override public @NotNull Tuple2<@NotNull Pat<Expr>, Decl.@NotNull DataCtor>
+  visitDataCtorClause(MziParser.DataCtorClauseContext ctx) {
     return Tuple.of(
       visitPattern(ctx.pattern()),
       visitDataCtor(ctx.dataCtor())
@@ -460,39 +502,57 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Stmt visitCmd(MziParser.CmdContext ctx) {
-    var modifier = ctx.cmdModifier();
-    var accessibility = (modifier == null || modifier.PUBLIC() == null)
-      ? Stmt.Accessibility.Private
-      : Stmt.Accessibility.Public;
-    var useHide = ctx.useHide();
-    return new Stmt.CmdStmt(
+  public @NotNull Stmt visitImportCmd(MziParser.ImportCmdContext ctx) {
+    final var id = ctx.ID();
+    return new Stmt.ImportStmt(
       sourcePosOf(ctx),
-      accessibility,
-      (modifier != null && modifier.OPEN() != null) ? Cmd.Open : Cmd.Import,
       visitModuleName(ctx.moduleName()),
-      useHide != null ? visitUseHide(useHide) : Stmt.CmdStmt.UseHide.EMPTY
+      id == null ? null : id.getText()
     );
   }
 
-  public Stmt.CmdStmt.UseHide visitUse(List<MziParser.UseContext> ctxs) {
-    return new Stmt.CmdStmt.UseHide(
-      ctxs.stream()
-        .flatMap(ctx -> visitIds(ctx.useHideList().ids()))
-        .collect(ImmutableSeq.factory()),
-      Stmt.CmdStmt.UseHide.Strategy.Using);
+  @Override
+  public @NotNull ImmutableSeq<Stmt> visitOpenCmd(MziParser.OpenCmdContext ctx) {
+    var accessibility = ctx.PUBLIC() == null
+      ? Stmt.Accessibility.Private
+      : Stmt.Accessibility.Public;
+    var useHide = ctx.useHide();
+    var modName = visitModuleName(ctx.moduleName());
+    var open = new Stmt.OpenStmt(
+      sourcePosOf(ctx),
+      accessibility,
+      modName,
+      useHide != null ? visitUseHide(useHide) : Stmt.OpenStmt.UseHide.EMPTY
+    );
+    if (ctx.IMPORT() != null) return ImmutableSeq.of(
+      new Stmt.ImportStmt(sourcePosOf(ctx), modName, null),
+      open
+    );
+    else return ImmutableSeq.of(open);
   }
 
-  public Stmt.CmdStmt.UseHide visitHide(List<MziParser.HideContext> ctxs) {
-    return new Stmt.CmdStmt.UseHide(
+  public Stmt.OpenStmt.UseHide visitUse(List<MziParser.UseContext> ctxs) {
+    return new Stmt.OpenStmt.UseHide(
       ctxs.stream()
-        .flatMap(ctx -> visitIds(ctx.useHideList().ids()))
+        .map(MziParser.UseContext::useHideList)
+        .map(MziParser.UseHideListContext::ids)
+        .flatMap(this::visitIds)
         .collect(ImmutableSeq.factory()),
-      Stmt.CmdStmt.UseHide.Strategy.Hiding);
+      Stmt.OpenStmt.UseHide.Strategy.Using);
+  }
+
+  public Stmt.OpenStmt.UseHide visitHide(List<MziParser.HideContext> ctxs) {
+    return new Stmt.OpenStmt.UseHide(
+      ctxs.stream()
+        .map(MziParser.HideContext::useHideList)
+        .map(MziParser.UseHideListContext::ids)
+        .flatMap(this::visitIds)
+        .collect(ImmutableSeq.factory()),
+      Stmt.OpenStmt.UseHide.Strategy.Hiding);
   }
 
   @Override
-  public @NotNull Stmt.CmdStmt.UseHide visitUseHide(@NotNull MziParser.UseHideContext ctx) {
+  public @NotNull Stmt.OpenStmt.UseHide visitUseHide(@NotNull MziParser.UseHideContext ctx) {
     var use = ctx.use();
     if (use != null) return visitUse(use);
     return visitHide(ctx.hide());
@@ -503,7 +563,9 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return new Stmt.ModuleStmt(
       sourcePosOf(ctx),
       ctx.ID().getText(),
-      ImmutableSeq.from(ctx.stmt()).map(this::visitStmt)
+      ctx.stmt().stream().map(this::visitStmt)
+        .flatMap(Traversable::stream)
+        .collect(ImmutableSeq.factory())
     );
   }
 

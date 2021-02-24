@@ -6,7 +6,6 @@ import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.Param;
 import org.mzi.generic.Arg;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
@@ -37,7 +36,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return expr.function().accept(this, p);
   }
 
-  default void visitParams(@NotNull ImmutableSeq<@NotNull Param> params, P p) {
+  default void visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, P p) {
     params.forEach(param -> {
       if (param.type() != null) param.type().accept(this, p);
     });
@@ -51,14 +50,6 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   @Override default Unit visitPi(Expr.@NotNull PiExpr expr, P p) {
     visitParams(ImmutableSeq.of(expr.param()), p);
     return expr.last().accept(this, p);
-  }
-
-  @Override default Unit visitTelescopicPi(Expr.@NotNull TelescopicPiExpr expr, P p) {
-    throw new IllegalStateException("Found sugared expression. this should not happen");
-  }
-
-  @Override default Unit visitTelescopicLam(Expr.@NotNull TelescopicLamExpr expr, P p) {
-    throw new IllegalStateException("Found sugared expression. this should not happen");
   }
 
   @Override default Unit visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {

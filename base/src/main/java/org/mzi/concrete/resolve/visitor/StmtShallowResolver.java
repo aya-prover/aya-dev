@@ -2,6 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
+import org.glavo.kala.Tuple2;
 import org.glavo.kala.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
@@ -29,22 +30,22 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   }
 
   @Override
-  public Unit visitCmd(Stmt.@NotNull CmdStmt cmd, @NotNull ModuleContext context) {
-    switch (cmd.cmd()) {
-      case Open ->
-        context.openModule(
-          cmd.path(),
-          cmd.accessibility(),
-          cmd.useHide()::uses,
-          MutableHashMap.of(), // TODO handle renaming
-          cmd.sourcePos()
-        );
-      case Import -> {
-        var success = loader.load(cmd.path());
-        if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path(), cmd.sourcePos()));
-        context.importModule(cmd.path(), Stmt.Accessibility.Private, success, cmd.sourcePos());
-      }
-    }
+  public Unit visitImport(Stmt.@NotNull ImportStmt cmd, @NotNull ModuleContext context) {
+    var success = loader.load(cmd.path());
+    if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path(), cmd.sourcePos()));
+    context.importModule(cmd.path(), Stmt.Accessibility.Private, success, cmd.sourcePos());
+    return Unit.unit();
+  }
+
+  @Override
+  public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, @NotNull ModuleContext context) {
+    context.openModule(
+      cmd.path(),
+      cmd.accessibility(),
+      cmd.useHide()::uses,
+      MutableHashMap.of(), // TODO handle renaming
+      cmd.sourcePos()
+    );
     return Unit.unit();
   }
 
@@ -63,14 +64,16 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   @Override
   public Unit visitDataDecl(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
-    if (decl.open && decl.body instanceof Decl.DataBody.Ctors ctors) {
-      ctors.ctors().forEach(ctor -> context.addGlobal(
-        Context.TOP_LEVEL_MOD_NAME,
-        ctor.ref.name(),
+    if (decl.body instanceof Decl.DataBody.Ctors ctors) {
+      context.importModule(
+        ImmutableSeq.of(decl.ref().name()),
         decl.accessibility(),
-        ctor.ref,
-        ctor.sourcePos
-      ));
+        MutableHashMap.of(
+          Context.TOP_LEVEL_MOD_NAME,
+          MutableHashMap.from(ctors.ctors().toImmutableSeq().map(ctor ->
+            Tuple2.of(ctor.ref.name(), ctor.ref)))),
+        decl.sourcePos()
+      );
     }
     return Unit.unit();
   }

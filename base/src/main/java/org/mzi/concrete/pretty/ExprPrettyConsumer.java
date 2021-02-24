@@ -46,30 +46,6 @@ public class ExprPrettyConsumer implements Expr.Visitor<Unit, Doc> {
   }
 
   @Override
-  public Doc visitTelescopicLam(Expr.@NotNull TelescopicLamExpr expr, Unit unit) {
-    return Doc.cat(
-      Doc.plain("\\lam"),
-      Doc.plain(" "),
-      StmtPrettyConsumer.INSTANCE.visitTele(expr.params()),
-      expr.body() instanceof Expr.HoleExpr
-        ? Doc.empty()
-        : Doc.cat(Doc.plain(" => "), expr.body().toDoc())
-    );
-  }
-
-  @Override
-  public Doc visitTelescopicPi(Expr.@NotNull TelescopicPiExpr expr, Unit unit) {
-    // TODO[kiva]: expr.co
-    return Doc.cat(
-      Doc.plain("\\Pi"),
-      Doc.plain(" "),
-      StmtPrettyConsumer.INSTANCE.visitTele(expr.params()),
-      Doc.plain(" -> "),
-      expr.last().toDoc()
-    );
-  }
-
-  @Override
   public Doc visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Unit unit) {
     // TODO[kiva]: expr.co
     return Doc.cat(

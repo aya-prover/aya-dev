@@ -12,14 +12,16 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.Var;
-import org.mzi.concrete.desugar.Desugarer;
 import org.mzi.concrete.pretty.ExprPrettyConsumer;
 import org.mzi.concrete.resolve.context.Context;
 import org.mzi.concrete.resolve.context.EmptyContext;
 import org.mzi.concrete.resolve.visitor.ExprResolver;
 import org.mzi.generic.Arg;
+import org.mzi.generic.ParamLike;
 import org.mzi.pretty.doc.Doc;
+import org.mzi.ref.LocalVar;
 
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -29,10 +31,6 @@ public sealed interface Expr {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   @NotNull SourcePos sourcePos();
-
-  default @NotNull Expr desugar() {
-    return accept(Desugarer.INSTANCE, Unit.INSTANCE);
-  }
 
   default @NotNull Expr resolve(@NotNull Context context) {
     return accept(ExprResolver.INSTANCE, context);
@@ -51,8 +49,6 @@ public sealed interface Expr {
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
     R visitPi(@NotNull Expr.PiExpr expr, P p);
-    R visitTelescopicLam(@NotNull TelescopicLamExpr expr, P p);
-    R visitTelescopicPi(@NotNull Expr.TelescopicPiExpr expr, P p);
     R visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
@@ -76,12 +72,6 @@ public sealed interface Expr {
       return catchUnhandled(expr, p);
     }
     @Override default R visitPi(@NotNull Expr.PiExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitTelescopicLam(@NotNull Expr.TelescopicLamExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitTelescopicPi(@NotNull Expr.TelescopicPiExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
     @Override default R visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, P p) {
@@ -147,7 +137,7 @@ public sealed interface Expr {
     @NotNull ImmutableSeq<Param> params();
 
     default @NotNull Stream<@NotNull Tuple2<@NotNull Var, Param>> paramsStream() {
-      return params().stream().map(p -> Tuple.of(p.var(), p));
+      return params().stream().map(p -> Tuple.of(p.ref(), p));
     }
   }
 
@@ -171,7 +161,7 @@ public sealed interface Expr {
   record PiExpr(
     @NotNull SourcePos sourcePos,
     boolean co,
-    @NotNull Param param,
+    @NotNull Expr.Param param,
     @NotNull Expr last
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -180,42 +170,15 @@ public sealed interface Expr {
   }
 
   /**
-   * @author re-xyr, kiva
-   */
-  record TelescopicPiExpr(
-    @NotNull SourcePos sourcePos,
-    boolean co,
-    @NotNull ImmutableSeq<Param> params,
-    @NotNull Expr last
-  ) implements Expr, TelescopicExpr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTelescopicPi(this, p);
-    }
-  }
-
-  /**
    * @author re-xyr
    */
   record LamExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Param param,
+    @NotNull Expr.Param param,
     @NotNull Expr body
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLam(this, p);
-    }
-  }
-
-  /**
-   * @author re-xyr
-   */
-  record TelescopicLamExpr(
-    @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<@NotNull Param> params,
-    @NotNull Expr body
-  ) implements Expr, TelescopicExpr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTelescopicLam(this, p);
     }
   }
 
@@ -316,6 +279,24 @@ public sealed interface Expr {
   ) implements Expr {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitString(this, p);
+    }
+  }
+
+  /**
+   * @author re-xyr
+   */
+  record Param(
+    @NotNull SourcePos sourcePos,
+    @NotNull LocalVar ref,
+    @Nullable Expr type,
+    boolean explicit
+  ) implements ParamLike<Expr> {
+    public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
+      this(sourcePos, var, null, explicit);
+    }
+
+    public @NotNull Expr.Param mapExpr(@NotNull Function<@Nullable Expr, @Nullable Expr> mapper) {
+      return new Param(sourcePos, ref, mapper.apply(type), explicit);
     }
   }
 }
