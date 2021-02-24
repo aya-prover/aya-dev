@@ -8,20 +8,17 @@ import org.mzi.concrete.Expr;
 import org.mzi.core.term.Term;
 import org.mzi.pretty.doc.Doc;
 
-public record BadTypeError(
+public record UnifyError(
   @NotNull Expr expr,
-  @NotNull Doc expectedType,
-  @NotNull Term actualType
+  @NotNull Term expected,
+  @NotNull Term actual
 ) implements Problem.Error, TyckProblem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The expected type "),
-      Doc.plain(actualType.toString()),
-      Doc.plain(" is not a "),
-      expectedType,
-      Doc.plain(", therefore cannot type a lambda such as `"),
-      expr.toDoc(),
-      Doc.plain("`")
+      Doc.plain(expected.toString()),
+      Doc.plain(" does not match the actual type "),
+      Doc.plain(actual.toString())
     );
   }
 }

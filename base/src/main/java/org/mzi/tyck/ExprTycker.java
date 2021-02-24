@@ -25,6 +25,7 @@ import org.mzi.generic.Arg;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
+import org.mzi.tyck.error.UnifyError;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.Rule;
@@ -134,15 +135,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var ty = localCtx.get(var);
     if (ty == null) throw new IllegalStateException("Unresolved var `" + var.name() + "` tycked.");
     if (term == null) return new Result(new RefTerm(var), ty);
-    unify(term, ty);
+    unify(term, ty, expr);
     return new Result(new RefTerm(var), ty);
   }
 
-  private void unify(Term upper, Term lower) {
+  private void unify(Term upper, Term lower, Expr errorReportLocation) {
     var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
-      // TODO[ice]: expected type mismatch synthesized type
-      throw new TyckerException();
+      metaContext.report(new UnifyError(errorReportLocation, upper, lower));
+      // TODO[ice]: stop tycking?
     }
   }
 
@@ -202,7 +203,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     fieldsBefore.forEachIndexed((i, param) ->
       subst.add(param.ref(), new ProjTerm(tupleRes.wellTyped, i + 1)));
     type = type.subst(subst);
-    unify(term, type);
+    unify(term, type, expr);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
 
