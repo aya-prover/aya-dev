@@ -33,7 +33,6 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
     bodyChecker.localCtx.put(decl.ref, declType);
 
     var bodyRes = headerChecker.checkExpr(decl.body, resultRes.wellTyped());
-    if (bodyRes == null) throw new ExprTycker.TyckInterruptedException();
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 
@@ -51,7 +50,6 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
     return tele.stream().map(param -> {
       assert param.type() != null; // guaranteed by MziProducer
       var paramRes = exprTycker.checkExpr(param.type(), null);
-      if (paramRes == null) throw new ExprTycker.TyckInterruptedException();
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
     });

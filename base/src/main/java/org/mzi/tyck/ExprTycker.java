@@ -57,12 +57,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     );
   }
 
-  public @Nullable Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
-    try {
-      return finalize(expr.accept(this, type));
-    } catch (TyckInterruptedException e) {
-      return null;
-    }
+  public @NotNull Result
+  checkExpr(@NotNull Expr expr, @Nullable Term type) throws TyckInterruptedException {
+    return finalize(expr.accept(this, type));
   }
 
   @Rule.Check(partialSynth = true)

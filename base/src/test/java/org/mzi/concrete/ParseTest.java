@@ -131,6 +131,9 @@ public class ParseTest {
     assertTrue(MziProducer.parseExpr("f a b c") instanceof Expr.AppExpr);
     assertTrue(MziProducer.parseExpr("a.1") instanceof Expr.ProjExpr);
     assertTrue(MziProducer.parseExpr("a.1.2") instanceof Expr.ProjExpr);
+    assertTrue(MziProducer.parseExpr("f (a.1) (a.2)") instanceof Expr.AppExpr app
+      && app.arguments().get(0).term() instanceof Expr.ProjExpr
+      && app.arguments().get(1).term() instanceof Expr.ProjExpr);
     assertTrue(MziProducer.parseExpr("λ a => a") instanceof Expr.LamExpr);
     assertTrue(MziProducer.parseExpr("\\lam a => a") instanceof Expr.LamExpr);
     assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
