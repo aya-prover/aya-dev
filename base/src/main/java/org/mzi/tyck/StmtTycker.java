@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
 import org.glavo.kala.Unit;
@@ -33,6 +33,7 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
     bodyChecker.localCtx.put(decl.ref, declType);
 
     var bodyRes = headerChecker.checkExpr(decl.body, resultRes.wellTyped());
+    // TODO[ice]: type check of body failed, report error
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 
@@ -50,6 +51,7 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
     return tele.stream().map(param -> {
       assert param.type() != null; // guaranteed by MziProducer
       var paramRes = exprTycker.checkExpr(param.type(), null);
+      // TODO[ice]: type check of body failed, report error
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
     });

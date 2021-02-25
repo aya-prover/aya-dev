@@ -237,10 +237,12 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     var literal = ctx.literal();
     if (literal != null) return visitLiteral(literal);
 
+    final var typed = ctx.typed();
+    if (typed.size() == 1) return visitTyped(typed.get(0));
     return new Expr.TupExpr(
       sourcePosOf(ctx),
-      ctx.typed().stream()
-        .<Expr>map(this::visitTyped)
+      typed.stream()
+        .map(this::visitTyped)
         .collect(ImmutableVector.factory())
     );
   }
@@ -249,17 +251,19 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     var literal = ctx.literal();
     if (literal != null) return Buffer.of(Arg.explicit(visitLiteral(literal)));
     return ctx.typed().stream()
-      .<Expr>map(this::visitTyped)
+      .map(this::visitTyped)
       .map(Arg::explicit)
       .collect(Buffer.factory());
   }
 
   @Override
-  public Expr.@NotNull TypedExpr visitTyped(MziParser.TypedContext ctx) {
-    return new Expr.TypedExpr(
+  public @NotNull Expr visitTyped(MziParser.TypedContext ctx) {
+    final var type = ctx.type();
+    if (type == null) return visitExpr(ctx.expr());
+    else return new Expr.TypedExpr(
       sourcePosOf(ctx),
       visitExpr(ctx.expr()),
-      type(ctx.type(), sourcePosOf(ctx))
+      type(type, sourcePosOf(type))
     );
   }
 
@@ -269,7 +273,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     if (atom != null) return visitArgumentAtom(atom);
     if (ctx.LBRACE() != null) {
       return ctx.typed().stream()
-        .<Expr>map(this::visitTyped)
+        .map(this::visitTyped)
         .map(Arg::implicit)
         .collect(Buffer.factory());
     }

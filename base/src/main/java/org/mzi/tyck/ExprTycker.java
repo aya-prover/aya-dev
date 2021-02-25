@@ -57,8 +57,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     );
   }
 
-  public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
-    return finalize(expr.accept(this, type));
+  public @Nullable Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
+    try {
+      return finalize(expr.accept(this, type));
+    } catch (TyckInterruptedException e) {
+      return null;
+    }
   }
 
   @Rule.Check(partialSynth = true)
@@ -97,7 +101,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   private <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
     metaContext.report(new BadTypeError(expr, Doc.plain(expectedText), term));
-    throw new TyckerException();
+    throw new TyckInterruptedException();
   }
 
   @Rule.Synth
@@ -143,7 +147,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
       metaContext.report(new UnifyError(errorReportLocation, upper, lower));
-      // TODO[ice]: stop tycking?
+      throw new TyckInterruptedException();
     }
   }
 
@@ -308,6 +312,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override
   public Result catchUnhandled(@NotNull Expr expr, Term term) {
     throw new UnsupportedOperationException(expr.toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
+  }
+
+  public static class TyckInterruptedException extends RuntimeException {
   }
 
   public static class TyckerException extends MziBreakingException {
