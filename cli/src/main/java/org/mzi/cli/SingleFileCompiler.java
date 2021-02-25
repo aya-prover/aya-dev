@@ -38,6 +38,9 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
         Please report the stacktrace to the developers so a better error handling could be made.
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
       return e.exitCode();
+    } catch (ExprTycker.TyckInterruptedException e) {
+      // TODO[ice]: proper error handling
+      System.err.println("Tycking interrupted due to errors.");
     }
     if (reporter.isEmpty()) {
       reporter.reportString(flags.successNotion());

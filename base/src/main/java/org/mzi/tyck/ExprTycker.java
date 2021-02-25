@@ -314,7 +314,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     throw new UnsupportedOperationException(expr.toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
   }
 
-  public static class TyckInterruptedException extends RuntimeException {
+  public static final class TyckInterruptedException extends RuntimeException {
   }
 
   public static class TyckerException extends MziBreakingException {
