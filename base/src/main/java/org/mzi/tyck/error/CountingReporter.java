@@ -25,7 +25,7 @@ public final class CountingReporter implements Reporter {
   }
 
   @Override public void report(@NotNull Problem problem) {
-    if (problem.sourcePos() != SourcePos.NONE) errors++;
+    if (problem.sourcePos() != SourcePos.NONE && problem.level() == Problem.Severity.ERROR) errors++;
     delegated.report(problem);
   }
 }
