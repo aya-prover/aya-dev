@@ -60,11 +60,18 @@ public class TestRunner {
       checkOutput(file, expectedOutFile, hookOut.toString());
     } else {
       if (expectSuccess) {
-        final var empty = reporter.isEmpty();
-        if (!empty) System.err.println(hookOut);
-        final var name = file.getFileName().toString();
-        assertTrue(empty, "The test case <" + name + "> should pass, but it fails.");
-        showStatus(name, "success");
+        if (reporter.isEmpty()) {
+          showStatus(file.getFileName().toString(), "success");
+        } else {
+          System.err.printf(Locale.getDefault(),
+            """
+            ----------------------------------------
+              %s
+            ----------------------------------------
+            """,
+            hookOut);
+          fail("The test case <" + file.getFileName() + "> should pass, but it fails.");
+        }
       } else {
         generateWorkflow(file, expectedOutFile, hookOut.toString());
       }
@@ -72,6 +79,7 @@ public class TestRunner {
   }
 
   private void generateWorkflow(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
+    hookOut = instantiateHoles(testFile, hookOut);
     var workflowFile = testFile.resolveSibling(testFile.getFileName() + ".txt.todo");
     try {
       Files.writeString(workflowFile, hookOut);
@@ -96,12 +104,20 @@ public class TestRunner {
   private void checkOutput(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
     try {
       var output = trimCRLF(hookOut);
-      var expected = trimCRLF(Files.readString(expectedOutFile));
+      var expected = instantiateVars(testFile, trimCRLF(Files.readString(expectedOutFile)));
       assertEquals(expected, output, testFile.getFileName().toString());
       showStatus(testFile.getFileName().toString(), "success");
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
     }
+  }
+
+  private String instantiateVars(@NotNull Path testFile, String template) {
+    return template.replace("$FILE", testFile.toString());
+  }
+
+  private String instantiateHoles(@NotNull Path testFile, String template) {
+    return template.replace(testFile.toString(), "$FILE");
   }
 
   private void showStatus(String testName, String status) {

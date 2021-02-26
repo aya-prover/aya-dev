@@ -1,4 +1,4 @@
-In file 00-syntax-error.mzi:1:0 ->
+In file $FILE:1:0 ->
 
   1 | hammer
       ^----^
