@@ -60,9 +60,18 @@ public class TestRunner {
       checkOutput(file, expectedOutFile, hookOut.toString());
     } else {
       if (expectSuccess) {
-        final var empty = reporter.isEmpty();
-        if (!empty) System.err.println(hookOut);
-        assertTrue(empty, "The test case <" + file.getFileName() + "> should pass, but it fails.");
+        if (reporter.isEmpty()) {
+          showStatus(file.getFileName().toString(), "success");
+        } else {
+          System.err.printf(Locale.getDefault(),
+            """
+            ----------------------------------------
+              %s
+            ----------------------------------------
+            """,
+            hookOut);
+          fail("The test case <" + file.getFileName() + "> should pass, but it fails.");
+        }
       } else {
         generateWorkflow(file, expectedOutFile, hookOut.toString());
       }
