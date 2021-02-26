@@ -79,6 +79,7 @@ public class TestRunner {
   }
 
   private void generateWorkflow(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
+    hookOut = instantiateHoles(testFile, hookOut);
     var workflowFile = testFile.resolveSibling(testFile.getFileName() + ".txt.todo");
     try {
       Files.writeString(workflowFile, hookOut);
@@ -113,6 +114,10 @@ public class TestRunner {
 
   private String instantiateVars(@NotNull Path testFile, String template) {
     return template.replace("$FILE", testFile.toString());
+  }
+
+  private String instantiateHoles(@NotNull Path testFile, String template) {
+    return template.replace(testFile.toString(), "$FILE");
   }
 
   private void showStatus(String testName, String status) {
