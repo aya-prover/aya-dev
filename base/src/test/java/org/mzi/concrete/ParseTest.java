@@ -139,7 +139,8 @@ public class ParseTest {
     assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
     assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.PiExpr dt && !dt.co());
     assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
-    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.PiExpr dt
+      && !dt.co() && dt.last() instanceof Expr.PiExpr);
     assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());

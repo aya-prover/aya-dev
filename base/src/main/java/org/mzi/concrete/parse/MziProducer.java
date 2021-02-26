@@ -339,7 +339,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
       sourcePos,
       co,
       params.first(),
-      buildLam(sourcePos, params.drop(1), body)
+      buildPi(sourcePos, co, params.drop(1), body)
     );
   }
 
