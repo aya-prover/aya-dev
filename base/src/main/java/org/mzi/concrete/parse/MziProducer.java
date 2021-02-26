@@ -222,12 +222,13 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   @Override
   public @NotNull Expr visitApp(MziParser.AppContext ctx) {
     var argument = ctx.argument();
-    if (argument.isEmpty()) return visitAtom(ctx.atom());
+    final var atom = ctx.atom();
+    if (argument.isEmpty()) return visitAtom(atom);
     return new Expr.AppExpr(
       sourcePosOf(ctx),
-      visitAtom(ctx.atom()),
+      visitAtom(atom),
       argument.stream()
-        .flatMap(a -> this.visitArgument(a).stream())
+        .map(this::visitArgument)
         .collect(ImmutableSeq.factory())
     );
   }
@@ -247,15 +248,6 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public @NotNull Buffer<Arg<Expr>> visitArgumentAtom(MziParser.AtomContext ctx) {
-    var literal = ctx.literal();
-    if (literal != null) return Buffer.of(Arg.explicit(visitLiteral(literal)));
-    return ctx.typed().stream()
-      .map(this::visitTyped)
-      .map(Arg::explicit)
-      .collect(Buffer.factory());
-  }
-
   @Override
   public @NotNull Expr visitTyped(MziParser.TypedContext ctx) {
     final var type = ctx.type();
@@ -268,15 +260,13 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Buffer<Arg<Expr>> visitArgument(MziParser.ArgumentContext ctx) {
+  public @NotNull Arg<Expr> visitArgument(MziParser.ArgumentContext ctx) {
     var atom = ctx.atom();
-    if (atom != null) return visitArgumentAtom(atom);
-    if (ctx.LBRACE() != null) {
-      return ctx.typed().stream()
+    if (atom != null) return Arg.explicit(visitAtom(atom));
+    if (ctx.LBRACE() != null) return Arg.implicit(new Expr.TupExpr(sourcePosOf(ctx),
+      ctx.typed().stream()
         .map(this::visitTyped)
-        .map(Arg::implicit)
-        .collect(Buffer.factory());
-    }
+        .collect(ImmutableVector.factory())));
     // TODO: . idFix
     throw new UnsupportedOperationException();
   }
