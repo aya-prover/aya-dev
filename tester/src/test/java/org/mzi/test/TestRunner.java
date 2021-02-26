@@ -103,12 +103,16 @@ public class TestRunner {
   private void checkOutput(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
     try {
       var output = trimCRLF(hookOut);
-      var expected = trimCRLF(Files.readString(expectedOutFile));
+      var expected = instantiateVars(testFile, trimCRLF(Files.readString(expectedOutFile)));
       assertEquals(expected, output, testFile.getFileName().toString());
       showStatus(testFile.getFileName().toString(), "success");
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
     }
+  }
+
+  private String instantiateVars(@NotNull Path testFile, String template) {
+    return template.replaceAll("\\$FILE", testFile.getFileName().toString());
   }
 
   private void showStatus(String testName, String status) {
