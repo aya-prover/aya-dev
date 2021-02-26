@@ -64,8 +64,7 @@ public class PrettyErrorTest {
         15 | }
         16 |\s
        \s
-      Error: No, you don't want to write tests
-      """, text);
+      Error: No, you don't want to write tests""", text);
   }
 
   @Test
@@ -95,8 +94,7 @@ public class PrettyErrorTest {
         3 | import org.mzi.pretty.PrettyError
        \s
       Error: package 'org.junit.jupiter.apt.Test' not found
-      note: Did you mean 'org.junit.jupiter.api.Test'
-      """, text);
+      note: Did you mean 'org.junit.jupiter.api.Test'""", text);
   }
 
   @Test
@@ -129,7 +127,6 @@ public class PrettyErrorTest {
              'org.junit.jupiter.apt.Test'
              not found
       note: Did you mean
-            'org.junit.jupiter.api.Test'
-      """, text);
+            'org.junit.jupiter.api.Test'""", text);
   }
 }
