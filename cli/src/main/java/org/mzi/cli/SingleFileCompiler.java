@@ -4,6 +4,7 @@ package org.mzi.cli;
 
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.error.Reporter;
+import org.mzi.api.util.MziInterruptException;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.parse.MziParsing;
@@ -38,9 +39,9 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
         Please report the stacktrace to the developers so a better error handling could be made.
         Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
       return e.exitCode();
-    } catch (ExprTycker.TyckInterruptedException e) {
+    } catch (MziInterruptException e) {
       // TODO[ice]: proper error handling
-      System.err.println("Tycking interrupted due to errors.");
+      System.err.println(e.stage() + " interrupted due to errors.");
     }
     if (reporter.isEmpty()) {
       reporter.reportString(flags.successNotion());

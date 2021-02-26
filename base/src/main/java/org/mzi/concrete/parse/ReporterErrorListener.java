@@ -27,6 +27,7 @@ public class ReporterErrorListener extends BaseErrorListener {
     } else {
       parserError(line, pos, msg, offendingToken);
     }
+    throw new ParsingInterruptedException();
   }
 
   private void parserError(int line, int pos, String msg, Token offendingToken) {

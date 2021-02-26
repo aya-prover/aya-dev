@@ -14,6 +14,7 @@ import org.mzi.api.error.Reporter;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.MziBreakingException;
+import org.mzi.api.util.MziInterruptException;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
@@ -307,7 +308,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     throw new UnsupportedOperationException(expr.toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
   }
 
-  public static final class TyckInterruptedException extends RuntimeException {
+  public static final class TyckInterruptedException extends MziInterruptException {
+    @Override
+    public String stage() {
+      return "Typechecking";
+    }
   }
 
   public static class TyckerException extends MziBreakingException {
