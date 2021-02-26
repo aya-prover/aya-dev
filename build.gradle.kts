@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 import java.util.*
 
 plugins {
@@ -20,15 +20,15 @@ allprojects {
   version = deps.getProperty("version.project")
 }
 
-val nonJavaProjects = listOf("docs")
 @Suppress("UnstableApiUsage")
 subprojects {
-  if (name in nonJavaProjects) return@subprojects
+  if (name in listOf("docs")) return@subprojects
+  val useJacoco = name in listOf("base", "tester")
 
   apply {
     plugin("java")
     plugin("idea")
-    plugin("jacoco")
+    if (useJacoco) plugin("jacoco")
     plugin("maven-publish")
     plugin("java-library")
   }
@@ -41,7 +41,7 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_15
   }
 
-  jacoco {
+  if (useJacoco) jacoco {
     toolVersion = deps.getProperty("version.jacoco")
   }
 
@@ -59,7 +59,7 @@ subprojects {
     options.compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
   }
 
-  tasks.jacocoTestReport {
+  if (useJacoco) tasks.jacocoTestReport {
     dependsOn(tasks.test)
     reports {
       xml.isEnabled = false
@@ -91,12 +91,34 @@ subprojects {
         // url.set("https://arend-lang.github.io")
         licenses {
           license {
-            name.set("Apache-2.0")
+            name.set("GPL-3.0")
             url.set("https://github.com/ice1000/mzi/blob/master/LICENSE")
           }
         }
       }
     }
+  }
+}
+
+tasks.register<JacocoReport>("mergeJacocoReports") {
+  group = "verification"
+  subprojects.forEach { subproject ->
+    subproject.plugins.withType<JacocoPlugin>().configureEach {
+      subproject.tasks.matching { it.extensions.findByType<JacocoTaskExtension>() != null }.configureEach {
+        sourceSets(subproject.sourceSets.main.get())
+        executionData(this)
+      }
+
+      subproject.tasks.matching { it.extensions.findByType<JacocoTaskExtension>() != null }.forEach {
+        dependsOn(it)
+      }
+    }
+  }
+
+  reports {
+    xml.isEnabled = false
+    csv.isEnabled = false
+    html.isEnabled = true
   }
 }
 
