@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.pretty.error;
 
 import org.glavo.kala.collection.mutable.Buffer;
@@ -18,12 +18,12 @@ public record PrettyError(
   @NotNull Doc noteMessage
 ) {
   public Doc toDoc(PrettyErrorConfig config) {
-    var sourceRange = getPrettyCode(config);
+    var lineCol = errorRange.findStartStopLineCol(config);
 
     return Doc.vcat(
-      Doc.plain("In file " + filePath + ":" + sourceRange.startLine + ":" + sourceRange.startCol + " ->"),
+      Doc.plain("In file " + filePath + ":" + lineCol.startLine() + ":" + lineCol.startCol() + " ->"),
       Doc.empty(),
-      Doc.hang(2, visualizeCode(sourceRange)),
+      Doc.hang(2, visualizeCode(config, lineCol)),
       Doc.hsep(tag, Doc.align(tagMessage)),
       Doc.emptyIf(noteMessage instanceof Doc.Empty,
         Doc.vcat(Doc.hsep(Doc.plain("note:"), Doc.align(noteMessage)), Doc.empty())
@@ -40,12 +40,11 @@ public record PrettyError(
     return line.replaceAll("\t", " ".repeat(tabWidth));
   }
 
-  private @NotNull Doc visualizeCode(PrettyCode prettyCode) {
-    var config = prettyCode.prettyConfig;
-    int startLine = prettyCode.startLine;
-    int startCol = prettyCode.startCol;
-    int endLine = prettyCode.endLine;
-    int endCol = prettyCode.endCol;
+  private @NotNull Doc visualizeCode(PrettyErrorConfig config, Span.StartStopLineCol lineCol) {
+    int startLine = lineCol.startLine();
+    int startCol = lineCol.startCol();
+    int endLine = lineCol.endLine();
+    int endCol = lineCol.endCol();
     int showMore = config.showMore();
 
     // calculate the maximum char width of line number
@@ -122,54 +121,7 @@ public record PrettyError(
     builder.append('\n');
   }
 
-  private @NotNull PrettyError.PrettyCode getPrettyCode(PrettyErrorConfig config) {
-    String input = errorRange.input();
-    int line = 1;
-    int col = 0;
-    int pos = 0;
-
-    int startLine = -1;
-    int startCol = -1;
-    int endLine = -1;
-    int endCol = -1;
-
-    int tabWidth = config.tabWidth();
-
-    for (char c : input.toCharArray()) {
-      int oldPos = pos++;
-      int oldCol = col;
-      switch (c) {
-        case '\n' -> {
-          line++;
-          col = 0;
-        }
-        // treat tab as tabWidth-length-ed spaces
-        case '\t' -> col += tabWidth;
-        default -> col++;
-      }
-
-      if (oldPos == errorRange.start()) {
-        startLine = line;
-        startCol = oldCol;
-      }
-      if (oldPos == errorRange.end()) {
-        endLine = line;
-        endCol = oldCol;
-      }
-    }
-
-    return new PrettyCode(config, startLine, startCol, endLine, endCol);
-  }
-
   private int widthOfLineNumber(int line) {
     return String.valueOf(line).length();
-  }
-
-  private record PrettyCode(
-    PrettyErrorConfig prettyConfig,
-    int startLine,
-    int startCol,
-    int endLine,
-    int endCol) {
   }
 }

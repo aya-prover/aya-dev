@@ -1,11 +1,14 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.api.error;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.Global;
+import org.mzi.pretty.error.LineColSpan;
+import org.mzi.pretty.error.RangeSpan;
+import org.mzi.pretty.error.Span;
 
 import java.util.Objects;
 
@@ -25,10 +28,21 @@ public record SourcePos(
   int endLine,
   int endColumn
 ) {
+  public static final int UNAVAILABLE_AND_FUCK_ANTLR4 = -114514;
+
   /**
    * Single instance SourcePos for mocking tests and other usages.
    */
   public static final SourcePos NONE = new SourcePos(-1, -1, -1, -1, -1, -1);
+
+  public Span toSpan(@NotNull String input) {
+    if (tokenStartIndex == UNAVAILABLE_AND_FUCK_ANTLR4
+      || tokenEndIndex == UNAVAILABLE_AND_FUCK_ANTLR4) {
+      return new LineColSpan(input, startLine, startColumn, endLine, endColumn);
+    } else {
+      return new RangeSpan(input, tokenStartIndex, tokenEndIndex);
+    }
+  }
 
   @Contract(pure = true) public int length() {
     return tokenEndIndex < tokenStartIndex

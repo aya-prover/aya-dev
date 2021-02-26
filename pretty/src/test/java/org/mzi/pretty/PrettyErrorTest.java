@@ -1,11 +1,11 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.pretty;
 
 import org.junit.jupiter.api.Test;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.pretty.error.PrettyError;
-import org.mzi.pretty.error.Span;
+import org.mzi.pretty.error.RangeSpan;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -42,7 +42,7 @@ public class PrettyErrorTest {
 
     var doc = new PrettyError(
       "<stdin>",
-      Span.from(code, 71, 357),
+      RangeSpan.from(code, 71, 357),
       Doc.plain("Error:"),
       Doc.plain("No, you don't want to write tests"),
       Doc.empty()
@@ -77,7 +77,7 @@ public class PrettyErrorTest {
       """;
     var doc = new PrettyError(
       "<stdin>",
-      Span.from(code, 48, 50),
+      RangeSpan.from(code, 48, 50),
       Doc.plain("Error:"),
       Doc.plain("package 'org.junit.jupiter.apt.Test' not found"),
       Doc.plain("Did you mean 'org.junit.jupiter.api.Test'")
@@ -108,7 +108,7 @@ public class PrettyErrorTest {
       """;
     var doc = new PrettyError(
       "<stdin>",
-      Span.from(code, 48, 50),
+      RangeSpan.from(code, 48, 50),
       Doc.plain("Error:"),
       Doc.plain("package\n'org.junit.jupiter.apt.Test'\nnot found"),
       Doc.plain("Did you mean\n'org.junit.jupiter.api.Test'")

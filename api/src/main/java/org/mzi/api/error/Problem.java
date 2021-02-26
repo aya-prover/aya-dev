@@ -5,7 +5,6 @@ package org.mzi.api.error;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.pretty.doc.Doc;
 import org.mzi.pretty.error.PrettyError;
-import org.mzi.pretty.error.Span;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,10 +45,9 @@ public interface Problem {
       sourceCode = "<error-reading-file>";
     }
 
-    var sourcePos = sourcePos();
     return new PrettyError(
       filePath.toString(),
-      Span.from(sourceCode, sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex()),
+      sourcePos().toSpan(sourceCode),
       switch (level()) {
         case WARN -> Doc.plain("Warning:");
         case GOAL -> Doc.plain("Goal:");
