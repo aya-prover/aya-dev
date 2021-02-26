@@ -91,11 +91,11 @@ matchArg : elim
 typed : expr type? ;
 
 atom : literal
-     | LPAREN (typed ',')? typed? ')'
+     | LPAREN (typed ',')* typed? ')'
      ;
 
 argument : atom
-         | LBRACE (typed ',')? typed? '}'
+         | LBRACE (typed ',')* typed? '}'
          | '.' idFix
          ;
 

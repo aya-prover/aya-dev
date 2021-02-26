@@ -154,6 +154,10 @@ public class ParseTest {
       ),
       1
     ));
+    assertTrue(MziProducer.parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
+      && app.arguments().sizeEquals(1)
+      && app.arguments().get(0).term() instanceof Expr.TupExpr tup
+      && tup.items().sizeEquals(3));
   }
 
   private void parseImport(@Language("TEXT") String code) {
