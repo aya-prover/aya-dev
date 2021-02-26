@@ -1,0 +1,4 @@
+\def curry (A : \Set) (B : \Set) (C : \Set)
+           (f : \Pi (x : \Sig A ** B) -> C)
+           (a : A) (b : B) : C
+  => f (a, b)
