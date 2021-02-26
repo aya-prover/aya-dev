@@ -257,29 +257,26 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
     var items = Buffer.<Term>of();
     final var resultLast = new Ref<Term>();
-    final Buffer<Term.@NotNull Param> resultTele;
+    final var resultTele = Buffer.<Term.@NotNull Param>of();
     if (term == null) {
-      var typesTele = Buffer.<Term.@NotNull Param>of();
       // TODO[ice]: forbid one-variable tuple maybe?
       expr.items()
         .map(item -> item.accept(this, null))
         .forEach(result -> {
           items.append(result.wellTyped);
-          if (resultLast.value == null) resultLast.value = result.type;
-          else typesTele.append(new Term.Param(new LocalVar("_"), result.type, true));
+          if (resultLast.value != null) resultTele.append(
+            new Term.Param(new LocalVar("_"), resultLast.value, true));
+          resultLast.value = result.type;
         });
-      items.reverse();
-      resultTele = typesTele;
     } else if (!(term instanceof SigmaTerm dt && !dt.co())) {
       return wantButNo(expr, term, "sigma type");
     } else {
       var againstTele = dt.params();
       var last = dt.body();
-      var buffer = Buffer.<Term.@NotNull Param>of();
-      for (var iterator = expr.items().iterator(); iterator.hasNext(); ) {
-        var item = iterator.next();
+      for (var iter = expr.items().iterator(); iter.hasNext(); ) {
+        var item = iter.next();
         if (againstTele.isEmpty()) {
-          if (iterator.hasNext()) {
+          if (iter.hasNext()) {
             // TODO[ice]: not enough sigma elements
             throw new TyckerException();
           } else {
@@ -291,7 +288,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           var result = item.accept(this, againstTele.first().type());
           items.append(result.wellTyped);
           var ref = againstTele.first().ref();
-          buffer.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
+          resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
           againstTele = againstTele.drop(1);
           if (!againstTele.isEmpty()) {
             final var subst = new Substituter.TermSubst(ref, result.wellTyped);
@@ -300,7 +297,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           }
         }
       }
-      resultTele = buffer;
     }
     var resultType = new SigmaTerm(false, resultTele.toImmutableSeq(), resultLast.value);
     return new Result(new TupTerm(items.toImmutableSeq()), resultType);

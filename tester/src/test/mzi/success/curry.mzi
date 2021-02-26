@@ -2,3 +2,8 @@
            (f : \Pi (x : \Sig A ** B) -> C)
            (a : A) (b : B) : C
   => f (a, b)
+
+\def curry3 (A : \Set) (B : \Set) (C : \Set) (D : \Set)
+            (f : \Pi (x : \Sig A B ** C) -> D)
+            (a : A) (b : B) (c : C) : D
+  => f (a, b, c)
