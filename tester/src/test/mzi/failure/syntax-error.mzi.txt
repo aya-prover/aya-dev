@@ -4,4 +4,5 @@ In file $FILE:1:0 ->
       ^----^
   
 Error: Parser error: extraneous input 'hammer' expecting {<EOF>, '\def', '\structure', '\data', '\module', '\open', '\import', '\public', '\private'}
+Parsing interrupted due to errors.
 What are you doing?

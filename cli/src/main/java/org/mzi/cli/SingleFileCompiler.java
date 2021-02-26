@@ -23,10 +23,10 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
   public int compile(@NotNull CompilerFlags flags) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var parser = MziParsing.parser(filePath, reporter);
-    var program = MziProducer.INSTANCE.visitProgram(parser.program());
-    var context = new EmptyContext(reporter).derive();
-    var shallowResolver = new StmtShallowResolver(new EmptyModuleLoader());
     try {
+      var program = MziProducer.INSTANCE.visitProgram(parser.program());
+      var context = new EmptyContext(reporter).derive();
+      var shallowResolver = new StmtShallowResolver(new EmptyModuleLoader());
       program.forEach(s -> s.accept(shallowResolver, context));
       program.forEach(Stmt::resolve);
       program.forEach(s -> {
@@ -41,7 +41,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       return e.exitCode();
     } catch (MziInterruptException e) {
       // TODO[ice]: proper error handling
-      System.err.println(e.stage() + " interrupted due to errors.");
+      reporter.reportString(e.stage() + " interrupted due to errors.");
     }
     if (reporter.isEmpty()) {
       reporter.reportString(flags.successNotion());
