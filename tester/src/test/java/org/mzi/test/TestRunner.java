@@ -62,7 +62,9 @@ public class TestRunner {
       if (expectSuccess) {
         final var empty = reporter.isEmpty();
         if (!empty) System.err.println(hookOut);
-        assertTrue(empty, "The test case <" + file.getFileName() + "> should pass, but it fails.");
+        final var name = file.getFileName().toString();
+        assertTrue(empty, "The test case <" + name + "> should pass, but it fails.");
+        showStatus(name, "success");
       } else {
         generateWorkflow(file, expectedOutFile, hookOut.toString());
       }
