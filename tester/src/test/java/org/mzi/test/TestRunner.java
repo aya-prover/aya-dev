@@ -112,7 +112,7 @@ public class TestRunner {
   }
 
   private String instantiateVars(@NotNull Path testFile, String template) {
-    return template.replaceAll("\\$FILE", testFile.getFileName().toString());
+    return template.replace("$FILE", testFile.toString());
   }
 
   private void showStatus(String testName, String status) {
