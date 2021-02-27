@@ -272,7 +272,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     } else if (!(term instanceof SigmaTerm dt && !dt.co())) {
       return wantButNo(expr, term, "sigma type");
     } else {
-      var againstTele = dt.params();
+      var againstTele = dt.params().view();
       var last = dt.body();
       for (var iter = expr.items().iterator(); iter.hasNext(); ) {
         var item = iter.next();

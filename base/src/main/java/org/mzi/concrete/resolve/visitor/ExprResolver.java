@@ -1,8 +1,9 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
 import org.glavo.kala.Tuple2;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
@@ -33,13 +34,14 @@ public final class ExprResolver implements ExprFixpoint<Context> {
     );
   }
 
-  public @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context> resolveParams(@NotNull ImmutableSeq<Expr.Param> params, Context ctx) {
+  public @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context>
+  resolveParams(@NotNull Seq<Expr.Param> params, Context ctx) {
     if (params.isEmpty()) return Tuple2.of(ImmutableSeq.of(), ctx);
     var first = params.first();
     var type = first.type();
     type = type == null ? null : type.accept(this, ctx);
     var newCtx = ctx.bind(first.ref().name(), first.ref(), first.sourcePos());
-    var result = resolveParams(params.drop(1), newCtx);
+    var result = resolveParams(params.view().drop(1), newCtx);
     return Tuple2.of(
       result._1.prepended(new Expr.Param(first.sourcePos(), first.ref(), type, first.explicit())),
       result._2

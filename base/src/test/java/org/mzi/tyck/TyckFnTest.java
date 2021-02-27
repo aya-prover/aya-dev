@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -33,7 +33,7 @@ public class TyckFnTest {
     idLamTestCase(MziProducer.buildLam(SourcePos.NONE,
       ImmutableSeq.of(
         new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
-        new Expr.Param(SourcePos.NONE, a, true)),
+        new Expr.Param(SourcePos.NONE, a, true)).view(),
       new Expr.RefExpr(SourcePos.NONE, a)));
   }
 
@@ -78,7 +78,8 @@ public class TyckFnTest {
           Stream.of(f, p)
         )
         .map(v -> new Expr.Param(SourcePos.NONE, v, true))
-        .collect(ImmutableSeq.factory()),
+        .collect(ImmutableSeq.factory())
+        .view(),
       new Expr.AppExpr(SourcePos.NONE,
         new Expr.RefExpr(SourcePos.NONE, f),
         ImmutableSeq.of(

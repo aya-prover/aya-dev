@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.glavo.kala.Tuple;
 import org.glavo.kala.Tuple2;
+import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -275,14 +276,14 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   public Expr.@NotNull LamExpr visitLam(MziParser.LamContext ctx) {
     return (Expr.LamExpr) buildLam(
       sourcePosOf(ctx),
-      visitTelescope(ctx.tele().stream()),
+      visitTelescope(ctx.tele().stream()).view(),
       visitLamBody(ctx)
     );
   }
 
   public static @NotNull Expr buildLam(
     SourcePos sourcePos,
-    ImmutableSeq<Expr.Param> params,
+    SeqView<Expr.Param> params,
     Expr body
   ) {
     if (params.isEmpty()) return body;
@@ -323,7 +324,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return (Expr.PiExpr) buildPi(
       sourcePosOf(ctx),
       false,
-      visitTelescope(ctx.tele().stream()),
+      visitTelescope(ctx.tele().stream()).view(),
       visitExpr(ctx.expr())
     );
   }
@@ -331,7 +332,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   public static @NotNull Expr buildPi(
     SourcePos sourcePos,
     boolean co,
-    ImmutableSeq<Expr.Param> params,
+    SeqView<Expr.Param> params,
     Expr body
   ) {
     if (params.isEmpty()) return body;
