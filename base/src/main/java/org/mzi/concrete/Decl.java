@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
 import org.glavo.kala.Tuple2;
@@ -124,13 +124,26 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     record Ctors(
       @NotNull Buffer<DataCtor> ctors
     ) implements DataBody {
+      @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+        return visitor.visitCtor(this, p);
+      }
     }
 
     record Clauses(
       @NotNull Buffer<String> elim,
       @NotNull Buffer<Tuple2<Pat<Expr>, DataCtor>> clauses
     ) implements DataBody {
+      @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+        return visitor.visitClause(this, p);
+      }
     }
+
+    interface Visitor<P, R> {
+      R visitCtor(@NotNull Ctors ctors, P p);
+      R visitClause(@NotNull Clauses clauses, P p);
+    }
+
+    <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   }
 
   /**
