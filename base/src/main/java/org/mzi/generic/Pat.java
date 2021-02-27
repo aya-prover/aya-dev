@@ -68,13 +68,13 @@ public sealed interface Pat<Term> {
 
     record Tuple<Pat>(@NotNull Buffer<Pat> patterns) implements Atom<Pat> {
       @Override public @NotNull <Pat2> Tuple<Pat2> mapTerm(@NotNull Function<Pat, Pat2> mapper) {
-        return new Tuple<>(patterns.stream().map(mapper).collect(Buffer.factory()));
+        return new Tuple<Pat2>(patterns.stream().map(mapper).collect(Buffer.factory()));
       }
     }
 
     record Braced<Pat>(@NotNull Buffer<Pat> patterns) implements Atom<Pat> {
       @Override public @NotNull <Pat2> Braced<Pat2> mapTerm(@NotNull Function<Pat, Pat2> mapper) {
-        return new Braced<>(patterns.stream().map(mapper).collect(Buffer.factory()));
+        return new Braced<Pat2>(patterns.stream().map(mapper).collect(Buffer.factory()));
       }
     }
 
