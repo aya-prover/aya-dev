@@ -26,8 +26,8 @@ public class Main {
 
     var inputFile = cli.inputFile;
     var flags = cli.asciiOnly
-      ? CompilerFlags.asciiOnlyFlags()
-      : CompilerFlags.defaultFlags();
+      ? CompilerFlags.ASCII_FLAGS
+      : CompilerFlags.DEFAULT_FLAGS;
     var filePath = Paths.get(inputFile);
     var compiler = new SingleFileCompiler(new CliReporter(filePath), filePath);
     System.exit(compiler.compile(flags));

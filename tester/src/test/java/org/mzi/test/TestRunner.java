@@ -51,7 +51,7 @@ public class TestRunner {
 
     try {
       new SingleFileCompiler(reporter, file)
-        .compile(CompilerFlags.asciiOnlyFlags());
+        .compile(CompilerFlags.ASCII_FLAGS);
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }
