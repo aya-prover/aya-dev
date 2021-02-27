@@ -309,9 +309,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public static final class TyckInterruptedException extends MziInterruptException {
-    @Override
-    public String stage() {
-      return "Typechecking";
+    @Override public InterruptStage stage() {
+      return InterruptStage.Tycking;
     }
   }
 

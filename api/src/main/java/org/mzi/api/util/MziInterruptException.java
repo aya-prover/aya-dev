@@ -2,9 +2,17 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.api.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @author imkiva
  */
 public abstract class MziInterruptException extends RuntimeException {
-  public abstract String stage();
+  @ApiStatus.Internal public abstract InterruptStage stage();
+
+  public enum InterruptStage {
+    Parsing,
+    Resolving,
+    Tycking
+  }
 }

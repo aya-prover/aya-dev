@@ -8,8 +8,7 @@ import org.mzi.api.util.MziInterruptException;
  * @author kiva
  */
 public class ParsingInterruptedException extends MziInterruptException {
-  @Override
-  public String stage() {
-    return "Parsing";
+  @Override public InterruptStage stage() {
+    return InterruptStage.Parsing;
   }
 }

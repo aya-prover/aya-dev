@@ -41,7 +41,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       return e.exitCode();
     } catch (MziInterruptException e) {
       // TODO[ice]: proper error handling
-      reporter.reportString(e.stage() + " interrupted due to errors.");
+      reporter.reportString(e.stage().name() + " interrupted due to errors.");
     }
     if (reporter.isEmpty()) {
       reporter.reportString(flags.successNotion());
