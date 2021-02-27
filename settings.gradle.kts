@@ -7,7 +7,7 @@ dependencyResolutionManagement {
   repositories {
     jcenter()
     mavenCentral()
-    maven(url = "https://dl.bintray.com/glavo/maven")
+    maven(url = "https://jitpack.io")
   }
 }
 

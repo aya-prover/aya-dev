@@ -2,7 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
-import org.glavo.kala.Tuple2;
+import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public final class ExprResolver implements ExprFixpoint<Context> {
   }
 
   public @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context>
-  resolveParams(@NotNull Seq<Expr.Param> params, Context ctx) {
+  resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
     if (params.isEmpty()) return Tuple2.of(ImmutableSeq.of(), ctx);
     var first = params.first();
     var type = first.type();

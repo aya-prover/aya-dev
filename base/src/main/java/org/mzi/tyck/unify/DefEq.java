@@ -3,6 +3,7 @@
 package org.mzi.tyck.unify;
 
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.LinkedBuffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
@@ -136,16 +137,16 @@ public abstract class DefEq implements Term.BiVisitor<@NotNull Term, @Nullable T
     return visitLists(lhs.items(), rhs.items());
   }
 
-  private boolean visitArgs(Seq<? extends Arg<? extends Term>> l, Seq<? extends Arg<? extends Term>> r) {
+  private boolean visitArgs(SeqLike<? extends Arg<? extends Term>> l, SeqLike<? extends Arg<? extends Term>> r) {
     return visitLists(l.view().map(Arg::term), r.view().map(Arg::term));
   }
 
-  private boolean visitLists(Seq<? extends Term> l, Seq<? extends Term> r) {
+  private boolean visitLists(SeqLike<? extends Term> l, SeqLike<? extends Term> r) {
     if (!l.sizeEquals(r)) return false;
     return IntStream.range(0, l.size()).allMatch(i -> compare(l.get(i), r.get(i), null));
   }
 
-  private boolean visitLists(Seq<? extends Term> l, Seq<? extends Term> r, @NotNull Seq<? extends Term> types) {
+  private boolean visitLists(SeqLike<? extends Term> l, SeqLike<? extends Term> r, @NotNull SeqLike<? extends Term> types) {
     if (!l.sizeEquals(r)) return false;
     if (!r.sizeEquals(types)) return false;
     for (int i = 0; i < l.size(); i++) {

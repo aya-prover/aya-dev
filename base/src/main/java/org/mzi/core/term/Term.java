@@ -2,8 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
-import org.glavo.kala.Tuple3;
-import org.glavo.kala.Unit;
+import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.tuple.Tuple3;
+import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -115,7 +116,7 @@ public interface Term extends CoreTerm {
     }
 
     @TestOnly @Contract(pure = true)
-    public static boolean checkSubst(@NotNull Seq<@NotNull Param> params, @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
+    public static boolean checkSubst(@NotNull Seq<@NotNull Param> params, @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
       var obj = new Object() {
         boolean ok = true;
       };

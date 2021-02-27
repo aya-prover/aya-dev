@@ -2,8 +2,8 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
-import org.glavo.kala.Tuple2;
-import org.glavo.kala.Unit;
+import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.jetbrains.annotations.NotNull;

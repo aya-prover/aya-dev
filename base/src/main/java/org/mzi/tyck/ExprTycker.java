@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
-import org.glavo.kala.Tuple;
-import org.glavo.kala.Tuple3;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.ref.Ref;
+import org.glavo.kala.value.SimpleMutableValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
@@ -74,7 +74,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (!(term.normalize(NormalizeMode.WHNF) instanceof PiTerm dt && !dt.co())) {
       return wantButNo(expr, term, "pi type");
     }
-    var tyRef = new Ref<>(term);
+    var tyRef = new SimpleMutableValue<>(term);
     var var = expr.param().ref();
     var param = expr.param();
     if (tyRef.value instanceof PiTerm pi && !pi.co()) {
@@ -257,7 +257,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Check(partialSynth = true)
   @Override public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
     var items = Buffer.<Term>of();
-    final var resultLast = new Ref<Term>();
+    final var resultLast = new SimpleMutableValue<Term>();
     final var resultTele = Buffer.<Term.@NotNull Param>of();
     if (term == null) {
       // TODO[ice]: forbid one-variable tuple maybe?

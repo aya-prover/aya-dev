@@ -2,7 +2,7 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
-import org.glavo.kala.Unit;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.core.term.*;
 import org.mzi.generic.Arg;

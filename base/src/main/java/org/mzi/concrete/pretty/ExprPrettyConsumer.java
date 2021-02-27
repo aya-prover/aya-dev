@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete.pretty;
 
-import org.glavo.kala.Unit;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.pretty.doc.Doc;

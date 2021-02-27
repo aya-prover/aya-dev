@@ -3,6 +3,7 @@
 package org.mzi.core.term;
 
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ import org.mzi.util.Decision;
  */
 public sealed interface AppTerm extends Term {
   @NotNull Term fn();
-  @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args();
+  @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args();
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<? extends Term> arg) {
     if (f instanceof HoleApp holeApp) {
@@ -33,7 +34,7 @@ public sealed interface AppTerm extends Term {
     return lam.body().subst(new Substituter.TermSubst(param.ref(), arg.term()));
   }
 
-   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Seq<? extends Arg<? extends Term>> args) {
+   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull SeqLike<? extends Arg<? extends Term>> args) {
     if (args.isEmpty()) return f;
     if (f instanceof HoleApp holeApp) {
       holeApp.argsBuf().appendAll(args.view().map(Arg::uncapture));
@@ -45,7 +46,7 @@ public sealed interface AppTerm extends Term {
 
   record FnCall(
     @NotNull DefVar<FnDef, Decl.FnDecl> fnRef,
-    @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args
+    @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFnCall(this, p);
@@ -68,7 +69,7 @@ public sealed interface AppTerm extends Term {
 
   record DataCall(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-    @NotNull Seq<@NotNull ? extends @NotNull Arg<? extends Term>> args
+    @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitDataCall(this, p);
