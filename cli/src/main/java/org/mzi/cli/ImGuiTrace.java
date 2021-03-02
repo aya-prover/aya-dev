@@ -19,12 +19,12 @@ import java.awt.*;
 public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
   private JImGui imGui;
   private final String sourceCode;
-  private @NotNull SourcePos spanData;
+  private @NotNull SourcePos pos;
   private int inc = 0;
 
   public ImGuiTrace(@NotNull String sourceCode) {
     this.sourceCode = sourceCode;
-    spanData = SourcePos.NONE;
+    pos = SourcePos.NONE;
   }
 
   private @NotNull JImVec4 color(Color color) {
@@ -51,7 +51,7 @@ public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
         var c = sourceCode.charAt(i);
         buffer.append(c);
         var isEOL = c == '\n';
-        var contains = spanData.contains(line, column);
+        var contains = pos.contains(line, column);
         if (contains != previousContains) {
           if (!contains) imGui.textColored(highlight, buffer.toString());
           else imGui.text(buffer.toString());
@@ -79,11 +79,7 @@ public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, Unit unit) {
     var s = t.expr().toDoc().renderWithPageWidth(114514) + "##" + inc++;
     var color = t.term() == null ? Color.CYAN : Color.YELLOW;
-    visitSub(s, color, t.subtraces(), () ->
-    {
-      spanData = t.expr().sourcePos();
-      System.out.println(spanData);
-    });
+    visitSub(s, color, t.subtraces(), () -> pos = t.expr().sourcePos());
     return unit;
   }
 
@@ -100,7 +96,7 @@ public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
   }
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
-    visitSub("conversion check", Color.WHITE, t.subtraces(), () -> {});
+    visitSub("conversion check", Color.WHITE, t.subtraces(), () -> pos = t.pos());
     return unit;
   }
 }

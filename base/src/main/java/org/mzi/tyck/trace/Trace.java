@@ -6,6 +6,7 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.Term;
 
@@ -58,9 +59,9 @@ public sealed interface Trace {
     }
   }
 
-  record UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
-    public UnifyT(@NotNull Term lhs, @NotNull Term rhs) {
-      this(lhs, rhs, Buffer.of());
+  record UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
+    public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos) {
+      this(lhs, rhs, pos, Buffer.of());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

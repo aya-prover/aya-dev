@@ -38,7 +38,6 @@ import java.util.function.Consumer;
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
   public final @NotNull MutableMap<Var, Term> localCtx;
-
   public Trace.@Nullable Builder traceBuilder = null;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -157,7 +156,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
-    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper)));
+    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, errorReportLocation.sourcePos())));
     tracing(Trace.Builder::reduce);
     var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
