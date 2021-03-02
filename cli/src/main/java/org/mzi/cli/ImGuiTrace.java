@@ -42,37 +42,47 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     while (!imGui.windowShouldClose()) {
       imGui.initNewFrame();
       inc = 0;
-      var line = 1;
-      var column = 1;
-      var buffer = new StringBuilder();
-      var previousContains = false;
-      for (var i = 0; i < sourceCode.length(); i++) {
-        var c = sourceCode.charAt(i);
-        buffer.append(c);
-        var isEOL = c == '\n';
-        var contains = pos.contains(line, column);
-        if (contains != previousContains) {
-          if (!contains) imGui.textColored(highlight, buffer.toString());
-          else imGui.text(buffer.toString());
-          buffer.delete(0, buffer.length());
-        }
-        previousContains = contains;
-        if (isEOL) {
-          line++;
-          column = 1;
-          imGui.text(buffer.toString());
-          buffer.delete(0, buffer.length());
-          imGui.newLine();
-        } else {
-          column++;
-          imGui.sameLine();
-        }
+      if (imGui.begin("Source code")) {
+        sourceCode(imGui, highlight);
+        imGui.end();
       }
-      root.forEach(e -> e.accept(this, imGui));
+      if (imGui.begin("Trace")) {
+        root.forEach(e -> e.accept(this, imGui));
+        imGui.end();
+      }
       imGui.render();
     }
     highlight.deallocateNativeObject();
     imGui.deallocateNativeObject();
+  }
+
+  private void sourceCode(JImGui imGui, JImVec4 highlight) {
+    var line = 1;
+    var column = 1;
+    var buffer = new StringBuilder();
+    var previousContains = false;
+    for (var i = 0; i < sourceCode.length(); i++) {
+      var c = sourceCode.charAt(i);
+      buffer.append(c);
+      var isEOL = c == '\n';
+      var contains = pos.contains(line, column);
+      if (contains != previousContains) {
+        if (!contains) imGui.textColored(highlight, buffer.toString());
+        else imGui.text(buffer.toString());
+        buffer.delete(0, buffer.length());
+      }
+      previousContains = contains;
+      if (isEOL) {
+        line++;
+        column = 1;
+        imGui.text(buffer.toString());
+        buffer.delete(0, buffer.length());
+        imGui.newLine();
+      } else {
+        column++;
+        imGui.sameLine();
+      }
+    }
   }
 
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
