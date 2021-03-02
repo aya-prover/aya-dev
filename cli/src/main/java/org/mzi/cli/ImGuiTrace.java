@@ -6,7 +6,6 @@ import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
 import org.ice1000.jimgui.*;
-import org.ice1000.jimgui.flag.JImHoveredFlags;
 import org.ice1000.jimgui.util.JImGuiUtil;
 import org.ice1000.jimgui.util.JniLoader;
 import org.jetbrains.annotations.NotNull;
@@ -101,8 +100,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     @NotNull Runnable callback) {
     final var vec4 = color(color);
     imGui.pushStyleColor(JImStyleColors.Text, vec4);
-    if (imGui.treeNode(s)) {
-      if (imGui.isItemHovered(JImHoveredFlags.AllowWhenBlockedByActiveItem)) callback.run();
+    var node = imGui.treeNode(s);
+    if (imGui.isItemHovered()) callback.run();
+    if (node) {
       subtraces.forEach(e -> e.accept(this, imGui));
       imGui.treePop();
     }
