@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.Global;
+import org.mzi.api.error.Problem;
 import org.mzi.cli.CompilerFlags;
 import org.mzi.cli.SingleFileCompiler;
 import org.mzi.cli.StreamReporter;
@@ -47,7 +48,8 @@ public class TestRunner {
     var expectedOutFile = file.resolveSibling(file.getFileName() + ".txt");
 
     var hookOut = new ByteArrayOutputStream();
-    final var reporter = new CountingReporter(new StreamReporter(file, new PrintStream(hookOut)));
+    final var reporter = new CountingReporter(new StreamReporter(
+      file, Problem.readSourceCode(file), new PrintStream(hookOut)));
 
     try {
       new SingleFileCompiler(reporter, file, null)
