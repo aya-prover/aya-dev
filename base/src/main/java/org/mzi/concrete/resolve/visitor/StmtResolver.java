@@ -40,7 +40,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   @Override
   public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
-    decl.telescope = local._1.collect(ImmutableSeq.factory());
+    decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
     return decl.body.accept(new Decl.DataBody.Visitor<>() {
       @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
