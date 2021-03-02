@@ -76,8 +76,11 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   }
 
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
-    var s = t.expr().toDoc().renderWithPageWidth(114514) + "##" + inc++;
-    var color = t.term() == null ? Color.CYAN : Color.YELLOW;
+    var term = t.term();
+    var s = t.expr().toDoc().renderWithPageWidth(114514)
+      + (term == null ? "" : " : " + term.toDoc().renderWithPageWidth(114514))
+      + "##" + inc++;
+    var color = term == null ? Color.CYAN : Color.YELLOW;
     visitSub(s, color, imGui, t.subtraces(), () -> pos = t.expr().sourcePos());
     return Unit.unit();
   }
