@@ -16,8 +16,7 @@ import org.mzi.tyck.trace.Trace;
 import java.awt.*;
 
 @SuppressWarnings("AccessStaticViaInstance")
-public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
-  private JImGui imGui;
+public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   private final String sourceCode;
   private @NotNull SourcePos pos;
   private int inc = 0;
@@ -36,7 +35,7 @@ public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
 
   public void mainLoop(@NotNull Seq<@NotNull Trace> root) {
     JniLoader.load();
-    imGui = new JImGui();
+    var imGui = new JImGui();
     imGui.pushStyleVar(JImStyleVars.ItemSpacing, 0f, 2f);
     JImGuiUtil.cacheStringToBytes();
     var highlight = color(Color.GREEN);
@@ -69,34 +68,37 @@ public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
           imGui.sameLine();
         }
       }
-      root.forEach(e -> e.accept(this, Unit.unit()));
+      root.forEach(e -> e.accept(this, imGui));
       imGui.render();
     }
     highlight.deallocateNativeObject();
     imGui.deallocateNativeObject();
   }
 
-  @Override public Unit visitExpr(Trace.@NotNull ExprT t, Unit unit) {
+  @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
     var s = t.expr().toDoc().renderWithPageWidth(114514) + "##" + inc++;
     var color = t.term() == null ? Color.CYAN : Color.YELLOW;
-    visitSub(s, color, t.subtraces(), () -> pos = t.expr().sourcePos());
-    return unit;
+    visitSub(s, color, imGui, t.subtraces(), () -> pos = t.expr().sourcePos());
+    return Unit.unit();
   }
 
-  private void visitSub(String s, Color color, Buffer<@NotNull Trace> subtraces, @NotNull Runnable callback) {
+  private void visitSub(
+    String s, Color color, JImGui imGui,
+    Buffer<@NotNull Trace> subtraces,
+    @NotNull Runnable callback) {
     final var vec4 = color(color);
     imGui.pushStyleColor(JImStyleColors.Text, vec4);
     if (imGui.treeNode(s)) {
       if (imGui.isItemHovered(JImHoveredFlags.AllowWhenBlockedByActiveItem)) callback.run();
-      subtraces.forEach(e -> e.accept(this, Unit.unit()));
+      subtraces.forEach(e -> e.accept(this, imGui));
       imGui.treePop();
     }
     imGui.popStyleColor();
     vec4.deallocateNativeObject();
   }
 
-  @Override public Unit visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
-    visitSub("conversion check", Color.WHITE, t.subtraces(), () -> pos = t.pos());
-    return unit;
+  @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
+    visitSub("conversion check", Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos());
+    return Unit.unit();
   }
 }

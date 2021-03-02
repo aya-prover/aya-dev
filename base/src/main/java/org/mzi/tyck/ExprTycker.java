@@ -48,7 +48,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
   }
 
-  @Override public void traceExit(@NotNull Expr expr, Term term) {
+  @Override public void traceExit(Result result) {
     tracing(Trace.Builder::reduce);
   }
 
