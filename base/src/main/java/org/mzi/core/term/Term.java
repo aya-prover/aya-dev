@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.tuple.Tuple3;
-import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple3;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -15,11 +15,13 @@ import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
+import org.mzi.concrete.pretty.TermPrettyConsumer;
 import org.mzi.core.visitor.Normalizer;
 import org.mzi.core.visitor.Stripper;
 import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.generic.ParamLike;
+import org.mzi.pretty.doc.Doc;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.sort.LevelSubst;
@@ -53,6 +55,10 @@ public interface Term extends CoreTerm {
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
     return accept(Normalizer.INSTANCE, mode);
+  }
+
+  default @NotNull Doc toDoc() {
+    return accept(TermPrettyConsumer.INSTANCE, Unit.unit());
   }
 
   interface Visitor<P, R> {

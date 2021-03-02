@@ -31,9 +31,9 @@ public class TracingTest {
     show.lineSep = "\n";
     checker.traceBuilder.root().forEach(e -> e.accept(show, Unit.unit()));
     assertEquals("""
-      + \u22A2 `\\lam (_) => \\lam (a) => a` : expected type
-        + \u22A2 `\\lam (a) => a` : expected type
-          + \u22A2 `a` : expected type
+      + \u22A2 `\\lam (_) => \\lam (a) => a` : \\Pi (A : \\oo-Type) -> \\Pi (a : A) -> A
+        + \u22A2 `\\lam (a) => a` : \\Pi (a : A) -> A
+          + \u22A2 `a` : A
             + \u22A2 conversion check""", show.builder.toString().trim());
   }
 }

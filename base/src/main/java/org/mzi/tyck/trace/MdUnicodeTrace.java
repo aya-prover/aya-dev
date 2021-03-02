@@ -26,7 +26,9 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
     builder.append("+ \u22A2 `")
       .append(t.expr().toDoc().renderWithPageWidth(114514))
       .append("` : ")
-      .append("expected type");
+      .append(t.term() == null
+        ? "expected type"
+        : t.term().toDoc().renderWithPageWidth(114514));
     visitSub(t.subtraces());
     return unit;
   }
