@@ -15,10 +15,11 @@ public record UnifyError(
 ) implements Problem.Error, TyckProblem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
-      Doc.plain("The expected type "),
+      Doc.plain("The expected type `"),
       expected.toDoc(),
-      Doc.plain(" does not match the actual type "),
-      actual.toDoc()
+      Doc.plain("` does not match the actual type `"),
+      actual.toDoc(),
+      Doc.plain("`")
     );
   }
 }

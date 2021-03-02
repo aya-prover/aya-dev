@@ -15,9 +15,9 @@ public record BadTypeError(
 ) implements Problem.Error, TyckProblem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
-      Doc.plain("The expected type "),
+      Doc.plain("The expected type `"),
       actualType.toDoc(),
-      Doc.plain(" is not a "),
+      Doc.plain("` is not a "),
       expectedType,
       Doc.plain(", therefore cannot type a lambda such as `"),
       expr.toDoc(),
