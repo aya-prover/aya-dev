@@ -290,7 +290,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return new Expr.LamExpr(
       sourcePos,
       params.first(),
-      buildLam(sourcePos, params.drop(1), body)
+      buildLam(sourcePosForSubExpr(params, body), params.drop(1), body)
     );
   }
 
@@ -338,10 +338,29 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     if (params.isEmpty()) return body;
     var first = params.first();
     return new Expr.PiExpr(
-      first.sourcePos(),
+      sourcePos,
       co,
       first,
-      buildPi(sourcePos, co, params.drop(1), body)
+      buildPi(sourcePosForSubExpr(params, body), co, params.drop(1), body)
+    );
+  }
+
+  @NotNull private static SourcePos sourcePosForSubExpr(SeqView<Expr.Param> params, Expr body) {
+    var restParamSourcePos = params.stream().skip(1)
+      .map(Expr.Param::sourcePos)
+      .reduce(SourcePos.NONE, (acc, it) -> {
+        if (acc == SourcePos.NONE) return it;
+        return new SourcePos(acc.tokenStartIndex(), it.tokenEndIndex(),
+          acc.startLine(), acc.startColumn(), it.endLine(), it.endColumn());
+      });
+    var bodySourcePos = body.sourcePos();
+    return new SourcePos(
+      restParamSourcePos.tokenStartIndex(),
+      bodySourcePos.tokenEndIndex(),
+      restParamSourcePos.startLine(),
+      restParamSourcePos.startColumn(),
+      bodySourcePos.endLine(),
+      bodySourcePos.endColumn()
     );
   }
 
