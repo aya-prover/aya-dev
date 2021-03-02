@@ -50,7 +50,7 @@ public class TestRunner {
     final var reporter = new CountingReporter(new StreamReporter(file, new PrintStream(hookOut)));
 
     try {
-      new SingleFileCompiler(reporter, file)
+      new SingleFileCompiler(reporter, file, null)
         .compile(CompilerFlags.ASCII_FLAGS);
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());

@@ -4,6 +4,8 @@ package org.mzi.tyck.trace;
 
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.Term;
 
@@ -25,7 +27,12 @@ public sealed interface Trace {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   class Builder {
+    @VisibleForTesting
     public Deque<@NotNull Buffer<@NotNull Trace>> tops = new ArrayDeque<>();
+
+    public @NotNull Buffer<@NotNull Trace> root() {
+      return tops.getFirst();
+    }
 
     {
       tops.addLast(Buffer.of());
@@ -41,8 +48,8 @@ public sealed interface Trace {
     }
   }
 
-  record ExprT(@NotNull Expr expr, @NotNull Term term, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
-    public ExprT(@NotNull Expr expr, @NotNull Term term) {
+  record ExprT(@NotNull Expr expr, @Nullable Term term, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
+    public ExprT(@NotNull Expr expr, @Nullable Term term) {
       this(expr, term, Buffer.of());
     }
 

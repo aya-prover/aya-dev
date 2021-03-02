@@ -29,7 +29,7 @@ public class TracingTest {
     TyckFnTest.idLamTestCase(TyckFnTest.lamConnected(), checker);
     var show = new MdUnicodeTrace();
     show.lineSep = "\n";
-    checker.traceBuilder.tops.getFirst().forEach(e -> e.accept(show, Unit.unit()));
+    checker.traceBuilder.root().forEach(e -> e.accept(show, Unit.unit()));
     assertEquals("""
       + \u22A2 `\\lam (_) => \\lam (a) => a` : expected type
         + \u22A2 `\\lam (a) => a` : expected type
