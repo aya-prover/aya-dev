@@ -141,7 +141,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(ctx), id.getText());
     var universe = ctx.UNIVERSE();
     if (universe != null) {
-      String universeText = universe.getText();
+      var universeText = universe.getText();
       var univTrunc = universeText.substring(1, universeText.indexOf("T"));
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
@@ -155,19 +155,19 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     var set = ctx.SET_UNIV();
     if (set != null) {
       var text = set.getText().substring("\\Set".length());
-      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text, 0), 0);
+      return new Expr.UnivExpr(sourcePosOf(set), visitOptNumber(text, 0), 0);
     }
     var prop = ctx.PROP();
-    if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
+    if (prop != null) return new Expr.UnivExpr(sourcePosOf(prop), 0, -1);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
       return new Expr.HoleExpr(sourcePosOf(ctx), null, filling);
     }
     var number = ctx.NUMBER();
-    if (number != null) return new Expr.LitIntExpr(sourcePosOf(ctx), Integer.parseInt(number.getText()));
+    if (number != null) return new Expr.LitIntExpr(sourcePosOf(number), Integer.parseInt(number.getText()));
     var string = ctx.STRING();
-    if (string != null) return new Expr.LitStringExpr(sourcePosOf(ctx), string.getText());
+    if (string != null) return new Expr.LitStringExpr(sourcePosOf(string), string.getText());
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
