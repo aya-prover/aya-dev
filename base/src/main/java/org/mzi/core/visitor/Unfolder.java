@@ -1,20 +1,18 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.tuple.Unit;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.Set;
+import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableSet;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
 import org.mzi.generic.Arg;
-
-import java.util.HashMap;
 
 /**
  * @author ice1000
@@ -24,7 +22,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull SeqLike<Term.@NotNull Param> self,
     @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) {
-    var subst = new Substituter.TermSubst(new HashMap<>());
+    var subst = new Substituter.TermSubst(new MutableHashMap<>());
     self.forEachIndexed((i, param) -> subst.add(param.ref(), args.get(i).term()));
     return subst;
   }
