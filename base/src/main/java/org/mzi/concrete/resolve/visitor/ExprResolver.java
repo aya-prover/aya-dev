@@ -3,9 +3,9 @@
 package org.mzi.concrete.resolve.visitor;
 
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Tuple2;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Expr;
 import org.mzi.concrete.resolve.context.Context;
@@ -35,6 +35,7 @@ public final class ExprResolver implements ExprFixpoint<Context> {
     );
   }
 
+  @Contract(pure = true)
   public @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context>
   resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
     if (params.isEmpty()) return Tuple2.of(ImmutableSeq.of(), ctx);

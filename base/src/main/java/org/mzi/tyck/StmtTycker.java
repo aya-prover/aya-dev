@@ -2,17 +2,23 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
+import org.glavo.kala.collection.immutable.ImmutableHashMap;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
+import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.PiTerm;
 import org.mzi.core.term.Term;
+import org.mzi.core.term.UnivTerm;
+import org.mzi.generic.Pat;
 import org.mzi.tyck.trace.Trace;
 
 import java.util.stream.Stream;
@@ -21,18 +27,45 @@ public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
 ) implements Decl.Visitor<Unit, Def> {
-  @Override public Def visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
-    // TODO[kiva]: implement
-    throw new UnsupportedOperationException();
-  }
-
   private @NotNull ExprTycker newTycker() {
     final var tycker = new ExprTycker(reporter);
     tycker.traceBuilder = traceBuilder;
     return tycker;
   }
 
-  @Override public Def visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
+  @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+    var ctorBuf = Buffer.<DataDef.Ctor>of();
+    var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
+    var checker = newTycker();
+    var tele = checkTele(checker, decl.telescope)
+      .collect(ImmutableSeq.factory());
+    final var result = checker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+    decl.body.accept(new Decl.DataBody.Visitor<Unit, Unit>() {
+      @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
+        ctors.ctors().forEach(ctor -> {
+          var tele = checkTele(checker, ctor.telescope);
+          ctorBuf.append(new DataDef.Ctor(
+            ctor.ref,
+            tele.collect(ImmutableSeq.factory()),
+            ctor.elim,
+            ctor.clauses.stream()
+              .map(i -> i.mapTerm(expr -> checker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))
+              .collect(Buffer.factory()),
+            ctor.coerce
+          ));
+        });
+        return unit;
+      }
+
+      @Override public Unit visitClause(Decl.DataBody.@NotNull Clauses clauses, Unit unit) {
+        // TODO[ice]: implement
+        throw new UnsupportedOperationException();
+      }
+    }, unit);
+    return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, ImmutableHashMap.from(clauseBuf));
+  }
+
+  @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
     var headerChecker = newTycker();
     var resultTele = checkTele(headerChecker, decl.telescope)
       .collect(ImmutableSeq.factory());
