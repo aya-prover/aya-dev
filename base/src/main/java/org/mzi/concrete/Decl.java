@@ -62,10 +62,17 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
-  abstract <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
+  abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  public final @Override <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return accept((Decl.Visitor<P, R>) visitor, p);
+  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
+    var ret = doAccept(visitor, p);
+    visitor.traceExit(ret);
+    return ret;
+  }
+
+  public final @Override <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
+    return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
   public Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
@@ -73,6 +80,10 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   }
 
   public interface Visitor<P, R> {
+    default void traceEntrance(@NotNull Decl decl, P p) {
+    }
+    default void traceExit(R r) {
+    }
     R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
   }
@@ -174,7 +185,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     @Override
-    public <P, R> R accept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitDataDecl(this, p);
     }
 
@@ -242,7 +253,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     @Override
-    public <P, R> R accept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitFnDecl(this, p);
     }
 

@@ -21,8 +21,15 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
     this(2048, 2);
   }
 
+  @Override public Unit visitDecl(Trace.@NotNull DeclT t, Unit unit) {
+    indent();
+    builder.append("+ ").append(t.var().name());
+    visitSub(t.subtraces());
+    return unit;
+  }
+
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, Unit unit) {
-    builder.append(" ".repeat(indent));
+    indent();
     builder.append("+ \u22A2 `")
       .append(t.expr().toDoc().renderWithPageWidth(114514))
       .append("` : ")
@@ -31,6 +38,10 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
         : t.term().toDoc().renderWithPageWidth(114514));
     visitSub(t.subtraces());
     return unit;
+  }
+
+  private void indent() {
+    builder.append(" ".repeat(indent));
   }
 
   private void visitSub(@NotNull Buffer<@NotNull Trace> subtraces) {
@@ -42,7 +53,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
   }
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
-    builder.append(" ".repeat(indent));
+    indent();
     builder.append("+ \u22A2 conversion check");
     visitSub(t.subtraces());
     return unit;

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.mzi.api.error.SourcePos;
+import org.mzi.api.ref.DefVar;
 import org.mzi.concrete.Expr;
 import org.mzi.core.term.Term;
 
@@ -23,6 +24,7 @@ public sealed interface Trace {
   interface Visitor<P, R> {
     R visitExpr(@NotNull ExprT t, P p);
     R visitUnify(@NotNull UnifyT t, P p);
+    R visitDecl(@NotNull DeclT t, P p);
   }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
@@ -46,6 +48,16 @@ public sealed interface Trace {
 
     public void reduce() {
       tops.removeLast();
+    }
+  }
+
+  record DeclT(@NotNull DefVar<?, ?> var, @NotNull SourcePos pos, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
+    public DeclT(@NotNull DefVar<?, ?> var, @NotNull SourcePos pos) {
+      this(var, pos, Buffer.of());
+    }
+
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitDecl(this, p);
     }
   }
 

@@ -21,6 +21,7 @@ import org.mzi.core.term.UnivTerm;
 import org.mzi.generic.Pat;
 import org.mzi.tyck.trace.Trace;
 
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public record StmtTycker(
@@ -31,6 +32,18 @@ public record StmtTycker(
     final var tycker = new ExprTycker(reporter);
     tycker.traceBuilder = traceBuilder;
     return tycker;
+  }
+
+  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+    if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  @Override public void traceEntrance(@NotNull Decl decl, Unit unit) {
+    tracing(builder -> builder.shift(new Trace.DeclT(decl.ref(), decl.sourcePos)));
+  }
+
+  @Override public void traceExit(Def def) {
+    tracing(Trace.Builder::reduce);
   }
 
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
