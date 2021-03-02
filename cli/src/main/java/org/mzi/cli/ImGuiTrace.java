@@ -10,8 +10,7 @@ import org.ice1000.jimgui.flag.JImHoveredFlags;
 import org.ice1000.jimgui.util.JImGuiUtil;
 import org.ice1000.jimgui.util.JniLoader;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.pretty.error.PrettyErrorConfig;
-import org.mzi.pretty.error.Span;
+import org.mzi.api.error.SourcePos;
 import org.mzi.tyck.trace.Trace;
 
 import java.awt.*;
@@ -20,12 +19,12 @@ import java.awt.*;
 public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
   private JImGui imGui;
   private final String sourceCode;
-  private @NotNull Span.Data spanData;
+  private @NotNull SourcePos spanData;
   private int inc = 0;
 
   public ImGuiTrace(@NotNull String sourceCode) {
     this.sourceCode = sourceCode;
-    spanData = new Span.Data(-1, -1, -1, -1);
+    spanData = SourcePos.NONE;
   }
 
   private @NotNull JImVec4 color(Color color) {
@@ -82,7 +81,7 @@ public class ImGuiTrace implements Trace.Visitor<Unit, Unit> {
     var color = t.term() == null ? Color.CYAN : Color.YELLOW;
     visitSub(s, color, t.subtraces(), () ->
     {
-      spanData = t.expr().sourcePos().toSpan(sourceCode).normalize(PrettyErrorConfig.DEFAULT);
+      spanData = t.expr().sourcePos();
       System.out.println(spanData);
     });
     return unit;

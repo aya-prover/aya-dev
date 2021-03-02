@@ -336,10 +336,11 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     Expr body
   ) {
     if (params.isEmpty()) return body;
+    var first = params.first();
     return new Expr.PiExpr(
-      sourcePos,
+      first.sourcePos(),
       co,
-      params.first(),
+      first,
       buildPi(sourcePos, co, params.drop(1), body)
     );
   }

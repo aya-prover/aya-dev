@@ -56,6 +56,10 @@ public record SourcePos(
       endColumn == sourcePos.endColumn;
   }
 
+  public boolean contains(int line, int column) {
+    return line >= startLine && line <= endLine && column >= startColumn && column <= endColumn;
+  }
+
   @Override
   public int hashCode() {
     // the equals() returns true in tests, so hashCode() should
