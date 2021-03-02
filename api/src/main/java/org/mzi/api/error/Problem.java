@@ -36,15 +36,21 @@ public interface Problem {
     return Stage.OTHER;
   }
 
-  default @NotNull PrettyError toPrettyError(@NotNull Path filePath,
-                                             @NotNull Doc noteMessage) {
+  static @NotNull String readSourceCode(@NotNull Path filePath) {
     String sourceCode;
     try {
       sourceCode = Files.readString(filePath);
     } catch (IOException ignore) {
       sourceCode = "<error-reading-file>";
     }
+    return sourceCode;
+  }
 
+  default @NotNull PrettyError toPrettyError(
+    @NotNull Path filePath,
+    @NotNull Doc noteMessage,
+    @NotNull String sourceCode
+  ) {
     return new PrettyError(
       filePath.toString(),
       sourcePos().toSpan(sourceCode),

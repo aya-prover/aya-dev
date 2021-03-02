@@ -7,12 +7,16 @@ import org.jetbrains.annotations.NotNull;
 public interface Span {
   @NotNull String input();
 
-  @NotNull Span.StartStopLineCol findStartStopLineCol(PrettyErrorConfig config);
+  @NotNull Span.Data normalize(PrettyErrorConfig config);
 
-  record StartStopLineCol(
+  record Data(
     int startLine,
     int startCol,
     int endLine,
-    int endCol) {
+    int endCol
+  ) {
+    public boolean contains(int line, int column) {
+      return line >= startLine && line <= endLine && column >= startCol && column <= endCol;
+    }
   }
 }

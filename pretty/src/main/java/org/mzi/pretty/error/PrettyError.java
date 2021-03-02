@@ -18,7 +18,7 @@ public record PrettyError(
   @NotNull Doc noteMessage
 ) {
   public Doc toDoc(PrettyErrorConfig config) {
-    var lineCol = errorRange.findStartStopLineCol(config);
+    var lineCol = errorRange.normalize(config);
 
     var doc = Doc.vcat(
       Doc.plain("In file " + filePath + ":" + lineCol.startLine() + ":" + lineCol.startCol() + " ->"),
@@ -33,7 +33,7 @@ public record PrettyError(
   }
 
   public Doc toDoc() {
-    return toDoc(new PrettyErrorConfig.Default());
+    return toDoc(PrettyErrorConfig.DEFAULT);
   }
 
   private @NotNull String visualizeLine(PrettyErrorConfig config, String line) {
@@ -41,7 +41,7 @@ public record PrettyError(
     return line.replaceAll("\t", " ".repeat(tabWidth));
   }
 
-  private @NotNull Doc visualizeCode(PrettyErrorConfig config, Span.StartStopLineCol lineCol) {
+  private @NotNull Doc visualizeCode(PrettyErrorConfig config, Span.Data lineCol) {
     int startLine = lineCol.startLine();
     int startCol = lineCol.startCol();
     int endLine = lineCol.endLine();
