@@ -160,6 +160,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
     tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper)));
     var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
+    tracing(Trace.Builder::reduce);
     if (!unification) {
       metaContext.report(new UnifyError(errorReportLocation, upper, lower));
       throw new TyckInterruptedException();
