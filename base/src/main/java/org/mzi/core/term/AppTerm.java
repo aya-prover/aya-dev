@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.core.term;
 
 import org.glavo.kala.collection.Seq;
@@ -48,11 +48,11 @@ public sealed interface AppTerm extends Term {
     @NotNull DefVar<FnDef, Decl.FnDecl> fnRef,
     @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFnCall(this, p);
     }
 
-    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitFnCall(this, p, q);
     }
 
@@ -71,11 +71,11 @@ public sealed interface AppTerm extends Term {
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args
   ) implements AppTerm {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitDataCall(this, p);
     }
 
-    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitDataCall(this, p, q);
     }
 
@@ -98,11 +98,11 @@ public sealed interface AppTerm extends Term {
       return fn().whnf();
     }
 
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }
 
-    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitApp(this, p, q);
     }
 
@@ -131,11 +131,11 @@ public sealed interface AppTerm extends Term {
       return new RefTerm(var);
     }
 
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitHole(this, p);
     }
 
-    @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitHole(this, p, q);
     }
 

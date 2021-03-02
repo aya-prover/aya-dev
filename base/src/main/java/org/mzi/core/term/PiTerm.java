@@ -15,11 +15,11 @@ public record PiTerm(boolean co, @NotNull Term.Param param, @NotNull Term body) 
     return Decision.YES;
   }
 
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+  @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitPi(this, p);
   }
 
-  @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+  @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
     return visitor.visitPi(this, p, q);
   }
 

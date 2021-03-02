@@ -10,11 +10,11 @@ import org.mzi.util.Decision;
  * @author ice1000
  */
 public record LamTerm(@NotNull Term.Param param, @NotNull Term body) implements Term {
-  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+  @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitLam(this, p);
   }
 
-  @Override public <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+  @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
     return visitor.visitLam(this, p, q);
   }
 

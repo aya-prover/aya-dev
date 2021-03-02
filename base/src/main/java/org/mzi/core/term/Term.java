@@ -33,8 +33,20 @@ import org.mzi.util.Decision;
  * @author ice1000
  */
 public interface Term extends CoreTerm {
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-  <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
+  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
+  <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
+  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
+    var ret = doAccept(visitor, p);
+    visitor.traceExit(ret);
+    return ret;
+  }
+  default <P, Q, R> R accept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+    visitor.traceEntrance(this, p, q);
+    var ret = doAccept(visitor, p, q);
+    visitor.traceExit(ret);
+    return ret;
+  }
   @Contract(pure = true) @NotNull Decision whnf();
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
@@ -62,6 +74,10 @@ public interface Term extends CoreTerm {
   }
 
   interface Visitor<P, R> {
+    default void traceEntrance(@NotNull Term term, P p) {
+    }
+    default void traceExit(R r) {
+    }
     R visitRef(@NotNull RefTerm term, P p);
     R visitLam(@NotNull LamTerm term, P p);
     R visitPi(@NotNull PiTerm term, P p);
@@ -76,6 +92,10 @@ public interface Term extends CoreTerm {
   }
 
   interface BiVisitor<P, Q, R> {
+    default void traceEntrance(@NotNull Term term, P p, Q q) {
+    }
+    default void traceExit(R r) {
+    }
     R visitRef(@NotNull RefTerm term, P p, Q q);
     R visitLam(@NotNull LamTerm term, P p, Q q);
     R visitPi(@NotNull PiTerm term, P p, Q q);
