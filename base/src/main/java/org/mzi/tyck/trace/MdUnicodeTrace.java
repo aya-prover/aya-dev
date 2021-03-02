@@ -53,7 +53,10 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
     indent();
-    builder.append("+ \u22A2 conversion check");
+    builder.append("+ \u22A2 ")
+      .append(t.lhs().toDoc().renderWithPageWidth(114514))
+      .append(" \u2261 ")
+      .append(t.rhs().toDoc().renderWithPageWidth(114514));
     visitSub(t.subtraces());
     return unit;
   }

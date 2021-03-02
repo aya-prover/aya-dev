@@ -111,7 +111,10 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   }
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
-    visitSub("conversion check", Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos());
+    var s = t.lhs().toDoc().renderWithPageWidth(114514)
+      + " = "
+      + t.rhs().toDoc().renderWithPageWidth(114514);
+    visitSub(s, Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos());
     return Unit.unit();
   }
 
