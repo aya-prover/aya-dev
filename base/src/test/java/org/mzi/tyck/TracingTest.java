@@ -34,6 +34,6 @@ public class TracingTest {
       + \u22A2 `\\lam (_) => \\lam (a) => a` : \\Pi (A : \\oo-Type) -> \\Pi (a : A) -> A
         + \u22A2 `\\lam (a) => a` : \\Pi (a : A) -> A
           + \u22A2 `a` : A
-            + \u22A2 conversion check""", show.builder.toString().trim());
+            + \u22A2 A \u2261 A""", show.builder.toString().trim());
   }
 }
