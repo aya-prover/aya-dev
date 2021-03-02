@@ -32,10 +32,9 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
     indent();
     builder.append("+ \u22A2 `")
       .append(t.expr().toDoc().renderWithPageWidth(114514))
-      .append("`")
-      .append(t.term() == null
-        ? ""
-        : " : " + t.term().toDoc().renderWithPageWidth(114514));
+      .append("`");
+    if (t.term() != null) builder.append(" : ")
+      .append(t.term().toDoc().renderWithPageWidth(114514));
     visitSub(t.subtraces());
     return unit;
   }
