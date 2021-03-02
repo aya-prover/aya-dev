@@ -28,6 +28,7 @@ import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
 import org.mzi.tyck.error.UnifyError;
 import org.mzi.tyck.sort.Sort;
+import org.mzi.tyck.trace.Trace;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.Rule;
 import org.mzi.util.Ordering;

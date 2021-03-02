@@ -4,6 +4,7 @@ package org.mzi.tyck;
 
 import org.junit.jupiter.api.Test;
 import org.mzi.test.ThrowingReporter;
+import org.mzi.tyck.trace.Trace;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 

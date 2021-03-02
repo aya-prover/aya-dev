@@ -2,10 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
-import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +21,7 @@ import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
 import org.mzi.tyck.StmtTycker;
+import org.mzi.tyck.trace.Trace;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -67,8 +68,8 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     return accept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  public Def tyck(@NotNull Reporter reporter) {
-    return accept(new StmtTycker(reporter), Unit.unit());
+  public Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
+    return accept(new StmtTycker(reporter, builder), Unit.unit());
   }
 
   public interface Visitor<P, R> {

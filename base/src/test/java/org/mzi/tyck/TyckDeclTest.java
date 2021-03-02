@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
 import org.intellij.lang.annotations.Language;
@@ -37,7 +37,7 @@ public class TyckDeclTest {
     var decl = MziProducer.parseDecl(code)._1;
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     decl.resolve();
-    var def = decl.tyck(ThrowingReporter.INSTANCE);
+    var def = decl.tyck(ThrowingReporter.INSTANCE, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
     return ((FnDef) def);

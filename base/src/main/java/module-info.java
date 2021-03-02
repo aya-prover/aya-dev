@@ -24,4 +24,5 @@ module org.mzi {
   exports org.mzi.tyck;
   exports org.mzi.util.cancel;
   exports org.mzi.util;
+	exports org.mzi.tyck.trace;
 }

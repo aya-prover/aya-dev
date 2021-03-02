@@ -2,9 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
-import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
@@ -12,17 +13,27 @@ import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.PiTerm;
 import org.mzi.core.term.Term;
+import org.mzi.tyck.trace.Trace;
 
 import java.util.stream.Stream;
 
-public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Unit, Def> {
+public record StmtTycker(
+  @NotNull Reporter reporter,
+  Trace.@Nullable Builder traceBuilder
+) implements Decl.Visitor<Unit, Def> {
   @Override public Def visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
     // TODO[kiva]: implement
     throw new UnsupportedOperationException();
   }
 
+  private @NotNull ExprTycker newTycker() {
+    final var tycker = new ExprTycker(reporter);
+    tycker.traceBuilder = traceBuilder;
+    return tycker;
+  }
+
   @Override public Def visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
-    var headerChecker = new ExprTycker(reporter);
+    var headerChecker = newTycker();
     var resultTele = checkTele(headerChecker, decl.telescope)
       .collect(ImmutableSeq.factory());
     // It might contain unsolved holes, but that's acceptable.

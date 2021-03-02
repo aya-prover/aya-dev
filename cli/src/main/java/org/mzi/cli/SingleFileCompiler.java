@@ -30,7 +30,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       program.forEach(s -> s.accept(shallowResolver, context));
       program.forEach(Stmt::resolve);
       program.forEach(s -> {
-        if (s instanceof Decl decl) decl.tyck(reporter);
+        if (s instanceof Decl decl) decl.tyck(reporter, null);
       });
     } catch (ExprTycker.TyckerException | Context.ContextException e) {
       e.printStackTrace();
