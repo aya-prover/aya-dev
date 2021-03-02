@@ -45,7 +45,7 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
 
       @Override public Unit visitClause(Decl.DataBody.@NotNull Clauses clauses, Unit unit) {
         // TODO[ice]: implement
-        return unit;
+        throw new UnsupportedOperationException();
       }
     }, unit);
     return new DataDef(
