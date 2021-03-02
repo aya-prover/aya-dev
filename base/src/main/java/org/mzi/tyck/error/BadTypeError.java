@@ -16,7 +16,7 @@ public record BadTypeError(
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The expected type "),
-      Doc.plain(actualType.toString()),
+      actualType.toDoc(),
       Doc.plain(" is not a "),
       expectedType,
       Doc.plain(", therefore cannot type a lambda such as `"),

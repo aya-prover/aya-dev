@@ -16,9 +16,9 @@ public record UnifyError(
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The expected type "),
-      Doc.plain(expected.toString()),
+      expected.toDoc(),
       Doc.plain(" does not match the actual type "),
-      Doc.plain(actual.toString())
+      actual.toDoc()
     );
   }
 }
