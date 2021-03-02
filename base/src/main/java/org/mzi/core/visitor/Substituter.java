@@ -1,7 +1,9 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
+import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.Var;
@@ -9,9 +11,6 @@ import org.mzi.core.term.RefTerm;
 import org.mzi.core.term.Term;
 import org.mzi.tyck.sort.LevelSubst;
 import org.mzi.tyck.sort.Sort;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * This doesn't substitute references underlying function calls.
@@ -31,18 +30,17 @@ public record Substituter(
   /**
    * @author ice1000
    */
-  public static record TermSubst(@NotNull Map<@NotNull Var, @NotNull Term> map) {
+  public static record TermSubst(@NotNull MutableMap<@NotNull Var, @NotNull Term> map) {
     // TODO[JDK-8247334]: uncomment when we move to JDK16
-    public static final /*@NotNull*/ TermSubst EMPTY = new TermSubst(Collections.emptyMap());
+    public static final /*@NotNull*/ TermSubst EMPTY = new TermSubst(MutableHashMap.of());
 
     public TermSubst(@NotNull Var var, @NotNull Term term) {
-      this(Map.of(var, term));
+      this(MutableHashMap.of(var, term));
     }
 
     public void subst(@NotNull TermSubst subst) {
       if (map.isEmpty()) return;
-      for (var entry : map.entrySet())
-        entry.setValue(entry.getValue().subst(subst));
+      map.updateAll((var, term) -> term.subst(subst));
     }
 
     public void addAll(@NotNull TermSubst subst) {
