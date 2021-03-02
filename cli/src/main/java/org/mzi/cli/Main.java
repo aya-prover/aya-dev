@@ -4,6 +4,8 @@ package org.mzi.cli;
 
 import com.beust.jcommander.JCommander;
 import org.glavo.kala.tuple.Unit;
+import org.ice1000.jimgui.JImGui;
+import org.ice1000.jimgui.util.JniLoader;
 import org.mzi.prelude.GeneratedVersion;
 import org.mzi.tyck.trace.MdUnicodeTrace;
 import org.mzi.tyck.trace.Trace;
@@ -33,9 +35,15 @@ public class Main {
     var compiler = new SingleFileCompiler(new CliReporter(filePath), filePath, traceBuilder);
     var status = compiler.compile(flags);
     if (traceBuilder != null) {
-      var printer = new MdUnicodeTrace();
-      traceBuilder.root().forEach(e -> e.accept(printer, Unit.unit()));
-      System.err.println(printer.builder);
+      if (cli.visualization) {
+        JniLoader.load();
+        var printer = new ImGuiTrace(new JImGui());
+        printer.mainLoop(traceBuilder.root());
+      } else {
+        var printer = new MdUnicodeTrace();
+        traceBuilder.root().forEach(e -> e.accept(printer, Unit.unit()));
+        System.err.println(printer.builder);
+      }
     }
     System.exit(status);
   }
