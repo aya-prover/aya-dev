@@ -1,0 +1,12 @@
+\data Nat : \Set
+ | zero
+ | suc Nat
+
+\data Int : \Set
+ | negs Nat
+ | poss Nat
+ | zro
+
+\data List (A : \Set) : \Set
+ | nil
+ | cons A (x : List A)
