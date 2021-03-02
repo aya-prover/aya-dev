@@ -26,6 +26,9 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
     var ctorBuf = Buffer.<DataDef.Ctor>of();
     var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
     var checker = new ExprTycker(reporter);
+    var tele = checkTele(checker, decl.telescope)
+      .collect(ImmutableSeq.factory());
+    final var result = checker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.body.accept(new Decl.DataBody.Visitor<Unit, Unit>() {
       @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
         ctors.ctors().forEach(ctor -> {
@@ -48,13 +51,7 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
         throw new UnsupportedOperationException();
       }
     }, unit);
-    return new DataDef(
-      decl.ref,
-      checkTele(checker, decl.telescope).collect(ImmutableSeq.factory()),
-      checker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped(),
-      Buffer.of(),
-      ctorBuf, ImmutableHashMap.from(clauseBuf)
-    );
+    return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, ImmutableHashMap.from(clauseBuf));
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
