@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
@@ -28,7 +28,14 @@ import java.util.stream.Stream;
  * @author re-xyr
  */
 public sealed interface Expr {
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
+
+  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
+    var ret = doAccept(visitor, p);
+    visitor.traceExit(ret);
+    return ret;
+  }
 
   @NotNull SourcePos sourcePos();
 
@@ -45,6 +52,10 @@ public sealed interface Expr {
   }
 
   interface Visitor<P, R> {
+    default void traceEntrance(@NotNull Expr expr, P p) {
+    }
+    default void traceExit(R r) {
+    }
     R visitRef(@NotNull RefExpr expr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
@@ -111,7 +122,7 @@ public sealed interface Expr {
     @NotNull String name
   ) implements Expr {
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnresolved(this, p);
     }
   }
@@ -125,7 +136,7 @@ public sealed interface Expr {
     @Nullable Expr filling
   ) implements Expr {
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitHole(this, p);
     }
   }
@@ -150,7 +161,7 @@ public sealed interface Expr {
     @NotNull ImmutableSeq<@NotNull Arg<Expr>> arguments
   ) implements Expr {
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }
   }
@@ -164,7 +175,7 @@ public sealed interface Expr {
     @NotNull Expr.Param param,
     @NotNull Expr last
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPi(this, p);
     }
   }
@@ -177,7 +188,7 @@ public sealed interface Expr {
     @NotNull Expr.Param param,
     @NotNull Expr body
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLam(this, p);
     }
   }
@@ -191,7 +202,7 @@ public sealed interface Expr {
     @NotNull ImmutableSeq<@NotNull Param> params,
     @NotNull Expr last
   ) implements Expr, TelescopicExpr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTelescopicSigma(this, p);
     }
   }
@@ -203,7 +214,7 @@ public sealed interface Expr {
     @NotNull SourcePos sourcePos,
     @NotNull Var resolvedVar
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitRef(this, p);
     }
   }
@@ -218,7 +229,7 @@ public sealed interface Expr {
     int uLevel,
     int hLevel
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }
   }
@@ -230,7 +241,7 @@ public sealed interface Expr {
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableVector<@NotNull Expr> items
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTup(this, p);
     }
   }
@@ -243,7 +254,7 @@ public sealed interface Expr {
     @NotNull Expr tup,
     int ix
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);
     }
   }
@@ -256,7 +267,7 @@ public sealed interface Expr {
     @NotNull Expr expr,
     @NotNull Expr type
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTyped(this, p);
     }
   }
@@ -268,7 +279,7 @@ public sealed interface Expr {
     @NotNull SourcePos sourcePos,
     int integer
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitInt(this, p);
     }
   }
@@ -277,7 +288,7 @@ public sealed interface Expr {
     @NotNull SourcePos sourcePos,
     @NotNull String string
   ) implements Expr {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitString(this, p);
     }
   }

@@ -3,6 +3,8 @@
 package org.mzi.tyck;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.jupiter.api.Test;
 import org.mzi.api.error.SourcePos;
 import org.mzi.concrete.Expr;
@@ -28,29 +30,35 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TyckFnTest {
   @Test
   public void idLamConnected() {
+    idLamTestCase(lamConnected(), new ExprTycker(ThrowingReporter.INSTANCE));
+  }
+
+  static @NotNull Expr lamConnected() {
     var a = new LocalVar("a");
     // \A a.a
-    idLamTestCase(MziProducer.buildLam(SourcePos.NONE,
+    return MziProducer.buildLam(SourcePos.NONE,
       ImmutableSeq.of(
         new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
         new Expr.Param(SourcePos.NONE, a, true)).view(),
-      new Expr.RefExpr(SourcePos.NONE, a)));
+      new Expr.RefExpr(SourcePos.NONE, a));
   }
 
   @Test
   public void idLamDisconnected() {
     var a = new LocalVar("a");
     // \A.\a.a
-    idLamTestCase(new Expr.LamExpr(SourcePos.NONE,
+    final var lam = new Expr.LamExpr(SourcePos.NONE,
       new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
       new Expr.LamExpr(SourcePos.NONE, new Expr.Param(SourcePos.NONE, a, true),
-        new Expr.RefExpr(SourcePos.NONE, a))));
+        new Expr.RefExpr(SourcePos.NONE, a)));
+    idLamTestCase(lam, new ExprTycker(ThrowingReporter.INSTANCE));
   }
 
-  private void idLamTestCase(Expr lamAaa) {
+  @TestOnly
+  static void idLamTestCase(Expr lamAaa, ExprTycker visitor) {
     var piUAA = Lisp.parse("(Pi (A (U) ex) (Pi (a A ex) A))");
     var result = lamAaa
-      .accept(new ExprTycker(ThrowingReporter.INSTANCE), piUAA);
+      .accept(visitor, piUAA);
     assertNotNull(result);
     if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof PiTerm dt)) {
       fail();

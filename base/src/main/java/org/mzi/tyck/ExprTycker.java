@@ -28,13 +28,29 @@ import org.mzi.ref.LocalVar;
 import org.mzi.tyck.error.BadTypeError;
 import org.mzi.tyck.error.UnifyError;
 import org.mzi.tyck.sort.Sort;
+import org.mzi.tyck.trace.Trace;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.Rule;
 import org.mzi.util.Ordering;
 
+import java.util.function.Consumer;
+
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
   public final @NotNull MutableMap<Var, Term> localCtx;
+  public Trace.@Nullable Builder traceBuilder = null;
+
+  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+    if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  @Override public void traceEntrance(@NotNull Expr expr, Term term) {
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
+  }
+
+  @Override public void traceExit(Result result) {
+    tracing(Trace.Builder::reduce);
+  }
 
   public ExprTycker(@NotNull Reporter reporter) {
     this(new MetaContext(reporter));
@@ -140,6 +156,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
+    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, errorReportLocation.sourcePos())));
+    tracing(Trace.Builder::reduce);
     var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
       metaContext.report(new UnifyError(errorReportLocation, upper, lower));

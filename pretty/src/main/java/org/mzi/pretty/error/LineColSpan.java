@@ -11,7 +11,7 @@ public record LineColSpan(
   int endLine,
   int endCol) implements Span {
   @Override
-  public @NotNull Span.StartStopLineCol findStartStopLineCol(PrettyErrorConfig config) {
-    return new StartStopLineCol(startLine, startCol, endLine, endCol);
+  public @NotNull Span.Data normalize(PrettyErrorConfig config) {
+    return new Data(startLine, startCol, endLine, endCol);
   }
 }

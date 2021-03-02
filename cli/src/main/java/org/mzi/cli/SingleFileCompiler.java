@@ -3,6 +3,7 @@
 package org.mzi.cli;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.util.MziInterruptException;
 import org.mzi.concrete.Decl;
@@ -15,11 +16,12 @@ import org.mzi.concrete.resolve.module.EmptyModuleLoader;
 import org.mzi.concrete.resolve.visitor.StmtShallowResolver;
 import org.mzi.tyck.ExprTycker;
 import org.mzi.tyck.error.CountingReporter;
+import org.mzi.tyck.trace.Trace;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath) {
+public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath, Trace.@Nullable Builder builder) {
   public int compile(@NotNull CompilerFlags flags) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var parser = MziParsing.parser(filePath, reporter);
@@ -30,7 +32,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       program.forEach(s -> s.accept(shallowResolver, context));
       program.forEach(Stmt::resolve);
       program.forEach(s -> {
-        if (s instanceof Decl decl) decl.tyck(reporter);
+        if (s instanceof Decl decl) decl.tyck(reporter, builder);
       });
     } catch (ExprTycker.TyckerException | Context.ContextException e) {
       e.printStackTrace();

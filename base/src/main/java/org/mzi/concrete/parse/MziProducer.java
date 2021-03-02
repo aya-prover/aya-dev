@@ -5,13 +5,13 @@ package org.mzi.concrete.parse;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.glavo.kala.collection.base.Traversable;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.collection.SeqView;
+import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +141,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(ctx), id.getText());
     var universe = ctx.UNIVERSE();
     if (universe != null) {
-      String universeText = universe.getText();
+      var universeText = universe.getText();
       var univTrunc = universeText.substring(1, universeText.indexOf("T"));
       var hLevel = switch (univTrunc) {
         default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
@@ -150,24 +150,24 @@ public final class MziProducer extends MziBaseVisitor<Object> {
         case "oo-" -> Integer.MAX_VALUE;
       };
       var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), 0);
-      return new Expr.UnivExpr(sourcePosOf(ctx), uLevel, hLevel);
+      return new Expr.UnivExpr(sourcePosOf(universe), uLevel, hLevel);
     }
     var set = ctx.SET_UNIV();
     if (set != null) {
       var text = set.getText().substring("\\Set".length());
-      return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(text, 0), 0);
+      return new Expr.UnivExpr(sourcePosOf(set), visitOptNumber(text, 0), 0);
     }
     var prop = ctx.PROP();
-    if (prop != null) return new Expr.UnivExpr(sourcePosOf(ctx), 0, -1);
+    if (prop != null) return new Expr.UnivExpr(sourcePosOf(prop), 0, -1);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
       return new Expr.HoleExpr(sourcePosOf(ctx), null, filling);
     }
     var number = ctx.NUMBER();
-    if (number != null) return new Expr.LitIntExpr(sourcePosOf(ctx), Integer.parseInt(number.getText()));
+    if (number != null) return new Expr.LitIntExpr(sourcePosOf(number), Integer.parseInt(number.getText()));
     var string = ctx.STRING();
-    if (string != null) return new Expr.LitStringExpr(sourcePosOf(ctx), string.getText());
+    if (string != null) return new Expr.LitStringExpr(sourcePosOf(string), string.getText());
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
@@ -193,7 +193,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   public @NotNull Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
     var type = type(ctx.type(), sourcePosOf(ctx.ids()));
     return explicit -> visitIds(ctx.ids())
-      .map(var -> new Expr.Param(sourcePosOf(ctx), new LocalVar(var), type, explicit))
+      .map(v -> new Expr.Param(v._1, new LocalVar(v._2), type, explicit))
       .collect(ImmutableSeq.factory());
   }
 
@@ -290,7 +290,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     return new Expr.LamExpr(
       sourcePos,
       params.first(),
-      buildLam(sourcePos, params.drop(1), body)
+      buildLam(sourcePosForSubExpr(params, body), params.drop(1), body)
     );
   }
 
@@ -336,11 +336,31 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     Expr body
   ) {
     if (params.isEmpty()) return body;
+    var first = params.first();
     return new Expr.PiExpr(
       sourcePos,
       co,
-      params.first(),
-      buildPi(sourcePos, co, params.drop(1), body)
+      first,
+      buildPi(sourcePosForSubExpr(params, body), co, params.drop(1), body)
+    );
+  }
+
+  @NotNull private static SourcePos sourcePosForSubExpr(SeqView<Expr.Param> params, Expr body) {
+    var restParamSourcePos = params.stream().skip(1)
+      .map(Expr.Param::sourcePos)
+      .reduce(SourcePos.NONE, (acc, it) -> {
+        if (acc == SourcePos.NONE) return it;
+        return new SourcePos(acc.tokenStartIndex(), it.tokenEndIndex(),
+          acc.startLine(), acc.startColumn(), it.endLine(), it.endColumn());
+      });
+    var bodySourcePos = body.sourcePos();
+    return new SourcePos(
+      restParamSourcePos.tokenStartIndex(),
+      bodySourcePos.tokenEndIndex(),
+      restParamSourcePos.startLine(),
+      restParamSourcePos.startColumn(),
+      bodySourcePos.endLine(),
+      bodySourcePos.endColumn()
     );
   }
 
@@ -532,6 +552,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
         .map(MziParser.UseContext::useHideList)
         .map(MziParser.UseHideListContext::ids)
         .flatMap(this::visitIds)
+        .map(Tuple2::getValue)
         .collect(ImmutableSeq.factory()),
       Stmt.OpenStmt.UseHide.Strategy.Using);
   }
@@ -542,6 +563,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
         .map(MziParser.HideContext::useHideList)
         .map(MziParser.UseHideListContext::ids)
         .flatMap(this::visitIds)
+        .map(Tuple2::getValue)
         .collect(ImmutableSeq.factory()),
       Stmt.OpenStmt.UseHide.Strategy.Hiding);
   }
@@ -565,8 +587,8 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Stream<String> visitIds(MziParser.IdsContext ctx) {
-    return ctx.ID().stream().map(ParseTree::getText);
+  public @NotNull Stream<Tuple2<SourcePos, String>> visitIds(MziParser.IdsContext ctx) {
+    return ctx.ID().stream().map(id -> Tuple.of(sourcePosOf(id), id.getText()));
   }
 
   @Override

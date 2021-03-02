@@ -1,9 +1,9 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
-import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +33,11 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
    * @author re-xyr
    */
   interface Visitor<P, R> extends Decl.Visitor<P, R> {
+    default void traceEntrance(@NotNull Stmt stmt, P p) {
+    }
+    @Override default void traceEntrance(@NotNull Decl decl, P p) {
+      traceEntrance((Stmt) decl, p);
+    }
     default @NotNull ImmutableSeq<R> visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       return stmts.map(stmt -> stmt.accept(this, p));
       // [xyr]: Is this OK? The order of visiting must be preserved.
@@ -43,7 +48,14 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     R visitModule(@NotNull ModuleStmt mod, P p);
   }
 
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
+
+  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
+    var ret = doAccept(visitor, p);
+    visitor.traceExit(ret);
+    return ret;
+  }
 
   /**
    * @author re-xyr
@@ -72,7 +84,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     }
 
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitModule(this, p);
     }
   }
@@ -92,7 +104,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     }
 
     @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitImport(this, p);
     }
   }
@@ -106,7 +118,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     @NotNull ImmutableSeq<String> path,
     @NotNull UseHide useHide
   ) implements Stmt {
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitOpen(this, p);
     }
 

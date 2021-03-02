@@ -2,10 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete;
 
-import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +21,7 @@ import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
 import org.mzi.tyck.StmtTycker;
+import org.mzi.tyck.trace.Trace;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -61,17 +62,28 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
-  abstract <P, R> R accept(Decl.@NotNull Visitor<P, R> visitor, P p);
+  abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  public final @Override <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return accept((Decl.Visitor<P, R>) visitor, p);
+  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
+    var ret = doAccept(visitor, p);
+    visitor.traceExit(ret);
+    return ret;
   }
 
-  public Def tyck(@NotNull Reporter reporter) {
-    return accept(new StmtTycker(reporter), Unit.unit());
+  public final @Override <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
+    return doAccept((Decl.Visitor<P, R>) visitor, p);
+  }
+
+  public Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
+    return accept(new StmtTycker(reporter, builder), Unit.unit());
   }
 
   public interface Visitor<P, R> {
+    default void traceEntrance(@NotNull Decl decl, P p) {
+    }
+    default void traceExit(R r) {
+    }
     R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
   }
@@ -173,7 +185,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     @Override
-    public <P, R> R accept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitDataDecl(this, p);
     }
 
@@ -241,7 +253,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     @Override
-    public <P, R> R accept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitFnDecl(this, p);
     }
 

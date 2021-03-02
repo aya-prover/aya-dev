@@ -16,3 +16,5 @@ gradle.properties
 lombok.config
 
 /cli-*-all.jar
+/imgui.ini
+

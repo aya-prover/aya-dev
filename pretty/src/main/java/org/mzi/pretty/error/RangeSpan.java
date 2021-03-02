@@ -24,7 +24,7 @@ public record RangeSpan(
   }
 
   @Override
-  public @NotNull Span.StartStopLineCol findStartStopLineCol(PrettyErrorConfig config) {
+  public @NotNull Span.Data normalize(PrettyErrorConfig config) {
     String input = input();
     int line = 1;
     int col = 0;
@@ -60,7 +60,7 @@ public record RangeSpan(
       }
     }
 
-    return new StartStopLineCol(startLine, startCol, endLine, endCol);
+    return new Data(startLine, startCol, endLine, endCol);
   }
 
   @Override public String toString() {

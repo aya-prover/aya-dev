@@ -49,7 +49,7 @@ public class ExprPrettyConsumer implements Expr.Visitor<Unit, Doc> {
   public Doc visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Unit unit) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.plain("\\Sigma"),
+      Doc.plain("\\Sig"),
       Doc.plain(" "),
       StmtPrettyConsumer.INSTANCE.visitTele(expr.params()),
       Doc.plain(" ** "),

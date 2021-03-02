@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.cli;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,16 +14,16 @@ import java.nio.file.Path;
 /**
  * @author ice1000
  */
-public record StreamReporter(@NotNull Path filePath, @NotNull PrintStream stream) implements Reporter {
+public record StreamReporter(@NotNull Path filePath, @NotNull String sourceCode, @NotNull PrintStream stream) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
-    var errorMsg = errorMsg(filePath, problem);
+    var errorMsg = errorMsg(filePath, sourceCode, problem);
     stream.println(errorMsg);
   }
 
-  public static @NotNull String errorMsg(@NotNull Path filePath, @NotNull Problem problem) {
+  public static @NotNull String errorMsg(@NotNull Path filePath, @NotNull String sourceCode, @NotNull Problem problem) {
     if (problem.sourcePos() == SourcePos.NONE)
       return problem.describe().renderWithPageWidth(114514);
-    var error = problem.toPrettyError(filePath, Doc.empty()).toDoc();
+    var error = problem.toPrettyError(filePath, Doc.empty(), sourceCode).toDoc();
     return error.renderWithPageWidth(80);
   }
 }

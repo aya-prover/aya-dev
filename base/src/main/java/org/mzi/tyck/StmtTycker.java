@@ -8,6 +8,7 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
@@ -18,14 +19,37 @@ import org.mzi.core.term.PiTerm;
 import org.mzi.core.term.Term;
 import org.mzi.core.term.UnivTerm;
 import org.mzi.generic.Pat;
+import org.mzi.tyck.trace.Trace;
 
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Unit, Def> {
+public record StmtTycker(
+  @NotNull Reporter reporter,
+  Trace.@Nullable Builder traceBuilder
+) implements Decl.Visitor<Unit, Def> {
+  private @NotNull ExprTycker newTycker() {
+    final var tycker = new ExprTycker(reporter);
+    tycker.traceBuilder = traceBuilder;
+    return tycker;
+  }
+
+  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+    if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  @Override public void traceEntrance(@NotNull Decl decl, Unit unit) {
+    tracing(builder -> builder.shift(new Trace.DeclT(decl.ref(), decl.sourcePos)));
+  }
+
+  @Override public void traceExit(Def def) {
+    tracing(Trace.Builder::reduce);
+  }
+
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
     var ctorBuf = Buffer.<DataDef.Ctor>of();
     var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
-    var checker = new ExprTycker(reporter);
+    var checker = newTycker();
     var tele = checkTele(checker, decl.telescope)
       .collect(ImmutableSeq.factory());
     final var result = checker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
@@ -55,7 +79,7 @@ public record StmtTycker(@NotNull Reporter reporter) implements Decl.Visitor<Uni
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
-    var headerChecker = new ExprTycker(reporter);
+    var headerChecker = newTycker();
     var resultTele = checkTele(headerChecker, decl.telescope)
       .collect(ImmutableSeq.factory());
     // It might contain unsolved holes, but that's acceptable.
