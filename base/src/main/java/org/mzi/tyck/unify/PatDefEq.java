@@ -3,6 +3,7 @@
 package org.mzi.tyck.unify;
 
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.core.term.AppTerm;
@@ -16,8 +17,6 @@ import org.mzi.tyck.MetaContext;
 import org.mzi.tyck.error.HoleBadSpineWarn;
 import org.mzi.util.Ordering;
 
-import java.util.HashMap;
-
 /**
  * The implementation of untyped pattern unification for holes.
  * András Kovács' elaboration-zoo is taken as reference.
@@ -30,7 +29,7 @@ public class PatDefEq extends DefEq {
   }
 
   private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
-    var subst = new Substituter.TermSubst(new HashMap<>(spine.size() * 2));
+    var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : spine.view()) {
       if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
         rhs = extractVar(rhs, subst, arg, var);

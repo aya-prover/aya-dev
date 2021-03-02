@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.value.SimpleMutableValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +31,6 @@ import org.mzi.tyck.sort.Sort;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.Rule;
 import org.mzi.util.Ordering;
-
-import java.util.HashMap;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
@@ -201,7 +199,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var type = index == telescope.size() ? dt.body() : telescope.get(index).type();
     // instantiate the type
     var fieldsBefore = telescope.take(index);
-    var subst = new Substituter.TermSubst(new HashMap<>());
+    var subst = new Substituter.TermSubst(new MutableHashMap<>());
     fieldsBefore.forEachIndexed((i, param) ->
       subst.add(param.ref(), new ProjTerm(tupleRes.wellTyped, i + 1)));
     type = type.subst(subst);
@@ -223,7 +221,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var resultTerm = f.wellTyped;
     if (!(f.type instanceof PiTerm piTerm)) return wantButNo(expr, f.type, "pi type");
     var pi = piTerm;
-    var subst = new Substituter.TermSubst(new HashMap<>());
+    var subst = new Substituter.TermSubst(new MutableHashMap<>());
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
       var param = pi.param().subst(subst);
