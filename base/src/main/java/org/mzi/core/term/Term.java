@@ -15,7 +15,7 @@ import org.mzi.api.core.term.CoreTerm;
 import org.mzi.api.ref.Bind;
 import org.mzi.api.ref.Var;
 import org.mzi.api.util.NormalizeMode;
-import org.mzi.concrete.pretty.TermPrettyConsumer;
+import org.mzi.core.pretty.TermPrettyConsumer;
 import org.mzi.core.visitor.Normalizer;
 import org.mzi.core.visitor.Stripper;
 import org.mzi.core.visitor.Substituter;
