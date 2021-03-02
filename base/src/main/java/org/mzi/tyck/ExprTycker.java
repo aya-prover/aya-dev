@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.value.SimpleMutableValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,10 +33,25 @@ import org.mzi.tyck.unify.Rule;
 import org.mzi.util.Ordering;
 
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
   public final @NotNull MutableMap<Var, Term> localCtx;
+
+  public Trace.@Nullable Builder traceBuilder = null;
+
+  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+    if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  @Override public void traceEntrance(@NotNull Expr expr, Term term) {
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
+  }
+
+  @Override public void traceExit(@NotNull Expr expr, Term term) {
+    tracing(Trace.Builder::reduce);
+  }
 
   public ExprTycker(@NotNull Reporter reporter) {
     this(new MetaContext(reporter));
@@ -142,6 +157,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
+    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper)));
     var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
       metaContext.report(new UnifyError(errorReportLocation, upper, lower));

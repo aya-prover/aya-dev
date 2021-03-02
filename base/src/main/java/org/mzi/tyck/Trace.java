@@ -27,8 +27,12 @@ public sealed interface Trace {
   class Builder {
     public Deque<@NotNull Buffer<@NotNull Trace>> tops = new ArrayDeque<>();
 
+    {
+      tops.addLast(Buffer.of());
+    }
+
     public void shift(@NotNull Trace trace) {
-      Objects.requireNonNull(tops.peekLast()).append(trace);
+      Objects.requireNonNull(tops.getLast()).append(trace);
       tops.addLast(trace.subtraces());
     }
 
