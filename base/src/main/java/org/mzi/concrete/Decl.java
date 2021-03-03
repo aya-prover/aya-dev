@@ -64,7 +64,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
-  abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
+  protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     visitor.traceEntrance(this, p);
@@ -187,7 +187,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     @Override
-    public <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitDataDecl(this, p);
     }
 
@@ -255,7 +255,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     @Override
-    public <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitFnDecl(this, p);
     }
 
