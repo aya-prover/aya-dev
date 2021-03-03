@@ -19,7 +19,7 @@ import org.mzi.tyck.trace.Trace;
  *
  * @author ice1000
  */
-public sealed abstract class SigItem implements ConcreteDecl permits Decl, Decl.DataCtor {
+public sealed abstract class Signatured implements ConcreteDecl permits Decl, Decl.DataCtor {
   public final @NotNull SourcePos sourcePos;
 
   // will change after resolve
@@ -36,10 +36,10 @@ public sealed abstract class SigItem implements ConcreteDecl permits Decl, Decl.
   }
 
   public interface Visitor<P, R> extends Decl.Visitor<P, R> {
-    default void traceEntrance(@NotNull SigItem item, P p) {
+    default void traceEntrance(@NotNull Signatured item, P p) {
     }
     @Override default void traceEntrance(@NotNull Decl decl, P p) {
-      traceEntrance((SigItem) decl, p);
+      traceEntrance((Signatured) decl, p);
     }
     R visitCtor(@NotNull Decl.DataCtor ctor, P p);
   }
@@ -53,7 +53,7 @@ public sealed abstract class SigItem implements ConcreteDecl permits Decl, Decl.
     return ret;
   }
 
-  protected SigItem(
+  protected Signatured(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Expr.Param> telescope
   ) {

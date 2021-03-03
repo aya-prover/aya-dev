@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
-import org.mzi.concrete.SigItem;
+import org.mzi.concrete.Signatured;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
-) implements SigItem.Visitor<ExprTycker, Def> {
+) implements Signatured.Visitor<ExprTycker, Def> {
   public @NotNull ExprTycker newTycker() {
     final var tycker = new ExprTycker(reporter);
     tycker.traceBuilder = traceBuilder;

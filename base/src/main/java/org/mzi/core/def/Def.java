@@ -5,13 +5,13 @@ package org.mzi.core.def;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.core.def.CoreDef;
 import org.mzi.api.ref.DefVar;
-import org.mzi.concrete.SigItem;
+import org.mzi.concrete.Signatured;
 
 /**
  * @author ice1000
  */
 public interface Def extends CoreDef {
-  @Override @NotNull DefVar<? extends Def, ? extends SigItem> ref();
+  @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
 
   <P, R> R accept(Visitor<P, R> visitor, P p);
 

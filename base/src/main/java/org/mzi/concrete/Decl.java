@@ -27,7 +27,7 @@ import java.util.Objects;
  *
  * @author re-xyr
  */
-public sealed abstract class Decl extends SigItem implements Stmt, ConcreteDecl {
+public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDecl {
   public final @NotNull Accessibility accessibility;
   public final @NotNull ImmutableSeq<Stmt> abuseBlock;
   public @Nullable Context ctx = null;
@@ -62,7 +62,7 @@ public sealed abstract class Decl extends SigItem implements Stmt, ConcreteDecl 
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  public final @Override <P, R> R doAccept(SigItem.@NotNull Visitor<P, R> visitor, P p) {
+  public final @Override <P, R> R doAccept(Signatured.@NotNull Visitor<P, R> visitor, P p) {
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
@@ -75,7 +75,7 @@ public sealed abstract class Decl extends SigItem implements Stmt, ConcreteDecl 
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
   }
 
-  public static final class DataCtor extends SigItem {
+  public static final class DataCtor extends Signatured {
     public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
     public @NotNull Buffer<String> elim;
     public @NotNull Buffer<Pat.Clause<Expr>> clauses;
