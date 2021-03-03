@@ -3,6 +3,7 @@
 package org.mzi.cli;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import org.glavo.kala.tuple.Unit;
 import org.ice1000.jimgui.util.JniLoader;
 import org.mzi.api.error.Problem;
@@ -17,7 +18,12 @@ public class Main {
   public static void main(String... args) throws IOException {
     var cli = new CliArgs();
     var commander = JCommander.newBuilder().addObject(cli).build();
-    commander.parse(args);
+    try {
+      commander.parse(args);
+    } catch (ParameterException e) {
+      System.err.println(e.getLocalizedMessage());
+      System.exit(-1);
+    }
     if (cli.version) {
       System.out.println("Mzi v" + GeneratedVersion.VERSION_STRING);
       if (cli.inputFile == null) return;
@@ -32,14 +38,15 @@ public class Main {
       : CompilerFlags.DEFAULT_FLAGS;
     var filePath = Paths.get(inputFile);
     var sourceCode = Problem.readSourceCode(filePath);
-    var traceBuilder = cli.verbose ? new Trace.Builder() : null;
+    var traceBuilder = cli.traceFormat != null ? new Trace.Builder() : null;
     var compiler = new SingleFileCompiler(new CliReporter(filePath, sourceCode), filePath, traceBuilder);
     var status = compiler.compile(flags);
-    if (traceBuilder != null) {
-      if (cli.visualization) {
+    if (traceBuilder != null) switch (cli.traceFormat) {
+      case ImGui -> {
         JniLoader.load();
         new ImGuiTrace(sourceCode).mainLoop(traceBuilder.root());
-      } else {
+      }
+      case Markdown -> {
         var printer = new MdUnicodeTrace();
         traceBuilder.root().forEach(e -> e.accept(printer, Unit.unit()));
         System.err.println(printer.builder);
