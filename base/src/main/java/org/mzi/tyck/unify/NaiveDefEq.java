@@ -3,7 +3,6 @@
 package org.mzi.tyck.unify;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mzi.core.term.AppTerm;
 import org.mzi.core.term.Term;
 import org.mzi.tyck.MetaContext;
@@ -13,13 +12,13 @@ import org.mzi.util.Ordering;
 /**
  * @author ice1000
  */
-public class NaiveDefEq extends DefEq {
-  public NaiveDefEq(@NotNull Ordering ord, @NotNull MetaContext metaContext) {
-    super(ord, metaContext);
+public class NaiveDefEq extends TypedDefEq {
+  public NaiveDefEq(@NotNull TypeDirectedDefEq defeq, @NotNull Ordering ord, @NotNull MetaContext metaContext) {
+    super(defeq, ord, metaContext);
   }
 
   @Override
-  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term preRhs, @Nullable Term type) {
+  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!lhs.argsBuf().isEmpty()) {
       metaContext.report(new HoleAppWarn(lhs, expr));
       return false;

@@ -23,9 +23,9 @@ import org.mzi.util.Ordering;
  *
  * @author ice1000
  */
-public class PatDefEq extends DefEq {
-  public PatDefEq(@NotNull Ordering ord, @NotNull MetaContext metaContext) {
-    super(ord, metaContext);
+public class PatDefEq extends TypedDefEq {
+  public PatDefEq(@NotNull TypeDirectedDefEq defeq, @NotNull Ordering ord, @NotNull MetaContext metaContext) {
+    super(defeq, ord, metaContext);
   }
 
   private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
@@ -53,7 +53,7 @@ public class PatDefEq extends DefEq {
   }
 
   @Override
-  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @Nullable Term type) {
+  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @NotNull Term type) {
     var solved = extract(lhs.args(), rhs);
     if (solved == null) {
       metaContext.report(new HoleBadSpineWarn(lhs, expr));
