@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.concrete.def.ConcreteDecl;
-import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
@@ -19,8 +18,6 @@ import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
-import org.mzi.tyck.StmtTycker;
-import org.mzi.tyck.trace.Trace;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -67,11 +64,6 @@ public sealed abstract class Decl extends SigItem implements Stmt, ConcreteDecl 
 
   public final @Override <P, R> R doAccept(SigItem.@NotNull Visitor<P, R> visitor, P p) {
     return doAccept((Decl.Visitor<P, R>) visitor, p);
-  }
-
-  public Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
-    var tycker = new StmtTycker(reporter, builder);
-    return accept(tycker, tycker.newTycker());
   }
 
   public interface Visitor<P, R> {

@@ -7,8 +7,12 @@ import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.concrete.def.ConcreteDecl;
+import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
+import org.mzi.core.def.Def;
 import org.mzi.core.term.Term;
+import org.mzi.tyck.StmtTycker;
+import org.mzi.tyck.trace.Trace;
 
 /**
  * An item in the signature, with telescope and result type.
@@ -24,6 +28,11 @@ public sealed abstract class SigItem implements ConcreteDecl permits Decl, Decl.
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
+  }
+
+  public Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
+    var tycker = new StmtTycker(reporter, builder);
+    return accept(tycker, tycker.newTycker());
   }
 
   public interface Visitor<P, R> extends Decl.Visitor<P, R> {
