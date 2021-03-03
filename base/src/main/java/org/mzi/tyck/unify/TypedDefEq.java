@@ -36,35 +36,16 @@ public abstract class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNu
 
   @Override
   public @NotNull Boolean visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    /*
-    if (!(preRhs instanceof PiTerm rhs)) return false;
-    if (!defeq.checkParam(lhs.param(), rhs.param())) return false;
-    var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
-    defeq.localCtx.remove(lhs.param().ref());
-    return bodyIsOk;
-     */
     return passDown(lhs, preRhs, type);
   }
 
   @Override
   public @NotNull Boolean visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    /*if (!(preRhs instanceof SigmaTerm rhs)) return false;
-    if (!defeq.checkParams(lhs.params(), rhs.params())) return false;
-    var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
-    lhs.params().forEach(param -> defeq.localCtx.remove(param.ref()));
-    return bodyIsOk;
-
-     */
     return passDown(lhs, preRhs, type);
   }
 
   @Override
   public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    /*
-    if (!(preRhs instanceof UnivTerm rhs)) return false;
-    return true;
-
-     */
     return passDown(lhs, preRhs, type);
   }
 
