@@ -6,6 +6,7 @@ import org.glavo.kala.collection.immutable.ImmutableHashMap;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,7 @@ public record StmtTycker(
     var tele = checkTele(checker, decl.telescope)
       .collect(ImmutableSeq.factory());
     final var result = checker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+    decl.signature = Tuple.of(tele, result);
     decl.body.accept(new Decl.DataBody.Visitor<Unit, Unit>() {
       @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
         ctors.ctors().forEach(ctor -> {
