@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -126,24 +127,30 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return wantButNo(expr, term, "universe term");
   }
 
-  @Rule.Synth
+  @SuppressWarnings("unchecked") @Rule.Synth
   @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
     final var var = expr.resolvedVar();
     if (var instanceof DefVar<?, ?> defVar) {
       if (defVar.core instanceof FnDef fn) {
         // TODO[ice]: should we rename the vars in this telescope?
         var tele = fn.telescope();
-        @SuppressWarnings("unchecked") var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, tele.map(Term.Param::toArg));
-        var lam = LamTerm.make(tele, call);
-        var ty = PiTerm.make(false, tele, fn.result());
-        return new Result(lam, ty);
+        var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, tele.map(Term.Param::toArg));
+        return defCall(tele, call, fn.result());
       } else if (defVar.core instanceof DataDef data) {
         var tele = data.telescope();
-        @SuppressWarnings("unchecked") var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, tele.map(Term.Param::toArg));
-        var lam = LamTerm.make(tele, call);
-        var ty = PiTerm.make(false, tele, data.result());
-        return new Result(lam, ty);
-      } else {
+        var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, tele.map(Term.Param::toArg));
+        return defCall(tele, call, data.result());
+      } else if (defVar.concrete instanceof Decl decl && decl.signature != null)
+        return defCall(decl.signature._1, decl.accept(new Decl.Visitor<ImmutableSeq<Arg<Term>>, @NotNull Term>() {
+          @Override public Term visitDataDecl(Decl.@NotNull DataDecl decl1, ImmutableSeq<Arg<Term>> args) {
+            return new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, args);
+          }
+
+          @Override public Term visitFnDecl(Decl.@NotNull FnDecl decl1, ImmutableSeq<Arg<Term>> args) {
+            return new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, args);
+          }
+        }, decl.signature._1.map(Term.Param::toArg)), decl.signature._2);
+      else {
         final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
       }
@@ -153,6 +160,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) return new Result(new RefTerm(var), ty);
     unify(term, ty, expr);
     return new Result(new RefTerm(var), ty);
+  }
+
+  @NotNull private ExprTycker.Result defCall(ImmutableSeq<Term.Param> tele, Term call, Term result) {
+    return new Result(LamTerm.make(tele, call), PiTerm.make(false, tele, result));
   }
 
   private void unify(Term upper, Term lower, Expr errorReportLocation) {

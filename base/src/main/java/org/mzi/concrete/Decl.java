@@ -18,6 +18,7 @@ import org.mzi.concrete.resolve.context.Context;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
+import org.mzi.core.term.Term;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
 import org.mzi.tyck.StmtTycker;
@@ -36,6 +37,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
   public final @NotNull Accessibility accessibility;
   public final @NotNull ImmutableSeq<Stmt> abuseBlock;
   public @Nullable Context ctx = null;
+  public @Nullable Tuple2<@NotNull ImmutableSeq<Term.Param>, @NotNull Term> signature;
 
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
@@ -62,7 +64,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
-  abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
+  protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     visitor.traceEntrance(this, p);
@@ -185,7 +187,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     @Override
-    public <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitDataDecl(this, p);
     }
 
@@ -253,22 +255,12 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     @Override
-    public <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitFnDecl(this, p);
-    }
-
-    @Override
-    public @NotNull SourcePos sourcePos() {
-      return this.sourcePos;
     }
 
     @Override public @NotNull DefVar<FnDef, FnDecl> ref() {
       return this.ref;
-    }
-
-    @Override
-    public @NotNull Accessibility accessibility() {
-      return this.accessibility;
     }
 
     @Override public boolean equals(Object o) {
