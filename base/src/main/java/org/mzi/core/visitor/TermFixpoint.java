@@ -57,7 +57,7 @@ public interface TermFixpoint<P> extends
     var params = term.params().map(param ->
       new Term.Param(param.ref(), param.type().accept(this, p), param.explicit()));
     var body = term.body().accept(this, p);
-    if (params.sameElements(term.params(), true) || body == term.body()) return term;
+    if (params.sameElements(term.params(), true) && body == term.body()) return term;
     return new SigmaTerm(term.co(), params, body);
   }
 
