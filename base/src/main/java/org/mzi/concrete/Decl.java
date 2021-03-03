@@ -5,12 +5,10 @@ package org.mzi.concrete;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.concrete.def.ConcreteDecl;
-import org.mzi.api.error.Reporter;
 import org.mzi.api.error.SourcePos;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.util.Assoc;
@@ -18,11 +16,8 @@ import org.mzi.concrete.resolve.context.Context;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.term.Term;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
-import org.mzi.tyck.StmtTycker;
-import org.mzi.tyck.trace.Trace;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -32,19 +27,10 @@ import java.util.Objects;
  *
  * @author re-xyr
  */
-public sealed abstract class Decl implements Stmt, ConcreteDecl {
-  public final @NotNull SourcePos sourcePos;
+public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDecl {
   public final @NotNull Accessibility accessibility;
   public final @NotNull ImmutableSeq<Stmt> abuseBlock;
   public @Nullable Context ctx = null;
-  public @Nullable Tuple2<@NotNull ImmutableSeq<Term.Param>, @NotNull Term> signature;
-
-  // will change after resolve
-  public @NotNull ImmutableSeq<Expr.Param> telescope;
-
-  @Override public @NotNull SourcePos sourcePos() {
-    return sourcePos;
-  }
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;
@@ -56,10 +42,9 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     @NotNull ImmutableSeq<Stmt> abuseBlock,
     @NotNull ImmutableSeq<Expr.Param> telescope
   ) {
-    this.sourcePos = sourcePos;
+    super(sourcePos, telescope);
     this.accessibility = accessibility;
     this.abuseBlock = abuseBlock;
-    this.telescope = telescope;
   }
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
@@ -77,8 +62,8 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  public Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
-    return accept(new StmtTycker(reporter, builder), Unit.unit());
+  public final @Override <P, R> R doAccept(Signatured.@NotNull Visitor<P, R> visitor, P p) {
+    return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
   public interface Visitor<P, R> {
@@ -90,10 +75,8 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
   }
 
-  public static class DataCtor {
-    public @NotNull SourcePos sourcePos;
+  public static final class DataCtor extends Signatured {
     public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
-    public @NotNull ImmutableSeq<Expr.Param> telescope;
     public @NotNull Buffer<String> elim;
     public @NotNull Buffer<Pat.Clause<Expr>> clauses;
     public boolean coerce;
@@ -104,8 +87,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
                     @NotNull Buffer<String> elim,
                     @NotNull Buffer<Pat.Clause<Expr>> clauses,
                     boolean coerce) {
-      this.sourcePos = sourcePos;
-      this.telescope = telescope;
+      super(sourcePos, telescope);
       this.elim = elim;
       this.clauses = clauses;
       this.coerce = coerce;
@@ -124,13 +106,12 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       return Objects.hash(telescope, elim, clauses, coerce);
     }
 
-    @Override public String toString() {
-      return "DataCtor{" +
-        "telescope=" + telescope +
-        ", elim=" + elim +
-        ", clauses=" + clauses +
-        ", coerce=" + coerce +
-        '}';
+    @Override protected <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitCtor(this, p);
+    }
+
+    @Override public @NotNull DefVar<DataDef.Ctor, DataCtor> ref() {
+      return ref;
     }
   }
 
@@ -139,7 +120,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
       @NotNull Buffer<DataCtor> ctors
     ) implements DataBody {
       @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-        return visitor.visitCtor(this, p);
+        return visitor.visitCtors(this, p);
       }
     }
 
@@ -153,7 +134,7 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     }
 
     interface Visitor<P, R> {
-      R visitCtor(@NotNull Ctors ctors, P p);
+      R visitCtors(@NotNull Ctors ctors, P p);
       R visitClause(@NotNull Clauses clauses, P p);
     }
 
@@ -208,17 +189,6 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     @Override
     public int hashCode() {
       return Objects.hash(sourcePos, telescope, result, body, abuseBlock);
-    }
-
-    @Override public String toString() {
-      return "DataDecl{" +
-        "sourcePos=" + sourcePos +
-        ", accessibility=" + accessibility +
-        ", telescope=" + telescope +
-        ", result=" + result +
-        ", body=" + body +
-        ", abuseBlock=" + abuseBlock +
-        '}';
     }
   }
 
@@ -278,19 +248,6 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     @Override
     public int hashCode() {
       return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
-    }
-
-    @Override public String toString() {
-      return "FnDecl{" +
-        "sourcePos=" + sourcePos +
-        ", accessibility=" + accessibility +
-        ", modifiers=" + modifiers +
-        ", assoc=" + assoc +
-        ", telescope=" + telescope +
-        ", result=" + result +
-        ", body=" + body +
-        ", abuseBlock=" + abuseBlock +
-        '}';
     }
   }
 }

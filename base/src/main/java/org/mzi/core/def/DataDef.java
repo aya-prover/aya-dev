@@ -38,9 +38,17 @@ public record DataDef(
     @NotNull Buffer<String> elim,
     @NotNull Buffer<Pat.Clause<Term>> clauses,
     boolean coerce
-  ) {
+  ) implements Def {
     public Ctor {
       name.core = this;
+    }
+
+    @Override public @NotNull DefVar<Ctor, Decl.DataCtor> ref() {
+      return name;
+    }
+
+    @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {
+      return null;
     }
   }
 }

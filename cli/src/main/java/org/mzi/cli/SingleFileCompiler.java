@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.api.util.MziInterruptException;
-import org.mzi.concrete.Decl;
+import org.mzi.concrete.Signatured;
 import org.mzi.concrete.Stmt;
 import org.mzi.concrete.parse.MziParsing;
 import org.mzi.concrete.parse.MziProducer;
@@ -32,7 +32,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       program.forEach(s -> s.accept(shallowResolver, context));
       program.forEach(Stmt::resolve);
       program.forEach(s -> {
-        if (s instanceof Decl decl) decl.tyck(reporter, builder);
+        if (s instanceof Signatured decl) decl.tyck(reporter, builder);
       });
     } catch (ExprTycker.TyckerException | Context.ContextException e) {
       e.printStackTrace();

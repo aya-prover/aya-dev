@@ -43,7 +43,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
     return decl.body.accept(new Decl.DataBody.Visitor<>() {
-      @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
+      @Override public Unit visitCtors(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
         for (var ctor : ctors.ctors()) {
           var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
           ctor.telescope = ctorLocal._1;
