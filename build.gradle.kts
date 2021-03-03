@@ -100,7 +100,7 @@ subprojects {
   }
 }
 
-tasks.register<JacocoReport>("mergeJacocoReports") {
+val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
   group = "verification"
   subprojects.forEach { subproject ->
     subproject.plugins.withType<JacocoPlugin>().configureEach {
@@ -120,6 +120,11 @@ tasks.register<JacocoReport>("mergeJacocoReports") {
     csv.isEnabled = false
     html.isEnabled = true
   }
+}
+
+tasks.register("githubActions") {
+  group = "verification"
+  dependsOn(tasks.named("check"), mergeJacocoReports)
 }
 
 tasks.withType<Wrapper>().configureEach {
