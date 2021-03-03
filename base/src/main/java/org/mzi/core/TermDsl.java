@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.core;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -17,7 +17,6 @@ import org.mzi.generic.Arg;
 import org.mzi.parser.LispBaseVisitor;
 import org.mzi.parser.LispParser;
 import org.mzi.ref.LocalVar;
-import org.mzi.tyck.sort.Sort;
 
 import java.util.List;
 import java.util.Map;
@@ -54,7 +53,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var rule = ctx.IDENT().getText();
     var exprs = ctx.expr();
     return switch (rule) {
-      case "U" -> new UnivTerm(Sort.OMEGA);
+      case "U" -> UnivTerm.OMEGA;
       case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new AppTerm.FnCall(
         (DefVar<FnDef, Decl.FnDecl>) ((RefTerm) exprs.get(0).accept(this)).var(),
@@ -76,9 +75,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
 
   public Term.@NotNull Param exprToParam(LispParser.ExprContext ctx) {
     var atom = ctx.atom();
-    if (atom != null) {
-      throw new IllegalArgumentException("Unexpected atom: " + atom.getText());
-    }
+    if (atom != null) throw new IllegalArgumentException("Unexpected atom: " + atom.getText());
     var ident = ctx.IDENT().getText();
     var exprs = ctx.expr();
     assert exprs.size() == 2;
