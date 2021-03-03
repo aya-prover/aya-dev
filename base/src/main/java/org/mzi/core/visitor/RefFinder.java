@@ -1,15 +1,17 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.core.visitor;
 
-import org.glavo.kala.tuple.Unit;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.api.ref.DefVar;
 import org.mzi.api.ref.Var;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
+import org.mzi.core.term.Term;
 
 /**
  * @author re-xyr
@@ -29,7 +31,7 @@ public record RefFinder(boolean withBody) implements Def.Visitor<@NotNull Buffer
   public static RefFinder HEADER_AND_BODY = new RefFinder(true);
 
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
-    fn.telescope().forEach(param -> param.type().accept(TermRefFinder.INSTANCE, references));
+    tele(references, fn.telescope());
     fn.result().accept(TermRefFinder.INSTANCE, references);
     if (withBody) {
       fn.body().accept(TermRefFinder.INSTANCE, references);
@@ -37,9 +39,19 @@ public record RefFinder(boolean withBody) implements Def.Visitor<@NotNull Buffer
     return Unit.unit();
   }
 
+  @Override public Unit visitCtor(@NotNull DataDef.Ctor def, @NotNull Buffer<Def> references) {
+    tele(references, def.telescope());
+    // TODO: ctor def
+    return Unit.unit();
+  }
+
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
-    def.telescope().forEach(param -> param.type().accept(TermRefFinder.INSTANCE, references));
+    tele(references, def.telescope());
     // TODO: data def
     return Unit.unit();
+  }
+
+  private void tele(@NotNull Buffer<Def> references, ImmutableSeq<Term.Param> telescope) {
+    telescope.forEach(param -> param.type().accept(TermRefFinder.INSTANCE, references));
   }
 }

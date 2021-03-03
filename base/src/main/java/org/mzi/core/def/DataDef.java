@@ -6,7 +6,6 @@ import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
-import org.mzi.api.core.def.CoreDef;
 import org.mzi.api.ref.DefVar;
 import org.mzi.concrete.Decl;
 import org.mzi.core.term.Term;
@@ -39,13 +38,17 @@ public record DataDef(
     @NotNull Buffer<String> elim,
     @NotNull Buffer<Pat.Clause<Term>> clauses,
     boolean coerce
-  ) implements CoreDef {
+  ) implements Def {
     public Ctor {
       name.core = this;
     }
 
     @Override public @NotNull DefVar<Ctor, Decl.DataCtor> ref() {
       return name;
+    }
+
+    @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {
+      return null;
     }
   }
 }

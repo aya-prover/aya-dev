@@ -128,7 +128,7 @@ public sealed abstract class Decl extends SigItem implements Stmt, ConcreteDecl 
       @NotNull Buffer<DataCtor> ctors
     ) implements DataBody {
       @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-        return visitor.visitCtor(this, p);
+        return visitor.visitCtors(this, p);
       }
     }
 
@@ -142,7 +142,7 @@ public sealed abstract class Decl extends SigItem implements Stmt, ConcreteDecl 
     }
 
     interface Visitor<P, R> {
-      R visitCtor(@NotNull Ctors ctors, P p);
+      R visitCtors(@NotNull Ctors ctors, P p);
       R visitClause(@NotNull Clauses clauses, P p);
     }
 

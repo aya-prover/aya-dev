@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.mzi.api.error.Reporter;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
+import org.mzi.concrete.SigItem;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
@@ -24,10 +25,16 @@ import org.mzi.tyck.trace.Trace;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+/**
+ * @author ice1000, kiva
+ * @apiNote this class does not create {@link ExprTycker} instances itself,
+ * but use the one passed to it. {@link StmtTycker#newTycker()} creates instances
+ * of expr tyckers.
+ */
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
-) implements Decl.Visitor<ExprTycker, Def> {
+) implements SigItem.Visitor<ExprTycker, Def> {
   public @NotNull ExprTycker newTycker() {
     final var tycker = new ExprTycker(reporter);
     tycker.traceBuilder = traceBuilder;
@@ -46,6 +53,19 @@ public record StmtTycker(
     tracing(Trace.Builder::reduce);
   }
 
+  @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+    var tele = checkTele(tycker, ctor.telescope);
+    return new DataDef.Ctor(
+      ctor.ref,
+      tele.collect(ImmutableSeq.factory()),
+      ctor.elim,
+      ctor.clauses.stream()
+        .map(i -> i.mapTerm(expr -> tycker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))
+        .collect(Buffer.factory()),
+      ctor.coerce
+    );
+  }
+
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var ctorBuf = Buffer.<DataDef.Ctor>of();
     var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
@@ -54,19 +74,8 @@ public record StmtTycker(
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = Tuple.of(tele, result);
     decl.body.accept(new Decl.DataBody.Visitor<ExprTycker, Unit>() {
-      @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, ExprTycker tycker) {
-        ctors.ctors().forEach(ctor -> {
-          var tele = checkTele(tycker, ctor.telescope);
-          ctorBuf.append(new DataDef.Ctor(
-            ctor.ref,
-            tele.collect(ImmutableSeq.factory()),
-            ctor.elim,
-            ctor.clauses.stream()
-              .map(i -> i.mapTerm(expr -> tycker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))
-              .collect(Buffer.factory()),
-            ctor.coerce
-          ));
-        });
+      @Override public Unit visitCtors(Decl.DataBody.@NotNull Ctors ctors, ExprTycker tycker) {
+        ctors.ctors().forEach(ctor -> ctorBuf.append(visitCtor(ctor, tycker)));
         return Unit.unit();
       }
 

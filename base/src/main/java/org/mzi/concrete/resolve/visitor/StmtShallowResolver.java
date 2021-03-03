@@ -65,7 +65,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   public Unit visitDataDecl(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     return decl.body.accept(new Decl.DataBody.Visitor<>() {
-      @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
+      @Override public Unit visitCtors(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
         context.importModule(
           ImmutableSeq.of(decl.ref().name()),
           decl.accessibility(),
