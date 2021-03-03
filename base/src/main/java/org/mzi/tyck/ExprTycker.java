@@ -8,7 +8,6 @@ import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple3;
-import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.SimpleMutableValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,25 +134,23 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       if (defVar.core instanceof FnDef fn) {
         // TODO[ice]: should we rename the vars in this telescope?
         var tele = fn.telescope();
-        @SuppressWarnings("unchecked") var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, tele.map(Term.Param::toArg));
+        var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, tele.map(Term.Param::toArg));
         return defCall(tele, call, fn.result());
       } else if (defVar.core instanceof DataDef data) {
         var tele = data.telescope();
         var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, tele.map(Term.Param::toArg));
         return defCall(tele, call, data.result());
-      } else if (defVar.concrete instanceof Decl decl && decl.signature != null) {
-        var args = decl.signature._1.map(Term.Param::toArg);
-        var call = decl.accept(new Decl.Visitor<Unit, @NotNull Term>() {
-          @Override public Term visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+      } else if (defVar.concrete instanceof Decl decl && decl.signature != null)
+        return defCall(decl.signature._1, decl.accept(new Decl.Visitor<ImmutableSeq<Arg<Term>>, @NotNull Term>() {
+          @Override public Term visitDataDecl(Decl.@NotNull DataDecl decl1, ImmutableSeq<Arg<Term>> args) {
             return new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, args);
           }
 
-          @Override public Term visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
+          @Override public Term visitFnDecl(Decl.@NotNull FnDecl decl1, ImmutableSeq<Arg<Term>> args) {
             return new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, args);
           }
-        }, Unit.unit());
-        return defCall(decl.signature._1, call, decl.signature._2);
-      } else {
+        }, decl.signature._1.map(Term.Param::toArg)), decl.signature._2);
+      else {
         final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
       }
