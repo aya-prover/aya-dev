@@ -123,15 +123,6 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     public int hashCode() {
       return Objects.hash(telescope, elim, clauses, coerce);
     }
-
-    @Override public String toString() {
-      return "DataCtor{" +
-        "telescope=" + telescope +
-        ", elim=" + elim +
-        ", clauses=" + clauses +
-        ", coerce=" + coerce +
-        '}';
-    }
   }
 
   public sealed interface DataBody {
@@ -209,17 +200,6 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     public int hashCode() {
       return Objects.hash(sourcePos, telescope, result, body, abuseBlock);
     }
-
-    @Override public String toString() {
-      return "DataDecl{" +
-        "sourcePos=" + sourcePos +
-        ", accessibility=" + accessibility +
-        ", telescope=" + telescope +
-        ", result=" + result +
-        ", body=" + body +
-        ", abuseBlock=" + abuseBlock +
-        '}';
-    }
   }
 
   /**
@@ -278,19 +258,6 @@ public sealed abstract class Decl implements Stmt, ConcreteDecl {
     @Override
     public int hashCode() {
       return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
-    }
-
-    @Override public String toString() {
-      return "FnDecl{" +
-        "sourcePos=" + sourcePos +
-        ", accessibility=" + accessibility +
-        ", modifiers=" + modifiers +
-        ", assoc=" + assoc +
-        ", telescope=" + telescope +
-        ", result=" + result +
-        ", body=" + body +
-        ", abuseBlock=" + abuseBlock +
-        '}';
     }
   }
 }
