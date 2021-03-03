@@ -5,6 +5,7 @@ package org.mzi.concrete;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple2;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,10 +59,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     return ret;
   }
 
+  @ApiStatus.NonExtendable
   public final @Override <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
+  @ApiStatus.NonExtendable
   public final @Override <P, R> R doAccept(Signatured.@NotNull Visitor<P, R> visitor, P p) {
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
