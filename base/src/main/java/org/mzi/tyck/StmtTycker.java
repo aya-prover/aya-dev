@@ -45,7 +45,7 @@ public record StmtTycker(
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override public void traceEntrance(@NotNull Decl decl, ExprTycker tycker) {
+  @Override public void traceEntrance(@NotNull Signatured decl, ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.DeclT(decl.ref(), decl.sourcePos)));
   }
 

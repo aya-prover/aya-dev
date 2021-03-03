@@ -4,6 +4,7 @@ package org.mzi.concrete;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
   interface Visitor<P, R> extends Decl.Visitor<P, R> {
     default void traceEntrance(@NotNull Stmt stmt, P p) {
     }
+    @ApiStatus.NonExtendable
     @Override default void traceEntrance(@NotNull Decl decl, P p) {
       traceEntrance((Stmt) decl, p);
     }

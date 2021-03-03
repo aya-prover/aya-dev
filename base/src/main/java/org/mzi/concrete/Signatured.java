@@ -4,6 +4,7 @@ package org.mzi.concrete;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple2;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mzi.api.concrete.def.ConcreteDecl;
@@ -38,6 +39,7 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
   public interface Visitor<P, R> extends Decl.Visitor<P, R> {
     default void traceEntrance(@NotNull Signatured item, P p) {
     }
+    @ApiStatus.NonExtendable
     @Override default void traceEntrance(@NotNull Decl decl, P p) {
       traceEntrance((Signatured) decl, p);
     }
