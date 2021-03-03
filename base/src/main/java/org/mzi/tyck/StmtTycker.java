@@ -16,7 +16,6 @@ import org.mzi.concrete.Expr;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.term.PiTerm;
 import org.mzi.core.term.Term;
 import org.mzi.core.term.UnivTerm;
 import org.mzi.generic.Pat;
@@ -81,25 +80,15 @@ public record StmtTycker(
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
-    var headerChecker = newTycker();
-    var resultTele = checkTele(headerChecker, decl.telescope)
+    var checker = newTycker();
+    var resultTele = checkTele(checker, decl.telescope)
       .collect(ImmutableSeq.factory());
     // It might contain unsolved holes, but that's acceptable.
-    var resultRes = decl.result.accept(headerChecker, null);
+    var resultRes = decl.result.accept(checker, null);
+    decl.signature = Tuple.of(resultTele, resultRes.wellTyped());
 
-    var bodyChecker = new ExprTycker(headerChecker.metaContext, headerChecker.localCtx);
-    var declType = buildFnType(resultTele, resultRes.wellTyped());
-    bodyChecker.localCtx.put(decl.ref, declType);
-
-    var bodyRes = headerChecker.checkExpr(decl.body, resultRes.wellTyped());
+    var bodyRes = checker.checkExpr(decl.body, resultRes.wellTyped());
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
-  }
-
-  private @NotNull Term buildFnType(ImmutableSeq<Term.Param> tele, Term result) {
-    if (tele.isEmpty()) {
-      return result;
-    }
-    return new PiTerm(false, tele.first(), buildFnType(tele.drop(1), result));
   }
 
   private @NotNull Stream<Term.Param> checkTele(
