@@ -31,6 +31,7 @@ import org.mzi.tyck.sort.Sort;
 import org.mzi.tyck.trace.Trace;
 import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.Rule;
+import org.mzi.tyck.unify.TypeDirectedDefEq;
 import org.mzi.util.Ordering;
 
 import java.util.function.Consumer;
@@ -88,27 +89,26 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (!(term.normalize(NormalizeMode.WHNF) instanceof PiTerm dt && !dt.co())) {
       return wantButNo(expr, term, "pi type");
     }
-    var tyRef = new SimpleMutableValue<>(term);
-    var var = expr.param().ref();
     var param = expr.param();
-    if (tyRef.value instanceof PiTerm pi && !pi.co()) {
-      var type = pi.param().type();
-      var lamParam = param.type();
-      if (lamParam != null) {
-        var result = lamParam.accept(this, UnivTerm.OMEGA);
-        var comparison = new NaiveDefEq(Ordering.Lt, metaContext).compare(result.wellTyped, type, UnivTerm.OMEGA);
-        if (!comparison) {
-          // TODO[ice]: expected type mismatch lambda type annotation
-          throw new TyckerException();
-        } else type = result.wellTyped;
-      }
-      type = type.subst(pi.param().ref(), new RefTerm(var));
-      var resultParam = new Term.Param(var, type, param.explicit());
-      localCtx.put(var, type);
-      tyRef.value = pi.body();
-      var rec = expr.body().accept(this, tyRef.value);
-      return new Result(new LamTerm(resultParam, rec.wellTyped), dt);
-    } else return wantButNo(expr, tyRef.value, "pi type");
+    var var = param.ref();
+    var lamParam = param.type();
+    var type = dt.param().type();
+    if (lamParam != null) {
+      var result = lamParam.accept(this, UnivTerm.OMEGA);
+      var comparison = new TypeDirectedDefEq(
+        eq -> new NaiveDefEq(eq, Ordering.Lt, metaContext),
+        localCtx
+      ).compare(result.wellTyped, type, UnivTerm.OMEGA);
+      if (!comparison) {
+        // TODO[ice]: expected type mismatch lambda type annotation
+        throw new TyckerException();
+      } else type = result.wellTyped;
+    }
+    var resultParam = new Term.Param(var, type, param.explicit());
+    localCtx.put(var, type);
+    var body = dt.body().subst(dt.param().ref(), new RefTerm(var));
+    var rec = expr.body().accept(this, body);
+    return new Result(new LamTerm(resultParam, rec.wellTyped), dt);
   }
 
   private <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
@@ -158,7 +158,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
     tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, errorReportLocation.sourcePos())));
     tracing(Trace.Builder::reduce);
-    var unification = new NaiveDefEq(Ordering.Lt, metaContext).compare(lower, upper, UnivTerm.OMEGA);
+    var unification = new TypeDirectedDefEq(
+      eq -> new NaiveDefEq(eq, Ordering.Lt, metaContext),
+      localCtx
+    ).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
       metaContext.report(new UnifyError(errorReportLocation, upper, lower));
       throw new TyckInterruptedException();
