@@ -64,7 +64,7 @@ public class TyckFnTest {
       fail();
       return;
     }
-    var lam_aa = AppTerm.make(lam, new Arg<>(new RefTerm(() -> "_"), true));
+    var lam_aa = AppTerm.make(lam, new Arg<>(new RefTerm(new LocalVar("_")), true));
     assertEquals(lam.body(), lam_aa);
     var newVar = new RefTerm(new LocalVar("xyr"));
     assertEquals(newVar, AppTerm.make(lam_aa, new Arg<>(newVar, true)));

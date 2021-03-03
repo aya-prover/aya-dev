@@ -32,8 +32,8 @@ public class TracingTest {
     checker.traceBuilder.root().forEach(e -> e.accept(show, Unit.unit()));
     assertEquals("""
       + \u22A2 `\\lam (_) => \\lam (a) => a` : \\Pi (A : \\oo-Type) -> \\Pi (a : A) -> A
-        + \u22A2 `\\lam (a) => a` : \\Pi (a : A) -> A
-          + \u22A2 `a` : A
-            + \u22A2 A \u2261 A""", show.builder.toString().trim());
+        + \u22A2 `\\lam (a) => a` : \\Pi (a : _) -> _
+          + \u22A2 `a` : _
+            + \u22A2 _ \u2261 _""", show.builder.toString().trim());
   }
 }

@@ -2,90 +2,117 @@
 // Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
+import org.mzi.core.term.Term;
+import org.mzi.ref.LocalVar;
 import org.mzi.test.Lisp;
 import org.mzi.test.LispTestCase;
+import org.mzi.tyck.unify.TypeDirectedDefEq;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DefEqTest extends LispTestCase {
+  private final Term typeU = Lisp.parse("(U)");
+  private final Term typePi = Lisp.parse("(Pi (m (U) ex) (U))");
+  private final Term typeSigma = Lisp.parse("(Sigma (n (U) ex null) (U))");
+
+  public DefEqTest() {
+    ImmutableSeq.of("x", "y", "f", "g", "jojo", "xyren", "kiva", "kiwa", "t", "tt").forEach(name ->
+      vars.put(name, new LocalVar(name))
+    );
+    eq = eq(MutableHashMap.ofEntries(
+      Tuple2.of(vars.get("x"), typeU),
+      Tuple2.of(vars.get("y"), typeU),
+      Tuple2.of(vars.get("f"), typePi),
+      Tuple2.of(vars.get("g"), typePi),
+      Tuple2.of(vars.get("jojo"), typeU),
+      Tuple2.of(vars.get("xyren"), typeU),
+      Tuple2.of(vars.get("kiva"), typeU),
+      Tuple2.of(vars.get("kiwa"), typeU),
+      Tuple2.of(vars.get("t"), typeSigma),
+      Tuple2.of(vars.get("tt"), typeSigma)
+    ));
+  }
+
+  private final TypeDirectedDefEq eq;
+
   @Test
   public void basicFailure() {
-    assertFalse(eq().compare(Lisp.parse("(U)"), Lisp.parse("jojo"), null));
-    assertFalse(eq().compare(Lisp.parse("(app (lam (a (U) ex) a) x)", vars), Lisp.parse("(app g y)", vars), null));
-    assertFalse(eq().compare(Lisp.parse("(app (lam (a (U) ex) a) x)", vars), Lisp.parse("(app g x)", vars), null));
-    assertFalse(eq().compare(Lisp.parse("(app (lam (a (U) ex) a) x)", vars), Lisp.parse("(app f y)", vars), null));
-    assertFalse(eq().compare(Lisp.parse("(Pi (a (U) ex) (Pi (b (U) ex) a))"), Lisp.parse("(Pi (a (U) ex) a)"), null));
-    assertFalse(eq().compare(Lisp.parse("(Sigma (a (U) ex (b (U) ex null)) a)"), Lisp.parse("(Sigma (a (U) ex null) a)"), null));
-    assertFalse(eq().compare(Lisp.parse("(Pi (a (U) ex) (Pi (b (U) ex) a))"), Lisp.parse("(Pi (a (U) ex) (Pi (b a ex) a))"), null));
-    assertFalse(eq().compare(Lisp.parse("(proj (tup (app (lam (a (U) ex) a) x) b) 1)"), Lisp.parse("(U)"), null));
-    assertFalse(eq().compare(Lisp.parse("(proj t 1)"), Lisp.parse("(U)"), null));
-    assertFalse(eq().compare(Lisp.parse("(proj t 1)", vars), Lisp.parse("(proj t 2)", vars ), null));
+    assertFalse(eq.compare(typeU, Lisp.parse("jojo"), typeU));
+    assertFalse(eq.compare(Lisp.parse("(app (lam (a (U) ex) a) x)", vars), Lisp.parse("(app g y)", vars), typeU));
+    assertFalse(eq.compare(Lisp.parse("(app (lam (a (U) ex) a) x)", vars), Lisp.parse("(app g x)", vars), typeU));
+    assertFalse(eq.compare(Lisp.parse("(app (lam (a (U) ex) a) x)", vars), Lisp.parse("(app f y)", vars), typeU));
+    assertFalse(eq.compare(Lisp.parse("(Pi (a (U) ex) (Pi (b (U) ex) a))"), Lisp.parse("(Pi (a (U) ex) a)"), typeU));
+    assertFalse(eq.compare(Lisp.parse("(Sigma (a (U) ex (b (U) ex null)) a)"), Lisp.parse("(Sigma (a (U) ex null) a)"), typeU));
+    assertFalse(eq.compare(Lisp.parse("(Pi (a (U) ex) (Pi (b (U) ex) a))"), Lisp.parse("(Pi (a (U) ex) (Pi (b a ex) a))"), typeU));
+    assertFalse(eq.compare(Lisp.parse("(proj (tup (app (lam (a (U) ex) a) x) b) 1)"), typeU, typeU));
+    assertFalse(eq.compare(Lisp.parse("(proj t 1)"), typeU, typeU));
+    assertFalse(eq.compare(Lisp.parse("(proj t 1)", vars), Lisp.parse("(proj t 2)", vars ), typeU));
   }
 
   @Test
   public void identical() {
-    identical("(proj (lam (a (U) ex) a) 1)");
-    identical("(lam (a (U) ex) a)");
-    identical("xyren");
-    identical("(Pi (a (U) ex) a)");
-    identical("(Sigma (a (U) ex null) a)");
-    identical("(U)");
-    identical("(tup (proj t 1) (proj t 2))");
-    identical("(proj t 1)");
-    identical("(proj (tup (app (lam (a (U) ex) a) x) b) 1)");
+    identical("(lam (a (U) ex) a)", "(Pi (a (U) ex) (U))");
+    identical("xyren", "(U)");
+    identical("(Pi (b (U) ex) b)", "(U)");
+    identical("(Sigma (a (U) ex null) a)", "(U)");
+    identical("(U)", "(U)");
+    identical("(tup (proj t 1) (proj t 2))", "(Sigma (c (U) ex null) (U))");
+    identical("(proj t 1)", "(U)");
+    identical("(proj (tup (app (lam (a (U) ex) a) x) b) 1)", "(U)");
   }
 
-  private void identical(@Language("TEXT") String code) {
-    assertTrue(eq().compare(Lisp.parse(code, vars), Lisp.parse(code, vars), null));
+  private void identical(@Language("TEXT") String code, @Language("TEXT") String type) {
+    assertTrue(eq.compare(Lisp.parse(code, vars), Lisp.parse(code, vars), Lisp.parse(type, vars)));
   }
 
   @Test
   public void reduceApp() {
-    assertTrue(eq().compare(Lisp.parse("(app (lam (a (U) ex) a) a)", vars), Lisp.parse("a", vars), null));
+    assertTrue(eq.compare(Lisp.parse("(app (lam (a (U) ex) a) x)", vars), Lisp.parse("x", vars), typeU));
   }
 
   @Test
   public void alphaLam() {
-    assertTrue(eq().compare(
+    assertTrue(eq.compare(
       Lisp.parse("(lam (x (U) ex) (app f x))", vars),
-      Lisp.parse("(lam (y (U) ex) (app f y))", vars), Lisp.parse("(Pi (x (U) ex) U)")));
-    assertFalse(eq().compare(
+      Lisp.parse("(lam (y (U) ex) (app f y))", vars), typePi));
+    assertFalse(eq.compare(
       Lisp.parse("(lam (x (U) ex) (app f x))", vars),
-      Lisp.parse("(lam (y (U) ex) (app f z))", vars), Lisp.parse("(Pi (x (U) ex) U)")));
+      Lisp.parse("(lam (y (U) ex) (app f z))", vars), typePi));
   }
 
   @Test
   public void etaLamLhs() {
-    assertTrue(eq().compare(Lisp.parse("(lam (x (U) ex) (app f x))", vars), Lisp.parse("f", vars), Lisp.parse("(Pi (x (U) ex) U)")));
-    assertFalse(eq().compare(Lisp.parse("(lam (x (U) ex) (app f y))", vars), Lisp.parse("f", vars), Lisp.parse("(Pi (x (U) ex) U)")));
-    assertFalse(eq().compare(Lisp.parse("(lam (x (U) ex) (app g x))", vars), Lisp.parse("f", vars), Lisp.parse("(Pi (x (U) ex) U)")));
+    assertTrue(eq.compare(Lisp.parse("(lam (x (U) ex) (app f x))", vars), Lisp.parse("f", vars), typePi));
+    assertFalse(eq.compare(Lisp.parse("(lam (x (U) ex) (app f y))", vars), Lisp.parse("f", vars), typePi));
+    assertFalse(eq.compare(Lisp.parse("(lam (x (U) ex) (app g x))", vars), Lisp.parse("f", vars), typePi));
   }
 
   // ref: commit 03befddc
   @Test
   public void etaLamRhs() {
-    assertTrue(eq().compare(Lisp.parse("f", vars), Lisp.parse("(lam (x (U) ex) (app f x))", vars), Lisp.parse("(Pi (x (U) ex) U)")));
-    assertFalse(eq().compare(Lisp.parse("f", vars), Lisp.parse("(lam (x (U) ex) (app f y))", vars), Lisp.parse("(Pi (x (U) ex) U)")));
-    assertFalse(eq().compare(Lisp.parse("f", vars), Lisp.parse("(lam (x (U) ex) (app g x))", vars), Lisp.parse("(Pi (x (U) ex) U)")));
+    assertTrue(eq.compare(Lisp.parse("f", vars), Lisp.parse("(lam (x (U) ex) (app f x))", vars), typePi));
+    assertFalse(eq.compare(Lisp.parse("f", vars), Lisp.parse("(lam (x (U) ex) (app f y))", vars), typePi));
+    assertFalse(eq.compare(Lisp.parse("f", vars), Lisp.parse("(lam (x (U) ex) (app g x))", vars), typePi));
   }
 
   // ref: commit e3601934, cbcee4cc
   @Test
   public void etaTup() {
     var etaed = Lisp.parse("(tup (proj t 1) (proj t 2))", vars);
-    var type = Lisp.parse("(Sigma (x (U) ex null) U)");
-    assertTrue(eq().compare(etaed, Lisp.parse("t", vars), type));
-    assertTrue(eq().compare(Lisp.parse("t", vars), etaed, type));
-    assertFalse(eq().compare(etaed, Lisp.parse("t", vars), null));
-    assertFalse(eq().compare(etaed, Lisp.parse("tt", vars), type));
+    var type = typeSigma;
+    assertTrue(eq.compare(etaed, Lisp.parse("t", vars), type));
+    assertTrue(eq.compare(Lisp.parse("t", vars), etaed, type));
+    assertFalse(eq.compare(etaed, Lisp.parse("tt", vars), type));
   }
 
   @Test
   public void projReduce() {
-    assertTrue(eq().compare(Lisp.parse("(proj (tup (app (lam (a (U) ex) a) x) b) 1)", vars), Lisp.parse("(app (lam (a (U) ex) a) x)", vars), null));
+    assertTrue(eq.compare(Lisp.parse("(proj (tup (app (lam (a (U) ex) a) x) y) 1)", vars), Lisp.parse("(app (lam (a (U) ex) a) x)", vars), typeU));
   }
 
   @Test
@@ -95,12 +122,12 @@ public class DefEqTest extends LispTestCase {
     Lisp.parseDef("id2",
       "(y (U) ex null)", "y", "y", vars);
     var fnCall = Lisp.parse("(fncall id kiva)", vars);
-    assertTrue(eq().compare(fnCall, Lisp.parse("kiva", vars), null));
-    assertTrue(eq().compare(fnCall, Lisp.parse("(fncall id kiva)", vars), null));
-    assertTrue(eq().compare(fnCall, Lisp.parse("(fncall id2 kiva)", vars), null));
-    assertFalse(eq().compare(fnCall, Lisp.parse("(fncall id kiwa)", vars), null));
-    assertFalse(eq().compare(fnCall, Lisp.parse("(app id kiva)"), null));
-    assertFalse(eq().compare(fnCall, Lisp.parse("kiva"), null));
+    assertTrue(eq.compare(fnCall, Lisp.parse("kiva", vars), typeU));
+    assertTrue(eq.compare(fnCall, Lisp.parse("(fncall id kiva)", vars), typeU));
+    assertTrue(eq.compare(fnCall, Lisp.parse("(fncall id2 kiva)", vars), typeU));
+    assertFalse(eq.compare(fnCall, Lisp.parse("(fncall id kiwa)", vars), typeU));
+    assertFalse(eq.compare(fnCall, Lisp.parse("(app id kiva)"), typeU));
+    assertFalse(eq.compare(fnCall, Lisp.parse("kiva"), typeU));
   }
 
   @Test
@@ -108,9 +135,9 @@ public class DefEqTest extends LispTestCase {
     var lhs = Lisp.parse("(Sigma (a (U) ex (b (U) ex null)) a)");
     var rhs = Lisp.parse("(Sigma (a (U) ex null) (Sigma (b (U) ex null) a))");
     var rhs2 = Lisp.parse("(Sigma (a (U) ex null) (Sigma (b (Pi (n (U) ex) U) ex null) a))");
-    assertFalse(eq().compare(lhs, rhs, null));
-    assertFalse(eq().compare(lhs, rhs2, null));
-    assertFalse(eq().compare(rhs, lhs, null));
-    assertFalse(eq().compare(rhs2, lhs, null));
+    assertFalse(eq.compare(lhs, rhs, typeU));
+    assertFalse(eq.compare(lhs, rhs2, typeU));
+    assertFalse(eq.compare(rhs, lhs, typeU));
+    assertFalse(eq.compare(rhs2, lhs, typeU));
   }
 }
