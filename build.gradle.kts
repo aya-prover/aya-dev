@@ -124,7 +124,7 @@ val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
 
 tasks.register("githubActions") {
   group = "verification"
-  dependsOn(tasks.named("check"), mergeJacocoReports)
+  dependsOn(tasks.named("check"), mergeJacocoReports, tasks.findByPath(":cli:copyJarHere"))
 }
 
 tasks.withType<Wrapper>().configureEach {
