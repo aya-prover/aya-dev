@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.test;
 
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -10,8 +10,8 @@ import org.mzi.api.error.CollectReporter;
 import org.mzi.api.ref.Var;
 import org.mzi.core.term.Term;
 import org.mzi.tyck.MetaContext;
-import org.mzi.tyck.unify.NaiveDefEq;
 import org.mzi.tyck.unify.TypeDirectedDefEq;
+import org.mzi.tyck.unify.TypedDefEq;
 import org.mzi.util.Ordering;
 
 import java.util.HashMap;
@@ -24,7 +24,7 @@ public class LispTestCase {
   protected final CollectReporter reporter = new CollectReporter();
 
   protected @NotNull TypeDirectedDefEq eq(MutableMap<Var, Term> localCtx) {
-    return new TypeDirectedDefEq(eq -> new NaiveDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx);
+    return new TypeDirectedDefEq(eq -> new TypedDefEq.NaiveDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx);
   }
 
   @BeforeEach
