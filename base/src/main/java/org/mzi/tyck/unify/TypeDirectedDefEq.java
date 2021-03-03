@@ -58,6 +58,7 @@ public final class TypeDirectedDefEq implements Term.BiVisitor<@NotNull Term, @N
 
   @NotNull
   public Boolean checkParam(Term.@NotNull Param l, Term.@NotNull Param r) {
+    if (l.explicit() != r.explicit()) return false;
     if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return false;
     varSubst.put(r.ref(), l.ref());
     localCtx.put(l.ref(), l.type());
@@ -74,7 +75,7 @@ public final class TypeDirectedDefEq implements Term.BiVisitor<@NotNull Term, @N
     for (int i = 0; i < length; i++) {
       final var rhs = r.get(i);
       final var lhs = l.get(i);
-      if (!compare(lhs.type(), rhs.type(), UnivTerm.OMEGA)) {
+      if (!compare(lhs.type(), rhs.type(), UnivTerm.OMEGA) || lhs.explicit() != rhs.explicit()) {
         for (int j = 0; j < i; j++) {
           varSubst.remove(r.get(j).ref());
           localCtx.remove(lhs.ref());
