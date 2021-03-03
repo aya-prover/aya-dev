@@ -13,12 +13,13 @@ import org.mzi.api.error.SourcePos;
 import org.mzi.tyck.trace.Trace;
 
 import java.awt.*;
+import java.util.Objects;
 
 @SuppressWarnings("AccessStaticViaInstance")
 public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
+  public static final int PAGE_WIDTH = 114514;
   private final String sourceCode;
   private @NotNull SourcePos pos;
-  private int inc = 0;
 
   public ImGuiTrace(@NotNull String sourceCode) {
     this.sourceCode = sourceCode;
@@ -40,7 +41,6 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     var highlight = color(Color.GREEN);
     while (!imGui.windowShouldClose()) {
       imGui.initNewFrame();
-      inc = 0;
       if (imGui.begin("Source code")) {
         sourceCode(imGui, highlight);
         imGui.end();
@@ -86,9 +86,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
 
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
     var term = t.term();
-    var s = t.expr().toDoc().renderWithPageWidth(114514)
-      + (term == null ? "" : " : " + term.toDoc().renderWithPageWidth(114514))
-      + "##" + inc++;
+    var s = t.expr().toDoc().renderWithPageWidth(PAGE_WIDTH)
+      + (term == null ? "" : " : " + term.toDoc().renderWithPageWidth(PAGE_WIDTH))
+      + "##" + Objects.hash(t);
     var color = term == null ? Color.CYAN : Color.YELLOW;
     visitSub(s, color, imGui, t.subtraces(), () -> pos = t.expr().sourcePos());
     return Unit.unit();
@@ -111,9 +111,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   }
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
-    var s = t.lhs().toDoc().renderWithPageWidth(114514)
+    var s = t.lhs().toDoc().renderWithPageWidth(PAGE_WIDTH)
       + " = "
-      + t.rhs().toDoc().renderWithPageWidth(114514);
+      + t.rhs().toDoc().renderWithPageWidth(PAGE_WIDTH);
     visitSub(s, Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos());
     return Unit.unit();
   }

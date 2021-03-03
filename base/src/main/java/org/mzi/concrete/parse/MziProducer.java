@@ -138,7 +138,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   public @NotNull Expr visitLiteral(MziParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
     var id = ctx.ID();
-    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(ctx), id.getText());
+    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), id.getText());
     var universe = ctx.UNIVERSE();
     if (universe != null) {
       var universeText = universe.getText();
