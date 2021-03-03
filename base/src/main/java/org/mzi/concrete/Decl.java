@@ -5,7 +5,6 @@ package org.mzi.concrete;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,6 @@ import org.mzi.concrete.resolve.context.Context;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.Def;
 import org.mzi.core.def.FnDef;
-import org.mzi.core.term.Term;
 import org.mzi.generic.Modifier;
 import org.mzi.generic.Pat;
 import org.mzi.tyck.StmtTycker;
@@ -36,7 +34,6 @@ public sealed abstract class Decl extends SigItem implements Stmt, ConcreteDecl 
   public final @NotNull Accessibility accessibility;
   public final @NotNull ImmutableSeq<Stmt> abuseBlock;
   public @Nullable Context ctx = null;
-  public @Nullable Tuple2<@NotNull ImmutableSeq<Term.Param>, @NotNull Term> signature;
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;
@@ -73,7 +70,8 @@ public sealed abstract class Decl extends SigItem implements Stmt, ConcreteDecl 
   }
 
   public Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
-    return accept(new StmtTycker(reporter, builder), Unit.unit());
+    var tycker = new StmtTycker(reporter, builder);
+    return accept(tycker, tycker.newTycker());
   }
 
   public interface Visitor<P, R> {

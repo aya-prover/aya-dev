@@ -19,6 +19,7 @@ import org.mzi.api.util.MziInterruptException;
 import org.mzi.api.util.NormalizeMode;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Expr;
+import org.mzi.concrete.SigItem;
 import org.mzi.core.def.DataDef;
 import org.mzi.core.def.FnDef;
 import org.mzi.core.term.*;
@@ -140,8 +141,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         var tele = data.telescope();
         var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, tele.map(Term.Param::toArg));
         return defCall(tele, call, data.result());
-      } else if (defVar.concrete instanceof Decl decl && decl.signature != null)
-        return defCall(decl.signature._1, decl.accept(new Decl.Visitor<ImmutableSeq<Arg<Term>>, @NotNull Term>() {
+      } else if (defVar.concrete instanceof SigItem decl && decl.signature != null)
+        return defCall(decl.signature._1, decl.accept(new SigItem.Visitor<ImmutableSeq<Arg<Term>>, @NotNull Term>() {
+          @Override public @NotNull Term visitCtor(Decl.@NotNull DataCtor ctor, ImmutableSeq<Arg<Term>> args) {
+            throw new UnsupportedOperationException();
+          }
+
           @Override public Term visitDataDecl(Decl.@NotNull DataDecl decl1, ImmutableSeq<Arg<Term>> args) {
             return new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, args);
           }

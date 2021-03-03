@@ -3,9 +3,12 @@
 package org.mzi.concrete;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mzi.api.concrete.def.ConcreteDecl;
 import org.mzi.api.error.SourcePos;
+import org.mzi.core.term.Term;
 
 /**
  * An item in the signature, with telescope and result type.
@@ -17,6 +20,7 @@ public sealed abstract class SigItem implements ConcreteDecl permits Decl, Decl.
 
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
+  public @Nullable Tuple2<@NotNull ImmutableSeq<Term.Param>, @NotNull Term> signature;
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;

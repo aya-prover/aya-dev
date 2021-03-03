@@ -1,11 +1,11 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.concrete.resolve.visitor;
 
-import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.mzi.concrete.Decl;
 import org.mzi.concrete.Stmt;
@@ -64,18 +64,24 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   @Override
   public Unit visitDataDecl(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
-    if (decl.body instanceof Decl.DataBody.Ctors ctors) {
-      context.importModule(
-        ImmutableSeq.of(decl.ref().name()),
-        decl.accessibility(),
-        MutableHashMap.of(
-          Context.TOP_LEVEL_MOD_NAME,
-          MutableHashMap.from(ctors.ctors().toImmutableSeq().map(ctor ->
-            Tuple2.of(ctor.ref.name(), ctor.ref)))),
-        decl.sourcePos()
-      );
-    }
-    return Unit.unit();
+    return decl.body.accept(new Decl.DataBody.Visitor<>() {
+      @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
+        context.importModule(
+          ImmutableSeq.of(decl.ref().name()),
+          decl.accessibility(),
+          MutableHashMap.of(
+            Context.TOP_LEVEL_MOD_NAME,
+            MutableHashMap.from(ctors.ctors().toImmutableSeq().map(ctor ->
+              Tuple2.of(ctor.ref.name(), ctor.ref)))),
+          decl.sourcePos()
+        );
+        return unit;
+      }
+
+      @Override public Unit visitClause(Decl.DataBody.@NotNull Clauses clauses, Unit unit) {
+        throw new UnsupportedOperationException();
+      }
+    }, Unit.unit());
   }
 
   @Override

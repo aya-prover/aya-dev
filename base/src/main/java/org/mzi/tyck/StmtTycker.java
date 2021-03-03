@@ -27,8 +27,8 @@ import java.util.stream.Stream;
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
-) implements Decl.Visitor<Unit, Def> {
-  private @NotNull ExprTycker newTycker() {
+) implements Decl.Visitor<ExprTycker, Def> {
+  public @NotNull ExprTycker newTycker() {
     final var tycker = new ExprTycker(reporter);
     tycker.traceBuilder = traceBuilder;
     return tycker;
@@ -38,7 +38,7 @@ public record StmtTycker(
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override public void traceEntrance(@NotNull Decl decl, Unit unit) {
+  @Override public void traceEntrance(@NotNull Decl decl, ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.DeclT(decl.ref(), decl.sourcePos)));
   }
 
@@ -46,48 +46,46 @@ public record StmtTycker(
     tracing(Trace.Builder::reduce);
   }
 
-  @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+  @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var ctorBuf = Buffer.<DataDef.Ctor>of();
     var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
-    var checker = newTycker();
-    var tele = checkTele(checker, decl.telescope)
+    var tele = checkTele(tycker, decl.telescope)
       .collect(ImmutableSeq.factory());
-    final var result = checker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+    final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = Tuple.of(tele, result);
-    decl.body.accept(new Decl.DataBody.Visitor<Unit, Unit>() {
-      @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
+    decl.body.accept(new Decl.DataBody.Visitor<ExprTycker, Unit>() {
+      @Override public Unit visitCtor(Decl.DataBody.@NotNull Ctors ctors, ExprTycker tycker) {
         ctors.ctors().forEach(ctor -> {
-          var tele = checkTele(checker, ctor.telescope);
+          var tele = checkTele(tycker, ctor.telescope);
           ctorBuf.append(new DataDef.Ctor(
             ctor.ref,
             tele.collect(ImmutableSeq.factory()),
             ctor.elim,
             ctor.clauses.stream()
-              .map(i -> i.mapTerm(expr -> checker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))
+              .map(i -> i.mapTerm(expr -> tycker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))
               .collect(Buffer.factory()),
             ctor.coerce
           ));
         });
-        return unit;
+        return Unit.unit();
       }
 
-      @Override public Unit visitClause(Decl.DataBody.@NotNull Clauses clauses, Unit unit) {
+      @Override public Unit visitClause(Decl.DataBody.@NotNull Clauses clauses, ExprTycker tycker) {
         // TODO[ice]: implement
         throw new UnsupportedOperationException();
       }
-    }, unit);
+    }, tycker);
     return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, ImmutableHashMap.from(clauseBuf));
   }
 
-  @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
-    var checker = newTycker();
-    var resultTele = checkTele(checker, decl.telescope)
+  @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
+    var resultTele = checkTele(tycker, decl.telescope)
       .collect(ImmutableSeq.factory());
     // It might contain unsolved holes, but that's acceptable.
-    var resultRes = decl.result.accept(checker, null);
+    var resultRes = decl.result.accept(tycker, null);
     decl.signature = Tuple.of(resultTele, resultRes.wellTyped());
 
-    var bodyRes = checker.checkExpr(decl.body, resultRes.wellTyped());
+    var bodyRes = tycker.checkExpr(decl.body, resultRes.wellTyped());
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 
