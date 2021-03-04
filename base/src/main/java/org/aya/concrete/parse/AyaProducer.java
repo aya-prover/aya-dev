@@ -437,10 +437,11 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var elim = elimCtx == null
       ? Buffer.<String>of()
       : visitElim(elimCtx);
+    var id = ctx.ID();
 
     return new Decl.DataCtor(
-      sourcePosOf(ctx),
-      ctx.ID().getText(),
+      sourcePosOf(id),
+      id.getText(),
       visitTelescope(ctx.tele().stream()),
       elim,
       ctx.clause().stream()
