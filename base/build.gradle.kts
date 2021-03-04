@@ -1,5 +1,5 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 dependencies {
   api(project(":api"))
   implementation(project(":pretty"))
@@ -9,7 +9,7 @@ dependencies {
 
 val genDir = file("src/main/gen")
 val generateVersion = tasks.register<org.mzi.gradle.GenerateVersionTask>("generateVersion") {
-  outputDir = genDir.resolve("org/mzi/prelude")
+  outputDir = genDir.resolve("${project.group.toString().split(".").joinToString("/")}/prelude")
 }
 
 idea {

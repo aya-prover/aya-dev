@@ -16,7 +16,7 @@ deps = Properties()
 deps.load(file("gradle/deps.properties").reader())
 
 allprojects {
-  group = "org.mzi"
+  group = "org.aya"
   version = deps.getProperty("version.project")
 }
 
