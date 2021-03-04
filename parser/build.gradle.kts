@@ -11,10 +11,8 @@ idea {
   module.generatedSourceDirs.add(genDir)
 }
 
-val cleanGenerated = tasks.register("cleanGenerated") {
+tasks.register("cleanSource") {
   group = "build"
   genDir.deleteRecursively()
 }
-
-tasks.named("clean").configure { dependsOn(cleanGenerated) }
 
