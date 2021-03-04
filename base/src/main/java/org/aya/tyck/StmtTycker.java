@@ -76,7 +76,8 @@ public record StmtTycker(
     decl.signature = Tuple.of(tele, result);
     decl.body.accept(new Decl.DataBody.Visitor<ExprTycker, Unit>() {
       @Override public Unit visitCtors(Decl.DataBody.@NotNull Ctors ctors, ExprTycker tycker) {
-        ctors.ctors().forEach(ctor -> ctorBuf.append(visitCtor(ctor, tycker)));
+        // ice: this cast is extremely safe.
+        ctors.ctors().forEach(ctor -> ctorBuf.append((DataDef.Ctor) ctor.accept(StmtTycker.this, tycker)));
         return Unit.unit();
       }
 
