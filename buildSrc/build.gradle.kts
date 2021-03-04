@@ -8,7 +8,7 @@ plugins {
   antlr
 }
 
-repositories { jcenter() }
+repositories { mavenCentral() }
 
 val rootDir = projectDir.parentFile!!
 val parserDir = rootDir.resolve("parser")

@@ -81,11 +81,12 @@ subprojects {
     enableAssertions = true
   }
 
+  val proj = this@subprojects
   publishing.publications {
     create<MavenPublication>("maven") {
-      groupId = this@subprojects.group.toString()
-      version = this@subprojects.version.toString()
-      artifactId = this@subprojects.name
+      groupId = proj.group.toString()
+      version = proj.version.toString()
+      artifactId = proj.name
       from(components["java"])
       pom {
         // url.set("https://arend-lang.github.io")
