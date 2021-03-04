@@ -2,143 +2,177 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck.unify;
 
-import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.mzi.concrete.Expr;
+import org.mzi.api.ref.Var;
+import org.mzi.api.util.NormalizeMode;
 import org.mzi.core.term.*;
-import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
-import org.mzi.tyck.MetaContext;
-import org.mzi.tyck.error.HoleBadSpineWarn;
-import org.mzi.util.Decision;
-import org.mzi.util.Ordering;
+
+import java.util.Objects;
+import java.util.function.Function;
 
 /**
- * The implementation of untyped pattern unification for holes.
- * András Kovács' elaboration-zoo is taken as reference.
- *
- * @author re-xyr, ice1000
+ * @author ice1000
+ * @implNote Do not call <code>expr.accept(this, bla)</code> directly.
+ * Instead, invoke {@link TypedDefEq#compare(Term, Term, Term)} to do so.
  */
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
-  private final @NotNull TypeDirectedDefEq defeq;
-  private final @NotNull UntypedDefEq untypedDefeq;
+  protected final @NotNull MutableMap<@NotNull Var, @NotNull Var> varSubst = new MutableHashMap<>();
+  public final @NotNull MutableMap<Var, Term> localCtx;
+  private final @NotNull PatDefEq termDirectedDefeq;
 
-  protected @NotNull Ordering ord;
-  protected @NotNull MetaContext metaContext;
-  protected Expr expr;
+  public TypedDefEq(
+    @NotNull Function<@NotNull TypedDefEq, @NotNull PatDefEq> createTypedDefEq,
+    @NotNull MutableMap<Var, Term> localCtx
+  ) {
+    this.localCtx = localCtx;
+    this.termDirectedDefeq = createTypedDefEq.apply(this);
+  }
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
-    return lhs.accept(this, rhs, type);
-  }
-
-  @Override
-  public @NotNull Boolean visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
-  }
-
-  @Override
-  public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    throw new IllegalStateException("No visitLam in PatDefEq");
-  }
-
-  @Override
-  public @NotNull Boolean visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
-  }
-
-  @Override
-  public @NotNull Boolean visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
-  }
-
-  @Override
-  public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
-  }
-
-  @Override
-  public @NotNull Boolean visitApp(@NotNull AppTerm.Apply lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
-  }
-
-  @Override
-  public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.FnCall rhs)
-      || lhs.fnRef() != rhs.fnRef()) {
-      if (lhs.whnf() != Decision.NO) return false;
-      return defeq.compareWHNF(lhs, preRhs, type);
+    if (lhs == rhs) return true;
+    type = type.normalize(NormalizeMode.WHNF);
+    // at least one of them is not an FnCall
+    if (isNotCall(lhs) || isNotCall(rhs)) {
+      lhs = lhs.normalize(NormalizeMode.WHNF);
+      rhs = rhs.normalize(NormalizeMode.WHNF);
     }
-    return defeq.visitArgs(lhs.args(), rhs.args(), lhs.fnRef().core.telescope());
+    if (rhs instanceof AppTerm.HoleApp) return type.accept(this, rhs, lhs);
+    return type.accept(this, lhs, rhs);
   }
 
-  @Override
-  public @NotNull Boolean visitDataCall(@NotNull AppTerm.DataCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.DataCall rhs)
-      || lhs.dataRef() != rhs.dataRef())
-      return false;
-    return defeq.visitArgs(lhs.args(), rhs.args(), lhs.dataRef().core.telescope());
+  private boolean isNotCall(@NotNull Term term) {
+    return !(term instanceof AppTerm.FnCall);
   }
 
-  @Override
-  public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    throw new IllegalStateException("No visitTup in TermDirectedDefEq");
+  public boolean compareWHNF(Term lhs, Term preRhs, @NotNull Term type) {
+    var whnf = lhs.normalize(NormalizeMode.WHNF);
+    if (Objects.equals(whnf, lhs)) return false;
+    return compare(whnf, preRhs.normalize(NormalizeMode.WHNF), type);
   }
 
-  @Override
-  public @NotNull Boolean visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
-  }
-
-  private @NotNull Boolean passDown(@NotNull Term lhs, @NotNull Term preRhs, @NotNull Term type) {
-    var inferred = untypedDefeq.compare(lhs, preRhs);
-    if (inferred == null) return false;
-    return defeq.compare(inferred, type, UnivTerm.OMEGA); // TODO[xyr]: proper subtyping?
-  }
-
-  public TypedDefEq(@NotNull TypeDirectedDefEq defeq, @NotNull Ordering ord, @NotNull MetaContext metaContext) {
-    this.defeq = defeq;
-    this.untypedDefeq = new UntypedDefEq(defeq);
-    this.ord = ord;
-    this.metaContext = metaContext;
-  }
-
-  private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
-    var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
-    for (var arg : spine.view()) {
-      if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
-        rhs = extractVar(rhs, subst, arg, var);
-        if (rhs == null) return null;
-      } else return null;
-      // TODO[ice]: ^ eta var
-    }
-    return rhs.subst(subst);
-  }
-
-  private @Nullable Term extractVar(Term rhs, Substituter.TermSubst subst, Arg<? extends Term> arg, LocalVar var) {
-    if (subst.map().containsKey(var)) {
-      // TODO[ice]: report errors for duplicated vars in spine
-      return null;
-    }
-    var type = new AppTerm.HoleApp(new LocalVar("_"));
-    var abstracted = new LocalVar(var.name() + "'");
-    var param = new Term.Param(abstracted, type, arg.explicit());
-    subst.add(var, new RefTerm(abstracted));
-    return new LamTerm(param, new LamTerm(param, rhs));
-  }
-
-  @Override
-  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @NotNull Term type) {
-    var solved = extract(lhs.args(), rhs);
-    if (solved == null) {
-      metaContext.report(new HoleBadSpineWarn(lhs, expr));
-      return false;
-    }
-    var solution = metaContext.solutions().getOption(lhs);
-    if (solution.isDefined()) return compare(AppTerm.make(solution.get(), lhs.args()), rhs, type);
-    metaContext.solutions().put(lhs, solved);
+  @NotNull
+  public Boolean checkParam(Term.@NotNull Param l, Term.@NotNull Param r) {
+    if (l.explicit() != r.explicit()) return false;
+    if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return false;
+    varSubst.put(r.ref(), l.ref());
+    localCtx.put(l.ref(), l.type());
     return true;
+  }
+
+  /**
+   * @apiNote Do not forget to remove variables out of localCtx after done checking.
+   */
+  @NotNull
+  public Boolean checkParams(ImmutableSeq<Term.@NotNull Param> l, ImmutableSeq<Term.@NotNull Param> r) {
+    if (!l.sizeEquals(r)) return false;
+    var length = l.size();
+    for (int i = 0; i < length; i++) {
+      final var rhs = r.get(i);
+      final var lhs = l.get(i);
+      if (!compare(lhs.type(), rhs.type(), UnivTerm.OMEGA) || lhs.explicit() != rhs.explicit()) {
+        for (int j = 0; j < i; j++) {
+          varSubst.remove(r.get(j).ref());
+          localCtx.remove(lhs.ref());
+          localCtx.remove(rhs.ref());
+        }
+        return false;
+      }
+      varSubst.put(rhs.ref(), lhs.ref());
+      localCtx.put(lhs.ref(), lhs.type());
+      localCtx.put(rhs.ref(), rhs.type());
+    }
+    return true;
+  }
+
+  @Override
+  public @NotNull Boolean visitRef(@NotNull RefTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitLam(@NotNull LamTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitUniv(@NotNull UnivTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitApp(@NotNull AppTerm.Apply type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitDataCall(@NotNull AppTerm.DataCall type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitTup(@NotNull TupTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitProj(@NotNull ProjTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
+  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  public boolean visitArgs(SeqLike<? extends Arg<? extends Term>> l, SeqLike<? extends Arg<? extends Term>> r, SeqLike<? extends Term.Param> params) {
+    return visitLists(l.view().map(Arg::term), r.view().map(Arg::term), params);
+  }
+
+  private boolean visitLists(SeqLike<? extends Term> l, SeqLike<? extends Term> r, @NotNull SeqLike<? extends Term.Param> types) {
+    if (!l.sizeEquals(r)) return false;
+    if (!r.sizeEquals(types)) return false;
+    var typesSubstituted = types;
+    for (int i = 0; i < l.size(); i++) {
+      var li = l.get(i);
+      if (!compare(li, r.get(i), typesSubstituted.first().type())) return false;
+      typesSubstituted = types.view().drop(1).map(type -> type.subst(types.first().ref(), li));
+    }
+    return true;
+  }
+
+  @Override
+  public @NotNull Boolean visitPi(@NotNull PiTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+    var dummy = new RefTerm(new LocalVar("dummy"));
+    var dummyArg = new Arg<Term>(dummy, type.param().explicit());
+    localCtx.put(dummy.var(), type.param().type());
+    var result = compare(AppTerm.make(lhs, dummyArg), AppTerm.make(rhs, dummyArg), type.body().subst(type.param().ref(), dummy));
+    localCtx.remove(dummy.var());
+    return result;
+  }
+
+  @Override
+  public @NotNull Boolean visitSigma(@NotNull SigmaTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+    var params = type.params();
+    var body = type.body();
+    for (int i = 1; i <= type.params().size(); i++) {
+      var l = new ProjTerm(lhs, i);
+      var currentParam = params.first();
+      if (!compare(l, new ProjTerm(rhs, i), currentParam.type())) return false;
+      params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
+      body = body.subst(currentParam.ref(), l);
+    }
+    var len = type.params().size() + 1;
+    return compare(new ProjTerm(lhs, len), new ProjTerm(rhs, len), body);
   }
 }

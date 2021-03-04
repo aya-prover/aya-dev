@@ -1,5 +1,5 @@
-// Copyright (c) 2020-2020 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the Apache-2.0 license that can be found in the LICENSE file.
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.mzi.tyck;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -11,9 +11,10 @@ import org.mzi.core.term.Term;
 import org.mzi.ref.LocalVar;
 import org.mzi.test.Lisp;
 import org.mzi.test.LispTestCase;
-import org.mzi.tyck.unify.TypeDirectedDefEq;
+import org.mzi.tyck.unify.TypedDefEq;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DefEqTest extends LispTestCase {
   private final Term typeU = Lisp.parse("(U)");
@@ -38,7 +39,7 @@ public class DefEqTest extends LispTestCase {
     ));
   }
 
-  private final TypeDirectedDefEq eq;
+  private final TypedDefEq eq;
 
   @Test
   public void basicFailure() {

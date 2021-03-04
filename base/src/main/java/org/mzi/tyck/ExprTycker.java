@@ -31,8 +31,8 @@ import org.mzi.tyck.error.BadTypeError;
 import org.mzi.tyck.error.UnifyError;
 import org.mzi.tyck.sort.Sort;
 import org.mzi.tyck.trace.Trace;
+import org.mzi.tyck.unify.PatDefEq;
 import org.mzi.tyck.unify.Rule;
-import org.mzi.tyck.unify.TypeDirectedDefEq;
 import org.mzi.tyck.unify.TypedDefEq;
 import org.mzi.util.Ordering;
 
@@ -97,8 +97,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var type = dt.param().type();
     if (lamParam != null) {
       var result = lamParam.accept(this, UnivTerm.OMEGA);
-      var comparison = new TypeDirectedDefEq(
-        eq -> new TypedDefEq(eq, Ordering.Lt, metaContext),
+      var comparison = new TypedDefEq(
+        eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
         localCtx
       ).compare(result.wellTyped, type, UnivTerm.OMEGA);
       if (!comparison) {
@@ -174,8 +174,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
     tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, errorReportLocation.sourcePos())));
     tracing(Trace.Builder::reduce);
-    var unification = new TypeDirectedDefEq(
-      eq -> new TypedDefEq(eq, Ordering.Lt, metaContext),
+    var unification = new TypedDefEq(
+      eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
       localCtx
     ).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {

@@ -12,7 +12,7 @@ import org.mzi.core.term.*;
  * @author re-xyr
  */
 public record UntypedDefEq(
-  @NotNull TypeDirectedDefEq defeq
+  @NotNull TypedDefEq defeq
 ) implements Term.Visitor<@NotNull Term, @Nullable Term> {
   public @Nullable
   Term compare(@NotNull Term lhs, @NotNull Term rhs) {
@@ -118,7 +118,7 @@ public record UntypedDefEq(
     throw new IllegalStateException("No visitLam in UntypedDefEq");
   }
 
-  public UntypedDefEq(@NotNull TypeDirectedDefEq defeq) {
+  public UntypedDefEq(@NotNull TypedDefEq defeq) {
     this.defeq = defeq;
   }
 }

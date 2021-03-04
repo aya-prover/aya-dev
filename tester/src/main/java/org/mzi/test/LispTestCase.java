@@ -10,7 +10,7 @@ import org.mzi.api.error.CollectReporter;
 import org.mzi.api.ref.Var;
 import org.mzi.core.term.Term;
 import org.mzi.tyck.MetaContext;
-import org.mzi.tyck.unify.TypeDirectedDefEq;
+import org.mzi.tyck.unify.PatDefEq;
 import org.mzi.tyck.unify.TypedDefEq;
 import org.mzi.util.Ordering;
 
@@ -23,8 +23,8 @@ public class LispTestCase {
   protected final Map<String, @NotNull Var> vars = new HashMap<>();
   protected final CollectReporter reporter = new CollectReporter();
 
-  protected @NotNull TypeDirectedDefEq eq(MutableMap<Var, Term> localCtx) {
-    return new TypeDirectedDefEq(eq -> new TypedDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx);
+  protected @NotNull TypedDefEq eq(MutableMap<Var, Term> localCtx) {
+    return new TypedDefEq(eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx);
   }
 
   @BeforeEach
