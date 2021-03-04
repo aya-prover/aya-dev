@@ -40,7 +40,7 @@ public class TestRunner {
 
     Files.walk(path)
       .filter(Files::isRegularFile)
-      .filter(f -> f.getFileName().toString().endsWith(".mzi"))
+      .filter(f -> f.getFileName().toString().endsWith(".aya"))
       .forEach(file -> runFile(file, expectSuccess));
   }
 
