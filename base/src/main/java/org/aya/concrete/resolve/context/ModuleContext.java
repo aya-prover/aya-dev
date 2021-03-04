@@ -110,7 +110,7 @@ public record ModuleContext(
     @NotNull SourcePos sourcePos
   ) {
     if (!globals.containsKey(name)) {
-      if (getUnqualifiedMaybe(name, sourcePos) != null) {
+      if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith("_")) {
         reporter().report(new ShadowingWarn(name, sourcePos));
       }
       globals.set(name, MutableHashMap.of());

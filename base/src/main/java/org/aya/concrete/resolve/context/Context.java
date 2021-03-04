@@ -74,7 +74,7 @@ public interface Context {
   }
 
   default @NotNull BindContext bind(@NotNull String name, @NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
-    if (getUnqualifiedMaybe(name, sourcePos) != null) {
+    if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith("_")) {
       reporter().report(new ShadowingWarn(name, sourcePos));
     }
     return new BindContext(this, name, ref);
