@@ -56,6 +56,7 @@ public record StmtTycker(
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var tele = checkTele(tycker, ctor.telescope);
     return new DataDef.Ctor(
+      ctor.dataRef,
       ctor.ref,
       tele.collect(ImmutableSeq.factory()),
       ctor.elim,

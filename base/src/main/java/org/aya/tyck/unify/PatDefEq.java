@@ -2,7 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Signatured;
+import org.aya.core.def.Def;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Arg;
@@ -13,9 +16,12 @@ import org.aya.util.Constants;
 import org.aya.util.Decision;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * The implementation of untyped pattern unification for holes.
@@ -65,40 +71,36 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return passDown(lhs, preRhs, type);
   }
 
+  private ImmutableSeq<Term.Param> tele(DefVar<? extends Def, ? extends Signatured> defVar) {
+    return tele(defVar.concrete, defVar.core);
+  }
+
+  private ImmutableSeq<Term.Param> tele(Signatured signatured, Def def) {
+    if (def != null) return def.telescope();
+    // guaranteed as this is already a core term
+    else return Objects.requireNonNull(signatured.signature)._1;
+  }
+
   @Override
   public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.FnCall rhs)
-      || lhs.fnRef() != rhs.fnRef()) {
+    if (!(preRhs instanceof AppTerm.FnCall rhs) || lhs.fnRef() != rhs.fnRef()) {
       if (lhs.whnf() != Decision.NO) return false;
       return defeq.compareWHNF(lhs, preRhs, type);
     }
-    final var signature = lhs.fnRef().concrete.signature;
-    assert signature != null; // guaranteed as this is already a core term
-    return defeq.visitArgs(lhs.args(), rhs.args(), signature._1);
+    return defeq.visitArgs(lhs.args(), rhs.args(), tele(lhs.fnRef()));
   }
 
   @Override
   public @NotNull Boolean visitDataCall(@NotNull AppTerm.DataCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.DataCall rhs)
-      || lhs.dataRef() != rhs.dataRef())
-      return false;
-    final var signature = lhs.dataRef().concrete.signature;
-    assert signature != null; // guaranteed as this is already a core term
-    return defeq.visitArgs(lhs.args(), rhs.args(), signature._1);
+    if (!(preRhs instanceof AppTerm.DataCall rhs) || lhs.dataRef() != rhs.dataRef()) return false;
+    return defeq.visitArgs(lhs.args(), rhs.args(), tele(lhs.dataRef()));
   }
 
   @Override
   public @NotNull Boolean visitConCall(@NotNull AppTerm.ConCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.ConCall rhs)
-      || lhs.conHead() != rhs.conHead())
-      return false;
-    final var concrete = lhs.conHead().concrete;
-    var dataTele = concrete.dataRef.concrete.signature;
-    assert dataTele != null;
-    if (!defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(), dataTele._1)) return false;
-    final var signature = concrete.signature;
-    assert signature != null;
-    return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), signature._1);
+    if (!(preRhs instanceof AppTerm.ConCall rhs) || lhs.conHead() != rhs.conHead()) return false;
+    return defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(), tele(lhs.dataRef()))
+      && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), tele(lhs.conHead()));
   }
 
   @Override

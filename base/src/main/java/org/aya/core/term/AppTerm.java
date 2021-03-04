@@ -103,6 +103,11 @@ public sealed interface AppTerm extends Term {
       return visitor.visitConCall(this, p, q);
     }
 
+    public @NotNull DefVar<DataDef, Decl.DataDecl> dataRef() {
+      if (conHead.core != null) return conHead.core.dataRef();
+      else return conHead.concrete.dataRef;
+    }
+
     @Override public @NotNull SeqView<Arg<Term>> args() {
       return dataArgs.view().concat(conArgs.view());
     }

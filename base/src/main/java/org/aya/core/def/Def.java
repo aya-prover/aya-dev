@@ -5,6 +5,8 @@ package org.aya.core.def;
 import org.aya.api.core.def.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
+import org.aya.core.term.Term;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Def extends CoreDef {
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
+  @NotNull ImmutableSeq<Term.Param> telescope();
 
   <P, R> R accept(Visitor<P, R> visitor, P p);
 

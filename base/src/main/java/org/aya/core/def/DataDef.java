@@ -33,6 +33,7 @@ public record DataDef(
   }
 
   public static record Ctor(
+    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> name,
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull Buffer<String> elim,
