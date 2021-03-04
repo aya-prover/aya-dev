@@ -28,7 +28,7 @@ public class TestRunner {
   }
 
   @Test
-  void runAllMziTests() throws IOException {
+  void runAllAyaTests() throws IOException {
     var testSourceDir = Paths.get("src", "test", "aya");
     runDir(testSourceDir.resolve("success"), true);
     runDir(testSourceDir.resolve("failure"), false);

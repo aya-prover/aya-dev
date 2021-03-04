@@ -103,7 +103,7 @@ public record StmtTycker(
     @NotNull ImmutableSeq<Expr.Param> tele
   ) {
     return tele.stream().map(param -> {
-      assert param.type() != null; // guaranteed by MziProducer
+      assert param.type() != null; // guaranteed by AyaProducer
       var paramRes = exprTycker.checkExpr(param.type(), null);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());

@@ -25,7 +25,7 @@ public class Main {
       System.exit(-1);
     }
     if (cli.version) {
-      System.out.println("Mzi v" + GeneratedVersion.VERSION_STRING);
+      System.out.println("Aya v" + GeneratedVersion.VERSION_STRING);
       if (cli.inputFile == null) return;
     } else if (cli.help || cli.inputFile == null) {
       commander.usage();

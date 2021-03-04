@@ -1,4 +1,4 @@
-Zen of Mzi
+Zen of Aya
 ===
 
 This document is organized in a way so that if you concatenate all the subheadings together, you get a _nice little poem_.  Please keep that in mind when you want to change the subheadings.  We can discuss and fill the details under each subheading.
