@@ -38,7 +38,7 @@ public interface LevelSubst {
     @Override public @NotNull LevelSubst subst(@NotNull LevelSubst subst) {
       if (isEmpty()) return this;
       var result = new Simple(new MutableHashMap<>());
-      map.forEach((var, level) -> map.replace(var, level.subst(subst)));
+      map.replaceAll((var, term) -> term.subst(subst));
       return result;
     }
   }
