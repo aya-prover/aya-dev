@@ -23,3 +23,10 @@ sourceSets.main {
 tasks.compileJava {
   dependsOn(generateVersion)
 }
+
+val cleanGenerated = tasks.register("cleanGenerated") {
+  group = "build"
+  genDir.deleteRecursively()
+}
+
+tasks.named("clean").configure { dependsOn(cleanGenerated) }
