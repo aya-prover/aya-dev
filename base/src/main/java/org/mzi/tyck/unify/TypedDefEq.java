@@ -12,7 +12,6 @@ import org.mzi.core.visitor.Substituter;
 import org.mzi.generic.Arg;
 import org.mzi.ref.LocalVar;
 import org.mzi.tyck.MetaContext;
-import org.mzi.tyck.error.HoleAppWarn;
 import org.mzi.tyck.error.HoleBadSpineWarn;
 import org.mzi.util.Decision;
 import org.mzi.util.Ordering;
@@ -153,35 +152,6 @@ public abstract class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNu
       var solution = metaContext.solutions().getOption(lhs);
       if (solution.isDefined()) return compare(AppTerm.make(solution.get(), lhs.args()), rhs, type);
       metaContext.solutions().put(lhs, solved);
-      return true;
-    }
-  }
-
-  /**
-   * @author ice1000
-   */
-  public static class NaiveDefEq extends TypedDefEq {
-    public NaiveDefEq(@NotNull TypeDirectedDefEq defeq, @NotNull Ordering ord, @NotNull MetaContext metaContext) {
-      super(defeq, ord, metaContext);
-    }
-
-    @Override
-    public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term preRhs, @NotNull Term type) {
-      if (!lhs.argsBuf().isEmpty()) {
-        metaContext.report(new HoleAppWarn(lhs, expr));
-        return false;
-      }
-      var solution = metaContext.solutions().getOption(lhs);
-      if (solution.isDefined()) return compare(solution.get(), preRhs, type);
-      if (preRhs instanceof AppTerm.HoleApp rhs) {
-        if (!rhs.args().isEmpty()) {
-          metaContext.report(new HoleAppWarn(lhs, expr));
-          return false;
-        }
-        if (lhs.var() == rhs.var()) return true;
-      }
-      // TODO[ice]: check for recursive solution
-      metaContext.solutions().put(lhs, preRhs);
       return true;
     }
   }

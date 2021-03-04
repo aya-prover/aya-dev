@@ -24,7 +24,7 @@ public class LispTestCase {
   protected final CollectReporter reporter = new CollectReporter();
 
   protected @NotNull TypeDirectedDefEq eq(MutableMap<Var, Term> localCtx) {
-    return new TypeDirectedDefEq(eq -> new TypedDefEq.NaiveDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx);
+    return new TypeDirectedDefEq(eq -> new TypedDefEq.PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx);
   }
 
   @BeforeEach

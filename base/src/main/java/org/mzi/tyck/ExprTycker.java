@@ -98,7 +98,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (lamParam != null) {
       var result = lamParam.accept(this, UnivTerm.OMEGA);
       var comparison = new TypeDirectedDefEq(
-        eq -> new TypedDefEq.NaiveDefEq(eq, Ordering.Lt, metaContext),
+        eq -> new TypedDefEq.PatDefEq(eq, Ordering.Lt, metaContext),
         localCtx
       ).compare(result.wellTyped, type, UnivTerm.OMEGA);
       if (!comparison) {
@@ -175,7 +175,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, errorReportLocation.sourcePos())));
     tracing(Trace.Builder::reduce);
     var unification = new TypeDirectedDefEq(
-      eq -> new TypedDefEq.NaiveDefEq(eq, Ordering.Lt, metaContext),
+      eq -> new TypedDefEq.PatDefEq(eq, Ordering.Lt, metaContext),
       localCtx
     ).compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
