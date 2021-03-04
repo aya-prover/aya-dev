@@ -4,7 +4,6 @@ package org.aya.tyck.unify;
 
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
-import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,10 +13,9 @@ import org.jetbrains.annotations.Nullable;
 public record UntypedDefEq(
   @NotNull TypedDefEq defeq
 ) implements Term.Visitor<@NotNull Term, @Nullable Term> {
-  public @Nullable
-  Term compare(@NotNull Term lhs, @NotNull Term rhs) {
-    // [xyr]: If we delete the type parameter it'll produce a worse warning.
-    return Option.<Term>of(lhs.accept(this, rhs)).map(x -> x.normalize(NormalizeMode.WHNF)).getOrNull();
+  public @Nullable Term compare(@NotNull Term lhs, @NotNull Term rhs) {
+    final var x = lhs.accept(this, rhs);
+    return x != null ? x.normalize(NormalizeMode.WHNF) : null;
   }
 
   @Override
@@ -90,7 +88,7 @@ public record UntypedDefEq(
   @Override
   public @Nullable
   Term visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof UnivTerm rhs)) return null;
+    if (!(preRhs instanceof UnivTerm)) return null;
     return UnivTerm.OMEGA;
   }
 
@@ -110,6 +108,10 @@ public record UntypedDefEq(
   public @Nullable
   Term visitDataCall(@NotNull AppTerm.DataCall lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitData in UntypedDefEq");
+  }
+
+  @Override public @Nullable Term visitConCall(@NotNull AppTerm.ConCall conCall, @NotNull Term term) {
+    throw new IllegalStateException("No visitCon in UntypedDefEq");
   }
 
   @Override

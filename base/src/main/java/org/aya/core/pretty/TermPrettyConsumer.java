@@ -73,6 +73,10 @@ public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
     return visitCalls(dataCall.fn(), dataCall.args());
   }
 
+  @Override public Doc visitConCall(@NotNull AppTerm.ConCall conCall, Unit unit) {
+    return visitCalls(conCall.fn(), conCall.conArgs());
+  }
+
   @Override
   public Doc visitTup(@NotNull TupTerm term, Unit unit) {
     var items = term.items().stream()

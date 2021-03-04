@@ -28,6 +28,14 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new AppTerm.DataCall(dataCall.dataRef(), args);
   }
 
+  @Override default @NotNull Term visitConCall(@NotNull AppTerm.ConCall conCall, P p) {
+    var dataArgs = conCall.dataArgs().view().map(arg -> visitArg(arg, p));
+    var conArgs = conCall.conArgs().view().map(arg -> visitArg(arg, p));
+    if (conCall.dataArgs().sameElements(dataArgs, true)
+      && conCall.conArgs().sameElements(conArgs, true)) return conCall;
+    return new AppTerm.ConCall(conCall.conHead(), dataArgs, conArgs);
+  }
+
   private <T> T visitParameterized(
     @NotNull Term.Param theParam, @NotNull Term theBody, @NotNull P p, @NotNull T original,
     @NotNull BiFunction<Term.@NotNull Param, @NotNull Term, T> callback

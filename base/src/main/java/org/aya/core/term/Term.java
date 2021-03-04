@@ -87,9 +87,7 @@ public interface Term extends CoreTerm {
     R visitApp(AppTerm.@NotNull Apply term, P p);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p);
     R visitDataCall(AppTerm.@NotNull DataCall dataCall, P p);
-    default R visitConCall(AppTerm.@NotNull ConCall conCall, P p) {
-      throw new UnsupportedOperationException();
-    }
+    R visitConCall(AppTerm.@NotNull ConCall conCall, P p);
     R visitTup(@NotNull TupTerm term, P p);
     R visitProj(@NotNull ProjTerm term, P p);
     R visitHole(@NotNull AppTerm.HoleApp term, P p);
@@ -108,9 +106,7 @@ public interface Term extends CoreTerm {
     R visitApp(AppTerm.@NotNull Apply term, P p, Q q);
     R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p, Q q);
     R visitDataCall(AppTerm.@NotNull DataCall dataCall, P p, Q q);
-    default R visitConCall(AppTerm.@NotNull ConCall conCall, P p, Q q) {
-      throw new UnsupportedOperationException();
-    }
+    R visitConCall(AppTerm.@NotNull ConCall conCall, P p, Q q);
     R visitTup(@NotNull TupTerm term, P p, Q q);
     R visitProj(@NotNull ProjTerm term, P p, Q q);
     R visitHole(@NotNull AppTerm.HoleApp term, P p, Q q);

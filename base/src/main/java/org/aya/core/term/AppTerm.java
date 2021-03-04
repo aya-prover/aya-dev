@@ -92,8 +92,8 @@ public sealed interface AppTerm extends Term {
 
   record ConCall(
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> conHead,
-    @NotNull SeqLike<@NotNull Arg<? extends Term>> dataArgs,
-    @NotNull SeqLike<@NotNull Arg<? extends Term>> conArgs
+    @NotNull SeqLike<Arg<Term>> dataArgs,
+    @NotNull SeqLike<Arg<Term>> conArgs
   ) implements AppTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitConCall(this, p);
@@ -103,7 +103,7 @@ public sealed interface AppTerm extends Term {
       return visitor.visitConCall(this, p, q);
     }
 
-    @Override public @NotNull SeqView<@NotNull Arg<? extends Term>> args() {
+    @Override public @NotNull SeqView<Arg<Term>> args() {
       return dataArgs.view().concat(conArgs.view());
     }
 

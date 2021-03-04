@@ -84,6 +84,15 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
+  public @NotNull Boolean visitConCall(@NotNull AppTerm.ConCall lhs, @NotNull Term preRhs, @NotNull Term type) {
+    if (!(preRhs instanceof AppTerm.ConCall rhs)
+      || lhs.conHead() != rhs.conHead())
+      return false;
+    // TODO[ice]: compare dataArgs
+    return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), lhs.conHead().core.telescope());
+  }
+
+  @Override
   public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
     throw new IllegalStateException("No visitTup in TermDirectedDefEq");
   }

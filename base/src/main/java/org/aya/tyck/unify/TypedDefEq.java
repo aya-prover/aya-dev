@@ -121,6 +121,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
+  public @NotNull Boolean visitConCall(@NotNull AppTerm.ConCall type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
   public @NotNull Boolean visitTup(@NotNull TupTerm type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
