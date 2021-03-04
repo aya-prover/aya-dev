@@ -12,4 +12,4 @@ More precisely, there is _preferably_ only one _natural_, and preferably _beauti
 
 ### Notation lives matter.
 
-### The only thing I know is that I mzi.
+[comment]: <> (### The only thing I know is that I mzi.)

@@ -2,10 +2,10 @@
 
 For quick testing, there is a lisp dialect used to create core terms.
 We call it the 'term DSL', or the 'core language DSL'.
-Its syntax definition could be found [here](../../buildSrc/src/main/antlr/org/mzi/parser/Lisp.g4),
+Its syntax definition could be found [here](../../buildSrc/src/main/antlr/org/aya/parser/Lisp.g4),
 which is a very straight-forward lisp syntax.
 
-It is parsed using the Java code [here](../../base/src/main/java/org/mzi/core/TermDsl.java),
+It is parsed using the Java code [here](../../base/src/main/java/org/aya/core/TermDsl.java),
 and I'll explain the specification of the DSL in this document.
 
 The DSL is designed to reflect the exact shape of (a supported subset of) the core language,

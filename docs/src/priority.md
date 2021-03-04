@@ -4,7 +4,7 @@ We've all agreed upon that number-based priority system is hard to use and error
 
 The user can declare how their operator binds compared to existing ones using the following syntax (keywords to be discussed)
 
-```mzi
+```aya
 \bind * \tighter +
 \bind + , - \looser /
 \bind ** \tighter * , /

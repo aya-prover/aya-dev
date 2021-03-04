@@ -92,7 +92,7 @@ subprojects {
         licenses {
           license {
             name.set("GPL-3.0")
-            url.set("https://github.com/ice1000/mzi/blob/master/LICENSE")
+            url.set("https://github.com/ice1000/aya-prover/blob/master/LICENSE")
           }
         }
       }

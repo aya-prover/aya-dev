@@ -9,7 +9,7 @@ It's preferred to allow `let` to introduce a local scope for arbitrary definitio
 (a similar issue in Arend can be found [here](https://github.com/JetBrains/Arend/issues/129)).
 So, I propose it this way:
 
-```mzi
+```aya
 \let {
   -- an anonymous local module, you can define datatypes,
   -- \open or \import something, or create \class or \instance,

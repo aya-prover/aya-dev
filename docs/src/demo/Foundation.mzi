@@ -59,7 +59,7 @@
 
 \def curry {A B : \Type} (f : A × B -> C) : A -> B -> C =>
   \lam x y => f (x ,, y)
-  -- mzi keywords can be represented by `\\(\w*)`, and instead of `\lam` we can just use `\`
+  -- aya keywords can be represented by `\\(\w*)`, and instead of `\lam` we can just use `\`
   -- ice: but I still propose \lam
 
 \def pairExt {A B : \Type} (p1 p2 : A × B) : p1 .fst = p2 .fst -> p1 .snd = p2 .snd -> p1 = p2 =>
@@ -77,7 +77,7 @@
   | contr (x : A) : center = x
   \abusing {
     \level 1 => \mzi
-    -- this should make mzi put (isContr A) in \Prop for any A
+    -- this should make aya put (isContr A) in \Prop for any A
   }
 -- Ok, I reconsidered the issue and think `\record` are still dependent pairs with named projections, not codata.
 

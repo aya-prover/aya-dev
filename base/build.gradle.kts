@@ -8,7 +8,7 @@ dependencies {
 }
 
 val genDir = file("src/main/gen")
-val generateVersion = tasks.register<org.mzi.gradle.GenerateVersionTask>("generateVersion") {
+val generateVersion = tasks.register<org.aya.gradle.GenerateVersionTask>("generateVersion") {
   outputDir = genDir.resolve("${project.group.toString().split(".").joinToString("/")}/prelude")
 }
 

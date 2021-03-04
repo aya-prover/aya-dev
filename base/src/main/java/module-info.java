@@ -1,28 +1,28 @@
-module org.mzi {
+module org.aya {
   requires static org.jetbrains.annotations;
   requires static org.antlr.antlr4.runtime;
 
-  requires transitive org.mzi.api;
-  requires transitive org.mzi.parser;
+  requires transitive org.aya.api;
+  requires transitive org.aya.parser;
   requires transitive org.glavo.kala.common;
 
-  requires org.mzi.pretty;
+  requires org.aya.pretty;
 
-  exports org.mzi.concrete.parse;
-  exports org.mzi.concrete.resolve.context;
-  exports org.mzi.concrete.resolve.module;
-  exports org.mzi.concrete.visitor;
-  exports org.mzi.concrete;
-  exports org.mzi.core.def;
-  exports org.mzi.core.term;
-  exports org.mzi.core.visitor;
-  exports org.mzi.core;
-  exports org.mzi.generic;
-  exports org.mzi.ref;
-  exports org.mzi.tyck.sort;
-  exports org.mzi.tyck.trace;
-  exports org.mzi.tyck.unify;
-  exports org.mzi.tyck;
-  exports org.mzi.util.cancel;
-  exports org.mzi.util;
+  exports org.aya.concrete.parse;
+  exports org.aya.concrete.resolve.context;
+  exports org.aya.concrete.resolve.module;
+  exports org.aya.concrete.visitor;
+  exports org.aya.concrete;
+  exports org.aya.core.def;
+  exports org.aya.core.term;
+  exports org.aya.core.visitor;
+  exports org.aya.core;
+  exports org.aya.generic;
+  exports org.aya.ref;
+  exports org.aya.tyck.sort;
+  exports org.aya.tyck.trace;
+  exports org.aya.tyck.unify;
+  exports org.aya.tyck;
+  exports org.aya.util.cancel;
+  exports org.aya.util;
 }
