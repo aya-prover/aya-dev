@@ -72,7 +72,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       if (lhs.whnf() != Decision.NO) return false;
       return defeq.compareWHNF(lhs, preRhs, type);
     }
-    return defeq.visitArgs(lhs.args(), rhs.args(), lhs.fnRef().core.telescope());
+    final var signature = lhs.fnRef().concrete.signature;
+    assert signature != null; // guaranteed as this is already a core term
+    return defeq.visitArgs(lhs.args(), rhs.args(), signature._1);
   }
 
   @Override
@@ -80,7 +82,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     if (!(preRhs instanceof AppTerm.DataCall rhs)
       || lhs.dataRef() != rhs.dataRef())
       return false;
-    return defeq.visitArgs(lhs.args(), rhs.args(), lhs.dataRef().core.telescope());
+    final var signature = lhs.dataRef().concrete.signature;
+    assert signature != null; // guaranteed as this is already a core term
+    return defeq.visitArgs(lhs.args(), rhs.args(), signature._1);
   }
 
   @Override
@@ -88,8 +92,14 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     if (!(preRhs instanceof AppTerm.ConCall rhs)
       || lhs.conHead() != rhs.conHead())
       return false;
-    // TODO[ice]: compare dataArgs
-    return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), lhs.conHead().core.telescope());
+    final var concrete = lhs.conHead().concrete;
+    var dataTele = concrete.dataRef.concrete.signature;
+    assert dataTele != null;
+    if (!defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(),
+      dataTele._1.map(Term.Param::toImplicit))) return false;
+    final var signature = concrete.signature;
+    assert signature != null;
+    return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), signature._1);
   }
 
   @Override

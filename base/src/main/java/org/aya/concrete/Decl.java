@@ -15,6 +15,7 @@ import org.aya.generic.Pat;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   }
 
   public static final class DataCtor extends Signatured {
-    public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
+    public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
+    public DefVar<DataDef, DataDecl> dataRef;
     public @NotNull Buffer<String> elim;
     public @NotNull Buffer<Pat.Clause<Expr>> clauses;
     public boolean coerce;
@@ -168,6 +170,17 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.result = result;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
+      body.accept(new DataBody.Visitor<Unit, Unit>() {
+        @Override public Unit visitCtors(DataBody.@NotNull Ctors ctors, Unit unit) {
+          ctors.ctors.forEach(c -> c.dataRef = ref);
+          return unit;
+        }
+
+        @Override public Unit visitClause(DataBody.@NotNull Clauses clauses, Unit unit) {
+          clauses.clauses.forEach(t -> t._2.dataRef = ref);
+          return unit;
+        }
+      }, Unit.unit());
     }
 
     @Override
