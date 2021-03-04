@@ -72,13 +72,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   private ImmutableSeq<Term.Param> tele(DefVar<? extends Def, ? extends Signatured> defVar) {
-    return tele(defVar.concrete, defVar.core);
-  }
-
-  private ImmutableSeq<Term.Param> tele(Signatured signatured, Def def) {
-    if (def != null) return def.telescope();
+    if (defVar.core != null) return defVar.core.telescope();
     // guaranteed as this is already a core term
-    else return Objects.requireNonNull(signatured.signature)._1;
+    else return Objects.requireNonNull(defVar.concrete.signature)._1;
   }
 
   @Override
