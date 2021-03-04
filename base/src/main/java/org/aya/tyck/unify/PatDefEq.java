@@ -9,6 +9,7 @@ import org.aya.generic.Arg;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.error.HoleBadSpineWarn;
+import org.aya.util.Constants;
 import org.aya.util.Decision;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.Seq;
@@ -122,7 +123,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       // TODO[ice]: report errors for duplicated vars in spine
       return null;
     }
-    var type = new AppTerm.HoleApp(new LocalVar("_"));
+    var type = new AppTerm.HoleApp(new LocalVar(Constants.ANONYMOUS_PREFIX));
     var abstracted = new LocalVar(var.name() + "'");
     var param = new Term.Param(abstracted, type, arg.explicit());
     subst.add(var, new RefTerm(abstracted));

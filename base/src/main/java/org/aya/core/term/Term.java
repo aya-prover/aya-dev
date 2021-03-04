@@ -16,6 +16,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.sort.LevelSubst;
+import org.aya.util.Constants;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
@@ -138,7 +139,7 @@ public interface Term extends CoreTerm {
     }
 
     public static @NotNull Term.Param mock(@NotNull Var hole, boolean explicit) {
-      return new Param(new LocalVar("_"), new AppTerm.HoleApp(hole), explicit);
+      return new Param(new LocalVar(Constants.ANONYMOUS_PREFIX), new AppTerm.HoleApp(hole), explicit);
     }
 
     @TestOnly @Contract(pure = true)

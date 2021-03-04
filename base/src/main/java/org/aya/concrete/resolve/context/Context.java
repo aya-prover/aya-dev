@@ -11,6 +11,7 @@ import org.aya.concrete.resolve.error.QualifiedNameNotFoundError;
 import org.aya.concrete.resolve.error.ShadowingWarn;
 import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
 import org.aya.ref.LocalVar;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
@@ -74,7 +75,7 @@ public interface Context {
   }
 
   default @NotNull BindContext bind(@NotNull String name, @NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
-    if (getUnqualifiedMaybe(name, sourcePos) != null) {
+    if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
       reporter().report(new ShadowingWarn(name, sourcePos));
     }
     return new BindContext(this, name, ref);
