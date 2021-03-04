@@ -7,6 +7,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.error.*;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -110,7 +111,7 @@ public record ModuleContext(
     @NotNull SourcePos sourcePos
   ) {
     if (!globals.containsKey(name)) {
-      if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith("_")) {
+      if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
         reporter().report(new ShadowingWarn(name, sourcePos));
       }
       globals.set(name, MutableHashMap.of());

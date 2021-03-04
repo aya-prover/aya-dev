@@ -162,20 +162,19 @@ public class ParseTest {
   }
 
   private void parseImport(@Language("TEXT") String code) {
-    assertTrue(AyaProducer.parseStmt(code).first() instanceof Stmt.ImportStmt);
+    assertTrue(AyaProducer.parseStmt(code).first() instanceof Stmt.ImportStmt s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
   }
 
   private void parseOpen(@Language("TEXT") String code) {
-    assertTrue(AyaProducer.parseStmt(code).last() instanceof Stmt.OpenStmt);
+    assertTrue(AyaProducer.parseStmt(code).last() instanceof Stmt.OpenStmt s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
   }
 
   private void parseFn(@Language("TEXT") String code) {
-    assertTrue(AyaProducer.parseDecl(code)._1 instanceof Decl.FnDecl);
+    assertTrue(AyaProducer.parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
   }
 
   private void parseData(@Language("TEXT") String code) {
     assertTrue(AyaProducer.parseDecl(code)._1 instanceof Decl.DataDecl);
-
   }
 
   private void parseUniv(@Language("TEXT") String code) {

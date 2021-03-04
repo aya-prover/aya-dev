@@ -16,6 +16,7 @@ import org.aya.generic.Pat;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -136,7 +137,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
-    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
+    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), Constants.ANONYMOUS_PREFIX, null);
     var id = ctx.ID();
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), id.getText());
     var universe = ctx.UNIVERSE();
@@ -182,7 +183,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx) {
     var literal = ctx.literal();
     if (literal != null)
-      return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
+      return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitLiteral(literal), true));
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
@@ -215,7 +216,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Expr.PiExpr(
       sourcePosOf(ctx),
       false,
-      new Expr.Param(sourcePosOf(ctx.expr(0)), new LocalVar("_"), from, true),
+      new Expr.Param(sourcePosOf(ctx.expr(0)), new LocalVar(Constants.ANONYMOUS_PREFIX), from, true),
       to
     );
   }

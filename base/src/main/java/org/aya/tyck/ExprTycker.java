@@ -25,6 +25,7 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.PatDefEq;
 import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
+import org.aya.util.Constants;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -84,8 +85,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override
   public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
     if (term == null) {
-      var domain = new LocalVar("_");
-      var codomain = new LocalVar("_");
+      var domain = new LocalVar(Constants.ANONYMOUS_PREFIX);
+      var codomain = new LocalVar(Constants.ANONYMOUS_PREFIX);
       term = new PiTerm(false, Term.Param.mock(domain, expr.param().explicit()), new AppTerm.HoleApp(codomain));
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof PiTerm dt && !dt.co())) {
@@ -247,7 +248,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
     // TODO[ice]: deal with unit type
     var name = expr.name();
-    if (name == null) name = "_";
+    if (name == null) name = Constants.ANONYMOUS_PREFIX;
     if (term == null) term = new AppTerm.HoleApp(new LocalVar(name + "_ty"));
     return new Result(new AppTerm.HoleApp(new LocalVar(name)), term);
   }
@@ -270,7 +271,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         newArg = new Arg<>(elabArg.wellTyped, argLicit);
       } else if (argLicit) {
         // that implies paramLicit == false
-        var holeApp = new AppTerm.HoleApp(new LocalVar("_"));
+        var holeApp = new AppTerm.HoleApp(new LocalVar(Constants.ANONYMOUS_PREFIX));
         // TODO: maybe we should create a concrete hole and check it against the type
         //  in case we can synthesize this term via its type only
         newArg = new Arg<>(holeApp, false);
@@ -301,7 +302,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         .forEach(result -> {
           items.append(result.wellTyped);
           if (resultLast.value != null) resultTele.append(
-            new Term.Param(new LocalVar("_"), resultLast.value, true));
+            new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), resultLast.value, true));
           resultLast.value = result.type;
         });
     } else if (!(term instanceof SigmaTerm dt && !dt.co())) {
