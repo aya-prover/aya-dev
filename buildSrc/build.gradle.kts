@@ -20,13 +20,16 @@ val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
 }
 
 tasks.withType<AntlrTask>().configureEach {
-  dependsOn(copyModuleInfo)
   outputDirectory = genDir
   arguments.addAll(listOf(
     "-package", "org.aya.parser",
     "-no-listener",
     "-visitor"
   ))
+}
+
+tasks.named("build").configure {
+  dependsOn(copyModuleInfo)
 }
 
 dependencies {
