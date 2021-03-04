@@ -17,9 +17,12 @@ import org.mzi.util.Decision;
 import org.mzi.util.Ordering;
 
 /**
- * @author re-xyr
+ * The implementation of untyped pattern unification for holes.
+ * András Kovács' elaboration-zoo is taken as reference.
+ *
+ * @author re-xyr, ice1000
  */
-public abstract class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
+public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
   private final @NotNull TypeDirectedDefEq defeq;
   private final @NotNull UntypedDefEq untypedDefeq;
 
@@ -38,7 +41,7 @@ public abstract class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNu
 
   @Override
   public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
-    throw new IllegalStateException("No visitLam in TermDirectedDefEq");
+    throw new IllegalStateException("No visitLam in PatDefEq");
   }
 
   @Override
@@ -89,11 +92,6 @@ public abstract class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNu
     return passDown(lhs, preRhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
-  }
-
   private @NotNull Boolean passDown(@NotNull Term lhs, @NotNull Term preRhs, @NotNull Term type) {
     var inferred = untypedDefeq.compare(lhs, preRhs);
     if (inferred == null) return false;
@@ -107,52 +105,40 @@ public abstract class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNu
     this.metaContext = metaContext;
   }
 
-  /**
-   * The implementation of untyped pattern unification for holes.
-   * András Kovács' elaboration-zoo is taken as reference.
-   *
-   * @author ice1000
-   */
-  public static class PatDefEq extends TypedDefEq {
-    public PatDefEq(@NotNull TypeDirectedDefEq defeq, @NotNull Ordering ord, @NotNull MetaContext metaContext) {
-      super(defeq, ord, metaContext);
+  private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
+    var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
+    for (var arg : spine.view()) {
+      if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
+        rhs = extractVar(rhs, subst, arg, var);
+        if (rhs == null) return null;
+      } else return null;
+      // TODO[ice]: ^ eta var
     }
+    return rhs.subst(subst);
+  }
 
-    private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
-      var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
-      for (var arg : spine.view()) {
-        if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
-          rhs = extractVar(rhs, subst, arg, var);
-          if (rhs == null) return null;
-        } else return null;
-        // TODO[ice]: ^ eta var
-      }
-      return rhs.subst(subst);
+  private @Nullable Term extractVar(Term rhs, Substituter.TermSubst subst, Arg<? extends Term> arg, LocalVar var) {
+    if (subst.map().containsKey(var)) {
+      // TODO[ice]: report errors for duplicated vars in spine
+      return null;
     }
+    var type = new AppTerm.HoleApp(new LocalVar("_"));
+    var abstracted = new LocalVar(var.name() + "'");
+    var param = new Term.Param(abstracted, type, arg.explicit());
+    subst.add(var, new RefTerm(abstracted));
+    return new LamTerm(param, new LamTerm(param, rhs));
+  }
 
-    private @Nullable Term extractVar(Term rhs, Substituter.TermSubst subst, Arg<? extends Term> arg, LocalVar var) {
-      if (subst.map().containsKey(var)) {
-        // TODO[ice]: report errors for duplicated vars in spine
-        return null;
-      }
-      var type = new AppTerm.HoleApp(new LocalVar("_"));
-      var abstracted = new LocalVar(var.name() + "'");
-      var param = new Term.Param(abstracted, type, arg.explicit());
-      subst.add(var, new RefTerm(abstracted));
-      return new LamTerm(param, new LamTerm(param, rhs));
+  @Override
+  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @NotNull Term type) {
+    var solved = extract(lhs.args(), rhs);
+    if (solved == null) {
+      metaContext.report(new HoleBadSpineWarn(lhs, expr));
+      return false;
     }
-
-    @Override
-    public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @NotNull Term type) {
-      var solved = extract(lhs.args(), rhs);
-      if (solved == null) {
-        metaContext.report(new HoleBadSpineWarn(lhs, expr));
-        return false;
-      }
-      var solution = metaContext.solutions().getOption(lhs);
-      if (solution.isDefined()) return compare(AppTerm.make(solution.get(), lhs.args()), rhs, type);
-      metaContext.solutions().put(lhs, solved);
-      return true;
-    }
+    var solution = metaContext.solutions().getOption(lhs);
+    if (solution.isDefined()) return compare(AppTerm.make(solution.get(), lhs.args()), rhs, type);
+    metaContext.solutions().put(lhs, solved);
+    return true;
   }
 }
