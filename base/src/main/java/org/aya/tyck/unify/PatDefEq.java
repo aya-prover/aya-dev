@@ -95,8 +95,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     final var concrete = lhs.conHead().concrete;
     var dataTele = concrete.dataRef.concrete.signature;
     assert dataTele != null;
-    if (!defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(),
-      dataTele._1.map(Term.Param::toImplicit))) return false;
+    if (!defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(), dataTele._1)) return false;
     final var signature = concrete.signature;
     assert signature != null;
     return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), signature._1);

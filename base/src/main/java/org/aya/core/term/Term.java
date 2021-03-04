@@ -124,10 +124,6 @@ public interface Term extends CoreTerm {
       return buf.toImmutableSeq().map(tup -> new Param(tup._1, tup._3, tup._2));
     }
 
-    @Contract(" -> new") public @NotNull Param toImplicit() {
-      return new Param(ref, type, false);
-    }
-
     @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
       return new Arg<>(new RefTerm(ref), explicit);
     }

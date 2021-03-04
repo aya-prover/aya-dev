@@ -140,6 +140,9 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
+  /**
+   * @apiNote this ignores {@link Arg#explicit()}
+   */
   public boolean visitArgs(SeqLike<? extends Arg<? extends Term>> l, SeqLike<? extends Arg<? extends Term>> r, SeqLike<? extends Term.Param> params) {
     return visitLists(l.view().map(Arg::term), r.view().map(Arg::term), params);
   }
