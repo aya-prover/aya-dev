@@ -40,7 +40,7 @@ public record Substituter(
 
     public void subst(@NotNull TermSubst subst) {
       if (map.isEmpty()) return;
-      map.updateAll((var, term) -> term.subst(subst));
+      map.forEach((var, term) -> map.replace(var, term.subst(subst)));
     }
 
     public void addAll(@NotNull TermSubst subst) {

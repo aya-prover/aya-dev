@@ -23,7 +23,7 @@ public final class CachedModuleLoader implements ModuleLoader {
   @Override
   public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<String> path) {
     var stringifiedPath = path.joinToString("::");
-    return cache.getOrElseGet(stringifiedPath, () -> {
+    return cache.getOrElse(stringifiedPath, () -> {
       var ctx = loader.load(path);
       cache.put(stringifiedPath, ctx);
       return ctx;

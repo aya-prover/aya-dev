@@ -33,7 +33,7 @@ import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple3;
-import org.glavo.kala.value.SimpleMutableValue;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -293,7 +293,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Check(partialSynth = true)
   @Override public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
     var items = Buffer.<Term>of();
-    final var resultLast = new SimpleMutableValue<Term>();
+    final var resultLast = new Ref<Term>();
     final var resultTele = Buffer.<Term.@NotNull Param>of();
     if (term == null) {
       // TODO[ice]: forbid one-variable tuple maybe?
