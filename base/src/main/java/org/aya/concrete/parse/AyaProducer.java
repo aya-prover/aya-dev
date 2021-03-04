@@ -13,8 +13,8 @@ import org.aya.concrete.Stmt;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.generic.Pat;
-import org.aya.parser.MziBaseVisitor;
-import org.aya.parser.MziParser;
+import org.aya.parser.AyaBaseVisitor;
+import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
@@ -40,33 +40,33 @@ import java.util.stream.Stream;
 /**
  * @author ice1000, kiva
  */
-public final class MziProducer extends MziBaseVisitor<Object> {
-  public static final @NotNull MziProducer INSTANCE = new MziProducer();
+public final class AyaProducer extends AyaBaseVisitor<Object> {
+  public static final @NotNull AyaProducer INSTANCE = new AyaProducer();
 
-  private MziProducer() {
+  private AyaProducer() {
   }
 
   @TestOnly
   public static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitExpr(MziParsing.parser(code).expr());
+    return INSTANCE.visitExpr(AyaParsing.parser(code).expr());
   }
 
   @TestOnly
   public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitStmt(MziParsing.parser(code).stmt());
+    return INSTANCE.visitStmt(AyaParsing.parser(code).stmt());
   }
 
   @TestOnly
   public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitDecl(MziParsing.parser(code).decl());
+    return INSTANCE.visitDecl(AyaParsing.parser(code).decl());
   }
 
-  @Override public ImmutableSeq<Stmt> visitProgram(MziParser.ProgramContext ctx) {
+  @Override public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
     return ctx.stmt().stream().map(this::visitStmt).flatMap(Traversable::stream).collect(ImmutableSeq.factory());
   }
 
   @Override
-  public @NotNull ImmutableSeq<Stmt> visitStmt(MziParser.StmtContext ctx) {
+  public @NotNull ImmutableSeq<Stmt> visitStmt(AyaParser.StmtContext ctx) {
     var importCmd = ctx.importCmd();
     if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
     var openCmd = ctx.openCmd();
@@ -82,7 +82,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(MziParser.DeclContext ctx) {
+  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
     var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
     if (fnDecl != null) return Tuple2.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.of());
@@ -93,7 +93,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  public Decl.@NotNull FnDecl visitFnDecl(MziParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
+  public Decl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
     var modifiers = ctx.fnModifiers().stream()
       .map(this::visitFnModifiers)
       .distinct()
@@ -114,7 +114,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(Stream<MziParser.TeleContext> stream) {
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(Stream<AyaParser.TeleContext> stream) {
     return stream
       .map(this::visitTele)
       .flatMap(Traversable::stream)
@@ -122,7 +122,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(MziParser.AbuseContext ctx) {
+  public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(AyaParser.AbuseContext ctx) {
     return ctx.stmt().stream()
       .map(this::visitStmt)
       .flatMap(Traversable::stream)
@@ -130,12 +130,12 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Expr visitFnBody(MziParser.FnBodyContext ctx) {
+  public @NotNull Expr visitFnBody(AyaParser.FnBodyContext ctx) {
     return visitExpr(ctx.expr());
   }
 
   @Override
-  public @NotNull Expr visitLiteral(MziParser.LiteralContext ctx) {
+  public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), "_", null);
     var id = ctx.ID();
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), id.getText());
@@ -179,7 +179,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(MziParser.TeleContext ctx) {
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx) {
     var literal = ctx.literal();
     if (literal != null)
       return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar("_"), visitLiteral(literal), true));
@@ -190,26 +190,26 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(MziParser.TeleMaybeTypedExprContext ctx) {
+  public @NotNull Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(AyaParser.TeleMaybeTypedExprContext ctx) {
     var type = type(ctx.type(), sourcePosOf(ctx.ids()));
     return explicit -> visitIds(ctx.ids())
       .map(v -> new Expr.Param(v._1, new LocalVar(v._2), type, explicit))
       .collect(ImmutableSeq.factory());
   }
 
-  public @NotNull Expr visitExpr(MziParser.ExprContext ctx) {
-    if (ctx instanceof MziParser.AppContext app) return visitApp(app);
-    if (ctx instanceof MziParser.ProjContext proj) return visitProj(proj);
-    if (ctx instanceof MziParser.PiContext pi) return visitPi(pi);
-    if (ctx instanceof MziParser.SigmaContext sig) return visitSigma(sig);
-    if (ctx instanceof MziParser.LamContext lam) return visitLam(lam);
-    if (ctx instanceof MziParser.ArrContext arr) return visitArr(arr);
+  public @NotNull Expr visitExpr(AyaParser.ExprContext ctx) {
+    if (ctx instanceof AyaParser.AppContext app) return visitApp(app);
+    if (ctx instanceof AyaParser.ProjContext proj) return visitProj(proj);
+    if (ctx instanceof AyaParser.PiContext pi) return visitPi(pi);
+    if (ctx instanceof AyaParser.SigmaContext sig) return visitSigma(sig);
+    if (ctx instanceof AyaParser.LamContext lam) return visitLam(lam);
+    if (ctx instanceof AyaParser.ArrContext arr) return visitArr(arr);
     // TODO: match
     throw new UnsupportedOperationException("TODO: " + ctx.getClass());
   }
 
   @Override
-  public @NotNull Expr visitArr(MziParser.ArrContext ctx) {
+  public @NotNull Expr visitArr(AyaParser.ArrContext ctx) {
     var from = visitExpr(ctx.expr(0));
     var to = visitExpr(ctx.expr(1));
     return new Expr.PiExpr(
@@ -221,7 +221,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Expr visitApp(MziParser.AppContext ctx) {
+  public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
     var argument = ctx.argument();
     final var atom = ctx.atom();
     if (argument.isEmpty()) return visitAtom(atom);
@@ -235,7 +235,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Expr visitAtom(MziParser.AtomContext ctx) {
+  public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {
     var literal = ctx.literal();
     if (literal != null) return visitLiteral(literal);
 
@@ -250,7 +250,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Expr visitTyped(MziParser.TypedContext ctx) {
+  public @NotNull Expr visitTyped(AyaParser.TypedContext ctx) {
     final var type = ctx.type();
     if (type == null) return visitExpr(ctx.expr());
     else return new Expr.TypedExpr(
@@ -261,7 +261,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Arg<Expr> visitArgument(MziParser.ArgumentContext ctx) {
+  public @NotNull Arg<Expr> visitArgument(AyaParser.ArgumentContext ctx) {
     var atom = ctx.atom();
     if (atom != null) return Arg.explicit(visitAtom(atom));
     if (ctx.LBRACE() != null) return Arg.implicit(new Expr.TupExpr(sourcePosOf(ctx),
@@ -273,7 +273,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull LamExpr visitLam(MziParser.LamContext ctx) {
+  public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
     return (Expr.LamExpr) buildLam(
       sourcePosOf(ctx),
       visitTelescope(ctx.tele().stream()).view(),
@@ -294,7 +294,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  private @NotNull Expr visitLamBody(@NotNull MziParser.LamContext ctx) {
+  private @NotNull Expr visitLamBody(@NotNull AyaParser.LamContext ctx) {
     var bodyExpr = ctx.expr();
 
     if (bodyExpr == null) {
@@ -310,7 +310,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull TelescopicSigmaExpr visitSigma(MziParser.SigmaContext ctx) {
+  public Expr.@NotNull TelescopicSigmaExpr visitSigma(AyaParser.SigmaContext ctx) {
     return new Expr.TelescopicSigmaExpr(
       sourcePosOf(ctx),
       false,
@@ -320,7 +320,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull PiExpr visitPi(MziParser.PiContext ctx) {
+  public Expr.@NotNull PiExpr visitPi(AyaParser.PiContext ctx) {
     return (Expr.PiExpr) buildPi(
       sourcePosOf(ctx),
       false,
@@ -365,7 +365,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull ProjExpr visitProj(MziParser.ProjContext proj) {
+  public Expr.@NotNull ProjExpr visitProj(AyaParser.ProjContext proj) {
     return new Expr.ProjExpr(
       sourcePosOf(proj),
       visitExpr(proj.expr()),
@@ -373,7 +373,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     );
   }
 
-  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(MziParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var data = new Decl.DataDecl(
@@ -398,21 +398,21 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     } else return Tuple2.of(data, ImmutableSeq.of());
   }
 
-  public @NotNull Expr type(@Nullable MziParser.TypeContext typeCtx, SourcePos sourcePos) {
+  public @NotNull Expr type(@Nullable AyaParser.TypeContext typeCtx, SourcePos sourcePos) {
     return typeCtx == null
       ? new Expr.HoleExpr(sourcePos, null, null)
       : visitType(typeCtx);
   }
 
-  private @NotNull Decl.DataBody visitDataBody(MziParser.DataBodyContext ctx) {
-    if (ctx instanceof MziParser.DataCtorsContext dcc) return visitDataCtors(dcc);
-    if (ctx instanceof MziParser.DataClausesContext dcc) return visitDataClauses(dcc);
+  private @NotNull Decl.DataBody visitDataBody(AyaParser.DataBodyContext ctx) {
+    if (ctx instanceof AyaParser.DataCtorsContext dcc) return visitDataCtors(dcc);
+    if (ctx instanceof AyaParser.DataClausesContext dcc) return visitDataClauses(dcc);
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
-  public Decl.DataBody visitDataCtors(MziParser.DataCtorsContext ctx) {
+  public Decl.DataBody visitDataCtors(AyaParser.DataCtorsContext ctx) {
     return new Decl.DataBody.Ctors(
       ctx.dataCtor().stream()
         .map(this::visitDataCtor)
@@ -421,7 +421,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Decl.DataBody visitDataClauses(MziParser.DataClausesContext ctx) {
+  public Decl.DataBody visitDataClauses(AyaParser.DataClausesContext ctx) {
     var elim = visitElim(ctx.elim());
     // TODO[imkiva]: use var will compile, but IDEA shows error
     Buffer<Tuple2<Pat<Expr>, Decl.DataCtor>> clauses = ctx.dataCtorClause().stream()
@@ -431,7 +431,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Decl.@NotNull DataCtor visitDataCtor(MziParser.DataCtorContext ctx) {
+  public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
     var elimCtx = ctx.elim();
     var elim = elimCtx == null
       ? Buffer.<String>of()
@@ -450,7 +450,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override public @NotNull Tuple2<@NotNull Pat<Expr>, Decl.@NotNull DataCtor>
-  visitDataCtorClause(MziParser.DataCtorClauseContext ctx) {
+  visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
     return Tuple.of(
       visitPattern(ctx.pattern()),
       visitDataCtor(ctx.dataCtor())
@@ -458,7 +458,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Pat<Expr> visitPattern(MziParser.PatternContext ctx) {
+  public @NotNull Pat<Expr> visitPattern(AyaParser.PatternContext ctx) {
     // TODO[imkiva]: use var will compile, but IDEA shows error
     ImmutableSeq<Pat.Atom<Pat<Expr>>> atoms = ctx.atomPattern().stream()
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
@@ -471,7 +471,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Pat.@NotNull Atom<Pat<Expr>> visitAtomPattern(MziParser.AtomPatternContext ctx) {
+  public Pat.@NotNull Atom<Pat<Expr>> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
     if (ctx.LPAREN() != null) return new Pat.Atom.Tuple<>(visitPatterns(ctx.patterns()));
     if (ctx.LBRACE() != null) return new Pat.Atom.Braced<>(visitPatterns(ctx.patterns()));
     if (ctx.CALM_FACE() != null) return new Pat.Atom.CalmFace<>();
@@ -484,14 +484,14 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Buffer<@NotNull Pat<Expr>> visitPatterns(MziParser.PatternsContext ctx) {
+  public @NotNull Buffer<@NotNull Pat<Expr>> visitPatterns(AyaParser.PatternsContext ctx) {
     return ctx.pattern().stream()
       .map(this::visitPattern)
       .collect(Buffer.factory());
   }
 
   @Override
-  public @NotNull Pat.Clause<Expr> visitClause(MziParser.ClauseContext ctx) {
+  public @NotNull Pat.Clause<Expr> visitClause(AyaParser.ClauseContext ctx) {
     if (ctx.ABSURD() != null) return new Pat.Clause.Impossible<>();
     return new Pat.Clause.Possible<>(
       visitPatterns(ctx.patterns()),
@@ -500,24 +500,24 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public Buffer<String> visitElim(MziParser.ElimContext ctx) {
+  public Buffer<String> visitElim(AyaParser.ElimContext ctx) {
     return ctx.ID().stream()
       .map(ParseTree::getText)
       .collect(Buffer.factory());
   }
 
-  public @NotNull Decl visitStructDecl(MziParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Decl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     // TODO: visit struct decl
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public @NotNull Expr visitType(@NotNull MziParser.TypeContext ctx) {
+  public @NotNull Expr visitType(@NotNull AyaParser.TypeContext ctx) {
     return visitExpr(ctx.expr());
   }
 
   @Override
-  public @NotNull Stmt visitImportCmd(MziParser.ImportCmdContext ctx) {
+  public @NotNull Stmt visitImportCmd(AyaParser.ImportCmdContext ctx) {
     final var id = ctx.ID();
     return new Stmt.ImportStmt(
       sourcePosOf(ctx),
@@ -527,7 +527,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull ImmutableSeq<Stmt> visitOpenCmd(MziParser.OpenCmdContext ctx) {
+  public @NotNull ImmutableSeq<Stmt> visitOpenCmd(AyaParser.OpenCmdContext ctx) {
     var accessibility = ctx.PUBLIC() == null
       ? Stmt.Accessibility.Private
       : Stmt.Accessibility.Public;
@@ -546,22 +546,22 @@ public final class MziProducer extends MziBaseVisitor<Object> {
     else return ImmutableSeq.of(open);
   }
 
-  public Stmt.OpenStmt.UseHide visitUse(List<MziParser.UseContext> ctxs) {
+  public Stmt.OpenStmt.UseHide visitUse(List<AyaParser.UseContext> ctxs) {
     return new Stmt.OpenStmt.UseHide(
       ctxs.stream()
-        .map(MziParser.UseContext::useHideList)
-        .map(MziParser.UseHideListContext::ids)
+        .map(AyaParser.UseContext::useHideList)
+        .map(AyaParser.UseHideListContext::ids)
         .flatMap(this::visitIds)
         .map(Tuple2::getValue)
         .collect(ImmutableSeq.factory()),
       Stmt.OpenStmt.UseHide.Strategy.Using);
   }
 
-  public Stmt.OpenStmt.UseHide visitHide(List<MziParser.HideContext> ctxs) {
+  public Stmt.OpenStmt.UseHide visitHide(List<AyaParser.HideContext> ctxs) {
     return new Stmt.OpenStmt.UseHide(
       ctxs.stream()
-        .map(MziParser.HideContext::useHideList)
-        .map(MziParser.UseHideListContext::ids)
+        .map(AyaParser.HideContext::useHideList)
+        .map(AyaParser.UseHideListContext::ids)
         .flatMap(this::visitIds)
         .map(Tuple2::getValue)
         .collect(ImmutableSeq.factory()),
@@ -569,14 +569,14 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Stmt.OpenStmt.UseHide visitUseHide(@NotNull MziParser.UseHideContext ctx) {
+  public @NotNull Stmt.OpenStmt.UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
     var use = ctx.use();
     if (use != null) return visitUse(use);
     return visitHide(ctx.hide());
   }
 
   @Override
-  public @NotNull Stmt.ModuleStmt visitModule(MziParser.ModuleContext ctx) {
+  public @NotNull Stmt.ModuleStmt visitModule(AyaParser.ModuleContext ctx) {
     return new Stmt.ModuleStmt(
       sourcePosOf(ctx),
       ctx.ID().getText(),
@@ -587,19 +587,19 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Stream<Tuple2<SourcePos, String>> visitIds(MziParser.IdsContext ctx) {
+  public @NotNull Stream<Tuple2<SourcePos, String>> visitIds(AyaParser.IdsContext ctx) {
     return ctx.ID().stream().map(id -> Tuple.of(sourcePosOf(id), id.getText()));
   }
 
   @Override
-  public @NotNull ImmutableSeq<@NotNull String> visitModuleName(MziParser.ModuleNameContext ctx) {
+  public @NotNull ImmutableSeq<@NotNull String> visitModuleName(AyaParser.ModuleNameContext ctx) {
     return ctx.ID().stream()
       .map(ParseTree::getText)
       .collect(ImmutableSeq.factory());
   }
 
   @Override
-  public @NotNull Assoc visitAssoc(MziParser.AssocContext ctx) {
+  public @NotNull Assoc visitAssoc(AyaParser.AssocContext ctx) {
     if (ctx.FIX() != null) return Assoc.Fix;
     if (ctx.FIXL() != null) return Assoc.FixL;
     if (ctx.FIXR() != null) return Assoc.FixR;
@@ -611,7 +611,7 @@ public final class MziProducer extends MziBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Modifier visitFnModifiers(MziParser.FnModifiersContext ctx) {
+  public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {
     if (ctx.ERASE() != null) return Modifier.Erase;
     if (ctx.INLINE() != null) return Modifier.Inline;
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());

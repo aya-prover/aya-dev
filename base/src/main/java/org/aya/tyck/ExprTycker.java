@@ -5,8 +5,8 @@ package org.aya.tyck;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
-import org.aya.api.util.MziBreakingException;
-import org.aya.api.util.MziInterruptException;
+import org.aya.api.util.BreakingException;
+import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
@@ -343,13 +343,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     throw new UnsupportedOperationException(expr.toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
   }
 
-  public static final class TyckInterruptedException extends MziInterruptException {
+  public static final class TyckInterruptedException extends InterruptException {
     @Override public InterruptStage stage() {
       return InterruptStage.Tycking;
     }
   }
 
-  public static class TyckerException extends MziBreakingException {
+  public static class TyckerException extends BreakingException {
     @Override public void printHint() {
       System.err.println("A type error was discovered during type checking.");
     }

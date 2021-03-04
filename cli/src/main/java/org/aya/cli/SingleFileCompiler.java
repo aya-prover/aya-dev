@@ -3,11 +3,11 @@
 package org.aya.cli;
 
 import org.aya.api.error.Reporter;
-import org.aya.api.util.MziInterruptException;
+import org.aya.api.util.InterruptException;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.Stmt;
-import org.aya.concrete.parse.MziParsing;
-import org.aya.concrete.parse.MziProducer;
+import org.aya.concrete.parse.AyaParsing;
+import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
@@ -24,9 +24,9 @@ import java.nio.file.Path;
 public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath, Trace.@Nullable Builder builder) {
   public int compile(@NotNull CompilerFlags flags) throws IOException {
     var reporter = new CountingReporter(this.reporter);
-    var parser = MziParsing.parser(filePath, reporter);
+    var parser = AyaParsing.parser(filePath, reporter);
     try {
-      var program = MziProducer.INSTANCE.visitProgram(parser.program());
+      var program = AyaProducer.INSTANCE.visitProgram(parser.program());
       var context = new EmptyContext(reporter).derive();
       var shallowResolver = new StmtShallowResolver(new EmptyModuleLoader());
       program.forEach(s -> s.accept(shallowResolver, context));
@@ -39,9 +39,9 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       e.printHint();
       System.err.println("""
         Please report the stacktrace to the developers so a better error handling could be made.
-        Don't forget to inform the version of Mzi you're using and attach your code for reproduction.""");
+        Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
       return e.exitCode();
-    } catch (MziInterruptException e) {
+    } catch (InterruptException e) {
       // TODO[ice]: proper error handling
       reporter.reportString(e.stage().name() + " interrupted due to errors.");
     }

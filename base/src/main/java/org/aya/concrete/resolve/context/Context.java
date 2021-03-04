@@ -6,7 +6,7 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.api.util.MziBreakingException;
+import org.aya.api.util.BreakingException;
 import org.aya.concrete.resolve.error.QualifiedNameNotFoundError;
 import org.aya.concrete.resolve.error.ShadowingWarn;
 import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
@@ -84,7 +84,7 @@ public interface Context {
     return new ModuleContext(this);
   }
 
-  class ContextException extends MziBreakingException {
+  class ContextException extends BreakingException {
     @Override public void printHint() {
       System.err.println("A reference error was discovered during resolving.");
     }

@@ -3,7 +3,7 @@
 package org.aya.tyck;
 
 import org.aya.api.ref.Var;
-import org.aya.concrete.parse.MziProducer;
+import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.core.def.FnDef;
 import org.aya.test.Lisp;
@@ -34,7 +34,7 @@ public class TyckDeclTest {
   }
 
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
-    var decl = MziProducer.parseDecl(code)._1;
+    var decl = AyaProducer.parseDecl(code)._1;
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     decl.resolve();
     var def = decl.tyck(ThrowingReporter.INSTANCE, null);

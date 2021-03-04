@@ -4,7 +4,7 @@ package org.aya.tyck;
 
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.Expr;
-import org.aya.concrete.parse.MziProducer;
+import org.aya.concrete.parse.AyaProducer;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.LamTerm;
 import org.aya.core.term.PiTerm;
@@ -36,7 +36,7 @@ public class TyckFnTest {
   static @NotNull Expr lamConnected() {
     var a = new LocalVar("a");
     // \A a.a
-    return MziProducer.buildLam(SourcePos.NONE,
+    return AyaProducer.buildLam(SourcePos.NONE,
       ImmutableSeq.of(
         new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
         new Expr.Param(SourcePos.NONE, a, true)).view(),
@@ -79,7 +79,7 @@ public class TyckFnTest {
     var pRef = new Expr.RefExpr(SourcePos.NONE, p);
     var f = new LocalVar("f");
     // \A B C f p. f(p.1, p.2)
-    var uncurry = MziProducer.buildLam(SourcePos.NONE,
+    var uncurry = AyaProducer.buildLam(SourcePos.NONE,
       Stream
         .concat(
           Stream.of("A", "B", "C").map(LocalVar::new),

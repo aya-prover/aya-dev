@@ -5,7 +5,7 @@ package org.aya.api.util;
 /**
  * @author ice1000
  */
-public abstract class MziBreakingException extends RuntimeException {
+public abstract class BreakingException extends RuntimeException {
   public abstract void printHint();
   public abstract int exitCode();
 }

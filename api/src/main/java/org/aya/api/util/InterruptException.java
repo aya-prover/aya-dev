@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * @author imkiva
  */
-public abstract class MziInterruptException extends RuntimeException {
+public abstract class InterruptException extends RuntimeException {
   @ApiStatus.Internal public abstract InterruptStage stage();
 
   public enum InterruptStage {

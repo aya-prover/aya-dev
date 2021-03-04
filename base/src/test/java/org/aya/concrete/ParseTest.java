@@ -4,7 +4,7 @@ package org.aya.concrete;
 
 import org.aya.api.Global;
 import org.aya.api.error.SourcePos;
-import org.aya.concrete.parse.MziProducer;
+import org.aya.concrete.parse.AyaProducer;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.ref.LocalVar;
@@ -30,7 +30,7 @@ public class ParseTest {
 
   @Test
   public void issue141() {
-    Assertions.assertEquals(MziProducer.parseStmt("\\module a {}"),
+    Assertions.assertEquals(AyaProducer.parseStmt("\\module a {}"),
       ImmutableSeq.of(new Stmt.ModuleStmt(SourcePos.NONE, "a", ImmutableSeq.empty())));
   }
 
@@ -53,7 +53,7 @@ public class ParseTest {
 
   @Test
   public void successLiteral() {
-    assertTrue(MziProducer.parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
+    assertTrue(AyaProducer.parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
     parseUniv("\\Prop");
     parseUniv("\\Set");
     parseUniv("\\Set0");
@@ -127,25 +127,25 @@ public class ParseTest {
 
   @Test
   public void successExpr() {
-    assertTrue(MziProducer.parseExpr("boy") instanceof Expr.UnresolvedExpr);
-    assertTrue(MziProducer.parseExpr("f a") instanceof Expr.AppExpr);
-    assertTrue(MziProducer.parseExpr("f a b c") instanceof Expr.AppExpr);
-    assertTrue(MziProducer.parseExpr("a.1") instanceof Expr.ProjExpr);
-    assertTrue(MziProducer.parseExpr("a.1.2") instanceof Expr.ProjExpr);
-    assertTrue(MziProducer.parseExpr("f (a.1) (a.2)") instanceof Expr.AppExpr app
+    assertTrue(AyaProducer.parseExpr("boy") instanceof Expr.UnresolvedExpr);
+    assertTrue(AyaProducer.parseExpr("f a") instanceof Expr.AppExpr);
+    assertTrue(AyaProducer.parseExpr("f a b c") instanceof Expr.AppExpr);
+    assertTrue(AyaProducer.parseExpr("a.1") instanceof Expr.ProjExpr);
+    assertTrue(AyaProducer.parseExpr("a.1.2") instanceof Expr.ProjExpr);
+    assertTrue(AyaProducer.parseExpr("f (a.1) (a.2)") instanceof Expr.AppExpr app
       && app.arguments().get(0).term() instanceof Expr.ProjExpr
       && app.arguments().get(1).term() instanceof Expr.ProjExpr);
-    assertTrue(MziProducer.parseExpr("λ a => a") instanceof Expr.LamExpr);
-    assertTrue(MziProducer.parseExpr("\\lam a => a") instanceof Expr.LamExpr);
-    assertTrue(MziProducer.parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
-    assertTrue(MziProducer.parseExpr("Π a -> a") instanceof Expr.PiExpr dt && !dt.co());
-    assertTrue(MziProducer.parseExpr("\\Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
-    assertTrue(MziProducer.parseExpr("\\Pi a b -> a") instanceof Expr.PiExpr dt
+    assertTrue(AyaProducer.parseExpr("λ a => a") instanceof Expr.LamExpr);
+    assertTrue(AyaProducer.parseExpr("\\lam a => a") instanceof Expr.LamExpr);
+    assertTrue(AyaProducer.parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
+    assertTrue(AyaProducer.parseExpr("Π a -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(AyaProducer.parseExpr("\\Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(AyaProducer.parseExpr("\\Pi a b -> a") instanceof Expr.PiExpr dt
       && !dt.co() && dt.last() instanceof Expr.PiExpr);
-    assertTrue(MziProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
-    assertTrue(MziProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
-    assertTrue(MziProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
-    assertTrue(MziProducer.parseExpr("\\Pi (x : \\Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.TelescopicSigmaExpr);
+    assertTrue(AyaProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(AyaProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(AyaProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(AyaProducer.parseExpr("\\Pi (x : \\Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.TelescopicSigmaExpr);
     parseTo("f a . 1", new Expr.ProjExpr(
       SourcePos.NONE,
       new Expr.AppExpr(
@@ -155,38 +155,38 @@ public class ParseTest {
       ),
       1
     ));
-    assertTrue(MziProducer.parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
+    assertTrue(AyaProducer.parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
       && app.arguments().sizeEquals(1)
       && app.arguments().get(0).term() instanceof Expr.TupExpr tup
       && tup.items().sizeEquals(3));
   }
 
   private void parseImport(@Language("TEXT") String code) {
-    assertTrue(MziProducer.parseStmt(code).first() instanceof Stmt.ImportStmt);
+    assertTrue(AyaProducer.parseStmt(code).first() instanceof Stmt.ImportStmt);
   }
 
   private void parseOpen(@Language("TEXT") String code) {
-    assertTrue(MziProducer.parseStmt(code).last() instanceof Stmt.OpenStmt);
+    assertTrue(AyaProducer.parseStmt(code).last() instanceof Stmt.OpenStmt);
   }
 
   private void parseFn(@Language("TEXT") String code) {
-    assertTrue(MziProducer.parseDecl(code)._1 instanceof Decl.FnDecl);
+    assertTrue(AyaProducer.parseDecl(code)._1 instanceof Decl.FnDecl);
   }
 
   private void parseData(@Language("TEXT") String code) {
-    assertTrue(MziProducer.parseDecl(code)._1 instanceof Decl.DataDecl);
+    assertTrue(AyaProducer.parseDecl(code)._1 instanceof Decl.DataDecl);
 
   }
 
   private void parseUniv(@Language("TEXT") String code) {
-    assertTrue(MziProducer.parseExpr(code) instanceof Expr.UnivExpr);
+    assertTrue(AyaProducer.parseExpr(code) instanceof Expr.UnivExpr);
   }
 
   private void parseTo(@NotNull @NonNls @Language("TEXT") String code, ImmutableSeq<Stmt> stmt) {
-    assertEquals(stmt, MziProducer.parseStmt(code));
+    assertEquals(stmt, AyaProducer.parseStmt(code));
   }
 
   private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Expr expr) {
-    Assertions.assertEquals(expr, MziProducer.parseExpr(code));
+    Assertions.assertEquals(expr, AyaProducer.parseExpr(code));
   }
 }
