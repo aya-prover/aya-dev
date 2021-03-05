@@ -1,10 +1,7 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.cli;
+package org.aya.api.error;
 
-import org.aya.api.error.Problem;
-import org.aya.api.error.Reporter;
-import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +11,8 @@ import java.nio.file.Path;
 /**
  * @author ice1000
  */
-public record StreamReporter(@NotNull Path filePath, @NotNull String sourceCode, @NotNull PrintStream stream) implements Reporter {
+public record StreamReporter(@NotNull Path filePath, @NotNull String sourceCode,
+                             @NotNull PrintStream stream) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
     var errorMsg = errorMsg(filePath, sourceCode, problem);
     stream.println(errorMsg);

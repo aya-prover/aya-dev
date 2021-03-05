@@ -3,11 +3,11 @@
 package org.aya.test;
 
 import org.aya.api.Global;
+import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Problem;
+import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
-import org.aya.cli.StreamReporter;
-import org.aya.tyck.error.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -67,10 +67,10 @@ public class TestRunner {
         } else {
           System.err.printf(Locale.getDefault(),
             """
-            ----------------------------------------
-              %s
-            ----------------------------------------
-            """,
+              ----------------------------------------
+                %s
+              ----------------------------------------
+              """,
             hookOut);
           fail("The test case <" + file.getFileName() + "> should pass, but it fails.");
         }

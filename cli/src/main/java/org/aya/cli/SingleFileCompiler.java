@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli;
 
+import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.Signatured;
@@ -13,7 +14,6 @@ import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.error.CountingReporter;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
