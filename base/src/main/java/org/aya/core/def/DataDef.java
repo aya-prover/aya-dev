@@ -9,11 +9,12 @@ import org.aya.core.term.Term;
 import org.aya.generic.Pat;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
 
 /**
  * core data definition, corresponding to {@link Decl.DataDecl}
@@ -49,8 +50,13 @@ public record DataDef(
       ref.core = this;
     }
 
-    @Override public @NotNull SeqView<Term.Param> telescope() {
-      return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTelescope);
+    @Override public @NotNull Seq<Term.Param> telescope() {
+      // https://github.com/Glavo/kala-common/issues/14
+      // return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTelescope);
+      return Stream.concat(
+        Def.defTele(dataRef).stream(),
+        conTelescope.stream()
+      ).collect(Seq.factory());
     }
 
     @Override public @NotNull Term result() {
