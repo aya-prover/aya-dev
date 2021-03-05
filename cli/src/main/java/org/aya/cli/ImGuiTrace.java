@@ -56,15 +56,13 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   }
 
   private void sourceCode(JImGui imGui, JImVec4 highlight) {
-    var line = 1;
-    var column = 1;
     var buffer = new StringBuilder();
     var previousContains = false;
     for (var i = 0; i < sourceCode.length(); i++) {
       var c = sourceCode.charAt(i);
       buffer.append(c);
       var isEOL = c == '\n';
-      var contains = pos.contains(line, column);
+      var contains = pos.contains(i + 1);
       if (contains != previousContains) {
         if (!contains) imGui.textColored(highlight, buffer.toString());
         else imGui.text(buffer.toString());
@@ -72,13 +70,10 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
       }
       previousContains = contains;
       if (isEOL) {
-        line++;
-        column = 1;
         imGui.text(buffer.toString());
         buffer.delete(0, buffer.length());
         imGui.newLine();
       } else {
-        column++;
         imGui.sameLine();
       }
     }
