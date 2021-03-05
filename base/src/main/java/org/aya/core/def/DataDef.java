@@ -13,16 +13,17 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * core data definition, corresponding to {@link Decl.DataDecl}
+ *
  * @author kiva
  */
 public record DataDef(
-		@NotNull DefVar<DataDef, Decl.DataDecl> ref,
-		@NotNull ImmutableSeq<Term.Param> telescope,
-		@NotNull Term result,
-		@NotNull Buffer<String> elim,
-		@NotNull Buffer<Ctor> ctors,
-		@NotNull ImmutableMap<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
-		// TODO: also see RefFinder
+  @NotNull DefVar<DataDef, Decl.DataDecl> ref,
+  @NotNull ImmutableSeq<Term.Param> telescope,
+  @NotNull Term result,
+  @NotNull Buffer<String> elim,
+  @NotNull Buffer<Ctor> ctors,
+  @NotNull ImmutableMap<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
+  // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
     ref.core = this;

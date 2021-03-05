@@ -142,7 +142,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         var tele = data.telescope();
         var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, tele.map(Term.Param::toArg));
         return defCall(tele, call, data.result());
-      } else if (defVar.concrete instanceof Signatured decl && decl.signature != null)
+      } else if (defVar.concrete instanceof Signatured decl) {
+        assert decl.signature != null;
         return defCall(decl.signature._1, decl.accept(new Signatured.Visitor<ImmutableSeq<Arg<Term>>, @NotNull Term>() {
           @Override public @NotNull Term visitCtor(Decl.@NotNull DataCtor ctor, ImmutableSeq<Arg<Term>> args) {
             throw new UnsupportedOperationException();
@@ -156,7 +157,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
             return new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, args);
           }
         }, decl.signature._1.map(Term.Param::toArg)), decl.signature._2);
-      else {
+      } else {
         final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
       }

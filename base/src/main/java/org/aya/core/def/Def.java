@@ -9,10 +9,18 @@ import org.aya.core.term.Term;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author ice1000
  */
 public interface Def extends CoreDef {
+  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+    if (defVar.core != null) return defVar.core.telescope();
+      // guaranteed as this is already a core term
+    else return Objects.requireNonNull(defVar.concrete.signature)._1;
+  }
+
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
