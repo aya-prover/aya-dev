@@ -14,8 +14,7 @@ import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.Pat;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.collection.immutable.ImmutableHashMap;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple;
@@ -55,9 +54,9 @@ public record StmtTycker(
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
-    var tele = checkTele(tycker, ctor.telescope).collect(ImmutableSeq.factory());
+    var tele = checkTele(tycker, ctor.telescope).collect(Seq.factory());
     var dataRef = ctor.dataRef;
-    ctor.signature = Tuple.of(tele, new AppTerm.DataCall(dataRef, tele.map(Term.Param::toArg)));
+    ctor.signature = Tuple.of(tele, new AppTerm.DataCall(dataRef, tele.view().map(Term.Param::toArg)));
     return new DataDef.Ctor(
       dataRef,
       ctor.ref,
@@ -73,8 +72,7 @@ public record StmtTycker(
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var ctorBuf = Buffer.<DataDef.Ctor>of();
     var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
-    var tele = checkTele(tycker, decl.telescope)
-      .collect(ImmutableSeq.factory());
+    var tele = checkTele(tycker, decl.telescope).collect(Seq.factory());
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = Tuple.of(tele, result);
     decl.body.accept(new Decl.DataBody.Visitor<ExprTycker, Unit>() {
@@ -89,12 +87,12 @@ public record StmtTycker(
         throw new UnsupportedOperationException();
       }
     }, tycker);
-    return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, ImmutableHashMap.from(clauseBuf));
+    return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, clauseBuf);
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
     var resultTele = checkTele(tycker, decl.telescope)
-      .collect(ImmutableSeq.factory());
+      .collect(Seq.factory());
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);
     decl.signature = Tuple.of(resultTele, resultRes.wellTyped());
@@ -103,10 +101,7 @@ public record StmtTycker(
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 
-  private @NotNull Stream<Term.Param> checkTele(
-    @NotNull ExprTycker exprTycker,
-    @NotNull ImmutableSeq<Expr.Param> tele
-  ) {
+  private @NotNull Stream<Term.Param> checkTele(@NotNull ExprTycker exprTycker, @NotNull Seq<Expr.Param> tele) {
     return tele.stream().map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
       var paramRes = exprTycker.checkExpr(param.type(), null);

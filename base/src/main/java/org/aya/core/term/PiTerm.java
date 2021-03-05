@@ -3,7 +3,7 @@
 package org.aya.core.term;
 
 import org.aya.util.Decision;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ public record PiTerm(boolean co, @NotNull Term.Param param, @NotNull Term body) 
     return visitor.visitPi(this, p, q);
   }
 
-  public static @NotNull Term make(boolean co, @NotNull ImmutableSeq<@NotNull Param> telescope, @NotNull Term body) {
-    return telescope.reversed().foldLeft(body, (t, p) -> new PiTerm(co, p, t));
+  public static @NotNull Term make(boolean co, @NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
+    return telescope.view().reversed().foldLeft(body, (t, p) -> new PiTerm(co, p, t));
   }
 }

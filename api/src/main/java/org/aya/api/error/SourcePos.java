@@ -60,6 +60,10 @@ public record SourcePos(
     return line >= startLine && line <= endLine && column >= startColumn && column <= endColumn;
   }
 
+  public boolean contains(int pos) {
+    return pos >= tokenStartIndex && pos <= tokenEndIndex;
+  }
+
   @Override
   public int hashCode() {
     // the equals() returns true in tests, so hashCode() should

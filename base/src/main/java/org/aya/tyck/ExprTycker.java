@@ -28,7 +28,7 @@ import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
-import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -139,6 +139,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         return defCall((DefVar<FnDef, Decl.FnDecl>) defVar, AppTerm.FnCall::new);
       } else if (defVar.core instanceof DataDef || defVar.concrete instanceof Decl.DataDecl) {
         return defCall((DefVar<DataDef, Decl.DataDecl>) defVar, AppTerm.DataCall::new);
+      } else if (defVar.core instanceof DataDef.Ctor || defVar.concrete instanceof Decl.DataDecl.DataCtor) {
+        var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) defVar;
+        var telescopes = DataDef.Ctor.telescopes(conVar);
+        var body = new AppTerm.ConCall(conVar,
+          telescopes._1.view().map(Term.Param::toArg),
+          telescopes._2.view().map(Term.Param::toArg));
+        var tele = Def.defTele(conVar);
+        var type = PiTerm.make(false, tele, Def.defResult(conVar));
+        return new Result(LamTerm.make(tele, body), type);
       } else {
         final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
@@ -152,10 +161,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
-  defCall(DefVar<D, S> defVar, BiFunction<DefVar<D, S>, Seq<Arg<Term>>, Term> function) {
+  defCall(DefVar<D, S> defVar, BiFunction<DefVar<D, S>, SeqLike<Arg<Term>>, Term> function) {
     var tele = Def.defTele(defVar);
     // ice: should we rename the vars in this telescope? Probably not.
-    var body = function.apply(defVar, tele.map(Term.Param::toArg));
+    var body = function.apply(defVar, tele.view().map(Term.Param::toArg));
     var type = PiTerm.make(false, tele, Def.defResult(defVar));
     return new Result(LamTerm.make(tele, body), type);
   }

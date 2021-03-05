@@ -7,10 +7,14 @@ import org.aya.concrete.Decl;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Pat;
-import org.glavo.kala.collection.immutable.ImmutableMap;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.Map;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
 
 /**
  * core data definition, corresponding to {@link Decl.DataDecl}
@@ -19,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> telescope,
+  @NotNull Seq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull Buffer<String> elim,
   @NotNull Buffer<Ctor> ctors,
-  @NotNull ImmutableMap<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
+  @NotNull Map<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
   // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
@@ -36,22 +40,39 @@ public record DataDef(
 
   public static record Ctor(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-    @NotNull DefVar<Ctor, Decl.DataCtor> name,
-    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull DefVar<Ctor, Decl.DataCtor> ref,
+    @NotNull Seq<Term.Param> conTelescope,
     @NotNull Buffer<String> elim,
     @NotNull Buffer<Pat.Clause<Term>> clauses,
     boolean coerce
   ) implements Def {
     public Ctor {
-      name.core = this;
+      ref.core = this;
+    }
+
+    @Override public @NotNull Seq<Term.Param> telescope() {
+      // https://github.com/Glavo/kala-common/issues/14
+      // return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTelescope);
+      return Stream.concat(
+        Def.defTele(dataRef).stream(),
+        conTelescope.stream()
+      ).collect(Seq.factory());
     }
 
     @Override public @NotNull Term result() {
-      return new AppTerm.DataCall(dataRef, Def.defTele(dataRef).map(Term.Param::toArg));
+      return new AppTerm.DataCall(dataRef, Def.defTele(dataRef).view().map(Term.Param::toArg));
     }
 
-    @Override public @NotNull DefVar<Ctor, Decl.DataCtor> ref() {
-      return name;
+    /**
+     * @return first component: data's telescope, second component: con telescope
+     */
+    public static Tuple2<Seq<Term.Param>, Seq<Term.Param>> telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
+      if (defVar.core != null) return Tuple.of(defVar.core.dataRef.core.telescope, defVar.core.conTelescope);
+      var dataSignature = defVar.concrete.dataRef.concrete.signature;
+      assert dataSignature != null;
+      var conSignature = defVar.concrete.signature;
+      assert conSignature != null;
+      return Tuple.of(dataSignature._1, conSignature._1);
     }
 
     @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {

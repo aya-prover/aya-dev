@@ -620,16 +620,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
-    var interval = ctx.getSourceInterval();
     var start = ctx.getStart();
     var end = ctx.getStop();
     return new SourcePos(
-      interval.a,
-      interval.b,
+      start.getStartIndex(),
+      end.getStopIndex(),
       start.getLine(),
       start.getCharPositionInLine(),
       end.getLine(),
-      end.getCharPositionInLine()
+      end.getCharPositionInLine() + end.getText().length() - 1
     );
   }
 
@@ -642,7 +641,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       line,
       token.getCharPositionInLine(),
       line,
-      token.getCharPositionInLine() + token.getText().length()
+      token.getCharPositionInLine() + token.getText().length() - 1
     );
   }
 }

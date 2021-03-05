@@ -5,7 +5,7 @@ package org.aya.core.def;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record FnDef(
   @NotNull DefVar<FnDef, Decl.FnDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> telescope,
+  @NotNull Seq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull Term body
 ) implements Def {

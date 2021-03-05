@@ -8,7 +8,7 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public record RefFinder(boolean withBody) implements Def.Visitor<@NotNull Buffer
     return Unit.unit();
   }
 
-  private void tele(@NotNull Buffer<Def> references, ImmutableSeq<Term.Param> telescope) {
+  private void tele(@NotNull Buffer<Def> references, @NotNull SeqLike<Term.Param> telescope) {
     telescope.forEach(param -> param.type().accept(TermRefFinder.INSTANCE, references));
   }
 }

@@ -9,6 +9,7 @@ import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.trace.Trace;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,8 +25,8 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
   public final @NotNull SourcePos sourcePos;
 
   // will change after resolve
-  public @NotNull ImmutableSeq<Expr.Param> telescope;
-  public @Nullable Tuple2<@NotNull ImmutableSeq<Term.Param>, @NotNull Term> signature;
+  public @NotNull Seq<Expr.Param> telescope;
+  public @Nullable Tuple2<@NotNull Seq<Term.Param>, @NotNull Term> signature;
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
