@@ -15,7 +15,6 @@ import org.aya.core.term.UnivTerm;
 import org.aya.generic.Pat;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple;
@@ -55,9 +54,9 @@ public record StmtTycker(
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
-    var tele = checkTele(tycker, ctor.telescope).collect(ImmutableSeq.factory());
+    var tele = checkTele(tycker, ctor.telescope).collect(Seq.factory());
     var dataRef = ctor.dataRef;
-    ctor.signature = Tuple.of(tele, new AppTerm.DataCall(dataRef, tele.map(Term.Param::toArg)));
+    ctor.signature = Tuple.of(tele, new AppTerm.DataCall(dataRef, tele.view().map(Term.Param::toArg)));
     return new DataDef.Ctor(
       dataRef,
       ctor.ref,
@@ -73,8 +72,7 @@ public record StmtTycker(
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var ctorBuf = Buffer.<DataDef.Ctor>of();
     var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
-    var tele = checkTele(tycker, decl.telescope)
-      .collect(ImmutableSeq.factory());
+    var tele = checkTele(tycker, decl.telescope).collect(Seq.factory());
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = Tuple.of(tele, result);
     decl.body.accept(new Decl.DataBody.Visitor<ExprTycker, Unit>() {
