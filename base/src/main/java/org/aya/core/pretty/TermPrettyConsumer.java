@@ -101,6 +101,9 @@ public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
 
   private Doc visitCalls(@NotNull Term fn,
                          @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
+    if (args.isEmpty()) {
+      return fn.toDoc();
+    }
     return Doc.cat(
       fn.toDoc(),
       Doc.plain(" "),
