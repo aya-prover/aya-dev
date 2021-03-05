@@ -12,6 +12,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Signatured;
 import org.aya.core.def.DataDef;
+import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -27,7 +28,7 @@ import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -37,6 +38,7 @@ import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
@@ -133,30 +135,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
     final var var = expr.resolvedVar();
     if (var instanceof DefVar<?, ?> defVar) {
-      if (defVar.core instanceof FnDef fn) {
-        // TODO[ice]: should we rename the vars in this telescope?
-        var tele = fn.telescope();
-        var call = new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, tele.map(Term.Param::toArg));
-        return defCall(tele, call, fn.result());
-      } else if (defVar.core instanceof DataDef data) {
-        var tele = data.telescope();
-        var call = new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, tele.map(Term.Param::toArg));
-        return defCall(tele, call, data.result());
-      } else if (defVar.concrete instanceof Signatured decl) {
-        assert decl.signature != null;
-        return defCall(decl.signature._1, decl.accept(new Signatured.Visitor<ImmutableSeq<Arg<Term>>, @NotNull Term>() {
-          @Override public @NotNull Term visitCtor(Decl.@NotNull DataCtor ctor, ImmutableSeq<Arg<Term>> args) {
-            throw new UnsupportedOperationException();
-          }
-
-          @Override public Term visitDataDecl(Decl.@NotNull DataDecl decl1, ImmutableSeq<Arg<Term>> args) {
-            return new AppTerm.DataCall((DefVar<DataDef, Decl.DataDecl>) defVar, args);
-          }
-
-          @Override public Term visitFnDecl(Decl.@NotNull FnDecl decl1, ImmutableSeq<Arg<Term>> args) {
-            return new AppTerm.FnCall((DefVar<FnDef, Decl.FnDecl>) defVar, args);
-          }
-        }, decl.signature._1.map(Term.Param::toArg)), decl.signature._2);
+      if (defVar.core instanceof FnDef || defVar.concrete instanceof Decl.FnDecl) {
+        return defCall((DefVar<FnDef, Decl.FnDecl>) defVar, AppTerm.FnCall::new);
+      } else if (defVar.core instanceof DataDef || defVar.concrete instanceof Decl.DataDecl) {
+        return defCall((DefVar<DataDef, Decl.DataDecl>) defVar, AppTerm.DataCall::new);
       } else {
         final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
@@ -169,8 +151,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new RefTerm(var), ty);
   }
 
-  @NotNull private ExprTycker.Result defCall(ImmutableSeq<Term.Param> tele, Term call, Term result) {
-    return new Result(LamTerm.make(tele, call), PiTerm.make(false, tele, result));
+  private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
+  defCall(DefVar<D, S> defVar, BiFunction<DefVar<D, S>, Seq<Arg<Term>>, Term> function) {
+    var tele = Def.defTele(defVar);
+    // ice: should we rename the vars in this telescope? Probably not.
+    var body = function.apply(defVar, tele.map(Term.Param::toArg));
+    var type = PiTerm.make(false, tele, Def.defResult(defVar));
+    return new Result(LamTerm.make(tele, body), type);
   }
 
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
