@@ -6,6 +6,7 @@ out/
 /.idea/shelf/*
 /.idea/codeStyles/*
 /.idea/dictionaries/*
+/.idea/.name
 /.gradle/
 /.fleet/
 /.vs/
