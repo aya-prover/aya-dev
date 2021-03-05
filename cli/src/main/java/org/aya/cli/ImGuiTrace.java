@@ -37,6 +37,13 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     JniLoader.load();
     var imGui = new JImGui();
     imGui.pushStyleVar(JImStyleVars.ItemSpacing, 0f, 2f);
+    imGui.getStyle().scaleAllSizes(2);
+    try (var config = new JImFontConfig()) {
+      var fontAtlas = imGui.getIO().getFonts();
+      fontAtlas.clearFonts();
+      config.setSizePixels(26);
+      fontAtlas.addDefaultFont(config);
+    }
     JImGuiUtil.cacheStringToBytes();
     var highlight = color(Color.GREEN);
     while (!imGui.windowShouldClose()) {
