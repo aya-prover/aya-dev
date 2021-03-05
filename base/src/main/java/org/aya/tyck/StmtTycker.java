@@ -9,6 +9,7 @@ import org.aya.concrete.Signatured;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.Pat;
@@ -54,11 +55,13 @@ public record StmtTycker(
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
-    var tele = checkTele(tycker, ctor.telescope);
+    var tele = checkTele(tycker, ctor.telescope).collect(ImmutableSeq.factory());
+    var dataRef = ctor.dataRef;
+    ctor.signature = Tuple.of(tele, new AppTerm.DataCall(dataRef, tele.map(Term.Param::toArg)));
     return new DataDef.Ctor(
-      ctor.dataRef,
+      dataRef,
       ctor.ref,
-      tele.collect(ImmutableSeq.factory()),
+      tele,
       ctor.elim,
       ctor.clauses.stream()
         .map(i -> i.mapTerm(expr -> tycker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))

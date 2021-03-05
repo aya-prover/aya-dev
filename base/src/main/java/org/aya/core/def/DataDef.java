@@ -4,6 +4,7 @@ package org.aya.core.def;
 
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
+import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Pat;
 import org.glavo.kala.collection.immutable.ImmutableMap;
@@ -43,6 +44,10 @@ public record DataDef(
   ) implements Def {
     public Ctor {
       name.core = this;
+    }
+
+    @Override public @NotNull Term result() {
+      return new AppTerm.DataCall(dataRef, Def.defTele(dataRef).map(Term.Param::toArg));
     }
 
     @Override public @NotNull DefVar<Ctor, Decl.DataCtor> ref() {

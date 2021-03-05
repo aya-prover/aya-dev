@@ -20,7 +20,13 @@ public interface Def extends CoreDef {
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature)._1;
   }
+  static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+    if (defVar.core != null) return defVar.core.result();
+      // guaranteed as this is already a core term
+    else return Objects.requireNonNull(defVar.concrete.signature)._2;
+  }
 
+  @NotNull Term result();
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
