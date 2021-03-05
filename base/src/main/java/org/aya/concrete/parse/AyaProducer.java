@@ -629,7 +629,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       start.getLine(),
       start.getCharPositionInLine(),
       end.getLine(),
-      end.getCharPositionInLine()
+      end.getCharPositionInLine() + end.getText().length() - 1
     );
   }
 
