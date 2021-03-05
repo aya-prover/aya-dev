@@ -7,8 +7,9 @@ import org.aya.concrete.Decl;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Pat;
-import org.glavo.kala.collection.immutable.ImmutableMap;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.Map;
+import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> telescope,
+  @NotNull Seq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull Buffer<String> elim,
   @NotNull Buffer<Ctor> ctors,
-  @NotNull ImmutableMap<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
+  @NotNull Map<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
   // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
@@ -37,7 +38,7 @@ public record DataDef(
   public static record Ctor(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> name,
-    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull Seq<Term.Param> conTelescope,
     @NotNull Buffer<String> elim,
     @NotNull Buffer<Pat.Clause<Term>> clauses,
     boolean coerce
@@ -46,8 +47,12 @@ public record DataDef(
       name.core = this;
     }
 
+    @Override public @NotNull SeqView<Term.Param> telescope() {
+      return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTelescope);
+    }
+
     @Override public @NotNull Term result() {
-      return new AppTerm.DataCall(dataRef, Def.defTele(dataRef).map(Term.Param::toArg));
+      return new AppTerm.DataCall(dataRef, Def.defTele(dataRef).view().map(Term.Param::toArg));
     }
 
     @Override public @NotNull DefVar<Ctor, Decl.DataCtor> ref() {

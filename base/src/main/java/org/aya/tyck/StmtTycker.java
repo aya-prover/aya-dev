@@ -14,7 +14,7 @@ import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.Pat;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.collection.immutable.ImmutableHashMap;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
@@ -89,12 +89,12 @@ public record StmtTycker(
         throw new UnsupportedOperationException();
       }
     }, tycker);
-    return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, ImmutableHashMap.from(clauseBuf));
+    return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, clauseBuf);
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
     var resultTele = checkTele(tycker, decl.telescope)
-      .collect(ImmutableSeq.factory());
+      .collect(Seq.factory());
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);
     decl.signature = Tuple.of(resultTele, resultRes.wellTyped());
@@ -103,10 +103,7 @@ public record StmtTycker(
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 
-  private @NotNull Stream<Term.Param> checkTele(
-    @NotNull ExprTycker exprTycker,
-    @NotNull ImmutableSeq<Expr.Param> tele
-  ) {
+  private @NotNull Stream<Term.Param> checkTele(@NotNull ExprTycker exprTycker, @NotNull Seq<Expr.Param> tele) {
     return tele.stream().map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
       var paramRes = exprTycker.checkExpr(param.type(), null);
