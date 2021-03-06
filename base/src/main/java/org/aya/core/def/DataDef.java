@@ -66,7 +66,7 @@ public record DataDef(
       assert dataSignature != null;
       var conSignature = defVar.concrete.signature;
       assert conSignature != null;
-      return Tuple.of(dataSignature._1, conSignature._1);
+      return Tuple.of(dataSignature.param(), conSignature.param());
     }
 
     @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {
