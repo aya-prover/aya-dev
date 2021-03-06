@@ -51,5 +51,10 @@ public interface Def extends CoreDef {
     @NotNull Seq<Term.@NotNull Param> param,
     @NotNull Term result
   ) {
+    public @NotNull Signature inst(@NotNull Term term) {
+      var v = param.first().ref();
+      var params = param.view().drop(1).map(p -> p.subst(v, term));
+      return new Signature(params.toImmutableSeq(), result.subst(v, term));
+    }
   }
 }

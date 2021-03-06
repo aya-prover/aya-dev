@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.generic;
 
+import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
@@ -11,9 +12,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author kiva
  */
-public sealed interface Pat<Term> {
+public sealed interface Pat<T> {
   @Nullable LocalVar as();
-  @NotNull Term type();
+  @NotNull T type();
+  <P, R> R accept(@NotNull Visitor<T, P, R> visitor, P p);
+  default @NotNull Term toTerm() {
+    throw new UnsupportedOperationException();
+  }
 
   interface Visitor<Term, P, R> {
     R visitAtomic(@NotNull Atomic<Term> atomic, P p);
@@ -21,19 +26,25 @@ public sealed interface Pat<Term> {
     R visitUnresolved(@NotNull Unresolved<Term> unresolved, P p);
   }
 
-  record Atomic<Term>(
-    @NotNull Atom<Pat<Term>> atom,
+  record Atomic<T>(
+    @NotNull Atom<Pat<T>> atom,
     @Nullable LocalVar as,
-    @NotNull Term type
-  ) implements Pat<Term> {
+    @NotNull T type
+  ) implements Pat<T> {
+    @Override public <P, R> R accept(@NotNull Visitor<T, P, R> visitor, P p) {
+      return visitor.visitAtomic(this, p);
+    }
   }
 
-  record Ctor<Term>(
+  record Ctor<T>(
     @NotNull String name,
-    @NotNull Buffer<Pat<Term>> params,
+    @NotNull Buffer<Pat<T>> params,
     @Nullable LocalVar as,
-    @NotNull Term type
-  ) implements Pat<Term> {
+    @NotNull T type
+  ) implements Pat<T> {
+    @Override public <P, R> R accept(@NotNull Visitor<T, P, R> visitor, P p) {
+      return visitor.visitCtor(this, p);
+    }
   }
 
   /**
@@ -46,6 +57,9 @@ public sealed interface Pat<Term> {
     @Nullable LocalVar as,
     @NotNull Term type
   ) implements Pat<Term> {
+    @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
+      return visitor.visitUnresolved(this, p);
+    }
   }
 
   /**
