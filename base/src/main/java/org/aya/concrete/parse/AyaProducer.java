@@ -453,7 +453,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     // TODO[imkiva]: use var will compile, but IDEA shows error
     ImmutableSeq<Pat.Atom<Pat<Expr>>> atoms = ctx.atomPattern().stream()
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
-    return new Pat.UnresolvedPat<>(
+    return new Pat.Unresolved<>(
       atoms.first(),
       atoms.drop(1).collect(Buffer.factory()),
       ctx.ID() != null ? new LocalVar(ctx.ID().getText()) : null,

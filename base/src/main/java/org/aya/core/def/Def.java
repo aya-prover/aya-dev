@@ -42,6 +42,11 @@ public interface Def extends CoreDef {
     R visitCtor(DataDef.@NotNull Ctor def, P p);
   }
 
+  /**
+   * Signature of a definition, used in concrete and tycking.
+   *
+   * @author ice1000
+   */
   record Signature(
     @NotNull Seq<Term.@NotNull Param> param,
     @NotNull Term result
