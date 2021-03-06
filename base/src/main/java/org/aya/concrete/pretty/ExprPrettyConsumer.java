@@ -109,11 +109,6 @@ public class ExprPrettyConsumer implements Expr.Visitor<Unit, Doc> {
   }
 
   @Override
-  public Doc visitTyped(Expr.@NotNull TypedExpr expr, Unit unit) {
-    return Doc.cat(expr.expr().toDoc(), Doc.plain(" : "), expr.type().toDoc());
-  }
-
-  @Override
   public Doc visitLitInt(Expr.@NotNull LitIntExpr expr, Unit unit) {
     return Doc.plain(String.valueOf(expr.integer()));
   }

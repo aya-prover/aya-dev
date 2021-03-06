@@ -66,7 +66,6 @@ public sealed interface Expr {
     R visitHole(@NotNull HoleExpr expr, P p);
     R visitTup(@NotNull TupExpr expr, P p);
     R visitProj(@NotNull ProjExpr expr, P p);
-    R visitTyped(@NotNull TypedExpr expr, P p);
     R visitLitInt(@NotNull LitIntExpr expr, P p);
     R visitLitString(@NotNull LitStringExpr expr, P p);
   }
@@ -101,9 +100,6 @@ public sealed interface Expr {
       return catchUnhandled(expr, p);
     }
     @Override default R visitProj(@NotNull ProjExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitTyped(@NotNull TypedExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
     @Override default R visitLitInt(@NotNull LitIntExpr expr, P p) {
@@ -256,19 +252,6 @@ public sealed interface Expr {
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);
-    }
-  }
-
-  /**
-   * @author kiva
-   */
-  record TypedExpr(
-    @NotNull SourcePos sourcePos,
-    @NotNull Expr expr,
-    @NotNull Expr type
-  ) implements Expr {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTyped(this, p);
     }
   }
 

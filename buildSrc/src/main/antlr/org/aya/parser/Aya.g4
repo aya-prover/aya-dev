@@ -88,14 +88,12 @@ matchArg : elim
          | expr
          ;
 
-typed : expr type? ;
-
 atom : literal
-     | LPAREN (typed ',')* typed? ')'
+     | LPAREN (expr ',')* expr? ')'
      ;
 
 argument : atom
-         | LBRACE (typed ',')* typed? '}'
+         | LBRACE (expr ',')* expr? '}'
          | '.' idFix
          ;
 

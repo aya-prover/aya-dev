@@ -240,24 +240,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var literal = ctx.literal();
     if (literal != null) return visitLiteral(literal);
 
-    final var typed = ctx.typed();
-    if (typed.size() == 1) return visitTyped(typed.get(0));
+    final var expr = ctx.expr();
+    if (expr.size() == 1) return visitExpr(expr.get(0));
     return new Expr.TupExpr(
       sourcePosOf(ctx),
-      typed.stream()
-        .map(this::visitTyped)
+      expr.stream()
+        .map(this::visitExpr)
         .collect(ImmutableVector.factory())
-    );
-  }
-
-  @Override
-  public @NotNull Expr visitTyped(AyaParser.TypedContext ctx) {
-    final var type = ctx.type();
-    if (type == null) return visitExpr(ctx.expr());
-    else return new Expr.TypedExpr(
-      sourcePosOf(ctx),
-      visitExpr(ctx.expr()),
-      type(type, sourcePosOf(type))
     );
   }
 
@@ -266,8 +255,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var atom = ctx.atom();
     if (atom != null) return Arg.explicit(visitAtom(atom));
     if (ctx.LBRACE() != null) return Arg.implicit(new Expr.TupExpr(sourcePosOf(ctx),
-      ctx.typed().stream()
-        .map(this::visitTyped)
+      ctx.expr().stream()
+        .map(this::visitExpr)
         .collect(ImmutableVector.factory())));
     // TODO: . idFix
     throw new UnsupportedOperationException();
