@@ -57,16 +57,11 @@ public record StmtTycker(
     var tele = checkTele(tycker, ctor.telescope).collect(Seq.factory());
     var dataRef = ctor.dataRef;
     ctor.signature = Tuple.of(tele, new AppTerm.DataCall(dataRef, tele.view().map(Term.Param::toArg)));
-    return new DataDef.Ctor(
-      dataRef,
-      ctor.ref,
-      tele,
-      ctor.elim,
-      ctor.clauses.stream()
-        .map(i -> i.mapTerm(expr -> tycker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))
-        .collect(Buffer.factory()),
-      ctor.coerce
-    );
+    // TODO[ice]: elaborate patterns
+    var elabClauses = ctor.clauses.stream()
+      .map(i -> i.mapTerm(expr -> tycker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))
+      .collect(Buffer.factory());
+    return new DataDef.Ctor(dataRef, ctor.ref, tele, ctor.elim, elabClauses, ctor.coerce);
   }
 
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
