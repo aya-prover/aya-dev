@@ -6,6 +6,7 @@ import org.aya.api.core.def.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
 import org.aya.core.term.Term;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,12 +19,12 @@ public interface Def extends CoreDef {
   static @NotNull SeqLike<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
-    else return Objects.requireNonNull(defVar.concrete.signature)._1;
+    else return Objects.requireNonNull(defVar.concrete.signature).param;
   }
   static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.result();
       // guaranteed as this is already a core term
-    else return Objects.requireNonNull(defVar.concrete.signature)._2;
+    else return Objects.requireNonNull(defVar.concrete.signature).result;
   }
 
   @NotNull Term result();
@@ -39,5 +40,11 @@ public interface Def extends CoreDef {
     R visitFn(@NotNull FnDef def, P p);
     R visitData(@NotNull DataDef def, P p);
     R visitCtor(DataDef.@NotNull Ctor def, P p);
+  }
+
+  record Signature(
+    @NotNull Seq<Term.@NotNull Param> param,
+    @NotNull Term result
+  ) {
   }
 }

@@ -26,7 +26,7 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
 
   // will change after resolve
   public @NotNull Seq<Expr.Param> telescope;
-  public @Nullable Tuple2<@NotNull Seq<Term.Param>, @NotNull Term> signature;
+  public Def.@Nullable Signature signature;
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;

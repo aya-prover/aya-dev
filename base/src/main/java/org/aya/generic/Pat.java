@@ -101,22 +101,25 @@ public sealed interface Pat<Term> {
    * @author kiva
    */
   sealed interface Clause<Term> {
-    <Term2> @NotNull Clause<Term2> mapTerm(@NotNull Function<Term, Term2> mapper);
+    <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p);
 
-    record Possible<Term>(
+    interface Visitor<Term, P, R> {
+      R visitMatch(@NotNull Match<Term> match, P p);
+      R visitAbsurd(@NotNull Absurd<Term> absurd, P p);
+    }
+
+    record Match<Term>(
       @NotNull Buffer<Pat<Term>> patterns,
       @NotNull Term expr
     ) implements Clause<Term> {
-      @Override public @NotNull <Term2> Possible<Term2> mapTerm(@NotNull Function<Term, Term2> mapper) {
-        return new Possible<>(
-          patterns.stream().map(i -> i.mapTerm(mapper)).collect(Buffer.factory()),
-          mapper.apply(expr));
+      @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
+        return visitor.visitMatch(this, p);
       }
     }
 
-    record Impossible<Term>() implements Clause<Term> {
-      @Override public @NotNull <Term2> Impossible<Term2> mapTerm(@NotNull Function<Term, Term2> mapper) {
-        return new Impossible<>();
+    record Absurd<Term>() implements Clause<Term> {
+      @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
+        return visitor.visitAbsurd(this, p);
       }
     }
   }

@@ -483,8 +483,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Pat.Clause<Expr> visitClause(AyaParser.ClauseContext ctx) {
-    if (ctx.ABSURD() != null) return new Pat.Clause.Impossible<>();
-    return new Pat.Clause.Possible<>(
+    if (ctx.ABSURD() != null) return new Pat.Clause.Absurd<>();
+    return new Pat.Clause.Match<>(
       visitPatterns(ctx.patterns()),
       visitExpr(ctx.expr())
     );

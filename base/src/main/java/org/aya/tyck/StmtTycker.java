@@ -13,11 +13,11 @@ import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.Pat;
+import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,10 +56,11 @@ public record StmtTycker(
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var tele = checkTele(tycker, ctor.telescope).collect(Seq.factory());
     var dataRef = ctor.dataRef;
-    ctor.signature = Tuple.of(tele, new AppTerm.DataCall(dataRef, tele.view().map(Term.Param::toArg)));
-    // TODO[ice]: elaborate patterns
+    var signature = new Def.Signature(tele, new AppTerm.DataCall(dataRef, tele.view().map(Term.Param::toArg)));
+    ctor.signature = signature;
+    var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses.stream()
-      .map(i -> i.mapTerm(expr -> tycker.checkExpr(expr, UnivTerm.OMEGA).wellTyped()))
+      .map(c -> c.accept(patTycker, signature))
       .collect(Buffer.factory());
     return new DataDef.Ctor(dataRef, ctor.ref, tele, ctor.elim, elabClauses, ctor.coerce);
   }
@@ -69,7 +70,7 @@ public record StmtTycker(
     var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
     var tele = checkTele(tycker, decl.telescope).collect(Seq.factory());
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
-    decl.signature = Tuple.of(tele, result);
+    decl.signature = new Def.Signature(tele, result);
     decl.body.accept(new Decl.DataBody.Visitor<ExprTycker, Unit>() {
       @Override public Unit visitCtors(Decl.DataBody.@NotNull Ctors ctors, ExprTycker tycker) {
         // ice: this cast is extremely safe.
@@ -90,7 +91,7 @@ public record StmtTycker(
       .collect(Seq.factory());
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);
-    decl.signature = Tuple.of(resultTele, resultRes.wellTyped());
+    decl.signature = new Def.Signature(resultTele, resultRes.wellTyped());
 
     var bodyRes = tycker.checkExpr(decl.body, resultRes.wellTyped());
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
