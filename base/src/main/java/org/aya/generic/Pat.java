@@ -51,13 +51,13 @@ public sealed interface Pat<T> {
    * pattern remains unresolved because we are unable to know
    * whether `zero` is a data ctor or a bind id
    */
-  record Unresolved<Term>(
-    @NotNull Atom<Pat<Term>> name,
-    @NotNull Buffer<Atom<Pat<Term>>> params,
+  record Unresolved<T>(
+    @NotNull Atom<Pat<T>> name,
+    @NotNull Buffer<Atom<Pat<T>>> params,
     @Nullable LocalVar as,
-    @NotNull Term type
-  ) implements Pat<Term> {
-    @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
+    @NotNull T type
+  ) implements Pat<T> {
+    @Override public <P, R> R accept(@NotNull Visitor<T, P, R> visitor, P p) {
       return visitor.visitUnresolved(this, p);
     }
   }

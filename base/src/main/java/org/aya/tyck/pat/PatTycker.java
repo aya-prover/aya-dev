@@ -25,7 +25,7 @@ public record PatTycker(@NotNull ExprTycker exprTycker) implements
       sig.value = sig.value.inst(res.toTerm());
       return res;
     }).collect(Buffer.factory());
-    return new Pat.Clause.Match<Term>(patterns, exprTycker.checkExpr(match.expr(), sig.value.result()).wellTyped());
+    return new Pat.Clause.Match<>(patterns, exprTycker.checkExpr(match.expr(), sig.value.result()).wellTyped());
   }
 
   @Override
