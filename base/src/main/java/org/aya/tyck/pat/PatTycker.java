@@ -20,7 +20,7 @@ public record PatTycker(@NotNull ExprTycker exprTycker) implements
   @Override
   public Pat.Clause<Term> visitMatch(Pat.Clause.@NotNull Match<Expr> match, Def.Signature signature) {
     var sig = new Ref<>(signature);
-    var patterns = match.patterns().stream().map(pat -> {
+    var patterns = match.patterns().stream().sequential().map(pat -> {
       var res = pat.accept(this, sig.value);
       sig.value = sig.value.inst(res.toTerm());
       return res;

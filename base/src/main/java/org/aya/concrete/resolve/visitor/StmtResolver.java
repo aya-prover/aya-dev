@@ -47,10 +47,9 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
         for (var ctor : ctors.ctors()) {
           var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
           ctor.telescope = ctorLocal._1;
-          throw new UnsupportedOperationException();
-          // ctor.clauses = ctor.clauses.stream()
-          //   .map(clause -> clause.mapTerm(e -> e.resolve(ctorLocal._2)))
-          //   .collect(Buffer.factory());
+          ctor.clauses = ctor.clauses.stream()
+            .map(clause -> clause.accept(PatResolver.INSTANCE, ctorLocal._2))
+            .collect(Buffer.factory());
         }
         return unit;
       }
