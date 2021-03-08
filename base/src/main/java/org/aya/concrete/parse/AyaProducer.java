@@ -455,20 +455,21 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var as = id != null ? new LocalVar(id.getText()) : null;
     // TODO[ice]: help me @imkiva
     return new Pattern.Unresolved(
-      atoms.map(pa -> new Pattern.Atomic(pa, null)).collect(ImmutableSeq.factory()),
+      sourcePosOf(ctx),
+      atoms.map(pa -> new Pattern.Atomic(pa.sourcePos(), pa, null)).collect(ImmutableSeq.factory()),
       as
     );
   }
 
   @Override
   public @NotNull Atom<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
-    if (ctx.LPAREN() != null) return new Atom.Tuple<>(visitPatterns(ctx.patterns()));
-    if (ctx.LBRACE() != null) return new Atom.Braced<>(visitPatterns(ctx.patterns()));
-    if (ctx.CALM_FACE() != null) return new Atom.CalmFace<>();
+    if (ctx.LPAREN() != null) return new Atom.Tuple<>(sourcePosOf(ctx), visitPatterns(ctx.patterns()));
+    if (ctx.LBRACE() != null) return new Atom.Braced<>(sourcePosOf(ctx), visitPatterns(ctx.patterns()));
+    if (ctx.CALM_FACE() != null) return new Atom.CalmFace<>(sourcePosOf(ctx));
     var number = ctx.NUMBER();
-    if (number != null) return new Atom.Number<>(Integer.parseInt(number.getText()));
+    if (number != null) return new Atom.Number<>(sourcePosOf(ctx), Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null) return new Atom.Bind<>(new LocalVar(id.getText()));
+    if (id != null) return new Atom.Bind<>(sourcePosOf(ctx), new LocalVar(id.getText()));
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }

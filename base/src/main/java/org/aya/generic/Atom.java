@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.generic;
 
+import org.aya.api.error.SourcePos;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.annotations.Covariant;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -19,33 +20,35 @@ public sealed interface Atom<@Covariant Pat> {
     R visitCalmFace(P p);
   }
 
+  @NotNull SourcePos sourcePos();
+
   <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p);
 
-  record Tuple<Pat>(@NotNull Buffer<Pat> patterns) implements Atom<Pat> {
+  record Tuple<Pat>(@NotNull SourcePos sourcePos, @NotNull Buffer<Pat> patterns) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitTuple(this, p);
     }
   }
 
-  record Braced<Pat>(@NotNull Buffer<Pat> patterns) implements Atom<Pat> {
+  record Braced<Pat>(@NotNull SourcePos sourcePos, @NotNull Buffer<Pat> patterns) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitBraced(this, p);
     }
   }
 
-  record Number<Pat>(int number) implements Atom<Pat> {
+  record Number<Pat>(@NotNull SourcePos sourcePos, int number) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitNumber(this, p);
     }
   }
 
-  record CalmFace<Pat>() implements Atom<Pat> {
+  record CalmFace<Pat>(@NotNull SourcePos sourcePos) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitCalmFace(p);
     }
   }
 
-  record Bind<Pat>(@NotNull LocalVar bind) implements Atom<Pat> {
+  record Bind<Pat>(@NotNull SourcePos sourcePos, @NotNull LocalVar bind) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitBind(this, p);
     }
