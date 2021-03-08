@@ -31,8 +31,8 @@ public final class PatResolver implements
     return new Pat.Clause.Match<>(pats, match.expr().resolve(ctx.value));
   }
 
-  @Override public Pat.Clause<Expr> visitAbsurd(Pat.Clause.@NotNull Absurd<Expr> absurd, Context context) {
-    return absurd;
+  @Override public Pat.Clause<Expr> visitAbsurd(Context context) {
+    return new Pat.Clause.Absurd<>();
   }
 
   @Override public Tuple2<Context, Pat<Expr>> visitAtomic(Pat.@NotNull Atomic<Expr> atomic, Context context) {

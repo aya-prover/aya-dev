@@ -29,7 +29,7 @@ public record PatTycker(@NotNull ExprTycker exprTycker) implements
   }
 
   @Override
-  public Pat.Clause<Term> visitAbsurd(Pat.Clause.@NotNull Absurd<Expr> absurd, Def.Signature signature) {
+  public Pat.Clause<Term> visitAbsurd(Def.Signature signature) {
     return new Pat.Clause.Absurd<>();
   }
 

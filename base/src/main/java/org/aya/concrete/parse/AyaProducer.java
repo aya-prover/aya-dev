@@ -11,6 +11,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Stmt;
 import org.aya.generic.Arg;
+import org.aya.generic.Atom;
 import org.aya.generic.Modifier;
 import org.aya.generic.Pat;
 import org.aya.parser.AyaBaseVisitor;
@@ -451,7 +452,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override
   public @NotNull Pat<Expr> visitPattern(AyaParser.PatternContext ctx) {
     // TODO[imkiva]: use var will compile, but IDEA shows error
-    ImmutableSeq<Pat.Atom<Pat<Expr>>> atoms = ctx.atomPattern().stream()
+    ImmutableSeq<Atom<Pat<Expr>>> atoms = ctx.atomPattern().stream()
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
     return new Pat.Unresolved<>(
       atoms.first(),
@@ -462,14 +463,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public Pat.@NotNull Atom<Pat<Expr>> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
-    if (ctx.LPAREN() != null) return new Pat.Atom.Tuple<>(visitPatterns(ctx.patterns()));
-    if (ctx.LBRACE() != null) return new Pat.Atom.Braced<>(visitPatterns(ctx.patterns()));
-    if (ctx.CALM_FACE() != null) return new Pat.Atom.CalmFace<>();
+  public @NotNull Atom<Pat<Expr>> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
+    if (ctx.LPAREN() != null) return new Atom.Tuple<>(visitPatterns(ctx.patterns()));
+    if (ctx.LBRACE() != null) return new Atom.Braced<>(visitPatterns(ctx.patterns()));
+    if (ctx.CALM_FACE() != null) return new Atom.CalmFace<>();
     var number = ctx.NUMBER();
-    if (number != null) return new Pat.Atom.Number<>(Integer.parseInt(number.getText()));
+    if (number != null) return new Atom.Number<>(Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null) return new Pat.Atom.Bind<>(new LocalVar(id.getText()));
+    if (id != null) return new Atom.Bind<>(new LocalVar(id.getText()));
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }

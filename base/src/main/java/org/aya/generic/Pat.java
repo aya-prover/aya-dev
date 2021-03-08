@@ -65,32 +65,12 @@ public sealed interface Pat<T> {
   /**
    * @author kiva
    */
-  sealed interface Atom<Pat> {
-    record Tuple<Pat>(@NotNull Buffer<Pat> patterns) implements Atom<Pat> {
-    }
-
-    record Braced<Pat>(@NotNull Buffer<Pat> patterns) implements Atom<Pat> {
-    }
-
-    record Number<Pat>(int number) implements Atom<Pat> {
-    }
-
-    record CalmFace<Pat>() implements Atom<Pat> {
-    }
-
-    record Bind<Pat>(@NotNull LocalVar bind) implements Atom<Pat> {
-    }
-  }
-
-  /**
-   * @author kiva
-   */
   sealed interface Clause<Term> {
     <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p);
 
     interface Visitor<Term, P, R> {
       R visitMatch(@NotNull Match<Term> match, P p);
-      R visitAbsurd(@NotNull Absurd<Term> absurd, P p);
+      R visitAbsurd(P p);
     }
 
     record Match<Term>(
@@ -104,7 +84,7 @@ public sealed interface Pat<T> {
 
     record Absurd<Term>() implements Clause<Term> {
       @Override public <P, R> R accept(@NotNull Visitor<Term, P, R> visitor, P p) {
-        return visitor.visitAbsurd(this, p);
+        return visitor.visitAbsurd(p);
       }
     }
   }
