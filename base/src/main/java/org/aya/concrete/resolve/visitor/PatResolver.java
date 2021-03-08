@@ -8,6 +8,7 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.Contract;
@@ -27,12 +28,14 @@ public final class PatResolver implements
 
   @Override public Pattern.Clause visitMatch(Pattern.Clause.@NotNull Match match, Context context) {
     var ctx = new Ref<>(context);
-    var pats = match.patterns().stream().sequential().map(pat -> {
-      var res = pat.accept(this, ctx.value);
-      ctx.value = res._1;
-      return res._2;
-    }).collect(Buffer.factory());
+    var pats = match.patterns().stream().sequential().map(pat -> subpatterns(ctx, pat)).collect(Buffer.factory());
     return new Pattern.Clause.Match(pats, match.expr().resolve(ctx.value));
+  }
+
+  private Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
+    var res = pat.accept(this, ctx.value);
+    ctx.value = res._1;
+    return res._2;
   }
 
   @Override public Pattern.Clause visitAbsurd(Pattern.Clause.@NotNull Absurd absurd, Context context) {
@@ -54,11 +57,33 @@ public final class PatResolver implements
   @Contract(value = "_, _ -> fail", pure = true)
   @Override public Tuple2<Context, Pattern> visitCtor(Pattern.@NotNull Ctor ctor, Context context) {
     var newCtx = new Ref<>(context);
-    var params = ctor.params().map(p -> {
-      var pats = p.accept(this, newCtx.value);
-      newCtx.value = pats._1;
-      return pats._2;
-    });
-    return new Tuple2<>(newCtx.value, new Pattern.Ctor(ctor.sourcePos(), ctor.name(), params, ctor.as()));
+    var params = ctor.params().map(p -> subpatterns(newCtx, p));
+    var sourcePos = ctor.sourcePos();
+    return Tuple.of(bindAs(ctor.as(), newCtx.value, sourcePos), new Pattern.Ctor(sourcePos, ctor.name(), params, ctor.as()));
+  }
+
+  @Override public Tuple2<Context, Atom<Pattern>> visitTuple(Atom.@NotNull Tuple<Pattern> tuple, Context context) {
+    var newCtx = new Ref<>(context);
+    var patterns = tuple.patterns().stream().sequential().map(p -> subpatterns(newCtx, p)).collect(Buffer.factory());
+    return Tuple.of(newCtx.value, new Atom.Tuple<>(tuple.sourcePos(), patterns));
+  }
+
+  @Override public Tuple2<Context, Atom<Pattern>> visitBraced(Atom.@NotNull Braced<Pattern> braced, Context context) {
+    var newCtx = new Ref<>(context);
+    var patterns = braced.patterns().stream().sequential().map(p -> subpatterns(newCtx, p)).collect(Buffer.factory());
+    return Tuple.of(newCtx.value, new Atom.Braced<>(braced.sourcePos(), patterns));
+  }
+
+  @Override public Tuple2<Context, Atom<Pattern>> visitNumber(Atom.@NotNull Number<Pattern> number, Context context) {
+    return Tuple.of(context, number);
+  }
+
+  @Override public Tuple2<Context, Atom<Pattern>> visitCalmFace(Atom.@NotNull CalmFace<Pattern> f, Context context) {
+    return Tuple.of(context, f);
+  }
+
+  @Override public Tuple2<Context, Atom<Pattern>> visitBind(Atom.@NotNull Bind<Pattern> bind, Context context) {
+    bind.resolved().value = context.getUnqualifiedMaybe(bind.bind().name(), bind.sourcePos());
+    return Tuple.of(context.bind(bind.bind(), bind.sourcePos()), bind);
   }
 }

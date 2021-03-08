@@ -9,7 +9,6 @@ import org.glavo.kala.annotations.Covariant;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kiva, ice1000
@@ -17,10 +16,10 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface Atom<@Covariant Pat> {
   interface Visitor<Pat, P, R> {
     R visitTuple(@NotNull Tuple<Pat> tuple, P p);
-    R visitBraced(@NotNull Braced<Pat> tuple, P p);
-    R visitNumber(@NotNull Number<Pat> tuple, P p);
-    R visitBind(@NotNull Bind<Pat> tuple, P p);
-    R visitCalmFace(P p);
+    R visitBraced(@NotNull Braced<Pat> braced, P p);
+    R visitNumber(@NotNull Number<Pat> number, P p);
+    R visitBind(@NotNull Bind<Pat> bind, P p);
+    R visitCalmFace(@NotNull CalmFace<Pat> calmFace, P p);
   }
 
   @NotNull SourcePos sourcePos();
@@ -47,7 +46,7 @@ public sealed interface Atom<@Covariant Pat> {
 
   record CalmFace<Pat>(@NotNull SourcePos sourcePos) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
-      return visitor.visitCalmFace(p);
+      return visitor.visitCalmFace(this, p);
     }
   }
 
@@ -58,7 +57,7 @@ public sealed interface Atom<@Covariant Pat> {
   record Bind<Pat>(
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar bind,
-    @Nullable Ref<Var> resolved
+    @NotNull Ref<Var> resolved
   ) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitBind(this, p);
