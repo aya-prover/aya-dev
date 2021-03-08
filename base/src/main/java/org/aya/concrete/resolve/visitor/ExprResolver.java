@@ -31,7 +31,7 @@ public final class ExprResolver implements ExprFixpoint<Context> {
     type = type == null ? null : type.accept(this, ctx);
     return Tuple2.of(
       new Expr.Param(param.sourcePos(), param.ref(), type, param.explicit()),
-      ctx.bind(param.ref().name(), param.ref(), param.sourcePos())
+      ctx.bind(param.ref(), param.sourcePos())
     );
   }
 
@@ -42,7 +42,7 @@ public final class ExprResolver implements ExprFixpoint<Context> {
     var first = params.first();
     var type = first.type();
     type = type == null ? null : type.accept(this, ctx);
-    var newCtx = ctx.bind(first.ref().name(), first.ref(), first.sourcePos());
+    var newCtx = ctx.bind(first.ref(), first.sourcePos());
     var result = resolveParams(params.view().drop(1), newCtx);
     return Tuple2.of(
       result._1.prepended(new Expr.Param(first.sourcePos(), first.ref(), type, first.explicit())),

@@ -74,6 +74,10 @@ public interface Context {
     } else return ref;
   }
 
+  default @NotNull BindContext bind(@NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
+    return bind(ref.name(), ref, sourcePos);
+  }
+
   default @NotNull BindContext bind(@NotNull String name, @NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
     if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
       reporter().report(new ShadowingWarn(name, sourcePos));
