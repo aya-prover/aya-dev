@@ -61,7 +61,15 @@ public record DataDef(
      * @return first component: data's telescope, second component: con telescope
      */
     public static Tuple2<Seq<Term.Param>, Seq<Term.Param>> telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
-      if (defVar.core != null) return Tuple.of(defVar.core.dataRef.core.telescope, defVar.core.conTelescope);
+      var core = defVar.core;
+      if (core != null) {
+        if (core.dataRef.core != null) return Tuple.of(core.dataRef.core.telescope, core.conTelescope);
+        else {
+          var signature = core.dataRef.concrete.signature;
+          assert signature != null;
+          return Tuple.of(signature.param(), core.conTelescope);
+        }
+      }
       var dataSignature = defVar.concrete.dataRef.concrete.signature;
       assert dataSignature != null;
       var conSignature = defVar.concrete.signature;

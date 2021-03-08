@@ -10,6 +10,7 @@ import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ public sealed interface Pat {
   @NotNull Term type();
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   default @NotNull Term toTerm() {
-    throw new UnsupportedOperationException();
+    return accept(PatToTerm.INSTANCE, Unit.unit());
   }
 
   interface Visitor<P, R> {
