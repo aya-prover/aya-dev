@@ -57,5 +57,9 @@ public record Substituter(
       subst(subst);
       addAll(subst);
     }
+
+    public void clear() {
+      map.clear();
+    }
   }
 }
