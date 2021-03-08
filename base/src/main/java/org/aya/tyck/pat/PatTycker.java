@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
-import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.DataDef;

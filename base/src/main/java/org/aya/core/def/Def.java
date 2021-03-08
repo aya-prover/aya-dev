@@ -6,6 +6,7 @@ import org.aya.api.core.def.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Substituter;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +53,9 @@ public interface Def extends CoreDef {
     @NotNull Term result
   ) {
     public @NotNull Signature inst(@NotNull Term term) {
-      var v = param.first().ref();
-      var params = param.view().drop(1).map(p -> p.subst(v, term));
-      return new Signature(params.toImmutableSeq(), result.subst(v, term));
+      var subst = new Substituter.TermSubst(param.first().ref(), term);
+      var params = param.view().drop(1).map(p -> p.subst(subst));
+      return new Signature(params.toImmutableSeq(), result.subst(subst));
     }
   }
 }
