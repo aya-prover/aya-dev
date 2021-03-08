@@ -5,6 +5,7 @@ package org.aya.concrete;
 import org.aya.api.error.SourcePos;
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public sealed interface Pattern {
   record Ctor(
     @NotNull SourcePos sourcePos,
     @NotNull String name,
-    @NotNull ImmutableSeq<Pattern> params,
+    @NotNull Seq<Pattern> params,
     @Nullable LocalVar as
   ) implements Pattern {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -56,7 +57,7 @@ public sealed interface Pattern {
     }
 
     record Match(
-      @NotNull Buffer<Pattern> patterns,
+      @NotNull Seq<Pattern> patterns,
       @NotNull Expr expr
     ) implements Clause {
       @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

@@ -7,6 +7,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -57,7 +58,7 @@ public final class PatResolver implements
   @Contract(value = "_, _ -> fail", pure = true)
   @Override public Tuple2<Context, Pattern> visitCtor(Pattern.@NotNull Ctor ctor, Context context) {
     var newCtx = new Ref<>(context);
-    var params = ctor.params().map(p -> subpatterns(newCtx, p));
+    var params = ctor.params().view().map(p -> subpatterns(newCtx, p)).collect(Seq.factory());
     var sourcePos = ctor.sourcePos();
     return Tuple.of(bindAs(ctor.as(), newCtx.value, sourcePos), new Pattern.Ctor(sourcePos, ctor.name(), params, ctor.as()));
   }

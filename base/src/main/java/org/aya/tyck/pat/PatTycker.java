@@ -20,6 +20,7 @@ import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -42,7 +43,7 @@ public final class PatTycker implements
   public Pat.Clause visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.map().clear();
-    var patterns = visitPatterns(sig, match.patterns().stream()).collect(Buffer.factory());
+    var patterns = visitPatterns(sig, match.patterns().stream()).collect(Seq.factory());
     var expr = match.expr().accept(subst, Unit.unit());
     return new Pat.Clause.Match(patterns, exprTycker.checkExpr(expr, sig.value.result()).wellTyped());
   }
@@ -102,7 +103,7 @@ public final class PatTycker implements
     return new Pat.Ctor(realCtor.ref(), patterns, ctor.as(), param);
   }
 
-  private DataDef.Ctor selectCtor(Term param, @NotNull String name) {
+  private DataDef.@Nullable Ctor selectCtor(Term param, @NotNull String name) {
     if (!(param instanceof AppTerm.DataCall dataCall)) {
       // TODO[ice]: report error: splitting on non data
       return null;

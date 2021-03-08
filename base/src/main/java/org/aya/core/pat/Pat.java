@@ -63,7 +63,7 @@ public sealed interface Pat {
     }
 
     record Match(
-      @NotNull Buffer<Pat> patterns,
+      @NotNull Seq<Pat> patterns,
       @NotNull Term expr
     ) implements Clause {
       @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
