@@ -24,6 +24,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.value.Ref;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -453,7 +454,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
     var id = ctx.ID();
     var as = id != null ? new LocalVar(id.getText()) : null;
-    return new Pattern.Unresolved(
+    // TODO[imkiva]
+    return new Pattern.Ctor(
       sourcePosOf(ctx),
       atoms.map(pa -> new Pattern.Atomic(pa.sourcePos(), pa, null)).collect(ImmutableSeq.factory()),
       as
@@ -468,7 +470,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var number = ctx.NUMBER();
     if (number != null) return new Atom.Number<>(sourcePosOf(ctx), Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null) return new Atom.Bind<>(sourcePosOf(ctx), new LocalVar(id.getText()));
+    if (id != null) return new Atom.Bind<>(sourcePosOf(ctx), new LocalVar(id.getText()), new Ref<>());
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }

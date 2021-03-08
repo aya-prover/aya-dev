@@ -3,8 +3,6 @@
 package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.DefVar;
-import org.aya.core.def.DataDef;
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -23,7 +21,6 @@ public sealed interface Pattern {
   interface Visitor<P, R> {
     R visitAtomic(@NotNull Atomic atomic, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
-    R visitUnresolved(@NotNull Unresolved unresolved, P p);
   }
 
   record Atomic(
@@ -38,26 +35,12 @@ public sealed interface Pattern {
 
   record Ctor(
     @NotNull SourcePos sourcePos,
-    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> name,
+    @NotNull String name,
     @NotNull ImmutableSeq<Pattern> params,
     @Nullable LocalVar as
   ) implements Pattern {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);
-    }
-  }
-
-  /**
-   * pattern remains unresolved because we are unable to know
-   * whether `zero` is a data ctor or a bind id
-   */
-  record Unresolved(
-    @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Pattern> fields,
-    @Nullable LocalVar as
-  ) implements Pattern {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitUnresolved(this, p);
     }
   }
 

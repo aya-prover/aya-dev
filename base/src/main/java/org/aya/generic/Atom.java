@@ -3,10 +3,13 @@
 package org.aya.generic;
 
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.Var;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.annotations.Covariant;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kiva, ice1000
@@ -48,7 +51,15 @@ public sealed interface Atom<@Covariant Pat> {
     }
   }
 
-  record Bind<Pat>(@NotNull SourcePos sourcePos, @NotNull LocalVar bind) implements Atom<Pat> {
+  /**
+   * @param <Pat>    Either {@link org.aya.concrete.Pattern} or {@link org.aya.core.pat.Pat}
+   * @param resolved will be modified during resolving
+   */
+  record Bind<Pat>(
+    @NotNull SourcePos sourcePos,
+    @NotNull LocalVar bind,
+    @Nullable Ref<Var> resolved
+  ) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitBind(this, p);
     }
