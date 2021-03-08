@@ -453,7 +453,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
     var id = ctx.ID();
     var as = id != null ? new LocalVar(id.getText()) : null;
-    // TODO[ice]: help me @imkiva
     return new Pattern.Unresolved(
       sourcePosOf(ctx),
       atoms.map(pa -> new Pattern.Atomic(pa.sourcePos(), pa, null)).collect(ImmutableSeq.factory()),

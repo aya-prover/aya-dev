@@ -10,11 +10,12 @@ import org.aya.concrete.resolve.error.NotCtorError;
 import org.aya.concrete.resolve.error.UnexpectedParamError;
 import org.aya.core.def.DataDef;
 import org.aya.generic.Atom;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,16 +43,18 @@ public final class PatResolver implements
     return null;
   }
 
+  @Contract(value = "_, _ -> fail", pure = true)
   @Override public Tuple2<Context, Pattern> visitAtomic(Pattern.@NotNull Atomic atomic, Context context) {
-    throw new IllegalArgumentException("before resolving, we can never have resolved patterns");
+    throw new IllegalArgumentException("trying to resolve a resolved pattern " + atomic);
   }
 
+  @Contract(value = "_, _ -> fail", pure = true)
   @Override public Tuple2<Context, Pattern> visitCtor(Pattern.@NotNull Ctor ctor, Context context) {
-    throw new IllegalArgumentException("before resolving, we can never have resolved patterns");
+    throw new IllegalArgumentException("trying to resolve a resolved pattern " + ctor);
   }
 
   @Override public Tuple2<Context, Pattern> visitUnresolved(Pattern.@NotNull Unresolved pat, Context context) {
-    var first = ((Pattern.Atomic) pat.fields().first()); // ensured by AyaProducer
+    var first = (Pattern.Atomic) pat.fields().first(); // ensured by AyaProducer
     var rest = pat.fields().drop(1);
 
     var atom = first.atom();
@@ -63,11 +66,8 @@ public final class PatResolver implements
       if (what instanceof DefVar<?, ?> defVar) {
         if (defVar.concrete instanceof Decl.DataCtor) {
           // this case is totally safe
-          //noinspection unchecked
-          return Tuple.of(
-            context,
-            new Pattern.Ctor(pat.sourcePos(), (DefVar<DataDef.Ctor, Decl.DataCtor>) defVar, rest, pat.as())
-          );
+          @SuppressWarnings("unchecked") var v = (DefVar<DataDef.Ctor, Decl.DataCtor>) defVar;
+          return Tuple.of(context, new Pattern.Ctor(pat.sourcePos(), v, rest, pat.as()));
         }
 
         if (!rest.isEmpty()) {
@@ -85,7 +85,7 @@ public final class PatResolver implements
     );
   }
 
-  private void requiresNoParam(@NotNull Atom<Pattern> atom, @NotNull Context context, @NotNull ImmutableSeq<Pattern> seq) {
+  private void requiresNoParam(@NotNull Atom<Pattern> atom, @NotNull Context context, @NotNull Seq<Pattern> seq) {
     if (!seq.isEmpty()) {
       // TODO[kiva]: pretty-print atom
       context.reportAndThrow(new UnexpectedParamError(atom.toString(), atom.sourcePos()));
