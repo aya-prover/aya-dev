@@ -4,6 +4,7 @@ package org.aya.concrete;
 
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public sealed interface Pattern {
 
   record Ctor(
     @NotNull String name,
-    @NotNull Buffer<Pattern> params,
+    @NotNull ImmutableSeq<Pattern> params,
     @Nullable LocalVar as
   ) implements Pattern {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -45,7 +46,7 @@ public sealed interface Pattern {
    * whether `zero` is a data ctor or a bind id
    */
   record Unresolved(
-    @NotNull Atom<Pattern> name,
+    @NotNull ImmutableSeq<Pattern> fields,
     @Nullable LocalVar as
   ) implements Pattern {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

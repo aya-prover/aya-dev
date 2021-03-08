@@ -453,11 +453,9 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
     var id = ctx.ID();
     var as = id != null ? new LocalVar(id.getText()) : null;
-    if (atoms.sizeEquals(1)) return new Pattern.Unresolved(atoms.first(), as);
     // TODO[ice]: help me @imkiva
-    return new Pattern.Ctor(
-      ((Atom.Bind<?>) atoms.first()).bind().name(),
-      atoms.drop(1).map(pa -> new Pattern.Atomic(pa, null)).collect(Buffer.factory()),
+    return new Pattern.Unresolved(
+      atoms.map(pa -> new Pattern.Atomic(pa, null)).collect(ImmutableSeq.factory()),
       as
     );
   }
