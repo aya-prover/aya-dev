@@ -9,11 +9,11 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
 import org.aya.generic.Arg;
 import org.aya.generic.Atom;
 import org.aya.generic.Modifier;
-import org.aya.generic.Pat;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
@@ -21,7 +21,6 @@ import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -247,7 +246,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       sourcePosOf(ctx),
       expr.stream()
         .map(this::visitExpr)
-        .collect(ImmutableVector.factory())
+        .collect(ImmutableSeq.factory())
     );
   }
 
@@ -258,7 +257,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx.LBRACE() != null) return Arg.implicit(new Expr.TupExpr(sourcePosOf(ctx),
       ctx.expr().stream()
         .map(this::visitExpr)
-        .collect(ImmutableVector.factory())));
+        .collect(ImmutableSeq.factory())));
     // TODO: . idFix
     throw new UnsupportedOperationException();
   }
@@ -414,8 +413,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override
   public Decl.DataBody visitDataClauses(AyaParser.DataClausesContext ctx) {
     var elim = visitElim(ctx.elim());
-    // TODO[imkiva]: use var will compile, but IDEA shows error
-    Buffer<Tuple2<Pat<Expr>, Decl.DataCtor>> clauses = ctx.dataCtorClause().stream()
+    var clauses = ctx.dataCtorClause().stream()
       .map(this::visitDataCtorClause)
       .collect(Buffer.factory());
     return new Decl.DataBody.Clauses(elim, clauses);
@@ -441,7 +439,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override public @NotNull Tuple2<@NotNull Pat<Expr>, Decl.@NotNull DataCtor>
+  @Override public @NotNull Tuple2<@NotNull Pattern, Decl.@NotNull DataCtor>
   visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
     return Tuple.of(
       visitPattern(ctx.pattern()),
@@ -450,20 +448,18 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Pat<Expr> visitPattern(AyaParser.PatternContext ctx) {
-    // TODO[imkiva]: use var will compile, but IDEA shows error
-    ImmutableSeq<Atom<Pat<Expr>>> atoms = ctx.atomPattern().stream()
+  public @NotNull Pattern visitPattern(AyaParser.PatternContext ctx) {
+    var atoms = ctx.atomPattern().stream()
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
-    return new Pat.Unresolved<>(
+    return new Pattern.Unresolved(
       atoms.first(),
       atoms.drop(1).collect(Buffer.factory()),
-      ctx.ID() != null ? new LocalVar(ctx.ID().getText()) : null,
-      type(ctx.type(), sourcePosOf(ctx))
+      ctx.ID() != null ? new LocalVar(ctx.ID().getText()) : null
     );
   }
 
   @Override
-  public @NotNull Atom<Pat<Expr>> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
+  public @NotNull Atom<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
     if (ctx.LPAREN() != null) return new Atom.Tuple<>(visitPatterns(ctx.patterns()));
     if (ctx.LBRACE() != null) return new Atom.Braced<>(visitPatterns(ctx.patterns()));
     if (ctx.CALM_FACE() != null) return new Atom.CalmFace<>();
@@ -476,16 +472,16 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Buffer<@NotNull Pat<Expr>> visitPatterns(AyaParser.PatternsContext ctx) {
+  public @NotNull Buffer<@NotNull Pattern> visitPatterns(AyaParser.PatternsContext ctx) {
     return ctx.pattern().stream()
       .map(this::visitPattern)
       .collect(Buffer.factory());
   }
 
   @Override
-  public @NotNull Pat.Clause<Expr> visitClause(AyaParser.ClauseContext ctx) {
-    if (ctx.ABSURD() != null) return new Pat.Clause.Absurd<>();
-    return new Pat.Clause.Match<>(
+  public @NotNull Pattern.Clause visitClause(AyaParser.ClauseContext ctx) {
+    if (ctx.ABSURD() != null) return new Pattern.Clause.Absurd();
+    return new Pattern.Clause.Match(
       visitPatterns(ctx.patterns()),
       visitExpr(ctx.expr())
     );

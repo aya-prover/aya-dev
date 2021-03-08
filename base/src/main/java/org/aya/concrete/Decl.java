@@ -11,7 +11,6 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.generic.Modifier;
-import org.aya.generic.Pat;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple2;
@@ -83,14 +82,14 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     public @NotNull Buffer<String> elim;
-    public @NotNull Buffer<Pat.Clause<Expr>> clauses;
+    public @NotNull Buffer<Pattern.Clause> clauses;
     public boolean coerce;
 
     public DataCtor(@NotNull SourcePos sourcePos,
                     @NotNull String name,
                     @NotNull ImmutableSeq<Expr.Param> telescope,
                     @NotNull Buffer<String> elim,
-                    @NotNull Buffer<Pat.Clause<Expr>> clauses,
+                    @NotNull Buffer<Pattern.Clause> clauses,
                     boolean coerce) {
       super(sourcePos, telescope);
       this.elim = elim;
@@ -131,7 +130,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
     record Clauses(
       @NotNull Buffer<String> elim,
-      @NotNull Buffer<Tuple2<Pat<Expr>, DataCtor>> clauses
+      @NotNull Buffer<Tuple2<Pattern, DataCtor>> clauses
     ) implements DataBody {
       @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
         return visitor.visitClause(this, p);

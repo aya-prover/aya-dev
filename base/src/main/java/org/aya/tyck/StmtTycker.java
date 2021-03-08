@@ -9,10 +9,10 @@ import org.aya.concrete.Signatured;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
-import org.aya.generic.Pat;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.Seq;
@@ -67,7 +67,7 @@ public record StmtTycker(
 
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var ctorBuf = Buffer.<DataDef.Ctor>of();
-    var clauseBuf = MutableHashMap.<Pat<Term>, DataDef.Ctor>of();
+    var clauseBuf = MutableHashMap.<Pat, DataDef.Ctor>of();
     var tele = checkTele(tycker, decl.telescope).collect(Seq.factory());
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tele, result);

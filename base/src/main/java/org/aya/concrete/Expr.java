@@ -14,7 +14,6 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
@@ -235,7 +234,7 @@ public sealed interface Expr {
    */
   record TupExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableVector<@NotNull Expr> items
+    @NotNull ImmutableSeq<@NotNull Expr> items
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTup(this, p);

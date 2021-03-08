@@ -4,9 +4,9 @@ package org.aya.core.def;
 
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Pat;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
@@ -26,7 +26,7 @@ public record DataDef(
   @NotNull Term result,
   @NotNull Buffer<String> elim,
   @NotNull Buffer<Ctor> ctors,
-  @NotNull Map<Pat<Term>, Ctor> clauses // TODO: mix clauses and ctors into one field?
+  @NotNull Map<Pat, Ctor> clauses // TODO: mix clauses and ctors into one field?
   // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
@@ -42,7 +42,7 @@ public record DataDef(
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
     @NotNull Seq<Term.Param> conTelescope,
     @NotNull Buffer<String> elim,
-    @NotNull Buffer<Pat.Clause<Term>> clauses,
+    @NotNull Buffer<Pat.Clause> clauses,
     boolean coerce
   ) implements Def {
     public Ctor {
