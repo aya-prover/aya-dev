@@ -39,8 +39,4 @@ public record PatTycker(@NotNull ExprTycker exprTycker) implements
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term.Param param) {
     throw new UnsupportedOperationException();
   }
-
-  @Override public Pat visitUnresolved(Pattern.@NotNull Unresolved unresolved, Term.Param param) {
-    throw new UnsupportedOperationException();
-  }
 }

@@ -454,12 +454,22 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
     var id = ctx.ID();
     var as = id != null ? new LocalVar(id.getText()) : null;
-    // TODO[imkiva]
-    return new Pattern.Ctor(
-      sourcePosOf(ctx),
-      atoms.map(pa -> new Pattern.Atomic(pa.sourcePos(), pa, null)).collect(ImmutableSeq.factory()),
-      as
-    );
+    if (atoms.sizeEquals(1)) {
+      return new Pattern.Atomic(
+        sourcePosOf(ctx),
+        atoms.first(),
+        as
+      );
+    } else {
+      // TODO: should we throw en error here or in resolver
+      //  if atom.first() is not a bind?
+      return new Pattern.Ctor(
+        sourcePosOf(ctx),
+        ((Atom.Bind<Pattern>) atoms.first()).bind().name(),
+        atoms.view().drop(1).map(pa -> new Pattern.Atomic(pa.sourcePos(), pa, null)).collect(ImmutableSeq.factory()),
+        as
+      );
+    }
   }
 
   @Override
