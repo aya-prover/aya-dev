@@ -124,4 +124,10 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     visitSub(t.var().name(), Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos());
     return Unit.unit();
   }
+
+  @Override
+  public Unit visitTerm(Trace.@NotNull TyckT t, JImGui jImGui) {
+    return Unit.unit();
+  }
+
 }

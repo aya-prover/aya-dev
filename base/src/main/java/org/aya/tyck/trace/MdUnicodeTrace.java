@@ -60,4 +60,15 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
     visitSub(t.subtraces());
     return unit;
   }
+
+  @Override
+  public Unit visitTerm(Trace.@NotNull TyckT t, Unit unit) {
+    indent();
+    builder.append("+ \u22A2 `")
+      .append(t.term().toDoc().renderWithPageWidth(114514))
+      .append("` : ")
+      .append(t.type().toDoc().renderWithPageWidth(114514))
+      .append(lineSep);
+    return unit;
+  }
 }

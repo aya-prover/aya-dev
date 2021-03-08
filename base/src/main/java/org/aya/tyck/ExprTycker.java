@@ -56,6 +56,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public void traceExit(Result result) {
     tracing(Trace.Builder::reduce);
+    tracing(builder -> builder.shift(new Trace.TyckT(result.wellTyped, result.type)));
+    tracing(Trace.Builder::reduce);
   }
 
   public ExprTycker(@NotNull Reporter reporter) {
@@ -172,10 +174,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
     tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, errorReportLocation.sourcePos())));
     tracing(Trace.Builder::reduce);
-    var unification = new TypedDefEq(
+    var unifier = new TypedDefEq(
       eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
       localCtx
-    ).compare(lower, upper, UnivTerm.OMEGA);
+    );
+    unifier.traceBuilder = traceBuilder;
+    var unification = unifier.compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
       metaContext.report(new UnifyError(errorReportLocation, upper, lower));
       throw new TyckInterruptedException();
