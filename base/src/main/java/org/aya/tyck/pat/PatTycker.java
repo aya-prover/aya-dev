@@ -8,9 +8,13 @@ import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.Atom;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +26,8 @@ import java.util.stream.Stream;
  */
 public record PatTycker(@NotNull ExprTycker exprTycker) implements
   Pattern.Clause.Visitor<Def.Signature, Pat.Clause>,
-  Pattern.Visitor<Term, Pat> {
+  Pattern.Visitor<Term, Pat>,
+  Atom.Visitor<Pattern, Tuple2<Term, LocalVar>, Pat> {
   @Override
   public Pat.Clause visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
@@ -43,30 +48,60 @@ public record PatTycker(@NotNull ExprTycker exprTycker) implements
   }
 
   @Override public Pat visitAtomic(Pattern.@NotNull Atomic atomic, Term param) {
+    return atomic.atom().accept(this, Tuple.of(param, atomic.as()));
+  }
+
+  @Override public Pat visitCalmFace(Atom.@NotNull CalmFace<Pattern> face, Tuple2<Term, LocalVar> t) {
     throw new UnsupportedOperationException();
   }
 
+  @Override public Pat visitNumber(Atom.@NotNull Number<Pattern> number, Tuple2<Term, LocalVar> t) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public Pat visitBraced(Atom.@NotNull Braced<Pattern> braced, Tuple2<Term, LocalVar> termLocalVarTuple2) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public Pat visitTuple(Atom.@NotNull Tuple<Pattern> tuple, Tuple2<Term, LocalVar> t) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public Pat visitBind(Atom.@NotNull Bind<Pattern> bind, Tuple2<Term, LocalVar> t) {
+    var selected = selectCtor(t._1, bind.bind().name());
+    if (selected == null) {
+      var atom = new Atom.Bind<Pat>(bind.sourcePos(), bind.bind(), new Ref<>());
+      return new Pat.Atomic(atom, t._2, t._1);
+    }
+    if (!selected.conTelescope().isEmpty()) {
+      // TODO: error report: not enough parameters bind
+      throw new ExprTycker.TyckerException();
+    }
+    return new Pat.Ctor(selected.ref(), Seq.of(), t._2, t._1);
+  }
+
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
-    var realCtor = selectCtor(ctor, param);
+    var realCtor = selectCtor(param, ctor.name());
+    if (realCtor == null) throw new ExprTycker.TyckerException();
     var sig = new Ref<>(new Def.Signature(realCtor.conTelescope(), realCtor.result()));
     var patterns = visitPatterns(sig, ctor.params().stream()).collect(Seq.factory());
     return new Pat.Ctor(realCtor.ref(), patterns, ctor.as(), param);
   }
 
-  private DataDef.Ctor selectCtor(Pattern.@NotNull Ctor ctor, Term param) {
+  private DataDef.Ctor selectCtor(Term param, @NotNull String name) {
     if (!(param instanceof AppTerm.DataCall dataCall)) {
       // TODO[ice]: report error: splitting on non data
-      throw new ExprTycker.TyckerException();
+      return null;
     }
     var core = dataCall.dataRef().core;
     if (core == null) {
       // TODO[ice]: report error: not checked data
-      throw new ExprTycker.TyckerException();
+      return null;
     }
-    var selected = core.ctors().find(c -> Objects.equals(c.ref().name(), ctor.name()));
+    var selected = core.ctors().find(c -> Objects.equals(c.ref().name(), name));
     if (selected.isEmpty()) {
       // TODO[ice]: report error: cannot find ctor of name
-      throw new ExprTycker.TyckerException();
+      return null;
     }
     return selected.get();
   }
