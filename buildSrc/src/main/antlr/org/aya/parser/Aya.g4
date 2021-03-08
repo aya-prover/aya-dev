@@ -101,7 +101,7 @@ clause : patterns IMPLIES expr
        | ABSURD;
 
 patterns : pattern (',' pattern)* ;
-pattern : atomPattern+ (AS ID type?)?
+pattern : atomPattern+ (AS ID)?
         ;
 
 atomPattern : LPAREN patterns? ')'

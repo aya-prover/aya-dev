@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
-import org.aya.core.term.Term;
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -15,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface Pattern {
   @Nullable LocalVar as();
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-  default @NotNull Term toTerm() {
-    throw new UnsupportedOperationException();
-  }
 
   interface Visitor<P, R> {
     R visitAtomic(@NotNull Atomic atomic, P p);
@@ -50,7 +46,6 @@ public sealed interface Pattern {
    */
   record Unresolved(
     @NotNull Atom<Pattern> name,
-    @NotNull Buffer<Atom<Pattern>> params,
     @Nullable LocalVar as
   ) implements Pattern {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

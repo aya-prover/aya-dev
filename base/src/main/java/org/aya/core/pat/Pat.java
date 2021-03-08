@@ -26,7 +26,6 @@ public sealed interface Pat {
   interface Visitor<P, R> {
     R visitAtomic(@NotNull Atomic atomic, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
-    R visitUnresolved(@NotNull Unresolved unresolved, P p);
   }
 
   record Atomic(
@@ -47,21 +46,6 @@ public sealed interface Pat {
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);
-    }
-  }
-
-  /**
-   * pattern remains unresolved because we are unable to know
-   * whether `zero` is a data ctor or a bind id
-   */
-  record Unresolved(
-    @NotNull Atom<Pat> name,
-    @NotNull Buffer<Atom<Pat>> params,
-    @Nullable LocalVar as,
-    @NotNull Term type
-  ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitUnresolved(this, p);
     }
   }
 
