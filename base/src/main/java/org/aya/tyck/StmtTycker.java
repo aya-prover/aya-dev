@@ -22,6 +22,7 @@ import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -56,7 +57,9 @@ public record StmtTycker(
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var tele = checkTele(tycker, ctor.telescope).collect(Seq.factory());
     var dataRef = ctor.dataRef;
-    var signature = new Def.Signature(tele, new AppTerm.DataCall(dataRef, tele.view().map(Term.Param::toArg)));
+    var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
+      .param().view().map(Term.Param::toArg);
+    var signature = new Def.Signature(tele, new AppTerm.DataCall(dataRef, dataArgs));
     ctor.signature = signature;
     var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses.stream()
