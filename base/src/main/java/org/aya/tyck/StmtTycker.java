@@ -57,10 +57,9 @@ public record StmtTycker(
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var tele = checkTele(tycker, ctor.telescope).collect(Seq.factory());
     var dataRef = ctor.dataRef;
-    var dataArgs = Objects.requireNonNull(dataRef.concrete.signature).param().view();
-    var signature = new Def.Signature(
-      dataArgs.concat(tele.view()).toImmutableSeq(),
-      new AppTerm.DataCall(dataRef, dataArgs.map(Term.Param::toArg)));
+    var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
+      .param().view().map(Term.Param::toArg);
+    var signature = new Def.Signature(tele, new AppTerm.DataCall(dataRef, dataArgs));
     ctor.signature = signature;
     var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses.stream()
