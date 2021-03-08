@@ -10,8 +10,7 @@ dependencies {
   implementation(project(":pretty"))
 }
 
-tasks {
-  named<Test>("test") {
-    testLogging.showStandardStreams = true
-  }
+tasks.named<Test>("test") {
+  testLogging.showStandardStreams = true
+  inputs.dir(projectDir.resolve("src/test/aya"))
 }

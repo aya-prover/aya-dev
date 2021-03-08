@@ -15,6 +15,7 @@ out/
 gradle.properties
 .DS_Store
 lombok.config
+/test.aya
 
 /cli-*-all.jar
 /imgui.ini
