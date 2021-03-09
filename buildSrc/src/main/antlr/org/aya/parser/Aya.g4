@@ -42,7 +42,8 @@ abuse : '\\abusing' (LBRACE stmt* '}' | stmt);
 
 fnDecl : '\\def' fnModifiers* assoc? ID tele* type? fnBody abuse?;
 
-fnBody : IMPLIES expr;
+fnBody : IMPLIES expr
+       | ('|' clause)+ ;
 
 fnModifiers : ERASE
             | INLINE
