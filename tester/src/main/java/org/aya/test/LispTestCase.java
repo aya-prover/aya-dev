@@ -3,7 +3,9 @@
 package org.aya.test;
 
 import org.aya.api.error.CollectReporter;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.unify.PatDefEq;
@@ -24,7 +26,8 @@ public class LispTestCase {
   protected final CollectReporter reporter = new CollectReporter();
 
   protected @NotNull TypedDefEq eq(MutableMap<Var, Term> localCtx) {
-    return new TypedDefEq(eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx);
+    var dummyExpr = new Expr.UnresolvedExpr(SourcePos.NONE, "dummy");
+    return new TypedDefEq(eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx, dummyExpr);
   }
 
   @BeforeEach

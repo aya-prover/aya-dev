@@ -4,16 +4,20 @@ package org.aya.tyck.unify;
 
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
+import org.aya.concrete.Expr;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -25,13 +29,31 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   protected final @NotNull MutableMap<@NotNull Var, @NotNull Var> varSubst = new MutableHashMap<>();
   public final @NotNull MutableMap<Var, Term> localCtx;
   private final @NotNull PatDefEq termDirectedDefeq;
+  public Trace.@Nullable Builder traceBuilder = null;
+  public final @NotNull Expr errorReportLocation;
+
+  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+    if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  @Override
+  public void traceEntrance(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
+    tracing(builder -> builder.shift(new Trace.UnifyT(lhs, rhs, errorReportLocation.sourcePos())));
+  }
+
+  @Override
+  public void traceExit(@NotNull Boolean result) {
+    tracing(Trace.Builder::reduce);
+  }
 
   public TypedDefEq(
     @NotNull Function<@NotNull TypedDefEq, @NotNull PatDefEq> createTypedDefEq,
-    @NotNull MutableMap<Var, Term> localCtx
+    @NotNull MutableMap<Var, Term> localCtx,
+    @NotNull Expr errorReportLocation
   ) {
     this.localCtx = localCtx;
     this.termDirectedDefeq = createTypedDefEq.apply(this);
+    this.errorReportLocation = errorReportLocation;
   }
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {

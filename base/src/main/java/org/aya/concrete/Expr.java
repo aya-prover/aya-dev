@@ -32,7 +32,7 @@ public sealed interface Expr {
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
-    visitor.traceExit(ret);
+    visitor.traceExit(ret, this, p);
     return ret;
   }
 
@@ -53,7 +53,7 @@ public sealed interface Expr {
   interface Visitor<P, R> {
     default void traceEntrance(@NotNull Expr expr, P p) {
     }
-    default void traceExit(R r) {
+    default void traceExit(R r, @NotNull Expr expr, P p) {
     }
     R visitRef(@NotNull RefExpr expr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);

@@ -54,8 +54,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
   }
 
-  @Override public void traceExit(Result result) {
-    tracing(Trace.Builder::reduce);
+  @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
+    tracing(builder -> {
+      builder.shift(new Trace.TyckT(result.wellTyped, result.type, expr.sourcePos()));
+      builder.reduce();
+      builder.reduce();
+    });
   }
 
   public ExprTycker(@NotNull Reporter reporter) {
@@ -102,7 +106,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var result = lamParam.accept(this, UnivTerm.OMEGA);
       var comparison = new TypedDefEq(
         eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
-        localCtx
+        localCtx,
+        expr
       ).compare(result.wellTyped, type, UnivTerm.OMEGA);
       if (!comparison) {
         // TODO[ice]: expected type mismatch lambda type annotation
@@ -172,10 +177,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   private void unify(Term upper, Term lower, Expr errorReportLocation) {
     tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, errorReportLocation.sourcePos())));
     tracing(Trace.Builder::reduce);
-    var unification = new TypedDefEq(
+    var unifier = new TypedDefEq(
       eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
-      localCtx
-    ).compare(lower, upper, UnivTerm.OMEGA);
+      localCtx,
+      errorReportLocation
+    );
+    unifier.traceBuilder = traceBuilder;
+    var unification = unifier.compare(lower, upper, UnivTerm.OMEGA);
     if (!unification) {
       metaContext.report(new UnifyError(errorReportLocation, upper, lower));
       throw new TyckInterruptedException();
