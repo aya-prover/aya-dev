@@ -43,17 +43,21 @@ public final class PatTycker implements
   public Pat.Clause visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.map().clear();
-    var patterns = visitPatterns(sig, match.patterns().stream()).collect(Seq.factory());
+    var patterns = visitPatterns(sig, match.patterns().stream());
     var expr = match.expr().accept(subst, Unit.unit());
     return new Pat.Clause.Match(patterns, exprTycker.checkExpr(expr, sig.value.result()).wellTyped());
   }
 
-  private Stream<Pat> visitPatterns(Ref<Def.Signature> sig, Stream<Pattern> stream) {
-    return stream.sequential().map(pat -> {
-      var res = pat.accept(this, sig.value.param().first().type());
+  private Seq<Pat> visitPatterns(Ref<Def.Signature> sig, Stream<Pattern> stream) {
+    var results = Buffer.<Pat>of();
+    stream.sequential().forEach(pat -> {
+      var param = sig.value.param().first();
+      // TODO[ice]: generate implicit pattern when param's licitness mismatch pattern licitness
+      var res = pat.accept(this, param.type());
       sig.value = sig.value.inst(res.toTerm());
-      return res;
+      results.append(res);
     });
+    return results;
   }
 
   @Override public Pat.Clause visitAbsurd(Pattern.Clause.@NotNull Absurd absurd, Def.Signature signature) {
@@ -99,7 +103,7 @@ public final class PatTycker implements
     var realCtor = selectCtor(param, ctor.name());
     if (realCtor == null) throw new ExprTycker.TyckerException();
     var sig = new Ref<>(new Def.Signature(realCtor.conTelescope(), realCtor.result()));
-    var patterns = visitPatterns(sig, ctor.params().stream()).collect(Seq.factory());
+    var patterns = visitPatterns(sig, ctor.params().stream());
     return new Pat.Ctor(realCtor.ref(), patterns, ctor.as(), param);
   }
 
