@@ -40,14 +40,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.Objects;
-import java.util.Stack;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
   public final @NotNull MutableMap<Var, Term> localCtx;
   public Trace.@Nullable Builder traceBuilder = null;
-  private @NotNull Stack<@NotNull Expr> exprStack = new Stack();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -55,14 +52,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public void traceEntrance(@NotNull Expr expr, Term term) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
-    exprStack.push(expr);
   }
 
-  @Override public void traceExit(Result result) {
-    var errorReportLocation = exprStack.pop();
-    tracing(builder -> builder.shift(new Trace.TyckT(result.wellTyped, result.type, Objects.requireNonNull(errorReportLocation).sourcePos())));
-    tracing(Trace.Builder::reduce);
-    tracing(Trace.Builder::reduce);
+  @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
+    tracing(builder -> {
+      builder.shift(new Trace.TyckT(result.wellTyped, result.type, expr.sourcePos()));
+      builder.reduce();
+      builder.reduce();
+    });
   }
 
   public ExprTycker(@NotNull Reporter reporter) {
