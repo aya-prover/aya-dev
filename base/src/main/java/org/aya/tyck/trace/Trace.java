@@ -25,7 +25,7 @@ public sealed interface Trace {
     R visitExpr(@NotNull ExprT t, P p);
     R visitUnify(@NotNull UnifyT t, P p);
     R visitDecl(@NotNull DeclT t, P p);
-    R visitTerm(@NotNull Trace.TyckT t, P p);
+    R visitTyck(@NotNull TyckT t, P p);
   }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
@@ -72,13 +72,9 @@ public sealed interface Trace {
     }
   }
 
-  record UnifyT(@NotNull Term lhs, @NotNull Term rhs, @Nullable SourcePos pos, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
-    public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @Nullable SourcePos pos) {
+  record UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
+    public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos) {
       this(lhs, rhs, pos, Buffer.of());
-    }
-
-    public UnifyT(@NotNull Term lhs, @NotNull Term rhs) {
-      this(lhs, rhs, null, Buffer.of());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -86,12 +82,13 @@ public sealed interface Trace {
     }
   }
 
-  record TyckT(@NotNull Term term, @NotNull Term type, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
-    public TyckT(@NotNull Term term, @NotNull Term type) {
-      this (term, type, Buffer.of());
+  record TyckT(@NotNull Term term, @NotNull Term type, @NotNull SourcePos pos, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
+    public TyckT(@NotNull Term term, @NotNull Term type, @NotNull SourcePos pos) {
+      this (term, type, pos, Buffer.of());
     }
+
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTerm(this, p);
+      return visitor.visitTyck(this, p);
     }
   }
 }

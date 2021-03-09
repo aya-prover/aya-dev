@@ -40,11 +40,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.Objects;
+import java.util.Stack;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
   public final @NotNull MutableMap<Var, Term> localCtx;
   public Trace.@Nullable Builder traceBuilder = null;
+  private @NotNull Stack<@NotNull Expr> exprStack = new Stack();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -52,11 +55,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public void traceEntrance(@NotNull Expr expr, Term term) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
+    exprStack.push(expr);
   }
 
   @Override public void traceExit(Result result) {
+    var errorReportLocation = exprStack.pop();
+    tracing(builder -> builder.shift(new Trace.TyckT(result.wellTyped, result.type, Objects.requireNonNull(errorReportLocation).sourcePos())));
     tracing(Trace.Builder::reduce);
-    tracing(builder -> builder.shift(new Trace.TyckT(result.wellTyped, result.type)));
     tracing(Trace.Builder::reduce);
   }
 
@@ -104,7 +109,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var result = lamParam.accept(this, UnivTerm.OMEGA);
       var comparison = new TypedDefEq(
         eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
-        localCtx
+        localCtx,
+        expr
       ).compare(result.wellTyped, type, UnivTerm.OMEGA);
       if (!comparison) {
         // TODO[ice]: expected type mismatch lambda type annotation
@@ -176,7 +182,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     tracing(Trace.Builder::reduce);
     var unifier = new TypedDefEq(
       eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
-      localCtx
+      localCtx,
+      errorReportLocation
     );
     unifier.traceBuilder = traceBuilder;
     var unification = unifier.compare(lower, upper, UnivTerm.OMEGA);

@@ -62,11 +62,11 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
   }
 
   @Override
-  public Unit visitTerm(Trace.@NotNull TyckT t, Unit unit) {
+  public Unit visitTyck(Trace.@NotNull TyckT t, Unit unit) {
     indent();
-    builder.append("+ \u22A2 `")
+    builder.append("result \u22A2 `")
       .append(t.term().toDoc().renderWithPageWidth(114514))
-      .append("` : ")
+      .append("` \u2191 ")
       .append(t.type().toDoc().renderWithPageWidth(114514))
       .append(lineSep);
     return unit;

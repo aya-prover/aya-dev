@@ -126,7 +126,14 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   }
 
   @Override
-  public Unit visitTerm(Trace.@NotNull TyckT t, JImGui jImGui) {
+  public Unit visitTyck(Trace.@NotNull TyckT t, JImGui imGui) {
+    var term = t.term();
+    var type = t.type();
+    var s = "result "
+      + term.toDoc().renderWithPageWidth(PAGE_WIDTH)
+      + " : "
+      + type.toDoc().renderWithPageWidth(PAGE_WIDTH);
+    visitSub(s, Color.YELLOW, imGui, Buffer.of(), () -> pos = t.pos());
     return Unit.unit();
   }
 
