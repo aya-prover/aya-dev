@@ -120,8 +120,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public @NotNull Either<Expr, Decl.FnDecl.Patterns> visitFnBody(AyaParser.FnBodyContext ctx) {
     var expr = ctx.expr();
     if (expr != null) return Either.left(visitExpr(expr));
-    // TODO
-    throw new UnsupportedOperationException();
+    var patterns = ctx.clause().stream().map(this::visitClause).collect(Buffer.factory());
+    return Either.right(new Decl.FnDecl.Patterns(patterns));
   }
 
   @Override

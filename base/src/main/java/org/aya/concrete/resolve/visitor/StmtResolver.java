@@ -63,9 +63,11 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1.collect(ImmutableSeq.factory());
     decl.result = decl.result.resolve(local._2);
-    decl.body = decl.body.map(expr -> expr.resolve(local._2), patterns -> {
-      throw new UnsupportedOperationException();
-    });
+    decl.body = decl.body.map(
+      expr -> expr.resolve(local._2),
+      patterns -> new Decl.FnDecl.Patterns(patterns.clauses().stream()
+        .map(clause -> clause.accept(PatResolver.INSTANCE, local._2))
+        .collect(Buffer.factory())));
     return Unit.unit();
   }
 }
