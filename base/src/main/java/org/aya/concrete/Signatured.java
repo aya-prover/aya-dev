@@ -6,10 +6,12 @@ import org.aya.api.concrete.def.ConcreteDecl;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
+import org.aya.core.term.Term;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +53,12 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
     var ret = doAccept(visitor, p);
     visitor.traceExit(ret);
     return ret;
+  }
+
+  @Contract(mutates = "this")
+  public void modifyResult(@NotNull Term result) {
+    assert signature != null;
+    signature = new Def.Signature(signature.param(), result);
   }
 
   protected Signatured(

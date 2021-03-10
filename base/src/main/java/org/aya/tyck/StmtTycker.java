@@ -89,9 +89,19 @@ public record StmtTycker(
     var resultRes = decl.result.accept(tycker, null);
     decl.signature = new Def.Signature(resultTele, resultRes.wellTyped());
 
-    // TODO[ice]: change core
-    var bodyRes = tycker.checkExpr(decl.body.getLeftValue(), resultRes.wellTyped());
-    return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
+    var patTycker = new PatTycker(tycker);
+    var what = decl.body.map(
+      left -> {
+        var result = tycker.checkExpr(left, resultRes.wellTyped());
+        decl.modifyResult(result.type());
+        return result.wellTyped();
+      }, right -> right.map(r -> {
+        var clause = r.accept(patTycker, decl.signature);
+        decl.modifyResult(patTycker.resultType);
+        return clause;
+      }));
+
+    return new FnDef(decl.ref, resultTele, decl.signature.result(), what);
   }
 
   private @NotNull ImmutableSeq<Term.Param>

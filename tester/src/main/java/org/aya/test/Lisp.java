@@ -9,6 +9,7 @@ import org.aya.core.TermDsl;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Either;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public interface Lisp {
     var result = parse(resultTypeCode, refs);
     var body = parse(bodyCode, refs);
     var existingRef = (DefVar<FnDef, Decl.FnDecl>) refs.getOrDefault(name, DefVar.core(null, name));
-    var def = new FnDef(existingRef, tele, result, body);
+    var def = new FnDef(existingRef, tele, result, Either.left(body));
     var ref = def.ref();
     refs.put(name, ref);
     return def;

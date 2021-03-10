@@ -33,7 +33,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     assert fnCall.args().sizeEquals(def.telescope().size());
     assert Term.Param.checkSubst(def.telescope(), fnCall.args());
     var subst = buildSubst(def.telescope(), fnCall.args());
-    return def.body().subst(subst).accept(this, p);
+    // TODO[vont]: pattern matching body
+    return def.body().getLeftValue().subst(subst).accept(this, p);
   }
 
   /**

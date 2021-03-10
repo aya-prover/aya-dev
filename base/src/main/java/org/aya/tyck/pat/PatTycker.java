@@ -34,6 +34,7 @@ public final class PatTycker implements
   Atom.Visitor<Pattern, Tuple2<Term, LocalVar>, Pat> {
   private final @NotNull ExprTycker exprTycker;
   private final @NotNull ExprRefSubst subst = new ExprRefSubst(MutableHashMap.of());
+  public Term resultType;
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
     this.exprTycker = exprTycker;
@@ -44,7 +45,9 @@ public final class PatTycker implements
     subst.map().clear();
     var patterns = visitPatterns(sig, match.patterns().stream());
     var expr = match.expr().accept(subst, Unit.unit());
-    return new Pat.Clause.Match(patterns, exprTycker.checkExpr(expr, sig.value.result()).wellTyped());
+    var result = exprTycker.checkExpr(expr, sig.value.result());
+    resultType = result.type();
+    return new Pat.Clause.Match(patterns, result.wellTyped());
   }
 
   private @NotNull Seq<Pat> visitPatterns(Ref<Def.Signature> sig, Stream<Pattern> stream) {
