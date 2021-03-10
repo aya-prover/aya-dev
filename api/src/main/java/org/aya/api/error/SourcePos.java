@@ -64,6 +64,11 @@ public record SourcePos(
     return pos >= tokenStartIndex && pos <= tokenEndIndex;
   }
 
+  @Override public String toString() {
+    return "(" + tokenStartIndex + "-" + tokenEndIndex + ") ["
+      + startLine + "," + startColumn + "-" + endLine + "," + endColumn + ']';
+  }
+
   @Override
   public int hashCode() {
     // the equals() returns true in tests, so hashCode() should
