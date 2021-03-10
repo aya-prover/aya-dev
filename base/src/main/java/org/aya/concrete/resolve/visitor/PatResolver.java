@@ -7,8 +7,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
@@ -29,7 +27,7 @@ public final class PatResolver implements
 
   @Override public Pattern.Clause visitMatch(Pattern.Clause.@NotNull Match match, Context context) {
     var ctx = new Ref<>(context);
-    var pats = match.patterns().stream().sequential().map(pat -> subpatterns(ctx, pat)).collect(Buffer.factory());
+    var pats = match.patterns().map(pat -> subpatterns(ctx, pat));
     return new Pattern.Clause.Match(pats, match.expr().resolve(ctx.value));
   }
 
@@ -58,20 +56,20 @@ public final class PatResolver implements
   @Contract(value = "_, _ -> fail", pure = true)
   @Override public Tuple2<Context, Pattern> visitCtor(Pattern.@NotNull Ctor ctor, Context context) {
     var newCtx = new Ref<>(context);
-    var params = ctor.params().view().map(p -> subpatterns(newCtx, p)).collect(Seq.factory());
+    var params = ctor.params().map(p -> subpatterns(newCtx, p));
     var sourcePos = ctor.sourcePos();
     return Tuple.of(bindAs(ctor.as(), newCtx.value, sourcePos), new Pattern.Ctor(sourcePos, ctor.name(), params, ctor.as()));
   }
 
   @Override public Tuple2<Context, Atom<Pattern>> visitTuple(Atom.@NotNull Tuple<Pattern> tuple, Context context) {
     var newCtx = new Ref<>(context);
-    var patterns = tuple.patterns().stream().sequential().map(p -> subpatterns(newCtx, p)).collect(Buffer.factory());
+    var patterns = tuple.patterns().map(p -> subpatterns(newCtx, p));
     return Tuple.of(newCtx.value, new Atom.Tuple<>(tuple.sourcePos(), patterns));
   }
 
   @Override public Tuple2<Context, Atom<Pattern>> visitBraced(Atom.@NotNull Braced<Pattern> braced, Context context) {
     var newCtx = new Ref<>(context);
-    var patterns = braced.patterns().stream().sequential().map(p -> subpatterns(newCtx, p)).collect(Buffer.factory());
+    var patterns = braced.patterns().map(p -> subpatterns(newCtx, p));
     return Tuple.of(newCtx.value, new Atom.Braced<>(braced.sourcePos(), patterns));
   }
 

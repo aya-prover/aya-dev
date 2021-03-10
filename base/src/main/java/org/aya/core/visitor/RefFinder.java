@@ -36,13 +36,12 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
     tele(references, fn.telescope());
     fn.result().accept(TermRefFinder.INSTANCE, references);
-    if (withBody) {
-      fn.body().map(term -> term.accept(TermRefFinder.INSTANCE, references),
-        clauses -> {
-          clauses.forEach(clause -> clause.accept(this, references));
-          return Unit.unit();
-        });
-    }
+    if (withBody) fn.body().map(
+      term -> term.accept(TermRefFinder.INSTANCE, references),
+      clauses -> {
+        clauses.forEach(clause -> clause.accept(this, references));
+        return Unit.unit();
+      });
     return Unit.unit();
   }
 

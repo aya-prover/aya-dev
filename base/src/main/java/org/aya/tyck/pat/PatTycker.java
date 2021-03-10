@@ -13,6 +13,7 @@ import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
  * @author ice1000
@@ -43,16 +43,16 @@ public final class PatTycker implements
   @Override public Pat.Clause visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.map().clear();
-    var patterns = visitPatterns(sig, match.patterns().stream());
+    var patterns = visitPatterns(sig, match.patterns());
     var expr = match.expr().accept(subst, Unit.unit());
     var result = exprTycker.checkExpr(expr, sig.value.result());
     resultType = result.type();
     return new Pat.Clause.Match(patterns, result.wellTyped());
   }
 
-  private @NotNull Seq<Pat> visitPatterns(Ref<Def.Signature> sig, Stream<Pattern> stream) {
+  private @NotNull Seq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
     var results = Buffer.<Pat>of();
-    stream.sequential().forEach(pat -> {
+    stream.forEach(pat -> {
       var param = sig.value.param().first();
       // TODO[ice]: generate implicit pattern when param's licitness mismatch pattern licitness
       var res = pat.accept(this, param.type());
@@ -105,7 +105,7 @@ public final class PatTycker implements
     var realCtor = selectCtor(param, ctor.name());
     if (realCtor == null) throw new ExprTycker.TyckerException();
     var sig = new Ref<>(new Def.Signature(realCtor.conTelescope(), realCtor.result()));
-    var patterns = visitPatterns(sig, ctor.params().stream());
+    var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(realCtor.ref(), patterns, ctor.as(), param);
   }
 

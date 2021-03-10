@@ -6,7 +6,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.annotations.Covariant;
-import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,13 +26,13 @@ public sealed interface Atom<@Covariant Pat> {
 
   <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p);
 
-  record Tuple<Pat>(@NotNull SourcePos sourcePos, @NotNull Buffer<Pat> patterns) implements Atom<Pat> {
+  record Tuple<Pat>(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Pat> patterns) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitTuple(this, p);
     }
   }
 
-  record Braced<Pat>(@NotNull SourcePos sourcePos, @NotNull Buffer<Pat> patterns) implements Atom<Pat> {
+  record Braced<Pat>(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Pat> patterns) implements Atom<Pat> {
     @Override public <P, R> R accept(@NotNull Visitor<Pat, P, R> visitor, P p) {
       return visitor.visitBraced(this, p);
     }

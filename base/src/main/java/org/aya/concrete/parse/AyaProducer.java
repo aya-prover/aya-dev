@@ -468,10 +468,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Buffer<@NotNull Pattern> visitPatterns(AyaParser.PatternsContext ctx) {
+  public @NotNull ImmutableSeq<@NotNull Pattern> visitPatterns(AyaParser.PatternsContext ctx) {
     return ctx.pattern().stream()
       .map(this::visitPattern)
-      .collect(Buffer.factory());
+      .collect(ImmutableSeq.factory());
   }
 
   @Override
