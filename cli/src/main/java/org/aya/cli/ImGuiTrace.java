@@ -115,7 +115,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
     var s = t.lhs().toDoc().renderWithPageWidth(PAGE_WIDTH)
       + " = "
-      + t.rhs().toDoc().renderWithPageWidth(PAGE_WIDTH);
+      + t.rhs().toDoc().renderWithPageWidth(PAGE_WIDTH)
+      + "##"
+      + Objects.hashCode(t);
     visitSub(s, Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos());
     return Unit.unit();
   }
@@ -129,11 +131,13 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   public Unit visitTyck(Trace.@NotNull TyckT t, JImGui imGui) {
     var term = t.term();
     var type = t.type();
-    var s = "result "
-      + term.toDoc().renderWithPageWidth(PAGE_WIDTH)
-      + " : "
-      + type.toDoc().renderWithPageWidth(PAGE_WIDTH);
-    visitSub(s, Color.YELLOW, imGui, Buffer.of(), () -> pos = t.pos());
+    var s = new StringBuilder()
+      .append(term.toDoc().renderWithPageWidth(PAGE_WIDTH))
+      .append(" : ")
+      .append(type.toDoc().renderWithPageWidth(PAGE_WIDTH));
+    imGui.text("-".repeat(s.length() + 4));
+    s.append("##").append(Objects.hashCode(t));
+    visitSub(s.toString(), Color.YELLOW, imGui, Buffer.of(), () -> pos = t.pos());
     return Unit.unit();
   }
 
