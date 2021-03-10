@@ -4,7 +4,6 @@ package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +58,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   @Override
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
-    decl.telescope = local._1.collect(ImmutableSeq.factory());
+    decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
     decl.body = decl.body.map(
       expr -> expr.resolve(local._2),

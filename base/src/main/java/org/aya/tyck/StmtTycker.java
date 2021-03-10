@@ -15,7 +15,7 @@ import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Unit;
@@ -94,12 +94,13 @@ public record StmtTycker(
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 
-  private @NotNull Seq<Term.Param> checkTele(@NotNull ExprTycker exprTycker, @NotNull Seq<Expr.Param> tele) {
-    return tele.stream().map(param -> {
+  private @NotNull ImmutableSeq<Term.Param>
+  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele) {
+    return tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
       var paramRes = exprTycker.checkExpr(param.type(), null);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
-    }).collect(Seq.factory());
+    });
   }
 }

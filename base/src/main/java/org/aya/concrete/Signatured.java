@@ -8,7 +8,6 @@ import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +22,7 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
   public final @NotNull SourcePos sourcePos;
 
   // will change after resolve
-  public @NotNull Seq<Expr.Param> telescope;
+  public @NotNull ImmutableSeq<Expr.Param> telescope;
   public Def.@Nullable Signature signature;
 
   @Override public @NotNull SourcePos sourcePos() {

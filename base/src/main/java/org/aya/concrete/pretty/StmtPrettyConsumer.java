@@ -7,7 +7,6 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Stmt;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -106,10 +105,10 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
     };
   }
 
-  /*package-private*/ Doc visitTele(@NotNull Seq<Expr.Param> telescope) {
-    return telescope.stream()
+  /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Expr.Param> telescope) {
+    return telescope
       .map(this::visitParam)
-      .reduce(Doc.empty(), Doc::hsep);
+      .fold(Doc.empty(), Doc::hsep);
   }
 
   /*package-private*/ Doc visitParam(@NotNull Expr.Param param) {
