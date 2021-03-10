@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-  @NotNull Seq<Term.Param> telescope,
+  @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull Buffer<Ctor> ctors,
   @NotNull Map<Pat, Ctor> clauses // TODO: mix clauses and ctors into one field?
@@ -40,7 +40,7 @@ public record DataDef(
   public static record Ctor(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
-    @NotNull Seq<Term.Param> conTelescope,
+    @NotNull ImmutableSeq<Term.Param> conTelescope,
     @NotNull ImmutableSeq<Pat.Clause> clauses,
     boolean coerce
   ) implements Def {

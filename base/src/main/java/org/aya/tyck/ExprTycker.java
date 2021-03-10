@@ -82,14 +82,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     );
   }
 
-  public @NotNull Result
-  checkExpr(@NotNull Expr expr, @Nullable Term type) throws TyckInterruptedException {
+  public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) throws TyckInterruptedException {
     return finalize(expr.accept(this, type));
   }
 
   @Rule.Check(partialSynth = true)
-  @Override
-  public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
+  @Override public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
     if (term == null) {
       var domain = new LocalVar(Constants.ANONYMOUS_PREFIX);
       var codomain = new LocalVar(Constants.ANONYMOUS_PREFIX);
@@ -190,8 +188,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
   }
 
-  @Rule.Synth
-  @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
+  @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
     final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
     var var = expr.param().ref();
     var param = expr.param();
@@ -225,8 +222,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new SigmaTerm(expr.co(), Term.Param.fromBuffer(resultTele), last.wellTyped), against);
   }
 
-  @Rule.Synth
-  @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
+  @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
     var tupleRes = expr.tup().accept(this, null);
     if (!(tupleRes.type instanceof SigmaTerm dt && !dt.co()))
       return wantButNo(expr.tup(), tupleRes.type, "sigma type");
@@ -258,8 +254,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new AppTerm.HoleApp(new LocalVar(name)), term);
   }
 
-  @Rule.Synth
-  @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
+  @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
     var f = expr.function().accept(this, null);
     var resultTerm = f.wellTyped;
     if (!(f.type instanceof PiTerm piTerm)) return wantButNo(expr, f.type, "pi type");
@@ -344,8 +339,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new TupTerm(items.toImmutableSeq()), resultType);
   }
 
-  @Override
-  public Result catchUnhandled(@NotNull Expr expr, Term term) {
+  @Override public Result catchUnhandled(@NotNull Expr expr, Term term) {
     throw new UnsupportedOperationException(expr.toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
   }
 
@@ -365,9 +359,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
   }
 
-  public static record Result(
-    @NotNull Term wellTyped,
-    @NotNull Term type
-  ) {
+  /**
+   * {@link Result#type} is the type of {@link Result#wellTyped}.
+   *
+   * @author ice1000
+   */
+  public static record Result(@NotNull Term wellTyped, @NotNull Term type) {
   }
 }

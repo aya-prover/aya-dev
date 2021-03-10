@@ -149,8 +149,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       });
     }
 
-    @Override
-    protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitDataDecl(this, p);
     }
 
@@ -168,8 +167,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
         abuseBlock.equals(dataDecl.abuseBlock);
     }
 
-    @Override
-    public int hashCode() {
+    @Override public int hashCode() {
       return Objects.hash(sourcePos, telescope, result, body, abuseBlock);
     }
 
@@ -212,8 +210,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.body = body;
     }
 
-    @Override
-    protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+    @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitFnDecl(this, p);
     }
 
@@ -233,8 +230,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
         abuseBlock.equals(fnDecl.abuseBlock);
     }
 
-    @Override
-    public int hashCode() {
+    @Override public int hashCode() {
       return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
     }
 
