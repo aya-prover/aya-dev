@@ -93,7 +93,7 @@ public record StmtTycker(
     decl.signature = signature.value;
 
     var patTycker = new PatTycker(tycker);
-    var what = FP.transposeFst(decl.body.map(
+    var what = FP.distR(decl.body.map(
       left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
       right -> patTycker.elabClause(right, signature)));
     return new FnDef(decl.ref, resultTele, what._1, what._2);
