@@ -92,7 +92,8 @@ public record StmtTycker(
     var resultRes = decl.result.accept(tycker, null);
     decl.signature = new Def.Signature(resultTele, resultRes.wellTyped());
 
-    var bodyRes = tycker.checkExpr(decl.body, resultRes.wellTyped());
+    // TODO[ice]: change core
+    var bodyRes = tycker.checkExpr(decl.body.getLeftValue(), resultRes.wellTyped());
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 

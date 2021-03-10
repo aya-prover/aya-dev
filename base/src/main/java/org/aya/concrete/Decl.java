@@ -5,12 +5,14 @@ package org.aya.concrete;
 import org.aya.api.concrete.def.ConcreteDecl;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.Var;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.generic.Modifier;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Either;
@@ -82,7 +84,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataCtor extends Signatured {
     public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
-    public @NotNull Buffer<String> elim;
+    public @NotNull Seq<Var> elim;
     public @NotNull Buffer<Pattern.Clause> clauses;
     public boolean coerce;
 
@@ -93,7 +95,10 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
                     @NotNull Buffer<Pattern.Clause> clauses,
                     boolean coerce) {
       super(sourcePos, telescope);
-      this.elim = elim;
+      // TODO[ice]: error handling
+      this.elim = elim.stream()
+        .map(s -> telescope.find(p -> p.ref().name().equals(s)).get().ref())
+        .collect(Seq.factory());
       this.clauses = clauses;
       this.coerce = coerce;
       this.ref = DefVar.concrete(this, name);
@@ -195,7 +200,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Expr result;
-    public @NotNull Expr body;
+    public @NotNull Either<Expr, Patterns> body;
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
@@ -205,7 +210,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
-      @NotNull Expr body,
+      @NotNull Either<Expr, Patterns> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
@@ -241,6 +246,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public int hashCode() {
       return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
     }
-  }
 
+    public static record Patterns(@NotNull Buffer<Pattern.Clause> clauses) {
+    }
+  }
 }

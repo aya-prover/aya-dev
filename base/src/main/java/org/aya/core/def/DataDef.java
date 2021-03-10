@@ -3,6 +3,7 @@
 package org.aya.core.def;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
@@ -41,7 +42,7 @@ public record DataDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
     @NotNull Seq<Term.Param> conTelescope,
-    @NotNull Buffer<String> elim,
+    @NotNull Seq<Var> elim,
     @NotNull Buffer<Pat.Clause> clauses,
     boolean coerce
   ) implements Def {

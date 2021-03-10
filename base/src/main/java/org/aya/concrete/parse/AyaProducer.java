@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.Var;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
@@ -133,8 +134,11 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Expr visitFnBody(AyaParser.FnBodyContext ctx) {
-    return visitExpr(ctx.expr());
+  public @NotNull Either<Expr, Decl.FnDecl.Patterns> visitFnBody(AyaParser.FnBodyContext ctx) {
+    var expr = ctx.expr();
+    if (expr != null) return Either.left(visitExpr(expr));
+    // TODO
+    throw new UnsupportedOperationException();
   }
 
   @Override
