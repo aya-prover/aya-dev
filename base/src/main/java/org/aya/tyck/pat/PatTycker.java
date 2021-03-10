@@ -32,7 +32,7 @@ import java.util.Objects;
 public final class PatTycker implements
   Pattern.Clause.Visitor<Def.Signature, Tuple2<@NotNull Term, Pat.Clause>>,
   Pattern.Visitor<Term, Pat>,
-  Atom.Visitor<Pattern, Tuple2<Term, LocalVar>, Pat> {
+  Atom.Visitor<Pattern, Tuple2<LocalVar, Term>, Pat> {
   private final @NotNull ExprTycker exprTycker;
   private final @NotNull ExprRefSubst subst = new ExprRefSubst(MutableHashMap.of());
 
@@ -53,9 +53,12 @@ public final class PatTycker implements
   @Override public Tuple2<@NotNull Term, Pat.Clause> visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.map().clear();
+    var recover = MutableHashMap.from(exprTycker.localCtx);
     var patterns = visitPatterns(sig, match.patterns());
     var expr = match.expr().accept(subst, Unit.unit());
     var result = exprTycker.checkExpr(expr, sig.value.result());
+    exprTycker.localCtx.clear();
+    exprTycker.localCtx.putAll(recover);
     return Tuple.of(result.type(), new Pat.Clause.Match(patterns, result.wellTyped()));
   }
 
@@ -77,38 +80,42 @@ public final class PatTycker implements
   }
 
   @Override public Pat visitAtomic(Pattern.@NotNull Atomic atomic, Term param) {
-    return atomic.atom().accept(this, Tuple.of(param, atomic.as()));
+    var t = Tuple.of(atomic.as(), param);
+    exprTycker.localCtx.put(t);
+    return atomic.atom().accept(this, t);
   }
 
-  @Override public Pat visitCalmFace(Atom.@NotNull CalmFace<Pattern> face, Tuple2<Term, LocalVar> t) {
+  @Override public Pat visitCalmFace(Atom.@NotNull CalmFace<Pattern> face, Tuple2<LocalVar, Term> t) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitNumber(Atom.@NotNull Number<Pattern> number, Tuple2<Term, LocalVar> t) {
+  @Override public Pat visitNumber(Atom.@NotNull Number<Pattern> number, Tuple2<LocalVar, Term> t) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitBraced(Atom.@NotNull Braced<Pattern> braced, Tuple2<Term, LocalVar> termLocalVarTuple2) {
+  @Override public Pat visitBraced(Atom.@NotNull Braced<Pattern> braced, Tuple2<LocalVar, Term> termLocalVarTuple2) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitTuple(Atom.@NotNull Tuple<Pattern> tuple, Tuple2<Term, LocalVar> t) {
+  @Override public Pat visitTuple(Atom.@NotNull Tuple<Pattern> tuple, Tuple2<LocalVar, Term> t) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitBind(Atom.@NotNull Bind<Pattern> bind, Tuple2<Term, LocalVar> t) {
-    var selected = selectCtor(t._1, bind.bind().name());
+  @Override public Pat visitBind(Atom.@NotNull Bind<Pattern> bind, Tuple2<LocalVar, Term> t) {
+    var v = bind.bind();
+    var selected = selectCtor(t._2, v.name());
     if (selected == null) {
-      var atom = new Atom.Bind<Pat>(bind.sourcePos(), bind.bind(), new Ref<>());
-      return new Pat.Atomic(atom, t._2, t._1);
+      exprTycker.localCtx.put(v, t._2);
+      var atom = new Atom.Bind<Pat>(bind.sourcePos(), v, new Ref<>());
+      return new Pat.Atomic(atom, t._1, t._2);
     }
     if (!selected.conTelescope().isEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
     var value = bind.resolved().value;
-    if (value != null) subst.map().put(bind.bind(), value);
-    return new Pat.Ctor(selected.ref(), Seq.of(), t._2, t._1);
+    if (value != null) subst.map().put(v, value);
+    return new Pat.Ctor(selected.ref(), Seq.of(), t._1, t._2);
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {

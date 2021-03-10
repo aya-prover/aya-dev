@@ -16,3 +16,13 @@
  | zero, a => neg a
  | a, zero => pos a
  | suc a, suc b => subNI a b
+
+\def addI (a, b : Int) : Int
+ | pos zero, n => n
+ | n, pos zero => n
+ | neg zero, n => n
+ | n, neg zero => n
+ | pos n, pos m => pos (addN n m)
+ | neg n, neg m => neg (addN n m)
+ | neg n, pos m => subNI m n
+ | pos n, neg m => subNI n m
