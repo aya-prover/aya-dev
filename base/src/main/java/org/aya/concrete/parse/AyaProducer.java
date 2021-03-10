@@ -13,6 +13,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
+import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
 import org.aya.generic.Arg;
 import org.aya.generic.Atom;
 import org.aya.generic.Modifier;
@@ -29,11 +30,8 @@ import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
-import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -406,7 +404,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public Decl.DataDecl.Clauses visitDataClauses(AyaParser.DataClausesContext ctx) {
-    var elim = visitElim(ctx.elim());
+    var elim = ctx.elim().ID().stream().map(ParseTree::getText);
     var clauses = ctx.dataCtorClause().stream()
       .map(this::visitDataCtorClause)
       .collect(Buffer.factory());
@@ -419,8 +417,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var telescope = visitTelescope(ctx.tele().stream());
     var elim = elimCtx == null
       ? Buffer.<Var>of()
-      : visitElim(elimCtx)
-      .map(s -> (Var) telescope.find(p -> p.ref().name().equals(s)).get().ref())
+      : elimCtx.ID().stream()
+      .map(s -> (Var) telescope
+        .find(p -> p.ref().name().equals(s.getText()))
+        .getOrThrow(() -> {
+          reporter.report(new UnqualifiedNameNotFoundError(s.getText(), sourcePosOf(s)));
+          return new ParsingInterruptedException();
+        }).ref())
       .collect(Seq.factory());
     var id = ctx.ID();
 
@@ -495,11 +498,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       visitPatterns(ctx.patterns()),
       visitExpr(ctx.expr())
     );
-  }
-
-  @Override
-  public Stream<String> visitElim(AyaParser.ElimContext ctx) {
-    return ctx.ID().stream().map(ParseTree::getText);
   }
 
   public @NotNull Decl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
