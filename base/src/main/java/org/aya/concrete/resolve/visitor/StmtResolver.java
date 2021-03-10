@@ -65,9 +65,8 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     decl.result = decl.result.resolve(local._2);
     decl.body = decl.body.map(
       expr -> expr.resolve(local._2),
-      patterns -> new Decl.FnDecl.Patterns(patterns.clauses().stream()
-        .map(clause -> clause.accept(PatResolver.INSTANCE, local._2))
-        .collect(Buffer.factory())));
+      patterns -> new Decl.FnDecl.Patterns(patterns.clauses()
+        .map(clause -> clause.accept(PatResolver.INSTANCE, local._2))));
     return Unit.unit();
   }
 }

@@ -238,7 +238,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
     }
 
-    public static record Patterns(@NotNull Buffer<Pattern.Clause> clauses) {
+    public static record Patterns(@NotNull ImmutableSeq<Pattern.Clause> clauses) {
     }
   }
 }
