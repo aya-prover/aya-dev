@@ -30,12 +30,11 @@ import java.util.Objects;
  * @author ice1000
  */
 public final class PatTycker implements
-  Pattern.Clause.Visitor<Def.Signature, Pat.Clause>,
+  Pattern.Clause.Visitor<Def.Signature, Tuple2<@NotNull Term, Pat.Clause>>,
   Pattern.Visitor<Term, Pat>,
   Atom.Visitor<Pattern, Tuple2<Term, LocalVar>, Pat> {
   private final @NotNull ExprTycker exprTycker;
   private final @NotNull ExprRefSubst subst = new ExprRefSubst(MutableHashMap.of());
-  public Term resultType;
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
     this.exprTycker = exprTycker;
@@ -45,20 +44,19 @@ public final class PatTycker implements
   elabClause(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, Ref<Def.@NotNull Signature> signature) {
     var res = clauses.map(clause -> {
       var elabClause = clause.accept(this, signature.value);
-      signature.value = signature.value.mapTerm(resultType);
-      return elabClause;
+      signature.value = signature.value.mapTerm(elabClause._1);
+      return elabClause._2;
     });
     return Tuple.of(signature.value.result(), res);
   }
 
-  @Override public Pat.Clause visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
+  @Override public Tuple2<@NotNull Term, Pat.Clause> visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.map().clear();
     var patterns = visitPatterns(sig, match.patterns());
     var expr = match.expr().accept(subst, Unit.unit());
     var result = exprTycker.checkExpr(expr, sig.value.result());
-    resultType = result.type();
-    return new Pat.Clause.Match(patterns, result.wellTyped());
+    return Tuple.of(result.type(), new Pat.Clause.Match(patterns, result.wellTyped()));
   }
 
   private @NotNull Seq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
@@ -73,9 +71,9 @@ public final class PatTycker implements
     return results;
   }
 
-  @Override public Pat.Clause visitAbsurd(Pattern.Clause.@NotNull Absurd absurd, Def.Signature signature) {
-    resultType = signature.result();
-    return Pat.Clause.Absurd.INSTANCE;
+  @Override public Tuple2<@NotNull Term, Pat.Clause>
+  visitAbsurd(Pattern.Clause.@NotNull Absurd absurd, Def.Signature signature) {
+    return Tuple.of(signature.result(), Pat.Clause.Absurd.INSTANCE);
   }
 
   @Override public Pat visitAtomic(Pattern.@NotNull Atomic atomic, Term param) {

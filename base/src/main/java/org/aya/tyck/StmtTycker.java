@@ -64,7 +64,7 @@ public record StmtTycker(
     ctor.signature = signature;
     var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses
-      .map(c -> c.accept(patTycker, signature));
+      .map(c -> c.accept(patTycker, signature)._2);
     return new DataDef.Ctor(dataRef, ctor.ref, tele, elabClauses, ctor.coerce);
   }
 
