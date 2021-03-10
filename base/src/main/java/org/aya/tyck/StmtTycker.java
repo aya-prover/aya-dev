@@ -65,7 +65,7 @@ public record StmtTycker(
     var elabClauses = ctor.clauses.stream()
       .map(c -> c.accept(patTycker, signature))
       .collect(Buffer.factory());
-    return new DataDef.Ctor(dataRef, ctor.ref, tele, ctor.elim, elabClauses, ctor.coerce);
+    return new DataDef.Ctor(dataRef, ctor.ref, tele, elabClauses, ctor.coerce);
   }
 
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {

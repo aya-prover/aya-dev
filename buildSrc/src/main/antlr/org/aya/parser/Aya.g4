@@ -63,13 +63,11 @@ field : COERCE? ID tele* type   # fieldDecl
 dataDecl : (PUBLIC? OPEN)? '\\data' ID tele* type? dataBody abuse?;
 
 dataBody : ('|' dataCtor)*       # dataCtors
-         | elim dataCtorClause*  # dataClauses
+         | dataCtorClause*  # dataClauses
          ;
 
 // TODO[imkiva]: some code commented in Arend.g4
-dataCtor : COERCE? ID tele* (elim? LBRACE clause? ('|' clause)* '}')?;
-
-elim : '\\elim' ID (',' ID)*;
+dataCtor : COERCE? ID tele* (LBRACE clause? ('|' clause)* '}')?;
 
 dataCtorClause : '|' pattern IMPLIES dataCtor;
 
@@ -82,12 +80,8 @@ expr : atom argument*                                 # app
      | PI tele+ TO expr                               # pi
      | SIGMA tele+ '**' expr                          # sigma
      | LAMBDA tele+ (IMPLIES expr?)?                  # lam
-     | MATCH matchArg (',' matchArg)* ('|' clause)+   # match
+     | MATCH expr (',' expr)* ('|' clause)+   # match
      ;
-
-matchArg : elim
-         | expr
-         ;
 
 atom : literal
      | LPAREN (expr ',')* expr? ')'

@@ -5,14 +5,12 @@ package org.aya.concrete;
 import org.aya.api.concrete.def.ConcreteDecl;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.Var;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.generic.Modifier;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Either;
@@ -84,18 +82,15 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataCtor extends Signatured {
     public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
-    public @NotNull Seq<Var> elim;
     public @NotNull Buffer<Pattern.Clause> clauses;
     public boolean coerce;
 
     public DataCtor(@NotNull SourcePos sourcePos,
                     @NotNull String name,
                     @NotNull ImmutableSeq<Expr.Param> telescope,
-                    @NotNull Seq<Var> elim,
                     @NotNull Buffer<Pattern.Clause> clauses,
                     boolean coerce) {
       super(sourcePos, telescope);
-      this.elim = elim;
       this.clauses = clauses;
       this.coerce = coerce;
       this.ref = DefVar.concrete(this, name);
@@ -105,12 +100,11 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       DataCtor dataCtor = (DataCtor) o;
-      return coerce == dataCtor.coerce && telescope.equals(dataCtor.telescope) && elim.equals(dataCtor.elim) && clauses.equals(dataCtor.clauses);
+      return coerce == dataCtor.coerce && telescope.equals(dataCtor.telescope) && clauses.equals(dataCtor.clauses);
     }
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(telescope, elim, clauses, coerce);
+    @Override public int hashCode() {
+      return Objects.hash(telescope, clauses, coerce);
     }
 
     @Override protected <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -179,7 +173,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return Objects.hash(sourcePos, telescope, result, body, abuseBlock);
     }
 
-    public static record Clauses(@NotNull Buffer<String> elim, @NotNull Buffer<Tuple2<Pattern, DataCtor>> clauses) {
+    public static record Clauses(@NotNull Buffer<Tuple2<Pattern, DataCtor>> clauses) {
     }
 
     public static record Ctors(@NotNull Buffer<DataCtor> ctors) {

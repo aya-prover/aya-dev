@@ -7,13 +7,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.Var;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
-import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
 import org.aya.generic.Arg;
 import org.aya.generic.Atom;
 import org.aya.generic.Modifier;
@@ -21,7 +19,6 @@ import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -404,34 +401,21 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public Decl.DataDecl.Clauses visitDataClauses(AyaParser.DataClausesContext ctx) {
-    var elim = ctx.elim().ID().stream().map(ParseTree::getText);
     var clauses = ctx.dataCtorClause().stream()
       .map(this::visitDataCtorClause)
       .collect(Buffer.factory());
-    return new Decl.DataDecl.Clauses(elim.collect(Buffer.factory()), clauses);
+    return new Decl.DataDecl.Clauses( clauses);
   }
 
   @Override
   public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
-    var elimCtx = ctx.elim();
     var telescope = visitTelescope(ctx.tele().stream());
-    var elim = elimCtx == null
-      ? Buffer.<Var>of()
-      : elimCtx.ID().stream()
-      .map(s -> (Var) telescope
-        .find(p -> p.ref().name().equals(s.getText()))
-        .getOrThrow(() -> {
-          reporter.report(new UnqualifiedNameNotFoundError(s.getText(), sourcePosOf(s)));
-          return new ParsingInterruptedException();
-        }).ref())
-      .collect(Seq.factory());
     var id = ctx.ID();
 
     return new Decl.DataCtor(
       sourcePosOf(id),
       id.getText(),
       telescope,
-      elim,
       ctx.clause().stream()
         .map(this::visitClause)
         .collect(Buffer.factory()),
