@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
-import org.aya.concrete.Expr;
 import org.aya.core.def.Def;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -28,9 +27,8 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   private final @NotNull TypedDefEq defeq;
   private final @NotNull UntypedDefEq untypedDefeq;
 
-  protected @NotNull Ordering ord;
-  protected @NotNull MetaContext metaContext;
-  protected Expr expr;
+  private final @NotNull Ordering ord;
+  private final @NotNull MetaContext metaContext;
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     return lhs.accept(this, rhs, type);
@@ -139,7 +137,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @NotNull Term type) {
     var solved = extract(lhs.args(), rhs);
     if (solved == null) {
-      metaContext.report(new HoleBadSpineWarn(lhs, expr));
+      metaContext.report(new HoleBadSpineWarn(lhs, defeq.pos));
       return false;
     }
     var solution = metaContext.solutions().getOption(lhs);

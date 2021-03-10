@@ -26,8 +26,7 @@ public class LispTestCase {
   protected final CollectReporter reporter = new CollectReporter();
 
   protected @NotNull TypedDefEq eq(MutableMap<Var, Term> localCtx) {
-    var dummyExpr = new Expr.UnresolvedExpr(SourcePos.NONE, "dummy");
-    return new TypedDefEq(eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx, dummyExpr);
+    return new TypedDefEq(eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)), localCtx, SourcePos.NONE);
   }
 
   @BeforeEach

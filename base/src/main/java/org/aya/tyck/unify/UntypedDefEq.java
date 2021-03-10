@@ -4,11 +4,13 @@ package org.aya.tyck.unify;
 
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
+import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author re-xyr
+ * @apiNote Use {@link UntypedDefEq#compare(Term, Term)} instead of visiting directly!
  */
 public record UntypedDefEq(
   @NotNull TypedDefEq defeq
@@ -16,6 +18,14 @@ public record UntypedDefEq(
   public @Nullable Term compare(@NotNull Term lhs, @NotNull Term rhs) {
     final var x = lhs.accept(this, rhs);
     return x != null ? x.normalize(NormalizeMode.WHNF) : null;
+  }
+
+  @Override public void traceEntrance(@NotNull Term lhs, @NotNull Term rhs) {
+    defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.pos));
+  }
+
+  @Override public void traceExit(@Nullable Term term) {
+    defeq.traceExit(true);
   }
 
   @Override

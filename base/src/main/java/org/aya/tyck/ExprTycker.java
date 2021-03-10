@@ -104,11 +104,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var type = dt.param().type();
     if (lamParam != null) {
       var result = lamParam.accept(this, UnivTerm.OMEGA);
-      var comparison = new TypedDefEq(
-        eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
-        localCtx,
-        expr
-      ).compare(result.wellTyped, type, UnivTerm.OMEGA);
+      var comparison = unifyTy(result.wellTyped, type, lamParam);
       if (!comparison) {
         // TODO[ice]: expected type mismatch lambda type annotation
         throw new TyckerException();
@@ -161,7 +157,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var ty = localCtx.get(var);
     if (ty == null) throw new IllegalStateException("Unresolved var `" + var.name() + "` tycked.");
     if (term == null) return new Result(new RefTerm(var), ty);
-    unify(term, ty, expr);
+    unifyTyThrowing(term, ty, expr);
     return new Result(new RefTerm(var), ty);
   }
 
@@ -174,18 +170,22 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(LamTerm.make(tele, body), type);
   }
 
-  private void unify(Term upper, Term lower, Expr errorReportLocation) {
-    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, errorReportLocation.sourcePos())));
+  private boolean unifyTy(Term upper, Term lower, Expr loc) {
+    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, loc.sourcePos())));
     tracing(Trace.Builder::reduce);
     var unifier = new TypedDefEq(
       eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
       localCtx,
-      errorReportLocation
+      loc.sourcePos()
     );
     unifier.traceBuilder = traceBuilder;
-    var unification = unifier.compare(lower, upper, UnivTerm.OMEGA);
+    return unifier.compare(lower, upper, UnivTerm.OMEGA);
+  }
+
+  private void unifyTyThrowing(Term upper, Term lower, Expr loc) {
+    var unification = unifyTy(upper, lower, loc);
     if (!unification) {
-      metaContext.report(new UnifyError(errorReportLocation, upper, lower));
+      metaContext.report(new UnifyError(loc, upper, lower));
       throw new TyckInterruptedException();
     }
   }
@@ -246,7 +246,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     fieldsBefore.forEachIndexed((i, param) ->
       subst.add(param.ref(), new ProjTerm(tupleRes.wellTyped, i + 1)));
     type = type.subst(subst);
-    unify(term, type, expr);
+    unifyTyThrowing(term, type, expr);
     return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
   }
 
