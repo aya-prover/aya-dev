@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 /**
  * @author ice1000, kiva
@@ -55,7 +54,7 @@ public record StmtTycker(
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
-    var tele = checkTele(tycker, ctor.telescope).collect(Seq.factory());
+    var tele = checkTele(tycker, ctor.telescope);
     var dataRef = ctor.dataRef;
     var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
       .param().view().map(Term.Param::toArg);
@@ -70,7 +69,7 @@ public record StmtTycker(
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var ctorBuf = Buffer.<DataDef.Ctor>of();
     var clauseBuf = MutableHashMap.<Pat, DataDef.Ctor>of();
-    var tele = checkTele(tycker, decl.telescope).collect(Seq.factory());
+    var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tele, result);
     decl.body.map(ctors -> {
@@ -85,8 +84,7 @@ public record StmtTycker(
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
-    var resultTele = checkTele(tycker, decl.telescope)
-      .collect(Seq.factory());
+    var resultTele = checkTele(tycker, decl.telescope);
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);
     decl.signature = new Def.Signature(resultTele, resultRes.wellTyped());
@@ -96,12 +94,12 @@ public record StmtTycker(
     return new FnDef(decl.ref, resultTele, bodyRes.type(), bodyRes.wellTyped());
   }
 
-  private @NotNull Stream<Term.Param> checkTele(@NotNull ExprTycker exprTycker, @NotNull Seq<Expr.Param> tele) {
+  private @NotNull Seq<Term.Param> checkTele(@NotNull ExprTycker exprTycker, @NotNull Seq<Expr.Param> tele) {
     return tele.stream().map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
       var paramRes = exprTycker.checkExpr(param.type(), null);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
-    });
+    }).collect(Seq.factory());
   }
 }
