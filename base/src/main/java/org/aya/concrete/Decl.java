@@ -91,14 +91,11 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public DataCtor(@NotNull SourcePos sourcePos,
                     @NotNull String name,
                     @NotNull ImmutableSeq<Expr.Param> telescope,
-                    @NotNull Buffer<String> elim,
+                    @NotNull Seq<Var> elim,
                     @NotNull Buffer<Pattern.Clause> clauses,
                     boolean coerce) {
       super(sourcePos, telescope);
-      // TODO[ice]: error handling
-      this.elim = elim.stream()
-        .map(s -> telescope.find(p -> p.ref().name().equals(s)).get().ref())
-        .collect(Seq.factory());
+      this.elim = elim;
       this.clauses = clauses;
       this.coerce = coerce;
       this.ref = DefVar.concrete(this, name);

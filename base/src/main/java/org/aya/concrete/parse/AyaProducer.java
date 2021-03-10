@@ -19,6 +19,7 @@ import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
 import org.aya.util.Constants;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -422,21 +423,24 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var clauses = ctx.dataCtorClause().stream()
       .map(this::visitDataCtorClause)
       .collect(Buffer.factory());
-    return new Decl.DataDecl.Clauses(elim, clauses);
+    return new Decl.DataDecl.Clauses(elim.collect(Buffer.factory()), clauses);
   }
 
   @Override
   public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
     var elimCtx = ctx.elim();
+    var telescope = visitTelescope(ctx.tele().stream());
     var elim = elimCtx == null
-      ? Buffer.<String>of()
-      : visitElim(elimCtx);
+      ? Buffer.<Var>of()
+      : visitElim(elimCtx)
+      .map(s -> (Var) telescope.find(p -> p.ref().name().equals(s)).get().ref())
+      .collect(Seq.factory());
     var id = ctx.ID();
 
     return new Decl.DataCtor(
       sourcePosOf(id),
       id.getText(),
-      visitTelescope(ctx.tele().stream()),
+      telescope,
       elim,
       ctx.clause().stream()
         .map(this::visitClause)
@@ -507,10 +511,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public Buffer<String> visitElim(AyaParser.ElimContext ctx) {
-    return ctx.ID().stream()
-      .map(ParseTree::getText)
-      .collect(Buffer.factory());
+  public Stream<String> visitElim(AyaParser.ElimContext ctx) {
+    return ctx.ID().stream().map(ParseTree::getText);
   }
 
   public @NotNull Decl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
