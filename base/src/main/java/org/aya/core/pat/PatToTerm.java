@@ -22,7 +22,7 @@ public final class PatToTerm implements Pat.Visitor<Unit, Term>, Atom.Visitor<Pa
   }
 
   @Override public Term visitAtomic(Pat.@NotNull Atomic atomic, Unit unit) {
-    return atomic.accept(this, unit);
+    return atomic.atom().accept(this, unit);
   }
 
   @Override public Term visitBraced(Atom.@NotNull Braced<Pat> braced, Unit unit) {

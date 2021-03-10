@@ -1,0 +1,18 @@
+\open \data Nat : \Set
+ | zero
+ | suc Nat
+
+\open \data Int : \Set
+ | pos Nat
+ | neg Nat { | zero => pos zero }
+
+\def addN (a, b : Nat) : Nat
+ | zero, a => a
+ | a, zero => a
+ | suc a, b => suc (addN a b)
+ | a, suc b => suc (addN a b)
+
+\def subNI (a, b : Nat) : Int
+ | zero, a => neg a
+ | a, zero => pos a
+ | suc a, suc b => subNI a b
