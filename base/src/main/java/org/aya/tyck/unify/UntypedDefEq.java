@@ -15,10 +15,16 @@ public record UntypedDefEq(
   @NotNull TypedDefEq defeq
 ) implements Term.Visitor<@NotNull Term, @Nullable Term> {
   public @Nullable Term compare(@NotNull Term lhs, @NotNull Term rhs) {
-    defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.pos));
     final var x = lhs.accept(this, rhs);
-    defeq.traceExit();
     return x != null ? x.normalize(NormalizeMode.WHNF) : null;
+  }
+
+  @Override public void traceEntrance(@NotNull Term lhs, @NotNull Term rhs) {
+    defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.pos));
+  }
+
+  @Override public void traceExit(@Nullable Term term) {
+    defeq.traceExit(true);
   }
 
   @Override

@@ -5,7 +5,6 @@ package org.aya.tyck.unify;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
-import org.aya.concrete.Expr;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.ref.LocalVar;
@@ -37,17 +36,13 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  public void traceEntrance(@NotNull Trace trace) {
+  void traceEntrance(@NotNull Trace trace) {
     tracing(builder -> builder.shift(trace));
-  }
-
-  public void traceExit() {
-    tracing(Trace.Builder::reduce);
   }
 
   @Override
   public void traceEntrance(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
-    tracing(builder -> builder.shift(new Trace.UnifyT(lhs, rhs, pos)));
+    traceEntrance(new Trace.UnifyT(lhs, rhs, pos));
   }
 
   @Override
