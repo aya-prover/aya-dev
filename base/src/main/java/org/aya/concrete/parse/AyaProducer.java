@@ -5,6 +5,7 @@ package org.aya.concrete.parse;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Assoc;
@@ -46,24 +47,10 @@ import java.util.stream.Stream;
  * @author ice1000, kiva
  */
 public final class AyaProducer extends AyaBaseVisitor<Object> {
-  public static final @NotNull AyaProducer INSTANCE = new AyaProducer();
+  private final @NotNull Reporter reporter;
 
-  private AyaProducer() {
-  }
-
-  @TestOnly
-  public static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitExpr(AyaParsing.parser(code).expr());
-  }
-
-  @TestOnly
-  public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitStmt(AyaParsing.parser(code).stmt());
-  }
-
-  @TestOnly
-  public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitDecl(AyaParsing.parser(code).decl());
+  public AyaProducer(@NotNull Reporter reporter) {
+    this.reporter = reporter;
   }
 
   @Override public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {

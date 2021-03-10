@@ -26,7 +26,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var reporter = new CountingReporter(this.reporter);
     var parser = AyaParsing.parser(filePath, reporter);
     try {
-      var program = AyaProducer.INSTANCE.visitProgram(parser.program());
+      var program = new AyaProducer(reporter).visitProgram(parser.program());
       var context = new EmptyContext(reporter).derive();
       var shallowResolver = new StmtShallowResolver(new EmptyModuleLoader());
       program.forEach(s -> s.accept(shallowResolver, context));

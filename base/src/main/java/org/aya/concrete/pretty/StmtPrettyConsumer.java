@@ -91,7 +91,8 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
         : Doc.cat(Doc.plain(":"), decl.result.toDoc(), Doc.plain(" ")),
       Doc.plain("=>"),
       Doc.plain(" "),
-      decl.body.toDoc(),
+      // TODO[ice]: expr
+      decl.body.getLeftValue().toDoc(),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
         : Doc.cat(Doc.plain(" "), Doc.plain("\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))

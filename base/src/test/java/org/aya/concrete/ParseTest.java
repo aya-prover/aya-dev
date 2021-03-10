@@ -4,14 +4,17 @@ package org.aya.concrete;
 
 import org.aya.api.Global;
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.ref.LocalVar;
+import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Either;
+import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,13 +28,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
+  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(ThrowingReporter.INSTANCE);
+
   @BeforeAll public static void enableTest() {
     Global.enterTestMode();
   }
 
+  private static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
+    return INSTANCE.visitExpr(AyaParsing.parser(code).expr());
+  }
+
+  private static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
+    return INSTANCE.visitStmt(AyaParsing.parser(code).stmt());
+  }
+
+  public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
+    return INSTANCE.visitDecl(AyaParsing.parser(code).decl());
+  }
+
   @Test
   public void issue141() {
-    Assertions.assertEquals(AyaProducer.parseStmt("\\module a {}"),
+    Assertions.assertEquals(parseStmt("\\module a {}"),
       ImmutableSeq.of(new Stmt.ModuleStmt(SourcePos.NONE, "a", ImmutableSeq.empty())));
   }
 
@@ -54,7 +71,7 @@ public class ParseTest {
 
   @Test
   public void successLiteral() {
-    assertTrue(AyaProducer.parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
+    assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
     parseUniv("\\Prop");
     parseUniv("\\Set");
     parseUniv("\\Set0");
@@ -92,7 +109,7 @@ public class ParseTest {
       "id",
       ImmutableSeq.of(A, a),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
-      new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
+      Either.left(new Expr.UnresolvedExpr(SourcePos.NONE, "a")),
       ImmutableSeq.of()
     )));
     final var b = new Expr.Param(SourcePos.NONE, new LocalVar("B"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
@@ -104,7 +121,7 @@ public class ParseTest {
       "xx",
       ImmutableSeq.of(A, b, a),
       new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
-      new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
+      Either.left(new Expr.UnresolvedExpr(SourcePos.NONE, "a")),
       ImmutableSeq.of()
     )));
     parseTo("\\data Nat | Z | S Nat", ImmutableSeq.of(new Decl.DataDecl(
@@ -128,25 +145,25 @@ public class ParseTest {
 
   @Test
   public void successExpr() {
-    assertTrue(AyaProducer.parseExpr("boy") instanceof Expr.UnresolvedExpr);
-    assertTrue(AyaProducer.parseExpr("f a") instanceof Expr.AppExpr);
-    assertTrue(AyaProducer.parseExpr("f a b c") instanceof Expr.AppExpr);
-    assertTrue(AyaProducer.parseExpr("a.1") instanceof Expr.ProjExpr);
-    assertTrue(AyaProducer.parseExpr("a.1.2") instanceof Expr.ProjExpr);
-    assertTrue(AyaProducer.parseExpr("f (a.1) (a.2)") instanceof Expr.AppExpr app
+    assertTrue(parseExpr("boy") instanceof Expr.UnresolvedExpr);
+    assertTrue(parseExpr("f a") instanceof Expr.AppExpr);
+    assertTrue(parseExpr("f a b c") instanceof Expr.AppExpr);
+    assertTrue(parseExpr("a.1") instanceof Expr.ProjExpr);
+    assertTrue(parseExpr("a.1.2") instanceof Expr.ProjExpr);
+    assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.AppExpr app
       && app.arguments().get(0).term() instanceof Expr.ProjExpr
       && app.arguments().get(1).term() instanceof Expr.ProjExpr);
-    assertTrue(AyaProducer.parseExpr("λ a => a") instanceof Expr.LamExpr);
-    assertTrue(AyaProducer.parseExpr("\\lam a => a") instanceof Expr.LamExpr);
-    assertTrue(AyaProducer.parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
-    assertTrue(AyaProducer.parseExpr("Π a -> a") instanceof Expr.PiExpr dt && !dt.co());
-    assertTrue(AyaProducer.parseExpr("\\Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
-    assertTrue(AyaProducer.parseExpr("\\Pi a b -> a") instanceof Expr.PiExpr dt
+    assertTrue(parseExpr("λ a => a") instanceof Expr.LamExpr);
+    assertTrue(parseExpr("\\lam a => a") instanceof Expr.LamExpr);
+    assertTrue(parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
+    assertTrue(parseExpr("Π a -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(parseExpr("\\Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(parseExpr("\\Pi a b -> a") instanceof Expr.PiExpr dt
       && !dt.co() && dt.last() instanceof Expr.PiExpr);
-    assertTrue(AyaProducer.parseExpr("Σ a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
-    assertTrue(AyaProducer.parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
-    assertTrue(AyaProducer.parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
-    assertTrue(AyaProducer.parseExpr("\\Pi (x : \\Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.TelescopicSigmaExpr);
+    assertTrue(parseExpr("Σ a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
+    assertTrue(parseExpr("\\Pi (x : \\Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.TelescopicSigmaExpr);
     parseTo("f a . 1", new Expr.ProjExpr(
       SourcePos.NONE,
       new Expr.AppExpr(
@@ -156,37 +173,37 @@ public class ParseTest {
       ),
       1
     ));
-    assertTrue(AyaProducer.parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
+    assertTrue(parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
       && app.arguments().sizeEquals(1)
       && app.arguments().get(0).term() instanceof Expr.TupExpr tup
       && tup.items().sizeEquals(3));
   }
 
   private void parseImport(@Language("TEXT") String code) {
-    assertTrue(AyaProducer.parseStmt(code).first() instanceof Stmt.ImportStmt s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
+    assertTrue(parseStmt(code).first() instanceof Stmt.ImportStmt s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
   }
 
   private void parseOpen(@Language("TEXT") String code) {
-    assertTrue(AyaProducer.parseStmt(code).last() instanceof Stmt.OpenStmt s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
+    assertTrue(parseStmt(code).last() instanceof Stmt.OpenStmt s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
   }
 
   private void parseFn(@Language("TEXT") String code) {
-    assertTrue(AyaProducer.parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
+    assertTrue(parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
   }
 
   private void parseData(@Language("TEXT") String code) {
-    assertTrue(AyaProducer.parseDecl(code)._1 instanceof Decl.DataDecl);
+    assertTrue(parseDecl(code)._1 instanceof Decl.DataDecl);
   }
 
   private void parseUniv(@Language("TEXT") String code) {
-    assertTrue(AyaProducer.parseExpr(code) instanceof Expr.UnivExpr);
+    assertTrue(parseExpr(code) instanceof Expr.UnivExpr);
   }
 
   private void parseTo(@NotNull @NonNls @Language("TEXT") String code, ImmutableSeq<Stmt> stmt) {
-    assertEquals(stmt, AyaProducer.parseStmt(code));
+    assertEquals(stmt, parseStmt(code));
   }
 
   private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Expr expr) {
-    Assertions.assertEquals(expr, AyaProducer.parseExpr(code));
+    Assertions.assertEquals(expr, parseExpr(code));
   }
 }
