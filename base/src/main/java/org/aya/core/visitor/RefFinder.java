@@ -7,6 +7,7 @@ import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -18,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
  * @see RefFinder#HEADER_ONLY
  * @see RefFinder#HEADER_AND_BODY
  */
-public record RefFinder(boolean withBody) implements Def.Visitor<@NotNull Buffer<Def>, Unit> {
+public record RefFinder(boolean withBody) implements
+  Def.Visitor<@NotNull Buffer<Def>, Unit>,
+  Pat.Clause.Visitor<@NotNull Buffer<Def>, Unit> {
   private static final class TermRefFinder implements VarConsumer<@NotNull Buffer<Def>> {
     public static final @NotNull TermRefFinder INSTANCE = new TermRefFinder();
 
@@ -40,14 +43,26 @@ public record RefFinder(boolean withBody) implements Def.Visitor<@NotNull Buffer
   }
 
   @Override public Unit visitCtor(@NotNull DataDef.Ctor def, @NotNull Buffer<Def> references) {
-    tele(references, def.telescope());
-    // TODO: ctor def
+    tele(references, def.conTelescope());
+    if (withBody) for (var clause : def.clauses()) clause.accept(this, references);
     return Unit.unit();
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
-    // TODO: data def
+    def.result().accept(TermRefFinder.INSTANCE, references);
+    def.clauses().forEach((pat, ctor) -> ctor.accept(this, references));
+    def.ctors().forEach(ctor -> ctor.accept(this, references));
+    return Unit.unit();
+  }
+
+  @Override public Unit visitMatch(Pat.Clause.@NotNull Match match, @NotNull Buffer<Def> defs) {
+    match.expr().accept(TermRefFinder.INSTANCE, defs);
+    return Unit.unit();
+  }
+
+  @Override public Unit visitAbsurd(@NotNull Buffer<Def> defs) {
     return Unit.unit();
   }
 

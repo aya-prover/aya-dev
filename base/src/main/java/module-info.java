@@ -14,11 +14,13 @@ module org.aya {
   exports org.aya.concrete.visitor;
   exports org.aya.concrete;
   exports org.aya.core.def;
+  exports org.aya.core.pat;
   exports org.aya.core.term;
   exports org.aya.core.visitor;
   exports org.aya.core;
   exports org.aya.generic;
   exports org.aya.ref;
+  exports org.aya.tyck.pat;
   exports org.aya.tyck.sort;
   exports org.aya.tyck.trace;
   exports org.aya.tyck.unify;
