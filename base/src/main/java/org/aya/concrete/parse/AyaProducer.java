@@ -418,7 +418,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       telescope,
       ctx.clause().stream()
         .map(this::visitClause)
-        .collect(Buffer.factory()),
+        .collect(ImmutableSeq.factory()),
       ctx.COERCE() != null
     );
   }

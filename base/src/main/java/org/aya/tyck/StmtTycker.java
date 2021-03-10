@@ -62,9 +62,8 @@ public record StmtTycker(
     var signature = new Def.Signature(tele, new AppTerm.DataCall(dataRef, dataArgs));
     ctor.signature = signature;
     var patTycker = new PatTycker(tycker);
-    var elabClauses = ctor.clauses.stream()
-      .map(c -> c.accept(patTycker, signature))
-      .collect(Buffer.factory());
+    var elabClauses = ctor.clauses
+      .map(c -> c.accept(patTycker, signature));
     return new DataDef.Ctor(dataRef, ctor.ref, tele, elabClauses, ctor.coerce);
   }
 
@@ -82,7 +81,7 @@ public record StmtTycker(
       // TODO[ice]: implement
       throw new UnsupportedOperationException();
     });
-    return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, clauseBuf);
+    return new DataDef(decl.ref, tele, result, ctorBuf, clauseBuf);
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {

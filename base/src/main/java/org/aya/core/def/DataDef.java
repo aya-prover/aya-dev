@@ -10,6 +10,7 @@ import org.aya.core.term.Term;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -24,7 +25,6 @@ public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
   @NotNull Seq<Term.Param> telescope,
   @NotNull Term result,
-  @NotNull Buffer<String> elim,
   @NotNull Buffer<Ctor> ctors,
   @NotNull Map<Pat, Ctor> clauses // TODO: mix clauses and ctors into one field?
   // TODO: also see RefFinder
@@ -41,7 +41,7 @@ public record DataDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
     @NotNull Seq<Term.Param> conTelescope,
-    @NotNull Buffer<Pat.Clause> clauses,
+    @NotNull ImmutableSeq<Pat.Clause> clauses,
     boolean coerce
   ) implements Def {
     public Ctor {

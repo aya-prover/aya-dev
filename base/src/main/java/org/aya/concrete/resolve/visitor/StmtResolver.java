@@ -5,7 +5,6 @@ package org.aya.concrete.resolve.visitor;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,9 +45,8 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
       for (var ctor : ctors.ctors()) {
         var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
         ctor.telescope = ctorLocal._1;
-        ctor.clauses = ctor.clauses.stream()
-          .map(clause -> clause.accept(PatResolver.INSTANCE, ctorLocal._2))
-          .collect(Buffer.factory());
+        ctor.clauses = ctor.clauses
+          .map(clause -> clause.accept(PatResolver.INSTANCE, ctorLocal._2));
       }
       return Unit.unit();
     }, clauses -> {

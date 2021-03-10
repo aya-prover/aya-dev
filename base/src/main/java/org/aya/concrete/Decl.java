@@ -82,13 +82,13 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataCtor extends Signatured {
     public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
-    public @NotNull Buffer<Pattern.Clause> clauses;
+    public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public boolean coerce;
 
     public DataCtor(@NotNull SourcePos sourcePos,
                     @NotNull String name,
                     @NotNull ImmutableSeq<Expr.Param> telescope,
-                    @NotNull Buffer<Pattern.Clause> clauses,
+                    @NotNull ImmutableSeq<Pattern.Clause> clauses,
                     boolean coerce) {
       super(sourcePos, telescope);
       this.clauses = clauses;
