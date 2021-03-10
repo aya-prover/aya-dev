@@ -5,7 +5,8 @@ module org.aya {
   requires transitive org.aya.api;
   requires transitive org.aya.parser;
   requires transitive org.aya.pretty;
-  requires transitive org.glavo.kala.common;
+  requires org.glavo.kala.base;
+  requires org.glavo.kala.collection;
 
   exports org.aya.concrete.parse;
   exports org.aya.concrete.resolve.context;

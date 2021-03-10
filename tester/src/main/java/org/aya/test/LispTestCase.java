@@ -5,7 +5,6 @@ package org.aya.test;
 import org.aya.api.error.CollectReporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.unify.PatDefEq;

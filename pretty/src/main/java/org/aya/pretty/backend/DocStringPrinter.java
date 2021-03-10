@@ -31,8 +31,8 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
   }
 
   private static class RendererImpl {
-    StringBuilder builder = new StringBuilder();
-    Config config;
+    final StringBuilder builder = new StringBuilder();
+    final Config config;
 
     int nestLevel = 0;
     int cursor = 0;

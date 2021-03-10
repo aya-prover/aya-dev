@@ -32,7 +32,7 @@ public sealed interface Trace {
 
   class Builder {
     @VisibleForTesting
-    public Deque<@NotNull Buffer<@NotNull Trace>> tops = new ArrayDeque<>();
+    public final Deque<@NotNull Buffer<@NotNull Trace>> tops = new ArrayDeque<>();
 
     public @NotNull Buffer<@NotNull Trace> root() {
       return tops.getFirst();

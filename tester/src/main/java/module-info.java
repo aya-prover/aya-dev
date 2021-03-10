@@ -3,8 +3,6 @@ module org.aya.test {
 
   requires transitive org.junit.jupiter.api;
   requires transitive org.aya;
-  requires transitive org.aya.parser;
-  requires transitive org.aya.pretty;
 
   exports org.aya.test;
 }
