@@ -33,8 +33,10 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.value.Ref;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -365,5 +367,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    * @author ice1000
    */
   public static record Result(@NotNull Term wellTyped, @NotNull Term type) {
+    @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
+      return Tuple.of(type, wellTyped);
+    }
   }
 }

@@ -9,6 +9,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -52,10 +53,14 @@ public interface Def extends CoreDef {
     @NotNull Seq<Term.@NotNull Param> param,
     @NotNull Term result
   ) {
-    public @NotNull Signature inst(@NotNull Term term) {
+    @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
       var params = param.view().drop(1).map(p -> p.subst(subst));
       return new Signature(params.toImmutableSeq(), result.subst(subst));
+    }
+
+    @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {
+      return new Signature(param, term);
     }
   }
 }

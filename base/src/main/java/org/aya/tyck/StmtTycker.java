@@ -15,10 +15,12 @@ import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.FP;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Unit;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,21 +89,14 @@ public record StmtTycker(
     var resultTele = checkTele(tycker, decl.telescope);
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);
-    decl.signature = new Def.Signature(resultTele, resultRes.wellTyped());
+    var signature = new Ref<>(new Def.Signature(resultTele, resultRes.wellTyped()));
+    decl.signature = signature.value;
 
     var patTycker = new PatTycker(tycker);
-    var what = decl.body.map(
-      left -> {
-        var result = tycker.checkExpr(left, resultRes.wellTyped());
-        decl.modifyResult(result.type());
-        return result.wellTyped();
-      }, right -> right.map(r -> {
-        var clause = r.accept(patTycker, decl.signature);
-        decl.modifyResult(patTycker.resultType);
-        return clause;
-      }));
-
-    return new FnDef(decl.ref, resultTele, decl.signature.result(), what);
+    var what = FP.transposeFst(decl.body.map(
+      left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
+      right -> patTycker.elabClause(right, signature)));
+    return new FnDef(decl.ref, resultTele, what._1, what._2);
   }
 
   private @NotNull ImmutableSeq<Term.Param>

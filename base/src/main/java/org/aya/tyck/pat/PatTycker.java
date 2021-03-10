@@ -14,6 +14,7 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple;
@@ -40,6 +41,16 @@ public final class PatTycker implements
     this.exprTycker = exprTycker;
   }
 
+  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.Clause>>
+  elabClause(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, Ref<Def.@NotNull Signature> signature) {
+    var res = clauses.map(clause -> {
+      var elabClause = clause.accept(this, signature.value);
+      signature.value = signature.value.mapTerm(resultType);
+      return elabClause;
+    });
+    return Tuple.of(signature.value.result(), res);
+  }
+
   @Override public Pat.Clause visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.map().clear();
@@ -63,6 +74,7 @@ public final class PatTycker implements
   }
 
   @Override public Pat.Clause visitAbsurd(Pattern.Clause.@NotNull Absurd absurd, Def.Signature signature) {
+    resultType = signature.result();
     return Pat.Clause.Absurd.INSTANCE;
   }
 
