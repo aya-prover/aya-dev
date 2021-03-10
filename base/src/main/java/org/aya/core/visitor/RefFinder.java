@@ -14,7 +14,7 @@ import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author re-xyr
+ * @author re-xyr, ice1000
  * @see RefFinder#HEADER_ONLY
  * @see RefFinder#HEADER_AND_BODY
  */

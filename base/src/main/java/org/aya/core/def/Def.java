@@ -32,7 +32,7 @@ public interface Def extends CoreDef {
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
   @NotNull SeqLike<Term.Param> telescope();
 
-  <P, R> R accept(Visitor<P, R> visitor, P p);
+  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   /**
    * @author re-xyr

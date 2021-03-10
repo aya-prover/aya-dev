@@ -33,7 +33,7 @@ public record DataDef(
     ref.core = this;
   }
 
-  @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {
+  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitData(this, p);
   }
 
@@ -76,7 +76,7 @@ public record DataDef(
       return Tuple.of(dataSignature.param(), conSignature.param());
     }
 
-    @Override public <P, R> R accept(Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return null;
     }
   }

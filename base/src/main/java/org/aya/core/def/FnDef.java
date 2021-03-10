@@ -22,7 +22,7 @@ public record FnDef(
   }
 
   @Override
-  public <P, R> R accept(Visitor<P, R> visitor, P p) {
+  public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitFn(this, p);
   }
 }

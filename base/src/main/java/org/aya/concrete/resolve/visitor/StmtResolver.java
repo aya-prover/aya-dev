@@ -8,9 +8,9 @@ import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * resolves expressions inside stmts, after StmtShallowResolveConsumer
+ * Resolves expressions inside stmts, after {@link StmtShallowResolver}
  *
- * @author re-xyr
+ * @author re-xyr, iec1000
  */
 public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
