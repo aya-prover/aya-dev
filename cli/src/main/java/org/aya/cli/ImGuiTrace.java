@@ -89,20 +89,23 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
     var term = t.term();
     var s = t.expr().toDoc().renderWithPageWidth(PAGE_WIDTH)
-      + (term == null ? "" : " : " + term.toDoc().renderWithPageWidth(PAGE_WIDTH))
-      + "##" + Objects.hash(t);
+      + (term == null ? "" : " : " + term.toDoc().renderWithPageWidth(PAGE_WIDTH));
     var color = term == null ? Color.CYAN : Color.YELLOW;
-    visitSub(s, color, imGui, t.subtraces(), () -> pos = t.expr().sourcePos());
+    visitSub(s, color, imGui, t.subtraces(), () -> pos = t.expr().sourcePos(), Objects.hashCode(t));
     return Unit.unit();
   }
 
   private void visitSub(
     String s, Color color, JImGui imGui,
     Buffer<@NotNull Trace> subtraces,
-    @NotNull Runnable callback) {
+    @NotNull Runnable callback,
+    int hashCode
+  ) {
     final var vec4 = color(color);
     imGui.pushStyleColor(JImStyleColors.Text, vec4);
-    var node = imGui.treeNode(s);
+    var node = false;
+    if (subtraces.isEmpty()) imGui.bulletText(s);
+    else node = imGui.treeNode(s + "##" + hashCode);
     if (imGui.isItemHovered()) callback.run();
     if (node) {
       subtraces.forEach(e -> e.accept(this, imGui));
@@ -115,15 +118,13 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
     var s = t.lhs().toDoc().renderWithPageWidth(PAGE_WIDTH)
       + " = "
-      + t.rhs().toDoc().renderWithPageWidth(PAGE_WIDTH)
-      + "##"
-      + Objects.hashCode(t);
-    visitSub(s, Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos());
+      + t.rhs().toDoc().renderWithPageWidth(PAGE_WIDTH);
+    visitSub(s, Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
 
   @Override public Unit visitDecl(Trace.@NotNull DeclT t, JImGui imGui) {
-    visitSub(t.var().name(), Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos());
+    visitSub(t.var().name(), Color.WHITE, imGui, t.subtraces(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
 
@@ -131,13 +132,11 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   public Unit visitTyck(Trace.@NotNull TyckT t, JImGui imGui) {
     var term = t.term();
     var type = t.type();
-    var s = new StringBuilder()
-      .append(term.toDoc().renderWithPageWidth(PAGE_WIDTH))
-      .append(" : ")
-      .append(type.toDoc().renderWithPageWidth(PAGE_WIDTH));
+    var s = term.toDoc().renderWithPageWidth(PAGE_WIDTH) +
+      " : " +
+      type.toDoc().renderWithPageWidth(PAGE_WIDTH);
     imGui.text("-".repeat(s.length() + 4));
-    s.append("##").append(Objects.hashCode(t));
-    visitSub(s.toString(), Color.YELLOW, imGui, Buffer.of(), () -> pos = t.pos());
+    visitSub(s, Color.YELLOW, imGui, Buffer.of(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
 
