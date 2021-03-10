@@ -4,6 +4,7 @@ package org.aya.tyck.unify;
 
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
+import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,9 @@ public record UntypedDefEq(
   @NotNull TypedDefEq defeq
 ) implements Term.Visitor<@NotNull Term, @Nullable Term> {
   public @Nullable Term compare(@NotNull Term lhs, @NotNull Term rhs) {
+    defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.pos));
     final var x = lhs.accept(this, rhs);
+    defeq.traceExit();
     return x != null ? x.normalize(NormalizeMode.WHNF) : null;
   }
 

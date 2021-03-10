@@ -107,7 +107,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var comparison = new TypedDefEq(
         eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
         localCtx,
-        expr
+        expr.sourcePos()
       ).compare(result.wellTyped, type, UnivTerm.OMEGA);
       if (!comparison) {
         // TODO[ice]: expected type mismatch lambda type annotation
@@ -180,7 +180,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var unifier = new TypedDefEq(
       eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
       localCtx,
-      errorReportLocation
+      errorReportLocation.sourcePos()
     );
     unifier.traceBuilder = traceBuilder;
     var unification = unifier.compare(lower, upper, UnivTerm.OMEGA);
