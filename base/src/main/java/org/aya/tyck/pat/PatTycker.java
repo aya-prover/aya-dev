@@ -39,8 +39,7 @@ public final class PatTycker implements
     this.exprTycker = exprTycker;
   }
 
-  @Override
-  public Pat.Clause visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
+  @Override public Pat.Clause visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.map().clear();
     var patterns = visitPatterns(sig, match.patterns().stream());
@@ -48,7 +47,7 @@ public final class PatTycker implements
     return new Pat.Clause.Match(patterns, exprTycker.checkExpr(expr, sig.value.result()).wellTyped());
   }
 
-  private Seq<Pat> visitPatterns(Ref<Def.Signature> sig, Stream<Pattern> stream) {
+  private @NotNull Seq<Pat> visitPatterns(Ref<Def.Signature> sig, Stream<Pattern> stream) {
     var results = Buffer.<Pat>of();
     stream.sequential().forEach(pat -> {
       var param = sig.value.param().first();

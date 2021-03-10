@@ -42,22 +42,19 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
-    return decl.body.accept(new Decl.DataBody.Visitor<>() {
-      @Override public Unit visitCtors(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
-        for (var ctor : ctors.ctors()) {
-          var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
-          ctor.telescope = ctorLocal._1;
-          ctor.clauses = ctor.clauses.stream()
-            .map(clause -> clause.accept(PatResolver.INSTANCE, ctorLocal._2))
-            .collect(Buffer.factory());
-        }
-        return unit;
+    decl.body.map(ctors -> {
+      for (var ctor : ctors.ctors()) {
+        var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
+        ctor.telescope = ctorLocal._1;
+        ctor.clauses = ctor.clauses.stream()
+          .map(clause -> clause.accept(PatResolver.INSTANCE, ctorLocal._2))
+          .collect(Buffer.factory());
       }
-
-      @Override public Unit visitClause(Decl.DataBody.@NotNull Clauses clauses, Unit unit) {
-        throw new UnsupportedOperationException();
-      }
-    }, unit);
+      return Unit.unit();
+    }, clauses -> {
+      throw new UnsupportedOperationException();
+    });
+    return unit;
   }
 
   /** @apiNote Note that this function MUTATES the decl. */

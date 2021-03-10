@@ -74,18 +74,14 @@ public record StmtTycker(
     var tele = checkTele(tycker, decl.telescope).collect(Seq.factory());
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tele, result);
-    decl.body.accept(new Decl.DataBody.Visitor<ExprTycker, Unit>() {
-      @Override public Unit visitCtors(Decl.DataBody.@NotNull Ctors ctors, ExprTycker tycker) {
-        // ice: this cast is extremely safe.
-        ctors.ctors().forEach(ctor -> ctorBuf.append((DataDef.Ctor) ctor.accept(StmtTycker.this, tycker)));
-        return Unit.unit();
-      }
-
-      @Override public Unit visitClause(Decl.DataBody.@NotNull Clauses clauses, ExprTycker tycker) {
-        // TODO[ice]: implement
-        throw new UnsupportedOperationException();
-      }
-    }, tycker);
+    decl.body.map(ctors -> {
+      // ice: this cast is extremely safe.
+      ctors.ctors().forEach(ctor -> ctorBuf.append((DataDef.Ctor) ctor.accept(StmtTycker.this, tycker)));
+      return Unit.unit();
+    }, clauses -> {
+      // TODO[ice]: implement
+      throw new UnsupportedOperationException();
+    });
     return new DataDef(decl.ref, tele, result, Buffer.of(), ctorBuf, clauseBuf);
   }
 

@@ -64,24 +64,21 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   @Override
   public Unit visitDataDecl(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
-    return decl.body.accept(new Decl.DataBody.Visitor<>() {
-      @Override public Unit visitCtors(Decl.DataBody.@NotNull Ctors ctors, Unit unit) {
-        context.importModule(
-          ImmutableSeq.of(decl.ref().name()),
-          decl.accessibility(),
-          MutableHashMap.of(
-            Context.TOP_LEVEL_MOD_NAME,
-            MutableHashMap.from(ctors.ctors().toImmutableSeq().map(ctor ->
-              Tuple2.of(ctor.ref.name(), ctor.ref)))),
-          decl.sourcePos()
-        );
-        return unit;
-      }
-
-      @Override public Unit visitClause(Decl.DataBody.@NotNull Clauses clauses, Unit unit) {
-        throw new UnsupportedOperationException();
-      }
-    }, Unit.unit());
+    decl.body.map(ctors -> {
+      context.importModule(
+        ImmutableSeq.of(decl.ref().name()),
+        decl.accessibility(),
+        MutableHashMap.of(
+          Context.TOP_LEVEL_MOD_NAME,
+          MutableHashMap.from(ctors.ctors().toImmutableSeq().map(ctor ->
+            Tuple2.of(ctor.ref.name(), ctor.ref)))),
+        decl.sourcePos()
+      );
+      return Unit.unit();
+    }, clauses -> {
+      throw new UnsupportedOperationException();
+    });
+    return Unit.unit();
   }
 
   @Override

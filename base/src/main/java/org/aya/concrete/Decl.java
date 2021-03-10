@@ -13,6 +13,7 @@ import org.aya.core.def.FnDef;
 import org.aya.generic.Modifier;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -119,32 +120,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
   }
 
-  public sealed interface DataBody {
-    record Ctors(
-      @NotNull Buffer<DataCtor> ctors
-    ) implements DataBody {
-      @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-        return visitor.visitCtors(this, p);
-      }
-    }
-
-    record Clauses(
-      @NotNull Buffer<String> elim,
-      @NotNull Buffer<Tuple2<Pattern, DataCtor>> clauses
-    ) implements DataBody {
-      @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-        return visitor.visitClause(this, p);
-      }
-    }
-
-    interface Visitor<P, R> {
-      R visitCtors(@NotNull Ctors ctors, P p);
-      R visitClause(@NotNull Clauses clauses, P p);
-    }
-
-    <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-  }
-
   /**
    * Concrete data definition
    *
@@ -154,7 +129,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
-    public @NotNull DataBody body;
+    public @NotNull Either<Ctors, Clauses> body;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
@@ -162,24 +137,20 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
-      @NotNull DataBody body,
+      @NotNull Either<Ctors, Clauses> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
-      body.accept(new DataBody.Visitor<Unit, Unit>() {
-        @Override public Unit visitCtors(DataBody.@NotNull Ctors ctors, Unit unit) {
-          ctors.ctors.forEach(c -> c.dataRef = ref);
-          return unit;
-        }
-
-        @Override public Unit visitClause(DataBody.@NotNull Clauses clauses, Unit unit) {
-          clauses.clauses.forEach(t -> t._2.dataRef = ref);
-          return unit;
-        }
-      }, Unit.unit());
+      body.map(ctors -> {
+        ctors.ctors.forEach(c -> c.dataRef = ref);
+        return Unit.unit();
+      }, clauses -> {
+        clauses.clauses.forEach(t -> t._2.dataRef = ref);
+        return Unit.unit();
+      });
     }
 
     @Override
@@ -204,6 +175,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     @Override
     public int hashCode() {
       return Objects.hash(sourcePos, telescope, result, body, abuseBlock);
+    }
+
+    public static record Clauses(@NotNull Buffer<String> elim, @NotNull Buffer<Tuple2<Pattern, DataCtor>> clauses) {
+    }
+
+    public static record Ctors(@NotNull Buffer<DataCtor> ctors) {
     }
   }
 
@@ -265,4 +242,5 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
     }
   }
+
 }

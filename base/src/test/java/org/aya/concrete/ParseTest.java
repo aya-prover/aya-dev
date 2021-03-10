@@ -11,6 +11,7 @@ import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Either;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +113,7 @@ public class ParseTest {
       "Nat",
       ImmutableSeq.of(),
       new Expr.HoleExpr(SourcePos.NONE, null, null),
-      new Decl.DataBody.Ctors(Buffer.of(
+      Either.left(new Decl.DataDecl.Ctors(Buffer.of(
         new Decl.DataCtor(SourcePos.NONE, "Z", ImmutableSeq.of(), Buffer.of(), Buffer.of(), false),
         new Decl.DataCtor(SourcePos.NONE, "S",
           ImmutableSeq.of(
@@ -120,7 +121,7 @@ public class ParseTest {
           ),
           Buffer.of(), Buffer.of(), false
         )
-      )),
+      ))),
       ImmutableSeq.of()
     )));
   }

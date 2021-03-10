@@ -22,6 +22,7 @@ import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
@@ -395,16 +396,16 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       : visitType(typeCtx);
   }
 
-  private @NotNull Decl.DataBody visitDataBody(AyaParser.DataBodyContext ctx) {
-    if (ctx instanceof AyaParser.DataCtorsContext dcc) return visitDataCtors(dcc);
-    if (ctx instanceof AyaParser.DataClausesContext dcc) return visitDataClauses(dcc);
+  private @NotNull Either<Decl.DataDecl.Ctors, Decl.DataDecl.Clauses> visitDataBody(AyaParser.DataBodyContext ctx) {
+    if (ctx instanceof AyaParser.DataCtorsContext dcc) return Either.left(visitDataCtors(dcc));
+    if (ctx instanceof AyaParser.DataClausesContext dcc) return Either.right(visitDataClauses(dcc));
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
   @Override
-  public Decl.DataBody visitDataCtors(AyaParser.DataCtorsContext ctx) {
-    return new Decl.DataBody.Ctors(
+  public Decl.DataDecl.Ctors visitDataCtors(AyaParser.DataCtorsContext ctx) {
+    return new Decl.DataDecl.Ctors(
       ctx.dataCtor().stream()
         .map(this::visitDataCtor)
         .collect(Buffer.factory())
@@ -412,12 +413,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public Decl.DataBody visitDataClauses(AyaParser.DataClausesContext ctx) {
+  public Decl.DataDecl.Clauses visitDataClauses(AyaParser.DataClausesContext ctx) {
     var elim = visitElim(ctx.elim());
     var clauses = ctx.dataCtorClause().stream()
       .map(this::visitDataCtorClause)
       .collect(Buffer.factory());
-    return new Decl.DataBody.Clauses(elim, clauses);
+    return new Decl.DataDecl.Clauses(elim, clauses);
   }
 
   @Override
