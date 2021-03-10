@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Generate the order of dependency of headers, fail if a cycle occurs.
+ *
  * @author re-xyr
  */
 public final class HeaderOrder {

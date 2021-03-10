@@ -35,7 +35,7 @@ public sealed interface AppTerm extends Term {
     return lam.body().subst(new Substituter.TermSubst(param.ref(), arg.term()));
   }
 
-   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull SeqLike<Arg<Term>> args) {
+  @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull SeqLike<Arg<Term>> args) {
     if (args.isEmpty()) return f;
     if (f instanceof HoleApp holeApp) {
       holeApp.argsBuf().appendAll(args.view());

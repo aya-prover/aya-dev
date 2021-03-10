@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author re-xyr
- *
  * @apiNote in each file's dependency tree there should be one and only one EmptyContext which is also the tree root.
  * @implNote EmptyContext is the context storing the file's Reporter in the resolving stage.
  */

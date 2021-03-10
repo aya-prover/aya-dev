@@ -52,7 +52,7 @@ public final class PatResolver implements
   }
 
   private Context bindAs(LocalVar as, Context ctx, SourcePos sourcePos) {
-    return as != null ?  ctx.bind(as, sourcePos) : ctx;
+    return as != null ? ctx.bind(as, sourcePos) : ctx;
   }
 
   @Contract(value = "_, _ -> fail", pure = true)

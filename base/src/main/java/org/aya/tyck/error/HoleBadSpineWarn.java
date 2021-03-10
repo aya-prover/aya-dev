@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public record HoleBadSpineWarn(
   @NotNull AppTerm.HoleApp term,
   @NotNull SourcePos sourcePos
-  ) implements Problem {
+) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.plain("Can't perform pattern unification on hole with spine " + term.args() + ".");
   }
