@@ -3,7 +3,7 @@
 package org.aya.tyck.error;
 
 import org.aya.api.error.Problem;
-import org.aya.concrete.Expr;
+import org.aya.api.error.SourcePos;
 import org.aya.core.term.AppTerm;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public record HoleBadSpineWarn(
   @NotNull AppTerm.HoleApp term,
-  @NotNull Expr expr
-) implements TyckProblem {
+  @NotNull SourcePos sourcePos
+  ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.plain("Can't perform pattern unification on hole with spine " + term.args() + ".");
   }

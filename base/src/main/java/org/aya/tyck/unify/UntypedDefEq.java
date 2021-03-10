@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author re-xyr
+ * @apiNote Use {@link UntypedDefEq#compare(Term, Term)} instead of visiting directly!
  */
 public record UntypedDefEq(
   @NotNull TypedDefEq defeq
