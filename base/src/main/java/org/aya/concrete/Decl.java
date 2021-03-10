@@ -189,7 +189,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @Nullable Assoc assoc;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Expr result;
-    public @NotNull Either<Expr, Patterns> body;
+    public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
 
     public FnDecl(
       @NotNull SourcePos sourcePos,
@@ -199,7 +199,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
-      @NotNull Either<Expr, Patterns> body,
+      @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
@@ -232,9 +232,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
     @Override public int hashCode() {
       return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
-    }
-
-    public static record Patterns(@NotNull ImmutableSeq<Pattern.Clause> clauses) {
     }
   }
 }
