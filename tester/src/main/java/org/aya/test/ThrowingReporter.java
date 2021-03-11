@@ -16,6 +16,10 @@ public final class ThrowingReporter implements Reporter {
   }
 
   @Override public void report(@NotNull Problem problem) {
+    if (problem.level() != Problem.Severity.ERROR) {
+      System.err.println(problem.describe().renderWithPageWidth(120));
+      return;
+    }
     Assertions.fail("Failed with `" + problem.getClass() + "`: " + problem
       .describe()
       .renderWithPageWidth(120));

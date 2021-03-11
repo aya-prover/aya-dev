@@ -12,7 +12,6 @@ import org.aya.core.term.Term;
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -62,7 +61,7 @@ public final class PatTycker implements
     return Tuple.of(result.type(), new Pat.Clause.Match(patterns, result.wellTyped()));
   }
 
-  private @NotNull Seq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
+  private @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
     var results = Buffer.<Pat>of();
     stream.forEach(pat -> {
       var param = sig.value.param().first();
@@ -71,7 +70,7 @@ public final class PatTycker implements
       sig.value = sig.value.inst(res.toTerm());
       results.append(res);
     });
-    return results;
+    return results.toImmutableSeq();
   }
 
   @Override public Tuple2<@NotNull Term, Pat.Clause>
@@ -115,7 +114,7 @@ public final class PatTycker implements
     }
     var value = bind.resolved().value;
     if (value != null) subst.map().put(v, value);
-    return new Pat.Ctor(selected.ref(), Seq.of(), t._1, t._2);
+    return new Pat.Ctor(selected.ref(), ImmutableSeq.of(), t._1, t._2);
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {

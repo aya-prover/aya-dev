@@ -9,6 +9,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public sealed interface Pat {
 
   record Ctor(
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> name,
-    @NotNull Seq<Pat> params,
+    @NotNull ImmutableSeq<Pat> params,
     @Nullable LocalVar as,
     @NotNull Term type
   ) implements Pat {
