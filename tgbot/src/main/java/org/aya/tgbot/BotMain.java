@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * @author ice1000
  */
-public class Main {
+public class BotMain {
   public static void main(String... args) throws TelegramApiException, IOException {
     var bots = new TelegramBotsApi(DefaultBotSession.class);
     bots.registerBot(new AyaBot());

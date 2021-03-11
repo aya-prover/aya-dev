@@ -20,6 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+/**
+ * @author ice1000
+ */
 public class AyaBot extends TelegramLongPollingBot {
   private final @NotNull
   Properties properties = new Properties();
@@ -39,10 +42,10 @@ public class AyaBot extends TelegramLongPollingBot {
   @Override public void onUpdateReceived(Update update) {
     if (update.hasMessage()) {
       var m = update.getMessage();
-      if (m.hasText()) replyTo(m.getText().trim(), m.getChatId());
+      if (m.hasText()) replyTo(m.getText(), m.getChatId());
     } else if (update.hasEditedMessage()) {
       var m = update.getEditedMessage();
-      if (m.hasText()) replyTo(m.getText().trim(), m.getChatId());
+      if (m.hasText()) replyTo(m.getText(), m.getChatId());
     }
   }
 

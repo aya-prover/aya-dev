@@ -18,5 +18,6 @@ lombok.config
 /test.aya
 
 /cli-*-all.jar
+/tgbot-*-all.jar
 /imgui.ini
 

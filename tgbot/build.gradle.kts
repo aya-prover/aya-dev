@@ -14,7 +14,7 @@ plugins {
 }
 
 tasks.withType<Jar>().configureEach {
-  manifest.attributes["Main-Class"] = "${project.group}.tgbot.Main"
+  manifest.attributes["Main-Class"] = "${project.group}.tgbot.BotMain"
 }
 
 task<Copy>("copyJarHere") {
