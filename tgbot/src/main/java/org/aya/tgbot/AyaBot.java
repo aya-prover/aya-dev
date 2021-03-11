@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -24,6 +25,8 @@ import java.util.List;
  * @author ice1000
  */
 public record AyaBot(@NotNull TelegramBot bot) implements UpdatesListener {
+  public static final Charset CHARSET = StandardCharsets.UTF_8;
+
   @Override public int process(List<Update> updates) {
     updates.forEach(this::onUpdateReceived);
     return CONFIRMED_UPDATES_ALL;
@@ -44,13 +47,13 @@ public record AyaBot(@NotNull TelegramBot bot) implements UpdatesListener {
   private String computeMessage(String txt) {
     var file = Paths.get("build", "telegramCache");
     try {
-      Files.writeString(file, txt, StandardCharsets.UTF_8);
+      Files.writeString(file, txt, CHARSET);
       var hookOut = new ByteArrayOutputStream();
       var reporter = new CountingReporter(new StreamReporter(
         file, txt, new PrintStream(hookOut)));
       var e = new SingleFileCompiler(reporter, file, null)
         .compile(CompilerFlags.DEFAULT_FLAGS);
-      return hookOut + "\n\n Exited with " + e;
+      return hookOut.toString(CHARSET) + "\n\n Exited with " + e;
     } catch (IOException e) {
       return "error reading file " + file.toAbsolutePath();
     }
