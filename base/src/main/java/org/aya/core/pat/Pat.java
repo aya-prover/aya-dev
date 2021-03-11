@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface Pat {
   @Nullable LocalVar as();
   @NotNull Term type();
+  boolean explicit();
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   default @NotNull Term toTerm() {
     return accept(PatToTerm.INSTANCE, Unit.unit());
@@ -30,6 +31,7 @@ public sealed interface Pat {
   }
 
   record Bind(
+    boolean explicit,
     @NotNull LocalVar as,
     @NotNull Term type
   ) implements Pat {
@@ -39,6 +41,7 @@ public sealed interface Pat {
   }
 
   record Tuple(
+    boolean explicit,
     @NotNull ImmutableSeq<Pat> pats,
     @Nullable LocalVar as,
     @NotNull Term type
@@ -49,6 +52,7 @@ public sealed interface Pat {
   }
 
   record Ctor(
+    boolean explicit,
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> params,
     @Nullable LocalVar as,

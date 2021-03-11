@@ -3,8 +3,10 @@
 package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.Var;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,26 +15,64 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface Pattern {
   @NotNull SourcePos sourcePos();
-  @Nullable LocalVar as();
+  boolean explicit();
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   interface Visitor<P, R> {
-    R visitAtomic(@NotNull Atomic atomic, P p);
+    R visitTuple(@NotNull Tuple tuple, P p);
+    R visitNumber(@NotNull Number number, P p);
+    R visitBind(@NotNull Bind bind, P p);
+    R visitCalmFace(@NotNull CalmFace calmFace, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
   }
 
-  record Atomic(
+  record Tuple(
     @NotNull SourcePos sourcePos,
-    @NotNull Atom atom,
+    boolean explicit,
+    @NotNull ImmutableSeq<Pattern> patterns,
     @Nullable LocalVar as
   ) implements Pattern {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitAtomic(this, p);
+      return visitor.visitTuple(this, p);
+    }
+  }
+
+  record Number(
+    @NotNull SourcePos sourcePos,
+    boolean explicit,
+    int number
+  ) implements Pattern {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitNumber(this, p);
+    }
+  }
+
+  record CalmFace(
+    @NotNull SourcePos sourcePos,
+    boolean explicit
+  ) implements Pattern {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitCalmFace(this, p);
+    }
+  }
+
+  /**
+   * @param resolved will be modified during resolving
+   */
+  record Bind(
+    @NotNull SourcePos sourcePos,
+    boolean explicit,
+    @NotNull LocalVar bind,
+    @NotNull Ref<@Nullable Var> resolved
+  ) implements Pattern {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitBind(this, p);
     }
   }
 
   record Ctor(
     @NotNull SourcePos sourcePos,
+    boolean explicit,
     @NotNull String name,
     @NotNull ImmutableSeq<Pattern> params,
     @Nullable LocalVar as

@@ -96,11 +96,12 @@ clause : patterns IMPLIES expr
        | ABSURD;
 
 patterns : pattern (',' pattern)* ;
-pattern : atomPattern+ (AS ID)?
+pattern : atomPatterns
+        | LBRACE atomPatterns (',' atomPatterns)* '}' (AS ID)?
         ;
 
-atomPattern : LPAREN patterns? ')'
-            | LBRACE patterns '}'
+atomPatterns : atomPattern+ ;
+atomPattern : LPAREN patterns? ')' (AS ID)?
             | NUMBER
             | ID
             | CALM_FACE

@@ -4,7 +4,7 @@ package org.aya.tyck.pat;
 
 import org.aya.api.error.IgnoringReporter;
 import org.aya.api.error.Reporter;
-import org.aya.concrete.Atom;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.DataDef;
@@ -33,8 +33,7 @@ import java.util.Objects;
  */
 public final class PatTycker implements
   Pattern.Clause.Visitor<Def.Signature, Tuple2<@NotNull Term, Pat.Clause>>,
-  Pattern.Visitor<Term, Pat>,
-  Atom.Visitor<Tuple2<LocalVar, Term>, Pat> {
+  Pattern.Visitor<Term, Pat> {
   private final @NotNull ExprTycker exprTycker;
   private final @NotNull ExprRefSubst subst;
 
@@ -83,34 +82,25 @@ public final class PatTycker implements
     return Tuple.of(signature.result(), Pat.Clause.Absurd.INSTANCE);
   }
 
-  @Override public Pat visitAtomic(Pattern.@NotNull Atomic atomic, Term param) {
-    var t = Tuple.of(atomic.as(), param);
-    exprTycker.localCtx.put(t);
-    return atomic.atom().accept(this, t);
-  }
-
-  @Override public Pat visitCalmFace(Atom.@NotNull CalmFace face, Tuple2<LocalVar, Term> t) {
+  @Override public Pat visitCalmFace(Pattern.@NotNull CalmFace face, Term t) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitNumber(Atom.@NotNull Number number, Tuple2<LocalVar, Term> t) {
+  @Override public Pat visitNumber(Pattern.@NotNull Number number, Term t) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitBraced(Atom.@NotNull Braced braced, Tuple2<LocalVar, Term> termLocalVarTuple2) {
+  @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
+    exprTycker.localCtx.put(tuple.as(), t);
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitTuple(Atom.@NotNull Tuple tuple, Tuple2<LocalVar, Term> t) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override public Pat visitBind(Atom.@NotNull Bind bind, Tuple2<LocalVar, Term> t) {
+  @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
     var v = bind.bind();
-    var selected = selectCtor(t._2, v.name(), IgnoringReporter.INSTANCE);
+    var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE);
     if (selected == null) {
-      exprTycker.localCtx.put(v, t._2);
-      return new Pat.Bind(v, t._2);
+      exprTycker.localCtx.put(v, t);
+      return new Pat.Bind(true, v, t);
     }
     if (!selected.conTelescope().isEmpty()) {
       // TODO: error report: not enough parameters bind
@@ -119,7 +109,7 @@ public final class PatTycker implements
     var value = bind.resolved().value;
     if (value != null) subst.good().put(v, value);
     else subst.bad().add(v);
-    return new Pat.Ctor(selected.ref(), ImmutableSeq.of(), t._1, t._2);
+    return new Pat.Ctor(true, selected.ref(), ImmutableSeq.of(), null, t);
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
@@ -127,7 +117,7 @@ public final class PatTycker implements
     if (realCtor == null) throw new ExprTycker.TyckerException();
     var sig = new Ref<>(new Def.Signature(realCtor.conTelescope(), realCtor.result()));
     var patterns = visitPatterns(sig, ctor.params());
-    return new Pat.Ctor(realCtor.ref(), patterns, ctor.as(), param);
+    return new Pat.Ctor(true, realCtor.ref(), patterns, ctor.as(), param);
   }
 
   private DataDef.@Nullable Ctor selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {

@@ -8,17 +8,14 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
-import org.aya.concrete.Decl;
-import org.aya.concrete.Expr;
-import org.aya.concrete.Pattern;
-import org.aya.concrete.Stmt;
+import org.aya.concrete.*;
 import org.aya.generic.Arg;
-import org.aya.concrete.Atom;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
 import org.aya.util.Constants;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -403,7 +400,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var clauses = ctx.dataCtorClause().stream()
       .map(this::visitDataCtorClause)
       .collect(Buffer.factory());
-    return new Decl.DataDecl.Clauses( clauses);
+    return new Decl.DataDecl.Clauses(clauses);
   }
 
   @Override
@@ -432,37 +429,52 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Pattern visitPattern(AyaParser.PatternContext ctx) {
-    var atoms = ctx.atomPattern().stream()
-      .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
+    var ex = ctx.LBRACE() == null;
+    if (ex) {
+      return visitAtomPatterns(ctx.atomPatterns(0), true, null);
+    }
+
     var id = ctx.ID();
     var as = id != null ? new LocalVar(id.getText()) : null;
+    var subs = ctx.atomPatterns().stream()
+      .map(ap -> visitAtomPatterns(ap, false, as))
+      .collect(ImmutableSeq.factory());
+
+    return subs.sizeEquals(1)
+      ? subs.get(0)
+      : new Pattern.Tuple(sourcePosOf(ctx), false, subs, as);
+  }
+
+  private Pattern visitAtomPatterns(@NotNull AyaParser.AtomPatternsContext ctx, boolean ex, LocalVar as) {
+    var atoms = ctx.atomPattern().stream()
+      .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
     if (atoms.sizeEquals(1)) {
-      return new Pattern.Atomic(
-        sourcePosOf(ctx),
-        atoms.first(),
-        as
-      );
+      return atoms.first().apply(ex);
     } else {
       // TODO: should we throw en error here or in resolver
       //  if atom.first() is not a bind?
       return new Pattern.Ctor(
         sourcePosOf(ctx),
-        ((Atom.Bind) atoms.first()).bind().name(),
-        atoms.view().drop(1).map(pa -> new Pattern.Atomic(pa.sourcePos(), pa, null)).collect(ImmutableSeq.factory()),
+        ex,
+        ((Pattern.Bind) atoms.first().apply(ex)).bind().name(),
+        atoms.view().drop(1).map(pa -> pa.apply(ex)).collect(ImmutableSeq.factory()),
         as
       );
     }
   }
 
   @Override
-  public @NotNull Atom visitAtomPattern(AyaParser.AtomPatternContext ctx) {
-    if (ctx.LPAREN() != null) return new Atom.Tuple(sourcePosOf(ctx), visitPatterns(ctx.patterns()));
-    if (ctx.LBRACE() != null) return new Atom.Braced(sourcePosOf(ctx), visitPatterns(ctx.patterns()));
-    if (ctx.CALM_FACE() != null) return new Atom.CalmFace(sourcePosOf(ctx));
+  public @NotNull Function<Boolean, Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
+    if (ctx.LPAREN() != null) {
+      var id = ctx.ID();
+      var as = id != null ? new LocalVar(id.getText()) : null;
+      return ex -> new Pattern.Tuple(sourcePosOf(ctx), ex, visitPatterns(ctx.patterns()), as);
+    }
+    if (ctx.CALM_FACE() != null) return ex -> new Pattern.CalmFace(sourcePosOf(ctx), ex);
     var number = ctx.NUMBER();
-    if (number != null) return new Atom.Number(sourcePosOf(ctx), Integer.parseInt(number.getText()));
+    if (number != null) return ex -> new Pattern.Number(sourcePosOf(ctx), ex, Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null) return new Atom.Bind(sourcePosOf(ctx), new LocalVar(id.getText()), new Ref<>());
+    if (id != null) return ex -> new Pattern.Bind(sourcePosOf(ctx), ex, new LocalVar(id.getText()), new Ref<>());
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
