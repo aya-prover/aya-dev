@@ -16,6 +16,7 @@ include(
   "tester",
   "docs",
   "cli",
+  "tgbot",
   // "proto",
   "parser",
   "base",
