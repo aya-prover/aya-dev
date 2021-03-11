@@ -16,6 +16,7 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableHashSet;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
@@ -33,10 +34,11 @@ public final class PatTycker implements
   Pattern.Visitor<Term, Pat>,
   Atom.Visitor<Pattern, Tuple2<LocalVar, Term>, Pat> {
   private final @NotNull ExprTycker exprTycker;
-  private final @NotNull ExprRefSubst subst = new ExprRefSubst(MutableHashMap.of());
+  private final @NotNull ExprRefSubst subst;
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
     this.exprTycker = exprTycker;
+    subst = new ExprRefSubst(exprTycker.metaContext.reporter(), MutableHashMap.of(), MutableHashSet.of());
   }
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.Clause>>
@@ -49,9 +51,10 @@ public final class PatTycker implements
     return Tuple.of(signature.value.result(), res);
   }
 
-  @Override public Tuple2<@NotNull Term, Pat.Clause> visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
+  @Override
+  public Tuple2<@NotNull Term, Pat.Clause> visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
     var sig = new Ref<>(signature);
-    subst.map().clear();
+    subst.clear();
     var recover = MutableHashMap.from(exprTycker.localCtx);
     var patterns = visitPatterns(sig, match.patterns());
     var expr = match.expr().accept(subst, Unit.unit());
@@ -113,7 +116,8 @@ public final class PatTycker implements
       throw new ExprTycker.TyckerException();
     }
     var value = bind.resolved().value;
-    if (value != null) subst.map().put(v, value);
+    if (value != null) subst.good().put(v, value);
+    else subst.bad().add(v);
     return new Pat.Ctor(selected.ref(), ImmutableSeq.of(), t._1, t._2);
   }
 
