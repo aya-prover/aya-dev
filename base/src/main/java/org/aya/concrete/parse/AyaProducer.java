@@ -13,7 +13,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
 import org.aya.generic.Arg;
-import org.aya.generic.Atom;
+import org.aya.concrete.Atom;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
@@ -447,7 +447,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       //  if atom.first() is not a bind?
       return new Pattern.Ctor(
         sourcePosOf(ctx),
-        ((Atom.Bind<Pattern>) atoms.first()).bind().name(),
+        ((Atom.Bind) atoms.first()).bind().name(),
         atoms.view().drop(1).map(pa -> new Pattern.Atomic(pa.sourcePos(), pa, null)).collect(ImmutableSeq.factory()),
         as
       );
@@ -455,14 +455,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull Atom<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
-    if (ctx.LPAREN() != null) return new Atom.Tuple<>(sourcePosOf(ctx), visitPatterns(ctx.patterns()));
-    if (ctx.LBRACE() != null) return new Atom.Braced<>(sourcePosOf(ctx), visitPatterns(ctx.patterns()));
-    if (ctx.CALM_FACE() != null) return new Atom.CalmFace<>(sourcePosOf(ctx));
+  public @NotNull Atom visitAtomPattern(AyaParser.AtomPatternContext ctx) {
+    if (ctx.LPAREN() != null) return new Atom.Tuple(sourcePosOf(ctx), visitPatterns(ctx.patterns()));
+    if (ctx.LBRACE() != null) return new Atom.Braced(sourcePosOf(ctx), visitPatterns(ctx.patterns()));
+    if (ctx.CALM_FACE() != null) return new Atom.CalmFace(sourcePosOf(ctx));
     var number = ctx.NUMBER();
-    if (number != null) return new Atom.Number<>(sourcePosOf(ctx), Integer.parseInt(number.getText()));
+    if (number != null) return new Atom.Number(sourcePosOf(ctx), Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null) return new Atom.Bind<>(sourcePosOf(ctx), new LocalVar(id.getText()), new Ref<>());
+    if (id != null) return new Atom.Bind(sourcePosOf(ctx), new LocalVar(id.getText()), new Ref<>());
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }

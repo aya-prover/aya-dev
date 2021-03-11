@@ -11,14 +11,14 @@ public interface FP {
   @Contract(value = "_ -> new", pure = true) static <A, B, C> @NotNull Tuple2<@NotNull Either<A, B>, C>
   distL(@NotNull Either<@NotNull Tuple2<A, C>, @NotNull Tuple2<B, C>> either) {
     return Tuple2.of(
-      either.map(a -> a._1, b -> b._1),
-      either.fold(a -> a._2, b -> b._2));
+      either.map(Tuple2::getKey, Tuple2::getKey),
+      either.fold(Tuple2::getValue, Tuple2::getValue));
   }
 
   @Contract(value = "_ -> new", pure = true) static <A, B, C> @NotNull Tuple2<C, @NotNull Either<A, B>>
   distR(@NotNull Either<@NotNull Tuple2<C, A>, @NotNull Tuple2<C, B>> either) {
     return Tuple2.of(
-      either.fold(a -> a._1, b -> b._1),
-      either.map(a -> a._2, b -> b._2));
+      either.fold(Tuple2::getKey, Tuple2::getKey),
+      either.map(Tuple2::getValue, Tuple2::getValue));
   }
 }

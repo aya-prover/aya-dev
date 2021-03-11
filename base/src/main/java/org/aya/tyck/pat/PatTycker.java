@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
+import org.aya.concrete.Atom;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.DataDef;
@@ -9,7 +10,6 @@ import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.glavo.kala.collection.SeqLike;
@@ -32,7 +32,7 @@ import java.util.Objects;
 public final class PatTycker implements
   Pattern.Clause.Visitor<Def.Signature, Tuple2<@NotNull Term, Pat.Clause>>,
   Pattern.Visitor<Term, Pat>,
-  Atom.Visitor<Pattern, Tuple2<LocalVar, Term>, Pat> {
+  Atom.Visitor<Tuple2<LocalVar, Term>, Pat> {
   private final @NotNull ExprTycker exprTycker;
   private final @NotNull ExprRefSubst subst;
 
@@ -87,29 +87,28 @@ public final class PatTycker implements
     return atomic.atom().accept(this, t);
   }
 
-  @Override public Pat visitCalmFace(Atom.@NotNull CalmFace<Pattern> face, Tuple2<LocalVar, Term> t) {
+  @Override public Pat visitCalmFace(Atom.@NotNull CalmFace face, Tuple2<LocalVar, Term> t) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitNumber(Atom.@NotNull Number<Pattern> number, Tuple2<LocalVar, Term> t) {
+  @Override public Pat visitNumber(Atom.@NotNull Number number, Tuple2<LocalVar, Term> t) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitBraced(Atom.@NotNull Braced<Pattern> braced, Tuple2<LocalVar, Term> termLocalVarTuple2) {
+  @Override public Pat visitBraced(Atom.@NotNull Braced braced, Tuple2<LocalVar, Term> termLocalVarTuple2) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitTuple(Atom.@NotNull Tuple<Pattern> tuple, Tuple2<LocalVar, Term> t) {
+  @Override public Pat visitTuple(Atom.@NotNull Tuple tuple, Tuple2<LocalVar, Term> t) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Pat visitBind(Atom.@NotNull Bind<Pattern> bind, Tuple2<LocalVar, Term> t) {
+  @Override public Pat visitBind(Atom.@NotNull Bind bind, Tuple2<LocalVar, Term> t) {
     var v = bind.bind();
     var selected = selectCtor(t._2, v.name());
     if (selected == null) {
       exprTycker.localCtx.put(v, t._2);
-      var atom = new Atom.Bind<Pat>(bind.sourcePos(), v, new Ref<>());
-      return new Pat.Atomic(atom, t._1, t._2);
+      return new Pat.Bind(v, t._2);
     }
     if (!selected.conTelescope().isEmpty()) {
       // TODO: error report: not enough parameters bind

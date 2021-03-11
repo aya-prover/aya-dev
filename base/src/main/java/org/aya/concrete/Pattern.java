@@ -3,7 +3,6 @@
 package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
-import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,7 @@ public sealed interface Pattern {
 
   record Atomic(
     @NotNull SourcePos sourcePos,
-    @NotNull Atom<Pattern> atom,
+    @NotNull Atom atom,
     @Nullable LocalVar as
   ) implements Pattern {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

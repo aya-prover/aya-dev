@@ -6,7 +6,6 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.term.Term;
-import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -26,17 +25,27 @@ public sealed interface Pat {
   }
 
   interface Visitor<P, R> {
-    R visitAtomic(@NotNull Atomic atomic, P p);
+    R visitBind(@NotNull Bind bind, P p);
+    R visitTuple(@NotNull Tuple tuple, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
   }
 
-  record Atomic(
-    @NotNull Atom<Pat> atom,
+  record Bind(
+    @NotNull LocalVar as,
+    @NotNull Term type
+  ) implements Pat {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitBind(this, p);
+    }
+  }
+
+  record Tuple(
+    @NotNull ImmutableSeq<Pat> pats,
     @Nullable LocalVar as,
     @NotNull Term type
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitAtomic(this, p);
+      return visitor.visitTuple(this, p);
     }
   }
 

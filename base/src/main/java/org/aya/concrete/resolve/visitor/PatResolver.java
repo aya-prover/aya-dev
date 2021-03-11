@@ -3,9 +3,9 @@
 package org.aya.concrete.resolve.visitor;
 
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.Atom;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.generic.Atom;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public final class PatResolver implements
   Pattern.Clause.Visitor<Context, Pattern.Clause>,
   Pattern.Visitor<Context, Tuple2<Context, Pattern>>,
-  Atom.Visitor<Pattern, Context, Tuple2<Context, Atom<Pattern>>> {
+  Atom.Visitor<Context, Tuple2<Context, Atom>> {
   public static final @NotNull PatResolver INSTANCE = new PatResolver();
 
   private PatResolver() {
@@ -61,27 +61,27 @@ public final class PatResolver implements
     return Tuple.of(bindAs(ctor.as(), newCtx.value, sourcePos), new Pattern.Ctor(sourcePos, ctor.name(), params, ctor.as()));
   }
 
-  @Override public Tuple2<Context, Atom<Pattern>> visitTuple(Atom.@NotNull Tuple<Pattern> tuple, Context context) {
+  @Override public Tuple2<Context, Atom> visitTuple(Atom.@NotNull Tuple tuple, Context context) {
     var newCtx = new Ref<>(context);
     var patterns = tuple.patterns().map(p -> subpatterns(newCtx, p));
-    return Tuple.of(newCtx.value, new Atom.Tuple<>(tuple.sourcePos(), patterns));
+    return Tuple.of(newCtx.value, new Atom.Tuple(tuple.sourcePos(), patterns));
   }
 
-  @Override public Tuple2<Context, Atom<Pattern>> visitBraced(Atom.@NotNull Braced<Pattern> braced, Context context) {
+  @Override public Tuple2<Context, Atom> visitBraced(Atom.@NotNull Braced braced, Context context) {
     var newCtx = new Ref<>(context);
     var patterns = braced.patterns().map(p -> subpatterns(newCtx, p));
-    return Tuple.of(newCtx.value, new Atom.Braced<>(braced.sourcePos(), patterns));
+    return Tuple.of(newCtx.value, new Atom.Braced(braced.sourcePos(), patterns));
   }
 
-  @Override public Tuple2<Context, Atom<Pattern>> visitNumber(Atom.@NotNull Number<Pattern> number, Context context) {
+  @Override public Tuple2<Context, Atom> visitNumber(Atom.@NotNull Number number, Context context) {
     return Tuple.of(context, number);
   }
 
-  @Override public Tuple2<Context, Atom<Pattern>> visitCalmFace(Atom.@NotNull CalmFace<Pattern> f, Context context) {
+  @Override public Tuple2<Context, Atom> visitCalmFace(Atom.@NotNull CalmFace f, Context context) {
     return Tuple.of(context, f);
   }
 
-  @Override public Tuple2<Context, Atom<Pattern>> visitBind(Atom.@NotNull Bind<Pattern> bind, Context context) {
+  @Override public Tuple2<Context, Atom> visitBind(Atom.@NotNull Bind bind, Context context) {
     bind.resolved().value = context.getUnqualifiedMaybe(bind.bind().name(), bind.sourcePos());
     return Tuple.of(context.bind(bind.bind(), bind.sourcePos()), bind);
   }
