@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author ice1000
  */
-public class TyckFnTest {
+public class TyckExprTest {
   @Test
   public void idLamConnected() {
     idLamTestCase(lamConnected(), new ExprTycker(ThrowingReporter.INSTANCE));

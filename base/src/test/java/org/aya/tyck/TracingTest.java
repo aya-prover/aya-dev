@@ -16,7 +16,7 @@ public class TracingTest {
   public void traceExistence() {
     var checker = new ExprTycker(ThrowingReporter.INSTANCE);
     checker.traceBuilder = new Trace.Builder();
-    TyckFnTest.idLamTestCase(TyckFnTest.lamConnected(), checker);
+    TyckExprTest.idLamTestCase(TyckExprTest.lamConnected(), checker);
     final var tops = checker.traceBuilder.tops;
     assertFalse(tops.isEmpty());
     assertEquals(1, tops.size());
@@ -26,7 +26,7 @@ public class TracingTest {
   public void traceMd() {
     var checker = new ExprTycker(ThrowingReporter.INSTANCE);
     checker.traceBuilder = new Trace.Builder();
-    TyckFnTest.idLamTestCase(TyckFnTest.lamConnected(), checker);
+    TyckExprTest.idLamTestCase(TyckExprTest.lamConnected(), checker);
     var show = new MdUnicodeTrace();
     show.lineSep = "\n";
     checker.traceBuilder.root().forEach(e -> e.accept(show, Unit.unit()));
