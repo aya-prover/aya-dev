@@ -2,15 +2,15 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tgbot;
 
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.request.SendMessage;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.jetbrains.annotations.NotNull;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,49 +18,31 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Properties;
+import java.util.List;
 
 /**
  * @author ice1000
  */
-public class AyaBot extends TelegramLongPollingBot {
-  private final @NotNull
-  Properties properties = new Properties();
-
-  public AyaBot() throws IOException {
-    properties.load(Files.newInputStream(Paths.get("gradle.properties")));
+public record AyaBot(@NotNull TelegramBot bot) implements UpdatesListener {
+  @Override public int process(List<Update> updates) {
+    updates.forEach(this::onUpdateReceived);
+    return CONFIRMED_UPDATES_ALL;
   }
 
-  @Override public String getBotUsername() {
-    return "Aya REPL Bot";
-  }
-
-  @Override public String getBotToken() {
-    return properties.getProperty("aya.telegram.token");
-  }
-
-  @Override public void onUpdateReceived(Update update) {
-    if (update.hasMessage()) {
-      var m = update.getMessage();
-      if (m.hasText()) replyTo(m.getText(), m.getChatId());
-    } else if (update.hasEditedMessage()) {
-      var m = update.getEditedMessage();
-      if (m.hasText()) replyTo(m.getText(), m.getChatId());
-    }
+  public void onUpdateReceived(Update update) {
+    var m = update.message();
+    var em = update.editedMessage();
+    if (m != null) replyTo(m.text(), m.chat().id());
+    else if (em != null) replyTo(em.text(), em.chat().id());
   }
 
   private void replyTo(String txt, long chatId) {
-    if (txt.startsWith("\\")) try {
-      execute(sendMessage(txt, chatId));
-    } catch (TelegramApiException e) {
-      e.printStackTrace();
-    }
+    if (txt == null) return;
+    if (txt.startsWith("\\")) bot.execute(new SendMessage(chatId, computeMessage(txt)));
   }
 
-  @NotNull private SendMessage sendMessage(String txt, long chatId) {
+  private String computeMessage(String txt) {
     var file = Paths.get("build", "telegramCache");
-    var send = new SendMessage();
-    send.setChatId(String.valueOf(chatId));
     try {
       Files.writeString(file, txt, StandardCharsets.UTF_8);
       var hookOut = new ByteArrayOutputStream();
@@ -68,10 +50,9 @@ public class AyaBot extends TelegramLongPollingBot {
         file, txt, new PrintStream(hookOut)));
       var e = new SingleFileCompiler(reporter, file, null)
         .compile(CompilerFlags.ASCII_FLAGS);
-      send.setText(hookOut + "\n\n Exited with " + e);
+      return hookOut + "\n\n Exited with " + e;
     } catch (IOException e) {
-      send.setText("error reading file " + file.toAbsolutePath());
+      return "error reading file " + file.toAbsolutePath();
     }
-    return send;
   }
 }

@@ -3,7 +3,7 @@
 
 dependencies {
   val deps: java.util.Properties by rootProject.ext
-  implementation("org.telegram", "telegrambots", version = deps.getProperty("version.telegrambots"))
+  implementation("com.github.pengrad", "java-telegram-bot-api", version = deps.getProperty("version.telegramapi"))
   implementation(project(":cli"))
   implementation(project(":api"))
   implementation(project(":base"))
