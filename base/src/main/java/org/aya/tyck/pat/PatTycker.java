@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
+import org.aya.api.error.IgnoringReporter;
+import org.aya.api.error.Reporter;
 import org.aya.concrete.Atom;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
@@ -105,7 +107,7 @@ public final class PatTycker implements
 
   @Override public Pat visitBind(Atom.@NotNull Bind bind, Tuple2<LocalVar, Term> t) {
     var v = bind.bind();
-    var selected = selectCtor(t._2, v.name());
+    var selected = selectCtor(t._2, v.name(), IgnoringReporter.INSTANCE);
     if (selected == null) {
       exprTycker.localCtx.put(v, t._2);
       return new Pat.Bind(v, t._2);
@@ -121,14 +123,14 @@ public final class PatTycker implements
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
-    var realCtor = selectCtor(param, ctor.name());
+    var realCtor = selectCtor(param, ctor.name(), subst.reporter());
     if (realCtor == null) throw new ExprTycker.TyckerException();
     var sig = new Ref<>(new Def.Signature(realCtor.conTelescope(), realCtor.result()));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(realCtor.ref(), patterns, ctor.as(), param);
   }
 
-  private DataDef.@Nullable Ctor selectCtor(Term param, @NotNull String name) {
+  private DataDef.@Nullable Ctor selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
     if (!(param instanceof AppTerm.DataCall dataCall)) {
       // TODO[ice]: report error: splitting on non data
       return null;

@@ -7,7 +7,6 @@ import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +71,7 @@ public sealed interface Pat {
     }
 
     record Match(
-      @NotNull Seq<Pat> patterns,
+      @NotNull ImmutableSeq<Pat> patterns,
       @NotNull Term expr
     ) implements Clause {
       @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
