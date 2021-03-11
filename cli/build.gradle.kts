@@ -9,6 +9,7 @@ dependencies {
   implementation(project(":base"))
   implementation(project(":parser"))
   implementation(project(":pretty"))
+  testImplementation(project(":tester"))
 }
 
 plugins {
