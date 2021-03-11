@@ -12,11 +12,22 @@ import org.ice1000.jimgui.util.JImGuiUtil;
 import org.ice1000.jimgui.util.JniLoader;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Objects;
 
 @SuppressWarnings("AccessStaticViaInstance")
 public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
+  private static record Color(int red, int green, int blue, @NotNull MutableJImVec4 vec4) {
+    public Color(int red, int green, int blue) {
+      this(red, green, blue,
+        new MutableJImVec4(red / 256f, green / 256f, blue / 256f, 1));
+    }
+
+    public static Color GREEN = new Color(0, 255, 0);
+    public static Color CYAN = new Color(0, 255, 255);
+    public static Color YELLOW = new Color(255, 255, 0);
+    public static Color WHITE = new Color(255, 255, 255);
+  }
+
   public static final int PAGE_WIDTH = 114514;
   private final String sourceCode;
   private @NotNull SourcePos pos;
@@ -26,18 +37,11 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     pos = SourcePos.NONE;
   }
 
-  private @NotNull JImVec4 color(Color color) {
-    return new MutableJImVec4(color.getRed() / 256f,
-      color.getGreen() / 256f,
-      color.getBlue() / 256f,
-      color.getAlpha() / 256f);
-  }
-
   public void mainLoop(@NotNull Seq<@NotNull Trace> root) {
     JniLoader.load();
     var imGui = new JImGui();
-    imGui.pushStyleVar(JImStyleVars.ItemSpacing, 0f, 2f);
-    imGui.getStyle().scaleAllSizes(2);
+    imGui.pushStyleVar(JImStyleVars.ItemSpacing, 0f, 1.5f);
+    imGui.getStyle().scaleAllSizes(1.5f);
     try (var config = new JImFontConfig()) {
       var fontAtlas = imGui.getIO().getFonts();
       fontAtlas.clearFonts();
@@ -45,7 +49,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
       fontAtlas.addDefaultFont(config);
     }
     JImGuiUtil.cacheStringToBytes();
-    var highlight = color(Color.GREEN);
+    var highlight = Color.GREEN.vec4;
     while (!imGui.windowShouldClose()) {
       imGui.initNewFrame();
       if (imGui.begin("Source code")) {
@@ -101,8 +105,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     @NotNull Runnable callback,
     int hashCode
   ) {
-    final var vec4 = color(color);
-    imGui.pushStyleColor(JImStyleColors.Text, vec4);
+    imGui.pushStyleColor(JImStyleColors.Text, color.vec4);
     var node = false;
     if (subtraces.isEmpty()) imGui.bulletText(s);
     else node = imGui.treeNode(s + "##" + hashCode);
@@ -112,7 +115,6 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
       imGui.treePop();
     }
     imGui.popStyleColor();
-    vec4.deallocateNativeObject();
   }
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
