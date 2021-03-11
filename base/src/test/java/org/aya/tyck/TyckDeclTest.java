@@ -70,7 +70,7 @@ public class TyckDeclTest {
     assertEquals(0, zeroCtor.conTelescope().size());
     var zeroParam = xyr.telescope().get(0);
     assertEquals(zeroToZero.expr(), new RefTerm(zeroParam.ref()));
-    assertEquals(zeroCtor.ref(), ((Pat.Ctor) zeroToZero.patterns().get(0)).name());
+    assertEquals(zeroCtor.ref(), ((Pat.Ctor) zeroToZero.patterns().get(0)).ref());
   }
 
   private @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {

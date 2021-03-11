@@ -41,7 +41,7 @@ public sealed interface Pat {
   }
 
   record Ctor(
-    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> name,
+    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> params,
     @Nullable LocalVar as,
     @NotNull Term type
