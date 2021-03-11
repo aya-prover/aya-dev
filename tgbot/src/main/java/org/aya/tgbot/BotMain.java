@@ -3,7 +3,6 @@
 package org.aya.tgbot;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.request.SendMessage;
 
 import java.io.IOException;
 import java.nio.file.Files;
