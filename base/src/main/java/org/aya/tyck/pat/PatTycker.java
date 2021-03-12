@@ -13,6 +13,7 @@ import org.aya.core.term.AppTerm;
 import org.aya.core.term.SigmaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -69,7 +70,15 @@ public final class PatTycker implements
     var results = Buffer.<Pat>of();
     stream.forEach(pat -> {
       var param = sig.value.param().first();
-      // TODO[ice]: generate implicit pattern when param's licitness mismatch pattern licitness
+      while (param.explicit() != pat.explicit()) if (pat.explicit()) {
+        var bind = new Pat.Bind(false, new LocalVar(param.ref().name()), param.type());
+        results.append(bind);
+        sig.value = sig.value.inst(bind.toTerm());
+        param = sig.value.param().first();
+      } else {
+        // TODO[ice]: unexpected implicit pattern
+        throw new ExprTycker.TyckerException();
+      }
       var res = pat.accept(this, param.type());
       sig.value = sig.value.inst(res.toTerm());
       results.append(res);

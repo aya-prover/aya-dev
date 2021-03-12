@@ -1,6 +1,9 @@
 \def id {A : \Set} (a : A) : A
  | {A}, a => a
 
+\def id2 {A : \Set} (a : A) : A
+ | a => a
+
 \open \data Nat : \Set
  | zero | suc Nat
 

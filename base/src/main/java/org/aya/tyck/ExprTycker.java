@@ -265,10 +265,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
       var param = pi.param().subst(subst);
-      var paramLicit = param.explicit();
       var argLicit = arg.explicit();
       Arg<Term> newArg;
-      if (paramLicit == argLicit) {
+      if (param.explicit() == argLicit) {
         var elabArg = arg.term().accept(this, param.type());
         newArg = new Arg<>(elabArg.wellTyped, argLicit);
       } else if (argLicit) {
