@@ -430,9 +430,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override
   public @NotNull Pattern visitPattern(AyaParser.PatternContext ctx) {
     var ex = ctx.LBRACE() == null;
-    if (ex) {
-      return visitAtomPatterns(ctx.atomPatterns(0), true, null);
-    }
+    if (ex) return visitAtomPatterns(ctx.atomPatterns(0), true, null);
 
     var id = ctx.ID();
     var as = id != null ? new LocalVar(id.getText()) : null;
@@ -448,19 +446,16 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   private Pattern visitAtomPatterns(@NotNull AyaParser.AtomPatternsContext ctx, boolean ex, LocalVar as) {
     var atoms = ctx.atomPattern().stream()
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
-    if (atoms.sizeEquals(1)) {
-      return atoms.first().apply(ex);
-    } else {
-      // TODO: should we throw en error here or in resolver
-      //  if atom.first() is not a bind?
-      return new Pattern.Ctor(
-        sourcePosOf(ctx),
-        ex,
-        ((Pattern.Bind) atoms.first().apply(ex)).bind().name(),
-        atoms.view().drop(1).map(pa -> pa.apply(ex)).collect(ImmutableSeq.factory()),
-        as
-      );
-    }
+    if (atoms.sizeEquals(1)) return atoms.first().apply(ex);
+    // TODO: should we throw en error here or in resolver
+    //  if atom.first() is not a bind?
+    return new Pattern.Ctor(
+      sourcePosOf(ctx),
+      ex,
+      ((Pattern.Bind) atoms.first().apply(ex)).bind().name(),
+      atoms.view().drop(1).map(pa -> pa.apply(ex)).collect(ImmutableSeq.factory()),
+      as
+    );
   }
 
   @Override
