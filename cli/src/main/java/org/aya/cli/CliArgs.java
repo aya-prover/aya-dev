@@ -5,6 +5,8 @@ package org.aya.cli;
 import com.beust.jcommander.Parameter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class CliArgs {
   @Parameter(names = {"--version"}, description = "Display the current version")
   public boolean version = false;
@@ -16,6 +18,8 @@ public class CliArgs {
   public @Nullable TraceFormat traceFormat;
   @Parameter(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")
   public boolean asciiOnly;
+  @Parameter(names = {"--module-path"}, description = "Search for module under this path")
+  public List<String> modulePaths;
   @Parameter(description = "<input-file>")
   public String inputFile;
 

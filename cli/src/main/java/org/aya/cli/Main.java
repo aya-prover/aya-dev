@@ -8,10 +8,12 @@ import org.aya.api.error.Problem;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.ice1000.jimgui.util.JniLoader;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Main {
@@ -41,7 +43,10 @@ public class Main {
     var traceBuilder = cli.traceFormat != null ? new Trace.Builder() : null;
     var reporter = new CliReporter(filePath, sourceCode);
     var compiler = new SingleFileCompiler(reporter, filePath, traceBuilder);
-    var status = compiler.compile(new CompilerFlags(message, cli.interruptedTrace));
+    var status = compiler.compile(new CompilerFlags(
+      message,
+      cli.interruptedTrace,
+      ImmutableSeq.from(cli.modulePaths).map(Path::of)));
     if (traceBuilder != null) switch (cli.traceFormat) {
       case ImGui -> {
         JniLoader.load();

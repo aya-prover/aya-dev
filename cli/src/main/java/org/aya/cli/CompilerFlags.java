@@ -2,12 +2,16 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli;
 
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
+
+import java.nio.file.Path;
 
 public record CompilerFlags(
   @NotNull Message message,
-  boolean interruptedTrace
-) {
+  boolean interruptedTrace,
+  @NotNull ImmutableSeq<Path> modulePaths
+  ) {
   public record Message(
     @NotNull String successNotion,
     @NotNull String failNotion

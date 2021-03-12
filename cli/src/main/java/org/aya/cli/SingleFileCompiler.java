@@ -11,7 +11,10 @@ import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
+import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
+import org.aya.concrete.resolve.module.FileModuleLoader;
+import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
@@ -28,7 +31,9 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
       var context = new EmptyContext(reporter).derive();
-      var shallowResolver = new StmtShallowResolver(new EmptyModuleLoader());
+      var loader = new ModuleListLoader(flags.modulePaths().map(path ->
+        new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
+      var shallowResolver = new StmtShallowResolver(loader);
       program.forEach(s -> s.accept(shallowResolver, context));
       program.forEach(Stmt::resolve);
       program.forEach(s -> {
