@@ -19,7 +19,7 @@ public record BadTypeError(
       actualType.toDoc(),
       Doc.plain("` is not a "),
       expectedType,
-      Doc.plain(", therefore cannot type a lambda such as `"),
+      Doc.plain(", therefore cannot type a term such as `"),
       expr.toDoc(),
       Doc.plain("`")
     );

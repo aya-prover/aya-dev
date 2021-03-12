@@ -117,7 +117,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new LamTerm(resultParam, rec.wellTyped), dt);
   }
 
-  private <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
+  <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
     metaContext.report(new BadTypeError(expr, Doc.plain(expectedText), term));
     throw new TyckInterruptedException();
   }

@@ -5,14 +5,14 @@ package org.aya.tyck.pat;
 import org.aya.api.error.IgnoringReporter;
 import org.aya.api.error.Reporter;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
+import org.aya.core.term.SigmaTerm;
 import org.aya.core.term.Term;
-import org.aya.ref.LocalVar;
+import org.aya.core.term.UnivTerm;
 import org.aya.tyck.ExprTycker;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -92,7 +92,15 @@ public final class PatTycker implements
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
     exprTycker.localCtx.put(tuple.as(), t);
-    throw new UnsupportedOperationException();
+    if (!(t instanceof SigmaTerm sigma)) {
+      // TODO[ice]: requires pretty printing patterns
+      throw new ExprTycker.TyckerException();
+    }
+    // sig.result is a dummy term
+    var sig = new Def.Signature(sigma.params(), UnivTerm.OMEGA);
+    exprTycker.localCtx.put(tuple.as(), sigma);
+    return new Pat.Tuple(tuple.explicit(),
+      visitPatterns(new Ref<>(sig), tuple.patterns()), tuple.as(), sigma);
   }
 
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
