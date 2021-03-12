@@ -3,6 +3,8 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
+import org.aya.core.pat.Pat;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
@@ -29,12 +31,24 @@ public interface Unfolder<P> extends TermFixpoint<P> {
 
   @Override default @NotNull Term visitFnCall(@NotNull AppTerm.FnCall fnCall, P p) {
     var def = fnCall.fnRef().core;
-    // This shouldn't happen
-    assert fnCall.args().sizeEquals(def.telescope().size());
-    assert Term.Param.checkSubst(def.telescope(), fnCall.args());
-    var subst = buildSubst(def.telescope(), fnCall.args());
-    // TODO[vont]: pattern matching body
-    return def.body().getLeftValue().subst(subst).accept(this, p);
+    var args = fnCall.args();
+    // This shouldn't fail
+    assert args.sizeEquals(def.telescope().size());
+    assert Term.Param.checkSubst(def.telescope(), args);
+    var subst = buildSubst(def.telescope(), args);
+    var body = def.body();
+    if (body.isLeft()) return body.getLeftValue().subst(subst).accept(this, p);
+    var clauses = body.getRightValue();
+    for (var clause : clauses) {
+      if (!(clause instanceof Pat.Clause.Match matchy)) continue;
+      var termSubst = PatMatcher.tryBuildSubst(matchy.patterns(), args);
+      if (termSubst != null) {
+        subst.add(termSubst);
+        return matchy.expr().subst(subst);
+      }
+    }
+    // Unfold failed
+    return fnCall;
   }
 
   /**
