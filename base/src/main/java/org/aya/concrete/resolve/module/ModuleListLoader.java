@@ -20,9 +20,9 @@ public final class ModuleListLoader implements ModuleLoader {
   }
 
   @Override
-  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path) {
+  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     for (var loader : loaders) {
-      var mod = loader.load(path);
+      var mod = loader.load(path, recurseLoader);
       if (mod != null) return mod;
     }
     return null;

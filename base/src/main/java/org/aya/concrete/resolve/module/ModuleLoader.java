@@ -12,5 +12,9 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public interface ModuleLoader {
-  @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path);
+  @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader);
+
+  default @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path) {
+    return load(path, this);
+  }
 }

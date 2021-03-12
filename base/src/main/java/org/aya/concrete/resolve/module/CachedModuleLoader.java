@@ -16,15 +16,15 @@ public final class CachedModuleLoader implements ModuleLoader {
   @NotNull MutableMap<@NotNull String, MutableMap<Seq<String>, MutableMap<String, Var>>> cache = new MutableHashMap<>();
   @NotNull ModuleLoader loader;
 
-  CachedModuleLoader(@NotNull ModuleLoader loader) {
+  public CachedModuleLoader(@NotNull ModuleLoader loader) {
     this.loader = loader;
   }
 
   @Override
-  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<String> path) {
+  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<String> path, @NotNull ModuleLoader recurseLoader) {
     var stringifiedPath = path.joinToString("::");
     return cache.getOrElse(stringifiedPath, () -> {
-      var ctx = loader.load(path);
+      var ctx = loader.load(path, recurseLoader);
       cache.put(stringifiedPath, ctx);
       return ctx;
     });

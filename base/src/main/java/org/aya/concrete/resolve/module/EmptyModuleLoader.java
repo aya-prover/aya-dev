@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class EmptyModuleLoader implements ModuleLoader {
   @Override
-  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path) {
+  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     return null;
   }
 }
