@@ -43,19 +43,17 @@ public record Substituter(
       map.replaceAll((var, term) -> term.subst(subst));
     }
 
-    public void addAll(@NotNull TermSubst subst) {
-      map.putAll(subst.map);
-    }
-
-    public void add(@NotNull Var var, @NotNull Term term) {
+    public @NotNull TermSubst add(@NotNull Var var, @NotNull Term term) {
       subst(new TermSubst(var, term));
       map.put(var, term);
+      return this;
     }
 
-    public void add(@NotNull TermSubst subst) {
-      if (subst.map.isEmpty()) return;
+    public @NotNull TermSubst add(@NotNull TermSubst subst) {
+      if (subst.map.isEmpty()) return this;
       subst(subst);
-      addAll(subst);
+      map.putAll(subst.map);
+      return this;
     }
 
     public void clear() {
