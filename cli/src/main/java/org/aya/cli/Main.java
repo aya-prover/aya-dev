@@ -33,14 +33,15 @@ public class Main {
     }
 
     var inputFile = cli.inputFile;
-    var flags = cli.asciiOnly
-      ? CompilerFlags.ASCII_FLAGS
-      : CompilerFlags.DEFAULT_FLAGS;
+    var message = cli.asciiOnly
+      ? CompilerFlags.Message.ASCII
+      : CompilerFlags.Message.EMOJI;
     var filePath = Paths.get(inputFile);
     var sourceCode = Problem.readSourceCode(filePath);
     var traceBuilder = cli.traceFormat != null ? new Trace.Builder() : null;
-    var compiler = new SingleFileCompiler(new CliReporter(filePath, sourceCode), filePath, traceBuilder);
-    var status = compiler.compile(flags);
+    var reporter = new CliReporter(filePath, sourceCode);
+    var compiler = new SingleFileCompiler(reporter, filePath, traceBuilder);
+    var status = compiler.compile(new CompilerFlags(message, cli.interruptedTrace));
     if (traceBuilder != null) switch (cli.traceFormat) {
       case ImGui -> {
         JniLoader.load();

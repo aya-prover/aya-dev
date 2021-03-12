@@ -44,12 +44,13 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     } catch (InterruptException e) {
       // TODO[ice]: proper error handling
       reporter.reportString(e.stage().name() + " interrupted due to errors.");
+      if (flags.interruptedTrace()) e.printStackTrace();
     }
     if (reporter.isEmpty()) {
-      reporter.reportString(flags.successNotion());
+      reporter.reportString(flags.message().successNotion());
       return 0;
     } else {
-      reporter.reportString(flags.failNotion());
+      reporter.reportString(flags.message().failNotion());
       return -1;
     }
   }

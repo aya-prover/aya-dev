@@ -10,6 +10,8 @@ public class CliArgs {
   public boolean version = false;
   @Parameter(names = {"--help", "-h"}, description = "Show this message", help = true)
   public boolean help = false;
+  @Parameter(names = {"--interrupted-trace"}, hidden = true)
+  public boolean interruptedTrace = false;
   @Parameter(names = {"--trace"}, description = "Print type checking traces")
   public @Nullable TraceFormat traceFormat;
   @Parameter(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")

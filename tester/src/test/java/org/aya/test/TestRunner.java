@@ -53,7 +53,7 @@ public class TestRunner {
 
     try {
       new SingleFileCompiler(reporter, file, null)
-        .compile(CompilerFlags.ASCII_FLAGS);
+        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false));
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }

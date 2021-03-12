@@ -5,9 +5,14 @@ package org.aya.cli;
 import org.jetbrains.annotations.NotNull;
 
 public record CompilerFlags(
-  @NotNull String successNotion,
-  @NotNull String failNotion
+  @NotNull Message message,
+  boolean interruptedTrace
 ) {
-  public static final CompilerFlags DEFAULT_FLAGS = new CompilerFlags("\uD83D\uDC02\uD83C\uDF7A", "\uD83D\uDD28");
-  public static final CompilerFlags ASCII_FLAGS = new CompilerFlags("That looks right!", "What are you doing?");
+  public record Message(
+    @NotNull String successNotion,
+    @NotNull String failNotion
+  ) {
+    public static final Message EMOJI = new Message("\uD83D\uDC02\uD83C\uDF7A", "\uD83D\uDD28");
+    public static final Message ASCII = new Message("That looks right!", "What are you doing?");
+  }
 }

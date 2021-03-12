@@ -52,7 +52,7 @@ public record AyaBot(@NotNull TelegramBot bot) implements UpdatesListener {
       var reporter = new CountingReporter(new StreamReporter(
         file, txt, new PrintStream(hookOut)));
       var e = new SingleFileCompiler(reporter, file, null)
-        .compile(CompilerFlags.ASCII_FLAGS);
+        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false));
       return hookOut.toString(CHARSET) + "\n\n Exited with " + e;
     } catch (IOException e) {
       return "error reading file " + file.toAbsolutePath();
