@@ -15,7 +15,6 @@ import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -239,10 +238,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public @NotNull Arg<Expr> visitArgument(AyaParser.ArgumentContext ctx) {
     var atom = ctx.atom();
     if (atom != null) return Arg.explicit(visitAtom(atom));
-    if (ctx.LBRACE() != null) return Arg.implicit(new Expr.TupExpr(sourcePosOf(ctx),
-      ctx.expr().stream()
+    if (ctx.LBRACE() != null) {
+      var items = ctx.expr().stream()
         .map(this::visitExpr)
-        .collect(ImmutableSeq.factory())));
+        .collect(ImmutableSeq.factory());
+      if (items.sizeEquals(1)) return Arg.implicit(items.first());
+      return Arg.implicit(new Expr.TupExpr(sourcePosOf(ctx), items));
+    }
     // TODO: . idFix
     throw new UnsupportedOperationException();
   }
@@ -439,7 +441,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .collect(ImmutableSeq.factory());
 
     return subs.sizeEquals(1)
-      ? subs.get(0)
+      ? subs.first()
       : new Pattern.Tuple(sourcePosOf(ctx), false, subs, as);
   }
 
