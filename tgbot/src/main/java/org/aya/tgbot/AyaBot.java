@@ -10,6 +10,7 @@ import org.aya.api.error.CountingReporter;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -52,7 +53,7 @@ public record AyaBot(@NotNull TelegramBot bot) implements UpdatesListener {
       var reporter = new CountingReporter(new StreamReporter(
         file, txt, new PrintStream(hookOut)));
       var e = new SingleFileCompiler(reporter, file, null)
-        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false));
+        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false, ImmutableSeq.of()));
       return hookOut.toString(CHARSET) + "\n\n Exited with " + e;
     } catch (IOException e) {
       return "error reading file " + file.toAbsolutePath();

@@ -8,6 +8,7 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,7 @@ public class TestRunner {
 
     try {
       new SingleFileCompiler(reporter, file, null)
-        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false));
+        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false, ImmutableSeq.of()));
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }
