@@ -3,13 +3,19 @@
 package org.aya.core;
 
 import org.aya.api.util.NormalizeMode;
+import org.aya.core.def.FnDef;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.LamTerm;
 import org.aya.core.term.RefTerm;
+import org.aya.core.term.Term;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
+import org.aya.tyck.TyckDeclTest;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
+import java.util.function.IntFunction;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -71,5 +77,30 @@ public class NormalizeTest extends LispTestCase {
     var norm = term.normalize(NormalizeMode.WHNF);
     assertNotEquals(term, norm);
     assertEquals(new RefTerm(vars.get("kiva")), norm);
+  }
+
+  @Test
+  public void unfoldPatterns() {
+    var defs = TyckDeclTest.successTyckDecls("""
+      \\open \\data Nat : \\Set | zero | suc Nat
+      \\def tracy (a, b : Nat) : Nat
+       | zero, a => a
+       | a, zero => a
+       | suc a, b => suc (tracy a b)
+       | a, suc b => suc (tracy a b)
+      \\def xyr : Nat => tracy zero (suc zero)
+      \\def kiva : Nat => tracy (suc zero) zero
+      \\def overlap (a : Nat) : Nat => tracy a zero
+      \\def overlap2 (a : Nat) : Nat => tracy zero a""");
+    IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i))
+      .body().getLeftValue().normalize(NormalizeMode.NF);
+    assertTrue(normalizer.apply(2) instanceof AppTerm.ConCall conCall
+      && Objects.equals(conCall.conHead().name(), "suc"));
+    assertTrue(normalizer.apply(3) instanceof AppTerm.ConCall conCall
+      && Objects.equals(conCall.conHead().name(), "suc"));
+    assertTrue(normalizer.apply(4) instanceof RefTerm ref
+      && Objects.equals(ref.var().name(), "a"));
+    assertTrue(normalizer.apply(5) instanceof RefTerm ref
+      && Objects.equals(ref.var().name(), "a"));
   }
 }

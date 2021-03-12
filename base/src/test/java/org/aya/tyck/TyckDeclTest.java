@@ -3,7 +3,6 @@
 package org.aya.tyck;
 
 import org.aya.api.ref.Var;
-import org.aya.concrete.Decl;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.Stmt;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,7 +55,7 @@ public class TyckDeclTest {
   }
 
   @Test
-  public void ctorPatScoping(){
+  public void ctorPatScoping() {
     var defs = successTyckDecls("""
       \\data Nat : \\Set | zero | suc Nat
       \\def xyr (zero : Nat) : Nat
@@ -73,16 +73,15 @@ public class TyckDeclTest {
     assertEquals(zeroCtor.ref(), ((Pat.Ctor) zeroToZero.patterns().get(0)).ref());
   }
 
-  private @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
+  public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
     var decls = ParseTest.INSTANCE
-      .visitProgram(AyaParsing.parser(text).program())
-      .map(i -> (Decl) i);
+      .visitProgram(AyaParsing.parser(text).program());
     var ssr = new StmtShallowResolver(new EmptyModuleLoader());
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     decls.forEach(d -> d.accept(ssr, ctx));
     decls.forEach(Stmt::resolve);
     return decls
-      .map(i -> (Signatured) i)
-      .map(i -> i.tyck(ThrowingReporter.INSTANCE, null));
+      .map(i -> i instanceof Signatured s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
+      .filter(Objects::nonNull);
   }
 }

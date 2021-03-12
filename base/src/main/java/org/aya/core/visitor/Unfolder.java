@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public interface Unfolder<P> extends TermFixpoint<P> {
   @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
     @NotNull SeqLike<Term.@NotNull Param> self,
-    @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args
+    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
   ) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
     self.forEachIndexed((i, param) -> subst.add(param.ref(), args.get(i).term()));
