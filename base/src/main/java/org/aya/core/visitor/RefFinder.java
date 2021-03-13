@@ -20,8 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * @see RefFinder#HEADER_AND_BODY
  */
 public record RefFinder(boolean withBody) implements
-  Def.Visitor<@NotNull Buffer<Def>, Unit>,
-  Pat.Clause.Visitor<@NotNull Buffer<Def>, Unit> {
+  Def.Visitor<@NotNull Buffer<Def>, Unit> {
   private static final class TermRefFinder implements VarConsumer<@NotNull Buffer<Def>> {
     public static final @NotNull TermRefFinder INSTANCE = new TermRefFinder();
 
@@ -39,7 +38,7 @@ public record RefFinder(boolean withBody) implements
     if (withBody) fn.body().map(
       term -> term.accept(TermRefFinder.INSTANCE, references),
       clauses -> {
-        clauses.forEach(clause -> clause.accept(this, references));
+        clauses.forEach(clause -> matchy(clause, references));
         return Unit.unit();
       });
     return Unit.unit();
@@ -47,7 +46,7 @@ public record RefFinder(boolean withBody) implements
 
   @Override public Unit visitCtor(@NotNull DataDef.Ctor def, @NotNull Buffer<Def> references) {
     tele(references, def.conTelescope());
-    if (withBody) for (var clause : def.clauses()) clause.accept(this, references);
+    if (withBody) for (var clause : def.clauses()) matchy(clause, references);
     return Unit.unit();
   }
 
@@ -59,13 +58,8 @@ public record RefFinder(boolean withBody) implements
     return Unit.unit();
   }
 
-  @Override public Unit visitMatch(Pat.Clause.@NotNull Match match, @NotNull Buffer<Def> defs) {
+  public void matchy(Pat.@NotNull Clause match, @NotNull Buffer<Def> defs) {
     match.expr().accept(TermRefFinder.INSTANCE, defs);
-    return Unit.unit();
-  }
-
-  @Override public Unit visitAbsurd(@NotNull Buffer<Def> defs) {
-    return Unit.unit();
   }
 
   private void tele(@NotNull Buffer<Def> references, @NotNull SeqLike<Term.Param> telescope) {

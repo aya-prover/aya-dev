@@ -8,6 +8,7 @@ import org.aya.core.def.DataDef;
 import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,39 +65,23 @@ public sealed interface Pat {
   }
 
   /**
-   * @author kiva
+   * @author kiva, ice1000
    */
-  sealed interface Clause {
-    @NotNull ImmutableSeq<Pat> patterns();
-    <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-
-    interface Visitor<P, R> {
-      R visitMatch(@NotNull Match match, P p);
-      R visitAbsurd(P p);
+  record Clause(
+    @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull Term expr
+  ) {
+    public static @Nullable Clause fromProto(@NotNull PrototypeClause clause) {
+      return clause.expr.map(term -> new Clause(clause.patterns, term)).getOrNull();
     }
+  }
 
-    record Match(
-      @NotNull ImmutableSeq<Pat> patterns,
-      @NotNull Term expr
-    ) implements Clause {
-      @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-        return visitor.visitMatch(this, p);
-      }
-    }
-
-    final class Absurd implements Clause {
-      public static final @NotNull Absurd INSTANCE = new Absurd();
-
-      @Override public @NotNull ImmutableSeq<Pat> patterns() {
-        throw new UnsupportedOperationException("TODO");
-      }
-
-      private Absurd() {
-      }
-
-      @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-        return visitor.visitAbsurd(p);
-      }
-    }
+  /**
+   * @author ice1000
+   */
+  record PrototypeClause(
+    @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull Option<Term> expr
+  ) {
   }
 }

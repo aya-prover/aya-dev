@@ -45,7 +45,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
         var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
         ctor.telescope = ctorLocal._1;
         ctor.clauses = ctor.clauses
-          .map(clause -> clause.accept(PatResolver.INSTANCE, ctorLocal._2));
+          .map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
       }
       return Unit.unit();
     }, clauses -> {
@@ -62,7 +62,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     decl.result = decl.result.resolve(local._2);
     decl.body = decl.body.map(
       expr -> expr.resolve(local._2),
-      pats -> pats.map(clause -> clause.accept(PatResolver.INSTANCE, local._2)));
+      pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2)));
     return Unit.unit();
   }
 }

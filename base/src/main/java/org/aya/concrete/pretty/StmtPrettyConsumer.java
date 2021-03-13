@@ -120,7 +120,7 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
     var clausesDoc = Doc.cat(
       Doc.plain("| "), // join will only insert "|" between clauses
       Doc.join(Doc.plain("| "), clauses.stream()
-        .map(c -> c.accept(PatternPrettyConsumer.INSTANCE, Unit.unit()))));
+        .map(PatternPrettyConsumer.INSTANCE::matchy)));
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
   }
 

@@ -15,28 +15,22 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public final class PatResolver implements
-  Pattern.Clause.Visitor<Context, Pattern.Clause>,
-  Pattern.Visitor<Context, Tuple2<Context, Pattern>> {
+public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Context, Pattern>> {
   public static final @NotNull PatResolver INSTANCE = new PatResolver();
 
   private PatResolver() {
   }
 
-  @Override public Pattern.Clause visitMatch(Pattern.Clause.@NotNull Match match, Context context) {
+  public Pattern.Clause matchy(Pattern.@NotNull Clause match, Context context) {
     var ctx = new Ref<>(context);
     var pats = match.patterns().map(pat -> subpatterns(ctx, pat));
-    return new Pattern.Clause.Match(pats, match.expr().resolve(ctx.value));
+    return new Pattern.Clause(pats, match.expr().map(e -> e.resolve(ctx.value)));
   }
 
   private Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
     var res = pat.accept(this, ctx.value);
     ctx.value = res._1;
     return res._2;
-  }
-
-  @Override public Pattern.Clause visitAbsurd(Pattern.Clause.@NotNull Absurd absurd, Context context) {
-    return absurd;
   }
 
   private Context bindAs(LocalVar as, Context ctx, SourcePos sourcePos) {

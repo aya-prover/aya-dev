@@ -63,8 +63,10 @@ public record StmtTycker(
     ctor.signature = signature;
     var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses
-      .map(c -> c.accept(patTycker, signature)._2);
-    return new DataDef.Ctor(dataRef, ctor.ref, tele, elabClauses, ctor.coerce);
+      .map(c -> patTycker.visitMatch(c, signature)._2);
+    // TODO[ice]: coverage check
+    var clauses = elabClauses.map(Pat.Clause::fromProto).filterNotNull();
+    return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
   }
 
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
@@ -94,7 +96,8 @@ public record StmtTycker(
     var what = FP.distR(decl.body.map(
       left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
       right -> patTycker.elabClause(right, signature)));
-    return new FnDef(decl.ref, resultTele, what._1, what._2);
+    var body = what._2.mapRight(cs -> cs.map(Pat.Clause::fromProto).filterNotNull());
+    return new FnDef(decl.ref, resultTele, what._1, body);
   }
 
   private @NotNull ImmutableSeq<Term.Param>

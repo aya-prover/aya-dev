@@ -6,12 +6,10 @@ import org.aya.concrete.Pattern;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public class PatternPrettyConsumer implements
-  Pattern.Visitor<Boolean, Doc>,
-  Pattern.Clause.Visitor<Unit, Doc> {
+  Pattern.Visitor<Boolean, Doc> {
   public static final PatternPrettyConsumer INSTANCE = new PatternPrettyConsumer();
 
   @Override
@@ -66,15 +64,9 @@ public class PatternPrettyConsumer implements
       .reduce(Doc.empty(), Doc::hsep);
   }
 
-  @Override
-  public Doc visitMatch(Pattern.Clause.@NotNull Match match, Unit unit) {
-    return Doc.cat(visitMaybeCtorPatterns(match.patterns(), false),
-      Doc.plain(" => "),
-      match.expr().toDoc());
-  }
-
-  @Override
-  public Doc visitAbsurd(Pattern.Clause.@NotNull Absurd absurd, Unit unit) {
-    return Doc.plain(Constants.ANONYMOUS_PREFIX);
+  public Doc matchy(Pattern.@NotNull Clause match) {
+    var doc = visitMaybeCtorPatterns(match.patterns(), false);
+    return match.expr().map(e -> Doc.cat(doc, Doc.plain(" => "), e.toDoc()))
+      .getOrDefault(Doc.cat(doc, Doc.plain(" \\impossible")));
   }
 }

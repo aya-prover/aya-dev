@@ -66,7 +66,7 @@ public class TyckDeclTest {
     var ctors = nat.ctors();
     assertEquals(2, ctors.size());
     var clauses = xyr.body().getRightValue();
-    var zeroToZero = ((Pat.Clause.Match) clauses.get(0));
+    var zeroToZero = ((Pat.Clause) clauses.get(0));
     var zeroCtor = ctors.get(0);
     assertEquals(0, zeroCtor.conTelescope().size());
     var zeroParam = xyr.telescope().get(0);

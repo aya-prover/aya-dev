@@ -8,6 +8,7 @@ import org.aya.concrete.pretty.PatternPrettyConsumer;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Option;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,29 +91,11 @@ public sealed interface Pattern {
   }
 
   /**
-   * @author kiva
+   * @author kiva, ice1000
    */
-  sealed interface Clause {
-    <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-
-    interface Visitor<P, R> {
-      R visitMatch(@NotNull Match match, P p);
-      R visitAbsurd(@NotNull Absurd absurd, P p);
-    }
-
-    record Match(
-      @NotNull ImmutableSeq<Pattern> patterns,
-      @NotNull Expr expr
-    ) implements Clause {
-      @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-        return visitor.visitMatch(this, p);
-      }
-    }
-
-    record Absurd() implements Clause {
-      @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-        return visitor.visitAbsurd(this, p);
-      }
-    }
+  record Clause(
+    @NotNull ImmutableSeq<Pattern> patterns,
+    @NotNull Option<Expr> expr
+  ) {
   }
 }

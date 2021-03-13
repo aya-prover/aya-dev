@@ -32,9 +32,7 @@ import java.util.Objects;
 /**
  * @author ice1000
  */
-public final class PatTycker implements
-  Pattern.Clause.Visitor<Def.Signature, Tuple2<@NotNull Term, Pat.Clause>>,
-  Pattern.Visitor<Term, Pat> {
+public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   private final @NotNull ExprTycker exprTycker;
   private final @NotNull ExprRefSubst subst;
 
@@ -43,27 +41,28 @@ public final class PatTycker implements
     subst = new ExprRefSubst(exprTycker.metaContext.reporter(), MutableHashMap.of(), MutableHashSet.of());
   }
 
-  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.Clause>>
+  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
   elabClause(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, Ref<Def.@NotNull Signature> signature) {
     var res = clauses.map(clause -> {
-      var elabClause = clause.accept(this, signature.value);
+      var elabClause = visitMatch(clause, signature.value);
       signature.value = signature.value.mapTerm(elabClause._1);
       return elabClause._2;
     });
     return Tuple.of(signature.value.result(), res);
   }
 
-  @Override
-  public Tuple2<@NotNull Term, Pat.Clause> visitMatch(Pattern.Clause.@NotNull Match match, Def.Signature signature) {
+  public Tuple2<@NotNull Term, Pat.PrototypeClause> visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.clear();
     var recover = MutableHashMap.from(exprTycker.localCtx);
     var patterns = visitPatterns(sig, match.patterns());
-    var expr = match.expr().accept(subst, Unit.unit());
-    var result = exprTycker.checkExpr(expr, sig.value.result());
+    var result = match.expr()
+      .map(e -> e.accept(subst, Unit.unit()))
+      .map(e -> exprTycker.checkExpr(e, sig.value.result()));
     exprTycker.localCtx.clear();
     exprTycker.localCtx.putAll(recover);
-    return Tuple.of(result.type(), new Pat.Clause.Match(patterns, result.wellTyped()));
+    var type = result.map(ExprTycker.Result::type).getOrDefault(sig.value.result());
+    return Tuple.of(type, new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped)));
   }
 
   private @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
@@ -84,11 +83,6 @@ public final class PatTycker implements
       results.append(res);
     });
     return results.toImmutableSeq();
-  }
-
-  @Override public Tuple2<@NotNull Term, Pat.Clause>
-  visitAbsurd(Pattern.Clause.@NotNull Absurd absurd, Def.Signature signature) {
-    return Tuple.of(signature.result(), Pat.Clause.Absurd.INSTANCE);
   }
 
   @Override public Pat visitCalmFace(Pattern.@NotNull CalmFace face, Term t) {

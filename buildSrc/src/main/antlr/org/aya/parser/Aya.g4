@@ -94,7 +94,7 @@ argument : atom
 
 clauses : LBRACE clause? ('|' clause)* '}' ;
 clause : patterns IMPLIES expr
-       | ABSURD;
+       | patterns ABSURD;
 
 patterns : pattern (',' pattern)* ;
 pattern : atomPatterns

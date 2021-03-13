@@ -3,7 +3,6 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
-import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
@@ -39,8 +38,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst).accept(this, p);
     var clauses = body.getRightValue();
-    for (var clause : clauses) {
-      if (!(clause instanceof Pat.Clause.Match matchy)) continue;
+    for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubst(matchy.patterns(), args);
       if (termSubst != null) {
         subst.add(termSubst);

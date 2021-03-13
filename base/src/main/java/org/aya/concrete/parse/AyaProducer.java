@@ -22,6 +22,7 @@ import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
+import org.glavo.kala.control.Option;
 import org.glavo.kala.function.BooleanFunction;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -500,11 +501,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Pattern.Clause visitClause(AyaParser.ClauseContext ctx) {
-    if (ctx.ABSURD() != null) return new Pattern.Clause.Absurd();
-    return new Pattern.Clause.Match(
-      visitPatterns(ctx.patterns()),
-      visitExpr(ctx.expr())
-    );
+    return new Pattern.Clause(visitPatterns(ctx.patterns()),
+      Option.of(ctx.expr()).map(this::visitExpr));
   }
 
   public @NotNull Decl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
