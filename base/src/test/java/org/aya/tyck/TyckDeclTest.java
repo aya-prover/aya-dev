@@ -63,10 +63,11 @@ public class TyckDeclTest {
         | suc n => zero""");
     var nat = (DataDef) defs.get(0);
     var xyr = (FnDef) defs.get(1);
-    assertEquals(2, nat.ctors().size());
+    var ctors = nat.ctors();
+    assertEquals(2, ctors.size());
     var clauses = xyr.body().getRightValue();
     var zeroToZero = ((Pat.Clause.Match) clauses.get(0));
-    var zeroCtor = nat.ctors().get(0);
+    var zeroCtor = ctors.get(0);
     assertEquals(0, zeroCtor.conTelescope().size());
     var zeroParam = xyr.telescope().get(0);
     assertEquals(zeroToZero.expr(), new RefTerm(zeroParam.ref()));

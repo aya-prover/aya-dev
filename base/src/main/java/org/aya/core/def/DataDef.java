@@ -7,11 +7,10 @@ import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +24,23 @@ public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
-  @NotNull Buffer<Ctor> ctors,
-  @NotNull Map<Pat, Ctor> clauses // TODO: mix clauses and ctors into one field?
+  @NotNull ImmutableSeq<Tuple2<Option<Pat>, Ctor>> body
   // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
     ref.core = this;
+  }
+
+  public @NotNull SeqView<@NotNull Ctor> ctors() {
+    return body.view()
+      .filter(t -> t._1.isEmpty())
+      .map(t -> t._2);
+  }
+
+  public @NotNull SeqView<@NotNull Tuple2<@NotNull Pat, @NotNull Ctor>> clauses() {
+    return body.view()
+      .filter(t -> t._1.isDefined())
+      .map(t -> Tuple.of(t._1.get(), t._2));
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
