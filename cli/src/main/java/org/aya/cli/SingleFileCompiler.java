@@ -5,17 +5,13 @@ package org.aya.cli;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.util.InterruptException;
-import org.aya.concrete.Signatured;
-import org.aya.concrete.Stmt;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
-import org.aya.concrete.resolve.module.EmptyModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
-import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +26,9 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var parser = AyaParsing.parser(filePath, reporter);
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
-      var context = new EmptyContext(reporter).derive();
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
-      var shallowResolver = new StmtShallowResolver(loader);
-      program.forEach(s -> s.accept(shallowResolver, context));
-      program.forEach(Stmt::resolve);
-      program.forEach(s -> {
-        if (s instanceof Signatured decl) decl.tyck(reporter, builder);
-      });
+      FileModuleLoader.tyckModule(loader, program, reporter, builder);
     } catch (ExprTycker.TyckerException | Context.ContextException e) {
       e.printStackTrace();
       e.printHint();
