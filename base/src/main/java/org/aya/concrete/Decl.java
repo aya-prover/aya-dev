@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.Objects;
 
 /**
  * concrete definition, corresponding to {@link Def}.
@@ -95,17 +94,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.ref = DefVar.concrete(this, name);
     }
 
-    @Override public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      DataCtor dataCtor = (DataCtor) o;
-      return coerce == dataCtor.coerce && telescope.equals(dataCtor.telescope) && clauses.equals(dataCtor.clauses);
-    }
-
-    @Override public int hashCode() {
-      return Objects.hash(telescope, clauses, coerce);
-    }
-
     @Override protected <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);
     }
@@ -156,20 +144,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return this.ref;
     }
 
-    @Override public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof DataDecl dataDecl)) return false;
-      return sourcePos.equals(dataDecl.sourcePos) &&
-        telescope.equals(dataDecl.telescope) &&
-        result.equals(dataDecl.result) &&
-        body.equals(dataDecl.body) &&
-        abuseBlock.equals(dataDecl.abuseBlock);
-    }
-
-    @Override public int hashCode() {
-      return Objects.hash(sourcePos, telescope, result, body, abuseBlock);
-    }
-
     public static record Clauses(@NotNull ImmutableSeq<Tuple2<Pattern, DataCtor>> clauses) {
     }
 
@@ -215,22 +189,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
     @Override public @NotNull DefVar<FnDef, FnDecl> ref() {
       return this.ref;
-    }
-
-    @Override public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof FnDecl fnDecl)) return false;
-      return sourcePos.equals(fnDecl.sourcePos) &&
-        modifiers.equals(fnDecl.modifiers) &&
-        assoc == fnDecl.assoc &&
-        telescope.equals(fnDecl.telescope) &&
-        Objects.equals(result, fnDecl.result) &&
-        body.equals(fnDecl.body) &&
-        abuseBlock.equals(fnDecl.abuseBlock);
-    }
-
-    @Override public int hashCode() {
-      return Objects.hash(sourcePos, modifiers, assoc, telescope, result, body, abuseBlock);
     }
   }
 }

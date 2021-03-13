@@ -7,13 +7,9 @@ import org.aya.api.error.SourcePos;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.generic.Arg;
-import org.aya.generic.Modifier;
-import org.aya.ref.LocalVar;
+import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.immutable.ImmutableVector;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -21,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import java.util.EnumSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,12 +55,9 @@ public class ParseTest {
     parseImport("\\import A");
     parseImport("\\import A.B");
     parseImport("\\import A.B \\using ()");
-    parseTo("\\open Boy.Next.Door \\using (door) \\using (next)", ImmutableSeq.of(new Stmt.OpenStmt(
-      SourcePos.NONE,
-      Stmt.Accessibility.Private,
-      ImmutableSeq.of("Boy", "Next", "Door"),
-      new Stmt.OpenStmt.UseHide(ImmutableVector.of("door", "next"), Stmt.OpenStmt.UseHide.Strategy.Using)
-    )));
+    parseAndPretty("\\open Boy.Next.Door \\using (door) \\using (next)", """
+      \\private \\open Boy::Next::Door \\using (door, next)
+    """);
   }
 
   @Test
@@ -99,48 +90,15 @@ public class ParseTest {
     parseData("\\data Unit \\abusing {}");
     parseData("\\data Unit : A \\abusing {}");
     parseData("\\data T {A : \\114-Type514} : A \\abusing {}");
-    final var A = new Expr.Param(SourcePos.NONE, new LocalVar("A"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
-    final var a = new Expr.Param(SourcePos.NONE, new LocalVar("a"), new Expr.UnresolvedExpr(SourcePos.NONE, "A"), true);
-    parseTo("\\def id {A : \\114-Type514} (a : A) : A => a", ImmutableSeq.of(new Decl.FnDecl(
-      SourcePos.NONE,
-      Stmt.Accessibility.Public,
-      EnumSet.noneOf(Modifier.class),
-      null,
-      "id",
-      ImmutableSeq.of(A, a),
-      new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
-      Either.left(new Expr.UnresolvedExpr(SourcePos.NONE, "a")),
-      ImmutableSeq.of()
-    )));
-    final var b = new Expr.Param(SourcePos.NONE, new LocalVar("B"), new Expr.UnivExpr(SourcePos.NONE, 514, 114), false);
-    parseTo("\\def xx {A, B : \\114-Type514} (a : A) : A => a", ImmutableSeq.of(new Decl.FnDecl(
-      SourcePos.NONE,
-      Stmt.Accessibility.Public,
-      EnumSet.noneOf(Modifier.class),
-      null,
-      "xx",
-      ImmutableSeq.of(A, b, a),
-      new Expr.UnresolvedExpr(SourcePos.NONE, "A"),
-      Either.left(new Expr.UnresolvedExpr(SourcePos.NONE, "a")),
-      ImmutableSeq.of()
-    )));
-    parseTo("\\data Nat | Z | S Nat", ImmutableSeq.of(new Decl.DataDecl(
-      SourcePos.NONE,
-      Stmt.Accessibility.Public,
-      "Nat",
-      ImmutableSeq.of(),
-      new Expr.HoleExpr(SourcePos.NONE, null, null),
-      Either.left(new Decl.DataDecl.Ctors(Buffer.of(
-        new Decl.DataCtor(SourcePos.NONE, "Z", ImmutableSeq.of(), ImmutableSeq.of(), false),
-        new Decl.DataCtor(SourcePos.NONE, "S",
-          ImmutableSeq.of(
-            new Expr.Param(SourcePos.NONE, new LocalVar("_"), new Expr.UnresolvedExpr(SourcePos.NONE, "Nat"), true)
-          ),
-          ImmutableSeq.of(), false
-        )
-      ))),
-      ImmutableSeq.of()
-    )));
+    parseAndPretty("\\def id {A : \\114-Type514} (a : A) : A => a", """
+      \\public \\def id {A : \\114-Type514} (a : A) : A => a
+    """);
+    parseAndPretty("\\def xx {A, B : \\114-Type514} (a : A) : A => a", """
+      \\public \\def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
+    """);
+    parseAndPretty("\\data Nat | Z | S Nat", """
+      \\public \\data Nat | Z | S (_ : Nat)
+    """);
   }
 
   @Test
@@ -199,8 +157,12 @@ public class ParseTest {
     assertTrue(parseExpr(code) instanceof Expr.UnivExpr);
   }
 
-  private void parseTo(@NotNull @NonNls @Language("TEXT") String code, ImmutableSeq<Stmt> stmt) {
-    assertEquals(stmt, parseStmt(code));
+  private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
+    assertEquals(pretty.trim(), parseStmt(code).stream()
+      .map(Stmt::toDoc)
+      .reduce(Doc.empty(), Doc::vcat)
+      .renderWithPageWidth(114514)
+      .trim());
   }
 
   private void parseTo(@NotNull @NonNls @Language("TEXT") String code, Expr expr) {
