@@ -172,6 +172,18 @@ public class ParseTest {
       "\\public \\def im-unary-tuples-are-ignored | {a} => a"
     );
     parseAndPretty(
+      "\\def we-dont-have-unary-tuples | ((((((((a)))))))) => (a)",
+      "\\public \\def we-dont-have-unary-tuples | a => a"
+    );
+    parseAndPretty(
+      "\\def we-dont-have-unary-tuples | {{{{{{{{{{a}}}}}}}}}} => a",
+      "\\public \\def we-dont-have-unary-tuples | {a} => a"
+    );
+    parseAndPretty(
+      "\\def we-dont-have-unary-tuples | ((((((((a)))), b)))) => (a)",
+      "\\public \\def we-dont-have-unary-tuples | (a, b) => a"
+    );
+    parseAndPretty(
       "\\def tuples | (a,b,c) => a",
       "\\public \\def tuples | (a, b, c) => a"
     );
@@ -192,12 +204,12 @@ public class ParseTest {
       "\\public \\def im-in-ctor | suc {N} a => N"
     );
     parseAndPretty(
-      "\\def im-in-ctor-nested | suc {N} (suc {M} a) b => N",
-      "\\public \\def im-in-ctor-nested | suc {N} (suc {M} a) b => N"
+      "\\def im-in-ctor-nested | suc {N} (suc {M} a) => a",
+      "\\public \\def im-in-ctor-nested | suc {N} (suc {M} a) => a"
     );
     parseAndPretty(
-      "\\def final : Nat | (suc {m} {suc x} a, fuck) \\as Outer => a",
-      "\\public \\def final : Nat | (suc {m} {suc x} a, fuck) \\as Outer => a"
+      "\\def final : Nat | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a",
+      "\\public \\def final : Nat | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a"
     );
   }
 
