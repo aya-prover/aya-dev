@@ -13,7 +13,6 @@ import org.glavo.kala.tuple.Unit;
 import org.ice1000.jimgui.util.JniLoader;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Main {
@@ -46,7 +45,7 @@ public class Main {
     var status = compiler.compile(new CompilerFlags(
       message,
       cli.interruptedTrace,
-      ImmutableSeq.from(cli.modulePaths).map(Path::of)));
+      ImmutableSeq.from(cli.modulePaths).map(Paths::get)));
     if (traceBuilder != null) switch (cli.traceFormat) {
       case ImGui -> {
         JniLoader.load();
