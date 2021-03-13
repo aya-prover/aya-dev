@@ -47,7 +47,7 @@ public sealed interface AppTerm extends Term {
 
   record FnCall(
     @NotNull DefVar<FnDef, Decl.FnDecl> fnRef,
-    @NotNull SeqLike<Arg<Term>> args
+    @NotNull SeqLike<Arg<@NotNull Term>> args
   ) implements AppTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFnCall(this, p);
@@ -70,7 +70,7 @@ public sealed interface AppTerm extends Term {
 
   record DataCall(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-    @NotNull SeqLike<Arg<Term>> args
+    @NotNull SeqLike<Arg<@NotNull Term>> args
   ) implements AppTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitDataCall(this, p);
@@ -125,7 +125,7 @@ public sealed interface AppTerm extends Term {
 
   record Apply(
     @NotNull Term fn,
-    @NotNull Arg<Term> arg
+    @NotNull Arg<@NotNull Term> arg
   ) implements AppTerm {
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
       if (fn() instanceof LamTerm) return Decision.NO;
@@ -141,7 +141,7 @@ public sealed interface AppTerm extends Term {
     }
 
     @Contract(" -> new")
-    @Override public @NotNull Seq<@NotNull Arg<? extends Term>> args() {
+    @Override public @NotNull Seq<Arg<@NotNull Term>> args() {
       return Seq.of(arg());
     }
   }

@@ -7,19 +7,18 @@ import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
+public class TermPrettyConsumer implements Term.Visitor<Boolean, Doc> {
   public static final TermPrettyConsumer INSTANCE = new TermPrettyConsumer();
 
   @Override
-  public Doc visitRef(@NotNull RefTerm term, Unit unit) {
+  public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
     return Doc.plain(term.var().name());
   }
 
   @Override
-  public Doc visitLam(@NotNull LamTerm term, Unit unit) {
+  public Doc visitLam(@NotNull LamTerm term, Boolean nestedCall) {
     return Doc.cat(
       Doc.plain("\\lam"),
       Doc.plain(" "),
@@ -30,7 +29,7 @@ public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
   }
 
   @Override
-  public Doc visitPi(@NotNull PiTerm term, Unit unit) {
+  public Doc visitPi(@NotNull PiTerm term, Boolean nestedCall) {
     // TODO[kiva]: term.co
     return Doc.cat(
       Doc.plain("\\Pi"),
@@ -42,7 +41,7 @@ public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
   }
 
   @Override
-  public Doc visitSigma(@NotNull SigmaTerm term, Unit unit) {
+  public Doc visitSigma(@NotNull SigmaTerm term, Boolean nestedCall) {
     return Doc.cat(
       Doc.plain("\\Sig"),
       Doc.plain(" "),
@@ -53,32 +52,32 @@ public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
   }
 
   @Override
-  public Doc visitUniv(@NotNull UnivTerm term, Unit unit) {
+  public Doc visitUniv(@NotNull UnivTerm term, Boolean nestedCall) {
     // TODO: level
     return Doc.plain("\\oo-Type");
   }
 
   @Override
-  public Doc visitApp(@NotNull AppTerm.Apply term, Unit unit) {
-    return visitCalls(term.fn(), term.args());
+  public Doc visitApp(@NotNull AppTerm.Apply term, Boolean nestedCall) {
+    return visitCalls(term.fn(), term.args(), nestedCall);
   }
 
   @Override
-  public Doc visitFnCall(@NotNull AppTerm.FnCall fnCall, Unit unit) {
-    return visitCalls(fnCall.fn(), fnCall.args());
+  public Doc visitFnCall(@NotNull AppTerm.FnCall fnCall, Boolean nestedCall) {
+    return visitCalls(fnCall.fn(), fnCall.args(), nestedCall);
   }
 
   @Override
-  public Doc visitDataCall(@NotNull AppTerm.DataCall dataCall, Unit unit) {
-    return visitCalls(dataCall.fn(), dataCall.args());
+  public Doc visitDataCall(@NotNull AppTerm.DataCall dataCall, Boolean nestedCall) {
+    return visitCalls(dataCall.fn(), dataCall.args(), nestedCall);
   }
 
-  @Override public Doc visitConCall(@NotNull AppTerm.ConCall conCall, Unit unit) {
-    return visitCalls(conCall.fn(), conCall.conArgs());
+  @Override public Doc visitConCall(@NotNull AppTerm.ConCall conCall, Boolean nestedCall) {
+    return visitCalls(conCall.fn(), conCall.conArgs(), nestedCall);
   }
 
   @Override
-  public Doc visitTup(@NotNull TupTerm term, Unit unit) {
+  public Doc visitTup(@NotNull TupTerm term, Boolean nestedCall) {
     var items = term.items().stream()
       .map(Term::toDoc)
       .reduce(Doc.empty(), (acc, doc) -> Doc.join(Doc.plain(","), acc, doc));
@@ -86,12 +85,12 @@ public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
   }
 
   @Override
-  public Doc visitProj(@NotNull ProjTerm term, Unit unit) {
+  public Doc visitProj(@NotNull ProjTerm term, Boolean nestedCall) {
     return Doc.cat(term.tup().toDoc(), Doc.plain("."), Doc.plain(String.valueOf(term.ix())));
   }
 
   @Override
-  public Doc visitHole(AppTerm.@NotNull HoleApp term, Unit unit) {
+  public Doc visitHole(AppTerm.@NotNull HoleApp term, Boolean nestedCall) {
     String name = term.var().name();
     Doc filling = term.args().stream()
       .map(t -> t.term().toDoc())
@@ -100,7 +99,8 @@ public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
   }
 
   private Doc visitCalls(@NotNull Term fn,
-                         @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
+                         @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
+                         boolean nestedCall) {
     if (args.isEmpty()) {
       return fn.toDoc();
     }
@@ -108,11 +108,21 @@ public class TermPrettyConsumer implements Term.Visitor<Unit, Doc> {
       fn.toDoc(),
       Doc.plain(" "),
       args.stream()
-        .map(arg -> arg.explicit()
-          ? arg.term().toDoc()
-          : Doc.cat(Doc.plain("{"), arg.term().toDoc(), Doc.plain("}")))
+        .map(arg -> {
+          // Do not use `arg.term().toDoc()` because we want to
+          // wrap args in parens if we are inside a nested call
+          // such as `suc (suc (suc n))`
+          var argDoc = arg.term().accept(this, true);
+          return arg.explicit()
+            ? nestedCall ? warp("(", ")", argDoc) : argDoc
+            : warp("{", "}", argDoc);
+        })
         .reduce(Doc.empty(), Doc::hsep)
     );
+  }
+
+  private Doc warp(String left, String right, Doc doc) {
+    return Doc.cat(Doc.plain(left), doc, Doc.plain(right));
   }
 
   private Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {

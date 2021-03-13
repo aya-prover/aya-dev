@@ -71,7 +71,7 @@ public interface Term extends CoreTerm {
   }
 
   default @NotNull Doc toDoc() {
-    return accept(TermPrettyConsumer.INSTANCE, Unit.unit());
+    return accept(TermPrettyConsumer.INSTANCE, false);
   }
 
   interface Visitor<P, R> {
