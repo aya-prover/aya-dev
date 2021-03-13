@@ -3,6 +3,7 @@
 package org.aya.cli;
 
 import com.beust.jcommander.Parameter;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -22,6 +23,10 @@ public class CliArgs {
   public List<String> modulePaths;
   @Parameter(description = "<input-file>")
   public String inputFile;
+
+  public ImmutableSeq<String> modulePaths() {
+    return modulePaths == null ? ImmutableSeq.empty() : ImmutableSeq.from(modulePaths);
+  }
 
   public enum TraceFormat {
     ImGui,
