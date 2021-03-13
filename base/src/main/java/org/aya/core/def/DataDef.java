@@ -7,11 +7,10 @@ import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +24,7 @@ public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
-  @NotNull Buffer<Ctor> ctors,
-  @NotNull Map<Pat, Ctor> clauses // TODO: mix clauses and ctors into one field?
+  @NotNull Either<ImmutableSeq<Ctor>, ImmutableSeq<Tuple2<Pat, Ctor>>> body
   // TODO: also see RefFinder
 ) implements Def {
   public DataDef {

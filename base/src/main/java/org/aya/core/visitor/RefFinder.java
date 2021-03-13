@@ -55,8 +55,10 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(TermRefFinder.INSTANCE, references);
-    def.clauses().forEach((pat, ctor) -> ctor.accept(this, references));
-    def.ctors().forEach(ctor -> ctor.accept(this, references));
+    def.body().forEach(
+      ctors -> ctors.forEach(ctor -> ctor.accept(this, references)),
+      clauses -> clauses.forEach(patCtor -> patCtor._2.accept(this, references))
+    );
     return Unit.unit();
   }
 

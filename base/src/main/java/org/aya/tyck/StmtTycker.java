@@ -17,9 +17,8 @@ import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.tuple.Unit;
+import org.glavo.kala.control.Either;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,20 +68,21 @@ public record StmtTycker(
   }
 
   @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
-    var ctorBuf = Buffer.<DataDef.Ctor>of();
-    var clauseBuf = MutableHashMap.<Pat, DataDef.Ctor>of();
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tele, result);
-    decl.body.map(ctors -> {
-      // ice: this cast is extremely safe.
-      ctors.ctors().forEach(ctor -> ctorBuf.append((DataDef.Ctor) ctor.accept(StmtTycker.this, tycker)));
-      return Unit.unit();
-    }, clauses -> {
-      // TODO[ice]: implement
-      throw new UnsupportedOperationException();
-    });
-    return new DataDef(decl.ref, tele, result, ctorBuf, clauseBuf);
+    Either<ImmutableSeq<DataDef.Ctor>, ImmutableSeq<Tuple2<Pat, DataDef.Ctor>>> checked = decl.body.map(
+      ctors -> {
+        // ice: this cast is extremely safe.
+        return ctors.ctors().stream()
+          .map(ctor -> (DataDef.Ctor) ctor.accept(StmtTycker.this, tycker))
+          .collect(ImmutableSeq.factory());
+      },
+      clauses -> {
+        // TODO[ice]: implement
+        throw new UnsupportedOperationException();
+      });
+    return new DataDef(decl.ref, tele, result, checked);
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
