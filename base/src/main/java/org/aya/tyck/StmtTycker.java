@@ -9,7 +9,6 @@ import org.aya.concrete.Signatured;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
-import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
@@ -17,8 +16,6 @@ import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Either;
-import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +68,7 @@ public record StmtTycker(
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tele, result);
-    Either<ImmutableSeq<DataDef.Ctor>, ImmutableSeq<Tuple2<Pat, DataDef.Ctor>>> checked = decl.body.map(
+    return new DataDef(decl.ref, tele, result, decl.body.map(
       ctors -> {
         // ice: this cast is extremely safe.
         return ctors.ctors().stream()
@@ -81,8 +78,7 @@ public record StmtTycker(
       clauses -> {
         // TODO[ice]: implement
         throw new UnsupportedOperationException();
-      });
-    return new DataDef(decl.ref, tele, result, checked);
+      }));
   }
 
   @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
