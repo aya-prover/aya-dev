@@ -4,8 +4,11 @@ package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.concrete.pretty.PatternPrettyConsumer;
+import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +19,11 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface Pattern {
   @NotNull SourcePos sourcePos();
   boolean explicit();
+
+  default @NotNull Doc toDoc() {
+    return accept(PatternPrettyConsumer.INSTANCE, Unit.unit());
+  }
+
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   interface Visitor<P, R> {

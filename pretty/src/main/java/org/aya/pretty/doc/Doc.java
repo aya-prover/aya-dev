@@ -123,6 +123,10 @@ public sealed interface Doc {
 
   //region DocFactory functions
 
+  static Doc wrap(String left, String right, Doc doc) {
+    return Doc.cat(Doc.plain(left), doc, Doc.plain(right));
+  }
+
   /**
    * Return conditional {@link Doc#empty()}
    * @param cond condition

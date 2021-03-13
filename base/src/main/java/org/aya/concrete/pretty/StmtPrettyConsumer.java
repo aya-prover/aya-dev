@@ -8,6 +8,7 @@ import org.aya.concrete.Stmt;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,8 +72,49 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
 
   @Override
   public Doc visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
-    // TODO[kiva]: implement
-    return null;
+    return Doc.cat(
+      visitAccess(decl.accessibility()),
+      Doc.plain(" "),
+      Doc.plain("\\data"),
+      Doc.plain(" "),
+      Doc.plain(decl.ref.name()),
+      Doc.plain(" "),
+      visitTele(decl.telescope),
+      decl.result instanceof Expr.HoleExpr
+        ? Doc.hardLine()
+        : Doc.cat(Doc.plain(":"), decl.result.toDoc(), Doc.hardLine()),
+      Doc.hang(2, visitDataBody(decl.body))
+    );
+  }
+
+  private Doc visitDataBody(Either<Decl.DataDecl.Ctors, Decl.DataDecl.Clauses> body) {
+    return body.isLeft() ? visitDataCtors(body.getLeftValue()) : visitDataClauses(body.getRightValue());
+  }
+
+  private Doc visitDataClauses(Decl.DataDecl.Clauses clauses) {
+    return clauses.clauses().stream()
+      .map(c -> Doc.cat(Doc.plain("| "), c._1.toDoc(), Doc.plain(" => "), visitDataCtor(c._2)))
+      .reduce(Doc.empty(), Doc::vcat);
+  }
+
+  private Doc visitDataCtors(Decl.DataDecl.Ctors ctors) {
+    return ctors.ctors().stream()
+      .map(this::visitDataCtor)
+      .reduce(Doc.empty(), Doc::vcat);
+  }
+
+  private Doc visitDataCtor(Decl.DataCtor ctor) {
+    return Doc.cat(
+      Doc.plain("| "),
+      ctor.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
+      Doc.plain(ctor.ref.name()),
+      Doc.plain(" "),
+      visitTele(ctor.telescope),
+      ctor.clauses.isEmpty() ? Doc.empty() : Doc.wrap("{", "}", ctor.clauses.stream()
+        .map(c -> c.accept(PatternPrettyConsumer.INSTANCE, Unit.unit()))
+        .reduce(Doc.empty(),  (acc, doc) -> Doc.join(Doc.plain("|"), acc, doc))
+      )
+    );
   }
 
   @Override

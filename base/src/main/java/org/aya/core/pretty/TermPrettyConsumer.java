@@ -112,7 +112,7 @@ public class TermPrettyConsumer implements Term.Visitor<Boolean, Doc> {
                                      @NotNull Function<T, Doc> formatter,
                                      boolean nestedCall) {
     if (args.isEmpty()) {
-      return nestedCall ? wrap("(", ")", fn) : fn;
+      return nestedCall ? Doc.wrap("(", ")", fn) : fn;
     }
     var call = Doc.cat(
       fn,
@@ -125,15 +125,11 @@ public class TermPrettyConsumer implements Term.Visitor<Boolean, Doc> {
           var argDoc = formatter.apply(arg.term());
           return arg.explicit()
             ? argDoc
-            : wrap("{", "}", argDoc);
+            : Doc.wrap("{", "}", argDoc);
         })
         .reduce(Doc.empty(), Doc::hsep)
     );
-    return nestedCall ? wrap("(", ")", call) : call;
-  }
-
-  private Doc wrap(String left, String right, Doc doc) {
-    return Doc.cat(Doc.plain(left), doc, Doc.plain(right));
+    return nestedCall ? Doc.wrap("(", ")", call) : call;
   }
 
   private Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {

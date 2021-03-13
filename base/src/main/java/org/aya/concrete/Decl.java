@@ -12,7 +12,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.generic.Modifier;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
@@ -171,10 +170,10 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return Objects.hash(sourcePos, telescope, result, body, abuseBlock);
     }
 
-    public static record Clauses(@NotNull Buffer<Tuple2<Pattern, DataCtor>> clauses) {
+    public static record Clauses(@NotNull ImmutableSeq<Tuple2<Pattern, DataCtor>> clauses) {
     }
 
-    public static record Ctors(@NotNull Buffer<DataCtor> ctors) {
+    public static record Ctors(@NotNull ImmutableSeq<DataCtor> ctors) {
     }
   }
 
