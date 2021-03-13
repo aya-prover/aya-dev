@@ -22,6 +22,7 @@ import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
+import org.glavo.kala.function.BooleanFunction;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -437,46 +439,48 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Pattern visitPattern(AyaParser.PatternContext ctx) {
-    var ex = ctx.LBRACE() == null;
-    if (ex) return visitAtomPatterns(ctx.atomPatterns(0), true, null);
-
-    var id = ctx.ID();
-    var as = id != null ? new LocalVar(id.getText()) : null;
-    var subs = ctx.atomPatterns().stream()
-      .map(ap -> visitAtomPatterns(ap, false, as))
-      .collect(ImmutableSeq.factory());
-
-    return subs.sizeEquals(1)
-      ? subs.first()
-      : new Pattern.Tuple(sourcePosOf(ctx), false, subs, as);
+    return visitAtomPatterns(ctx.atomPatterns()).apply(true, null);
   }
 
-  private Pattern visitAtomPatterns(@NotNull AyaParser.AtomPatternsContext ctx, boolean ex, LocalVar as) {
+  @Override
+  public BiFunction<Boolean, LocalVar, Pattern> visitAtomPatterns(@NotNull AyaParser.AtomPatternsContext ctx) {
     var atoms = ctx.atomPattern().stream()
-      .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
-    if (atoms.sizeEquals(1)) return atoms.first().apply(ex);
+      .map(this::visitAtomPattern)
+      .collect(ImmutableSeq.factory());
+    if (atoms.sizeEquals(1)) return (ex, as) -> atoms.first().apply(ex);
 
-    var first = atoms.first().apply(ex);
+    // this apply does nothing on explicitness because we only used its bind
+    var first = atoms.first().apply(true);
     if (!(first instanceof Pattern.Bind bind)) {
       reporter.report(new ParseError(first.sourcePos(),
         "`" + first.toDoc().renderWithPageWidth(114514) + "` is not a constructor name"));
       throw new ParsingInterruptedException();
     }
-    return new Pattern.Ctor(
+    return (ex, as) -> new Pattern.Ctor(
       sourcePosOf(ctx),
       ex,
       bind.bind().name(),
-      atoms.view().drop(1).map(pa -> pa.apply(ex)).collect(ImmutableSeq.factory()),
+      atoms.view().drop(1).map(p -> p.apply(true)).collect(ImmutableSeq.factory()),
       as
     );
   }
 
   @Override
-  public @NotNull Function<Boolean, Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
-    if (ctx.LPAREN() != null) {
+  public @NotNull BooleanFunction<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
+    if (ctx.LPAREN() != null || ctx.LBRACE() != null) {
+      var forceEx = ctx.LPAREN() != null;
       var id = ctx.ID();
       var as = id != null ? new LocalVar(id.getText()) : null;
-      return ex -> new Pattern.Tuple(sourcePosOf(ctx), ex, visitPatterns(ctx.patterns()), as);
+      var tupElem = ctx.patterns().pattern().stream()
+        .map(t -> visitAtomPatterns(t.atomPatterns()))
+        .collect(ImmutableSeq.factory());
+      return tupElem.sizeEquals(1)
+        ? (exIgnored -> tupElem.first().apply(forceEx, as))
+        : (exIgnored -> new Pattern.Tuple(
+        sourcePosOf(ctx),
+        forceEx,
+        tupElem.map(p -> p.apply(true, null)),
+        as));
     }
     if (ctx.CALM_FACE() != null) return ex -> new Pattern.CalmFace(sourcePosOf(ctx), ex);
     var number = ctx.NUMBER();
@@ -488,7 +492,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public @NotNull ImmutableSeq<@NotNull Pattern> visitPatterns(AyaParser.PatternsContext ctx) {
+  public @NotNull ImmutableSeq<Pattern> visitPatterns(AyaParser.PatternsContext ctx) {
     return ctx.pattern().stream()
       .map(this::visitPattern)
       .collect(ImmutableSeq.factory());

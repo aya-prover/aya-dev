@@ -98,11 +98,11 @@ clause : patterns IMPLIES expr
 
 patterns : pattern (',' pattern)* ;
 pattern : atomPatterns
-        | LBRACE atomPatterns (',' atomPatterns)* '}' (AS ID)?
         ;
 
 atomPatterns : atomPattern+ ;
-atomPattern : LPAREN patterns? ')' (AS ID)?
+atomPattern : LPAREN patterns ')' (AS ID)?
+            | LBRACE patterns '}' (AS ID)?
             | NUMBER
             | ID
             | CALM_FACE
