@@ -141,7 +141,7 @@ public sealed interface Expr {
   interface TelescopicExpr {
     @NotNull ImmutableSeq<Param> params();
 
-    default @NotNull Stream<@NotNull Tuple2<@NotNull Var, Param>> paramsStream() {
+    default @NotNull Stream<@NotNull Tuple2<@NotNull LocalVar, Param>> paramsStream() {
       return params().stream().map(p -> Tuple.of(p.ref(), p));
     }
   }

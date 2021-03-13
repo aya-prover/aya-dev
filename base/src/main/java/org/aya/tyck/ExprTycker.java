@@ -209,7 +209,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Synth
   @Override public Result visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, @Nullable Term term) {
     final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
-    var resultTele = Buffer.<Tuple3<Var, Boolean, Term>>of();
+    var resultTele = Buffer.<Tuple3<LocalVar, Boolean, Term>>of();
     expr.paramsStream().forEach(tuple -> {
       final var type = tuple._2.type();
       if (type == null) {
