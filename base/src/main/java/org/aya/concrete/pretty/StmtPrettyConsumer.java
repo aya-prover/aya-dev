@@ -45,11 +45,11 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
       Doc.plain(cmd.path().joinToString("::")),
       Doc.plain(" "),
       switch (cmd.useHide().strategy()) {
-        case Using -> Doc.plain("\\using");
-        case Hiding -> Doc.plain("\\hiding");
+        case Using -> Doc.plain("\\using ");
+        case Hiding -> Doc.plain("\\hiding ");
       },
       Doc.plain("("),
-      Doc.plain(cmd.useHide().list().joinToString(",")),
+      Doc.plain(cmd.useHide().list().joinToString(", ")),
       Doc.plain(")")
     );
   }
@@ -81,8 +81,8 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
       Doc.plain(" "),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
-        ? Doc.hardLine()
-        : Doc.cat(Doc.plain(":"), decl.result.toDoc(), Doc.hardLine()),
+        ? Doc.empty()
+        : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       Doc.hang(2, visitDataBody(decl.body))
     );
   }
@@ -112,7 +112,7 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
       visitTele(ctor.telescope),
       ctor.clauses.isEmpty() ? Doc.empty() : Doc.wrap("{", "}", ctor.clauses.stream()
         .map(c -> c.accept(PatternPrettyConsumer.INSTANCE, Unit.unit()))
-        .reduce(Doc.empty(),  (acc, doc) -> Doc.join(Doc.plain("|"), acc, doc))
+        .reduce(Doc.empty(), (acc, doc) -> Doc.join(Doc.plain("|"), acc, doc))
       )
     );
   }
@@ -120,18 +120,18 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
   @Override
   public Doc visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
     return Doc.cat(
+      visitAccess(decl.accessibility()),
+      Doc.plain(" "),
       Doc.plain("\\def"),
-      Doc.plain(" "),
-      decl.modifiers.stream().map(this::visitModifier).reduce(Doc.empty(), Doc::hsep),
-      Doc.plain(" "),
+      decl.modifiers.isEmpty() ? Doc.plain(" ") :
+        decl.modifiers.stream().map(this::visitModifier).reduce(Doc.empty(), Doc::hsep),
       Doc.plain(decl.ref.name()),
       Doc.plain(" "),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.plain(" ")
-        : Doc.cat(Doc.plain(":"), decl.result.toDoc(), Doc.plain(" ")),
-      Doc.plain("=>"),
-      Doc.plain(" "),
+        : Doc.cat(Doc.plain(" : "), decl.result.toDoc(), Doc.plain(" ")),
+      Doc.plain("=> "),
       // TODO[ice]: expr
       decl.body.getLeftValue().toDoc(),
       decl.abuseBlock.sizeEquals(0)
