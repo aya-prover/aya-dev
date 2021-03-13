@@ -31,16 +31,16 @@ public record DataDef(
     ref.core = this;
   }
 
+  public static @NotNull DefVar<DataDef, Decl.DataDecl> fromCtor(@NotNull DefVar<Ctor, Decl.DataCtor> conHead) {
+    if (conHead.core != null) return conHead.core.dataRef();
+    else return conHead.concrete.dataRef;
+  }
+
+  // TODO: eliminated ctors
   public @NotNull SeqView<@NotNull Ctor> ctors() {
     return body.view()
       .filter(t -> t._1.isEmpty())
       .map(t -> t._2);
-  }
-
-  public @NotNull SeqView<@NotNull Tuple2<@NotNull Pat, @NotNull Ctor>> clauses() {
-    return body.view()
-      .filter(t -> t._1.isDefined())
-      .map(t -> Tuple.of(t._1.get(), t._2));
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

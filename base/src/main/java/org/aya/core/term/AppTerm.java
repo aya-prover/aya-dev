@@ -88,6 +88,10 @@ public sealed interface AppTerm extends Term {
     @Override public @NotNull Term fn() {
       return new RefTerm(dataRef);
     }
+
+    public @NotNull SeqView<DataDef.@NotNull Ctor> availableCtors() {
+      return dataRef.core.ctors();
+    }
   }
 
   record ConCall(
@@ -104,8 +108,7 @@ public sealed interface AppTerm extends Term {
     }
 
     public @NotNull DefVar<DataDef, Decl.DataDecl> dataRef() {
-      if (conHead.core != null) return conHead.core.dataRef();
-      else return conHead.concrete.dataRef;
+      return DataDef.fromCtor(conHead);
     }
 
     @Override public @NotNull SeqView<Arg<Term>> args() {
