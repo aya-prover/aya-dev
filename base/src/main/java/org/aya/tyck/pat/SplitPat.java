@@ -7,6 +7,9 @@ import org.aya.generic.Arg;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 public final class SplitPat implements Pat.Visitor<Integer, SplitPat.Tree> {
   public static final @NotNull SplitPat INSTANCE = new SplitPat();
 
@@ -30,8 +33,14 @@ public final class SplitPat implements Pat.Visitor<Integer, SplitPat.Tree> {
    * @author ice1000
    */
   public sealed interface Tree {
+    <P, R> R visit(P p, @NotNull BiFunction<@NotNull Con, P, R> con, @NotNull Function<P, R> done);
+
     final class Done implements Tree {
       public static final @NotNull Done INSTANCE = new Done();
+
+      @Override public <P, R> R visit(P p, @NotNull BiFunction<@NotNull Con, P, R> con, @NotNull Function<P, R> done) {
+        return done.apply(p);
+      }
 
       private Done() {
       }
@@ -44,6 +53,9 @@ public final class SplitPat implements Pat.Visitor<Integer, SplitPat.Tree> {
       @NotNull Arg<@NotNull Integer> on,
       @NotNull ImmutableSeq<Tree> children
     ) implements Tree {
+      @Override public <P, R> R visit(P p, @NotNull BiFunction<@NotNull Con, P, R> con, @NotNull Function<P, R> done) {
+        return con.apply(this, p);
+      }
     }
   }
 }
