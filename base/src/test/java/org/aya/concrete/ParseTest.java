@@ -157,8 +157,17 @@ public class ParseTest {
     assertTrue(parseExpr(code) instanceof Expr.UnivExpr);
   }
 
+  @Test
+  public void patternParseImplicit() {
+    parseAndPretty("""
+      \\def f : Nat
+       | (suc {m} {suc x} a, fuck) \\as Outer => a""",
+      "\\public \\def f : Nat | (suc {m} {suc x} a, fuck) \\as Outer => a");
+  }
+
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
-    assertEquals(pretty.trim(), parseStmt(code).stream()
+    var stmt = parseStmt(code);
+    assertEquals(pretty.trim(), stmt.stream()
       .map(Stmt::toDoc)
       .reduce(Doc.empty(), Doc::vcat)
       .renderWithPageWidth(114514)

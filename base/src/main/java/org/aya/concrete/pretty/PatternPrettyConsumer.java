@@ -18,12 +18,9 @@ public class PatternPrettyConsumer implements
   public Doc visitTuple(Pattern.@NotNull Tuple tuple, Unit unit) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
-      tuple.patterns().stream()
-        .map(Pattern::toDoc)
-        .reduce(Doc.empty(), (acc, doc) -> Doc.join(Doc.plain(","), acc, doc))
-    );
+      Doc.join(Doc.plain(", "), tuple.patterns().stream().map(Pattern::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.cat(tup, Doc.plain(" as "), Doc.plain(tuple.as().name()));
+      : Doc.cat(tup, Doc.plain(" \\as "), Doc.plain(tuple.as().name()));
   }
 
   @Override
@@ -50,10 +47,14 @@ public class PatternPrettyConsumer implements
   @Override
   public Doc visitCtor(Pattern.@NotNull Ctor ctor, Unit unit) {
     boolean ex = ctor.explicit();
-    var c = Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      visitMaybeCtorPatterns(ctor.params()));
-    return ctor.as() == null ? c
-      : Doc.cat(Doc.wrap("(", ")", c), Doc.plain(" as "), Doc.plain(ctor.as().name()));
+    var ctorDoc = Doc.cat(
+      Doc.plain(ctor.name()),
+      Doc.plain(" "),
+      visitMaybeCtorPatterns(ctor.params())
+    );
+    var docExplicitness = Doc.wrap(ex ? "" : "{", ex ? "" : "}", ctorDoc);
+    return ctor.as() == null ? docExplicitness
+      : Doc.cat(Doc.wrap("(", ")", docExplicitness), Doc.plain(" \\as "), Doc.plain(ctor.as().name()));
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns) {

@@ -80,9 +80,8 @@ public class TermPrettyConsumer implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitTup(@NotNull TupTerm term, Boolean nestedCall) {
-    var items = term.items().stream()
-      .map(Term::toDoc)
-      .reduce(Doc.empty(), (acc, doc) -> Doc.join(Doc.plain(","), acc, doc));
+    var items = Doc.join(Doc.plain(", "), term.items().stream()
+      .map(Term::toDoc));
     return Doc.cat(Doc.plain("("), items, Doc.plain(")"));
   }
 

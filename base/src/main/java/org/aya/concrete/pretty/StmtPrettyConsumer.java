@@ -111,15 +111,17 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
       Doc.plain(ctor.ref.name()),
       Doc.plain(" "),
       visitTele(ctor.telescope),
-      visitClauses(ctor.clauses)
+      visitClauses(ctor.clauses, true)
     );
   }
 
-  private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses) {
-    return clauses.isEmpty() ? Doc.empty() : Doc.wrap("{", "}", clauses.stream()
-      .map(c -> c.accept(PatternPrettyConsumer.INSTANCE, Unit.unit()))
-      .reduce(Doc.empty(), (acc, doc) -> Doc.join(Doc.plain("|"), acc, doc))
-    );
+  private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {
+    if (clauses.isEmpty()) return Doc.empty();
+    var clausesDoc = Doc.cat(
+      Doc.plain("| "), // join will only insert "|" between clauses
+      Doc.join(Doc.plain("| "), clauses.stream()
+        .map(c -> c.accept(PatternPrettyConsumer.INSTANCE, Unit.unit()))));
+    return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
   }
 
   @Override
@@ -131,13 +133,13 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
       decl.modifiers.isEmpty() ? Doc.plain(" ") :
         decl.modifiers.stream().map(this::visitModifier).reduce(Doc.empty(), Doc::hsep),
       Doc.plain(decl.ref.name()),
-      Doc.plain(" "),
-      visitTele(decl.telescope),
+      decl.telescope.isEmpty() ? Doc.empty() :
+        visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.plain(" ")
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc(), Doc.plain(" ")),
-      Doc.plain("=> "),
-      decl.body.fold(Expr::toDoc, this::visitClauses),
+      decl.body.isLeft() ? Doc.plain("=> ") : Doc.empty(),
+      decl.body.fold(Expr::toDoc, clauses -> visitClauses(clauses, false)),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
         : Doc.cat(Doc.plain(" "), Doc.plain("\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))

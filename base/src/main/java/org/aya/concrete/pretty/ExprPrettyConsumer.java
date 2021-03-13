@@ -94,10 +94,10 @@ public class ExprPrettyConsumer implements Expr.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
-    var items = expr.items().stream()
-      .map(Expr::toDoc)
-      .reduce(Doc.empty(), (acc, doc) -> Doc.join(Doc.plain(","), acc, doc));
-    return Doc.cat(Doc.plain("("), items, Doc.plain(")"));
+    return Doc.cat(Doc.plain("("),
+      Doc.join(Doc.plain(", "), expr.items().stream()
+        .map(Expr::toDoc)),
+      Doc.plain(")"));
   }
 
   @Override

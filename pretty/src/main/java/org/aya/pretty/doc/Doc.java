@@ -9,8 +9,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class reimplemented Haskell
@@ -434,6 +437,17 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc hcat(Doc @NotNull ... docs) {
+    return hcat(Arrays.asList(docs));
+  }
+
+  /**
+   * hcat concatenates all documents docs horizontally without any spacing.
+   *
+   * @param docs documents to concat
+   * @return concat document
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc hcat(@NotNull List<@NotNull Doc> docs) {
     return concatWith(Doc::simpleCat, docs);
   }
 
@@ -571,6 +585,34 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc hsep(Doc @NotNull ... docs) {
+    return hsep(Arrays.asList(docs));
+  }
+
+  /**
+   * hsep concatenates all documents {@param docs} horizontally with a space,
+   * i.e. it puts a space between all entries.
+   *
+   * <pre>
+   * >>> let docs = Util.words "lorem ipsum dolor sit amet"
+   *
+   * >>> hsep docs
+   * lorem ipsum dolor sit amet
+   *
+   * </pre>
+   * <p>
+   * hsep does not introduce line breaks on its own, even when the page is too
+   * narrow:
+   *
+   * <pre>
+   * >>> putDocW 5 (hsep docs)
+   * lorem ipsum dolor sit amet
+   * </pre>
+   *
+   * @param docs documents to separate
+   * @return separated documents
+   */
+  @Contract("_ -> new")
+  static @NotNull Doc hsep(@NotNull List<@NotNull Doc> docs) {
     return concatWith(Doc::simpleSpacedCat, docs);
   }
 
@@ -609,6 +651,16 @@ public sealed interface Doc {
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
+    return join(delim, Arrays.asList(docs));
+  }
+
+  @Contract("_, _ -> new")
+  static @NotNull Doc join(@NotNull Doc delim, Stream<Doc> docs) {
+    return join(delim, docs.collect(Collectors.toList()));
+  }
+
+  @Contract("_, _ -> new")
+  static @NotNull Doc join(@NotNull Doc delim, @NotNull List<@NotNull Doc> docs) {
     return concatWith(
       (x, y) -> simpleCat(x, delim, y),
       docs
@@ -698,16 +750,16 @@ public sealed interface Doc {
 
   //region utility functions
 
-  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Doc... xs) {
-    assert xs.length > 0;
-    if (xs.length == 1) {
-      return xs[0];
+  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull List<@NotNull Doc> xs) {
+    assert xs.size() > 0;
+    if (xs.size() == 1) {
+      return xs.get(0);
     }
-    return Arrays.stream(xs).reduce(f).get(); // never null
+    return xs.stream().reduce(f).get(); // never null
   }
 
   private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
-    return concatWith(Doc::makeCat, xs);
+    return concatWith(Doc::makeCat, Arrays.asList(xs));
   }
 
   private static @NotNull Doc simpleSpacedCat(Doc @NotNull ... xs) {
@@ -718,7 +770,7 @@ public sealed interface Doc {
           second,
           (a, b) -> simpleCat(a, plain(" "), b)
         ),
-      xs
+      Arrays.asList(xs)
     );
   }
 
