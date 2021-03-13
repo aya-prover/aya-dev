@@ -4,6 +4,7 @@ package org.aya.concrete.resolve.module;
 
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
+import org.aya.api.util.BreakingException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.Stmt;
@@ -40,6 +41,7 @@ public final record FileModuleLoader(
       reporter.reportString(e.getMessage());
       return null;
     } catch (ExprTycker.TyckerException | Context.ContextException e) {
+      handleInternalError(e);
       return null;
     } catch (InterruptException e) {
       // TODO[ice]: proper error handling
@@ -63,5 +65,13 @@ public final record FileModuleLoader(
       if (s instanceof Signatured decl) decl.tyck(reporter, builder);
     });
     return context;
+  }
+
+  public static void handleInternalError(@NotNull BreakingException e) {
+    e.printStackTrace();
+    e.printHint();
+    System.err.println("""
+      Please report the stacktrace to the developers so a better error handling could be made.
+      Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
   }
 }

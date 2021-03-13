@@ -4,6 +4,7 @@ package org.aya.cli;
 
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
+import org.aya.api.util.BreakingException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
@@ -30,11 +31,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter, builder);
     } catch (ExprTycker.TyckerException | Context.ContextException e) {
-      e.printStackTrace();
-      e.printHint();
-      System.err.println("""
-        Please report the stacktrace to the developers so a better error handling could be made.
-        Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
+      FileModuleLoader.handleInternalError(e);
       return e.exitCode();
     } catch (InterruptException e) {
       // TODO[ice]: proper error handling
