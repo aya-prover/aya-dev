@@ -4,6 +4,7 @@ package org.aya.concrete.pretty;
 
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
@@ -110,10 +111,14 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
       Doc.plain(ctor.ref.name()),
       Doc.plain(" "),
       visitTele(ctor.telescope),
-      ctor.clauses.isEmpty() ? Doc.empty() : Doc.wrap("{", "}", ctor.clauses.stream()
-        .map(c -> c.accept(PatternPrettyConsumer.INSTANCE, Unit.unit()))
-        .reduce(Doc.empty(), (acc, doc) -> Doc.join(Doc.plain("|"), acc, doc))
-      )
+      visitClauses(ctor.clauses)
+    );
+  }
+
+  private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses) {
+    return clauses.isEmpty() ? Doc.empty() : Doc.wrap("{", "}", clauses.stream()
+      .map(c -> c.accept(PatternPrettyConsumer.INSTANCE, Unit.unit()))
+      .reduce(Doc.empty(), (acc, doc) -> Doc.join(Doc.plain("|"), acc, doc))
     );
   }
 
@@ -132,8 +137,7 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
         ? Doc.plain(" ")
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc(), Doc.plain(" ")),
       Doc.plain("=> "),
-      // TODO[ice]: expr
-      decl.body.getLeftValue().toDoc(),
+      decl.body.fold(Expr::toDoc, this::visitClauses),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
         : Doc.cat(Doc.plain(" "), Doc.plain("\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
