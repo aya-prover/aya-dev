@@ -134,7 +134,7 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
         decl.modifiers.stream().map(this::visitModifier).reduce(Doc.empty(), Doc::hsep),
       Doc.plain(decl.ref.name()),
       decl.telescope.isEmpty() ? Doc.empty() :
-        visitTele(decl.telescope),
+        Doc.cat(Doc.plain(" "), visitTele(decl.telescope)),
       decl.result instanceof Expr.HoleExpr
         ? Doc.plain(" ")
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc(), Doc.plain(" ")),
