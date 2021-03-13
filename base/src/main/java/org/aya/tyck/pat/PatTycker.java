@@ -20,7 +20,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableHashSet;
-import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
@@ -148,9 +147,7 @@ public final class PatTycker implements
       // TODO[ice]: report error: not checked data
       return null;
     }
-    var selected = core.body().isLeft()
-      ? core.body().getLeftValue().find(c -> Objects.equals(c.ref().name(), name))
-      : Option.<DataDef.Ctor>none();
+    var selected = core.ctors().find(c -> Objects.equals(c.ref().name(), name));
     if (selected.isEmpty()) {
       // TODO[ice]: report error: cannot find ctor of name
       return null;
