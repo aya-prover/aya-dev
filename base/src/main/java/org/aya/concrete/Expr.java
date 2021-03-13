@@ -16,7 +16,6 @@ import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,7 @@ public sealed interface Expr {
   }
 
   default @NotNull Doc toDoc() {
-    return accept(ExprPrettyConsumer.INSTANCE, Unit.unit());
+    return accept(ExprPrettyConsumer.INSTANCE, false);
   }
 
   interface Visitor<P, R> {

@@ -63,24 +63,24 @@ field : COERCE? ID tele* type   # fieldDecl
 dataDecl : (PUBLIC? OPEN)? '\\data' ID tele* type? dataBody abuse?;
 
 dataBody : ('|' dataCtor)*       # dataCtors
-         | dataCtorClause*  # dataClauses
+         | dataCtorClause*       # dataClauses
          ;
 
 // TODO[imkiva]: some code commented in Arend.g4
-dataCtor : COERCE? ID tele* (LBRACE clause? ('|' clause)* '}')?;
+dataCtor : COERCE? ID tele* clauses?;
 
 dataCtorClause : '|' pattern IMPLIES dataCtor;
 
 module : '\\module' ID LBRACE stmt* '}';
 
 // expressions
-expr : atom argument*                                 # app
-     | <assoc=right> expr TO expr                     # arr
-     | <assoc=right> expr '.' NUMBER                  # proj
-     | PI tele+ TO expr                               # pi
-     | SIGMA tele+ '**' expr                          # sigma
-     | LAMBDA tele+ (IMPLIES expr?)?                  # lam
-     | MATCH expr (',' expr)* ('|' clause)+   # match
+expr : atom argument*                  # app
+     | <assoc=right> expr TO expr      # arr
+     | <assoc=right> expr '.' NUMBER   # proj
+     | PI tele+ TO expr                # pi
+     | SIGMA tele+ '**' expr           # sigma
+     | LAMBDA tele+ (IMPLIES expr?)?   # lam
+     | MATCH expr (',' expr)* clauses  # match
      ;
 
 atom : literal
@@ -92,6 +92,7 @@ argument : atom
          | '.' idFix
          ;
 
+clauses : LBRACE clause? ('|' clause)* '}' ;
 clause : patterns IMPLIES expr
        | ABSURD;
 

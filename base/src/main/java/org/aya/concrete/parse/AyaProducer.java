@@ -8,7 +8,10 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
-import org.aya.concrete.*;
+import org.aya.concrete.Decl;
+import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
+import org.aya.concrete.Stmt;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
@@ -18,7 +21,6 @@ import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -393,16 +395,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Decl.DataDecl.Ctors(
       ctx.dataCtor().stream()
         .map(this::visitDataCtor)
-        .collect(Buffer.factory())
+        .collect(ImmutableSeq.factory())
     );
   }
 
   @Override
   public Decl.DataDecl.Clauses visitDataClauses(AyaParser.DataClausesContext ctx) {
-    var clauses = ctx.dataCtorClause().stream()
+    return new Decl.DataDecl.Clauses(ctx.dataCtorClause().stream()
       .map(this::visitDataCtorClause)
-      .collect(Buffer.factory());
-    return new Decl.DataDecl.Clauses(clauses);
+      .collect(ImmutableSeq.factory()));
   }
 
   @Override
@@ -414,11 +415,16 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       sourcePosOf(id),
       id.getText(),
       telescope,
-      ctx.clause().stream()
-        .map(this::visitClause)
-        .collect(ImmutableSeq.factory()),
+      visitClauses(ctx.clauses()),
       ctx.COERCE() != null
     );
+  }
+
+  @Override public ImmutableSeq<Pattern.Clause> visitClauses(@Nullable AyaParser.ClausesContext ctx) {
+    if (ctx == null) return ImmutableSeq.empty();
+    return ctx.clause().stream()
+      .map(this::visitClause)
+      .collect(ImmutableSeq.factory());
   }
 
   @Override public @NotNull Tuple2<@NotNull Pattern, Decl.@NotNull DataCtor>
@@ -449,12 +455,17 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var atoms = ctx.atomPattern().stream()
       .map(this::visitAtomPattern).collect(ImmutableSeq.factory());
     if (atoms.sizeEquals(1)) return atoms.first().apply(ex);
-    // TODO: should we throw en error here or in resolver
-    //  if atom.first() is not a bind?
+
+    var first = atoms.first().apply(ex);
+    if (!(first instanceof Pattern.Bind bind)) {
+      reporter.report(new ParseError(first.sourcePos(),
+        "`" + first.toDoc().renderWithPageWidth(114514) + "` is not a constructor name"));
+      throw new ParsingInterruptedException();
+    }
     return new Pattern.Ctor(
       sourcePosOf(ctx),
       ex,
-      ((Pattern.Bind) atoms.first().apply(ex)).bind().name(),
+      bind.bind().name(),
       atoms.view().drop(1).map(pa -> pa.apply(ex)).collect(ImmutableSeq.factory()),
       as
     );
