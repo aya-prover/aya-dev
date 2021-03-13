@@ -415,11 +415,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       sourcePosOf(id),
       id.getText(),
       telescope,
-      ctx.clause().stream()
-        .map(this::visitClause)
-        .collect(ImmutableSeq.factory()),
+      visitClauses(ctx.clauses()),
       ctx.COERCE() != null
     );
+  }
+
+  @Override public ImmutableSeq<Pattern.Clause> visitClauses(AyaParser.ClausesContext ctx) {
+    return ctx.clause().stream()
+      .map(this::visitClause)
+      .collect(ImmutableSeq.factory());
   }
 
   @Override public @NotNull Tuple2<@NotNull Pattern, Decl.@NotNull DataCtor>
