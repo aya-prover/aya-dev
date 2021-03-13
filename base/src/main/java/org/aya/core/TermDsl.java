@@ -80,7 +80,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var exprs = ctx.expr();
     assert exprs.size() == 2;
     boolean explicit = licit(exprs);
-    return new Term.Param(ref(ident), exprs.get(0).accept(this), explicit);
+    return new Term.Param((LocalVar) ref(ident), exprs.get(0).accept(this), explicit);
   }
 
   public @NotNull ImmutableSeq<Term.@NotNull Param> exprToParams(LispParser.ExprContext ctx) {
@@ -93,7 +93,8 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var exprs = ctx.expr();
     assert exprs.size() == 3;
     boolean explicit = licit(exprs);
-    return exprToParams(exprs.get(2)).prepended(new Term.Param(ref(ident), exprs.get(0).accept(this), explicit));
+    var param = new Term.Param((LocalVar) ref(ident), exprs.get(0).accept(this), explicit);
+    return exprToParams(exprs.get(2)).prepended(param);
   }
 
   private boolean licit(List<LispParser.ExprContext> exprs) {
