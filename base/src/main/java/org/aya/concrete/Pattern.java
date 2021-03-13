@@ -8,7 +8,6 @@ import org.aya.concrete.pretty.PatternPrettyConsumer;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,7 @@ public sealed interface Pattern {
   boolean explicit();
 
   default @NotNull Doc toDoc() {
-    return accept(PatternPrettyConsumer.INSTANCE, Unit.unit());
+    return accept(PatternPrettyConsumer.INSTANCE, false);
   }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);

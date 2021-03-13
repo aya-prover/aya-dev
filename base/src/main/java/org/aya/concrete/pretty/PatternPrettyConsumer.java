@@ -10,12 +10,12 @@ import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public class PatternPrettyConsumer implements
-  Pattern.Visitor<Unit, Doc>,
+  Pattern.Visitor<Boolean, Doc>,
   Pattern.Clause.Visitor<Unit, Doc> {
   public static final PatternPrettyConsumer INSTANCE = new PatternPrettyConsumer();
 
   @Override
-  public Doc visitTuple(Pattern.@NotNull Tuple tuple, Unit unit) {
+  public Doc visitTuple(Pattern.@NotNull Tuple tuple, Boolean nestedCall) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
       Doc.join(Doc.plain(", "), tuple.patterns().stream().map(Pattern::toDoc)));
@@ -24,48 +24,51 @@ public class PatternPrettyConsumer implements
   }
 
   @Override
-  public Doc visitNumber(Pattern.@NotNull Number number, Unit unit) {
+  public Doc visitNumber(Pattern.@NotNull Number number, Boolean nestedCall) {
     boolean ex = number.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
       Doc.plain(String.valueOf(number.number())));
   }
 
   @Override
-  public Doc visitBind(Pattern.@NotNull Bind bind, Unit unit) {
+  public Doc visitBind(Pattern.@NotNull Bind bind, Boolean nestedCall) {
     boolean ex = bind.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
       Doc.plain(bind.bind().name()));
   }
 
   @Override
-  public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Unit unit) {
+  public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Boolean nestedCall) {
     boolean ex = calmFace.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
       Doc.plain(Constants.ANONYMOUS_PREFIX));
   }
 
   @Override
-  public Doc visitCtor(Pattern.@NotNull Ctor ctor, Unit unit) {
+  public Doc visitCtor(Pattern.@NotNull Ctor ctor, Boolean nestedCall) {
     boolean ex = ctor.explicit();
+    boolean as = ctor.as() != null;
     var ctorDoc = Doc.cat(
       Doc.plain(ctor.name()),
       Doc.plain(" "),
-      visitMaybeCtorPatterns(ctor.params())
+      visitMaybeCtorPatterns(ctor.params(), true)
     );
-    var docExplicitness = Doc.wrap(ex ? "" : "{", ex ? "" : "}", ctorDoc);
-    return ctor.as() == null ? docExplicitness
-      : Doc.cat(Doc.wrap("(", ")", docExplicitness), Doc.plain(" \\as "), Doc.plain(ctor.as().name()));
+    var withEx = Doc.wrap(ex ? "" : "{", ex ? "" : "}", ctorDoc);
+    var withAs = as
+      ? Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" \\as "), Doc.plain(ctor.as().name()))
+      : withEx;
+    return !ex && !as ? withAs : nestedCall ? Doc.wrap("(", ")", withAs) : withAs;
   }
 
-  private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns) {
+  private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, boolean nestedCall) {
     return patterns.stream()
-      .map(Pattern::toDoc)
+      .map(p -> p.accept(PatternPrettyConsumer.INSTANCE, nestedCall))
       .reduce(Doc.empty(), Doc::hsep);
   }
 
   @Override
   public Doc visitMatch(Pattern.Clause.@NotNull Match match, Unit unit) {
-    return Doc.cat(visitMaybeCtorPatterns(match.patterns()),
+    return Doc.cat(visitMaybeCtorPatterns(match.patterns(), false),
       Doc.plain(" => "),
       match.expr().toDoc());
   }

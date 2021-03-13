@@ -56,8 +56,8 @@ public class ParseTest {
     parseImport("\\import A.B");
     parseImport("\\import A.B \\using ()");
     parseAndPretty("\\open Boy.Next.Door \\using (door) \\using (next)", """
-      \\private \\open Boy::Next::Door \\using (door, next)
-    """);
+        \\private \\open Boy::Next::Door \\using (door, next)
+      """);
   }
 
   @Test
@@ -91,14 +91,14 @@ public class ParseTest {
     parseData("\\data Unit : A \\abusing {}");
     parseData("\\data T {A : \\114-Type514} : A \\abusing {}");
     parseAndPretty("\\def id {A : \\114-Type514} (a : A) : A => a", """
-      \\public \\def id {A : \\114-Type514} (a : A) : A => a
-    """);
+        \\public \\def id {A : \\114-Type514} (a : A) : A => a
+      """);
     parseAndPretty("\\def xx {A, B : \\114-Type514} (a : A) : A => a", """
-      \\public \\def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
-    """);
+        \\public \\def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
+      """);
     parseAndPretty("\\data Nat | Z | S Nat", """
-      \\public \\data Nat | Z | S (_ : Nat)
-    """);
+        \\public \\data Nat | Z | S (_ : Nat)
+      """);
   }
 
   @Test
@@ -159,10 +159,46 @@ public class ParseTest {
 
   @Test
   public void patternParseImplicit() {
-    parseAndPretty("""
-      \\def f : Nat
-       | (suc {m} {suc x} a, fuck) \\as Outer => a""",
-      "\\public \\def f : Nat | (suc {m} {suc x} a, fuck) \\as Outer => a");
+    parseAndPretty(
+      "\\def simple | a => a",
+      "\\public \\def simple | a => a"
+    );
+    parseAndPretty(
+      "\\def unary-tuples-are-ignored | (a) => a",
+      "\\public \\def unary-tuples-are-ignored | a => a"
+    );
+    parseAndPretty(
+      "\\def im-unary-tuples-are-ignored | {a} => a",
+      "\\public \\def im-unary-tuples-are-ignored | {a} => a"
+    );
+    parseAndPretty(
+      "\\def tuples | (a,b,c) => a",
+      "\\public \\def tuples | (a, b, c) => a"
+    );
+    parseAndPretty(
+      "\\def im-tuples | {a,b,c} => a",
+      "\\public \\def im-tuples | {a, b, c} => a"
+    );
+    parseAndPretty(
+      "\\def tuples-with-im | (a,{b},c,d,{ef}) => ef",
+      "\\public \\def tuples-with-im | (a, {b}, c, d, {ef}) => ef"
+    );
+    parseAndPretty(
+      "\\def imtuple-with-extuple | {a, (b, c, d)} => ef",
+      "\\public \\def imtuple-with-extuple | {a, (b, c, d)} => ef"
+    );
+    parseAndPretty(
+      "\\def im-in-ctor | suc {N} (a) => N",
+      "\\public \\def im-in-ctor | suc {N} a => N"
+    );
+    parseAndPretty(
+      "\\def im-in-ctor-nested | suc {N} (suc {M} a) b => N",
+      "\\public \\def im-in-ctor-nested | suc {N} (suc {M} a) b => N"
+    );
+    parseAndPretty(
+      "\\def final : Nat | (suc {m} {suc x} a, fuck) \\as Outer => a",
+      "\\public \\def final : Nat | (suc {m} {suc x} a, fuck) \\as Outer => a"
+    );
   }
 
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
