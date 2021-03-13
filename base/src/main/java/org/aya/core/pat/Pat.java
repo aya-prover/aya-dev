@@ -67,6 +67,7 @@ public sealed interface Pat {
    * @author kiva
    */
   sealed interface Clause {
+    @NotNull ImmutableSeq<Pat> patterns();
     <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
     interface Visitor<P, R> {
@@ -85,6 +86,10 @@ public sealed interface Pat {
 
     final class Absurd implements Clause {
       public static final @NotNull Absurd INSTANCE = new Absurd();
+
+      @Override public @NotNull ImmutableSeq<Pat> patterns() {
+        throw new UnsupportedOperationException("TODO");
+      }
 
       private Absurd() {
       }
