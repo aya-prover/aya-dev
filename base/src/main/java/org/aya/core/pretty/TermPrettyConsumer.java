@@ -9,6 +9,8 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 public class TermPrettyConsumer implements Term.Visitor<Boolean, Doc> {
   public static final TermPrettyConsumer INSTANCE = new TermPrettyConsumer();
 
@@ -101,27 +103,36 @@ public class TermPrettyConsumer implements Term.Visitor<Boolean, Doc> {
   private Doc visitCalls(@NotNull Term fn,
                          @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
                          boolean nestedCall) {
+    return visitCalls(fn.toDoc(), args,
+      (term -> term.accept(this, true)), nestedCall);
+  }
+
+  public <T> @NotNull Doc visitCalls(@NotNull Doc fn,
+                                     @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
+                                     @NotNull Function<T, Doc> formatter,
+                                     boolean nestedCall) {
     if (args.isEmpty()) {
-      return fn.toDoc();
+      return nestedCall ? wrap("(", ")", fn) : fn;
     }
-    return Doc.cat(
-      fn.toDoc(),
+    var call = Doc.cat(
+      fn,
       Doc.plain(" "),
       args.stream()
         .map(arg -> {
           // Do not use `arg.term().toDoc()` because we want to
           // wrap args in parens if we are inside a nested call
           // such as `suc (suc (suc n))`
-          var argDoc = arg.term().accept(this, true);
+          var argDoc = formatter.apply(arg.term());
           return arg.explicit()
-            ? nestedCall ? warp("(", ")", argDoc) : argDoc
-            : warp("{", "}", argDoc);
+            ? argDoc
+            : wrap("{", "}", argDoc);
         })
         .reduce(Doc.empty(), Doc::hsep)
     );
+    return nestedCall ? wrap("(", ")", call) : call;
   }
 
-  private Doc warp(String left, String right, Doc doc) {
+  private Doc wrap(String left, String right, Doc doc) {
     return Doc.cat(Doc.plain(left), doc, Doc.plain(right));
   }
 
