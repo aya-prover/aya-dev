@@ -420,7 +420,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override public ImmutableSeq<Pattern.Clause> visitClauses(AyaParser.ClausesContext ctx) {
+  @Override public ImmutableSeq<Pattern.Clause> visitClauses(@Nullable AyaParser.ClausesContext ctx) {
+    if (ctx == null) return ImmutableSeq.empty();
     return ctx.clause().stream()
       .map(this::visitClause)
       .collect(ImmutableSeq.factory());
