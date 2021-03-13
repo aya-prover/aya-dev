@@ -72,13 +72,10 @@ public record StmtTycker(
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tele, result);
     return new DataDef(decl.ref, tele, result, decl.body.fold(
-      ctors -> {
-        // ice: this cast is extremely safe.
-        return ctors.ctors().stream()
-          .map(ctor -> (DataDef.Ctor) ctor.accept(StmtTycker.this, tycker))
-          .map(ctor -> Tuple.of(Option.<Pat>none(), ctor))
-          .collect(ImmutableSeq.factory());
-      },
+      ctors -> ctors.ctors().stream()
+        .map(ctor -> visitCtor(ctor, tycker))
+        .map(ctor -> Tuple.of(Option.<Pat>none(), ctor))
+        .collect(ImmutableSeq.factory()),
       clauses -> {
         // TODO[ice]: implement
         throw new UnsupportedOperationException();
