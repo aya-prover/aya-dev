@@ -4,6 +4,7 @@ package org.aya.tyck.pat;
 
 import org.aya.api.error.IgnoringReporter;
 import org.aya.api.error.Reporter;
+import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.DataDef;
@@ -133,7 +134,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
 
   private @Nullable Tuple2<AppTerm.DataCall, DataDef.Ctor>
   selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
-    if (!(param instanceof AppTerm.DataCall dataCall)) {
+    if (!(param.normalize(NormalizeMode.WHNF) instanceof AppTerm.DataCall dataCall)) {
       // TODO[ice]: report error: splitting on non data
       return null;
     }
