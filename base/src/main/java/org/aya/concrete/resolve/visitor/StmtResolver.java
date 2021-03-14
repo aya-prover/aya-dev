@@ -36,7 +36,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override
-  public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+  public Unit visitData(Decl.@NotNull DataDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
@@ -55,14 +55,14 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   }
 
   @Override
-  public Unit visitStructDecl(Decl.@NotNull StructDecl decl, Unit unit) {
+  public Unit visitStruct(Decl.@NotNull StructDecl decl, Unit unit) {
     // TODO[vont]: struct
     return null;
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override
-  public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
+  public Unit visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);

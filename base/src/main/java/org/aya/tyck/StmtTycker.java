@@ -71,7 +71,7 @@ public record StmtTycker(
     return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
   }
 
-  @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
+  @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tele, result);
@@ -87,7 +87,11 @@ public record StmtTycker(
     ));
   }
 
-  @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
+  @Override public Def visitStruct(@NotNull Decl.StructDecl decl, ExprTycker exprTycker) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
     var resultTele = checkTele(tycker, decl.telescope);
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);

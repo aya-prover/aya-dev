@@ -49,12 +49,7 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : OPEN? '\\structure' ID fieldTele* ('\\extends' ids)? ('|' field)* abuse?;
-
-fieldTeleInner : COERCE? ID+ type;
-fieldTele : LPAREN fieldTeleInner ')'
-          | LBRACE fieldTeleInner '}'
-          ;
+structDecl : OPEN? '\\struct' ID tele* ('\\extends' ids)? ('|' field)* abuse?;
 
 field : COERCE? ID tele* type   # fieldDecl
       | ID tele* IMPLIES expr   # fieldImpl
