@@ -54,6 +54,12 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     return unit;
   }
 
+  @Override
+  public Unit visitStructDecl(Decl.@NotNull StructDecl decl, Unit unit) {
+    // TODO[vont]: struct
+    return null;
+  }
+
   /** @apiNote Note that this function MUTATES the decl. */
   @Override
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {

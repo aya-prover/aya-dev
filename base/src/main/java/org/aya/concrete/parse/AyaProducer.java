@@ -506,6 +506,17 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   public @NotNull Decl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     // TODO: visit struct decl
+    var abuseCtx = ctx.abuse();
+    var data = new Decl.StructDecl(
+      sourcePosOf(ctx.ID()),
+      accessibility,
+      ctx.ID().getText(),
+      visitFieldTele(ctx.fieldTele()),
+      ctx.ids(),
+      visitField(ctx.field()),
+      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
+    );
+
     throw new UnsupportedOperationException();
   }
 
