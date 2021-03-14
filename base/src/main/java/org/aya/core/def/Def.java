@@ -28,6 +28,10 @@ public interface Def extends CoreDef {
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).result;
   }
+  static @NotNull ImmutableSeq<Term.Param>
+  substParams(@NotNull SeqLike<Term.@NotNull Param> param, Substituter.@NotNull TermSubst subst) {
+    return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
+  }
 
   @NotNull Term result();
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
@@ -55,8 +59,7 @@ public interface Def extends CoreDef {
   ) {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
-      var params = param.view().drop(1).map(p -> p.subst(subst));
-      return new Signature(params.toImmutableSeq(), result.subst(subst));
+      return new Signature(substParams(param, subst), result.subst(subst));
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {
