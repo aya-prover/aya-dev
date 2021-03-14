@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -95,15 +94,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       modifiers,
       assocCtx == null ? null : visitAssoc(assocCtx),
       ctx.ID().getText(),
-      visitTelescope(ctx.tele().stream()),
+      visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
   }
 
-  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(Stream<AyaParser.TeleContext> stream) {
-    return stream
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(List<AyaParser.TeleContext> telescope) {
+    return telescope.stream()
       .map(this::visitTele)
       .flatMap(Traversable::stream)
       .collect(ImmutableSeq.factory());
@@ -162,10 +161,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   public int visitOptNumber(@NotNull String number, int defaultVal) {
-    return Optional.of(number)
+    return Option.of(number)
       .filter(Predicate.not(String::isEmpty))
       .map(Integer::parseInt)
-      .orElse(defaultVal);
+      .getOrDefault(defaultVal);
   }
 
   @Override
@@ -258,7 +257,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
     return (Expr.LamExpr) buildLam(
       sourcePosOf(ctx),
-      visitTelescope(ctx.tele().stream()).view(),
+      visitTelescope(ctx.tele()).view(),
       visitLamBody(ctx)
     );
   }
@@ -296,7 +295,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Expr.TelescopicSigmaExpr(
       sourcePosOf(ctx),
       false,
-      visitTelescope(ctx.tele().stream()),
+      visitTelescope(ctx.tele()),
       visitExpr(ctx.expr())
     );
   }
@@ -306,7 +305,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return (Expr.PiExpr) buildPi(
       sourcePosOf(ctx),
       false,
-      visitTelescope(ctx.tele().stream()).view(),
+      visitTelescope(ctx.tele()).view(),
       visitExpr(ctx.expr())
     );
   }
@@ -362,7 +361,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       sourcePosOf(ctx.ID()),
       accessibility,
       ctx.ID().getText(),
-      visitTelescope(ctx.tele().stream()),
+      visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitDataBody(ctx.dataBody()),
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
@@ -411,7 +410,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
-    var telescope = visitTelescope(ctx.tele().stream());
+    var telescope = visitTelescope(ctx.tele());
     var id = ctx.ID();
 
     return new Decl.DataCtor(
@@ -587,7 +586,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Stream<Tuple2<SourcePos, String>> visitIds(AyaParser.IdsContext ctx) {
-    return ctx.ID().stream().map(id -> Tuple.of(sourcePosOf(id), id.getText()));
+    return ctx.ID().stream()
+      .map(id -> Tuple.of(sourcePosOf(id), id.getText()));
   }
 
   @Override

@@ -65,7 +65,7 @@ public record StmtTycker(
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature)._2);
     // TODO[ice]: coverage check
-    var clauses = elabClauses.map(Pat.Clause::fromProto).filterNotNull();
+    var clauses = elabClauses.flatMap(Pat.Clause::fromProto);
     return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
   }
 
@@ -96,7 +96,7 @@ public record StmtTycker(
     var what = FP.distR(decl.body.map(
       left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
       right -> patTycker.elabClause(right, signature)));
-    var body = what._2.mapRight(cs -> cs.map(Pat.Clause::fromProto).filterNotNull());
+    var body = what._2.mapRight(cs -> cs.flatMap(Pat.Clause::fromProto));
     return new FnDef(decl.ref, resultTele, what._1, body);
   }
 

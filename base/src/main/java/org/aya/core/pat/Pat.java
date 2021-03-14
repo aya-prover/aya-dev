@@ -71,8 +71,8 @@ public sealed interface Pat {
     @NotNull ImmutableSeq<Pat> patterns,
     @NotNull Term expr
   ) {
-    public static @Nullable Clause fromProto(@NotNull PrototypeClause clause) {
-      return clause.expr.map(term -> new Clause(clause.patterns, term)).getOrNull();
+    public static @NotNull Option<@NotNull Clause> fromProto(@NotNull PrototypeClause clause) {
+      return clause.expr.map(term -> new Clause(clause.patterns, term));
     }
   }
 
