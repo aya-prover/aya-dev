@@ -169,11 +169,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   /**
    * @apiNote this ignores {@link Arg#explicit()}
    */
-  public boolean visitArgs(SeqLike<? extends Arg<? extends Term>> l, SeqLike<? extends Arg<? extends Term>> r, SeqLike<? extends Term.Param> params) {
+  public boolean visitArgs(SeqLike<Arg<Term>> l, SeqLike<Arg<Term>> r, SeqLike<Term.Param> params) {
     return visitLists(l.view().map(Arg::term), r.view().map(Arg::term), params);
   }
 
-  private boolean visitLists(SeqLike<? extends Term> l, SeqLike<? extends Term> r, @NotNull SeqLike<? extends Term.Param> types) {
+  private boolean visitLists(SeqLike<Term> l, SeqLike<Term> r, @NotNull SeqLike<Term.Param> types) {
     if (!l.sizeEquals(r)) return false;
     if (!r.sizeEquals(types)) return false;
     var typesSubstituted = types;
