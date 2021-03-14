@@ -82,6 +82,13 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   }
 
   @Override
+  public Unit visitStructDecl(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
+    visitDecl(decl, context);
+    // TODO[vont]: struct
+    return null;
+  }
+
+  @Override
   public Unit visitFnDecl(Decl.@NotNull FnDecl decl, @NotNull ModuleContext context) {
     // TODO[xyr]: abuse block currently have no use, so we ignore it for now.
     return visitDecl(decl, context);

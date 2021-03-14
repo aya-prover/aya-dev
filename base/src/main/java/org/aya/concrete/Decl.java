@@ -74,6 +74,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     default void traceExit(R r) {
     }
     R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
+    R visitStructDecl(@NotNull Decl.StructDecl decl, P p);
     R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
   }
 
@@ -148,6 +149,37 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
 
     public static record Ctors(@NotNull ImmutableSeq<DataCtor> ctors) {
+    }
+  }
+
+  /**
+   * Concrete structure definition
+   *
+   * @author vont
+   */
+  public static final class StructDecl extends Decl {
+    public final @NotNull DefVar<StructDecl, StructDecl> ref;
+
+    protected StructDecl(
+      @NotNull SourcePos sourcePos,
+      @NotNull Accessibility accessibility,
+      @NotNull String name,
+      @NotNull ImmutableSeq<Expr.Param> fieldTelescope,
+      @NotNull ImmutableSeq<String> superClassNames,
+      @NotNull ImmutableSeq<Expr.Param> fields,
+      @NotNull ImmutableSeq<Stmt> abuseBlock) {
+      super(sourcePos, accessibility, abuseBlock, telescope);
+      this.ref = DefVar.concrete(this, name);
+    }
+
+    @Override
+    public @NotNull DefVar<? extends Def, ? extends Decl> ref() {
+      return null;
+    }
+
+    @Override
+    protected <P, R> R doAccept(Decl.@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitStructDecl(this, p);
     }
   }
 
