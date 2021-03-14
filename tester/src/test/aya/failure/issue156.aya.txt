@@ -5,6 +5,6 @@ In file $FILE:4:11 ->
   4 |   => f p.1 p.2
                  ^^
   
-Error: Parser error: extraneous input 'p' expecting {<EOF>, '\def', '\structure', '\data', '\module', '\open', '\import', '\public', '\private'}
+Error: Parser error: extraneous input 'p' expecting {<EOF>, '\def', '\struct', '\data', '\module', '\open', '\import', '\public', '\private'}
 Parsing interrupted due to errors.
 What are you doing?
