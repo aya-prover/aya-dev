@@ -73,9 +73,9 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
     default void traceExit(R r) {
     }
-    R visitDataDecl(@NotNull Decl.DataDecl decl, P p);
-    R visitStructDecl(@NotNull Decl.StructDecl decl, P p);
-    R visitFnDecl(@NotNull Decl.FnDecl decl, P p);
+    R visitData(Decl.@NotNull DataDecl decl, P p);
+    R visitStruct(Decl.@NotNull StructDecl decl, P p);
+    R visitFn(Decl.@NotNull FnDecl decl, P p);
   }
 
   public static final class DataCtor extends Signatured {
@@ -138,7 +138,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
 
     @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
-      return visitor.visitDataDecl(this, p);
+      return visitor.visitData(this, p);
     }
 
     @Override public @NotNull DefVar<DataDef, DataDecl> ref() {
@@ -158,29 +158,30 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @author vont
    */
   public static final class StructDecl extends Decl {
-    public final @NotNull DefVar<StructDecl, StructDecl> ref;
+    public final @NotNull DefVar<? extends Def, StructDecl> ref;
 
-    protected StructDecl(
+    public StructDecl(
       @NotNull SourcePos sourcePos,
       @NotNull Accessibility accessibility,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> fieldTelescope,
-      @NotNull ImmutableSeq<String> superClassNames,
-      @NotNull ImmutableSeq<Expr.Param> fields,
+      // @NotNull ImmutableSeq<String> superClassNames,
+      @NotNull ImmutableSeq<StructField> fields,
       @NotNull ImmutableSeq<Stmt> abuseBlock) {
-      super(sourcePos, accessibility, abuseBlock, telescope);
+      super(sourcePos, accessibility, abuseBlock, fieldTelescope);
       this.ref = DefVar.concrete(this, name);
     }
 
-    @Override
-    public @NotNull DefVar<? extends Def, ? extends Decl> ref() {
-      return null;
+    @Override public @NotNull DefVar<? extends Def, StructDecl> ref() {
+      return ref;
     }
 
-    @Override
-    protected <P, R> R doAccept(Decl.@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitStructDecl(this, p);
+    @Override protected <P, R> R doAccept(Decl.@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitStruct(this, p);
     }
+  }
+
+  public record StructField() {
   }
 
   /**
@@ -216,7 +217,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
 
     @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
-      return visitor.visitFnDecl(this, p);
+      return visitor.visitFn(this, p);
     }
 
     @Override public @NotNull DefVar<FnDef, FnDecl> ref() {

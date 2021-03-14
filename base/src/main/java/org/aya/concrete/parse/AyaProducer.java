@@ -504,19 +504,35 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 
-  public @NotNull Decl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     // TODO: visit struct decl
     var abuseCtx = ctx.abuse();
-    var data = new Decl.StructDecl(
+    return new Decl.StructDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
       ctx.ID().getText(),
-      visitFieldTele(ctx.fieldTele()),
-      ctx.ids(),
+      visitTelescope(ctx.tele()),
+      // ctx.ids(),
       visitField(ctx.field()),
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
+  }
 
+  private ImmutableSeq<Decl.StructField> visitField(List<AyaParser.FieldContext> field) {
+    return field.stream()
+      .map(fieldCtx -> {
+        if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
+        else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
+        else throw new IllegalArgumentException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
+      })
+      .collect(ImmutableSeq.factory());
+  }
+
+  @Override public Decl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override public Decl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
     throw new UnsupportedOperationException();
   }
 
