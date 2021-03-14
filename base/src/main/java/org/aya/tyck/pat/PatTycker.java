@@ -113,25 +113,26 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       exprTycker.localCtx.put(v, t);
       return new Pat.Bind(true, v, t);
     }
-    if (!selected.conTelescope().isEmpty()) {
+    if (!selected._2.conTelescope().isEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
     var value = bind.resolved().value;
     if (value != null) subst.good().put(v, value);
     else subst.bad().add(v);
-    return new Pat.Ctor(true, selected.ref(), ImmutableSeq.of(), null, t);
+    return new Pat.Ctor(true, selected._2.ref(), ImmutableSeq.of(), null, selected._1);
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name(), subst.reporter());
     if (realCtor == null) throw new ExprTycker.TyckerException();
-    var sig = new Ref<>(new Def.Signature(realCtor.conTelescope(), realCtor.result()));
+    var sig = new Ref<>(new Def.Signature(realCtor._2.conTelescope(), realCtor._2.result()));
     var patterns = visitPatterns(sig, ctor.params());
-    return new Pat.Ctor(true, realCtor.ref(), patterns, ctor.as(), param);
+    return new Pat.Ctor(true, realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
   }
 
-  private DataDef.@Nullable Ctor selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
+  private @Nullable Tuple2<AppTerm.DataCall, DataDef.Ctor>
+  selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
     if (!(param instanceof AppTerm.DataCall dataCall)) {
       // TODO[ice]: report error: splitting on non data
       return null;
@@ -146,6 +147,6 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       // TODO[ice]: report error: cannot find ctor of name
       return null;
     }
-    return selected.get();
+    return Tuple.of(dataCall, selected.get());
   }
 }

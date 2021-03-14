@@ -62,7 +62,7 @@ public record DataDef(
       return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTelescope);
     }
 
-    @Override public @NotNull Term result() {
+    @Override public @NotNull AppTerm.DataCall result() {
       return new AppTerm.DataCall(dataRef, Def.defTele(dataRef).view().map(Term.Param::toArg));
     }
 
