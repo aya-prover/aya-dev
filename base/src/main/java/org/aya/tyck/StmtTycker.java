@@ -59,6 +59,7 @@ public record StmtTycker(
     var dataRef = ctor.dataRef;
     var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
       .param().view().map(Term.Param::toArg);
+    // TODO[ice]: insert data params?
     var signature = new Def.Signature(tele, new AppTerm.DataCall(dataRef, dataArgs));
     ctor.signature = signature;
     var patTycker = new PatTycker(tycker);

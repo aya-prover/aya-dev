@@ -7,8 +7,8 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +50,7 @@ public interface Def extends CoreDef {
    * @author ice1000
    */
   record Signature(
-    @NotNull Seq<Term.@NotNull Param> param,
+    @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
@@ -61,6 +61,10 @@ public interface Def extends CoreDef {
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {
       return new Signature(param, term);
+    }
+
+    public @NotNull Signature subst(@NotNull Substituter.TermSubst subst) {
+      return new Signature(param.map(p -> p.subst(subst)), result.subst(subst));
     }
   }
 }
