@@ -17,6 +17,7 @@ include(
   "docs",
   "cli",
   "tgbot",
+  "qqbot",
   // "proto",
   "parser",
   "base",
