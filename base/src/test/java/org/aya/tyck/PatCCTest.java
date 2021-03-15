@@ -16,6 +16,22 @@ public class PatCCTest {
   public void addCC() {
     var decls = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
+      \\def add (a, b : Nat) : Nat
+       | zero, b => b
+       | a, zero => a
+       | suc a, b => suc (add a b)
+       | a, suc b => suc (add a b)""");
+    var clauses = ((FnDef) decls.get(1)).body().getRightValue();
+    var classified = PatClassifier.classify(clauses);
+    assertEquals(4, classified.size());
+    classified.forEach(cls ->
+      assertEquals(2, cls.contents().size()));
+  }
+
+  @Test
+  public void maxCC() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      \\open \\data Nat : \\Set | zero | suc Nat
       \\def max (a, b : Nat) : Nat
        | zero, b => b
        | a, zero => a
