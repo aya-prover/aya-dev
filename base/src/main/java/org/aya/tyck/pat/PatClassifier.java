@@ -43,13 +43,15 @@ public interface PatClassifier {
     // Progress
     if (hasMatch.isEmpty()) return classifySub(subPatsSeq.map(SubPats::drop));
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
-    var classified = hasMatch.first().availableCtors().flatMap(ctor -> {
-      var clazz = subPatsSeq.view()
+    var classification = hasMatch.first().availableCtors()
+      .map(ctor -> subPatsSeq.view()
         .mapNotNull(subPats -> matches(subPats, ctor.ref()))
-        .toImmutableSeq();
-      return classifySub(clazz);
-    }).toImmutableSeq();
-    return classified;
+        .toImmutableSeq())
+      .flatMap(PatClassifier::classifySub)
+      .flatMap(patClass -> patClass.extract(subPatsSeq))
+      .map(SubPats::drop)
+      .toImmutableSeq();
+    return classifySub(classification);
   }
 
   private static @Nullable SubPats matches(SubPats subPats, @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref) {
@@ -66,8 +68,15 @@ public interface PatClassifier {
   }
 
   record PatClass(
-    @NotNull ImmutableSeq<IntObjTuple2<Substituter.TermSubst>> ixAndSubst
+    @NotNull ImmutableSeq<IntObjTuple2<Substituter.TermSubst>> contents
   ) {
+    public @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
+      return contents.map(tup -> {
+        var pat = subPatsSeq.get(tup._1);
+        pat.bodySubst.subst(tup._2);
+        return pat;
+      });
+    }
   }
 
   record SubPats(
