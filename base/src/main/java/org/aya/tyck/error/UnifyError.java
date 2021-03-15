@@ -12,7 +12,7 @@ public record UnifyError(
   @NotNull Expr expr,
   @NotNull Term expected,
   @NotNull Term actual
-) implements Problem.Error, TyckProblem {
+) implements TyckProblem, Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The expected type `"),
@@ -21,5 +21,9 @@ public record UnifyError(
       actual.toDoc(),
       Doc.plain("`")
     );
+  }
+
+  @Override public @NotNull Severity level() {
+    return Severity.ERROR;
   }
 }

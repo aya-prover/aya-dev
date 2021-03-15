@@ -12,7 +12,11 @@ public record BadTypeError(
   @NotNull Expr expr,
   @NotNull Doc expectedType,
   @NotNull Term actualType
-) implements Problem.Error, TyckProblem {
+) implements Problem, TyckProblem {
+  @Override public @NotNull Severity level() {
+    return Severity.ERROR;
+  }
+
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The expected type `"),

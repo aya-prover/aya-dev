@@ -13,7 +13,11 @@ public record AmbiguousNameError(
   @NotNull String name,
   @NotNull ImmutableSeq<Seq<String>> disambiguation,
   @NotNull SourcePos sourcePos
-) implements Problem.Error {
+) implements Problem {
+  @Override public @NotNull Severity level() {
+    return Severity.ERROR;
+  }
+
   @Override
   public @NotNull Doc describe() {
     return Doc.hcat(

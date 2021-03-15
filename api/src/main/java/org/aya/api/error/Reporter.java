@@ -19,9 +19,13 @@ public interface Reporter {
 
   @ApiStatus.Internal
   default void reportString(@NotNull String s) {
-    report(new Problem.Info() {
+    report(new Problem() {
       @Override public @NotNull SourcePos sourcePos() {
         return SourcePos.NONE;
+      }
+
+      @Override public @NotNull Severity level() {
+        return Severity.INFO;
       }
 
       @Override public @NotNull Doc describe() {

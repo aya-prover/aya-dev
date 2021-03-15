@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public record ModNotFoundError(
   @NotNull Seq<String> modName,
   @NotNull SourcePos sourcePos
-) implements Problem.Error {
+) implements Problem {
   @Override
   public @NotNull Doc describe() {
     return Doc.hcat(
@@ -23,5 +23,9 @@ public record ModNotFoundError(
 
   @Override public @NotNull Stage stage() {
     return Stage.RESOLVE;
+  }
+
+  @Override public @NotNull Severity level() {
+    return Severity.ERROR;
   }
 }

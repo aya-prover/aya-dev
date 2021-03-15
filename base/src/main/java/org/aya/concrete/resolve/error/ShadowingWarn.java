@@ -10,7 +10,11 @@ import org.jetbrains.annotations.NotNull;
 public record ShadowingWarn(
   @NotNull String name,
   @NotNull SourcePos sourcePos
-) implements Problem.Warn {
+) implements Problem {
+  @Override public @NotNull Severity level() {
+    return Severity.WARN;
+  }
+
   @Override
   public @NotNull Doc describe() {
     return Doc.hcat(

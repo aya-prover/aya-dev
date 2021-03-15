@@ -64,32 +64,4 @@ public interface Problem {
       noteMessage
     );
   }
-
-  interface Error extends Problem {
-    @Override
-    default @NotNull Severity level() {
-      return Severity.ERROR;
-    }
-  }
-
-  interface Warn extends Problem {
-    @Override
-    default @NotNull Severity level() {
-      return Severity.WARN;
-    }
-  }
-
-  interface Goal extends Problem {
-    @Override
-    default @NotNull Severity level() {
-      return Severity.GOAL;
-    }
-  }
-
-  interface Info extends Problem {
-    @Override
-    default @NotNull Severity level() {
-      return Severity.INFO;
-    }
-  }
 }

@@ -7,8 +7,12 @@ import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record ParseError(@NotNull SourcePos sourcePos, @NotNull String message) implements Problem.Error {
+public record ParseError(@NotNull SourcePos sourcePos, @NotNull String message) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.plain("Parser error: " + message);
+  }
+
+  @Override public @NotNull Severity level() {
+    return Severity.ERROR;
   }
 }

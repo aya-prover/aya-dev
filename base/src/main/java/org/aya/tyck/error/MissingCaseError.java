@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public record MissingCaseError(
   @NotNull SourcePos sourcePos,
   @NotNull Buffer<PatTree> pats
-) implements Problem.Error {
+) implements Problem {
   @Override public @NotNull Doc describe() {
     var sb = new StringBuilder();
     var started = false;
@@ -28,5 +28,9 @@ public record MissingCaseError(
       Doc.plain("Unhandled case: "),
       Doc.plain(sb.toString())
     );
+  }
+
+  @Override public @NotNull Severity level() {
+    return Severity.ERROR;
   }
 }

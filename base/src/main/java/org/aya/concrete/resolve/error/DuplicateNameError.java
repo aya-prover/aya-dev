@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public record DuplicateNameError(
   @NotNull String name,
   @NotNull SourcePos sourcePos
-) implements Problem.Error {
+) implements Problem {
   @Override
   public @NotNull Doc describe() {
     return Doc.hcat(
@@ -22,5 +22,9 @@ public record DuplicateNameError(
 
   @Override public @NotNull Stage stage() {
     return Stage.RESOLVE;
+  }
+
+  @Override public @NotNull Severity level() {
+    return Severity.ERROR;
   }
 }
