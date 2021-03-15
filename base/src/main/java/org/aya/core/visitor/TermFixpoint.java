@@ -31,8 +31,6 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitConCall(@NotNull AppTerm.ConCall conCall, P p) {
     var dataArgs = conCall.dataArgs().view().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().view().map(arg -> visitArg(arg, p));
-    if (conCall.dataArgs().sameElements(dataArgs, true)
-      && conCall.conArgs().sameElements(conArgs, true)) return conCall;
     return new AppTerm.ConCall(conCall.conHead(), dataArgs, conArgs);
   }
 
