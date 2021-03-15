@@ -10,6 +10,7 @@ import org.aya.core.pat.PatToSubst;
 import org.aya.core.visitor.Substituter;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -19,11 +20,16 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000, kiva
  */
 public interface PatClassifier {
+  static @NotNull ImmutableSeq<PatClass> classify(@NotNull ImmutableSeq<Pat.@NotNull Clause> clauses) {
+    return classifySub(clauses.mapIndexed((index, clause) ->
+      new SubPats(clause.patterns(), new Substituter.TermSubst(new MutableHashMap<>()), index)));
+  }
+
   /**
    * @param subPatsSeq should be of the same length, and should <strong>not</strong> be empty.
    * @return pattern classes
    */
-  static @NotNull ImmutableSeq<PatClass> classify(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
+  private static @NotNull ImmutableSeq<PatClass> classifySub(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
     assert !subPatsSeq.isEmpty();
     var pivot = subPatsSeq.first();
     // Done
@@ -35,14 +41,15 @@ public interface PatClassifier {
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Ctor ctor ? ctor.type() : null)
       .toImmutableSeq();
     // Progress
-    if (hasMatch.isEmpty()) return classify(subPatsSeq.map(SubPats::drop));
+    if (hasMatch.isEmpty()) return classifySub(subPatsSeq.map(SubPats::drop));
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
-    return hasMatch.first().availableCtors().flatMap(ctor -> {
+    var classified = hasMatch.first().availableCtors().flatMap(ctor -> {
       var clazz = subPatsSeq.view()
         .mapNotNull(subPats -> matches(subPats, ctor.ref()))
         .toImmutableSeq();
-      return classify(clazz);
+      return classifySub(clazz);
     }).toImmutableSeq();
+    return classified;
   }
 
   private static @Nullable SubPats matches(SubPats subPats, @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref) {
