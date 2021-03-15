@@ -7,46 +7,65 @@ import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatToSubst;
-import org.aya.core.term.Term;
+import org.aya.core.visitor.Substituter;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Option;
+import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class PatClassifier {
+/**
+ * @author ice1000, kiva
+ */
+public interface PatClassifier {
   /**
    * @param subPatsSeq should be of the same length, and should <strong>not</strong> be empty.
+   * @return pattern classes
    */
-  public static void classify(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
+  static @NotNull ImmutableSeq<PatClass> classify(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
     assert !subPatsSeq.isEmpty();
     var pivot = subPatsSeq.first();
     // Done
-    if (pivot.pats.isEmpty()) return;
+    if (pivot.pats.isEmpty()) {
+      var oneClass = subPatsSeq.map(subPats -> IntObjTuple2.of(subPats.ix, subPats.bodySubst));
+      return ImmutableSeq.of(new PatClass(oneClass));
+    }
     var hasMatch = subPatsSeq.view()
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Ctor ctor ? ctor.type() : null)
       .toImmutableSeq();
     // Progress
-    if (hasMatch.isEmpty()) {
-      classify(subPatsSeq.map(SubPats::drop));
-      return;
-    }
+    if (hasMatch.isEmpty()) return classify(subPatsSeq.map(SubPats::drop));
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
-    for (var ctor : hasMatch.first().availableCtors()) {
+    return hasMatch.first().availableCtors().flatMap(ctor -> {
       var clazz = subPatsSeq.view()
-        .filter(subPats -> matches(subPats, ctor.ref()))
+        .mapNotNull(subPats -> matches(subPats, ctor.ref()))
         .toImmutableSeq();
-    }
+      return classify(clazz);
+    }).toImmutableSeq();
   }
 
-  private static boolean matches(SubPats subPats, @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref) {
+  private static @Nullable SubPats matches(SubPats subPats, @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref) {
     var head = subPats.head();
-    return head instanceof Pat.Ctor ctor && ctor.ref() == ref || head instanceof Pat.Bind;
+    var bodySubst = subPats.bodySubst;
+    if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
+      return new SubPats(ctor.params(), bodySubst, subPats.ix);
+    if (head instanceof Pat.Bind bind) {
+      var freshPat = ref.core.freshPat(bind.explicit());
+      bodySubst.add(bind.as(), freshPat.toTerm());
+      return new SubPats(freshPat.params(), bodySubst, subPats.ix);
+    }
+    return null;
   }
 
-  public static record SubPats(
+  record PatClass(
+    @NotNull ImmutableSeq<IntObjTuple2<Substituter.TermSubst>> ixAndSubst
+  ) {
+  }
+
+  record SubPats(
     @NotNull SeqLike<Pat> pats,
-    @NotNull Option<Term> body,
+    @NotNull Substituter.TermSubst bodySubst,
     int ix
   ) {
     @Contract(pure = true) public @NotNull Pat head() {
@@ -55,7 +74,8 @@ public final class PatClassifier {
 
     @Contract(pure = true) public @NotNull SubPats drop() {
       var subst = PatToSubst.build(pats.first());
-      return new SubPats(pats.view().drop(1), body.map(term -> term.subst(subst)), ix);
+      subst.map().putAll(bodySubst.map());
+      return new SubPats(pats.view().drop(1), subst, ix);
     }
   }
 }
