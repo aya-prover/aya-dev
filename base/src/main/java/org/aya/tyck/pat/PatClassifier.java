@@ -69,12 +69,10 @@ public record PatClassifier(
     if (hasMatch.isEmpty()) return classifySub(subPatsSeq.map(SubPats::drop));
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     return hasMatch.first().availableCtors()
-      .map(ctor -> subPatsSeq.view()
+      .flatMap(ctor -> classifySub(subPatsSeq.view()
         .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor.ref()))
-        .toImmutableSeq())
-      .flatMap(this::classifySub)
-      .map(pats -> pats.extract(subPatsSeq).map(SubPats::drop))
-      .flatMap(this::classifySub)
+        .toImmutableSeq()))
+      .flatMap(pats -> classifySub(pats.extract(subPatsSeq).map(SubPats::drop)))
       .toImmutableSeq();
   }
 
