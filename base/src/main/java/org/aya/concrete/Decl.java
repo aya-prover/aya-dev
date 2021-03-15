@@ -10,7 +10,9 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.StructDef;
 import org.aya.generic.Modifier;
+import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
@@ -158,18 +160,24 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @author vont
    */
   public static final class StructDecl extends Decl {
-    public final @NotNull DefVar<? extends Def, StructDecl> ref;
+    public final @NotNull DefVar<StructDef, StructDecl> ref;
+    public @NotNull ImmutableSeq<StructField> fields;
+    public @NotNull Expr result;
 
     public StructDecl(
       @NotNull SourcePos sourcePos,
       @NotNull Accessibility accessibility,
       @NotNull String name,
-      @NotNull ImmutableSeq<Expr.Param> fieldTelescope,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
+      @NotNull Expr result,
       // @NotNull ImmutableSeq<String> superClassNames,
       @NotNull ImmutableSeq<StructField> fields,
       @NotNull ImmutableSeq<Stmt> abuseBlock) {
-      super(sourcePos, accessibility, abuseBlock, fieldTelescope);
+      super(sourcePos, accessibility, abuseBlock, telescope);
+      this.result = result;
+      this.fields = fields;
       this.ref = DefVar.concrete(this, name);
+      fields.forEach(field -> field.structRef = ref);
     }
 
     @Override public @NotNull DefVar<? extends Def, StructDecl> ref() {
@@ -179,9 +187,35 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     @Override protected <P, R> R doAccept(Decl.@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitStruct(this, p);
     }
+
+    // public static record Fields(@NotNull ImmutableSeq<StructField> fields) {}
   }
 
-  public record StructField() {
+  public static final class StructField extends Signatured {
+    public final @NotNull DefVar<StructDef.Field, Decl.StructField> ref;
+    public DefVar<StructDef, StructDecl> structRef;
+    public Expr expr;
+
+    public boolean coerce;
+
+    public StructField(@NotNull SourcePos sourcePos,
+                       @NotNull String name,
+                       @NotNull ImmutableSeq<Expr.Param> telescope,
+                       @NotNull Expr expr,
+                       boolean coerce) {
+      super(sourcePos, telescope);
+      this.coerce = coerce;
+      this.expr = expr;
+      this.ref = DefVar.concrete(this, name);
+    }
+
+    @Override protected <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitField(this, p);
+    }
+
+    @Override public @NotNull DefVar<? extends Def, StructField> ref() {
+      return ref;
+    }
   }
 
   /**

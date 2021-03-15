@@ -84,8 +84,19 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   @Override
   public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
-    // TODO[vont]: struct
-    return null;
+
+    // vont: We don't need to import ANYTHING since we choose not to have projection. Do we??
+
+    // context.importModule(
+    //   ImmutableSeq.of(decl.ref().name()),
+    //   decl.accessibility(),
+    //   MutableHashMap.of(
+    //     Context.TOP_LEVEL_MOD_NAME,
+    //     MutableHashMap.from(decl.fields.toImmutableSeq().map(field ->
+    //       Tuple2.of(field.ref.name(), field.ref)))),
+    //     decl.sourcePos()
+    //   );
+    return Unit.unit();
   }
 
   @Override

@@ -2,8 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.visitor;
 
+import org.aya.api.error.SourcePos;
 import org.aya.concrete.Decl;
+import org.aya.concrete.Expr;
 import org.aya.concrete.Stmt;
+import org.aya.ref.LocalVar;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,8 +60,20 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
 
   @Override
   public Unit visitStruct(Decl.@NotNull StructDecl decl, Unit unit) {
-    // TODO[vont]: struct
-    return null;
+    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
+    decl.telescope = local._1;
+    decl.result = decl.result.resolve(local._2);
+
+    decl.fields.foldLeft(local._2, (ctx, field) -> {
+      var fieldLocal = ExprResolver.INSTANCE.resolveParams(field.telescope, ctx);
+      field.telescope = fieldLocal._1;
+      field.expr = field.expr.resolve(fieldLocal._2);
+      var newVar = new LocalVar(field.ref.name());
+      var newParam = new Expr.Param(field.sourcePos(), newVar, false);
+      return ctx.bind(new LocalVar(field.ref.name()), field.sourcePos());
+    });
+
+    return unit;
   }
 
   /** @apiNote Note that this function MUTATES the decl. */

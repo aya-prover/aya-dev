@@ -7,6 +7,7 @@ import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.SeqLike;
@@ -48,6 +49,19 @@ public record RefFinder(boolean withBody) implements
     tele(references, def.conTelescope());
     if (withBody) for (var clause : def.clauses()) matchy(clause, references);
     return Unit.unit();
+  }
+
+  @Override
+  public Unit visitStruct(@NotNull StructDef def, @NotNull Buffer<Def> references) {
+    // TODO[vont]: struct
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Unit visitField(@NotNull StructDef.Field def, @NotNull Buffer<Def> references) {
+    tele(references, def.telescope());
+    // TODO[vont]: struct
+    throw new UnsupportedOperationException();
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
