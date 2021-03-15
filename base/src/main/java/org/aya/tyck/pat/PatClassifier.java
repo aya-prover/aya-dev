@@ -44,8 +44,8 @@ public interface PatClassifier {
     if (hasMatch.isEmpty()) return classifySub(subPatsSeq.map(SubPats::drop));
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var classification = hasMatch.first().availableCtors()
-      .map(ctor -> subPatsSeq.view()
-        .mapNotNull(subPats -> matches(subPats, ctor.ref()))
+      .mapIndexed((ix, ctor) -> subPatsSeq.view()
+        .mapNotNull(subPats -> matches(subPats, ix, ctor.ref()))
         .toImmutableSeq())
       .flatMap(PatClassifier::classifySub)
       .flatMap(patClass -> patClass.extract(subPatsSeq))
@@ -54,15 +54,18 @@ public interface PatClassifier {
     return classifySub(classification);
   }
 
-  private static @Nullable SubPats matches(SubPats subPats, @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref) {
+  private static @Nullable SubPats matches(
+    SubPats subPats, int ix,
+    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref
+  ) {
     var head = subPats.head();
     var bodySubst = subPats.bodySubst;
     if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
-      return new SubPats(ctor.params(), bodySubst, subPats.ix);
+      return new SubPats(ctor.params(), bodySubst, ix);
     if (head instanceof Pat.Bind bind) {
       var freshPat = ref.core.freshPat(bind.explicit());
       bodySubst.add(bind.as(), freshPat.toTerm());
-      return new SubPats(freshPat.params(), bodySubst, subPats.ix);
+      return new SubPats(freshPat.params(), bodySubst, ix);
     }
     return null;
   }
