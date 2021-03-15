@@ -13,6 +13,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
+import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
@@ -65,7 +66,8 @@ public record StmtTycker(
     var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature)._2);
-    // TODO[ice]: coverage check
+    if (!elabClauses.isEmpty())
+      PatClassifier.test(elabClauses, reporter, ctor.sourcePos);
     var clauses = elabClauses.flatMap(Pat.Clause::fromProto);
     return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
   }

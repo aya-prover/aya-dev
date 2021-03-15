@@ -24,7 +24,7 @@ public class PatCCTest {
        | suc a, b => suc (add a b)
        | a, suc b => suc (add a b)""");
     var clauses = ((FnDef) decls.get(1)).body().getRightValue();
-    var classified = PatClassifier.classify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
+    var classified = PatClassifier.testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
     assertEquals(4, classified.size());
     classified.forEach(cls ->
       assertEquals(2, cls.contents().size()));
@@ -39,7 +39,7 @@ public class PatCCTest {
        | a, zero => a
        | suc a, suc b => suc (max a b)""");
     var clauses = ((FnDef) decls.get(1)).body().getRightValue();
-    var classified = PatClassifier.classify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
+    var classified = PatClassifier.testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
     assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());

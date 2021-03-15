@@ -17,7 +17,7 @@ import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author ice1000, kiva
@@ -26,14 +26,28 @@ public record PatClassifier(
   @NotNull Reporter reporter,
   @NotNull SourcePos pos
 ) {
-  @VisibleForTesting
-  public static @NotNull ImmutableSeq<PatClass> classify(
+  @TestOnly
+  public static @NotNull ImmutableSeq<PatClass> testClassify(
     @NotNull ImmutableSeq<Pat.@NotNull Clause> clauses,
+    @NotNull Reporter reporter, @NotNull SourcePos pos
+  ) {
+    return classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos);
+  }
+
+  private static @NotNull ImmutableSeq<PatClass> classify(
+    @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos
   ) {
     var classifier = new PatClassifier(reporter, pos);
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
       new SubPats(clause.patterns(), new TermSubst(new MutableHashMap<>()), index)));
+  }
+
+  public static void test(
+    @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
+    @NotNull Reporter reporter, @NotNull SourcePos pos
+  ) {
+    classify(clauses, reporter, pos);
   }
 
   /**

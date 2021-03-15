@@ -84,5 +84,8 @@ public sealed interface Pat {
     @NotNull ImmutableSeq<Pat> patterns,
     @NotNull Option<Term> expr
   ) {
+    public static @NotNull PrototypeClause prototypify(@NotNull Clause clause) {
+      return new PrototypeClause(clause.patterns, Option.some(clause.expr));
+    }
   }
 }
