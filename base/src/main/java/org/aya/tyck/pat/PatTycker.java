@@ -101,7 +101,9 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       throw new ExprTycker.TyckerException();
     }
     // sig.result is a dummy term
-    var sig = new Def.Signature(sigma.params(), UnivTerm.OMEGA);
+    var sig = new Def.Signature(
+      sigma.params().appended(new Term.Param(new LocalVar("_"), sigma.body(), true)),
+      UnivTerm.OMEGA);
     exprTycker.localCtx.put(tuple.as(), sigma);
     return new Pat.Tuple(tuple.explicit(),
       visitPatterns(new Ref<>(sig), tuple.patterns()), tuple.as(), sigma);
