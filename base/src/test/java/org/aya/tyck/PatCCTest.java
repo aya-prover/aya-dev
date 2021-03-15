@@ -44,4 +44,19 @@ public class PatCCTest {
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
     assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
   }
+
+  @Test
+  public void tupleCC() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      \\open \\data Nat : \\Set | zero | suc Nat
+      \\def max (a : \\Sig Nat ** Nat) : Nat
+       | (zero, b) => b
+       | (a, zero) => a
+       | (suc a, suc b) => suc (max (a, b))""");
+    var clauses = ((FnDef) decls.get(1)).body().getRightValue();
+    var classified = PatClassifier.testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
+    assertEquals(4, classified.size());
+    assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
+    assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
+  }
 }

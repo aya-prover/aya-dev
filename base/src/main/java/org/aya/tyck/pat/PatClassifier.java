@@ -63,6 +63,11 @@ public record PatClassifier(
       var oneClass = subPatsSeq.map(subPats -> IntObjTuple2.of(subPats.ix, subPats.bodySubst));
       return ImmutableSeq.of(new PatClass(oneClass));
     }
+    var hasTuple = subPatsSeq.view()
+      .mapNotNull(subPats -> subPats.head() instanceof Pat.Tuple tuple ? tuple : null)
+      .toImmutableSeq();
+    if (!hasTuple.isEmpty())
+      return classifySub(flatTuple(hasTuple)); // TODO: help! what if we have both tuple and ctors in a clause?
     var hasMatch = subPatsSeq.view()
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Ctor ctor ? ctor.type() : null)
       .toImmutableSeq();
@@ -80,6 +85,16 @@ public record PatClassifier(
       buffer.appendAll(rest);
     }
     return buffer.toImmutableSeq();
+  }
+
+  private @NotNull ImmutableSeq<SubPats> flatTuple(ImmutableSeq<Pat.Tuple> hasTuple) {
+    return hasTuple.view()
+      .mapIndexed((index, tuple) -> {
+        var subst = new TermSubst(new MutableHashMap<>());
+        if (tuple.as() != null) subst.add(tuple.as(), tuple.toTerm());
+        return new SubPats(tuple.pats(), subst, index);
+      })
+      .toImmutableSeq();
   }
 
   private static @Nullable SubPats matches(
