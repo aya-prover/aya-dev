@@ -6,21 +6,18 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
+import org.aya.generic.GenericBuilder;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Objects;
 
 /**
  * @author ice1000
  */
-public sealed interface Trace {
-  @NotNull Buffer<@NotNull Trace> subtraces();
-
+public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   interface Visitor<P, R> {
     R visitExpr(@NotNull ExprT t, P p);
     R visitUnify(@NotNull UnifyT t, P p);
@@ -30,31 +27,15 @@ public sealed interface Trace {
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
-  class Builder {
-    @VisibleForTesting
-    public final Deque<@NotNull Buffer<@NotNull Trace>> tops = new ArrayDeque<>();
-
-    public @NotNull Buffer<@NotNull Trace> root() {
-      return tops.getFirst();
-    }
-
-    {
-      tops.addLast(Buffer.of());
-    }
-
-    public void shift(@NotNull Trace trace) {
-      Objects.requireNonNull(tops.getLast()).append(trace);
-      tops.addLast(trace.subtraces());
-    }
-
-    public void reduce() {
-      tops.removeLast();
+  final class Builder extends GenericBuilder<Trace> {
+    @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {
+      return tops;
     }
   }
 
   record DeclT(
     @NotNull DefVar<?, ?> var, @NotNull SourcePos pos,
-    @NotNull Buffer<@NotNull Trace> subtraces
+    @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
     public DeclT(@NotNull DefVar<?, ?> var, @NotNull SourcePos pos) {
       this(var, pos, Buffer.of());
@@ -65,7 +46,7 @@ public sealed interface Trace {
     }
   }
 
-  record ExprT(@NotNull Expr expr, @Nullable Term term, @NotNull Buffer<@NotNull Trace> subtraces) implements Trace {
+  record ExprT(@NotNull Expr expr, @Nullable Term term, @NotNull Buffer<@NotNull Trace> children) implements Trace {
     public ExprT(@NotNull Expr expr, @Nullable Term term) {
       this(expr, term, Buffer.of());
     }
@@ -78,7 +59,7 @@ public sealed interface Trace {
   record UnifyT(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull SourcePos pos,
-    @NotNull Buffer<@NotNull Trace> subtraces
+    @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
     public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos) {
       this(lhs, rhs, pos, Buffer.of());
@@ -92,7 +73,7 @@ public sealed interface Trace {
   record TyckT(
     @NotNull Term term, @NotNull Term type,
     @NotNull SourcePos pos,
-    @NotNull Buffer<@NotNull Trace> subtraces
+    @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
     public TyckT(@NotNull Term term, @NotNull Term type, @NotNull SourcePos pos) {
       this(term, type, pos, Buffer.of());

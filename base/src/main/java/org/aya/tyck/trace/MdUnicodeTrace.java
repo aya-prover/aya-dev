@@ -24,7 +24,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
   @Override public Unit visitDecl(Trace.@NotNull DeclT t, Unit unit) {
     indent();
     builder.append("+ ").append(t.var().name());
-    visitSub(t.subtraces());
+    visitSub(t.children());
     return unit;
   }
 
@@ -35,7 +35,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
       .append("`");
     if (t.term() != null) builder.append(" : ")
       .append(t.term().toDoc().renderWithPageWidth(114514));
-    visitSub(t.subtraces());
+    visitSub(t.children());
     return unit;
   }
 
@@ -57,7 +57,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
       .append(t.lhs().toDoc().renderWithPageWidth(114514))
       .append(" \u2261 ")
       .append(t.rhs().toDoc().renderWithPageWidth(114514));
-    visitSub(t.subtraces());
+    visitSub(t.children());
     return unit;
   }
 

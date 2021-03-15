@@ -17,7 +17,7 @@ public class TracingTest {
     var checker = new ExprTycker(ThrowingReporter.INSTANCE);
     checker.traceBuilder = new Trace.Builder();
     TyckExprTest.idLamTestCase(TyckExprTest.lamConnected(), checker);
-    final var tops = checker.traceBuilder.tops;
+    final var tops = checker.traceBuilder.getTops();
     assertFalse(tops.isEmpty());
     assertEquals(1, tops.size());
   }
@@ -31,13 +31,13 @@ public class TracingTest {
     show.lineSep = "\n";
     checker.traceBuilder.root().forEach(e -> e.accept(show, Unit.unit()));
     assertEquals("""
-      + \u22A2 `\\lam (_) => \\lam (a) => a` : \\Pi (A : \\oo-Type) -> \\Pi (a : A) -> A
-        + \u22A2 `\\lam (a) => a` : \\Pi (a : _) -> _
-          + \u22A2 `a` : _
-            + \u22A2 _ \u2261 _
-            result ⊢ `a` ↑ _
-          result ⊢ `\\lam (a : _) => a` ↑ \\Pi (a : _) -> _
-        result ⊢ `\\lam (_ : \\oo-Type) => \\lam (a : _) => a` ↑ \\Pi (A : \\oo-Type) -> \\Pi (a : A) -> A"""
+        + \u22A2 `\\lam (_) => \\lam (a) => a` : \\Pi (A : \\oo-Type) -> \\Pi (a : A) -> A
+          + \u22A2 `\\lam (a) => a` : \\Pi (a : _) -> _
+            + \u22A2 `a` : _
+              + \u22A2 _ \u2261 _
+              result ⊢ `a` ↑ _
+            result ⊢ `\\lam (a : _) => a` ↑ \\Pi (a : _) -> _
+          result ⊢ `\\lam (_ : \\oo-Type) => \\lam (a : _) => a` ↑ \\Pi (A : \\oo-Type) -> \\Pi (a : A) -> A"""
       , show.builder.toString().trim());
   }
 }
