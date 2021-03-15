@@ -3,18 +3,20 @@
 
 package org.aya.qqbot
 
-import com.jcabi.manifests.Manifests
 import net.mamoe.mirai.BotFactory
 import net.mamoe.mirai.alsoLogin
-import net.mamoe.mirai.event.subscribeMessages
+import net.mamoe.mirai.event.subscribeFriendMessages
+import net.mamoe.mirai.event.subscribeGroupMessages
 import org.aya.api.error.CountingReporter
 import org.aya.api.error.StreamReporter
 import org.aya.cli.CompilerFlags
 import org.aya.cli.SingleFileCompiler
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.*
 
 object AyaQQBot {
   private val env = Files.readAllLines(Paths.get("env"))
@@ -24,17 +26,11 @@ object AyaQQBot {
       if (!Files.exists(it))
         Files.createDirectory(it)
     }
-    bot.eventChannel.subscribeMessages {
-      startsWith("aya history ", true) quoteReply {
-        it.toIntOrNull()?.let { id ->
-          Files.readString(History.get(id))
-        } ?: "Index is not a number"
-      }
-      case("aya info") quoteReply
-        """Tweet~, I am here.
-           Version: ${Manifests.read("Version")}.
-           Build: ${Manifests.read("Build")}.""".trimIndent()
-      startsWith("aya$", true) quoteReply { compile(it) }
+    bot.eventChannel.subscribeFriendMessages {
+      startsWith("") reply { compile(it) }
+    }
+    bot.eventChannel.subscribeGroupMessages {
+      startsWith("Aya$", true) reply { compile(it) }
     }
   }
   suspend fun join() {
@@ -43,10 +39,12 @@ object AyaQQBot {
 }
 
 private fun compile(text: String): String {
+  val file = Paths.get("tmp", UUID.randomUUID().toString())
   val hookOut = ByteArrayOutputStream()
-  val file = History.add(text)
+  Files.write(file, text.toByteArray())
   val reporter = CountingReporter(StreamReporter(file, text, PrintStream(hookOut)))
   val e = SingleFileCompiler(reporter, file, null).compile(CompilerFlags.ASCII_FLAGS)
+  Files.delete(file)
   return "$hookOut\n\nExit with $e"
 }
 
