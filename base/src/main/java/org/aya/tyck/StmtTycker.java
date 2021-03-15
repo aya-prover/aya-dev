@@ -9,6 +9,7 @@ import org.aya.concrete.Signatured;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
@@ -87,8 +88,22 @@ public record StmtTycker(
     ));
   }
 
-  @Override public Def visitStruct(@NotNull Decl.StructDecl decl, ExprTycker exprTycker) {
-    throw new UnsupportedOperationException();
+  @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
+    var tele = checkTele(tycker, decl.telescope);
+    final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+    decl.signature = new Def.Signature(tele, result);
+    return new StructDef(decl.ref, tele, result, decl.fields.map(field -> visitField(field, tycker)));
+  }
+
+  @Override
+  public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
+    var tele = checkTele(tycker, field.telescope);
+    var structRef = field.structRef;
+    var result = field.expr.accept(tycker, null);
+    var signature = new Ref<>(new Def.Signature(tele, result.wellTyped()));
+    field.signature = signature.value;
+
+    return new StructDef.Field(structRef, field.ref, tele, field.coerce);
   }
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {

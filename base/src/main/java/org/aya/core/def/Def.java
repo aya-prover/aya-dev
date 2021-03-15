@@ -46,6 +46,8 @@ public interface Def extends CoreDef {
     R visitFn(@NotNull FnDef def, P p);
     R visitData(@NotNull DataDef def, P p);
     R visitCtor(DataDef.@NotNull Ctor def, P p);
+    R visitStruct(@NotNull StructDef def, P p);
+    R visitField(StructDef.@NotNull Field def, P p);
   }
 
   /**

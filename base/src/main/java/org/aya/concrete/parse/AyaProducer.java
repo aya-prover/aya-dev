@@ -512,6 +512,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       accessibility,
       ctx.ID().getText(),
       visitTelescope(ctx.tele()),
+      type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
       visitField(ctx.field()),
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
@@ -529,11 +530,27 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public Decl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
-    throw new UnsupportedOperationException("TODO");
+    var telescope = visitTelescope(ctx.tele());
+    var id = ctx.ID();
+    return new Decl.StructField(
+      sourcePosOf(id),
+      id.getText(),
+      telescope,
+      visitExpr(ctx.expr()),
+      false
+    );
   }
 
   @Override public Decl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
-    throw new UnsupportedOperationException();
+    var telescope = visitTelescope(ctx.tele());
+    var id = ctx.ID();
+    return new Decl.StructField(
+      sourcePosOf(id),
+      id.getText(),
+      telescope,
+      type(ctx.type(), sourcePosOf(ctx)),
+      ctx.COERCE() != null
+    );
   }
 
   @Override

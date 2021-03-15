@@ -49,7 +49,7 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : OPEN? '\\struct' ID tele* ('\\extends' ids)? ('|' field)* abuse?;
+structDecl : '\\struct' ID tele* type? ('\\extends' ids)? ('|' field)* abuse?;
 
 field : COERCE? ID tele* type   # fieldDecl
       | ID tele* IMPLIES expr   # fieldImpl
