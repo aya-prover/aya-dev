@@ -13,6 +13,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
+import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
@@ -97,7 +98,11 @@ public record StmtTycker(
     var what = FP.distR(decl.body.map(
       left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
       right -> patTycker.elabClause(right, signature)));
-    var body = what._2.mapRight(cs -> cs.flatMap(Pat.Clause::fromProto));
+    var body = what._2.mapRight(cs -> {
+      if (!cs.isEmpty())
+        PatClassifier.test(cs, reporter, decl.sourcePos);
+      return cs.flatMap(Pat.Clause::fromProto);
+    });
     return new FnDef(decl.ref, resultTele, what._1, body);
   }
 

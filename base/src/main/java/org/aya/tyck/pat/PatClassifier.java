@@ -10,6 +10,8 @@ import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatToSubst;
 import org.aya.core.visitor.Substituter.TermSubst;
+import org.aya.tyck.ExprTycker;
+import org.aya.tyck.error.MissingCaseError;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -25,7 +27,8 @@ import org.jetbrains.annotations.TestOnly;
  */
 public record PatClassifier(
   @NotNull Reporter reporter,
-  @NotNull SourcePos pos
+  @NotNull SourcePos pos,
+  @NotNull PatTree.Builder builder
 ) {
   @TestOnly
   public static @NotNull ImmutableSeq<PatClass> testClassify(
@@ -39,7 +42,7 @@ public record PatClassifier(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos
   ) {
-    var classifier = new PatClassifier(reporter, pos);
+    var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
       new SubPats(clause.patterns(), new TermSubst(new MutableHashMap<>()), index)));
   }
@@ -67,20 +70,31 @@ public record PatClassifier(
       .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
         ? flatTuple(tuple, subPats.bodySubst, index) : null)
       .toImmutableSeq();
-    if (!hasTuple.isEmpty())
+    if (!hasTuple.isEmpty()) {
+      builder.shiftEmpty();
       return classifySub(hasTuple);
+    }
     var hasMatch = subPatsSeq.view()
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Ctor ctor ? ctor.type() : null)
       .toImmutableSeq();
     // Progress
-    if (hasMatch.isEmpty()) return classifySub(subPatsSeq.map(SubPats::drop));
+    if (hasMatch.isEmpty()) {
+      builder.shiftEmpty();
+      return classifySub(subPatsSeq.map(SubPats::drop));
+    }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
     for (var ctor : hasMatch.first().availableCtors()) {
       var matches = subPatsSeq.view()
         .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor.ref()))
         .toImmutableSeq();
+      builder.shift(new PatTree(ctor.ref().name()));
+      if (matches.isEmpty()) {
+        reporter.report(new MissingCaseError(pos, builder.root()));
+        throw new ExprTycker.TyckInterruptedException();
+      }
       var classified = classifySub(matches);
+      builder.reduce();
       var clazz = classified.flatMap(pat -> pat.extract(subPatsSeq).map(SubPats::drop));
       var rest = classifySub(clazz);
       buffer.appendAll(rest);
