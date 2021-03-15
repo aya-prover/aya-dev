@@ -43,15 +43,14 @@ public interface PatClassifier {
     // Progress
     if (hasMatch.isEmpty()) return classifySub(subPatsSeq.map(SubPats::drop));
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
-    var classification = hasMatch.first().availableCtors()
-      .mapIndexed((ix, ctor) -> subPatsSeq.view()
-        .mapNotNull(subPats -> matches(subPats, ix, ctor.ref()))
+    return hasMatch.first().availableCtors()
+      .map(ctor -> subPatsSeq.view()
+        .mapIndexedNotNull((ix1, subPats) -> matches(subPats, ix1, ctor.ref()))
         .toImmutableSeq())
       .flatMap(PatClassifier::classifySub)
-      .flatMap(patClass -> patClass.extract(subPatsSeq))
-      .map(SubPats::drop)
+      .map(pats -> pats.extract(subPatsSeq).map(SubPats::drop))
+      .flatMap(PatClassifier::classifySub)
       .toImmutableSeq();
-    return classifySub(classification);
   }
 
   private static @Nullable SubPats matches(
@@ -76,7 +75,7 @@ public interface PatClassifier {
     public @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
       return contents.map(tup -> {
         var pat = subPatsSeq.get(tup._1);
-        pat.bodySubst.subst(tup._2);
+        pat.bodySubst.add(tup._2);
         return pat;
       });
     }

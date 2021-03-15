@@ -2,10 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
-import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.tyck.pat.PatClassifier;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * CC = coverage and confluence
@@ -21,6 +22,8 @@ public class PatCCTest {
        | suc a, suc b => suc (max a b)""");
     var clauses = ((FnDef) decls.get(1)).body().getRightValue();
     var classified = PatClassifier.classify(clauses);
-    System.out.println(classified);
+    assertEquals(4, classified.size());
+    assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
+    assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
   }
 }
