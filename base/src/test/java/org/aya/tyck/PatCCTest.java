@@ -49,11 +49,12 @@ public class PatCCTest {
   public void tupleCC() {
     var decls = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
-      \\def max (a : \\Sig Nat ** Nat) : Nat
-       | (zero, b) => b
-       | (a, zero) => a
-       | (suc a, suc b) => suc (max (a, b))""");
-    var clauses = ((FnDef) decls.get(1)).body().getRightValue();
+      \\open \\data Unit : \\Set | unit Nat
+      \\def max (a : \\Sig Nat ** Nat) (b : Unit) : Nat
+       | (zero, b), unit x => b
+       | (a, zero), y => a
+       | (suc a, suc b), unit y => suc (max (a, b))""");
+    var clauses = ((FnDef) decls.get(2)).body().getRightValue();
     var classified = PatClassifier.testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
