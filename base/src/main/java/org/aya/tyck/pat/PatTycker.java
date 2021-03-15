@@ -121,7 +121,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       throw new ExprTycker.TyckerException();
     }
     var value = bind.resolved().value;
-    if (value != null) subst.good().put(v, value);
+    if (value != null) subst.good().putIfAbsent(v, value);
     else subst.bad().add(v);
     return new Pat.Ctor(true, selected._2.ref(), ImmutableSeq.of(), null, selected._1);
   }
