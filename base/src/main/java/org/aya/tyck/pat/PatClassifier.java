@@ -3,14 +3,17 @@
 package org.aya.tyck.pat;
 
 import org.aya.api.error.Reporter;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.Decl;
+import org.aya.concrete.Decl.DataCtor;
+import org.aya.concrete.Expr;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatToSubst;
-import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Substituter.TermSubst;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
@@ -21,11 +24,19 @@ import org.jetbrains.annotations.VisibleForTesting;
 /**
  * @author ice1000, kiva
  */
-public record PatClassifier(@NotNull Reporter reporter) {
+public record PatClassifier(
+  @NotNull Reporter reporter,
+  @NotNull Buffer<Buffer<Expr>> stack,
+  @NotNull SourcePos pos
+) {
   @VisibleForTesting
-  public @NotNull ImmutableSeq<PatClass> classify(@NotNull ImmutableSeq<Pat.@NotNull Clause> clauses) {
-    return classifySub(clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), new Substituter.TermSubst(new MutableHashMap<>()), index)));
+  public static @NotNull ImmutableSeq<PatClass> classify(
+    @NotNull ImmutableSeq<Pat.@NotNull Clause> clauses,
+    @NotNull Reporter reporter, @NotNull SourcePos pos
+  ) {
+    var classifier = new PatClassifier(reporter, Buffer.of(), pos);
+    return classifier.classifySub(clauses.mapIndexed((index, clause) ->
+      new SubPats(clause.patterns(), new TermSubst(new MutableHashMap<>()), index)));
   }
 
   /**
@@ -58,7 +69,7 @@ public record PatClassifier(@NotNull Reporter reporter) {
 
   private static @Nullable SubPats matches(
     SubPats subPats, int ix,
-    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref
+    @NotNull DefVar<DataDef.Ctor, DataCtor> ref
   ) {
     var head = subPats.head();
     var bodySubst = subPats.bodySubst;
@@ -73,7 +84,7 @@ public record PatClassifier(@NotNull Reporter reporter) {
   }
 
   public static record PatClass(
-    @NotNull ImmutableSeq<IntObjTuple2<Substituter.TermSubst>> contents
+    @NotNull ImmutableSeq<IntObjTuple2<TermSubst>> contents
   ) {
     private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
       return contents.map(tup -> {
@@ -86,7 +97,7 @@ public record PatClassifier(@NotNull Reporter reporter) {
 
   record SubPats(
     @NotNull SeqLike<Pat> pats,
-    @NotNull Substituter.TermSubst bodySubst,
+    @NotNull TermSubst bodySubst,
     int ix
   ) {
     @Contract(pure = true) public @NotNull Pat head() {
