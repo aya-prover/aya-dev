@@ -25,6 +25,7 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.TestOnly;
  *
  * @author ice1000
  */
+@Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
 public interface Term extends CoreTerm {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
   <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);

@@ -3,11 +3,13 @@
 package org.aya.api.ref;
 
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
  */
+@Debug.Renderer(hasChildren = "false", text = "name")
 public final class DefVar<Core, Concrete> implements Var {
   public Concrete concrete;
   public Core core;

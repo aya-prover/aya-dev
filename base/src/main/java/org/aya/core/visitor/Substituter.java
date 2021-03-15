@@ -10,6 +10,7 @@ import org.aya.tyck.sort.Sort;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Unit;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +31,9 @@ public record Substituter(
   /**
    * @author ice1000
    */
+  @Debug.Renderer(text = "map.toString()",
+    childrenArray = "map.asJava().entrySet().toArray()",
+    hasChildren = "!map.isEmpty()")
   public static record TermSubst(@NotNull MutableMap<@NotNull Var, @NotNull Term> map) {
     // TODO[JDK-8247334]: uncomment when we move to JDK16
     public static final /*@NotNull*/ TermSubst EMPTY = new TermSubst(MutableHashMap.of());
