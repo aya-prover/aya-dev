@@ -1,0 +1,10 @@
+\open \data Nat : \Set
+ | zero
+ | suc Nat
+
+\def addN (a, b : Nat) : Nat
+ | zero, zero => zero
+ | zero, a => a
+ | a, zero => a
+ | suc a, b => suc (addN a b)
+ | a, suc b => suc (addN a b)
