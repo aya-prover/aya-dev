@@ -12,6 +12,7 @@ import org.aya.core.pat.PatToSubst;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
@@ -68,12 +69,17 @@ public record PatClassifier(
     // Progress
     if (hasMatch.isEmpty()) return classifySub(subPatsSeq.map(SubPats::drop));
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
-    return hasMatch.first().availableCtors()
-      .flatMap(ctor -> classifySub(subPatsSeq.view()
+    var buffer = Buffer.<PatClass>of();
+    for (var ctor : hasMatch.first().availableCtors()) {
+      var matches = subPatsSeq.view()
         .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor.ref()))
-        .toImmutableSeq()))
-      .flatMap(pats -> classifySub(pats.extract(subPatsSeq).map(SubPats::drop)))
-      .toImmutableSeq();
+        .toImmutableSeq();
+      var classified = classifySub(matches);
+      var clazz = classified.flatMap(pat -> pat.extract(subPatsSeq).map(SubPats::drop));
+      var rest = classifySub(clazz);
+      buffer.appendAll(rest);
+    }
+    return buffer.toImmutableSeq();
   }
 
   private static @Nullable SubPats matches(
