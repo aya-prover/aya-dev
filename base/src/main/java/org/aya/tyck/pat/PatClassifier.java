@@ -6,14 +6,12 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl.DataCtor;
-import org.aya.concrete.Expr;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatToSubst;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
@@ -26,7 +24,6 @@ import org.jetbrains.annotations.VisibleForTesting;
  */
 public record PatClassifier(
   @NotNull Reporter reporter,
-  @NotNull Buffer<Buffer<Expr>> stack,
   @NotNull SourcePos pos
 ) {
   @VisibleForTesting
@@ -34,7 +31,7 @@ public record PatClassifier(
     @NotNull ImmutableSeq<Pat.@NotNull Clause> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos
   ) {
-    var classifier = new PatClassifier(reporter, Buffer.of(), pos);
+    var classifier = new PatClassifier(reporter, pos);
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
       new SubPats(clause.patterns(), new TermSubst(new MutableHashMap<>()), index)));
   }
