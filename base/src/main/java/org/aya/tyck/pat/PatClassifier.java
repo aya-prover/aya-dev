@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
+import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
@@ -15,12 +16,14 @@ import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * @author ice1000, kiva
  */
-public interface PatClassifier {
-  static @NotNull ImmutableSeq<PatClass> classify(@NotNull ImmutableSeq<Pat.@NotNull Clause> clauses) {
+public record PatClassifier(@NotNull Reporter reporter) {
+  @VisibleForTesting
+  public @NotNull ImmutableSeq<PatClass> classify(@NotNull ImmutableSeq<Pat.@NotNull Clause> clauses) {
     return classifySub(clauses.mapIndexed((index, clause) ->
       new SubPats(clause.patterns(), new Substituter.TermSubst(new MutableHashMap<>()), index)));
   }
@@ -29,7 +32,7 @@ public interface PatClassifier {
    * @param subPatsSeq should be of the same length, and should <strong>not</strong> be empty.
    * @return pattern classes
    */
-  private static @NotNull ImmutableSeq<PatClass> classifySub(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
+  private @NotNull ImmutableSeq<PatClass> classifySub(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
     assert !subPatsSeq.isEmpty();
     var pivot = subPatsSeq.first();
     // Done
@@ -45,11 +48,11 @@ public interface PatClassifier {
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     return hasMatch.first().availableCtors()
       .map(ctor -> subPatsSeq.view()
-        .mapIndexedNotNull((ix1, subPats) -> matches(subPats, ix1, ctor.ref()))
+        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor.ref()))
         .toImmutableSeq())
-      .flatMap(PatClassifier::classifySub)
+      .flatMap(this::classifySub)
       .map(pats -> pats.extract(subPatsSeq).map(SubPats::drop))
-      .flatMap(PatClassifier::classifySub)
+      .flatMap(this::classifySub)
       .toImmutableSeq();
   }
 
@@ -69,10 +72,10 @@ public interface PatClassifier {
     return null;
   }
 
-  record PatClass(
+  public static record PatClass(
     @NotNull ImmutableSeq<IntObjTuple2<Substituter.TermSubst>> contents
   ) {
-    public @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
+    private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
       return contents.map(tup -> {
         var pat = subPatsSeq.get(tup._1);
         pat.bodySubst.add(tup._2);

@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import org.aya.core.def.FnDef;
+import org.aya.test.ThrowingReporter;
 import org.aya.tyck.pat.PatClassifier;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * CC = coverage and confluence
  */
 public class PatCCTest {
+  public static final PatClassifier CLASSIFIER = new PatClassifier(ThrowingReporter.INSTANCE);
+
   @Test
   public void addCC() {
     var decls = TyckDeclTest.successTyckDecls("""
@@ -22,7 +25,7 @@ public class PatCCTest {
        | suc a, b => suc (add a b)
        | a, suc b => suc (add a b)""");
     var clauses = ((FnDef) decls.get(1)).body().getRightValue();
-    var classified = PatClassifier.classify(clauses);
+    var classified = CLASSIFIER.classify(clauses);
     assertEquals(4, classified.size());
     classified.forEach(cls ->
       assertEquals(2, cls.contents().size()));
@@ -37,7 +40,7 @@ public class PatCCTest {
        | a, zero => a
        | suc a, suc b => suc (max a b)""");
     var clauses = ((FnDef) decls.get(1)).body().getRightValue();
-    var classified = PatClassifier.classify(clauses);
+    var classified = CLASSIFIER.classify(clauses);
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
     assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
