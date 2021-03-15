@@ -14,12 +14,18 @@ import org.aya.cli.SingleFileCompiler
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 
 object AyaQQBot {
-  private val env = File("env").readLines()
+  private val env = Files.readAllLines(Paths.get("env"))
   private val bot = BotFactory.newBot(env[0].toLong(), env[1])
   init {
+    Paths.get("tmp").let {
+      if (!Files.exists(it))
+        Files.createDirectory(it)
+    }
     bot.eventChannel.subscribeFriendMessages {
       startsWith("") reply { compile(it) }
     }
@@ -33,12 +39,12 @@ object AyaQQBot {
 }
 
 private fun compile(text: String): String {
-  val file = File.createTempFile("aya-qq-bot", "")
+  val file = Paths.get("tmp", UUID.randomUUID().toString())
   val hookOut = ByteArrayOutputStream()
-  file.writeText(text)
-  val reporter = CountingReporter(StreamReporter(file.toPath(), text, PrintStream(hookOut)))
-  val e = SingleFileCompiler(reporter, file.toPath(), null).compile(CompilerFlags.ASCII_FLAGS)
-  file.delete()
+  Files.write(file, text.toByteArray())
+  val reporter = CountingReporter(StreamReporter(file, text, PrintStream(hookOut)))
+  val e = SingleFileCompiler(reporter, file, null).compile(CompilerFlags.ASCII_FLAGS)
+  Files.delete(file)
   return "$hookOut\n\nExit with $e"
 }
 

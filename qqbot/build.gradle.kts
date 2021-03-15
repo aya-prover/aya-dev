@@ -9,10 +9,10 @@ plugins {
 
 tasks {
   compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "15"
   }
   compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "15"
   }
 }
 
@@ -21,8 +21,9 @@ tasks.withType<Jar>().configureEach {
 }
 
 dependencies {
+  val deps: java.util.Properties by rootProject.ext
   implementation(kotlin("stdlib"))
-  implementation("net.mamoe:mirai-core:2.4.0")
+  implementation("net.mamoe:mirai-core:${deps.getProperty("version.mirai")}")
   implementation(project(":cli"))
   implementation(project(":api"))
   implementation(project(":base"))
