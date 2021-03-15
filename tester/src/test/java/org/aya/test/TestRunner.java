@@ -52,6 +52,8 @@ public class TestRunner {
     final var reporter = new CountingReporter(new StreamReporter(
       file, Problem.readSourceCode(file), new PrintStream(hookOut)));
 
+    System.out.print(file.getFileName() + " ---> ");
+
     try {
       new SingleFileCompiler(reporter, file, null)
         .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false, ImmutableSeq.of()));
@@ -61,11 +63,13 @@ public class TestRunner {
 
     if (Files.exists(expectedOutFile)) {
       checkOutput(file, expectedOutFile, hookOut.toString());
+      System.out.println("success");
     } else {
       if (expectSuccess) {
         if (reporter.isEmpty()) {
-          showStatus(file.getFileName().toString(), "success");
+          System.out.println("success");
         } else {
+          System.out.println(); // add line break after `--->`
           System.err.printf(Locale.getDefault(),
             """
               ----------------------------------------
@@ -76,6 +80,7 @@ public class TestRunner {
           fail("The test case <" + file.getFileName() + "> should pass, but it fails.");
         }
       } else {
+        System.out.println(); // add line break after `--->`
         generateWorkflow(file, expectedOutFile, hookOut.toString());
       }
     }
@@ -101,7 +106,6 @@ public class TestRunner {
       expectedOutFile.getFileName(),
       hookOut
     );
-    showStatus(testFile.getFileName().toString(), "todo generated");
   }
 
   private void checkOutput(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
@@ -109,7 +113,6 @@ public class TestRunner {
       var output = trimCRLF(hookOut);
       var expected = instantiateVars(testFile, trimCRLF(Files.readString(expectedOutFile)));
       assertEquals(expected, output, testFile.getFileName().toString());
-      showStatus(testFile.getFileName().toString(), "success");
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
     }
@@ -121,10 +124,6 @@ public class TestRunner {
 
   private String instantiateHoles(@NotNull Path testFile, String template) {
     return template.replace(testFile.toString(), "$FILE");
-  }
-
-  private void showStatus(String testName, String status) {
-    System.out.println(testName + " ---> " + status);
   }
 
   private String trimCRLF(String string) {
