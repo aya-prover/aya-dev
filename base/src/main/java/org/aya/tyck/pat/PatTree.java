@@ -3,6 +3,7 @@
 package org.aya.tyck.pat;
 
 import org.aya.generic.GenericBuilder;
+import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,14 +15,10 @@ public record PatTree(@NotNull String s, @NotNull Buffer<PatTree> children) impl
     this(s, Buffer.create());
   }
 
-  public void buildString(@NotNull StringBuilder builder) {
-    if (children.isEmpty()) {
-      builder.append(s);
-    } else {
-      builder.append("(").append(s);
-      for (var tree : children) tree.buildString(builder.append(", "));
-      builder.append(")");
-    }
+  public @NotNull Doc toDoc() {
+    return children.isEmpty()
+      ? Doc.plain(s)
+      : Doc.wrap("(", ")", Doc.join(Doc.plain(", "), children.stream().map(PatTree::toDoc)));
   }
 
   public final static class Builder extends GenericBuilder<PatTree> {

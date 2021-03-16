@@ -17,16 +17,9 @@ public record MissingCaseError(
   @NotNull Buffer<PatTree> pats
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    var sb = new StringBuilder();
-    var started = false;
-    for (var pat : pats) {
-      if (started) sb.append(", ");
-      pat.buildString(sb);
-      started = true;
-    }
     return Doc.hcat(
       Doc.plain("Unhandled case: "),
-      Doc.plain(sb.toString())
+      Doc.join(Doc.plain(", "), pats.stream().map(PatTree::toDoc))
     );
   }
 
