@@ -103,7 +103,7 @@ public record StmtTycker(
     var signature = new Ref<>(new Def.Signature(tele, result.wellTyped()));
     field.signature = signature.value;
 
-    return new StructDef.Field(structRef, field.ref, tele, field.coerce);
+    return new StructDef.Field(structRef, field.ref, tele, result.wellTyped(), field.coerce);
   }
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {

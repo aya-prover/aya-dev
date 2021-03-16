@@ -5,7 +5,6 @@ package org.aya.core.def;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +19,7 @@ public record StructDef(
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull ImmutableSeq<Field> fields
-  ) implements Def {
+) implements Def {
   public StructDef {
     ref.core = this;
   }
@@ -33,28 +32,16 @@ public record StructDef(
   public static record Field(
     @NotNull DefVar<StructDef, Decl.StructDecl> structRef,
     @NotNull DefVar<Field, Decl.StructField> ref,
-    @NotNull ImmutableSeq<Term.Param> fieldTelescope,
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull Term result,
     boolean coerce
   ) implements Def {
     public Field {
       ref.core = this;
     }
 
-    @Override
-    public @NotNull Term result() {
-      // TODO[vont]: struct
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public @NotNull SeqLike<Term.Param> telescope() {
-      // TODO[vont]: struct
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return null;
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitField(this, p);
     }
   }
 }
