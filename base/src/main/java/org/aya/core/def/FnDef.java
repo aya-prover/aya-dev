@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public record FnDef(
   @NotNull DefVar<FnDef, Decl.FnDecl> ref,
+  @NotNull ImmutableSeq<Term.Param> contextTelescope,
+
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull Either<Term, ImmutableSeq<Pat.Clause>> body

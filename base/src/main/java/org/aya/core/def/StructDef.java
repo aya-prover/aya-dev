@@ -5,6 +5,7 @@ package org.aya.core.def;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.term.Term;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 public record StructDef(
   @NotNull DefVar<StructDef, Decl.StructDecl> ref,
+  @NotNull ImmutableSeq<Term.Param> contextTelescope,
+
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull ImmutableSeq<Field> fields
@@ -38,6 +41,11 @@ public record StructDef(
   ) implements Def {
     public Field {
       ref.core = this;
+    }
+
+    @Override
+    public @NotNull SeqLike<Term.Param> contextTelescope() {
+      return structRef().core.contextTelescope();
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

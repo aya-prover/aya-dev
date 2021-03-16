@@ -5,14 +5,16 @@ package org.aya.core.def;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Tuple3;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
+  @NotNull ImmutableSeq<Term.Param> contextTelescope,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull ImmutableSeq<Tuple2<Option<Pat>, Ctor>> body
@@ -58,32 +61,41 @@ public record DataDef(
       ref.core = this;
     }
 
+    @Override
+    public @NotNull SeqLike<Term.Param> contextTelescope() {
+      return dataRef().core.contextTelescope();
+    }
+
     @Override public @NotNull SeqView<Term.Param> telescope() {
       return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTelescope);
     }
 
-    @Override public @NotNull AppTerm.DataCall result() {
-      return new AppTerm.DataCall(dataRef, Def.defTele(dataRef).view().map(Term.Param::toArg));
+    @Override public @NotNull CallTerm.DataCall result() {
+      return new CallTerm.DataCall(
+        dataRef,
+        Def.defContextTele(dataRef).view().map(Term.Param::toArg),
+        Def.defTele(dataRef).view().map(Term.Param::toArg)
+      );
     }
 
     /**
      * @return first component: data's telescope, second component: con telescope
      */
-    public static Tuple2<Seq<Term.Param>, Seq<Term.Param>> telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
+    public static Tuple3<Seq<Term.Param>, Seq<Term.Param>, Seq<Term.Param>> telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
       var core = defVar.core;
       if (core != null) {
-        if (core.dataRef.core != null) return Tuple.of(core.dataRef.core.telescope, core.conTelescope);
+        if (core.dataRef.core != null) return Tuple.of(core.dataRef.core.contextTelescope, core.dataRef.core.telescope, core.conTelescope);
         else {
           var signature = core.dataRef.concrete.signature;
           assert signature != null;
-          return Tuple.of(signature.param(), core.conTelescope);
+          return Tuple.of(signature.contextParam(), signature.param(), core.conTelescope);
         }
       }
       var dataSignature = defVar.concrete.dataRef.concrete.signature;
       assert dataSignature != null;
       var conSignature = defVar.concrete.signature;
       assert conSignature != null;
-      return Tuple.of(dataSignature.param(), conSignature.param());
+      return Tuple.of(dataSignature.contextParam(), dataSignature.param(), conSignature.param());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

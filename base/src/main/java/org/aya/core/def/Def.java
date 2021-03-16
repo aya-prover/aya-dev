@@ -18,6 +18,11 @@ import java.util.Objects;
  * @author ice1000
  */
 public interface Def extends CoreDef {
+  static @NotNull SeqLike<Term.Param> defContextTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+    if (defVar.core != null) return defVar.core.contextTelescope();
+      // guaranteed as this is already a core term
+    else return Objects.requireNonNull(defVar.concrete.signature).contextParam;
+  }
   static @NotNull SeqLike<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
@@ -35,6 +40,7 @@ public interface Def extends CoreDef {
 
   @NotNull Term result();
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
+  @NotNull SeqLike<Term.Param> contextTelescope();
   @NotNull SeqLike<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
@@ -56,20 +62,22 @@ public interface Def extends CoreDef {
    * @author ice1000
    */
   record Signature(
+    @NotNull ImmutableSeq<Term.@NotNull Param> contextParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
-      return new Signature(substParams(param, subst), result.subst(subst));
+      if (contextParam.isEmpty()) return new Signature(contextParam, substParams(param, subst), result.subst(subst));
+      else return new Signature(substParams(contextParam, subst), param.map(p -> p.subst(subst)), result.subst(subst));
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {
-      return new Signature(param, term);
+      return new Signature(contextParam, param, term);
     }
 
     public @NotNull Signature subst(@NotNull Substituter.TermSubst subst) {
-      return new Signature(param.map(p -> p.subst(subst)), result.subst(subst));
+      return new Signature(contextParam.map(p -> p.subst(subst)), param.map(p -> p.subst(subst)), result.subst(subst));
     }
   }
 }
