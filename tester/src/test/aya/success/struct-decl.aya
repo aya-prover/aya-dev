@@ -9,7 +9,3 @@
 \struct Pos2 (B : Nat -> \Set) : \Set
   | x : Nat
   | y : B zero
-
-
-
-

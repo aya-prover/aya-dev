@@ -53,6 +53,7 @@ public record RefFinder(boolean withBody) implements
 
   @Override
   public Unit visitStruct(@NotNull StructDef def, @NotNull Buffer<Def> references) {
+    tele(references, def.telescope());
     // TODO[vont]: struct
     throw new UnsupportedOperationException();
   }

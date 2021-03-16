@@ -12,7 +12,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
 import org.aya.generic.Modifier;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
@@ -172,7 +171,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull Expr result,
       // @NotNull ImmutableSeq<String> superClassNames,
       @NotNull ImmutableSeq<StructField> fields,
-      @NotNull ImmutableSeq<Stmt> abuseBlock) {
+      @NotNull ImmutableSeq<Stmt> abuseBlock
+    ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.fields = fields;
