@@ -100,8 +100,7 @@ public record StmtTycker(
     var tele = checkTele(tycker, field.telescope);
     var structRef = field.structRef;
     var result = field.expr.accept(tycker, null);
-    var signature = new Ref<>(new Def.Signature(tele, result.wellTyped()));
-    field.signature = signature.value;
+    field.signature = new Def.Signature(tele, result.wellTyped());
 
     return new StructDef.Field(structRef, field.ref, tele, result.wellTyped(), field.coerce);
   }
