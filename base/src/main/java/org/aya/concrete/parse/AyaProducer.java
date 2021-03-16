@@ -505,7 +505,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
-    // TODO: visit struct decl
     var abuseCtx = ctx.abuse();
     return new Decl.StructDecl(
       sourcePosOf(ctx.ID()),
