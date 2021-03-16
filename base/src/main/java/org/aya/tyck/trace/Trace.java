@@ -5,6 +5,7 @@ package org.aya.tyck.trace;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
 import org.aya.generic.GenericBuilder;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -23,6 +24,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     R visitUnify(@NotNull UnifyT t, P p);
     R visitDecl(@NotNull DeclT t, P p);
     R visitTyck(@NotNull TyckT t, P p);
+    R visitPat(@NotNull PatT t, P p);
   }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
@@ -81,6 +83,21 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTyck(this, p);
+    }
+  }
+
+  record PatT(
+    @NotNull Term term, @NotNull Pattern pat,
+    @NotNull SourcePos pos,
+    @NotNull Buffer<@NotNull Trace> children
+    ) implements Trace {
+    public PatT(@NotNull Term term, @NotNull Pattern pat, @NotNull SourcePos pos) {
+      this(term, pat, pos, Buffer.of());
+    }
+
+    @Override
+    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitPat(this, p);
     }
   }
 }

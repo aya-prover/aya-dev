@@ -71,4 +71,15 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
       .append(lineSep);
     return unit;
   }
+
+  @Override
+  public Unit visitPat(Trace.@NotNull PatT t, Unit unit) {
+    indent();
+    builder.append("pat \u22A2 `")
+      .append(t.pat().toDoc().renderWithPageWidth(114514))
+      .append("` : ")
+      .append(t.term().toDoc().renderWithPageWidth(114514))
+      .append(lineSep);
+    return unit;
+  }
 }

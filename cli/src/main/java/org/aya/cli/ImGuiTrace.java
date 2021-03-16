@@ -26,6 +26,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     public static Color CYAN = new Color(0, 255, 255);
     public static Color YELLOW = new Color(255, 255, 0);
     public static Color WHITE = new Color(255, 255, 255);
+    public static Color PINK = new Color(255, 0, 255);
   }
 
   public static final int PAGE_WIDTH = 114514;
@@ -142,4 +143,14 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     return Unit.unit();
   }
 
+  @Override
+  public Unit visitPat(Trace.@NotNull PatT t, JImGui imGui) {
+    var type = t.term();
+    var pat = t.pat();
+    var s = pat.toDoc().renderWithPageWidth(PAGE_WIDTH) +
+      " : " +
+      type.toDoc().renderWithPageWidth(PAGE_WIDTH);
+    visitSub(s, Color.PINK, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
+    return Unit.unit();
+  }
 }
