@@ -24,7 +24,14 @@ public sealed interface Pattern {
     return accept(PatternPrettyConsumer.INSTANCE, false);
   }
 
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
+    var ret = doAccept(visitor, p);
+    visitor.traceExit(ret, this, p);
+    return ret;
+  }
+
+  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   interface Visitor<P, R> {
     R visitTuple(@NotNull Tuple tuple, P p);
@@ -32,6 +39,10 @@ public sealed interface Pattern {
     R visitBind(@NotNull Bind bind, P p);
     R visitCalmFace(@NotNull CalmFace calmFace, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
+    default void traceEntrance(@NotNull Pattern pat, P p) {
+    }
+    default void traceExit(R r, @NotNull Pattern pat, P p) {
+    }
   }
 
   record Tuple(
@@ -40,7 +51,7 @@ public sealed interface Pattern {
     @NotNull ImmutableSeq<Pattern> patterns,
     @Nullable LocalVar as
   ) implements Pattern {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTuple(this, p);
     }
   }
@@ -50,7 +61,7 @@ public sealed interface Pattern {
     boolean explicit,
     int number
   ) implements Pattern {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNumber(this, p);
     }
   }
@@ -59,7 +70,7 @@ public sealed interface Pattern {
     @NotNull SourcePos sourcePos,
     boolean explicit
   ) implements Pattern {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCalmFace(this, p);
     }
   }
@@ -73,7 +84,7 @@ public sealed interface Pattern {
     @NotNull LocalVar bind,
     @NotNull Ref<@Nullable Var> resolved
   ) implements Pattern {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitBind(this, p);
     }
   }
@@ -85,7 +96,7 @@ public sealed interface Pattern {
     @NotNull ImmutableSeq<Pattern> params,
     @Nullable LocalVar as
   ) implements Pattern {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);
     }
   }

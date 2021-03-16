@@ -14,8 +14,10 @@ import org.aya.core.term.AppTerm;
 import org.aya.core.term.SigmaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
+import org.aya.generic.GenericBuilder;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * @author ice1000
@@ -36,9 +39,25 @@ import java.util.Objects;
 public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   private final @NotNull ExprTycker exprTycker;
   private final @NotNull ExprRefSubst subst;
+  public Trace.@Nullable Builder traceBuilder = null;
+
+  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+    if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  @Override
+  public void traceEntrance(@NotNull Pattern pat, Term term) {
+    tracing(builder -> builder.shift(new Trace.PatT(term, pat, pat.sourcePos())));
+  }
+
+  @Override
+  public void traceExit(Pat pat, @NotNull Pattern pattern, Term term) {
+    tracing(GenericBuilder::reduce);
+  }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
     this.exprTycker = exprTycker;
+    this.traceBuilder = exprTycker.traceBuilder;
     subst = new ExprRefSubst(exprTycker.metaContext.reporter(), MutableHashMap.of(), MutableHashSet.of());
   }
 
