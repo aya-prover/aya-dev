@@ -2,9 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pretty;
 
+import org.aya.api.ref.Var;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
@@ -60,21 +62,21 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
-  public Doc visitApp(@NotNull AppTerm.Apply term, Boolean nestedCall) {
-    return visitCalls(term.fn(), term.args(), nestedCall);
+  public Doc visitApp(@NotNull AppTerm term, Boolean nestedCall) {
+    return visitCalls(term.fn(), term.arg(), nestedCall);
   }
 
   @Override
-  public Doc visitFnCall(@NotNull AppTerm.FnCall fnCall, Boolean nestedCall) {
+  public Doc visitFnCall(@NotNull CallTerm.FnCall fnCall, Boolean nestedCall) {
     return visitCalls(fnCall.fn(), fnCall.args(), nestedCall);
   }
 
   @Override
-  public Doc visitDataCall(@NotNull AppTerm.DataCall dataCall, Boolean nestedCall) {
+  public Doc visitDataCall(@NotNull CallTerm.DataCall dataCall, Boolean nestedCall) {
     return visitCalls(dataCall.fn(), dataCall.args(), nestedCall);
   }
 
-  @Override public Doc visitConCall(@NotNull AppTerm.ConCall conCall, Boolean nestedCall) {
+  @Override public Doc visitConCall(@NotNull CallTerm.ConCall conCall, Boolean nestedCall) {
     return visitCalls(conCall.fn(), conCall.conArgs(), nestedCall);
   }
 
@@ -91,7 +93,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
-  public Doc visitHole(AppTerm.@NotNull HoleApp term, Boolean nestedCall) {
+  public Doc visitHole(CallTerm.@NotNull HoleApp term, Boolean nestedCall) {
     String name = term.var().name();
     Doc filling = term.args().stream()
       .map(t -> t.term().toDoc())
@@ -100,9 +102,16 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   private Doc visitCalls(@NotNull Term fn,
+                         @NotNull Arg<@NotNull Term> arg,
+                         boolean nestedCall) {
+    return visitCalls(fn.toDoc(), Seq.of(arg),
+      (term -> term.accept(this, true)), nestedCall);
+  }
+
+  private Doc visitCalls(@NotNull Var fn,
                          @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
                          boolean nestedCall) {
-    return visitCalls(fn.toDoc(), args,
+    return visitCalls(Doc.plain(fn.name()), args,
       (term -> term.accept(this, true)), nestedCall);
   }
 
