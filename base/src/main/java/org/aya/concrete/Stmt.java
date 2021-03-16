@@ -3,7 +3,7 @@
 package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
-import org.aya.concrete.pretty.StmtPrettyConsumer;
+import org.aya.concrete.pretty.StmtPrettier;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -27,7 +27,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
   }
 
   default @NotNull Doc toDoc() {
-    return accept(StmtPrettyConsumer.INSTANCE, Unit.unit());
+    return accept(StmtPrettier.INSTANCE, Unit.unit());
   }
 
   /**

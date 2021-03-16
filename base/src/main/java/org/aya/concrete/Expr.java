@@ -5,7 +5,7 @@ package org.aya.concrete;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.concrete.pretty.ExprPrettyConsumer;
+import org.aya.concrete.pretty.ExprPrettier;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
@@ -46,7 +46,7 @@ public sealed interface Expr {
   }
 
   default @NotNull Doc toDoc() {
-    return accept(ExprPrettyConsumer.INSTANCE, false);
+    return accept(ExprPrettier.INSTANCE, false);
   }
 
   interface Visitor<P, R> {

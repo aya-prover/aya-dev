@@ -3,13 +3,13 @@
 package org.aya.concrete.pretty;
 
 import org.aya.concrete.Expr;
-import org.aya.core.pretty.TermPrettyConsumer;
+import org.aya.core.pretty.TermPrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.StringEscapeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ExprPrettyConsumer implements Expr.Visitor<Boolean, Doc> {
-  public static final ExprPrettyConsumer INSTANCE = new ExprPrettyConsumer();
+public class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
+  public static final ExprPrettier INSTANCE = new ExprPrettier();
 
   @Override
   public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
@@ -26,7 +26,7 @@ public class ExprPrettyConsumer implements Expr.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.plain("\\lam"),
       Doc.plain(" "),
-      StmtPrettyConsumer.INSTANCE.visitParam(expr.param()),
+      StmtPrettier.INSTANCE.visitParam(expr.param()),
       expr.body() instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" => "), expr.body().toDoc())
@@ -39,7 +39,7 @@ public class ExprPrettyConsumer implements Expr.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.plain("\\Pi"),
       Doc.plain(" "),
-      StmtPrettyConsumer.INSTANCE.visitParam(expr.param()),
+      StmtPrettier.INSTANCE.visitParam(expr.param()),
       Doc.plain(" -> "),
       expr.last().toDoc()
     );
@@ -51,7 +51,7 @@ public class ExprPrettyConsumer implements Expr.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.plain("\\Sig"),
       Doc.plain(" "),
-      StmtPrettyConsumer.INSTANCE.visitTele(expr.params()),
+      StmtPrettier.INSTANCE.visitTele(expr.params()),
       Doc.plain(" ** "),
       expr.last().toDoc()
     );
@@ -71,7 +71,7 @@ public class ExprPrettyConsumer implements Expr.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
-    return TermPrettyConsumer.INSTANCE.visitCalls(
+    return TermPrettier.INSTANCE.visitCalls(
       expr.function().toDoc(),
       expr.arguments(),
       (arg -> arg.accept(this, true)),

@@ -8,9 +8,9 @@ import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 
-public class PatternPrettyConsumer implements
+public class PatternPrettier implements
   Pattern.Visitor<Boolean, Doc> {
-  public static final PatternPrettyConsumer INSTANCE = new PatternPrettyConsumer();
+  public static final PatternPrettier INSTANCE = new PatternPrettier();
 
   @Override
   public Doc visitTuple(Pattern.@NotNull Tuple tuple, Boolean nestedCall) {
@@ -60,7 +60,7 @@ public class PatternPrettyConsumer implements
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, boolean nestedCall) {
     return patterns.stream()
-      .map(p -> p.accept(PatternPrettyConsumer.INSTANCE, nestedCall))
+      .map(p -> p.accept(PatternPrettier.INSTANCE, nestedCall))
       .reduce(Doc.empty(), Doc::hsep);
   }
 
