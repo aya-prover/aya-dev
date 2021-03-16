@@ -38,8 +38,8 @@ subprojects {
     withSourcesJar()
     // Enable on-demand
     // withJavadocJar()
-    sourceCompatibility = JavaVersion.VERSION_15
-    targetCompatibility = JavaVersion.VERSION_15
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
   }
 
   if (useJacoco) jacoco {
@@ -56,7 +56,7 @@ subprojects {
 
     options.encoding = "UTF-8"
     options.isDeprecation = true
-    options.release.set(15)
+    options.release.set(16)
     options.compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
   }
 

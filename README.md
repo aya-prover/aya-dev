@@ -2,7 +2,7 @@
 [![](https://jitpack.io/v/aya-prover/aya-dev.svg)](https://jitpack.io/#aya-prover/aya-dev)
 [![Gitter](https://badges.gitter.im/aya-prover/community.svg)](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-You need Java 15 to setup this project.
+You need Java 16 to setup this project.
 
 ```bash
 # create a runnable jar at the root directory of the repo
