@@ -3,20 +3,22 @@
 
 package org.aya.qqbot
 
+import com.jcabi.manifests.Manifests
 import net.mamoe.mirai.BotFactory
 import net.mamoe.mirai.alsoLogin
-import net.mamoe.mirai.event.subscribeFriendMessages
-import net.mamoe.mirai.event.subscribeGroupMessages
+import net.mamoe.mirai.event.subscribeMessages
 import org.aya.api.error.CountingReporter
 import org.aya.api.error.StreamReporter
 import org.aya.cli.CompilerFlags
+import org.aya.cli.CompilerFlags.Message.ASCII
 import org.aya.cli.SingleFileCompiler
+import org.aya.prelude.GeneratedVersion
+import org.glavo.kala.collection.immutable.ImmutableSeq
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.PrintStream
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
 
 object AyaQQBot {
   private val env = Files.readAllLines(Paths.get("env"))
@@ -26,11 +28,23 @@ object AyaQQBot {
       if (!Files.exists(it))
         Files.createDirectory(it)
     }
-    bot.eventChannel.subscribeFriendMessages {
-      startsWith("") reply { compile(it) }
-    }
-    bot.eventChannel.subscribeGroupMessages {
-      startsWith("Aya$", true) reply { compile(it) }
+    bot.eventChannel.subscribeMessages {
+      startsWith("aya history#") quoteReply {
+        error {
+          it.removePrefix("aya history#").trim().toInt().let { id ->
+            Files.readString(History.get(id))
+          }
+        }
+      }
+      case("aya info") quoteReply
+        """Tweet~, I am here.
+          |Version: ${GeneratedVersion.VERSION_STRING}.
+          |Build: ${Manifests.read("Build")}.""".trimMargin()
+      startsWith("aya#") quoteReply {
+        error {
+          compile(it.removePrefix("aya#"))
+        }
+      }
     }
   }
   suspend fun join() {
@@ -38,13 +52,20 @@ object AyaQQBot {
   }
 }
 
+private inline fun error(f: () -> String): String {
+  return try {
+    f()
+  } catch (e: Exception) {
+    e.localizedMessage
+  }
+}
+
 private fun compile(text: String): String {
-  val file = Paths.get("tmp", UUID.randomUUID().toString())
   val hookOut = ByteArrayOutputStream()
-  Files.write(file, text.toByteArray())
+  val file = History.add(text.toByteArray(StandardCharsets.UTF_8))
   val reporter = CountingReporter(StreamReporter(file, text, PrintStream(hookOut)))
-  val e = SingleFileCompiler(reporter, file, null).compile(CompilerFlags.ASCII_FLAGS)
-  Files.delete(file)
+  val e = SingleFileCompiler(reporter, file, null)
+    .compile(CompilerFlags(ASCII, false, ImmutableSeq.of()))
   return "$hookOut\n\nExit with $e"
 }
 

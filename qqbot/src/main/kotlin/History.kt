@@ -9,14 +9,21 @@ import java.nio.file.Paths
 import java.util.*
 
 object History {
+  init {
+    Paths.get("record").let {
+      if (!Files.exists(it))
+        Files.createFile(it)
+    }
+  }
+
   private val history = Buffer.from(Files.readAllLines(Paths.get("record")))
 
   fun get(x: Int): Path = Paths.get("tmp", history[x])
 
-  fun add(s: String): Path {
+  fun add(s: ByteArray): Path {
     val id = UUID.randomUUID().toString()
-    val file = (Paths.get("tmp", id))
-    Files.write(file, s.toByteArray())
+    val file = Paths.get("tmp", id)
+    Files.write(file, s)
     history.prepend(id)
     save()
     return file
