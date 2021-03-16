@@ -72,7 +72,7 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   }
 
   @Override
-  public Doc visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+  public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
@@ -86,6 +86,10 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       Doc.hang(2, visitDataBody(decl.body))
     );
+  }
+
+  @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
+    throw new UnsupportedOperationException();
   }
 
   private Doc visitDataBody(Either<Decl.DataDecl.Ctors, Decl.DataDecl.Clauses> body) {
@@ -125,7 +129,7 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   }
 
   @Override
-  public Doc visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
+  public Doc visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),

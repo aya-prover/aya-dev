@@ -7,6 +7,7 @@ import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.SeqLike;
@@ -47,6 +48,22 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitCtor(@NotNull DataDef.Ctor def, @NotNull Buffer<Def> references) {
     tele(references, def.conTelescope());
     if (withBody) for (var clause : def.clauses()) matchy(clause, references);
+    return Unit.unit();
+  }
+
+  @Override
+  public Unit visitStruct(@NotNull StructDef def, @NotNull Buffer<Def> references) {
+    tele(references, def.telescope());
+    def.result().accept(TermRefFinder.INSTANCE, references);
+    def.fields().forEach(t -> t.accept(this, references));
+    return Unit.unit();
+  }
+
+  @Override
+  public Unit visitField(@NotNull StructDef.Field def, @NotNull Buffer<Def> references) {
+    tele(references, def.telescope());
+    def.result().accept(TermRefFinder.INSTANCE, references);
+    // TODO[ice]: conditions
     return Unit.unit();
   }
 

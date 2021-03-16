@@ -9,6 +9,7 @@ import org.aya.concrete.Signatured;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.Term;
@@ -71,7 +72,7 @@ public record StmtTycker(
     return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
   }
 
-  @Override public DataDef visitDataDecl(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
+  @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tele, result);
@@ -87,7 +88,24 @@ public record StmtTycker(
     ));
   }
 
-  @Override public FnDef visitFnDecl(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
+  @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
+    var tele = checkTele(tycker, decl.telescope);
+    final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+    decl.signature = new Def.Signature(tele, result);
+    return new StructDef(decl.ref, tele, result, decl.fields.map(field -> visitField(field, tycker)));
+  }
+
+  @Override
+  public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
+    var tele = checkTele(tycker, field.telescope);
+    var structRef = field.structRef;
+    var result = field.expr.accept(tycker, null);
+    field.signature = new Def.Signature(tele, result.wellTyped());
+
+    return new StructDef.Field(structRef, field.ref, tele, result.wellTyped(), field.coerce);
+  }
+
+  @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
     var resultTele = checkTele(tycker, decl.telescope);
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);

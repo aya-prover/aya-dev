@@ -62,7 +62,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   }
 
   @Override
-  public Unit visitDataDecl(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
+  public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     decl.body.map(ctors -> {
       context.importModule(
@@ -82,7 +82,16 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   }
 
   @Override
-  public Unit visitFnDecl(Decl.@NotNull FnDecl decl, @NotNull ModuleContext context) {
+  public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
+    visitDecl(decl, context);
+
+    // vont: We don't need to import ANYTHING since we choose not to have projection. Do we??
+
+    return Unit.unit();
+  }
+
+  @Override
+  public Unit visitFn(Decl.@NotNull FnDecl decl, @NotNull ModuleContext context) {
     // TODO[xyr]: abuse block currently have no use, so we ignore it for now.
     return visitDecl(decl, context);
   }

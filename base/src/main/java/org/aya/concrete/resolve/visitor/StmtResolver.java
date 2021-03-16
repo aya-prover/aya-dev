@@ -3,7 +3,9 @@
 package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
+import org.aya.concrete.Expr;
 import org.aya.concrete.Stmt;
+import org.aya.ref.LocalVar;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +38,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override
-  public Unit visitDataDecl(Decl.@NotNull DataDecl decl, Unit unit) {
+  public Unit visitData(Decl.@NotNull DataDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
@@ -54,9 +56,24 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     return unit;
   }
 
+  @Override
+  public Unit visitStruct(Decl.@NotNull StructDecl decl, Unit unit) {
+    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
+    decl.telescope = local._1;
+    decl.result = decl.result.resolve(local._2);
+
+    decl.fields.forEach(field -> {
+      var fieldLocal = ExprResolver.INSTANCE.resolveParams(field.telescope, local._2);
+      field.telescope = fieldLocal._1;
+      field.expr = field.expr.resolve(fieldLocal._2);
+    });
+
+    return unit;
+  }
+
   /** @apiNote Note that this function MUTATES the decl. */
   @Override
-  public Unit visitFnDecl(Decl.@NotNull FnDecl decl, Unit unit) {
+  public Unit visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);

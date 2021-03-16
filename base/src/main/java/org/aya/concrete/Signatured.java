@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed abstract class Signatured implements ConcreteDecl permits Decl, Decl.DataCtor {
+public sealed abstract class Signatured implements ConcreteDecl permits Decl, Decl.DataCtor, Decl.StructField {
   public final @NotNull SourcePos sourcePos;
 
   // will change after resolve
@@ -42,6 +42,7 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
       traceEntrance((Signatured) decl, p);
     }
     R visitCtor(@NotNull Decl.DataCtor ctor, P p);
+    R visitField(@NotNull Decl.StructField field, P p);
   }
 
   protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);

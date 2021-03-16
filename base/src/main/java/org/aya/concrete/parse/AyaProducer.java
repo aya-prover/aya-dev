@@ -504,9 +504,53 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 
-  public @NotNull Decl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
-    // TODO: visit struct decl
-    throw new UnsupportedOperationException();
+  public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
+    var abuseCtx = ctx.abuse();
+    var id = ctx.ID();
+    return new Decl.StructDecl(
+      sourcePosOf(id),
+      accessibility,
+      id.getText(),
+      visitTelescope(ctx.tele()),
+      type(ctx.type(), sourcePosOf(ctx)),
+      // ctx.ids(),
+      visitField(ctx.field()),
+      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
+    );
+  }
+
+  private ImmutableSeq<Decl.StructField> visitField(List<AyaParser.FieldContext> field) {
+    return field.stream()
+      .map(fieldCtx -> {
+        if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
+        else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
+        else throw new IllegalArgumentException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
+      })
+      .collect(ImmutableSeq.factory());
+  }
+
+  @Override public Decl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
+    var telescope = visitTelescope(ctx.tele());
+    var id = ctx.ID();
+    return new Decl.StructField(
+      sourcePosOf(id),
+      id.getText(),
+      telescope,
+      visitExpr(ctx.expr()),
+      false
+    );
+  }
+
+  @Override public Decl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
+    var telescope = visitTelescope(ctx.tele());
+    var id = ctx.ID();
+    return new Decl.StructField(
+      sourcePosOf(id),
+      id.getText(),
+      telescope,
+      type(ctx.type(), sourcePosOf(ctx)),
+      ctx.COERCE() != null
+    );
   }
 
   @Override

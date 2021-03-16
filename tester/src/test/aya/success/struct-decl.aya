@@ -1,0 +1,11 @@
+\open \data Nat : \Set
+ | zero
+ | suc Nat
+
+\struct Pos1 (A : \Set) : \Set
+  | x : A
+  | y : Nat
+
+\struct Pos2 (B : Nat -> \Set) : \Set
+  | x : Nat
+  | y : B zero
