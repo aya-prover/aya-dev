@@ -13,8 +13,8 @@ import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
-  public static final StmtPrettyConsumer INSTANCE = new StmtPrettyConsumer();
+public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
+  public static final StmtPrettier INSTANCE = new StmtPrettier();
 
   private Doc visitAccess(Stmt.@NotNull Accessibility accessibility) {
     return switch (accessibility) {
@@ -124,7 +124,7 @@ public class StmtPrettyConsumer implements Stmt.Visitor<Unit, Doc> {
     var clausesDoc = Doc.cat(
       Doc.plain("| "), // join will only insert "|" between clauses
       Doc.join(Doc.plain("| "), clauses.stream()
-        .map(PatternPrettyConsumer.INSTANCE::matchy)));
+        .map(PatternPrettier.INSTANCE::matchy)));
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
   }
 

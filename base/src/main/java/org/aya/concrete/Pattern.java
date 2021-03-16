@@ -4,7 +4,7 @@ package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.concrete.pretty.PatternPrettyConsumer;
+import org.aya.concrete.pretty.PatternPrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -21,7 +21,7 @@ public sealed interface Pattern {
   boolean explicit();
 
   default @NotNull Doc toDoc() {
-    return accept(PatternPrettyConsumer.INSTANCE, false);
+    return accept(PatternPrettier.INSTANCE, false);
   }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);

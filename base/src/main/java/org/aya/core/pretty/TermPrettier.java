@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-public class TermPrettyConsumer implements Term.Visitor<Boolean, Doc> {
-  public static final TermPrettyConsumer INSTANCE = new TermPrettyConsumer();
+public class TermPrettier implements Term.Visitor<Boolean, Doc> {
+  public static final TermPrettier INSTANCE = new TermPrettier();
 
   @Override
   public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {

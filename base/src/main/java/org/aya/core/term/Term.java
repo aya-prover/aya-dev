@@ -6,7 +6,7 @@ import org.aya.api.core.term.CoreTerm;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
-import org.aya.core.pretty.TermPrettyConsumer;
+import org.aya.core.pretty.TermPrettier;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Stripper;
 import org.aya.core.visitor.Substituter;
@@ -73,7 +73,7 @@ public interface Term extends CoreTerm {
   }
 
   default @NotNull Doc toDoc() {
-    return accept(TermPrettyConsumer.INSTANCE, false);
+    return accept(TermPrettier.INSTANCE, false);
   }
 
   interface Visitor<P, R> {
