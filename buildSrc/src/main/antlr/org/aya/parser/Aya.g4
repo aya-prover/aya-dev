@@ -69,13 +69,13 @@ dataCtorClause : '|' pattern IMPLIES dataCtor;
 module : '\\module' ID LBRACE stmt* '}';
 
 // expressions
-expr : atom argument*                  # app
-     | <assoc=right> expr TO expr      # arr
-     | <assoc=right> expr '.' NUMBER   # proj
-     | PI tele+ TO expr                # pi
-     | SIGMA tele+ '**' expr           # sigma
-     | LAMBDA tele+ (IMPLIES expr?)?   # lam
-     | MATCH expr (',' expr)* clauses  # match
+expr : atom argument*                         # app
+     | <assoc=right> expr TO expr             # arr
+     | <assoc=right> expr '.' (NUMBER | ID)   # proj
+     | PI tele+ TO expr                       # pi
+     | SIGMA tele+ '**' expr                  # sigma
+     | LAMBDA tele+ (IMPLIES expr?)?          # lam
+     | MATCH expr (',' expr)* clauses         # match
      ;
 
 atom : literal
@@ -84,7 +84,6 @@ atom : literal
 
 argument : atom
          | LBRACE (expr ',')* expr? '}'
-         | '.' idFix
          ;
 
 clauses : LBRACE clause? ('|' clause)* '}' ;
