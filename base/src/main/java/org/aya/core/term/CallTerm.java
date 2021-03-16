@@ -26,9 +26,9 @@ public sealed interface CallTerm extends Term {
   @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args();
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
-    if (f instanceof HoleApp holeApp) {
-      holeApp.argsBuf().append(arg);
-      return holeApp;
+    if (f instanceof Hole hole) {
+      hole.argsBuf().append(arg);
+      return hole;
     }
     if (!(f instanceof LamTerm lam)) return new AppTerm(f, arg);
     var param = lam.param();
@@ -37,15 +37,15 @@ public sealed interface CallTerm extends Term {
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull SeqLike<Arg<Term>> args) {
     if (args.isEmpty()) return f;
-    if (f instanceof HoleApp holeApp) {
-      holeApp.argsBuf().appendAll(args.view());
-      return holeApp;
+    if (f instanceof Hole hole) {
+      hole.argsBuf().appendAll(args.view());
+      return hole;
     }
     if (!(f instanceof LamTerm lam)) return make(new AppTerm(f, args.first()), args.view().drop(1));
     return make(make(lam, args.first()), args.view().drop(1));
   }
 
-  record FnCall(
+  record Fn(
     @NotNull DefVar<FnDef, Decl.FnDecl> fnRef,
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<@NotNull Term>> args
@@ -69,7 +69,7 @@ public sealed interface CallTerm extends Term {
     }
   }
 
-  record DataCall(
+  record Data(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<@NotNull Term>> args
@@ -96,7 +96,7 @@ public sealed interface CallTerm extends Term {
     }
   }
 
-  record ConCall(
+  record Con(
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> conHead,
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<Term>> dataArgs,
@@ -132,11 +132,11 @@ public sealed interface CallTerm extends Term {
   /**
    * @author ice1000
    */
-  record HoleApp(
+  record Hole(
     @NotNull Var var,
     @NotNull Buffer<@NotNull Arg<Term>> argsBuf
   ) implements CallTerm {
-    public HoleApp(@NotNull Var var) {
+    public Hole(@NotNull Var var) {
       this(var, Buffer.of());
     }
 

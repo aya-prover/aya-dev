@@ -29,11 +29,11 @@ public final class PatToTerm implements Pat.Visitor<Unit, Term> {
   }
 
   @Override public Term visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
-    var data = (CallTerm.DataCall) ctor.type();
+    var data = (CallTerm.Data) ctor.type();
     var tele = ctor.ref().core.conTelescope();
     var args = ctor.params().view().zip(tele.view())
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
       .collect(Seq.factory());
-    return new CallTerm.ConCall(ctor.ref(), data.contextArgs(), data.args(), args);
+    return new CallTerm.Con(ctor.ref(), data.contextArgs(), data.args(), args);
   }
 }

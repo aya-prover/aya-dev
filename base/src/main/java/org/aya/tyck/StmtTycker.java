@@ -66,7 +66,7 @@ public record StmtTycker(
       var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
         .param().view().map(Term.Param::toArg);
       // TODO[ice]: insert data params?
-      var signature = new Def.Signature(ImmutableSeq.of(), tele, new CallTerm.DataCall(
+      var signature = new Def.Signature(ImmutableSeq.of(), tele, new CallTerm.Data(
         dataRef,
         dataContextArgs,
         dataArgs));

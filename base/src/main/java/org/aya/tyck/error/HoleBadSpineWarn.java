@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record HoleBadSpineWarn(
-  @NotNull CallTerm.HoleApp term,
+  @NotNull CallTerm.Hole term,
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {

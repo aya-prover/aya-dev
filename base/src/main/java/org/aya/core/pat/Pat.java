@@ -58,7 +58,7 @@ public sealed interface Pat {
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> params,
     @Nullable LocalVar as,
-    @NotNull CallTerm.DataCall type
+    @NotNull CallTerm.Data type
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);

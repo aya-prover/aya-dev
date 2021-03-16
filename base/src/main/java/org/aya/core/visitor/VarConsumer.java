@@ -21,13 +21,13 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     return Unit.unit();
   }
 
-  @Override default Unit visitHole(@NotNull CallTerm.HoleApp term, P p) {
+  @Override default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
     visitVar(term.var(), p);
     visitArgs(term.args(), p);
     return Unit.unit();
   }
 
-  @Override default Unit visitFnCall(CallTerm.@NotNull FnCall fnCall, P p) {
+  @Override default Unit visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
     visitVar(fnCall.fnRef(), p);
     visitArgs(fnCall.args(), p);
     return Unit.unit();
@@ -37,13 +37,13 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     args.forEach(i -> i.term().accept(this, p));
   }
 
-  @Override default Unit visitDataCall(@NotNull CallTerm.DataCall dataCall, P p) {
+  @Override default Unit visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
     visitVar(dataCall.dataRef(), p);
     visitArgs(dataCall.args(), p);
     return Unit.unit();
   }
 
-  @Override default Unit visitConCall(@NotNull CallTerm.ConCall conCall, P p) {
+  @Override default Unit visitConCall(@NotNull CallTerm.Con conCall, P p) {
     visitVar(conCall.conHead(), p);
     visitArgs(conCall.args(), p);
     return Unit.unit();

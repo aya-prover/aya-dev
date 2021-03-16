@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override
-  default Unit visitHole(@NotNull CallTerm.HoleApp term, P p) {
+  default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
     term.argsBuf().forEach(arg -> visitArg(arg, p));
     return Unit.unit();
   }
@@ -47,7 +47,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     return term.fn().accept(this, p);
   }
 
-  @Override default Unit visitFnCall(@NotNull CallTerm.FnCall fnCall, P p) {
+  @Override default Unit visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
     fnCall.args().forEach(arg -> visitArg(arg, p));
     return Unit.unit();
   }

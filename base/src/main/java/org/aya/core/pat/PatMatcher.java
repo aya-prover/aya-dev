@@ -54,7 +54,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   }
 
   @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Term term) {
-    if (!(term instanceof CallTerm.ConCall conCall)) throw new Mismatch();
+    if (!(term instanceof CallTerm.Con conCall)) throw new Mismatch();
     var as = ctor.as();
     if (as != null) subst.map().put(as, conCall);
     if (ctor.ref() != conCall.conHead()) throw new Mismatch();

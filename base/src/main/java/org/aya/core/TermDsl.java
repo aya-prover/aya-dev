@@ -55,7 +55,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     return switch (rule) {
       case "U" -> UnivTerm.OMEGA;
       case "app" -> new AppTerm(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
-      case "fncall" -> new CallTerm.FnCall(
+      case "fncall" -> new CallTerm.Fn(
         (DefVar<FnDef, Decl.FnDecl>) ref(exprs.get(0).getText()),
         ImmutableSeq.of(),
         exprs.subList(1, exprs.size())

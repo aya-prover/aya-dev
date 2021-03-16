@@ -28,7 +28,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return subst;
   }
 
-  @Override default @NotNull Term visitFnCall(@NotNull CallTerm.FnCall fnCall, P p) {
+  @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
     var def = fnCall.fnRef().core;
     var args = fnCall.args();
     // This shouldn't fail
@@ -59,7 +59,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull MutableSet<@NotNull Var> unfolded
   ) implements Unfolder<Unit> {
     @Override
-    public @NotNull Term visitFnCall(CallTerm.@NotNull FnCall fnCall, Unit emptyTuple) {
+    public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit emptyTuple) {
       if (!unfolding.contains(fnCall.fnRef())) return fnCall;
       unfolded.add(fnCall.fnRef());
       return Unfolder.super.visitFnCall(fnCall, emptyTuple);

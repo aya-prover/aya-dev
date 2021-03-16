@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public record MetaContext(
   @NotNull Reporter reporter,
   LevelEqn.@NotNull Set levelEqns,
-  MutableMap<CallTerm.HoleApp, Term> solutions
+  MutableMap<CallTerm.Hole, Term> solutions
 ) {
   public MetaContext(@NotNull Reporter reporter) {
     this(reporter, new LevelEqn.Set(Buffer.of(), Buffer.of()), new MutableHashMap<>());

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public final record Stripper(@NotNull MetaContext metaContext) implements TermFixpoint<Unit> {
-  @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.HoleApp term, Unit emptyTuple) {
+  @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit emptyTuple) {
     var sol = metaContext.solutions().getOption(term);
     if (sol.isEmpty()) {
       // TODO[ice]: unsolved meta

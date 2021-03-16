@@ -69,12 +69,12 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
       lhs = lhs.normalize(NormalizeMode.WHNF);
       rhs = rhs.normalize(NormalizeMode.WHNF);
     }
-    if (rhs instanceof CallTerm.HoleApp) return type.accept(this, rhs, lhs);
+    if (rhs instanceof CallTerm.Hole) return type.accept(this, rhs, lhs);
     return type.accept(this, lhs, rhs);
   }
 
   private boolean isNotCall(@NotNull Term term) {
-    return !(term instanceof CallTerm.FnCall);
+    return !(term instanceof CallTerm.Fn);
   }
 
   public boolean compareWHNF(Term lhs, Term preRhs, @NotNull Term type) {
@@ -123,17 +123,17 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitFnCall(@NotNull CallTerm.FnCall type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
   @Override
-  public @NotNull Boolean visitDataCall(@NotNull CallTerm.DataCall type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
   @Override
-  public @NotNull Boolean visitConCall(@NotNull CallTerm.ConCall type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitConCall(@NotNull CallTerm.Con type, @NotNull Term lhs, @NotNull Term rhs) {
     throw new IllegalStateException("ConCall can never be a type of any term");
   }
 
@@ -148,7 +148,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitHole(CallTerm.@NotNull HoleApp type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitHole(CallTerm.@NotNull Hole type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 

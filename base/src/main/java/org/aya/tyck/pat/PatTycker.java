@@ -154,9 +154,9 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     return new Pat.Ctor(ctor.explicit(), realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
   }
 
-  private @Nullable Tuple2<CallTerm.DataCall, DataDef.Ctor>
+  private @Nullable Tuple2<CallTerm.Data, DataDef.Ctor>
   selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
-    if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.DataCall dataCall)) {
+    if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       // TODO[ice]: report error: splitting on non data
       return null;
     }

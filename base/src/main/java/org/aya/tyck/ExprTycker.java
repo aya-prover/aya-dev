@@ -92,7 +92,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) {
       var domain = new LocalVar(Constants.ANONYMOUS_PREFIX);
       var codomain = new LocalVar(Constants.ANONYMOUS_PREFIX);
-      term = new PiTerm(false, Term.Param.mock(domain, expr.param().explicit()), new CallTerm.HoleApp(codomain));
+      term = new PiTerm(false, Term.Param.mock(domain, expr.param().explicit()), new CallTerm.Hole(codomain));
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof PiTerm dt && !dt.co())) {
       return wantButNo(expr, term, "pi type");
@@ -137,13 +137,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     final var var = expr.resolvedVar();
     if (var instanceof DefVar<?, ?> defVar) {
       if (defVar.core instanceof FnDef || defVar.concrete instanceof Decl.FnDecl) {
-        return defCall((DefVar<FnDef, Decl.FnDecl>) defVar, CallTerm.FnCall::new);
+        return defCall((DefVar<FnDef, Decl.FnDecl>) defVar, CallTerm.Fn::new);
       } else if (defVar.core instanceof DataDef || defVar.concrete instanceof Decl.DataDecl) {
-        return defCall((DefVar<DataDef, Decl.DataDecl>) defVar, CallTerm.DataCall::new);
+        return defCall((DefVar<DataDef, Decl.DataDecl>) defVar, CallTerm.Data::new);
       } else if (defVar.core instanceof DataDef.Ctor || defVar.concrete instanceof Decl.DataDecl.DataCtor) {
         var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) defVar;
         var telescopes = DataDef.Ctor.telescopes(conVar);
-        var body = new CallTerm.ConCall(conVar,
+        var body = new CallTerm.Con(conVar,
           telescopes._1.view().map(Term.Param::toArg),
           telescopes._2.view().map(Term.Param::toArg),
           telescopes._3.view().map(Term.Param::toArg));
@@ -259,8 +259,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     // TODO[ice]: deal with unit type
     var name = expr.name();
     if (name == null) name = Constants.ANONYMOUS_PREFIX;
-    if (term == null) term = new CallTerm.HoleApp(new LocalVar(name + "_ty"));
-    return new Result(new CallTerm.HoleApp(new LocalVar(name)), term);
+    if (term == null) term = new CallTerm.Hole(new LocalVar(name + "_ty"));
+    return new Result(new CallTerm.Hole(new LocalVar(name)), term);
   }
 
   @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
@@ -279,7 +279,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         newArg = new Arg<>(elabArg.wellTyped, argLicit);
       } else if (argLicit) {
         // that implies paramLicit == false
-        var holeApp = new CallTerm.HoleApp(new LocalVar(Constants.ANONYMOUS_PREFIX));
+        var holeApp = new CallTerm.Hole(new LocalVar(Constants.ANONYMOUS_PREFIX));
         // TODO: maybe we should create a concrete hole and check it against the type
         //  in case we can synthesize this term via its type only
         newArg = new Arg<>(holeApp, false);

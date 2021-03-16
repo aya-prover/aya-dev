@@ -67,16 +67,16 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
-  public Doc visitFnCall(@NotNull CallTerm.FnCall fnCall, Boolean nestedCall) {
+  public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
     return visitCalls(fnCall.fn(), fnCall.args(), nestedCall);
   }
 
   @Override
-  public Doc visitDataCall(@NotNull CallTerm.DataCall dataCall, Boolean nestedCall) {
+  public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
     return visitCalls(dataCall.fn(), dataCall.args(), nestedCall);
   }
 
-  @Override public Doc visitConCall(@NotNull CallTerm.ConCall conCall, Boolean nestedCall) {
+  @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Boolean nestedCall) {
     return visitCalls(conCall.fn(), conCall.conArgs(), nestedCall);
   }
 
@@ -93,7 +93,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
-  public Doc visitHole(CallTerm.@NotNull HoleApp term, Boolean nestedCall) {
+  public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
     String name = term.var().name();
     Doc filling = term.args().stream()
       .map(t -> t.term().toDoc())
