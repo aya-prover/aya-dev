@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public record RefTerm(@NotNull Var var) implements Term {
+public record RefTerm(@NotNull LocalVar var) implements Term {
   @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitRef(this, p);
   }
@@ -23,7 +23,7 @@ public record RefTerm(@NotNull Var var) implements Term {
 
   /**
    * @apiNote This is, theoretically incorrect, because {@link DefVar}s can be reduced.
-   * However, in those cases it is always in a {@link AppTerm.FnCall},
+   * However, in those cases it is always in a {@link CallTerm.FnCall},
    * so here we only care about the {@link LevelVar} and {@link LocalVar} cases,
    * in which the term is a WHNF.
    */
