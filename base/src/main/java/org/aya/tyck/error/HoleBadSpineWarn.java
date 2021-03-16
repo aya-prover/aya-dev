@@ -4,7 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record HoleBadSpineWarn(
-  @NotNull AppTerm.HoleApp term,
+  @NotNull CallTerm.HoleApp term,
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {

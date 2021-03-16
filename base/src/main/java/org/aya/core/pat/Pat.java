@@ -5,7 +5,7 @@ package org.aya.core.pat;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -58,7 +58,7 @@ public sealed interface Pat {
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> params,
     @Nullable LocalVar as,
-    @NotNull AppTerm.DataCall type
+    @NotNull CallTerm.DataCall type
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);

@@ -4,7 +4,6 @@ package org.aya.tyck;
 
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.Var;
 import org.aya.api.util.BreakingException;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
@@ -31,7 +30,7 @@ import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.function.TriFunction;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
@@ -40,12 +39,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiFunction;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
-  public final @NotNull MutableMap<Var, Term> localCtx;
+  public final @NotNull LocalCtx localCtx;
   public Trace.@Nullable Builder traceBuilder = null;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -69,10 +68,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public ExprTycker(@NotNull MetaContext metaContext) {
-    this(metaContext, new MutableHashMap<>());
+    this(metaContext, new LocalCtx());
   }
 
-  public ExprTycker(@NotNull MetaContext metaContext, @NotNull MutableMap<Var, Term> localCtx) {
+  public ExprTycker(@NotNull MetaContext metaContext, @NotNull LocalCtx localCtx) {
     this.localCtx = localCtx;
     this.metaContext = metaContext;
   }
@@ -93,7 +92,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) {
       var domain = new LocalVar(Constants.ANONYMOUS_PREFIX);
       var codomain = new LocalVar(Constants.ANONYMOUS_PREFIX);
-      term = new PiTerm(false, Term.Param.mock(domain, expr.param().explicit()), new AppTerm.HoleApp(codomain));
+      term = new PiTerm(false, Term.Param.mock(domain, expr.param().explicit()), new CallTerm.HoleApp(codomain));
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof PiTerm dt && !dt.co())) {
       return wantButNo(expr, term, "pi type");
@@ -111,10 +110,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       } else type = result.wellTyped;
     }
     var resultParam = new Term.Param(var, type, param.explicit());
-    localCtx.put(var, type);
-    var body = dt.body().subst(dt.param().ref(), new RefTerm(var));
-    var rec = expr.body().accept(this, body);
-    return new Result(new LamTerm(resultParam, rec.wellTyped), dt);
+    return localCtx.with(var, type, () -> {
+      var body = dt.body().subst(dt.param().ref(), new RefTerm(var));
+      var rec = expr.body().accept(this, body);
+      return new Result(new LamTerm(resultParam, rec.wellTyped), dt);
+    });
   }
 
   <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
@@ -137,15 +137,16 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     final var var = expr.resolvedVar();
     if (var instanceof DefVar<?, ?> defVar) {
       if (defVar.core instanceof FnDef || defVar.concrete instanceof Decl.FnDecl) {
-        return defCall((DefVar<FnDef, Decl.FnDecl>) defVar, AppTerm.FnCall::new);
+        return defCall((DefVar<FnDef, Decl.FnDecl>) defVar, CallTerm.FnCall::new);
       } else if (defVar.core instanceof DataDef || defVar.concrete instanceof Decl.DataDecl) {
-        return defCall((DefVar<DataDef, Decl.DataDecl>) defVar, AppTerm.DataCall::new);
+        return defCall((DefVar<DataDef, Decl.DataDecl>) defVar, CallTerm.DataCall::new);
       } else if (defVar.core instanceof DataDef.Ctor || defVar.concrete instanceof Decl.DataDecl.DataCtor) {
         var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) defVar;
         var telescopes = DataDef.Ctor.telescopes(conVar);
-        var body = new AppTerm.ConCall(conVar,
+        var body = new CallTerm.ConCall(conVar,
           telescopes._1.view().map(Term.Param::toArg),
-          telescopes._2.view().map(Term.Param::toArg));
+          telescopes._2.view().map(Term.Param::toArg),
+          telescopes._3.view().map(Term.Param::toArg));
         var tele = Def.defTele(conVar);
         var type = PiTerm.make(false, tele, Def.defResult(conVar));
         return new Result(LamTerm.make(tele, body), type);
@@ -153,19 +154,25 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
       }
-    }
-    var ty = localCtx.get(var);
-    if (ty == null) throw new IllegalStateException("Unresolved var `" + var.name() + "` tycked.");
-    if (term == null) return new Result(new RefTerm(var), ty);
-    unifyTyThrowing(term, ty, expr);
-    return new Result(new RefTerm(var), ty);
+    } else if (var instanceof LocalVar loc) {
+      var ty = localCtx.get(loc);
+      if (ty == null) throw new IllegalStateException("Unresolved var `" + var.name() + "` tycked.");
+      if (term == null) return new Result(new RefTerm(loc), ty);
+      unifyTyThrowing(term, ty, expr);
+      return new Result(new RefTerm(loc), ty);
+    } else throw new IllegalStateException("TODO: UnivVar not yet implemented");
   }
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
-  defCall(DefVar<D, S> defVar, BiFunction<DefVar<D, S>, SeqLike<Arg<Term>>, Term> function) {
+  defCall(DefVar<D, S> defVar, TriFunction<DefVar<D, S>, SeqLike<Arg<Term>>, SeqLike<Arg<Term>>, Term> function) {
     var tele = Def.defTele(defVar);
     // ice: should we rename the vars in this telescope? Probably not.
-    var body = function.apply(defVar, tele.view().map(Term.Param::toArg));
+    var body = function.apply(
+      defVar,
+      Objects.requireNonNull(defVar.concrete.signature)
+        .param().view().map(Term.Param::toArg),
+      tele.view().map(Term.Param::toArg)
+    );
     var type = PiTerm.make(false, tele, Def.defResult(defVar));
     return new Result(LamTerm.make(tele, body), type);
   }
@@ -252,8 +259,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     // TODO[ice]: deal with unit type
     var name = expr.name();
     if (name == null) name = Constants.ANONYMOUS_PREFIX;
-    if (term == null) term = new AppTerm.HoleApp(new LocalVar(name + "_ty"));
-    return new Result(new AppTerm.HoleApp(new LocalVar(name)), term);
+    if (term == null) term = new CallTerm.HoleApp(new LocalVar(name + "_ty"));
+    return new Result(new CallTerm.HoleApp(new LocalVar(name)), term);
   }
 
   @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
@@ -272,7 +279,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         newArg = new Arg<>(elabArg.wellTyped, argLicit);
       } else if (argLicit) {
         // that implies paramLicit == false
-        var holeApp = new AppTerm.HoleApp(new LocalVar(Constants.ANONYMOUS_PREFIX));
+        var holeApp = new CallTerm.HoleApp(new LocalVar(Constants.ANONYMOUS_PREFIX));
         // TODO: maybe we should create a concrete hole and check it against the type
         //  in case we can synthesize this term via its type only
         newArg = new Arg<>(holeApp, false);
@@ -280,7 +287,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         // TODO[ice]: no implicit argument expected, but inserted.
         throw new TyckerException();
       }
-      resultTerm = AppTerm.make(resultTerm, newArg);
+      resultTerm = CallTerm.make(resultTerm, newArg);
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) {
         subst.add(param.ref(), newArg.term());

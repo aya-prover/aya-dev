@@ -10,7 +10,7 @@ import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.SigmaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
@@ -74,13 +74,13 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   public Tuple2<@NotNull Term, Pat.PrototypeClause> visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.clear();
-    var recover = MutableHashMap.from(exprTycker.localCtx);
+    var recover = MutableHashMap.from(exprTycker.localCtx.localMap);
     var patterns = visitPatterns(sig, match.patterns());
     var result = match.expr()
       .map(e -> e.accept(subst, Unit.unit()))
       .map(e -> exprTycker.checkExpr(e, sig.value.result()));
-    exprTycker.localCtx.clear();
-    exprTycker.localCtx.putAll(recover);
+    exprTycker.localCtx.localMap.clear();
+    exprTycker.localCtx.localMap.putAll(recover);
     var type = result.map(ExprTycker.Result::type).getOrDefault(sig.value.result());
     return Tuple.of(type, new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped)));
   }
@@ -114,16 +114,17 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   }
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
-    exprTycker.localCtx.put(tuple.as(), t);
+    exprTycker.localCtx.localMap.put(tuple.as(), t);
     if (!(t instanceof SigmaTerm sigma)) {
       // TODO[ice]: requires pretty printing patterns
       throw new ExprTycker.TyckerException();
     }
     // sig.result is a dummy term
     var sig = new Def.Signature(
+      ImmutableSeq.of(),
       sigma.params().appended(new Term.Param(new LocalVar("_"), sigma.body(), true)),
       UnivTerm.OMEGA);
-    exprTycker.localCtx.put(tuple.as(), sigma);
+    exprTycker.localCtx.localMap.put(tuple.as(), sigma);
     return new Pat.Tuple(tuple.explicit(),
       visitPatterns(new Ref<>(sig), tuple.patterns()), tuple.as(), sigma);
   }
@@ -132,7 +133,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var v = bind.bind();
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE);
     if (selected == null) {
-      exprTycker.localCtx.put(v, t);
+      exprTycker.localCtx.localMap.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
     }
     if (!selected._2.conTelescope().isEmpty()) {
@@ -148,14 +149,14 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name(), subst.reporter());
     if (realCtor == null) throw new ExprTycker.TyckerException();
-    var sig = new Ref<>(new Def.Signature(realCtor._2.conTelescope(), realCtor._2.result()));
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), realCtor._2.conTelescope(), realCtor._2.result()));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
   }
 
-  private @Nullable Tuple2<AppTerm.DataCall, DataDef.Ctor>
+  private @Nullable Tuple2<CallTerm.DataCall, DataDef.Ctor>
   selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
-    if (!(param.normalize(NormalizeMode.WHNF) instanceof AppTerm.DataCall dataCall)) {
+    if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.DataCall dataCall)) {
       // TODO[ice]: report error: splitting on non data
       return null;
     }

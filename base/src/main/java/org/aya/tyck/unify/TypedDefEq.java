@@ -8,9 +8,9 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.LocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author ice1000
@@ -27,7 +28,7 @@ import java.util.function.Function;
  */
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
   protected final @NotNull MutableMap<@NotNull Var, @NotNull Var> varSubst = new MutableHashMap<>();
-  public final @NotNull MutableMap<Var, Term> localCtx;
+  public final @NotNull LocalCtx localCtx;
   private final @NotNull PatDefEq termDirectedDefeq;
   public Trace.@Nullable Builder traceBuilder = null;
   public final @NotNull SourcePos pos;
@@ -52,7 +53,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   public TypedDefEq(
     @NotNull Function<@NotNull TypedDefEq, @NotNull PatDefEq> createTypedDefEq,
-    @NotNull MutableMap<Var, Term> localCtx,
+    @NotNull LocalCtx localCtx,
     @NotNull SourcePos pos
   ) {
     this.localCtx = localCtx;
@@ -68,12 +69,12 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
       lhs = lhs.normalize(NormalizeMode.WHNF);
       rhs = rhs.normalize(NormalizeMode.WHNF);
     }
-    if (rhs instanceof AppTerm.HoleApp) return type.accept(this, rhs, lhs);
+    if (rhs instanceof CallTerm.HoleApp) return type.accept(this, rhs, lhs);
     return type.accept(this, lhs, rhs);
   }
 
   private boolean isNotCall(@NotNull Term term) {
-    return !(term instanceof AppTerm.FnCall);
+    return !(term instanceof CallTerm.FnCall);
   }
 
   public boolean compareWHNF(Term lhs, Term preRhs, @NotNull Term type) {
@@ -82,38 +83,23 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     return compare(whnf, preRhs.normalize(NormalizeMode.WHNF), type);
   }
 
-  @NotNull
-  public Boolean checkParam(Term.@NotNull Param l, Term.@NotNull Param r) {
-    if (l.explicit() != r.explicit()) return false;
-    if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return false;
+  public <T> T checkParam(Term.@NotNull Param l, Term.@NotNull Param r, Supplier<T> fail, Supplier<T> success) {
+    if (l.explicit() != r.explicit()) return fail.get();
+    if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return fail.get();
     varSubst.put(r.ref(), l.ref());
-    localCtx.put(l.ref(), l.type());
-    return true;
+    var result = localCtx.with(l.ref(), l.type(), success);
+    varSubst.remove(r.ref());
+    return result;
   }
 
   /**
    * @apiNote Do not forget to remove variables out of localCtx after done checking.
    */
-  @NotNull
-  public Boolean checkParams(ImmutableSeq<Term.@NotNull Param> l, ImmutableSeq<Term.@NotNull Param> r) {
-    if (!l.sizeEquals(r)) return false;
-    var length = l.size();
-    for (int i = 0; i < length; i++) {
-      final var rhs = r.get(i);
-      final var lhs = l.get(i);
-      if (!compare(lhs.type(), rhs.type(), UnivTerm.OMEGA) || lhs.explicit() != rhs.explicit()) {
-        for (int j = 0; j < i; j++) {
-          varSubst.remove(r.get(j).ref());
-          localCtx.remove(lhs.ref());
-          localCtx.remove(rhs.ref());
-        }
-        return false;
-      }
-      varSubst.put(rhs.ref(), lhs.ref());
-      localCtx.put(lhs.ref(), lhs.type());
-      localCtx.put(rhs.ref(), rhs.type());
-    }
-    return true;
+  public <T> T checkParams(SeqLike<Term.@NotNull Param> l, SeqLike<Term.@NotNull Param> r, Supplier<T> fail, Supplier<T> success) {
+    if (!l.sizeEquals(r)) return fail.get();
+    if (l.isEmpty()) return success.get();
+    return checkParam(l.first(), r.first(), fail, () ->
+      checkParams(l.view().drop(1), r.view().drop(1), fail, success));
   }
 
   @Override
@@ -132,22 +118,22 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitApp(@NotNull AppTerm.Apply type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitApp(@NotNull AppTerm type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
   @Override
-  public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitFnCall(@NotNull CallTerm.FnCall type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
   @Override
-  public @NotNull Boolean visitDataCall(@NotNull AppTerm.DataCall type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitDataCall(@NotNull CallTerm.DataCall type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
   @Override
-  public @NotNull Boolean visitConCall(@NotNull AppTerm.ConCall type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitConCall(@NotNull CallTerm.ConCall type, @NotNull Term lhs, @NotNull Term rhs) {
     throw new IllegalStateException("ConCall can never be a type of any term");
   }
 
@@ -162,7 +148,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitHole(CallTerm.@NotNull HoleApp type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
@@ -187,12 +173,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   @Override
   public @NotNull Boolean visitPi(@NotNull PiTerm type, @NotNull Term lhs, @NotNull Term rhs) {
-    var dummy = new RefTerm(new LocalVar("dummy"));
+    var dummyVar = new LocalVar("dummy");
+    var dummy = new RefTerm(dummyVar);
     var dummyArg = new Arg<Term>(dummy, type.param().explicit());
-    localCtx.put(dummy.var(), type.param().type());
-    var result = compare(AppTerm.make(lhs, dummyArg), AppTerm.make(rhs, dummyArg), type.body().subst(type.param().ref(), dummy));
-    localCtx.remove(dummy.var());
-    return result;
+    return localCtx.with(dummyVar, type.param().type(), () ->
+      compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.body().subst(type.param().ref(), dummy)));
   }
 
   @Override

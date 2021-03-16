@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pat;
 
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.TupTerm;
 import org.aya.core.visitor.Substituter;
@@ -54,7 +54,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   }
 
   @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Term term) {
-    if (!(term instanceof AppTerm.ConCall conCall)) throw new Mismatch();
+    if (!(term instanceof CallTerm.ConCall conCall)) throw new Mismatch();
     var as = ctor.as();
     if (as != null) subst.map().put(as, conCall);
     if (ctor.ref() != conCall.conHead()) throw new Mismatch();

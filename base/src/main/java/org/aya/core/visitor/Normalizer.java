@@ -15,14 +15,14 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
   }
 
   @Override
-  public @NotNull Term visitApp(AppTerm.@NotNull Apply term, NormalizeMode mode) {
+  public @NotNull Term visitApp(@NotNull AppTerm term, NormalizeMode mode) {
     var fn = term.fn();
     if (term.whnf() != Decision.NO) {
       if (mode != NormalizeMode.NF) return term;
-      else return AppTerm.make(fn, visitArg(term.arg(), mode));
+      else return CallTerm.make(fn, visitArg(term.arg(), mode));
     }
-    if (fn instanceof LamTerm lam) return AppTerm.make(lam, term.arg()).accept(this, mode);
-    else return AppTerm.make(fn.accept(this, mode), term.arg()).accept(this, mode);
+    if (fn instanceof LamTerm lam) return CallTerm.make(lam, term.arg()).accept(this, mode);
+    else return CallTerm.make(fn.accept(this, mode), term.arg()).accept(this, mode);
   }
 
   @Override

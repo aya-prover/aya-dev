@@ -3,7 +3,7 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
@@ -21,13 +21,13 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     return Unit.unit();
   }
 
-  @Override default Unit visitHole(@NotNull AppTerm.HoleApp term, P p) {
+  @Override default Unit visitHole(@NotNull CallTerm.HoleApp term, P p) {
     visitVar(term.var(), p);
     visitArgs(term.args(), p);
     return Unit.unit();
   }
 
-  @Override default Unit visitFnCall(AppTerm.@NotNull FnCall fnCall, P p) {
+  @Override default Unit visitFnCall(CallTerm.@NotNull FnCall fnCall, P p) {
     visitVar(fnCall.fnRef(), p);
     visitArgs(fnCall.args(), p);
     return Unit.unit();
@@ -37,13 +37,13 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     args.forEach(i -> i.term().accept(this, p));
   }
 
-  @Override default Unit visitDataCall(@NotNull AppTerm.DataCall dataCall, P p) {
+  @Override default Unit visitDataCall(@NotNull CallTerm.DataCall dataCall, P p) {
     visitVar(dataCall.dataRef(), p);
     visitArgs(dataCall.args(), p);
     return Unit.unit();
   }
 
-  @Override default Unit visitConCall(@NotNull AppTerm.ConCall conCall, P p) {
+  @Override default Unit visitConCall(@NotNull CallTerm.ConCall conCall, P p) {
     visitVar(conCall.conHead(), p);
     visitArgs(conCall.args(), p);
     return Unit.unit();
