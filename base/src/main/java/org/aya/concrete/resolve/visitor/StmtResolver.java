@@ -62,13 +62,10 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
 
-    decl.fields.foldLeft(local._2, (ctx, field) -> {
-      var fieldLocal = ExprResolver.INSTANCE.resolveParams(field.telescope, ctx);
+    decl.fields.forEach(field -> {
+      var fieldLocal = ExprResolver.INSTANCE.resolveParams(field.telescope, local._2);
       field.telescope = fieldLocal._1;
       field.expr = field.expr.resolve(fieldLocal._2);
-      var newVar = new LocalVar(field.ref.name());
-      var newParam = new Expr.Param(field.sourcePos(), newVar, false);
-      return ctx.bind(new LocalVar(field.ref.name()), field.sourcePos());
     });
 
     return unit;
