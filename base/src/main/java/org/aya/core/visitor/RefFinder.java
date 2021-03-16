@@ -54,15 +54,17 @@ public record RefFinder(boolean withBody) implements
   @Override
   public Unit visitStruct(@NotNull StructDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
-    // TODO[vont]: struct
-    throw new UnsupportedOperationException();
+    def.result().accept(TermRefFinder.INSTANCE, references);
+    def.fields().forEach(t -> t.accept(this, references));
+    return Unit.unit();
   }
 
   @Override
   public Unit visitField(@NotNull StructDef.Field def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
-    // TODO[vont]: struct
-    throw new UnsupportedOperationException();
+    def.result().accept(TermRefFinder.INSTANCE, references);
+    // TODO[ice]: conditions
+    return Unit.unit();
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")

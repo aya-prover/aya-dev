@@ -506,10 +506,11 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
+    var id = ctx.ID();
     return new Decl.StructDecl(
-      sourcePosOf(ctx.ID()),
+      sourcePosOf(id),
       accessibility,
-      ctx.ID().getText(),
+      id.getText(),
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
