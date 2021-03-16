@@ -112,8 +112,8 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : spine.view()) {
-      if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
-        rhs = extractVar(rhs, subst, arg, var);
+      if (arg.term() instanceof RefTerm ref) {
+        rhs = extractVar(rhs, subst, arg, ref.var());
         if (rhs == null) return null;
       } else return null;
       // TODO[ice]: ^ eta var
