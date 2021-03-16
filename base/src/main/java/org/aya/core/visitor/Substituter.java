@@ -35,8 +35,7 @@ public record Substituter(
     childrenArray = "map.asJava().entrySet().toArray()",
     hasChildren = "!map.isEmpty()")
   public static record TermSubst(@NotNull MutableMap<@NotNull Var, @NotNull Term> map) {
-    // TODO[JDK-8247334]: uncomment when we move to JDK16
-    public static final /*@NotNull*/ TermSubst EMPTY = new TermSubst(MutableHashMap.of());
+    public static final @NotNull TermSubst EMPTY = new TermSubst(MutableHashMap.of());
 
     public TermSubst(@NotNull Var var, @NotNull Term term) {
       this(MutableHashMap.of(var, term));

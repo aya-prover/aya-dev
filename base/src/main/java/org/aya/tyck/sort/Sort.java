@@ -16,9 +16,8 @@ import org.jetbrains.annotations.Nullable;
  * >Sort.java</a>
  */
 public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements LevelSubst {
-  // TODO[JDK-8247334]: uncomment when we move to JDK16
   // TODO[level]
-  public static final /*@NotNull*/ Sort OMEGA = new Sort(new Level(), new Level());
+  public static final @NotNull Sort OMEGA = new Sort(new Level(), new Level());
 
   @Override public boolean isEmpty() {
     throw new UnsupportedOperationException("#93");

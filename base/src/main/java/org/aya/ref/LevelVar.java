@@ -33,7 +33,6 @@ public record LevelVar(
     }
   }
 
-  // TODO[JDK-8247334]: uncomment when we move to JDK16
-  public static final /*@NotNull*/ LevelVar UP = new LevelVar("ul", Kind.U);
-  public static final /*@NotNull*/ LevelVar HP = new LevelVar("hl", Kind.H);
+  public static final @NotNull LevelVar UP = new LevelVar("ul", Kind.U);
+  public static final @NotNull LevelVar HP = new LevelVar("hl", Kind.H);
 }
