@@ -54,14 +54,15 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var exprs = ctx.expr();
     return switch (rule) {
       case "U" -> UnivTerm.OMEGA;
-      case "app" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
-      case "fncall" -> new AppTerm.FnCall(
-        (DefVar<FnDef, Decl.FnDecl>) ((RefTerm) exprs.get(0).accept(this)).var(),
+      case "app" -> new AppTerm(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
+      case "fncall" -> new CallTerm.FnCall(
+        (DefVar<FnDef, Decl.FnDecl>) ref(exprs.get(0).getText()),
+        ImmutableSeq.of(),
         exprs.subList(1, exprs.size())
           .stream()
           .map(c -> Arg.explicit(c.accept(this)))
           .collect(ImmutableSeq.factory()));
-      case "iapp" -> new AppTerm.Apply(exprs.get(0).accept(this), Arg.implicit(exprs.get(1).accept(this)));
+      case "iapp" -> new AppTerm(exprs.get(0).accept(this), Arg.implicit(exprs.get(1).accept(this)));
       case "lam" -> new LamTerm(exprToParam(exprs.get(0)), exprs.get(1).accept(this));
       case "Pi" -> new PiTerm(false, exprToParam(exprs.get(0)), exprs.get(1).accept(this));
       case "Copi" -> new PiTerm(true, exprToParam(exprs.get(0)), exprs.get(1).accept(this));
@@ -69,7 +70,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
       case "Cosigma" -> new SigmaTerm(true, exprToParams(exprs.get(0)), exprs.get(1).accept(this));
       case "tup" -> new TupTerm(exprs.stream().collect(ImmutableVector.factory()).map(expr -> expr.accept(this)));
       case "proj" -> new ProjTerm(exprs.get(0).accept(this), parseInt(exprs.get(1).getText()));
-      default -> new RefTerm(ref(rule));
+      default -> new RefTerm((LocalVar) ref(rule));
     };
   }
 
@@ -115,7 +116,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
   public Term visitAtom(LispParser.AtomContext ctx) {
     var number = ctx.NUMBER();
     var ident = ctx.IDENT();
-    if (ident != null) return new RefTerm(ref(ident.getText()));
+    if (ident != null) return new RefTerm((LocalVar) ref(ident.getText()));
     else if (number != null) throw new UnsupportedOperationException("No numbers yet!");
     throw new IllegalArgumentException(ctx.getText());
   }

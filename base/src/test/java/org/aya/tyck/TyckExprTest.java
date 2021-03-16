@@ -5,7 +5,7 @@ package org.aya.tyck;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.parse.AyaProducer;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.LamTerm;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.RefTerm;
@@ -64,10 +64,10 @@ public class TyckExprTest {
       fail();
       return;
     }
-    var lam_aa = AppTerm.make(lam, new Arg<>(new RefTerm(new LocalVar("_")), true));
+    var lam_aa = CallTerm.make(lam, new Arg<>(new RefTerm(new LocalVar("_")), true));
     assertEquals(lam.body(), lam_aa);
     var newVar = new RefTerm(new LocalVar("xyr"));
-    assertEquals(newVar, AppTerm.make(lam_aa, new Arg<>(newVar, true)));
+    assertEquals(newVar, CallTerm.make(lam_aa, new Arg<>(newVar, true)));
     assertTrue(dt.body() instanceof PiTerm pi
       && pi.body() instanceof RefTerm ref
       && ref.var() == dt.param().ref());

@@ -4,10 +4,8 @@ package org.aya.core;
 
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.FnDef;
-import org.aya.core.term.AppTerm;
-import org.aya.core.term.LamTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
+import org.aya.ref.LocalVar;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
 import org.aya.tyck.TyckDeclTest;
@@ -71,12 +69,12 @@ public class NormalizeTest extends LispTestCase {
     var def = Lisp.parseDef("id",
       "(y (U) ex null)", "y", "y", vars);
     var term = Lisp.parse("(fncall id kiva)", vars);
-    assertTrue(term instanceof AppTerm.FnCall);
+    assertTrue(term instanceof CallTerm.FnCall);
     assertEquals("id", def.ref().name());
     assertEquals(1, def.telescope().size());
     var norm = term.normalize(NormalizeMode.WHNF);
     assertNotEquals(term, norm);
-    assertEquals(new RefTerm(vars.get("kiva")), norm);
+    assertEquals(new RefTerm((LocalVar) vars.get("kiva")), norm);
   }
 
   @Test
@@ -94,9 +92,9 @@ public class NormalizeTest extends LispTestCase {
       \\def overlap2 (a : Nat) : Nat => tracy zero a""");
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i))
       .body().getLeftValue().normalize(NormalizeMode.NF);
-    assertTrue(normalizer.apply(2) instanceof AppTerm.ConCall conCall
+    assertTrue(normalizer.apply(2) instanceof CallTerm.ConCall conCall
       && Objects.equals(conCall.conHead().name(), "suc"));
-    assertTrue(normalizer.apply(3) instanceof AppTerm.ConCall conCall
+    assertTrue(normalizer.apply(3) instanceof CallTerm.ConCall conCall
       && Objects.equals(conCall.conHead().name(), "suc"));
     assertTrue(normalizer.apply(4) instanceof RefTerm ref
       && Objects.equals(ref.var().name(), "a"));
