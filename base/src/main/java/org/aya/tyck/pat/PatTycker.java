@@ -114,7 +114,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE);
     if (selected == null) {
       exprTycker.localCtx.put(v, t);
-      return new Pat.Bind(true, v, t);
+      return new Pat.Bind(bind.explicit(), v, t);
     }
     if (!selected._2.conTelescope().isEmpty()) {
       // TODO: error report: not enough parameters bind
@@ -123,7 +123,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var value = bind.resolved().value;
     if (value != null) subst.good().putIfAbsent(v, value);
     else subst.bad().add(v);
-    return new Pat.Ctor(true, selected._2.ref(), ImmutableSeq.of(), null, selected._1);
+    return new Pat.Ctor(bind.explicit(), selected._2.ref(), ImmutableSeq.of(), null, selected._1);
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
@@ -131,7 +131,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     if (realCtor == null) throw new ExprTycker.TyckerException();
     var sig = new Ref<>(new Def.Signature(realCtor._2.conTelescope(), realCtor._2.result()));
     var patterns = visitPatterns(sig, ctor.params());
-    return new Pat.Ctor(true, realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
+    return new Pat.Ctor(ctor.explicit(), realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
   }
 
   private @Nullable Tuple2<AppTerm.DataCall, DataDef.Ctor>

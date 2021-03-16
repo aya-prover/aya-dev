@@ -69,6 +69,6 @@ In file $FILE:4:5 ->
   4 | \def add {a, b : Nat} : Nat
            ^-^
   
-Error: Unhandled case: zero, zero
+Error: Unhandled case: {zero}, {zero}
 Tycking interrupted due to errors.
 What are you doing?

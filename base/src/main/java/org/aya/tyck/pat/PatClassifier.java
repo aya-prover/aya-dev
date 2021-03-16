@@ -66,12 +66,13 @@ public record PatClassifier(
       var oneClass = subPatsSeq.map(subPats -> IntObjTuple2.of(subPats.ix, subPats.bodySubst));
       return ImmutableSeq.of(new PatClass(oneClass));
     }
+    var explicit = pivot.head().explicit();
     var hasTuple = subPatsSeq.view()
       .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
         ? flatTuple(tuple, subPats.bodySubst, index) : null)
       .toImmutableSeq();
     if (!hasTuple.isEmpty()) {
-      builder.shiftEmpty();
+      builder.shiftEmpty(explicit);
       return classifySub(hasTuple);
     }
     var hasMatch = subPatsSeq.view()
@@ -79,7 +80,7 @@ public record PatClassifier(
       .toImmutableSeq();
     // Progress
     if (hasMatch.isEmpty()) {
-      builder.shiftEmpty();
+      builder.shiftEmpty(explicit);
       return classifySub(subPatsSeq.map(SubPats::drop));
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
@@ -88,7 +89,7 @@ public record PatClassifier(
       var matches = subPatsSeq.view()
         .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor.ref()))
         .toImmutableSeq();
-      builder.shift(new PatTree(ctor.ref().name()));
+      builder.shift(new PatTree(ctor.ref().name(), explicit));
       if (matches.isEmpty()) {
         reporter.report(new MissingCaseError(pos, builder.root()));
         throw new ExprTycker.TyckInterruptedException();
