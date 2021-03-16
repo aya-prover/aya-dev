@@ -93,10 +93,10 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
 
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
     var term = t.term();
-    var s = t.expr().toDoc().renderWithPageWidth(PAGE_WIDTH)
-      + (term == null ? "" : " : " + term.toDoc().renderWithPageWidth(PAGE_WIDTH));
+    var s = new StringBuilder().append(t.expr().toDoc().renderWithPageWidth(PAGE_WIDTH));
+    if (term != null) s.append(" : ").append(term.toDoc().renderWithPageWidth(PAGE_WIDTH));
     var color = term == null ? Color.CYAN : Color.YELLOW;
-    visitSub(s, color, imGui, t.children(), () -> pos = t.expr().sourcePos(), Objects.hashCode(t));
+    visitSub(s.toString(), color, imGui, t.children(), () -> pos = t.expr().sourcePos(), Objects.hashCode(t));
     return Unit.unit();
   }
 
@@ -119,11 +119,10 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   }
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
-    var s = t.lhs().toDoc().renderWithPageWidth(PAGE_WIDTH)
-      + " = "
-      + t.rhs().toDoc().renderWithPageWidth(PAGE_WIDTH)
-      + (t.type() != null ? " : " + t.type().toDoc().renderWithPageWidth(PAGE_WIDTH) : "");
-    visitSub(s, Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
+    var s = new StringBuilder().append(t.lhs().toDoc().renderWithPageWidth(PAGE_WIDTH))
+      .append(" = ").append(t.rhs().toDoc().renderWithPageWidth(PAGE_WIDTH));
+    if (t.type() != null) s.append(" : ").append(t.type().toDoc().renderWithPageWidth(PAGE_WIDTH));
+    visitSub(s.toString(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
 

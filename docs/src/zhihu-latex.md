@@ -31,6 +31,6 @@ $ ./gradlew zhihu
 ```
 
 然后构建后的 markdown 文件会出现在 `/docs/zhihu` 目录下，应该可以正确导入知乎。
-打开[知乎 - 写文章](https://zhuanlan.zhihu.com/write)，工具栏右边有三个点，点一下可以导入。
+打开[知乎 - 写文章](https://zhuanlan.zhihu.com/write) ，工具栏右边有三个点，点一下可以导入。
 
 相关参考资料：[GalAster/ZhihuLink](https://github.com/GalAster/ZhihuLink/issues/3)
