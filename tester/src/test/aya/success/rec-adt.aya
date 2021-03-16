@@ -10,3 +10,10 @@
 \data List (A : \Set) : \Set
  | nil
  | cons A (x : List A)
+
+\data Both (A, B : \Set) : \Set
+ | pair A B
+
+\data List2 (A : \Set) : \Set
+ | nil2
+ | cons2 A (List2 (Both A A))
