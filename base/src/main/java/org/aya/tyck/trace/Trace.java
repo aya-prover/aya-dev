@@ -60,11 +60,15 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
 
   record UnifyT(
     @NotNull Term lhs, @NotNull Term rhs,
-    @NotNull SourcePos pos,
+    @NotNull SourcePos pos, @Nullable Term type,
     @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
     public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos) {
-      this(lhs, rhs, pos, Buffer.of());
+      this(lhs, rhs, pos, null);
+    }
+
+    public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos, @Nullable Term type) {
+      this(lhs, rhs, pos, type, Buffer.of());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
