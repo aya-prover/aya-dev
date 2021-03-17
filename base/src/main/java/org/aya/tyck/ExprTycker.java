@@ -273,7 +273,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var conField = conFieldOpt.get();
       conFields = conFields.dropWhile(t -> t._2 == conField);
       var type = defField.result().subst(subst);
-      var field = conField.accept(this, type).wellTyped.subst(bodySubst);
+      var fieldRes = conField.accept(this, null);
+      unifyTyThrowing(type, fieldRes.type, conField);
+      var field = fieldRes.wellTyped.subst(bodySubst);
       fields.append(Tuple.of(defField.ref().name(), field));
       bodySubst.add(defField.ref(), field);
     }
