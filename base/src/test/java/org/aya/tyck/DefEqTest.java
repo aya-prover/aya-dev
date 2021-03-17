@@ -11,6 +11,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,21 +22,25 @@ public class DefEqTest extends LispTestCase {
   private final Term typePi = Lisp.parse("(Pi (m (U) ex) (U))");
   private final Term typeSigma = Lisp.parse("(Sigma (n (U) ex null) (U))");
 
+  @NotNull LocalVar getLocal(String name) {
+    return (LocalVar) vars.get(name);
+  }
+
   public DefEqTest() {
     ImmutableSeq.of("x", "y", "f", "g", "jojo", "xyren", "kiva", "kiwa", "t", "tt").forEach(name ->
       vars.put(name, new LocalVar(name))
     );
     eq = eq(MutableHashMap.ofEntries(
-      Tuple2.of(vars.get("x"), typeU),
-      Tuple2.of(vars.get("y"), typeU),
-      Tuple2.of(vars.get("f"), typePi),
-      Tuple2.of(vars.get("g"), typePi),
-      Tuple2.of(vars.get("jojo"), typeU),
-      Tuple2.of(vars.get("xyren"), typeU),
-      Tuple2.of(vars.get("kiva"), typeU),
-      Tuple2.of(vars.get("kiwa"), typeU),
-      Tuple2.of(vars.get("t"), typeSigma),
-      Tuple2.of(vars.get("tt"), typeSigma)
+      Tuple2.of(getLocal("x"), typeU),
+      Tuple2.of(getLocal("y"), typeU),
+      Tuple2.of(getLocal("f"), typePi),
+      Tuple2.of(getLocal("g"), typePi),
+      Tuple2.of(getLocal("jojo"), typeU),
+      Tuple2.of(getLocal("xyren"), typeU),
+      Tuple2.of(getLocal("kiva"), typeU),
+      Tuple2.of(getLocal("kiwa"), typeU),
+      Tuple2.of(getLocal("t"), typeSigma),
+      Tuple2.of(getLocal("tt"), typeSigma)
     ));
   }
 

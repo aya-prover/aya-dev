@@ -16,7 +16,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +114,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
-    public @NotNull Either<Ctors, Clauses> body;
+    public @NotNull ImmutableSeq<Tuple2<Option<Pattern>, DataCtor>> body;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
@@ -123,20 +122,14 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
-      @NotNull Either<Ctors, Clauses> body,
+      @NotNull ImmutableSeq<Tuple2<Option<Pattern>, DataCtor>> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
-      body.map(ctors -> {
-        ctors.ctors.forEach(c -> c.dataRef = ref);
-        return Unit.unit();
-      }, clauses -> {
-        clauses.clauses.forEach(t -> t._2.dataRef = ref);
-        return Unit.unit();
-      });
+      body.forEach(ctors -> ctors._2.dataRef = ref);
     }
 
     @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
@@ -145,12 +138,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
     @Override public @NotNull DefVar<DataDef, DataDecl> ref() {
       return this.ref;
-    }
-
-    public static record Clauses(@NotNull ImmutableSeq<Tuple2<Pattern, DataCtor>> clauses) {
-    }
-
-    public static record Ctors(@NotNull ImmutableSeq<DataCtor> ctors) {
     }
   }
 

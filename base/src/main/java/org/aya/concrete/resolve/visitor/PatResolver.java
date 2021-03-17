@@ -65,6 +65,6 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
 
   @Override public Tuple2<Context, Pattern> visitBind(Pattern.@NotNull Bind bind, Context context) {
     bind.resolved().value = context.getUnqualifiedMaybe(bind.bind().name(), bind.sourcePos());
-    return Tuple.of(context.bind(bind.bind(), bind.sourcePos()), bind);
+    return Tuple.of(context.bind(bind.bind(), bind.sourcePos(), var -> false), bind);
   }
 }

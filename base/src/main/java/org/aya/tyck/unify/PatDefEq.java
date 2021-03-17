@@ -60,13 +60,13 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
-  public @NotNull Boolean visitApp(@NotNull AppTerm.Apply lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitApp(@NotNull AppTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
   @Override
-  public @NotNull Boolean visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.FnCall rhs) || lhs.fnRef() != rhs.fnRef()) {
+  public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs, @NotNull Term type) {
+    if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.fnRef() != rhs.fnRef()) {
       if (lhs.whnf() != Decision.NO) return false;
       return defeq.compareWHNF(lhs, preRhs, type);
     }
@@ -74,20 +74,19 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
-  public @NotNull Boolean visitDataCall(@NotNull AppTerm.DataCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.DataCall rhs) || lhs.dataRef() != rhs.dataRef()) return false;
+  public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs, @NotNull Term type) {
+    if (!(preRhs instanceof CallTerm.Data rhs) || lhs.dataRef() != rhs.dataRef()) return false;
     return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.dataRef()));
   }
 
   @Override
-  public @NotNull Boolean visitStructCall(@NotNull AppTerm.StructCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.StructCall rhs) || lhs.structRef() != rhs.structRef()) return false;
+  public @NotNull Boolean visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs, @NotNull Term type) {
+    if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.structRef() != rhs.structRef()) return false;
     return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.structRef()));
   }
 
-  @Override
-  public @NotNull Boolean visitConCall(@NotNull AppTerm.ConCall lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof AppTerm.ConCall rhs) || lhs.conHead() != rhs.conHead()) return false;
+  public @NotNull Boolean visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs, @NotNull Term type) {
+    if (!(preRhs instanceof CallTerm.Con rhs) || lhs.conHead() != rhs.conHead()) return false;
     return defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(), Def.defTele(lhs.dataRef()))
       && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Def.defTele(lhs.conHead()));
   }
@@ -123,8 +122,8 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : spine.view()) {
-      if (arg.term() instanceof RefTerm ref && ref.var() instanceof LocalVar var) {
-        rhs = extractVar(rhs, subst, arg, var);
+      if (arg.term() instanceof RefTerm ref) {
+        rhs = extractVar(rhs, subst, arg, ref.var());
         if (rhs == null) return null;
       } else return null;
       // TODO[ice]: ^ eta var
@@ -137,7 +136,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       // TODO[ice]: report errors for duplicated vars in spine
       return null;
     }
-    var type = new AppTerm.HoleApp(new LocalVar(Constants.ANONYMOUS_PREFIX));
+    var type = new CallTerm.Hole(new LocalVar(Constants.ANONYMOUS_PREFIX));
     var abstracted = new LocalVar(var.name() + "'");
     var param = new Term.Param(abstracted, type, arg.explicit());
     subst.add(var, new RefTerm(abstracted));
@@ -145,14 +144,14 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
-  public @NotNull Boolean visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term rhs, @NotNull Term type) {
+  public @NotNull Boolean visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs, @NotNull Term type) {
     var solved = extract(lhs.args(), rhs);
     if (solved == null) {
       metaContext.report(new HoleBadSpineWarn(lhs, defeq.pos));
       return false;
     }
     var solution = metaContext.solutions().getOption(lhs);
-    if (solution.isDefined()) return compare(AppTerm.make(solution.get(), lhs.args()), rhs, type);
+    if (solution.isDefined()) return compare(CallTerm.make(solution.get(), lhs.args()), rhs, type);
     metaContext.solutions().put(lhs, solved);
     return true;
   }

@@ -6,10 +6,8 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public record FnDef(
   @NotNull DefVar<FnDef, Decl.FnDecl> ref,
+  @NotNull ImmutableSeq<Term.Param> contextTele,
+
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull Either<Term, ImmutableSeq<Pat.Clause>> body

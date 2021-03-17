@@ -63,8 +63,13 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
    * @author re-xyr
    */
   enum Accessibility {
-    Private,
-    Public;
+    Private("\\private"),
+    Public("\\public");
+    public final @NotNull String keyword;
+
+    Accessibility(@NotNull String keyword) {
+      this.keyword = keyword;
+    }
 
     public boolean lessThan(Accessibility accessibility) {
       return ordinal() < accessibility.ordinal();

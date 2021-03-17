@@ -3,7 +3,6 @@
 package org.aya.core.term;
 
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.Var;
 import org.aya.ref.LevelVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Decision;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public record RefTerm(@NotNull Var var) implements Term {
+public record RefTerm(@NotNull LocalVar var) implements Term {
   @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitRef(this, p);
   }
@@ -23,7 +22,7 @@ public record RefTerm(@NotNull Var var) implements Term {
 
   /**
    * @apiNote This is, theoretically incorrect, because {@link DefVar}s can be reduced.
-   * However, in those cases it is always in a {@link AppTerm.FnCall},
+   * However, in those cases it is always in a {@link CallTerm.Fn},
    * so here we only care about the {@link LevelVar} and {@link LocalVar} cases,
    * in which the term is a WHNF.
    */

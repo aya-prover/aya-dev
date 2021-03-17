@@ -12,6 +12,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
+import org.aya.concrete.resolve.error.DuplicateCtorError;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
@@ -376,13 +377,22 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
+    var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
+    for (int i = 0, bodySize = body.size(); i < bodySize; i++)
+      for (int j = i + 1; j < bodySize; j++) {
+        var ctor = body.get(j)._2;
+        if (body.get(i)._2.ref.name().equals(ctor.ref.name())) {
+          reporter.report(new DuplicateCtorError(ctor.ref.name(), ctor.sourcePos));
+          throw new ParsingInterruptedException();
+        }
+      }
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
       ctx.ID().getText(),
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
-      visitDataBody(ctx.dataBody()),
+      body,
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
     if (ctx.OPEN() != null) {
@@ -404,31 +414,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       : visitType(typeCtx);
   }
 
-  private @NotNull Either<Decl.DataDecl.Ctors, Decl.DataDecl.Clauses> visitDataBody(AyaParser.DataBodyContext ctx) {
-    if (ctx instanceof AyaParser.DataCtorsContext dcc) return Either.left(visitDataCtors(dcc));
-    if (ctx instanceof AyaParser.DataClausesContext dcc) return Either.right(visitDataClauses(dcc));
+  private @NotNull Tuple2<Option<Pattern>, Decl.DataCtor> visitDataBody(AyaParser.DataBodyContext ctx) {
+    if (ctx instanceof AyaParser.DataCtorsContext dcc) return Tuple.of(Option.none(), visitDataCtor(dcc.dataCtor()));
+    if (ctx instanceof AyaParser.DataClausesContext dcc) return visitDataCtorClause(dcc.dataCtorClause());
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  @Override
-  public Decl.DataDecl.Ctors visitDataCtors(AyaParser.DataCtorsContext ctx) {
-    return new Decl.DataDecl.Ctors(
-      ctx.dataCtor().stream()
-        .map(this::visitDataCtor)
-        .collect(ImmutableSeq.factory())
-    );
-  }
-
-  @Override
-  public Decl.DataDecl.Clauses visitDataClauses(AyaParser.DataClausesContext ctx) {
-    return new Decl.DataDecl.Clauses(ctx.dataCtorClause().stream()
-      .map(this::visitDataCtorClause)
-      .collect(ImmutableSeq.factory()));
-  }
-
-  @Override
-  public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
+  @Override public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
     var telescope = visitTelescope(ctx.tele());
     var id = ctx.ID();
 
@@ -448,10 +441,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .collect(ImmutableSeq.factory());
   }
 
-  @Override public @NotNull Tuple2<@NotNull Pattern, Decl.@NotNull DataCtor>
+  @Override public @NotNull Tuple2<Option<Pattern>, Decl.@NotNull DataCtor>
   visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
     return Tuple.of(
-      visitPattern(ctx.pattern()),
+      Option.some(visitPattern(ctx.pattern())),
       visitDataCtor(ctx.dataCtor())
     );
   }

@@ -40,8 +40,8 @@ public record UntypedDefEq(
 
   @Override
   public @Nullable
-  Term visitApp(@NotNull AppTerm.Apply lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof AppTerm.Apply rhs)) return null;
+  Term visitApp(@NotNull AppTerm lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof AppTerm rhs)) return null;
     var preFnType = compare(lhs.fn(), rhs.fn());
     if (!(preFnType instanceof PiTerm fnType)) return null;
     if (!defeq.compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) return null;
@@ -69,7 +69,7 @@ public record UntypedDefEq(
 
   @Override
   public @Nullable
-  Term visitHole(AppTerm.@NotNull HoleApp lhs, @NotNull Term preRhs) {
+  Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitHole in UntypedDefEq");
   }
 
@@ -77,22 +77,22 @@ public record UntypedDefEq(
   public @Nullable
   Term visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof PiTerm rhs)) return null;
-    if (!defeq.checkParam(lhs.param(), rhs.param())) return null;
-    var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
-    defeq.localCtx.remove(lhs.param().ref());
-    if (!bodyIsOk) return null;
-    return UnivTerm.OMEGA;
+    return defeq.checkParam(lhs.param(), rhs.param(), () -> null, () -> {
+      var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
+      if (!bodyIsOk) return null;
+      return UnivTerm.OMEGA;
+    });
   }
 
   @Override
   public @Nullable
   Term visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof SigmaTerm rhs)) return null;
-    if (!defeq.checkParams(lhs.params(), rhs.params())) return null;
-    var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
-    lhs.params().forEach(param -> defeq.localCtx.remove(param.ref()));
-    if (!bodyIsOk) return null;
-    return UnivTerm.OMEGA;
+    return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
+      var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
+      if (!bodyIsOk) return null;
+      return UnivTerm.OMEGA;
+    });
   }
 
   @Override
@@ -115,22 +115,22 @@ public record UntypedDefEq(
 
   @Override
   public @Nullable
-  Term visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs) {
+  Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitFn in UntypedDefEq");
   }
 
   @Override
   public @Nullable
-  Term visitDataCall(@NotNull AppTerm.DataCall lhs, @NotNull Term preRhs) {
+  Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitData in UntypedDefEq");
   }
 
   @Override
-  public @Nullable Term visitStructCall(@NotNull AppTerm.StructCall lhs, @NotNull Term preRhs) {
+  public @Nullable Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitStruct in UntypedDefEq");
   }
 
-  @Override public @Nullable Term visitConCall(@NotNull AppTerm.ConCall conCall, @NotNull Term term) {
+  @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con conCall, @NotNull Term term) {
     throw new IllegalStateException("No visitCon in UntypedDefEq");
   }
 

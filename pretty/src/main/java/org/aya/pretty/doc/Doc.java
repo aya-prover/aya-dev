@@ -429,6 +429,11 @@ public sealed interface Doc {
     return join(lineEmpty(), docs);
   }
 
+  @Contract("_ -> new")
+  static @NotNull Doc vcat(@NotNull Stream<@NotNull Doc> docs) {
+    return join(lineEmpty(), docs);
+  }
+
   /**
    * hcat concatenates all documents docs horizontally without any spacing.
    *

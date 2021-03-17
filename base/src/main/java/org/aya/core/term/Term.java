@@ -86,15 +86,15 @@ public interface Term extends CoreTerm {
     R visitPi(@NotNull PiTerm term, P p);
     R visitSigma(@NotNull SigmaTerm term, P p);
     R visitUniv(@NotNull UnivTerm term, P p);
-    R visitApp(AppTerm.@NotNull Apply term, P p);
-    R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p);
-    R visitDataCall(AppTerm.@NotNull DataCall dataCall, P p);
-    R visitConCall(AppTerm.@NotNull ConCall conCall, P p);
-    R visitStructCall(AppTerm.@NotNull StructCall structCall, P p);
+    R visitApp(@NotNull AppTerm term, P p);
+    R visitFnCall(CallTerm.@NotNull Fn fnCall, P p);
+    R visitDataCall(CallTerm.@NotNull Data dataCall, P p);
+    R visitConCall(CallTerm.@NotNull Con conCall, P p);
+    R visitStructCall(CallTerm.@NotNull Struct structCall, P p);
     R visitTup(@NotNull TupTerm term, P p);
     R visitNew(@NotNull NewTerm newTerm, P p);
     R visitProj(@NotNull ProjTerm term, P p);
-    R visitHole(@NotNull AppTerm.HoleApp term, P p);
+    R visitHole(@NotNull CallTerm.Hole term, P p);
   }
 
   interface BiVisitor<P, Q, R> {
@@ -107,15 +107,15 @@ public interface Term extends CoreTerm {
     R visitPi(@NotNull PiTerm term, P p, Q q);
     R visitSigma(@NotNull SigmaTerm term, P p, Q q);
     R visitUniv(@NotNull UnivTerm term, P p, Q q);
-    R visitApp(AppTerm.@NotNull Apply term, P p, Q q);
-    R visitFnCall(AppTerm.@NotNull FnCall fnCall, P p, Q q);
-    R visitDataCall(AppTerm.@NotNull DataCall dataCall, P p, Q q);
-    R visitConCall(AppTerm.@NotNull ConCall conCall, P p, Q q);
-    R visitStructCall(AppTerm.@NotNull StructCall structCall, P p, Q q);
+    R visitApp(@NotNull AppTerm term, P p, Q q);
+    R visitFnCall(CallTerm.@NotNull Fn fnCall, P p, Q q);
+    R visitDataCall(CallTerm.@NotNull Data dataCall, P p, Q q);
+    R visitConCall(CallTerm.@NotNull Con conCall, P p, Q q);
+    R visitStructCall(CallTerm.@NotNull Struct structCall, P p, Q q);
     R visitTup(@NotNull TupTerm term, P p, Q q);
     R visitNew(@NotNull NewTerm newTerm, P p, Q q);
     R visitProj(@NotNull ProjTerm term, P p, Q q);
-    R visitHole(@NotNull AppTerm.HoleApp term, P p, Q q);
+    R visitHole(@NotNull CallTerm.Hole term, P p, Q q);
   }
 
   /**
@@ -151,7 +151,7 @@ public interface Term extends CoreTerm {
     }
 
     public static @NotNull Term.Param mock(@NotNull Var hole, boolean explicit) {
-      return new Param(new LocalVar(Constants.ANONYMOUS_PREFIX), new AppTerm.HoleApp(hole), explicit);
+      return new Param(new LocalVar(Constants.ANONYMOUS_PREFIX), new CallTerm.Hole(hole), explicit);
     }
 
     @TestOnly @Contract(pure = true)

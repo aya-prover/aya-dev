@@ -65,30 +65,26 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     var dataInnerCtx = context.derive();
-    decl.body.map(ctors -> {
-      var ctorSymbols = ctors.ctors().toImmutableSeq()
-        .map(ctor -> {
-          dataInnerCtx.addGlobal(
-            Context.TOP_LEVEL_MOD_NAME,
-            ctor.ref.name(),
-            Stmt.Accessibility.Public,
-            ctor.ref,
-            ctor.sourcePos
-          );
-          return Tuple2.of(ctor.ref.name(), ctor.ref);
-        });
-      context.importModule(
-        ImmutableSeq.of(decl.ref().name()),
-        decl.accessibility(),
-        MutableHashMap.of(
+    var ctorSymbols = decl.body.toImmutableSeq()
+      .map(ctor -> {
+        dataInnerCtx.addGlobal(
           Context.TOP_LEVEL_MOD_NAME,
-          MutableHashMap.from(ctorSymbols)),
-        decl.sourcePos()
-      );
-      return Unit.unit();
-    }, clauses -> {
-      throw new UnsupportedOperationException();
-    });
+          ctor._2.ref.name(),
+          Stmt.Accessibility.Public,
+          ctor._2.ref,
+          ctor._2.sourcePos
+        );
+        return Tuple2.of(ctor._2.ref.name(), ctor._2.ref);
+      });
+
+    context.importModule(
+      ImmutableSeq.of(decl.ref().name()),
+      decl.accessibility(),
+      MutableHashMap.of(
+        Context.TOP_LEVEL_MOD_NAME,
+        MutableHashMap.from(ctorSymbols)),
+      decl.sourcePos()
+    );
     decl.ctx = dataInnerCtx;
     return Unit.unit();
   }
@@ -97,15 +93,13 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     var structInnerCtx = context.derive();
-    decl.fields.forEach(field -> {
-      structInnerCtx.addGlobal(
-        Context.TOP_LEVEL_MOD_NAME,
-        field.ref.name(),
-        Stmt.Accessibility.Public,
-        field.ref,
-        field.sourcePos
-      );
-    });
+    decl.fields.forEach(field -> structInnerCtx.addGlobal(
+      Context.TOP_LEVEL_MOD_NAME,
+      field.ref.name(),
+      Stmt.Accessibility.Public,
+      field.ref,
+      field.sourcePos
+    ));
     decl.ctx = structInnerCtx;
     return Unit.unit();
   }

@@ -212,6 +212,18 @@ public class ParseTest {
       "\\def final : Nat | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a",
       "\\public \\def final : Nat | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a"
     );
+    parseAndPretty(
+      "\\struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat",
+      "\\public \\struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat"
+    );
+    parseAndPretty(
+      """
+        \\struct With-Tele (B : Nat -> \\Set) : \\Set
+          | x { X : \\Set } : Nat
+          | y : B zero
+        """,
+      "\\public \\struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set | x {X : \\Set} : Nat | y : B zero"
+    );
   }
 
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {

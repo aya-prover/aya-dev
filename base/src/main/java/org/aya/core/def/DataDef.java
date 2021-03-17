@@ -5,13 +5,11 @@ package org.aya.core.def;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
-import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
+  @NotNull ImmutableSeq<Term.Param> contextTele,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull ImmutableSeq<Tuple2<Option<Pat>, Ctor>> body
@@ -58,32 +57,42 @@ public record DataDef(
       ref.core = this;
     }
 
+    @Override
+    public @NotNull ImmutableSeq<Term.Param> contextTele() {
+      return dataRef().core.contextTele();
+    }
+
     @Override public @NotNull SeqView<Term.Param> telescope() {
       return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTelescope);
     }
 
-    @Override public @NotNull AppTerm.DataCall result() {
-      return new AppTerm.DataCall(dataRef, Def.defTele(dataRef).view().map(Term.Param::toArg));
+    @Override public @NotNull CallTerm.Data result() {
+      return new CallTerm.Data(
+        dataRef,
+        Def.defContextTele(dataRef).view().map(Term.Param::toArg),
+        Def.defTele(dataRef).view().map(Term.Param::toArg)
+      );
     }
 
     /**
      * @return first component: data's telescope, second component: con telescope
      */
-    public static Tuple2<Seq<Term.Param>, Seq<Term.Param>> telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
+    public static @NotNull CtorTelescopes telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
       var core = defVar.core;
       if (core != null) {
-        if (core.dataRef.core != null) return Tuple.of(core.dataRef.core.telescope, core.conTelescope);
+        if (core.dataRef.core != null)
+          return new CtorTelescopes(core.dataRef.core.contextTele, core.dataRef.core.telescope, core.conTelescope);
         else {
           var signature = core.dataRef.concrete.signature;
           assert signature != null;
-          return Tuple.of(signature.param(), core.conTelescope);
+          return new CtorTelescopes(signature.contextParam(), signature.param(), core.conTelescope);
         }
       }
       var dataSignature = defVar.concrete.dataRef.concrete.signature;
       assert dataSignature != null;
       var conSignature = defVar.concrete.signature;
       assert conSignature != null;
-      return Tuple.of(dataSignature.param(), conSignature.param());
+      return new CtorTelescopes(dataSignature.contextParam(), dataSignature.param(), conSignature.param());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -94,6 +103,22 @@ public record DataDef(
       return new Pat.Ctor(explicit, ref,
         conTelescope.map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())),
         null, result());
+    }
+  }
+
+  /**
+   * @author ice1000
+   */
+  public static record CtorTelescopes(
+    @NotNull ImmutableSeq<Term.Param> ctxTele,
+    @NotNull ImmutableSeq<Term.Param> dataTele,
+    @NotNull ImmutableSeq<Term.Param> conTele
+  ) {
+    public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {
+      return new CallTerm.Con(conVar,
+        ctxTele.map(Term.Param::toArg),
+        dataTele.map(Term.Param::toArg),
+        conTele.map(Term.Param::toArg));
     }
   }
 }

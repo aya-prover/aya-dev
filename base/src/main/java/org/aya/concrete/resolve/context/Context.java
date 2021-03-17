@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 /**
  * @author re-xyr
  */
@@ -74,12 +76,28 @@ public interface Context {
     } else return ref;
   }
 
-  default @NotNull BindContext bind(@NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
-    return bind(ref.name(), ref, sourcePos);
+  default @NotNull BindContext bind(
+    @NotNull LocalVar ref,
+    @NotNull SourcePos sourcePos,
+    @NotNull Predicate<@Nullable Var> toWarn
+  ) {
+    return bind(ref.name(), ref, sourcePos, toWarn);
   }
 
-  default @NotNull BindContext bind(@NotNull String name, @NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
-    if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
+  default @NotNull BindContext bind(
+    @NotNull LocalVar ref,
+    @NotNull SourcePos sourcePos
+  ) {
+    return bind(ref.name(), ref, sourcePos, var -> var instanceof LocalVar);
+  }
+
+  default @NotNull BindContext bind(
+    @NotNull String name,
+    @NotNull LocalVar ref,
+    @NotNull SourcePos sourcePos,
+    @NotNull Predicate<@Nullable Var> toWarn
+  ) {
+    if (toWarn.test(getUnqualifiedMaybe(name, sourcePos)) && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
       reporter().report(new ShadowingWarn(name, sourcePos));
     }
     return new BindContext(this, name, ref);

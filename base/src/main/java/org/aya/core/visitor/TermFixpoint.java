@@ -15,30 +15,35 @@ import java.util.function.BiFunction;
  * @author ice1000
  */
 public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
-  @Override default @NotNull Term visitHole(@NotNull AppTerm.HoleApp term, P p) {
+  @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole term, P p) {
     var args = term.argsBuf().view().map(arg -> visitArg(arg, p));
     if (!args.sameElements(term.argsBuf())) {
-      return new AppTerm.HoleApp(term.var(), args.collect(Buffer.factory()));
+      return new CallTerm.Hole(term.var(), args.collect(Buffer.factory()));
     }
     return term;
   }
 
-  @Override default @NotNull Term visitDataCall(@NotNull AppTerm.DataCall dataCall, P p) {
+  @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
+    var contextArgs = dataCall.contextArgs().view().map(arg -> visitArg(arg, p));
     var args = dataCall.args().view().map(arg -> visitArg(arg, p));
-    if (dataCall.args().sameElements(args, true)) return dataCall;
-    return new AppTerm.DataCall(dataCall.dataRef(), args);
+    if (dataCall.contextArgs().sameElements(contextArgs, true)
+      && dataCall.args().sameElements(args, true)) return dataCall;
+    return new CallTerm.Data(dataCall.dataRef(), contextArgs, args);
   }
 
-  @Override default @NotNull Term visitConCall(@NotNull AppTerm.ConCall conCall, P p) {
+  @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
+    var contextArgs = conCall.contextArgs().view().map(arg -> visitArg(arg, p));
     var dataArgs = conCall.dataArgs().view().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().view().map(arg -> visitArg(arg, p));
-    return new AppTerm.ConCall(conCall.conHead(), dataArgs, conArgs);
+    return new CallTerm.Con(conCall.conHead(), contextArgs, dataArgs, conArgs);
   }
 
-  @Override default @NotNull Term visitStructCall(@NotNull AppTerm.StructCall structCall, P p) {
+  @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
+    var contextArgs = structCall.contextArgs().view().map(arg -> visitArg(arg, p));
     var args = structCall.args().view().map(arg -> visitArg(arg, p));
-    if (structCall.args().sameElements(args, true)) return structCall;
-    return new AppTerm.StructCall(structCall.structRef(), args);
+    if (structCall.contextArgs().sameElements(contextArgs, true)
+      && structCall.args().sameElements(args, true)) return structCall;
+    return new CallTerm.Struct(structCall.structRef(), contextArgs, args);
   }
 
   private <T> T visitParameterized(
@@ -87,17 +92,19 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return sort;
   }
 
-  @Override default @NotNull Term visitApp(AppTerm.@NotNull Apply term, P p) {
+  @Override default @NotNull Term visitApp(@NotNull AppTerm term, P p) {
     var function = term.fn().accept(this, p);
     var arg = visitArg(term.arg(), p);
     if (function == term.fn() && arg == term.arg()) return term;
-    return AppTerm.make(function, arg);
+    return CallTerm.make(function, arg);
   }
 
-  @Override default @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, P p) {
+  @Override default @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
+    var contextArgs = fnCall.contextArgs().view().map(arg -> visitArg(arg, p));
     var args = fnCall.args().view().map(arg -> visitArg(arg, p));
-    if (fnCall.args().sameElements(args, true)) return fnCall;
-    return new AppTerm.FnCall(fnCall.fnRef(), args);
+    if (fnCall.args().sameElements(args, true)
+      && fnCall.args().sameElements(args, true)) return fnCall;
+    return new CallTerm.Fn(fnCall.fnRef(), contextArgs, args);
   }
 
   @Override default @NotNull Term visitTup(@NotNull TupTerm term, P p) {

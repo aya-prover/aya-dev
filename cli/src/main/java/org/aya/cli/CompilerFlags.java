@@ -10,6 +10,7 @@ import java.nio.file.Path;
 public record CompilerFlags(
   @NotNull Message message,
   boolean interruptedTrace,
+  boolean dumpAST,
   @NotNull ImmutableSeq<Path> modulePaths
   ) {
   public record Message(

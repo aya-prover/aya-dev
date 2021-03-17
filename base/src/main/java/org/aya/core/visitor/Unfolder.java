@@ -4,7 +4,7 @@ package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
 import org.aya.core.pat.PatMatcher;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
 import org.glavo.kala.collection.SeqLike;
@@ -28,7 +28,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return subst;
   }
 
-  @Override default @NotNull Term visitFnCall(@NotNull AppTerm.FnCall fnCall, P p) {
+  @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
     var def = fnCall.fnRef().core;
     var args = fnCall.args();
     // This shouldn't fail
@@ -59,7 +59,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull MutableSet<@NotNull Var> unfolded
   ) implements Unfolder<Unit> {
     @Override
-    public @NotNull Term visitFnCall(AppTerm.@NotNull FnCall fnCall, Unit emptyTuple) {
+    public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit emptyTuple) {
       if (!unfolding.contains(fnCall.fnRef())) return fnCall;
       unfolded.add(fnCall.fnRef());
       return Unfolder.super.visitFnCall(fnCall, emptyTuple);

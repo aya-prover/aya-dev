@@ -1,0 +1,10 @@
+In file $FILE:3:4 ->
+
+  1 | \data Z : \Set
+  2 |   | zero
+  3 |   | zero
+          ^--^
+  
+Error: Redefinition of constructor zero
+Parsing interrupted due to errors.
+What are you doing?

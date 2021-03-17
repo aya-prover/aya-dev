@@ -11,13 +11,14 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author ice1000, kiva
@@ -57,80 +59,96 @@ public record StmtTycker(
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
-    var tele = checkTele(tycker, ctor.telescope);
-    var dataRef = ctor.dataRef;
-    var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
-      .param().view().map(Term.Param::toArg);
-    // TODO[ice]: insert data params?
-    var signature = new Def.Signature(tele, new AppTerm.DataCall(dataRef, dataArgs));
-    ctor.signature = signature;
-    var patTycker = new PatTycker(tycker);
-    var elabClauses = ctor.clauses
-      .map(c -> patTycker.visitMatch(c, signature)._2);
-    // TODO[ice]: confluence check
-    var clauses = elabClauses.flatMap(Pat.Clause::fromProto);
-    return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
+    return checkTele(tycker, ctor.telescope, tele -> {
+      var dataRef = ctor.dataRef;
+      var dataContextArgs = Objects.requireNonNull(dataRef.concrete.signature)
+        .contextParam().view().map(Term.Param::toArg);
+      var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
+        .param().view().map(Term.Param::toArg);
+      // TODO[ice]: insert data params?
+      var signature = new Def.Signature(ImmutableSeq.of(), tele, new CallTerm.Data(
+        dataRef,
+        dataContextArgs,
+        dataArgs));
+      ctor.signature = signature;
+      var patTycker = new PatTycker(tycker);
+      var elabClauses = ctor.clauses
+        .map(c -> patTycker.visitMatch(c, signature)._2);
+      // TODO[ice]: confluence check
+      var clauses = elabClauses.flatMap(Pat.Clause::fromProto);
+      return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
+    });
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
-    var tele = checkTele(tycker, decl.telescope);
-    final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
-    decl.signature = new Def.Signature(tele, result);
-    return new DataDef(decl.ref, tele, result, decl.body.fold(
-      ctors -> ctors.ctors().stream()
-        .map(ctor -> visitCtor(ctor, tycker))
+    var ctxTele = tycker.localCtx.extract();
+    return checkTele(tycker, decl.telescope, tele -> {
+      final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+      decl.signature = new Def.Signature(ctxTele, tele, result);
+      return new DataDef(decl.ref, ctxTele, tele, result, decl.body
+        // TODO[patterns]: deal with elim patterns
+        .map(ctor -> visitCtor(ctor._2, tycker))
         .map(ctor -> Tuple.of(Option.<Pat>none(), ctor))
-        .collect(ImmutableSeq.factory()),
-      clauses -> {
-        // TODO[ice]: implement
-        throw new UnsupportedOperationException();
-      }
-    ));
+        .collect(ImmutableSeq.factory()));
+    });
   }
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
-    var tele = checkTele(tycker, decl.telescope);
-    final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
-    decl.signature = new Def.Signature(tele, result);
-    return new StructDef(decl.ref, tele, result, decl.fields.map(field -> visitField(field, tycker)));
+    var ctxTele = tycker.localCtx.extract();
+    return checkTele(tycker, decl.telescope, tele -> {
+      final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+      decl.signature = new Def.Signature(ctxTele, tele, result);
+      return new StructDef(decl.ref, ctxTele, tele, result, decl.fields.map(field -> visitField(field, tycker)));
+    });
   }
 
   @Override
   public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
-    var tele = checkTele(tycker, field.telescope);
-    var structRef = field.structRef;
-    var result = field.result.accept(tycker, null).wellTyped();
-    field.signature = new Def.Signature(tele, result);
-    var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
-    return new StructDef.Field(structRef, field.ref, tele, result, body, field.coerce);
+    return checkTele(tycker, field.telescope, tele -> {
+      var structRef = field.structRef;
+      var result = field.result.accept(tycker, null).wellTyped();
+      // TODO[kiva]: ctxTele?
+      field.signature = new Def.Signature(ImmutableSeq.of(), tele, result);
+      var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
+      return new StructDef.Field(structRef, field.ref, tele, result, body, field.coerce);
+    });
   }
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
-    var resultTele = checkTele(tycker, decl.telescope);
-    // It might contain unsolved holes, but that's acceptable.
-    var resultRes = decl.result.accept(tycker, null);
-    var signature = new Ref<>(new Def.Signature(resultTele, resultRes.wellTyped()));
-    decl.signature = signature.value;
-
-    var patTycker = new PatTycker(tycker);
-    var what = FP.distR(decl.body.map(
-      left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
-      right -> patTycker.elabClause(right, signature)));
-    var body = what._2.mapRight(cs -> {
-      if (!cs.isEmpty())
-        PatClassifier.test(cs, reporter, decl.sourcePos);
-      return cs.flatMap(Pat.Clause::fromProto);
+    var ctxTele = tycker.localCtx.extract();
+    return checkTele(tycker, decl.telescope, resultTele -> {
+      // It might contain unsolved holes, but that's acceptable.
+      var resultRes = decl.result.accept(tycker, null);
+      var signature = new Ref<>(new Def.Signature(ctxTele, resultTele, resultRes.wellTyped()));
+      decl.signature = signature.value;
+      var patTycker = new PatTycker(tycker);
+      var what = FP.distR(decl.body.map(
+        left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
+        right -> patTycker.elabClause(right, signature)));
+      var body = what._2.mapRight(cs -> {
+        if (!cs.isEmpty())
+          PatClassifier.test(cs, reporter, decl.sourcePos);
+        return cs.flatMap(Pat.Clause::fromProto);
+      });
+      return new FnDef(decl.ref, ctxTele, resultTele, what._1, body);
     });
-    return new FnDef(decl.ref, resultTele, what._1, body);
   }
 
-  private @NotNull ImmutableSeq<Term.Param>
-  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele) {
-    return tele.map(param -> {
-      assert param.type() != null; // guaranteed by AyaProducer
-      var paramRes = exprTycker.checkExpr(param.type(), null);
-      exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
-      return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
-    });
+  private <T> T
+  checkParam(@NotNull ExprTycker exprTycker, @NotNull Expr.Param param, @NotNull Function<Term.Param, T> action) {
+    assert param.type() != null;
+    var paramRes = exprTycker.checkExpr(param.type(), null);
+    return exprTycker.localCtx.with(param.ref(), paramRes.wellTyped(),
+      () -> action.apply(new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit())));
+  }
+
+  private <T> T
+  checkTele(@NotNull ExprTycker exprTycker, @NotNull SeqLike<Expr.Param> tele, @NotNull Function<ImmutableSeq<Term.Param>, T> action) {
+    if (tele.isEmpty()) return action.apply(ImmutableSeq.of());
+    return checkParam(exprTycker, tele.first(), param ->
+      checkTele(exprTycker, tele.view().drop(1), params ->
+        action.apply(params.prepended(param))
+      )
+    );
   }
 }

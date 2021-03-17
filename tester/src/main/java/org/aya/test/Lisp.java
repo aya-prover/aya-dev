@@ -43,7 +43,7 @@ public interface Lisp {
     var result = parse(resultTypeCode, refs);
     var body = parse(bodyCode, refs);
     var existingRef = (DefVar<FnDef, Decl.FnDecl>) refs.getOrDefault(name, DefVar.core(null, name));
-    var def = new FnDef(existingRef, tele, result, Either.left(body));
+    var def = new FnDef(existingRef, ImmutableSeq.of(), tele, result, Either.left(body));
     var ref = def.ref();
     refs.put(name, ref);
     return def;

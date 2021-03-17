@@ -1,0 +1,10 @@
+In file $FILE:4:5 ->
+
+  2 |  | zero | suc Nat
+  3 | 
+  4 | \def add {a, b : Nat} : Nat
+           ^-^
+  
+Error: Unhandled case: {zero}, {zero}
+Tycking interrupted due to errors.
+What are you doing?

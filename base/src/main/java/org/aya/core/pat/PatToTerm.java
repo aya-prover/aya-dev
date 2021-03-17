@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pat;
 
-import org.aya.core.term.AppTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.TupTerm;
@@ -29,11 +29,11 @@ public final class PatToTerm implements Pat.Visitor<Unit, Term> {
   }
 
   @Override public Term visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
-    var data = (AppTerm.DataCall) ctor.type();
+    var data = (CallTerm.Data) ctor.type();
     var tele = ctor.ref().core.conTelescope();
     var args = ctor.params().view().zip(tele.view())
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
       .collect(Seq.factory());
-    return new AppTerm.ConCall(ctor.ref(), data.args(), args);
+    return new CallTerm.Con(ctor.ref(), data.contextArgs(), data.args(), args);
   }
 }
