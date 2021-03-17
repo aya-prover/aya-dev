@@ -7,13 +7,10 @@ import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
-import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Tuple3;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -80,21 +77,22 @@ public record DataDef(
     /**
      * @return first component: data's telescope, second component: con telescope
      */
-    public static Tuple3<Seq<Term.Param>, Seq<Term.Param>, Seq<Term.Param>> telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
+    public static @NotNull CtorTelescopes telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
       var core = defVar.core;
       if (core != null) {
-        if (core.dataRef.core != null) return Tuple.of(core.dataRef.core.contextTele, core.dataRef.core.telescope, core.conTelescope);
+        if (core.dataRef.core != null)
+          return new CtorTelescopes(core.dataRef.core.contextTele, core.dataRef.core.telescope, core.conTelescope);
         else {
           var signature = core.dataRef.concrete.signature;
           assert signature != null;
-          return Tuple.of(signature.contextParam(), signature.param(), core.conTelescope);
+          return new CtorTelescopes(signature.contextParam(), signature.param(), core.conTelescope);
         }
       }
       var dataSignature = defVar.concrete.dataRef.concrete.signature;
       assert dataSignature != null;
       var conSignature = defVar.concrete.signature;
       assert conSignature != null;
-      return Tuple.of(dataSignature.contextParam(), dataSignature.param(), conSignature.param());
+      return new CtorTelescopes(dataSignature.contextParam(), dataSignature.param(), conSignature.param());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -105,6 +103,22 @@ public record DataDef(
       return new Pat.Ctor(explicit, ref,
         conTelescope.map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())),
         null, result());
+    }
+  }
+
+  /**
+   * @author ice1000
+   */
+  public static record CtorTelescopes(
+    @NotNull ImmutableSeq<Term.Param> ctxTele,
+    @NotNull ImmutableSeq<Term.Param> dataTele,
+    @NotNull ImmutableSeq<Term.Param> conTele
+  ) {
+    public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {
+      return new CallTerm.Con(conVar,
+        ctxTele.map(Term.Param::toArg),
+        dataTele.map(Term.Param::toArg),
+        conTele.map(Term.Param::toArg));
     }
   }
 }

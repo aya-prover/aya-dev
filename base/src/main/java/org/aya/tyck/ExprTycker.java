@@ -143,13 +143,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       } else if (defVar.core instanceof DataDef.Ctor || defVar.concrete instanceof Decl.DataDecl.DataCtor) {
         var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) defVar;
         var telescopes = DataDef.Ctor.telescopes(conVar);
-        var body = new CallTerm.Con(conVar,
-          telescopes._1.view().map(Term.Param::toArg),
-          telescopes._2.view().map(Term.Param::toArg),
-          telescopes._3.view().map(Term.Param::toArg));
         var tele = Def.defTele(conVar);
         var type = PiTerm.make(false, tele, Def.defResult(conVar));
-        return new Result(LamTerm.make(tele, body), type);
+        return new Result(LamTerm.make(tele, telescopes.toConCall(conVar)), type);
       } else {
         final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
