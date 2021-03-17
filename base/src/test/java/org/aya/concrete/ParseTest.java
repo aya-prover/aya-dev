@@ -213,7 +213,7 @@ public class ParseTest {
     );
     parseAndPretty(
       "\\struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat",
-      "\\public \\struct Very-Simple (A : \\Set) : \\Set| x : A| y : Nat"
+      "\\public \\struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat"
     );
     parseAndPretty(
       """
@@ -221,7 +221,7 @@ public class ParseTest {
           | x { X : \\Set } : Nat
           | y : B zero
         """,
-      "\\public \\struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set| x {X : \\Set} : Nat| y : B zero"
+      "\\public \\struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set | x {X : \\Set} : Nat | y : B zero"
     );
   }
 

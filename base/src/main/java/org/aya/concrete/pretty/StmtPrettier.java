@@ -62,7 +62,7 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       Doc.plain(mod.name()),
       Doc.plain(" {"),
       Doc.hardLine(),
-      mod.contents().stream().map(Stmt::toDoc).reduce(Doc.empty(), Doc::vcat),
+      Doc.vcat(mod.contents().stream().map(Stmt::toDoc)),
       Doc.hardLine(),
       Doc.plain("}")
     );
@@ -90,15 +90,14 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   }
 
   private Doc visitDataClauses(Decl.DataDecl.Clauses clauses) {
-    return clauses.clauses().stream()
-      .map(c -> Doc.cat(Doc.plain("| "), c._1.toDoc(), Doc.plain(" => "), visitDataCtor(c._2)))
-      .reduce(Doc.empty(), Doc::vcat);
+    var stream = clauses.clauses().stream()
+      .map(c -> Doc.cat(Doc.plain("| "), c._1.toDoc(), Doc.plain(" => "), visitDataCtor(c._2)));
+    return Doc.vcat(stream);
   }
 
   private Doc visitDataCtors(Decl.DataDecl.Ctors ctors) {
-    return ctors.ctors().stream()
-      .map(this::visitDataCtor)
-      .reduce(Doc.empty(), Doc::vcat);
+    return Doc.vcat(ctors.ctors().stream()
+      .map(this::visitDataCtor));
   }
 
   private Doc visitDataCtor(Decl.DataCtor ctor) {
@@ -139,8 +138,8 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   }
 
   private Doc visitFields(@NotNull ImmutableSeq<Decl.StructField> fields) {
-    return fields.map(field -> Doc.vcat(
-      Doc.plain("| "),
+    return Doc.vcat(fields.map(field -> Doc.hcat(
+      Doc.plain(" | "),
       field.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
       Doc.plain(field.ref.name()),
       field.telescope.isEmpty()
@@ -149,7 +148,7 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       field.expr instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), field.expr.toDoc())
-    )).stream().reduce(Doc.empty(), Doc::vcat);
+    )).stream());
   }
 
   @Override
@@ -201,6 +200,6 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
     return block.sizeEquals(1)
       ? block.get(0).toDoc()
-      : block.stream().map(Stmt::toDoc).reduce(Doc.empty(), Doc::vcat);
+      : Doc.vcat(block.stream().map(Stmt::toDoc));
   }
 }
