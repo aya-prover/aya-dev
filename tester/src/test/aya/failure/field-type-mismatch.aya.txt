@@ -1,0 +1,10 @@
+In file $FILE:14:31 ->
+
+  12 | 
+  13 | \def test-nat-pair : Pair Nat Nat =>
+  14 |   \new Pair Nat Nat { | fst => make-pair Nat Nat zero zero | snd => suc zero }
+                                      ^-------------------------^
+  
+Error: The expected type `Nat` does not match the actual type `Pair Nat Nat`
+Tycking interrupted due to errors.
+What are you doing?

@@ -127,7 +127,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
                                      @NotNull Function<T, Doc> formatter,
                                      boolean nestedCall) {
     if (args.isEmpty()) {
-      return nestedCall ? Doc.wrap("(", ")", fn) : fn;
+      return fn;
     }
     var call = Doc.cat(
       fn,
