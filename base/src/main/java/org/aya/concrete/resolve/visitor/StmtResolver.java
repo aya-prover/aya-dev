@@ -4,6 +4,8 @@ package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
+import org.glavo.kala.control.Option;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,9 +43,15 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
     for (var bodyElement : decl.body) {
-      if (bodyElement._1.isDefined()) throw new UnsupportedOperationException();
+      var localCtxWithPat = local._2;
+      if (bodyElement._1.isDefined()) {
+        var pat = bodyElement._1.get();
+        var patLocal = pat.accept(PatResolver.INSTANCE, local._2);
+        localCtxWithPat = patLocal._1;
+        bodyElement = Tuple2.of(Option.some(pat), bodyElement._2);
+      }
       var ctor = bodyElement._2;
-      var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
+      var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, localCtxWithPat);
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses
         .map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
