@@ -77,7 +77,7 @@ private fun compile(text: String): String {
   val file = History.add(text.toByteArray(StandardCharsets.UTF_8))
   val reporter = CountingReporter(StreamReporter(file, text, PrintStream(hookOut)))
   val e = SingleFileCompiler(reporter, file, null)
-    .compile(CompilerFlags(ASCII, false, ImmutableSeq.of()))
+    .compile(CompilerFlags(ASCII, false, false, ImmutableSeq.of()))
   return "$hookOut\n\nExit with $e"
 }
 
