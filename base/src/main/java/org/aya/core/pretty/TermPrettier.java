@@ -91,6 +91,17 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
+  public Doc visitStruct(@NotNull NewTerm newTerm, Boolean aBoolean) {
+    return Doc.cat(
+      Doc.plain("\\new { "),
+      newTerm.params().stream().map(t ->
+        Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
+      ).reduce(Doc.empty(), Doc::hsep),
+      Doc.plain(" }")
+    );
+  }
+
+  @Override
   public Doc visitProj(@NotNull ProjTerm term, Boolean nestedCall) {
     return Doc.cat(term.tup().toDoc(), Doc.plain("."), Doc.plain(String.valueOf(term.ix())));
   }

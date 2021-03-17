@@ -6,6 +6,7 @@ import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.tyck.sort.Sort;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
@@ -103,6 +104,13 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var items = term.items().map(x -> x.accept(this, p));
     if (term.items().sameElements(items, true)) return term;
     return new TupTerm(items);
+  }
+
+  @Override default @NotNull Term visitStruct(@NotNull NewTerm struct, P p) {
+    var items = struct.params()
+      .map(t -> Tuple.of(t._1, t._2.accept(this, p)));
+    if (struct.params().sameElements(items, true)) return struct;
+    return new NewTerm(items);
   }
 
   @Override default @NotNull Term visitProj(@NotNull ProjTerm term, P p) {

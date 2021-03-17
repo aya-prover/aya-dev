@@ -109,6 +109,11 @@ public record UntypedDefEq(
   }
 
   @Override
+  public @Nullable Term visitStruct(@NotNull NewTerm newTerm, @NotNull Term term) {
+    throw new IllegalStateException("No visitStruct in UntypedDefEq");
+  }
+
+  @Override
   public @Nullable
   Term visitFnCall(@NotNull AppTerm.FnCall lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitFn in UntypedDefEq");

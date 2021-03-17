@@ -30,9 +30,7 @@ import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.collection.mutable.*;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
@@ -227,17 +225,43 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new SigmaTerm(expr.co(), Term.Param.fromBuffer(resultTele), last.wellTyped), against);
   }
 
+  @Override
+  public Result visitNew(Expr.@NotNull NewExpr expr, @Nullable Term term) {
+    var struct = expr.struct().accept(this, null).wellTyped;
+    if (!(struct instanceof AppTerm.StructCall structCall))
+      return wantButNo(expr.struct(), struct, "struct type");
+    var structRef = structCall.structRef();
+
+    var subst = new Substituter.TermSubst(new MutableHashMap<>());
+    var structTele = Def.defTele(structRef);
+    structTele.view().zip(structCall.args())
+      .forEach(t -> subst.add(t._1.ref(), t._2.term()));
+
+    var fields = Buffer.<Tuple2<String, Term>>of();
+    var conFields = expr.fields().view();
+    for (var defField : structRef.core.fields()) {
+      var conField = conFields
+        .find(t -> t._1.equals(defField.ref().name()))
+        .map(t -> t._2)
+        .getOrThrow(TyckerException::new); // TODO[kiva]: no instantiation of `defField` was found
+      conFields = conFields.dropWhile(t -> t._2 == conField);
+      var type = defField.result().subst(subst);
+      var field = conField.accept(this, type).wellTyped;
+      fields.append(Tuple.of(defField.ref().name(), field));
+    }
+
+    if (!conFields.isEmpty()) throw new TyckerException(); // TODO[kiva]: use of undefined fields
+
+    // TODO: and then create a StructTerm?
+    return new Result(new NewTerm(fields.toImmutableSeq()), structCall);
+  }
+
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
     var projectee = expr.tup().accept(this, null);
     return expr.ix().fold(
       ix -> visitIntProj(expr, term, projectee),
       sp -> visitStructProj(expr, term, projectee)
     );
-  }
-
-  @Override
-  public Result visitNew(Expr.@NotNull NewExpr expr, Term term) {
-    throw new UnsupportedOperationException("TODO");
   }
 
   private Result visitStructProj(Expr.@NotNull ProjExpr expr, @Nullable Term term, Result projectee) {

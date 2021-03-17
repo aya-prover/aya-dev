@@ -98,6 +98,11 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
+  public @NotNull Boolean visitStruct(@NotNull NewTerm newTerm, @NotNull Term term, @NotNull Term term2) {
+    throw new IllegalStateException("No visitStruct in TermDirectedDefEq");
+  }
+
+  @Override
   public @NotNull Boolean visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
