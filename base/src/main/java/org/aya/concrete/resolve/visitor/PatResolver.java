@@ -34,6 +34,7 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
   }
 
   private Context bindAs(LocalVar as, Context ctx, SourcePos sourcePos) {
+    // TODO[ice]: pass an argument to toWarn
     return as != null ? ctx.bind(as, sourcePos) : ctx;
   }
 

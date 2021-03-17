@@ -20,7 +20,7 @@ public record ShadowingWarn(
     return Doc.hcat(
       Doc.plain("The newly bound name `"),
       Doc.plain(name),
-      Doc.plain("` shadows a previous definition from outer scope")
+      Doc.plain("` shadows a previous local definition from outer scope")
     );
   }
 
