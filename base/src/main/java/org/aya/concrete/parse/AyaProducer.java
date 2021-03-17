@@ -12,6 +12,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
+import org.aya.concrete.resolve.error.DuplicateCtorError;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
@@ -357,13 +358,20 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
+    var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
+    for (int i = 0, bodySize = body.size(); i < bodySize; i++)
+      for (int j = i + 1; j < bodySize; j++) {
+        var ctor = body.get(j)._2;
+        if (body.get(i)._2.ref.name().equals(ctor.ref.name()))
+          reporter.report(new DuplicateCtorError(ctor.ref.name(), ctor.sourcePos));
+      }
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
       ctx.ID().getText(),
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
-      ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory()),
+      body,
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
     if (ctx.OPEN() != null) {
