@@ -85,16 +85,11 @@ public record StmtTycker(
     return checkTele(tycker, decl.telescope, tele -> {
       final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
       decl.signature = new Def.Signature(ctxTele, tele, result);
-      return new DataDef(decl.ref, ctxTele, tele, result, decl.body.fold(
-        ctors -> ctors.ctors().stream()
-          .map(ctor -> visitCtor(ctor, tycker))
-          .map(ctor -> Tuple.of(Option.<Pat>none(), ctor))
-          .collect(ImmutableSeq.factory()),
-        clauses -> {
-          // TODO[ice]: implement
-          throw new UnsupportedOperationException();
-        }
-      ));
+      return new DataDef(decl.ref, ctxTele, tele, result, decl.body
+        // TODO[patterns]: deal with elim patterns
+        .map(ctor -> visitCtor(ctor._2, tycker))
+        .map(ctor -> Tuple.of(Option.<Pat>none(), ctor))
+        .collect(ImmutableSeq.factory()));
     });
   }
 

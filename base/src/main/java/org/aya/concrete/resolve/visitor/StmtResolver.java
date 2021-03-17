@@ -3,9 +3,7 @@
 package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
-import org.aya.concrete.Expr;
 import org.aya.concrete.Stmt;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,17 +40,14 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
-    decl.body.map(ctors -> {
-      for (var ctor : ctors.ctors()) {
-        var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
-        ctor.telescope = ctorLocal._1;
-        ctor.clauses = ctor.clauses
-          .map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
-      }
-      return Unit.unit();
-    }, clauses -> {
-      throw new UnsupportedOperationException();
-    });
+    for (var bodyElement : decl.body) {
+      if (bodyElement._1.isDefined()) throw new UnsupportedOperationException();
+      var ctor = bodyElement._2;
+      var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, local._2);
+      ctor.telescope = ctorLocal._1;
+      ctor.clauses = ctor.clauses
+        .map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
+    }
     return unit;
   }
 

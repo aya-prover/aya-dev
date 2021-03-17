@@ -9,7 +9,7 @@ import org.aya.concrete.Stmt;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Either;
+import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,27 +81,12 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      Doc.hang(2, visitDataBody(decl.body))
+      Doc.hang(2, Doc.vcat(decl.body.stream().map(t -> visitDataCtor(t._1, t._2))))
     );
   }
 
-  private Doc visitDataBody(Either<Decl.DataDecl.Ctors, Decl.DataDecl.Clauses> body) {
-    return body.isLeft() ? visitDataCtors(body.getLeftValue()) : visitDataClauses(body.getRightValue());
-  }
-
-  private Doc visitDataClauses(Decl.DataDecl.Clauses clauses) {
-    var stream = clauses.clauses().stream()
-      .map(c -> Doc.cat(Doc.plain("| "), c._1.toDoc(), Doc.plain(" => "), visitDataCtor(c._2)));
-    return Doc.vcat(stream);
-  }
-
-  private Doc visitDataCtors(Decl.DataDecl.Ctors ctors) {
-    return Doc.vcat(ctors.ctors().stream()
-      .map(this::visitDataCtor));
-  }
-
-  private Doc visitDataCtor(Decl.DataCtor ctor) {
-    return Doc.cat(
+  private Doc visitDataCtor(Option<Pattern> patterns, Decl.DataCtor ctor) {
+    var doc = Doc.cat(
       Doc.plain("| "),
       ctor.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
       Doc.plain(ctor.ref.name()),
@@ -109,6 +94,8 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       visitTele(ctor.telescope),
       visitClauses(ctor.clauses, true)
     );
+    if (patterns.isDefined()) return Doc.hcat(Doc.plain("| "), patterns.get().toDoc(), Doc.plain(" => "), doc);
+    else return doc;
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {

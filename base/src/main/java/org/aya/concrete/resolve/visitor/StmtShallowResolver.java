@@ -64,20 +64,15 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   @Override
   public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
-    decl.body.map(ctors -> {
-      context.importModule(
-        ImmutableSeq.of(decl.ref().name()),
-        decl.accessibility(),
-        MutableHashMap.of(
-          Context.TOP_LEVEL_MOD_NAME,
-          MutableHashMap.from(ctors.ctors().toImmutableSeq().map(ctor ->
-            Tuple2.of(ctor.ref.name(), ctor.ref)))),
-        decl.sourcePos()
-      );
-      return Unit.unit();
-    }, clauses -> {
-      throw new UnsupportedOperationException();
-    });
+    context.importModule(
+      ImmutableSeq.of(decl.ref().name()),
+      decl.accessibility(),
+      MutableHashMap.of(
+        Context.TOP_LEVEL_MOD_NAME,
+        MutableHashMap.from(decl.body.toImmutableSeq().map(ctor ->
+          Tuple2.of(ctor._2.ref.name(), ctor._2.ref)))),
+      decl.sourcePos()
+    );
     return Unit.unit();
   }
 

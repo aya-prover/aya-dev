@@ -55,10 +55,10 @@ field : COERCE? ID tele* type   # fieldDecl
       | ID tele* IMPLIES expr   # fieldImpl
       ;
 
-dataDecl : (PUBLIC? OPEN)? '\\data' ID tele* type? dataBody abuse?;
+dataDecl : (PUBLIC? OPEN)? '\\data' ID tele* type? dataBody* abuse?;
 
-dataBody : ('|' dataCtor)*       # dataCtors
-         | dataCtorClause*       # dataClauses
+dataBody : ('|' dataCtor)       # dataCtors
+         | dataCtorClause       # dataClauses
          ;
 
 // TODO[imkiva]: some code commented in Arend.g4

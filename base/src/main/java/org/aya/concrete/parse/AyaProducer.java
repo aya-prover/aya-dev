@@ -363,7 +363,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       ctx.ID().getText(),
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
-      visitDataBody(ctx.dataBody()),
+      ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory()),
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
     if (ctx.OPEN() != null) {
@@ -385,31 +385,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       : visitType(typeCtx);
   }
 
-  private @NotNull Either<Decl.DataDecl.Ctors, Decl.DataDecl.Clauses> visitDataBody(AyaParser.DataBodyContext ctx) {
-    if (ctx instanceof AyaParser.DataCtorsContext dcc) return Either.left(visitDataCtors(dcc));
-    if (ctx instanceof AyaParser.DataClausesContext dcc) return Either.right(visitDataClauses(dcc));
+  private @NotNull Tuple2<Option<Pattern>, Decl.DataCtor> visitDataBody(AyaParser.DataBodyContext ctx) {
+    if (ctx instanceof AyaParser.DataCtorsContext dcc) return Tuple.of(Option.none(), visitDataCtor(dcc.dataCtor()));
+    if (ctx instanceof AyaParser.DataClausesContext dcc) return visitDataCtorClause(dcc.dataCtorClause());
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  @Override
-  public Decl.DataDecl.Ctors visitDataCtors(AyaParser.DataCtorsContext ctx) {
-    return new Decl.DataDecl.Ctors(
-      ctx.dataCtor().stream()
-        .map(this::visitDataCtor)
-        .collect(ImmutableSeq.factory())
-    );
-  }
-
-  @Override
-  public Decl.DataDecl.Clauses visitDataClauses(AyaParser.DataClausesContext ctx) {
-    return new Decl.DataDecl.Clauses(ctx.dataCtorClause().stream()
-      .map(this::visitDataCtorClause)
-      .collect(ImmutableSeq.factory()));
-  }
-
-  @Override
-  public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
+  @Override public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
     var telescope = visitTelescope(ctx.tele());
     var id = ctx.ID();
 
@@ -429,10 +412,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .collect(ImmutableSeq.factory());
   }
 
-  @Override public @NotNull Tuple2<@NotNull Pattern, Decl.@NotNull DataCtor>
+  @Override public @NotNull Tuple2<Option<Pattern>, Decl.@NotNull DataCtor>
   visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
     return Tuple.of(
-      visitPattern(ctx.pattern()),
+      Option.some(visitPattern(ctx.pattern())),
       visitDataCtor(ctx.dataCtor())
     );
   }
