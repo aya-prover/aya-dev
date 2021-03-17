@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record StructDef(
   @NotNull DefVar<StructDef, Decl.StructDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> contextTelescope,
+  @NotNull ImmutableSeq<Term.Param> contextTele,
 
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
@@ -44,8 +44,8 @@ public record StructDef(
     }
 
     @Override
-    public @NotNull SeqLike<Term.Param> contextTelescope() {
-      return structRef().core.contextTelescope();
+    public @NotNull SeqLike<Term.Param> contextTele() {
+      return structRef().core.contextTele();
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

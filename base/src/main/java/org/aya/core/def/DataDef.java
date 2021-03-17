@@ -8,7 +8,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> contextTelescope,
+  @NotNull ImmutableSeq<Term.Param> contextTele,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull ImmutableSeq<Tuple2<Option<Pat>, Ctor>> body
@@ -62,8 +61,8 @@ public record DataDef(
     }
 
     @Override
-    public @NotNull SeqLike<Term.Param> contextTelescope() {
-      return dataRef().core.contextTelescope();
+    public @NotNull ImmutableSeq<Term.Param> contextTele() {
+      return dataRef().core.contextTele();
     }
 
     @Override public @NotNull SeqView<Term.Param> telescope() {
@@ -84,7 +83,7 @@ public record DataDef(
     public static Tuple3<Seq<Term.Param>, Seq<Term.Param>, Seq<Term.Param>> telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
       var core = defVar.core;
       if (core != null) {
-        if (core.dataRef.core != null) return Tuple.of(core.dataRef.core.contextTelescope, core.dataRef.core.telescope, core.conTelescope);
+        if (core.dataRef.core != null) return Tuple.of(core.dataRef.core.contextTele, core.dataRef.core.telescope, core.conTelescope);
         else {
           var signature = core.dataRef.concrete.signature;
           assert signature != null;

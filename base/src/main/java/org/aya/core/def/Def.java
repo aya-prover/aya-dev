@@ -19,7 +19,7 @@ import java.util.Objects;
  */
 public interface Def extends CoreDef {
   static @NotNull SeqLike<Term.Param> defContextTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
-    if (defVar.core != null) return defVar.core.contextTelescope();
+    if (defVar.core != null) return defVar.core.contextTele();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).contextParam;
   }
@@ -40,7 +40,7 @@ public interface Def extends CoreDef {
 
   @NotNull Term result();
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
-  @NotNull SeqLike<Term.Param> contextTelescope();
+  @NotNull SeqLike<Term.Param> contextTele();
   @NotNull SeqLike<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
