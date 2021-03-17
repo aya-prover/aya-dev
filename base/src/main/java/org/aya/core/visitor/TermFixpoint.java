@@ -106,7 +106,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new TupTerm(items);
   }
 
-  @Override default @NotNull Term visitStruct(@NotNull NewTerm struct, P p) {
+  @Override default @NotNull Term visitNew(@NotNull NewTerm struct, P p) {
     var items = struct.params()
       .map(t -> Tuple.of(t._1, t._2.accept(this, p)));
     if (struct.params().sameElements(items, true)) return struct;

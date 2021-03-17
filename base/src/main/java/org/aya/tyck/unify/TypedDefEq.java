@@ -162,8 +162,8 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitStruct(@NotNull NewTerm newTerm, @NotNull Term term, @NotNull Term term2) {
-    throw new IllegalStateException("StructTerm can never be a type of any term");
+  public @NotNull Boolean visitNew(@NotNull NewTerm newTerm, @NotNull Term term, @NotNull Term term2) {
+    throw new IllegalStateException("NewTerm can never be a type of any term");
   }
 
   @Override

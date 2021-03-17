@@ -109,7 +109,7 @@ public record UntypedDefEq(
   }
 
   @Override
-  public @Nullable Term visitStruct(@NotNull NewTerm newTerm, @NotNull Term term) {
+  public @Nullable Term visitNew(@NotNull NewTerm newTerm, @NotNull Term term) {
     throw new IllegalStateException("No visitStruct in UntypedDefEq");
   }
 
