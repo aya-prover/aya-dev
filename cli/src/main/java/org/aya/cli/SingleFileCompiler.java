@@ -32,7 +32,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
         StmtPrettier.INSTANCE
           .visitAll(program, Unit.unit())
           .map(doc -> doc.renderWithPageWidth(114514))
-          .forEach(System.err::println);
+          .forEach(System.out::println);
       }
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
