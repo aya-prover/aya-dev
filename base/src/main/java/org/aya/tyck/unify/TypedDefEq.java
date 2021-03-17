@@ -147,6 +147,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
+  public @NotNull Boolean visitStructCall(@NotNull AppTerm.StructCall type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override
   public @NotNull Boolean visitConCall(@NotNull AppTerm.ConCall type, @NotNull Term lhs, @NotNull Term rhs) {
     throw new IllegalStateException("ConCall can never be a type of any term");
   }

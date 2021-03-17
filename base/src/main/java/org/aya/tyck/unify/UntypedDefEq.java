@@ -120,6 +120,11 @@ public record UntypedDefEq(
     throw new IllegalStateException("No visitData in UntypedDefEq");
   }
 
+  @Override
+  public @Nullable Term visitStructCall(@NotNull AppTerm.StructCall lhs, @NotNull Term preRhs) {
+    throw new IllegalStateException("No visitStruct in UntypedDefEq");
+  }
+
   @Override public @Nullable Term visitConCall(@NotNull AppTerm.ConCall conCall, @NotNull Term term) {
     throw new IllegalStateException("No visitCon in UntypedDefEq");
   }

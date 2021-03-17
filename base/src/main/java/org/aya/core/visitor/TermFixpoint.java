@@ -34,6 +34,12 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new AppTerm.ConCall(conCall.conHead(), dataArgs, conArgs);
   }
 
+  @Override default @NotNull Term visitStructCall(@NotNull AppTerm.StructCall structCall, P p) {
+    var args = structCall.args().view().map(arg -> visitArg(arg, p));
+    if (structCall.args().sameElements(args, true)) return structCall;
+    return new AppTerm.StructCall(structCall.structRef(), args);
+  }
+
   private <T> T visitParameterized(
     @NotNull Term.Param theParam, @NotNull Term theBody, @NotNull P p, @NotNull T original,
     @NotNull BiFunction<Term.@NotNull Param, @NotNull Term, T> callback

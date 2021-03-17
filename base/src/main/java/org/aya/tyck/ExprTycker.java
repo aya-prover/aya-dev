@@ -14,6 +14,7 @@ import org.aya.concrete.Signatured;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Arg;
@@ -140,6 +141,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         return defCall((DefVar<FnDef, Decl.FnDecl>) defVar, AppTerm.FnCall::new);
       } else if (defVar.core instanceof DataDef || defVar.concrete instanceof Decl.DataDecl) {
         return defCall((DefVar<DataDef, Decl.DataDecl>) defVar, AppTerm.DataCall::new);
+      } else if (defVar.core instanceof StructDef || defVar.concrete instanceof Decl.StructDecl) {
+        return defCall((DefVar<StructDef, Decl.StructDecl>) defVar, AppTerm.StructCall::new);
       } else if (defVar.core instanceof DataDef.Ctor || defVar.concrete instanceof Decl.DataDecl.DataCtor) {
         var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) defVar;
         var telescopes = DataDef.Ctor.telescopes(conVar);

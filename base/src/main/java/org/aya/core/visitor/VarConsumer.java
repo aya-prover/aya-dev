@@ -49,5 +49,11 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     return Unit.unit();
   }
 
+  @Override default Unit visitStructCall(@NotNull AppTerm.StructCall structCall, P p) {
+    visitVar(structCall.structRef(), p);
+    visitArgs(structCall.args(), p);
+    return Unit.unit();
+  }
+
   @Contract(mutates = "this,param2") void visitVar(Var usage, P p);
 }

@@ -74,6 +74,11 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return visitCalls(dataCall.fn(), dataCall.args(), nestedCall);
   }
 
+  @Override
+  public Doc visitStructCall(@NotNull AppTerm.StructCall structCall, Boolean nestedCall) {
+    return visitCalls(structCall.fn(), structCall.args(), nestedCall);
+  }
+
   @Override public Doc visitConCall(@NotNull AppTerm.ConCall conCall, Boolean nestedCall) {
     return visitCalls(conCall.fn(), conCall.conArgs(), nestedCall);
   }

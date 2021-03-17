@@ -80,6 +80,12 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
+  public @NotNull Boolean visitStructCall(@NotNull AppTerm.StructCall lhs, @NotNull Term preRhs, @NotNull Term type) {
+    if (!(preRhs instanceof AppTerm.StructCall rhs) || lhs.structRef() != rhs.structRef()) return false;
+    return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.structRef()));
+  }
+
+  @Override
   public @NotNull Boolean visitConCall(@NotNull AppTerm.ConCall lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!(preRhs instanceof AppTerm.ConCall rhs) || lhs.conHead() != rhs.conHead()) return false;
     return defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(), Def.defTele(lhs.dataRef()))

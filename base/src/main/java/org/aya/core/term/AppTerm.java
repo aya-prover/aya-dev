@@ -7,8 +7,10 @@ import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Arg;
+import org.aya.ref.LocalVar;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
@@ -91,6 +93,28 @@ public sealed interface AppTerm extends Term {
 
     public @NotNull SeqView<DataDef.@NotNull Ctor> availableCtors() {
       return dataRef.core.ctors();
+    }
+  }
+
+  record StructCall(
+    @NotNull DefVar<StructDef, Decl.StructDecl> structRef,
+    @NotNull SeqLike<Arg<@NotNull Term>> args
+  ) implements AppTerm {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitStructCall(this, p);
+    }
+
+    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+      return visitor.visitStructCall(this, p, q);
+    }
+
+    @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      return Decision.YES;
+    }
+
+    @Contract(value = " -> new", pure = true)
+    @Override public @NotNull Term fn() {
+      return new RefTerm(new LocalVar(structRef.name()));
     }
   }
 
