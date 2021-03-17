@@ -253,21 +253,29 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     structTele.view().zip(structCall.args())
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
+    var bodySubst = new Substituter.TermSubst(new MutableHashMap<>());
     var fields = Buffer.<Tuple2<String, Term>>of();
     var missing = Buffer.<String>of();
     var conFields = expr.fields().view();
+
     for (var defField : structRef.core.fields()) {
       var conFieldOpt = conFields.find(t -> t._1.equals(defField.ref().name())).map(t -> t._2);
       if (conFieldOpt.isEmpty()) {
         if (defField.body().isEmpty()) missing.append(defField.ref().name()); // no value available, skip and prepare error reporting
-        else fields.append(Tuple.of(defField.ref().name(), defField.body().get())); // use default value from defField
+        else {
+          // use default value from defField
+          var field = defField.body().get().subst(bodySubst);
+          fields.append(Tuple.of(defField.ref().name(), field));
+          bodySubst.add(defField.ref(), field);
+        }
         continue;
       }
       var conField = conFieldOpt.get();
       conFields = conFields.dropWhile(t -> t._2 == conField);
       var type = defField.result().subst(subst);
-      var field = conField.accept(this, type).wellTyped;
+      var field = conField.accept(this, type).wellTyped.subst(bodySubst);
       fields.append(Tuple.of(defField.ref().name(), field));
+      bodySubst.add(defField.ref(), field);
     }
 
     if (!missing.isEmpty()) {
