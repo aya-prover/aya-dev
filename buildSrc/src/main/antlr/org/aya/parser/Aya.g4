@@ -70,6 +70,7 @@ module : '\\module' ID LBRACE stmt* '}';
 
 // expressions
 expr : atom argument*                         # app
+     | NEW ID argument*                       # new
      | <assoc=right> expr TO expr             # arr
      | <assoc=right> expr '.' (NUMBER | ID)   # proj
      | PI tele+ TO expr                       # pi
@@ -161,6 +162,7 @@ MATCH : '\\match';
 ABSURD : '\\impossible';
 TO : '->' | '\u2192';
 IMPLIES : '=>' | '\u21D2';
+NEW : '\\new';
 
 // markers
 LBRACE : '{';

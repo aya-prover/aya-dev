@@ -193,8 +193,19 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx instanceof AyaParser.SigmaContext sig) return visitSigma(sig);
     if (ctx instanceof AyaParser.LamContext lam) return visitLam(lam);
     if (ctx instanceof AyaParser.ArrContext arr) return visitArr(arr);
+    if (ctx instanceof AyaParser.NewContext n) return visitNew(n);
     // TODO: match
     throw new UnsupportedOperationException("TODO: " + ctx.getClass());
+  }
+
+  @Override
+  public @NotNull Expr visitNew(AyaParser.NewContext ctx) {
+    var id = ctx.ID();
+    return new Expr.AppExpr(
+      sourcePosOf(ctx),
+      new Expr.UnresolvedExpr(sourcePosOf(id), id.getText()),
+      visitArguments(ctx.argument())
+    );
   }
 
   @Override
@@ -212,15 +223,19 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override
   public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
     var argument = ctx.argument();
-    final var atom = ctx.atom();
+    var atom = ctx.atom();
     if (argument.isEmpty()) return visitAtom(atom);
     return new Expr.AppExpr(
       sourcePosOf(ctx),
       visitAtom(atom),
-      argument.stream()
-        .map(this::visitArgument)
-        .collect(ImmutableSeq.factory())
+      visitArguments(argument)
     );
+  }
+
+  private @NotNull ImmutableSeq<Arg<Expr>> visitArguments(List<AyaParser.ArgumentContext> args) {
+    return args.stream()
+      .map(this::visitArgument)
+      .collect(ImmutableSeq.factory());
   }
 
   @Override
@@ -347,10 +362,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public Expr.@NotNull ProjExpr visitProj(AyaParser.ProjContext proj) {
+    var number = proj.NUMBER();
     return new Expr.ProjExpr(
       sourcePosOf(proj),
       visitExpr(proj.expr()),
-      Integer.parseInt(proj.NUMBER().getText())
+      number != null
+        ? Either.left(Integer.parseInt(number.getText()))
+        : Either.right(proj.ID().getText())
     );
   }
 

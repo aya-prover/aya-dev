@@ -14,6 +14,7 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
@@ -246,7 +247,7 @@ public sealed interface Expr {
   record ProjExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
-    int ix
+    @NotNull Either<Integer, String> ix
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);

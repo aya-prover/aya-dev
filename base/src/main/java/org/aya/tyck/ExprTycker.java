@@ -225,11 +225,23 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
-    var tupleRes = expr.tup().accept(this, null);
-    if (!(tupleRes.type instanceof SigmaTerm dt && !dt.co()))
-      return wantButNo(expr.tup(), tupleRes.type, "sigma type");
-    var telescope = dt.params();
-    var index = expr.ix() - 1;
+    var projectee = expr.tup().accept(this, null);
+    return expr.ix().fold(
+      ix -> visitIntProj(expr, term, projectee),
+      sp -> visitStructProj(expr, term, projectee)
+    );
+  }
+
+  private Result visitStructProj(Expr.@NotNull ProjExpr expr, @Nullable Term term, Result projectee) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  private Result visitIntProj(Expr.@NotNull ProjExpr expr, @Nullable Term term, Result projectee) {
+    if (!(projectee.type instanceof SigmaTerm sigma && !sigma.co()))
+      return wantButNo(expr.tup(), projectee.type, "sigma type");
+    var telescope = sigma.params();
+    var ix = expr.ix().getLeftValue();
+    var index = ix - 1;
     if (index < 0) {
       // TODO[ice]: too small index
       throw new TyckerException();
@@ -237,15 +249,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       // TODO[ice]: too large index
       throw new TyckerException();
     }
-    var type = index == telescope.size() ? dt.body() : telescope.get(index).type();
+    var type = index == telescope.size() ? sigma.body() : telescope.get(index).type();
     // instantiate the type
     var fieldsBefore = telescope.take(index);
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
     fieldsBefore.forEachIndexed((i, param) ->
-      subst.add(param.ref(), new ProjTerm(tupleRes.wellTyped, i + 1)));
+      subst.add(param.ref(), new ProjTerm(projectee.wellTyped, i + 1)));
     type = type.subst(subst);
     unifyTyThrowing(term, type, expr);
-    return new Result(new ProjTerm(tupleRes.wellTyped, expr.ix()), type);
+    return new Result(new ProjTerm(projectee.wellTyped, ix), type);
   }
 
   @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
