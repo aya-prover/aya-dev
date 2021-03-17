@@ -1,0 +1,74 @@
+In file $FILE:6:4 ->
+
+  4 | 
+  5 | \def add {a, b : Nat} : Nat
+  6 |  | {zero}, {zero} => b
+          ^--^
+  
+Warning: The newly bound name `zero` shadows a previous definition from outer scope
+In file $FILE:6:12 ->
+
+  4 | 
+  5 | \def add {a, b : Nat} : Nat
+  6 |  | {zero}, {zero} => b
+                  ^--^
+  
+Warning: The newly bound name `zero` shadows a previous definition from outer scope
+In file $FILE:7:8 ->
+
+  5 | \def add {a, b : Nat} : Nat
+  6 |  | {zero}, {zero} => b
+  7 |  | {suc a}, {zero} => a
+              ^^
+  
+Warning: The newly bound name `a` shadows a previous definition from outer scope
+In file $FILE:7:13 ->
+
+  5 | \def add {a, b : Nat} : Nat
+  6 |  | {zero}, {zero} => b
+  7 |  | {suc a}, {zero} => a
+                   ^--^
+  
+Warning: The newly bound name `zero` shadows a previous definition from outer scope
+In file $FILE:8:8 ->
+
+  6 |  | {zero}, {zero} => b
+  7 |  | {suc a}, {zero} => a
+  8 |  | {suc a}, {b} => suc (add {a} {b})
+              ^^
+  
+Warning: The newly bound name `a` shadows a previous definition from outer scope
+In file $FILE:8:13 ->
+
+  6 |  | {zero}, {zero} => b
+  7 |  | {suc a}, {zero} => a
+  8 |  | {suc a}, {b} => suc (add {a} {b})
+                   ^^
+  
+Warning: The newly bound name `b` shadows a previous definition from outer scope
+In file $FILE:9:8 ->
+
+  7 |  | {suc a}, {zero} => a
+  8 |  | {suc a}, {b} => suc (add {a} {b})
+  9 |  | {suc a}, {suc b} => suc (add {a} {b})
+              ^^
+  
+Warning: The newly bound name `a` shadows a previous definition from outer scope
+In file $FILE:9:17 ->
+
+  7 |  | {suc a}, {zero} => a
+  8 |  | {suc a}, {b} => suc (add {a} {b})
+  9 |  | {suc a}, {suc b} => suc (add {a} {b})
+                       ^^
+  
+Warning: The newly bound name `b` shadows a previous definition from outer scope
+In file $FILE:5:5 ->
+
+  3 |  | suc Nat
+  4 | 
+  5 | \def add {a, b : Nat} : Nat
+           ^-^
+  
+Error: Unhandled case: {zero}, {suc}
+Tycking interrupted due to errors.
+What are you doing?
