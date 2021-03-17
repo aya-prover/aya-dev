@@ -30,7 +30,9 @@ import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.mutable.*;
+import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
@@ -150,12 +152,24 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         var tele = Def.defTele(conVar);
         var type = PiTerm.make(false, tele, Def.defResult(conVar));
         return new Result(LamTerm.make(tele, body), type);
+      } else if (defVar.core instanceof StructDef.Field || defVar.concrete instanceof Decl.StructField) {
+        // the code runs to here because we are tycking a StructField in a StructDecl
+        // there should be two-stage check for this case:
+        //  - check the definition's correctness: happens here
+        //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
+        var field = (DefVar<StructDef.Field, Decl.StructField>) defVar;
+        var ty = Def.defResult(field);
+        return unifyRefType(new Expr.RefExpr(field.concrete.sourcePos(), field), term, field, ty);
       } else {
         final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
         throw new IllegalStateException(msg);
       }
     }
     var ty = localCtx.get(var);
+    return unifyRefType(expr, term, var, ty);
+  }
+
+  @NotNull private Result unifyRefType(Expr.@NotNull RefExpr expr, @Nullable Term term, Var var, Term ty) {
     if (ty == null) throw new IllegalStateException("Unresolved var `" + var.name() + "` tycked.");
     if (term == null) return new Result(new RefTerm(var), ty);
     unifyTyThrowing(term, ty, expr);
