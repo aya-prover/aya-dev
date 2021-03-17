@@ -88,8 +88,26 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     );
   }
 
-  @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
-    throw new UnsupportedOperationException();
+  @Override
+  public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
+    return Doc.cat(
+      visitAccess(decl.accessibility()),
+      Doc.plain(" "),
+      Doc.plain("\\struct"),
+      Doc.plain(" "),
+      Doc.plain(decl.ref.name()),
+      Doc.plain(" "),
+      visitTele(decl.telescope),
+      decl.result instanceof Expr.HoleExpr
+        ? Doc.empty()
+        : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
+      decl.fields.map((Decl.StructField field) -> Doc.cat(
+        Doc.hang(2, Doc.plain(field.ref.name())),
+        field.expr instanceof Expr.HoleExpr
+          ? Doc.empty()
+          : Doc.cat(Doc.plain(" : "), field.expr.toDoc())
+      )).reduce(Doc::vcat)
+    );
   }
 
   private Doc visitDataBody(Either<Decl.DataDecl.Ctors, Decl.DataDecl.Clauses> body) {
@@ -152,7 +170,7 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
 
   private Doc visitModifier(@NotNull Modifier modifier) {
     return switch (modifier) {
-      case Inline -> Doc.plain("\\inlnie");
+      case Inline -> Doc.plain("\\inline");
       case Erase -> Doc.plain("\\erase");
     };
   }
