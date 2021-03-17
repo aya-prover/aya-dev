@@ -259,7 +259,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     for (var defField : structRef.core.fields()) {
       var conFieldOpt = conFields.find(t -> t._1.equals(defField.ref().name())).map(t -> t._2);
       if (conFieldOpt.isEmpty()) {
-        missing.append(defField.ref().name());
+        if (defField.body().isEmpty()) missing.append(defField.ref().name()); // no value available, skip and prepare error reporting
+        else fields.append(Tuple.of(defField.ref().name(), defField.body().get())); // use default value from defField
         continue;
       }
       var conField = conFieldOpt.get();
