@@ -64,29 +64,49 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   @Override
   public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
+    var dataInnerCtx = context.derive();
     decl.body.map(ctors -> {
+      var ctorSymbols = ctors.ctors().toImmutableSeq()
+        .map(ctor -> {
+          dataInnerCtx.addGlobal(
+            Context.TOP_LEVEL_MOD_NAME,
+            ctor.ref.name(),
+            Stmt.Accessibility.Public,
+            ctor.ref,
+            ctor.sourcePos
+          );
+          return Tuple2.of(ctor.ref.name(), ctor.ref);
+        });
       context.importModule(
         ImmutableSeq.of(decl.ref().name()),
         decl.accessibility(),
         MutableHashMap.of(
           Context.TOP_LEVEL_MOD_NAME,
-          MutableHashMap.from(ctors.ctors().toImmutableSeq().map(ctor ->
-            Tuple2.of(ctor.ref.name(), ctor.ref)))),
+          MutableHashMap.from(ctorSymbols)),
         decl.sourcePos()
       );
       return Unit.unit();
     }, clauses -> {
       throw new UnsupportedOperationException();
     });
+    decl.ctx = dataInnerCtx;
     return Unit.unit();
   }
 
   @Override
   public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
-
-    // vont: We don't need to import ANYTHING since we choose not to have projection. Do we??
-
+    var structInnerCtx = context.derive();
+    decl.fields.forEach(field -> {
+      structInnerCtx.addGlobal(
+        Context.TOP_LEVEL_MOD_NAME,
+        field.ref.name(),
+        Stmt.Accessibility.Public,
+        field.ref,
+        field.sourcePos
+      );
+    });
+    decl.ctx = structInnerCtx;
     return Unit.unit();
   }
 

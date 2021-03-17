@@ -3,9 +3,7 @@
 package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
-import org.aya.concrete.Expr;
 import org.aya.concrete.Stmt;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
