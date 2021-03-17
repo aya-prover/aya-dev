@@ -7,15 +7,30 @@ import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record DuplicateCtorError(
+public record RedefinitionError(
+  @NotNull Kind kind,
   @NotNull String name,
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(Doc.plain("Redefinition of constructor "), Doc.plain(name));
+    return Doc.hcat(Doc.plain("Redefinition of "), Doc.plain(kind.toString()),
+      Doc.plain(" `"), Doc.plain(name), Doc.plain("`"));
   }
 
   @Override public @NotNull Severity level() {
     return Severity.ERROR;
+  }
+
+  public enum Kind {
+    Ctor,
+    Field;
+
+    @Override
+    public String toString() {
+      return switch (this) {
+        case Ctor -> "constructor";
+        case Field -> "field";
+      };
+    }
   }
 }

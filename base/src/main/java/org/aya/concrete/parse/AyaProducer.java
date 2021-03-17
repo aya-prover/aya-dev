@@ -12,7 +12,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
-import org.aya.concrete.resolve.error.DuplicateCtorError;
+import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.generic.Arg;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
@@ -22,6 +22,7 @@ import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableHashSet;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.function.BooleanFunction;
@@ -378,14 +379,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var abuseCtx = ctx.abuse();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
-    for (int i = 0, bodySize = body.size(); i < bodySize; i++)
-      for (int j = i + 1; j < bodySize; j++) {
-        var ctor = body.get(j)._2;
-        if (body.get(i)._2.ref.name().equals(ctor.ref.name())) {
-          reporter.report(new DuplicateCtorError(ctor.ref.name(), ctor.sourcePos));
-          throw new ParsingInterruptedException();
-        }
-      }
+    checkRedefinition(RedefinitionError.Kind.Ctor,
+      body.view().map(ctor -> Tuple.of(ctor._2.ref.name(), ctor._2.sourcePos)));
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
@@ -516,9 +511,23 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 
+  private void checkRedefinition(@NotNull RedefinitionError.Kind kind,
+                                 @NotNull SeqView<Tuple2<String, SourcePos>> names) {
+    var set = MutableHashSet.<String>of();
+    var redefs = names.filterNot(n -> set.add(n._1));
+    if (!redefs.isEmpty()) {
+      var last = redefs.last();
+      reporter.report(new RedefinitionError(kind, last._1, last._2));
+      throw new ParsingInterruptedException();
+    }
+  }
+
   public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
     var id = ctx.ID();
+    var fields = visitFields(ctx.field());
+    checkRedefinition(RedefinitionError.Kind.Field,
+      fields.view().map(field -> Tuple.of(field.ref.name(), field.sourcePos)));
     return new Decl.StructDecl(
       sourcePosOf(id),
       accessibility,
@@ -526,12 +535,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
-      visitField(ctx.field()),
+      fields,
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
   }
 
-  private ImmutableSeq<Decl.StructField> visitField(List<AyaParser.FieldContext> field) {
+  private ImmutableSeq<Decl.StructField> visitFields(List<AyaParser.FieldContext> field) {
     return field.stream()
       .map(fieldCtx -> {
         if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
