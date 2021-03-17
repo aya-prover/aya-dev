@@ -14,6 +14,7 @@ import org.aya.ref.LocalVar;
 import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Either;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.jupiter.api.Test;
@@ -91,8 +92,8 @@ public class TyckExprTest {
       new Expr.AppExpr(SourcePos.NONE,
         new Expr.RefExpr(SourcePos.NONE, f),
         ImmutableSeq.of(
-          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 1), true),
-          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, 2), true))));
+          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, Either.left(1)), true),
+          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, Either.left(2)), true))));
     // Pi(A B C : U)(f : A -> B -> C)(p : A ** B) -> C
     var uncurryTy = Lisp.parse("""
       (Pi (A (U) ex)

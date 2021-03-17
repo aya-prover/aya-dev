@@ -10,6 +10,7 @@ import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -129,7 +130,7 @@ public class ParseTest {
         new Expr.UnresolvedExpr(SourcePos.NONE, "f"),
         ImmutableSeq.of(Arg.explicit(new Expr.UnresolvedExpr(SourcePos.NONE, "a")))
       ),
-      1
+      Either.left(1)
     ));
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
       && app.arguments().sizeEquals(1)
