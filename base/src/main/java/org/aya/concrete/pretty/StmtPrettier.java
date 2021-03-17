@@ -17,10 +17,7 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   public static final StmtPrettier INSTANCE = new StmtPrettier();
 
   private Doc visitAccess(Stmt.@NotNull Accessibility accessibility) {
-    return switch (accessibility) {
-      case Public -> Doc.plain("\\public");
-      case Private -> Doc.plain("\\private");
-    };
+    return Doc.plain(accessibility.keyword);
   }
 
   @Override
