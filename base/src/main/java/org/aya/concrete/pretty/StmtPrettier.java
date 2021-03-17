@@ -88,28 +88,6 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     );
   }
 
-  @Override
-  public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
-    return Doc.cat(
-      visitAccess(decl.accessibility()),
-      Doc.plain(" "),
-      Doc.plain("\\struct"),
-      Doc.plain(" "),
-      Doc.plain(decl.ref.name()),
-      Doc.plain(" "),
-      visitTele(decl.telescope),
-      decl.result instanceof Expr.HoleExpr
-        ? Doc.empty()
-        : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      decl.fields.map((Decl.StructField field) -> Doc.cat(
-        Doc.hang(2, Doc.plain(field.ref.name())),
-        field.expr instanceof Expr.HoleExpr
-          ? Doc.empty()
-          : Doc.cat(Doc.plain(" : "), field.expr.toDoc())
-      )).reduce(Doc::vcat)
-    );
-  }
-
   private Doc visitDataBody(Either<Decl.DataDecl.Ctors, Decl.DataDecl.Clauses> body) {
     return body.isLeft() ? visitDataCtors(body.getLeftValue()) : visitDataClauses(body.getRightValue());
   }
@@ -144,6 +122,37 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       Doc.join(Doc.plain("| "), clauses.stream()
         .map(PatternPrettier.INSTANCE::matchy)));
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
+  }
+
+  @Override
+  public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
+    return Doc.cat(
+      visitAccess(decl.accessibility()),
+      Doc.plain(" "),
+      Doc.plain("\\struct"),
+      Doc.plain(" "),
+      Doc.plain(decl.ref.name()),
+      Doc.plain(" "),
+      visitTele(decl.telescope),
+      decl.result instanceof Expr.HoleExpr
+        ? Doc.empty()
+        : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
+      Doc.hang(2, visitFields(decl.fields))
+    );
+  }
+
+  private Doc visitFields(@NotNull ImmutableSeq<Decl.StructField> fields) {
+    return fields.map((Decl.StructField field) -> Doc.cat(
+      Doc.plain("| "),
+      field.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
+      Doc.plain(field.ref.name()),
+      field.telescope.isEmpty()
+        ? Doc.empty()
+        : Doc.cat(Doc.plain(" "), visitTele(field.telescope)),
+      field.expr instanceof Expr.HoleExpr
+        ? Doc.empty()
+        : Doc.cat(Doc.plain(" : "), field.expr.toDoc())
+    )).stream().reduce(Doc.empty(), Doc::vcat);
   }
 
   @Override

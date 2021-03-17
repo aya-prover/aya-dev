@@ -4,17 +4,18 @@ package org.aya.cli;
 
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
-import org.aya.api.util.BreakingException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
+import org.aya.concrete.pretty.StmtPrettier;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
+import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,13 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var parser = AyaParsing.parser(filePath, reporter);
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
+      if (flags.dumpAST()) {
+        // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
+        StmtPrettier.INSTANCE
+          .visitAll(program, Unit.INSTANCE)
+          .map((Doc doc) -> doc.renderWithPageWidth(114514))
+          .forEach(System.err::println);
+      }
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter, builder);
