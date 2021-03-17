@@ -7,6 +7,10 @@ import com.jcabi.manifests.Manifests
 import net.mamoe.mirai.BotFactory
 import net.mamoe.mirai.alsoLogin
 import net.mamoe.mirai.event.subscribeMessages
+import net.mamoe.mirai.message.data.MessageChain
+import net.mamoe.mirai.message.data.PlainText
+import net.mamoe.mirai.message.data.QuoteReply
+import net.mamoe.mirai.message.data.content
 import org.aya.api.error.CountingReporter
 import org.aya.api.error.StreamReporter
 import org.aya.cli.CompilerFlags
@@ -45,12 +49,20 @@ object AyaQQBot {
           compile(it.removePrefix("aya#"))
         }
       }
+      case("aya compile") quoteReply {
+        message[QuoteReply]?.let {
+          it.source.originalMessage.plainText().let { compile(it) }
+        } ?: "Which message do you want to compile."
+      }
     }
   }
   suspend fun join() {
     bot.alsoLogin().join()
   }
 }
+
+private fun MessageChain.plainText() =
+  filterIsInstance<PlainText>().joinToString { it.content }
 
 private inline fun error(f: () -> String): String {
   return try {
