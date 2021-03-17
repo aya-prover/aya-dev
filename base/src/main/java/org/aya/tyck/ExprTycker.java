@@ -235,7 +235,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     );
   }
 
+  @Override
+  public Result visitNew(Expr.@NotNull NewExpr expr, Term term) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
   private Result visitStructProj(Expr.@NotNull ProjExpr expr, @Nullable Term term, Result projectee) {
+    if (!(projectee.type instanceof AppTerm.StructCall structCall))
+      return wantButNo(expr.tup(), projectee.type, "struct type");
+
     throw new UnsupportedOperationException("TODO");
   }
 

@@ -200,11 +200,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Expr visitNew(AyaParser.NewContext ctx) {
-    var id = ctx.ID();
-    return new Expr.AppExpr(
+    return new Expr.NewExpr(
       sourcePosOf(ctx),
-      new Expr.UnresolvedExpr(sourcePosOf(id), id.getText()),
-      visitArguments(ctx.argument())
+      visitExpr(ctx.expr()),
+      ctx.newArg().stream()
+        .map(na -> Tuple.of(na.ID().getText(), visitExpr(na.expr())))
+        .collect(ImmutableSeq.factory())
     );
   }
 
@@ -228,12 +229,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Expr.AppExpr(
       sourcePosOf(ctx),
       visitAtom(atom),
-      visitArguments(argument)
+      visitArguments(argument.stream())
     );
   }
 
-  private @NotNull ImmutableSeq<Arg<Expr>> visitArguments(List<AyaParser.ArgumentContext> args) {
-    return args.stream()
+  private @NotNull ImmutableSeq<Arg<Expr>> visitArguments(@NotNull Stream<AyaParser.ArgumentContext> args) {
+    return args
       .map(this::visitArgument)
       .collect(ImmutableSeq.factory());
   }

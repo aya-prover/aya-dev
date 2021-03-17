@@ -106,6 +106,11 @@ public class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   }
 
   @Override
+  public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override
   public Doc visitLitInt(Expr.@NotNull LitIntExpr expr, Boolean nestedCall) {
     return Doc.plain(String.valueOf(expr.integer()));
   }
