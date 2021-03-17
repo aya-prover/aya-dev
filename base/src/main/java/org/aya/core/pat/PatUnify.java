@@ -60,7 +60,7 @@ public class PatUnify implements Pat.Visitor<Pat, Substituter.TermSubst> {
    * The unification of patterns. Assumes well-typedness and homogeneous-ness.
    *
    * @param lhs Can contain `as` patterns
-   * @param rhs Preferably the internally generated patterns
+   * @param rhs Will be turned into terms in the substitution
    * @return Some(Subst) if success positively, or None if success negatively
    * @throws IllegalArgumentException if failed
    */
