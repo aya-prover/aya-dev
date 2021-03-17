@@ -1,4 +1,4 @@
-Listed in random order.
+Names are listed in random order.
 
 # Project idea
 
@@ -6,6 +6,7 @@ Listed in random order.
 + Tesla Zhang <ice1000kotlin@foxmail.com>
 + Kiva Oyama <imkiva@islovely.icu>
 + Xy Ren <xy.r@outlook.com>
++ Wei Wu <lazyparser@gmail.com>
 
 # Prototyping
 
