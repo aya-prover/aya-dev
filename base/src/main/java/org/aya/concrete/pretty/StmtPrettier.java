@@ -139,7 +139,7 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   }
 
   private Doc visitFields(@NotNull ImmutableSeq<Decl.StructField> fields) {
-    return fields.map((Decl.StructField field) -> Doc.cat(
+    return fields.map(field -> Doc.vcat(
       Doc.plain("| "),
       field.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
       Doc.plain(field.ref.name()),

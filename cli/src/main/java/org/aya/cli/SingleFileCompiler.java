@@ -12,7 +12,6 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
-import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.tuple.Unit;
@@ -31,8 +30,8 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       if (flags.dumpAST()) {
         // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
         StmtPrettier.INSTANCE
-          .visitAll(program, Unit.INSTANCE)
-          .map((Doc doc) -> doc.renderWithPageWidth(114514))
+          .visitAll(program, Unit.unit())
+          .map(doc -> doc.renderWithPageWidth(114514))
           .forEach(System.err::println);
       }
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
