@@ -14,6 +14,7 @@ import org.aya.core.def.StructDef;
 import org.aya.generic.Modifier;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
+import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -194,18 +195,21 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class StructField extends Signatured {
     public final @NotNull DefVar<StructDef.Field, Decl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
-    public Expr expr;
+    public @NotNull Expr result;
+    public @NotNull Option<Expr> body;
 
     public boolean coerce;
 
     public StructField(@NotNull SourcePos sourcePos,
                        @NotNull String name,
                        @NotNull ImmutableSeq<Expr.Param> telescope,
-                       @NotNull Expr expr,
+                       @NotNull Expr result,
+                       @NotNull Option<Expr> body,
                        boolean coerce) {
       super(sourcePos, telescope);
       this.coerce = coerce;
-      this.expr = expr;
+      this.result = result;
+      this.body = body;
       this.ref = DefVar.concrete(this, name);
     }
 

@@ -6,6 +6,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,6 +35,7 @@ public record StructDef(
     @NotNull DefVar<Field, Decl.StructField> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull Term result,
+    @NotNull Option<Term> body,
     boolean coerce
   ) implements Def {
     public Field {

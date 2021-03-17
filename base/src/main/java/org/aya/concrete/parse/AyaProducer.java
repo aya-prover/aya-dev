@@ -555,7 +555,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       sourcePosOf(id),
       id.getText(),
       telescope,
-      visitExpr(ctx.expr()),
+      type(ctx.type(), sourcePosOf(ctx)),
+      Option.of(ctx.expr()).map(this::visitExpr),
       false
     );
   }
@@ -568,6 +569,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       id.getText(),
       telescope,
       type(ctx.type(), sourcePosOf(ctx)),
+      Option.none(),
       ctx.COERCE() != null
     );
   }

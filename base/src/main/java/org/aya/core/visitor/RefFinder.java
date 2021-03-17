@@ -62,6 +62,7 @@ public record RefFinder(boolean withBody) implements
   @Override
   public Unit visitField(@NotNull StructDef.Field def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
+    def.body().forEach(t -> t.accept(TermRefFinder.INSTANCE, references));
     def.result().accept(TermRefFinder.INSTANCE, references);
     // TODO[ice]: conditions
     return Unit.unit();

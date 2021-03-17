@@ -51,8 +51,8 @@ fnModifiers : ERASE
 
 structDecl : '\\struct' ID tele* type? ('\\extends' ids)? ('|' field)* abuse?;
 
-field : COERCE? ID tele* type   # fieldDecl
-      | ID tele* IMPLIES expr   # fieldImpl
+field : COERCE? ID tele* type         # fieldDecl
+      | ID tele* type? IMPLIES expr   # fieldImpl
       ;
 
 dataDecl : (PUBLIC? OPEN)? '\\data' ID tele* type? dataBody abuse?;

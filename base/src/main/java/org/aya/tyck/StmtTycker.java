@@ -99,10 +99,10 @@ public record StmtTycker(
   public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
     var tele = checkTele(tycker, field.telescope);
     var structRef = field.structRef;
-    var result = field.expr.accept(tycker, null);
-    field.signature = new Def.Signature(tele, result.wellTyped());
-
-    return new StructDef.Field(structRef, field.ref, tele, result.wellTyped(), field.coerce);
+    var result = field.result.accept(tycker, null).wellTyped();
+    field.signature = new Def.Signature(tele, result);
+    var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
+    return new StructDef.Field(structRef, field.ref, tele, result, body, field.coerce);
   }
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
