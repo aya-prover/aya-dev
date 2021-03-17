@@ -39,7 +39,7 @@ import java.util.function.Consumer;
 public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   private final @NotNull ExprTycker exprTycker;
   private final @NotNull ExprRefSubst subst;
-  public Trace.@Nullable Builder traceBuilder = null;
+  public Trace.@Nullable Builder traceBuilder;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -74,13 +74,13 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   public Tuple2<@NotNull Term, Pat.PrototypeClause> visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.clear();
-    var recover = MutableHashMap.from(exprTycker.localCtx.localMap);
+    var recover = MutableHashMap.from(exprTycker.localCtx.localMap());
     var patterns = visitPatterns(sig, match.patterns());
     var result = match.expr()
       .map(e -> e.accept(subst, Unit.unit()))
       .map(e -> exprTycker.checkExpr(e, sig.value.result()));
-    exprTycker.localCtx.localMap.clear();
-    exprTycker.localCtx.localMap.putAll(recover);
+    exprTycker.localCtx.localMap().clear();
+    exprTycker.localCtx.localMap().putAll(recover);
     var type = result.map(ExprTycker.Result::type).getOrDefault(sig.value.result());
     return Tuple.of(type, new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped)));
   }
@@ -114,7 +114,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   }
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
-    exprTycker.localCtx.localMap.put(tuple.as(), t);
+    exprTycker.localCtx.localMap().put(tuple.as(), t);
     if (!(t instanceof SigmaTerm sigma)) {
       // TODO[ice]: requires pretty printing patterns
       throw new ExprTycker.TyckerException();
@@ -124,7 +124,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       ImmutableSeq.of(),
       sigma.params().appended(new Term.Param(new LocalVar("_"), sigma.body(), true)),
       UnivTerm.OMEGA);
-    exprTycker.localCtx.localMap.put(tuple.as(), sigma);
+    exprTycker.localCtx.localMap().put(tuple.as(), sigma);
     return new Pat.Tuple(tuple.explicit(),
       visitPatterns(new Ref<>(sig), tuple.patterns()), tuple.as(), sigma);
   }
@@ -133,7 +133,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var v = bind.bind();
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE);
     if (selected == null) {
-      exprTycker.localCtx.localMap.put(v, t);
+      exprTycker.localCtx.localMap().put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
     }
     if (!selected._2.conTelescope().isEmpty()) {
