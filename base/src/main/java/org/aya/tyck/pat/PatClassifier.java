@@ -98,6 +98,7 @@ public record PatClassifier(
       builder.reduce();
       var clazz = classified.flatMap(pat -> pat.extract(subPatsSeq).map(SubPats::drop));
       var rest = classifySub(clazz);
+      builder.unshift();
       buffer.appendAll(rest);
     }
     return buffer.toImmutableSeq();

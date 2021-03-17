@@ -34,6 +34,11 @@ public abstract class GenericBuilder<T extends GenericBuilder.Tree<T>> {
     tops.addLast(trace.children());
   }
 
+  public void unshift() {
+    var buffer = Objects.requireNonNull(tops.getLast());
+    buffer.removeAt(buffer.size() - 1);
+  }
+
   public void reduce() {
     tops.removeLast();
   }
