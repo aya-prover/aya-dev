@@ -289,7 +289,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckInterruptedException();
     }
 
-    // TODO: and then create a StructTerm?
+    // TODO: and then create a StructTerm? what about reusing the TupTerm?
     return new Result(new NewTerm(fields.toImmutableSeq()), structCall.subst(typeSubst));
   }
 
