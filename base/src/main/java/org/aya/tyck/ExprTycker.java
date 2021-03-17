@@ -21,6 +21,8 @@ import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.error.BadTypeError;
+import org.aya.tyck.error.MissingFieldError;
+import org.aya.tyck.error.NoSuchFieldError;
 import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.sort.Sort;
 import org.aya.tyck.trace.Trace;
@@ -252,19 +254,29 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
     var fields = Buffer.<Tuple2<String, Term>>of();
+    var missing = Buffer.<String>of();
     var conFields = expr.fields().view();
     for (var defField : structRef.core.fields()) {
-      var conField = conFields
-        .find(t -> t._1.equals(defField.ref().name()))
-        .map(t -> t._2)
-        .getOrThrow(TyckerException::new); // TODO[kiva]: no instantiation of `defField` was found
+      var conFieldOpt = conFields.find(t -> t._1.equals(defField.ref().name())).map(t -> t._2);
+      if (conFieldOpt.isEmpty()) {
+        missing.append(defField.ref().name());
+        continue;
+      }
+      var conField = conFieldOpt.get();
       conFields = conFields.dropWhile(t -> t._2 == conField);
       var type = defField.result().subst(subst);
       var field = conField.accept(this, type).wellTyped;
       fields.append(Tuple.of(defField.ref().name(), field));
     }
 
-    if (!conFields.isEmpty()) throw new TyckerException(); // TODO[kiva]: use of undefined fields
+    if (!missing.isEmpty()) {
+      metaContext.report(new MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
+      throw new TyckInterruptedException();
+    }
+    if (!conFields.isEmpty()) {
+      metaContext.report(new NoSuchFieldError(expr.sourcePos(), conFields.map(t -> t._1).toImmutableSeq()));
+      throw new TyckInterruptedException();
+    }
 
     // TODO: and then create a StructTerm?
     return new Result(new NewTerm(fields.toImmutableSeq()), structCall);
