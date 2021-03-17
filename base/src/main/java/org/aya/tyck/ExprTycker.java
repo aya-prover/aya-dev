@@ -248,10 +248,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return wantButNo(expr.struct(), struct, "struct type");
     var structRef = structCall.structRef();
 
-    var subst = new Substituter.TermSubst(new MutableHashMap<>());
+    var typeSubst = new Substituter.TermSubst(new MutableHashMap<>());
     var structTele = Def.defTele(structRef);
     structTele.view().zip(structCall.args())
-      .forEach(t -> subst.add(t._1.ref(), t._2.term()));
+      .forEach(t -> typeSubst.add(t._1.ref(), t._2.term()));
 
     var bodySubst = new Substituter.TermSubst(new MutableHashMap<>());
     var fields = Buffer.<Tuple2<String, Term>>of();
@@ -272,9 +272,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       }
       var conField = conFieldOpt.get();
       conFields = conFields.dropWhile(t -> t._2 == conField);
-      var type = Def.defResult(defField.ref()).subst(subst);
+      var type = Def.defResult(defField.ref()).subst(typeSubst);
       var fieldRes = conField.accept(this, null);
-      unifyTyThrowing(type, fieldRes.type, conField);
+      unifyTyThrowing(type, fieldRes.type.subst(typeSubst), conField);
       var field = fieldRes.wellTyped.subst(bodySubst);
       fields.append(Tuple.of(defField.ref().name(), field));
       bodySubst.add(defField.ref(), field);
@@ -290,7 +290,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     // TODO: and then create a StructTerm?
-    return new Result(new NewTerm(fields.toImmutableSeq()), structCall);
+    return new Result(new NewTerm(fields.toImmutableSeq()), structCall.subst(typeSubst));
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
