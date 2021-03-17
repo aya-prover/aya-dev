@@ -107,7 +107,15 @@ public class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {
-    throw new UnsupportedOperationException("TODO");
+    return Doc.cat(
+      Doc.plain("\\new "),
+      expr.struct().toDoc(),
+      Doc.plain(" { "),
+      expr.fields().stream().map(t ->
+        Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
+      ).reduce(Doc.empty(), Doc::hsep),
+      Doc.plain(" }")
+    );
   }
 
   @Override
