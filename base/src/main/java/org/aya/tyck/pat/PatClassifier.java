@@ -8,14 +8,13 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl.DataCtor;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.pat.PatToSubst;
-import org.aya.core.visitor.Substituter.TermSubst;
+import org.aya.core.term.Term;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.MissingCaseError;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ public record PatClassifier(
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), new TermSubst(new MutableHashMap<>()), index)));
+      new SubPats(clause.patterns(), clause.expr(), index)));
   }
 
   public static void test(
@@ -63,13 +62,13 @@ public record PatClassifier(
     var pivot = subPatsSeq.first();
     // Done
     if (pivot.pats.isEmpty()) {
-      var oneClass = subPatsSeq.map(subPats -> IntObjTuple2.of(subPats.ix, subPats.bodySubst));
+      var oneClass = subPatsSeq.map(subPats -> IntObjTuple2.of(subPats.ix, subPats.body));
       return ImmutableSeq.of(new PatClass(oneClass));
     }
     var explicit = pivot.head().explicit();
     var hasTuple = subPatsSeq.view()
       .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
-        ? flatTuple(tuple, subPats.bodySubst, index) : null)
+        ? flatTuple(tuple, index) : null)
       .toImmutableSeq();
     if (!hasTuple.isEmpty()) {
       builder.shiftEmpty(explicit);
@@ -104,9 +103,8 @@ public record PatClassifier(
     return buffer.toImmutableSeq();
   }
 
-  private @NotNull SubPats flatTuple(Pat.Tuple tuple, TermSubst subst, int index) {
-    if (tuple.as() != null) subst.add(tuple.as(), tuple.toTerm());
-    return new SubPats(tuple.pats(), subst, index);
+  private @NotNull SubPats flatTuple(Pat.Tuple tuple, int index) {
+    return new SubPats(tuple.pats(), Option.none(), index);
   }
 
   private static @Nullable SubPats matches(
@@ -114,30 +112,24 @@ public record PatClassifier(
     @NotNull DefVar<DataDef.Ctor, DataCtor> ref
   ) {
     var head = subPats.head();
-    var bodySubst = subPats.bodySubst;
     if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
-      return new SubPats(ctor.params(), bodySubst, ix);
+      return new SubPats(ctor.params(), subPats.body, ix);
     if (head instanceof Pat.Bind bind) {
       var freshPat = ref.core.freshPat(bind.explicit());
-      bodySubst.add(bind.as(), freshPat.toTerm());
-      return new SubPats(freshPat.params(), bodySubst, ix);
+      return new SubPats(freshPat.params(), subPats.body, ix);
     }
     return null;
   }
 
-  public static record PatClass(@NotNull ImmutableSeq<IntObjTuple2<TermSubst>> contents) {
+  public static record PatClass(@NotNull ImmutableSeq<IntObjTuple2<Option<Term>>> contents) {
     private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
-      return contents.map(tup -> {
-        var pat = subPatsSeq.get(tup._1);
-        pat.bodySubst.add(tup._2);
-        return pat;
-      });
+      return contents.map(tup -> subPatsSeq.get(tup._1));
     }
   }
 
   record SubPats(
     @NotNull SeqLike<Pat> pats,
-    @NotNull TermSubst bodySubst,
+    @NotNull Option<Term> body,
     int ix
   ) {
     @Contract(pure = true) public @NotNull Pat head() {
@@ -145,9 +137,7 @@ public record PatClassifier(
     }
 
     @Contract(pure = true) public @NotNull SubPats drop() {
-      var subst = PatToSubst.build(pats.first());
-      subst.map().putAll(bodySubst.map());
-      return new SubPats(pats.view().drop(1), subst, ix);
+      return new SubPats(pats.view().drop(1), body, ix);
     }
   }
 }
