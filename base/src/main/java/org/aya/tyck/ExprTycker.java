@@ -251,12 +251,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return wantButNo(expr.struct(), struct, "struct type");
     var structRef = structCall.structRef();
 
-    var typeSubst = new Substituter.TermSubst(new MutableHashMap<>());
+    var subst = new Substituter.TermSubst(new MutableHashMap<>());
     var structTele = Def.defTele(structRef);
     structTele.view().zip(structCall.args())
-      .forEach(t -> typeSubst.add(t._1.ref(), t._2.term()));
+      .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
-    var bodySubst = new Substituter.TermSubst(new MutableHashMap<>());
     var fields = Buffer.<Tuple2<String, Term>>of();
     var missing = Buffer.<String>of();
     var conFields = expr.fields().view();
@@ -267,20 +266,20 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         if (defField.body().isEmpty()) missing.append(defField.ref().name()); // no value available, skip and prepare error reporting
         else {
           // use default value from defField
-          var field = defField.body().get().subst(bodySubst);
+          var field = defField.body().get().subst(subst);
           fields.append(Tuple.of(defField.ref().name(), field));
-          bodySubst.add(defField.ref(), field);
+          subst.add(defField.ref(), field);
         }
         continue;
       }
       var conField = conFieldOpt.get();
       conFields = conFields.dropWhile(t -> t._2 == conField);
-      var type = Def.defResult(defField.ref()).subst(typeSubst);
+      var type = Def.defResult(defField.ref()).subst(subst);
       var fieldRes = conField.accept(this, null);
-      unifyTyThrowing(type, fieldRes.type.subst(typeSubst), conField);
-      var field = fieldRes.wellTyped.subst(bodySubst);
+      unifyTyThrowing(type, fieldRes.type.subst(subst), conField);
+      var field = fieldRes.wellTyped.subst(subst);
       fields.append(Tuple.of(defField.ref().name(), field));
-      bodySubst.add(defField.ref(), field);
+      subst.add(defField.ref(), field);
     }
 
     if (!missing.isEmpty()) {
@@ -293,7 +292,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     // TODO: and then create a StructTerm? what about reusing the TupTerm?
-    return new Result(new NewTerm(fields.toImmutableSeq()), structCall.subst(typeSubst));
+    return new Result(new NewTerm(fields.toImmutableSeq()), structCall.subst(subst));
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
