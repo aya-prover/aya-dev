@@ -2,9 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pat;
 
-import org.aya.api.ref.Var;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.LocalVar;
+import org.aya.tyck.LocalCtx;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
@@ -19,10 +20,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public record PatUnify(
   @NotNull TermSubst lhsSubst,
-  @NotNull TermSubst rhsSubst
+  @NotNull TermSubst rhsSubst,
+  @NotNull LocalCtx localCtx
 ) implements Pat.Visitor<Pat, Unit> {
   @Override public Unit visitBind(Pat.@NotNull Bind bind, Pat pat) {
-    lhsSubst.add(bind.as(), pat.toTerm());
+    var v = bind.as();
+    lhsSubst.add(v, pat.toTerm());
+    localCtx.put(v, bind.type());
     return Unit.unit();
   }
 
@@ -30,10 +34,13 @@ public record PatUnify(
     return pat instanceof Pat.Tuple rhs ? visitList(lhs.pats(), rhs.pats(), lhs.as(), rhs) : reportError(lhs, pat);
   }
 
-  private Unit visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats, @Nullable Var as, Pat rhs) {
-    if (as != null) lhsSubst.add(as, rhs.toTerm());
+  private Unit visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats, @Nullable LocalVar as, Pat rhs) {
+    if (as != null) {
+      lhsSubst.add(as, rhs.toTerm());
+      localCtx.put(as, rhs.type());
+    }
     assert rpats.sizeEquals(lpats.size());
-    lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst));
+    lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, localCtx));
     return Unit.unit();
   }
 
@@ -49,9 +56,9 @@ public record PatUnify(
     return visitList(lhs.params(), rhs.params(), lhs.as(), rhs);
   }
 
-  public static void unifyPat(@NotNull Pat lhs, @NotNull Pat rhs, TermSubst lhsSubst, TermSubst rhsSubst) {
-    if (rhs instanceof Pat.Bind) rhs.accept(new PatUnify(rhsSubst, lhsSubst), lhs);
-    else lhs.accept(new PatUnify(lhsSubst, rhsSubst), rhs);
+  private static void unifyPat(Pat lhs, Pat rhs, TermSubst lhsSubst, TermSubst rhsSubst, LocalCtx localCtx) {
+    if (rhs instanceof Pat.Bind) rhs.accept(new PatUnify(rhsSubst, lhsSubst, localCtx), lhs);
+    else lhs.accept(new PatUnify(lhsSubst, rhsSubst, localCtx), rhs);
   }
 
   /**
@@ -59,10 +66,18 @@ public record PatUnify(
    *
    * @param lhsSubst the substitutions that would turn the lhs pattern to the rhs one.
    * @param rhsSubst the substitutions that would turn the rhs pattern to the lhs one.
+   * @return the context containing all the variable bindings in <code>lhsSubst</code> and <code>rhsSubst</code>
    * @throws IllegalArgumentException if failed
    */
-  public static void unifyPat(@NotNull SeqLike<Pat> lpats, @NotNull SeqLike<Pat> rpats, TermSubst lhsSubst, TermSubst rhsSubst) {
+  public static @NotNull LocalCtx unifyPat(
+    @NotNull SeqLike<Pat> lpats,
+    @NotNull SeqLike<Pat> rpats,
+    @NotNull TermSubst lhsSubst,
+    @NotNull TermSubst rhsSubst
+  ) {
     assert rpats.sizeEquals(lpats.size());
-    lpats.view().zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst));
+    var ctx = new LocalCtx();
+    lpats.view().zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, ctx));
+    return ctx;
   }
 }

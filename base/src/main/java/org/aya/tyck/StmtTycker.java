@@ -74,7 +74,7 @@ public record StmtTycker(
       var elabClauses = ctor.clauses
         .map(c -> patTycker.visitMatch(c, signature)._2);
       if (!elabClauses.isEmpty())
-        PatClassifier.test(elabClauses, reporter, ctor.sourcePos, false);
+        PatClassifier.test(elabClauses, tycker.metaContext, ctor.sourcePos, false, signature.result());
       var clauses = elabClauses.flatMap(Pat.Clause::fromProto);
       return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
     });
@@ -133,12 +133,13 @@ public record StmtTycker(
       var what = FP.distR(decl.body.map(
         left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
         right -> patTycker.elabClause(right, signature)));
+      var resultTy = what._1;
       var body = what._2.mapRight(cs -> {
         if (!cs.isEmpty())
-          PatClassifier.test(cs, reporter, decl.sourcePos, true);
+          PatClassifier.test(cs, tycker.metaContext, decl.sourcePos, true, resultTy);
         return cs.flatMap(Pat.Clause::fromProto);
       });
-      return new FnDef(decl.ref, ctxTele, resultTele, what._1, body);
+      return new FnDef(decl.ref, ctxTele, resultTele, resultTy, body);
     });
   }
 

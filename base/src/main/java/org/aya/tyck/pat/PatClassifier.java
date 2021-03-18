@@ -12,7 +12,12 @@ import org.aya.core.pat.PatUnify;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.MetaContext;
+import org.aya.tyck.error.ConfluenceError;
 import org.aya.tyck.error.MissingCaseError;
+import org.aya.tyck.unify.PatDefEq;
+import org.aya.tyck.unify.TypedDefEq;
+import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -49,10 +54,10 @@ public record PatClassifier(
 
   public static void test(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos,
-    boolean coverage
+    @NotNull MetaContext metaContext, @NotNull SourcePos pos,
+    boolean coverage, @NotNull Term result
   ) {
-    for (var results : classify(clauses, reporter, pos, coverage)) {
+    for (var results : classify(clauses, metaContext.reporter(), pos, coverage)) {
       var contents = results.contents;
       for (int i = 0, size = contents.size(); i < size; i++) {
         var lhs = contents.get(i);
@@ -62,8 +67,15 @@ public record PatClassifier(
           if (rhs._2.isEmpty()) continue;
           var lhsSubst = new Substituter.TermSubst(MutableMap.of());
           var rhsSubst = new Substituter.TermSubst(MutableMap.of());
-          PatUnify.unifyPat(clauses.get(lhs._1).patterns(), clauses.get(rhs._1).patterns(), lhsSubst, rhsSubst);
-          // TODO[ice]: unify the terms
+          var ctx = PatUnify.unifyPat(clauses.get(lhs._1).patterns(), clauses.get(rhs._1).patterns(), lhsSubst, rhsSubst);
+          var lhsTerm = lhs._2.get().subst(lhsSubst);
+          var rhsTerm = rhs._2.get().subst(rhsSubst);
+          var unification = new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
+            .compare(lhsTerm, rhsTerm, result);
+          if (!unification) {
+            metaContext.report(new ConfluenceError(pos, i, j, lhsTerm, rhsTerm));
+            throw new ExprTycker.TyckInterruptedException();
+          }
         }
       }
     }

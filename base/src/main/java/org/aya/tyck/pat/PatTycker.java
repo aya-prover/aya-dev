@@ -114,7 +114,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   }
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
-    exprTycker.localCtx.localMap().put(tuple.as(), t);
+    exprTycker.localCtx.put(tuple.as(), t);
     if (!(t instanceof SigmaTerm sigma)) {
       // TODO[ice]: requires pretty printing patterns
       throw new ExprTycker.TyckerException();
@@ -124,7 +124,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       ImmutableSeq.of(),
       sigma.params().appended(new Term.Param(new LocalVar("_"), sigma.body(), true)),
       UnivTerm.OMEGA);
-    exprTycker.localCtx.localMap().put(tuple.as(), sigma);
+    exprTycker.localCtx.put(tuple.as(), sigma);
     return new Pat.Tuple(tuple.explicit(),
       visitPatterns(new Ref<>(sig), tuple.patterns()), tuple.as(), sigma);
   }
@@ -133,7 +133,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var v = bind.bind();
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE);
     if (selected == null) {
-      exprTycker.localCtx.localMap().put(v, t);
+      exprTycker.localCtx.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
     }
     if (!selected._2.conTelescope().isEmpty()) {

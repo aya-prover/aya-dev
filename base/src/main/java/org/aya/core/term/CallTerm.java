@@ -60,6 +60,8 @@ public sealed interface CallTerm extends Term {
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      // Recursive case is irreducible
+      if (fnRef.core == null) return Decision.YES;
       // TODO[xyr]: after adding inductive datatypes, we need to check if the function pattern matches.
       return Decision.NO;
     }

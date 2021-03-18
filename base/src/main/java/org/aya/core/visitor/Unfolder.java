@@ -30,6 +30,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
 
   @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
     var def = fnCall.fnRef().core;
+    // Not yet type checked
+    if (def == null) return fnCall;
     var args = fnCall.args();
     // This shouldn't fail
     assert args.sizeEquals(def.telescope().size());
