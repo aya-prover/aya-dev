@@ -5,9 +5,8 @@ package org.aya.core.visitor;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.tyck.sort.Sort;
-import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
@@ -115,10 +114,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitNew(@NotNull NewTerm struct, P p) {
-    var items = MutableMap.from(struct.params());
-    var newItems = items.edit()
-      .replaceAll((id, term) -> term.accept(this, p)).done();
-    return new NewTerm(ImmutableMap.from(newItems));
+    var items = struct.params()
+      .map(t -> Tuple.of(t._1, t._2.accept(this, p)));
+    if (struct.params().sameElements(items, true)) return struct;
+    return new NewTerm(items);
   }
 
   @Override default @NotNull Term visitProj(@NotNull ProjTerm term, P p) {

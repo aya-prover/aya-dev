@@ -3,14 +3,15 @@
 package org.aya.core.term;
 
 import org.aya.util.Decision;
-import org.glavo.kala.collection.immutable.ImmutableMap;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author kiva
  */
 public record NewTerm(
-  @NotNull ImmutableMap<String, Term> params
+  @NotNull ImmutableSeq<Tuple2<String, Term>> params
 ) implements Term {
   @Override
   public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
