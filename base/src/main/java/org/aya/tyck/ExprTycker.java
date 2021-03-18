@@ -132,31 +132,39 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return wantButNo(expr, term, "universe term");
   }
 
-  @SuppressWarnings("unchecked") @Rule.Synth
-  @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
-    final var var = expr.resolvedVar();
-    if (var instanceof DefVar<?, ?> defVar) {
-      if (defVar.core instanceof FnDef || defVar.concrete instanceof Decl.FnDecl) {
-        return defCall((DefVar<FnDef, Decl.FnDecl>) defVar, CallTerm.Fn::new);
-      } else if (defVar.core instanceof DataDef || defVar.concrete instanceof Decl.DataDecl) {
-        return defCall((DefVar<DataDef, Decl.DataDecl>) defVar, CallTerm.Data::new);
-      } else if (defVar.core instanceof DataDef.Ctor || defVar.concrete instanceof Decl.DataDecl.DataCtor) {
-        var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) defVar;
-        var telescopes = DataDef.Ctor.telescopes(conVar);
-        var tele = Def.defTele(conVar);
-        var type = PiTerm.make(false, tele, Def.defResult(conVar));
-        return new Result(LamTerm.make(tele, telescopes.toConCall(conVar)), type);
-      } else {
-        final var msg = "Def var `" + var.name() + "` has core `" + defVar.core + "` which we don't know.";
-        throw new IllegalStateException(msg);
-      }
-    } else if (var instanceof LocalVar loc) {
+  @Rule.Synth @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
+    var var = expr.resolvedVar();
+    if (var instanceof LocalVar loc) {
       var ty = localCtx.get(loc);
       if (ty == null) throw new IllegalStateException("Unresolved var `" + var.name() + "` tycked.");
-      if (term == null) return new Result(new RefTerm(loc), ty);
-      unifyTyThrowing(term, ty, expr);
-      return new Result(new RefTerm(loc), ty);
+      return result(expr, term, ty, new RefTerm(loc));
+    } else if (var instanceof DefVar<?, ?> defVar) {
+      var result = inferRef(defVar);
+      return result(expr, term, result.type, result.wellTyped);
     } else throw new IllegalStateException("TODO: UnivVar not yet implemented");
+  }
+
+  @SuppressWarnings("unchecked") public @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
+    if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
+      return defCall((DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
+    } else if (var.core instanceof DataDef || var.concrete instanceof Decl.DataDecl) {
+      return defCall((DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
+    } else if (var.core instanceof DataDef.Ctor || var.concrete instanceof Decl.DataDecl.DataCtor) {
+      var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) var;
+      var telescopes = DataDef.Ctor.telescopes(conVar);
+      var tele = Def.defTele(conVar);
+      var type = PiTerm.make(false, tele, Def.defResult(conVar));
+      return new Result(LamTerm.make(tele, telescopes.toConCall(conVar)), type);
+    } else {
+      final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
+      throw new IllegalStateException(msg);
+    }
+  }
+
+  private @NotNull Result result(Expr.@NotNull RefExpr expr, @Nullable Term expected, Term ty, Term refTerm) {
+    if (expected == null) return new Result(refTerm, ty);
+    unifyTyThrowing(expected, ty, expr);
+    return new Result(refTerm, ty);
   }
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
