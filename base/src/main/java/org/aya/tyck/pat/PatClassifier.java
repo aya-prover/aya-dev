@@ -23,7 +23,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.control.Option;
-import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.*;
 
 /**
@@ -61,15 +60,17 @@ public record PatClassifier(
       var contents = results.contents;
       for (int i = 0, size = contents.size(); i < size; i++) {
         var lhs = contents.get(i);
-        if (lhs._2.isEmpty()) continue;
+        var lhsClause = clauses.get(lhs);
+        if (lhsClause.expr().isEmpty()) continue;
         for (int j = 0; j < size; j++) {
           var rhs = contents.get(j);
-          if (rhs._2.isEmpty()) continue;
+          var rhsClause = clauses.get(rhs);
+          if (rhsClause.expr().isEmpty()) continue;
           var lhsSubst = new Substituter.TermSubst(MutableMap.of());
           var rhsSubst = new Substituter.TermSubst(MutableMap.of());
-          var ctx = PatUnify.unifyPat(clauses.get(lhs._1).patterns(), clauses.get(rhs._1).patterns(), lhsSubst, rhsSubst);
-          var lhsTerm = lhs._2.get().subst(lhsSubst);
-          var rhsTerm = rhs._2.get().subst(rhsSubst);
+          var ctx = PatUnify.unifyPat(lhsClause.patterns(), rhsClause.patterns(), lhsSubst, rhsSubst);
+          var lhsTerm = rhsClause.expr().get().subst(lhsSubst);
+          var rhsTerm = rhsClause.expr().get().subst(rhsSubst);
           var unification = new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
             .compare(lhsTerm, rhsTerm, result);
           if (!unification) {
@@ -91,7 +92,7 @@ public record PatClassifier(
     var pivot = subPatsSeq.first();
     // Done
     if (pivot.pats.isEmpty()) {
-      var oneClass = subPatsSeq.map(subPats -> IntObjTuple2.of(subPats.ix, subPats.body));
+      var oneClass = subPatsSeq.map(SubPats::ix);
       return ImmutableSeq.of(new PatClass(oneClass));
     }
     var explicit = pivot.head().explicit();
@@ -156,9 +157,9 @@ public record PatClassifier(
     return null;
   }
 
-  public static record PatClass(@NotNull ImmutableSeq<IntObjTuple2<Option<Term>>> contents) {
+  public static record PatClass(@NotNull ImmutableSeq<Integer> contents) {
     private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
-      return contents.map(tup -> subPatsSeq.get(tup._1));
+      return contents.map(subPatsSeq::get);
     }
   }
 
