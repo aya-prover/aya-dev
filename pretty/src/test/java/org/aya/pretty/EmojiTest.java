@@ -25,6 +25,7 @@ public class EmojiTest {
     assertFalse(Character.isUnicodeIdentifierPart(x.charAt(0)));
     assertFalse(Character.isUnicodeIdentifierPart(x.charAt(1)));
     assertFalse(Character.isUnicodeIdentifierPart(x.codePointAt(0)));
+    assertTrue(Character.isSupplementaryCodePoint(x.codePointAt(0)));
   }
 
   @Test
@@ -32,8 +33,8 @@ public class EmojiTest {
     var x = "我";
     assertEquals(x.length(), 1);
     assertEquals(x.codePoints().count(), 1);
-    var c = x.charAt(0);
     var i = x.codePointAt(0);
     assertTrue(Character.isUnicodeIdentifierPart(i));
+    assertTrue(Character.isSupplementaryCodePoint(i));
   }
 }

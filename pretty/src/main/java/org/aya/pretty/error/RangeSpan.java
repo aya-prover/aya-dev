@@ -37,9 +37,9 @@ public record RangeSpan(
 
     int tabWidth = config.tabWidth();
 
-    var chars = input.toCharArray();
-    while (pos < chars.length) {
-      char c = chars[pos];
+    var codePoints = input.codePoints().toArray();
+    while (pos < codePoints.length) {
+      int c = codePoints[pos];
       int oldPos = pos++;
       int oldCol = col;
 
@@ -49,13 +49,9 @@ public record RangeSpan(
       } else if (c == '\t') {
         // treat tab as tabWidth-length-ed spaces
         col += tabWidth;
-      } else if (Character.isHighSurrogate(c)
-        && pos < chars.length
-        && Character.isLowSurrogate(chars[pos])) {
-        pos++;
-        col += 2;
       } else if (c > 128 && (Character.isUnicodeIdentifierStart(c)
-        || Character.isUnicodeIdentifierPart(c))) {
+        || Character.isUnicodeIdentifierPart(c)
+        || Character.isSupplementaryCodePoint(c))) {
         col += 2;
       } else {
         col += 1;
