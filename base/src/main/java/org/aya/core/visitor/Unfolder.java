@@ -28,6 +28,25 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return subst;
   }
 
+  @Override @NotNull default Term visitConCall(CallTerm.@NotNull Con conCall, P p) {
+    var def = conCall.conHead().core;
+    // Not yet type checked
+    if (def == null) return conCall;
+    var args = conCall.args();
+    var tele = def.telescope().toImmutableSeq();
+    assert args.sizeEquals(tele.size());
+    assert Term.Param.checkSubst(tele, args);
+    var subst = buildSubst(tele, args);
+    for (var matchy : def.clauses()) {
+      var termSubst = PatMatcher.tryBuildSubst(matchy.patterns(), args);
+      if (termSubst != null) {
+        subst.add(termSubst);
+        return matchy.expr().subst(subst);
+      }
+    }
+    return conCall;
+  }
+
   @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
     var def = fnCall.fnRef().core;
     // Not yet type checked
