@@ -1,0 +1,10 @@
+In file $FILE:9:16 ->
+
+  7 |   | false
+  8 | 
+  9 | \def u : Nat => true
+                      ^--^
+  
+Error: The expected type `Nat` does not match the actual type `Bool`
+Tycking interrupted due to errors.
+What are you doing?
