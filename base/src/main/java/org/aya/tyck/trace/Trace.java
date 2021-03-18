@@ -94,7 +94,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     @NotNull Term term, @NotNull Pattern pat,
     @NotNull SourcePos pos,
     @NotNull Buffer<@NotNull Trace> children
-    ) implements Trace {
+  ) implements Trace {
     public PatT(@NotNull Term term, @NotNull Pattern pat, @NotNull SourcePos pos) {
       this(term, pat, pos, Buffer.of());
     }

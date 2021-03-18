@@ -169,6 +169,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var field = (DefVar<StructDef.Field, Decl.StructField>) var;
       var ty = Def.defResult(field);
       var refExpr = new Expr.RefExpr(field.concrete.sourcePos(), field);
+      // TODO[ice]: correct this RefTerm
       return result(refExpr, expected, ty, new RefTerm(new LocalVar(field.name())));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";

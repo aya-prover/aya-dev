@@ -20,7 +20,6 @@ import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
