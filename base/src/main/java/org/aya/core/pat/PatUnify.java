@@ -41,6 +41,7 @@ public record PatUnify(
     if (as == null) return;
     unifier.lhsSubst.add(as, rhs.toTerm());
     unifier.localCtx.put(as, rhs.type());
+    if (!(rhs instanceof Pat.Bind)) rhs.accept(new PatTyper(unifier.localCtx), Unit.unit());
   }
 
   private <T> T reportError(@NotNull Pat lhs, @NotNull Pat pat) {
