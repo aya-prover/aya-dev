@@ -34,30 +34,33 @@ public record PatClassifier(
     @NotNull ImmutableSeq<Pat.@NotNull Clause> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos
   ) {
-    return classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos);
+    return classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, true);
   }
 
   private static @NotNull ImmutableSeq<PatClass> classify(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos
+    @NotNull Reporter reporter, @NotNull SourcePos pos,
+    boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), clause.expr(), index)));
+      new SubPats(clause.patterns(), clause.expr(), index)), coverage);
   }
 
   public static void test(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos
+    @NotNull Reporter reporter, @NotNull SourcePos pos,
+    boolean coverage
   ) {
-    classify(clauses, reporter, pos);
+    classify(clauses, reporter, pos, coverage);
   }
 
   /**
    * @param subPatsSeq should be of the same length, and should <strong>not</strong> be empty.
+   * @param coverage   if true, in uncovered cases an error will be reported
    * @return pattern classes
    */
-  private @NotNull ImmutableSeq<PatClass> classifySub(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
+  private @NotNull ImmutableSeq<PatClass> classifySub(@NotNull ImmutableSeq<SubPats> subPatsSeq, boolean coverage) {
     assert !subPatsSeq.isEmpty();
     var pivot = subPatsSeq.first();
     // Done
@@ -72,7 +75,7 @@ public record PatClassifier(
       .toImmutableSeq();
     if (!hasTuple.isEmpty()) {
       builder.shiftEmpty(explicit);
-      return classifySub(hasTuple);
+      return classifySub(hasTuple, coverage);
     }
     var hasMatch = subPatsSeq.view()
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Ctor ctor ? ctor.type() : null)
@@ -80,7 +83,7 @@ public record PatClassifier(
     // Progress
     if (hasMatch.isEmpty()) {
       builder.shiftEmpty(explicit);
-      return classifySub(subPatsSeq.map(SubPats::drop));
+      return classifySub(subPatsSeq.map(SubPats::drop), coverage);
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
@@ -90,13 +93,15 @@ public record PatClassifier(
         .toImmutableSeq();
       builder.shift(new PatTree(ctor.ref().name(), explicit));
       if (matches.isEmpty()) {
-        reporter.report(new MissingCaseError(pos, builder.root()));
-        throw new ExprTycker.TyckInterruptedException();
+        if (coverage) {
+          reporter.report(new MissingCaseError(pos, builder.root()));
+          throw new ExprTycker.TyckInterruptedException();
+        } else continue;
       }
-      var classified = classifySub(matches);
+      var classified = classifySub(matches, coverage);
       builder.reduce();
       var clazz = classified.flatMap(pat -> pat.extract(subPatsSeq).map(SubPats::drop));
-      var rest = classifySub(clazz);
+      var rest = classifySub(clazz, coverage);
       builder.unshift();
       buffer.appendAll(rest);
     }

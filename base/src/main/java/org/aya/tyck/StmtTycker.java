@@ -134,7 +134,7 @@ public record StmtTycker(
         right -> patTycker.elabClause(right, signature)));
       var body = what._2.mapRight(cs -> {
         if (!cs.isEmpty())
-          PatClassifier.test(cs, reporter, decl.sourcePos);
+          PatClassifier.test(cs, reporter, decl.sourcePos, true);
         return cs.flatMap(Pat.Clause::fromProto);
       });
       return new FnDef(decl.ref, ctxTele, resultTele, what._1, body);
