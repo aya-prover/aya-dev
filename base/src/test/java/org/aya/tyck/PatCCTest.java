@@ -53,7 +53,7 @@ public class PatCCTest {
       \\def max (a : \\Sig Nat ** Nat) (b : Unit) : Nat
        | (zero, b), unit x => b
        | (a, zero), y => a
-       | (suc a, suc b), unit y => suc (max (a, b))""");
+       | (suc a, suc b), unit y => suc (max (a, b) (unit zero))""");
     var clauses = ((FnDef) decls.get(2)).body().getRightValue();
     var classified = PatClassifier.testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
     assertEquals(4, classified.size());
