@@ -13,7 +13,7 @@ public record RedefinitionError(
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(Doc.plain("Redefinition of "), Doc.plain(kind.toString()),
+    return Doc.hcat(Doc.plain("Redefinition of "), Doc.plain(kind.prettyName),
       Doc.plain(" `"), Doc.plain(name), Doc.plain("`"));
   }
 
@@ -22,15 +22,13 @@ public record RedefinitionError(
   }
 
   public enum Kind {
-    Ctor,
-    Field;
+    Ctor("constructor"),
+    Field("field");
 
-    @Override
-    public String toString() {
-      return switch (this) {
-        case Ctor -> "constructor";
-        case Field -> "field";
-      };
+    final @NotNull String prettyName;
+
+    Kind(@NotNull String name) {
+      prettyName = name;
     }
   }
 }
