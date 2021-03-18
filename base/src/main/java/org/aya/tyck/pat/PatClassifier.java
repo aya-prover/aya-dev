@@ -22,7 +22,6 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.tuple.primitive.IntTuple2;
 import org.jetbrains.annotations.*;
 
 /**
@@ -33,6 +32,7 @@ public record PatClassifier(
   @NotNull SourcePos pos,
   @NotNull PatTree.Builder builder
 ) {
+  /** Prefer using {@link PatClassifier#classify(ImmutableSeq, Reporter, SourcePos, boolean)} in production code. */
   @TestOnly @VisibleForTesting
   public static @NotNull ImmutableSeq<PatClass> testClassify(
     @NotNull ImmutableSeq<Pat.@NotNull Clause> clauses,
@@ -41,29 +41,28 @@ public record PatClassifier(
     return classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, true);
   }
 
-  private static @NotNull ImmutableSeq<PatClass> classify(
+  public static @NotNull ImmutableSeq<PatClass> classify(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos,
-    boolean coverage
+    @NotNull Reporter reporter, @NotNull SourcePos pos, boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), index, index)), coverage);
+      new SubPats(clause.patterns(), index)), coverage);
   }
 
-  public static void test(
+  public static void confluence(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
     @NotNull MetaContext metaContext, @NotNull SourcePos pos,
-    boolean coverage, @NotNull Term result
+    @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
   ) {
-    for (var results : classify(clauses, metaContext.reporter(), pos, coverage)) {
+    for (var results : classification) {
       var contents = results.contents;
       for (int i = 0, size = contents.size(); i < size; i++) {
-        var lhsIx = contents.get(i)._2;
+        int lhsIx = contents.get(i);
         var lhs = clauses.get(lhsIx);
         if (lhs.expr().isEmpty()) continue;
         for (int j = 0; j < size; j++) {
-          var rhsIx = contents.get(j)._2;
+          int rhsIx = contents.get(j);
           var rhs = clauses.get(rhsIx);
           if (rhs.expr().isEmpty()) continue;
           var lhsSubst = new Substituter.TermSubst(MutableMap.of());
@@ -92,13 +91,13 @@ public record PatClassifier(
     var pivot = subPatsSeq.first();
     // Done
     if (pivot.pats.isEmpty()) {
-      var oneClass = subPatsSeq.map(subPats -> IntTuple2.of(subPats.ix, subPats.oix));
+      var oneClass = subPatsSeq.map(SubPats::ix);
       return ImmutableSeq.of(new PatClass(oneClass));
     }
     var explicit = pivot.head().explicit();
     var hasTuple = subPatsSeq.view()
       .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
-        ? new SubPats(tuple.pats(), index, subPats.oix) : null)
+        ? new SubPats(tuple.pats(), index) : null)
       .toImmutableSeq();
     if (!hasTuple.isEmpty()) {
       builder.shiftEmpty(explicit);
@@ -145,34 +144,33 @@ public record PatClassifier(
   ) {
     var head = subPats.head();
     if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
-      return new SubPats(ctor.params(), ix, subPats.oix);
+      return new SubPats(ctor.params(), ix);
     if (head instanceof Pat.Bind bind) {
       var freshPat = ref.core.freshPat(bind.explicit());
-      return new SubPats(freshPat.params(), ix, subPats.oix);
+      return new SubPats(freshPat.params(), ix);
     }
     return null;
   }
 
   /**
-   * @param contents the first int is the index in the group, the second is in the original clause
    * @author ice1000
    */
-  public static record PatClass(@NotNull ImmutableSeq<IntTuple2> contents) {
+  public static record PatClass(@NotNull ImmutableSeq<Integer> contents) {
     private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
-      return contents.map(ints -> subPatsSeq.get(ints._1));
+      return contents.map(subPatsSeq::get);
     }
   }
 
   record SubPats(
     @NotNull SeqLike<Pat> pats,
-    int ix, int oix
+    int ix
   ) {
     @Contract(pure = true) public @NotNull Pat head() {
       return pats.first();
     }
 
     @Contract(pure = true) public @NotNull SubPats drop() {
-      return new SubPats(pats.view().drop(1), ix, oix);
+      return new SubPats(pats.view().drop(1), ix);
     }
   }
 }
