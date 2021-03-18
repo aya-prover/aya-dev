@@ -148,7 +148,8 @@ public sealed interface CallTerm extends Term {
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      // TODO[ice]: conditions
+      if (conHead.core == null) return Decision.YES;
+      if (!conHead.core.clauses().isEmpty()) return Decision.NO;
       return Decision.YES;
     }
 

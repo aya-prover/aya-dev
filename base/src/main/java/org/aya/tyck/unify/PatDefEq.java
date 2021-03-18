@@ -70,7 +70,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       if (lhs.whnf() != Decision.NO) return false;
       return defeq.compareWHNF(lhs, preRhs, type);
     }
-    return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.fnRef()));
+    // Lossy comparison
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.fnRef()))) return true;
+    return defeq.compareWHNF(lhs, rhs, type);
   }
 
   @Override
@@ -86,7 +88,10 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   public @NotNull Boolean visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof CallTerm.Con rhs) || lhs.conHead() != rhs.conHead()) return false;
+    if (!(preRhs instanceof CallTerm.Con rhs) || lhs.conHead() != rhs.conHead()) {
+      if (lhs.whnf() != Decision.NO) return false;
+      return defeq.compareWHNF(lhs, preRhs, type);
+    }
     return defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(), Def.defTele(lhs.dataRef()))
       && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Def.defTele(lhs.conHead()));
   }

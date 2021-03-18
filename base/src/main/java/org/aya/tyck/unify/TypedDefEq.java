@@ -74,7 +74,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   private boolean isNotCall(@NotNull Term term) {
-    return !(term instanceof CallTerm.Fn);
+    return !(term instanceof CallTerm.Fn || term instanceof CallTerm.Con);
   }
 
   public boolean compareWHNF(Term lhs, Term preRhs, @NotNull Term type) {
