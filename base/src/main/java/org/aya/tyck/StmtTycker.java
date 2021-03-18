@@ -85,10 +85,18 @@ public record StmtTycker(
     return checkTele(tycker, decl.telescope, tele -> {
       final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
       decl.signature = new Def.Signature(ctxTele, tele, result);
-      return new DataDef(decl.ref, ctxTele, tele, result, decl.body
-        // TODO[patterns]: deal with elim patterns
-        .map(ctor -> visitCtor(ctor._2, tycker))
-        .map(ctor -> Tuple.of(Option.<Pat>none(), ctor))
+      var body = decl.body.map(clause -> {
+        var recover = tycker.localCtx.localMap();
+        var patTyck = new PatTycker(tycker);
+        var pat = clause._1.map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
+        var ctor = visitCtor(clause._2, tycker);
+        if (clause._1.isDefined()) {
+          tycker.localCtx.localMap().clear();
+          tycker.localCtx.localMap().putAll(recover);
+        }
+        return Tuple.of(pat, ctor);
+      });
+      return new DataDef(decl.ref, ctxTele, tele, result, body
         .collect(ImmutableSeq.factory()));
     });
   }

@@ -174,7 +174,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var literal = ctx.literal();
     if (literal != null)
       return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitLiteral(literal), true));
+    var teleBinder = ctx.teleBinder();
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
+    if (teleBinder != null) {
+      var type = teleBinder.expr();
+      if (type != null) return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitExpr(type), true));
+      teleMaybeTypedExpr = teleBinder.teleMaybeTypedExpr();
+    }
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
     assert ctx.LBRACE() != null;
     return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(false);
