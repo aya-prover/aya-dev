@@ -1,0 +1,3 @@
+\data ℕ : \Set
+  | zero
+  | suc ℕ
