@@ -24,24 +24,23 @@ public record PatUnify(
   @NotNull LocalCtx localCtx
 ) implements Pat.Visitor<Pat, Unit> {
   @Override public Unit visitBind(Pat.@NotNull Bind bind, Pat pat) {
-    var v = bind.as();
-    lhsSubst.add(v, pat.toTerm());
-    localCtx.put(v, bind.type());
     return Unit.unit();
   }
 
   @Override public Unit visitTuple(Pat.@NotNull Tuple lhs, Pat pat) {
-    return pat instanceof Pat.Tuple rhs ? visitList(lhs.pats(), rhs.pats(), lhs.as(), rhs) : reportError(lhs, pat);
+    return pat instanceof Pat.Tuple rhs ? visitList(lhs.pats(), rhs.pats()) : reportError(lhs, pat);
   }
 
-  private Unit visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats, @Nullable LocalVar as, Pat rhs) {
-    if (as != null) {
-      lhsSubst.add(as, rhs.toTerm());
-      localCtx.put(as, rhs.type());
-    }
+  private Unit visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {
     assert rpats.sizeEquals(lpats.size());
     lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, localCtx));
     return Unit.unit();
+  }
+
+  private static void visitAs(@Nullable LocalVar as, Pat rhs, PatUnify unifier) {
+    if (as == null) return;
+    unifier.lhsSubst.add(as, rhs.toTerm());
+    unifier.localCtx.put(as, rhs.type());
   }
 
   private <T> T reportError(@NotNull Pat lhs, @NotNull Pat pat) {
@@ -53,12 +52,20 @@ public record PatUnify(
     if (!(pat instanceof Pat.Ctor rhs)) return reportError(lhs, pat);
     // lhs.dataRef == rhs.dataRef -- we're assuming this fact!
     assert lhs.ref() == rhs.ref();
-    return visitList(lhs.params(), rhs.params(), lhs.as(), rhs);
+    return visitList(lhs.params(), rhs.params());
   }
 
   private static void unifyPat(Pat lhs, Pat rhs, TermSubst lhsSubst, TermSubst rhsSubst, LocalCtx localCtx) {
-    if (rhs instanceof Pat.Bind) rhs.accept(new PatUnify(rhsSubst, lhsSubst, localCtx), lhs);
-    else lhs.accept(new PatUnify(lhsSubst, rhsSubst, localCtx), rhs);
+    PatUnify unify;
+    if (rhs instanceof Pat.Bind) {
+      unify = new PatUnify(rhsSubst, lhsSubst, localCtx);
+      rhs.accept(unify, lhs);
+    } else {
+      unify = new PatUnify(lhsSubst, rhsSubst, localCtx);
+      lhs.accept(unify, rhs);
+    }
+    visitAs(lhs.as(), rhs, unify);
+    visitAs(rhs.as(), lhs, unify);
   }
 
   /**

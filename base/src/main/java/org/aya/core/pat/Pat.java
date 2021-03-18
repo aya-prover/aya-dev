@@ -11,12 +11,14 @@ import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Unit;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kiva, ice1000
  */
+@Debug.Renderer(text = "toTerm().toDoc().renderWithPageWidth(114514)")
 public sealed interface Pat {
   @Nullable LocalVar as();
   @NotNull Term type();
