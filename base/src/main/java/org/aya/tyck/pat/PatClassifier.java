@@ -22,7 +22,7 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.control.Option;
+import org.glavo.kala.tuple.primitive.IntTuple2;
 import org.jetbrains.annotations.*;
 
 /**
@@ -48,7 +48,7 @@ public record PatClassifier(
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), clause.expr(), index)), coverage);
+      new SubPats(clause.patterns(), index, index)), coverage);
   }
 
   public static void test(
@@ -59,22 +59,22 @@ public record PatClassifier(
     for (var results : classify(clauses, metaContext.reporter(), pos, coverage)) {
       var contents = results.contents;
       for (int i = 0, size = contents.size(); i < size; i++) {
-        var lhs = contents.get(i);
-        var lhsClause = clauses.get(lhs);
-        if (lhsClause.expr().isEmpty()) continue;
+        var lhsIx = contents.get(i)._2;
+        var lhs = clauses.get(lhsIx);
+        if (lhs.expr().isEmpty()) continue;
         for (int j = 0; j < size; j++) {
-          var rhs = contents.get(j);
-          var rhsClause = clauses.get(rhs);
-          if (rhsClause.expr().isEmpty()) continue;
+          var rhsIx = contents.get(j)._2;
+          var rhs = clauses.get(rhsIx);
+          if (rhs.expr().isEmpty()) continue;
           var lhsSubst = new Substituter.TermSubst(MutableMap.of());
           var rhsSubst = new Substituter.TermSubst(MutableMap.of());
-          var ctx = PatUnify.unifyPat(lhsClause.patterns(), rhsClause.patterns(), lhsSubst, rhsSubst);
-          var lhsTerm = rhsClause.expr().get().subst(lhsSubst);
-          var rhsTerm = rhsClause.expr().get().subst(rhsSubst);
+          var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
+          var lhsTerm = lhs.expr().get().subst(lhsSubst);
+          var rhsTerm = rhs.expr().get().subst(rhsSubst);
           var unification = new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
             .compare(lhsTerm, rhsTerm, result);
           if (!unification) {
-            metaContext.report(new ConfluenceError(pos, i, j, lhsTerm, rhsTerm));
+            metaContext.report(new ConfluenceError(pos, lhsIx, rhsIx, lhsTerm, rhsTerm));
             throw new ExprTycker.TyckInterruptedException();
           }
         }
@@ -92,13 +92,13 @@ public record PatClassifier(
     var pivot = subPatsSeq.first();
     // Done
     if (pivot.pats.isEmpty()) {
-      var oneClass = subPatsSeq.map(SubPats::ix);
+      var oneClass = subPatsSeq.map(subPats -> IntTuple2.of(subPats.ix, subPats.oix));
       return ImmutableSeq.of(new PatClass(oneClass));
     }
     var explicit = pivot.head().explicit();
     var hasTuple = subPatsSeq.view()
       .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
-        ? flatTuple(tuple, index) : null)
+        ? new SubPats(tuple.pats(), index, subPats.oix) : null)
       .toImmutableSeq();
     if (!hasTuple.isEmpty()) {
       builder.shiftEmpty(explicit);
@@ -139,41 +139,40 @@ public record PatClassifier(
     return buffer.toImmutableSeq();
   }
 
-  private @NotNull SubPats flatTuple(Pat.Tuple tuple, int index) {
-    return new SubPats(tuple.pats(), Option.none(), index);
-  }
-
   private static @Nullable SubPats matches(
     SubPats subPats, int ix,
     @NotNull DefVar<DataDef.Ctor, DataCtor> ref
   ) {
     var head = subPats.head();
     if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
-      return new SubPats(ctor.params(), subPats.body, ix);
+      return new SubPats(ctor.params(), ix, subPats.oix);
     if (head instanceof Pat.Bind bind) {
       var freshPat = ref.core.freshPat(bind.explicit());
-      return new SubPats(freshPat.params(), subPats.body, ix);
+      return new SubPats(freshPat.params(), ix, subPats.oix);
     }
     return null;
   }
 
-  public static record PatClass(@NotNull ImmutableSeq<Integer> contents) {
+  /**
+   * @param contents the first int is the index in the group, the second is in the original clause
+   * @author ice1000
+   */
+  public static record PatClass(@NotNull ImmutableSeq<IntTuple2> contents) {
     private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
-      return contents.map(subPatsSeq::get);
+      return contents.map(ints -> subPatsSeq.get(ints._1));
     }
   }
 
   record SubPats(
     @NotNull SeqLike<Pat> pats,
-    @NotNull Option<Term> body,
-    int ix
+    int ix, int oix
   ) {
     @Contract(pure = true) public @NotNull Pat head() {
       return pats.first();
     }
 
     @Contract(pure = true) public @NotNull SubPats drop() {
-      return new SubPats(pats.view().drop(1), body, ix);
+      return new SubPats(pats.view().drop(1), ix, oix);
     }
   }
 }
