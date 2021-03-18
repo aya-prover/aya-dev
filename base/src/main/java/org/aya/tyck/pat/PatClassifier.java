@@ -9,6 +9,7 @@ import org.aya.concrete.Decl.DataCtor;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatToSubst;
+import org.aya.core.pat.PatUnify;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.MissingCaseError;
@@ -86,8 +87,9 @@ public record PatClassifier(
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
     for (var ctor : hasMatch.first().availableCtors()) {
+      var freshPat = ctor.ref().core.freshPat(explicit);
       var matches = subPatsSeq.view()
-        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor.ref()))
+        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor.ref(), freshPat))
         .toImmutableSeq();
       builder.shift(new PatTree(ctor.ref().name(), explicit));
       if (matches.isEmpty()) {
@@ -111,14 +113,17 @@ public record PatClassifier(
 
   private static @Nullable SubPats matches(
     SubPats subPats, int ix,
-    @NotNull DefVar<DataDef.Ctor, DataCtor> ref
+    @NotNull DefVar<DataDef.Ctor, DataCtor> ref,
+    Pat.@NotNull Ctor freshPat
   ) {
     var head = subPats.head();
     var bodySubst = subPats.bodySubst;
-    if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
+    if (head instanceof Pat.Ctor ctor && ctor.ref() == ref) {
+      // Not supposed to fail
+      bodySubst.add(PatUnify.unify(freshPat, ctor).get());
       return new SubPats(ctor.params(), bodySubst, ix);
+    }
     if (head instanceof Pat.Bind bind) {
-      var freshPat = ref.core.freshPat(bind.explicit());
       bodySubst.add(bind.as(), freshPat.toTerm());
       return new SubPats(freshPat.params(), bodySubst, ix);
     }
