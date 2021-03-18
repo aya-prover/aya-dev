@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public final class PatToTerm implements Pat.Visitor<Unit, Term> {
-  public static final @NotNull PatToTerm INSTANCE = new PatToTerm();
+final class PatToTerm implements Pat.Visitor<Unit, Term> {
+  static final @NotNull PatToTerm INSTANCE = new PatToTerm();
 
   private PatToTerm() {
   }

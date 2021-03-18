@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author ice1000
  */
-public record PatTyper(@NotNull LocalCtx localCtx) implements Pat.Visitor<Unit, Unit> {
+record PatTyper(@NotNull LocalCtx localCtx) implements Pat.Visitor<Unit, Unit> {
   @Override public Unit visitBind(Pat.@NotNull Bind bind, Unit unit) {
     localCtx.put(bind.as(), bind.type());
     return unit;
