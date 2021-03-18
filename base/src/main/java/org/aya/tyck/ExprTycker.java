@@ -31,8 +31,10 @@ import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.function.TriFunction;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -256,7 +258,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     structTele.view().zip(structCall.args())
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
-    var fields = Buffer.<Tuple2<String, Term>>of();
+    var fields = MutableMap.<String, Term>of();
     var missing = Buffer.<String>of();
     var conFields = expr.fields().view();
 
@@ -267,7 +269,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         else {
           // use default value from defField
           var field = defField.body().get().subst(subst);
-          fields.append(Tuple.of(defField.ref().name(), field));
+          fields.put(defField.ref().name(), field);
           subst.add(defField.ref(), field);
         }
         continue;
@@ -278,7 +280,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var fieldRes = conField.accept(this, null);
       unifyTyThrowing(type, fieldRes.type.subst(subst), conField);
       var field = fieldRes.wellTyped.subst(subst);
-      fields.append(Tuple.of(defField.ref().name(), field));
+      fields.put(defField.ref().name(), field);
       subst.add(defField.ref(), field);
     }
 
@@ -292,7 +294,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     // TODO: and then create a StructTerm? what about reusing the TupTerm?
-    return new Result(new NewTerm(fields.toImmutableSeq()), structCall.subst(subst));
+    return new Result(new NewTerm(ImmutableMap.from(fields)),
+      structCall.subst(subst));
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {

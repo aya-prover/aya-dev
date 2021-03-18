@@ -9,9 +9,11 @@ import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final TermPrettier INSTANCE = new TermPrettier();
@@ -93,11 +95,13 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitNew(@NotNull NewTerm newTerm, Boolean aBoolean) {
+    Iterable<Tuple2<String, Term>> iterable = () -> newTerm.params().iterator();
     return Doc.cat(
       Doc.plain("\\new { "),
-      newTerm.params().stream().map(t ->
-        Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
-      ).reduce(Doc.empty(), Doc::hsep),
+      StreamSupport.stream(iterable.spliterator(), false)
+        .map(t ->
+          Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc()))
+        .reduce(Doc.empty(), Doc::hsep),
       Doc.plain(" }")
     );
   }
