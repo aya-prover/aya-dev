@@ -8,18 +8,18 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl.DataCtor;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
+import org.aya.core.pat.PatUnify;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.MissingCaseError;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.primitive.IntObjTuple2;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 /**
  * @author ice1000, kiva
@@ -29,7 +29,7 @@ public record PatClassifier(
   @NotNull SourcePos pos,
   @NotNull PatTree.Builder builder
 ) {
-  @TestOnly
+  @TestOnly @VisibleForTesting
   public static @NotNull ImmutableSeq<PatClass> testClassify(
     @NotNull ImmutableSeq<Pat.@NotNull Clause> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos
@@ -52,7 +52,21 @@ public record PatClassifier(
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     boolean coverage
   ) {
-    classify(clauses, reporter, pos, coverage);
+    for (var results : classify(clauses, reporter, pos, coverage)) {
+      var contents = results.contents;
+      for (int i = 0, size = contents.size(); i < size; i++) {
+        var lhs = contents.get(i);
+        if (lhs._2.isEmpty()) continue;
+        for (int j = 0; j < size; j++) {
+          var rhs = contents.get(j);
+          if (rhs._2.isEmpty()) continue;
+          var lhsSubst = new Substituter.TermSubst(MutableMap.of());
+          var rhsSubst = new Substituter.TermSubst(MutableMap.of());
+          PatUnify.unifyPat(clauses.get(lhs._1).patterns(), clauses.get(rhs._1).patterns(), lhsSubst, rhsSubst);
+          // TODO[ice]: unify the terms
+        }
+      }
+    }
   }
 
   /**
