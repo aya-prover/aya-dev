@@ -115,9 +115,13 @@ literal : ID
         ;
 
 tele : literal
-     | LPAREN teleMaybeTypedExpr ')'
+     | LPAREN teleBinder ')'
      | LBRACE teleMaybeTypedExpr '}'
      ;
+
+// Explicit arguments may be anonymous
+teleBinder : teleMaybeTypedExpr
+           | expr;
 
 teleMaybeTypedExpr : ids type?;
 
