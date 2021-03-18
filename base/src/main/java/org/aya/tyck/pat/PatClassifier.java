@@ -96,7 +96,11 @@ public record PatClassifier(
         if (coverage) {
           reporter.report(new MissingCaseError(pos, builder.root()));
           throw new ExprTycker.TyckInterruptedException();
-        } else continue;
+        } else {
+          builder.reduce();
+          builder.unshift();
+          continue;
+        }
       }
       var classified = classifySub(matches, coverage);
       builder.reduce();

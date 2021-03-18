@@ -73,7 +73,8 @@ public record StmtTycker(
       var patTycker = new PatTycker(tycker);
       var elabClauses = ctor.clauses
         .map(c -> patTycker.visitMatch(c, signature)._2);
-      // TODO[ice]: confluence check
+      if (!elabClauses.isEmpty())
+        PatClassifier.test(elabClauses, reporter, ctor.sourcePos, false);
       var clauses = elabClauses.flatMap(Pat.Clause::fromProto);
       return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
     });
@@ -89,7 +90,7 @@ public record StmtTycker(
         var patTyck = new PatTycker(tycker);
         var pat = clause._1.map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
         var ctor = visitCtor(clause._2, tycker);
-        if (clause._1.isDefined()) {
+        if (pat.isDefined()) {
           tycker.localCtx.localMap().clear();
           tycker.localCtx.localMap().putAll(recover);
         }
