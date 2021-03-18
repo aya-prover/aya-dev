@@ -32,7 +32,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = conCall.conHead().core;
     // Not yet type checked
     if (def == null) return conCall;
-    var args = conCall.args();
+    var args = conCall.args().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var tele = def.telescope().toImmutableSeq();
     assert args.sizeEquals(tele.size());
     assert Term.Param.checkSubst(tele, args);
@@ -41,7 +41,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var termSubst = PatMatcher.tryBuildSubst(matchy.patterns(), args);
       if (termSubst != null) {
         subst.add(termSubst);
-        return matchy.expr().subst(subst);
+        return matchy.expr().subst(subst).accept(this, p);
       }
     }
     return conCall;
@@ -63,7 +63,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var termSubst = PatMatcher.tryBuildSubst(matchy.patterns(), args);
       if (termSubst != null) {
         subst.add(termSubst);
-        return matchy.expr().subst(subst);
+        return matchy.expr().subst(subst).accept(this, p);
       }
     }
     // Unfold failed
@@ -84,6 +84,12 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       if (!unfolding.contains(fnCall.fnRef())) return fnCall;
       unfolded.add(fnCall.fnRef());
       return Unfolder.super.visitFnCall(fnCall, emptyTuple);
+    }
+
+    @Override public @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
+      if (!unfolding.contains(conCall.conHead())) return conCall;
+      unfolded.add(conCall.conHead());
+      return Unfolder.super.visitConCall(conCall, unit);
     }
   }
 }
