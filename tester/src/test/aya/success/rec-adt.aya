@@ -9,4 +9,4 @@
 
 \data List (A : \Set) : \Set
  | nil
- | cons A (x : List A)
+ | cons A (List A)
