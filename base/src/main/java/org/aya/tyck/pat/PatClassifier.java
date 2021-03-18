@@ -74,8 +74,6 @@ public record PatClassifier(
           var unification = new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
             .compare(lhsTerm, rhsTerm, result);
           if (!unification) {
-            new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
-              .compare(lhsTerm, rhsTerm, result);
             metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
             throw new ExprTycker.TyckInterruptedException();
           }
