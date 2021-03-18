@@ -37,17 +37,28 @@ public record RangeSpan(
 
     int tabWidth = config.tabWidth();
 
-    for (char c : input.toCharArray()) {
+    var chars = input.toCharArray();
+    while (pos < chars.length) {
+      char c = chars[pos];
       int oldPos = pos++;
       int oldCol = col;
-      switch (c) {
-        case '\n' -> {
-          line++;
-          col = 0;
-        }
+
+      if (c == '\n') {
+        line++;
+        col = 0;
+      } else if (c == '\t') {
         // treat tab as tabWidth-length-ed spaces
-        case '\t' -> col += tabWidth;
-        default -> col++;
+        col += tabWidth;
+      } else if (Character.isHighSurrogate(c)
+        && pos < chars.length
+        && Character.isLowSurrogate(chars[pos])) {
+        pos++;
+        col += 2;
+      } else if (c > 128 && (Character.isUnicodeIdentifierStart(c)
+        || Character.isUnicodeIdentifierPart(c))) {
+        col += 2;
+      } else {
+        col += 1;
       }
 
       if (oldPos == start) {
