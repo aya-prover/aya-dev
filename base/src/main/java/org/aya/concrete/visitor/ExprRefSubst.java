@@ -27,7 +27,7 @@ public record ExprRefSubst(
       throw new ExprTycker.TyckInterruptedException();
     }
     var rv = good.getOption(v);
-    if (rv.isDefined()) return new Expr.RefExpr(expr.sourcePos(), rv.get());
+    if (rv.isDefined()) return new Expr.RefExpr(expr.sourcePos(), rv.get()).accept(this, unit);
     else return expr;
   }
 
