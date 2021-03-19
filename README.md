@@ -1,6 +1,6 @@
 [![actions]](https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml)
 [![](https://jitpack.io/v/aya-prover/aya-dev.svg)](https://jitpack.io/#aya-prover/aya-dev)
-[![Gitter](https://badges.gitter.im/aya-prover/community.svg)](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
 
 You need Java 16 to setup this project.
@@ -20,3 +20,4 @@ You need Java 16 to setup this project.
 [@ice1000]: https://github.com/ice1000
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
 [codecov]: https://codecov.io/gh/aya-prover/aya-dev/branch/main/graph/badge.svg?token=Z4CDKG8VSX
+[gitter]: https://badges.gitter.im/aya-prover/community.svg
