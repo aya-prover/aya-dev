@@ -51,10 +51,14 @@ public record StmtTycker(
 
   @Override public void traceEntrance(@NotNull Signatured sig, ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.DeclT(sig.ref(), sig.sourcePos)));
+    tycker.localCtx = tycker.localCtx.derive();
   }
 
-  @Override public void traceExit(ExprTycker exprTycker, Def def) {
+  @Override public void traceExit(ExprTycker tycker, Def def) {
     tracing(Trace.Builder::reduce);
+    var parent = tycker.localCtx.parent();
+    assert parent != null;
+    tycker.localCtx = parent;
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
@@ -88,14 +92,13 @@ public record StmtTycker(
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(ctxTele, tele, result);
     var body = decl.body.map(clause -> {
-      var recover = !clause._1.isEmpty() ? tycker.localCtx.clone() : null;
+      tycker.localCtx = tycker.localCtx.derive();
       var patTyck = new PatTycker(tycker);
       var pat = clause._1.map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
       var ctor = visitCtor(clause._2, tycker);
-      if (!clause._1.isEmpty()) {
-        assert recover != null;
-        tycker.localCtx = recover;
-      }
+      var parent = tycker.localCtx.parent();
+      assert parent != null;
+      tycker.localCtx = parent;
       return Tuple.of(pat, ctor);
     });
     var collectedBody = body.collect(ImmutableSeq.factory());

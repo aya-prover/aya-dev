@@ -9,15 +9,16 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
 /**
- * @author re-xyr
+ * @author re-xyr, ice1000
  */
-public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap) implements Cloneable {
+public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable LocalCtx parent) {
   public LocalCtx() {
-    this(MutableHashMap.of());
+    this(MutableHashMap.of(), null);
   }
 
   public <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
@@ -41,7 +42,7 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap) implements 
     localMap.set(var, term);
   }
 
-  @Override public @NotNull LocalCtx clone() {
-    return new LocalCtx(MutableMap.from(localMap));
+  public @NotNull LocalCtx derive() {
+    return new LocalCtx(MutableMap.create(), this);
   }
 }
