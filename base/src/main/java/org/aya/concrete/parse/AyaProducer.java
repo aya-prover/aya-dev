@@ -513,7 +513,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Pattern.Clause visitClause(AyaParser.ClauseContext ctx) {
-    return new Pattern.Clause(visitPatterns(ctx.patterns()),
+    return new Pattern.Clause(sourcePosOf(ctx), visitPatterns(ctx.patterns()),
       Option.of(ctx.expr()).map(this::visitExpr));
   }
 

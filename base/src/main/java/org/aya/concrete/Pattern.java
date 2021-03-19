@@ -105,6 +105,7 @@ public sealed interface Pattern {
    * @author kiva, ice1000
    */
   record Clause(
+    @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pattern> patterns,
     @NotNull Option<Expr> expr
   ) {

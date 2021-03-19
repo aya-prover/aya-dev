@@ -63,9 +63,11 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
   elabClause(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, Ref<Def.@NotNull Signature> signature) {
-    var res = clauses.map(clause -> {
+    var res = clauses.mapIndexed((index, clause) -> {
+      tracing(builder -> builder.shift(new Trace.ClauseT(clause.sourcePos(), index)));
       var elabClause = visitMatch(clause, signature.value);
       signature.value = signature.value.mapTerm(elabClause._1);
+      tracing(GenericBuilder::reduce);
       return elabClause._2;
     });
     return Tuple.of(signature.value.result(), res);

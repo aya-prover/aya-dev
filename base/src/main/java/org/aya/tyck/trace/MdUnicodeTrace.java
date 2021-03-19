@@ -63,25 +63,32 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
     return unit;
   }
 
-  @Override
-  public Unit visitTyck(Trace.@NotNull TyckT t, Unit unit) {
+  @Override public Unit visitTyck(Trace.@NotNull TyckT t, Unit unit) {
     indent();
     builder.append("result \u22A2 `")
       .append(t.term().toDoc().renderWithPageWidth(WIDTH))
       .append("` \u2191 ")
       .append(t.type().toDoc().renderWithPageWidth(WIDTH))
       .append(lineSep);
+    assert t.children().isEmpty();
     return unit;
   }
 
-  @Override
-  public Unit visitPat(Trace.@NotNull PatT t, Unit unit) {
+  @Override public Unit visitPat(Trace.@NotNull PatT t, Unit unit) {
     indent();
     builder.append("pat \u22A2 `")
       .append(t.pat().toDoc().renderWithPageWidth(WIDTH))
       .append("` : ")
       .append(t.term().toDoc().renderWithPageWidth(WIDTH))
       .append(lineSep);
+    visitSub(t.children());
+    return unit;
+  }
+
+  @Override public Unit visitClause(Trace.@NotNull ClauseT t, Unit unit) {
+    indent();
+    builder.append("clause ").append(t.index());
+    visitSub(t.children());
     return unit;
   }
 }

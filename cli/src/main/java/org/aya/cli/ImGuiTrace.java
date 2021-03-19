@@ -132,8 +132,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitTyck(Trace.@NotNull TyckT t, JImGui imGui) {
+  @Override public Unit visitTyck(Trace.@NotNull TyckT t, JImGui imGui) {
     var term = t.term();
     var type = t.type();
     var s = term.toDoc().renderWithPageWidth(PAGE_WIDTH) +
@@ -144,8 +143,12 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitPat(Trace.@NotNull PatT t, JImGui imGui) {
+  @Override public Unit visitClause(Trace.@NotNull ClauseT t, JImGui imGui) {
+    visitSub("clause " + t.index(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
+    return Unit.unit();
+  }
+
+  @Override public Unit visitPat(Trace.@NotNull PatT t, JImGui imGui) {
     var type = t.term();
     var pat = t.pat();
     var s = pat.toDoc().renderWithPageWidth(PAGE_WIDTH) +
