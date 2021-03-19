@@ -25,7 +25,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     R visitDecl(@NotNull DeclT t, P p);
     R visitTyck(@NotNull TyckT t, P p);
     R visitPat(@NotNull PatT t, P p);
-    R visitClause(@NotNull ClauseT t, P p);
+    R visitLabel(@NotNull Trace.LabelT t, P p);
   }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
@@ -36,17 +36,17 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     }
   }
 
-  record ClauseT(
+  record LabelT(
     @NotNull SourcePos pos,
-    int index,
+    @NotNull String label,
     @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
-    public ClauseT(@NotNull SourcePos pos, int i) {
-      this(pos, i, Buffer.of());
+    public LabelT(@NotNull SourcePos pos, @NotNull String label) {
+      this(pos, label, Buffer.of());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitClause(this, p);
+      return visitor.visitLabel(this, p);
     }
   }
 

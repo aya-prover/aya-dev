@@ -143,8 +143,8 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     return Unit.unit();
   }
 
-  @Override public Unit visitClause(Trace.@NotNull ClauseT t, JImGui imGui) {
-    visitSub("clause " + t.index(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
+  @Override public Unit visitLabel(Trace.@NotNull LabelT t, JImGui imGui) {
+    visitSub(t.label(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
 

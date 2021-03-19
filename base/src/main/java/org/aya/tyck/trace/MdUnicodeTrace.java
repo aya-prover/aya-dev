@@ -85,9 +85,9 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
     return unit;
   }
 
-  @Override public Unit visitClause(Trace.@NotNull ClauseT t, Unit unit) {
+  @Override public Unit visitLabel(Trace.@NotNull LabelT t, Unit unit) {
     indent();
-    builder.append("clause ").append(t.index());
+    builder.append(t.label());
     visitSub(t.children());
     return unit;
   }
