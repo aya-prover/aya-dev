@@ -30,12 +30,20 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
 
   public @NotNull ImmutableSeq<Term.Param> extract() {
     var ctx = Buffer.<Term.Param>of();
-    localMap.mapTo(ctx, (k, v) -> new Term.Param(k, v, false));
+    var map = this;
+    while (map != null) {
+      map.localMap.mapTo(ctx, (k, v) -> new Term.Param(k, v, false));
+      map = map.parent;
+    }
     return ctx.toImmutableSeq();
   }
 
   public @NotNull Term get(LocalVar var) {
-    return localMap.get(var);
+    return localMap.getOrElse(var, () -> parentGet(var));
+  }
+
+  private @Nullable Term parentGet(LocalVar var) {
+    return parent != null ? parent.get(var) : null;
   }
 
   public void put(LocalVar var, @NotNull Term term) {
