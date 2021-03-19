@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author re-xyr, iec1000
  */
-public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
+public final class StmtResolver implements Stmt.NoTraceVisitor<Unit, Unit> {
   public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
 
   private StmtResolver() {

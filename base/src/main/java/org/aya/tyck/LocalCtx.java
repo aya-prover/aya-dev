@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 /**
  * @author re-xyr
  */
-public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap) {
+public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap) implements Cloneable {
   public LocalCtx() {
     this(MutableHashMap.of());
   }
@@ -39,5 +39,9 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap) {
 
   public void put(LocalVar var, @NotNull Term term) {
     localMap.set(var, term);
+  }
+
+  public @NotNull LocalCtx clone() {
+    return new LocalCtx(MutableHashMap.from(localMap));
   }
 }

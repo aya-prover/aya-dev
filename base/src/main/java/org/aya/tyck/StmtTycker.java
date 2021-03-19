@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
-) implements Signatured.Visitor<ExprTycker, Def> {
+) implements Signatured.Visitor<ExprTycker, Def, LocalCtx> {
   public @NotNull ExprTycker newTycker() {
     final var tycker = new ExprTycker(reporter);
     tycker.traceBuilder = traceBuilder;
@@ -49,12 +49,14 @@ public record StmtTycker(
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override public void traceEntrance(@NotNull Signatured sig, ExprTycker tycker) {
+  @Override public @NotNull LocalCtx traceEntrance(@NotNull Signatured sig, ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.DeclT(sig.ref(), sig.sourcePos)));
+    return tycker.localCtx.clone();
   }
 
-  @Override public void traceExit(ExprTycker exprTycker, Def def) {
+  @Override public void traceExit(ExprTycker exprTycker, Def def, LocalCtx localCtx) {
     tracing(Trace.Builder::reduce);
+    exprTycker.localCtx = localCtx;
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
@@ -88,13 +90,13 @@ public record StmtTycker(
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(ctxTele, tele, result);
     var body = decl.body.map(clause -> {
-      var recover = tycker.localCtx.localMap();
+      var recover = clause._1.isDefined() ? tycker.localCtx.clone() : null;
       var patTyck = new PatTycker(tycker);
       var pat = clause._1.map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
       var ctor = visitCtor(clause._2, tycker);
-      if (pat.isDefined()) {
-        tycker.localCtx.localMap().clear();
-        tycker.localCtx.localMap().putAll(recover);
+      if (clause._1.isDefined()) {
+        assert recover != null;
+        tycker.localCtx = recover;
       }
       return Tuple.of(pat, ctor);
     });

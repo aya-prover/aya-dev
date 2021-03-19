@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
-  public final @NotNull LocalCtx localCtx;
+  public @NotNull LocalCtx localCtx;
   public Trace.@Nullable Builder traceBuilder = null;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
