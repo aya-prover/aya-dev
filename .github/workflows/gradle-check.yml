@@ -30,7 +30,3 @@ jobs:
           directory: ./build/reports/
           path_to_write_report: ./build/codecov_report.txt
           verbose: true
-      - uses: actions/upload-artifact@master
-        with:
-          name: coverage-reports
-          path: build/reports/jacoco/mergeJacocoReports/html
