@@ -694,7 +694,7 @@ public sealed interface Doc {
    */
   @Contract("-> new")
   static @NotNull Doc softLine() {
-    return new Union(line(), plain(" "));
+    return new FlatAlt(plain(" "), new Line());
   }
 
   /**
@@ -704,7 +704,7 @@ public sealed interface Doc {
    */
   @Contract("-> new")
   static @NotNull Doc softLineEmpty() {
-    return new Union(line(), empty());
+    return new FlatAlt(plain(" "), empty());
   }
 
   /**

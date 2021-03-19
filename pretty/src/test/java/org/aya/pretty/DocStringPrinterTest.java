@@ -100,7 +100,13 @@ public class DocStringPrinterTest {
   @Test
   public void testFillSepNarrow() {
     var doc = fillSep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
-    assertEquals("boynext\nnext\ndoor\ndoooor", doc.renderWithPageWidth(7));
+    assertEquals("boynext\nnext door\ndoooor", doc.renderWithPageWidth(7));
+  }
+
+  @Test
+  public void testFillSep() {
+    var doc = fillSep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
+    assertEquals("boynext next door doooor", doc.renderWithPageWidth(114514));
   }
 
   @Test
