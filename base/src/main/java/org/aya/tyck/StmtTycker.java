@@ -20,6 +20,7 @@ import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -73,9 +74,13 @@ public record StmtTycker(
       var patTycker = new PatTycker(tycker);
       var elabClauses = ctor.clauses
         .map(c -> patTycker.visitMatch(c, signature)._2);
-      // TODO[ice]: confluence check
       var clauses = elabClauses.flatMap(Pat.Clause::fromProto);
-      return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
+      if (!elabClauses.isEmpty()) {
+        var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
+        var elaborated = new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
+        PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);
+        return elaborated;
+      } else return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
     });
   }
 
@@ -89,7 +94,7 @@ public record StmtTycker(
         var patTyck = new PatTycker(tycker);
         var pat = clause._1.map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
         var ctor = visitCtor(clause._2, tycker);
-        if (clause._1.isDefined()) {
+        if (pat.isDefined()) {
           tycker.localCtx.localMap().clear();
           tycker.localCtx.localMap().putAll(recover);
         }
@@ -132,12 +137,17 @@ public record StmtTycker(
       var what = FP.distR(decl.body.map(
         left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
         right -> patTycker.elabClause(right, signature)));
-      var body = what._2.mapRight(cs -> {
-        if (!cs.isEmpty())
-          PatClassifier.test(cs, reporter, decl.sourcePos);
-        return cs.flatMap(Pat.Clause::fromProto);
-      });
-      return new FnDef(decl.ref, ctxTele, resultTele, what._1, body);
+      var resultTy = what._1;
+      if (what._2.isLeft())
+        return new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.left(what._2.getLeftValue()));
+      var cs = what._2.getRightValue();
+      var elabClauses = cs.flatMap(Pat.Clause::fromProto);
+      if (!cs.isEmpty()) {
+        var classification = PatClassifier.classify(cs, tycker.metaContext.reporter(), decl.sourcePos, true);
+        var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(elabClauses));
+        PatClassifier.confluence(cs, tycker.metaContext, decl.sourcePos, resultTy, classification);
+        return elaborated;
+      } else return new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(elabClauses));
     });
   }
 

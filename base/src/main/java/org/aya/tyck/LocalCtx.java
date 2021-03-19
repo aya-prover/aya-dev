@@ -33,7 +33,11 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap) {
     return ctx.toImmutableSeq();
   }
 
-  public Term get(LocalVar var) {
+  public @NotNull Term get(LocalVar var) {
     return localMap.get(var);
+  }
+
+  public void put(LocalVar var, @NotNull Term term) {
+    localMap.set(var, term);
   }
 }

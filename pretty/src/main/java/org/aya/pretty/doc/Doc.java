@@ -132,7 +132,8 @@ public sealed interface Doc {
 
   /**
    * Return conditional {@link Doc#empty()}
-   * @param cond condition
+   *
+   * @param cond      condition
    * @param otherwise otherwise
    * @return {@link Empty} when {@code cond} is true, otherwise {@code otherwise}
    */
@@ -330,6 +331,18 @@ public sealed interface Doc {
   @Contract("_, _ -> new")
   static @NotNull Doc indent(int indent, @NotNull Doc doc) {
     return hang(indent, simpleCat(spaces(indent), doc));
+  }
+
+  @Contract("_ -> new")
+  static @NotNull Doc ordinal(int n) {
+    var m = n % 100;
+    if (m >= 4 && m <= 20) return Doc.plain(n + "th");
+    return Doc.plain(n + switch (n % 10) {
+      case 1 -> "st";
+      case 2 -> "nd";
+      case 3 -> "rd";
+      default -> "th";
+    });
   }
 
   /**

@@ -8,15 +8,18 @@ import org.aya.core.def.DataDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.LocalCtx;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Unit;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kiva, ice1000
  */
+@Debug.Renderer(text = "toTerm().toDoc().renderWithPageWidth(114514)")
 public sealed interface Pat {
   @Nullable LocalVar as();
   @NotNull Term type();
@@ -24,6 +27,9 @@ public sealed interface Pat {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   default @NotNull Term toTerm() {
     return accept(PatToTerm.INSTANCE, Unit.unit());
+  }
+  default void storeBindings(@NotNull LocalCtx localCtx) {
+    accept(new PatTyper(localCtx), Unit.unit());
   }
 
   interface Visitor<P, R> {

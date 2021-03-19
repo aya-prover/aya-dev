@@ -74,13 +74,14 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   private boolean isNotCall(@NotNull Term term) {
-    return !(term instanceof CallTerm.Fn);
+    return !(term instanceof CallTerm.Fn || term instanceof CallTerm.Con);
   }
 
   public boolean compareWHNF(Term lhs, Term preRhs, @NotNull Term type) {
     var whnf = lhs.normalize(NormalizeMode.WHNF);
-    if (Objects.equals(whnf, lhs)) return false;
-    return compare(whnf, preRhs.normalize(NormalizeMode.WHNF), type);
+    var rhsWhnf = preRhs.normalize(NormalizeMode.WHNF);
+    if (Objects.equals(whnf, lhs) && Objects.equals(rhsWhnf, preRhs)) return false;
+    return compare(whnf, rhsWhnf, type);
   }
 
   public <T> T checkParam(Term.@NotNull Param l, Term.@NotNull Param r, Supplier<T> fail, Supplier<T> success) {
