@@ -1,0 +1,10 @@
+In file $FILE:6:35 ->
+
+  4 |   | (zero, b), unit x => b
+  5 |   | (a, zero), y => a
+  6 |   | (suc a, suc b), unit y => suc (max (a, b))
+                                         ^--------^
+  
+Error: The expected type `Nat` does not match the actual type `\Pi (b : Unit) -> Nat`
+Tycking interrupted due to errors.
+What are you doing?

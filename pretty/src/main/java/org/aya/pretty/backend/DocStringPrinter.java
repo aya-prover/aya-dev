@@ -96,6 +96,9 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
     }
 
     private @NotNull Doc fitsBetter(@NotNull Doc a, @NotNull Doc b) {
+      if (isAtLineStart()) {
+        return a;
+      }
       return predictWidth(a) <= lineRemaining()
         ? a
         : b;

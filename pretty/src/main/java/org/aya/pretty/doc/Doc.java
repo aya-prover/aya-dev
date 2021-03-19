@@ -412,7 +412,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc cat(Doc @NotNull ... docs) {
-    return group(vcat(docs));
+    return simpleCat(docs);
   }
 
   /**
@@ -504,7 +504,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc fillCat(Doc @NotNull ... docs) {
-    return join(softLineEmpty(), docs);
+    return join(new FlatAlt(plain(" "), empty()), docs);
   }
 
   /**
@@ -664,7 +664,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc fillSep(Doc @NotNull ... docs) {
-    return join(softLine(), docs);
+    return join(new FlatAlt(plain(" "), new Line()), docs);
   }
 
   @Contract("_, _ -> new")
@@ -707,7 +707,7 @@ public sealed interface Doc {
    */
   @Contract("-> new")
   static @NotNull Doc softLine() {
-    return new FlatAlt(plain(" "), new Line());
+    return new Union(line(), plain(" "));
   }
 
   /**
@@ -717,7 +717,7 @@ public sealed interface Doc {
    */
   @Contract("-> new")
   static @NotNull Doc softLineEmpty() {
-    return new FlatAlt(plain(" "), empty());
+    return new Union(line(), empty());
   }
 
   /**
