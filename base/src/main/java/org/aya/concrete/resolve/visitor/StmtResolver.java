@@ -4,9 +4,9 @@ package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
-import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,15 +43,13 @@ public final class StmtResolver implements Stmt.NoTraceVisitor<Unit, Unit> {
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
     for (var bodyElement : decl.body) {
-      var localCtxWithPat = local._2;
-      if (bodyElement._1.isDefined()) {
-        var pat = bodyElement._1.get();
-        var patLocal = pat.accept(PatResolver.INSTANCE, local._2);
-        localCtxWithPat = patLocal._1;
-        bodyElement = Tuple2.of(Option.some(pat), bodyElement._2);
+      var localCtxWithPat = new Ref<>(local._2);
+      if (!bodyElement._1.isEmpty()) {
+        var pat = bodyElement._1.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
+        bodyElement = Tuple2.of(pat, bodyElement._2);
       }
       var ctor = bodyElement._2;
-      var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, localCtxWithPat);
+      var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses
         .map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));

@@ -113,7 +113,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
-    public @NotNull ImmutableSeq<Tuple2<Option<Pattern>, DataCtor>> body;
+    public @NotNull ImmutableSeq<Tuple2<ImmutableSeq<Pattern>, DataCtor>> body;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
@@ -121,7 +121,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
-      @NotNull ImmutableSeq<Tuple2<Option<Pattern>, DataCtor>> body,
+      @NotNull ImmutableSeq<Tuple2<ImmutableSeq<Pattern>, DataCtor>> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);

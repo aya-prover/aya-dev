@@ -90,11 +90,11 @@ public record StmtTycker(
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(ctxTele, tele, result);
     var body = decl.body.map(clause -> {
-      var recover = clause._1.isDefined() ? tycker.localCtx.clone() : null;
+      var recover = !clause._1.isEmpty() ? tycker.localCtx.clone() : null;
       var patTyck = new PatTycker(tycker);
       var pat = clause._1.map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
       var ctor = visitCtor(clause._2, tycker);
-      if (clause._1.isDefined()) {
+      if (!clause._1.isEmpty()) {
         assert recover != null;
         tycker.localCtx = recover;
       }

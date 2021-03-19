@@ -27,7 +27,7 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
     return new Pattern.Clause(match.sourcePos(), pats, match.expr().map(e -> e.resolve(ctx.value)));
   }
 
-  private Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
+  Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
     var res = pat.accept(this, ctx.value);
     ctx.value = res._1;
     return res._2;

@@ -9,7 +9,6 @@ import org.aya.concrete.Stmt;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,7 +86,7 @@ public class StmtPrettier implements Stmt.NoTraceVisitor<Unit, Doc> {
     );
   }
 
-  private Doc visitDataCtor(Option<Pattern> patterns, Decl.DataCtor ctor) {
+  private Doc visitDataCtor(ImmutableSeq<Pattern> patterns, Decl.DataCtor ctor) {
     var doc = Doc.cat(
       Doc.plain("| "),
       ctor.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
@@ -96,8 +95,10 @@ public class StmtPrettier implements Stmt.NoTraceVisitor<Unit, Doc> {
       visitTele(ctor.telescope),
       visitClauses(ctor.clauses, true)
     );
-    if (patterns.isDefined()) return Doc.hcat(Doc.plain("| "), patterns.get().toDoc(), Doc.plain(" => "), doc);
-    else return doc;
+    if (!patterns.isEmpty()) {
+      var pats = Doc.join(Doc.plain(","), patterns.stream().map(Pattern::toDoc));
+      return Doc.hcat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
+    } else return doc;
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {

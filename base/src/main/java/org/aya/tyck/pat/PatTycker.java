@@ -166,7 +166,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       // TODO[ice]: report error: not checked data
       return null;
     }
-    var selected = core.ctors().find(c -> Objects.equals(c.ref().name(), name));
+    var selected = dataCall.availableCtors().find(c -> Objects.equals(c.ref().name(), name));
     if (selected.isEmpty()) {
       // TODO[ice]: report error: cannot find ctor of name
       return null;

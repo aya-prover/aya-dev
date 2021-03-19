@@ -64,7 +64,7 @@ dataBody : ('|' dataCtor)       # dataCtors
 // TODO[imkiva]: some code commented in Arend.g4
 dataCtor : COERCE? ID tele* clauses?;
 
-dataCtorClause : '|' pattern IMPLIES dataCtor;
+dataCtorClause : '|' patterns IMPLIES dataCtor;
 
 module : '\\module' ID LBRACE stmt* '}';
 

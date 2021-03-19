@@ -8,6 +8,7 @@ import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Arg;
 import org.aya.util.Decision;
@@ -95,7 +96,14 @@ public sealed interface CallTerm extends Term {
     }
 
     public @NotNull SeqView<DataDef.@NotNull Ctor> availableCtors() {
-      return dataRef.core.ctors();
+      return dataRef.core.body().view()
+        .filter(t -> {
+          if (t._1.isEmpty()) return true;
+          // TODO[ice]: apply subst
+          var matchy = PatMatcher.tryBuildSubst(t._1, args);
+          return matchy != null;
+        })
+        .map(t -> t._2);
     }
   }
 

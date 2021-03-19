@@ -9,7 +9,6 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ public record DataDef(
   @NotNull ImmutableSeq<Term.Param> contextTele,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
-  @NotNull ImmutableSeq<Tuple2<Option<Pat>, Ctor>> body
+  @NotNull ImmutableSeq<Tuple2<ImmutableSeq<Pat>, Ctor>> body
   // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
@@ -33,13 +32,6 @@ public record DataDef(
   public static @NotNull DefVar<DataDef, Decl.DataDecl> fromCtor(@NotNull DefVar<Ctor, Decl.DataCtor> conHead) {
     if (conHead.core != null) return conHead.core.dataRef();
     else return conHead.concrete.dataRef;
-  }
-
-  // TODO: eliminated ctors
-  public @NotNull SeqView<@NotNull Ctor> ctors() {
-    return body.view()
-      .filter(t -> t._1.isEmpty())
-      .map(t -> t._2);
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

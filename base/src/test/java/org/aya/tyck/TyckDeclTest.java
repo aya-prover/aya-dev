@@ -20,6 +20,7 @@ import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,7 @@ public class TyckDeclTest {
         | suc n => zero""");
     var nat = (DataDef) defs.get(0);
     var xyr = (FnDef) defs.get(1);
-    var ctors = nat.ctors();
+    var ctors = nat.body().map(Tuple2::getValue);
     assertEquals(2, ctors.size());
     var clauses = xyr.body().getRightValue();
     var zeroToZero = ((Pat.Clause) clauses.get(0));
