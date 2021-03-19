@@ -14,6 +14,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
+import org.aya.generic.GenericBuilder;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
@@ -128,9 +129,11 @@ public record StmtTycker(
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
     var ctxTele = tycker.localCtx.extract();
+    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     return checkTele(tycker, decl.telescope, resultTele -> {
       // It might contain unsolved holes, but that's acceptable.
       var resultRes = decl.result.accept(tycker, null);
+      tracing(GenericBuilder::reduce);
       var signature = new Ref<>(new Def.Signature(ctxTele, resultTele, resultRes.wellTyped()));
       decl.signature = signature.value;
       var patTycker = new PatTycker(tycker);
@@ -159,8 +162,11 @@ public record StmtTycker(
       () -> action.apply(new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit())));
   }
 
-  private <T> T
-  checkTele(@NotNull ExprTycker exprTycker, @NotNull SeqLike<Expr.Param> tele, @NotNull Function<ImmutableSeq<Term.Param>, T> action) {
+  private <T> T checkTele(
+    @NotNull ExprTycker exprTycker,
+    @NotNull SeqLike<Expr.Param> tele,
+    @NotNull Function<ImmutableSeq<Term.Param>, T> action
+  ) {
     if (tele.isEmpty()) return action.apply(ImmutableSeq.of());
     return checkParam(exprTycker, tele.first(), param ->
       checkTele(exprTycker, tele.view().drop(1), params ->
