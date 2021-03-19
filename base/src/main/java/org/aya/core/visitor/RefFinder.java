@@ -10,6 +10,7 @@ import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
+import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
@@ -72,12 +73,12 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(TermRefFinder.INSTANCE, references);
-    def.body().forEach(t -> t._2.accept(this, references));
+    def.body().forEach(t -> t.body().accept(this, references));
     return Unit.unit();
   }
 
-  public void matchy(Pat.@NotNull Clause match, @NotNull Buffer<Def> defs) {
-    match.expr().accept(TermRefFinder.INSTANCE, defs);
+  public void matchy(@NotNull Matching<Pat, Term> match, @NotNull Buffer<Def> defs) {
+    match.body().accept(TermRefFinder.INSTANCE, defs);
   }
 
   private void tele(@NotNull Buffer<Def> references, @NotNull SeqLike<Term.Param> telescope) {

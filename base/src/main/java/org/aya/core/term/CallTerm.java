@@ -11,6 +11,7 @@ import org.aya.core.def.StructDef;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Arg;
+import org.aya.generic.Matching;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
@@ -98,12 +99,12 @@ public sealed interface CallTerm extends Term {
     public @NotNull SeqView<DataDef.@NotNull Ctor> availableCtors() {
       return dataRef.core.body().view()
         .filter(t -> {
-          if (t._1.isEmpty()) return true;
+          if (t.patterns().isEmpty()) return true;
           // TODO[ice]: apply subst
-          var matchy = PatMatcher.tryBuildSubst(t._1, args);
+          var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
           return matchy != null;
         })
-        .map(t -> t._2);
+        .map(Matching::body);
     }
   }
 

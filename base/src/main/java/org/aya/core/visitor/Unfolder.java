@@ -8,6 +8,7 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Arg;
+import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.Set;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -61,13 +62,13 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   private @Nullable Term tryUnfoldClauses(
     P p, ImmutableSeq<Arg<Term>> args,
     Substituter.@NotNull TermSubst subst,
-    @NotNull ImmutableSeq<Pat.@NotNull Clause> clauses
+    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubst(matchy.patterns(), args);
       if (termSubst != null) {
         subst.add(termSubst);
-        return matchy.expr().subst(subst).accept(this, p);
+        return matchy.body().subst(subst).accept(this, p);
       }
     }
     // Unfold failed

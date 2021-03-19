@@ -7,9 +7,9 @@ import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,7 +22,7 @@ public record DataDef(
   @NotNull ImmutableSeq<Term.Param> contextTele,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
-  @NotNull ImmutableSeq<Tuple2<ImmutableSeq<Pat>, Ctor>> body
+  @NotNull ImmutableSeq<Matching<Pat, Ctor>> body
   // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
@@ -42,7 +42,7 @@ public record DataDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Term.Param> conTelescope,
-    @NotNull ImmutableSeq<Pat.Clause> clauses,
+    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
     boolean coerce
   ) implements Def {
     public Ctor {

@@ -16,11 +16,11 @@ import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.Matching;
 import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,14 +66,14 @@ public class TyckDeclTest {
         | suc n => zero""");
     var nat = (DataDef) defs.get(0);
     var xyr = (FnDef) defs.get(1);
-    var ctors = nat.body().map(Tuple2::getValue);
+    var ctors = nat.body().map(Matching::body);
     assertEquals(2, ctors.size());
     var clauses = xyr.body().getRightValue();
-    var zeroToZero = ((Pat.Clause) clauses.get(0));
+    var zeroToZero = ((Matching<?, ?>) clauses.get(0));
     var zeroCtor = ctors.get(0);
     assertEquals(0, zeroCtor.conTelescope().size());
     var zeroParam = xyr.telescope().get(0);
-    assertEquals(zeroToZero.expr(), new RefTerm(zeroParam.ref()));
+    assertEquals(zeroToZero.body(), new RefTerm(zeroParam.ref()));
     assertEquals(zeroCtor.ref(), ((Pat.Ctor) zeroToZero.patterns().get(0)).ref());
   }
 

@@ -7,6 +7,7 @@ import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.Matching;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.LocalCtx;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -86,26 +87,18 @@ public sealed interface Pat {
   }
 
   /**
-   * @author kiva, ice1000
-   */
-  record Clause(
-    @NotNull ImmutableSeq<Pat> patterns,
-    @NotNull Term expr
-  ) {
-    public static @NotNull Option<@NotNull Clause> fromProto(@NotNull PrototypeClause clause) {
-      return clause.expr.map(term -> new Clause(clause.patterns, term));
-    }
-  }
-
-  /**
    * @author ice1000
    */
   record PrototypeClause(
     @NotNull ImmutableSeq<Pat> patterns,
     @NotNull Option<Term> expr
   ) {
-    public static @NotNull PrototypeClause prototypify(@NotNull Clause clause) {
-      return new PrototypeClause(clause.patterns, Option.some(clause.expr));
+    public static @NotNull PrototypeClause prototypify(@NotNull Matching<Pat, Term> clause) {
+      return new PrototypeClause(clause.patterns(), Option.some(clause.body()));
+    }
+
+    public static @NotNull Option<@NotNull Matching<Pat, Term>> deprototypify(@NotNull PrototypeClause clause) {
+      return clause.expr.map(term -> new Matching<>(clause.patterns, term));
     }
   }
 }

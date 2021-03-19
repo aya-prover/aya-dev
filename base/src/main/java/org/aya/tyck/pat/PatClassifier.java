@@ -11,6 +11,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
+import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.error.ConfluenceError;
@@ -35,7 +36,7 @@ public record PatClassifier(
   /** Prefer using {@link PatClassifier#classify(ImmutableSeq, Reporter, SourcePos, boolean)} in production code. */
   @TestOnly @VisibleForTesting
   public static @NotNull ImmutableSeq<PatClass> testClassify(
-    @NotNull ImmutableSeq<Pat.@NotNull Clause> clauses,
+    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos
   ) {
     return classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, true);

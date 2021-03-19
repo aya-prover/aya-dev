@@ -15,13 +15,13 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.GenericBuilder;
+import org.aya.generic.Matching;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
-import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +77,7 @@ public record StmtTycker(
     var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature)._2);
-    var clauses = elabClauses.flatMap(Pat.Clause::fromProto);
+    var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     if (!elabClauses.isEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       var elaborated = new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
@@ -99,7 +99,7 @@ public record StmtTycker(
       var parent = tycker.localCtx.parent();
       assert parent != null;
       tycker.localCtx = parent;
-      return Tuple.of(pat, ctor);
+      return new Matching<>(pat, ctor);
     });
     var collectedBody = body.collect(ImmutableSeq.factory());
     return new DataDef(decl.ref, ctxTele, tele, result, collectedBody);
@@ -141,7 +141,7 @@ public record StmtTycker(
     if (what._2.isLeft())
       return new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.left(what._2.getLeftValue()));
     var cs = what._2.getRightValue();
-    var elabClauses = cs.flatMap(Pat.Clause::fromProto);
+    var elabClauses = cs.flatMap(Pat.PrototypeClause::deprototypify);
     if (!cs.isEmpty()) {
       var classification = PatClassifier.classify(cs, tycker.metaContext.reporter(), decl.sourcePos, true);
       var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(elabClauses));

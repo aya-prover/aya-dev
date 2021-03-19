@@ -6,6 +6,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
+import org.aya.generic.Matching;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ public record FnDef(
 
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
-  @NotNull Either<Term, ImmutableSeq<Pat.Clause>> body
+  @NotNull Either<Term, ImmutableSeq<Matching<Pat, Term>>> body
 ) implements Def {
   public FnDef {
     ref.core = this;
