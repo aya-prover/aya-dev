@@ -7,6 +7,7 @@ import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.TupTerm;
 import org.aya.generic.Arg;
+import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ final class PatToTerm implements Pat.Visitor<Unit, Term> {
   }
 
   @Override public Term visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
-    throw new IllegalStateException();
+    return new RefTerm(new LocalVar("()"));
   }
 
   @Override public Term visitBind(Pat.@NotNull Bind bind, Unit unit) {
