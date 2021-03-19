@@ -130,6 +130,15 @@ public interface Term extends CoreTerm {
       return buf.toImmutableSeq().map(tup -> new Param(tup._1, tup._3, tup._2));
     }
 
+    public @NotNull Doc toDoc() {
+      return Doc.cat(
+        explicit ? Doc.plain("(") : Doc.plain("{"),
+        Doc.plain(ref.name()),
+        Doc.cat(Doc.plain(" : "), type.toDoc()),
+        explicit ? Doc.plain(")") : Doc.plain("}")
+      );
+    }
+
     @Contract(" -> new") public @NotNull Param implicitify() {
       return new Param(ref, type, false);
     }

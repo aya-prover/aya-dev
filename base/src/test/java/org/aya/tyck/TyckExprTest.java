@@ -66,7 +66,7 @@ public class TyckExprTest {
       return;
     }
     var lam_aa = CallTerm.make(lam, new Arg<>(new RefTerm(new LocalVar("_")), true));
-    assertEquals(lam.body(), lam_aa);
+    assertEquals(lam.body().toDoc(), lam_aa.toDoc());
     var newVar = new RefTerm(new LocalVar("xyr"));
     assertEquals(newVar, CallTerm.make(lam_aa, new Arg<>(newVar, true)));
     assertTrue(dt.body() instanceof PiTerm pi

@@ -26,7 +26,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.plain("\\lam"),
       Doc.plain(" "),
-      visitParam(term.param()),
+      term.param().toDoc(),
       Doc.plain(" => "),
       term.body().toDoc()
     );
@@ -38,7 +38,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.plain("\\Pi"),
       Doc.plain(" "),
-      visitParam(term.param()),
+      term.param().toDoc(),
       Doc.plain(" -> "),
       term.body().toDoc()
     );
@@ -157,16 +157,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   private Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
     return telescope.stream()
-      .map(this::visitParam)
+      .map(Term.Param::toDoc)
       .reduce(Doc.empty(), Doc::hsep);
-  }
-
-  private Doc visitParam(@NotNull Term.Param param) {
-    return Doc.cat(
-      param.explicit() ? Doc.plain("(") : Doc.plain("{"),
-      Doc.plain(param.ref().name()),
-      Doc.cat(Doc.plain(" : "), param.type().toDoc()),
-      param.explicit() ? Doc.plain(")") : Doc.plain("}")
-    );
   }
 }

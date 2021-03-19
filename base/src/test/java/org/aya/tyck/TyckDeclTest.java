@@ -15,6 +15,7 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.RefTerm;
+import org.aya.core.term.Term;
 import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -41,7 +42,8 @@ public class TyckDeclTest {
     vars.put(fnDef.ref().name(), fnDef.ref());
     var expected = Lisp.parseDef("id",
       "(A (U) im (a (A) ex null))", "A", "a", vars);
-    assertEquals(expected, fnDef);
+    assertEquals(expected.telescope().map(Term.Param::toDoc), fnDef.telescope().map(Term.Param::toDoc));
+    assertEquals(expected.body().getLeftValue().toDoc(), fnDef.body().getLeftValue().toDoc());
   }
 
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
