@@ -14,6 +14,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.generic.Arg;
+import org.aya.generic.Matching;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
@@ -386,7 +387,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
     checkRedefinition(RedefinitionError.Kind.Ctor,
-      body.view().map(ctor -> Tuple.of(ctor._2.ref.name(), ctor._2.sourcePos)));
+      body.view().map(ctor -> Tuple.of(ctor.body().ref.name(), ctor.body().sourcePos)));
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
@@ -415,9 +416,9 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       : visitType(typeCtx);
   }
 
-  private @NotNull Tuple2<ImmutableSeq<Pattern>, Decl.DataCtor> visitDataBody(AyaParser.DataBodyContext ctx) {
+  private @NotNull Matching<Pattern, Decl.DataCtor> visitDataBody(AyaParser.DataBodyContext ctx) {
     if (ctx instanceof AyaParser.DataCtorsContext dcc)
-      return Tuple.of(ImmutableSeq.empty(), visitDataCtor(dcc.dataCtor()));
+      return new Matching<>(ImmutableSeq.empty(), visitDataCtor(dcc.dataCtor()));
     if (ctx instanceof AyaParser.DataClausesContext dcc) return visitDataCtorClause(dcc.dataCtorClause());
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
@@ -443,12 +444,9 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .collect(ImmutableSeq.factory());
   }
 
-  @Override public @NotNull Tuple2<ImmutableSeq<Pattern>, Decl.@NotNull DataCtor>
+  @Override public @NotNull Matching<Pattern, Decl.DataCtor>
   visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
-    return Tuple.of(
-      visitPatterns(ctx.patterns()),
-      visitDataCtor(ctx.dataCtor())
-    );
+    return new Matching<>(visitPatterns(ctx.patterns()), visitDataCtor(ctx.dataCtor()));
   }
 
   @Override

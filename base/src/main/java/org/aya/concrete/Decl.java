@@ -11,11 +11,11 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
+import org.aya.generic.Matching;
 import org.aya.generic.Modifier;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.control.Option;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -114,8 +114,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
-    public @NotNull
-    final ImmutableSeq<Tuple2<ImmutableSeq<Pattern>, DataCtor>> body;
+    public final @NotNull ImmutableSeq<Matching<Pattern, DataCtor>> body;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
@@ -123,14 +122,14 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
-      @NotNull ImmutableSeq<Tuple2<ImmutableSeq<Pattern>, DataCtor>> body,
+      @NotNull ImmutableSeq<Matching<Pattern, DataCtor>> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
-      body.forEach(ctors -> ctors._2.dataRef = ref);
+      body.forEach(ctors -> ctors.body().dataRef = ref);
     }
 
     @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {

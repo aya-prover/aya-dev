@@ -69,12 +69,12 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
       .map(ctor -> {
         dataInnerCtx.addGlobal(
           Context.TOP_LEVEL_MOD_NAME,
-          ctor._2.ref.name(),
+          ctor.body().ref.name(),
           Stmt.Accessibility.Public,
-          ctor._2.ref,
-          ctor._2.sourcePos
+          ctor.body().ref,
+          ctor.body().sourcePos
         );
-        return Tuple2.of(ctor._2.ref.name(), ctor._2.ref);
+        return Tuple2.of(ctor.body().ref.name(), ctor.body().ref);
       });
 
     context.importModule(

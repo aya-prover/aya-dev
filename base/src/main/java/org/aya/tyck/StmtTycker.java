@@ -94,8 +94,8 @@ public record StmtTycker(
     var body = decl.body.map(clause -> {
       tycker.localCtx = tycker.localCtx.derive();
       var patTyck = new PatTycker(tycker);
-      var pat = clause._1.map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
-      var ctor = visitCtor(clause._2, tycker);
+      var pat = clause.patterns().map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
+      var ctor = visitCtor(clause.body(), tycker);
       var parent = tycker.localCtx.parent();
       assert parent != null;
       tycker.localCtx = parent;

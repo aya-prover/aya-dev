@@ -4,7 +4,7 @@ package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
-import org.glavo.kala.tuple.Tuple2;
+import org.aya.generic.Matching;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +44,11 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     decl.result = decl.result.resolve(local._2);
     for (var bodyElement : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
-      if (!bodyElement._1.isEmpty()) {
-        var pat = bodyElement._1.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
-        bodyElement = Tuple2.of(pat, bodyElement._2);
+      if (!bodyElement.patterns().isEmpty()) {
+        var pat = bodyElement.patterns().map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
+        bodyElement = new Matching<>(pat, bodyElement.body());
       }
-      var ctor = bodyElement._2;
+      var ctor = bodyElement.body();
       var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses

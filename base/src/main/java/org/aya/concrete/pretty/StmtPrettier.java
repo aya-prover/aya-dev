@@ -82,7 +82,7 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.body.isEmpty()
         ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(decl.body.stream().map(t -> visitDataCtor(t._1, t._2)))))
+        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(decl.body.stream().map(t -> visitDataCtor(t.patterns(), t.body())))))
     );
   }
 
