@@ -49,12 +49,12 @@ public record StmtTycker(
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override public @NotNull LocalCtx traceEntrance(@NotNull Signatured sig, ExprTycker tycker) {
+  @Override public @NotNull LocalCtx onEntrance(@NotNull Signatured sig, ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.DeclT(sig.ref(), sig.sourcePos)));
     return tycker.localCtx.clone();
   }
 
-  @Override public void traceExit(ExprTycker exprTycker, Def def, LocalCtx localCtx) {
+  @Override public void onExit(ExprTycker exprTycker, Def def, LocalCtx localCtx) {
     tracing(Trace.Builder::reduce);
     exprTycker.localCtx = localCtx;
   }
