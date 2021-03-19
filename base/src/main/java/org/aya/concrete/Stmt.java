@@ -34,10 +34,10 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
    * @author re-xyr
    */
   interface Visitor<P, R, T> extends Decl.Visitor<P, R, T> {
-    T onEntrance(@NotNull Stmt stmt, P p);
+    T traceEntrance(@NotNull Stmt stmt, P p);
     @ApiStatus.NonExtendable
-    @Override default T onEntrance(@NotNull Decl decl, P p) {
-      return onEntrance((Stmt) decl, p);
+    @Override default T traceEntrance(@NotNull Decl decl, P p) {
+      return traceEntrance((Stmt) decl, p);
     }
     default @NotNull ImmutableSeq<R> visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       return stmts.map(stmt -> stmt.accept(this, p));
@@ -50,7 +50,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
   }
 
   interface NoTraceVisitor<P, R> extends Visitor<P, R, Unit> {
-    default @Override Unit onEntrance(@NotNull Stmt stmt, P p) {
+    default @Override Unit traceEntrance(@NotNull Stmt stmt, P p) {
       return Unit.unit();
     }
   }
@@ -58,9 +58,9 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
   <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p);
 
   default <P, R, T> R accept(@NotNull Visitor<P, R, T> visitor, P p) {
-    var t = visitor.onEntrance(this, p);
+    var t = visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
-    visitor.onExit(p, ret, t);
+    visitor.traceExit(p, ret, t);
     return ret;
   }
 
