@@ -40,6 +40,10 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
     return Unit.unit();
   }
 
+  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, Term term) {
+    throw new Mismatch();
+  }
+
   @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Term term) {
     if (!(term instanceof TupTerm tup)) throw new Mismatch();
     var as = tuple.as();

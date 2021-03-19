@@ -59,6 +59,10 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
     return Tuple.of(context, number);
   }
 
+  @Override public Tuple2<Context, Pattern> visitAbsurd(Pattern.@NotNull Absurd number, Context context) {
+    return Tuple.of(context, number);
+  }
+
   @Override public Tuple2<Context, Pattern> visitCalmFace(Pattern.@NotNull CalmFace f, Context context) {
     return Tuple.of(context, f);
   }

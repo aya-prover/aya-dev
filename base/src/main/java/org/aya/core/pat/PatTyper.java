@@ -17,6 +17,10 @@ record PatTyper(@NotNull LocalCtx localCtx) implements Pat.Visitor<Unit, Unit> {
     return unit;
   }
 
+  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
+    throw new IllegalStateException();
+  }
+
   @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Unit unit) {
     localCtx.put(tuple.as(), tuple.type());
     tuple.pats().forEach(pat -> pat.accept(this, Unit.unit()));

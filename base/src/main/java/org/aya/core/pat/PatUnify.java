@@ -31,6 +31,10 @@ public record PatUnify(
     return pat instanceof Pat.Tuple rhs ? visitList(lhs.pats(), rhs.pats()) : reportError(lhs, pat);
   }
 
+  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, Pat pat) {
+    throw new IllegalStateException();
+  }
+
   private Unit visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {
     assert rpats.sizeEquals(lpats.size());
     lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, localCtx));

@@ -36,6 +36,7 @@ public sealed interface Pattern {
   interface Visitor<P, R> {
     R visitTuple(@NotNull Tuple tuple, P p);
     R visitNumber(@NotNull Number number, P p);
+    R visitAbsurd(@NotNull Absurd absurd, P p);
     R visitBind(@NotNull Bind bind, P p);
     R visitCalmFace(@NotNull CalmFace calmFace, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
@@ -63,6 +64,15 @@ public sealed interface Pattern {
   ) implements Pattern {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNumber(this, p);
+    }
+  }
+
+  record Absurd(
+    @NotNull SourcePos sourcePos,
+    boolean explicit
+  ) implements Pattern {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitAbsurd(this, p);
     }
   }
 

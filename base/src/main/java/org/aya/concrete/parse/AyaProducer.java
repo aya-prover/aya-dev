@@ -481,6 +481,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull BooleanFunction<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
+    var sourcePos = sourcePosOf(ctx);
     if (ctx.LPAREN() != null || ctx.LBRACE() != null) {
       var forceEx = ctx.LPAREN() != null;
       var id = ctx.ID();
@@ -491,16 +492,17 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       return tupElem.sizeEquals(1)
         ? (exIgnored -> tupElem.first().apply(forceEx, as))
         : (exIgnored -> new Pattern.Tuple(
-        sourcePosOf(ctx),
+        sourcePos,
         forceEx,
         tupElem.map(p -> p.apply(true, null)),
         as));
     }
-    if (ctx.CALM_FACE() != null) return ex -> new Pattern.CalmFace(sourcePosOf(ctx), ex);
+    if (ctx.CALM_FACE() != null) return ex -> new Pattern.CalmFace(sourcePos, ex);
     var number = ctx.NUMBER();
-    if (number != null) return ex -> new Pattern.Number(sourcePosOf(ctx), ex, Integer.parseInt(number.getText()));
+    if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null) return ex -> new Pattern.Bind(sourcePosOf(ctx), ex, new LocalVar(id.getText()), new Ref<>());
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText()), new Ref<>());
+    if (ctx.ABSURD() != null) return ex -> new Pattern.Absurd(sourcePos, ex);
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }

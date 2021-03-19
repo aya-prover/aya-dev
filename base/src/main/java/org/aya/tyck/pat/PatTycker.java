@@ -73,6 +73,11 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     return Tuple.of(signature.value.result(), res);
   }
 
+  @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
+    // TODO[ice]: make sure empty?
+    return new Pat.Absurd(absurd.explicit(), term);
+  }
+
   public Tuple2<@NotNull Term, Pat.PrototypeClause> visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.clear();

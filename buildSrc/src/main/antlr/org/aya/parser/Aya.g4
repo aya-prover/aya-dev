@@ -90,8 +90,7 @@ argument : atom
          ;
 
 clauses : LBRACE clause? ('|' clause)* '}' ;
-clause : patterns IMPLIES expr
-       | patterns ABSURD;
+clause : patterns (IMPLIES expr)? ;
 
 patterns : pattern (',' pattern)* ;
 pattern : atomPatterns
@@ -101,6 +100,7 @@ atomPatterns : atomPattern+ ;
 atomPattern : LPAREN patterns ')' (AS ID)?
             | LBRACE patterns '}' (AS ID)?
             | NUMBER
+            | ABSURD
             | ID
             | CALM_FACE
             ;

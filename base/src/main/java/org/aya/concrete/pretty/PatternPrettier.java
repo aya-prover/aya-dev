@@ -35,6 +35,12 @@ public class PatternPrettier implements
       Doc.plain(bind.bind().name()));
   }
 
+  @Override public Doc visitAbsurd(Pattern.@NotNull Absurd absurd, Boolean aBoolean) {
+    boolean ex = absurd.explicit();
+    return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
+      Doc.plain("\\impossible"));
+  }
+
   @Override
   public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Boolean nestedCall) {
     boolean ex = calmFace.explicit();
@@ -66,7 +72,6 @@ public class PatternPrettier implements
 
   public Doc matchy(Pattern.@NotNull Clause match) {
     var doc = visitMaybeCtorPatterns(match.patterns(), false);
-    return match.expr().map(e -> Doc.cat(doc, Doc.plain(" => "), e.toDoc()))
-      .getOrDefault(Doc.cat(doc, Doc.plain(" \\impossible")));
+    return match.expr().map(e -> Doc.cat(doc, Doc.plain(" => "), e.toDoc())).getOrDefault(doc);
   }
 }

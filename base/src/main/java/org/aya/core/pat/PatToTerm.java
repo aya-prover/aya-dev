@@ -20,6 +20,10 @@ final class PatToTerm implements Pat.Visitor<Unit, Term> {
   private PatToTerm() {
   }
 
+  @Override public Term visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
+    throw new IllegalStateException();
+  }
+
   @Override public Term visitBind(Pat.@NotNull Bind bind, Unit unit) {
     return new RefTerm(bind.as());
   }

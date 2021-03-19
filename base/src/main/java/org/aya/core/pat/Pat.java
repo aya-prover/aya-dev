@@ -36,6 +36,7 @@ public sealed interface Pat {
     R visitBind(@NotNull Bind bind, P p);
     R visitTuple(@NotNull Tuple tuple, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
+    R visitAbsurd(@NotNull Absurd absurd, P p);
   }
 
   record Bind(
@@ -45,6 +46,19 @@ public sealed interface Pat {
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitBind(this, p);
+    }
+  }
+
+  record Absurd(
+    boolean explicit,
+    @NotNull Term type
+  ) implements Pat {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitAbsurd(this, p);
+    }
+
+    @Override public @Nullable LocalVar as() {
+      return null;
     }
   }
 
