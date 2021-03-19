@@ -18,12 +18,12 @@ import org.aya.core.term.RefTerm;
 import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +37,7 @@ public class TyckDeclTest {
 
   public void idFuncTestCase(@NotNull @NonNls @Language("TEXT") String code) {
     var fnDef = successTyckFn(code);
-    var vars = new HashMap<String, @NotNull Var>();
+    var vars = new MutableHashMap<String, @NotNull Var>();
     vars.put(fnDef.ref().name(), fnDef.ref());
     var expected = Lisp.parseDef("id",
       "(A (U) im (a (A) ex null))", "A", "a", vars);

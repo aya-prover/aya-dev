@@ -9,14 +9,13 @@ import org.aya.core.TermDsl;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.control.Either;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -25,10 +24,10 @@ import java.util.Objects;
 @TestOnly
 public interface Lisp {
   static @NotNull Term parse(@NotNull @NonNls @Language("TEXT") String code) {
-    return parse(code, new HashMap<>());
+    return parse(code, MutableMap.create());
   }
 
-  static @NotNull Term parse(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
+  static @NotNull Term parse(@NotNull @NonNls @Language("TEXT") String code, @NotNull MutableMap<String, @NotNull Var> refs) {
     return Objects.requireNonNull(TermDsl.parse(code, refs));
   }
 
@@ -38,7 +37,7 @@ public interface Lisp {
     @NotNull @NonNls @Language("TEXT") String teleCode,
     @NotNull @NonNls @Language("TEXT") String resultTypeCode,
     @NotNull @NonNls @Language("TEXT") String bodyCode,
-    @NotNull Map<String, @NotNull Var> refs) {
+    @NotNull MutableMap<String, @NotNull Var> refs) {
     var tele = parseTele(teleCode, refs);
     var result = parse(resultTypeCode, refs);
     var body = parse(bodyCode, refs);
@@ -49,7 +48,7 @@ public interface Lisp {
     return def;
   }
 
-  static @NotNull ImmutableSeq<Term.@NotNull Param> parseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull Map<String, @NotNull Var> refs) {
+  static @NotNull ImmutableSeq<Term.@NotNull Param> parseTele(@NotNull @NonNls @Language("TEXT") String code, @NotNull MutableMap<String, @NotNull Var> refs) {
     return Objects.requireNonNull(TermDsl.parseTele(code, refs));
   }
 }

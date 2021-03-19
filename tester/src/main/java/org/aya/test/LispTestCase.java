@@ -17,13 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LispTestCase {
-  protected final Map<String, @NotNull Var> vars = new HashMap<>();
+  protected final MutableMap<String, @NotNull Var> vars = MutableMap.create();
   protected final CollectReporter reporter = new CollectReporter();
 
   protected @NotNull TypedDefEq eq(MutableMap<LocalVar, Term> localCtx) {

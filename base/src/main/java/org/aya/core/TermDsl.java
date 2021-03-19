@@ -13,13 +13,13 @@ import org.aya.parser.LispParser;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 import static java.lang.Integer.parseInt;
@@ -31,17 +31,17 @@ import static org.aya.concrete.parse.LispParsing.parser;
 @TestOnly
 @ApiStatus.Internal
 public class TermDsl extends LispBaseVisitor<Term> {
-  private final @NotNull Map<String, @NotNull Var> refs;
+  private final @NotNull MutableMap<String, @NotNull Var> refs;
 
-  public TermDsl(@NotNull Map<String, @NotNull Var> refs) {
+  public TermDsl(@NotNull MutableMap<String, @NotNull Var> refs) {
     this.refs = refs;
   }
 
-  public static @Nullable Term parse(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
+  public static @Nullable Term parse(@NotNull String text, @NotNull MutableMap<String, @NotNull Var> refs) {
     return parser(text).expr().accept(new TermDsl(refs));
   }
 
-  public static @NotNull ImmutableSeq<Term.@NotNull Param> parseTele(@NotNull String text, @NotNull Map<String, @NotNull Var> refs) {
+  public static @NotNull ImmutableSeq<Term.@NotNull Param> parseTele(@NotNull String text, @NotNull MutableMap<String, @NotNull Var> refs) {
     return new TermDsl(refs).exprToParams(parser(text).expr());
   }
 
@@ -122,6 +122,6 @@ public class TermDsl extends LispBaseVisitor<Term> {
   }
 
   private @NotNull Var ref(String ident) {
-    return refs.computeIfAbsent(ident, LocalVar::new);
+    return refs.getOrPut(ident, () -> new LocalVar(ident));
   }
 }
