@@ -81,7 +81,9 @@ public class StmtPrettier implements Stmt.NoTraceVisitor<Unit, Doc> {
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      Doc.hang(2, Doc.vcat(decl.body.stream().map(t -> visitDataCtor(t._1, t._2))))
+      decl.body.isEmpty()
+        ? Doc.empty()
+        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(decl.body.stream().map(t -> visitDataCtor(t._1, t._2)))))
     );
   }
 
@@ -120,13 +122,15 @@ public class StmtPrettier implements Stmt.NoTraceVisitor<Unit, Doc> {
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      Doc.hang(2, visitFields(decl.fields))
+      decl.fields.isEmpty()
+        ? Doc.empty()
+        : Doc.cat(Doc.line(), Doc.hang(2, visitFields(decl.fields)))
     );
   }
 
   private Doc visitFields(@NotNull ImmutableSeq<Decl.StructField> fields) {
     return Doc.vcat(fields.map(field -> Doc.hcat(
-      Doc.plain(" | "),
+      Doc.plain("| "),
       field.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
       Doc.plain(field.ref.name()),
       field.telescope.isEmpty()

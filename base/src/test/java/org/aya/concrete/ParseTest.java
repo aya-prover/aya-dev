@@ -98,7 +98,9 @@ public class ParseTest {
         \\public \\def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
       """);
     parseAndPretty("\\data Nat | Z | S Nat", """
-        \\public \\data Nat | Z | S (_ : Nat)
+      \\public \\data Nat\s
+        | Z\s
+        | S (_ : Nat)
       """);
   }
 
@@ -214,7 +216,11 @@ public class ParseTest {
     );
     parseAndPretty(
       "\\struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat",
-      "\\public \\struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat"
+      """
+      \\public \\struct Very-Simple (A : \\Set) : \\Set
+        | x : A
+        | y : Nat
+      """
     );
     parseAndPretty(
       """
@@ -222,7 +228,11 @@ public class ParseTest {
           | x { X : \\Set } : Nat
           | y : B zero
         """,
-      "\\public \\struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set | x {X : \\Set} : Nat | y : B zero"
+      """
+       \\public \\struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set
+         | x {X : \\Set} : Nat
+         | y : B zero
+       """
     );
   }
 
