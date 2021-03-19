@@ -5,7 +5,6 @@ package org.aya.tyck.pat;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
-import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl.DataCtor;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
@@ -58,25 +57,25 @@ public record PatClassifier(
   ) {
     for (var results : classification) {
       var contents = results.contents;
-      for (int i = 0, size = contents.size(); i < size; i++) {
-        int lhsIx = contents.get(i);
+      for (int i = 1, size = contents.size(); i < size; i++) {
+        int lhsIx = contents.get(i - 1);
+        int rhsIx = contents.get(i);
         var lhs = clauses.get(lhsIx);
         if (lhs.expr().isEmpty()) continue;
-        for (int j = 0; j < size; j++) {
-          int rhsIx = contents.get(j);
-          var rhs = clauses.get(rhsIx);
-          if (rhs.expr().isEmpty()) continue;
-          var lhsSubst = new Substituter.TermSubst(MutableMap.of());
-          var rhsSubst = new Substituter.TermSubst(MutableMap.of());
-          var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
-          var lhsTerm = lhs.expr().get().subst(lhsSubst).normalize(NormalizeMode.NF);
-          var rhsTerm = rhs.expr().get().subst(rhsSubst).normalize(NormalizeMode.NF);
-          var unification = new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
+        var rhs = clauses.get(rhsIx);
+        if (rhs.expr().isEmpty()) continue;
+        var lhsSubst = new Substituter.TermSubst(MutableMap.of());
+        var rhsSubst = new Substituter.TermSubst(MutableMap.of());
+        var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
+        var lhsTerm = lhs.expr().get().subst(lhsSubst);
+        var rhsTerm = rhs.expr().get().subst(rhsSubst);
+        var unification = new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
+          .compare(lhsTerm, rhsTerm, result);
+        if (!unification) {
+          new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
             .compare(lhsTerm, rhsTerm, result);
-          if (!unification) {
-            metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
-            throw new ExprTycker.TyckInterruptedException();
-          }
+          metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
+          throw new ExprTycker.TyckInterruptedException();
         }
       }
     }
