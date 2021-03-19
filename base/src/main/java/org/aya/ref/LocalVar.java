@@ -4,10 +4,18 @@ package org.aya.ref;
 
 import org.aya.api.ref.Var;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
  */
 public record LocalVar(@NotNull String name) implements Var {
+  @Override public boolean equals(@Nullable Object o) {
+    return this == o;
+  }
+
+  @Override public int hashCode() {
+    return System.identityHashCode(this);
+  }
 }
 
