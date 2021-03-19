@@ -7,11 +7,13 @@ import org.aya.ref.LocalVar;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
 import org.aya.tyck.unify.TypedDefEq;
+import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,16 +23,17 @@ public class DefEqTest extends LispTestCase {
   private final Term typeU = Lisp.parse("(U)");
   private final Term typePi = Lisp.parse("(Pi (m (U) ex) (U))");
   private final Term typeSigma = Lisp.parse("(Sigma (n (U) ex null) (U))");
+  private TypedDefEq eq;
 
   @NotNull LocalVar getLocal(String name) {
     return (LocalVar) vars.get(name);
   }
 
-  public DefEqTest() {
+  @BeforeEach
+  public void initialize() {
     ImmutableSeq.of("x", "y", "f", "g", "jojo", "xyren", "kiva", "kiwa", "t", "tt").forEach(name ->
-      vars.put(name, new LocalVar(name))
-    );
-    eq = eq(MutableHashMap.ofEntries(
+      vars.put(name, new LocalVar(name)));
+    eq = eq(MutableMap.wrapJava(Map.ofEntries(
       Tuple2.of(getLocal("x"), typeU),
       Tuple2.of(getLocal("y"), typeU),
       Tuple2.of(getLocal("f"), typePi),
@@ -41,10 +44,8 @@ public class DefEqTest extends LispTestCase {
       Tuple2.of(getLocal("kiwa"), typeU),
       Tuple2.of(getLocal("t"), typeSigma),
       Tuple2.of(getLocal("tt"), typeSigma)
-    ));
+    ).asJava()));
   }
-
-  private final TypedDefEq eq;
 
   @Test
   public void basicFailure() {
@@ -57,7 +58,7 @@ public class DefEqTest extends LispTestCase {
     assertFalse(eq.compare(Lisp.parse("(Pi (a (U) ex) (Pi (b (U) ex) a))"), Lisp.parse("(Pi (a (U) ex) (Pi (b a ex) a))"), typeU));
     assertFalse(eq.compare(Lisp.parse("(proj (tup (app (lam (a (U) ex) a) x) b) 1)"), typeU, typeU));
     assertFalse(eq.compare(Lisp.parse("(proj t 1)"), typeU, typeU));
-    assertFalse(eq.compare(Lisp.parse("(proj t 1)", vars), Lisp.parse("(proj t 2)", vars ), typeU));
+    assertFalse(eq.compare(Lisp.parse("(proj t 1)", vars), Lisp.parse("(proj t 2)", vars), typeU));
   }
 
   @Test

@@ -15,7 +15,6 @@ import org.aya.util.Ordering;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,7 +26,7 @@ public class LispTestCase {
     return new TypedDefEq(eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)), new LocalCtx(localCtx), SourcePos.NONE);
   }
 
-  @BeforeEach
+  @AfterEach
   public void clearVars() {
     vars.clear();
   }
