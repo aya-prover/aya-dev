@@ -380,7 +380,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         else wantButNo(expr, pi.body(), "pi type");
       }
     }
-    return new Result(resultTerm, pi.body());
+    var codomain = pi.body();
+    unifyTyThrowing(term, codomain, expr);
+    return new Result(resultTerm, codomain);
   }
 
   @Rule.Check(partialSynth = true)

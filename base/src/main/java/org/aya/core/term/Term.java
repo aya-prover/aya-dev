@@ -121,6 +121,7 @@ public interface Term extends CoreTerm {
   /**
    * @author re-xyr
    */
+  @Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
   record Param(
     @NotNull LocalVar ref,
     @NotNull Term type,
