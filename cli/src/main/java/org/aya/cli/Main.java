@@ -14,7 +14,7 @@ import org.ice1000.jimgui.util.JniLoader;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-public class Main {
+public final class Main {
   public static void main(String... args) throws IOException {
     var cli = new CliArgs();
     var commander = JCommander.newBuilder().addObject(cli).build();

@@ -12,6 +12,11 @@
  | suc a, b => suc (addN a b)
  | a, suc b => suc (addN a b)
 
+\def randomTest (a, b : Nat) : \Set
+ | zero, a => \Pi Nat -> Nat
+ | a, zero => \Pi Nat -> Nat
+ | suc a, suc b => \Sig Nat ** Nat
+
 \def subNI (a, b : Nat) : Int
  | zero, a => neg a
  | a, zero => pos a
