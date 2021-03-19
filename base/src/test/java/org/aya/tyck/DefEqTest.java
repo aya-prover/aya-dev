@@ -7,7 +7,6 @@ import org.aya.ref.LocalVar;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
 import org.aya.tyck.unify.TypedDefEq;
-import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple2;
@@ -33,7 +32,7 @@ public class DefEqTest extends LispTestCase {
   public void initialize() {
     ImmutableSeq.of("x", "y", "f", "g", "jojo", "xyren", "kiva", "kiwa", "t", "tt").forEach(name ->
       vars.put(name, new LocalVar(name)));
-    eq = eq(MutableMap.wrapJava(Map.ofEntries(
+    eq = eq(MutableMap.ofEntries(
       Tuple2.of(getLocal("x"), typeU),
       Tuple2.of(getLocal("y"), typeU),
       Tuple2.of(getLocal("f"), typePi),
@@ -44,7 +43,7 @@ public class DefEqTest extends LispTestCase {
       Tuple2.of(getLocal("kiwa"), typeU),
       Tuple2.of(getLocal("t"), typeSigma),
       Tuple2.of(getLocal("tt"), typeSigma)
-    ).asJava()));
+    ));
   }
 
   @Test
