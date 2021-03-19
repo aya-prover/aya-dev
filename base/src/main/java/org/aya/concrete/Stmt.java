@@ -55,7 +55,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
-    visitor.traceExit(ret);
+    visitor.traceExit(p, ret);
     return ret;
   }
 

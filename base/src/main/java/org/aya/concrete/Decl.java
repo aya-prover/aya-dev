@@ -55,7 +55,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
-    visitor.traceExit(ret);
+    visitor.traceExit(p, ret);
     return ret;
   }
 
@@ -72,7 +72,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public interface Visitor<P, R> {
     default void traceEntrance(@NotNull Decl decl, P p) {
     }
-    default void traceExit(R r) {
+    default void traceExit(P p, R r) {
     }
     R visitData(Decl.@NotNull DataDecl decl, P p);
     R visitStruct(Decl.@NotNull StructDecl decl, P p);

@@ -50,7 +50,7 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
   public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
-    visitor.traceExit(ret);
+    visitor.traceExit(p, ret);
     return ret;
   }
 
