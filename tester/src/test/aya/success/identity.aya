@@ -1,1 +1,2 @@
-\def id {A : \Set} (a : A) => a
+\def id {A : \Set} (a : A) : A => a
+\def id2 {A : \Set} : \Pi A -> A => \lam (a : A) => a

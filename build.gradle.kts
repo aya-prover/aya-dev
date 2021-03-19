@@ -118,7 +118,7 @@ val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
   }
 
   reports {
-    xml.isEnabled = false
+    xml.isEnabled = true
     csv.isEnabled = false
     html.isEnabled = true
   }
