@@ -34,22 +34,23 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
     return accept(tycker, tycker.newTycker());
   }
 
-  public interface Visitor<P, R, T> extends Decl.Visitor<P, R, T> {
-    T traceEntrance(@NotNull Signatured item, P p);
+  public interface Visitor<P, R> extends Decl.Visitor<P, R> {
+    default void traceEntrance(@NotNull Signatured item, P p) {
+    }
     @ApiStatus.NonExtendable
-    @Override default T traceEntrance(@NotNull Decl decl, P p) {
-      return traceEntrance((Signatured) decl, p);
+    @Override default void traceEntrance(@NotNull Decl decl, P p) {
+      traceEntrance((Signatured) decl, p);
     }
     R visitCtor(@NotNull Decl.DataCtor ctor, P p);
     R visitField(@NotNull Decl.StructField field, P p);
   }
 
-  protected abstract <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p);
+  protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  public final <P, R, T> R accept(@NotNull Visitor<P, R, T> visitor, P p) {
-    var t = visitor.traceEntrance(this, p);
+  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
-    visitor.traceExit(p, ret, t);
+    visitor.traceExit(p, ret);
     return ret;
   }
 

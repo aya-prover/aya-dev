@@ -41,7 +41,7 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap) implements 
     localMap.set(var, term);
   }
 
-  public @NotNull LocalCtx clone() {
-    return new LocalCtx(MutableHashMap.from(localMap));
+  @Override public @NotNull LocalCtx clone() {
+    return new LocalCtx(MutableMap.from(localMap));
   }
 }

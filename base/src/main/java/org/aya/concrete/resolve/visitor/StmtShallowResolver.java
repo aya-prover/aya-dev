@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * @author re-xyr
  */
 public final record StmtShallowResolver(@NotNull ModuleLoader loader)
-  implements Stmt.NoTraceVisitor<@NotNull ModuleContext, Unit> {
+  implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   @Override
   public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();

@@ -12,7 +12,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-public class StmtPrettier implements Stmt.NoTraceVisitor<Unit, Doc> {
+public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   public static final StmtPrettier INSTANCE = new StmtPrettier();
 
   private Doc visitAccess(Stmt.@NotNull Accessibility accessibility) {

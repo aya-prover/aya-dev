@@ -81,12 +81,13 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   public Tuple2<@NotNull Term, Pat.PrototypeClause> visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.clear();
-    var recover = exprTycker.localCtx.clone();
+    var recover = MutableHashMap.from(exprTycker.localCtx.localMap());
     var patterns = visitPatterns(sig, match.patterns());
     var result = match.expr()
       .map(e -> e.accept(subst, Unit.unit()))
       .map(e -> exprTycker.checkExpr(e, sig.value.result()));
-    exprTycker.localCtx = recover;
+    exprTycker.localCtx.localMap().clear();
+    exprTycker.localCtx.localMap().putAll(recover);
     var type = result.map(ExprTycker.Result::type).getOrDefault(sig.value.result());
     return Tuple.of(type, new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped)));
   }

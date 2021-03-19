@@ -33,11 +33,12 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
   /**
    * @author re-xyr
    */
-  interface Visitor<P, R, T> extends Decl.Visitor<P, R, T> {
-    T traceEntrance(@NotNull Stmt stmt, P p);
+  interface Visitor<P, R> extends Decl.Visitor<P, R> {
+    default void traceEntrance(@NotNull Stmt stmt, P p) {
+    }
     @ApiStatus.NonExtendable
-    @Override default T traceEntrance(@NotNull Decl decl, P p) {
-      return traceEntrance((Stmt) decl, p);
+    @Override default void traceEntrance(@NotNull Decl decl, P p) {
+      traceEntrance((Stmt) decl, p);
     }
     default @NotNull ImmutableSeq<R> visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       return stmts.map(stmt -> stmt.accept(this, p));
@@ -49,18 +50,12 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     R visitModule(@NotNull ModuleStmt mod, P p);
   }
 
-  interface NoTraceVisitor<P, R> extends Visitor<P, R, Unit> {
-    default @Override Unit traceEntrance(@NotNull Stmt stmt, P p) {
-      return Unit.unit();
-    }
-  }
+  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p);
-
-  default <P, R, T> R accept(@NotNull Visitor<P, R, T> visitor, P p) {
-    var t = visitor.traceEntrance(this, p);
+  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
-    visitor.traceExit(p, ret, t);
+    visitor.traceExit(p, ret);
     return ret;
   }
 
@@ -96,7 +91,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     }
 
     @Override
-    public <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitModule(this, p);
     }
   }
@@ -116,7 +111,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     }
 
     @Override
-    public <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitImport(this, p);
     }
   }
@@ -130,7 +125,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     @NotNull ImmutableSeq<String> path,
     @NotNull UseHide useHide
   ) implements Stmt {
-    public <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p) {
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitOpen(this, p);
     }
 

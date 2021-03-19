@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
-) implements Signatured.Visitor<ExprTycker, Def, LocalCtx> {
+) implements Signatured.Visitor<ExprTycker, Def> {
   public @NotNull ExprTycker newTycker() {
     final var tycker = new ExprTycker(reporter);
     tycker.traceBuilder = traceBuilder;
@@ -49,14 +49,12 @@ public record StmtTycker(
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override public @NotNull LocalCtx traceEntrance(@NotNull Signatured sig, ExprTycker tycker) {
+  @Override public void traceEntrance(@NotNull Signatured sig, ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.DeclT(sig.ref(), sig.sourcePos)));
-    return tycker.localCtx.clone();
   }
 
-  @Override public void traceExit(ExprTycker exprTycker, Def def, LocalCtx localCtx) {
+  @Override public void traceExit(ExprTycker exprTycker, Def def) {
     tracing(Trace.Builder::reduce);
-    exprTycker.localCtx = localCtx;
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {

@@ -50,28 +50,29 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
-  protected abstract <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p);
+  protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  public final <P, R, T> R accept(@NotNull Visitor<P, R, T> visitor, P p) {
-    var t = visitor.traceEntrance(this, p);
+  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
     var ret = doAccept(visitor, p);
-    visitor.traceExit(p, ret, t);
+    visitor.traceExit(p, ret);
     return ret;
   }
 
   @ApiStatus.NonExtendable
-  public final @Override <P, R, T> R doAccept(Stmt.@NotNull Visitor<P, R, T> visitor, P p) {
-    return doAccept((Decl.Visitor<P, R, T>) visitor, p);
+  public final @Override <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
+    return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
   @ApiStatus.NonExtendable
-  public final @Override <P, R, T> R doAccept(Signatured.@NotNull Visitor<P, R, T> visitor, P p) {
-    return doAccept((Decl.Visitor<P, R, T>) visitor, p);
+  public final @Override <P, R> R doAccept(Signatured.@NotNull Visitor<P, R> visitor, P p) {
+    return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  public interface Visitor<P, R, T> {
-    T traceEntrance(@NotNull Decl decl, P p);
-    default void traceExit(P p, R r, T t) {
+  public interface Visitor<P, R> {
+    default void traceEntrance(@NotNull Decl decl, P p) {
+    }
+    default void traceExit(P p, R r) {
     }
     R visitData(Decl.@NotNull DataDecl decl, P p);
     R visitStruct(Decl.@NotNull StructDecl decl, P p);
@@ -95,7 +96,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.ref = DefVar.concrete(this, name);
     }
 
-    @Override protected <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p) {
+    @Override protected <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);
     }
 
@@ -131,7 +132,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       body.forEach(ctors -> ctors._2.dataRef = ref);
     }
 
-    @Override protected <P, R, T> R doAccept(@NotNull Decl.Visitor<P, R, T> visitor, P p) {
+    @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitData(this, p);
     }
 
@@ -171,7 +172,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return ref;
     }
 
-    @Override protected <P, R, T> R doAccept(Decl.@NotNull Visitor<P, R, T> visitor, P p) {
+    @Override protected <P, R> R doAccept(Decl.@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitStruct(this, p);
     }
 
@@ -199,7 +200,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.ref = DefVar.concrete(this, name);
     }
 
-    @Override protected <P, R, T> R doAccept(@NotNull Visitor<P, R, T> visitor, P p) {
+    @Override protected <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitField(this, p);
     }
 
@@ -240,7 +241,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.body = body;
     }
 
-    @Override protected <P, R, T> R doAccept(@NotNull Decl.Visitor<P, R, T> visitor, P p) {
+    @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitFn(this, p);
     }
 
