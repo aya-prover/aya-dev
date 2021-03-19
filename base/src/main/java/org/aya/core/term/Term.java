@@ -133,10 +133,10 @@ public interface Term extends CoreTerm {
 
     public @NotNull Doc toDoc() {
       return Doc.cat(
-        explicit ? Doc.plain("(") : Doc.plain("{"),
+        Doc.plain(explicit ? "(" : "{"),
         Doc.plain(ref.name()),
         Doc.cat(Doc.plain(" : "), type.toDoc()),
-        explicit ? Doc.plain(")") : Doc.plain("}")
+        Doc.plain(explicit ? ")" : "}")
       );
     }
 

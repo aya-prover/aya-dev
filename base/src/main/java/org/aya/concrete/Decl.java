@@ -83,7 +83,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
-    public boolean coerce;
+    public final boolean coerce;
 
     public DataCtor(@NotNull SourcePos sourcePos,
                     @NotNull String name,
@@ -114,7 +114,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
-    public @NotNull ImmutableSeq<Tuple2<ImmutableSeq<Pattern>, DataCtor>> body;
+    public @NotNull
+    final ImmutableSeq<Tuple2<ImmutableSeq<Pattern>, DataCtor>> body;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
@@ -148,7 +149,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    */
   public static final class StructDecl extends Decl {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
-    public @NotNull ImmutableSeq<StructField> fields;
+    public @NotNull
+    final ImmutableSeq<StructField> fields;
     public @NotNull Expr result;
 
     public StructDecl(
@@ -185,7 +187,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull Expr result;
     public @NotNull Option<Expr> body;
 
-    public boolean coerce;
+    public final boolean coerce;
 
     public StructField(@NotNull SourcePos sourcePos,
                        @NotNull String name,

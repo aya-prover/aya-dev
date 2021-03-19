@@ -145,10 +145,8 @@ public record PatClassifier(
     var head = subPats.head();
     if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
       return new SubPats(ctor.params(), ix);
-    if (head instanceof Pat.Bind bind) {
-      var freshPat = ref.core.freshPat(bind.explicit());
-      return new SubPats(freshPat.params(), ix);
-    }
+    if (head instanceof Pat.Bind bind)
+      return new SubPats(ref.core.conTelescope().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
     return null;
   }
 

@@ -13,7 +13,8 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public final class ModuleListLoader implements ModuleLoader {
-  @NotNull ImmutableSeq<@NotNull ModuleLoader> loaders;
+  @NotNull
+  final ImmutableSeq<@NotNull ModuleLoader> loaders;
 
   public ModuleListLoader(@NotNull ImmutableSeq<@NotNull ModuleLoader> loaders) {
     this.loaders = loaders;

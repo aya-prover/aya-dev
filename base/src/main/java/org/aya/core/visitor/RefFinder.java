@@ -30,8 +30,8 @@ public record RefFinder(boolean withBody) implements
     }
   }
 
-  public static RefFinder HEADER_ONLY = new RefFinder(false);
-  public static RefFinder HEADER_AND_BODY = new RefFinder(true);
+  public static final RefFinder HEADER_ONLY = new RefFinder(false);
+  public static final RefFinder HEADER_AND_BODY = new RefFinder(true);
 
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
     tele(references, fn.telescope());

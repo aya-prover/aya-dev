@@ -90,12 +90,6 @@ public record DataDef(
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return null;
     }
-
-    public Pat.@NotNull Ctor freshPat(boolean explicit) {
-      return new Pat.Ctor(explicit, ref,
-        conTelescope.map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())),
-        null, result());
-    }
   }
 
   /**

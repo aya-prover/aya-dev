@@ -23,11 +23,11 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
         new MutableJImVec4(red / 256f, green / 256f, blue / 256f, 1));
     }
 
-    public static Color GREEN = new Color(0, 255, 0);
-    public static Color CYAN = new Color(0, 255, 255);
-    public static Color YELLOW = new Color(255, 255, 0);
-    public static Color WHITE = new Color(255, 255, 255);
-    public static Color PINK = new Color(255, 0, 255);
+    public static final Color GREEN = new Color(0, 255, 0);
+    public static final Color CYAN = new Color(0, 255, 255);
+    public static final Color YELLOW = new Color(255, 255, 0);
+    public static final Color WHITE = new Color(255, 255, 255);
+    public static final Color PINK = new Color(255, 0, 255);
   }
 
   public static final int PAGE_WIDTH = 114514;
