@@ -376,12 +376,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) {
         subst.add(param.ref(), newArg.term());
-        if (pi.body() instanceof PiTerm newPi) pi = newPi;
+        if (pi.body().subst(subst) instanceof PiTerm newPi) pi = newPi;
         else wantButNo(expr, pi.body(), "pi type");
       }
     }
     var codomain = pi.body();
-    unifyTyThrowing(term, codomain, expr);
+    if (term != null) unifyTyThrowing(term, codomain, expr);
     return new Result(resultTerm, codomain);
   }
 
