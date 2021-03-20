@@ -168,7 +168,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       // TODO[ice]: report error: splitting on non data
       return null;
     }
-    var core = dataCall.dataRef().core;
+    var core = dataCall.ref().core;
     if (core == null) {
       // TODO[ice]: report error: not checked data
       return null;

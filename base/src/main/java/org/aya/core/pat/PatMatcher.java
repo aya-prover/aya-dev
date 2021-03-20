@@ -61,7 +61,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
     if (!(term instanceof CallTerm.Con conCall)) throw new Mismatch();
     var as = ctor.as();
     if (as != null) subst.map().put(as, conCall);
-    if (ctor.ref() != conCall.conHead()) throw new Mismatch();
+    if (ctor.ref() != conCall.ref()) throw new Mismatch();
     return visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
   }
 

@@ -33,7 +33,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   @Override @NotNull default Term visitConCall(CallTerm.@NotNull Con conCall, P p) {
-    var def = conCall.conHead().core;
+    var def = conCall.ref().core;
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.args().map(arg -> visitArg(arg, p)).toImmutableSeq();
@@ -45,7 +45,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
-    var def = fnCall.fnRef().core;
+    var def = fnCall.ref().core;
     // Not yet type checked
     if (def == null) return fnCall;
     var args = fnCall.args().view().map(arg -> visitArg(arg, p)).toImmutableSeq();
@@ -86,14 +86,14 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   ) implements Unfolder<Unit> {
     @Override
     public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit emptyTuple) {
-      if (!unfolding.contains(fnCall.fnRef())) return fnCall;
-      unfolded.add(fnCall.fnRef());
+      if (!unfolding.contains(fnCall.ref())) return fnCall;
+      unfolded.add(fnCall.ref());
       return Unfolder.super.visitFnCall(fnCall, emptyTuple);
     }
 
     @Override public @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
-      if (!unfolding.contains(conCall.conHead())) return conCall;
-      unfolded.add(conCall.conHead());
+      if (!unfolding.contains(conCall.ref())) return conCall;
+      unfolded.add(conCall.ref());
       return Unfolder.super.visitConCall(conCall, unit);
     }
   }

@@ -55,7 +55,7 @@ public record PatUnify(
 
   @Override public Unit visitCtor(Pat.@NotNull Ctor lhs, Pat pat) {
     if (!(pat instanceof Pat.Ctor rhs)) return reportError(lhs, pat);
-    // lhs.dataRef == rhs.dataRef -- we're assuming this fact!
+    // lhs.ref == rhs.ref -- we're assuming this fact!
     assert lhs.ref() == rhs.ref();
     return visitList(lhs.params(), rhs.params());
   }

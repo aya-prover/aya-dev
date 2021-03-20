@@ -18,7 +18,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole term, P p) {
     var args = term.argsBuf().view().map(arg -> visitArg(arg, p));
     if (!args.sameElements(term.argsBuf())) {
-      return new CallTerm.Hole(term.var(), args.collect(Buffer.factory()));
+      return new CallTerm.Hole(term.ref(), args.collect(Buffer.factory()));
     }
     return term;
   }
@@ -28,14 +28,14 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var args = dataCall.args().view().map(arg -> visitArg(arg, p));
     if (dataCall.contextArgs().sameElements(contextArgs, true)
       && dataCall.args().sameElements(args, true)) return dataCall;
-    return new CallTerm.Data(dataCall.dataRef(), contextArgs, args);
+    return new CallTerm.Data(dataCall.ref(), contextArgs, args);
   }
 
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
     var contextArgs = conCall.contextArgs().view().map(arg -> visitArg(arg, p));
     var dataArgs = conCall.dataArgs().view().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().view().map(arg -> visitArg(arg, p));
-    return new CallTerm.Con(conCall.conHead(), contextArgs, dataArgs, conArgs);
+    return new CallTerm.Con(conCall.ref(), contextArgs, dataArgs, conArgs);
   }
 
   @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
@@ -43,7 +43,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var args = structCall.args().view().map(arg -> visitArg(arg, p));
     if (structCall.contextArgs().sameElements(contextArgs, true)
       && structCall.args().sameElements(args, true)) return structCall;
-    return new CallTerm.Struct(structCall.structRef(), contextArgs, args);
+    return new CallTerm.Struct(structCall.ref(), contextArgs, args);
   }
 
   private <T> T visitParameterized(
@@ -104,7 +104,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var args = fnCall.args().view().map(arg -> visitArg(arg, p));
     if (fnCall.args().sameElements(args, true)
       && fnCall.args().sameElements(args, true)) return fnCall;
-    return new CallTerm.Fn(fnCall.fnRef(), contextArgs, args);
+    return new CallTerm.Fn(fnCall.ref(), contextArgs, args);
   }
 
   @Override default @NotNull Term visitTup(@NotNull TupTerm term, P p) {

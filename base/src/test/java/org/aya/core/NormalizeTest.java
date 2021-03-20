@@ -93,9 +93,9 @@ public class NormalizeTest extends LispTestCase {
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i))
       .body().getLeftValue().normalize(NormalizeMode.NF);
     assertTrue(normalizer.apply(2) instanceof CallTerm.Con conCall
-      && Objects.equals(conCall.conHead().name(), "suc"));
+      && Objects.equals(conCall.ref().name(), "suc"));
     assertTrue(normalizer.apply(3) instanceof CallTerm.Con conCall
-      && Objects.equals(conCall.conHead().name(), "suc"));
+      && Objects.equals(conCall.ref().name(), "suc"));
     assertTrue(normalizer.apply(4) instanceof RefTerm ref
       && Objects.equals(ref.var().name(), "a"));
     assertTrue(normalizer.apply(5) instanceof RefTerm ref

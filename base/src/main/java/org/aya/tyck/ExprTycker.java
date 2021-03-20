@@ -254,7 +254,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var struct = expr.struct().accept(this, null).wellTyped;
     if (!(struct instanceof CallTerm.Struct structCall))
       return wantButNo(expr.struct(), struct, "struct type");
-    var structRef = structCall.structRef();
+    var structRef = structCall.ref();
 
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
     var structTele = Def.defTele(structRef);

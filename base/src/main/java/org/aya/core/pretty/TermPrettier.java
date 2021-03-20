@@ -68,20 +68,20 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
-    return visitCalls(fnCall.fn(), fnCall.args(), nestedCall);
+    return visitCalls(fnCall.ref(), fnCall.args(), nestedCall);
   }
 
   @Override
   public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
-    return visitCalls(dataCall.fn(), dataCall.args(), nestedCall);
+    return visitCalls(dataCall.ref(), dataCall.args(), nestedCall);
   }
 
   @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Boolean nestedCall) {
-    return visitCalls(structCall.fn(), structCall.args(), nestedCall);
+    return visitCalls(structCall.ref(), structCall.args(), nestedCall);
   }
 
   @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Boolean nestedCall) {
-    return visitCalls(conCall.fn(), conCall.conArgs(), nestedCall);
+    return visitCalls(conCall.ref(), conCall.conArgs(), nestedCall);
   }
 
   @Override
@@ -109,7 +109,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
-    String name = term.var().name();
+    String name = term.ref().name();
     Doc filling = term.args().stream()
       .map(t -> t.term().toDoc())
       .reduce(Doc.empty(), Doc::hsep);

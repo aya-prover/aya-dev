@@ -11,7 +11,6 @@ import org.aya.core.def.StructDef;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Arg;
-import org.aya.generic.Matching;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @see CallTerm#make(Term, Arg)
  */
 public sealed interface CallTerm extends Term {
-  @NotNull Var fn();
+  @NotNull Var ref();
   @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args();
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
@@ -49,7 +48,7 @@ public sealed interface CallTerm extends Term {
   }
 
   record Fn(
-    @NotNull DefVar<FnDef, Decl.FnDecl> fnRef,
+    @NotNull DefVar<FnDef, Decl.FnDecl> ref,
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<@NotNull Term>> args
   ) implements CallTerm {
@@ -63,19 +62,14 @@ public sealed interface CallTerm extends Term {
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
       // Recursive case is irreducible
-      if (fnRef.core == null) return Decision.YES;
+      if (ref.core == null) return Decision.YES;
       // TODO[xyr]: after adding inductive datatypes, we need to check if the function pattern matches.
       return Decision.NO;
-    }
-
-    @Contract(value = " -> new", pure = true)
-    @Override public @NotNull Var fn() {
-      return fnRef;
     }
   }
 
   record Data(
-    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
+    @NotNull DefVar<DataDef, Decl.DataDecl> ref,
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<@NotNull Term>> args
   ) implements CallTerm {
@@ -91,20 +85,14 @@ public sealed interface CallTerm extends Term {
       return Decision.YES;
     }
 
-    @Contract(value = " -> new", pure = true)
-    @Override public @NotNull Var fn() {
-      return dataRef;
-    }
-
     public @NotNull SeqView<DataDef.@NotNull Ctor> availableCtors() {
-      return dataRef.core.body().view()
-        .filter(t -> {
-          if (t.patterns().isEmpty()) return true;
-          // TODO[ice]: apply subst
-          var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
-          return matchy != null;
-        })
-        .map(Matching::body);
+      return ref.core.body().view().mapNotNull(t -> {
+        if (t.patterns().isEmpty()) return t.body();
+        var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
+        if (matchy == null) return null;
+        // TODO[ice]: apply subst
+        return t.body();
+      });
     }
   }
 
@@ -112,7 +100,7 @@ public sealed interface CallTerm extends Term {
    * @author kiva
    */
   record Struct(
-    @NotNull DefVar<StructDef, Decl.StructDecl> structRef,
+    @NotNull DefVar<StructDef, Decl.StructDecl> ref,
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<@NotNull Term>> args
   ) implements CallTerm {
@@ -127,15 +115,10 @@ public sealed interface CallTerm extends Term {
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
       return Decision.YES;
     }
-
-    @Contract(value = " -> new", pure = true)
-    @Override public @NotNull Var fn() {
-      return structRef;
-    }
   }
 
   record Con(
-    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> conHead,
+    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<Term>> dataArgs,
     @NotNull SeqLike<Arg<Term>> conArgs
@@ -149,7 +132,7 @@ public sealed interface CallTerm extends Term {
     }
 
     public @NotNull DefVar<DataDef, Decl.DataDecl> dataRef() {
-      return DataDef.fromCtor(conHead);
+      return DataDef.fromCtor(ref);
     }
 
     @Override public @NotNull SeqView<Arg<Term>> args() {
@@ -157,14 +140,9 @@ public sealed interface CallTerm extends Term {
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      if (conHead.core == null) return Decision.YES;
-      if (!conHead.core.clauses().isEmpty()) return Decision.NO;
+      if (ref.core == null) return Decision.YES;
+      if (!ref.core.clauses().isEmpty()) return Decision.NO;
       return Decision.MAYBE;
-    }
-
-    @Contract(value = " -> new", pure = true)
-    @Override public @NotNull Var fn() {
-      return conHead;
     }
   }
 
@@ -172,7 +150,7 @@ public sealed interface CallTerm extends Term {
    * @author ice1000
    */
   record Hole(
-    @NotNull Var var,
+    @NotNull Var ref,
     @NotNull Buffer<@NotNull Arg<Term>> argsBuf
   ) implements CallTerm {
     public Hole(@NotNull Var var) {
@@ -181,10 +159,6 @@ public sealed interface CallTerm extends Term {
 
     @Override public @NotNull Seq<Arg<Term>> args() {
       return argsBuf;
-    }
-
-    @Contract(" -> new") @Override public @NotNull Var fn() {
-      return var;
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

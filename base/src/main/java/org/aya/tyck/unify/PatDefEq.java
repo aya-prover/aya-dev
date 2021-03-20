@@ -66,32 +66,32 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
 
   @Override
   public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.fnRef() != rhs.fnRef())
+    if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref())
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
     // Lossy comparison
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.fnRef()))) return true;
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()))) return true;
     return defeq.compareWHNF(lhs, rhs, type);
   }
 
   @Override
   public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof CallTerm.Data rhs) || lhs.dataRef() != rhs.dataRef()) return false;
-    return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.dataRef()));
+    if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) return false;
+    return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()));
   }
 
   @Override
   public @NotNull Boolean visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.structRef() != rhs.structRef()) return false;
-    return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.structRef()));
+    if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) return false;
+    return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()));
   }
 
   public @NotNull Boolean visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof CallTerm.Con rhs) || lhs.conHead() != rhs.conHead())
+    if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref())
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
     return defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(), Def.defTele(lhs.dataRef()))
-      && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Def.defTele(lhs.conHead()));
+      && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Def.defTele(lhs.ref()));
   }
 
   @Override
