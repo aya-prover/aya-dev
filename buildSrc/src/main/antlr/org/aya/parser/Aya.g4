@@ -188,23 +188,8 @@ fragment OCT_DIGIT : [0-8];
 
 // identifier
 fragment AYA_SIMPLE_LETTER : [~!@#$%^&*\-+=<>?/|:[\u005Da-zA-Z_\u2200-\u22FF];
-
-fragment AYA_UNICODE : ~[\u0000-\u007F\uD800-\uDBFF] {Character.isUnicodeIdentifierPart(_input.LA(-1))}?;
-
-fragment AYA_EMOJI32 : [\p{EmojiPresentation=EmojiDefault}];
-fragment AYA_EMOJI32_TEXT : [\p{EmojiPresentation=TextDefault}];
-// emoji that are two code points: emoji32 + variation selector (U+FE00-U+FE0F)
-fragment AYA_EMOJi : AYA_EMOJI32 [\uFE00-\uFE0F]?
-                   | AYA_EMOJI32_TEXT [\uFE00-\uFE0F]?
-                   ;
-
-fragment AYA_ALL_LETTER
-	:	AYA_SIMPLE_LETTER // these are the "aya letters" below 0x7F
-	|	AYA_UNICODE
-	| AYA_EMOJi
-	;
-
-ID : AYA_ALL_LETTER (AYA_ALL_LETTER | [0-9'])*;
+fragment AYA_LETTER : AYA_SIMPLE_LETTER | [\u0080-\u{10FFFF}];
+ID : AYA_LETTER (AYA_LETTER | [0-9'])*;
 
 // whitespaces
 WS : [ \t\r\n]+ -> channel(HIDDEN);
