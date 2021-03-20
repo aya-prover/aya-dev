@@ -23,6 +23,10 @@ public record RangeSpan(
     return new RangeSpan(input, start, end);
   }
 
+  private boolean isVariationSelector(int code) {
+    return code >= (int) '\uFE00' && code <= (int) '\uFE0F';
+  }
+
   @Override
   public @NotNull Span.Data normalize(PrettyErrorConfig config) {
     String input = input();
@@ -49,6 +53,8 @@ public record RangeSpan(
       } else if (c == '\t') {
         // treat tab as tabWidth-length-ed spaces
         col += tabWidth;
+      } else if (isVariationSelector(c)) {
+        col += 0;
       } else if (c > 128 && (Character.isUnicodeIdentifierStart(c)
         || Character.isUnicodeIdentifierPart(c)
         || Character.isSupplementaryCodePoint(c))) {

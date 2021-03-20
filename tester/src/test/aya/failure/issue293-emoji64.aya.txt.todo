@@ -1,0 +1,10 @@
+In file $FILE:10:29 ->
+
+   8 |   | 🀎
+   9 | 
+  10 | \def u : ❤️守❤️护❤️最❤️好❤️的❤️ => 🀎
+                                    ^^
+  
+Error: The expected type `❤️守❤️护❤️最❤️好❤️的❤️` does not match the actual type `❤️`
+Tycking interrupted due to errors.
+What are you doing?
