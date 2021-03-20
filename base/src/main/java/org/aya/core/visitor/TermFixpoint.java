@@ -33,9 +33,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
     var contextArgs = conCall.contextArgs().view().map(arg -> visitArg(arg, p));
-    var dataArgs = conCall.dataArgs().view().map(arg -> visitArg(arg, p));
+    var dataArgs = conCall.head().dataArgs().view().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().view().map(arg -> visitArg(arg, p));
-    return new CallTerm.Con(conCall.ref(), contextArgs, dataArgs, conArgs);
+    var head = new CallTerm.ConHead(conCall.head().dataRef(), conCall.head().ref(), dataArgs);
+    return new CallTerm.Con(head, contextArgs, conArgs);
   }
 
   @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {

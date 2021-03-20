@@ -117,12 +117,32 @@ public sealed interface CallTerm extends Term {
     }
   }
 
-  record Con(
+  record ConHead(
+    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
+    @NotNull SeqLike<Arg<@NotNull Term>> dataArgs
+  ) {
+  }
+
+  record Con(
+    @NotNull ConHead head,
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
-    @NotNull SeqLike<Arg<Term>> dataArgs,
     @NotNull SeqLike<Arg<Term>> conArgs
   ) implements CallTerm {
+    public Con(
+      @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
+      @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
+      @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
+      @NotNull SeqLike<Arg<@NotNull Term>> dataArgs,
+      @NotNull SeqLike<Arg<@NotNull Term>> conArgs
+    ) {
+      this(new ConHead(dataRef, ref, dataArgs), contextArgs, conArgs);
+    }
+
+    @Override public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref() {
+      return head().ref;
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitConCall(this, p);
     }
@@ -131,17 +151,14 @@ public sealed interface CallTerm extends Term {
       return visitor.visitConCall(this, p, q);
     }
 
-    public @NotNull DefVar<DataDef, Decl.DataDecl> dataRef() {
-      return DataDef.fromCtor(ref);
-    }
-
     @Override public @NotNull SeqView<Arg<Term>> args() {
-      return dataArgs.view().concat(conArgs.view());
+      return head.dataArgs.view().concat(conArgs.view());
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      if (ref.core == null) return Decision.YES;
-      if (!ref.core.clauses().isEmpty()) return Decision.NO;
+      var core = head.ref.core;
+      if (core == null) return Decision.YES;
+      if (!core.clauses().isEmpty()) return Decision.NO;
       return Decision.MAYBE;
     }
   }

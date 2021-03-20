@@ -101,7 +101,7 @@ public record DataDef(
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {
-      return new CallTerm.Con(conVar,
+      return new CallTerm.Con(fromCtor(conVar), conVar,
         ctxTele.map(Term.Param::toArg),
         dataTele.map(Term.Param::toArg),
         conTele.map(Term.Param::toArg));

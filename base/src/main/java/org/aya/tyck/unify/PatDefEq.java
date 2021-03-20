@@ -90,7 +90,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref())
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
-    return defeq.visitArgs(lhs.dataArgs(), rhs.dataArgs(), Def.defTele(lhs.dataRef()))
+    return defeq.visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), Def.defTele(lhs.head().dataRef()))
       && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Def.defTele(lhs.ref()));
   }
 
