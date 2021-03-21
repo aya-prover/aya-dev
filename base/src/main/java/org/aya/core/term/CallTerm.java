@@ -87,11 +87,12 @@ public sealed interface CallTerm extends Term {
 
     public @NotNull SeqView<@NotNull ConHead> availableCtors() {
       return ref.core.body().view().mapNotNull(t -> {
-        if (t.patterns().isEmpty()) return new ConHead(ref, t.body().ref(), args);
+        var ref = t.body().ref();
+        if (t.patterns().isEmpty()) return new ConHead(this.ref, ref, contextArgs, args);
         var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
         if (matchy == null) return null;
         // TODO[ice]: apply subst
-        return new ConHead(ref, t.body().ref(), args);
+        return new ConHead(this.ref, ref, contextArgs, args);
       });
     }
   }
@@ -120,6 +121,7 @@ public sealed interface CallTerm extends Term {
   record ConHead(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
+    @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<@NotNull Term>> dataArgs
   ) {
     public @NotNull Data underlyingDataCall(@NotNull SeqLike<Arg<@NotNull Term>> contextArgs) {
@@ -129,7 +131,6 @@ public sealed interface CallTerm extends Term {
 
   record Con(
     @NotNull ConHead head,
-    @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<Term>> conArgs
   ) implements CallTerm {
     public Con(
@@ -139,7 +140,7 @@ public sealed interface CallTerm extends Term {
       @NotNull SeqLike<Arg<@NotNull Term>> dataArgs,
       @NotNull SeqLike<Arg<@NotNull Term>> conArgs
     ) {
-      this(new ConHead(dataRef, ref, dataArgs), contextArgs, conArgs);
+      this(new ConHead(dataRef, ref, contextArgs, dataArgs), conArgs);
     }
 
     @Override public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref() {
