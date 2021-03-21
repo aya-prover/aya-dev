@@ -7,9 +7,11 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
+import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -61,6 +63,7 @@ public interface Def extends CoreDef {
    *
    * @author ice1000
    */
+  @Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
   record Signature(
     @NotNull ImmutableSeq<Term.@NotNull Param> contextParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
@@ -70,6 +73,11 @@ public interface Def extends CoreDef {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
       if (contextParam.isEmpty()) return new Signature(contextParam, substParams(param, subst), result.subst(subst));
       else return new Signature(substParams(contextParam, subst), param.map(p -> p.subst(subst)), result.subst(subst));
+    }
+
+    public @NotNull Doc toDoc() {
+      return Doc.hcat(Doc.join(Doc.plain(" "), param.stream().map(Term.Param::toDoc)),
+        Doc.plain(" -> "), result.toDoc());
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {

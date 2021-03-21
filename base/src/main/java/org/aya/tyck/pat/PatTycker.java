@@ -66,9 +66,8 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos(), "clause " + (1 + index))));
       var elabClause = visitMatch(clause, signature.value);
-      signature.value = signature.value.mapTerm(elabClause._1);
       tracing(GenericBuilder::reduce);
-      return elabClause._2;
+      return elabClause;
     });
     return Tuple.of(signature.value.result(), res);
   }
@@ -78,7 +77,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     return new Pat.Absurd(absurd.explicit(), term);
   }
 
-  public Tuple2<@NotNull Term, Pat.PrototypeClause> visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
+  public Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
     var sig = new Ref<>(signature);
     subst.clear();
     exprTycker.localCtx = exprTycker.localCtx.derive();
@@ -89,8 +88,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
-    var type = result.map(ExprTycker.Result::type).getOrDefault(sig.value.result());
-    return Tuple.of(type, new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped)));
+    return new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped));
   }
 
   private @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
