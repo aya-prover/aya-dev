@@ -114,11 +114,11 @@ public record PatClassifier(
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
-    for (var ctor : hasMatch.first().availableCtors()) {
+    for (var conHead : hasMatch.first().availableCtors()) {
       var matches = subPatsSeq.view()
-        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor.ref()))
+        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conHead.ref()))
         .toImmutableSeq();
-      builder.shift(new PatTree(ctor.ref().name(), explicit));
+      builder.shift(new PatTree(conHead.ref().name(), explicit));
       if (matches.isEmpty()) {
         if (coverage) {
           reporter.report(new MissingCaseError(pos, builder.root()));

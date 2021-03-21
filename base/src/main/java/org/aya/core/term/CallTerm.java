@@ -85,13 +85,13 @@ public sealed interface CallTerm extends Term {
       return Decision.YES;
     }
 
-    public @NotNull SeqView<DataDef.@NotNull Ctor> availableCtors() {
+    public @NotNull SeqView<@NotNull ConHead> availableCtors() {
       return ref.core.body().view().mapNotNull(t -> {
-        if (t.patterns().isEmpty()) return t.body();
+        if (t.patterns().isEmpty()) return new ConHead(ref, t.body().ref(), args);
         var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
         if (matchy == null) return null;
         // TODO[ice]: apply subst
-        return t.body();
+        return new ConHead(ref, t.body().ref(), args);
       });
     }
   }
@@ -122,6 +122,9 @@ public sealed interface CallTerm extends Term {
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
     @NotNull SeqLike<Arg<@NotNull Term>> dataArgs
   ) {
+    public @NotNull Data underlyingDataCall(@NotNull SeqLike<Arg<@NotNull Term>> contextArgs) {
+      return new Data(dataRef, contextArgs, dataArgs);
+    }
   }
 
   record Con(

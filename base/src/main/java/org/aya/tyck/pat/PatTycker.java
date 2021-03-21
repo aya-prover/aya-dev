@@ -7,7 +7,6 @@ import org.aya.api.error.Reporter;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
-import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
@@ -18,6 +17,7 @@ import org.aya.generic.GenericBuilder;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -142,7 +142,9 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       exprTycker.localCtx.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
     }
-    if (!selected._2.conTelescope().isEmpty()) {
+    var ctorCore = selected._2.ref().core;
+    assert ctorCore != null;
+    if (!ctorCore.conTelescope().isEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
@@ -155,12 +157,14 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name(), subst.reporter());
     if (realCtor == null) throw new ExprTycker.TyckerException();
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), realCtor._2.conTelescope(), realCtor._2.result()));
+    var ctorCore = realCtor._2.ref().core;
+    assert ctorCore != null;
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), ctorCore.conTelescope(), realCtor._2.underlyingDataCall(Seq.of())));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
   }
 
-  private @Nullable Tuple2<CallTerm.Data, DataDef.Ctor>
+  private @Nullable Tuple2<CallTerm.Data, CallTerm.ConHead>
   selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
     if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       // TODO[ice]: report error: splitting on non data
@@ -171,11 +175,11 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       // TODO[ice]: report error: not checked data
       return null;
     }
-    var selected = dataCall.availableCtors().find(c -> Objects.equals(c.ref().name(), name));
-    if (selected.isEmpty()) {
+    var head = dataCall.availableCtors().find(c -> Objects.equals(c.ref().name(), name));
+    if (head.isEmpty()) {
       // TODO[ice]: report error: cannot find ctor of name
       return null;
     }
-    return Tuple.of(dataCall, selected.get());
+    return Tuple.of(dataCall, head.get());
   }
 }
