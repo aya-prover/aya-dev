@@ -143,7 +143,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       exprTycker.localCtx.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
     }
-    var ctorCore = selected._2.ref().core;
+    var ctorCore = selected._2;
     assert ctorCore != null;
     if (!ctorCore.conTelescope().isEmpty()) {
       // TODO: error report: not enough parameters bind
@@ -152,7 +152,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var value = bind.resolved().value;
     if (value != null) subst.good().putIfAbsent(v, value);
     else subst.bad().add(v);
-    return new Pat.Ctor(bind.explicit(), selected._2.ref(), ImmutableSeq.of(), null, selected._1);
+    return new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.of(), null, selected._1);
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
@@ -160,10 +160,10 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     if (realCtor == null) throw new ExprTycker.TyckerException();
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), realCtor._2.conTelescope(), realCtor._3.underlyingDataCall()));
     var patterns = visitPatterns(sig, ctor.params());
-    return new Pat.Ctor(ctor.explicit(), realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
+    return new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
   }
 
-  private @Nullable Tuple3<CallTerm.Data, DataDef.Ctor, CallTerm.ConHead>
+  private @Nullable Tuple3<CallTerm.Data, DataDef.CtorInfo, CallTerm.ConHead>
   selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
     if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       // TODO[ice]: report error: splitting on non data

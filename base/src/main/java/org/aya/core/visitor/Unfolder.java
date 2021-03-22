@@ -40,7 +40,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var tele = def.telescope().toImmutableSeq();
     assert args.sizeEquals(tele.size());
     assert Term.Param.checkSubst(tele, args);
-    var volynskaya = tryUnfoldClauses(p, args, buildSubst(tele, args), def.clauses());
+    var volynskaya = tryUnfoldClauses(p, args, buildSubst(tele, args), def.info().clauses());
     return volynskaya != null ? volynskaya : conCall;
   }
 

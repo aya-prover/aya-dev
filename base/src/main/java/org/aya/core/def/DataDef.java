@@ -39,11 +39,21 @@ public record DataDef(
     return visitor.visitData(this, p);
   }
 
+  public static record CtorInfo(
+    @NotNull ImmutableSeq<Term.Param> conTelescope,
+    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
+  ) {
+    public @NotNull CtorInfo subst(Substituter.TermSubst subst) {
+      var conTele = Term.Param.subst(conTelescope, subst);
+      // TODO[ice]: subst clauses
+      return new CtorInfo(conTele, clauses);
+    }
+  }
+
   public static record Ctor(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
-    @NotNull ImmutableSeq<Term.Param> conTelescope,
-    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
+    @NotNull CtorInfo info,
     boolean coerce
   ) implements Def {
     public Ctor {
@@ -55,7 +65,7 @@ public record DataDef(
     }
 
     @Override public @NotNull SeqView<Term.Param> telescope() {
-      return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTelescope);
+      return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(info.conTelescope);
     }
 
     @Override public @NotNull CallTerm.Data result() {
@@ -72,12 +82,14 @@ public record DataDef(
     public static @NotNull CtorTelescopes telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
       var core = defVar.core;
       if (core != null) {
-        if (core.dataRef.core != null)
-          return new CtorTelescopes(core.dataRef.core.contextTele, core.dataRef.core.telescope, core.conTelescope);
+        var dataDef = core.dataRef.core;
+        var conTelescope = core.info.conTelescope;
+        if (dataDef != null)
+          return new CtorTelescopes(dataDef.contextTele, dataDef.telescope, conTelescope);
         else {
           var signature = core.dataRef.concrete.signature;
           assert signature != null;
-          return new CtorTelescopes(signature.contextParam(), signature.param(), core.conTelescope);
+          return new CtorTelescopes(signature.contextParam(), signature.param(), conTelescope);
         }
       }
       var dataSignature = defVar.concrete.dataRef.concrete.signature;
@@ -89,14 +101,6 @@ public record DataDef(
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return null;
-    }
-
-    public @NotNull Ctor subst(Substituter.TermSubst subst) {
-      var conTele = Term.Param.subst(conTelescope, subst);
-      // TODO[ice]: subst clauses
-      var newCtor = new Ctor(dataRef, ref, conTele, clauses, coerce);
-      newCtor.ref.core = this;
-      return newCtor;
     }
   }
 

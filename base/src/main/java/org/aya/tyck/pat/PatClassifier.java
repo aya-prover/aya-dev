@@ -4,6 +4,7 @@ package org.aya.tyck.pat;
 
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
@@ -21,7 +22,6 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.*;
 
 /**
@@ -113,11 +113,11 @@ public record PatClassifier(
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
-    for (var conHead : hasMatch.first().availableCtors().view().map(Tuple2::getKey)) {
+    for (var ctor : hasMatch.first().availableCtors().view()) {
       var matches = subPatsSeq.view()
-        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conHead))
+        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor._1, ctor._2.ref()))
         .toImmutableSeq();
-      builder.shift(new PatTree(conHead.ref().name(), explicit));
+      builder.shift(new PatTree(ctor._2.ref().name(), explicit));
       if (matches.isEmpty()) {
         if (coverage) {
           reporter.report(new MissingCaseError(pos, builder.root()));
@@ -138,9 +138,9 @@ public record PatClassifier(
     return buffer.toImmutableSeq();
   }
 
-  private static @Nullable SubPats matches(SubPats subPats, int ix, DataDef.Ctor ctor) {
+  private static @Nullable SubPats matches(SubPats subPats, int ix, DataDef.CtorInfo ctor, Var ctorRef) {
     var head = subPats.head();
-    if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctor.ref())
+    if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
       return new SubPats(ctorPat.params(), ix);
     if (head instanceof Pat.Bind)
       return new SubPats(ctor.conTelescope().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);

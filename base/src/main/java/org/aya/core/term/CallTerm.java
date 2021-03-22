@@ -92,13 +92,14 @@ public sealed interface CallTerm extends Term {
      * @apiNote Do <strong>not</strong> use <code>conHead._2.ref.core</code> to obtain the constructor!
      * Use <code>conHead._1</code> directly.
      */
-    public @NotNull SeqView<Tuple2<DataDef.@NotNull Ctor, @NotNull ConHead>> availableCtors() {
+    public @NotNull SeqView<Tuple2<DataDef.@NotNull CtorInfo, @NotNull ConHead>> availableCtors() {
       return ref.core.body().view().mapNotNull(t -> {
-        var ctor = t.body().ref();
-        if (t.patterns().isEmpty()) return Tuple.of(ctor.core, new ConHead(ref, ctor, contextArgs, args));
+        var info = t.body().info();
+        var head = new ConHead(ref, t.body().ref(), contextArgs, args);
+        if (t.patterns().isEmpty()) return Tuple.of(info, head);
         var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
         if (matchy == null) return null;
-        return Tuple.of(t.body().subst(matchy), new ConHead(ref, ctor, contextArgs, args));
+        return Tuple.of(info.subst(matchy), head);
       });
     }
   }
@@ -168,7 +169,7 @@ public sealed interface CallTerm extends Term {
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
       var core = head.ref.core;
       if (core == null) return Decision.YES;
-      if (!core.clauses().isEmpty()) return Decision.NO;
+      if (!core.info().clauses().isEmpty()) return Decision.NO;
       return Decision.MAYBE;
     }
   }

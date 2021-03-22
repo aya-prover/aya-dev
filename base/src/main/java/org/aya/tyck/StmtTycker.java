@@ -78,12 +78,13 @@ public record StmtTycker(
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature));
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
+    var info = new DataDef.CtorInfo(tele, clauses);
     if (!elabClauses.isEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
-      var elaborated = new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
+      var elaborated = new DataDef.Ctor(dataRef, ctor.ref, info, ctor.coerce);
       PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);
       return elaborated;
-    } else return new DataDef.Ctor(dataRef, ctor.ref, tele, clauses, ctor.coerce);
+    } else return new DataDef.Ctor(dataRef, ctor.ref, info, ctor.coerce);
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
