@@ -8,6 +8,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,11 +39,11 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     return ctx.toImmutableSeq();
   }
 
-  public @NotNull Term get(LocalVar var) {
+  @Contract(pure = true) public @NotNull Term get(LocalVar var) {
     return localMap.getOrElse(var, () -> parentGet(var));
   }
 
-  private @Nullable Term parentGet(LocalVar var) {
+  @Contract(pure = true) private @Nullable Term parentGet(LocalVar var) {
     return parent != null ? parent.get(var) : null;
   }
 
@@ -50,7 +51,7 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     localMap.set(var, term);
   }
 
-  public @NotNull LocalCtx derive() {
+  @Contract(" -> new") public @NotNull LocalCtx derive() {
     return new LocalCtx(MutableMap.create(), this);
   }
 }

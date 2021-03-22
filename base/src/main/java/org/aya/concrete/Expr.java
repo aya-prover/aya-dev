@@ -17,6 +17,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.stream.Stream;
 /**
  * @author re-xyr
  */
+@Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
 public sealed interface Expr {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
@@ -58,8 +60,8 @@ public sealed interface Expr {
     R visitRef(@NotNull RefExpr expr, P p);
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
-    R visitPi(@NotNull Expr.PiExpr expr, P p);
-    R visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, P p);
+    R visitPi(@NotNull PiExpr expr, P p);
+    R visitTelescopicSigma(@NotNull TelescopicSigmaExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
@@ -81,10 +83,10 @@ public sealed interface Expr {
     @Override default R visitLam(@NotNull LamExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
-    @Override default R visitPi(@NotNull Expr.PiExpr expr, P p) {
+    @Override default R visitPi(@NotNull PiExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
-    @Override default R visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, P p) {
+    @Override default R visitTelescopicSigma(@NotNull TelescopicSigmaExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
     @Override default R visitUniv(@NotNull UnivExpr expr, P p) {
