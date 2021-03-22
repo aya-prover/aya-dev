@@ -5,6 +5,8 @@ package org.aya.generic;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 /**
  * @param <Pattern> {@link org.aya.core.pat.Pat} or {@link org.aya.concrete.Pattern}
  * @param <Body>    {@link org.aya.core.term.Term} or {@link org.aya.concrete.Expr} or
@@ -15,4 +17,7 @@ public record Matching<Pattern, Body>(
   @NotNull ImmutableSeq<Pattern> patterns,
   @NotNull Body body
 ) {
+  public @NotNull <EveryBody> Matching<Pattern, EveryBody> mapBody(@NotNull Function<Body, EveryBody> f) {
+    return new Matching<>(patterns, f.apply(body));
+  }
 }

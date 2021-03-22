@@ -45,8 +45,7 @@ public record DataDef(
   ) {
     public @NotNull CtorInfo subst(Substituter.TermSubst subst) {
       var conTele = Term.Param.subst(conTelescope, subst);
-      // TODO[ice]: subst clauses
-      return new CtorInfo(conTele, clauses);
+      return new CtorInfo(conTele, clauses.map(i -> i.mapBody(term -> term.subst(subst))));
     }
   }
 
