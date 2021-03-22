@@ -4,8 +4,6 @@ package org.aya.tyck.pat;
 
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.DefVar;
-import org.aya.concrete.Decl.DataCtor;
 import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatUnify;
@@ -115,9 +113,9 @@ public record PatClassifier(
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
-    for (var conHead : hasMatch.first().availableCtors().view().map(Tuple2::getValue)) {
+    for (var conHead : hasMatch.first().availableCtors().view().map(Tuple2::getKey)) {
       var matches = subPatsSeq.view()
-        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conHead.ref()))
+        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conHead))
         .toImmutableSeq();
       builder.shift(new PatTree(conHead.ref().name(), explicit));
       if (matches.isEmpty()) {
@@ -140,15 +138,12 @@ public record PatClassifier(
     return buffer.toImmutableSeq();
   }
 
-  private static @Nullable SubPats matches(
-    SubPats subPats, int ix,
-    @NotNull DefVar<DataDef.Ctor, DataCtor> ref
-  ) {
+  private static @Nullable SubPats matches(SubPats subPats, int ix, DataDef.Ctor ctor) {
     var head = subPats.head();
-    if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
-      return new SubPats(ctor.params(), ix);
+    if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctor.ref())
+      return new SubPats(ctorPat.params(), ix);
     if (head instanceof Pat.Bind)
-      return new SubPats(ref.core.conTelescope().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
+      return new SubPats(ctor.conTelescope().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
     return null;
   }
 
