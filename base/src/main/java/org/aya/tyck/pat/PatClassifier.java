@@ -23,6 +23,7 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.*;
 
 /**
@@ -114,7 +115,7 @@ public record PatClassifier(
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
-    for (var conHead : hasMatch.first().availableCtors()) {
+    for (var conHead : hasMatch.first().availableCtors().view().map(Tuple2::getValue)) {
       var matches = subPatsSeq.view()
         .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conHead.ref()))
         .toImmutableSeq();
@@ -146,7 +147,7 @@ public record PatClassifier(
     var head = subPats.head();
     if (head instanceof Pat.Ctor ctor && ctor.ref() == ref)
       return new SubPats(ctor.params(), ix);
-    if (head instanceof Pat.Bind bind)
+    if (head instanceof Pat.Bind)
       return new SubPats(ref.core.conTelescope().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
     return null;
   }

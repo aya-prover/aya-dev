@@ -7,6 +7,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
+import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
@@ -24,6 +25,7 @@ import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableHashSet;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -156,14 +158,12 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name(), subst.reporter());
     if (realCtor == null) throw new ExprTycker.TyckerException();
-    var ctorCore = realCtor._2.ref().core;
-    assert ctorCore != null;
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), ctorCore.conTelescope(), realCtor._2.underlyingDataCall()));
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), realCtor._2.conTelescope(), realCtor._3.underlyingDataCall()));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
   }
 
-  private @Nullable Tuple2<CallTerm.Data, CallTerm.ConHead>
+  private @Nullable Tuple3<CallTerm.Data, DataDef.Ctor, CallTerm.ConHead>
   selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
     if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       // TODO[ice]: report error: splitting on non data
@@ -174,11 +174,12 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       // TODO[ice]: report error: not checked data
       return null;
     }
-    var head = dataCall.availableCtors().find(c -> Objects.equals(c.ref().name(), name));
+    var head = dataCall.availableCtors().find(c -> Objects.equals(c._2.ref().name(), name));
     if (head.isEmpty()) {
       // TODO[ice]: report error: cannot find ctor of name
       return null;
     }
-    return Tuple.of(dataCall, head.get());
+    var conHead = head.get();
+    return Tuple.of(dataCall, conHead._1, conHead._2);
   }
 }

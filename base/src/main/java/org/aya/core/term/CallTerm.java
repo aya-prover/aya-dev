@@ -16,6 +16,8 @@ import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,14 +87,14 @@ public sealed interface CallTerm extends Term {
       return Decision.YES;
     }
 
-    public @NotNull SeqView<@NotNull ConHead> availableCtors() {
+    public @NotNull SeqView<Tuple2<DataDef.@NotNull Ctor, @NotNull ConHead>> availableCtors() {
       return ref.core.body().view().mapNotNull(t -> {
-        var ref = t.body().ref();
-        if (t.patterns().isEmpty()) return new ConHead(this.ref, ref, contextArgs, args);
+        var ctor = t.body().ref();
+        if (t.patterns().isEmpty()) return Tuple.of(ctor.core, new ConHead(ref, ctor, contextArgs, args));
         var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
         if (matchy == null) return null;
         // TODO[ice]: apply subst
-        return new ConHead(this.ref, ref, contextArgs, args);
+        return Tuple.of(ctor.core, new ConHead(this.ref, ctor, contextArgs, args));
       });
     }
   }
