@@ -156,6 +156,13 @@ public interface Term extends CoreTerm {
       return subst(subst, LevelSubst.EMPTY);
     }
 
+    public static @NotNull ImmutableSeq<Term.Param> subst(
+      @NotNull SeqLike<Term.@NotNull Param> params,
+      @NotNull Substituter.TermSubst subst
+    ) {
+      return params.view().map(param -> param.subst(subst)).toImmutableSeq();
+    }
+
     public @NotNull Term.Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
       return new Param(ref, type.accept(new Substituter(subst, levelSubst), Unit.unit()), explicit);
     }

@@ -49,8 +49,7 @@ public record DataDef(
       ref.core = this;
     }
 
-    @Override
-    public @NotNull ImmutableSeq<Term.Param> contextTele() {
+    @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
       return dataRef().core.contextTele();
     }
 

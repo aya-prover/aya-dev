@@ -124,7 +124,7 @@ public sealed interface CallTerm extends Term {
     @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<Arg<@NotNull Term>> dataArgs
   ) {
-    public @NotNull Data underlyingDataCall(@NotNull SeqLike<Arg<@NotNull Term>> contextArgs) {
+    public @NotNull Data underlyingDataCall() {
       return new Data(dataRef, contextArgs, dataArgs);
     }
   }

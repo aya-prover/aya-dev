@@ -424,7 +424,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           againstTele = againstTele.drop(1);
           if (!againstTele.isEmpty()) {
             final var subst = new Substituter.TermSubst(ref, result.wellTyped);
-            againstTele = againstTele.map(param -> param.subst(subst));
+            againstTele = Term.Param.subst(againstTele, subst).view();
             last = last.subst(subst);
           }
         }

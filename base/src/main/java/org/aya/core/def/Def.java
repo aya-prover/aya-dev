@@ -37,7 +37,7 @@ public interface Def extends CoreDef {
   }
   static @NotNull ImmutableSeq<Term.Param>
   substParams(@NotNull SeqLike<Term.@NotNull Param> param, Substituter.@NotNull TermSubst subst) {
-    return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
+    return Term.Param.subst(param.view().drop(1), subst);
   }
 
   @NotNull Term result();
@@ -72,7 +72,7 @@ public interface Def extends CoreDef {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
       if (contextParam.isEmpty()) return new Signature(contextParam, substParams(param, subst), result.subst(subst));
-      else return new Signature(substParams(contextParam, subst), param.map(p -> p.subst(subst)), result.subst(subst));
+      else return new Signature(substParams(contextParam, subst), Term.Param.subst(param, subst), result.subst(subst));
     }
 
     public @NotNull Doc toDoc() {
@@ -85,7 +85,7 @@ public interface Def extends CoreDef {
     }
 
     public @NotNull Signature subst(@NotNull Substituter.TermSubst subst) {
-      return new Signature(contextParam.map(p -> p.subst(subst)), param.map(p -> p.subst(subst)), result.subst(subst));
+      return new Signature(Term.Param.subst(contextParam, subst), Term.Param.subst(param, subst), result.subst(subst));
     }
   }
 }

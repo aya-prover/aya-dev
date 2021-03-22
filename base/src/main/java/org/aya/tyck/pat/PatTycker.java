@@ -17,7 +17,6 @@ import org.aya.generic.GenericBuilder;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -159,7 +158,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     if (realCtor == null) throw new ExprTycker.TyckerException();
     var ctorCore = realCtor._2.ref().core;
     assert ctorCore != null;
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), ctorCore.conTelescope(), realCtor._2.underlyingDataCall(Seq.of())));
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), ctorCore.conTelescope(), realCtor._2.underlyingDataCall()));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._2.ref(), patterns, ctor.as(), realCtor._1);
   }
