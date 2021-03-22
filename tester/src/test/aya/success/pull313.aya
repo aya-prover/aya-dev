@@ -1,0 +1,12 @@
+\open \data Nat : \Set
+ | zero
+ | suc Nat
+
+\data Fin (n : Nat) : \Set
+ | suc m => fzero
+ | suc m => fsuc (Fin m)
+
+\def finToNat (n : Nat) (a : Fin n) : Nat
+ | zero, \impossible
+ | suc zero, fzero => zero
+ | suc n, fsuc a => suc (finToNat n a)
