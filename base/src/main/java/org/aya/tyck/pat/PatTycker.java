@@ -95,11 +95,19 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   private @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
     var results = Buffer.<Pat>of();
     stream.forEach(pat -> {
+      if (sig.value.param().isEmpty()) {
+        // TODO[ice]: report error
+        throw new ExprTycker.TyckerException();
+      }
       var param = sig.value.param().first();
       while (param.explicit() != pat.explicit()) if (pat.explicit()) {
         var bind = new Pat.Bind(false, new LocalVar(param.ref().name()), param.type());
         results.append(bind);
         sig.value = sig.value.inst(bind.toTerm());
+        if (sig.value.param().isEmpty()) {
+          // TODO[ice]: report error
+          throw new ExprTycker.TyckerException();
+        }
         param = sig.value.param().first();
       } else {
         // TODO[ice]: unexpected implicit pattern
