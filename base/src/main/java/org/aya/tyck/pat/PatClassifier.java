@@ -109,6 +109,7 @@ public record PatClassifier(
     // Progress
     if (hasMatch.isEmpty()) {
       builder.shiftEmpty(explicit);
+      builder.unshift();
       return classifySub(subPatsSeq.map(SubPats::drop), coverage);
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.

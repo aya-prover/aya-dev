@@ -1,0 +1,10 @@
+In file $FILE:5:5 ->
+
+  3 |  | suc Nat
+  4 | 
+  5 | \def cov (a, b, c, d : Nat) : Nat
+           ^-^
+  
+Error: Unhandled case: suc, suc, suc
+Tycking interrupted due to errors.
+What are you doing?
