@@ -87,14 +87,18 @@ public sealed interface CallTerm extends Term {
       return Decision.YES;
     }
 
+    /**
+     * @return a substituted constructor (due to GADT) and a constructor head.
+     * @apiNote Do <strong>not</strong> use <code>conHead._2.ref.core</code> to obtain the constructor!
+     * Use <code>conHead._1</code> directly.
+     */
     public @NotNull SeqView<Tuple2<DataDef.@NotNull Ctor, @NotNull ConHead>> availableCtors() {
       return ref.core.body().view().mapNotNull(t -> {
         var ctor = t.body().ref();
         if (t.patterns().isEmpty()) return Tuple.of(ctor.core, new ConHead(ref, ctor, contextArgs, args));
         var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
         if (matchy == null) return null;
-        // TODO[ice]: apply subst
-        return Tuple.of(ctor.core, new ConHead(this.ref, ctor, contextArgs, args));
+        return Tuple.of(ctor.core.subst(matchy), new ConHead(this.ref, ctor, contextArgs, args));
       });
     }
   }

@@ -7,6 +7,7 @@ import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Substituter;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -88,6 +89,12 @@ public record DataDef(
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return null;
+    }
+
+    public @NotNull Ctor subst(Substituter.TermSubst subst) {
+      var conTele = Term.Param.subst(conTelescope, subst);
+      // TODO[ice]: subst clauses
+      return new Ctor(dataRef, ref, conTele, clauses, coerce);
     }
   }
 
