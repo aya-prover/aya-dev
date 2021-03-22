@@ -30,7 +30,7 @@ import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
-import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.function.TriFunction;
@@ -182,15 +182,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
-  defCall(DefVar<D, S> defVar, TriFunction<DefVar<D, S>, SeqLike<Arg<Term>>, SeqLike<Arg<Term>>, Term> function) {
+  defCall(DefVar<D, S> defVar, TriFunction<DefVar<D, S>, ImmutableSeq<Arg<Term>>, ImmutableSeq<Arg<Term>>, Term> function) {
     var tele = Def.defTele(defVar);
     // ice: should we rename the vars in this telescope? Probably not.
-    var body = function.apply(
-      defVar,
-      Objects.requireNonNull(defVar.concrete.signature)
-        .param().view().map(Term.Param::toArg),
-      tele.view().map(Term.Param::toArg)
-    );
+    var body = function.apply(defVar,
+      Objects.requireNonNull(defVar.concrete.signature).param().map(Term.Param::toArg),
+      tele.view().map(Term.Param::toArg).toImmutableSeq());
     var type = PiTerm.make(false, tele, Def.defResult(defVar));
     return new Result(LamTerm.make(tele, body), type);
   }

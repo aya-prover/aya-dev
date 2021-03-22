@@ -70,8 +70,8 @@ public record DataDef(
     @Override public @NotNull CallTerm.Data result() {
       return new CallTerm.Data(
         dataRef,
-        Def.defContextTele(dataRef).view().map(Term.Param::toArg),
-        Def.defTele(dataRef).view().map(Term.Param::toArg)
+        Def.defContextTele(dataRef).map(Term.Param::toArg),
+        Def.defTele(dataRef).view().map(Term.Param::toArg).toImmutableSeq()
       );
     }
 

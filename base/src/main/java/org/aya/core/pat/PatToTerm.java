@@ -8,7 +8,7 @@ import org.aya.core.term.Term;
 import org.aya.core.term.TupTerm;
 import org.aya.generic.Arg;
 import org.aya.ref.LocalVar;
-import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,8 +38,8 @@ final class PatToTerm implements Pat.Visitor<Unit, Term> {
     var tele = ctor.ref().core.info().conTelescope();
     var args = ctor.params().view().zip(tele.view())
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
-      .collect(Seq.factory());
-    var dataArgs = data.args().view().map(Arg::implicitify);
+      .collect(ImmutableSeq.factory());
+    var dataArgs = data.args().map(Arg::implicitify);
     return new CallTerm.Con(data.ref(), ctor.ref(), data.contextArgs(), dataArgs, args);
   }
 }

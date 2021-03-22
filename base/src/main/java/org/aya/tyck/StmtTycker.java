@@ -65,9 +65,9 @@ public record StmtTycker(
     var tele = checkTele(tycker, ctor.telescope);
     var dataRef = ctor.dataRef;
     var dataContextArgs = Objects.requireNonNull(dataRef.concrete.signature)
-      .contextParam().view().map(Term.Param::toArg);
+      .contextParam().map(Term.Param::toArg);
     var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
-      .param().view().map(Term.Param::toArg);
+      .param().map(Term.Param::toArg);
     // TODO[ice]: insert data params?
     var signature = new Def.Signature(ImmutableSeq.of(), tele, new CallTerm.Data(
       dataRef,

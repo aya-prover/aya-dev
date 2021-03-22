@@ -5,7 +5,6 @@ package org.aya.core.def;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,7 @@ public record StructDef(
     }
 
     @Override
-    public @NotNull SeqLike<Term.Param> contextTele() {
+    public @NotNull ImmutableSeq<Term.Param> contextTele() {
       return structRef().core.contextTele();
     }
 

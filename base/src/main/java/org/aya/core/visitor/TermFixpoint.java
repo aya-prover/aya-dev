@@ -24,17 +24,17 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
-    var contextArgs = dataCall.contextArgs().view().map(arg -> visitArg(arg, p));
-    var args = dataCall.args().view().map(arg -> visitArg(arg, p));
+    var contextArgs = dataCall.contextArgs().map(arg -> visitArg(arg, p));
+    var args = dataCall.args().map(arg -> visitArg(arg, p));
     if (dataCall.contextArgs().sameElements(contextArgs, true)
       && dataCall.args().sameElements(args, true)) return dataCall;
     return new CallTerm.Data(dataCall.ref(), contextArgs, args);
   }
 
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
-    var contextArgs = conCall.head().contextArgs().view().map(arg -> visitArg(arg, p));
-    var dataArgs = conCall.head().dataArgs().view().map(arg -> visitArg(arg, p));
-    var conArgs = conCall.conArgs().view().map(arg -> visitArg(arg, p));
+    var contextArgs = conCall.head().contextArgs().map(arg -> visitArg(arg, p));
+    var dataArgs = conCall.head().dataArgs().map(arg -> visitArg(arg, p));
+    var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));
     var head = new CallTerm.ConHead(conCall.head().dataRef(), conCall.head().ref(), contextArgs, dataArgs);
     return new CallTerm.Con(head, conArgs);
   }

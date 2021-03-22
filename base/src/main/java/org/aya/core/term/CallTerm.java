@@ -15,6 +15,7 @@ import org.aya.util.Decision;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -72,8 +73,8 @@ public sealed interface CallTerm extends Term {
 
   record Data(
     @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-    @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
-    @NotNull SeqLike<Arg<@NotNull Term>> args
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitDataCall(this, p);
@@ -128,8 +129,8 @@ public sealed interface CallTerm extends Term {
   record ConHead(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
-    @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
-    @NotNull SeqLike<Arg<@NotNull Term>> dataArgs
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs
   ) {
     public @NotNull Data underlyingDataCall() {
       return new Data(dataRef, contextArgs, dataArgs);
@@ -138,14 +139,14 @@ public sealed interface CallTerm extends Term {
 
   record Con(
     @NotNull ConHead head,
-    @NotNull SeqLike<Arg<Term>> conArgs
+    @NotNull ImmutableSeq<Arg<Term>> conArgs
   ) implements CallTerm {
     public Con(
       @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
       @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
-      @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
-      @NotNull SeqLike<Arg<@NotNull Term>> dataArgs,
-      @NotNull SeqLike<Arg<@NotNull Term>> conArgs
+      @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
+      @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs,
+      @NotNull ImmutableSeq<Arg<@NotNull Term>> conArgs
     ) {
       this(new ConHead(dataRef, ref, contextArgs, dataArgs), conArgs);
     }
@@ -163,7 +164,7 @@ public sealed interface CallTerm extends Term {
     }
 
     @Override public @NotNull SeqView<Arg<Term>> args() {
-      return head.dataArgs.view().concat(conArgs.view());
+      return head.dataArgs.view().concat(conArgs);
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
