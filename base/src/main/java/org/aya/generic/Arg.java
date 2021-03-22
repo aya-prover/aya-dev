@@ -19,4 +19,8 @@ public record Arg<T>(@NotNull T term, boolean explicit) {
   @Contract("_ -> new") public static <T> @NotNull Arg<T> implicit(@NotNull T term) {
     return new Arg<>(term, false);
   }
+
+  public @NotNull Arg<T> implicitify() {
+    return new Arg<>(term, false);
+  }
 }

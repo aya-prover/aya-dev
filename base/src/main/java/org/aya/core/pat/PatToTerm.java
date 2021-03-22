@@ -39,6 +39,7 @@ final class PatToTerm implements Pat.Visitor<Unit, Term> {
     var args = ctor.params().view().zip(tele.view())
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
       .collect(Seq.factory());
-    return new CallTerm.Con(data.ref(), ctor.ref(), data.contextArgs(), data.args(), args);
+    var dataArgs = data.args().view().map(Arg::implicitify);
+    return new CallTerm.Con(data.ref(), ctor.ref(), data.contextArgs(), dataArgs, args);
   }
 }
