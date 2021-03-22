@@ -94,7 +94,9 @@ public record DataDef(
     public @NotNull Ctor subst(Substituter.TermSubst subst) {
       var conTele = Term.Param.subst(conTelescope, subst);
       // TODO[ice]: subst clauses
-      return new Ctor(dataRef, ref, conTele, clauses, coerce);
+      var newCtor = new Ctor(dataRef, ref, conTele, clauses, coerce);
+      newCtor.ref.core = this;
+      return newCtor;
     }
   }
 

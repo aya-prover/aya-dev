@@ -98,7 +98,7 @@ public sealed interface CallTerm extends Term {
         if (t.patterns().isEmpty()) return Tuple.of(ctor.core, new ConHead(ref, ctor, contextArgs, args));
         var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
         if (matchy == null) return null;
-        return Tuple.of(ctor.core.subst(matchy), new ConHead(this.ref, ctor, contextArgs, args));
+        return Tuple.of(t.body().subst(matchy), new ConHead(ref, ctor, contextArgs, args));
       });
     }
   }
