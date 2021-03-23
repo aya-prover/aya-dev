@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import org.aya.api.error.Reporter;
+import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Signatured;
@@ -69,19 +70,24 @@ public record StmtTycker(
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), dataSig.param(), dataCall));
     var pat = new PatTycker(tycker).visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope);
-    // TODO[ice]: insert data params?
-    var signature = new Def.Signature(ImmutableSeq.of(), tele, sig.value.result());
+    if (!pat.isEmpty()) {
+      var subst = dataSig.param().view().map(Term.Param::ref)
+        .zip(pat.view().map(Pat::toTerm))
+        .<Var, Term>toImmutableMap();
+      dataCall = (CallTerm.Data) dataCall.subst(subst);
+    }
+    var signature = new Def.Signature(ImmutableSeq.of(), tele, dataCall);
     ctor.signature = signature;
     var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature));
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
+    var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, tele, clauses, dataCall, ctor.coerce);
     if (!elabClauses.isEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
-      var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, tele, clauses, dataCall, ctor.coerce);
       PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);
-      return elaborated;
-    } else return new DataDef.Ctor(dataRef, ctor.ref, pat, tele, clauses, dataCall, ctor.coerce);
+    }
+    return elaborated;
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {

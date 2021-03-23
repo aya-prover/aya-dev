@@ -157,15 +157,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) var;
       var telescopes = DataDef.Ctor.telescopes(conVar);
       var tele = Def.defTele(conVar);
-      var result = Def.defResult(conVar);
-      if (!DataDef.Ctor.isPatEmpty(conVar)) {
-        if (conVar.core == null) {
-          var loc = new Expr.RefExpr(conVar.concrete.sourcePos, conVar);
-          return wantButNo(loc, new RefTerm(new LocalVar(conVar.name())), "already checked constructor");
-        }
-        // TODO[ice]: apply some subst, see #320
-      }
-      var type = PiTerm.make(false, tele, result);
+      var type = PiTerm.make(false, tele, Def.defResult(conVar));
       return new Result(LamTerm.make(tele, telescopes.toConCall(conVar)), type);
     } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl

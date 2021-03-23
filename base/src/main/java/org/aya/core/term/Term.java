@@ -18,6 +18,7 @@ import org.aya.tyck.MetaContext;
 import org.aya.tyck.sort.LevelSubst;
 import org.aya.util.Constants;
 import org.aya.util.Decision;
+import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -60,8 +61,12 @@ public interface Term extends CoreTerm {
     return subst(subst, LevelSubst.EMPTY);
   }
 
+  default @NotNull Term subst(@NotNull Map<Var, Term> subst) {
+    return accept(new Substituter(subst, LevelSubst.EMPTY), Unit.unit());
+  }
+
   default @NotNull Term subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
-    return accept(new Substituter(subst, levelSubst), Unit.INSTANCE);
+    return accept(new Substituter(subst, levelSubst), Unit.unit());
   }
 
   default @NotNull Term strip(@NotNull MetaContext context) {

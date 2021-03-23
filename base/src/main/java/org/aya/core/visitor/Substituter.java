@@ -7,6 +7,7 @@ import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.sort.LevelSubst;
 import org.aya.tyck.sort.Sort;
+import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Unit;
@@ -19,13 +20,19 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Substituter(
-  @NotNull TermSubst termSubst, @NotNull LevelSubst levelSubst) implements TermFixpoint<Unit> {
+  @NotNull Map<Var, Term> termSubst,
+  @NotNull LevelSubst levelSubst
+) implements TermFixpoint<Unit> {
+  public Substituter(@NotNull TermSubst termSubst, @NotNull LevelSubst levelSubst) {
+    this(termSubst.map, levelSubst);
+  }
+
   @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unused) {
     return sort.substSort(levelSubst);
   }
 
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
-    return termSubst.map.getOrDefault(term.var(), term);
+    return termSubst.getOrDefault(term.var(), term);
   }
 
   /**
