@@ -37,7 +37,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.args().map(arg -> visitArg(arg, p)).toImmutableSeq();
-    var tele = def.telescope().toImmutableSeq();
+    var tele = def.telescope();
     assert args.sizeEquals(tele.size());
     assert Term.Param.checkSubst(tele, args);
     var volynskaya = tryUnfoldClauses(p, args, buildSubst(tele, args), def.clauses());

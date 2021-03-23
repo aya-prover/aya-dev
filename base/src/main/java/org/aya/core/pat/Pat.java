@@ -10,6 +10,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.LocalCtx;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Unit;
@@ -31,6 +32,11 @@ public sealed interface Pat {
   }
   default void storeBindings(@NotNull LocalCtx localCtx) {
     accept(new PatTyper(localCtx), Unit.unit());
+  }
+  static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
+    var localCtx = new LocalCtx();
+    for (var pat : pats) pat.accept(new PatTyper(localCtx), Unit.unit());
+    return localCtx.extract();
   }
 
   interface Visitor<P, R> {

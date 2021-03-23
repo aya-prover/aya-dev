@@ -70,8 +70,9 @@ public record StmtTycker(
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), dataSig.param(), dataCall));
     var pat = new PatTycker(tycker).visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope);
+    var dataParamView = dataSig.param().view();
     if (!pat.isEmpty()) {
-      var subst = dataSig.param().view().map(Term.Param::ref)
+      var subst = dataParamView.map(Term.Param::ref)
         .zip(pat.view().map(Pat::toTerm))
         .<Var, Term>toImmutableMap();
       dataCall = (CallTerm.Data) dataCall.subst(subst);
@@ -82,7 +83,9 @@ public record StmtTycker(
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature));
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
-    var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, tele, clauses, dataCall, ctor.coerce);
+    var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify) : Pat.extractTele(pat);
+    var fullTele = implicits.concat(tele).toImmutableSeq();
+    var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, fullTele, tele, clauses, dataCall, ctor.coerce);
     if (!elabClauses.isEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);

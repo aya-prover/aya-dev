@@ -8,7 +8,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
-import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,6 +55,7 @@ public record DataDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> pats,
+    @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<Term.Param> conTele,
     @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
     @NotNull Term result,
@@ -67,10 +67,6 @@ public record DataDef(
 
     @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
       return dataRef().core.contextTele();
-    }
-
-    @Override public @NotNull SeqView<Term.Param> telescope() {
-      return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTele);
     }
 
     /**

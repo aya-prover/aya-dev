@@ -25,7 +25,7 @@ public interface Def extends CoreDef {
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).contextParam;
   }
-  static @NotNull SeqLike<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+  static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).param;
@@ -43,7 +43,7 @@ public interface Def extends CoreDef {
   @NotNull Term result();
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
   @NotNull ImmutableSeq<Term.Param> contextTele();
-  @NotNull SeqLike<Term.Param> telescope();
+  @NotNull ImmutableSeq<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
