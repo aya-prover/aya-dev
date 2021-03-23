@@ -130,5 +130,5 @@ tasks.register("githubActions") {
 }
 
 tasks.withType<Wrapper>().configureEach {
-  gradleVersion = "7.0-milestone-3"
+  gradleVersion = "7.0-rc-1"
 }
