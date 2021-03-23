@@ -9,6 +9,7 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.function.Supplier;
 /**
  * @author re-xyr, ice1000
  */
+@Debug.Renderer(hasChildren = "true", childrenArray = "extract().toArray()")
 public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable LocalCtx parent) {
   public LocalCtx() {
     this(MutableHashMap.of(), null);

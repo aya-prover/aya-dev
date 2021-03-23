@@ -60,8 +60,6 @@ public record StmtTycker(
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
-    var patTyck = new PatTycker(tycker);
-    var tele = checkTele(tycker, ctor.telescope);
     var dataRef = ctor.dataRef;
     var dataSig = dataRef.concrete.signature;
     assert dataSig != null;
@@ -69,7 +67,8 @@ public record StmtTycker(
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var dataCall = new CallTerm.Data(dataRef, dataContextArgs, dataArgs);
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), dataSig.param(), dataCall));
-    var pat = patTyck.visitPatterns(sig, ctor.patterns);
+    var pat = new PatTycker(tycker).visitPatterns(sig, ctor.patterns);
+    var tele = checkTele(tycker, ctor.telescope);
     // TODO[ice]: insert data params?
     var signature = new Def.Signature(ImmutableSeq.of(), tele, sig.value.result());
     ctor.signature = signature;
