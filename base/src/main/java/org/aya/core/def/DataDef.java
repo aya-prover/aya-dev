@@ -99,6 +99,12 @@ public record DataDef(
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return null;
     }
+
+    public static boolean isPatEmpty(@NotNull DefVar<Ctor, Decl.DataCtor> conVar) {
+      var core = conVar.core;
+      if (core != null) return core.pats.isEmpty();
+      return conVar.concrete.patterns.isEmpty();
+    }
   }
 
   /**

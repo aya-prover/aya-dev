@@ -9,8 +9,7 @@ import java.util.function.Function;
 
 /**
  * @param <Pattern> {@link org.aya.core.pat.Pat} or {@link org.aya.concrete.Pattern}
- * @param <Body>    {@link org.aya.core.term.Term} or {@link org.aya.concrete.Expr} or
- *                  {@link org.aya.core.def.DataDef.Ctor}
+ * @param <Body>    {@link org.aya.core.term.Term} or {@link org.aya.concrete.Expr}
  * @author ice1000
  */
 public record Matching<Pattern, Body>(
