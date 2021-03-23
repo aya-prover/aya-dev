@@ -49,6 +49,14 @@ public record DataDef(
     }
   }
 
+  /**
+   * @param ref  refers to the original constructor, but in case of GADT constructors, telescope is not instantiated.
+   *             If you need to get the available constructors given an instance of {@link CallTerm.Data},
+   *             please use {@link CallTerm.Data#availableCtors()}.
+   * @param info the information of this ctor. Will be substituted in {@link CallTerm.Data#availableCtors()}.
+   *             Use with extreme care!
+   * @author ice1000, kiva
+   */
   public static record Ctor(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
