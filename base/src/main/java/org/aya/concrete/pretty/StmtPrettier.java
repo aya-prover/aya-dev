@@ -82,11 +82,11 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.body.isEmpty()
         ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(decl.body.stream().map(t -> visitDataCtor(t.patterns(), t.body())))))
+        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(decl.body.stream().map(this::visitDataCtor))))
     );
   }
 
-  private Doc visitDataCtor(ImmutableSeq<Pattern> patterns, Decl.DataCtor ctor) {
+  private Doc visitDataCtor(Decl.DataCtor ctor) {
     var doc = Doc.cat(
       Doc.plain("| "),
       ctor.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
@@ -95,8 +95,8 @@ public class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       visitTele(ctor.telescope),
       visitClauses(ctor.clauses, true)
     );
-    if (!patterns.isEmpty()) {
-      var pats = Doc.join(Doc.plain(","), patterns.stream().map(Pattern::toDoc));
+    if (!ctor.patterns.isEmpty()) {
+      var pats = Doc.join(Doc.plain(","), ctor.patterns.stream().map(Pattern::toDoc));
       return Doc.hcat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
     } else return doc;
   }

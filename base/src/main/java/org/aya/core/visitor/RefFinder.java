@@ -47,9 +47,8 @@ public record RefFinder(boolean withBody) implements
   }
 
   @Override public Unit visitCtor(@NotNull DataDef.Ctor def, @NotNull Buffer<Def> references) {
-    var info = def.info();
-    tele(references, info.conTelescope());
-    if (withBody) for (var clause : info.clauses()) matchy(clause, references);
+    tele(references, def.conTele());
+    if (withBody) for (var clause : def.clauses()) matchy(clause, references);
     return Unit.unit();
   }
 
@@ -74,7 +73,7 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(TermRefFinder.INSTANCE, references);
-    def.body().forEach(t -> t.body().accept(this, references));
+    def.body().forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 

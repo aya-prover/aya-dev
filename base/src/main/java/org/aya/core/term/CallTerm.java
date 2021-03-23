@@ -8,7 +8,6 @@ import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
-import org.aya.core.pat.PatMatcher;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Arg;
 import org.aya.util.Decision;
@@ -17,8 +16,6 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,20 +85,8 @@ public sealed interface CallTerm extends Term {
       return Decision.YES;
     }
 
-    /**
-     * @return a substituted constructor (due to GADT) and a constructor head.
-     * @apiNote Do <strong>not</strong> use <code>conHead._2.ref.core</code> to obtain the constructor!
-     * Use <code>conHead._1</code> directly.
-     */
-    public @NotNull SeqView<Tuple2<DataDef.@NotNull CtorInfo, @NotNull ConHead>> availableCtors() {
-      return ref.core.body().view().mapNotNull(t -> {
-        var info = t.body().info();
-        var head = new ConHead(ref, t.body().ref(), contextArgs, args);
-        if (t.patterns().isEmpty()) return Tuple.of(info, head);
-        var matchy = PatMatcher.tryBuildSubst(t.patterns(), args);
-        if (matchy == null) return null;
-        return Tuple.of(info.subst(matchy), head);
-      });
+    public @NotNull ConHead conHead(@NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ctorRef) {
+      return new ConHead(ref, ctorRef, contextArgs, args);
     }
   }
 
@@ -170,7 +155,7 @@ public sealed interface CallTerm extends Term {
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
       var core = head.ref.core;
       if (core == null) return Decision.YES;
-      if (!core.info().clauses().isEmpty()) return Decision.NO;
+      if (!core.clauses().isEmpty()) return Decision.NO;
       return Decision.MAYBE;
     }
   }

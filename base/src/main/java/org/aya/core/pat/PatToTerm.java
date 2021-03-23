@@ -35,7 +35,7 @@ final class PatToTerm implements Pat.Visitor<Unit, Term> {
 
   @Override public Term visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
     var data = (CallTerm.Data) ctor.type();
-    var tele = ctor.ref().core.info().conTelescope();
+    var tele = ctor.ref().core.conTele();
     var args = ctor.params().view().zip(tele.view())
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
       .collect(ImmutableSeq.factory());

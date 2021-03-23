@@ -7,7 +7,6 @@ import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Substituter;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -23,7 +22,7 @@ public record DataDef(
   @NotNull ImmutableSeq<Term.Param> contextTele,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
-  @NotNull ImmutableSeq<Matching<Pat, Ctor>> body
+  @NotNull ImmutableSeq<Ctor> body
   // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
@@ -39,28 +38,27 @@ public record DataDef(
     return visitor.visitData(this, p);
   }
 
-  public static record CtorInfo(
-    @NotNull ImmutableSeq<Term.Param> conTelescope,
-    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
-  ) {
+/*
     public @NotNull CtorInfo subst(Substituter.TermSubst subst) {
-      var conTele = Term.Param.subst(conTelescope, subst);
+      var conTele = Term.Param.subst(conTele, subst);
       return new CtorInfo(conTele, clauses.map(i -> i.mapBody(term -> term.subst(subst))));
     }
-  }
+*/
 
   /**
-   * @param ref  refers to the original constructor, but in case of GADT constructors, telescope is not instantiated.
-   *             If you need to get the available constructors given an instance of {@link CallTerm.Data},
-   *             please use {@link CallTerm.Data#availableCtors()}.
-   * @param info the information of this ctor. Will be substituted in {@link CallTerm.Data#availableCtors()}.
-   *             Use with extreme care!
+   * @param ref     in case of GADT constructors, the telescope is not instantiated.
+   * @param conTele Needs to be substituted before usage.
+   * @param clauses Needs to be substituted before usage.
+   * @param result  Needs to be substituted before usage.
    * @author ice1000, kiva
    */
   public static record Ctor(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
-    @NotNull CtorInfo info,
+    @NotNull ImmutableSeq<Pat> pats,
+    @NotNull ImmutableSeq<Term.Param> conTele,
+    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
+    @NotNull Term result,
     boolean coerce
   ) implements Def {
     public Ctor {
@@ -72,15 +70,7 @@ public record DataDef(
     }
 
     @Override public @NotNull SeqView<Term.Param> telescope() {
-      return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(info.conTelescope);
-    }
-
-    @Override public @NotNull CallTerm.Data result() {
-      return new CallTerm.Data(
-        dataRef,
-        Def.defContextTele(dataRef).map(Term.Param::toArg),
-        Def.defTele(dataRef).view().map(Term.Param::toArg).toImmutableSeq()
-      );
+      return Def.defTele(dataRef).view().map(Term.Param::implicitify).concat(conTele);
     }
 
     /**
@@ -90,7 +80,7 @@ public record DataDef(
       var core = defVar.core;
       if (core != null) {
         var dataDef = core.dataRef.core;
-        var conTelescope = core.info.conTelescope;
+        var conTelescope = core.conTele;
         if (dataDef != null)
           return new CtorTelescopes(dataDef.contextTele, dataDef.telescope, conTelescope);
         else {

@@ -15,7 +15,6 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.GenericBuilder;
-import org.aya.generic.Matching;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
@@ -26,7 +25,6 @@ import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -62,29 +60,29 @@ public record StmtTycker(
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+    var patTyck = new PatTycker(tycker);
     var tele = checkTele(tycker, ctor.telescope);
     var dataRef = ctor.dataRef;
-    var dataContextArgs = Objects.requireNonNull(dataRef.concrete.signature)
-      .contextParam().map(Term.Param::toArg);
-    var dataArgs = Objects.requireNonNull(dataRef.concrete.signature)
-      .param().map(Term.Param::toArg);
+    var dataSig = dataRef.concrete.signature;
+    assert dataSig != null;
+    var dataContextArgs = dataSig.contextParam().map(Term.Param::toArg);
+    var dataArgs = dataSig.param().map(Term.Param::toArg);
+    var dataCall = new CallTerm.Data(dataRef, dataContextArgs, dataArgs);
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), dataSig.param(), dataCall));
+    var pat = patTyck.visitPatterns(sig, ctor.patterns);
     // TODO[ice]: insert data params?
-    var signature = new Def.Signature(ImmutableSeq.of(), tele, new CallTerm.Data(
-      dataRef,
-      dataContextArgs,
-      dataArgs));
+    var signature = new Def.Signature(ImmutableSeq.of(), tele, sig.value.result());
     ctor.signature = signature;
     var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature));
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
-    var info = new DataDef.CtorInfo(tele, clauses);
     if (!elabClauses.isEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
-      var elaborated = new DataDef.Ctor(dataRef, ctor.ref, info, ctor.coerce);
+      var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, tele, clauses, dataCall, ctor.coerce);
       PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);
       return elaborated;
-    } else return new DataDef.Ctor(dataRef, ctor.ref, info, ctor.coerce);
+    } else return new DataDef.Ctor(dataRef, ctor.ref, pat, tele, clauses, dataCall, ctor.coerce);
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
@@ -92,16 +90,7 @@ public record StmtTycker(
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
     decl.signature = new Def.Signature(ctxTele, tele, result);
-    var body = decl.body.map(clause -> {
-      tycker.localCtx = tycker.localCtx.derive();
-      var patTyck = new PatTycker(tycker);
-      var pat = clause.patterns().map(pattern -> pattern.accept(patTyck, decl.signature.param().first().type()));
-      var ctor = visitCtor(clause.body(), tycker);
-      var parent = tycker.localCtx.parent();
-      assert parent != null;
-      tycker.localCtx = parent;
-      return new Matching<>(pat, ctor);
-    });
+    var body = decl.body.map(clause -> visitCtor(clause, tycker));
     var collectedBody = body.collect(ImmutableSeq.factory());
     return new DataDef(decl.ref, ctxTele, tele, result, collectedBody);
   }

@@ -7,13 +7,14 @@ import org.aya.api.error.Reporter;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
-import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.SigmaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
+import org.aya.core.visitor.Substituter;
 import org.aya.generic.GenericBuilder;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
@@ -92,7 +93,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     return new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped));
   }
 
-  private @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
+  public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
     var results = Buffer.<Pat>of();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
@@ -151,9 +152,8 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       exprTycker.localCtx.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
     }
-    var ctorCore = selected._2;
-    assert ctorCore != null;
-    if (!ctorCore.conTelescope().isEmpty()) {
+    var ctorCore = selected._3.ref().core;
+    if (!ctorCore.conTele().isEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
@@ -166,12 +166,13 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name(), subst.reporter());
     if (realCtor == null) throw new ExprTycker.TyckerException();
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), realCtor._2.conTelescope(), realCtor._3.underlyingDataCall()));
+    var ctorCore = realCtor._3.ref().core;
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), Term.Param.subst(ctorCore.conTele(), realCtor._2), realCtor._3.underlyingDataCall()));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
   }
 
-  private @Nullable Tuple3<CallTerm.Data, DataDef.CtorInfo, CallTerm.ConHead>
+  private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
   selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
     if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       // TODO[ice]: report error: splitting on non data
@@ -182,12 +183,15 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       // TODO[ice]: report error: not checked data
       return null;
     }
-    var head = dataCall.availableCtors().find(c -> Objects.equals(c._2.ref().name(), name));
-    if (head.isEmpty()) {
-      // TODO[ice]: report error: cannot find ctor of name
-      return null;
+    for (var ctor : dataCall.ref().core.body()) {
+      if (!Objects.equals(ctor.ref().name(), name)) continue;
+      if (!ctor.pats().isEmpty()) {
+        var matchy = PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
+        if (matchy == null) continue;
+        return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
+      } else return Tuple.of(dataCall, Substituter.TermSubst.EMPTY, dataCall.conHead(ctor.ref()));
     }
-    var conHead = head.get();
-    return Tuple.of(dataCall, conHead._1, conHead._2);
+    // TODO[ice]: report error: cannot find ctor of name
+    return null;
   }
 }

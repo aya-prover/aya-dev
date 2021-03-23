@@ -11,7 +11,6 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
-import org.aya.generic.Matching;
 import org.aya.generic.Modifier;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
@@ -83,16 +82,19 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
+    public @NotNull ImmutableSeq<Pattern> patterns;
     public final boolean coerce;
 
     public DataCtor(@NotNull SourcePos sourcePos,
                     @NotNull String name,
                     @NotNull ImmutableSeq<Expr.Param> telescope,
                     @NotNull ImmutableSeq<Pattern.Clause> clauses,
+                    @NotNull ImmutableSeq<Pattern> patterns,
                     boolean coerce) {
       super(sourcePos, telescope);
       this.clauses = clauses;
       this.coerce = coerce;
+      this.patterns = patterns;
       this.ref = DefVar.concrete(this, name);
     }
 
@@ -114,7 +116,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataDecl extends Decl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
-    public final @NotNull ImmutableSeq<Matching<Pattern, DataCtor>> body;
+    public final @NotNull ImmutableSeq<DataCtor> body;
 
     public DataDecl(
       @NotNull SourcePos sourcePos,
@@ -122,14 +124,14 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
-      @NotNull ImmutableSeq<Matching<Pattern, DataCtor>> body,
+      @NotNull ImmutableSeq<DataCtor> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
       super(sourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
-      body.forEach(ctors -> ctors.body().dataRef = ref);
+      body.forEach(ctors -> ctors.dataRef = ref);
     }
 
     @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {

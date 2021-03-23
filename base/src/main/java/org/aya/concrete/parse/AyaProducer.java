@@ -14,7 +14,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.generic.Arg;
-import org.aya.generic.Matching;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
@@ -179,7 +178,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (teleBinder != null) {
       var type = teleBinder.expr();
-      if (type != null) return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitExpr(type), true));
+      if (type != null)
+        return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitExpr(type), true));
       teleMaybeTypedExpr = teleBinder.teleMaybeTypedExpr();
     }
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
@@ -387,7 +387,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
     checkRedefinition(RedefinitionError.Kind.Ctor,
-      body.view().map(ctor -> Tuple.of(ctor.body().ref.name(), ctor.body().sourcePos)));
+      body.view().map(ctor -> Tuple.of(ctor.ref.name(), ctor.sourcePos)));
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
@@ -416,15 +416,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       : visitType(typeCtx);
   }
 
-  private @NotNull Matching<Pattern, Decl.DataCtor> visitDataBody(AyaParser.DataBodyContext ctx) {
-    if (ctx instanceof AyaParser.DataCtorsContext dcc)
-      return new Matching<>(ImmutableSeq.empty(), visitDataCtor(dcc.dataCtor()));
+  private @NotNull Decl.DataCtor visitDataBody(AyaParser.DataBodyContext ctx) {
+    if (ctx instanceof AyaParser.DataCtorsContext dcc) return visitDataCtor(ImmutableSeq.empty(), dcc.dataCtor());
     if (ctx instanceof AyaParser.DataClausesContext dcc) return visitDataCtorClause(dcc.dataCtorClause());
 
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  @Override public Decl.@NotNull DataCtor visitDataCtor(AyaParser.DataCtorContext ctx) {
+  public Decl.DataCtor visitDataCtor(@NotNull ImmutableSeq<Pattern> patterns, AyaParser.DataCtorContext ctx) {
     var telescope = visitTelescope(ctx.tele());
     var id = ctx.ID();
 
@@ -433,6 +432,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       id.getText(),
       telescope,
       visitClauses(ctx.clauses()),
+      patterns,
       ctx.COERCE() != null
     );
   }
@@ -444,9 +444,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .collect(ImmutableSeq.factory());
   }
 
-  @Override public @NotNull Matching<Pattern, Decl.DataCtor>
-  visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
-    return new Matching<>(visitPatterns(ctx.patterns()), visitDataCtor(ctx.dataCtor()));
+  @Override public @NotNull Decl.DataCtor visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
+    return visitDataCtor(visitPatterns(ctx.patterns()), ctx.dataCtor());
   }
 
   @Override

@@ -27,8 +27,7 @@ public record StructDef(
     ref.core = this;
   }
 
-  @Override
-  public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitStruct(this, p);
   }
 
@@ -44,8 +43,7 @@ public record StructDef(
       ref.core = this;
     }
 
-    @Override
-    public @NotNull ImmutableSeq<Term.Param> contextTele() {
+    @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
       return structRef().core.contextTele();
     }
 

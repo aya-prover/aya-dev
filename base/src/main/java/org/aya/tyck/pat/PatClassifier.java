@@ -5,8 +5,8 @@ package org.aya.tyck.pat;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.core.def.DataDef;
 import org.aya.core.pat.Pat;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
@@ -113,11 +113,19 @@ public record PatClassifier(
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
-    for (var ctor : hasMatch.first().availableCtors().view()) {
+    var dataCall = hasMatch.first();
+    for (var ctor : dataCall.ref().core.body()) {
+      var conTele = ctor.conTele();
+      if (!ctor.pats().isEmpty()) {
+        var matchy = PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
+        if (matchy == null) continue;
+        conTele = Term.Param.subst(conTele, matchy);
+      }
+      var conTeleCapture = conTele;
       var matches = subPatsSeq.view()
-        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, ctor._1, ctor._2.ref()))
+        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()))
         .toImmutableSeq();
-      builder.shift(new PatTree(ctor._2.ref().name(), explicit));
+      builder.shift(new PatTree(ctor.ref().name(), explicit));
       if (matches.isEmpty()) {
         if (coverage) {
           reporter.report(new MissingCaseError(pos, builder.root()));
@@ -138,12 +146,12 @@ public record PatClassifier(
     return buffer.toImmutableSeq();
   }
 
-  private static @Nullable SubPats matches(SubPats subPats, int ix, DataDef.CtorInfo ctor, Var ctorRef) {
+  private static @Nullable SubPats matches(SubPats subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {
     var head = subPats.head();
     if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
       return new SubPats(ctorPat.params(), ix);
     if (head instanceof Pat.Bind)
-      return new SubPats(ctor.conTelescope().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
+      return new SubPats(conTele.map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
     return null;
   }
 

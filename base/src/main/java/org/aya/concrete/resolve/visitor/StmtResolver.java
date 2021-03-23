@@ -4,7 +4,6 @@ package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
-import org.aya.generic.Matching;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -42,17 +41,13 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
-    for (var bodyElement : decl.body) {
+    for (var ctor : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
-      if (!bodyElement.patterns().isEmpty()) {
-        var pat = bodyElement.patterns().map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
-        bodyElement = new Matching<>(pat, bodyElement.body());
-      }
-      var ctor = bodyElement.body();
+      if (!ctor.patterns.isEmpty())
+        ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
       var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
-      ctor.clauses = ctor.clauses
-        .map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
+      ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
     }
     return unit;
   }
