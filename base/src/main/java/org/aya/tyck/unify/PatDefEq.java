@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -91,7 +92,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
     return defeq.visitArgs(lhs.head().dataArgs(), rhs.head().dataArgs(), Def.defTele(lhs.head().dataRef()))
-      && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Def.defTele(lhs.ref()));
+      && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), DataDef.Ctor.conTele(lhs.ref()));
   }
 
   @Override

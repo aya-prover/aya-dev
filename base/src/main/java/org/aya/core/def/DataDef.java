@@ -11,6 +11,8 @@ import org.aya.generic.Matching;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * core data definition, corresponding to {@link Decl.DataDecl}
  *
@@ -64,6 +66,11 @@ public record DataDef(
 
     @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
       return dataTele.concat(conTele);
+    }
+
+    public static @NotNull ImmutableSeq<Term.Param> conTele(@NotNull DefVar<Ctor, Decl.DataCtor> conVar) {
+      if (conVar.core != null) return conVar.core.conTele;
+      else return Objects.requireNonNull(conVar.concrete.signature).param();
     }
 
     /**
