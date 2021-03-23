@@ -139,10 +139,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var var = expr.resolvedVar();
     if (var instanceof LocalVar loc) {
       var ty = localCtx.get(loc);
-      return result(expr, term, ty, new RefTerm(loc));
+      return refResult(expr, term, ty, new RefTerm(loc));
     } else if (var instanceof DefVar<?, ?> defVar) {
       var result = inferRef(defVar, term);
-      return result(expr, term, result.type, result.wellTyped);
+      return refResult(expr, term, result.type, result.wellTyped);
     } else throw new IllegalStateException("TODO: UnivVar not yet implemented");
   }
 
@@ -168,14 +168,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var ty = Def.defResult(field);
       var refExpr = new Expr.RefExpr(field.concrete.sourcePos(), field);
       // TODO[ice]: correct this RefTerm
-      return result(refExpr, expected, ty, new RefTerm(new LocalVar(field.name())));
+      return refResult(refExpr, expected, ty, new RefTerm(new LocalVar(field.name())));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);
     }
   }
 
-  private @NotNull Result result(Expr.@NotNull RefExpr expr, @Nullable Term expected, Term ty, Term refTerm) {
+  private @NotNull Result refResult(Expr.@NotNull RefExpr expr, @Nullable Term expected, Term ty, Term refTerm) {
     if (expected == null) return new Result(refTerm, ty);
     unifyTyThrowing(expected, ty, expr);
     return new Result(refTerm, ty);

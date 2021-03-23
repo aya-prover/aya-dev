@@ -37,13 +37,6 @@ public record DataDef(
     return visitor.visitData(this, p);
   }
 
-/*
-    public @NotNull CtorInfo subst(Substituter.TermSubst subst) {
-      var conTele = Term.Param.subst(conTele, subst);
-      return new CtorInfo(conTele, clauses.map(i -> i.mapBody(term -> term.subst(subst))));
-    }
-*/
-
   /**
    * @param ref     in case of GADT constructors, the telescope is not instantiated.
    * @param conTele Needs to be substituted before usage.
@@ -55,7 +48,7 @@ public record DataDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> pats,
-    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Term.Param> dataTele,
     @NotNull ImmutableSeq<Term.Param> conTele,
     @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
     @NotNull Term result,
@@ -67,6 +60,10 @@ public record DataDef(
 
     @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
       return dataRef().core.contextTele();
+    }
+
+    @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
+      return dataTele.concat(conTele);
     }
 
     /**

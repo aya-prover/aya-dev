@@ -83,9 +83,8 @@ public record StmtTycker(
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature));
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
-    var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify) : Pat.extractTele(pat);
-    var fullTele = implicits.concat(tele).toImmutableSeq();
-    var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, fullTele, tele, clauses, dataCall, ctor.coerce);
+    var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
+    var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, clauses, dataCall, ctor.coerce);
     if (!elabClauses.isEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);
