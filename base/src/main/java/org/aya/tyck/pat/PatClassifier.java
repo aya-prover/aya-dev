@@ -60,6 +60,7 @@ public record PatClassifier(
       for (int i = 1, size = contents.size(); i < size; i++) {
         int lhsIx = contents.get(i - 1);
         int rhsIx = contents.get(i);
+        if (lhsIx == rhsIx) continue;
         var lhs = clauses.get(lhsIx);
         if (lhs.expr().isEmpty()) continue;
         var rhs = clauses.get(rhsIx);
@@ -72,8 +73,6 @@ public record PatClassifier(
         var unification = new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
           .compare(lhsTerm, rhsTerm, result);
         if (!unification) {
-          new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
-            .compare(lhsTerm, rhsTerm, result);
           metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
           throw new ExprTycker.TyckInterruptedException();
         }

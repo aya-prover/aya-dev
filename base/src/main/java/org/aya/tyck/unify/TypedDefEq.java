@@ -172,11 +172,12 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   private boolean visitLists(SeqLike<Term> l, SeqLike<Term> r, @NotNull SeqLike<Term.Param> types) {
     if (!l.sizeEquals(r)) return false;
     if (!r.sizeEquals(types)) return false;
-    var typesSubstituted = types;
+    var typesSubst = types.view();
     for (int i = 0; i < l.size(); i++) {
       var li = l.get(i);
-      if (!compare(li, r.get(i), typesSubstituted.first().type())) return false;
-      typesSubstituted = types.view().drop(1).map(type -> type.subst(types.first().ref(), li));
+      var head = typesSubst.first();
+      if (!compare(li, r.get(i), head.type())) return false;
+      typesSubst = typesSubst.drop(1).map(type -> type.subst(head.ref(), li));
     }
     return true;
   }
