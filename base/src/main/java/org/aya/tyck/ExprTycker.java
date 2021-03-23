@@ -353,33 +353,36 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
-      var param = pi.param().subst(subst);
       var argLicit = arg.explicit();
-      Arg<Term> newArg;
-      if (param.explicit() == argLicit) {
-        var elabArg = arg.term().accept(this, param.type());
-        newArg = new Arg<>(elabArg.wellTyped, argLicit);
-      } else if (argLicit) {
-        // that implies paramLicit == false
-        var holeApp = new CallTerm.Hole(new LocalVar(Constants.ANONYMOUS_PREFIX));
-        // TODO: maybe we should create a concrete hole and check it against the type
-        //  in case we can synthesize this term via its type only
-        newArg = new Arg<>(holeApp, false);
-      } else {
-        // TODO[ice]: no implicit argument expected, but inserted.
-        throw new TyckerException();
+      while (pi.param().explicit() != argLicit) {
+        if (argLicit) {
+          // that implies paramLicit == false
+          var holeApp = new CallTerm.Hole(new LocalVar(Constants.ANONYMOUS_PREFIX));
+          // TODO: maybe we should create a concrete hole and check it against the type
+          //  in case we can synthesize this term via its type only
+          var holeArg = new Arg<Term>(holeApp, false);
+          resultTerm = CallTerm.make(resultTerm, holeArg);
+          pi = instPi(expr, pi, subst, holeArg);
+        } else {
+          // TODO[ice]: no implicit argument expected, but inserted.
+          throw new TyckerException();
+        }
       }
+      var elabArg = arg.term().accept(this, pi.param().type());
+      var newArg = new Arg<>(elabArg.wellTyped, argLicit);
       resultTerm = CallTerm.make(resultTerm, newArg);
       // so, in the end, the pi term is not updated, its body would be the eliminated type
-      if (iter.hasNext()) {
-        subst.add(param.ref(), newArg.term());
-        if (pi.body().subst(subst) instanceof PiTerm newPi) pi = newPi;
-        else wantButNo(expr, pi.body(), "pi type");
-      }
+      if (iter.hasNext()) pi = instPi(expr, pi, subst, newArg);
     }
     var codomain = pi.body();
     if (term != null) unifyTyThrowing(term, codomain, expr);
     return new Result(resultTerm, codomain);
+  }
+
+  private PiTerm instPi(@NotNull Expr expr, @NotNull PiTerm pi, Substituter.TermSubst subst, Arg<Term> newArg) {
+    subst.add(pi.param().ref(), newArg.term());
+    return pi.body().subst(subst).normalize(NormalizeMode.WHNF) instanceof PiTerm newPi
+      ? newPi : wantButNo(expr, pi.body(), "pi type");
   }
 
   @Rule.Check(partialSynth = true)
