@@ -40,7 +40,7 @@ import java.util.function.Consumer;
  */
 public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   private final @NotNull ExprTycker exprTycker;
-  private final @NotNull ExprRefSubst subst;
+  public final @NotNull ExprRefSubst subst;
   public Trace.@Nullable Builder traceBuilder;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -67,6 +67,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   elabClause(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, Ref<Def.@NotNull Signature> signature) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos(), "clause " + (1 + index))));
+      subst.clear();
       var elabClause = visitMatch(clause, signature.value);
       tracing(GenericBuilder::reduce);
       return elabClause;
@@ -81,7 +82,6 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
 
   public Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
     var sig = new Ref<>(signature);
-    subst.clear();
     exprTycker.localCtx = exprTycker.localCtx.derive();
     var patterns = visitPatterns(sig, match.patterns());
     var result = match.expr()

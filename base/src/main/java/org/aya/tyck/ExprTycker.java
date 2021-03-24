@@ -175,7 +175,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
   }
 
-  private @NotNull Result refResult(Expr.@NotNull RefExpr expr, @Nullable Term expected, Term ty, Term refTerm) {
+  private @NotNull Result refResult(
+    Expr.@NotNull RefExpr expr, @Nullable Term expected,
+    @NotNull Term ty, Term refTerm
+  ) {
     if (expected == null) return new Result(refTerm, ty);
     unifyTyThrowing(expected, ty, expr);
     return new Result(refTerm, ty);

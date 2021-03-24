@@ -305,8 +305,8 @@ public sealed interface Expr {
       this(sourcePos, var, null, explicit);
     }
 
-    public @NotNull Expr.Param mapExpr(@NotNull Function<@Nullable Expr, @Nullable Expr> mapper) {
-      return new Param(sourcePos, ref, mapper.apply(type), explicit);
+    public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @Nullable Expr> mapper) {
+      return new Param(sourcePos, ref, type != null ? mapper.apply(type) : null, explicit);
     }
   }
 }

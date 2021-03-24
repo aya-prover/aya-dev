@@ -22,6 +22,7 @@ import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
+import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,8 +69,10 @@ public record StmtTycker(
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var dataCall = new CallTerm.Data(dataRef, dataContextArgs, dataArgs);
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), dataSig.param(), dataCall));
-    var pat = new PatTycker(tycker).visitPatterns(sig, ctor.patterns);
-    var tele = checkTele(tycker, ctor.telescope);
+    var patTycker = new PatTycker(tycker);
+    var pat = patTycker.visitPatterns(sig, ctor.patterns);
+    var tele = checkTele(tycker, ctor.telescope.map(param ->
+      param.mapExpr(expr -> expr.accept(patTycker.subst, Unit.unit()))));
     var dataParamView = dataSig.param().view();
     if (!pat.isEmpty()) {
       var subst = dataParamView.map(Term.Param::ref)
@@ -79,7 +82,6 @@ public record StmtTycker(
     }
     var signature = new Def.Signature(ImmutableSeq.of(), tele, dataCall);
     ctor.signature = signature;
-    var patTycker = new PatTycker(tycker);
     var elabClauses = ctor.clauses
       .map(c -> patTycker.visitMatch(c, signature));
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
