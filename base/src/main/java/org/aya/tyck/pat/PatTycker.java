@@ -130,7 +130,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   }
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
-    exprTycker.localCtx.put(tuple.as(), t);
+    if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), t);
     if (!(t instanceof SigmaTerm sigma)) {
       // TODO[ice]: requires pretty printing patterns
       throw new ExprTycker.TyckerException();
@@ -140,7 +140,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       ImmutableSeq.of(),
       sigma.params().appended(new Term.Param(new LocalVar("_"), sigma.body(), true)),
       UnivTerm.OMEGA);
-    exprTycker.localCtx.put(tuple.as(), sigma);
+    if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), sigma);
     return new Pat.Tuple(tuple.explicit(),
       visitPatterns(new Ref<>(sig), tuple.patterns()), tuple.as(), sigma);
   }

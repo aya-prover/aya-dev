@@ -22,13 +22,13 @@ record PatTyper(@NotNull LocalCtx localCtx) implements Pat.Visitor<Unit, Unit> {
   }
 
   @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Unit unit) {
-    localCtx.put(tuple.as(), tuple.type());
+    if (tuple.as() != null) localCtx.put(tuple.as(), tuple.type());
     tuple.pats().forEach(pat -> pat.accept(this, Unit.unit()));
     return unit;
   }
 
   @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
-    localCtx.put(ctor.as(), ctor.type());
+    if (ctor.as() != null) localCtx.put(ctor.as(), ctor.type());
     ctor.params().forEach(pat -> pat.accept(this, Unit.unit()));
     return unit;
   }
