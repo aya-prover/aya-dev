@@ -73,6 +73,7 @@ public record StmtTycker(
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
       param.mapExpr(expr -> expr.accept(patTycker.subst, Unit.unit()))));
+    var patSubst = patTycker.subst.clone();
     var dataParamView = dataSig.param().view();
     if (!pat.isEmpty()) {
       var subst = dataParamView.map(Term.Param::ref)
@@ -83,7 +84,10 @@ public record StmtTycker(
     var signature = new Def.Signature(ImmutableSeq.of(), tele, dataCall);
     ctor.signature = signature;
     var elabClauses = ctor.clauses
-      .map(c -> patTycker.visitMatch(c, signature));
+      .map(c -> {
+        patTycker.subst.resetTo(patSubst);
+        return patTycker.visitMatch(c, signature);
+      });
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, clauses, dataCall, ctor.coerce);

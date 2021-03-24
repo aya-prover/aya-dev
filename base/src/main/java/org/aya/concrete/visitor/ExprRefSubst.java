@@ -19,7 +19,7 @@ public record ExprRefSubst(
   @NotNull Reporter reporter,
   @NotNull MutableHashMap<Var, Var> good,
   @NotNull MutableHashSet<Var> bad
-) implements ExprFixpoint<Unit> {
+) implements ExprFixpoint<Unit>, Cloneable {
   @Override public @NotNull Expr visitRef(@NotNull Expr.RefExpr expr, Unit unit) {
     var v = expr.resolvedVar();
     if (bad.contains(v)) {
@@ -34,5 +34,16 @@ public record ExprRefSubst(
   public void clear() {
     good.clear();
     bad.clear();
+  }
+
+  public void resetTo(@NotNull ExprRefSubst subst) {
+    good.clear();
+    bad.clear();
+    good.putAll(subst.good);
+    bad.addAll(subst.bad);
+  }
+
+  @SuppressWarnings("MethodDoesntCallSuperMethod") public @NotNull ExprRefSubst clone() {
+    return new ExprRefSubst(reporter, good, bad);
   }
 }
