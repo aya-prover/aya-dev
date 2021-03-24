@@ -2,10 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.doc;
 
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Text styles. Inspired by terminal-colors.d(5)
@@ -63,25 +61,25 @@ public sealed interface Style {
   }
 
   class StyleBuilder {
-    List<Style> styles = new ArrayList<>();
+    Buffer<Style> styles = Buffer.of();
 
     public StyleBuilder italic() {
-      styles.add(Attr.Italic);
+      styles.append(Attr.Italic);
       return this;
     }
 
     public StyleBuilder bold() {
-      styles.add(Attr.Bold);
+      styles.append(Attr.Bold);
       return this;
     }
 
     public StyleBuilder strike() {
-      styles.add(Attr.Strike);
+      styles.append(Attr.Strike);
       return this;
     }
 
     public StyleBuilder underline() {
-      styles.add(Attr.Underline);
+      styles.append(Attr.Underline);
       return this;
     }
 
@@ -89,7 +87,7 @@ public sealed interface Style {
      * @see Color#colorKey
      */
     public StyleBuilder color(@NotNull String colorNameOrRGB) {
-      styles.add(new ColorFG(colorNameOrRGB));
+      styles.append(new ColorFG(colorNameOrRGB));
       return this;
     }
 
@@ -98,7 +96,7 @@ public sealed interface Style {
      * @see Color#brighter
      */
     public StyleBuilder colorBrighter(@NotNull String colorNameOrRGB) {
-      styles.add(new ColorFG(colorNameOrRGB).brighter());
+      styles.append(new ColorFG(colorNameOrRGB).brighter());
       return this;
     }
 
@@ -106,7 +104,7 @@ public sealed interface Style {
      * @see Color#colorKey
      */
     public StyleBuilder colorBG(@NotNull String colorNameOrRGB) {
-      styles.add(new ColorBG(colorNameOrRGB));
+      styles.append(new ColorBG(colorNameOrRGB));
       return this;
     }
 
@@ -115,7 +113,7 @@ public sealed interface Style {
      * @see Color#brighter
      */
     public StyleBuilder colorBgBrighter(@NotNull String colorNameOrRGB) {
-      styles.add(new ColorBG(colorNameOrRGB).brighter());
+      styles.append(new ColorBG(colorNameOrRGB).brighter());
       return this;
     }
   }

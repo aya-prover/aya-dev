@@ -127,7 +127,8 @@ public class StringRenderer<StringConfig extends StringPrinterConfig> {
   }
 
   protected void renderStyled(@NotNull Doc.Styled styled) {
-    renderDoc(styled.doc());
+    var formatter = config.formatter;
+    formatter.format(styled.styles(), builder, () -> renderDoc(styled.doc()));
   }
 
   private void renderPlainText(@NotNull String content) {

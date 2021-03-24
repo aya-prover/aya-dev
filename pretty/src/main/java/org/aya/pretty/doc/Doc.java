@@ -4,16 +4,16 @@ package org.aya.pretty.doc;
 
 import org.aya.pretty.backend.DocStringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.backend.string.style.IgnoringFormatter;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
+import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -38,7 +38,7 @@ public sealed interface Doc {
   }
 
   default @NotNull String renderWithPageWidth(int pageWidth) {
-    var config = new StringPrinterConfig(pageWidth);
+    var config = new StringPrinterConfig(IgnoringFormatter.INSTANCE, pageWidth);
     return this.renderToString(config);
   }
 
@@ -73,7 +73,7 @@ public sealed interface Doc {
   /**
    * Styled document
    */
-  record Styled(@NotNull List<Style> styles, @NotNull Doc doc) implements Doc {
+  record Styled(@NotNull Seq<Style> styles, @NotNull Doc doc) implements Doc {
   }
 
   /**
@@ -133,11 +133,11 @@ public sealed interface Doc {
 
   //region DocFactory functions
   static Doc styled(@NotNull Style style, @NotNull Doc doc) {
-    return new Doc.Styled(List.of(style), doc);
+    return new Doc.Styled(Seq.of(style), doc);
   }
 
   static Doc styled(@NotNull Style style, @NotNull String plain) {
-    return new Doc.Styled(List.of(style), Doc.plain(plain));
+    return new Doc.Styled(Seq.of(style), Doc.plain(plain));
   }
 
   static Doc styled(@NotNull Style.StyleBuilder builder, @NotNull Doc doc) {
@@ -477,7 +477,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc hcat(Doc @NotNull ... docs) {
-    return hcat(Arrays.asList(docs));
+    return hcat(Seq.of(docs));
   }
 
   /**
@@ -487,7 +487,7 @@ public sealed interface Doc {
    * @return concat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc hcat(@NotNull List<@NotNull Doc> docs) {
+  static @NotNull Doc hcat(@NotNull Seq<@NotNull Doc> docs) {
     return concatWith(Doc::simpleCat, docs);
   }
 
@@ -625,7 +625,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc hsep(Doc @NotNull ... docs) {
-    return hsep(Arrays.asList(docs));
+    return hsep(Seq.of(docs));
   }
 
   /**
@@ -652,7 +652,7 @@ public sealed interface Doc {
    * @return separated documents
    */
   @Contract("_ -> new")
-  static @NotNull Doc hsep(@NotNull List<@NotNull Doc> docs) {
+  static @NotNull Doc hsep(@NotNull Seq<@NotNull Doc> docs) {
     return concatWith(Doc::simpleSpacedCat, docs);
   }
 
@@ -691,16 +691,16 @@ public sealed interface Doc {
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
-    return join(delim, Arrays.asList(docs));
+    return join(delim, Seq.of(docs));
   }
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, Stream<Doc> docs) {
-    return join(delim, docs.collect(Collectors.toList()));
+    return join(delim, docs.collect(Seq.factory()));
   }
 
   @Contract("_, _ -> new")
-  static @NotNull Doc join(@NotNull Doc delim, @NotNull List<@NotNull Doc> docs) {
+  static @NotNull Doc join(@NotNull Doc delim, @NotNull Seq<@NotNull Doc> docs) {
     return concatWith(
       (x, y) -> simpleCat(x, delim, y),
       docs
@@ -790,16 +790,16 @@ public sealed interface Doc {
 
   //region utility functions
 
-  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull List<@NotNull Doc> xs) {
+  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Seq<@NotNull Doc> xs) {
     assert xs.size() > 0;
     if (xs.size() == 1) {
       return xs.get(0);
     }
-    return xs.stream().reduce(f).get(); // never null
+    return xs.reduce(f); // never null
   }
 
   private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
-    return concatWith(Doc::makeCat, Arrays.asList(xs));
+    return concatWith(Doc::makeCat, Seq.of(xs));
   }
 
   private static @NotNull Doc simpleSpacedCat(Doc @NotNull ... xs) {
@@ -810,7 +810,7 @@ public sealed interface Doc {
           second,
           (a, b) -> simpleCat(a, plain(" "), b)
         ),
-      Arrays.asList(xs)
+      Seq.of(xs)
     );
   }
 

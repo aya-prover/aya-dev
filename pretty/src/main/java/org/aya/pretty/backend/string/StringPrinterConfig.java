@@ -2,14 +2,23 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.string;
 
+import org.aya.pretty.backend.string.style.UnixTerminalStyleFormatter;
 import org.aya.pretty.printer.PrinterConfig;
+import org.jetbrains.annotations.NotNull;
 
 public class StringPrinterConfig extends PrinterConfig.Basic {
-  public StringPrinterConfig() {
-    this(PrinterConfig.INFINITE_SIZE);
+  public StringStyleFormatter formatter;
+
+  public StringPrinterConfig(@NotNull StringStyleFormatter formatter, int pageWidth) {
+    super(pageWidth, PrinterConfig.INFINITE_SIZE);
+    this.formatter = formatter;
   }
 
-  public StringPrinterConfig(int pageWidth) {
-    super(pageWidth, PrinterConfig.INFINITE_SIZE);
+  public static @NotNull StringPrinterConfig unixTerminal(int pageWidth) {
+    return new StringPrinterConfig(UnixTerminalStyleFormatter.INSTANCE, pageWidth);
+  }
+
+  public static @NotNull StringPrinterConfig unixTerminal() {
+    return unixTerminal(INFINITE_SIZE);
   }
 }

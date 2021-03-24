@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.printer;
 
+import org.aya.pretty.backend.DocStringPrinter;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  *   public class HtmlPrinter implements Printer<HtmlPrinterConfig> {}
  * </pre>
  * <p>
- * For a more practical example, see {@link org.aya.pretty.backend.DocStringPrinter}
+ * For a more practical example, see {@link DocStringPrinter}
  *
  * @author kiva
  */
