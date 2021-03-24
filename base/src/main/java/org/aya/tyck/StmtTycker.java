@@ -139,12 +139,12 @@ public record StmtTycker(
       return new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.left(what._2.getLeftValue()));
     var cs = what._2.getRightValue();
     var elabClauses = cs.flatMap(Pat.PrototypeClause::deprototypify);
+    var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(elabClauses));
     if (!cs.isEmpty()) {
       var classification = PatClassifier.classify(cs, tycker.metaContext.reporter(), decl.sourcePos, true);
-      var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(elabClauses));
       PatClassifier.confluence(cs, tycker.metaContext, decl.sourcePos, resultTy, classification);
-      return elaborated;
-    } else return new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(elabClauses));
+    }
+    return elaborated;
   }
 
   private @NotNull ImmutableSeq<Term.Param>
