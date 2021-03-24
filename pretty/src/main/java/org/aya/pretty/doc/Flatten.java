@@ -55,7 +55,8 @@ sealed interface Flatten {
 
     } else if (doc instanceof Doc.Empty
       || doc instanceof Doc.PlainText
-      || doc instanceof Doc.HyperText) {
+      || doc instanceof Doc.HyperText
+      || doc instanceof Doc.Styled) {
       return new AlreadyFlat();
 
     } else if (doc instanceof Doc.Fail) {

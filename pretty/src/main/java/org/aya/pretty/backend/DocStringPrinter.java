@@ -67,6 +67,9 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
       } else if (doc instanceof Doc.HyperText text) {
         return text.text().length();
 
+      } else if (doc instanceof Doc.Styled styled) {
+        return predictWidth(styled.doc());
+
       } else if (doc instanceof Doc.Line) {
         return 0;
 
@@ -114,6 +117,10 @@ public class DocStringPrinter implements Printer<String, DocStringPrinter.Config
       } else if (doc instanceof Doc.HyperText text) {
         // we ignore hyper text link because we are plain text renderer
         renderPlainText(text.text());
+
+      } else if (doc instanceof Doc.Styled styled) {
+        // ignore style because we are plain string renderer
+        renderDoc(styled.doc());
 
       } else if (doc instanceof Doc.Line) {
         renderHardLineBreak();

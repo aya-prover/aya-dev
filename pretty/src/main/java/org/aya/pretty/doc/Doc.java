@@ -70,6 +70,12 @@ public sealed interface Doc {
   }
 
   /**
+   * Styled document
+   */
+  record Styled(@NotNull List<Style> styles, @NotNull Doc doc) implements Doc {
+  }
+
+  /**
    * Hard line break
    */
   record Line() implements Doc {
@@ -125,6 +131,21 @@ public sealed interface Doc {
   //endregion
 
   //region DocFactory functions
+  static Doc styled(@NotNull Style style, @NotNull Doc doc) {
+    return new Doc.Styled(List.of(style), doc);
+  }
+
+  static Doc styled(@NotNull Style style, @NotNull String plain) {
+    return new Doc.Styled(List.of(style), Doc.plain(plain));
+  }
+
+  static Doc styled(@NotNull Style.StyleBuilder builder, @NotNull Doc doc) {
+    return new Doc.Styled(builder.styles, doc);
+  }
+
+  static Doc styled(@NotNull Style.StyleBuilder builder, @NotNull String plain) {
+    return new Doc.Styled(builder.styles, Doc.plain(plain));
+  }
 
   static Doc wrap(String left, String right, Doc doc) {
     return Doc.cat(Doc.plain(left), doc, Doc.plain(right));
