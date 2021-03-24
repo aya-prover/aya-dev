@@ -65,7 +65,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
 
   @Override public Unit visitTyck(Trace.@NotNull TyckT t, Unit unit) {
     indent();
-    builder.append("result \u22A2 `")
+    builder.append("+ result \u22A2 `")
       .append(t.term().toDoc().renderWithPageWidth(WIDTH))
       .append("` \u2191 ")
       .append(t.type().toDoc().renderWithPageWidth(WIDTH))
@@ -76,7 +76,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
 
   @Override public Unit visitPat(Trace.@NotNull PatT t, Unit unit) {
     indent();
-    builder.append("pat \u22A2 `")
+    builder.append("+ pat \u22A2 `")
       .append(t.pat().toDoc().renderWithPageWidth(WIDTH))
       .append("` : ")
       .append(t.term().toDoc().renderWithPageWidth(WIDTH))
@@ -87,7 +87,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
 
   @Override public Unit visitLabel(Trace.@NotNull LabelT t, Unit unit) {
     indent();
-    builder.append(t.label());
+    builder.append("+ ").append(t.label());
     visitSub(t.children());
     return unit;
   }
