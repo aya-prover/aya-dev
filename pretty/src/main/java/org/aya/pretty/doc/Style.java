@@ -31,12 +31,12 @@ public sealed interface Style {
      * We recommend to use color names instead of RBG values as we allow
      * different color themes to have different values of a same color.
      */
-    @NotNull String colorKey;
+    public @NotNull String colorKey;
 
     /**
      * Some output device like xterm supports brighter colors.
      */
-    boolean brighter = false;
+    public boolean brighter = false;
 
     private Color(@NotNull String colorKey) {
       this.colorKey = colorKey;

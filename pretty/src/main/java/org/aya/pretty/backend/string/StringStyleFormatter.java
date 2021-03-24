@@ -7,5 +7,5 @@ import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 public interface StringStyleFormatter {
-  void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, Runnable inside);
+  void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside);
 }

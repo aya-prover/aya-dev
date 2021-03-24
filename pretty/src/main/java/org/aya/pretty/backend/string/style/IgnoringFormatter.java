@@ -11,7 +11,7 @@ public class IgnoringFormatter implements StringStyleFormatter {
   public static final IgnoringFormatter INSTANCE = new IgnoringFormatter();
 
   @Override
-  public void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, Runnable inside) {
+  public void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside) {
     inside.run();
   }
 }
