@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend;
 
+import org.aya.pretty.backend.string.StringOutputPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
-import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringRenderer;
 
-public class DocStringPrinter extends StringPrinter<StringPrinterConfig> {
+public class DocStringPrinter extends StringOutputPrinter<StringPrinterConfig> {
   public DocStringPrinter() {
     super(new StringRenderer<>());
   }

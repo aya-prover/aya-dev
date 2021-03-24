@@ -9,14 +9,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * The class for all string-output printers.
  * This backend can be customized by extending the renderer.
- * @see StringRenderer
+ *
  * @author kiva
+ * @see StringRenderer
  */
-public class StringPrinter<StringConfig extends StringPrinterConfig>
+public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
   implements Printer<String, StringConfig> {
   private final StringRenderer<StringConfig> renderer;
 
-  protected StringPrinter(StringRenderer<StringConfig> renderer) {
+  protected StringOutputPrinter(StringRenderer<StringConfig> renderer) {
     this.renderer = renderer;
   }
 

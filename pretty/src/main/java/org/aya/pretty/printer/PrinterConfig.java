@@ -2,8 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.printer;
 
-import org.aya.pretty.backend.string.StringPrinter;
-
 /**
  * This class was designed to support various PrettyPrint backend.
  * Example usage:
