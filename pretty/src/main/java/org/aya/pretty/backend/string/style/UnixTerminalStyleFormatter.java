@@ -56,7 +56,7 @@ public class UnixTerminalStyleFormatter implements StringStyleFormatter {
       return Tuple.of("", "");
     }
 
-    int hex = Integer.parseInt(rgb.replace("#", "0x"));
+    int hex = Integer.parseInt(rgb.replace("#", ""), 16);
     int r = (hex & 0xFF0000) >> 16;
     int g = (hex & 0xFF00) >> 8;
     int b = (hex & 0xFF);
@@ -64,7 +64,7 @@ public class UnixTerminalStyleFormatter implements StringStyleFormatter {
     // \033[${bg ? 48 : 38};2;${red};${green};${blue}m ${text} \033[49m
     return Tuple.of(
       String.format("\033[%d;2;%d;%d;%dm", bg ? 48 : 38, r, g, b),
-      "\033[49m"
+      String.format("\033[%dm", bg ? 49 : 39)
     );
   }
 }
