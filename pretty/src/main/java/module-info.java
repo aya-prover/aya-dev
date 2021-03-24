@@ -8,4 +8,5 @@ module org.aya.pretty {
   exports org.aya.pretty.doc;
   exports org.aya.pretty.error;
   exports org.aya.pretty.printer;
+    exports org.aya.pretty.backend.string;
 }

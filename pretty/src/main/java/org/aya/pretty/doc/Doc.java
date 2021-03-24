@@ -3,6 +3,7 @@
 package org.aya.pretty.doc;
 
 import org.aya.pretty.backend.DocStringPrinter;
+import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
 import org.jetbrains.annotations.Contract;
@@ -25,7 +26,7 @@ import java.util.stream.Stream;
 public sealed interface Doc {
   //region Doc Member Functions
 
-  default @NotNull String renderToString(@NotNull DocStringPrinter.Config config) {
+  default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
     var printer = new DocStringPrinter();
     return this.render(printer, config);
   }
@@ -37,7 +38,7 @@ public sealed interface Doc {
   }
 
   default @NotNull String renderWithPageWidth(int pageWidth) {
-    var config = new DocStringPrinter.Config(pageWidth);
+    var config = new StringPrinterConfig(pageWidth);
     return this.renderToString(config);
   }
 
@@ -66,7 +67,7 @@ public sealed interface Doc {
   /**
    * A clickable text line without '\n'.
    */
-  record HyperText(@NotNull String text, @NotNull Link link) implements Doc {
+  record HyperLinked(@NotNull Doc doc, @NotNull Link link) implements Doc {
   }
 
   /**

@@ -1,7 +1,9 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.printer;
-import org.aya.pretty.backend.DocStringPrinter;
+
+import org.aya.pretty.backend.string.StringPrinter;
+
 /**
  * This class was designed to support various PrettyPrint backend.
  * Example usage:
@@ -9,7 +11,7 @@ import org.aya.pretty.backend.DocStringPrinter;
  *   public class HtmlPrinterConfig implements PrinterConfig {}
  * </pre>
  * <p>
- * For a more practical example, see {@link DocStringPrinter.Config}
+ * For a more practical example, see {@link org.aya.pretty.backend.string.StringPrinterConfig}
  *
  * @author kiva
  */
@@ -35,6 +37,10 @@ public interface PrinterConfig {
    */
   default int getPageHeight() {
     return INFINITE_SIZE;
+  }
+
+  default StyleFormatter getStyleFormatter() {
+    return new StyleFormatter.IgnoringFormatter();
   }
 
   /**
