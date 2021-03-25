@@ -2,10 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pretty;
 
-import org.aya.api.ref.Var;
+import org.aya.api.ref.DefVar;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -14,17 +15,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public class TermPrettier implements Term.Visitor<Boolean, Doc> {
-  public static final TermPrettier INSTANCE = new TermPrettier();
+  public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
+  public static final Style.@NotNull StyleBuilder keyword = Style.bold().and().color("CD6600");
 
-  @Override
-  public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
+  private TermPrettier() {
+  }
+
+  @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
     return Doc.plain(term.var().name());
   }
 
   @Override
   public Doc visitLam(@NotNull LamTerm term, Boolean nestedCall) {
     return Doc.cat(
-      Doc.plain("\\lam"),
+      Doc.styled(keyword, "\\lam"),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.plain(" => "),
@@ -36,7 +40,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public Doc visitPi(@NotNull PiTerm term, Boolean nestedCall) {
     // TODO[kiva]: term.co
     return Doc.cat(
-      Doc.plain("\\Pi"),
+      Doc.styled(keyword, "\\Pi"),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.plain(" -> "),
@@ -47,7 +51,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitSigma(@NotNull SigmaTerm term, Boolean nestedCall) {
     return Doc.cat(
-      Doc.plain("\\Sig"),
+      Doc.styled(keyword, "\\Sig"),
       Doc.plain(" "),
       visitTele(term.params()),
       Doc.plain(" ** "),
@@ -58,7 +62,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitUniv(@NotNull UnivTerm term, Boolean nestedCall) {
     // TODO: level
-    return Doc.plain("\\oo-Type");
+    return Doc.styled(keyword, "\\oo-Type");
   }
 
   @Override
@@ -68,20 +72,20 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
-    return visitCalls(fnCall.ref(), fnCall.args(), nestedCall);
+    return visitCalls(fnCall.ref(), Style.color("CD6600"), fnCall.args(), nestedCall);
   }
 
   @Override
   public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
-    return visitCalls(dataCall.ref(), dataCall.args(), nestedCall);
+    return visitCalls(dataCall.ref(), Style.color("0000CD"), dataCall.args(), nestedCall);
   }
 
   @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Boolean nestedCall) {
-    return visitCalls(structCall.ref(), structCall.args(), nestedCall);
+    return visitCalls(structCall.ref(), Style.color("0000CD"), structCall.args(), nestedCall);
   }
 
   @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Boolean nestedCall) {
-    return visitCalls(conCall.ref(), conCall.conArgs(), nestedCall);
+    return visitCalls(conCall.ref(), Style.color("008B00"), conCall.conArgs(), nestedCall);
   }
 
   @Override
@@ -94,7 +98,8 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitNew(@NotNull NewTerm newTerm, Boolean aBoolean) {
     return Doc.cat(
-      Doc.plain("\\new { "),
+      Doc.styled(keyword, "\\new"),
+      Doc.plain(" { "),
       newTerm.params().stream().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
       ).reduce(Doc.empty(), Doc::hsep),
@@ -123,10 +128,12 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
       (term -> term.accept(this, true)), nestedCall);
   }
 
-  private Doc visitCalls(@NotNull Var fn,
-                         @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
-                         boolean nestedCall) {
-    return visitCalls(Doc.plain(fn.name()), args,
+  private Doc visitCalls(
+    @NotNull DefVar<?, ?> fn, @NotNull Style style,
+    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
+    boolean nestedCall
+  ) {
+    return visitCalls(Doc.styled(style, fn.name()), args,
       (term -> term.accept(this, true)), nestedCall);
   }
 
