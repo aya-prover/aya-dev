@@ -5,6 +5,7 @@ package org.aya.pretty.doc;
 import org.aya.pretty.backend.DocHtmlPrinter;
 import org.aya.pretty.backend.DocStringPrinter;
 import org.aya.pretty.backend.html.HtmlPrinterConfig;
+import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.style.IgnoringStylist;
 import org.aya.pretty.printer.Printer;
@@ -141,6 +142,10 @@ public sealed interface Doc {
   //endregion
 
   //region DocFactory functions
+  static @NotNull Doc hashCodeLink(@NotNull Doc doc, int hashCode) {
+    return new HyperLinked(doc, new StringLink("#" + hashCode), String.valueOf(hashCode));
+  }
+
   static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull Link link, @Nullable String id) {
     return new HyperLinked(doc, link, id);
   }

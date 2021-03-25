@@ -5,6 +5,7 @@ package org.aya.core.pretty;
 import org.aya.api.ref.DefVar;
 import org.aya.core.term.*;
 import org.aya.generic.Arg;
+import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
@@ -31,7 +32,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
-    return Doc.plain(term.var().name());
+    return DefPrettier.plainLink(term.var());
   }
 
   @Override
@@ -135,13 +136,12 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   private Doc visitCalls(
-    @NotNull DefVar<?, ?> fn,
-    @NotNull Style style,
+    @NotNull DefVar<?, ?> fn, @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
     boolean nestedCall
   ) {
-    return visitCalls(Doc.styled(style, fn.name()), args,
-      (term -> term.accept(this, true)), nestedCall);
+    var hyperLink = Doc.hyperLink(Doc.styled(style, fn.name()), new StringLink("#" + fn.hashCode()), null);
+    return visitCalls(hyperLink, args, (term -> term.accept(this, true)), nestedCall);
   }
 
   public <T> @NotNull Doc visitCalls(

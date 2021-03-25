@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pretty;
 
+import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -10,6 +11,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\def "),
-      Doc.styled(TermPrettier.FN_CALL, def.ref().name()),
+      link(def.ref(), TermPrettier.FN_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isLeft() ? Doc.plain(" => ") : Doc.empty(),
@@ -54,7 +56,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\data"),
       Doc.plain(" "),
-      Doc.styled(TermPrettier.DATA_CALL, def.ref().name()),
+      link(def.ref(), TermPrettier.DATA_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isEmpty() ? Doc.empty()
@@ -63,10 +65,18 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
     );
   }
 
+  public static @NotNull Doc link(@NotNull Var ref, @NotNull Style color) {
+    return Doc.hashCodeLink(Doc.styled(color, ref.name()), ref.hashCode());
+  }
+
+  public static @NotNull Doc plainLink(@NotNull Var ref) {
+    return Doc.hashCodeLink(Doc.plain(ref.name()), ref.hashCode());
+  }
+
   @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
     var doc = Doc.cat(
       ctor.coerce() ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
-      Doc.styled(TermPrettier.CON_CALL, ctor.ref().name()),
+      link(ctor.ref(), TermPrettier.CON_CALL),
       visitTele(ctor.conTele()),
       visitClauses(ctor.clauses(), true)
     );
