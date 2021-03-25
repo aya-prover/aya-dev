@@ -14,7 +14,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-public final class DefPrettier implements Def.Visitor<Unit, Doc> {
+public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   public static final @NotNull DefPrettier INSTANCE = new DefPrettier();
 
   private DefPrettier() {
@@ -56,7 +56,7 @@ public final class DefPrettier implements Def.Visitor<Unit, Doc> {
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isEmpty() ? Doc.empty()
         : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
-        def.body().stream().map(ctor -> ctor.accept(this, Unit.unit())))))
+        def.body().map(ctor -> ctor.accept(this, Unit.unit())))))
     );
   }
 

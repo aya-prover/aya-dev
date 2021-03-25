@@ -10,6 +10,7 @@ import org.aya.pretty.backend.string.style.IgnoringStylist;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
 import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -479,8 +480,11 @@ public sealed interface Doc {
     return join(lineEmpty(), docs);
   }
 
-  @Contract("_ -> new")
-  static @NotNull Doc vcat(@NotNull Stream<@NotNull Doc> docs) {
+  @Contract("_ -> new") static @NotNull Doc vcat(@NotNull Stream<@NotNull Doc> docs) {
+    return join(lineEmpty(), docs);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc vcat(@NotNull SeqLike<@NotNull Doc> docs) {
     return join(lineEmpty(), docs);
   }
 
@@ -715,7 +719,7 @@ public sealed interface Doc {
   }
 
   @Contract("_, _ -> new")
-  static @NotNull Doc join(@NotNull Doc delim, @NotNull Seq<@NotNull Doc> docs) {
+  static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
     return concatWith(
       (x, y) -> simpleCat(x, delim, y),
       docs
@@ -805,7 +809,7 @@ public sealed interface Doc {
 
   //region utility functions
 
-  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull Seq<@NotNull Doc> xs) {
+  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull SeqLike<@NotNull Doc> xs) {
     assert xs.size() > 0;
     if (xs.size() == 1) {
       return xs.get(0);

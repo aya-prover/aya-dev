@@ -97,7 +97,7 @@ public record DataDef(
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return null;
+      return visitor.visitCtor(this, p);
     }
   }
 
