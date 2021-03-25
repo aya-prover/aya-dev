@@ -12,8 +12,8 @@ public class HtmlStyleTest {
   public void testHtmlStyle() {
     var a = Doc.styled(Style.bold(), "bold");
     var b = Doc.styled(Style.italic(), "italic");
-    var c = Doc.styled(Style.bold().and().italic().color("#f08f68"), "color1");
-    var d = Doc.styled(Style.bold().and().italic().colorBG("#f08f68"), "color2");
+    var c = Doc.styled(Style.bold().and().italic().color(0xf08f68), "color1");
+    var d = Doc.styled(Style.bold().and().italic().colorBG(0xf08f68), "color2");
     var e = Doc.styled(Style.strike(), Doc.cat(a, b, c, d));
     var f = Doc.cat(e, Doc.hyperLink("Click me", new StringLink("https://google.com")));
     var g = Doc.cat(f, Doc.hyperLink("Show dialog", new StringLink("javascript:alert('hello world');")));

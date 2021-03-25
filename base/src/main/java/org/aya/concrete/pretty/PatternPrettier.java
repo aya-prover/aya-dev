@@ -22,7 +22,7 @@ public final class PatternPrettier implements Pattern.Visitor<Boolean, Doc> {
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
       Doc.join(Doc.plain(", "), tuple.patterns().stream().map(Pattern::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.cat(tup, Doc.styled(TermPrettier.keyword, " \\as "), Doc.plain(tuple.as().name()));
+      : Doc.cat(tup, Doc.styled(TermPrettier.KEYWORD, " \\as "), Doc.plain(tuple.as().name()));
   }
 
   @Override
@@ -42,7 +42,7 @@ public final class PatternPrettier implements Pattern.Visitor<Boolean, Doc> {
   @Override public Doc visitAbsurd(Pattern.@NotNull Absurd absurd, Boolean aBoolean) {
     boolean ex = absurd.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.styled(TermPrettier.keyword, "\\impossible"));
+      Doc.styled(TermPrettier.KEYWORD, "\\impossible"));
   }
 
   @Override

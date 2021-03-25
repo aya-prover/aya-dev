@@ -22,7 +22,7 @@ public class PatPrettier implements Pat.Visitor<Boolean, Doc> {
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
       Doc.join(Doc.plain(", "), tuple.pats().stream().map(Pat::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.cat(tup, Doc.styled(TermPrettier.keyword, " \\as "), Doc.plain(tuple.as().name()));
+      : Doc.cat(tup, Doc.styled(TermPrettier.KEYWORD, " \\as "), Doc.plain(tuple.as().name()));
   }
 
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
@@ -34,7 +34,7 @@ public class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Boolean aBoolean) {
     boolean ex = absurd.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.styled(TermPrettier.keyword, "\\impossible"));
+      Doc.styled(TermPrettier.KEYWORD, "\\impossible"));
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {

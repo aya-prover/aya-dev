@@ -16,7 +16,7 @@ import java.util.function.Function;
 
 public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
-  public static final Style.@NotNull StyleBuilder Keyword = Style.bold().and().color(0xCD6600);
+  public static final Style.@NotNull StyleBuilder KEYWORD = Style.bold().and().color(0xCD6600);
 
   private TermPrettier() {
   }
@@ -28,7 +28,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitLam(@NotNull LamTerm term, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(Keyword, "\\lam"),
+      Doc.styled(KEYWORD, "\\lam"),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.plain(" => "),
@@ -40,7 +40,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public Doc visitPi(@NotNull PiTerm term, Boolean nestedCall) {
     // TODO[kiva]: term.co
     return Doc.cat(
-      Doc.styled(Keyword, "\\Pi"),
+      Doc.styled(KEYWORD, "\\Pi"),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.plain(" -> "),
@@ -51,7 +51,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitSigma(@NotNull SigmaTerm term, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(Keyword, "\\Sig"),
+      Doc.styled(KEYWORD, "\\Sig"),
       Doc.plain(" "),
       visitTele(term.params()),
       Doc.plain(" ** "),
@@ -62,7 +62,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitUniv(@NotNull UnivTerm term, Boolean nestedCall) {
     // TODO: level
-    return Doc.styled(Keyword, "\\oo-Type");
+    return Doc.styled(KEYWORD, "\\oo-Type");
   }
 
   @Override
@@ -98,7 +98,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitNew(@NotNull NewTerm newTerm, Boolean aBoolean) {
     return Doc.cat(
-      Doc.styled(Keyword, "\\new"),
+      Doc.styled(KEYWORD, "\\new"),
       Doc.plain(" { "),
       newTerm.params().stream().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
