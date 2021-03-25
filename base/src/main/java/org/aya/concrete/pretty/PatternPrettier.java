@@ -3,6 +3,8 @@
 package org.aya.concrete.pretty;
 
 import org.aya.concrete.Pattern;
+import org.aya.core.pretty.PatPrettier;
+import org.aya.core.pretty.TermPrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqLike;
@@ -20,7 +22,7 @@ public final class PatternPrettier implements Pattern.Visitor<Boolean, Doc> {
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
       Doc.join(Doc.plain(", "), tuple.patterns().stream().map(Pattern::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.cat(tup, Doc.plain(" \\as "), Doc.plain(tuple.as().name()));
+      : Doc.cat(tup, Doc.styled(TermPrettier.keyword, " \\as "), Doc.plain(tuple.as().name()));
   }
 
   @Override
@@ -40,7 +42,7 @@ public final class PatternPrettier implements Pattern.Visitor<Boolean, Doc> {
   @Override public Doc visitAbsurd(Pattern.@NotNull Absurd absurd, Boolean aBoolean) {
     boolean ex = absurd.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.plain("\\impossible"));
+      Doc.styled(TermPrettier.keyword, "\\impossible"));
   }
 
   @Override
@@ -52,23 +54,17 @@ public final class PatternPrettier implements Pattern.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitCtor(Pattern.@NotNull Ctor ctor, Boolean nestedCall) {
-    boolean ex = ctor.explicit();
-    boolean as = ctor.as() != null;
     var ctorDoc = Doc.cat(
       Doc.plain(ctor.name()),
       Doc.plain(" "),
       visitMaybeCtorPatterns(ctor.params(), true)
     );
-    var withEx = Doc.wrap(ex ? "" : "{", ex ? "" : "}", ctorDoc);
-    var withAs = as
-      ? Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" \\as "), Doc.plain(ctor.as().name()))
-      : withEx;
-    return !ex && !as ? withAs : nestedCall ? Doc.wrap("(", ")", withAs) : withAs;
+    return PatPrettier.ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, boolean nestedCall) {
     return patterns.stream()
-      .map(p -> p.accept(PatternPrettier.INSTANCE, nestedCall))
+      .map(p -> p.accept(this, nestedCall))
       .reduce(Doc.empty(), Doc::hsep);
   }
 

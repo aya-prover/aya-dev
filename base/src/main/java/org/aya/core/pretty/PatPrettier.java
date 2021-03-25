@@ -6,6 +6,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
@@ -37,23 +38,26 @@ public class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
-    boolean ex = ctor.explicit();
-    boolean as = ctor.as() != null;
     var ctorDoc = Doc.cat(
       Doc.plain(ctor.ref().name()),
       Doc.plain(" "),
       visitMaybeCtorPatterns(ctor.params(), true)
     );
+    return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());
+  }
+
+  public static @NotNull Doc ctorDoc(Boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs) {
+    boolean as = ctorAs != null;
     var withEx = Doc.wrap(ex ? "" : "{", ex ? "" : "}", ctorDoc);
     var withAs = as
-      ? Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" \\as "), Doc.plain(ctor.as().name()))
+      ? Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" \\as "), Doc.plain(ctorAs.name()))
       : withEx;
     return !ex && !as ? withAs : nestedCall ? Doc.wrap("(", ")", withAs) : withAs;
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall) {
     return patterns.stream()
-      .map(p -> p.accept(PatPrettier.INSTANCE, nestedCall))
+      .map(p -> p.accept(this, nestedCall))
       .reduce(Doc.empty(), Doc::hsep);
   }
 
