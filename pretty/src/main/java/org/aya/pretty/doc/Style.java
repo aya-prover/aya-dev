@@ -25,25 +25,44 @@ public sealed interface Style {
   final record Color(@NotNull String colorKey, boolean background) implements Style {
   }
 
+  /**
+   * Make your custom style a subclass of this one. For example:
+   * <pre>
+   *   enum UnixTermStyle implements CustomStyle {
+   *     DoubleUnderline,
+   *     CurlyUnderline,
+   *   }
+   * </pre>
+   * and use it with {@link Style.Custom} like this
+   * <pre>
+   *   .custom(UnixTermStyle.CurlyUnderline)
+   * </pre>
+   */
+  interface CustomStyle {
+  }
+
+  final record Custom(@NotNull CustomStyle style) implements Style {
+  }
+
   class StyleBuilder {
     Buffer<Style> styles = Buffer.of();
 
-    public StyleBuilder italic() {
+    public @NotNull StyleBuilder italic() {
       styles.append(Attr.Italic);
       return this;
     }
 
-    public StyleBuilder bold() {
+    public @NotNull StyleBuilder bold() {
       styles.append(Attr.Bold);
       return this;
     }
 
-    public StyleBuilder strike() {
+    public @NotNull StyleBuilder strike() {
       styles.append(Attr.Strike);
       return this;
     }
 
-    public StyleBuilder underline() {
+    public @NotNull StyleBuilder underline() {
       styles.append(Attr.Underline);
       return this;
     }
@@ -56,7 +75,7 @@ public sealed interface Style {
      * We recommend to use color names instead of RBG values as we allow
      * different color themes to have different values of a same color.
      */
-    public StyleBuilder color(@NotNull String colorNameOrRGB) {
+    public @NotNull StyleBuilder color(@NotNull String colorNameOrRGB) {
       styles.append(new Color(colorNameOrRGB, false));
       return this;
     }
@@ -64,39 +83,48 @@ public sealed interface Style {
     /**
      * @see StyleBuilder#color
      */
-    public StyleBuilder colorBG(@NotNull String colorNameOrRGB) {
+    public @NotNull StyleBuilder colorBG(@NotNull String colorNameOrRGB) {
       styles.append(new Color(colorNameOrRGB, true));
+      return this;
+    }
+
+    public @NotNull StyleBuilder custom(@NotNull CustomStyle style) {
+      styles.append(new Custom(style));
       return this;
     }
   }
 
-  static Style italic() {
+  static @NotNull Style italic() {
     return Attr.Italic;
   }
 
-  static Style bold() {
+  static @NotNull Style bold() {
     return Attr.Bold;
   }
 
-  static Style strike() {
+  static @NotNull Style strike() {
     return Attr.Strike;
   }
 
-  static Style underline() {
+  static @NotNull Style underline() {
     return Attr.Underline;
   }
 
   /**
    * @see StyleBuilder#color
    */
-  static Style color(@NotNull String colorNameOrRGB) {
+  static @NotNull Style color(@NotNull String colorNameOrRGB) {
     return new Color(colorNameOrRGB, false);
   }
 
   /**
    * @see StyleBuilder#color
    */
-  static Style colorBg(@NotNull String colorNameOrRGB) {
+  static @NotNull Style colorBg(@NotNull String colorNameOrRGB) {
     return new Color(colorNameOrRGB, true);
+  }
+
+  static @NotNull Style custom(@NotNull CustomStyle style) {
+    return new Custom(style);
   }
 }
