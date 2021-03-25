@@ -106,11 +106,10 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
 
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {
     if (clauses.isEmpty()) return Doc.empty();
-    var delim = Doc.hcat(Doc.line(), Doc.plain("| "));
-    var clausesDoc = Doc.cat(
-      delim, // join will only insert "|" between clauses
-      Doc.join(delim, clauses.stream()
-        .map(PatternPrettier.INSTANCE::matchy)));
+    var clausesDoc = Doc.vcat(
+      clauses.stream()
+        .map(PatternPrettier.INSTANCE::matchy)
+        .map(doc -> Doc.hcat(Doc.plain("| "), doc)));
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
   }
 
@@ -165,7 +164,8 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
         ? Doc.plain(" ")
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc(), Doc.plain(" ")),
       decl.body.isLeft() ? Doc.plain("=> ") : Doc.empty(),
-      decl.body.fold(Expr::toDoc, clauses -> visitClauses(clauses, false)),
+      decl.body.fold(Expr::toDoc, clauses ->
+        Doc.hcat(Doc.line(), Doc.hang(2, visitClauses(clauses, false)))),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
         : Doc.cat(Doc.plain(" "), Doc.styled(TermPrettier.KEYWORD, "\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
