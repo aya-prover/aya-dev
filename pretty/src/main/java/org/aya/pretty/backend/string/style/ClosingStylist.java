@@ -50,8 +50,8 @@ public abstract class ClosingStylist implements StringStylist {
       return formatColorName(color, color.background());
     } else if (style instanceof Style.ColorHex color) {
       return formatColorHex(color.color(), color.background());
-    } else if (style instanceof Style.Custom custom) {
-      return formatCustom(custom.style());
+    } else if (style instanceof Style.CustomStyle custom) {
+      return formatCustom(custom);
     }
 
     throw new IllegalArgumentException("Unsupported style: " + style.getClass().getName());

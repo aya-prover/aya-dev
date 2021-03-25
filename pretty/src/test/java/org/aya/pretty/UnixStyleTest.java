@@ -18,10 +18,10 @@ public class UnixStyleTest {
     var e = Doc.styled(Style.strike(), Doc.cat(a, b, c, d));
     var f = Doc.vcat(
       e,
-      Doc.styled(Style.custom(UnixTermStyle.DoubleUnderline), "double underline"),
-      Doc.styled(Style.custom(UnixTermStyle.CurlyUnderline), "curly underline"),
-      Doc.styled(Style.custom(UnixTermStyle.Blink), "blink"),
-      Doc.styled(Style.custom(UnixTermStyle.Reverse), "reverse")
+      Doc.styled(UnixTermStyle.DoubleUnderline, "double underline"),
+      Doc.styled(UnixTermStyle.CurlyUnderline, "curly underline"),
+      Doc.styled(UnixTermStyle.Blink, "blink"),
+      Doc.styled(UnixTermStyle.Reverse, "reverse")
     );
     System.out.println(f.renderToString(StringPrinterConfig.unixTerminal()));
   }

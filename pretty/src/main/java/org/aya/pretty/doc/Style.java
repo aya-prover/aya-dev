@@ -36,15 +36,8 @@ public sealed interface Style {
    *     CurlyUnderline,
    *   }
    * </pre>
-   * and use it with {@link Style.Custom} like this
-   * <pre>
-   *   .custom(UnixTermStyle.CurlyUnderline)
-   * </pre>
    */
-  interface CustomStyle {
-  }
-
-  final record Custom(@NotNull CustomStyle style) implements Style {
+  non-sealed interface CustomStyle extends Style {
   }
 
   class StyleBuilder {
@@ -95,7 +88,7 @@ public sealed interface Style {
     }
 
     public @NotNull StyleBuilder custom(@NotNull CustomStyle style) {
-      styles.append(new Custom(style));
+      styles.append(style);
       return this;
     }
   }
@@ -130,9 +123,5 @@ public sealed interface Style {
 
   static @NotNull Style colorBg(int color) {
     return new ColorHex(color, true);
-  }
-
-  static @NotNull Style custom(@NotNull CustomStyle style) {
-    return new Custom(style);
   }
 }
