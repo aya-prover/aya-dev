@@ -78,6 +78,19 @@ public sealed interface Doc {
    * A clickable text line without '\n'.
    */
   record HyperLinked(@NotNull Doc doc, @NotNull Link link, @Nullable String id) implements Doc {
+    @Override public String toString() {
+      return doc.toString();
+    }
+
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      return doc.equals(((HyperLinked) o).doc);
+    }
+
+    @Override public int hashCode() {
+      return doc.hashCode();
+    }
   }
 
   /**
