@@ -6,6 +6,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
+import org.aya.core.pretty.TermPrettier;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -19,17 +20,17 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   }
 
   private Doc visitAccess(Stmt.@NotNull Accessibility accessibility) {
-    return Doc.plain(accessibility.keyword);
+    return Doc.styled(TermPrettier.KEYWORD, accessibility.keyword);
   }
 
   @Override
   public Doc visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
     return Doc.cat(
-      Doc.plain("\\import"),
+      Doc.styled(TermPrettier.KEYWORD, "\\import"),
       Doc.plain(" "),
       Doc.plain(cmd.path().joinToString("::")),
       Doc.plain(" "),
-      Doc.plain("\\as"),
+      Doc.styled(TermPrettier.KEYWORD, "\\as"),
       Doc.plain(" "),
       Doc.plain(cmd.asName() == null ? cmd.path().joinToString("::") : cmd.asName())
     );
@@ -40,14 +41,14 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     return Doc.cat(
       visitAccess(cmd.accessibility()),
       Doc.plain(" "),
-      Doc.plain("\\open"),
+      Doc.styled(TermPrettier.KEYWORD, "\\open"),
       Doc.plain(" "),
       Doc.plain(cmd.path().joinToString("::")),
       Doc.plain(" "),
-      switch (cmd.useHide().strategy()) {
-        case Using -> Doc.plain("\\using ");
-        case Hiding -> Doc.plain("\\hiding ");
-      },
+      Doc.styled(TermPrettier.KEYWORD, switch (cmd.useHide().strategy()) {
+        case Using -> "\\using ";
+        case Hiding -> "\\hiding ";
+      }),
       Doc.plain("("),
       Doc.plain(cmd.useHide().list().joinToString(", ")),
       Doc.plain(")")
@@ -75,7 +76,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.plain("\\data"),
+      Doc.styled(TermPrettier.KEYWORD, "\\data"),
       Doc.plain(" "),
       Doc.plain(decl.ref.name()),
       Doc.plain(" "),
@@ -92,7 +93,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   private Doc visitDataCtor(Decl.DataCtor ctor) {
     var doc = Doc.cat(
       Doc.plain("| "),
-      ctor.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
+      ctor.coerce ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       Doc.plain(ctor.ref.name()),
       Doc.plain(" "),
       visitTele(ctor.telescope),
@@ -118,7 +119,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.plain("\\struct"),
+      Doc.styled(TermPrettier.KEYWORD, "\\struct"),
       Doc.plain(" "),
       Doc.plain(decl.ref.name()),
       Doc.plain(" "),
@@ -135,7 +136,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   private Doc visitFields(@NotNull ImmutableSeq<Decl.StructField> fields) {
     return Doc.vcat(fields.map(field -> Doc.hcat(
       Doc.plain("| "),
-      field.coerce ? Doc.plain("\\coerce ") : Doc.empty(),
+      field.coerce ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       Doc.plain(field.ref.name()),
       field.telescope.isEmpty()
         ? Doc.empty()
@@ -154,7 +155,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.plain("\\def"),
+      Doc.styled(TermPrettier.KEYWORD, "\\def"),
       decl.modifiers.isEmpty() ? Doc.plain(" ") :
         decl.modifiers.stream().map(this::visitModifier).reduce(Doc.empty(), Doc::hsep),
       Doc.plain(decl.ref.name()),
@@ -167,15 +168,15 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       decl.body.fold(Expr::toDoc, clauses -> visitClauses(clauses, false)),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
-        : Doc.cat(Doc.plain(" "), Doc.plain("\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
+        : Doc.cat(Doc.plain(" "), Doc.styled(TermPrettier.KEYWORD, "\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
     );
   }
 
   private Doc visitModifier(@NotNull Modifier modifier) {
-    return switch (modifier) {
-      case Inline -> Doc.plain("\\inline");
-      case Erase -> Doc.plain("\\erase");
-    };
+    return Doc.styled(TermPrettier.KEYWORD, switch (modifier) {
+      case Inline -> "\\inline";
+      case Erase -> "\\erase";
+    });
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Expr.Param> telescope) {

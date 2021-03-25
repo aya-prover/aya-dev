@@ -16,6 +16,7 @@ gradle.properties
 .DS_Store
 lombok.config
 /test.aya
+/pp.html
 
 /cli-*-all.jar
 /tgbot-*-all.jar

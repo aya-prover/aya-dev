@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath, Trace.@Nullable Builder builder) {
@@ -30,7 +31,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       var program = new AyaProducer(reporter).visitProgram(parser.program());
       if (flags.dumpAstHtml()) {
         // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
-        System.out.println(Doc.vcat(
+        Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
           StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
       }
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
