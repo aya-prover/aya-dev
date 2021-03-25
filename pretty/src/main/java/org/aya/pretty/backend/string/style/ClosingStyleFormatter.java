@@ -46,10 +46,8 @@ public abstract class ClosingStyleFormatter implements StringStyleFormatter {
         case Strike -> formatStrike();
         case Underline -> formatUnderline();
       };
-    } else if (style instanceof Style.ColorBG bg) {
-      return formatColor(bg, true);
-    } else if (style instanceof Style.ColorFG fg) {
-      return formatColor(fg, false);
+    } else if (style instanceof Style.Color color) {
+      return formatColor(color, color.background());
     }
 
     throw new IllegalArgumentException("Unsupported style: " + style.getClass().getName());
@@ -61,7 +59,7 @@ public abstract class ClosingStyleFormatter implements StringStyleFormatter {
   }
 
   protected @NotNull Tuple2<String, String> formatColor(Style.Color color, boolean background) {
-    var rgb = getColor(color.colorKey);
+    var rgb = getColor(color.colorKey());
     return rgb != null ? formatTrueColor(rgb, background) : Tuple.of("", "");
   }
 

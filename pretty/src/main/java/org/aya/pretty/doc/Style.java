@@ -22,42 +22,7 @@ public sealed interface Style {
     Underline,
   }
 
-  sealed abstract class Color implements Style {
-    /**
-     * The colorKey is one of the following
-     * - a color name, like `red`, `cyan`, `pink`, etc.
-     * - an exact color value (RGB) starting with `#`, like `#ff00ff`
-     * <p>
-     * We recommend to use color names instead of RBG values as we allow
-     * different color themes to have different values of a same color.
-     */
-    public @NotNull String colorKey;
-
-    /**
-     * Some output device like xterm supports brighter colors.
-     */
-    public boolean brighter = false;
-
-    private Color(@NotNull String colorKey) {
-      this.colorKey = colorKey;
-    }
-
-    public Color brighter() {
-      this.brighter = true;
-      return this;
-    }
-  }
-
-  final class ColorFG extends Color {
-    private ColorFG(@NotNull String colorKey) {
-      super(colorKey);
-    }
-  }
-
-  final class ColorBG extends Color {
-    private ColorBG(@NotNull String colorKey) {
-      super(colorKey);
-    }
+  final record Color(@NotNull String colorKey, boolean background) implements Style {
   }
 
   class StyleBuilder {
@@ -84,36 +49,23 @@ public sealed interface Style {
     }
 
     /**
-     * @see Color#colorKey
+     * The colorNameOrRGB is one of the following
+     * - a color name, like `red`, `cyan`, `pink`, etc.
+     * - an exact color value (RGB) starting with `#`, like `#ff00ff`
+     * <p>
+     * We recommend to use color names instead of RBG values as we allow
+     * different color themes to have different values of a same color.
      */
     public StyleBuilder color(@NotNull String colorNameOrRGB) {
-      styles.append(new ColorFG(colorNameOrRGB));
+      styles.append(new Color(colorNameOrRGB, false));
       return this;
     }
 
     /**
-     * @see Color#colorKey
-     * @see Color#brighter
-     */
-    public StyleBuilder colorBrighter(@NotNull String colorNameOrRGB) {
-      styles.append(new ColorFG(colorNameOrRGB).brighter());
-      return this;
-    }
-
-    /**
-     * @see Color#colorKey
+     * @see StyleBuilder#color
      */
     public StyleBuilder colorBG(@NotNull String colorNameOrRGB) {
-      styles.append(new ColorBG(colorNameOrRGB));
-      return this;
-    }
-
-    /**
-     * @see Color#colorKey
-     * @see Color#brighter
-     */
-    public StyleBuilder colorBgBrighter(@NotNull String colorNameOrRGB) {
-      styles.append(new ColorBG(colorNameOrRGB).brighter());
+      styles.append(new Color(colorNameOrRGB, true));
       return this;
     }
   }
@@ -135,32 +87,16 @@ public sealed interface Style {
   }
 
   /**
-   * @see Color#colorKey
+   * @see StyleBuilder#color
    */
   static Style color(@NotNull String colorNameOrRGB) {
-    return new ColorFG(colorNameOrRGB);
+    return new Color(colorNameOrRGB, false);
   }
 
   /**
-   * @see Color#colorKey
-   * @see Color#brighter
-   */
-  static Style colorBrighter(@NotNull String colorNameOrRGB) {
-    return new ColorFG(colorNameOrRGB).brighter();
-  }
-
-  /**
-   * @see Color#colorKey
+   * @see StyleBuilder#color
    */
   static Style colorBg(@NotNull String colorNameOrRGB) {
-    return new ColorBG(colorNameOrRGB);
-  }
-
-  /**
-   * @see Color#colorKey
-   * @see Color#brighter
-   */
-  static Style colorBgBrighter(@NotNull String colorNameOrRGB) {
-    return new ColorBG(colorNameOrRGB).brighter();
+    return new Color(colorNameOrRGB, true);
   }
 }
