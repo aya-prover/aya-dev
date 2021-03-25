@@ -16,7 +16,7 @@ import java.util.function.Function;
 
 public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
-  public static final Style.@NotNull StyleBuilder keyword = Style.bold().and().color("CD6600");
+  public static final Style.@NotNull StyleBuilder Keyword = Style.bold().and().color(0xCD6600);
 
   private TermPrettier() {
   }
@@ -28,7 +28,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitLam(@NotNull LamTerm term, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(keyword, "\\lam"),
+      Doc.styled(Keyword, "\\lam"),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.plain(" => "),
@@ -40,7 +40,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public Doc visitPi(@NotNull PiTerm term, Boolean nestedCall) {
     // TODO[kiva]: term.co
     return Doc.cat(
-      Doc.styled(keyword, "\\Pi"),
+      Doc.styled(Keyword, "\\Pi"),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.plain(" -> "),
@@ -51,7 +51,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitSigma(@NotNull SigmaTerm term, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(keyword, "\\Sig"),
+      Doc.styled(Keyword, "\\Sig"),
       Doc.plain(" "),
       visitTele(term.params()),
       Doc.plain(" ** "),
@@ -62,7 +62,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitUniv(@NotNull UnivTerm term, Boolean nestedCall) {
     // TODO: level
-    return Doc.styled(keyword, "\\oo-Type");
+    return Doc.styled(Keyword, "\\oo-Type");
   }
 
   @Override
@@ -72,20 +72,20 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
-    return visitCalls(fnCall.ref(), Style.color("CD6600"), fnCall.args(), nestedCall);
+    return visitCalls(fnCall.ref(), Style.color(0xCD6600), fnCall.args(), nestedCall);
   }
 
   @Override
   public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
-    return visitCalls(dataCall.ref(), Style.color("0000CD"), dataCall.args(), nestedCall);
+    return visitCalls(dataCall.ref(), Style.color(0x0000CD), dataCall.args(), nestedCall);
   }
 
   @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Boolean nestedCall) {
-    return visitCalls(structCall.ref(), Style.color("0000CD"), structCall.args(), nestedCall);
+    return visitCalls(structCall.ref(), Style.color(0x0000CD), structCall.args(), nestedCall);
   }
 
   @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Boolean nestedCall) {
-    return visitCalls(conCall.ref(), Style.color("008B00"), conCall.conArgs(), nestedCall);
+    return visitCalls(conCall.ref(), Style.color(0x008B00), conCall.conArgs(), nestedCall);
   }
 
   @Override
@@ -98,7 +98,7 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitNew(@NotNull NewTerm newTerm, Boolean aBoolean) {
     return Doc.cat(
-      Doc.styled(keyword, "\\new"),
+      Doc.styled(Keyword, "\\new"),
       Doc.plain(" { "),
       newTerm.params().stream().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
@@ -129,7 +129,8 @@ public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   private Doc visitCalls(
-    @NotNull DefVar<?, ?> fn, @NotNull Style style,
+    @NotNull DefVar<?, ?> fn,
+    @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
     boolean nestedCall
   ) {

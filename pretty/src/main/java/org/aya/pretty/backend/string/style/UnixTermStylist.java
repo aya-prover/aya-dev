@@ -45,16 +45,10 @@ public class UnixTermStylist extends ClosingStylist {
     return Tuple.of("", "");
   }
 
-  @Override protected @NotNull Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean bg) {
-    if (!rgb.startsWith("#")) {
-      // invalid color
-      return Tuple.of("", "");
-    }
-
-    int hex = Integer.parseInt(rgb.replace("#", ""), 16);
-    int r = (hex & 0xFF0000) >> 16;
-    int g = (hex & 0xFF00) >> 8;
-    int b = (hex & 0xFF);
+  @Override protected @NotNull Tuple2<String, String> formatColorHex(int rgb, boolean bg) {
+    int r = (rgb & 0xFF0000) >> 16;
+    int g = (rgb & 0xFF00) >> 8;
+    int b = (rgb & 0xFF);
 
     // \033[${bg ? 48 : 38};2;${red};${green};${blue}m ${text} \033[49m
     return Tuple.of(

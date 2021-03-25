@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface Style {
   default StyleBuilder and() {
-    return new StyleBuilder();
+    return new StyleBuilder(this);
   }
 
   enum Attr implements Style {
@@ -22,7 +22,10 @@ public sealed interface Style {
     Underline,
   }
 
-  final record Color(@NotNull String colorKey, boolean background) implements Style {
+  final record ColorName(@NotNull String colorName, boolean background) implements Style {
+  }
+
+  final record ColorHex(int color, boolean background) implements Style {
   }
 
   /**
@@ -45,7 +48,11 @@ public sealed interface Style {
   }
 
   class StyleBuilder {
-    Buffer<Style> styles = Buffer.of();
+    Buffer<Style> styles;
+
+    StyleBuilder(Style style) {
+      this.styles = Buffer.of(style);
+    }
 
     public @NotNull StyleBuilder italic() {
       styles.append(Attr.Italic);
@@ -67,24 +74,23 @@ public sealed interface Style {
       return this;
     }
 
-    /**
-     * The colorNameOrRGB is one of the following
-     * - a color name, like `red`, `cyan`, `pink`, etc.
-     * - an exact color value (RGB) starting with `#`, like `#ff00ff`
-     * <p>
-     * We recommend to use color names instead of RBG values as we allow
-     * different color themes to have different values of a same color.
-     */
-    public @NotNull StyleBuilder color(@NotNull String colorNameOrRGB) {
-      styles.append(new Color(colorNameOrRGB, false));
+    public @NotNull StyleBuilder color(@NotNull String colorName) {
+      styles.append(new ColorName(colorName, false));
       return this;
     }
 
-    /**
-     * @see StyleBuilder#color
-     */
-    public @NotNull StyleBuilder colorBG(@NotNull String colorNameOrRGB) {
-      styles.append(new Color(colorNameOrRGB, true));
+    public @NotNull StyleBuilder colorBG(@NotNull String colorName) {
+      styles.append(new ColorName(colorName, true));
+      return this;
+    }
+
+    public @NotNull StyleBuilder color(int color) {
+      styles.append(new ColorHex(color, false));
+      return this;
+    }
+
+    public @NotNull StyleBuilder colorBG(int color) {
+      styles.append(new ColorHex(color, true));
       return this;
     }
 
@@ -110,18 +116,20 @@ public sealed interface Style {
     return Attr.Underline;
   }
 
-  /**
-   * @see StyleBuilder#color
-   */
-  static @NotNull Style color(@NotNull String colorNameOrRGB) {
-    return new Color(colorNameOrRGB, false);
+  static @NotNull Style color(@NotNull String colorName) {
+    return new ColorName(colorName, false);
   }
 
-  /**
-   * @see StyleBuilder#color
-   */
-  static @NotNull Style colorBg(@NotNull String colorNameOrRGB) {
-    return new Color(colorNameOrRGB, true);
+  static @NotNull Style colorBg(@NotNull String colorName) {
+    return new ColorName(colorName, true);
+  }
+
+  static @NotNull Style color(int color) {
+    return new ColorHex(color, false);
+  }
+
+  static @NotNull Style colorBg(int color) {
+    return new ColorHex(color, true);
   }
 
   static @NotNull Style custom(@NotNull CustomStyle style) {

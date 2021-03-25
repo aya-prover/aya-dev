@@ -5,7 +5,7 @@ package org.aya.pretty.printer;
 import org.glavo.kala.collection.mutable.MutableMap;
 
 public interface Stylist {
-  default MutableMap<String, String> getColorScheme() {
+  default MutableMap<String, Integer> getColorScheme() {
     return MutableMap.of();
   }
 }

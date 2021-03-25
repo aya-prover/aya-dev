@@ -30,9 +30,9 @@ public class Html5Stylist extends ClosingStylist {
   }
 
   @Override
-  protected Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean background) {
+  protected Tuple2<String, String> formatColorHex(int rgb, boolean background) {
     return Tuple.of(
-      String.format("<span style=\"%s:%s;\">", background ? "background-color" : "color", rgb),
+      String.format("<span style=\"%s:#%s;\">", background ? "background-color" : "color", Integer.toHexString(rgb)),
       "</span>"
     );
   }
