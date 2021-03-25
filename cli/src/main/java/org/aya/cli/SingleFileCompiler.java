@@ -12,7 +12,7 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
-import org.aya.core.pretty.DefPrettier;
+import org.aya.core.def.Def;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
@@ -46,8 +46,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
         },
         defs -> {
           if (choice == CliArgs.DistillChoice.Typed)
-            Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
-              defs.stream().map(def -> def.accept(DefPrettier.INSTANCE, Unit.unit()))).renderToHtml());
+            Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(defs.map(Def::toDoc)).renderToHtml());
         }, builder);
     } catch (ExprTycker.TyckerException | Context.ContextException e) {
       FileModuleLoader.handleInternalError(e);

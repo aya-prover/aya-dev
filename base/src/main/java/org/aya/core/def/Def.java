@@ -5,11 +5,13 @@ package org.aya.core.def;
 import org.aya.api.core.def.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
+import org.aya.core.pretty.DefPrettier;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +48,9 @@ public interface Def extends CoreDef {
   @NotNull ImmutableSeq<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
+  default @NotNull Doc toDoc() {
+    return accept(DefPrettier.INSTANCE, Unit.unit());
+  }
 
   /**
    * @author re-xyr

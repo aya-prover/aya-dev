@@ -34,7 +34,7 @@ public class TyckExprTest {
     idLamTestCase(lamConnected(), new ExprTycker(ThrowingReporter.INSTANCE));
   }
 
-  static @NotNull Expr lamConnected() {
+  @TestOnly public static @NotNull Expr lamConnected() {
     var a = new LocalVar("a");
     // \A a.a
     return AyaProducer.buildLam(SourcePos.NONE,
