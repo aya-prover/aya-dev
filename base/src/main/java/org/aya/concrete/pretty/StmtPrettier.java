@@ -161,9 +161,9 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       decl.telescope.isEmpty() ? Doc.empty() :
         Doc.cat(Doc.plain(" "), visitTele(decl.telescope)),
       decl.result instanceof Expr.HoleExpr
-        ? Doc.plain(" ")
-        : Doc.cat(Doc.plain(" : "), decl.result.toDoc(), Doc.plain(" ")),
-      decl.body.isLeft() ? Doc.plain("=> ") : Doc.empty(),
+        ? Doc.empty()
+        : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
+      decl.body.isLeft() ? Doc.plain(" => ") : Doc.empty(),
       decl.body.fold(Expr::toDoc, clauses ->
         Doc.hcat(Doc.line(), Doc.hang(2, visitClauses(clauses, false)))),
       decl.abuseBlock.sizeEquals(0)
