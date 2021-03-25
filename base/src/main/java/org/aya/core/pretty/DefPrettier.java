@@ -28,8 +28,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\def "),
       Doc.styled(TermPrettier.FN_CALL, def.ref().name()),
-      def.telescope().isEmpty() ? Doc.empty() :
-        Doc.cat(Doc.plain(" "), visitTele(def.telescope())),
+      visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isLeft() ? Doc.plain(" => ") : Doc.empty(),
       def.body().fold(Term::toDoc, clauses ->
@@ -38,7 +37,8 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
-    return telescope.isEmpty() ? Doc.empty() : Doc.hsep(telescope.map(Term.Param::toDoc));
+    return telescope.isEmpty() ? Doc.empty() : Doc.cat(Doc.plain(" "),
+      Doc.hsep(telescope.map(Term.Param::toDoc)));
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses, boolean wrapInBraces) {
@@ -55,7 +55,6 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       Doc.styled(TermPrettier.KEYWORD, "\\data"),
       Doc.plain(" "),
       Doc.styled(TermPrettier.DATA_CALL, def.ref().name()),
-      Doc.plain(" "),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isEmpty() ? Doc.empty()
@@ -68,7 +67,6 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
     var doc = Doc.cat(
       ctor.coerce() ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       Doc.styled(TermPrettier.CON_CALL, ctor.ref().name()),
-      Doc.plain(" "),
       visitTele(ctor.conTele()),
       visitClauses(ctor.clauses(), true)
     );

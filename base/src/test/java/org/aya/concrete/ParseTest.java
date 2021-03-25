@@ -98,8 +98,8 @@ public class ParseTest {
         \\public \\def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
       """);
     parseAndPretty("\\data Nat | Z | S Nat", """
-      \\public \\data Nat\s
-        | Z\s
+      \\public \\data Nat
+        | Z
         | S (_ : Nat)
       """);
   }

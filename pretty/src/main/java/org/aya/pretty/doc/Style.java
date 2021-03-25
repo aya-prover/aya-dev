@@ -78,7 +78,12 @@ public sealed interface Style {
     }
 
     public @NotNull Style.Styles color(int color) {
-      styles.append(new ColorHex(color, false));
+      styles.append(Style.color(color));
+      return this;
+    }
+
+    public @NotNull Style.Styles color(float r, float g, float b) {
+      styles.append(Style.color(r, g, b));
       return this;
     }
 
@@ -119,6 +124,13 @@ public sealed interface Style {
 
   static @NotNull Style color(int color) {
     return new ColorHex(color, false);
+  }
+
+  static @NotNull Style color(float r, float g, float b) {
+    var red = (int) (r * 0xFF);
+    var green = (int) (g * 0xFF);
+    var blue = (int) (b * 0xFF);
+    return new ColorHex(red << 16 | green << 8 | blue, false);
   }
 
   static @NotNull Style colorBg(int color) {

@@ -76,7 +76,6 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
       Doc.styled(TermPrettier.KEYWORD, "\\data"),
       Doc.plain(" "),
       Doc.plain(decl.ref.name()),
-      Doc.plain(" "),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
@@ -94,7 +93,6 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     var doc = Doc.cat(
       ctor.coerce ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       Doc.plain(ctor.ref.name()),
-      Doc.plain(" "),
       visitTele(ctor.telescope),
       visitClauses(ctor.clauses, true)
     );
@@ -120,7 +118,6 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
       Doc.styled(TermPrettier.KEYWORD, "\\struct"),
       Doc.plain(" "),
       Doc.plain(decl.ref.name()),
-      Doc.plain(" "),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
@@ -136,9 +133,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
       Doc.plain("| "),
       field.coerce ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       Doc.plain(field.ref.name()),
-      field.telescope.isEmpty()
-        ? Doc.empty()
-        : Doc.cat(Doc.plain(" "), visitTele(field.telescope)),
+      visitTele(field.telescope),
       field.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), field.result.toDoc()),
@@ -156,8 +151,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
       decl.modifiers.isEmpty() ? Doc.plain(" ") :
         decl.modifiers.stream().map(this::visitModifier).reduce(Doc.empty(), Doc::hsep),
       Doc.plain(decl.ref.name()),
-      decl.telescope.isEmpty() ? Doc.empty() :
-        Doc.cat(Doc.plain(" "), visitTele(decl.telescope)),
+      visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
@@ -178,7 +172,8 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Expr.Param> telescope) {
-    return telescope.isEmpty() ? Doc.empty() : Doc.hsep(telescope.map(Expr.Param::toDoc));
+    return telescope.isEmpty() ? Doc.empty() : Doc.cat(Doc.plain(" "),
+      Doc.hsep(telescope.map(Expr.Param::toDoc)));
   }
 
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
