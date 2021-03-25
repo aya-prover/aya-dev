@@ -38,13 +38,13 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
     return telescope.isEmpty() ? Doc.empty() : Doc.cat(Doc.plain(" "),
-      Doc.hsep(telescope.map(Term.Param::toDoc)));
+      Doc.hsep(telescope.view().map(Term.Param::toDoc)));
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses, boolean wrapInBraces) {
     if (clauses.isEmpty()) return Doc.empty();
     var clausesDoc = Doc.vcat(
-      clauses.stream()
+      clauses.view()
         .map(PatPrettier.INSTANCE::matchy)
         .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
@@ -59,7 +59,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isEmpty() ? Doc.empty()
         : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
-        def.body().map(ctor -> ctor.accept(this, Unit.unit())))))
+        def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))))
     );
   }
 

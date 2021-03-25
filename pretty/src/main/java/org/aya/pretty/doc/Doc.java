@@ -13,6 +13,7 @@ import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
@@ -75,7 +76,7 @@ public sealed interface Doc {
   /**
    * A clickable text line without '\n'.
    */
-  record HyperLinked(@NotNull Doc doc, @NotNull Link link) implements Doc {
+  record HyperLinked(@NotNull Doc doc, @NotNull Link link, @Nullable String id) implements Doc {
   }
 
   /**
@@ -140,12 +141,12 @@ public sealed interface Doc {
   //endregion
 
   //region DocFactory functions
-  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull Link link) {
-    return new HyperLinked(doc, link);
+  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull Link link, @Nullable String id) {
+    return new HyperLinked(doc, link, id);
   }
 
   static @NotNull Doc hyperLink(@NotNull String plain, @NotNull Link link) {
-    return new HyperLinked(Doc.plain(plain), link);
+    return new HyperLinked(Doc.plain(plain), link, null);
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {

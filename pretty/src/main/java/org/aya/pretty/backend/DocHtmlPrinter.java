@@ -12,12 +12,10 @@ import org.jetbrains.annotations.NotNull;
  * Html backend, which ignores page width.
  */
 public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
-  @Override
-  protected void renderHeader() {
+  @Override protected void renderHeader() {
     builder.append("""
       <!DOCTYPE html>
-      <html>
-      <head>
+      <html><head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
@@ -26,30 +24,26 @@ public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
       """);
   }
 
-  @Override
-  protected void renderFooter() {
+  @Override protected void renderFooter() {
     builder.append("""
       </pre>
-      </body>
-      </html>
+      </body></html>
       """);
   }
 
-  @Override
-  protected void renderHyperLinked(Doc.@NotNull HyperLinked text) {
+  @Override protected void renderHyperLinked(Doc.@NotNull HyperLinked text) {
     if (text.link() instanceof StringLink link) {
-      builder.append("<a href=\"");
+      builder.append("<a ");
+      if (text.id() != null) builder.append("id=\"").append(text.id()).append("\" ");
+      builder.append("href=\"");
       builder.append(link.linkText());
       builder.append("\">");
       renderDoc(text.doc());
       builder.append("</a>");
-    } else {
-      super.renderHyperLinked(text);
-    }
+    } else super.renderHyperLinked(text);
   }
 
-  @Override
-  protected void renderHardLineBreak() {
+  @Override protected void renderHardLineBreak() {
     builder.append("<br>");
   }
 }
