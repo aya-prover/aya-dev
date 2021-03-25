@@ -110,9 +110,9 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
       Doc.styled(TermPrettier.KEYWORD, "\\new "),
       expr.struct().toDoc(),
       Doc.plain(" { "),
-      expr.fields().stream().map(t ->
+      Doc.hsep(expr.fields().view().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
-      ).reduce(Doc.empty(), Doc::hsep),
+      )),
       Doc.plain(" }")
     );
   }

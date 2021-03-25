@@ -9,7 +9,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -104,9 +103,9 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.styled(KEYWORD, "\\new"),
       Doc.plain(" { "),
-      newTerm.params().stream().map(t ->
+      Doc.hsep(newTerm.params().view().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
-      ).reduce(Doc.empty(), Doc::hsep),
+      )),
       Doc.plain(" }")
     );
   }
@@ -118,16 +117,13 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
-    String name = term.ref().name();
-    Doc filling = term.args().stream()
-      .map(t -> t.term().toDoc())
-      .reduce(Doc.empty(), Doc::hsep);
+    var name = term.ref().name();
+    var filling = Doc.hsep(term.args().view()
+      .map(t -> t.term().toDoc()));
     return Doc.hsep(Doc.plain("{"), filling, Doc.plain(name + "?}"));
   }
 
-  private Doc visitCalls(@NotNull Term fn,
-                         @NotNull Arg<@NotNull Term> arg,
-                         boolean nestedCall) {
+  private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
     return visitCalls(fn.toDoc(), Seq.of(arg),
       (term -> term.accept(this, true)), nestedCall);
   }
@@ -166,9 +162,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return nestedCall ? Doc.wrap("(", ")", call) : call;
   }
 
-  private Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
-    return telescope.stream()
-      .map(Term.Param::toDoc)
-      .reduce(Doc.empty(), Doc::hsep);
+  private Doc visitTele(@NotNull SeqLike<Term.Param> telescope) {
+    return telescope.isEmpty() ? Doc.empty() : Doc.hsep(telescope.view().map(Term.Param::toDoc));
   }
 }
