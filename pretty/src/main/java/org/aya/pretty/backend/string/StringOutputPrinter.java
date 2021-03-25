@@ -4,6 +4,7 @@ package org.aya.pretty.backend.string;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.Printer;
+import org.aya.pretty.printer.PrinterConfig;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,12 +24,15 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
   public @NotNull String render(@NotNull StringConfig config, @NotNull Doc doc) {
     builder = new StringBuilder();
     this.config = config;
+    renderHeader();
     renderDoc(doc);
+    renderFooter();
     return builder.toString();
   }
 
   protected int lineRemaining() {
-    return config.getPageWidth() - cursor;
+    var pw = config.getPageWidth();
+    return pw == PrinterConfig.INFINITE_SIZE ? pw : pw - cursor;
   }
 
   protected boolean isAtLineStart() {
@@ -83,9 +87,14 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
     if (isAtLineStart()) {
       return a;
     }
-    return predictWidth(a) <= lineRemaining()
-      ? a
-      : b;
+    var lineRem = lineRemaining();
+    return lineRem == PrinterConfig.INFINITE_SIZE || predictWidth(a) <= lineRem ? a : b;
+  }
+
+  protected void renderHeader() {
+  }
+
+  protected void renderFooter() {
   }
 
   protected void renderDoc(@NotNull Doc doc) {

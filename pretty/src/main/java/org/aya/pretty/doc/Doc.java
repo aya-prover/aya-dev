@@ -2,7 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.doc;
 
+import org.aya.pretty.backend.DocHtmlPrinter;
 import org.aya.pretty.backend.DocStringPrinter;
+import org.aya.pretty.backend.html.HtmlPrinterConfig;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.style.IgnoringFormatter;
 import org.aya.pretty.printer.Printer;
@@ -29,6 +31,11 @@ public sealed interface Doc {
   default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
     var printer = new DocStringPrinter();
     return this.render(printer, config);
+  }
+
+  default @NotNull String renderToHtml() {
+    var printer = new DocHtmlPrinter();
+    return this.render(printer, new HtmlPrinterConfig());
   }
 
   default <Out, Config extends PrinterConfig>

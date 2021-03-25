@@ -2,55 +2,35 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.string.style;
 
-import org.aya.pretty.backend.string.StringStyleFormatter;
-import org.aya.pretty.doc.Style;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
-public class UnixTerminalStyleFormatter implements StringStyleFormatter {
+public class UnixTerminalStyleFormatter extends ClosingStyleFormatter {
   public static final UnixTerminalStyleFormatter INSTANCE = new UnixTerminalStyleFormatter();
 
   @Override
-  public void format(@NotNull Seq<Style> styles, @NotNull StringBuilder builder, @NotNull Runnable inside) {
-    formatInternal(styles.view(), builder, inside);
+  protected Tuple2<String, String> formatItalic() {
+    return Tuple.of("\033[3m", "\033[23m");
   }
 
-  private void formatInternal(@NotNull SeqView<Style> styles, @NotNull StringBuilder builder, @NotNull Runnable inside) {
-    if (styles.isEmpty()) {
-      inside.run();
-      return;
-    }
-
-    var style = styles.first();
-    var format = formatOne(style);
-    builder.append(format._1);
-    formatInternal(styles.drop(1), builder, inside);
-    builder.append(format._2);
+  @Override
+  protected Tuple2<String, String> formatBold() {
+    return Tuple.of("\033[1m", "\033[22m");
   }
 
-  private @NotNull Tuple2<String, String> formatOne(Style style) {
-    if (style instanceof Style.Attr attr) {
-      return switch (attr) {
-        case Italic -> Tuple.of("\033[3m", "\033[23m");
-        case Bold -> Tuple.of("\033[1m", "\033[22m");
-        case Strike -> Tuple.of("\033[9m", "\033[29m");
-        case Underline -> Tuple.of("\033[4m", "\033[24m");
-      };
-    } else if (style instanceof Style.ColorBG bg) {
-      // TODO[kiva]: support color name
-      return formatTrueColor(bg.colorKey, true);
-    } else if (style instanceof Style.ColorFG fg) {
-      // TODO[kiva]: support color name
-      return formatTrueColor(fg.colorKey, false);
-    }
-
-    throw new IllegalArgumentException("Unsupported style: " + style.getClass().getName());
+  @Override
+  protected Tuple2<String, String> formatStrike() {
+    return Tuple.of("\033[9m", "\033[29m");
   }
 
-  private @NotNull Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean bg) {
+  @Override
+  protected Tuple2<String, String> formatUnderline() {
+    return Tuple.of("\033[4m", "\033[24m");
+  }
+
+  @Override
+  protected @NotNull Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean bg) {
     if (!rgb.startsWith("#")) {
       // invalid color
       return Tuple.of("", "");
