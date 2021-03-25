@@ -17,8 +17,8 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
   protected StringBuilder builder;
   protected StringConfig config;
 
-  protected int nestLevel = 0;
-  protected int cursor = 0;
+  private int nestLevel = 0;
+  private int cursor = 0;
 
   @Override
   public @NotNull String render(@NotNull StringConfig config, @NotNull Doc doc) {
@@ -30,12 +30,12 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
     return builder.toString();
   }
 
-  protected int lineRemaining() {
+  private int lineRemaining() {
     var pw = config.getPageWidth();
     return pw == PrinterConfig.INFINITE_SIZE ? pw : pw - cursor;
   }
 
-  protected boolean isAtLineStart() {
+  private boolean isAtLineStart() {
     return cursor == 0;
   }
 
@@ -103,6 +103,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
 
     } else if (doc instanceof Doc.PlainText text) {
       renderPlainText(text.text());
+      cursor += text.text().length();
 
     } else if (doc instanceof Doc.HyperLinked text) {
       renderHyperLinked(text);
@@ -112,6 +113,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
 
     } else if (doc instanceof Doc.Line) {
       renderHardLineBreak();
+      cursor = 0;
 
     } else if (doc instanceof Doc.FlatAlt alt) {
       renderFlatAlt(alt);
@@ -121,9 +123,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
       renderDoc(cat.second());
 
     } else if (doc instanceof Doc.Nest nest) {
-      nestLevel += nest.indent();
-      renderDoc(nest.doc());
-      nestLevel -= nest.indent();
+      renderNest(nest);
 
     } else if (doc instanceof Doc.Union union) {
       renderUnionDoc(union);
@@ -139,11 +139,17 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
     }
   }
 
-  protected void renderUnionDoc(Doc.Union union) {
+  protected void renderNest(@NotNull Doc.Nest nest) {
+    nestLevel += nest.indent();
+    renderDoc(nest.doc());
+    nestLevel -= nest.indent();
+  }
+
+  protected void renderUnionDoc(@NotNull Doc.Union union) {
     renderDoc(fitsBetter(union.shorterOne(), union.longerOne()));
   }
 
-  protected void renderFlatAlt(Doc.FlatAlt alt) {
+  protected void renderFlatAlt(@NotNull Doc.FlatAlt alt) {
     renderDoc(fitsBetter(alt.defaultDoc(), alt.preferWhenFlatten()));
   }
 
@@ -158,19 +164,13 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderPlainText(@NotNull String content) {
     if (isAtLineStart()) {
-      renderIndent(nestLevel);
+      builder.append(" ".repeat(nestLevel));
+      cursor += nestLevel;
     }
     builder.append(content);
-    cursor += content.length();
   }
 
   protected void renderHardLineBreak() {
-    cursor = 0;
     builder.append('\n');
-  }
-
-  protected void renderIndent(int indent) {
-    builder.append(" ".repeat(indent));
-    cursor += indent;
   }
 }

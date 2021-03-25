@@ -45,7 +45,7 @@ public class DocHtmlPrinter extends StringOutputPrinter<HtmlPrinterConfig> {
 
   @Override
   protected void renderHardLineBreak() {
-    builder.append("</br>");
+    builder.append("<br>");
   }
 
   @Override
@@ -54,7 +54,7 @@ public class DocHtmlPrinter extends StringOutputPrinter<HtmlPrinterConfig> {
   }
 
   @Override
-  protected void renderIndent(int indent) {
-    builder.append("&nbsp".repeat(indent));
+  protected void renderNest(@NotNull Doc.Nest nest) {
+    renderDoc(nest.doc());
   }
 }
