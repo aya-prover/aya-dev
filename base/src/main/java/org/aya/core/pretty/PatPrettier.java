@@ -39,8 +39,7 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
     var ctorDoc = Doc.cat(
       Doc.plain(ctor.ref().name()),
-      Doc.plain(" "),
-      visitMaybeCtorPatterns(ctor.params(), true)
+      visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" "))
     );
     return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());
   }
@@ -54,14 +53,13 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
     return !ex && !as ? withAs : nestedCall ? Doc.wrap("(", ")", withAs) : withAs;
   }
 
-  private Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall) {
-    return patterns.stream()
-      .map(p -> p.accept(this, nestedCall))
-      .reduce(Doc.empty(), Doc::hsep);
+  private Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
+    return patterns.isEmpty() ? Doc.empty() : Doc.cat(Doc.plain(" "), Doc.join(delim,
+      patterns.view().map(p -> p.accept(this, nestedCall))));
   }
 
   public Doc matchy(@NotNull Matching<Pat, Term> match) {
-    var doc = visitMaybeCtorPatterns(match.patterns(), false);
+    var doc = visitMaybeCtorPatterns(match.patterns(), false, Doc.plain(", "));
     return Doc.cat(doc, Doc.plain(" => "), match.body().toDoc());
   }
 }

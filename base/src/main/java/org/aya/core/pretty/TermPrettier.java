@@ -142,17 +142,17 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
       (term -> term.accept(this, true)), nestedCall);
   }
 
-  public <T> @NotNull Doc visitCalls(@NotNull Doc fn,
-                                     @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
-                                     @NotNull Function<T, Doc> formatter,
-                                     boolean nestedCall) {
+  public <T> @NotNull Doc visitCalls(
+    @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
+    @NotNull Function<T, Doc> formatter, boolean nestedCall
+  ) {
     if (args.isEmpty()) {
       return fn;
     }
     var call = Doc.cat(
       fn,
       Doc.plain(" "),
-      args.stream()
+      Doc.hsep(args.view()
         .map(arg -> {
           // Do not use `arg.term().toDoc()` because we want to
           // wrap args in parens if we are inside a nested call
@@ -161,8 +161,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
           return arg.explicit()
             ? argDoc
             : Doc.wrap("{", "}", argDoc);
-        })
-        .reduce(Doc.empty(), Doc::hsep)
+        }))
     );
     return nestedCall ? Doc.wrap("(", ")", call) : call;
   }

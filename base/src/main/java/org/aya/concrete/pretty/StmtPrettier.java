@@ -105,7 +105,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     var clausesDoc = Doc.vcat(
       clauses.stream()
         .map(PatternPrettier.INSTANCE::matchy)
-        .map(doc -> Doc.hcat(Doc.plain("| "), doc)));
+        .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
   }
 

@@ -671,8 +671,8 @@ public sealed interface Doc {
    * @return separated documents
    */
   @Contract("_ -> new")
-  static @NotNull Doc hsep(@NotNull Seq<@NotNull Doc> docs) {
-    return concatWith(Doc::simpleSpacedCat, docs);
+  static @NotNull Doc hsep(@NotNull SeqLike<@NotNull Doc> docs) {
+    return join(Doc.plain(" "), docs);
   }
 
   /**

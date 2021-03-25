@@ -56,7 +56,7 @@ public class TestRunner {
 
     try {
       new SingleFileCompiler(reporter, file, null)
-        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false, false, ImmutableSeq.of()));
+        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }

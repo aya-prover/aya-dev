@@ -42,7 +42,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
     var clausesDoc = Doc.vcat(
       clauses.stream()
         .map(PatPrettier.INSTANCE::matchy)
-        .map(doc -> Doc.hcat(Doc.plain("| "), doc)));
+        .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
   }
 
