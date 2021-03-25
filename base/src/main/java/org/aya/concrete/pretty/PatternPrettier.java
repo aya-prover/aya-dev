@@ -10,30 +10,31 @@ import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author ice1000, kiva
+ * @see PatPrettier
+ */
 public final class PatternPrettier implements Pattern.Visitor<Boolean, Doc> {
   public static final @NotNull PatternPrettier INSTANCE = new PatternPrettier();
 
   private PatternPrettier() {
   }
 
-  @Override
-  public Doc visitTuple(Pattern.@NotNull Tuple tuple, Boolean nestedCall) {
+  @Override public Doc visitTuple(Pattern.@NotNull Tuple tuple, Boolean nestedCall) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
-      Doc.join(Doc.plain(", "), tuple.patterns().stream().map(Pattern::toDoc)));
+      Doc.join(Doc.plain(", "), tuple.patterns().view().map(Pattern::toDoc)));
     return tuple.as() == null ? tup
       : Doc.cat(tup, Doc.styled(TermPrettier.KEYWORD, " \\as "), Doc.plain(tuple.as().name()));
   }
 
-  @Override
-  public Doc visitNumber(Pattern.@NotNull Number number, Boolean nestedCall) {
+  @Override public Doc visitNumber(Pattern.@NotNull Number number, Boolean nestedCall) {
     boolean ex = number.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
       Doc.plain(String.valueOf(number.number())));
   }
 
-  @Override
-  public Doc visitBind(Pattern.@NotNull Bind bind, Boolean nestedCall) {
+  @Override public Doc visitBind(Pattern.@NotNull Bind bind, Boolean nestedCall) {
     boolean ex = bind.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
       Doc.plain(bind.bind().name()));
@@ -45,17 +46,15 @@ public final class PatternPrettier implements Pattern.Visitor<Boolean, Doc> {
       Doc.styled(TermPrettier.KEYWORD, "\\impossible"));
   }
 
-  @Override
-  public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Boolean nestedCall) {
+  @Override public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Boolean nestedCall) {
     boolean ex = calmFace.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
       Doc.plain(Constants.ANONYMOUS_PREFIX));
   }
 
-  @Override
-  public Doc visitCtor(Pattern.@NotNull Ctor ctor, Boolean nestedCall) {
+  @Override public Doc visitCtor(Pattern.@NotNull Ctor ctor, Boolean nestedCall) {
     var ctorDoc = Doc.cat(
-      Doc.plain(ctor.name()),
+      Doc.styled(TermPrettier.CON_CALL, ctor.name()),
       visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" "))
     );
     return PatPrettier.ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());

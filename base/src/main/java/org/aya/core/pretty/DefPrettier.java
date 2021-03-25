@@ -14,6 +14,10 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author ice1000
+ * @see org.aya.concrete.pretty.StmtPrettier
+ */
 public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   public static final @NotNull DefPrettier INSTANCE = new DefPrettier();
 

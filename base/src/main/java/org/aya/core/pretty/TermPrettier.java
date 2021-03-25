@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
+/**
+ * @author ice1000, kiva
+ * @see org.aya.concrete.pretty.ExprPrettier
+ */
 public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
   public static final Style.@NotNull Styles KEYWORD = Style.bold().and().color(0xCD6600);

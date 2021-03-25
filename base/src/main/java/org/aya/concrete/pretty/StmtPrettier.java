@@ -10,6 +10,10 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author ice1000, kiva, icey
+ * @see org.aya.core.pretty.DefPrettier
+ */
 public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.Visitor<Unit, Doc> {
   public static final @NotNull StmtPrettier INSTANCE = new StmtPrettier();
 

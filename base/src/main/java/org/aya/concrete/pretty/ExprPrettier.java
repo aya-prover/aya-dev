@@ -8,24 +8,25 @@ import org.aya.pretty.doc.Doc;
 import org.aya.util.StringEscapeUtil;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author ice1000, kiva
+ * @see TermPrettier
+ */
 public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   public static final @NotNull ExprPrettier INSTANCE = new ExprPrettier();
 
   private ExprPrettier() {
   }
 
-  @Override
-  public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
+  @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
     return Doc.plain(expr.resolvedVar().name());
   }
 
-  @Override
-  public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Boolean nestedCall) {
+  @Override public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Boolean nestedCall) {
     return Doc.plain(expr.name());
   }
 
-  @Override
-  public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
+  @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\lam"),
       Doc.plain(" "),
@@ -36,8 +37,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override
-  public Doc visitPi(Expr.@NotNull PiExpr expr, Boolean nestedCall) {
+  @Override public Doc visitPi(Expr.@NotNull PiExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\Pi"),
@@ -48,8 +48,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override
-  public Doc visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Boolean nestedCall) {
+  @Override public Doc visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\Sig"),
@@ -60,8 +59,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override
-  public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
+  @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
     int u = expr.uLevel();
     int h = expr.hLevel();
     if (u == 0 && h == -1) return Doc.styled(TermPrettier.KEYWORD, "\\Prop");
@@ -72,8 +70,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     });
   }
 
-  @Override
-  public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
+  @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
     return TermPrettier.INSTANCE.visitCalls(
       expr.function().toDoc(),
       expr.arguments(),
@@ -82,8 +79,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override
-  public Doc visitHole(Expr.@NotNull HoleExpr expr, Boolean nestedCall) {
+  @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Boolean nestedCall) {
     String name = expr.name();
     Expr filling = expr.filling();
     if (name == null && filling == null) return Doc.empty();
@@ -91,21 +87,18 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     return Doc.hsep(Doc.plain("{"), filling.toDoc(), Doc.plain("?}"));
   }
 
-  @Override
-  public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
+  @Override public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
     return Doc.cat(Doc.plain("("),
       Doc.join(Doc.plain(", "), expr.items().stream()
         .map(Expr::toDoc)),
       Doc.plain(")"));
   }
 
-  @Override
-  public Doc visitProj(Expr.@NotNull ProjExpr expr, Boolean nestedCall) {
+  @Override public Doc visitProj(Expr.@NotNull ProjExpr expr, Boolean nestedCall) {
     return Doc.cat(expr.tup().toDoc(), Doc.plain("."), Doc.plain(String.valueOf(expr.ix())));
   }
 
-  @Override
-  public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {
+  @Override public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\new "),
       expr.struct().toDoc(),
@@ -117,13 +110,11 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override
-  public Doc visitLitInt(Expr.@NotNull LitIntExpr expr, Boolean nestedCall) {
+  @Override public Doc visitLitInt(Expr.@NotNull LitIntExpr expr, Boolean nestedCall) {
     return Doc.plain(String.valueOf(expr.integer()));
   }
 
-  @Override
-  public Doc visitLitString(Expr.@NotNull LitStringExpr expr, Boolean nestedCall) {
+  @Override public Doc visitLitString(Expr.@NotNull LitStringExpr expr, Boolean nestedCall) {
     return Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(expr.string()) + "\"");
   }
 }

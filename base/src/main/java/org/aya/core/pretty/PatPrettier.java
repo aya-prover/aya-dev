@@ -10,6 +10,10 @@ import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author ice1000
+ * @see org.aya.concrete.pretty.PatternPrettier
+ */
 public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   public static final @NotNull PatPrettier INSTANCE = new PatPrettier();
 
@@ -38,7 +42,7 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
     var ctorDoc = Doc.cat(
-      Doc.plain(ctor.ref().name()),
+      Doc.styled(TermPrettier.CON_CALL, ctor.ref().name()),
       visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" "))
     );
     return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());
