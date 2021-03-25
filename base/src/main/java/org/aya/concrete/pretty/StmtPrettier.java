@@ -92,7 +92,6 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
 
   private Doc visitDataCtor(Decl.DataCtor ctor) {
     var doc = Doc.cat(
-      Doc.plain("| "),
       ctor.coerce ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       Doc.plain(ctor.ref.name()),
       Doc.plain(" "),
@@ -102,14 +101,15 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     if (!ctor.patterns.isEmpty()) {
       var pats = Doc.join(Doc.plain(","), ctor.patterns.stream().map(Pattern::toDoc));
       return Doc.hcat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
-    } else return doc;
+    } else return Doc.hcat(Doc.plain("| "), doc);
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {
     if (clauses.isEmpty()) return Doc.empty();
+    var delim = Doc.hcat(Doc.line(), Doc.plain("| "));
     var clausesDoc = Doc.cat(
-      Doc.plain("| "), // join will only insert "|" between clauses
-      Doc.join(Doc.plain("| "), clauses.stream()
+      delim, // join will only insert "|" between clauses
+      Doc.join(delim, clauses.stream()
         .map(PatternPrettier.INSTANCE::matchy)));
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
   }
