@@ -6,32 +6,52 @@ import org.aya.pretty.backend.html.HtmlPrinterConfig;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.doc.Doc;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Html backend, which ignores page width.
  */
 public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
-  public static void writeHighlightHoverJS(@NotNull Path base) throws IOException {
-    var in = DocHtmlPrinter.class.getResourceAsStream("/highlight-hover.js");
-    assert in != null;
-    Files.write(base.resolve("highlight-hover.js"), in.readAllBytes());
-  }
+  @Language(value = "HTML")
+  private static final @NotNull String HEAD = """
+    <!DOCTYPE html>
+    <html><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+    var highlight = function (on) {
+      return function () {
+        var links = document.getElementsByTagName('a');
+        for (var i = 0; i < links.length; i++) {
+          var that = links[i];
+          if (this.href != that.href) continue;
+          if (on) that.classList.add("hover-highlight");
+          else that.classList.remove("hover-highlight");
+        }
+      }
+    };
+    window.onload = function () {
+      var links = document.getElementsByTagName('a');
+      for (var i = 0; i < links.length; i++) {
+        var link = links[i];
+        if (!link.hasAttribute("href")) continue;
+        link.onmouseover = highlight(true);
+        link.onmouseout = highlight(false);
+      }
+    };
+    </script>
+    <style>
+    .Aya a { text-decoration: none; color: black; }
+    .Aya a[href]:hover { background-color: #B4EEB4; }
+    .Aya [href].hover-highlight { background-color: #B4EEB4; }
+    </style>
+    </head><body>
+    <pre class="Aya">
+    """;
 
   @Override protected void renderHeader() {
-    builder.append("""
-      <!DOCTYPE html>
-      <html><head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <script type="text/javascript" src="highlight-hover.js"></script>
-      </head><body>
-      <pre>
-      """);
+    builder.append(HEAD);
   }
 
   @Override protected void renderFooter() {
