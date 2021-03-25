@@ -6,6 +6,7 @@ import org.aya.api.core.term.CoreTerm;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
+import org.aya.core.pretty.DefPrettier;
 import org.aya.core.pretty.TermPrettier;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Stripper;
@@ -139,7 +140,7 @@ public interface Term extends CoreTerm {
     public @NotNull Doc toDoc() {
       return Doc.cat(
         Doc.plain(explicit ? "(" : "{"),
-        Doc.plain(ref.name()),
+        DefPrettier.plainLink(ref),
         Doc.cat(Doc.plain(" : "), type.toDoc()),
         Doc.plain(explicit ? ")" : "}")
       );

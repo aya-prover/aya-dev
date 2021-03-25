@@ -5,9 +5,11 @@ package org.aya.core.pat;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
+import org.aya.core.pretty.PatPrettier;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
+import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.LocalCtx;
 import org.glavo.kala.collection.SeqLike;
@@ -29,6 +31,9 @@ public sealed interface Pat {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   default @NotNull Term toTerm() {
     return accept(PatToTerm.INSTANCE, Unit.unit());
+  }
+  default @NotNull Doc toDoc() {
+    return accept(PatPrettier.INSTANCE, false);
   }
   default void storeBindings(@NotNull LocalCtx localCtx) {
     accept(new PatTyper(localCtx), Unit.unit());

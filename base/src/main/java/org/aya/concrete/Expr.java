@@ -308,5 +308,16 @@ public sealed interface Expr {
     public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @Nullable Expr> mapper) {
       return new Param(sourcePos, ref, type != null ? mapper.apply(type) : null, explicit);
     }
+
+    public @NotNull Doc toDoc() {
+      return Doc.cat(
+        explicit ? Doc.plain("(") : Doc.plain("{"),
+        Doc.plain(ref.name()),
+        type == null
+          ? Doc.empty()
+          : Doc.cat(Doc.plain(" : "), type.toDoc()),
+        explicit ? Doc.plain(")") : Doc.plain("}")
+      );
+    }
   }
 }

@@ -98,8 +98,8 @@ public class ParseTest {
         \\public \\def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
       """);
     parseAndPretty("\\data Nat | Z | S Nat", """
-      \\public \\data Nat\s
-        | Z\s
+      \\public \\data Nat
+        | Z
         | S (_ : Nat)
       """);
   }
@@ -164,55 +164,55 @@ public class ParseTest {
   public void patternParseImplicit() {
     parseAndPretty(
       "\\def simple | a => a",
-      "\\public \\def simple | a => a"
+      "\\public \\def simple\n  | a => a"
     );
     parseAndPretty(
       "\\def unary-tuples-are-ignored | (a) => a",
-      "\\public \\def unary-tuples-are-ignored | a => a"
+      "\\public \\def unary-tuples-are-ignored\n  | a => a"
     );
     parseAndPretty(
       "\\def im-unary-tuples-are-ignored | {a} => a",
-      "\\public \\def im-unary-tuples-are-ignored | {a} => a"
+      "\\public \\def im-unary-tuples-are-ignored\n  | {a} => a"
     );
     parseAndPretty(
       "\\def we-dont-have-unary-tuples | ((((((((a)))))))) => (a)",
-      "\\public \\def we-dont-have-unary-tuples | a => a"
+      "\\public \\def we-dont-have-unary-tuples\n  | a => a"
     );
     parseAndPretty(
       "\\def we-dont-have-unary-tuples | {{{{{{{{{{a}}}}}}}}}} => a",
-      "\\public \\def we-dont-have-unary-tuples | {a} => a"
+      "\\public \\def we-dont-have-unary-tuples\n  | {a} => a"
     );
     parseAndPretty(
       "\\def we-dont-have-unary-tuples | ((((((((a)))), b)))) => (a)",
-      "\\public \\def we-dont-have-unary-tuples | (a, b) => a"
+      "\\public \\def we-dont-have-unary-tuples\n  | (a, b) => a"
     );
     parseAndPretty(
       "\\def tuples | (a,b,c) => a",
-      "\\public \\def tuples | (a, b, c) => a"
+      "\\public \\def tuples\n  | (a, b, c) => a"
     );
     parseAndPretty(
       "\\def im-tuples | {a,b,c} => a",
-      "\\public \\def im-tuples | {a, b, c} => a"
+      "\\public \\def im-tuples\n  | {a, b, c} => a"
     );
     parseAndPretty(
       "\\def tuples-with-im | (a,{b},c,d,{ef}) => ef",
-      "\\public \\def tuples-with-im | (a, {b}, c, d, {ef}) => ef"
+      "\\public \\def tuples-with-im\n  | (a, {b}, c, d, {ef}) => ef"
     );
     parseAndPretty(
       "\\def imtuple-with-extuple | {a, (b, c, d)} => ef",
-      "\\public \\def imtuple-with-extuple | {a, (b, c, d)} => ef"
+      "\\public \\def imtuple-with-extuple\n  | {a, (b, c, d)} => ef"
     );
     parseAndPretty(
       "\\def im-in-ctor | suc {N} (a) => N",
-      "\\public \\def im-in-ctor | suc {N} a => N"
+      "\\public \\def im-in-ctor\n  | suc {N} a => N"
     );
     parseAndPretty(
       "\\def im-in-ctor-nested | suc {N} (suc {M} a) => a",
-      "\\public \\def im-in-ctor-nested | suc {N} (suc {M} a) => a"
+      "\\public \\def im-in-ctor-nested\n  | suc {N} (suc {M} a) => a"
     );
     parseAndPretty(
       "\\def final : Nat | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a",
-      "\\public \\def final : Nat | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a"
+      "\\public \\def final : Nat\n  | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a"
     );
     parseAndPretty(
       "\\struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat",

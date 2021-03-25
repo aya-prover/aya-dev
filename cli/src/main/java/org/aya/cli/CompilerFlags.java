@@ -4,15 +4,16 @@ package org.aya.cli;
 
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
 public record CompilerFlags(
   @NotNull Message message,
   boolean interruptedTrace,
-  boolean dumpAST,
+  @Nullable CliArgs.DistillChoice distillChoice,
   @NotNull ImmutableSeq<Path> modulePaths
-  ) {
+) {
   public record Message(
     @NotNull String successNotion,
     @NotNull String failNotion

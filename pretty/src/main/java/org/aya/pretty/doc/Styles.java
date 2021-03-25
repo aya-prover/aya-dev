@@ -1,0 +1,64 @@
+// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
+package org.aya.pretty.doc;
+
+import org.glavo.kala.collection.mutable.Buffer;
+import org.jetbrains.annotations.NotNull;
+
+public class Styles {
+  Buffer<Style> styles;
+
+  Styles(Style style) {
+    this.styles = Buffer.of(style);
+  }
+
+  public @NotNull Styles italic() {
+    styles.append(Style.Attr.Italic);
+    return this;
+  }
+
+  public @NotNull Styles bold() {
+    styles.append(Style.Attr.Bold);
+    return this;
+  }
+
+  public @NotNull Styles strike() {
+    styles.append(Style.Attr.Strike);
+    return this;
+  }
+
+  public @NotNull Styles underline() {
+    styles.append(Style.Attr.Underline);
+    return this;
+  }
+
+  public @NotNull Styles color(@NotNull String colorName) {
+    styles.append(new Style.ColorName(colorName, false));
+    return this;
+  }
+
+  public @NotNull Styles colorBG(@NotNull String colorName) {
+    styles.append(new Style.ColorName(colorName, true));
+    return this;
+  }
+
+  public @NotNull Styles color(int color) {
+    styles.append(Style.color(color));
+    return this;
+  }
+
+  public @NotNull Styles color(float r, float g, float b) {
+    styles.append(Style.color(r, g, b));
+    return this;
+  }
+
+  public @NotNull Styles colorBG(int color) {
+    styles.append(new Style.ColorHex(color, true));
+    return this;
+  }
+
+  public @NotNull Styles custom(@NotNull Style.CustomStyle style) {
+    styles.append(style);
+    return this;
+  }
+}

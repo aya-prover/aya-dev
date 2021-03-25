@@ -2,17 +2,23 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.doc;
 
+import org.aya.pretty.backend.DocHtmlPrinter;
 import org.aya.pretty.backend.DocStringPrinter;
+import org.aya.pretty.backend.html.HtmlPrinterConfig;
+import org.aya.pretty.backend.string.StringLink;
+import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.backend.string.style.IgnoringStylist;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
+import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -25,9 +31,14 @@ import java.util.stream.Stream;
 public sealed interface Doc {
   //region Doc Member Functions
 
-  default @NotNull String renderToString(@NotNull DocStringPrinter.Config config) {
+  default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
     var printer = new DocStringPrinter();
     return this.render(printer, config);
+  }
+
+  default @NotNull String renderToHtml() {
+    var printer = new DocHtmlPrinter();
+    return this.render(printer, new HtmlPrinterConfig());
   }
 
   default <Out, Config extends PrinterConfig>
@@ -37,7 +48,7 @@ public sealed interface Doc {
   }
 
   default @NotNull String renderWithPageWidth(int pageWidth) {
-    var config = new DocStringPrinter.Config(pageWidth);
+    var config = new StringPrinterConfig(IgnoringStylist.INSTANCE, pageWidth);
     return this.renderToString(config);
   }
 
@@ -66,7 +77,26 @@ public sealed interface Doc {
   /**
    * A clickable text line without '\n'.
    */
-  record HyperText(@NotNull String text, @NotNull Link link) implements Doc {
+  record HyperLinked(@NotNull Doc doc, @NotNull Link link, @Nullable String id) implements Doc {
+    @Override public String toString() {
+      return doc.toString();
+    }
+
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      return doc.equals(((HyperLinked) o).doc);
+    }
+
+    @Override public int hashCode() {
+      return doc.hashCode();
+    }
+  }
+
+  /**
+   * Styled document
+   */
+  record Styled(@NotNull Seq<Style> styles, @NotNull Doc doc) implements Doc {
   }
 
   /**
@@ -125,8 +155,35 @@ public sealed interface Doc {
   //endregion
 
   //region DocFactory functions
+  static @NotNull Doc hashCodeLink(@NotNull Doc doc, int hashCode) {
+    return new HyperLinked(doc, new StringLink("#" + hashCode), String.valueOf(hashCode));
+  }
 
-  static Doc wrap(String left, String right, Doc doc) {
+  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull Link link, @Nullable String id) {
+    return new HyperLinked(doc, link, id);
+  }
+
+  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull Link link) {
+    return new HyperLinked(Doc.plain(plain), link, null);
+  }
+
+  static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {
+    return new Doc.Styled(Seq.of(style), doc);
+  }
+
+  static @NotNull Doc styled(@NotNull Style style, @NotNull String plain) {
+    return new Doc.Styled(Seq.of(style), Doc.plain(plain));
+  }
+
+  static @NotNull Doc styled(@NotNull Styles builder, @NotNull Doc doc) {
+    return new Doc.Styled(builder.styles, doc);
+  }
+
+  static @NotNull Doc styled(@NotNull Styles builder, @NotNull String plain) {
+    return new Doc.Styled(builder.styles, Doc.plain(plain));
+  }
+
+  static @NotNull Doc wrap(String left, String right, Doc doc) {
     return Doc.cat(Doc.plain(left), doc, Doc.plain(right));
   }
 
@@ -442,8 +499,11 @@ public sealed interface Doc {
     return join(lineEmpty(), docs);
   }
 
-  @Contract("_ -> new")
-  static @NotNull Doc vcat(@NotNull Stream<@NotNull Doc> docs) {
+  @Contract("_ -> new") static @NotNull Doc vcat(@NotNull Stream<@NotNull Doc> docs) {
+    return join(lineEmpty(), docs);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc vcat(@NotNull SeqLike<@NotNull Doc> docs) {
     return join(lineEmpty(), docs);
   }
 
@@ -455,7 +515,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc hcat(Doc @NotNull ... docs) {
-    return hcat(Arrays.asList(docs));
+    return hcat(Seq.of(docs));
   }
 
   /**
@@ -465,7 +525,7 @@ public sealed interface Doc {
    * @return concat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc hcat(@NotNull List<@NotNull Doc> docs) {
+  static @NotNull Doc hcat(@NotNull Seq<@NotNull Doc> docs) {
     return concatWith(Doc::simpleCat, docs);
   }
 
@@ -603,7 +663,7 @@ public sealed interface Doc {
    */
   @Contract("_ -> new")
   static @NotNull Doc hsep(Doc @NotNull ... docs) {
-    return hsep(Arrays.asList(docs));
+    return hsep(Seq.of(docs));
   }
 
   /**
@@ -630,8 +690,8 @@ public sealed interface Doc {
    * @return separated documents
    */
   @Contract("_ -> new")
-  static @NotNull Doc hsep(@NotNull List<@NotNull Doc> docs) {
-    return concatWith(Doc::simpleSpacedCat, docs);
+  static @NotNull Doc hsep(@NotNull SeqLike<@NotNull Doc> docs) {
+    return join(Doc.plain(" "), docs);
   }
 
   /**
@@ -669,16 +729,16 @@ public sealed interface Doc {
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
-    return join(delim, Arrays.asList(docs));
+    return join(delim, Seq.of(docs));
   }
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, Stream<Doc> docs) {
-    return join(delim, docs.collect(Collectors.toList()));
+    return join(delim, docs.collect(Seq.factory()));
   }
 
   @Contract("_, _ -> new")
-  static @NotNull Doc join(@NotNull Doc delim, @NotNull List<@NotNull Doc> docs) {
+  static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
     return concatWith(
       (x, y) -> simpleCat(x, delim, y),
       docs
@@ -768,16 +828,16 @@ public sealed interface Doc {
 
   //region utility functions
 
-  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull List<@NotNull Doc> xs) {
+  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull SeqLike<@NotNull Doc> xs) {
     assert xs.size() > 0;
     if (xs.size() == 1) {
       return xs.get(0);
     }
-    return xs.stream().reduce(f).get(); // never null
+    return xs.reduce(f); // never null
   }
 
   private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
-    return concatWith(Doc::makeCat, Arrays.asList(xs));
+    return concatWith(Doc::makeCat, Seq.of(xs));
   }
 
   private static @NotNull Doc simpleSpacedCat(Doc @NotNull ... xs) {
@@ -788,7 +848,7 @@ public sealed interface Doc {
           second,
           (a, b) -> simpleCat(a, plain(" "), b)
         ),
-      Arrays.asList(xs)
+      Seq.of(xs)
     );
   }
 
@@ -808,5 +868,136 @@ public sealed interface Doc {
     return maker.apply(first, second);
   }
 
+  //endregion
+
+  //region Internal implementation of groups
+
+  /**
+   * @author kiva
+   */
+  sealed interface Flatten {
+    record Flattened(@NotNull Doc flattenedDoc) implements Flatten {
+    }
+
+    record AlreadyFlat() implements Flatten {
+    }
+
+    record NeverFlat() implements Flatten {
+    }
+
+    static Flatten flatDoc(@NotNull Doc doc) {
+      if (doc instanceof Doc.FlatAlt alt) {
+        return new Flattened(flatten(alt.preferWhenFlatten()));
+
+      } else if (doc instanceof Doc.Line) {
+        return new NeverFlat();
+
+      } else if (doc instanceof Doc.Union u) {
+        return new Flattened(u.shorterOne());
+
+      } else if (doc instanceof Doc.Nest n) {
+        var result = flatDoc(n.doc());
+        if (result instanceof Flattened f) {
+          return new Flattened(new Doc.Nest(n.indent(), f.flattenedDoc()));
+        } else {
+          return result;
+        }
+
+      } else if (doc instanceof Doc.Column c) {
+        return new Flattened(new Doc.Column(
+          i -> flatten(c.docBuilder().apply(i))
+        ));
+
+      } else if (doc instanceof Doc.Nesting c) {
+        return new Flattened(new Doc.Nesting(
+          i -> flatten(c.docBuilder().apply(i))
+        ));
+
+      } else if (doc instanceof Doc.PageWidth c) {
+        return new Flattened(new Doc.PageWidth(
+          i -> flatten(c.docBuilder().apply(i))
+        ));
+
+      } else if (doc instanceof Doc.Cat c) {
+        return flatCat(c);
+
+      } else if (doc instanceof Doc.Empty
+        || doc instanceof Doc.PlainText
+        || doc instanceof Doc.HyperLinked
+        || doc instanceof Doc.Styled) {
+        return new AlreadyFlat();
+
+      } else if (doc instanceof Doc.Fail) {
+        return new NeverFlat();
+      }
+
+      throw new IllegalStateException("unreachable");
+    }
+
+    private static @NotNull Flatten flatCat(@NotNull Doc.Cat cat) {
+      var l = flatDoc(cat.first());
+      var r = flatDoc(cat.second());
+
+      if (l instanceof NeverFlat || r instanceof NeverFlat) {
+        return new NeverFlat();
+      } else if (l instanceof AlreadyFlat && r instanceof AlreadyFlat) {
+        return new AlreadyFlat();
+      }
+
+      if (l instanceof Flattened x) {
+        if (r instanceof Flattened y) {
+          return new Flattened(new Doc.Cat(x.flattenedDoc(), y.flattenedDoc()));
+        } else if (r instanceof AlreadyFlat) {
+          return new Flattened(new Doc.Cat(x.flattenedDoc(), cat.second()));
+        }
+      } else if (l instanceof AlreadyFlat && r instanceof Flattened y) {
+        return new Flattened(new Doc.Cat(cat.first(), y.flattenedDoc()));
+      }
+
+      throw new IllegalStateException("unreachable");
+    }
+
+    /**
+     * Flatten but does not report changes to caller.
+     *
+     * @param doc doc to flatten
+     * @return flattened doc
+     */
+    private static @NotNull Doc flatten(@NotNull Doc doc) {
+      if (doc instanceof Doc.FlatAlt alt) {
+        return flatten(alt.preferWhenFlatten());
+
+      } else if (doc instanceof Doc.Cat cat) {
+        return new Doc.Cat(flatten(cat.first()), flatten(cat.second()));
+
+      } else if (doc instanceof Doc.Nest nest) {
+        return new Doc.Nest(nest.indent(), flatten(nest.doc()));
+
+      } else if (doc instanceof Doc.Line) {
+        return new Doc.Fail();
+
+      } else if (doc instanceof Doc.Union u) {
+        return flatten(u.shorterOne());
+
+      } else if (doc instanceof Doc.Column c) {
+        return new Doc.Column(
+          i -> flatten(c.docBuilder().apply(i))
+        );
+
+      } else if (doc instanceof Doc.Nesting n) {
+        return new Doc.Nesting(
+          i -> flatten(n.docBuilder().apply(i))
+        );
+
+      } else if (doc instanceof Doc.PageWidth n) {
+        return new Doc.PageWidth(
+          i -> flatten(n.docBuilder().apply(i))
+        );
+
+      } else {
+        return doc;
+      }
+    }
+  }
   //endregion
 }
