@@ -4,10 +4,6 @@ package org.aya.pretty.backend;
 
 import org.aya.pretty.backend.string.StringOutputPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
-import org.aya.pretty.backend.string.StringRenderer;
 
 public class DocStringPrinter extends StringOutputPrinter<StringPrinterConfig> {
-  public DocStringPrinter() {
-    super(new StringRenderer<>());
-  }
 }
