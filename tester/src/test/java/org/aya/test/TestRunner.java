@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,7 +51,7 @@ public class TestRunner {
 
     var hookOut = new ByteArrayOutputStream();
     final var reporter = new CountingReporter(new StreamReporter(
-      file, Problem.readSourceCode(file), new PrintStream(hookOut)));
+      file, Problem.readSourceCode(file), new PrintStream(hookOut, true, StandardCharsets.UTF_8)));
 
     System.out.print(file.getFileName() + " ---> ");
 
@@ -62,7 +63,7 @@ public class TestRunner {
     }
 
     if (Files.exists(expectedOutFile)) {
-      checkOutput(file, expectedOutFile, hookOut.toString());
+      checkOutput(file, expectedOutFile, hookOut.toString(StandardCharsets.UTF_8));
       System.out.println("success");
     } else {
       if (expectSuccess) {
@@ -111,7 +112,7 @@ public class TestRunner {
   private void checkOutput(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
     try {
       var output = trimCRLF(hookOut);
-      var expected = instantiateVars(testFile, trimCRLF(Files.readString(expectedOutFile)));
+      var expected = instantiateVars(testFile, trimCRLF(Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
       assertEquals(expected, output, testFile.getFileName().toString());
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
