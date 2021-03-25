@@ -10,17 +10,17 @@ import org.jetbrains.annotations.NotNull;
 public class Html5StyleFormatter extends ClosingStyleFormatter {
   @Override
   protected Tuple2<String, String> formatItalic() {
-    return Tuple.of("<em>", "</em>");
+    return Tuple.of("<i>", "</i>");
   }
 
   @Override
   protected Tuple2<String, String> formatBold() {
-    return Tuple.of("<strong>", "</strong>");
+    return Tuple.of("<b>", "</b>");
   }
 
   @Override
   protected Tuple2<String, String> formatStrike() {
-    return Tuple.of("<del>", "</del>");
+    return Tuple.of("<s>", "</s>");
   }
 
   @Override
@@ -30,8 +30,9 @@ public class Html5StyleFormatter extends ClosingStyleFormatter {
 
   @Override
   protected Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean background) {
-    return background
-      ? Tuple.of(String.format("<p style=\"display: inline;\"><span style=\"background-color:%s;\">", rgb), "</span></p>")
-      : Tuple.of(String.format("<font color=\"%s\">", rgb), "</font>");
+    return Tuple.of(
+      String.format("<span style=\"%s:%s;\">", background ? "background-color" : "color", rgb),
+      "</span>"
+    );
   }
 }

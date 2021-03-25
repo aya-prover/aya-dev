@@ -17,14 +17,19 @@ public class DocHtmlPrinter extends StringOutputPrinter<HtmlPrinterConfig> {
     builder.append("""
       <!DOCTYPE html>
       <html>
-      <head></head>
+      <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
       <body>
+      <pre>
       """);
   }
 
   @Override
   protected void renderFooter() {
     builder.append("""
+      </pre>
       </body>
       </html>
       """);
@@ -46,15 +51,5 @@ public class DocHtmlPrinter extends StringOutputPrinter<HtmlPrinterConfig> {
   @Override
   protected void renderHardLineBreak() {
     builder.append("<br>");
-  }
-
-  @Override
-  protected void renderStyled(Doc.@NotNull Styled styled) {
-    super.renderStyled(styled);
-  }
-
-  @Override
-  protected void renderNest(@NotNull Doc.Nest nest) {
-    renderDoc(nest.doc());
   }
 }
