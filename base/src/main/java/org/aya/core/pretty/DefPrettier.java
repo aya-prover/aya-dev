@@ -34,7 +34,7 @@ public final class DefPrettier implements Def.Visitor<Unit, Doc> {
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
-    return telescope.map(Term.Param::toDoc).fold(Doc.empty(), Doc::hsep);
+    return Doc.hsep(telescope.map(Term.Param::toDoc));
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses, boolean wrapInBraces) {
@@ -47,7 +47,17 @@ public final class DefPrettier implements Def.Visitor<Unit, Doc> {
   }
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
-    return null;
+    return Doc.cat(
+      Doc.styled(TermPrettier.KEYWORD, "\\data"),
+      Doc.plain(" "),
+      Doc.plain(def.ref().name()),
+      Doc.plain(" "),
+      visitTele(def.telescope()),
+      Doc.plain(" : "), def.result().toDoc(),
+      def.body().isEmpty() ? Doc.empty()
+        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
+        def.body().stream().map(ctor -> ctor.accept(this, Unit.unit())))))
+    );
   }
 
   @Override public Doc visitCtor(@NotNull DataDef.Ctor def, Unit unit) {

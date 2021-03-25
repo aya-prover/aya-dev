@@ -2,10 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.pretty;
 
-import org.aya.concrete.Decl;
-import org.aya.concrete.Expr;
-import org.aya.concrete.Pattern;
-import org.aya.concrete.Stmt;
+import org.aya.concrete.*;
 import org.aya.core.pretty.TermPrettier;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
@@ -13,7 +10,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
+public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.Visitor<Unit, Doc> {
   public static final @NotNull StmtPrettier INSTANCE = new StmtPrettier();
 
   private StmtPrettier() {
@@ -23,8 +20,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     return Doc.styled(TermPrettier.KEYWORD, accessibility.keyword);
   }
 
-  @Override
-  public Doc visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
+  @Override public Doc visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\import"),
       Doc.plain(" "),
@@ -36,8 +32,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     );
   }
 
-  @Override
-  public Doc visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
+  @Override public Doc visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
     return Doc.cat(
       visitAccess(cmd.accessibility()),
       Doc.plain(" "),
@@ -55,8 +50,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     );
   }
 
-  @Override
-  public Doc visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
+  @Override public Doc visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
     return Doc.cat(
       visitAccess(mod.accessibility()),
       Doc.plain(" "),
@@ -71,8 +65,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     );
   }
 
-  @Override
-  public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {
+  @Override public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
@@ -84,13 +77,16 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      decl.body.isEmpty()
-        ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(decl.body.stream().map(this::visitDataCtor))))
+      decl.body.isEmpty() ? Doc.empty()
+        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
+        decl.body.stream().map(ctor -> ctor.accept(this, Unit.unit())))))
     );
   }
 
-  private Doc visitDataCtor(Decl.DataCtor ctor) {
+  @Override public void traceEntrance(@NotNull Decl decl, Unit unit) {
+  }
+
+  @Override public Doc visitCtor(Decl.@NotNull DataCtor ctor, Unit unit) {
     var doc = Doc.cat(
       ctor.coerce ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       Doc.plain(ctor.ref.name()),
@@ -113,8 +109,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
     return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
   }
 
-  @Override
-  public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
+  @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
@@ -126,14 +121,14 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      decl.fields.isEmpty()
-        ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.hang(2, visitFields(decl.fields)))
+      decl.fields.isEmpty() ? Doc.empty()
+        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
+        decl.fields.stream().map(field -> field.accept(this, Unit.unit())))))
     );
   }
 
-  private Doc visitFields(@NotNull ImmutableSeq<Decl.StructField> fields) {
-    return Doc.vcat(fields.map(field -> Doc.hcat(
+  @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
+    return Doc.hcat(
       Doc.plain("| "),
       field.coerce ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       Doc.plain(field.ref.name()),
@@ -146,11 +141,10 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
       field.body.isEmpty()
         ? Doc.empty()
         : Doc.cat(Doc.plain(" => "), field.body.get().toDoc())
-    )).stream());
+    );
   }
 
-  @Override
-  public Doc visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
+  @Override public Doc visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
@@ -180,20 +174,7 @@ public final class StmtPrettier implements Stmt.Visitor<Unit, Doc> {
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Expr.Param> telescope) {
-    return telescope
-      .map(this::visitParam)
-      .fold(Doc.empty(), Doc::hsep);
-  }
-
-  /*package-private*/ Doc visitParam(@NotNull Expr.Param param) {
-    return Doc.cat(
-      param.explicit() ? Doc.plain("(") : Doc.plain("{"),
-      Doc.plain(param.ref().name()),
-      param.type() == null
-        ? Doc.empty()
-        : Doc.cat(Doc.plain(" : "), param.type().toDoc()),
-      param.explicit() ? Doc.plain(")") : Doc.plain("}")
-    );
+    return Doc.hsep(telescope.map(Expr.Param::toDoc));
   }
 
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {

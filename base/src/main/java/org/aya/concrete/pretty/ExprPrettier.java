@@ -29,7 +29,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\lam"),
       Doc.plain(" "),
-      StmtPrettier.INSTANCE.visitParam(expr.param()),
+      expr.param().toDoc(),
       expr.body() instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" => "), expr.body().toDoc())
@@ -42,7 +42,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\Pi"),
       Doc.plain(" "),
-      StmtPrettier.INSTANCE.visitParam(expr.param()),
+      expr.param().toDoc(),
       Doc.plain(" -> "),
       expr.last().toDoc()
     );
