@@ -8,8 +8,11 @@ import org.aya.pretty.doc.Doc;
 import org.aya.util.StringEscapeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
-  public static final ExprPrettier INSTANCE = new ExprPrettier();
+public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
+  public static final @NotNull ExprPrettier INSTANCE = new ExprPrettier();
+
+  private ExprPrettier() {
+  }
 
   @Override
   public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
