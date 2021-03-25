@@ -24,7 +24,7 @@ allprojects {
 @Suppress("UnstableApiUsage")
 subprojects {
   if (name in listOf("docs")) return@subprojects
-  val useJacoco = name in listOf("base", "tester", "cli", "pretty")
+  val useJacoco = name in listOf("base", "tester", "pretty")
 
   apply {
     plugin("java")
