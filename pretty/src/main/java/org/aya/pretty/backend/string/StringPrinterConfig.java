@@ -14,6 +14,11 @@ public class StringPrinterConfig extends PrinterConfig.Basic {
     this.formatter = formatter;
   }
 
+  @Override
+  public StringStyleFormatter getStyleFormatter() {
+    return formatter;
+  }
+
   public static @NotNull StringPrinterConfig unixTerminal(int pageWidth) {
     return new StringPrinterConfig(UnixTerminalStyleFormatter.INSTANCE, pageWidth);
   }

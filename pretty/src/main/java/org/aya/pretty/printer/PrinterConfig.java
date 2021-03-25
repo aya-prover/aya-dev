@@ -37,6 +37,11 @@ public interface PrinterConfig {
     return INFINITE_SIZE;
   }
 
+  default StyleFormatter getStyleFormatter() {
+    return new StyleFormatter() {
+    };
+  }
+
   /**
    * Basic configure for other configs to easily extend config flags.
    */

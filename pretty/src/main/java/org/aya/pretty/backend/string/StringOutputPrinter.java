@@ -152,7 +152,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
   }
 
   protected void renderStyled(@NotNull Doc.Styled styled) {
-    var formatter = config.formatter;
+    var formatter = config.getStyleFormatter();
     formatter.format(styled.styles(), builder, () -> renderDoc(styled.doc()));
   }
 

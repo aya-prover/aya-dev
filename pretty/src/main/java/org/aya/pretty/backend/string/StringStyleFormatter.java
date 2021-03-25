@@ -3,9 +3,10 @@
 package org.aya.pretty.backend.string;
 
 import org.aya.pretty.doc.Style;
+import org.aya.pretty.printer.StyleFormatter;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
-public interface StringStyleFormatter {
+public interface StringStyleFormatter extends StyleFormatter {
   void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside);
 }

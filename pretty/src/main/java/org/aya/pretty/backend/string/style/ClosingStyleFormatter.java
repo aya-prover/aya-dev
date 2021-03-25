@@ -6,10 +6,21 @@ import org.aya.pretty.backend.string.StringStyleFormatter;
 import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
+import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ClosingStyleFormatter implements StringStyleFormatter {
+  private final MutableMap<String, String> definedColors = MutableHashMap.of();
+
+  @Override
+  public MutableMap<String, String> getColorScheme() {
+    return definedColors;
+  }
+
   public void format(@NotNull Seq<Style> styles, @NotNull StringBuilder builder, @NotNull Runnable inside) {
     formatInternal(styles.view(), builder, inside);
   }
@@ -36,20 +47,27 @@ public abstract class ClosingStyleFormatter implements StringStyleFormatter {
         case Underline -> formatUnderline();
       };
     } else if (style instanceof Style.ColorBG bg) {
-      // TODO[kiva]: support color name
-      return formatTrueColor(bg.colorKey, true);
+      return formatColor(bg, true);
     } else if (style instanceof Style.ColorFG fg) {
-      // TODO[kiva]: support color name
-      return formatTrueColor(fg.colorKey, false);
+      return formatColor(fg, false);
     }
 
     throw new IllegalArgumentException("Unsupported style: " + style.getClass().getName());
+  }
+
+  private @Nullable String getColor(@NotNull String colorNameOrRGB) {
+    if (colorNameOrRGB.startsWith("#")) return colorNameOrRGB;
+    return definedColors.getOrNull(colorNameOrRGB);
+  }
+
+  protected @NotNull Tuple2<String, String> formatColor(Style.Color color, boolean background) {
+    var rgb = getColor(color.colorKey);
+    return rgb != null ? formatTrueColor(rgb, background) : Tuple.of("", "");
   }
 
   protected abstract Tuple2<String, String> formatItalic();
   protected abstract Tuple2<String, String> formatBold();
   protected abstract Tuple2<String, String> formatStrike();
   protected abstract Tuple2<String, String> formatUnderline();
-
   protected abstract Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean background);
 }
