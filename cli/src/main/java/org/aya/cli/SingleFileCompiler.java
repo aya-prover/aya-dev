@@ -13,6 +13,7 @@ import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.core.pretty.DefPrettier;
+import org.aya.pretty.backend.DocHtmlPrinter;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath, Trace.@Nullable Builder builder) {
   public int compile(@NotNull CompilerFlags flags) throws IOException {
@@ -30,7 +32,12 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var parser = AyaParsing.parser(filePath, reporter);
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
-      if (flags.distillChoice() == CliArgs.DistillChoice.Raw) {
+      var choice = flags.distillChoice();
+      if (choice != null) {
+        var parent = filePath.getParent();
+        DocHtmlPrinter.writeHighlightHoverJS(parent != null ? parent : Paths.get("."));
+      }
+      if (choice == CliArgs.DistillChoice.Raw) {
         // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
         Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
           StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
@@ -39,12 +46,12 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter,
         () -> {
-          if (flags.distillChoice() == CliArgs.DistillChoice.Scoped)
+          if (choice == CliArgs.DistillChoice.Scoped)
             Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
               StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
         },
         defs -> {
-          if (flags.distillChoice() == CliArgs.DistillChoice.Typed)
+          if (choice == CliArgs.DistillChoice.Typed)
             Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
               defs.stream().map(def -> def.accept(DefPrettier.INSTANCE, Unit.unit()))).renderToHtml());
         }, builder);

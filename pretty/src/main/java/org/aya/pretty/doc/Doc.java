@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
@@ -36,6 +37,7 @@ public sealed interface Doc {
     return this.render(printer, config);
   }
 
+  /** @see DocHtmlPrinter#writeHighlightHoverJS(Path) */
   default @NotNull String renderToHtml() {
     var printer = new DocHtmlPrinter();
     return this.render(printer, new HtmlPrinterConfig());

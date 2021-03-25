@@ -17,6 +17,7 @@ gradle.properties
 lombok.config
 /test.aya
 /pp.html
+/highlight-hover.js
 
 /cli-*-all.jar
 /tgbot-*-all.jar

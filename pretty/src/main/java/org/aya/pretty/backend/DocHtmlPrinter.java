@@ -8,18 +8,28 @@ import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 /**
  * Html backend, which ignores page width.
  */
 public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
+  public static void writeHighlightHoverJS(@NotNull Path base) throws IOException {
+    var in = DocHtmlPrinter.class.getResourceAsStream("/highlight-hover.js");
+    assert in != null;
+    Files.write(base.resolve("highlight-hover.js"), in.readAllBytes());
+  }
+
   @Override protected void renderHeader() {
     builder.append("""
       <!DOCTYPE html>
       <html><head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      </head>
-      <body>
+      <script type="text/javascript" src="highlight-hover.js"></script>
+      </head><body>
       <pre>
       """);
   }
