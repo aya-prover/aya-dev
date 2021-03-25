@@ -20,13 +20,23 @@ public class DistillerTest {
   @Test public void fn() {
     var doc1 = declDoc("\\def id {A : \\Set} (a : A) : A => a");
     var doc2 = declDoc("\\def id {A : \\Set} (a : A) => a");
-    assertFalse(Doc.cat(doc1, doc2).renderToHtml().isEmpty());
+    var doc3 = declDoc("""
+      \\def curry3 (A, B, C, D : \\Set)
+                  (f : \\Pi (x : \\Sig A B ** C) -> D)
+                  (a : A) (b : B) (c : C) : D
+        => f (a, b, c)
+      \\def uncurry3 (A : \\Set) (B : \\Set) (C : \\Set) (D : \\Set)
+                    (f : \\Pi A B C -> D)
+                    (p : \\Sig A B ** C) : D
+        => f (p.1) (p.2) (p.3)""");
+    assertFalse(Doc.cat(doc1, doc2, doc3).renderToHtml().isEmpty());
   }
 
   @Test public void data() {
     assertFalse(declDoc("""
       \\open \\data Nat : \\Set | zero | suc Nat
       \\open \\data Int : \\Set | pos Nat | neg Nat { | zero => pos zero }
+      \\open \\data Fin (n : Nat) : \\Set | suc m => fzero | suc m => fsuc (Fin m)
       """).renderToHtml().isEmpty());
   }
 
