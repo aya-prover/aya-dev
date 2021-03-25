@@ -5,6 +5,7 @@ package org.aya.core.pretty;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
+import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.SeqLike;
@@ -31,7 +32,7 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
     boolean ex = bind.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.plain(bind.as().name()));
+      DefPrettier.plainLink(bind.as()));
   }
 
   @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Boolean aBoolean) {
@@ -41,10 +42,9 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
-    var ctorDoc = Doc.cat(
-      Doc.styled(TermPrettier.CON_CALL, ctor.ref().name()),
-      visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" "))
-    );
+    var hyperLink = Doc.hyperLink(Doc.styled(TermPrettier.CON_CALL,
+      ctor.ref().name()), new StringLink("#" + ctor.ref().hashCode()), null);
+    var ctorDoc = Doc.cat(hyperLink, visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" ")));
     return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());
   }
 
