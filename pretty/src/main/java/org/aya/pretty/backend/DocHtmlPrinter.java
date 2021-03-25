@@ -4,14 +4,14 @@ package org.aya.pretty.backend;
 
 import org.aya.pretty.backend.html.HtmlPrinterConfig;
 import org.aya.pretty.backend.string.StringLink;
-import org.aya.pretty.backend.string.StringOutputPrinter;
+import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Html backend, which ignores page width.
  */
-public class DocHtmlPrinter extends StringOutputPrinter<HtmlPrinterConfig> {
+public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
   @Override
   protected void renderHeader() {
     builder.append("""

@@ -4,7 +4,7 @@ package org.aya.pretty.printer;
 
 import org.glavo.kala.collection.mutable.MutableMap;
 
-public interface StyleFormatter {
+public interface Stylist {
   default MutableMap<String, String> getColorScheme() {
     return MutableMap.of();
   }

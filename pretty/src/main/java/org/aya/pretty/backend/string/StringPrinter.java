@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author kiva
  */
-public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
+public class StringPrinter<StringConfig extends StringPrinterConfig>
   implements Printer<String, StringConfig> {
   protected StringBuilder builder;
   protected StringConfig config;

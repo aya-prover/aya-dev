@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.html.style;
 
-import org.aya.pretty.backend.string.style.ClosingStyleFormatter;
+import org.aya.pretty.backend.string.style.ClosingStylist;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
-public class Html5StyleFormatter extends ClosingStyleFormatter {
+public class Html5Stylist extends ClosingStylist {
   @Override
   protected Tuple2<String, String> formatItalic() {
     return Tuple.of("<i>", "</i>");

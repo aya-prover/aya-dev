@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.string.style;
 
-import org.aya.pretty.backend.string.StringStyleFormatter;
+import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
@@ -13,7 +13,7 @@ import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ClosingStyleFormatter implements StringStyleFormatter {
+public abstract class ClosingStylist implements StringStylist {
   private final MutableMap<String, String> definedColors = MutableHashMap.of();
 
   @Override

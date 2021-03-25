@@ -37,8 +37,8 @@ public interface PrinterConfig {
     return INFINITE_SIZE;
   }
 
-  default StyleFormatter getStyleFormatter() {
-    return new StyleFormatter() {
+  default Stylist getStyleFormatter() {
+    return new Stylist() {
     };
   }
 

@@ -6,7 +6,7 @@ import org.aya.pretty.backend.DocHtmlPrinter;
 import org.aya.pretty.backend.DocStringPrinter;
 import org.aya.pretty.backend.html.HtmlPrinterConfig;
 import org.aya.pretty.backend.string.StringPrinterConfig;
-import org.aya.pretty.backend.string.style.IgnoringFormatter;
+import org.aya.pretty.backend.string.style.IgnoringStylist;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
 import org.glavo.kala.collection.Seq;
@@ -45,7 +45,7 @@ public sealed interface Doc {
   }
 
   default @NotNull String renderWithPageWidth(int pageWidth) {
-    var config = new StringPrinterConfig(IgnoringFormatter.INSTANCE, pageWidth);
+    var config = new StringPrinterConfig(IgnoringStylist.INSTANCE, pageWidth);
     return this.renderToString(config);
   }
 

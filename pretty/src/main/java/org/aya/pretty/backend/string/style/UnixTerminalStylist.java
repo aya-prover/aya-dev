@@ -6,31 +6,29 @@ import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
-public class UnixTerminalStyleFormatter extends ClosingStyleFormatter {
-  public static final UnixTerminalStyleFormatter INSTANCE = new UnixTerminalStyleFormatter();
+public class UnixTerminalStylist extends ClosingStylist {
+  public static final @NotNull UnixTerminalStylist INSTANCE = new UnixTerminalStylist();
 
-  @Override
-  protected Tuple2<String, String> formatItalic() {
+  private UnixTerminalStylist() {
+  }
+
+  @Override protected Tuple2<String, String> formatItalic() {
     return Tuple.of("\033[3m", "\033[23m");
   }
 
-  @Override
-  protected Tuple2<String, String> formatBold() {
+  @Override protected Tuple2<String, String> formatBold() {
     return Tuple.of("\033[1m", "\033[22m");
   }
 
-  @Override
-  protected Tuple2<String, String> formatStrike() {
+  @Override protected Tuple2<String, String> formatStrike() {
     return Tuple.of("\033[9m", "\033[29m");
   }
 
-  @Override
-  protected Tuple2<String, String> formatUnderline() {
+  @Override protected Tuple2<String, String> formatUnderline() {
     return Tuple.of("\033[4m", "\033[24m");
   }
 
-  @Override
-  protected @NotNull Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean bg) {
+  @Override protected @NotNull Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean bg) {
     if (!rgb.startsWith("#")) {
       // invalid color
       return Tuple.of("", "");
