@@ -15,8 +15,8 @@ public class CliArgs {
   public boolean help = false;
   @Parameter(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace = false;
-  @Parameter(names = {"--dump-ast"}, hidden = true)
-  public boolean dumpAST = false;
+  @Parameter(names = {"--dump-ast-html"}, hidden = true)
+  public boolean dumpAstHtml = false;
   @Parameter(names = {"--trace"}, description = "Print type checking traces")
   public @Nullable TraceFormat traceFormat;
   @Parameter(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")

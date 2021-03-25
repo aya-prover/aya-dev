@@ -27,7 +27,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override
   public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
     return Doc.cat(
-      Doc.plain("\\lam"),
+      Doc.styled(TermPrettier.keyword, "\\lam"),
       Doc.plain(" "),
       StmtPrettier.INSTANCE.visitParam(expr.param()),
       expr.body() instanceof Expr.HoleExpr
@@ -40,7 +40,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   public Doc visitPi(Expr.@NotNull PiExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.plain("\\Pi"),
+      Doc.styled(TermPrettier.keyword, "\\Pi"),
       Doc.plain(" "),
       StmtPrettier.INSTANCE.visitParam(expr.param()),
       Doc.plain(" -> "),
@@ -52,7 +52,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   public Doc visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.plain("\\Sig"),
+      Doc.styled(TermPrettier.keyword, "\\Sig"),
       Doc.plain(" "),
       StmtPrettier.INSTANCE.visitTele(expr.params()),
       Doc.plain(" ** "),
@@ -64,12 +64,12 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
     int u = expr.uLevel();
     int h = expr.hLevel();
-    if (u == 0 && h == -1) return Doc.plain("\\Prop");
-    return switch (h) {
-      case Integer.MAX_VALUE -> Doc.plain("\\oo-Type" + (u == 0 ? "" : u));
-      case 0 -> Doc.plain("\\Set" + (u == 0 ? "" : u));
-      default -> Doc.plain("\\" + h + "-Type" + (u == 0 ? "" : u));
-    };
+    if (u == 0 && h == -1) return Doc.styled(TermPrettier.keyword, "\\Prop");
+    return Doc.styled(TermPrettier.keyword, switch (h) {
+      case Integer.MAX_VALUE -> "\\oo-Type" + (u == 0 ? "" : u);
+      case 0 -> "\\Set" + (u == 0 ? "" : u);
+      default -> "\\" + h + "-Type" + (u == 0 ? "" : u);
+    });
   }
 
   @Override
@@ -86,12 +86,8 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   public Doc visitHole(Expr.@NotNull HoleExpr expr, Boolean nestedCall) {
     String name = expr.name();
     Expr filling = expr.filling();
-    if (name == null && filling == null) {
-      return Doc.empty();
-    }
-    if (name != null) {
-      return Doc.plain(name);
-    }
+    if (name == null && filling == null) return Doc.empty();
+    if (name != null) return Doc.plain(name);
     return Doc.hsep(Doc.plain("{"), filling.toDoc(), Doc.plain("?}"));
   }
 
@@ -111,7 +107,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override
   public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {
     return Doc.cat(
-      Doc.plain("\\new "),
+      Doc.styled(TermPrettier.keyword, "\\new "),
       expr.struct().toDoc(),
       Doc.plain(" { "),
       expr.fields().stream().map(t ->

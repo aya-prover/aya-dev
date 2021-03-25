@@ -10,9 +10,9 @@ import java.nio.file.Path;
 public record CompilerFlags(
   @NotNull Message message,
   boolean interruptedTrace,
-  boolean dumpAST,
+  boolean dumpAstHtml,
   @NotNull ImmutableSeq<Path> modulePaths
-  ) {
+) {
   public record Message(
     @NotNull String successNotion,
     @NotNull String failNotion
