@@ -35,7 +35,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
     return cursor == 0;
   }
 
-  private int predictWidth(@NotNull Doc doc) {
+  protected int predictWidth(@NotNull Doc doc) {
     if (doc instanceof Doc.Fail) {
       throw new IllegalArgumentException("Doc.Fail passed to renderer");
 
@@ -79,7 +79,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
     throw new IllegalStateException("unreachable");
   }
 
-  private @NotNull Doc fitsBetter(@NotNull Doc a, @NotNull Doc b) {
+  protected @NotNull Doc fitsBetter(@NotNull Doc a, @NotNull Doc b) {
     if (isAtLineStart()) {
       return a;
     }
@@ -105,7 +105,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
       renderHardLineBreak();
 
     } else if (doc instanceof Doc.FlatAlt alt) {
-      renderDoc(fitsBetter(alt.defaultDoc(), alt.preferWhenFlatten()));
+      renderFlatAlt(alt);
 
     } else if (doc instanceof Doc.Cat cat) {
       renderDoc(cat.first());
@@ -117,7 +117,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
       nestLevel -= nest.indent();
 
     } else if (doc instanceof Doc.Union union) {
-      renderDoc(fitsBetter(union.shorterOne(), union.longerOne()));
+      renderUnionDoc(union);
 
     } else if (doc instanceof Doc.Column column) {
       renderDoc(column.docBuilder().apply(cursor));
@@ -130,7 +130,15 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
     }
   }
 
-  private void renderHyperLinked(@NotNull Doc.HyperLinked text) {
+  protected void renderUnionDoc(Doc.Union union) {
+    renderDoc(fitsBetter(union.shorterOne(), union.longerOne()));
+  }
+
+  protected void renderFlatAlt(Doc.FlatAlt alt) {
+    renderDoc(fitsBetter(alt.defaultDoc(), alt.preferWhenFlatten()));
+  }
+
+  protected void renderHyperLinked(@NotNull Doc.HyperLinked text) {
     renderDoc(text.doc());
   }
 
@@ -139,7 +147,7 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
     formatter.format(styled.styles(), builder, () -> renderDoc(styled.doc()));
   }
 
-  private void renderPlainText(@NotNull String content) {
+  protected void renderPlainText(@NotNull String content) {
     if (isAtLineStart()) {
       renderIndent(nestLevel);
     }
@@ -147,12 +155,12 @@ public class StringOutputPrinter<StringConfig extends StringPrinterConfig>
     cursor += content.length();
   }
 
-  private void renderHardLineBreak() {
+  protected void renderHardLineBreak() {
     cursor = 0;
     builder.append('\n');
   }
 
-  private void renderIndent(int indent) {
+  protected void renderIndent(int indent) {
     builder.append(" ".repeat(indent));
     cursor += indent;
   }
