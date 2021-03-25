@@ -162,11 +162,11 @@ public sealed interface Doc {
     return new Doc.Styled(Seq.of(style), Doc.plain(plain));
   }
 
-  static @NotNull Doc styled(@NotNull Style.Styles builder, @NotNull Doc doc) {
+  static @NotNull Doc styled(@NotNull Styles builder, @NotNull Doc doc) {
     return new Doc.Styled(builder.styles, doc);
   }
 
-  static @NotNull Doc styled(@NotNull Style.Styles builder, @NotNull String plain) {
+  static @NotNull Doc styled(@NotNull Styles builder, @NotNull String plain) {
     return new Doc.Styled(builder.styles, Doc.plain(plain));
   }
 

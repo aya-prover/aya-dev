@@ -2,10 +2,16 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.printer;
 
-import org.glavo.kala.collection.mutable.MutableMap;
+import org.aya.pretty.color.EmacsColorScheme;
 
-public interface Stylist {
-  default MutableMap<String, Integer> getColorScheme() {
-    return MutableMap.of();
+public abstract class Stylist {
+  protected ColorScheme colorScheme;
+
+  public Stylist() {
+    this(EmacsColorScheme.INSTANCE);
+  }
+
+  public Stylist(ColorScheme colorScheme) {
+    this.colorScheme = colorScheme;
   }
 }

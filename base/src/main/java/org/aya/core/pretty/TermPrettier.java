@@ -8,6 +8,7 @@ import org.aya.generic.Arg;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.pretty.doc.Styles;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
@@ -15,18 +16,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 /**
- * The colors are from Emacs.
- *
  * @author ice1000, kiva
  * @see org.aya.concrete.pretty.ExprPrettier
  */
 public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
-  public static final Style.@NotNull Styles KEYWORD = Style.bold().and().color(1.0f, 0.43f, 0);
-  public static final @NotNull Style FN_CALL = Style.color(0, 0, 1f);
-  public static final @NotNull Style DATA_CALL = Style.color(0.13f, 0.55f, 0.13f);
-  public static final @NotNull Style STRUCT_CALL = Style.color(0.13f, 0.55f, 0.13f);
-  public static final @NotNull Style CON_CALL = Style.color(0.63f, 0.13f, 0.94f);
+  public static final @NotNull Styles KEYWORD = Style.bold().and().color("aya:Keyword");
+  public static final @NotNull Style FN_CALL = Style.color("aya:FnCall");
+  public static final @NotNull Style DATA_CALL = Style.color("aya:DataCall");
+  public static final @NotNull Style STRUCT_CALL = Style.color("aya:StructCall");
+  public static final @NotNull Style CON_CALL = Style.color("aya:ConCall");
 
   private TermPrettier() {
   }

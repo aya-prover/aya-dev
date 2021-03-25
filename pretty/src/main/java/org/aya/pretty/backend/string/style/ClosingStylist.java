@@ -6,21 +6,13 @@ import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ClosingStylist implements StringStylist {
-  private final MutableMap<String, Integer> definedColors = MutableHashMap.of();
-
+public abstract class ClosingStylist extends StringStylist {
   @Override
-  public MutableMap<String, Integer> getColorScheme() {
-    return definedColors;
-  }
-
   public void format(@NotNull Seq<Style> styles, @NotNull StringBuilder builder, @NotNull Runnable inside) {
     formatInternal(styles.view(), builder, inside);
   }
@@ -58,7 +50,7 @@ public abstract class ClosingStylist implements StringStylist {
   }
 
   private @NotNull Option<Integer> getColor(@NotNull String colorName) {
-    return definedColors.getOption(colorName);
+    return colorScheme.definedColors().getOption(colorName);
   }
 
   protected @NotNull Tuple2<String, String> formatColorName(@NotNull Style.ColorName color, boolean background) {

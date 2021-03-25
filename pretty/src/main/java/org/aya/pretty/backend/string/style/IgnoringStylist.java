@@ -7,7 +7,7 @@ import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
-public class IgnoringStylist implements StringStylist {
+public class IgnoringStylist extends StringStylist {
   public static final IgnoringStylist INSTANCE = new IgnoringStylist();
 
   private IgnoringStylist() {

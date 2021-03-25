@@ -7,6 +7,6 @@ import org.aya.pretty.printer.Stylist;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
-public interface StringStylist extends Stylist {
-  void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside);
+public abstract class StringStylist extends Stylist {
+  public abstract void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside);
 }

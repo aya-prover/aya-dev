@@ -50,7 +50,6 @@ public class UnixTermStylist extends ClosingStylist {
     int g = (rgb & 0xFF00) >> 8;
     int b = (rgb & 0xFF);
 
-    // \033[${bg ? 48 : 38};2;${red};${green};${blue}m ${text} \033[49m
     return Tuple.of(
       String.format("\033[%d;2;%d;%d;%dm", bg ? 48 : 38, r, g, b),
       String.format("\033[%dm", bg ? 49 : 39)
