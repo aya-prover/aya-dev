@@ -16,7 +16,7 @@ import java.util.function.Function;
 
 public class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
-  public static final Style.@NotNull StyleBuilder KEYWORD = Style.bold().and().color(0xCD6600);
+  public static final Style.@NotNull Styles KEYWORD = Style.bold().and().color(0xCD6600);
 
   private TermPrettier() {
   }

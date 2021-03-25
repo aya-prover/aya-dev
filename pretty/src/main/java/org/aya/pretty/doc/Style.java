@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public sealed interface Style {
-  default StyleBuilder and() {
-    return new StyleBuilder(this);
+  default Styles and() {
+    return new Styles(this);
   }
 
   enum Attr implements Style {
@@ -40,54 +40,54 @@ public sealed interface Style {
   non-sealed interface CustomStyle extends Style {
   }
 
-  class StyleBuilder {
+  class Styles {
     Buffer<Style> styles;
 
-    StyleBuilder(Style style) {
+    Styles(Style style) {
       this.styles = Buffer.of(style);
     }
 
-    public @NotNull StyleBuilder italic() {
+    public @NotNull Style.Styles italic() {
       styles.append(Attr.Italic);
       return this;
     }
 
-    public @NotNull StyleBuilder bold() {
+    public @NotNull Style.Styles bold() {
       styles.append(Attr.Bold);
       return this;
     }
 
-    public @NotNull StyleBuilder strike() {
+    public @NotNull Style.Styles strike() {
       styles.append(Attr.Strike);
       return this;
     }
 
-    public @NotNull StyleBuilder underline() {
+    public @NotNull Style.Styles underline() {
       styles.append(Attr.Underline);
       return this;
     }
 
-    public @NotNull StyleBuilder color(@NotNull String colorName) {
+    public @NotNull Style.Styles color(@NotNull String colorName) {
       styles.append(new ColorName(colorName, false));
       return this;
     }
 
-    public @NotNull StyleBuilder colorBG(@NotNull String colorName) {
+    public @NotNull Style.Styles colorBG(@NotNull String colorName) {
       styles.append(new ColorName(colorName, true));
       return this;
     }
 
-    public @NotNull StyleBuilder color(int color) {
+    public @NotNull Style.Styles color(int color) {
       styles.append(new ColorHex(color, false));
       return this;
     }
 
-    public @NotNull StyleBuilder colorBG(int color) {
+    public @NotNull Style.Styles colorBG(int color) {
       styles.append(new ColorHex(color, true));
       return this;
     }
 
-    public @NotNull StyleBuilder custom(@NotNull CustomStyle style) {
+    public @NotNull Style.Styles custom(@NotNull CustomStyle style) {
       styles.append(style);
       return this;
     }
