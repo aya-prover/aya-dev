@@ -3,6 +3,7 @@
 package org.aya.pretty.backend.html.style;
 
 import org.aya.pretty.backend.string.style.ClosingStylist;
+import org.aya.pretty.doc.Style;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
@@ -34,5 +35,11 @@ public class Html5Stylist extends ClosingStylist {
       String.format("<span style=\"%s:%s;\">", background ? "background-color" : "color", rgb),
       "</span>"
     );
+  }
+
+  @Override
+  protected @NotNull Tuple2<String, String> formatCustom(Style.@NotNull CustomStyle style) {
+    // TODO: html custom style?
+    return Tuple.of("", "");
   }
 }

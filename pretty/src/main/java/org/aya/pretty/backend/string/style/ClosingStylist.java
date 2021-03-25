@@ -48,6 +48,8 @@ public abstract class ClosingStylist implements StringStylist {
       };
     } else if (style instanceof Style.Color color) {
       return formatColor(color, color.background());
+    } else if (style instanceof Style.Custom custom) {
+      return formatCustom(custom.style());
     }
 
     throw new IllegalArgumentException("Unsupported style: " + style.getClass().getName());
@@ -68,4 +70,5 @@ public abstract class ClosingStylist implements StringStylist {
   protected abstract Tuple2<String, String> formatStrike();
   protected abstract Tuple2<String, String> formatUnderline();
   protected abstract Tuple2<String, String> formatTrueColor(@NotNull String rgb, boolean background);
+  protected abstract @NotNull Tuple2<String, String> formatCustom(@NotNull Style.CustomStyle style);
 }
