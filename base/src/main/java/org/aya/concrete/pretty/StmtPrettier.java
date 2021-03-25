@@ -54,7 +54,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     return Doc.cat(
       visitAccess(mod.accessibility()),
       Doc.plain(" "),
-      Doc.plain("\\module"),
+      Doc.styled(TermPrettier.KEYWORD, "\\module"),
       Doc.plain(" "),
       Doc.plain(mod.name()),
       Doc.plain(" {"),
@@ -174,7 +174,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Expr.Param> telescope) {
-    return Doc.hsep(telescope.map(Expr.Param::toDoc));
+    return telescope.isEmpty() ? Doc.empty() : Doc.hsep(telescope.map(Expr.Param::toDoc));
   }
 
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
