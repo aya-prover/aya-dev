@@ -36,7 +36,6 @@ public class DocHtmlPrinter extends StringOutputPrinter<HtmlPrinterConfig> {
       builder.append("<a href=\"");
       builder.append(link.linkText());
       builder.append("\">");
-      builder.append(">");
       renderDoc(text.doc());
       builder.append("</a>");
     } else {
