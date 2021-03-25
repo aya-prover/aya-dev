@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-public class TermPrettier implements Term.Visitor<Boolean, Doc> {
+public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
   public static final Style.@NotNull Styles KEYWORD = Style.bold().and().color(0xCD6600);
 

@@ -8,10 +8,9 @@ import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
-public class PatPrettier implements Pat.Visitor<Boolean, Doc> {
+public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   public static final @NotNull PatPrettier INSTANCE = new PatPrettier();
 
   private PatPrettier() {
@@ -61,8 +60,8 @@ public class PatPrettier implements Pat.Visitor<Boolean, Doc> {
       .reduce(Doc.empty(), Doc::hsep);
   }
 
-  public Doc matchy(@NotNull Matching<Pat, Option<Term>> match) {
+  public Doc matchy(@NotNull Matching<Pat, Term> match) {
     var doc = visitMaybeCtorPatterns(match.patterns(), false);
-    return match.body().map(e -> Doc.cat(doc, Doc.plain(" => "), e.toDoc())).getOrDefault(doc);
+    return Doc.cat(doc, Doc.plain(" => "), match.body().toDoc());
   }
 }
