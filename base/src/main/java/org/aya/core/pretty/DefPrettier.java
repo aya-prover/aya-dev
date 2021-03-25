@@ -23,7 +23,7 @@ public final class DefPrettier implements Def.Visitor<Unit, Doc> {
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\def "),
-      Doc.plain(def.ref().name()),
+      Doc.styled(TermPrettier.FN_CALL, def.ref().name()),
       def.telescope().isEmpty() ? Doc.empty() :
         Doc.cat(Doc.plain(" "), visitTele(def.telescope())),
       Doc.plain(" : "), def.result().toDoc(),
@@ -50,7 +50,7 @@ public final class DefPrettier implements Def.Visitor<Unit, Doc> {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\data"),
       Doc.plain(" "),
-      Doc.plain(def.ref().name()),
+      Doc.styled(TermPrettier.DATA_CALL, def.ref().name()),
       Doc.plain(" "),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc(),
@@ -63,7 +63,7 @@ public final class DefPrettier implements Def.Visitor<Unit, Doc> {
   @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
     var doc = Doc.cat(
       ctor.coerce() ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
-      Doc.plain(ctor.ref().name()),
+      Doc.styled(TermPrettier.CON_CALL, ctor.ref().name()),
       Doc.plain(" "),
       visitTele(ctor.conTele()),
       visitClauses(ctor.clauses(), true)

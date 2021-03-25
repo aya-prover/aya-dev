@@ -17,6 +17,10 @@ import java.util.function.Function;
 public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
   public static final Style.@NotNull Styles KEYWORD = Style.bold().and().color(0xCD6600);
+  public static final @NotNull Style FN_CALL = Style.color(0xCD6600);
+  public static final @NotNull Style DATA_CALL = Style.color(0x0000CD);
+  public static final @NotNull Style STRUCT_CALL = Style.color(0x0000CD);
+  public static final @NotNull Style CON_CALL = Style.color(0x008B00);
 
   private TermPrettier() {
   }
@@ -72,20 +76,20 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
-    return visitCalls(fnCall.ref(), Style.color(0xCD6600), fnCall.args(), nestedCall);
+    return visitCalls(fnCall.ref(), FN_CALL, fnCall.args(), nestedCall);
   }
 
   @Override
   public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
-    return visitCalls(dataCall.ref(), Style.color(0x0000CD), dataCall.args(), nestedCall);
+    return visitCalls(dataCall.ref(), DATA_CALL, dataCall.args(), nestedCall);
   }
 
   @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Boolean nestedCall) {
-    return visitCalls(structCall.ref(), Style.color(0x0000CD), structCall.args(), nestedCall);
+    return visitCalls(structCall.ref(), STRUCT_CALL, structCall.args(), nestedCall);
   }
 
   @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Boolean nestedCall) {
-    return visitCalls(conCall.ref(), Style.color(0x008B00), conCall.conArgs(), nestedCall);
+    return visitCalls(conCall.ref(), CON_CALL, conCall.conArgs(), nestedCall);
   }
 
   @Override

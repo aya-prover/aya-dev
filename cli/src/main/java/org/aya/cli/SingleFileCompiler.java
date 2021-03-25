@@ -12,6 +12,7 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
+import org.aya.core.pretty.DefPrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
@@ -29,14 +30,24 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var parser = AyaParsing.parser(filePath, reporter);
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
-      if (flags.dumpAstHtml()) {
+      if (flags.distillChoice() == CliArgs.DistillChoice.Raw) {
         // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
         Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
           StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
       }
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
-      FileModuleLoader.tyckModule(loader, program, reporter, builder);
+      FileModuleLoader.tyckModule(loader, program, reporter,
+        () -> {
+          if (flags.distillChoice() == CliArgs.DistillChoice.Scoped)
+            Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
+              StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
+        },
+        defs -> {
+          if (flags.distillChoice() == CliArgs.DistillChoice.Typed)
+            Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
+              defs.stream().map(def -> def.accept(DefPrettier.INSTANCE, Unit.unit()))).renderToHtml());
+        }, builder);
     } catch (ExprTycker.TyckerException | Context.ContextException e) {
       FileModuleLoader.handleInternalError(e);
       return e.exitCode();

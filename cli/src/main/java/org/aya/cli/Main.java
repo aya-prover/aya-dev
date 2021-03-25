@@ -44,7 +44,7 @@ public final class Main {
     var status = compiler.compile(new CompilerFlags(
       message,
       cli.interruptedTrace,
-      cli.dumpAstHtml,
+      cli.distill,
       cli.modulePaths().map(Paths::get)));
     if (traceBuilder != null) switch (cli.traceFormat) {
       case ImGui -> {

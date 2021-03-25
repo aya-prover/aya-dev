@@ -15,8 +15,8 @@ public class CliArgs {
   public boolean help = false;
   @Parameter(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace = false;
-  @Parameter(names = {"--dump-ast-html"}, hidden = true)
-  public boolean dumpAstHtml = false;
+  @Parameter(names = {"--distill", "--pretty"}, description = "Pretty print the code in a certain stage")
+  public DistillChoice distill;
   @Parameter(names = {"--trace"}, description = "Print type checking traces")
   public @Nullable TraceFormat traceFormat;
   @Parameter(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")
@@ -28,6 +28,12 @@ public class CliArgs {
 
   public ImmutableSeq<String> modulePaths() {
     return modulePaths == null ? ImmutableSeq.empty() : ImmutableSeq.from(modulePaths);
+  }
+
+  public enum DistillChoice {
+    Raw,
+    Scoped,
+    Typed
   }
 
   public enum TraceFormat {

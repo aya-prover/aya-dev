@@ -14,11 +14,14 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
+import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.function.CheckedConsumer;
+import org.glavo.kala.function.CheckedRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +39,7 @@ public final record FileModuleLoader(
     try {
       var parser = AyaParsing.parser(path.foldLeft(basePath, Path::resolve), reporter());
       var program = new AyaProducer(reporter).visitProgram(parser.program());
-      return tyckModule(recurseLoader, program, reporter, builder).exports();
+      return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports();
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
       return null;
@@ -51,19 +54,21 @@ public final record FileModuleLoader(
 
   }
 
-  public static @NotNull ModuleContext tyckModule(
+  public static <E extends Exception> @NotNull ModuleContext tyckModule(
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
+    @NotNull CheckedRunnable<E> onResolved,
+    @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
-  ) {
+  ) throws E {
     var context = new EmptyContext(reporter).derive();
     var shallowResolver = new StmtShallowResolver(recurseLoader);
     program.forEach(s -> s.accept(shallowResolver, context));
     program.forEach(Stmt::resolve);
-    program.forEach(s -> {
-      if (s instanceof Signatured decl) decl.tyck(reporter, builder);
-    });
+    onResolved.runChecked();
+    var wellTyped = program.mapNotNull(s -> s instanceof Signatured decl ? decl.tyck(reporter, builder) : null);
+    onTycked.acceptChecked(wellTyped);
     return context;
   }
 
