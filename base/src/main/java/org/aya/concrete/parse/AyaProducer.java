@@ -19,6 +19,7 @@ import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
 import org.aya.util.Constants;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -126,10 +127,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
+  public Seq<String> visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
+    return ctx.ID().stream().map(ParseTree::getText).collect(Seq.factory());
+  }
+
+  @Override
   public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), Constants.ANONYMOUS_PREFIX, null);
-    var id = ctx.ID();
-    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), id.getText());
+    var id = ctx.qualifiedId();
+    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), visitQualifiedId(id));
     var universe = ctx.UNIVERSE();
     if (universe != null) {
       var universeText = universe.getText();
