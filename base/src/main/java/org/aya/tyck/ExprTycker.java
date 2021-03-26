@@ -48,7 +48,7 @@ import java.util.function.Consumer;
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull MetaContext metaContext;
   public @NotNull LocalCtx localCtx;
-  public Trace.@Nullable Builder traceBuilder = null;
+  public final Trace.@Nullable Builder traceBuilder;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -66,17 +66,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     });
   }
 
-  public ExprTycker(@NotNull Reporter reporter) {
-    this(new MetaContext(reporter));
+  public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+    this(new MetaContext(reporter), new LocalCtx(), traceBuilder);
   }
 
-  public ExprTycker(@NotNull MetaContext metaContext) {
-    this(metaContext, new LocalCtx());
-  }
-
-  public ExprTycker(@NotNull MetaContext metaContext, @NotNull LocalCtx localCtx) {
+  public ExprTycker(@NotNull MetaContext metaContext, @NotNull LocalCtx localCtx, Trace.@Nullable Builder traceBuilder) {
     this.localCtx = localCtx;
     this.metaContext = metaContext;
+    this.traceBuilder = traceBuilder;
   }
 
   public @NotNull Result finalize(@NotNull Result result) {

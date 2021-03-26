@@ -40,9 +40,7 @@ public record StmtTycker(
   Trace.@Nullable Builder traceBuilder
 ) implements Signatured.Visitor<ExprTycker, Def> {
   public @NotNull ExprTycker newTycker() {
-    final var tycker = new ExprTycker(reporter);
-    tycker.traceBuilder = traceBuilder;
-    return tycker;
+    return new ExprTycker(reporter, traceBuilder);
   }
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {

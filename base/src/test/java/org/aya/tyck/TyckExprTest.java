@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TyckExprTest {
   @Test
   public void idLamConnected() {
-    idLamTestCase(lamConnected(), new ExprTycker(ThrowingReporter.INSTANCE));
+    idLamTestCase(lamConnected(), tycker());
   }
 
   @TestOnly public static @NotNull Expr lamConnected() {
@@ -52,7 +52,7 @@ public class TyckExprTest {
       new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
       new Expr.LamExpr(SourcePos.NONE, new Expr.Param(SourcePos.NONE, a, true),
         new Expr.RefExpr(SourcePos.NONE, a)));
-    idLamTestCase(lam, new ExprTycker(ThrowingReporter.INSTANCE));
+    idLamTestCase(lam, tycker());
   }
 
   @TestOnly
@@ -102,6 +102,10 @@ public class TyckExprTest {
          (Pi (f (Pi (a A ex)
                  (Pi (b B ex) C)) ex)
           (Pi (p (Sigma (a A ex null) B) ex) C)))))""");
-    uncurry.accept(new ExprTycker(ThrowingReporter.INSTANCE), uncurryTy);
+    uncurry.accept(tycker(), uncurryTy);
+  }
+
+  private static @NotNull ExprTycker tycker() {
+    return new ExprTycker(ThrowingReporter.INSTANCE, null);
   }
 }

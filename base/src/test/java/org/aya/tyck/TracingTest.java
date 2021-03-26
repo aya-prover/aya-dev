@@ -8,28 +8,28 @@ import org.aya.tyck.trace.Trace;
 import org.glavo.kala.tuple.Unit;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class TracingTest {
   @Test
   public void traceExistence() {
-    var checker = new ExprTycker(ThrowingReporter.INSTANCE);
-    checker.traceBuilder = new Trace.Builder();
+    var checker = new ExprTycker(ThrowingReporter.INSTANCE, new Trace.Builder());
     TyckExprTest.idLamTestCase(TyckExprTest.lamConnected(), checker);
-    final var tops = checker.traceBuilder.getTops();
+    final var tops = Objects.requireNonNull(checker.traceBuilder).getTops();
     assertFalse(tops.isEmpty());
     assertEquals(1, tops.size());
   }
 
   @Test
   public void traceMd() {
-    var checker = new ExprTycker(ThrowingReporter.INSTANCE);
-    checker.traceBuilder = new Trace.Builder();
+    var checker = new ExprTycker(ThrowingReporter.INSTANCE, new Trace.Builder());
     TyckExprTest.idLamTestCase(TyckExprTest.lamConnected(), checker);
     var show = new MdUnicodeTrace();
     show.lineSep = "\n";
-    checker.traceBuilder.root().forEach(e -> e.accept(show, Unit.unit()));
+    Objects.requireNonNull(checker.traceBuilder).root().forEach(e -> e.accept(show, Unit.unit()));
     assertEquals("""
         + \u22A2 `\\lam (_) => \\lam (a) => a` : \\Pi (A : \\oo-Type) -> \\Pi (a : A) -> A
           + \u22A2 `\\lam (a) => a` : \\Pi (a : _) -> _
