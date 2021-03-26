@@ -154,9 +154,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       metaContext.report(new HoleBadSpineWarn(lhs, defeq.pos));
       return false;
     }
-    var solution = metaContext.solutions().getOption(lhs);
+    var solution = metaContext.solution(lhs.ref());
     if (solution.isDefined()) return compare(CallTerm.make(solution.get(), lhs.args()), rhs, type);
-    metaContext.solutions().put(lhs, solved);
+    metaContext.solve(lhs.ref(), solved);
     return true;
   }
 }
