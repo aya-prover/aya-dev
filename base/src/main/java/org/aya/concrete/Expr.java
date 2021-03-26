@@ -123,6 +123,10 @@ public sealed interface Expr {
     @NotNull SourcePos sourcePos,
     @NotNull Seq<String> name
   ) implements Expr {
+    public UnresolvedExpr(@NotNull SourcePos sourcePos, @NotNull String name) {
+      this(sourcePos, Seq.of(name));
+    }
+
     @Override
     public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnresolved(this, p);
