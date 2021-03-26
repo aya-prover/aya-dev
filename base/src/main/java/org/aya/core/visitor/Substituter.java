@@ -42,7 +42,7 @@ public record Substituter(
     childrenArray = "map.asJava().entrySet().toArray()",
     hasChildren = "!map.isEmpty()")
   public static record TermSubst(@NotNull MutableMap<@NotNull Var, @NotNull Term> map) {
-    public static final @NotNull TermSubst EMPTY = new TermSubst(MutableHashMap.of());
+    public static final @NotNull TermSubst EMPTY = new TermSubst(new MutableHashMap<>(0));
 
     public TermSubst(@NotNull Var var, @NotNull Term term) {
       this(MutableHashMap.of(var, term));

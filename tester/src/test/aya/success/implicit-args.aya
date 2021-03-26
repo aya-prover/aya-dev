@@ -28,3 +28,9 @@
 \def len {A : \Set} (xs : List A) : Nat
  | nil => zero
  | cons x xs => suc (len xs)
+\def map {A, B : \Set} (f : \Pi A -> B) (xs : List A) : List B
+ | f, nil => nil {_}
+ | f, cons x xs => cons (f x) (map f xs)
+\def filter {A : \Set} (f : \Pi A -> Bool) (xs : List A) : List A
+ | f, nil => nil {_}
+ | f, cons x xs => ifElse (f x) (cons x (filter f xs)) (filter f xs)

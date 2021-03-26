@@ -76,8 +76,7 @@ public interface Def extends CoreDef {
   ) {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
-      if (contextParam.isEmpty()) return new Signature(contextParam, substParams(param, subst), result.subst(subst));
-      else return new Signature(substParams(contextParam, subst), Term.Param.subst(param, subst), result.subst(subst));
+      return new Signature(Term.Param.subst(contextParam, subst), substParams(param, subst), result.subst(subst));
     }
 
     public @NotNull Doc toDoc() {

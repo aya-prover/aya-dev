@@ -7,6 +7,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
+import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
@@ -15,6 +16,7 @@ import org.aya.core.term.SigmaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Unfolder;
 import org.aya.generic.GenericBuilder;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
@@ -183,15 +185,18 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       // TODO[ice]: report error: not checked data
       return null;
     }
-    for (var ctor : dataCall.ref().core.body()) {
+    for (var ctor : core.body()) {
       if (!Objects.equals(ctor.ref().name(), name)) continue;
-      if (!ctor.pats().isEmpty()) {
-        var matchy = PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
-        if (matchy == null) continue;
-        return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
-      } else return Tuple.of(dataCall, Substituter.TermSubst.EMPTY, dataCall.conHead(ctor.ref()));
+      var matchy = mischa(dataCall, core, ctor);
+      if (matchy == null) continue;
+      return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
     }
     // TODO[ice]: report error: cannot find ctor of name
     return null;
+  }
+
+  private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, DataDef.Ctor ctor) {
+    if (!ctor.pats().isEmpty()) return PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
+    else return Unfolder.buildSubst(core.telescope(), dataCall.args());
   }
 }
