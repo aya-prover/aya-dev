@@ -19,7 +19,6 @@ import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.ref.LocalVar;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.base.Traversable;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -127,8 +126,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public Seq<String> visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
-    return ctx.ID().stream().map(ParseTree::getText).collect(Seq.factory());
+  public ImmutableSeq<String> visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
+    return ctx.ID().stream().map(ParseTree::getText).collect(ImmutableSeq.factory());
   }
 
   @Override

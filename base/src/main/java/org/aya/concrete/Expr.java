@@ -13,7 +13,6 @@ import org.aya.generic.Arg;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple;
@@ -121,10 +120,10 @@ public sealed interface Expr {
    */
   record UnresolvedExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Seq<String> name
+    @NotNull ImmutableSeq<String> name
   ) implements Expr {
     public UnresolvedExpr(@NotNull SourcePos sourcePos, @NotNull String name) {
-      this(sourcePos, Seq.of(name));
+      this(sourcePos, ImmutableSeq.of(name));
     }
 
     @Override
