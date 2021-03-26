@@ -6,6 +6,7 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.UsageCounter;
 import org.aya.tyck.error.RecursiveSolutionError;
@@ -33,11 +34,13 @@ public record MetaContext(
       report(new RecursiveSolutionError(v, t, pos));
       throw new ExprTycker.TyckInterruptedException();
     }
+    assert !(t instanceof CallTerm.Hole hole) || hole.ref() == v;
     solutions.put(v, t);
   }
 
   public @NotNull Option<Term> solution(@NotNull Var v) {
-    return solutions.getOption(v);
+    return solutions.getOption(v).flatMap(term -> term instanceof CallTerm.Hole redirect
+      ? solution(redirect.ref()) : Option.of(term));
   }
 
   public void report(@NotNull Problem problem) {
