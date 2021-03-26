@@ -1,0 +1,30 @@
+\open \data Nat : \Set | zero | suc Nat
+\open \data Bool : \Set | true | false
+\def not (b : Bool) : Bool
+ | true => false
+ | false => true
+\def ifElse {A : \Set} (b : Bool) (x, y : A) : A
+ | true, x, y => x
+ | false, x, y => y
+\open \data TermTy : \Set | natT | boolT
+\def termTy (t : TermTy) : \Set
+ | natT => Nat
+ | boolT => Bool
+\open \data Term (n : TermTy) : \Set
+ | natT => nat Nat
+ | natT => succ (Term natT)
+ | boolT => bool Bool
+ | boolT => inv (Term boolT)
+ | A => case (Term boolT) (Term A) (Term A)
+\def normalize (t : TermTy) (x : Term t) : termTy t
+ | natT, nat n => n
+ | natT, succ n => suc (normalize natT n)
+ | boolT, bool b => b
+ | boolT, inv b => not (normalize boolT b)
+ | t, case b x y => ifElse (normalize boolT b) (normalize t x) (normalize t y)
+\open \data List (A : \Set) : \Set
+ | nil | cons A (List A)
+\def simple : List Nat => cons zero (cons (suc zero) (nil {_}))
+\def len {A : \Set} (xs : List A) : Nat
+ | nil => zero
+ | cons x xs => suc (len xs)
