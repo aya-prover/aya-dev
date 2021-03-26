@@ -156,7 +156,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     }
     var solution = metaContext.solution(lhs.ref());
     if (solution.isDefined()) return compare(CallTerm.make(solution.get(), lhs.args()), rhs, type);
-    metaContext.solve(lhs.ref(), solved);
+    metaContext.solve(lhs.ref(), solved, untypedDefeq.defeq().pos);
     return true;
   }
 }
