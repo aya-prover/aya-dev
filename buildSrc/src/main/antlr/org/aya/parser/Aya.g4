@@ -105,7 +105,7 @@ atomPattern : LPAREN patterns ')' (AS ID)?
             | CALM_FACE
             ;
 
-literal : ID
+literal : qualifiedId
         | PROP
         | CALM_FACE
         | idFix
@@ -187,10 +187,11 @@ fragment HEX_DIGIT : [0-9a-fA-F];
 fragment OCT_DIGIT : [0-8];
 
 // identifier
-fragment AYA_SIMPLE_LETTER : [~!@#$%^&*\-+=<>?/|:[\u005Da-zA-Z_\u2200-\u22FF];
+fragment AYA_SIMPLE_LETTER : [~!@#$%^&*\-+=<>?/|[\u005Da-zA-Z_\u2200-\u22FF];
 fragment AYA_UNICODE : [\u0080-\uFEFE] | [\uFF00-\u{10FFFF}]; // exclude U+FEFF which is a truly invisible char
 fragment AYA_LETTER : AYA_SIMPLE_LETTER | AYA_UNICODE;
 ID : AYA_LETTER (AYA_LETTER | [0-9'])*;
+qualifiedId : ID ('::' ID)*;
 
 // whitespaces
 WS : [ \t\r\n]+ -> channel(HIDDEN);

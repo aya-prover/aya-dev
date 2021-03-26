@@ -23,7 +23,11 @@ public final class ExprResolver implements ExprFixpoint<Context> {
   }
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
-    return new Expr.RefExpr(expr.sourcePos(), ctx.getUnqualified(expr.name(), expr.sourcePos()));
+    var sourcePos = expr.sourcePos();
+    var isUnqualified = expr.name().sizeEquals(1);
+    return new Expr.RefExpr(sourcePos, isUnqualified
+      ? ctx.getUnqualified(expr.name().first(), sourcePos)
+      : ctx.getQualified(expr.name(), sourcePos));
   }
 
   public @NotNull Tuple2<Expr.Param, Context> visitParam(@NotNull Expr.Param param, Context ctx) {

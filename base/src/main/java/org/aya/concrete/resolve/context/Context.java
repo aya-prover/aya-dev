@@ -66,6 +66,12 @@ public interface Context {
     return result;
   }
 
+  default @NotNull Var getQualified(@NotNull Seq<@NotNull String> fullName, @NotNull SourcePos sourcePos) {
+    var name = fullName.last();
+    var modName = fullName.view().dropLast(1).toSeq();
+    return getQualified(modName, name, sourcePos);
+  }
+
   @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos);
   default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
     var ref = getModuleLocalMaybe(modName, sourcePos);

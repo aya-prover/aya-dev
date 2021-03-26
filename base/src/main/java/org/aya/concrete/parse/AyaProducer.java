@@ -126,10 +126,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
+  public ImmutableSeq<String> visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
+    return ctx.ID().stream().map(ParseTree::getText).collect(ImmutableSeq.factory());
+  }
+
+  @Override
   public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), Constants.ANONYMOUS_PREFIX, null);
-    var id = ctx.ID();
-    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), id.getText());
+    var id = ctx.qualifiedId();
+    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), visitQualifiedId(id));
     var universe = ctx.UNIVERSE();
     if (universe != null) {
       var universeText = universe.getText();

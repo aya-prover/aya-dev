@@ -120,8 +120,12 @@ public sealed interface Expr {
    */
   record UnresolvedExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull String name
+    @NotNull ImmutableSeq<String> name
   ) implements Expr {
+    public UnresolvedExpr(@NotNull SourcePos sourcePos, @NotNull String name) {
+      this(sourcePos, ImmutableSeq.of(name));
+    }
+
     @Override
     public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnresolved(this, p);
