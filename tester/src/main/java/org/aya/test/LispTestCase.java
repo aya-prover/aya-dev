@@ -23,7 +23,10 @@ public class LispTestCase {
   protected final CollectReporter reporter = new CollectReporter();
 
   protected @NotNull TypedDefEq eq(MutableMap<LocalVar, Term> localCtx) {
-    return new TypedDefEq(eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)), new LocalCtx(localCtx, null), SourcePos.NONE);
+    return new TypedDefEq(
+      eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)),
+      new LocalCtx(localCtx, null), null, SourcePos.NONE
+    );
   }
 
   @AfterEach

@@ -197,10 +197,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     tracing(Trace.Builder::reduce);
     var unifier = new TypedDefEq(
       eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
-      localCtx,
-      loc.sourcePos()
+      localCtx, traceBuilder, loc.sourcePos()
     );
-    unifier.traceBuilder = traceBuilder;
     return unifier.compare(lower, upper, UnivTerm.OMEGA);
   }
 

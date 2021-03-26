@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   private final @NotNull ExprTycker exprTycker;
   public final @NotNull ExprRefSubst subst;
-  public Trace.@Nullable Builder traceBuilder;
+  public final Trace.@Nullable Builder traceBuilder;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);

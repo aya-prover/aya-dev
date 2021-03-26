@@ -70,8 +70,10 @@ public record PatClassifier(
         var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
         var lhsTerm = lhs.expr().get().subst(lhsSubst);
         var rhsTerm = rhs.expr().get().subst(rhsSubst);
-        var unification = new TypedDefEq(typedDefEq -> new PatDefEq(typedDefEq, Ordering.Eq, metaContext), ctx, pos)
-          .compare(lhsTerm, rhsTerm, result);
+        var unification = new TypedDefEq(
+          eq -> new PatDefEq(eq, Ordering.Eq, metaContext),
+          ctx, null, pos
+        ).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
           metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
           throw new ExprTycker.TyckInterruptedException();

@@ -30,7 +30,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   protected final @NotNull MutableMap<@NotNull Var, @NotNull Var> varSubst = new MutableHashMap<>();
   public final @NotNull LocalCtx localCtx;
   private final @NotNull PatDefEq termDirectedDefeq;
-  public Trace.@Nullable Builder traceBuilder = null;
+  public final Trace.@Nullable Builder traceBuilder;
   public final @NotNull SourcePos pos;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -53,11 +53,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   public TypedDefEq(
     @NotNull Function<@NotNull TypedDefEq, @NotNull PatDefEq> createTypedDefEq,
-    @NotNull LocalCtx localCtx,
-    @NotNull SourcePos pos
+    @NotNull LocalCtx localCtx, Trace.@Nullable Builder traceBuilder, @NotNull SourcePos pos
   ) {
     this.localCtx = localCtx;
     this.termDirectedDefeq = createTypedDefEq.apply(this);
+    this.traceBuilder = traceBuilder;
     this.pos = pos;
   }
 
