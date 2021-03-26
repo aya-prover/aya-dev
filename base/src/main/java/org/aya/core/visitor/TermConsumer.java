@@ -54,7 +54,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override default Unit visitTup(@NotNull TupTerm term, P p) {
     term.items().forEach(item -> item.accept(this, p));
-    return term.accept(this, p);
+    return Unit.unit();
   }
 
   @Override default Unit visitNew(@NotNull NewTerm newTerm, P p) {
