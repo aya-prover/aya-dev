@@ -96,6 +96,7 @@ public interface Term extends CoreTerm {
     R visitDataCall(CallTerm.@NotNull Data dataCall, P p);
     R visitConCall(CallTerm.@NotNull Con conCall, P p);
     R visitStructCall(CallTerm.@NotNull Struct structCall, P p);
+    R visitPrimCall(@NotNull CallTerm.Prim prim, P p);
     R visitTup(@NotNull TupTerm term, P p);
     R visitNew(@NotNull NewTerm newTerm, P p);
     R visitProj(@NotNull ProjTerm term, P p);
@@ -117,6 +118,7 @@ public interface Term extends CoreTerm {
     R visitDataCall(CallTerm.@NotNull Data dataCall, P p, Q q);
     R visitConCall(CallTerm.@NotNull Con conCall, P p, Q q);
     R visitStructCall(CallTerm.@NotNull Struct structCall, P p, Q q);
+    R visitPrimCall(@NotNull CallTerm.Prim prim, P p, Q q);
     R visitTup(@NotNull TupTerm term, P p, Q q);
     R visitNew(@NotNull NewTerm newTerm, P p, Q q);
     R visitProj(@NotNull ProjTerm term, P p, Q q);

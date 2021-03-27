@@ -68,24 +68,24 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override
-  public Doc visitUniv(@NotNull UnivTerm term, Boolean nestedCall) {
+  @Override public Doc visitUniv(@NotNull UnivTerm term, Boolean nestedCall) {
     // TODO: level
     return Doc.styled(KEYWORD, "\\oo-Type");
   }
 
-  @Override
-  public Doc visitApp(@NotNull AppTerm term, Boolean nestedCall) {
+  @Override public Doc visitApp(@NotNull AppTerm term, Boolean nestedCall) {
     return visitCalls(term.fn(), term.arg(), nestedCall);
   }
 
-  @Override
-  public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
+  @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
     return visitCalls(fnCall.ref(), FN_CALL, fnCall.args(), nestedCall);
   }
 
-  @Override
-  public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
+  @Override public Doc visitPrimCall(CallTerm.@NotNull Prim prim, Boolean nestedCall) {
+    return visitCalls(prim.ref(), FN_CALL, prim.args(), nestedCall);
+  }
+
+  @Override public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
     return visitCalls(dataCall.ref(), DATA_CALL, dataCall.args(), nestedCall);
   }
 

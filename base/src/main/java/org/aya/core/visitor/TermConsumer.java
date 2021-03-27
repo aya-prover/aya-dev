@@ -4,6 +4,7 @@ package org.aya.core.visitor;
 
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +12,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override
   default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
-    term.argsBuf().forEach(arg -> visitArg(arg, p));
+    visitArgs(p, term.argsBuf());
     return Unit.unit();
   }
 
@@ -48,13 +49,39 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
-    fnCall.args().forEach(arg -> visitArg(arg, p));
+    visitArgs(p, fnCall.args());
+    return Unit.unit();
+  }
+
+  @Override default Unit visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
+    visitArgs(p, prim.args());
+    return Unit.unit();
+  }
+
+
+  @Override default Unit visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
+    visitArgs(p, dataCall.args());
+    return Unit.unit();
+  }
+
+  @Override default Unit visitConCall(@NotNull CallTerm.Con conCall, P p) {
+    visitArgs(p, conCall.head().dataArgs());
+    visitArgs(p, conCall.conArgs());
+    return Unit.unit();
+  }
+
+  @Override default Unit visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
+    visitArgs(p, structCall.args());
     return Unit.unit();
   }
 
   @Override default Unit visitTup(@NotNull TupTerm term, P p) {
     term.items().forEach(item -> item.accept(this, p));
     return Unit.unit();
+  }
+
+  default void visitArgs(P p, SeqLike<Arg<@NotNull Term>> args) {
+    args.forEach(arg -> visitArg(arg, p));
   }
 
   @Override default Unit visitNew(@NotNull NewTerm newTerm, P p) {

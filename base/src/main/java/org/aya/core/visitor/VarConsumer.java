@@ -23,14 +23,18 @@ public interface VarConsumer<P> extends TermConsumer<P> {
 
   @Override default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
     visitVar(term.ref(), p);
-    visitArgs(term.args(), p);
-    return Unit.unit();
+    return TermConsumer.super.visitHole(term, p);
+
   }
 
   @Override default Unit visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
     visitVar(fnCall.ref(), p);
-    visitArgs(fnCall.args(), p);
-    return Unit.unit();
+    return TermConsumer.super.visitFnCall(fnCall, p);
+  }
+
+  @Override default Unit visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
+    visitVar(prim.ref(), p);
+    return TermConsumer.super.visitPrimCall(prim, p);
   }
 
   private void visitArgs(SeqLike<Arg<Term>> args, P p) {
@@ -39,20 +43,17 @@ public interface VarConsumer<P> extends TermConsumer<P> {
 
   @Override default Unit visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
     visitVar(dataCall.ref(), p);
-    visitArgs(dataCall.args(), p);
-    return Unit.unit();
+    return TermConsumer.super.visitDataCall(dataCall, p);
   }
 
   @Override default Unit visitConCall(@NotNull CallTerm.Con conCall, P p) {
     visitVar(conCall.ref(), p);
-    visitArgs(conCall.args(), p);
-    return Unit.unit();
+    return TermConsumer.super.visitConCall(conCall, p);
   }
 
   @Override default Unit visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
     visitVar(structCall.ref(), p);
-    visitArgs(structCall.args(), p);
-    return Unit.unit();
+    return TermConsumer.super.visitStructCall(structCall, p);
   }
 
   @Contract(mutates = "this,param2") void visitVar(Var usage, P p);

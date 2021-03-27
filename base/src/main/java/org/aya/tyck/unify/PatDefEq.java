@@ -87,6 +87,16 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()));
   }
 
+  @Override
+  public @NotNull Boolean visitPrimCall(CallTerm.@NotNull Prim lhs, @NotNull Term preRhs, @NotNull Term type) {
+    if (!(preRhs instanceof CallTerm.Prim rhs) || lhs.ref() != rhs.ref())
+      return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
+        && defeq.compareWHNF(lhs, preRhs, type);
+    // Lossy comparison
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()))) return true;
+    return defeq.compareWHNF(lhs, rhs, type);
+  }
+
   public @NotNull Boolean visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref())
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)

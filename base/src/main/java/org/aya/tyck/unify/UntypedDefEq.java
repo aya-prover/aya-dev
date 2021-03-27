@@ -28,9 +28,7 @@ public record UntypedDefEq(
     defeq.traceExit(true);
   }
 
-  @Override
-  public @Nullable
-  Term visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs) {
     if (preRhs instanceof RefTerm rhs
       && defeq.varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var()) {
       return defeq.localCtx.get(rhs.var());
@@ -38,9 +36,7 @@ public record UntypedDefEq(
     return null;
   }
 
-  @Override
-  public @Nullable
-  Term visitApp(@NotNull AppTerm lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitApp(@NotNull AppTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof AppTerm rhs)) return null;
     var preFnType = compare(lhs.fn(), rhs.fn());
     if (!(preFnType instanceof PiTerm fnType)) return null;
@@ -48,9 +44,7 @@ public record UntypedDefEq(
     return fnType.body().subst(fnType.param().ref(), lhs.arg().term());
   }
 
-  @Override
-  public @Nullable
-  Term visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof ProjTerm rhs)) return null;
     var preTupType = compare(lhs.tup(), rhs.tup());
     if (!(preTupType instanceof SigmaTerm tupType)) return null;
@@ -67,15 +61,11 @@ public record UntypedDefEq(
     return body;
   }
 
-  @Override
-  public @Nullable
-  Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitHole in UntypedDefEq");
   }
 
-  @Override
-  public @Nullable
-  Term visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof PiTerm rhs)) return null;
     return defeq.checkParam(lhs.param(), rhs.param(), () -> null, () -> {
       var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
@@ -84,9 +74,7 @@ public record UntypedDefEq(
     });
   }
 
-  @Override
-  public @Nullable
-  Term visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof SigmaTerm rhs)) return null;
     return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
       var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
@@ -95,39 +83,33 @@ public record UntypedDefEq(
     });
   }
 
-  @Override
-  public @Nullable
-  Term visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof UnivTerm)) return null;
     return UnivTerm.OMEGA;
   }
 
-  @Override
-  public @Nullable
-  Term visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitTup in UntypedDefEq");
   }
 
-  @Override
-  public @Nullable Term visitNew(@NotNull NewTerm newTerm, @NotNull Term term) {
+  @Override public @Nullable Term visitNew(@NotNull NewTerm newTerm, @NotNull Term term) {
     throw new IllegalStateException("No visitStruct in UntypedDefEq");
   }
 
-  @Override
-  public @Nullable
-  Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitFn in UntypedDefEq");
   }
 
-  @Override
-  public @Nullable
-  Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitData in UntypedDefEq");
   }
 
-  @Override
-  public @Nullable Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitStruct in UntypedDefEq");
+  }
+
+  @Override public @Nullable Term visitPrimCall(CallTerm.@NotNull Prim prim, @NotNull Term term) {
+    throw new IllegalStateException("No visitPrim in UntypedDefEq");
   }
 
   @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con conCall, @NotNull Term term) {

@@ -8,6 +8,7 @@ import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.PrimDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.visitor.Substituter;
 import org.aya.util.Decision;
@@ -65,6 +66,24 @@ public sealed interface CallTerm extends Term {
       if (ref.core == null) return Decision.YES;
       // TODO[xyr]: after adding inductive datatypes, we need to check if the function pattern matches.
       return Decision.NO;
+    }
+  }
+
+  record Prim(
+    @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
+    @NotNull SeqLike<Arg<@NotNull Term>> args
+  ) implements CallTerm {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitPrimCall(this, p);
+    }
+
+    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+      return visitor.visitPrimCall(this, p, q);
+    }
+
+    @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      if (args.isEmpty()) return Decision.YES;
+      return Decision.MAYBE;
     }
   }
 

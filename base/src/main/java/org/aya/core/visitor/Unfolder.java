@@ -59,6 +59,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return volynskaya != null ? volynskaya : fnCall;
   }
 
+  @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
+    return prim.ref().core.unfold(prim);
+  }
+
   private @Nullable Term tryUnfoldClauses(
     P p, ImmutableSeq<Arg<Term>> args,
     Substituter.@NotNull TermSubst subst,

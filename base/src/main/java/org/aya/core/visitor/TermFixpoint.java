@@ -108,6 +108,12 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new CallTerm.Fn(fnCall.ref(), contextArgs, args);
   }
 
+  @Override default @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
+    var args = prim.args().view().map(arg -> visitArg(arg, p));
+    if (prim.args().sameElements(args, true) && prim.args().sameElements(args, true)) return prim;
+    return new CallTerm.Prim(prim.ref(), args);
+  }
+
   @Override default @NotNull Term visitTup(@NotNull TupTerm term, P p) {
     var items = term.items().map(x -> x.accept(this, p));
     if (term.items().sameElements(items, true)) return term;

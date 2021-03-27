@@ -41,13 +41,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     tracing(builder -> builder.shift(trace));
   }
 
-  @Override
-  public void traceEntrance(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public void traceEntrance(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
     traceEntrance(new Trace.UnifyT(lhs, rhs, pos, type));
   }
 
-  @Override
-  public void traceExit(@NotNull Boolean result) {
+  @Override public void traceExit(@NotNull Boolean result) {
     tracing(Trace.Builder::reduce);
   }
 
@@ -103,38 +101,36 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
       checkParams(l.view().drop(1), r.view().drop(1), fail, success));
   }
 
-  @Override
-  public @NotNull Boolean visitRef(@NotNull RefTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitRef(@NotNull RefTerm type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitLam(@NotNull LamTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitLam(@NotNull LamTerm type, @NotNull Term lhs, @NotNull Term rhs) {
     throw new IllegalStateException("LamTerm can never be a type of any term");
   }
 
-  @Override
-  public @NotNull Boolean visitUniv(@NotNull UnivTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitUniv(@NotNull UnivTerm type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitApp(@NotNull AppTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitApp(@NotNull AppTerm type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
   @Override
   public @NotNull Boolean visitStructCall(@NotNull CallTerm.Struct type, @NotNull Term lhs, @NotNull Term rhs) {
+    return termDirectedDefeq.compare(lhs, rhs, type);
+  }
+
+  @Override public @NotNull Boolean visitPrimCall(CallTerm.@NotNull Prim type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
