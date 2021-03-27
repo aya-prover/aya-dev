@@ -40,11 +40,11 @@ import java.util.function.Consumer;
 /**
  * @author ice1000
  */
-public final class PatTycker implements Pattern.Visitor<Term, Pat> {
-  private final @NotNull ExprTycker exprTycker;
-  public final @NotNull ExprRefSubst subst;
-  public final Trace.@Nullable Builder traceBuilder;
-
+public record PatTycker(
+  @NotNull ExprTycker exprTycker,
+  @NotNull ExprRefSubst subst,
+  @Nullable Trace.Builder traceBuilder
+) implements Pattern.Visitor<Term, Pat> {
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
@@ -60,9 +60,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this.exprTycker = exprTycker;
-    this.traceBuilder = exprTycker.traceBuilder;
-    subst = new ExprRefSubst(exprTycker.metaContext.reporter(), MutableHashMap.of(), MutableHashSet.of());
+    this(exprTycker, new ExprRefSubst(exprTycker.metaContext.reporter(), MutableHashMap.of(), MutableHashSet.of()), exprTycker.traceBuilder);
   }
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
