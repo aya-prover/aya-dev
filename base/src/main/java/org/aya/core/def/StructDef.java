@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author vont
  */
 
-public record StructDef(
+public final record StructDef(
   @NotNull DefVar<StructDef, Decl.StructDecl> ref,
   @NotNull ImmutableSeq<Term.Param> contextTele,
 
@@ -31,7 +31,7 @@ public record StructDef(
     return visitor.visitStruct(this, p);
   }
 
-  public static record Field(
+  public static final record Field(
     @NotNull DefVar<StructDef, Decl.StructDecl> structRef,
     @NotNull DefVar<Field, Decl.StructField> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,

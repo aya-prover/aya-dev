@@ -22,7 +22,7 @@ import java.util.Objects;
 /**
  * @author ice1000
  */
-public interface Def extends CoreDef {
+public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef, PrimDef, StructDef, StructDef.Field {
   static @NotNull ImmutableSeq<Term.Param> defContextTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.contextTele();
       // guaranteed as this is already a core term
@@ -62,6 +62,7 @@ public interface Def extends CoreDef {
     R visitCtor(DataDef.@NotNull Ctor def, P p);
     R visitStruct(@NotNull StructDef def, P p);
     R visitField(StructDef.@NotNull Field def, P p);
+    R visitPrim(@NotNull PrimDef def, P p);
   }
 
   /**

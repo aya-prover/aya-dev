@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public record FnDef(
+public final record FnDef(
   @NotNull DefVar<FnDef, Decl.FnDecl> ref,
   @NotNull ImmutableSeq<Term.Param> contextTele,
 

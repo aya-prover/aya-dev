@@ -18,7 +18,7 @@ import java.util.Objects;
  *
  * @author kiva
  */
-public record DataDef(
+public final record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
   @NotNull ImmutableSeq<Term.Param> contextTele,
   @NotNull ImmutableSeq<Term.Param> telescope,
@@ -46,7 +46,7 @@ public record DataDef(
    * @param result  Needs to be substituted before usage.
    * @author ice1000, kiva
    */
-  public static record Ctor(
+  public static final record Ctor(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> pats,
