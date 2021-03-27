@@ -9,6 +9,7 @@ import org.aya.core.term.UnivTerm;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,4 +46,8 @@ public sealed interface PrimDef extends Def {
   @NotNull Map<String, DefVar<? extends PrimDef, Decl.PrimDecl>> primitives = Map.ofEntries(
     Tuple.of("I", Interval.ref)
   );
+
+  @ApiStatus.Internal static void clearConcrete() {
+    for (var var : primitives.valuesView()) var.concrete = null;
+  }
 }

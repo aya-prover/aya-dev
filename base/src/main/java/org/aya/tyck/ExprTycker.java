@@ -202,7 +202,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return unifier.compare(lower, upper, UnivTerm.OMEGA);
   }
 
-  private void unifyTyThrowing(Term upper, Term lower, Expr loc) {
+  void unifyTyThrowing(Term upper, Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc);
     if (!unification) {
       metaContext.report(new UnifyError(loc, upper, lower));

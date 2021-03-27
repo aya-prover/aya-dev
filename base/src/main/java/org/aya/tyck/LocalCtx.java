@@ -55,6 +55,10 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     localMap.set(var, term);
   }
 
+  public boolean isEmpty() {
+    return localMap.isEmpty() && (parent == null || parent.isEmpty());
+  }
+
   @Contract(" -> new") public @NotNull LocalCtx derive() {
     return new LocalCtx(MutableMap.create(), this);
   }

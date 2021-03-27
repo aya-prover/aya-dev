@@ -7,12 +7,10 @@ import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Signatured;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
-import org.aya.core.def.FnDef;
-import org.aya.core.def.StructDef;
+import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.GenericBuilder;
@@ -59,9 +57,23 @@ public record StmtTycker(
     tycker.localCtx = parent;
   }
 
-  @Override public Def visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker exprTycker) {
-    // TODO[ice]
-    throw new UnsupportedOperationException();
+  @Override public PrimDef visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker tycker) {
+    if (!tycker.localCtx.isEmpty()) {
+      // TODO[ice]: cannot put prims into local context
+      throw new ExprTycker.TyckerException();
+    }
+    var core = decl.ref.core;
+    var tele = checkTele(tycker, decl.telescope);
+    if (!tele.isEmpty()) tycker.unifyTyThrowing(
+      PiTerm.make(false, tele, core.result()),
+      PiTerm.make(false, core.telescope(), core.result()),
+      decl.result
+    );
+    if (decl.result != null) {
+      var result = decl.result.accept(tycker, null).wellTyped();
+      tycker.unifyTyThrowing(result, core.result(), decl.result);
+    }
+    return core;
   }
 
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {

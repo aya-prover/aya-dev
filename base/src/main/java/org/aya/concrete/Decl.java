@@ -82,14 +82,14 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @see PrimDef#primitives
    */
   public static final class PrimDecl extends Decl {
-    public final @NotNull DefVar<PrimDef, PrimDecl> ref;
-    public @NotNull Expr result;
+    public final @NotNull DefVar<@NotNull PrimDef, PrimDecl> ref;
+    public @Nullable Expr result;
 
     public PrimDecl(
       @NotNull SourcePos sourcePos,
-      @NotNull DefVar<PrimDef, PrimDecl> ref,
+      @NotNull DefVar<@NotNull PrimDef, PrimDecl> ref,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result
+      @Nullable Expr result
     ) {
       // TODO[ice]: are we sure? Empty abuse block?
       super(sourcePos, Accessibility.Public, ImmutableSeq.empty(), telescope);
