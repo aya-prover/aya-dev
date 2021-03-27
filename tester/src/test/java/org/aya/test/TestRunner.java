@@ -91,7 +91,7 @@ public class TestRunner {
     hookOut = instantiateHoles(testFile, hookOut);
     var workflowFile = testFile.resolveSibling(testFile.getFileName() + ".txt.todo");
     try {
-      Files.writeString(workflowFile, hookOut);
+      Files.writeString(workflowFile, hookOut, StandardCharsets.UTF_8);
     } catch (IOException e) {
       fail("error generating todo file " + workflowFile.toAbsolutePath());
     }

@@ -54,8 +54,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return ctx.stmt().stream().map(this::visitStmt).flatMap(Traversable::stream).collect(ImmutableSeq.factory());
   }
 
-  @Override
-  public @NotNull ImmutableSeq<Stmt> visitStmt(AyaParser.StmtContext ctx) {
+  @Override public @NotNull ImmutableSeq<Stmt> visitStmt(AyaParser.StmtContext ctx) {
     var importCmd = ctx.importCmd();
     if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
     var openCmd = ctx.openCmd();

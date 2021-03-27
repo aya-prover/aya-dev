@@ -27,6 +27,7 @@ decl : PRIVATE?
      ( fnDecl
      | structDecl
      | dataDecl
+     | primDecl
      );
 
 assoc : INFIX
@@ -51,6 +52,8 @@ fnModifiers : ERASE
 
 structDecl : '\\struct' ID tele* type? ('\\extends' ids)? ('|' field)* abuse?;
 
+primDecl : '\\prim' ID tele* type? ;
+
 field : COERCE? ID tele* type         # fieldDecl
       | ID tele* type? IMPLIES expr   # fieldImpl
       ;
@@ -61,7 +64,6 @@ dataBody : ('|' dataCtor)       # dataCtors
          | dataCtorClause       # dataClauses
          ;
 
-// TODO[imkiva]: some code commented in Arend.g4
 dataCtor : COERCE? ID tele* clauses?;
 
 dataCtorClause : '|' patterns IMPLIES dataCtor;
