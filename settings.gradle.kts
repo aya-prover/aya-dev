@@ -6,7 +6,6 @@ rootProject.name = "aya-prover"
 
 dependencyResolutionManagement {
   repositories {
-    jcenter()
     mavenCentral()
     maven(url = "https://jitpack.io")
   }

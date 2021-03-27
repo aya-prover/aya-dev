@@ -91,7 +91,7 @@ subprojects {
       artifactId = proj.name
       from(components["java"])
       pom {
-        // url.set("https://arend-lang.github.io")
+        url.set("https://www.aya-prover.org")
         licenses {
           license {
             name.set("GPL-3.0")
