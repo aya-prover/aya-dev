@@ -94,6 +94,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       // TODO[ice]: are we sure? Empty abuse block?
       super(sourcePos, Accessibility.Public, ImmutableSeq.empty(), telescope);
       this.result = result;
+      ref.concrete = this;
       this.ref = ref;
     }
 

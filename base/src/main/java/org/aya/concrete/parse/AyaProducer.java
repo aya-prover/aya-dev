@@ -66,9 +66,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       throw new ParsingInterruptedException();
     }
     var type = ctx.type();
+    var ref = core.get();
+    if (ref.concrete != null) {
+      reporter.report(new RedefinitionError(RedefinitionError.Kind.Prim, name, sourcePos));
+      throw new ParsingInterruptedException();
+    }
     return new Decl.PrimDecl(
       sourcePos,
-      core.get(),
+      ref,
       visitTelescope(ctx.tele()),
       type == null ? null : visitType(type)
     );

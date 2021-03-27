@@ -22,6 +22,7 @@ public record RedefinitionError(
   }
 
   public enum Kind {
+    Prim("primitive"),
     Ctor("constructor"),
     Field("field");
 

@@ -15,39 +15,36 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public sealed interface PrimDef extends Def {
-  @Override default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+public final record PrimDef(
+  @NotNull ImmutableSeq<Term.Param> telescope,
+  @NotNull Term result,
+  @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
+) implements Def {
+  public PrimDef(
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull Term result,
+    @NotNull String name
+  ) {
+    //noinspection ConstantConditions
+    this(telescope, result, DefVar.core(null, name));
+    ref.core = this;
+  }
+
+  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitPrim(this, p);
   }
 
-  final class Interval implements PrimDef {
-    private Interval() {
-    }
+  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), UnivTerm.OMEGA, "I");
 
-    public static final @NotNull DefVar<@NotNull Interval, Decl.PrimDecl> ref = DefVar.core(new Interval(), "I");
-
-    @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
-      return ImmutableSeq.empty();
-    }
-
-    @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
-      return ImmutableSeq.empty();
-    }
-
-    @Override public @NotNull DefVar<Interval, Decl.PrimDecl> ref() {
-      return ref;
-    }
-
-    @Override public @NotNull Term result() {
-      return UnivTerm.OMEGA;
-    }
+  @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
+    return ImmutableSeq.empty();
   }
 
-  @NotNull Map<String, DefVar<? extends PrimDef, Decl.PrimDecl>> primitives = Map.ofEntries(
-    Tuple.of("I", Interval.ref)
+  public static final @NotNull Map<@NotNull String, DefVar<? extends PrimDef, Decl.PrimDecl>> primitives = Map.ofEntries(
+    Tuple.of("I", INTERVAL.ref)
   );
 
-  @ApiStatus.Internal static void clearConcrete() {
+  public @ApiStatus.Internal static void clearConcrete() {
     for (var var : primitives.valuesView()) var.concrete = null;
   }
 }
