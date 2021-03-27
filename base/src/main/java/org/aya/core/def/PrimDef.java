@@ -40,6 +40,8 @@ public final record PrimDef(
   }
 
   public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), UnivTerm.OMEGA, prim -> prim, "I");
+  public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of()), prim -> prim, "left");
+  public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of()), prim -> prim, "right");
 
   public @NotNull Term unfold(@NotNull CallTerm.Prim primCall) {
     return unfold.apply(primCall);
@@ -50,7 +52,9 @@ public final record PrimDef(
   }
 
   public static final @NotNull Map<@NotNull String, @NotNull PrimDef> primitives = Map.ofEntries(
-    Tuple.of("I", INTERVAL)
+    Tuple.of("I", INTERVAL),
+    Tuple.of("left", LEFT),
+    Tuple.of("right", RIGHT)
   );
 
   public @ApiStatus.Internal static void clearConcrete() {

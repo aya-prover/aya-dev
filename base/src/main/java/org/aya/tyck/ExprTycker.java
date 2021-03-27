@@ -12,10 +12,7 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Signatured;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
-import org.aya.core.def.FnDef;
-import org.aya.core.def.StructDef;
+import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.pretty.doc.Doc;
@@ -42,7 +39,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
@@ -146,6 +142,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @SuppressWarnings("unchecked") public @NotNull Result inferRef(@NotNull DefVar<?, ?> var, Term expected) {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall((DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
+    } else if (var.core instanceof PrimDef) {
+      return defCall((DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, args) -> new CallTerm.Prim(v, args));
     } else if (var.core instanceof DataDef || var.concrete instanceof Decl.DataDecl) {
       return defCall((DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {
@@ -186,7 +184,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var tele = Def.defTele(defVar);
     // ice: should we rename the vars in this telescope? Probably not.
     var body = function.apply(defVar,
-      Objects.requireNonNull(defVar.concrete.signature).param().map(Term.Param::toArg),
+      // TODO[xyr]: context args
+      ImmutableSeq.of(),
       tele.view().map(Term.Param::toArg).toImmutableSeq());
     var type = PiTerm.make(false, tele, Def.defResult(defVar));
     return new Result(LamTerm.make(tele, body), type);
