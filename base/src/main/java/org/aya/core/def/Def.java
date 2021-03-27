@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.def;
 
-import org.aya.api.core.def.CoreDef;
+import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
 import org.aya.core.pretty.DefPrettier;

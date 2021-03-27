@@ -3,8 +3,8 @@
 package org.aya.core.term;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LocalVar;
 import org.aya.ref.LevelVar;
-import org.aya.ref.LocalVar;
 import org.aya.util.Decision;
 import org.jetbrains.annotations.NotNull;
 

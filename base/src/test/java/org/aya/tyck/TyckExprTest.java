@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.parse.AyaProducer;
@@ -10,7 +11,6 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.LamTerm;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.RefTerm;
-import org.aya.ref.LocalVar;
 import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;

@@ -3,11 +3,11 @@
 package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.pretty.PatternPrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.value.Ref;

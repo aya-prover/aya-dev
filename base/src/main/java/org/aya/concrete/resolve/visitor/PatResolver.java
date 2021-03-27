@@ -3,9 +3,9 @@
 package org.aya.concrete.resolve.visitor;
 
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.value.Ref;

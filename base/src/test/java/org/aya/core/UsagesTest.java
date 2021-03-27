@@ -2,10 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core;
 
+import org.aya.api.ref.LocalVar;
 import org.aya.core.def.Def;
 import org.aya.core.visitor.RefFinder;
 import org.aya.core.visitor.UsageCounter;
-import org.aya.ref.LocalVar;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
 import org.aya.tyck.TyckDeclTest;

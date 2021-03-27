@@ -3,6 +3,7 @@
 package org.aya.core;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
@@ -10,7 +11,6 @@ import org.aya.core.def.FnDef;
 import org.aya.core.term.*;
 import org.aya.parser.LispBaseVisitor;
 import org.aya.parser.LispParser;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.MutableMap;

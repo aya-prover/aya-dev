@@ -2,7 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pat;
 
+import org.aya.api.core.CorePat;
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.pretty.PatPrettier;
@@ -10,8 +12,6 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
-import org.aya.ref.LocalVar;
 import org.aya.tyck.LocalCtx;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -25,12 +25,10 @@ import org.jetbrains.annotations.Nullable;
  * @author kiva, ice1000
  */
 @Debug.Renderer(text = "toTerm().toDoc().renderWithPageWidth(114514)")
-public sealed interface Pat extends Docile {
-  @Nullable LocalVar as();
-  @NotNull Term type();
-  boolean explicit();
+public sealed interface Pat extends CorePat {
+  @Override @NotNull Term type();
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-  default @NotNull Term toTerm() {
+  @Override default @NotNull Term toTerm() {
     return accept(PatToTerm.INSTANCE, Unit.unit());
   }
   @Override default @NotNull Doc toDoc() {

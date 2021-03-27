@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pretty;
 
+import org.aya.api.ref.LocalVar;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 

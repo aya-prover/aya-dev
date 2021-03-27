@@ -1,8 +1,7 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.ref;
+package org.aya.api.ref;
 
-import org.aya.api.ref.Var;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,4 +17,3 @@ public record LocalVar(@NotNull String name) implements Var {
     return System.identityHashCode(this);
   }
 }
-

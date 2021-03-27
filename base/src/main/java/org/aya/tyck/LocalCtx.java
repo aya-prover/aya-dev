@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import org.aya.api.ref.LocalVar;
 import org.aya.core.term.Term;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;

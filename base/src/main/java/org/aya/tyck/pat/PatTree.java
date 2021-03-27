@@ -3,11 +3,11 @@
 package org.aya.tyck.pat;
 
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.generic.GenericBuilder;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;

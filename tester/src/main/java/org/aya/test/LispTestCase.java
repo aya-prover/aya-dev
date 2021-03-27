@@ -4,9 +4,9 @@ package org.aya.test;
 
 import org.aya.api.error.CollectReporter;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.core.term.Term;
-import org.aya.ref.LocalVar;
 import org.aya.tyck.LocalCtx;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.unify.PatDefEq;

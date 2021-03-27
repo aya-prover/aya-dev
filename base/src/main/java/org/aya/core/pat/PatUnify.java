@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pat;
 
+import org.aya.api.ref.LocalVar;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.LocalVar;
 import org.aya.tyck.LocalCtx;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
