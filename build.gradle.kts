@@ -33,12 +33,12 @@ subprojects {
     if (useJacoco) plugin("jacoco")
     plugin("maven-publish")
     plugin("java-library")
+    plugin("signing")
   }
 
   java {
     withSourcesJar()
-    // Enable on-demand
-    // withJavadocJar()
+    if (hasProperty("release")) withJavadocJar()
     sourceCompatibility = JavaVersion.VERSION_16
     targetCompatibility = JavaVersion.VERSION_16
   }
@@ -59,6 +59,19 @@ subprojects {
     options.isDeprecation = true
     options.release.set(16)
     options.compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
+  }
+
+  tasks.withType<Javadoc>().configureEach {
+    (options as StandardJavadocDocletOptions).tags(
+      "apiNote:a:API Note:",
+      "implSpec:a:Implementation Requirements:",
+      "implNote:a:Implementation Note:",
+    )
+  }
+
+  artifacts {
+    add("archives", tasks["sourcesJar"])
+    if (hasProperty("release")) add("archives", tasks["javadocJar"])
   }
 
   if (useJacoco) tasks.jacocoTestReport {
@@ -83,23 +96,51 @@ subprojects {
     enableAssertions = true
   }
 
+  if (hasProperty("ossrhUsername")) publishing.repositories {
+    maven("https://oss.sonatype.org/service/local/staging/deploy/maven2") {
+      name = "MavenCentral"
+      credentials {
+        username = property("ossrhUsername").toString()
+        password = property("ossrhPassword").toString()
+      }
+    }
+  }
+
   val proj = this@subprojects
   publishing.publications {
     create<MavenPublication>("maven") {
+      val githubUrl = "https://github.com/aya-prover/aya-dev"
       groupId = proj.group.toString()
       version = proj.version.toString()
       artifactId = proj.name
       from(components["java"])
       pom {
+        description.set("The Aya proof assistant")
+        name.set(proj.name)
         url.set("https://www.aya-prover.org")
         licenses {
           license {
             name.set("GPL-3.0")
-            url.set("https://github.com/ice1000/aya-prover/blob/master/LICENSE")
+            url.set("$githubUrl/blob/master/LICENSE")
           }
+        }
+        developers {
+          developer {
+            id.set("ice1000")
+            name.set("Tesla Ice Zhang")
+            email.set("ice1000kotlin@foxmail.com")
+          }
+        }
+        scm {
+          connection.set("scm:git:$githubUrl")
+          url.set(githubUrl)
         }
       }
     }
+  }
+
+  if (hasProperty("signing.keyId")) signing {
+    sign(publishing.publications["maven"])
   }
 }
 
