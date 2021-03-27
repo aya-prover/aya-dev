@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import org.aya.api.concrete.ConcretePat;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.pretty.PatternPrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.value.Ref;
@@ -19,10 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * @author kiva, ice1000
  */
 @Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
-public sealed interface Pattern extends Docile {
-  @NotNull SourcePos sourcePos();
-  boolean explicit();
-
+public sealed interface Pattern extends ConcretePat {
   @Override default @NotNull Doc toDoc() {
     return accept(PatternPrettier.INSTANCE, false);
   }

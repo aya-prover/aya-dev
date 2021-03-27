@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.NonExtendable
 public interface Bind extends Docile {
-  @Contract(pure = true) @NotNull Var ref();
+  @Contract(pure = true) @NotNull LocalVar ref();
   @Contract(pure = true) @Nullable CoreTerm type();
   @Contract(pure = true) boolean explicit();
   @Contract(" -> new") @NotNull Arg<? extends CoreTerm> toArg();

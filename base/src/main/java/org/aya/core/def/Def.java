@@ -43,10 +43,10 @@ public interface Def extends CoreDef {
     return Term.Param.subst(param.view().drop(1), subst);
   }
 
-  @NotNull Term result();
+  @Override @NotNull Term result();
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
-  @NotNull ImmutableSeq<Term.Param> contextTele();
-  @NotNull ImmutableSeq<Term.Param> telescope();
+  @Override @NotNull ImmutableSeq<Term.Param> contextTele();
+  @Override @NotNull ImmutableSeq<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Doc toDoc() {
