@@ -5,7 +5,7 @@ module org.aya.api {
 
   requires org.aya.pretty;
 
-  exports org.aya.api.concrete.def;
+  exports org.aya.api.concrete;
   exports org.aya.api.core.def;
   exports org.aya.api.core.term;
   exports org.aya.api.error;

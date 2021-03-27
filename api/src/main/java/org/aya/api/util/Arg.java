@@ -6,7 +6,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @param <T> the type of expressions, can be {@link org.aya.api.core.term.CoreTerm} or <code>Expr</code>.
+ * @param <T> the type of expressions, can be {@link org.aya.api.core.term.CoreTerm} or
+ *            {@link org.aya.api.concrete.ConcreteExpr}.
  * @author ice1000
  */
 public record Arg<T>(@NotNull T term, boolean explicit) {

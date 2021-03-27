@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import org.aya.api.concrete.ConcreteExpr;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
@@ -12,7 +13,6 @@ import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  * @author re-xyr
  */
 @Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
-public sealed interface Expr extends Docile {
+public sealed interface Expr extends ConcreteExpr {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -38,8 +38,6 @@ public sealed interface Expr extends Docile {
     visitor.traceExit(ret, this, p);
     return ret;
   }
-
-  @NotNull SourcePos sourcePos();
 
   default @NotNull Expr resolve(@NotNull Context context) {
     return accept(ExprResolver.INSTANCE, context);
@@ -312,16 +310,6 @@ public sealed interface Expr extends Docile {
 
     public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @Nullable Expr> mapper) {
       return new Param(sourcePos, ref, type != null ? mapper.apply(type) : null, explicit);
-    }
-
-    @Override public @NotNull Doc toDoc() {
-      return Doc.cat(
-        explicit ? Doc.plain("(") : Doc.plain("{"),
-        Doc.plain(ref.name()),
-        type == null ? Doc.empty()
-          : Doc.cat(Doc.plain(" : "), type.toDoc()),
-        explicit ? Doc.plain(")") : Doc.plain("}")
-      );
     }
   }
 }

@@ -7,7 +7,6 @@ import org.aya.api.ref.Bind;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
-import org.aya.core.pretty.DefPrettier;
 import org.aya.core.pretty.TermPrettier;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Stripper;
@@ -135,15 +134,6 @@ public interface Term extends CoreTerm {
   ) implements Bind, ParamLike<Term> {
     public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(Buffer<Tuple3<LocalVar, Boolean, Term>> buf) {
       return buf.toImmutableSeq().map(tup -> new Param(tup._1, tup._3, tup._2));
-    }
-
-    @Override public @NotNull Doc toDoc() {
-      return Doc.cat(
-        Doc.plain(explicit ? "(" : "{"),
-        DefPrettier.plainLink(ref),
-        Doc.cat(Doc.plain(" : "), type.toDoc()),
-        Doc.plain(explicit ? ")" : "}")
-      );
     }
 
     @Contract(" -> new") public @NotNull Param implicitify() {

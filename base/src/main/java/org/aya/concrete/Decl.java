@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
-import org.aya.api.concrete.def.ConcreteDecl;
+import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Assoc;
