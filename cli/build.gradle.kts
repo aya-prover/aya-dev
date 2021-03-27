@@ -5,7 +5,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 dependencies {
   val deps: java.util.Properties by rootProject.ext
   implementation("com.beust", "jcommander", version = deps.getProperty("version.jcommander"))
-  implementation("org.ice1000.jimgui", "jimgui-core", version = deps.getProperty("version.jimgui"))
+  implementation("org.ice1000.jimgui", "core", version = deps.getProperty("version.jimgui"))
   implementation(project(":base"))
   implementation(project(":parser"))
   implementation(project(":pretty"))

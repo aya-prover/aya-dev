@@ -22,8 +22,7 @@ allprojects {
   version = deps.getProperty("version.project")
 }
 
-@Suppress("UnstableApiUsage")
-subprojects {
+@Suppress("UnstableApiUsage") subprojects {
   if (name in listOf("docs")) return@subprojects
   val useJacoco = name in listOf("base", "tester", "pretty")
 
@@ -55,10 +54,12 @@ subprojects {
   tasks.withType<JavaCompile>().configureEach {
     modularity.inferModulePath.set(true)
 
-    options.encoding = "UTF-8"
-    options.isDeprecation = true
-    options.release.set(16)
-    options.compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
+    options.apply {
+      encoding = "UTF-8"
+      isDeprecation = true
+      release.set(16)
+      compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
+    }
   }
 
   tasks.withType<Javadoc>().configureEach {

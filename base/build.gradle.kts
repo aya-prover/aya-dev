@@ -9,13 +9,10 @@ dependencies {
 
 val genDir = file("src/main/gen")
 val generateVersion = tasks.register<org.aya.gradle.GenerateVersionTask>("generateVersion") {
-  outputDir = genDir.resolve("${project.group.toString().split(".").joinToString("/")}/prelude")
+  outputDir = genDir.resolve("${project.group.toString().replace('.', '/')}/prelude")
 }
 
-idea {
-  module.generatedSourceDirs.add(genDir)
-}
-
+idea.module.generatedSourceDirs.add(genDir)
 sourceSets.main {
   java.srcDirs(genDir)
 }
