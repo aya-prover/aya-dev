@@ -4,6 +4,7 @@ package org.aya.api.core.def;
 
 import org.aya.api.concrete.def.ConcreteDecl;
 import org.aya.api.ref.DefVar;
+import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,6 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 @ApiStatus.NonExtendable
-public interface CoreDef {
+public interface CoreDef extends Docile {
   @Contract(pure = true) @NotNull DefVar<? extends CoreDef, ? extends ConcreteDecl> ref();
 }

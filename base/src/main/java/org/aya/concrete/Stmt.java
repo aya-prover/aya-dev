@@ -6,6 +6,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.concrete.pretty.StmtPrettier;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author kiva
  */
-public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stmt.OpenStmt {
+public sealed interface Stmt extends Docile
+  permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stmt.OpenStmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
@@ -26,7 +28,7 @@ public sealed interface Stmt permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stm
     accept(StmtResolver.INSTANCE, Unit.unit());
   }
 
-  default @NotNull Doc toDoc() {
+  @Override default @NotNull Doc toDoc() {
     return accept(StmtPrettier.INSTANCE, Unit.unit());
   }
 

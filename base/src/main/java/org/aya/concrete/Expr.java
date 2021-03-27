@@ -5,13 +5,14 @@ package org.aya.concrete;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.api.util.Arg;
 import org.aya.concrete.pretty.ExprPrettier;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
-import org.aya.generic.Arg;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
@@ -28,7 +29,7 @@ import java.util.stream.Stream;
  * @author re-xyr
  */
 @Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
-public sealed interface Expr {
+public sealed interface Expr extends Docile {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -48,7 +49,7 @@ public sealed interface Expr {
     return resolve(new EmptyContext(reporter));
   }
 
-  default @NotNull Doc toDoc() {
+  @Override default @NotNull Doc toDoc() {
     return accept(ExprPrettier.INSTANCE, false);
   }
 
@@ -313,12 +314,11 @@ public sealed interface Expr {
       return new Param(sourcePos, ref, type != null ? mapper.apply(type) : null, explicit);
     }
 
-    public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc() {
       return Doc.cat(
         explicit ? Doc.plain("(") : Doc.plain("{"),
         Doc.plain(ref.name()),
-        type == null
-          ? Doc.empty()
+        type == null ? Doc.empty()
           : Doc.cat(Doc.plain(" : "), type.toDoc()),
         explicit ? Doc.plain(")") : Doc.plain("}")
       );

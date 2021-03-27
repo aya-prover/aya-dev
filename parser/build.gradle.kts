@@ -7,10 +7,7 @@ dependencies {
 
 val genDir = file("src/main/java")
 
-idea {
-  module.generatedSourceDirs.add(genDir)
-}
-
+idea.module.generatedSourceDirs.add(genDir)
 tasks.register("cleanSource") {
   group = "build"
   genDir.deleteRecursively()

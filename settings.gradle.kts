@@ -5,7 +5,7 @@ import java.util.*
 rootProject.name = "aya-prover"
 
 dependencyResolutionManagement {
-  repositories {
+  @Suppress("UnstableApiUsage") repositories {
     mavenCentral()
     maven(url = "https://jitpack.io")
   }
@@ -20,7 +20,7 @@ include(
   // "proto",
   "parser",
   "base",
-  "pretty"
+  "pretty",
 )
 
 var deps = Properties()

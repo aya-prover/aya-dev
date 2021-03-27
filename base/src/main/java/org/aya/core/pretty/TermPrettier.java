@@ -3,8 +3,8 @@
 package org.aya.core.pretty;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.util.Arg;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;

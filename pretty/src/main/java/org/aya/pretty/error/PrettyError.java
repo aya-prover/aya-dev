@@ -3,6 +3,7 @@
 package org.aya.pretty.error;
 
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ public record PrettyError(
   @NotNull Doc tag,
   @NotNull Doc tagMessage,
   @NotNull Doc noteMessage
-) {
+) implements Docile {
   public Doc toDoc(PrettyErrorConfig config) {
     var lineCol = errorRange.normalize(config);
 
@@ -32,7 +33,7 @@ public record PrettyError(
       : Doc.vcat(doc, Doc.hsep(Doc.plain("note:"), Doc.align(noteMessage)));
   }
 
-  public Doc toDoc() {
+  @Override public @NotNull Doc toDoc() {
     return toDoc(PrettyErrorConfig.DEFAULT);
   }
 

@@ -4,12 +4,12 @@ package org.aya.core.term;
 
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
+import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.visitor.Substituter;
-import org.aya.generic.Arg;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;

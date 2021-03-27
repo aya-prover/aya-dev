@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.api.util.Arg;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
-import org.aya.generic.Arg;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.error.HoleBadSpineWarn;

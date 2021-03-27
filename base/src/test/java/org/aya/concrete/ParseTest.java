@@ -4,9 +4,9 @@ package org.aya.concrete;
 
 import org.aya.api.Global;
 import org.aya.api.error.SourcePos;
+import org.aya.api.util.Arg;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
-import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;

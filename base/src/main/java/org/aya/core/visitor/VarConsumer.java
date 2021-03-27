@@ -3,10 +3,10 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
+import org.aya.api.util.Arg;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Arg;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;

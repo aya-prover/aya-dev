@@ -3,11 +3,11 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
+import org.aya.api.util.Arg;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Arg;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.Set;

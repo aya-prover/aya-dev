@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import org.aya.api.util.Arg;
 import org.aya.core.term.*;
-import org.aya.generic.Arg;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 

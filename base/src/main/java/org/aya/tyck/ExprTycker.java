@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
+import org.aya.api.util.Arg;
 import org.aya.api.util.BreakingException;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
@@ -16,7 +17,6 @@ import org.aya.core.def.FnDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
-import org.aya.generic.Arg;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.error.BadTypeError;

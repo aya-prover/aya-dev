@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
-import org.aya.generic.Arg;
+import org.aya.api.util.Arg;
 import org.aya.util.Decision;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

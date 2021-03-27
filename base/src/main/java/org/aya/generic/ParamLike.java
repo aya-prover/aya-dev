@@ -4,6 +4,7 @@ package org.aya.generic;
 
 import org.aya.api.ref.Var;
 import org.aya.core.term.Term;
+import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  *               {@link Term} or {@link org.aya.concrete.Expr}.
  * @author ice1000
  */
-public interface ParamLike<Expr> {
+public interface ParamLike<Expr> extends Docile {
   boolean explicit();
   @NotNull Var ref();
   @NotNull Expr type();

@@ -6,6 +6,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.concrete.Pattern;
 import org.aya.generic.GenericBuilder;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.ref.LocalVar;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.value.Ref;
@@ -18,7 +19,7 @@ public record PatTree(
   @NotNull String s,
   boolean explicit,
   @NotNull Buffer<PatTree> children
-) implements GenericBuilder.Tree<PatTree> {
+) implements GenericBuilder.Tree<PatTree>, Docile {
   public PatTree(@NotNull String s, boolean explicit) {
     this(s, explicit, Buffer.create());
   }
@@ -28,7 +29,7 @@ public record PatTree(
     return new Pattern.Ctor(SourcePos.NONE, explicit, s, children.view().map(PatTree::toPattern).toImmutableSeq(), null);
   }
 
-  public @NotNull Doc toDoc() {
+  @Override public @NotNull Doc toDoc() {
     return toPattern().toDoc();
   }
 

@@ -5,13 +5,13 @@ package org.aya.core.term;
 import org.aya.api.core.term.CoreTerm;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.Var;
+import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.pretty.DefPrettier;
 import org.aya.core.pretty.TermPrettier;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Stripper;
 import org.aya.core.visitor.Substituter;
-import org.aya.generic.Arg;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
@@ -78,7 +78,7 @@ public interface Term extends CoreTerm {
     return accept(Normalizer.INSTANCE, mode);
   }
 
-  default @NotNull Doc toDoc() {
+  @Override default @NotNull Doc toDoc() {
     return accept(TermPrettier.INSTANCE, false);
   }
 
@@ -137,7 +137,7 @@ public interface Term extends CoreTerm {
       return buf.toImmutableSeq().map(tup -> new Param(tup._1, tup._3, tup._2));
     }
 
-    public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc() {
       return Doc.cat(
         Doc.plain(explicit ? "(" : "{"),
         DefPrettier.plainLink(ref),
@@ -150,7 +150,7 @@ public interface Term extends CoreTerm {
       return new Param(ref, type, false);
     }
 
-    @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
+    @Override @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
       return new Arg<>(new RefTerm(ref), explicit);
     }
 
@@ -178,7 +178,7 @@ public interface Term extends CoreTerm {
     }
 
     @TestOnly @Contract(pure = true)
-    public static boolean checkSubst(@NotNull Seq<@NotNull Param> params, @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args) {
+    public static boolean checkSubst(@NotNull Seq<@NotNull Param> params, @NotNull SeqLike<Arg<Term>> args) {
       var obj = new Object() {
         boolean ok = true;
       };

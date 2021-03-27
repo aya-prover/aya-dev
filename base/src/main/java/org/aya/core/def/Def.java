@@ -9,6 +9,7 @@ import org.aya.core.pretty.DefPrettier;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
@@ -48,7 +49,7 @@ public interface Def extends CoreDef {
   @NotNull ImmutableSeq<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-  default @NotNull Doc toDoc() {
+  @Override default @NotNull Doc toDoc() {
     return accept(DefPrettier.INSTANCE, Unit.unit());
   }
 
@@ -73,13 +74,13 @@ public interface Def extends CoreDef {
     @NotNull ImmutableSeq<Term.@NotNull Param> contextParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
-  ) {
+  ) implements Docile {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
       return new Signature(Term.Param.subst(contextParam, subst), substParams(param, subst), result.subst(subst));
     }
 
-    public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc() {
       return Doc.hcat(Doc.join(Doc.plain(" "), param.stream().map(Term.Param::toDoc)),
         Doc.plain(" -> "), result.toDoc());
     }
