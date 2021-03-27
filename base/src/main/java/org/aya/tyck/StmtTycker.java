@@ -59,6 +59,11 @@ public record StmtTycker(
     tycker.localCtx = parent;
   }
 
+  @Override public Def visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker exprTycker) {
+    // TODO[ice]
+    throw new UnsupportedOperationException();
+  }
+
   @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var dataRef = ctor.dataRef;
     var dataSig = dataRef.concrete.signature;

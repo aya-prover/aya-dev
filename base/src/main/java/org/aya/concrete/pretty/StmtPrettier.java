@@ -3,6 +3,7 @@
 package org.aya.concrete.pretty;
 
 import org.aya.concrete.*;
+import org.aya.core.pretty.DefPrettier;
 import org.aya.core.pretty.TermPrettier;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
@@ -162,6 +163,10 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
         ? Doc.empty()
         : Doc.cat(Doc.plain(" "), Doc.styled(TermPrettier.KEYWORD, "\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
     );
+  }
+
+  @Override public Doc visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
+    return DefPrettier.primDoc(decl.ref);
   }
 
   private Doc visitModifier(@NotNull Modifier modifier) {

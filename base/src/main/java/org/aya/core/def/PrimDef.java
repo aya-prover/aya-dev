@@ -4,10 +4,11 @@ package org.aya.core.def;
 
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
-import org.aya.concrete.Signatured;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
+import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,8 +19,11 @@ public sealed interface PrimDef extends Def {
     return visitor.visitPrim(this, p);
   }
 
-  record Interval() implements PrimDef {
-    public static final @NotNull DefVar<@NotNull Interval, ? extends Decl> ref = DefVar.core(new Interval(), "I");
+  final class Interval implements PrimDef {
+    private Interval() {
+    }
+
+    public static final @NotNull DefVar<@NotNull Interval, Decl.PrimDecl> ref = DefVar.core(new Interval(), "I");
 
     @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
       return ImmutableSeq.empty();
@@ -29,7 +33,7 @@ public sealed interface PrimDef extends Def {
       return ImmutableSeq.empty();
     }
 
-    @Override public @NotNull DefVar<? extends Def, ? extends Signatured> ref() {
+    @Override public @NotNull DefVar<Interval, Decl.PrimDecl> ref() {
       return ref;
     }
 
@@ -37,4 +41,8 @@ public sealed interface PrimDef extends Def {
       return UnivTerm.OMEGA;
     }
   }
+
+  @NotNull Map<String, DefVar<? extends PrimDef, Decl.PrimDecl>> primitives = Map.ofEntries(
+    Tuple.of("I", Interval.ref)
+  );
 }

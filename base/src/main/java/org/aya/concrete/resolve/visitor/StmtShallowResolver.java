@@ -109,4 +109,9 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
     // TODO[xyr]: abuse block currently have no use, so we ignore it for now.
     return visitDecl(decl, context);
   }
+
+  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, @NotNull ModuleContext moduleContext) {
+    visitDecl(decl, moduleContext);
+    return Unit.unit();
+  }
 }

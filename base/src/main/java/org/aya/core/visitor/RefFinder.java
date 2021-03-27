@@ -4,10 +4,7 @@ package org.aya.core.visitor;
 
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
-import org.aya.core.def.FnDef;
-import org.aya.core.def.StructDef;
+import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
@@ -69,7 +66,11 @@ public record RefFinder(boolean withBody) implements
     return Unit.unit();
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
+  @Override public Unit visitPrim(@NotNull PrimDef def, @NotNull Buffer<Def> defs) {
+    tele(defs, def.telescope());
+    return Unit.unit();
+  }
+
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(TermRefFinder.INSTANCE, references);

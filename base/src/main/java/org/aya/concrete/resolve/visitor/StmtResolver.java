@@ -79,4 +79,11 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
       pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2)));
     return Unit.unit();
   }
+
+  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
+    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
+    decl.telescope = local._1;
+    decl.result = decl.result.resolve(local._2);
+    return unit;
+  }
 }

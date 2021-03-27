@@ -3,10 +3,7 @@
 package org.aya.core.pretty;
 
 import org.aya.api.ref.Var;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
-import org.aya.core.def.FnDef;
-import org.aya.core.def.StructDef;
+import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
@@ -92,5 +89,16 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
 
   @Override public Doc visitField(@NotNull StructDef.Field def, Unit unit) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {
+    return primDoc(def.ref());
+  }
+
+  public static @NotNull Doc primDoc(Var ref) {
+    return Doc.hcat(
+      Doc.styled(TermPrettier.KEYWORD, "\\prim "),
+      Doc.hashCodeLink(Doc.styled(TermPrettier.FN_CALL, ref.name()), ref.hashCode())
+    );
   }
 }

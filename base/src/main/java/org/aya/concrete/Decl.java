@@ -7,10 +7,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
-import org.aya.core.def.FnDef;
-import org.aya.core.def.StructDef;
+import org.aya.core.def.*;
 import org.aya.generic.Modifier;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
@@ -76,6 +73,37 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     R visitData(Decl.@NotNull DataDecl decl, P p);
     R visitStruct(Decl.@NotNull StructDecl decl, P p);
     R visitFn(Decl.@NotNull FnDecl decl, P p);
+    R visitPrim(Decl.@NotNull PrimDecl decl, P p);
+  }
+
+  /**
+   * @author ice1000
+   * @see PrimDef
+   * @see PrimDef#primitives
+   */
+  public static final class PrimDecl extends Decl {
+    public final @NotNull DefVar<PrimDef, PrimDecl> ref;
+    public @NotNull Expr result;
+
+    public PrimDecl(
+      @NotNull SourcePos sourcePos,
+      @NotNull DefVar<PrimDef, PrimDecl> ref,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
+      @NotNull Expr result
+    ) {
+      // TODO[ice]: are we sure? Empty abuse block?
+      super(sourcePos, Accessibility.Public, ImmutableSeq.empty(), telescope);
+      this.result = result;
+      this.ref = ref;
+    }
+
+    @Override public @NotNull DefVar<PrimDef, PrimDecl> ref() {
+      return ref;
+    }
+
+    @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
+      return visitor.visitPrim(this, p);
+    }
   }
 
   public static final class DataCtor extends Signatured {
