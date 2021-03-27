@@ -20,5 +20,5 @@ tasks.withType<Jar>().configureEach {
 task<Copy>("copyJarHere") {
   dependsOn("shadowJar")
   from(buildDir.resolve("libs").resolve("${project.name}-$version-all.jar"))
-  into(rootProject.projectDir)
+  into(rootProject.buildDir)
 }

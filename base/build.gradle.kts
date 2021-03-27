@@ -20,9 +20,8 @@ sourceSets.main {
   java.srcDirs(genDir)
 }
 
-tasks.compileJava {
-  dependsOn(generateVersion)
-}
+tasks.compileJava.configure { dependsOn(generateVersion) }
+tasks.sourcesJar.configure { dependsOn(generateVersion) }
 
 val cleanGenerated = tasks.register("cleanGenerated") {
   group = "build"
