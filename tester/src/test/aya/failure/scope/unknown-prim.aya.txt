@@ -1,0 +1,8 @@
+In file $FILE:1:6 ->
+
+  1 | \prim YYUT
+            ^--^
+  
+Error: Unknown primitive `YYUT`
+Parsing interrupted due to errors.
+What are you doing?

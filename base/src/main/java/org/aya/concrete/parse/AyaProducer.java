@@ -15,6 +15,8 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.error.RedefinitionError;
+import org.aya.concrete.resolve.error.UnknownPrimError;
+import org.aya.core.def.PrimDef;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
@@ -54,6 +56,24 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return ctx.stmt().stream().map(this::visitStmt).flatMap(Traversable::stream).collect(ImmutableSeq.factory());
   }
 
+  @Override public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
+    var id = ctx.ID();
+    var name = id.getText();
+    var core = PrimDef.primitives.getOption(name);
+    var sourcePos = sourcePosOf(id);
+    if (core.isEmpty()) {
+      reporter.report(new UnknownPrimError(sourcePos, name));
+      throw new ParsingInterruptedException();
+    }
+    var type = ctx.type();
+    return new Decl.PrimDecl(
+      sourcePos,
+      core.get(),
+      visitTelescope(ctx.tele()),
+      type == null ? null : visitType(type)
+    );
+  }
+
   @Override public @NotNull ImmutableSeq<Stmt> visitStmt(AyaParser.StmtContext ctx) {
     var importCmd = ctx.importCmd();
     if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
@@ -73,11 +93,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
     var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
-    if (fnDecl != null) return Tuple2.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.of());
+    if (fnDecl != null) return Tuple.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.of());
     var dataDecl = ctx.dataDecl();
     if (dataDecl != null) return visitDataDecl(dataDecl, accessibility);
     var structDecl = ctx.structDecl();
-    if (structDecl != null) return Tuple2.of(visitStructDecl(structDecl, accessibility), ImmutableSeq.of());
+    if (structDecl != null) return Tuple.of(visitStructDecl(structDecl, accessibility), ImmutableSeq.of());
+    var primDecl = ctx.primDecl();
+    if (primDecl != null) return Tuple.of(visitPrimDecl(primDecl), ImmutableSeq.of());
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 

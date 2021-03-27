@@ -82,12 +82,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @see PrimDef#primitives
    */
   public static final class PrimDecl extends Decl {
-    public final @NotNull DefVar<@NotNull PrimDef, PrimDecl> ref;
+    public final @NotNull DefVar<@NotNull ? extends PrimDef, PrimDecl> ref;
     public @Nullable Expr result;
 
     public PrimDecl(
       @NotNull SourcePos sourcePos,
-      @NotNull DefVar<@NotNull PrimDef, PrimDecl> ref,
+      @NotNull DefVar<@NotNull ? extends PrimDef, PrimDecl> ref,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result
     ) {
@@ -97,7 +97,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.ref = ref;
     }
 
-    @Override public @NotNull DefVar<PrimDef, PrimDecl> ref() {
+    @Override public @NotNull DefVar<@NotNull ? extends PrimDef, PrimDecl> ref() {
       return ref;
     }
 
