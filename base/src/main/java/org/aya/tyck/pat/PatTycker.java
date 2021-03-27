@@ -3,6 +3,7 @@
 package org.aya.tyck.pat;
 
 import org.aya.api.error.IgnoringReporter;
+import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
@@ -20,6 +21,9 @@ import org.aya.core.visitor.Unfolder;
 import org.aya.generic.GenericBuilder;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.error.NotYetTyckedError;
+import org.aya.tyck.error.SplittingOnNonData;
+import org.aya.tyck.error.UnavailableCtorError;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -147,7 +151,7 @@ public record PatTycker(
 
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
     var v = bind.bind();
-    var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE);
+    var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
     if (selected == null) {
       exprTycker.localCtx.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
@@ -164,8 +168,8 @@ public record PatTycker(
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
-    var realCtor = selectCtor(param, ctor.name(), subst.reporter());
-    if (realCtor == null) throw new ExprTycker.TyckerException();
+    var realCtor = selectCtor(param, ctor.name(), subst.reporter(), ctor);
+    if (realCtor == null) throw new ExprTycker.TyckInterruptedException();
     var ctorCore = realCtor._3.ref().core;
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), Term.Param.subst(ctorCore.conTele(), realCtor._2), realCtor._3.underlyingDataCall()));
     var patterns = visitPatterns(sig, ctor.params());
@@ -173,20 +177,27 @@ public record PatTycker(
   }
 
   private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
-  selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter) {
+  selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter, @NotNull Pattern pos) {
     if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
-      // TODO[ice]: report error: splitting on non data
+      reporter.report(new SplittingOnNonData(pos, param));
       return null;
     }
     var core = dataCall.ref().core;
     if (core == null) {
-      // TODO[ice]: report error: not checked data
+      reporter.report(new NotYetTyckedError(pos.sourcePos(), dataCall.ref()));
       return null;
     }
     for (var ctor : core.body()) {
       if (!Objects.equals(ctor.ref().name(), name)) continue;
       var matchy = mischa(dataCall, core, ctor);
-      if (matchy == null) continue;
+      if (matchy == null) {
+        // Since we cannot have two ctors of the same name,
+        // if the name-matching ctor mismatches the type,
+        // we get an error.
+        var severity = reporter == IgnoringReporter.INSTANCE ? Problem.Severity.WARN : Problem.Severity.ERROR;
+        subst.reporter().report(new UnavailableCtorError(pos, severity));
+        return null;
+      }
       return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
     }
     // TODO[ice]: report error: cannot find ctor of name

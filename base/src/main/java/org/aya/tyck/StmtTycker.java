@@ -70,8 +70,8 @@ public record StmtTycker(
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
-      param.mapExpr(expr -> expr.accept(patTycker.subst, Unit.unit()))));
-    var patSubst = patTycker.subst.clone();
+      param.mapExpr(expr -> expr.accept(patTycker.subst(), Unit.unit()))));
+    var patSubst = patTycker.subst().clone();
     var dataParamView = dataSig.param().view();
     if (!pat.isEmpty()) {
       var subst = dataParamView.map(Term.Param::ref)
@@ -83,7 +83,7 @@ public record StmtTycker(
     ctor.signature = signature;
     var elabClauses = ctor.clauses
       .map(c -> {
-        patTycker.subst.resetTo(patSubst);
+        patTycker.subst().resetTo(patSubst);
         return patTycker.visitMatch(c, signature);
       });
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);

@@ -8,6 +8,7 @@ plugins {
   idea
   `java-library`
   `maven-publish`
+  signing
   id("com.github.johnrengelman.shadow") version "6.1.0" apply false
 }
 
