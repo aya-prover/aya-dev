@@ -19,13 +19,10 @@ import org.jetbrains.annotations.NotNull;
  * @see RefFinder#HEADER_AND_BODY
  */
 public record RefFinder(boolean withBody) implements
-  Def.Visitor<@NotNull Buffer<Def>, Unit> {
-  private static final class TermRefFinder implements VarConsumer<@NotNull Buffer<Def>> {
-    public static final @NotNull TermRefFinder INSTANCE = new TermRefFinder();
-
-    @Override public void visitVar(Var usage, @NotNull Buffer<Def> defs) {
-      if (usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def) defs.append(def);
-    }
+  Def.Visitor<@NotNull Buffer<Def>, Unit>,
+  VarConsumer<@NotNull Buffer<Def>> {
+  @Override public void visitVar(Var usage, @NotNull Buffer<Def> defs) {
+    if (usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def) defs.append(def);
   }
 
   public static final @NotNull RefFinder HEADER_ONLY = new RefFinder(false);
@@ -33,9 +30,9 @@ public record RefFinder(boolean withBody) implements
 
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
     tele(references, fn.telescope());
-    fn.result().accept(TermRefFinder.INSTANCE, references);
+    fn.result().accept(this, references);
     if (withBody) fn.body().map(
-      term -> term.accept(TermRefFinder.INSTANCE, references),
+      term -> term.accept(this, references),
       clauses -> {
         clauses.forEach(clause -> matchy(clause, references));
         return Unit.unit();
@@ -52,7 +49,7 @@ public record RefFinder(boolean withBody) implements
   @Override
   public Unit visitStruct(@NotNull StructDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
-    def.result().accept(TermRefFinder.INSTANCE, references);
+    def.result().accept(this, references);
     def.fields().forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
@@ -60,8 +57,8 @@ public record RefFinder(boolean withBody) implements
   @Override
   public Unit visitField(@NotNull StructDef.Field def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
-    def.body().forEach(t -> t.accept(TermRefFinder.INSTANCE, references));
-    def.result().accept(TermRefFinder.INSTANCE, references);
+    def.body().forEach(t -> t.accept(this, references));
+    def.result().accept(this, references);
     // TODO[ice]: conditions
     return Unit.unit();
   }
@@ -73,16 +70,16 @@ public record RefFinder(boolean withBody) implements
 
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
-    def.result().accept(TermRefFinder.INSTANCE, references);
+    def.result().accept(this, references);
     def.body().forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 
   public void matchy(@NotNull Matching<Pat, Term> match, @NotNull Buffer<Def> defs) {
-    match.body().accept(TermRefFinder.INSTANCE, defs);
+    match.body().accept(this, defs);
   }
 
   private void tele(@NotNull Buffer<Def> references, @NotNull SeqLike<Term.Param> telescope) {
-    telescope.forEach(param -> param.type().accept(TermRefFinder.INSTANCE, references));
+    telescope.forEach(param -> param.type().accept(this, references));
   }
 }

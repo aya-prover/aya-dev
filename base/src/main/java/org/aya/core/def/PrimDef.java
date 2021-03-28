@@ -7,10 +7,12 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.core.term.*;
+import org.aya.core.visitor.UsageCounter;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +36,20 @@ public final record PrimDef(
     //noinspection ConstantConditions
     this(telescope, result, unfold, DefVar.core(null, name));
     ref.core = this;
+  }
+
+  private static @NotNull Term arcoe(@NotNull CallTerm.Prim prim) {
+    var args = prim.args();
+    var argBase = args.get(1).term();
+    var argI = args.get(2).term();
+    if (argI instanceof CallTerm.Prim primCall && primCall.ref() == LEFT.ref) return argBase;
+    var argA = args.get(0).term();
+    if (argA instanceof LamTerm lambda) {
+      var counter = new UsageCounter(lambda.param().ref());
+      lambda.body().accept(counter, Unit.unit());
+      if (counter.usageCount() == 0) return argBase;
+    }
+    return prim;
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -60,9 +76,7 @@ public final record PrimDef(
         new Term.Param(paramI, INTERVAL_CALL, true)
       ),
       new AppTerm(new RefTerm(paramA), Arg.explicit(new RefTerm(paramI))),
-      prim -> {
-        return prim;
-      }, "arcoe");
+      PrimDef::arcoe, "arcoe");
   }
 
   public @NotNull Term unfold(@NotNull CallTerm.Prim primCall) {
