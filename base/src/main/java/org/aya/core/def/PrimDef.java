@@ -8,6 +8,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.glavo.kala.collection.Map;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.ApiStatus;
@@ -75,7 +76,7 @@ public final record PrimDef(
   );
 
   private static @NotNull Map<@NotNull String, @NotNull PrimDef> of(@NotNull PrimDef... defs) {
-    return ImmutableSeq.of(defs)
+    return Seq.of(defs).view()
       .map(prim -> Tuple.of(prim.ref.name(), prim))
       .toImmutableMap();
   }
