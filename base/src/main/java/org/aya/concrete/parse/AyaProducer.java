@@ -131,7 +131,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(List<AyaParser.TeleContext> telescope) {
     return telescope.stream()
-      .map(this::visitTele)
+      .map(t -> visitTele(t, false))
+      .flatMap(Traversable::stream)
+      .collect(ImmutableSeq.factory());
+  }
+
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitLamTelescope(List<AyaParser.TeleContext> telescope) {
+    return telescope.stream()
+      .map(t -> visitTele(t, true))
       .flatMap(Traversable::stream)
       .collect(ImmutableSeq.factory());
   }
@@ -200,11 +207,28 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .getOrDefault(defaultVal);
   }
 
-  @Override
-  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx) {
+  private @NotNull String visitParamLiteral(AyaParser.LiteralContext ctx) {
+    var idCtx = ctx.qualifiedId();
+    if (idCtx == null) {
+      reporter.report(new ParseError(sourcePosOf(ctx),
+        "`" + ctx.getText() + "` is not a parameter name"));
+      throw new ParsingInterruptedException();
+    }
+    var id = visitQualifiedId(idCtx);
+    if (id.sizeGreaterThan(1)) {
+      reporter.report(new ParseError(sourcePosOf(ctx),
+        "parameter name `" + ctx.getText() + "` should not be qualified"));
+      throw new ParsingInterruptedException();
+    }
+    return id.first();
+  }
+
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx, boolean isLamTele) {
     var literal = ctx.literal();
-    if (literal != null)
-      return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitLiteral(literal), true));
+    if (literal != null) return ImmutableSeq.of(isLamTele
+      ? new Expr.Param(sourcePosOf(ctx), new LocalVar(visitParamLiteral(literal)), type(null, sourcePosOf(ctx)), true)
+      : new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitLiteral(literal), true)
+    );
     var teleBinder = ctx.teleBinder();
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (teleBinder != null) {
@@ -313,7 +337,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
     return (Expr.LamExpr) buildLam(
       sourcePosOf(ctx),
-      visitTelescope(ctx.tele()).view(),
+      visitLamTelescope(ctx.tele()).view(),
       visitLamBody(ctx)
     );
   }

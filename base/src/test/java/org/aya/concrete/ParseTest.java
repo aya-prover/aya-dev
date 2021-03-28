@@ -229,11 +229,27 @@ public class ParseTest {
           | y : B zero
         """,
       """
-       \\public \\struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set
-         | x {X : \\Set} : Nat
-         | y : B zero
-       """
+        \\public \\struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set
+          | x {X : \\Set} : Nat
+          | y : B zero
+        """
     );
+  }
+
+  @Test
+  public void issue350() {
+    parseAndPretty("""
+        \\def l : \\Set => \\lam i => Nat
+        """,
+      """
+        \\public \\def l : \\Set => \\lam (i) => Nat
+        """);
+    parseAndPretty("""
+        \\def l : \\Set => \\lam (i : I) => Nat
+        """,
+      """
+        \\public \\def l : \\Set => \\lam (i : I) => Nat
+        """);
   }
 
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {

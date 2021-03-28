@@ -102,8 +102,8 @@ public class NormalizeTest extends LispTestCase {
       \\prim left
       \\prim right
       \\prim arcoe
-      \\def xyr : Nat => arcoe (\\lam (i : I) => Nat) Nat::zero left
-      \\def kiva : Nat => arcoe (\\lam (i : I) => Nat) (Nat::suc Nat::zero) right""");
+      \\def xyr : Nat => arcoe (\\lam i => Nat) Nat::zero left
+      \\def kiva : Nat => arcoe (\\lam i => Nat) (Nat::suc Nat::zero) right""");
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i))
       .body().getLeftValue().normalize(NormalizeMode.NF);
     assertTrue(normalizer.apply(5) instanceof CallTerm.Con conCall
