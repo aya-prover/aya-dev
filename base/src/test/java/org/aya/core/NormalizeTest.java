@@ -24,20 +24,17 @@ public class NormalizeTest extends LispTestCase {
     assertEquals(term, term.normalize(NormalizeMode.WHNF));
   }
 
-  @Test
-  public void noNormalizeNeutral() {
+  @Test public void noNormalizeNeutral() {
     unchanged("(app f a)");
   }
 
-  @Test
-  public void noNormalizeCanonical() {
+  @Test public void noNormalizeCanonical() {
     unchanged("(lam (a (U) ex) a)");
     unchanged("(Pi (a (U) ex) a)");
     unchanged("(Sigma (a (U) ex null) a)");
   }
 
-  @Test
-  public void redexNormalize() {
+  @Test public void redexNormalize() {
     var term = Lisp.parse("(app (lam (a (U) ex) a) b)");
     assertTrue(term instanceof AppTerm);
     var whnf = term.normalize(NormalizeMode.WHNF);
@@ -47,14 +44,12 @@ public class NormalizeTest extends LispTestCase {
     assertEquals(whnf, nf);
   }
 
-  @Test
-  public void whnfNoNormalize() {
+  @Test public void whnfNoNormalize() {
     var term = Lisp.parse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
     assertEquals(term, term.normalize(NormalizeMode.WHNF));
   }
 
-  @Test
-  public void nfNormalizeCanonical() {
+  @Test public void nfNormalizeCanonical() {
     // \x : U. (\a : U. a) b
     var term = Lisp.parse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
     assertTrue(((LamTerm) term).body() instanceof AppTerm);
@@ -63,8 +58,7 @@ public class NormalizeTest extends LispTestCase {
     assertTrue(((LamTerm) nf).body() instanceof RefTerm);
   }
 
-  @Test
-  public void unfoldDef() {
+  @Test public void unfoldDef() {
     // (x y : U)
     var def = Lisp.parseDef("id",
       "(y (U) ex null)", "y", "y", vars);
@@ -77,8 +71,7 @@ public class NormalizeTest extends LispTestCase {
     assertEquals(new RefTerm((LocalVar) vars.get("kiva")), norm);
   }
 
-  @Test
-  public void unfoldPatterns() {
+  @Test public void unfoldPatterns() {
     var defs = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
       \\def tracy (a, b : Nat) : Nat
@@ -100,5 +93,24 @@ public class NormalizeTest extends LispTestCase {
       && Objects.equals(ref.var().name(), "a"));
     assertTrue(normalizer.apply(5) instanceof RefTerm ref
       && Objects.equals(ref.var().name(), "a"));
+  }
+
+  @Test public void unfoldPrim() {
+    var defs = TyckDeclTest.successTyckDecls("""
+      \\data Nat : \\Set | zero | suc Nat
+      \\prim I
+      \\prim left
+      \\prim right
+      \\prim arcoe
+      \\def xyr : Nat => arcoe (\\lam i => Nat) Nat::zero left
+      \\def kiva : Nat => arcoe (\\lam i => Nat) Nat::zero right""");
+    IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i))
+      .body().getLeftValue().normalize(NormalizeMode.NF);
+    assertTrue(normalizer.apply(5) instanceof CallTerm.Con conCall
+      && Objects.equals(conCall.ref().name(), "zero")
+      && conCall.conArgs().isEmpty());
+    assertTrue(normalizer.apply(6) instanceof CallTerm.Con conCall
+      && Objects.equals(conCall.ref().name(), "zero")
+      && conCall.conArgs().isEmpty());
   }
 }

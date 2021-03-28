@@ -22,6 +22,6 @@ public final class ThrowingReporter implements Reporter {
     }
     Assertions.fail("Failed with `" + problem.getClass() + "`: " + problem
       .describe()
-      .renderWithPageWidth(120));
+      .renderWithPageWidth(120) + "\nat " + problem.sourcePos());
   }
 }
