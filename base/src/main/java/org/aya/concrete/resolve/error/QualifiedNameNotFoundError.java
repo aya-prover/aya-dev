@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,8 +18,7 @@ public record QualifiedNameNotFoundError(
   public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The qualified name referred to by `"),
-      Doc.plain(modName.joinToString("::")),
-      Doc.plain(name),
+      Doc.plain(modName.view().concat(Seq.of(name)).joinToString(Constants.SCOPE_SEPARATOR)),
       Doc.plain("` is not defined in the current scope")
     );
   }
