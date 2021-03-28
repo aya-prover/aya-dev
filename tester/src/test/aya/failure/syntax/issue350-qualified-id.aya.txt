@@ -1,0 +1,8 @@
+In file $FILE:1:22 ->
+
+  1 | \def x : \Set => \lam A::B => x
+                            ^--^
+  
+Error: Parser error: parameter name `A::B` should not be qualified
+Parsing interrupted due to errors.
+What are you doing?
