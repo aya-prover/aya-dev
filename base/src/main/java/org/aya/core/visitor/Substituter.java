@@ -40,7 +40,7 @@ public record Substituter(
    */
   @Debug.Renderer(text = "map.toString()",
     childrenArray = "map.asJava().entrySet().toArray()",
-    hasChildren = "!map.isEmpty()")
+    hasChildren = "map.isNotEmpty()")
   public static record TermSubst(@NotNull MutableMap<@NotNull Var, @NotNull Term> map) {
     public static final @NotNull TermSubst EMPTY = new TermSubst(new MutableHashMap<>(0));
 

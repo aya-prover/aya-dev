@@ -97,7 +97,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
       visitTele(ctor.telescope),
       visitClauses(ctor.clauses, true)
     );
-    if (!ctor.patterns.isEmpty()) {
+    if (ctor.patterns.isNotEmpty()) {
       var pats = Doc.join(Doc.plain(", "), ctor.patterns.stream().map(Pattern::toDoc));
       return Doc.hcat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
     } else return Doc.hcat(Doc.plain("| "), doc);

@@ -282,11 +282,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       subst.add(defField.ref(), field);
     }
 
-    if (!missing.isEmpty()) {
+    if (missing.isNotEmpty()) {
       metaContext.report(new MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
       throw new TyckInterruptedException();
     }
-    if (!conFields.isEmpty()) {
+    if (conFields.isNotEmpty()) {
       metaContext.report(new NoSuchFieldError(expr.sourcePos(), conFields.map(t -> t._1).toImmutableSeq()));
       throw new TyckInterruptedException();
     }
@@ -420,7 +420,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           var ref = againstTele.first().ref();
           resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
           againstTele = againstTele.drop(1);
-          if (!againstTele.isEmpty()) {
+          if (againstTele.isNotEmpty()) {
             final var subst = new Substituter.TermSubst(ref, result.wellTyped);
             againstTele = Term.Param.subst(againstTele, subst).view();
             last = last.subst(subst);

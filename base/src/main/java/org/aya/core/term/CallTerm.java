@@ -174,7 +174,7 @@ public sealed interface CallTerm extends Term {
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
       var core = head.ref.core;
       if (core == null) return Decision.YES;
-      if (!core.clauses().isEmpty()) return Decision.NO;
+      if (core.clauses().isNotEmpty()) return Decision.NO;
       return Decision.MAYBE;
     }
   }

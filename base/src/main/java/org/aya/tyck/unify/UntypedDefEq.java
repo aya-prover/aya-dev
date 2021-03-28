@@ -57,7 +57,7 @@ public record UntypedDefEq(
       params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
       body = body.subst(currentParam.ref(), l);
     }
-    if (!params.isEmpty()) return params.first().type();
+    if (params.isNotEmpty()) return params.first().type();
     return body;
   }
 

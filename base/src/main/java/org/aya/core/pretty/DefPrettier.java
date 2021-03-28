@@ -77,7 +77,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       visitTele(ctor.conTele()),
       visitClauses(ctor.clauses(), true)
     );
-    if (!ctor.pats().isEmpty()) {
+    if (ctor.pats().isNotEmpty()) {
       var pats = Doc.join(Doc.plain(", "), ctor.pats().stream().map(Pat::toDoc));
       return Doc.hcat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
     } else return Doc.hcat(Doc.plain("| "), doc);

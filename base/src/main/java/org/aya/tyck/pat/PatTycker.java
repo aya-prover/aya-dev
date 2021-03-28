@@ -157,7 +157,7 @@ public record PatTycker(
       return new Pat.Bind(bind.explicit(), v, t);
     }
     var ctorCore = selected._3.ref().core;
-    if (!ctorCore.conTele().isEmpty()) {
+    if (ctorCore.conTele().isNotEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
@@ -205,7 +205,7 @@ public record PatTycker(
   }
 
   private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, DataDef.Ctor ctor) {
-    if (!ctor.pats().isEmpty()) return PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
+    if (ctor.pats().isNotEmpty()) return PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
     else return Unfolder.buildSubst(core.telescope(), dataCall.args());
   }
 }

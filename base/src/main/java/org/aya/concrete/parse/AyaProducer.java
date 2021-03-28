@@ -552,7 +552,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
                                  @NotNull SeqView<Tuple2<String, SourcePos>> names) {
     var set = MutableHashSet.<String>of();
     var redefs = names.filterNot(n -> set.add(n._1));
-    if (!redefs.isEmpty()) {
+    if (redefs.isNotEmpty()) {
       var last = redefs.last();
       reporter.report(new RedefinitionError(kind, last._1, last._2));
       throw new ParsingInterruptedException();

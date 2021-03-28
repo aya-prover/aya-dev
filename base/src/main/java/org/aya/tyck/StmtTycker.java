@@ -58,26 +58,27 @@ public record StmtTycker(
   }
 
   @Override public PrimDef visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker tycker) {
-    if (!tycker.localCtx.isEmpty()) {
+    if (tycker.localCtx.isNotEmpty()) {
       // TODO[ice]: cannot put prims into local context
       throw new ExprTycker.TyckerException();
     }
     var core = decl.ref.core;
     var tele = checkTele(tycker, decl.telescope);
-    if (!tele.isEmpty()) {
+    if (tele.isNotEmpty()) {
       tycker.unifyTyThrowing(
         PiTerm.make(false, tele, core.result()),
         PiTerm.make(false, core.telescope(), core.result()),
         decl.result
       );
-    }
-    if (core.telescope().isNotEmpty() && decl.result == null) {
-      // TODO[ice]: Expect type and term
-      throw new ExprTycker.TyckerException();
+      if (decl.result == null) {
+        // TODO[ice]: Expect type and term
+        throw new ExprTycker.TyckerException();
+      }
     }
     if (decl.result != null) {
       var result = decl.result.accept(tycker, null).wellTyped();
       tycker.unifyTyThrowing(result, core.result(), decl.result);
+      decl.signature = new Def.Signature(ImmutableSeq.empty(), tele, result);
     }
     return core;
   }
@@ -96,7 +97,7 @@ public record StmtTycker(
       param.mapExpr(expr -> expr.accept(patTycker.subst(), Unit.unit()))));
     var patSubst = patTycker.subst().clone();
     var dataParamView = dataSig.param().view();
-    if (!pat.isEmpty()) {
+    if (pat.isNotEmpty()) {
       var subst = dataParamView.map(Term.Param::ref)
         .zip(pat.view().map(Pat::toTerm))
         .<Var, Term>toImmutableMap();
@@ -112,7 +113,7 @@ public record StmtTycker(
     var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, clauses, dataCall, ctor.coerce);
-    if (!elabClauses.isEmpty()) {
+    if (elabClauses.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);
     }
@@ -167,7 +168,7 @@ public record StmtTycker(
     var cs = what._2.getRightValue();
     var elabClauses = cs.flatMap(Pat.PrototypeClause::deprototypify);
     var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(elabClauses));
-    if (!cs.isEmpty()) {
+    if (cs.isNotEmpty()) {
       var classification = PatClassifier.classify(cs, tycker.metaContext.reporter(), decl.sourcePos, true);
       PatClassifier.confluence(cs, tycker.metaContext, decl.sourcePos, resultTy, classification);
     }

@@ -62,4 +62,8 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
   @Contract(" -> new") public @NotNull LocalCtx derive() {
     return new LocalCtx(MutableMap.create(), this);
   }
+
+  public boolean isNotEmpty() {
+    return !isEmpty();
+  }
 }

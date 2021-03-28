@@ -88,7 +88,7 @@ public record PatClassifier(
    * @return pattern classes
    */
   private @NotNull ImmutableSeq<PatClass> classifySub(@NotNull ImmutableSeq<SubPats> subPatsSeq, boolean coverage) {
-    assert !subPatsSeq.isEmpty();
+    assert subPatsSeq.isNotEmpty();
     var pivot = subPatsSeq.first();
     // Done
     if (pivot.pats.isEmpty()) {
@@ -100,7 +100,7 @@ public record PatClassifier(
       .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
         ? new SubPats(tuple.pats(), index) : null)
       .toImmutableSeq();
-    if (!hasTuple.isEmpty()) {
+    if (hasTuple.isNotEmpty()) {
       builder.shiftEmpty(explicit);
       return classifySub(hasTuple, coverage);
     }
@@ -118,7 +118,7 @@ public record PatClassifier(
     var dataCall = hasMatch.first();
     for (var ctor : dataCall.ref().core.body()) {
       var conTele = ctor.conTele();
-      if (!ctor.pats().isEmpty()) {
+      if (ctor.pats().isNotEmpty()) {
         var matchy = PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
         if (matchy == null) continue;
         conTele = Term.Param.subst(conTele, matchy);

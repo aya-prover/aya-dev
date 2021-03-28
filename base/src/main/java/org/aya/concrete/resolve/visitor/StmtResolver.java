@@ -43,7 +43,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     decl.result = decl.result.resolve(local._2);
     for (var ctor : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
-      if (!ctor.patterns.isEmpty())
+      if (ctor.patterns.isNotEmpty())
         ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
       var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
