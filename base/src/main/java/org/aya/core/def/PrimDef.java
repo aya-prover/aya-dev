@@ -3,10 +3,11 @@
 package org.aya.core.def;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LocalVar;
+import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.Term;
-import org.aya.core.term.UnivTerm;
+import org.aya.core.term.*;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
@@ -40,8 +41,29 @@ public final record PrimDef(
   }
 
   public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), UnivTerm.OMEGA, prim -> prim, "I");
-  public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of()), prim -> prim, "left");
-  public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of()), prim -> prim, "right");
+  public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of());
+  public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
+  public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");
+
+  /** Short for <em>Arend coe</em>. */
+  public static final @NotNull PrimDef ARCOE;
+
+  static {
+    var paramA = new LocalVar("A");
+    var paramI = new LocalVar("i");
+    var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), INTERVAL_CALL, true);
+    var baseAtLeft = new AppTerm(new RefTerm(paramA), Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty())));
+    ARCOE = new PrimDef(
+      ImmutableSeq.of(
+        new Term.Param(paramA, new PiTerm(false, paramIToATy, UnivTerm.OMEGA), true),
+        new Term.Param(new LocalVar("base"), baseAtLeft, true),
+        new Term.Param(paramI, INTERVAL_CALL, true)
+      ),
+      new AppTerm(new RefTerm(paramA), Arg.explicit(new RefTerm(paramI))),
+      prim -> {
+        return prim;
+      }, "arcoe");
+  }
 
   public @NotNull Term unfold(@NotNull CallTerm.Prim primCall) {
     return unfold.apply(primCall);
