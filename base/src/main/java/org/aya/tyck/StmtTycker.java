@@ -64,11 +64,17 @@ public record StmtTycker(
     }
     var core = decl.ref.core;
     var tele = checkTele(tycker, decl.telescope);
-    if (!tele.isEmpty()) tycker.unifyTyThrowing(
-      PiTerm.make(false, tele, core.result()),
-      PiTerm.make(false, core.telescope(), core.result()),
-      decl.result
-    );
+    if (!tele.isEmpty()) {
+      tycker.unifyTyThrowing(
+        PiTerm.make(false, tele, core.result()),
+        PiTerm.make(false, core.telescope(), core.result()),
+        decl.result
+      );
+    }
+    if (core.telescope().isNotEmpty() && decl.result == null) {
+      // TODO[ice]: Expect type and term
+      throw new ExprTycker.TyckerException();
+    }
     if (decl.result != null) {
       var result = decl.result.accept(tycker, null).wellTyped();
       tycker.unifyTyThrowing(result, core.result(), decl.result);

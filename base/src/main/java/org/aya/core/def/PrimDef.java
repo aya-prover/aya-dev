@@ -47,6 +47,23 @@ public final record PrimDef(
     return unfold.apply(primCall);
   }
 
+  @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
+    if (telescope.isEmpty()) return telescope;
+    if (ref.concrete != null) {
+      var signature = ref.concrete.signature;
+      if (signature != null) return signature.param();
+    }
+    return telescope;
+  }
+
+  @Override public @NotNull Term result() {
+    if (ref.concrete != null) {
+      var signature = ref.concrete.signature;
+      if (signature != null) return signature.result();
+    }
+    return result;
+  }
+
   @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
     return ImmutableSeq.empty();
   }
