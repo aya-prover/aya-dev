@@ -59,7 +59,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
     var id = ctx.ID();
     var name = id.getText();
-    var core = PrimDef.primitives.getOption(name);
+    var core = PrimDef.PRIMITIVES.getOption(name);
     var sourcePos = sourcePosOf(id);
     if (core.isEmpty()) {
       reporter.report(new UnknownPrimError(sourcePos, name));

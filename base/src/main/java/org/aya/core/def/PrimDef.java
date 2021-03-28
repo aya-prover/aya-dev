@@ -68,12 +68,12 @@ public final record PrimDef(
     return ImmutableSeq.empty();
   }
 
-  public static final @NotNull Map<@NotNull String, @NotNull PrimDef> primitives = ImmutableSeq
+  public static final @NotNull Map<@NotNull String, @NotNull PrimDef> PRIMITIVES = ImmutableSeq
     .of(INTERVAL, LEFT, RIGHT).view()
     .map(prim -> Tuple.of(prim.ref.name(), prim))
     .toImmutableMap();
 
   public @ApiStatus.Internal static void clearConcrete() {
-    for (var var : primitives.valuesView()) var.ref.concrete = null;
+    for (var var : PRIMITIVES.valuesView()) var.ref.concrete = null;
   }
 }

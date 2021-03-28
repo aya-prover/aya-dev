@@ -79,7 +79,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   /**
    * @author ice1000
    * @see PrimDef
-   * @see PrimDef#primitives
+   * @see PrimDef#PRIMITIVES
    */
   public static final class PrimDecl extends Decl {
     public final @NotNull DefVar<@NotNull ? extends PrimDef, PrimDecl> ref;
