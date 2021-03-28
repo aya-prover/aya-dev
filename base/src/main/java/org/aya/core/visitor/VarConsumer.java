@@ -57,4 +57,25 @@ public interface VarConsumer<P> extends TermConsumer<P> {
   }
 
   @Contract(mutates = "this,param2") void visitVar(Var usage, P p);
+
+  /**
+   * @author ice1000
+   * @see Term#findUsages(Var)
+   */
+  final class UsageCounter implements VarConsumer<Unit> {
+    public final @NotNull Var var;
+    private int usageCount = 0;
+
+    @Contract(pure = true) public UsageCounter(@NotNull Var var) {
+      this.var = var;
+    }
+
+    @Contract(pure = true) public int usageCount() {
+      return usageCount;
+    }
+
+    @Contract(mutates = "this") @Override public void visitVar(Var usage, Unit unit) {
+      if (var == usage) usageCount++;
+    }
+  }
 }

@@ -5,50 +5,33 @@ package org.aya.core;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.def.Def;
 import org.aya.core.visitor.RefFinder;
-import org.aya.core.visitor.UsageCounter;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
 import org.aya.tyck.TyckDeclTest;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Unit;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UsagesTest extends LispTestCase {
   @Test public void someUsages() {
-    var term = Lisp.parse("(app glavo glavo)", vars);
-    var consumer = new UsageCounter(vars.get("glavo"));
-    term.accept(consumer, Unit.unit());
-    assertEquals(2, consumer.usageCount());
+    assertEquals(2, Lisp.parse("(app glavo glavo)", vars).findUsages(vars.get("glavo")));
   }
 
   @Test public void lambdaUsages() {
-    var term = Lisp.parse("(lam (dio (U) ex) dio)", vars);
-    var consumer = new UsageCounter(vars.get("dio"));
-    term.accept(consumer, Unit.unit());
-    assertEquals(1, consumer.usageCount());
+    assertEquals(1, Lisp.parse("(lam (dio (U) ex) dio)", vars).findUsages(vars.get("dio")));
   }
 
   @Test public void tupUsages() {
-    var term = Lisp.parse("(tup (U) yume)", vars);
-    var consumer = new UsageCounter(vars.get("yume"));
-    term.accept(consumer, Unit.unit());
-    assertEquals(1, consumer.usageCount());
+    assertEquals(1, Lisp.parse("(tup (U) yume)", vars).findUsages(vars.get("yume")));
   }
 
   @Test public void piUsages() {
-    var term = Lisp.parse("(Pi (giogio (U) ex) giogio)", vars);
-    var consumer = new UsageCounter(vars.get("giogio"));
-    term.accept(consumer, Unit.unit());
-    assertEquals(1, consumer.usageCount());
+    assertEquals(1, Lisp.parse("(Pi (giogio (U) ex) giogio)", vars).findUsages(vars.get("giogio")));
   }
 
   @Test public void noUsages() {
-    var term = Lisp.parse("(app xy r)", vars);
-    var consumer = new UsageCounter(new LocalVar("a"));
-    term.accept(consumer, Unit.unit());
-    assertEquals(0, consumer.usageCount());
+    assertEquals(0, Lisp.parse("(app xy r)", vars).findUsages(new LocalVar("a")));
   }
 
   @Test public void refFinder() {

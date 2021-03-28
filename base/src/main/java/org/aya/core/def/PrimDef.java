@@ -7,12 +7,10 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.core.term.*;
-import org.aya.core.visitor.UsageCounter;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,11 +42,7 @@ public final record PrimDef(
     var argI = args.get(2).term();
     if (argI instanceof CallTerm.Prim primCall && primCall.ref() == LEFT.ref) return argBase;
     var argA = args.get(0).term();
-    if (argA instanceof LamTerm lambda) {
-      var counter = new UsageCounter(lambda.param().ref());
-      lambda.body().accept(counter, Unit.unit());
-      if (counter.usageCount() == 0) return argBase;
-    }
+    if (argA instanceof LamTerm lambda && lambda.body().findUsages(lambda.param().ref()) == 0) return argBase;
     return prim;
   }
 
