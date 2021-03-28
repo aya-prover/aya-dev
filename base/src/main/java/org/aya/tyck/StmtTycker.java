@@ -79,7 +79,7 @@ public record StmtTycker(
     } else if (decl.result != null) {
       var result = decl.result.accept(tycker, null).wellTyped();
       tycker.unifyTyThrowing(result, core.result(), decl.result);
-    } else decl.signature = new Def.Signature(ImmutableSeq.empty(), ImmutableSeq.empty(), core.result());
+    } else decl.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
     return core;
   }
 
