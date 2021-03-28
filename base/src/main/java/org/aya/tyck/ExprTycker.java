@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import org.aya.api.error.Reporter;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
@@ -99,7 +100,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var type = dt.param().type();
     if (lamParam != null) {
       var result = lamParam.accept(this, UnivTerm.OMEGA);
-      var comparison = unifyTy(result.wellTyped, type, lamParam);
+      var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
       if (!comparison) {
         // TODO[ice]: expected type mismatch lambda type annotation
         throw new TyckerException();
@@ -191,18 +192,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(LamTerm.make(tele, body), type);
   }
 
-  private boolean unifyTy(Term upper, Term lower, Expr loc) {
-    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, loc.sourcePos())));
+  private boolean unifyTy(Term upper, Term lower, @NotNull SourcePos pos) {
+    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, pos)));
     tracing(Trace.Builder::reduce);
     var unifier = new TypedDefEq(
       eq -> new PatDefEq(eq, Ordering.Lt, metaContext),
-      localCtx, traceBuilder, loc.sourcePos()
+      localCtx, traceBuilder, pos
     );
     return unifier.compare(lower, upper, UnivTerm.OMEGA);
   }
 
   void unifyTyThrowing(Term upper, Term lower, Expr loc) {
-    var unification = unifyTy(upper, lower, loc);
+    var unification = unifyTy(upper, lower, loc.sourcePos());
     if (!unification) {
       metaContext.report(new UnifyError(loc, upper, lower));
       throw new TyckInterruptedException();
