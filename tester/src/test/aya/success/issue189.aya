@@ -3,3 +3,4 @@
 \prim right : I
 \def testLeft : I => left
 \def testRight : I => right
+\prim arcoe (A : I -> \Set) (A left) (i : I) : A i

@@ -91,7 +91,7 @@ public final record PrimDef(
   }
 
   public static final @NotNull Map<@NotNull String, @NotNull PrimDef> PRIMITIVES = ImmutableSeq
-    .of(INTERVAL, LEFT, RIGHT).view()
+    .of(INTERVAL, LEFT, RIGHT, ARCOE).view()
     .map(prim -> Tuple.of(prim.ref.name(), prim))
     .toImmutableMap();
 
