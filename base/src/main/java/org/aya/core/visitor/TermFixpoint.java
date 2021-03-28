@@ -40,8 +40,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
-    var contextArgs = structCall.contextArgs().view().map(arg -> visitArg(arg, p));
-    var args = structCall.args().view().map(arg -> visitArg(arg, p));
+    var contextArgs = structCall.contextArgs().map(arg -> visitArg(arg, p));
+    var args = structCall.args().map(arg -> visitArg(arg, p));
     if (structCall.contextArgs().sameElements(contextArgs, true)
       && structCall.args().sameElements(args, true)) return structCall;
     return new CallTerm.Struct(structCall.ref(), contextArgs, args);
@@ -101,15 +101,15 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
-    var contextArgs = fnCall.contextArgs().view().map(arg -> visitArg(arg, p));
-    var args = fnCall.args().view().map(arg -> visitArg(arg, p));
+    var contextArgs = fnCall.contextArgs().map(arg -> visitArg(arg, p));
+    var args = fnCall.args().map(arg -> visitArg(arg, p));
     if (fnCall.args().sameElements(args, true)
       && fnCall.args().sameElements(args, true)) return fnCall;
     return new CallTerm.Fn(fnCall.ref(), contextArgs, args);
   }
 
   @Override default @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
-    var args = prim.args().view().map(arg -> visitArg(arg, p));
+    var args = prim.args().map(arg -> visitArg(arg, p));
     if (prim.args().sameElements(args, true) && prim.args().sameElements(args, true)) return prim;
     return new CallTerm.Prim(prim.ref(), args);
   }

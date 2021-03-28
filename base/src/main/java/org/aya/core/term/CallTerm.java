@@ -12,9 +12,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.visitor.Substituter;
 import org.aya.util.Decision;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
@@ -26,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface CallTerm extends Term {
   @NotNull Var ref();
-  @NotNull SeqLike<@NotNull ? extends @NotNull Arg<? extends Term>> args();
+  @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args();
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
     if (f instanceof Hole hole) {
@@ -50,8 +48,8 @@ public sealed interface CallTerm extends Term {
 
   record Fn(
     @NotNull DefVar<FnDef, Decl.FnDecl> ref,
-    @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
-    @NotNull SeqLike<Arg<@NotNull Term>> args
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFnCall(this, p);
@@ -71,7 +69,7 @@ public sealed interface CallTerm extends Term {
 
   record Prim(
     @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
-    @NotNull SeqLike<Arg<@NotNull Term>> args
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPrimCall(this, p);
@@ -114,8 +112,8 @@ public sealed interface CallTerm extends Term {
    */
   record Struct(
     @NotNull DefVar<StructDef, Decl.StructDecl> ref,
-    @NotNull SeqLike<Arg<@NotNull Term>> contextArgs,
-    @NotNull SeqLike<Arg<@NotNull Term>> args
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitStructCall(this, p);
@@ -167,8 +165,8 @@ public sealed interface CallTerm extends Term {
       return visitor.visitConCall(this, p, q);
     }
 
-    @Override public @NotNull SeqView<Arg<Term>> args() {
-      return head.dataArgs.view().concat(conArgs);
+    @Override public @NotNull ImmutableSeq<Arg<@NotNull Term>> args() {
+      return head.dataArgs.view().concat(conArgs).toImmutableSeq();
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
@@ -190,8 +188,8 @@ public sealed interface CallTerm extends Term {
       this(var, Buffer.of());
     }
 
-    @Override public @NotNull Seq<Arg<Term>> args() {
-      return argsBuf;
+    @Override public @NotNull ImmutableSeq<Arg<Term>> args() {
+      return argsBuf.toImmutableSeq();
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
