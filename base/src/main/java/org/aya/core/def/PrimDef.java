@@ -68,11 +68,17 @@ public final record PrimDef(
     return ImmutableSeq.empty();
   }
 
-  public static final @NotNull Map<@NotNull String, @NotNull PrimDef> primitives = Map.ofEntries(
-    Tuple.of("I", INTERVAL),
-    Tuple.of("left", LEFT),
-    Tuple.of("right", RIGHT)
+  public static final @NotNull Map<@NotNull String, @NotNull PrimDef> primitives = of(
+    INTERVAL,
+    LEFT,
+    RIGHT
   );
+
+  private static @NotNull Map<@NotNull String, @NotNull PrimDef> of(@NotNull PrimDef... defs) {
+    return ImmutableSeq.of(defs)
+      .map(prim -> Tuple.of(prim.ref.name(), prim))
+      .toImmutableMap();
+  }
 
   public @ApiStatus.Internal static void clearConcrete() {
     for (var var : primitives.valuesView()) var.ref.concrete = null;
