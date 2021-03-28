@@ -18,7 +18,9 @@ public record QualifiedNameNotFoundError(
   public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The qualified name referred to by `"),
-      Doc.plain(modName.view().concat(Seq.of(name)).joinToString(Constants.SCOPE_SEPARATOR)),
+      Doc.plain(modName.joinToString(Constants.SCOPE_SEPARATOR)),
+      Doc.plain(Constants.SCOPE_SEPARATOR),
+      Doc.plain(name),
       Doc.plain("` is not defined in the current scope")
     );
   }
