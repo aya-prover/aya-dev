@@ -83,7 +83,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Boolean nestedCall) {
     String name = expr.name();
     Expr filling = expr.filling();
-    if (name == null && filling == null) return Doc.empty();
+    if (name == null && filling == null) return Doc.plain("{?}");
     if (name != null) return Doc.plain(name);
     return Doc.hsep(Doc.plain("{"), filling.toDoc(), Doc.plain("?}"));
   }
