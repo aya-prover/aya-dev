@@ -211,14 +211,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
     final var against = term != null ? term : new UnivTerm(Sort.OMEGA);
-    var var = expr.param().ref();
     var param = expr.param();
-    final var type = param.type();
-    if (type == null) {
-      // TODO[ice]: report error or generate meta?
-      //  I guess probably report error for now.
-      throw new TyckerException();
-    }
+    final var var = param.ref();
+    var type = param.type();
+    if (type == null) type = new Expr.HoleExpr(param.sourcePos(), var.name() + "Ty", null);
     var result = type.accept(this, against);
     var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
     var last = expr.last().accept(this, against);
