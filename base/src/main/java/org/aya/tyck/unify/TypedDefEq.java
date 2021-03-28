@@ -86,7 +86,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     if (l.explicit() != r.explicit()) return fail.get();
     if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return fail.get();
     varSubst.put(r.ref(), l.ref());
-    var result = localCtx.with(l.ref(), l.type(), success);
+    var result = localCtx.with(l, success);
     varSubst.remove(r.ref());
     return result;
   }

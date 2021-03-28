@@ -24,6 +24,10 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     this(MutableHashMap.of(), null);
   }
 
+  public <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
+    return with(param.ref(), param.type(), action);
+  }
+
   public <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
     localMap.put(var, type);
     var result = action.get();

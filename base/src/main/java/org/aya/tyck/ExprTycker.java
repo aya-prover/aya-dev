@@ -106,7 +106,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       } else type = result.wellTyped;
     }
     var resultParam = new Term.Param(var, type, param.explicit());
-    return localCtx.with(var, type, () -> {
+    return localCtx.with(resultParam, () -> {
       var body = dt.body().subst(dt.param().ref(), new RefTerm(var));
       var rec = expr.body().accept(this, body);
       return new Result(new LamTerm(resultParam, rec.wellTyped), dt);
@@ -217,8 +217,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (type == null) type = new Expr.HoleExpr(param.sourcePos(), var.name() + "Ty", null);
     var result = type.accept(this, against);
     var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
-    var last = expr.last().accept(this, against);
-    return new Result(new PiTerm(expr.co(), resultParam, last.wellTyped), against);
+    return localCtx.with(resultParam, () -> {
+      var last = expr.last().accept(this, against);
+      return new Result(new PiTerm(expr.co(), resultParam, last.wellTyped), against);
+    });
   }
 
   @Rule.Synth
