@@ -239,17 +239,17 @@ public class ParseTest {
   @Test
   public void issue350() {
     parseAndPretty("""
-        \\def l : \\Set => \\lam i => Nat
-        """,
+      \\def l : \\Set => \\lam i => Nat
+      """,
       """
-        \\public \\def l : \\Set => \\lam (i : {?}) => Nat
-        """);
+      \\public \\def l : \\Set => \\lam (i : {?}) => Nat
+      """);
     parseAndPretty("""
-        \\def l : \\Set => \\lam (i : I) => Nat
-        """,
+      \\def l : \\Set => \\lam (i : I) => Nat
+      """,
       """
-        \\public \\def l : \\Set => \\lam (i : I) => Nat
-        """);
+      \\public \\def l : \\Set => \\lam (i : I) => Nat
+      """);
   }
 
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
