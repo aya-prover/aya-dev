@@ -5,7 +5,7 @@ package org.aya.tyck;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.Var;
+import org.aya.api.ref.HoleVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.error.RecursiveSolutionError;
@@ -19,13 +19,13 @@ import org.jetbrains.annotations.NotNull;
 public record MetaContext(
   @NotNull Reporter reporter,
   LevelEqn.@NotNull Set levelEqns,
-  MutableMap<Var, Term> solutions
+  MutableMap<HoleVar, Term> solutions
 ) {
   public MetaContext(@NotNull Reporter reporter) {
     this(reporter, new LevelEqn.Set(Buffer.of(), Buffer.of()), new MutableHashMap<>());
   }
 
-  public void solve(@NotNull Var v, @NotNull Term t, @NotNull SourcePos pos) {
+  public void solve(@NotNull HoleVar v, @NotNull Term t, @NotNull SourcePos pos) {
     if (t.findUsages(v) > 0) {
       report(new RecursiveSolutionError(v, t, pos));
       throw new ExprTycker.TyckInterruptedException();
@@ -34,7 +34,7 @@ public record MetaContext(
     solutions.put(v, t);
   }
 
-  public @NotNull Option<Term> solution(@NotNull Var v) {
+  public @NotNull Option<Term> solution(@NotNull HoleVar v) {
     return solutions.getOption(v).flatMap(term -> term instanceof CallTerm.Hole redirect
       ? solution(redirect.ref()) : Option.of(term));
   }
