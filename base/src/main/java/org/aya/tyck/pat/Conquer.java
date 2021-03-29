@@ -15,32 +15,35 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author ice1000
  */
-public record Conquer(int nth) implements Pat.Visitor<Unit, Unit> {
-  public static void conditions(@NotNull ImmutableSeq<Matching<Pat, Term>> matchings, @NotNull ExprTycker tycker) {
+public record Conquer(
+  @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
+  @NotNull ExprTycker tycker
+) implements Pat.Visitor<Integer, Unit>, Runnable {
+  @Override public void run() {
     for (var matching : matchings) {
       var patterns = matching.patterns();
       for (int i = 0, size = patterns.size(); i < size; i++) {
         var pat = patterns.get(i);
-        pat.accept(new Conquer(i), Unit.unit());
+        pat.accept(new Conquer(matchings, tycker), i);
       }
     }
   }
 
-  @Override public Unit visitBind(Pat.@NotNull Bind bind, Unit unit) {
-    return unit;
+  @Override public Unit visitBind(Pat.@NotNull Bind bind, Integer nth) {
+    return Unit.unit();
   }
 
-  @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Unit unit) {
-    for (var pat : tuple.pats()) pat.accept(this, unit);
-    return unit;
+  @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Integer nth) {
+    for (var pat : tuple.pats()) pat.accept(this, nth);
+    return Unit.unit();
   }
 
-  @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
-    for (var pat : ctor.params()) pat.accept(this, unit);
-    return unit;
+  @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Integer nth) {
+    for (var pat : ctor.params()) pat.accept(this, nth);
+    return Unit.unit();
   }
 
-  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
-    return null;
+  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, Integer nth) {
+    return Unit.unit();
   }
 }

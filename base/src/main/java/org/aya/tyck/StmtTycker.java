@@ -117,7 +117,7 @@ public record StmtTycker(
     if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker, ctor.sourcePos, signature.result(), classification);
-      Conquer.conditions(matchings, tycker);
+      new Conquer(matchings, tycker).run();
     }
     return elaborated;
   }
