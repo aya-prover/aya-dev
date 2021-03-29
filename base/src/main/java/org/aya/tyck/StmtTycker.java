@@ -14,6 +14,7 @@ import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.GenericBuilder;
+import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
@@ -116,6 +117,7 @@ public record StmtTycker(
     if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker, ctor.sourcePos, signature.result(), classification);
+      Conquer.conditions(matchings, tycker);
     }
     return elaborated;
   }
