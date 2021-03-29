@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
@@ -181,10 +182,10 @@ public sealed interface CallTerm extends Term {
    * @author ice1000
    */
   record Hole(
-    @NotNull Var ref,
+    @NotNull HoleVar ref,
     @NotNull Buffer<@NotNull Arg<Term>> argsBuf
   ) implements CallTerm {
-    public Hole(@NotNull Var var) {
+    public Hole(@NotNull HoleVar var) {
       this(var, Buffer.of());
     }
 

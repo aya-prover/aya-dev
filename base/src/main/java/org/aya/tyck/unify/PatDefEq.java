@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.def.DataDef;
@@ -150,7 +151,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       // TODO[ice]: report errors for duplicated vars in spine
       return null;
     }
-    var type = new CallTerm.Hole(new LocalVar(Constants.ANONYMOUS_PREFIX));
+    var type = new CallTerm.Hole(new HoleVar(Constants.ANONYMOUS_PREFIX));
     var abstracted = new LocalVar(var.name() + "'");
     var param = new Term.Param(abstracted, type, arg.explicit());
     subst.add(var, new RefTerm(abstracted));

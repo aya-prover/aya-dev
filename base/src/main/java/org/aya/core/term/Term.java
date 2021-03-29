@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import org.aya.api.core.CoreTerm;
 import org.aya.api.ref.Bind;
+import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
@@ -172,7 +173,7 @@ public interface Term extends CoreTerm {
       return new Param(ref, type.accept(new Substituter(subst, levelSubst), Unit.unit()), explicit);
     }
 
-    public static @NotNull Term.Param mock(@NotNull Var hole, boolean explicit) {
+    public static @NotNull Term.Param mock(@NotNull HoleVar hole, boolean explicit) {
       return new Param(new LocalVar(Constants.ANONYMOUS_PREFIX), new CallTerm.Hole(hole), explicit);
     }
 

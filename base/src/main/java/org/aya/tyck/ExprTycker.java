@@ -5,6 +5,7 @@ package org.aya.tyck;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.BreakingException;
@@ -87,8 +88,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Check(partialSynth = true)
   @Override public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
     if (term == null) {
-      var domain = new LocalVar(Constants.ANONYMOUS_PREFIX);
-      var codomain = new LocalVar(Constants.ANONYMOUS_PREFIX);
+      var domain = new HoleVar(Constants.ANONYMOUS_PREFIX);
+      var codomain = new HoleVar(Constants.ANONYMOUS_PREFIX);
       term = new PiTerm(false, Term.Param.mock(domain, expr.param().explicit()), new CallTerm.Hole(codomain));
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof PiTerm dt && !dt.co())) {
@@ -337,8 +338,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     // TODO[ice]: deal with unit type
     var name = expr.name();
     if (name == null) name = Constants.ANONYMOUS_PREFIX;
-    if (term == null) term = new CallTerm.Hole(new LocalVar(name + "_ty"));
-    return new Result(new CallTerm.Hole(new LocalVar(name)), term);
+    if (term == null) term = new CallTerm.Hole(new HoleVar(name + "_ty"));
+    return new Result(new CallTerm.Hole(new HoleVar(name)), term);
   }
 
   @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
@@ -353,7 +354,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       while (pi.param().explicit() != argLicit) {
         if (argLicit) {
           // that implies paramLicit == false
-          var holeApp = new CallTerm.Hole(new LocalVar(Constants.ANONYMOUS_PREFIX));
+          var holeApp = new CallTerm.Hole(new HoleVar(Constants.ANONYMOUS_PREFIX));
           // TODO: maybe we should create a concrete hole and check it against the type
           //  in case we can synthesize this term via its type only
           var holeArg = new Arg<Term>(holeApp, false);
