@@ -59,7 +59,7 @@ public record PatClassifier(
         var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
         var lhsTerm = lhs.expr().get().subst(lhsSubst);
         var rhsTerm = rhs.expr().get().subst(rhsSubst);
-        var unification = tycker.unifier(pos, Ordering.Eq).compare(lhsTerm, rhsTerm, result);
+        var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
           tycker.metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
           throw new ExprTycker.TyckInterruptedException();

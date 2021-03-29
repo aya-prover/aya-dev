@@ -196,13 +196,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   private boolean unifyTy(Term upper, Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, pos)));
     tracing(Trace.Builder::reduce);
-    return unifier(pos, Ordering.Lt).compare(lower, upper, UnivTerm.OMEGA);
+    return unifier(pos, Ordering.Lt, localCtx).compare(lower, upper, UnivTerm.OMEGA);
   }
 
-  public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
+  public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
     return new TypedDefEq(
       eq -> new PatDefEq(eq, ord, metaContext),
-      localCtx, traceBuilder, pos
+      ctx, traceBuilder, pos
     );
   }
 
