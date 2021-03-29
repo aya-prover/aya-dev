@@ -10,7 +10,6 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
-import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.error.ConfluenceError;
@@ -22,7 +21,9 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000, kiva
@@ -32,15 +33,6 @@ public record PatClassifier(
   @NotNull SourcePos pos,
   @NotNull PatTree.Builder builder
 ) {
-  /** Prefer using {@link PatClassifier#classify(ImmutableSeq, Reporter, SourcePos, boolean)} in production code. */
-  @TestOnly @VisibleForTesting
-  public static @NotNull ImmutableSeq<PatClass> testClassify(
-    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos
-  ) {
-    return classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, true);
-  }
-
   public static @NotNull ImmutableSeq<PatClass> classify(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos, boolean coverage
