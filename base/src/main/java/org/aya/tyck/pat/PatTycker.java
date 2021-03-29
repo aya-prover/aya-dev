@@ -21,9 +21,7 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.GenericBuilder;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.error.NotYetTyckedError;
-import org.aya.tyck.error.SplittingOnNonData;
-import org.aya.tyck.error.UnavailableCtorError;
+import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -80,7 +78,12 @@ public record PatTycker(
   }
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
-    // TODO[ice]: make sure empty?
+    var selection = selectCtor(term, null, subst.reporter(), absurd);
+    if (selection != null) {
+      subst.reporter().report(new PossiblePatError(absurd, selection._3));
+      // This is actually not necessary. Do we want to delete it?
+      throw new ExprTycker.TyckInterruptedException();
+    }
     return new Pat.Absurd(absurd.explicit(), term);
   }
 
@@ -169,15 +172,23 @@ public record PatTycker(
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name(), subst.reporter(), ctor);
-    if (realCtor == null) throw new ExprTycker.TyckInterruptedException();
+    if (realCtor == null) {
+      subst.reporter().report(new UnknownCtorError(ctor));
+      throw new ExprTycker.TyckInterruptedException();
+    }
     var ctorCore = realCtor._3.ref().core;
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), Term.Param.subst(ctorCore.conTele(), realCtor._2), realCtor._3.underlyingDataCall()));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
   }
 
+  /**
+   * @param name     if null, the selection will be performed on all constructors
+   * @param reporter see also {@link IgnoringReporter#INSTANCE}
+   * @return null means selection failed
+   */
   private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
-  selectCtor(Term param, @NotNull String name, @NotNull Reporter reporter, @NotNull Pattern pos) {
+  selectCtor(Term param, @Nullable String name, @NotNull Reporter reporter, @NotNull Pattern pos) {
     if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       reporter.report(new SplittingOnNonData(pos, param));
       return null;
@@ -188,7 +199,7 @@ public record PatTycker(
       return null;
     }
     for (var ctor : core.body()) {
-      if (!Objects.equals(ctor.ref().name(), name)) continue;
+      if (name != null && !Objects.equals(ctor.ref().name(), name)) continue;
       var matchy = mischa(dataCall, core, ctor);
       if (matchy == null) {
         // Since we cannot have two ctors of the same name,
@@ -196,11 +207,10 @@ public record PatTycker(
         // we get an error.
         var severity = reporter == IgnoringReporter.INSTANCE ? Problem.Severity.WARN : Problem.Severity.ERROR;
         subst.reporter().report(new UnavailableCtorError(pos, severity));
-        return null;
+        if (name != null) return null;
       }
       return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
     }
-    // TODO[ice]: report error: cannot find ctor of name
     return null;
   }
 

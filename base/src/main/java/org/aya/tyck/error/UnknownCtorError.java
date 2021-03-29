@@ -6,16 +6,18 @@ import org.aya.concrete.Pattern;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record UnavailableCtorError(
-  @NotNull Pattern pattern,
-  @NotNull Severity level
+public record UnknownCtorError(
+  @NotNull Pattern pattern
 ) implements PatternProblem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
-      Doc.plain("Cannot match with `"),
+      Doc.plain("Unknown constructor `"),
       pattern.toDoc(),
-      Doc.plain("` due to a failed index unification"),
-      level == Severity.ERROR ? Doc.empty() : Doc.plain(", treating as bind pattern")
+      Doc.plain("`")
     );
+  }
+
+  @Override public @NotNull Severity level() {
+    return Severity.ERROR;
   }
 }
