@@ -11,11 +11,8 @@ import org.aya.core.pat.PatUnify;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.MetaContext;
 import org.aya.tyck.error.ConfluenceError;
 import org.aya.tyck.error.MissingCaseError;
-import org.aya.tyck.unify.PatDefEq;
-import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -44,7 +41,7 @@ public record PatClassifier(
 
   public static void confluence(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
-    @NotNull MetaContext metaContext, @NotNull SourcePos pos,
+    @NotNull ExprTycker tycker, @NotNull SourcePos pos,
     @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
   ) {
     for (var results : classification) {
@@ -62,12 +59,9 @@ public record PatClassifier(
         var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
         var lhsTerm = lhs.expr().get().subst(lhsSubst);
         var rhsTerm = rhs.expr().get().subst(rhsSubst);
-        var unification = new TypedDefEq(
-          eq -> new PatDefEq(eq, Ordering.Eq, metaContext),
-          ctx, null, pos
-        ).compare(lhsTerm, rhsTerm, result);
+        var unification = tycker.unifier(pos, Ordering.Eq).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
-          metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
+          tycker.metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
           throw new ExprTycker.TyckInterruptedException();
         }
       }

@@ -115,7 +115,7 @@ public record StmtTycker(
     var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
     if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
-      PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);
+      PatClassifier.confluence(elabClauses, tycker, ctor.sourcePos, signature.result(), classification);
     }
     return elaborated;
   }
@@ -170,7 +170,7 @@ public record StmtTycker(
     var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(matchings));
     if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), decl.sourcePos, true);
-      PatClassifier.confluence(elabClauses, tycker.metaContext, decl.sourcePos, resultTy, classification);
+      PatClassifier.confluence(elabClauses, tycker, decl.sourcePos, resultTy, classification);
     }
     return elaborated;
   }
