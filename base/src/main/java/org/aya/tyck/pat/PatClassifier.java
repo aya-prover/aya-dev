@@ -18,6 +18,7 @@ import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,23 +46,21 @@ public record PatClassifier(
     @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
   ) {
     for (var results : classification) {
-      var contents = results.contents;
+      var contents = results.contents.flatMap(i ->
+        Pat.PrototypeClause.deprototypify(clauses.get(i)).map(matching -> IntObjTuple2.of(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++) {
-        int lhsIx = contents.get(i - 1);
-        int rhsIx = contents.get(i);
-        if (lhsIx == rhsIx) continue;
-        var lhs = clauses.get(lhsIx);
-        if (lhs.expr().isEmpty()) continue;
-        var rhs = clauses.get(rhsIx);
-        if (rhs.expr().isEmpty()) continue;
+        var lhsInfo = contents.get(i - 1);
+        var rhsInfo = contents.get(i);
+        var lhs = lhsInfo._2;
+        var rhs = rhsInfo._2;
         var lhsSubst = new Substituter.TermSubst(MutableMap.of());
         var rhsSubst = new Substituter.TermSubst(MutableMap.of());
         var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
-        var lhsTerm = lhs.expr().get().subst(lhsSubst);
-        var rhsTerm = rhs.expr().get().subst(rhsSubst);
+        var lhsTerm = lhs.body().subst(lhsSubst);
+        var rhsTerm = rhs.body().subst(rhsSubst);
         var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
-          tycker.metaContext.report(new ConfluenceError(pos, lhsIx + 1, rhsIx + 1, lhsTerm, rhsTerm));
+          tycker.metaContext.report(new ConfluenceError(pos, lhsInfo._1 + 1, rhsInfo._1 + 1, lhsTerm, rhsTerm));
           throw new ExprTycker.TyckInterruptedException();
         }
       }
