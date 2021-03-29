@@ -7,7 +7,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
-import org.aya.api.util.BreakingException;
+import org.aya.api.util.InterruptException;
 import org.aya.concrete.resolve.error.QualifiedNameNotFoundError;
 import org.aya.concrete.resolve.error.ShadowingWarn;
 import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
@@ -33,7 +33,7 @@ public interface Context {
   @Contract("_->fail")
   default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
     reporter().report(problem);
-    throw new ContextException();
+    throw new ResolvingInterruptedException();
   }
 
   @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);
@@ -113,13 +113,10 @@ public interface Context {
     return new ModuleContext(this);
   }
 
-  class ContextException extends BreakingException {
-    @Override public void printHint() {
-      System.err.println("A reference error was discovered during resolving.");
-    }
-
-    @Override public int exitCode() {
-      return 1;
+  class ResolvingInterruptedException extends InterruptException {
+    @Override
+    public InterruptStage stage() {
+      return InterruptStage.Resolving;
     }
   }
 }

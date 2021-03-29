@@ -10,7 +10,6 @@ import org.aya.concrete.Signatured;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
-import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
@@ -43,7 +42,7 @@ public final record FileModuleLoader(
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
       return null;
-    } catch (ExprTycker.TyckerException | Context.ContextException e) {
+    } catch (ExprTycker.TyckerException e) {
       handleInternalError(e);
       return null;
     } catch (InterruptException e) {

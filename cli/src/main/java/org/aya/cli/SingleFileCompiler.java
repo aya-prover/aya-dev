@@ -8,7 +8,6 @@ import org.aya.api.util.InterruptException;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.pretty.StmtPrettier;
-import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
@@ -50,7 +49,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
             Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(defs.map(Def::toDoc)).renderToHtml());
         }, builder);
       PrimDef.clearConcrete();
-    } catch (ExprTycker.TyckerException | Context.ContextException e) {
+    } catch (ExprTycker.TyckerException e) {
       FileModuleLoader.handleInternalError(e);
       return e.exitCode();
     } catch (InterruptException e) {
