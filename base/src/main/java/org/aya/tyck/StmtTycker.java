@@ -110,10 +110,10 @@ public record StmtTycker(
         patTycker.subst().resetTo(patSubst);
         return patTycker.visitMatch(c, signature);
       });
-    var clauses = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
+    var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
-    var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, clauses, dataCall, ctor.coerce);
-    if (elabClauses.isNotEmpty()) {
+    var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
+    if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker.metaContext, ctor.sourcePos, signature.result(), classification);
     }
@@ -165,12 +165,12 @@ public record StmtTycker(
     var resultTy = what._1;
     if (what._2.isLeft())
       return new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.left(what._2.getLeftValue()));
-    var cs = what._2.getRightValue();
-    var elabClauses = cs.flatMap(Pat.PrototypeClause::deprototypify);
-    var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(elabClauses));
-    if (cs.isNotEmpty()) {
-      var classification = PatClassifier.classify(cs, tycker.metaContext.reporter(), decl.sourcePos, true);
-      PatClassifier.confluence(cs, tycker.metaContext, decl.sourcePos, resultTy, classification);
+    var elabClauses = what._2.getRightValue();
+    var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
+    var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(matchings));
+    if (matchings.isNotEmpty()) {
+      var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), decl.sourcePos, true);
+      PatClassifier.confluence(elabClauses, tycker.metaContext, decl.sourcePos, resultTy, classification);
     }
     return elaborated;
   }
