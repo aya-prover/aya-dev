@@ -5,5 +5,12 @@ In file $FILE:2:3 ->
          ^-^
   
 Error: Cannot split on a non-inductive type `\oo-Type` with a constructor pattern `x y`
+In file $FILE:2:3 ->
+
+  1 | \def test (a : \Set) : \Set
+  2 |  | x y => a
+         ^-^
+  
+Error: Unknown constructor `x y`
 Tycking interrupted due to errors.
 What are you doing?

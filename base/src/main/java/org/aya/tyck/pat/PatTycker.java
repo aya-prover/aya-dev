@@ -201,15 +201,15 @@ public record PatTycker(
     for (var ctor : core.body()) {
       if (name != null && !Objects.equals(ctor.ref().name(), name)) continue;
       var matchy = mischa(dataCall, core, ctor);
-      if (matchy == null) {
-        // Since we cannot have two ctors of the same name,
-        // if the name-matching ctor mismatches the type,
-        // we get an error.
-        var severity = reporter == IgnoringReporter.INSTANCE ? Problem.Severity.WARN : Problem.Severity.ERROR;
-        subst.reporter().report(new UnavailableCtorError(pos, severity));
-        if (name != null) return null;
-      }
-      return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
+      if (matchy != null) return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
+      // For absurd pattern, we look at the next constructor
+      if (name == null) continue;
+      // Since we cannot have two constructors of the same name,
+      // if the name-matching constructor mismatches the type,
+      // we get an error.
+      var severity = reporter == IgnoringReporter.INSTANCE ? Problem.Severity.WARN : Problem.Severity.ERROR;
+      subst.reporter().report(new UnavailableCtorError(pos, severity));
+      return null;
     }
     return null;
   }
