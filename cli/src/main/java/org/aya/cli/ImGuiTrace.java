@@ -17,7 +17,7 @@ import java.util.Objects;
 
 @SuppressWarnings("AccessStaticViaInstance")
 public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
-  public static final float SCALE_FACTOR = 1.2f;
+  public static final float SCALE_FACTOR = 1.6f;
 
   private static record Color(int red, int green, int blue, @NotNull MutableJImVec4 vec4) {
     public Color(int red, int green, int blue) {
@@ -49,7 +49,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     try (var config = new JImFontConfig()) {
       var fontAtlas = imGui.getIO().getFonts();
       fontAtlas.clearFonts();
-      config.setSizePixels(22);
+      config.setSizePixels(16 * SCALE_FACTOR);
       fontAtlas.addDefaultFont(config);
     }
     JImGuiUtil.cacheStringToBytes();
