@@ -34,7 +34,7 @@ public class ParseTest {
   }
 
   private static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitStmt(AyaParsing.parser(code).stmt());
+    return INSTANCE.visitStmt(AyaParsing.parser(code).stmt()).toImmutableSeq();
   }
 
   public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {

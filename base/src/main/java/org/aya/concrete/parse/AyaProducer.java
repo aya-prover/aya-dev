@@ -21,8 +21,7 @@ import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.SeqView;
-import org.glavo.kala.collection.base.Traversable;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashSet;
 import org.glavo.kala.control.Either;
@@ -53,7 +52,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
-    return ctx.stmt().stream().map(this::visitStmt).flatMap(Traversable::stream).collect(ImmutableSeq.factory());
+    return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt).toImmutableSeq();
   }
 
   @Override public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
@@ -79,7 +78,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override public @NotNull ImmutableSeq<Stmt> visitStmt(AyaParser.StmtContext ctx) {
+  @Override public @NotNull SeqLike<Stmt> visitStmt(AyaParser.StmtContext ctx) {
     var importCmd = ctx.importCmd();
     if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
     var openCmd = ctx.openCmd();
@@ -87,7 +86,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var decl = ctx.decl();
     if (decl != null) {
       var result = visitDecl(decl);
-      return result._2.prepended(result._1);
+      return result._2.view().prepended(result._1);
     }
     var mod = ctx.module();
     if (mod != null) return ImmutableSeq.of(visitModule(mod));
@@ -130,32 +129,23 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTelescope(List<AyaParser.TeleContext> telescope) {
-    return telescope.stream()
-      .map(t -> visitTele(t, false))
-      .flatMap(Traversable::stream)
-      .collect(ImmutableSeq.factory());
+    return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, false));
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitLamTelescope(List<AyaParser.TeleContext> telescope) {
-    return telescope.stream()
-      .map(t -> visitTele(t, true))
-      .flatMap(Traversable::stream)
-      .collect(ImmutableSeq.factory());
+    return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, true));
   }
 
   @Override
   public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(AyaParser.AbuseContext ctx) {
-    return ctx.stmt().stream()
-      .map(this::visitStmt)
-      .flatMap(Traversable::stream)
-      .collect(ImmutableSeq.factory());
+    return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
   }
 
   @Override
   public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> visitFnBody(AyaParser.FnBodyContext ctx) {
     var expr = ctx.expr();
     if (expr != null) return Either.left(visitExpr(expr));
-    return Either.right(ctx.clause().stream().map(this::visitClause).collect(ImmutableSeq.factory()));
+    return Either.right(ImmutableSeq.from(ctx.clause()).map(this::visitClause));
   }
 
   @Override
@@ -344,14 +334,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   public static @NotNull Expr buildLam(
     SourcePos sourcePos,
-    SeqView<Expr.Param> params,
+    SeqLike<Expr.Param> params,
     Expr body
   ) {
     if (params.isEmpty()) return body;
     return new Expr.LamExpr(
       sourcePos,
       params.first(),
-      buildLam(sourcePosForSubExpr(params, body), params.drop(1), body)
+      buildLam(sourcePosForSubExpr(params, body), params.view().drop(1), body)
     );
   }
 
@@ -393,7 +383,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public static @NotNull Expr buildPi(
     SourcePos sourcePos,
     boolean co,
-    SeqView<Expr.Param> params,
+    SeqLike<Expr.Param> params,
     Expr body
   ) {
     if (params.isEmpty()) return body;
@@ -402,11 +392,11 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       sourcePos,
       co,
       first,
-      buildPi(sourcePosForSubExpr(params, body), co, params.drop(1), body)
+      buildPi(sourcePosForSubExpr(params, body), co, params.view().drop(1), body)
     );
   }
 
-  @NotNull private static SourcePos sourcePosForSubExpr(SeqView<Expr.Param> params, Expr body) {
+  @NotNull private static SourcePos sourcePosForSubExpr(SeqLike<Expr.Param> params, Expr body) {
     var restParamSourcePos = params.stream().skip(1)
       .map(Expr.Param::sourcePos)
       .reduce(SourcePos.NONE, (acc, it) -> {
@@ -573,9 +563,9 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   private void checkRedefinition(@NotNull RedefinitionError.Kind kind,
-                                 @NotNull SeqView<Tuple2<String, SourcePos>> names) {
+                                 @NotNull SeqLike<Tuple2<String, SourcePos>> names) {
     var set = MutableHashSet.<String>of();
-    var redefs = names.filterNot(n -> set.add(n._1));
+    var redefs = names.view().filterNot(n -> set.add(n._1)).toImmutableSeq();
     if (redefs.isNotEmpty()) {
       var last = redefs.last();
       reporter.report(new RedefinitionError(kind, last._1, last._2));
@@ -706,9 +696,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Stmt.ModuleStmt(
       sourcePosOf(ctx),
       ctx.ID().getText(),
-      ctx.stmt().stream().map(this::visitStmt)
-        .flatMap(Traversable::stream)
-        .collect(ImmutableSeq.factory())
+      ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt)
     );
   }
 
