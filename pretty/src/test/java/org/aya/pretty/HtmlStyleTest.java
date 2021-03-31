@@ -7,6 +7,8 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 public class HtmlStyleTest {
   @Test
   public void testHtmlStyle() {
@@ -18,6 +20,6 @@ public class HtmlStyleTest {
     var f = Doc.cat(e, Doc.hyperLink("Click me", new StringLink("https://google.com")));
     var g = Doc.cat(f, Doc.hyperLink("Show dialog", new StringLink("javascript:alert('hello world');")));
 
-    assert !g.renderToHtml().isEmpty();
+    assertFalse(g.renderToHtml().isEmpty());
   }
 }

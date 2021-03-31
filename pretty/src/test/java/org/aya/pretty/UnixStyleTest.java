@@ -8,6 +8,8 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 public class UnixStyleTest {
   @Test
   public void testUnixStyle() {
@@ -23,6 +25,6 @@ public class UnixStyleTest {
       Doc.styled(UnixTermStyle.Blink, "blink"),
       Doc.styled(UnixTermStyle.Reverse, "reverse")
     );
-    assert !f.renderToString(StringPrinterConfig.unixTerminal()).isEmpty();
+    assertFalse(f.renderToString(StringPrinterConfig.unixTerminal()).isEmpty());
   }
 }

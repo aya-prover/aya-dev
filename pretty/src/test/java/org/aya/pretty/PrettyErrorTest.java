@@ -8,6 +8,7 @@ import org.aya.pretty.error.RangeSpan;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author kiva
@@ -49,6 +50,7 @@ public class PrettyErrorTest {
     ).toDoc();
 
     String text = doc.renderWithPageWidth(80);
+    assertFalse(text.isEmpty());
 
     assertEquals("""
       In file <stdin>:6:7 ->
@@ -82,6 +84,7 @@ public class PrettyErrorTest {
     ).toDoc();
 
     String text = doc.renderWithPageWidth(80);
+    assertFalse(text.isEmpty());
 
     assertEquals("""
       In file <stdin>:2:25 ->
@@ -111,6 +114,7 @@ public class PrettyErrorTest {
     ).toDoc();
 
     String text = doc.renderWithPageWidth(80);
+    assertFalse(text.isEmpty());
 
     assertEquals("""
       In file <stdin>:2:25 ->
