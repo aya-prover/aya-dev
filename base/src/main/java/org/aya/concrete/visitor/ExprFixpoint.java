@@ -52,7 +52,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     var last = expr.last().accept(this, p);
-    if (binds.sameElements(expr.params()) && Objects.equals(last, expr.last())) return expr;
+    if (binds.sameElements(expr.params(), true) && Objects.equals(last, expr.last())) return expr;
     return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), binds, last);
   }
 
@@ -69,13 +69,13 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
     var arg = expr.arguments().map(x -> visitArg(x, p));
-    if (Objects.equals(function, expr.function()) && arg.sameElements(expr.arguments())) return expr;
+    if (Objects.equals(function, expr.function()) && arg.sameElements(expr.arguments(), true)) return expr;
     return new Expr.AppExpr(expr.sourcePos(), function, arg);
   }
 
   @Override default @NotNull Expr visitTup(Expr.@NotNull TupExpr expr, P p) {
     var items = expr.items().map(item -> item.accept(this, p));
-    if (items.sameElements(expr.items())) return expr;
+    if (items.sameElements(expr.items(), true)) return expr;
     return new Expr.TupExpr(expr.sourcePos(), items);
   }
 
