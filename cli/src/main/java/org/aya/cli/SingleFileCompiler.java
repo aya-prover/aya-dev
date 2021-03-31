@@ -31,9 +31,13 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
       var choice = flags.distillChoice();
+      var pathFileName = filePath.getFileName().toString();
+      var dotIndex = pathFileName.indexOf('.');
+      var htmlPath = filePath.resolveSibling(pathFileName
+        .substring(0, dotIndex > 0 ? dotIndex : pathFileName.length()) + ".html");
       if (choice == CliArgs.DistillChoice.Raw) {
         // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
-        Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
+        Files.writeString(htmlPath, Doc.vcat(
           StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
       }
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
@@ -41,12 +45,12 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       FileModuleLoader.tyckModule(loader, program, reporter,
         () -> {
           if (choice == CliArgs.DistillChoice.Scoped)
-            Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(
+            Files.writeString(htmlPath, Doc.vcat(
               StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
         },
         defs -> {
           if (choice == CliArgs.DistillChoice.Typed)
-            Files.writeString(filePath.resolveSibling("pp.html"), Doc.vcat(defs.map(Def::toDoc)).renderToHtml());
+            Files.writeString(htmlPath, Doc.vcat(defs.map(Def::toDoc)).renderToHtml());
         }, builder);
       PrimDef.clearConcrete();
     } catch (ExprTycker.TyckerException e) {
