@@ -17,6 +17,7 @@ public class HtmlStyleTest {
     var e = Doc.styled(Style.strike(), Doc.cat(a, b, c, d));
     var f = Doc.cat(e, Doc.hyperLink("Click me", new StringLink("https://google.com")));
     var g = Doc.cat(f, Doc.hyperLink("Show dialog", new StringLink("javascript:alert('hello world');")));
-    System.out.println(g.renderToHtml());
+
+    assert !g.renderToHtml().isEmpty();
   }
 }

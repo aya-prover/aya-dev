@@ -49,7 +49,6 @@ public class PrettyErrorTest {
     ).toDoc();
 
     String text = doc.renderWithPageWidth(80);
-    System.out.println(text);
 
     assertEquals("""
       In file <stdin>:6:7 ->
@@ -83,7 +82,6 @@ public class PrettyErrorTest {
     ).toDoc();
 
     String text = doc.renderWithPageWidth(80);
-    System.out.println(text);
 
     assertEquals("""
       In file <stdin>:2:25 ->
@@ -113,7 +111,6 @@ public class PrettyErrorTest {
     ).toDoc();
 
     String text = doc.renderWithPageWidth(80);
-    System.out.println(text);
 
     assertEquals("""
       In file <stdin>:2:25 ->

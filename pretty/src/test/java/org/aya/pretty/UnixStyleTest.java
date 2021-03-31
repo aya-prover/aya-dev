@@ -23,6 +23,6 @@ public class UnixStyleTest {
       Doc.styled(UnixTermStyle.Blink, "blink"),
       Doc.styled(UnixTermStyle.Reverse, "reverse")
     );
-    System.out.println(f.renderToString(StringPrinterConfig.unixTerminal()));
+    assert !f.renderToString(StringPrinterConfig.unixTerminal()).isEmpty();
   }
 }
