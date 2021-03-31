@@ -3,6 +3,7 @@
 package org.aya.api.core;
 
 import org.aya.api.ref.LocalVar;
+import org.aya.api.util.Arg;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,4 +15,5 @@ public interface CorePat extends Docile {
   boolean explicit();
   @NotNull CoreTerm type();
   @NotNull CoreTerm toTerm();
+  @NotNull Arg<@NotNull ? extends @NotNull CoreTerm> toArg();
 }

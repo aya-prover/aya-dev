@@ -5,6 +5,7 @@ package org.aya.core.pat;
 import org.aya.api.core.CorePat;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.pretty.PatPrettier;
@@ -30,6 +31,9 @@ public sealed interface Pat extends CorePat {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Term toTerm() {
     return accept(PatToTerm.INSTANCE, Unit.unit());
+  }
+  @Override default @NotNull Arg<Term> toArg() {
+    return new Arg<>(toTerm(), explicit());
   }
   @Override default @NotNull Doc toDoc() {
     return accept(PatPrettier.INSTANCE, false);

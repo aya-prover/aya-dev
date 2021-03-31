@@ -117,7 +117,7 @@ public record StmtTycker(
     if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker, ctor.sourcePos, signature.result(), classification);
-      Conquer.against(matchings, tycker);
+      Conquer.against(matchings, tycker, ctor.sourcePos, signature);
     }
     return elaborated;
   }
@@ -173,6 +173,7 @@ public record StmtTycker(
     if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), decl.sourcePos, true);
       PatClassifier.confluence(elabClauses, tycker, decl.sourcePos, resultTy, classification);
+      Conquer.against(matchings, tycker, decl.sourcePos, signature.value);
     }
     return elaborated;
   }

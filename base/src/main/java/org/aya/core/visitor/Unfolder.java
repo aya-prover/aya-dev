@@ -63,7 +63,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return prim.ref().core.unfold(prim);
   }
 
-  private @Nullable Term tryUnfoldClauses(
+  default @Nullable Term tryUnfoldClauses(
     P p, ImmutableSeq<Arg<Term>> args,
     Substituter.@NotNull TermSubst subst,
     @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
