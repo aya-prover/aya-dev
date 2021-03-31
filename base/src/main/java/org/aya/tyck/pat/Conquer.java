@@ -61,7 +61,7 @@ public record Conquer(
     for (int i = 0, size = conditions.size(); i < size; i++) {
       var condition = conditions.get(i);
       var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
-      if (matchy != null) checkConditions(ctor, nth, i, condition.body(), matchy);
+      if (matchy != null) checkConditions(ctor, nth, i + 1, condition.body(), matchy);
     }
     return Unit.unit();
   }

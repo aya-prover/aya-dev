@@ -7,5 +7,5 @@
  | neg Nat { | zero => pos zero }
 
 \def abs (n : Int) : Nat
- | pos n => suc zero
- | neg n => zero
+ | pos n => suc n
+ | neg n => n
