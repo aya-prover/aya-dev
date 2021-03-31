@@ -1,0 +1,10 @@
+In file $FILE:15:5 ->
+
+  13 |  | neg Nat { | n => pos (addN n n) }
+  14 | 
+  15 | \def abs (n : Int) : Nat
+            ^-^
+  
+Error: The 2nd clause matches on a constructor with condition(s). When checking the 0th condition, we failed to even reduce one of the clause(s) to check condition
+Tycking interrupted due to errors.
+What are you doing?

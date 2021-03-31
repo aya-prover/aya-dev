@@ -13,7 +13,7 @@
  | fzero => zero
  | fsuc \impossible
 
-\def finToNat (n : Nat) (a : Fin n) : Nat
+\def finToNat (n : Nat) (att : Fin n) : Nat
  | zero, \impossible
- | suc zero, fzero => zero
+ | suc n, fzero => zero
  | suc n, fsuc a => suc (finToNat n a)

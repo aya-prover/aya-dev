@@ -125,8 +125,8 @@ public record PatClassifier(
       }
       var classified = classifySub(matches, coverage);
       builder.reduce();
-      var clazz = classified.flatMap(pat -> pat.extract(subPatsSeq).map(SubPats::drop));
-      var rest = classifySub(clazz, coverage);
+      var classes = classified.map(pat -> pat.extract(subPatsSeq).map(SubPats::drop));
+      var rest = classes.flatMap(clazz -> classifySub(clazz, coverage));
       builder.unshift();
       buffer.appendAll(rest);
     }
