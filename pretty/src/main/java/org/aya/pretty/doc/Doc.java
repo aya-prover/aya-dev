@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.doc;
 
-import org.aya.pretty.backend.DocHtmlPrinter;
-import org.aya.pretty.backend.DocStringPrinter;
+import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlPrinterConfig;
+import org.aya.pretty.backend.string.DocStringPrinter;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.style.IgnoringStylist;

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.printer;
 
-import org.aya.pretty.backend.DocStringPrinter;
+import org.aya.pretty.backend.string.DocStringPrinter;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
