@@ -106,18 +106,18 @@ public record StmtTycker(
     }
     var signature = new Def.Signature(ImmutableSeq.of(), tele, dataCall);
     ctor.signature = signature;
-    var elabClauses = ctor.clauses
-      .map(c -> {
-        patTycker.subst().resetTo(patSubst);
-        return patTycker.visitMatch(c, signature);
-      });
+    var cumulativeCtx = tycker.localCtx.derive();
+    var elabClauses = ctor.clauses.map(c -> {
+      patTycker.subst().resetTo(patSubst);
+      return patTycker.visitMatch(c, signature, cumulativeCtx.localMap());
+    });
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
     if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker, ctor.sourcePos, signature.result(), classification);
-      Conquer.against(matchings, tycker, ctor.sourcePos, signature);
+      Conquer.against(matchings, cumulativeCtx, tycker, ctor.sourcePos, signature);
     }
     return elaborated;
   }
@@ -161,9 +161,10 @@ public record StmtTycker(
     var signature = new Ref<>(new Def.Signature(ctxTele, resultTele, resultRes.wellTyped()));
     decl.signature = signature.value;
     var patTycker = new PatTycker(tycker);
+    var cumulativeCtx = tycker.localCtx.derive();
     var what = FP.distR(decl.body.map(
       left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
-      right -> patTycker.elabClause(right, signature)));
+      right -> patTycker.elabClause(right, signature, cumulativeCtx.localMap())));
     var resultTy = what._1;
     if (what._2.isLeft())
       return new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.left(what._2.getLeftValue()));
@@ -173,7 +174,7 @@ public record StmtTycker(
     if (matchings.isNotEmpty()) {
       var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), decl.sourcePos, true);
       PatClassifier.confluence(elabClauses, tycker, decl.sourcePos, resultTy, classification);
-      Conquer.against(matchings, tycker, decl.sourcePos, signature.value);
+      Conquer.against(matchings, cumulativeCtx, tycker, decl.sourcePos, signature.value);
     }
     return elaborated;
   }

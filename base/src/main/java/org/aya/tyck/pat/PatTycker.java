@@ -28,6 +28,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableHashSet;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
@@ -65,12 +66,15 @@ public record PatTycker(
     this(exprTycker, new ExprRefSubst(exprTycker.metaContext.reporter(), MutableHashMap.of(), MutableHashSet.of()), exprTycker.traceBuilder);
   }
 
-  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
-  elabClause(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, Ref<Def.@NotNull Signature> signature) {
+  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClause(
+    @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
+    Ref<Def.@NotNull Signature> signature,
+    @NotNull MutableMap<LocalVar, Term> cumulativeCtx
+  ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos(), "clause " + (1 + index))));
       subst.clear();
-      var elabClause = visitMatch(clause, signature.value);
+      var elabClause = visitMatch(clause, signature.value, cumulativeCtx);
       tracing(GenericBuilder::reduce);
       return elabClause;
     });
@@ -87,7 +91,10 @@ public record PatTycker(
     return new Pat.Absurd(absurd.explicit(), term);
   }
 
-  public Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.Signature signature) {
+  public Pat.PrototypeClause visitMatch(
+    Pattern.@NotNull Clause match, Def.@NotNull Signature signature,
+    @NotNull MutableMap<LocalVar, Term> cumulativeCtx
+  ) {
     var sig = new Ref<>(signature);
     exprTycker.localCtx = exprTycker.localCtx.derive();
     var patterns = visitPatterns(sig, match.patterns());
@@ -96,6 +103,7 @@ public record PatTycker(
       .map(e -> exprTycker.checkExpr(e, sig.value.result()));
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
+    cumulativeCtx.putAll(exprTycker.localCtx.localMap());
     exprTycker.localCtx = parent;
     return new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped));
   }

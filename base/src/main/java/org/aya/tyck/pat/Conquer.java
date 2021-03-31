@@ -14,6 +14,7 @@ import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.LocalCtx;
 import org.aya.tyck.error.ConditionError;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -29,17 +30,18 @@ import org.jetbrains.annotations.NotNull;
 public record Conquer(
   @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
   @NotNull SourcePos sourcePos,
+  @NotNull LocalCtx localCtx,
   @NotNull Def.Signature signature,
   @NotNull ExprTycker tycker
 ) implements Pat.Visitor<Integer, Unit> {
   public static void against(
-    @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
+    @NotNull ImmutableSeq<Matching<Pat, Term>> matchings, @NotNull LocalCtx localCtx,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
     for (int i = 0, size = matchings.size(); i < size; i++) {
       var matching = matchings.get(i);
       for (var pat : matching.patterns())
-        pat.accept(new Conquer(matchings, pos, signature, tycker), i);
+        pat.accept(new Conquer(matchings, pos, localCtx, signature, tycker), i);
     }
   }
 
@@ -74,9 +76,7 @@ public record Conquer(
           tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, null));
           throw new ExprTycker.TyckInterruptedException();
         }
-        // TODO[ice]: the tycker.localCtx is probably not suitable in this case. We need to type both
-        //  bodies, where the contexts can be obtained during the tycking of the terms
-        var unification = tycker.unifier(sourcePos, Ordering.Eq, tycker.localCtx)
+        var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
           .compare(newBody, volynskaya, signature.result().subst(matchy));
         if (!unification) {
           tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, volynskaya));
