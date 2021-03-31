@@ -61,30 +61,32 @@ public record Conquer(
     for (int i = 0, size = conditions.size(); i < size; i++) {
       var condition = conditions.get(i);
       var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
-      if (matchy != null) {
-        var currentClause = matchings.get(nth);
-        var newBody = currentClause.body().subst(matchy);
-        var newArgs = currentClause.patterns().map(pat -> new Arg<>(pat.accept(new PatToTerm() {
-          @Override public Term visitCtor(Pat.@NotNull Ctor newCtor, Unit unit) {
-            if (newCtor == ctor) return condition.body();
-            return super.visitCtor(newCtor, unit);
-          }
-        }, Unit.unit()), pat.explicit()));
-        var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
-          new Substituter.TermSubst(MutableMap.of()), matchings);
-        if (volynskaya == null) {
-          tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, null));
-          throw new ExprTycker.TyckInterruptedException();
-        }
-        var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
-          .compare(newBody, volynskaya, signature.result().subst(matchy));
-        if (!unification) {
-          tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, volynskaya));
-          throw new ExprTycker.TyckInterruptedException();
-        }
-      }
+      if (matchy != null) checkConditions(ctor, nth, i, condition.body(), matchy);
     }
     return Unit.unit();
+  }
+
+  private void checkConditions(Pat.@NotNull Ctor ctor, int nth, int i, Term condition, Substituter.TermSubst matchy) {
+    var currentClause = matchings.get(nth);
+    var newBody = currentClause.body().subst(matchy);
+    var newArgs = currentClause.patterns().map(pat -> new Arg<>(pat.accept(new PatToTerm() {
+      @Override public Term visitCtor(Pat.@NotNull Ctor newCtor, Unit unit) {
+        if (newCtor == ctor) return condition;
+        return super.visitCtor(newCtor, unit);
+      }
+    }, Unit.unit()), pat.explicit()));
+    var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
+      new Substituter.TermSubst(MutableMap.of()), matchings);
+    if (volynskaya == null) {
+      tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, null));
+      throw new ExprTycker.TyckInterruptedException();
+    }
+    var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
+      .compare(newBody, volynskaya, signature.result().subst(matchy));
+    if (!unification) {
+      tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, volynskaya));
+      throw new ExprTycker.TyckInterruptedException();
+    }
   }
 
   @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, Integer nth) {
