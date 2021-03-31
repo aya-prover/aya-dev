@@ -91,7 +91,7 @@ public record PatClassifier(
     }
     var hasMatch = subPatsSeq.view()
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Ctor ctor ? ctor.type() : null)
-      .toImmutableSeq();
+      .firstOption();
     // Progress
     if (hasMatch.isEmpty()) {
       builder.shiftEmpty(explicit);
@@ -100,7 +100,7 @@ public record PatClassifier(
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
-    var dataCall = hasMatch.first();
+    var dataCall = hasMatch.get();
     for (var ctor : dataCall.ref().core.body()) {
       var conTele = ctor.conTele();
       if (ctor.pats().isNotEmpty()) {
