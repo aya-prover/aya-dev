@@ -10,7 +10,7 @@ public class StringPrinterConfig extends PrinterConfig.Basic {
   public StringStylist formatter;
 
   public StringPrinterConfig(@NotNull StringStylist formatter, int pageWidth) {
-    super(pageWidth, PrinterConfig.INFINITE_SIZE);
+    super(pageWidth, INFINITE_SIZE);
     this.formatter = formatter;
   }
 

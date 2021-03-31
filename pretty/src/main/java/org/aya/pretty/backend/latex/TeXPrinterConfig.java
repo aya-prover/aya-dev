@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public class TeXPrinterConfig extends StringPrinterConfig {
-  public TeXPrinterConfig(@NotNull StringStylist formatter, int pageWidth) {
-    super(formatter, pageWidth);
+  public TeXPrinterConfig(@NotNull StringStylist formatter) {
+    super(formatter, INFINITE_SIZE);
   }
 }

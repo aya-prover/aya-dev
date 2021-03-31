@@ -4,7 +4,6 @@ module org.aya.pretty {
   requires org.glavo.kala.base;
   requires org.glavo.kala.collection;
 
-  exports org.aya.pretty.backend.html.style;
   exports org.aya.pretty.backend.html;
   exports org.aya.pretty.backend.string.custom;
   exports org.aya.pretty.backend.string.style;
