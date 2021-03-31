@@ -3,14 +3,12 @@
 package org.aya.pretty.backend.latex;
 
 import org.aya.pretty.backend.string.StringPrinterConfig;
-import org.aya.pretty.backend.string.StringStylist;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
  */
 public class TeXPrinterConfig extends StringPrinterConfig {
-  public TeXPrinterConfig(@NotNull StringStylist formatter) {
-    super(formatter, INFINITE_SIZE);
+  public TeXPrinterConfig() {
+    super(new TeXStylist(), INFINITE_SIZE);
   }
 }
