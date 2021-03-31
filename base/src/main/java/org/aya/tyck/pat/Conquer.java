@@ -22,8 +22,8 @@ public record Conquer(
   @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
   @NotNull MutableSet<IntTuple2> comparisons,
   @NotNull ExprTycker tycker
-) implements Pat.Visitor<Integer, Unit>, Runnable {
-  @Override public void run() {
+) implements Pat.Visitor<Integer, Unit> {
+  public static void against(@NotNull ImmutableSeq<Matching<Pat, Term>> matchings, @NotNull ExprTycker tycker) {
     var unificationBag = MutableSet.<IntTuple2>of();
     for (var matching : matchings) {
       var patterns = matching.patterns();
