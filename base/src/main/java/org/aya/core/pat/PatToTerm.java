@@ -15,10 +15,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-final class PatToTerm implements Pat.Visitor<Unit, Term> {
+public class PatToTerm implements Pat.Visitor<Unit, Term> {
   static final @NotNull PatToTerm INSTANCE = new PatToTerm();
 
-  private PatToTerm() {
+  protected PatToTerm() {
   }
 
   @Override public Term visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {

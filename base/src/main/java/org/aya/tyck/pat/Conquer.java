@@ -3,11 +3,14 @@
 package org.aya.tyck.pat;
 
 import org.aya.core.pat.Pat;
+import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableSet;
 import org.glavo.kala.tuple.Unit;
+import org.glavo.kala.tuple.primitive.IntTuple2;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,14 +20,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public record Conquer(
   @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
+  @NotNull MutableSet<IntTuple2> comparisons,
   @NotNull ExprTycker tycker
 ) implements Pat.Visitor<Integer, Unit>, Runnable {
   @Override public void run() {
+    var unificationBag = MutableSet.<IntTuple2>of();
     for (var matching : matchings) {
       var patterns = matching.patterns();
       for (int i = 0, size = patterns.size(); i < size; i++) {
         var pat = patterns.get(i);
-        pat.accept(new Conquer(matchings, tycker), i);
+        pat.accept(new Conquer(matchings, unificationBag, tycker), i);
       }
     }
   }
@@ -39,7 +44,13 @@ public record Conquer(
   }
 
   @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Integer nth) {
-    for (var pat : ctor.params()) pat.accept(this, nth);
+    var params = ctor.params();
+    for (var pat : params) pat.accept(this, nth);
+    for (var condition : ctor.ref().core.clauses()) {
+      var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
+      if (matchy == null) continue;
+      var newBody = matchings.get(nth).body().subst(matchy);
+    }
     return Unit.unit();
   }
 

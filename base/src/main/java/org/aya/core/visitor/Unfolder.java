@@ -69,7 +69,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
   ) {
     for (var matchy : clauses) {
-      var termSubst = PatMatcher.tryBuildSubst(matchy.patterns(), args);
+      var termSubst = PatMatcher.tryBuildSubstArgs(matchy.patterns(), args);
       if (termSubst != null) {
         subst.add(termSubst);
         return matchy.body().subst(subst).accept(this, p);

@@ -104,7 +104,7 @@ public record PatClassifier(
     for (var ctor : dataCall.ref().core.body()) {
       var conTele = ctor.conTele();
       if (ctor.pats().isNotEmpty()) {
-        var matchy = PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
+        var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats(), dataCall.args());
         if (matchy == null) continue;
         conTele = Term.Param.subst(conTele, matchy);
       }

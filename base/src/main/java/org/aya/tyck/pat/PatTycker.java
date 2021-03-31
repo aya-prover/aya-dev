@@ -215,7 +215,7 @@ public record PatTycker(
   }
 
   private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, DataDef.Ctor ctor) {
-    if (ctor.pats().isNotEmpty()) return PatMatcher.tryBuildSubst(ctor.pats(), dataCall.args());
+    if (ctor.pats().isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats(), dataCall.args());
     else return Unfolder.buildSubst(core.telescope(), dataCall.args());
   }
 }

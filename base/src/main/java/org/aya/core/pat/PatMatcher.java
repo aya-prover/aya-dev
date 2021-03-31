@@ -18,17 +18,24 @@ import org.jetbrains.annotations.Nullable;
  * Matches a term with a pattern.
  *
  * @author ice1000
- * @apiNote Use {@link PatMatcher#tryBuildSubst(ImmutableSeq, SeqLike)} instead of instantiating the class directly.
+ * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(ImmutableSeq, SeqLike)} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
 public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Visitor<Term, Unit> {
-  public static @Nullable Substituter.TermSubst tryBuildSubst(
+  public static @Nullable Substituter.TermSubst tryBuildSubstArgs(
     @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms
   ) {
+    return tryBuildSubstTerms(pats, terms.view().map(Arg::term));
+  }
+
+  public static @Nullable Substituter.TermSubst tryBuildSubstTerms(
+    @NotNull ImmutableSeq<@NotNull Pat> pats,
+    @NotNull SeqLike<@NotNull Term> terms
+  ) {
     var matchy = new PatMatcher(new Substituter.TermSubst(new MutableHashMap<>()));
     try {
-      for (var pat : pats.zip(terms)) pat._1.accept(matchy, pat._2.term());
+      for (var pat : pats.zip(terms)) pat._1.accept(matchy, pat._2);
       return matchy.subst();
     } catch (Mismatch mismatch) {
       return null;
