@@ -66,13 +66,12 @@ public record Conquer(
     return Unit.unit();
   }
 
-  private void checkConditions(Pat.@NotNull Ctor ctor, int nth, int i, Term condition, Substituter.TermSubst matchy) {
+  private void checkConditions(Pat ctor, int nth, int i, Term condition, Substituter.TermSubst matchy) {
     var currentClause = matchings.get(nth);
     var newBody = currentClause.body().subst(matchy);
     var newArgs = currentClause.patterns().map(pat -> new Arg<>(pat.accept(new PatToTerm() {
       @Override public Term visitCtor(Pat.@NotNull Ctor newCtor, Unit unit) {
-        if (newCtor == ctor) return condition;
-        return super.visitCtor(newCtor, unit);
+        return newCtor == ctor ? condition : super.visitCtor(newCtor, unit);
       }
     }, Unit.unit()), pat.explicit()));
     var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
