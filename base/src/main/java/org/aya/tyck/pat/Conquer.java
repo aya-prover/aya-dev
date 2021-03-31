@@ -3,15 +3,18 @@
 package org.aya.tyck.pat;
 
 import org.aya.api.error.SourcePos;
+import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
+import org.aya.core.pat.PatToTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.error.ConditionError;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -33,12 +36,10 @@ public record Conquer(
     @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
-    for (var matching : matchings) {
-      var patterns = matching.patterns();
-      for (int i = 0, size = patterns.size(); i < size; i++) {
-        var pat = patterns.get(i);
+    for (int i = 0, size = matchings.size(); i < size; i++) {
+      var matching = matchings.get(i);
+      for (var pat : matching.patterns())
         pat.accept(new Conquer(matchings, pos, signature, tycker), i);
-      }
     }
   }
 
@@ -54,25 +55,32 @@ public record Conquer(
   @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Integer nth) {
     var params = ctor.params();
     for (var pat : params) pat.accept(this, nth);
-    for (var condition : ctor.ref().core.clauses()) {
+    var conditions = ctor.ref().core.clauses();
+    for (int i = 0, size = conditions.size(); i < size; i++) {
+      var condition = conditions.get(i);
       var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
       if (matchy != null) {
         var currentClause = matchings.get(nth);
         var newBody = currentClause.body().subst(matchy);
-        var newArgs = currentClause.patterns().map(Pat::toArg);
+        var newArgs = currentClause.patterns().map(pat -> new Arg<>(pat.accept(new PatToTerm() {
+          @Override public Term visitCtor(Pat.@NotNull Ctor newCtor, Unit unit) {
+            if (newCtor == ctor) return condition.body();
+            return super.visitCtor(newCtor, unit);
+          }
+        }, Unit.unit()), pat.explicit()));
         var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
           new Substituter.TermSubst(MutableMap.of()), matchings);
         if (volynskaya == null) {
-          // TODO[ice]: unfold foiled, cannot check confluence over conditions
-          throw new ExprTycker.TyckerException();
+          tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, null));
+          throw new ExprTycker.TyckInterruptedException();
         }
         // TODO[ice]: the tycker.localCtx is probably not suitable in this case. We need to type both
         //  bodies, where the contexts can be obtained during the tycking of the terms
         var unification = tycker.unifier(sourcePos, Ordering.Eq, tycker.localCtx)
           .compare(newBody, volynskaya, signature.result().subst(matchy));
         if (!unification) {
-          // TODO[ice]: not confluence over conditions
-          throw new ExprTycker.TyckerException();
+          tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, volynskaya));
+          throw new ExprTycker.TyckInterruptedException();
         }
       }
     }
