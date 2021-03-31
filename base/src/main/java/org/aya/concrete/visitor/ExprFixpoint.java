@@ -8,8 +8,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitRef(Expr.@NotNull RefExpr expr, P p) {
     return expr;
@@ -21,38 +19,38 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitHole(Expr.@NotNull HoleExpr expr, P p) {
     var h = expr.filling() != null ? expr.filling().accept(this, p) : null;
-    if (Objects.equals(h, expr.filling())) return expr;
+    if (h == expr.filling()) return expr;
     return new Expr.HoleExpr(expr.sourcePos(), expr.name(), h);
   }
 
   default @NotNull ImmutableSeq<Expr.@NotNull Param> visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, P p) {
-    return params.view().map(param -> {
+    return params.map(param -> {
       var oldType = param.type();
       if (oldType == null) return param;
       var type = oldType.accept(this, p);
-      if (Objects.equals(type, oldType)) return param;
+      if (type == oldType) return param;
       return new Expr.Param(param.sourcePos(), param.ref(), type, param.explicit());
-    }).collect(ImmutableSeq.factory());
+    });
   }
 
   @Override default @NotNull Expr visitLam(Expr.@NotNull LamExpr expr, P p) {
     var bind = visitParams(ImmutableSeq.of(expr.param()), p).get(0);
     var body = expr.body().accept(this, p);
-    if (bind == expr.param() && Objects.equals(body, expr.body())) return expr;
+    if (bind == expr.param() && body == expr.body()) return expr;
     return new Expr.LamExpr(expr.sourcePos(), bind, body);
   }
 
   @Override default @NotNull Expr visitPi(Expr.@NotNull PiExpr expr, P p) {
     var bind = visitParams(ImmutableSeq.of(expr.param()), p).get(0);
     var body = expr.last().accept(this, p);
-    if (bind == expr.param() && Objects.equals(body, expr.last())) return expr;
+    if (bind == expr.param() && body == expr.last()) return expr;
     return new Expr.LamExpr(expr.sourcePos(), bind, body);
   }
 
   @Override default @NotNull Expr visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     var last = expr.last().accept(this, p);
-    if (binds.sameElements(expr.params(), true) && Objects.equals(last, expr.last())) return expr;
+    if (binds.sameElements(expr.params(), true) && last == expr.last()) return expr;
     return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), binds, last);
   }
 
@@ -62,14 +60,14 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   default @NotNull Arg<Expr> visitArg(@NotNull Arg<Expr> arg, P p) {
     var term = arg.term().accept(this, p);
-    if (Objects.equals(term, arg.term())) return arg;
+    if (term == arg.term()) return arg;
     return new Arg<>(term, arg.explicit());
   }
 
   @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
     var arg = expr.arguments().map(x -> visitArg(x, p));
-    if (Objects.equals(function, expr.function()) && arg.sameElements(expr.arguments(), true)) return expr;
+    if (function == expr.function() && arg.sameElements(expr.arguments(), true)) return expr;
     return new Expr.AppExpr(expr.sourcePos(), function, arg);
   }
 
@@ -81,14 +79,14 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitProj(Expr.@NotNull ProjExpr expr, P p) {
     var tup = expr.tup().accept(this, p);
-    if (Objects.equals(tup, expr.tup())) return expr;
+    if (tup == expr.tup()) return expr;
     return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix());
   }
 
   @Override default @NotNull Expr visitNew(Expr.@NotNull NewExpr expr, P p) {
     var struct = expr.struct().accept(this, p);
     var fields = expr.fields().map(t -> Tuple.of(t._1, t._2.accept(this, p)));
-    if (Objects.equals(expr.struct(), struct) && fields.sameElements(expr.fields())) return expr;
+    if (expr.struct() == struct && fields.sameElements(expr.fields(), true)) return expr;
     return new Expr.NewExpr(expr.sourcePos(), struct, fields);
   }
 
