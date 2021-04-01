@@ -18,7 +18,7 @@ public class CliArgs {
   @Parameter(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage")
   public DistillStage prettyStage;
   @Parameter(names = {"--pretty-format"}, description = "Pretty print format")
-  public DistillFormat prettyFormat;
+  public DistillFormat prettyFormat = DistillFormat.HTML;
   @Parameter(names = {"--pretty-dir"}, description = "Output directory of pretty printing")
   public @Nullable String prettyDir;
   @Parameter(names = {"--trace"}, description = "Print type checking traces")

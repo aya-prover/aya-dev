@@ -4,6 +4,8 @@ package org.aya.pretty.doc;
 
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlPrinterConfig;
+import org.aya.pretty.backend.latex.DocTeXPrinter;
+import org.aya.pretty.backend.latex.TeXPrinterConfig;
 import org.aya.pretty.backend.string.DocStringPrinter;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.backend.string.StringPrinterConfig;
@@ -39,6 +41,11 @@ public sealed interface Doc {
   default @NotNull String renderToHtml() {
     var printer = new DocHtmlPrinter();
     return this.render(printer, new HtmlPrinterConfig());
+  }
+
+  default @NotNull String renderToTeX() {
+    var printer = new DocTeXPrinter();
+    return this.render(printer, new TeXPrinterConfig());
   }
 
   default <Out, Config extends PrinterConfig>

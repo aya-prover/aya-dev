@@ -32,14 +32,14 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
       // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
-      writeCode(flags, () -> Doc.vcat(
+      writeCode(flags.distillInfo(), () -> Doc.vcat(
         StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()), CliArgs.DistillStage.Raw);
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter,
-        () -> writeCode(flags, () -> Doc.vcat(StmtPrettier.INSTANCE.visitAll(
+        () -> writeCode(flags.distillInfo(), () -> Doc.vcat(StmtPrettier.INSTANCE.visitAll(
           program, Unit.unit()).stream()), CliArgs.DistillStage.Scoped),
-        defs -> writeCode(flags, () -> Doc.vcat(defs.map(Def::toDoc)), CliArgs.DistillStage.Typed), builder);
+        defs -> writeCode(flags.distillInfo(), () -> Doc.vcat(defs.map(Def::toDoc)), CliArgs.DistillStage.Typed), builder);
       PrimDef.clearConcrete();
     } catch (ExprTycker.TyckerException e) {
       FileModuleLoader.handleInternalError(e);
@@ -58,14 +58,18 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     }
   }
 
-  private void writeCode(@NotNull CompilerFlags flags, Supplier<Doc> doc, @NotNull CliArgs.DistillStage currentStage) throws IOException {
-    if (currentStage != flags.distillStage()) return;
-    var pathFileName = filePath.getFileName().toString();
-    var dotIndex = pathFileName.indexOf('.');
+  private void writeCode(@Nullable CompilerFlags.DistillInfo flags, Supplier<Doc> doc, @NotNull CliArgs.DistillStage currentStage) throws IOException {
+    if (flags == null || currentStage != flags.distillStage()) return;
+    var ayaFileName = filePath.getFileName().toString();
+    var dotIndex = ayaFileName.indexOf('.');
     var distillDir = filePath.resolveSibling(flags.distillDir());
     if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
-    var htmlPath = distillDir.resolve(pathFileName
-      .substring(0, dotIndex > 0 ? dotIndex : pathFileName.length()) + ".html");
-    Files.writeString(htmlPath, doc.get().renderToHtml());
+    var fileName = ayaFileName
+      .substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length());
+    var code = doc.get();
+    switch (flags.distillFormat()) {
+      case HTML -> Files.writeString(distillDir.resolve(fileName + ".html"), code.renderToHtml());
+      case LaTeX -> Files.writeString(distillDir.resolve(fileName + ".tex"), code.renderToTeX());
+    }
   }
 }
