@@ -164,10 +164,18 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderPlainText(@NotNull String content) {
     if (isAtLineStart()) {
-      builder.append(" ".repeat(nestLevel));
+      renderIndent(nestLevel);
       cursor += nestLevel;
+      renderLineStart();
     }
     builder.append(content);
+  }
+
+  protected void renderLineStart() {
+  }
+
+  protected void renderIndent(int indent) {
+    builder.append(" ".repeat(indent));
   }
 
   protected void renderHardLineBreak() {
