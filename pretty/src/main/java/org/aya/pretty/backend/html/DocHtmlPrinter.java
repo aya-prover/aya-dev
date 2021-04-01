@@ -50,14 +50,13 @@ public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
     """;
 
   @Override protected void renderHeader() {
-    builder.append(HEAD);
+    if (config.withHeader) builder.append(HEAD);
+    else builder.append("<pre class=\"Aya\">");
   }
 
   @Override protected void renderFooter() {
-    builder.append("""
-      </pre>
-      </body></html>
-      """);
+    builder.append("</pre>");
+    if (config.withHeader) builder.append("</body></html>");
   }
 
   @Override protected void renderHyperLinked(Doc.@NotNull HyperLinked text) {

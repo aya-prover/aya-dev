@@ -43,8 +43,12 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToHtml() {
+    return renderToHtml(true);
+  }
+
+  default @NotNull String renderToHtml(boolean withHeader) {
     var printer = new DocHtmlPrinter();
-    return this.render(printer, new HtmlPrinterConfig());
+    return this.render(printer, new HtmlPrinterConfig(withHeader));
   }
 
   default @NotNull String renderToTeX() {

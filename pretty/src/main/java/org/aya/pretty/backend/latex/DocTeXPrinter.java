@@ -12,4 +12,8 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
   @Override protected void renderPlainText(@NotNull String content) {
     super.renderPlainText(content.replace(' ', '~'));
   }
+
+  @Override protected void renderHardLineBreak() {
+    builder.append("\\\\\n");
+  }
 }

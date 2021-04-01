@@ -5,7 +5,10 @@ package org.aya.pretty.backend.html;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 
 public class HtmlPrinterConfig extends StringPrinterConfig {
-  public HtmlPrinterConfig() {
+  public final boolean withHeader;
+
+  public HtmlPrinterConfig(boolean withHeader) {
     super(new Html5Stylist(), INFINITE_SIZE);
+    this.withHeader = withHeader;
   }
 }

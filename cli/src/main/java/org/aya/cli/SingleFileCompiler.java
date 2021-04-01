@@ -77,10 +77,10 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
         for (int i = 0; i < code.size(); i++) {
           var item = code.get(i);
           var thisDoc = item.toDoc();
-          Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + ".html"), thisDoc.renderToHtml());
+          Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + ".html"), thisDoc.renderToHtml(false));
           docs.append(thisDoc);
         }
-        Files.writeString(distillDir.resolve(fileName + ".html"), Doc.vcat(docs).renderToHtml());
+        Files.writeString(distillDir.resolve(fileName + ".html"), Doc.vcat(docs).renderToHtml(true));
       }
       case LaTeX -> {
         var docs = Buffer.<Doc>of();
