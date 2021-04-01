@@ -33,7 +33,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       var choice = flags.distillChoice();
       var pathFileName = filePath.getFileName().toString();
       var dotIndex = pathFileName.indexOf('.');
-      var htmlPath = filePath.resolveSibling(pathFileName
+      var htmlPath = filePath.resolveSibling(flags.distillDir()).resolve(pathFileName
         .substring(0, dotIndex > 0 ? dotIndex : pathFileName.length()) + ".html");
       if (choice == CliArgs.DistillChoice.Raw) {
         // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library

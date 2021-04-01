@@ -12,6 +12,7 @@ public record CompilerFlags(
   @NotNull Message message,
   boolean interruptedTrace,
   @Nullable CliArgs.DistillChoice distillChoice,
+  @NotNull Path distillDir,
   @NotNull ImmutableSeq<Path> modulePaths
 ) {
   public record Message(

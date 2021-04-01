@@ -15,8 +15,10 @@ public class CliArgs {
   public boolean help = false;
   @Parameter(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace = false;
-  @Parameter(names = {"--distill", "--pretty"}, description = "Pretty print the code in a certain stage")
-  public DistillChoice distill;
+  @Parameter(names = {"--pretty"}, description = "Pretty print the code in a certain stage")
+  public DistillChoice pretty;
+  @Parameter(names = {"--pretty-dir"}, description = "Output directory of pretty printing")
+  public @Nullable String prettyDir;
   @Parameter(names = {"--trace"}, description = "Print type checking traces")
   public @Nullable TraceFormat traceFormat;
   @Parameter(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")
