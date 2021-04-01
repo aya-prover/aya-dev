@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Supplier;
+import java.util.function.BiFunction;
 
 public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath, Trace.@Nullable Builder builder) {
   public int compile(@NotNull CompilerFlags flags) throws IOException {
@@ -34,12 +34,12 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
       // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
-      writeCode(flags.distillInfo(), () -> program, CliArgs.DistillStage.Raw);
+      writeCode(flags.distillInfo(), program, CliArgs.DistillStage.Raw);
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter,
-        () -> writeCode(flags.distillInfo(), () -> program, CliArgs.DistillStage.Scoped),
-        defs -> writeCode(flags.distillInfo(), () -> defs, CliArgs.DistillStage.Typed), builder);
+        () -> writeCode(flags.distillInfo(), program, CliArgs.DistillStage.Scoped),
+        defs -> writeCode(flags.distillInfo(), defs, CliArgs.DistillStage.Typed), builder);
       PrimDef.clearConcrete();
     } catch (ExprTycker.TyckerException e) {
       FileModuleLoader.handleInternalError(e);
@@ -60,7 +60,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
 
   private void writeCode(
     @Nullable CompilerFlags.DistillInfo flags,
-    Supplier<ImmutableSeq<? extends Docile>> doc,
+    ImmutableSeq<? extends Docile> doc,
     @NotNull CliArgs.DistillStage currentStage
   ) throws IOException {
     if (flags == null || currentStage != flags.distillStage()) return;
@@ -71,29 +71,23 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var fileName = ayaFileName
       .substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length());
     switch (flags.distillFormat()) {
-      case HTML -> {
-        var docs = Buffer.<Doc>of();
-        var code = doc.get();
-        for (int i = 0; i < code.size(); i++) {
-          var item = code.get(i);
-          var thisDoc = item.toDoc();
-          Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + ".html"), thisDoc.renderToHtml(false));
-          docs.append(thisDoc);
-        }
-        Files.writeString(distillDir.resolve(fileName + ".html"), Doc.vcat(docs).renderToHtml(true));
-      }
-      case LaTeX -> {
-        var docs = Buffer.<Doc>of();
-        var code = doc.get();
-        for (int i = 0; i < code.size(); i++) {
-          var item = code.get(i);
-          var thisDoc = item.toDoc();
-          Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + ".tex"), thisDoc.renderToTeX());
-          docs.append(thisDoc);
-        }
-        Files.writeString(distillDir.resolve(fileName + ".tex"), Doc.vcat(docs).renderToTeX());
-      }
+      case HTML -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
+      case LaTeX -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, bool) -> thisDoc.renderToTeX());
     }
+  }
+
+  private void doWrite(
+    ImmutableSeq<? extends Docile> doc, Path distillDir,
+    String fileName, String fileExt, BiFunction<Doc, Boolean, String> toString
+  ) throws IOException {
+    var docs = Buffer.<Doc>of();
+    for (int i = 0; i < doc.size(); i++) {
+      var item = doc.get(i);
+      var thisDoc = item.toDoc();
+      Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + fileExt), toString.apply(thisDoc, false));
+      docs.append(thisDoc);
+    }
+    Files.writeString(distillDir.resolve(fileName + fileExt), toString.apply(Doc.vcat(docs), true));
   }
 
   @NotNull private String nameOf(int i, Docile item) {
