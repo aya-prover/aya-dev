@@ -3,11 +3,16 @@
 package org.aya.pretty.backend.latex;
 
 import org.aya.pretty.backend.string.StringPrinter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
  */
 public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
+  @Override protected void renderPlainText(@NotNull String content) {
+    super.renderPlainText(content.replace("\\", ""));
+  }
+
   @Override
   protected void renderIndent(int indent) {
     builder.append("~".repeat(indent));
