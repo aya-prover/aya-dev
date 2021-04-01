@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
   @Override protected void renderPlainText(@NotNull String content) {
-    super.renderPlainText(content.replace(' ', '~'));
+    super.renderPlainText(content.replace(' ', '~').replace("\\", ""));
   }
 
   @Override protected void renderHardLineBreak() {

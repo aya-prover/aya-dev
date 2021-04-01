@@ -6,8 +6,8 @@ import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlPrinterConfig;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.latex.TeXPrinterConfig;
-import org.aya.pretty.backend.string.DocStringPrinter;
 import org.aya.pretty.backend.string.StringLink;
+import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.style.IgnoringStylist;
 import org.aya.pretty.printer.Printer;
@@ -38,7 +38,7 @@ public sealed interface Doc extends Docile {
   //region Doc Member Functions
 
   default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
-    var printer = new DocStringPrinter();
+    var printer = new StringPrinter<>();
     return this.render(printer, config);
   }
 
