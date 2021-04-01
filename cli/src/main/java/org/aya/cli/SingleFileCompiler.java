@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath, Trace.@Nullable Builder builder) {
   public int compile(@NotNull CompilerFlags flags) throws IOException {
@@ -30,28 +31,15 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var parser = AyaParsing.parser(filePath, reporter);
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
-      var choice = flags.distillChoice();
-      var pathFileName = filePath.getFileName().toString();
-      var dotIndex = pathFileName.indexOf('.');
-      var htmlPath = filePath.resolveSibling(flags.distillDir()).resolve(pathFileName
-        .substring(0, dotIndex > 0 ? dotIndex : pathFileName.length()) + ".html");
-      if (choice == CliArgs.DistillChoice.Raw) {
-        // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
-        Files.writeString(htmlPath, Doc.vcat(
-          StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
-      }
+      // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
+      writeCode(flags, () -> Doc.vcat(
+        StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()), CliArgs.DistillStage.Raw);
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter,
-        () -> {
-          if (choice == CliArgs.DistillChoice.Scoped)
-            Files.writeString(htmlPath, Doc.vcat(
-              StmtPrettier.INSTANCE.visitAll(program, Unit.unit()).stream()).renderToHtml());
-        },
-        defs -> {
-          if (choice == CliArgs.DistillChoice.Typed)
-            Files.writeString(htmlPath, Doc.vcat(defs.map(Def::toDoc)).renderToHtml());
-        }, builder);
+        () -> writeCode(flags, () -> Doc.vcat(StmtPrettier.INSTANCE.visitAll(
+          program, Unit.unit()).stream()), CliArgs.DistillStage.Scoped),
+        defs -> writeCode(flags, () -> Doc.vcat(defs.map(Def::toDoc)), CliArgs.DistillStage.Typed), builder);
       PrimDef.clearConcrete();
     } catch (ExprTycker.TyckerException e) {
       FileModuleLoader.handleInternalError(e);
@@ -68,5 +56,16 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       reporter.reportString(flags.message().failNotion());
       return -1;
     }
+  }
+
+  private void writeCode(@NotNull CompilerFlags flags, Supplier<Doc> doc, @NotNull CliArgs.DistillStage currentStage) throws IOException {
+    if (currentStage != flags.distillStage()) return;
+    var pathFileName = filePath.getFileName().toString();
+    var dotIndex = pathFileName.indexOf('.');
+    var distillDir = filePath.resolveSibling(flags.distillDir());
+    if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
+    var htmlPath = distillDir.resolve(pathFileName
+      .substring(0, dotIndex > 0 ? dotIndex : pathFileName.length()) + ".html");
+    Files.writeString(htmlPath, doc.get().renderToHtml());
   }
 }

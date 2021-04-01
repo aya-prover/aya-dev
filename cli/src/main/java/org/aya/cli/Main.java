@@ -44,7 +44,7 @@ public final class Main {
     var status = compiler.compile(new CompilerFlags(
       message,
       cli.interruptedTrace,
-      cli.pretty,
+      cli.prettyStage,
       Paths.get(cli.prettyDir != null ? cli.prettyDir : "."),
       cli.modulePaths().map(Paths::get)));
     if (traceBuilder != null) switch (cli.traceFormat) {
