@@ -30,7 +30,11 @@ import java.util.stream.Stream;
  *
  * @author kiva
  */
-public sealed interface Doc {
+public sealed interface Doc extends Docile {
+  @Override default @NotNull Doc toDoc() {
+    return this;
+  }
+
   //region Doc Member Functions
 
   default @NotNull String renderToString(@NotNull StringPrinterConfig config) {

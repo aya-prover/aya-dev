@@ -42,8 +42,8 @@ public sealed interface Stmt extends Docile
     @Override default void traceEntrance(@NotNull Decl decl, P p) {
       traceEntrance((Stmt) decl, p);
     }
-    default @NotNull ImmutableSeq<R> visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
-      return stmts.map(stmt -> stmt.accept(this, p));
+    default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
+      stmts.forEach(stmt -> stmt.accept(this, p));
       // [xyr]: Is this OK? The order of visiting must be preserved.
       // [ice]: I guess so, map should preserve the order.
     }
