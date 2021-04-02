@@ -183,10 +183,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
   defCall(DefVar<D, S> defVar, TriFunction<DefVar<D, S>, ImmutableSeq<Arg<Term>>, ImmutableSeq<Arg<Term>>, Term> function) {
     var tele = Def.defTele(defVar);
+    var ctxTele = Def.defContextTele(defVar);
     // ice: should we rename the vars in this telescope? Probably not.
     var body = function.apply(defVar,
-      // TODO[xyr]: context args
-      ImmutableSeq.of(),
+      ctxTele.view().map(Term.Param::toArg).toImmutableSeq(),
       tele.view().map(Term.Param::toArg).toImmutableSeq());
     var type = PiTerm.make(false, tele, Def.defResult(defVar));
     return new Result(LamTerm.make(tele, body), type);
