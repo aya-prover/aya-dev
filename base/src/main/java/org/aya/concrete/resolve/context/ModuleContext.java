@@ -116,7 +116,7 @@ public record ModuleContext(
       }
       globals.set(name, MutableHashMap.of());
     } else if (globals.get(name).containsKey(modName)) {
-      reporter().report(new DuplicateNameError(name, sourcePos));
+      reportAndThrow(new DuplicateNameError(name, sourcePos));
     } else {
       reporter().report(new AmbiguousNameWarn(name, sourcePos));
     }
@@ -127,7 +127,7 @@ public record ModuleContext(
     }
     if (accessibility == Stmt.Accessibility.Public) {
       if (exports.get(TOP_LEVEL_MOD_NAME).containsKey(name)) {
-        reporter().report(new DuplicateExportError(name, sourcePos));
+        reportAndThrow(new DuplicateExportError(name, sourcePos));
       } else exports.get(TOP_LEVEL_MOD_NAME).set(name, ref);
     }
   }
