@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author AustinZ
  */
-public record HoleVar(@NotNull String name) implements Var {
+public record CoreVar<Core>(@NotNull String name, @NotNull Core core) implements Var {
 
   @Override public boolean equals(Object o) {
     return this == o;
