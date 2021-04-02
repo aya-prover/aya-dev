@@ -19,6 +19,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   private int nestLevel = 0;
   protected int cursor = 0;
+  protected int lineStartCursor = 0;
 
   @Override
   public @NotNull String render(@NotNull StringConfig config, @NotNull Doc doc) {
@@ -36,7 +37,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   }
 
   private boolean isAtLineStart() {
-    return cursor == 0;
+    return cursor == lineStartCursor;
   }
 
   protected int predictWidth(@NotNull Doc doc) {
@@ -91,41 +92,29 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     if (doc instanceof Doc.Fail) {
       throw new IllegalArgumentException("Doc.Fail passed to renderer");
     } else if (doc instanceof Doc.PlainText text) {
-      renderPlainText(text.text());
-      cursor += text.text().length();
+      cursor += recordBuffer(() -> renderPlainText(text.text()));
     } else if (doc instanceof Doc.SpecialSymbol symbol) {
-      renderSpecialSymbol(symbol.text());
-      cursor += symbol.text().length();
-
+      cursor += recordBuffer(() -> renderSpecialSymbol(symbol.text()));
     } else if (doc instanceof Doc.HyperLinked text) {
       renderHyperLinked(text);
-
     } else if (doc instanceof Doc.Styled styled) {
       renderStyled(styled);
-
     } else if (doc instanceof Doc.Line) {
       renderHardLineBreak();
-      cursor = 0;
-      renderLineStart();
+      lineStartCursor = cursor = recordBuffer(this::renderLineStart);
     } else if (doc instanceof Doc.FlatAlt alt) {
       renderFlatAlt(alt);
-
     } else if (doc instanceof Doc.Cat cat) {
       renderDoc(cat.first());
       renderDoc(cat.second());
-
     } else if (doc instanceof Doc.Nest nest) {
       renderNest(nest);
-
     } else if (doc instanceof Doc.Union union) {
       renderUnionDoc(union);
-
     } else if (doc instanceof Doc.Column column) {
       renderDoc(column.docBuilder().apply(cursor));
-
     } else if (doc instanceof Doc.Nesting nesting) {
       renderDoc(nesting.docBuilder().apply(nestLevel));
-
     } else if (doc instanceof Doc.PageWidth pageWidth) {
       renderDoc(pageWidth.docBuilder().apply(config.getPageWidth()));
     }
@@ -175,5 +164,12 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderHardLineBreak() {
     builder.append('\n');
+  }
+
+  private int recordBuffer(@NotNull Runnable runnable) {
+    var curr = builder.length();
+    runnable.run();
+    var now = builder.length();
+    return now - curr;
   }
 }
