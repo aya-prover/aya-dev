@@ -5,9 +5,10 @@ package org.aya.api.ref;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author AustinZ
+ * @param <Core> the type of the thing stored in the hole
+ * @author AustinZ, re-xyr
  */
-public record CoreVar<Core>(@NotNull String name, @NotNull Core core) implements Var {
+public record HoleVar<Core>(@NotNull String name, @NotNull Core core) implements Var {
 
   @Override public boolean equals(Object o) {
     return this == o;

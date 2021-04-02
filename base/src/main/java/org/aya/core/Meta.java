@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core;
 
-import org.aya.api.ref.CoreVar;
+import org.aya.api.ref.HoleVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -20,7 +20,7 @@ public final class Meta {
     return contextTele.view().concat(telescope).toImmutableSeq();
   }
 
-  public boolean solve(@NotNull CoreVar<Meta> v, @NotNull Term t) {
+  public boolean solve(@NotNull HoleVar<Meta> v, @NotNull Term t) {
     if (t.findUsages(v) > 0) {
       return false;
     }

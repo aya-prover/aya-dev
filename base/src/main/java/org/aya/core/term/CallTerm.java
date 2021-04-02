@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
-import org.aya.api.ref.CoreVar;
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
@@ -198,11 +198,11 @@ public sealed interface CallTerm extends Term {
    * @author ice1000
    */
   record Hole(
-    @NotNull CoreVar<Meta> ref,
+    @NotNull HoleVar<Meta> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
     @NotNull SeqLike<@NotNull Arg<Term>> argsBuf
   ) implements CallTerm {
-    public Hole(@NotNull CoreVar<Meta> var, @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs) {
+    public Hole(@NotNull HoleVar<Meta> var, @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs) {
       this(var, contextArgs, Seq.of());
     }
 
