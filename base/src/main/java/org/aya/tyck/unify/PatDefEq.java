@@ -2,19 +2,17 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
-import org.aya.api.ref.HoleVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.util.Arg;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Unfolder;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.MetaContext;
 import org.aya.tyck.error.HoleBadSpineWarn;
-import org.aya.util.Constants;
+import org.aya.tyck.error.RecursiveSolutionError;
 import org.aya.util.Decision;
 import org.aya.util.Ordering;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,41 +132,41 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     this.metaContext = metaContext;
   }
 
-  private @Nullable Term extract(Seq<? extends Arg<? extends Term>> spine, Term rhs) {
+  private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
-    for (var arg : spine.view()) {
-      if (arg.term() instanceof RefTerm ref) {
-        rhs = extractVar(rhs, subst, arg, ref.var());
+    for (var arg : lhs.argsBuf().view().zip(lhs.ref().core().telescope.view())) {
+      if (arg._1.term() instanceof RefTerm ref) {
+        // TODO[xyr]: do scope checking here
+        subst.add(ref.var(), new RefTerm(arg._2.ref()));
         if (rhs == null) return null;
       } else return null;
       // TODO[ice]: ^ eta var
     }
-    return rhs.subst(subst);
-  }
-
-  private @Nullable Term extractVar(Term rhs, Substituter.TermSubst subst, Arg<? extends Term> arg, LocalVar var) {
-    if (subst.map().containsKey(var)) {
-      // TODO[ice]: report errors for duplicated vars in spine
-      return null;
-    }
-    var type = new CallTerm.Hole(new HoleVar(Constants.ANONYMOUS_PREFIX));
-    var abstracted = new LocalVar(var.name() + "'");
-    var param = new Term.Param(abstracted, type, arg.explicit());
-    subst.add(var, new RefTerm(abstracted));
-    return new LamTerm(param, new LamTerm(param, rhs));
+    return rhs.subst(subst.add(Unfolder.buildSubst(lhs.ref().core().contextTele, lhs.contextArgs())));
   }
 
   @Override
   public @NotNull Boolean visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs, @NotNull Term type) {
-    var solved = extract(lhs.args(), rhs);
+    if (rhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
+      var holeTy = PiTerm.make(false, lhs.ref().core().telescope, lhs.ref().core().result);
+      for (var arg : lhs.argsBuf().view().zip(rcall.argsBuf().view())) {
+        if (!(holeTy instanceof PiTerm holePi)) throw new IllegalStateException("meta arg size larger than param size. this should not happen");
+        if (!defeq.compare(arg._1.term(), arg._2.term(), holePi.param().type())) return false;
+        holeTy = holePi.body().subst(holePi.param().ref(), arg._1.term());
+      }
+      return true;
+    }
+    var solved = extract(lhs, rhs);
     if (solved == null) {
       metaContext.report(new HoleBadSpineWarn(lhs, defeq.pos));
       return false;
     }
-    var solution = metaContext.solution(lhs.ref());
-    if (solution.isDefined()) return untypedDefeq.defeq()
-      .compare(CallTerm.make(solution.get(), lhs.args()), rhs, type);
-    metaContext.solve(lhs.ref(), solved, untypedDefeq.defeq().pos);
+    assert lhs.ref().core().body == null;
+    var success = lhs.ref().core().solve(lhs.ref(), solved);
+    if (!success) {
+      metaContext.report(new RecursiveSolutionError(lhs.ref(), solved, untypedDefeq.defeq().pos));
+      throw new ExprTycker.TyckInterruptedException();
+    }
     return true;
   }
 }
