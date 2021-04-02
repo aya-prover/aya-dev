@@ -48,6 +48,10 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
   @Override @NotNull ImmutableSeq<Term.Param> contextTele();
   @Override @NotNull ImmutableSeq<Term.Param> telescope();
 
+  default @NotNull ImmutableSeq<Term.Param> fullTelescope() {
+    return contextTele().view().concat(telescope()).toImmutableSeq();
+  }
+
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Doc toDoc() {
     return accept(DefPrettier.INSTANCE, Unit.unit());
