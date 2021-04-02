@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
   @Override protected void renderHeader() {
-    builder.append("\\begin{tabular}{lr}\n");
+    builder.append("\\begin{tabular}{lr}\n&");
   }
 
   @Override protected void renderFooter() {
@@ -29,7 +29,6 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
 
   @Override protected void renderLineStart() {
     builder.append("&");
-    cursor += 1;
   }
 
   @Override protected void renderHardLineBreak() {

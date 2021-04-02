@@ -113,7 +113,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.Line) {
       renderHardLineBreak();
       cursor = 0;
-
+      renderLineStart();
     } else if (doc instanceof Doc.FlatAlt alt) {
       renderFlatAlt(alt);
 
@@ -163,7 +163,6 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderPlainText(@NotNull String content) {
     if (isAtLineStart()) {
-      renderLineStart();
       renderIndent(nestLevel);
       cursor += nestLevel;
     }
