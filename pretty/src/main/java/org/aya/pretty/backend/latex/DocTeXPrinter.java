@@ -37,10 +37,10 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
   @Override protected void renderSpecialSymbol(@NotNull String text) {
     for (var k : commandMapping.keysView()) {
       if (text.contains(k)) {
-        builder.append("$");
+        builder.append(" $");
         var str = commandMapping.get(k);
         builder.append(str);
-        builder.append("$");
+        builder.append("$ ");
         return;
       }
     }
