@@ -27,6 +27,7 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
 
   @Override protected void renderLineStart() {
     builder.append("&");
+    cursor += 1;
   }
 
   @Override protected void renderHardLineBreak() {

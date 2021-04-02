@@ -18,7 +18,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   protected StringConfig config;
 
   private int nestLevel = 0;
-  private int cursor = 0;
+  protected int cursor = 0;
 
   @Override
   public @NotNull String render(@NotNull StringConfig config, @NotNull Doc doc) {
@@ -100,7 +100,6 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   protected void renderDoc(@NotNull Doc doc) {
     if (doc instanceof Doc.Fail) {
       throw new IllegalArgumentException("Doc.Fail passed to renderer");
-
     } else if (doc instanceof Doc.PlainText text) {
       renderPlainText(text.text());
       cursor += text.text().length();
@@ -164,9 +163,9 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderPlainText(@NotNull String content) {
     if (isAtLineStart()) {
+      renderLineStart();
       renderIndent(nestLevel);
       cursor += nestLevel;
-      renderLineStart();
     }
     builder.append(content);
   }
