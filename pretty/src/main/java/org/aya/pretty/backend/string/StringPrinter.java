@@ -92,9 +92,11 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     if (doc instanceof Doc.Fail) {
       throw new IllegalArgumentException("Doc.Fail passed to renderer");
     } else if (doc instanceof Doc.PlainText text) {
-      cursor += recordBuffer(() -> renderPlainText(text.text()));
+      renderPlainText(text.text());
+      cursor += text.text().length();
     } else if (doc instanceof Doc.SpecialSymbol symbol) {
-      cursor += recordBuffer(() -> renderSpecialSymbol(symbol.text()));
+      renderSpecialSymbol(symbol.text());
+      cursor += symbol.text().length();
     } else if (doc instanceof Doc.HyperLinked text) {
       renderHyperLinked(text);
     } else if (doc instanceof Doc.Styled styled) {
@@ -144,7 +146,8 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderStyled(@NotNull Doc.Styled styled) {
     var formatter = config.getStyleFormatter();
-    formatter.format(styled.styles(), builder, () -> renderDoc(styled.doc()));
+    formatter.format(styled.styles(), builder,
+      () -> cursor += recordBuffer(() -> renderDoc(styled.doc())));
   }
 
   protected void renderPlainText(@NotNull String content) {
