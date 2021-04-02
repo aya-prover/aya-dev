@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.latex;
 
+import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.tuple.Tuple;
@@ -19,8 +20,8 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
     builder.append("\n\\end{tabular}");
   }
 
-  @Override protected void renderPlainText(@NotNull String content) {
-    super.renderPlainText(content
+  @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
+    super.renderPlainText(cursor, content
       .replace("\\", "")
       .replace("_", "\\_"));
   }
@@ -34,24 +35,25 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
     Tuple.of("}", "\\}")
   );
 
-  @Override protected void renderSpecialSymbol(@NotNull String text) {
+  @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {
     for (var k : commandMapping.keysView()) {
       if (text.contains(k)) {
         builder.append(" $");
         var str = commandMapping.get(k);
-        builder.append(str);
+        cursor.visibleContent(() -> builder.append(str));
         builder.append("$ ");
         return;
       }
     }
-    super.renderSpecialSymbol(text);
+    super.renderSpecialSymbol(cursor, text);
   }
 
-  @Override protected void renderIndent(int indent) {
+  @Override protected void renderIndent(@NotNull Cursor cursor, int indent) {
     if (indent > 0) builder.append("\\hspace*{").append(indent * 0.5).append("em}");
+    cursor.indent(indent);
   }
 
-  @Override protected void renderLineStart() {
+  @Override protected void renderLineStart(@NotNull Cursor cursor) {
     builder.append("&");
   }
 
