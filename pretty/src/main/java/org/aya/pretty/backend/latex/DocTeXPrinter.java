@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
   @Override protected void renderHeader() {
-    builder.append("\\begin{tabular}{lr}\n&");
+    builder.append("\\begin{tabular}{ll}\n&");
   }
 
   @Override protected void renderFooter() {
@@ -20,11 +20,13 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
   @Override protected void renderPlainText(@NotNull String content) {
     super.renderPlainText(content
       .replace("\\", "")
+      .replace("{", "\\{")
+      .replace("}", "\\}")
       .replace("_", "\\_"));
   }
 
   @Override protected void renderIndent(int indent) {
-    builder.append("~".repeat(indent));
+    if (indent > 0) builder.append("\\hspace*{").append(indent * 0.5).append("em}");
   }
 
   @Override protected void renderLineStart() {
