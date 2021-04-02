@@ -70,7 +70,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override public Doc visitUniv(@NotNull UnivTerm term, Boolean nestedCall) {
     // TODO: level
-    return Doc.styled(KEYWORD, "\\oo-Type");
+    return Doc.styled(KEYWORD, "\\Type");
   }
 
   @Override public Doc visitApp(@NotNull AppTerm term, Boolean nestedCall) {
