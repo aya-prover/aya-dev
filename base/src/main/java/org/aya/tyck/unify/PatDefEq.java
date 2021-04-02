@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.api.ref.LocalVar;
+import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.term.*;
@@ -142,7 +144,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       } else return null;
       // TODO[ice]: ^ eta var
     }
-    return rhs.subst(subst.add(Unfolder.buildSubst(lhs.ref().core().contextTele, lhs.contextArgs())));
+    var correspondence = MutableHashMap.<Var, Term>of();
+    defeq.varSubst.forEach((k, v) -> correspondence.set(k, new RefTerm(v)));
+    return rhs.subst(subst.add(Unfolder.buildSubst(lhs.ref().core().contextTele, lhs.contextArgs())).add(new Substituter.TermSubst(correspondence)));
   }
 
   @Override

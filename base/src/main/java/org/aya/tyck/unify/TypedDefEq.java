@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * Instead, invoke {@link TypedDefEq#compare(Term, Term, Term)} to do so.
  */
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
-  protected final @NotNull MutableMap<@NotNull Var, @NotNull Var> varSubst = new MutableHashMap<>();
+  protected final @NotNull MutableMap<@NotNull LocalVar, @NotNull LocalVar> varSubst = new MutableHashMap<>();
   public final @NotNull LocalCtx localCtx;
   private final @NotNull PatDefEq termDirectedDefeq;
   public final Trace.@Nullable Builder traceBuilder;
@@ -86,8 +86,10 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     if (l.explicit() != r.explicit()) return fail.get();
     if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return fail.get();
     varSubst.put(r.ref(), l.ref());
-    var result = localCtx.with(l, success);
+    varSubst.put(l.ref(), r.ref());
+    var result = localCtx.with(l, () -> localCtx.with(r, success));
     varSubst.remove(r.ref());
+    varSubst.remove(l.ref());
     return result;
   }
 
