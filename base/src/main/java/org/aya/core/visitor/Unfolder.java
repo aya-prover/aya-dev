@@ -36,8 +36,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = conCall.ref().core;
     // Not yet type checked
     if (def == null) return conCall;
-    var args = conCall.args().map(arg -> visitArg(arg, p)).toImmutableSeq();
-    var tele = def.telescope();
+    var args = conCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
+    var tele = def.fullTelescope();
     assert args.sizeEquals(tele.size());
     assert Term.Param.checkSubst(tele, args);
     var volynskaya = tryUnfoldClauses(p, args, buildSubst(tele, args), def.clauses());
@@ -48,11 +48,11 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = fnCall.ref().core;
     // Not yet type checked
     if (def == null) return fnCall;
-    var args = fnCall.args().view().map(arg -> visitArg(arg, p)).toImmutableSeq();
+    var args = fnCall.fullArgs().view().map(arg -> visitArg(arg, p)).toImmutableSeq();
     // This shouldn't fail
-    assert args.sizeEquals(def.telescope().size());
-    assert Term.Param.checkSubst(def.telescope(), args);
-    var subst = buildSubst(def.telescope(), args);
+    assert args.sizeEquals(def.fullTelescope().size());
+    assert Term.Param.checkSubst(def.fullTelescope(), args);
+    var subst = buildSubst(def.fullTelescope(), args);
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, body.getRightValue());
@@ -61,6 +61,19 @@ public interface Unfolder<P> extends TermFixpoint<P> {
 
   @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
     return prim.ref().core.unfold(prim);
+  }
+
+  @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
+    var def = hole.ref().core();
+    // Not yet type checked
+    var args = hole.fullArgs().view().map(arg -> visitArg(arg, p)).toImmutableSeq();
+    // This shouldn't fail
+    assert args.sizeEquals(def.fullTelescope().size());
+    assert Term.Param.checkSubst(def.fullTelescope(), args);
+    var subst = buildSubst(def.fullTelescope(), args);
+    var body = def.body;
+    if (body == null) return hole;
+    return body.subst(subst).accept(this, p);
   }
 
   default @Nullable Term tryUnfoldClauses(
