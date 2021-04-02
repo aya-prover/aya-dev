@@ -2,7 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import org.aya.api.ref.CoreVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.core.Meta;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -22,6 +25,13 @@ import java.util.function.Supplier;
 public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable LocalCtx parent) {
   public LocalCtx() {
     this(MutableHashMap.of(), null);
+  }
+
+  public CallTerm.Hole freshHole(@NotNull Term type, @NotNull String name) {
+    var ctxTele = extract();
+    var meta = new Meta(ctxTele, type);
+    var ref = new CoreVar<>(name, meta);
+    return new CallTerm.Hole(ref, ctxTele.view().map(Term.Param::toArg).toImmutableSeq());
   }
 
   public <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
