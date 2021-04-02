@@ -17,11 +17,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public final record Stripper(@NotNull MetaContext metaContext) implements TermFixpoint<Unit> {
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
-    var sol = metaContext.solution(term.ref());
-    if (sol.isEmpty()) {
+    var sol = term.ref().core();
+    if (sol.body == null) {
       // TODO[ice]: unsolved meta
       throw new ExprTycker.TyckerException();
     }
-    return sol.get().accept(this, Unit.unit());
+    return sol.body.accept(this, Unit.unit());
   }
 }
