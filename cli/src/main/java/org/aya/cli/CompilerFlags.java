@@ -11,9 +11,16 @@ import java.nio.file.Path;
 public record CompilerFlags(
   @NotNull Message message,
   boolean interruptedTrace,
-  @Nullable CliArgs.DistillChoice distillChoice,
+  @Nullable DistillInfo distillInfo,
   @NotNull ImmutableSeq<Path> modulePaths
 ) {
+  public record DistillInfo(
+    @NotNull CliArgs.DistillStage distillStage,
+    @NotNull CliArgs.DistillFormat distillFormat,
+    @NotNull Path distillDir
+  ) {
+  }
+
   public record Message(
     @NotNull String successNotion,
     @NotNull String failNotion

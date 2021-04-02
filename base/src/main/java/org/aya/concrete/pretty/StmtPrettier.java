@@ -29,11 +29,11 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\import"),
       Doc.plain(" "),
-      Doc.plain(cmd.path().joinToString("::")),
+      Doc.symbol(cmd.path().joinToString("::")),
       Doc.plain(" "),
       Doc.styled(TermPrettier.KEYWORD, "\\as"),
       Doc.plain(" "),
-      Doc.plain(cmd.asName() == null ? cmd.path().joinToString("::") : cmd.asName())
+      cmd.asName() == null ? Doc.symbol(cmd.path().joinToString("::")) : Doc.plain(cmd.asName())
     );
   }
 
@@ -140,7 +140,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
         : Doc.cat(Doc.plain(" : "), field.result.toDoc()),
       field.body.isEmpty()
         ? Doc.empty()
-        : Doc.cat(Doc.plain(" => "), field.body.get().toDoc())
+        : Doc.cat(Doc.symbol(" => "), field.body.get().toDoc())
     );
   }
 
@@ -156,7 +156,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      decl.body.isLeft() ? Doc.plain(" => ") : Doc.empty(),
+      decl.body.isLeft() ? Doc.symbol(" => ") : Doc.empty(),
       decl.body.fold(Expr::toDoc, clauses ->
         Doc.hcat(Doc.line(), Doc.hang(2, visitClauses(clauses, false)))),
       decl.abuseBlock.sizeEquals(0)

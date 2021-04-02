@@ -2,10 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.doc;
 
-import org.aya.pretty.backend.DocHtmlPrinter;
-import org.aya.pretty.backend.DocStringPrinter;
+import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlPrinterConfig;
+import org.aya.pretty.backend.latex.DocTeXPrinter;
+import org.aya.pretty.backend.latex.TeXPrinterConfig;
 import org.aya.pretty.backend.string.StringLink;
+import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.style.IgnoringStylist;
 import org.aya.pretty.printer.Printer;
@@ -28,17 +30,30 @@ import java.util.stream.Stream;
  *
  * @author kiva
  */
-public sealed interface Doc {
+public sealed interface Doc extends Docile {
+  @Override default @NotNull Doc toDoc() {
+    return this;
+  }
+
   //region Doc Member Functions
 
   default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
-    var printer = new DocStringPrinter();
+    var printer = new StringPrinter<>();
     return this.render(printer, config);
   }
 
   default @NotNull String renderToHtml() {
+    return renderToHtml(true);
+  }
+
+  default @NotNull String renderToHtml(boolean withHeader) {
     var printer = new DocHtmlPrinter();
-    return this.render(printer, new HtmlPrinterConfig());
+    return this.render(printer, new HtmlPrinterConfig(withHeader));
+  }
+
+  default @NotNull String renderToTeX() {
+    var printer = new DocTeXPrinter();
+    return this.render(printer, new TeXPrinterConfig());
   }
 
   default <Out, Config extends PrinterConfig>
@@ -72,6 +87,14 @@ public sealed interface Doc {
    * A plain text line without '\n'.
    */
   record PlainText(@NotNull String text) implements Doc {
+  }
+
+  /**
+   * A special symbol that may gets rendered in a special way
+   *
+   * @author ice1000
+   */
+  record SpecialSymbol(@NotNull String text) implements Doc {
   }
 
   /**
@@ -183,8 +206,8 @@ public sealed interface Doc {
     return new Doc.Styled(builder.styles, Doc.plain(plain));
   }
 
-  static @NotNull Doc wrap(String left, String right, Doc doc) {
-    return Doc.cat(Doc.plain(left), doc, Doc.plain(right));
+  static @NotNull Doc wrap(String leftSymbol, String rightSymbol, Doc doc) {
+    return Doc.cat(Doc.symbol(leftSymbol), doc, Doc.symbol(rightSymbol));
   }
 
   /**
@@ -409,8 +432,7 @@ public sealed interface Doc {
    * @return text document of the whole text
    */
   @SuppressWarnings("OptionalGetWithoutIsPresent")
-  @Contract("_ -> new")
-  static @NotNull Doc plain(String text) {
+  @Contract("_ -> new") static @NotNull Doc plain(String text) {
     if (!text.contains("\n")) {
       return new PlainText(text);
     }
@@ -419,6 +441,15 @@ public sealed interface Doc {
       .map(Doc::plain)
       .reduce((x, y) -> simpleCat(x, hardLine(), y))
       .get(); // never null
+  }
+
+  /**
+   * @param text '\n' not allowed!
+   * @return special symbol
+   */
+  @Contract("_ -> new") static @NotNull Doc symbol(String text) {
+    assert !text.contains("\n");
+    return new SpecialSymbol(text);
   }
 
   /**
@@ -923,6 +954,7 @@ public sealed interface Doc {
 
       } else if (doc instanceof Doc.Empty
         || doc instanceof Doc.PlainText
+        || doc instanceof Doc.SpecialSymbol
         || doc instanceof Doc.HyperLinked
         || doc instanceof Doc.Styled) {
         return new AlreadyFlat();

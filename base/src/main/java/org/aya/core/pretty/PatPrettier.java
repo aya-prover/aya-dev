@@ -64,6 +64,6 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
 
   public Doc matchy(@NotNull Matching<Pat, Term> match) {
     var doc = visitMaybeCtorPatterns(match.patterns(), false, Doc.plain(", "));
-    return Doc.cat(doc, Doc.plain(" => "), match.body().toDoc());
+    return Doc.cat(doc, Doc.symbol(" => "), match.body().toDoc());
   }
 }

@@ -41,10 +41,15 @@ public final class Main {
     var traceBuilder = cli.traceFormat != null ? new Trace.Builder() : null;
     var reporter = new CliReporter(filePath, sourceCode);
     var compiler = new SingleFileCompiler(reporter, filePath, traceBuilder);
+    var distillation = cli.prettyStage != null ? new CompilerFlags.DistillInfo(
+      cli.prettyStage,
+      cli.prettyFormat,
+      Paths.get(cli.prettyDir != null ? cli.prettyDir : ".")
+    ) : null;
     var status = compiler.compile(new CompilerFlags(
       message,
       cli.interruptedTrace,
-      cli.distill,
+      distillation,
       cli.modulePaths().map(Paths::get)));
     if (traceBuilder != null) switch (cli.traceFormat) {
       case ImGui -> {

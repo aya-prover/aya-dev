@@ -15,8 +15,12 @@ public class CliArgs {
   public boolean help = false;
   @Parameter(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace = false;
-  @Parameter(names = {"--distill", "--pretty"}, description = "Pretty print the code in a certain stage")
-  public DistillChoice distill;
+  @Parameter(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage")
+  public DistillStage prettyStage;
+  @Parameter(names = {"--pretty-format"}, description = "Pretty print format")
+  public DistillFormat prettyFormat = DistillFormat.HTML;
+  @Parameter(names = {"--pretty-dir"}, description = "Output directory of pretty printing")
+  public @Nullable String prettyDir;
   @Parameter(names = {"--trace"}, description = "Print type checking traces")
   public @Nullable TraceFormat traceFormat;
   @Parameter(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")
@@ -30,10 +34,15 @@ public class CliArgs {
     return modulePaths == null ? ImmutableSeq.empty() : ImmutableSeq.from(modulePaths);
   }
 
-  public enum DistillChoice {
+  public enum DistillStage {
     Raw,
     Scoped,
     Typed
+  }
+
+  public enum DistillFormat {
+    HTML,
+    LaTeX
   }
 
   public enum TraceFormat {

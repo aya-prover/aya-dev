@@ -29,7 +29,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
 
   @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(TermPrettier.KEYWORD, "\\lam"),
+      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\lam")),
       Doc.plain(" "),
       expr.param().toDoc(),
       expr.body() instanceof Expr.HoleExpr
@@ -41,7 +41,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override public Doc visitPi(Expr.@NotNull PiExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.styled(TermPrettier.KEYWORD, "\\Pi"),
+      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\Pi")),
       Doc.plain(" "),
       expr.param().toDoc(),
       Doc.plain(" -> "),
@@ -52,7 +52,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override public Doc visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.styled(TermPrettier.KEYWORD, "\\Sig"),
+      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\Sig")),
       Doc.plain(" "),
       StmtPrettier.INSTANCE.visitTele(expr.params()),
       Doc.plain(" ** "),
@@ -81,18 +81,18 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Boolean nestedCall) {
-    String name = expr.name();
-    Expr filling = expr.filling();
-    if (name == null && filling == null) return Doc.plain("{?}");
+    var name = expr.name();
+    var filling = expr.filling();
+    if (name == null && filling == null) return Doc.symbol("{?}");
     if (name != null) return Doc.plain(name);
-    return Doc.hsep(Doc.plain("{"), filling.toDoc(), Doc.plain("?}"));
+    return Doc.hsep(Doc.symbol("{"), filling.toDoc(), Doc.symbol("?}"));
   }
 
   @Override public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
-    return Doc.cat(Doc.plain("("),
+    return Doc.cat(Doc.symbol("("),
       Doc.join(Doc.plain(", "), expr.items().stream()
         .map(Expr::toDoc)),
-      Doc.plain(")"));
+      Doc.symbol(")"));
   }
 
   @Override public Doc visitProj(Expr.@NotNull ProjExpr expr, Boolean nestedCall) {
@@ -103,11 +103,11 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, "\\new "),
       expr.struct().toDoc(),
-      Doc.plain(" { "),
+      Doc.symbol(" { "),
       Doc.hsep(expr.fields().view().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
       )),
-      Doc.plain(" }")
+      Doc.symbol(" }")
     );
   }
 
