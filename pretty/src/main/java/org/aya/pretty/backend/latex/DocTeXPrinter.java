@@ -9,18 +9,24 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
+  @Override protected void renderHeader() {
+    builder.append("\\begin{tabular}{lr}");
+  }
+
+  @Override protected void renderFooter() {
+    builder.append("\\end{tabular}");
+  }
+
   @Override protected void renderPlainText(@NotNull String content) {
     super.renderPlainText(content.replace("\\", ""));
   }
 
-  @Override
-  protected void renderIndent(int indent) {
+  @Override protected void renderIndent(int indent) {
     builder.append("~".repeat(indent));
   }
 
-  @Override
-  protected void renderLineStart() {
-    // for more, see super.renderPlainText
+  @Override protected void renderLineStart() {
+    builder.append("&");
   }
 
   @Override protected void renderHardLineBreak() {
