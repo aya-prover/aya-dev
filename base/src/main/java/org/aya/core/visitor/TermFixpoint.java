@@ -16,11 +16,11 @@ import java.util.function.BiFunction;
  */
 public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole term, P p) {
+    var contextArgs = term.contextArgs().map(arg -> visitArg(arg, p));
     var args = term.argsBuf().view().map(arg -> visitArg(arg, p));
-    if (!args.sameElements(term.argsBuf(), true)) {
-      return new CallTerm.Hole(term.ref(), args.collect(Buffer.factory()));
-    }
-    return term;
+    if (term.contextArgs().sameElements(contextArgs, true)
+      && term.args().sameElements(args, true)) return term;
+    return new CallTerm.Hole(term.ref(), contextArgs, args.collect(Buffer.factory()));
   }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {

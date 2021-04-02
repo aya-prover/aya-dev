@@ -2,20 +2,23 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
+import org.aya.api.ref.CoreVar;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.HoleVar;
+import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
+import org.aya.core.Meta;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.visitor.Substituter;
+import org.aya.util.Constants;
 import org.aya.util.Decision;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,26 +28,29 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface CallTerm extends Term {
   @NotNull Var ref();
-  @NotNull ImmutableSeq<@NotNull ? extends @NotNull Arg<? extends Term>> args();
+  @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs();
+  @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
+  default @NotNull ImmutableSeq<@NotNull Arg<Term>> fullArgs() {
+    return contextArgs().view().concat(args()).toImmutableSeq();
+  }
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
     if (f instanceof Hole hole) {
-      hole.argsBuf().append(arg);
-      return hole;
+      var ret = hole.ref.core().result;
+      if (ret instanceof PiTerm pi) {
+        var paramRef = new LocalVar(Constants.ANONYMOUS_PREFIX);
+        hole.ref.core().telescope.append(new Term.Param(
+          paramRef,
+          pi.param().type(),
+          arg.explicit()
+        ));
+        hole.ref.core().result = pi.body().subst(pi.param().ref(), new RefTerm(paramRef));
+      }
+      return new Hole(hole.ref(), hole.contextArgs(), hole.argsBuf.view().appended(arg));
     }
     if (!(f instanceof LamTerm lam)) return new AppTerm(f, arg);
     var param = lam.param();
     return lam.body().subst(new Substituter.TermSubst(param.ref(), arg.term()));
-  }
-
-  @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull SeqLike<Arg<Term>> args) {
-    if (args.isEmpty()) return f;
-    if (f instanceof Hole hole) {
-      hole.argsBuf().appendAll(args.view());
-      return hole;
-    }
-    if (!(f instanceof LamTerm lam)) return make(new AppTerm(f, args.first()), args.view().drop(1));
-    return make(make(lam, args.first()), args.view().drop(1));
   }
 
   record Fn(
@@ -74,6 +80,11 @@ public sealed interface CallTerm extends Term {
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPrimCall(this, p);
+    }
+
+    @Override
+    public @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs() {
+      return ImmutableSeq.of();
     }
 
     @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
@@ -158,6 +169,11 @@ public sealed interface CallTerm extends Term {
       return head().ref;
     }
 
+    @Override
+    public @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs() {
+      return head.contextArgs();
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitConCall(this, p);
     }
@@ -182,11 +198,12 @@ public sealed interface CallTerm extends Term {
    * @author ice1000
    */
   record Hole(
-    @NotNull HoleVar ref,
-    @NotNull Buffer<@NotNull Arg<Term>> argsBuf
+    @NotNull CoreVar<Meta> ref,
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
+    @NotNull SeqLike<@NotNull Arg<Term>> argsBuf
   ) implements CallTerm {
-    public Hole(@NotNull HoleVar var) {
-      this(var, Buffer.of());
+    public Hole(@NotNull CoreVar<Meta> var, @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs) {
+      this(var, contextArgs, Seq.of());
     }
 
     @Override public @NotNull ImmutableSeq<Arg<Term>> args() {
