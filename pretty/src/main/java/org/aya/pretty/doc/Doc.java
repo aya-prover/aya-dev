@@ -90,6 +90,14 @@ public sealed interface Doc extends Docile {
   }
 
   /**
+   * A special symbol that may gets rendered in a special way
+   *
+   * @author ice1000
+   */
+  record SpecialSymbol(@NotNull String text) implements Doc {
+  }
+
+  /**
    * A clickable text line without '\n'.
    */
   record HyperLinked(@NotNull Doc doc, @NotNull Link link, @Nullable String id) implements Doc {
@@ -198,8 +206,8 @@ public sealed interface Doc extends Docile {
     return new Doc.Styled(builder.styles, Doc.plain(plain));
   }
 
-  static @NotNull Doc wrap(String left, String right, Doc doc) {
-    return Doc.cat(Doc.plain(left), doc, Doc.plain(right));
+  static @NotNull Doc wrap(String leftSymbol, String rightSymbol, Doc doc) {
+    return Doc.cat(Doc.symbol(leftSymbol), doc, Doc.symbol(rightSymbol));
   }
 
   /**
@@ -424,8 +432,7 @@ public sealed interface Doc extends Docile {
    * @return text document of the whole text
    */
   @SuppressWarnings("OptionalGetWithoutIsPresent")
-  @Contract("_ -> new")
-  static @NotNull Doc plain(String text) {
+  @Contract("_ -> new") static @NotNull Doc plain(String text) {
     if (!text.contains("\n")) {
       return new PlainText(text);
     }
@@ -434,6 +441,15 @@ public sealed interface Doc extends Docile {
       .map(Doc::plain)
       .reduce((x, y) -> simpleCat(x, hardLine(), y))
       .get(); // never null
+  }
+
+  /**
+   * @param text '\n' not allowed!
+   * @return special symbol
+   */
+  @Contract("_ -> new") static @NotNull Doc symbol(String text) {
+    assert !text.contains("\n");
+    return new SpecialSymbol(text);
   }
 
   /**
@@ -938,6 +954,7 @@ public sealed interface Doc extends Docile {
 
       } else if (doc instanceof Doc.Empty
         || doc instanceof Doc.PlainText
+        || doc instanceof Doc.SpecialSymbol
         || doc instanceof Doc.HyperLinked
         || doc instanceof Doc.Styled) {
         return new AlreadyFlat();

@@ -29,7 +29,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       link(def.ref(), TermPrettier.FN_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc(),
-      def.body().isLeft() ? Doc.plain(" => ") : Doc.empty(),
+      def.body().isLeft() ? Doc.symbol(" => ") : Doc.empty(),
       def.body().fold(Term::toDoc, clauses ->
         Doc.hcat(Doc.line(), Doc.hang(2, visitClauses(clauses, false))))
     );
@@ -79,7 +79,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
     );
     if (ctor.pats().isNotEmpty()) {
       var pats = Doc.join(Doc.plain(", "), ctor.pats().stream().map(Pat::toDoc));
-      return Doc.hcat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
+      return Doc.hcat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
     } else return Doc.hcat(Doc.plain("| "), doc);
   }
 

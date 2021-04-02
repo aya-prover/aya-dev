@@ -37,10 +37,10 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitLam(@NotNull LamTerm term, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(KEYWORD, "\\lam"),
+      Doc.styled(KEYWORD, Doc.symbol("\\lam")),
       Doc.plain(" "),
       term.param().toDoc(),
-      Doc.plain(" => "),
+      Doc.symbol(" => "),
       term.body().toDoc()
     );
   }
@@ -49,10 +49,10 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public Doc visitPi(@NotNull PiTerm term, Boolean nestedCall) {
     // TODO[kiva]: term.co
     return Doc.cat(
-      Doc.styled(KEYWORD, "\\Pi"),
+      Doc.styled(KEYWORD, Doc.symbol("\\Pi")),
       Doc.plain(" "),
       term.param().toDoc(),
-      Doc.plain(" -> "),
+      Doc.symbol(" -> "),
       term.body().toDoc()
     );
   }
@@ -60,7 +60,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override
   public Doc visitSigma(@NotNull SigmaTerm term, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(KEYWORD, "\\Sig"),
+      Doc.styled(KEYWORD, Doc.symbol("\\Sig")),
       Doc.plain(" "),
       visitTele(term.params()),
       Doc.plain(" ** "),
@@ -108,17 +108,17 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public Doc visitNew(@NotNull NewTerm newTerm, Boolean aBoolean) {
     return Doc.cat(
       Doc.styled(KEYWORD, "\\new"),
-      Doc.plain(" { "),
+      Doc.symbol(" { "),
       Doc.hsep(newTerm.params().view().map(t ->
-        Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
+        Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.symbol("=>"), t._2.toDoc())
       )),
-      Doc.plain(" }")
+      Doc.symbol(" }")
     );
   }
 
   @Override
   public Doc visitProj(@NotNull ProjTerm term, Boolean nestedCall) {
-    return Doc.cat(term.tup().toDoc(), Doc.plain("."), Doc.plain(String.valueOf(term.ix())));
+    return Doc.cat(term.tup().toDoc(), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
   }
 
   @Override
@@ -126,7 +126,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     var name = term.ref().name();
     var filling = term.args().isEmpty() ? Doc.empty() : Doc.hsep(term.args().view()
       .map(t -> t.term().toDoc()));
-    return Doc.hsep(Doc.plain("{"), filling, Doc.plain(name + "?}"));
+    return Doc.hsep(Doc.symbol("{"), filling, Doc.plain(name), Doc.symbol("?}"));
   }
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {

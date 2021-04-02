@@ -45,41 +45,31 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
     } else if (doc instanceof Doc.Empty) {
       return 0;
-
     } else if (doc instanceof Doc.PlainText text) {
       return text.text().length();
-
+    } else if (doc instanceof Doc.SpecialSymbol symbol) {
+      return symbol.text().length();
     } else if (doc instanceof Doc.HyperLinked text) {
       return predictWidth(text.doc());
-
     } else if (doc instanceof Doc.Styled styled) {
       return predictWidth(styled.doc());
-
     } else if (doc instanceof Doc.Line) {
       return 0;
-
     } else if (doc instanceof Doc.FlatAlt alt) {
       return predictWidth(alt.defaultDoc());
-
     } else if (doc instanceof Doc.Cat cat) {
       return predictWidth(cat.first()) + predictWidth(cat.second());
-
     } else if (doc instanceof Doc.Nest nest) {
       return predictWidth(nest.doc()) + nest.indent();
-
     } else if (doc instanceof Doc.Union union) {
       return predictWidth(union.longerOne());
-
     } else if (doc instanceof Doc.Column column) {
       return predictWidth(column.docBuilder().apply(cursor));
-
     } else if (doc instanceof Doc.Nesting nesting) {
       return predictWidth(nesting.docBuilder().apply(nestLevel));
-
     } else if (doc instanceof Doc.PageWidth pageWidth) {
       return predictWidth(pageWidth.docBuilder().apply(config.getPageWidth()));
     }
-
     throw new IllegalStateException("unreachable");
   }
 
@@ -103,6 +93,9 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.PlainText text) {
       renderPlainText(text.text());
       cursor += text.text().length();
+    } else if (doc instanceof Doc.SpecialSymbol symbol) {
+      renderSpecialSymbol(symbol.text());
+      cursor += symbol.text().length();
 
     } else if (doc instanceof Doc.HyperLinked text) {
       renderHyperLinked(text);
@@ -136,6 +129,10 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.PageWidth pageWidth) {
       renderDoc(pageWidth.docBuilder().apply(config.getPageWidth()));
     }
+  }
+
+  protected void renderSpecialSymbol(@NotNull String text) {
+    renderPlainText(text);
   }
 
   protected void renderNest(@NotNull Doc.Nest nest) {
