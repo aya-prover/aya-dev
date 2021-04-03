@@ -53,9 +53,9 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   }
 
   @Override public Unit visitPrim(Pat.@NotNull Prim prim, Term term) {
-    var core = prim.as().core;
+    var core = prim.ref().core;
     assert core == PrimDef.LEFT || core == PrimDef.RIGHT;
-    assert term instanceof CallTerm.Prim primCall && primCall.ref() == prim.as();
+    assert term instanceof CallTerm.Prim primCall && primCall.ref() == prim.ref();
     return Unit.unit();
   }
 

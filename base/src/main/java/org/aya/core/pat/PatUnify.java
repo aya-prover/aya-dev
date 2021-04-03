@@ -37,7 +37,7 @@ public record PatUnify(
 
   @Override public Unit visitPrim(Pat.@NotNull Prim lhs, Pat pat) {
     if (!(pat instanceof Pat.Prim rhs)) return reportError(lhs, pat);
-    assert lhs.as() == rhs.as();
+    assert lhs.ref() == rhs.ref();
     return Unit.unit();
   }
 

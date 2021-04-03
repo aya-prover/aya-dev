@@ -44,7 +44,7 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   @Override
   public Doc visitPrim(Pat.@NotNull Prim prim, Boolean aBoolean) {
     var hyperLink = Doc.hyperLink(Doc.styled(TermPrettier.CON_CALL,
-      prim.as().name()), new StringLink("#" + prim.as().hashCode()), null);
+      prim.ref().name()), new StringLink("#" + prim.ref().hashCode()), null);
     boolean ex = prim.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}", hyperLink);
   }

@@ -104,9 +104,13 @@ public sealed interface Pat extends CorePat {
 
   record Prim(
     boolean explicit,
-    @NotNull DefVar<PrimDef, Decl.PrimDecl> as,
+    @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
     @NotNull Term type
   ) implements Pat {
+    @Override public @Nullable LocalVar as() {
+      return null;
+    }
+
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPrim(this, p);
     }
