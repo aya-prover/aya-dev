@@ -1,0 +1,6 @@
+\open \data Nat : \Set | zero | suc Nat
+\data Empty : \Set
+\def Neg (T : \Set) => \Pi T -> Empty
+\def test
+ (F : \Pi \Set -> \Set)
+ (g : \Pi (X : F _) -> F (Neg X)) : Nat => g zero
