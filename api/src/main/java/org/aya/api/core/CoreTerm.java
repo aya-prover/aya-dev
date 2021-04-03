@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public interface CoreTerm extends Docile {
   int findUsages(@NotNull Var var);
   @NotNull CoreTerm normalize(@NotNull NormalizeMode mode);
+  @NotNull CorePat toPat();
   // TODO[kiva]: what in general does a term should have to expose to the outside world?
   //  ice: synthType, isType, etc.
 }

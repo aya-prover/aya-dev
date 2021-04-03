@@ -2,12 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
+import org.aya.api.core.CorePat;
 import org.aya.api.core.CoreTerm;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
+import org.aya.core.pat.PatToTerm;
 import org.aya.core.pretty.TermPrettier;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Stripper;
@@ -49,6 +51,9 @@ public interface Term extends CoreTerm {
     var ret = doAccept(visitor, p, q);
     visitor.traceExit(ret);
     return ret;
+  }
+  @Override default @NotNull CorePat toPat() {
+    return accept(TermToPat.INSTANCE, Unit.unit());
   }
   @Contract(pure = true) @NotNull Decision whnf();
 
