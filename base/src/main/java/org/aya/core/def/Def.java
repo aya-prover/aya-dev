@@ -11,6 +11,7 @@ import org.aya.core.visitor.Substituter;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
@@ -48,8 +49,8 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
   @Override @NotNull ImmutableSeq<Term.Param> contextTele();
   @Override @NotNull ImmutableSeq<Term.Param> telescope();
 
-  default @NotNull ImmutableSeq<Term.Param> fullTelescope() {
-    return contextTele().view().concat(telescope()).toImmutableSeq();
+  default @NotNull SeqView<Term.Param> fullTelescope() {
+    return contextTele().view().concat(telescope());
   }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);

@@ -36,7 +36,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = conCall.ref().core;
     // Not yet type checked
     if (def == null) return conCall;
-    var args = conCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
+    var args = conCall.fullArgs().map(arg -> visitArg(arg, p));
     var tele = def.fullTelescope();
     assert args.sizeEquals(tele.size());
     assert Term.Param.checkSubst(tele, args);
@@ -48,7 +48,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = fnCall.ref().core;
     // Not yet type checked
     if (def == null) return fnCall;
-    var args = fnCall.fullArgs().view().map(arg -> visitArg(arg, p)).toImmutableSeq();
+    var args = fnCall.fullArgs().map(arg -> visitArg(arg, p));
     // This shouldn't fail
     assert args.sizeEquals(def.fullTelescope().size());
     assert Term.Param.checkSubst(def.fullTelescope(), args);
@@ -66,7 +66,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
     var def = hole.ref().core();
     // Not yet type checked
-    var args = hole.fullArgs().view().map(arg -> visitArg(arg, p)).toImmutableSeq();
+    var args = hole.fullArgs().map(arg -> visitArg(arg, p));
     // This shouldn't fail
     assert args.sizeEquals(def.fullTelescope().size());
     assert Term.Param.checkSubst(def.fullTelescope(), args);
@@ -77,7 +77,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   default @Nullable Term tryUnfoldClauses(
-    P p, ImmutableSeq<Arg<Term>> args,
+    P p, SeqLike<Arg<Term>> args,
     Substituter.@NotNull TermSubst subst,
     @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
   ) {

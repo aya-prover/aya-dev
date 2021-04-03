@@ -18,6 +18,7 @@ import org.aya.util.Constants;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +31,8 @@ public sealed interface CallTerm extends Term {
   @NotNull Var ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
-  default @NotNull ImmutableSeq<@NotNull Arg<Term>> fullArgs() {
-    return contextArgs().view().concat(args()).toImmutableSeq();
+  default @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {
+    return contextArgs().view().concat(args());
   }
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {

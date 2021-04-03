@@ -20,7 +20,6 @@ import org.aya.tyck.sort.LevelSubst;
 import org.aya.util.Constants;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Map;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -177,7 +176,7 @@ public interface Term extends CoreTerm {
     }
 
     @TestOnly @Contract(pure = true)
-    public static boolean checkSubst(@NotNull Seq<@NotNull Param> params, @NotNull SeqLike<Arg<Term>> args) {
+    public static boolean checkSubst(@NotNull SeqLike<@NotNull Param> params, @NotNull SeqLike<Arg<Term>> args) {
       var obj = new Object() {
         boolean ok = true;
       };
