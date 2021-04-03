@@ -8,6 +8,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
+import org.aya.core.def.PrimDef;
 import org.aya.core.pretty.PatPrettier;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
@@ -103,7 +104,7 @@ public sealed interface Pat extends CorePat {
 
   record Prim(
     boolean explicit,
-    @NotNull LocalVar as,
+    @NotNull DefVar<PrimDef, Decl.PrimDecl> as,
     @NotNull Term type
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

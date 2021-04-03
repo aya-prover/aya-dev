@@ -35,8 +35,9 @@ public record PatUnify(
     throw new IllegalStateException();
   }
 
-  @Override
-  public Unit visitPrim(Pat.@NotNull Prim prim, Pat pat) {
+  @Override public Unit visitPrim(Pat.@NotNull Prim lhs, Pat pat) {
+    if (!(pat instanceof Pat.Prim rhs)) return reportError(lhs, pat);
+    assert lhs.as() == rhs.as();
     return Unit.unit();
   }
 

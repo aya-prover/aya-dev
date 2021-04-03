@@ -23,7 +23,6 @@ record PatTyper(@NotNull LocalCtx localCtx) implements Pat.Visitor<Unit, Unit> {
 
   @Override
   public Unit visitPrim(Pat.@NotNull Prim prim, Unit unit) {
-    localCtx.put(prim.as(), prim.type());
     return unit;
   }
 

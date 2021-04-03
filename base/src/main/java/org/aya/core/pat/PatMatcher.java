@@ -3,6 +3,7 @@
 package org.aya.core.pat;
 
 import org.aya.api.util.Arg;
+import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.TupTerm;
@@ -52,7 +53,9 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   }
 
   @Override public Unit visitPrim(Pat.@NotNull Prim prim, Term term) {
-    subst.map().put(prim.as(), term);
+    var core = prim.as().core;
+    assert core == PrimDef.LEFT || core == PrimDef.RIGHT;
+    assert term instanceof CallTerm.Prim primCall && primCall.ref() == prim.as();
     return Unit.unit();
   }
 

@@ -24,6 +24,7 @@ import org.aya.generic.GenericBuilder;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -167,9 +168,12 @@ public record PatTycker(
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
     var v = bind.bind();
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
-    if (t instanceof CallTerm.Prim prim && prim.ref().core == PrimDef.INTERVAL) {
-      return new Pat.Prim(bind.explicit(), v, t);
-    }
+    if (t instanceof CallTerm.Prim prim && prim.ref().core == PrimDef.INTERVAL)
+      for (var def : Seq.of(PrimDef.LEFT, PrimDef.RIGHT))
+        if (Objects.equals(bind.bind().name(), def.ref().name())) {
+          subst.bad().add(bind.bind());
+          return new Pat.Prim(bind.explicit(), def.ref(), t);
+        }
     if (selected == null) {
       exprTycker.localCtx.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
