@@ -7,7 +7,7 @@
 
 set -eu -o pipefail
 
-git log --oneline --decorate --pretty=format:'%h:%s' origin/main.. | xargs echo | while read line; do
+git log --oneline --decorate --pretty=format:'%h:%s' origin/main.. | xargs -0 echo | while read line; do
   IFS=':' read -r hash tag msg <<< "$line"
   if [[ "$(echo $tag | tr -d [A-Z0-9\#])"x != ""x ]]; then
     echo "In commit $hash, \`$tag\` is not a good commit tag"
