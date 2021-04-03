@@ -60,7 +60,7 @@ public record PatClassifier(
         var rhsTerm = rhs.body().subst(rhsSubst);
         var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
-          tycker.metaContext.report(new ConfluenceError(pos, lhsInfo._1 + 1, rhsInfo._1 + 1, lhsTerm, rhsTerm));
+          tycker.reporter.report(new ConfluenceError(pos, lhsInfo._1 + 1, rhsInfo._1 + 1, lhsTerm, rhsTerm));
           throw new ExprTycker.TyckInterruptedException();
         }
       }

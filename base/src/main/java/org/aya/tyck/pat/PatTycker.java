@@ -63,7 +63,7 @@ public record PatTycker(
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new ExprRefSubst(exprTycker.metaContext.reporter(), MutableHashMap.of(), MutableHashSet.of()), exprTycker.traceBuilder);
+    this(exprTycker, new ExprRefSubst(exprTycker.reporter, MutableHashMap.of(), MutableHashSet.of()), exprTycker.traceBuilder);
   }
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClause(

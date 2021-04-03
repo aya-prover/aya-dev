@@ -5,7 +5,6 @@ package org.aya.core.visitor;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.MetaContext;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author ice1000
  */
-public final record Stripper(@NotNull MetaContext metaContext) implements TermFixpoint<Unit> {
+public final class Stripper implements TermFixpoint<Unit> {
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
     var sol = term.ref().core();
     if (sol.body == null) {

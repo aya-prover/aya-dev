@@ -8,7 +8,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.core.term.Term;
 import org.aya.tyck.LocalCtx;
-import org.aya.tyck.MetaContext;
 import org.aya.tyck.unify.PatDefEq;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Ordering;
@@ -24,7 +23,7 @@ public class LispTestCase {
 
   protected @NotNull TypedDefEq eq(MutableMap<LocalVar, Term> localCtx) {
     return new TypedDefEq(
-      eq -> new PatDefEq(eq, Ordering.Eq, new MetaContext(reporter)),
+      eq -> new PatDefEq(eq, Ordering.Eq, reporter),
       new LocalCtx(localCtx, null), null, SourcePos.NONE
     );
   }

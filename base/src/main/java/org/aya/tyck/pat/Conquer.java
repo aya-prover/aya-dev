@@ -77,13 +77,13 @@ public record Conquer(
     var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
       new Substituter.TermSubst(MutableMap.of()), matchings);
     if (volynskaya == null) {
-      tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, null));
+      tycker.reporter.report(new ConditionError(sourcePos, nth, i, newBody, null));
       throw new ExprTycker.TyckInterruptedException();
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
       .compare(newBody, volynskaya, signature.result().subst(matchy));
     if (!unification) {
-      tycker.metaContext.report(new ConditionError(sourcePos, nth, i, newBody, volynskaya));
+      tycker.reporter.report(new ConditionError(sourcePos, nth, i, newBody, volynskaya));
       throw new ExprTycker.TyckInterruptedException();
     }
   }

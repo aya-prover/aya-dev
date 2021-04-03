@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
-import org.aya.api.ref.LocalVar;
+import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -10,7 +10,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.MetaContext;
 import org.aya.tyck.error.HoleBadSpineWarn;
 import org.aya.tyck.error.RecursiveSolutionError;
 import org.aya.util.Decision;
@@ -30,7 +29,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   private final @NotNull UntypedDefEq untypedDefeq;
 
   private final @NotNull Ordering ord;
-  private final @NotNull MetaContext metaContext;
+  private final @NotNull Reporter reporter;
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     return lhs.accept(this, rhs, type);
@@ -127,11 +126,11 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return defeq.compare(inferred, type, UnivTerm.OMEGA); // TODO[xyr]: proper subtyping?
   }
 
-  public PatDefEq(@NotNull TypedDefEq defeq, @NotNull Ordering ord, @NotNull MetaContext metaContext) {
+  public PatDefEq(@NotNull TypedDefEq defeq, @NotNull Ordering ord, @NotNull Reporter reporter) {
     this.defeq = defeq;
     this.untypedDefeq = new UntypedDefEq(defeq);
     this.ord = ord;
-    this.metaContext = metaContext;
+    this.reporter = reporter;
   }
 
   private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
@@ -162,13 +161,13 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     }
     var solved = extract(lhs, rhs);
     if (solved == null) {
-      metaContext.report(new HoleBadSpineWarn(lhs, defeq.pos));
+      reporter.report(new HoleBadSpineWarn(lhs, defeq.pos));
       return false;
     }
     assert lhs.ref().core().body == null;
     var success = lhs.ref().core().solve(lhs.ref(), solved);
     if (!success) {
-      metaContext.report(new RecursiveSolutionError(lhs.ref(), solved, untypedDefeq.defeq().pos));
+      reporter.report(new RecursiveSolutionError(lhs.ref(), solved, untypedDefeq.defeq().pos));
       throw new ExprTycker.TyckInterruptedException();
     }
     return true;

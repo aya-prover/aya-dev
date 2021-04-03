@@ -15,7 +15,6 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.MetaContext;
 import org.aya.tyck.sort.LevelSubst;
 import org.aya.util.Constants;
 import org.aya.util.Decision;
@@ -69,8 +68,8 @@ public interface Term extends CoreTerm {
     return accept(new Substituter(subst, levelSubst), Unit.unit());
   }
 
-  default @NotNull Term strip(@NotNull MetaContext context) {
-    return accept(new Stripper(context), Unit.unit());
+  default @NotNull Term strip() {
+    return accept(new Stripper(), Unit.unit());
   }
 
   @Override default int findUsages(@NotNull Var var) {

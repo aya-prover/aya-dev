@@ -115,7 +115,7 @@ public record StmtTycker(
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
     if (matchings.isNotEmpty()) {
-      var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), ctor.sourcePos, false);
+      var classification = PatClassifier.classify(elabClauses, tycker.reporter, ctor.sourcePos, false);
       PatClassifier.confluence(elabClauses, tycker, ctor.sourcePos, signature.result(), classification);
       Conquer.against(matchings, cumulativeCtx, tycker, ctor.sourcePos, signature);
     }
@@ -172,7 +172,7 @@ public record StmtTycker(
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(matchings));
     if (matchings.isNotEmpty()) {
-      var classification = PatClassifier.classify(elabClauses, tycker.metaContext.reporter(), decl.sourcePos, true);
+      var classification = PatClassifier.classify(elabClauses, tycker.reporter, decl.sourcePos, true);
       PatClassifier.confluence(elabClauses, tycker, decl.sourcePos, resultTy, classification);
       Conquer.against(matchings, cumulativeCtx, tycker, decl.sourcePos, signature.value);
     }

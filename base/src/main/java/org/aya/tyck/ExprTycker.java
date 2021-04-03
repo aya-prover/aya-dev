@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
-  public final @NotNull MetaContext metaContext;
+  public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final Trace.@Nullable Builder traceBuilder;
 
@@ -63,20 +63,20 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     });
   }
 
-  public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-    this(new MetaContext(reporter), new LocalCtx(), traceBuilder);
+  public ExprTycker(@NotNull Reporter reporter, @NotNull LocalCtx localCtx, Trace.@Nullable Builder traceBuilder) {
+    this.reporter = reporter;
+    this.localCtx = localCtx;
+    this.traceBuilder = traceBuilder;
   }
 
-  public ExprTycker(@NotNull MetaContext metaContext, @NotNull LocalCtx localCtx, Trace.@Nullable Builder traceBuilder) {
-    this.localCtx = localCtx;
-    this.metaContext = metaContext;
-    this.traceBuilder = traceBuilder;
+  public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+    this(reporter, new LocalCtx(), traceBuilder);
   }
 
   public @NotNull Result finalize(@NotNull Result result) {
     return new Result(
-      result.wellTyped.strip(metaContext),
-      result.type.strip(metaContext)
+      result.wellTyped.strip(),
+      result.type.strip()
     );
   }
 
@@ -115,7 +115,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
-    metaContext.report(new BadTypeError(expr, Doc.plain(expectedText), term));
+    reporter.report(new BadTypeError(expr, Doc.plain(expectedText), term));
     throw new TyckInterruptedException();
   }
 
@@ -200,7 +200,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
     return new TypedDefEq(
-      eq -> new PatDefEq(eq, ord, metaContext),
+      eq -> new PatDefEq(eq, ord, reporter),
       ctx, traceBuilder, pos
     );
   }
@@ -208,7 +208,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   void unifyTyThrowing(Term upper, Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
     if (!unification) {
-      metaContext.report(new UnifyError(loc, upper, lower));
+      reporter.report(new UnifyError(loc, upper, lower));
       throw new TyckInterruptedException();
     }
   }
@@ -285,11 +285,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     if (missing.isNotEmpty()) {
-      metaContext.report(new MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
+      reporter.report(new MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
       throw new TyckInterruptedException();
     }
     if (conFields.isNotEmpty()) {
-      metaContext.report(new NoSuchFieldError(expr.sourcePos(), conFields.map(t -> t._1).toImmutableSeq()));
+      reporter.report(new NoSuchFieldError(expr.sourcePos(), conFields.map(t -> t._1).toImmutableSeq()));
       throw new TyckInterruptedException();
     }
 
