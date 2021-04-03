@@ -52,6 +52,7 @@ public sealed interface Pat extends CorePat {
     R visitTuple(@NotNull Tuple tuple, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
     R visitAbsurd(@NotNull Absurd absurd, P p);
+    R visitPrim(@NotNull Pat.Prim prim, P p);
   }
 
   record Bind(
@@ -97,6 +98,16 @@ public sealed interface Pat extends CorePat {
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);
+    }
+  }
+
+  record Prim(
+    boolean explicit,
+    @NotNull LocalVar as,
+    @NotNull Term type
+  ) implements Pat {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitPrim(this, p);
     }
   }
 

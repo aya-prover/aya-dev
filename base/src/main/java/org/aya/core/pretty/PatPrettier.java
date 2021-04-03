@@ -41,6 +41,13 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
       Doc.styled(TermPrettier.KEYWORD, "\\impossible"));
   }
 
+  @Override
+  public Doc visitPrim(Pat.@NotNull Prim prim, Boolean aBoolean) {
+    boolean ex = prim.explicit();
+    return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
+      DefPrettier.plainLink(prim.as()));
+  }
+
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
     var hyperLink = Doc.hyperLink(Doc.styled(TermPrettier.CON_CALL,
       ctor.ref().name()), new StringLink("#" + ctor.ref().hashCode()), null);

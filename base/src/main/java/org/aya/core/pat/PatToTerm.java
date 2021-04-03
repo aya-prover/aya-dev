@@ -25,6 +25,10 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
     return new RefTerm(new LocalVar("()"));
   }
 
+  @Override public Term visitPrim(Pat.@NotNull Prim prim, Unit unit) {
+    return new RefTerm(prim.as());
+  }
+
   @Override public Term visitBind(Pat.@NotNull Bind bind, Unit unit) {
     return new RefTerm(bind.as());
   }

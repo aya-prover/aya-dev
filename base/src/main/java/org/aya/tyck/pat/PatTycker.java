@@ -11,6 +11,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
@@ -129,7 +130,10 @@ public record PatTycker(
         // TODO[ice]: unexpected implicit pattern
         throw new ExprTycker.TyckerException();
       }
-      var res = pat.accept(this, param.type());
+      Pat res = pat.accept(this, param.type());
+      // if (param.type() instanceof CallTerm.Prim prim && prim.ref().core == PrimDef.INTERVAL) {
+      //   res = new Pat.PrimPat(false, new LocalVar(param.ref().name()), param.type());
+      // }
       sig.value = sig.value.inst(res.toTerm());
       results.append(res);
     });
@@ -163,6 +167,9 @@ public record PatTycker(
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
     var v = bind.bind();
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
+    if (t instanceof CallTerm.Prim prim && prim.ref().core == PrimDef.INTERVAL) {
+      return new Pat.Prim(bind.explicit(), v, t);
+    }
     if (selected == null) {
       exprTycker.localCtx.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);

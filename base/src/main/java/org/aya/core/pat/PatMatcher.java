@@ -51,6 +51,11 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
     throw new Mismatch();
   }
 
+  @Override public Unit visitPrim(Pat.@NotNull Prim prim, Term term) {
+    subst.map().put(prim.as(), term);
+    return Unit.unit();
+  }
+
   @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Term term) {
     if (!(term instanceof TupTerm tup)) throw new Mismatch();
     var as = tuple.as();

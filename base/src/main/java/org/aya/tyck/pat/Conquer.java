@@ -91,4 +91,8 @@ public record Conquer(
   @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, Integer nth) {
     return Unit.unit();
   }
+
+  @Override public Unit visitPrim(Pat.@NotNull Prim prim, Integer nth) {
+    return Unit.unit();
+  }
 }

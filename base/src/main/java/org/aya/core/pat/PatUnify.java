@@ -35,6 +35,11 @@ public record PatUnify(
     throw new IllegalStateException();
   }
 
+  @Override
+  public Unit visitPrim(Pat.@NotNull Prim prim, Pat pat) {
+    return Unit.unit();
+  }
+
   private Unit visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {
     assert rpats.sizeEquals(lpats.size());
     lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, localCtx));
