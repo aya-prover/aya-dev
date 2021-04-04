@@ -61,7 +61,9 @@ public final record DataDef(
     }
 
     @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
-      return dataRef().core.contextTele();
+      var ref = dataRef();
+      if (ref.core == null) return Objects.requireNonNull(ref.concrete.signature).contextParam();
+      return ref.core.contextTele();
     }
 
     @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
