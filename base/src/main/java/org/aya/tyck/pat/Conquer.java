@@ -6,6 +6,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatToTerm;
@@ -93,7 +94,8 @@ public record Conquer(
   }
 
   @Override public Unit visitPrim(Pat.@NotNull Prim prim, Integer nth) {
-    // TODO[emanon]
-    return Unit.unit();
+    var core = prim.ref().core;
+    if (PrimDef.LEFT_RIGHT.contains(core)) return Unit.unit();
+    throw new ExprTycker.TyckInterruptedException();
   }
 }
