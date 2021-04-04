@@ -610,6 +610,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       telescope,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.of(ctx.expr()).map(this::visitExpr),
+      ImmutableSeq.empty(),
       false
     );
   }
@@ -623,6 +624,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       telescope,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.none(),
+      visitClauses(ctx.clauses()),
       ctx.COERCE() != null
     );
   }

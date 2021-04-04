@@ -54,8 +54,8 @@ structDecl : '\\struct' ID tele* type? ('\\extends' ids)? ('|' field)* abuse?;
 
 primDecl : '\\prim' ID tele* type? ;
 
-field : COERCE? ID tele* type         # fieldDecl
-      | ID tele* type? IMPLIES expr   # fieldImpl
+field : COERCE? ID tele* type clauses? # fieldDecl
+      | ID tele* type? IMPLIES expr    # fieldImpl
       ;
 
 dataDecl : (PUBLIC? OPEN)? '\\data' ID tele* type? dataBody* abuse?;

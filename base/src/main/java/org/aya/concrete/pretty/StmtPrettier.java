@@ -140,7 +140,8 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
         : Doc.cat(Doc.plain(" : "), field.result.toDoc()),
       field.body.isEmpty()
         ? Doc.empty()
-        : Doc.cat(Doc.symbol(" => "), field.body.get().toDoc())
+        : Doc.cat(Doc.symbol(" => "), field.body.get().toDoc()),
+      visitClauses(field.clauses, true)
     );
   }
 

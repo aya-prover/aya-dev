@@ -214,6 +214,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class StructField extends Signatured {
     public final @NotNull DefVar<StructDef.Field, Decl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
+    public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
     public @NotNull Option<Expr> body;
 
@@ -224,10 +225,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
                        @NotNull ImmutableSeq<Expr.Param> telescope,
                        @NotNull Expr result,
                        @NotNull Option<Expr> body,
+                       @NotNull ImmutableSeq<Pattern.Clause> clauses,
                        boolean coerce) {
       super(sourcePos, telescope);
       this.coerce = coerce;
       this.result = result;
+      this.clauses = clauses;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
     }

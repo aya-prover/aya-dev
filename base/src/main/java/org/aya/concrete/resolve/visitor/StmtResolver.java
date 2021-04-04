@@ -63,6 +63,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
       field.telescope = fieldLocal._1;
       field.result = field.result.resolve(fieldLocal._2);
       field.body = field.body.map(e -> e.resolve(fieldLocal._2));
+      field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2));
     });
 
     return unit;
