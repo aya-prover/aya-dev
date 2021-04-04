@@ -16,6 +16,7 @@ import org.aya.tyck.error.ConfluenceError;
 import org.aya.tyck.error.MissingCaseError;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -47,8 +48,10 @@ public record PatClassifier(
     @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
   ) {
     for (var results : classification) {
-      var contents = results.contents.flatMap(i ->
-        Pat.PrototypeClause.deprototypify(clauses.get(i)).map(matching -> IntObjTuple2.of(i, matching)));
+      var contents = results.contents.view()
+        .flatMap(i -> Pat.PrototypeClause.deprototypify(clauses.get(i))
+          .map(matching -> IntObjTuple2.of(i, matching)))
+        .toImmutableSeq();
       for (int i = 1, size = contents.size(); i < size; i++) {
         var lhsInfo = contents.get(i - 1);
         var rhsInfo = contents.get(i);
@@ -105,8 +108,10 @@ public record PatClassifier(
         });
         builder.shift(new PatTree(def.ref().name(), explicit));
         builder.reduce();
-        var classes = new PatClass(matchy.map(SubPats::ix))
-          .extract(subPatsSeq).map(SubPats::drop);
+        var classes = new PatClass(matchy.view().map(SubPats::ix))
+          .extract(subPatsSeq)
+          .map(SubPats::drop)
+          .toImmutableSeq();
         var rest = classifySub(classes, coverage);
         builder.unshift();
         buffer.appendAll(rest);
@@ -146,7 +151,10 @@ public record PatClassifier(
       }
       var classified = classifySub(matches, coverage);
       builder.reduce();
-      var classes = classified.map(pat -> pat.extract(subPatsSeq).map(SubPats::drop));
+      var classes = classified.map(pat -> pat
+        .extract(subPatsSeq)
+        .map(SubPats::drop)
+        .toImmutableSeq());
       var rest = classes.flatMap(clazz -> classifySub(clazz, coverage));
       builder.unshift();
       buffer.appendAll(rest);
@@ -166,9 +174,9 @@ public record PatClassifier(
   /**
    * @author ice1000
    */
-  public static record PatClass(@NotNull ImmutableSeq<Integer> contents) {
-    private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
-      return contents.map(subPatsSeq::get);
+  public static record PatClass(@NotNull SeqLike<Integer> contents) {
+    private @NotNull SeqView<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
+      return contents.view().map(subPatsSeq::get);
     }
   }
 
