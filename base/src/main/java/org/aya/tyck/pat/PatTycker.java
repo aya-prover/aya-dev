@@ -130,10 +130,7 @@ public record PatTycker(
         // TODO[ice]: unexpected implicit pattern
         throw new ExprTycker.TyckerException();
       }
-      Pat res = pat.accept(this, param.type());
-      // if (param.type() instanceof CallTerm.Prim prim && prim.ref().core == PrimDef.INTERVAL) {
-      //   res = new Pat.PrimPat(false, new LocalVar(param.ref().name()), param.type());
-      // }
+      var res = pat.accept(this, param.type());
       sig.value = sig.value.inst(res.toTerm());
       results.append(res);
     });
