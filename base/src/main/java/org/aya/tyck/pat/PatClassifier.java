@@ -13,6 +13,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ConfluenceError;
+import org.aya.tyck.error.MatchingOverIntervalError;
 import org.aya.tyck.error.MissingCaseError;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
@@ -97,8 +98,9 @@ public record PatClassifier(
     var buffer = Buffer.<PatClass>of();
     if (subPatsSeq.anyMatch(subPats -> subPats.head() instanceof Pat.Prim)) {
       if (coverage) {
-        // TODO[ice] function cannot match over intervals
-        throw new ExprTycker.TyckerException();
+        @NotNull var intervals = subPatsSeq.map(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null).filterNotNull();
+        this.reporter.report(new MatchingOverIntervalError(pos, intervals.first()));
+        throw new ExprTycker.TyckInterruptedException();
       }
       for (var def : PrimDef.LEFT_RIGHT) {
         var matchy = subPatsSeq.mapIndexedNotNull((ix, subPats) -> {
@@ -112,7 +114,7 @@ public record PatClassifier(
           .extract(subPatsSeq)
           .map(SubPats::drop)
           .toImmutableSeq();
-        var rest = classifySub(classes, coverage);
+        var rest = classifySub(classes, false);
         builder.unshift();
         buffer.appendAll(rest);
       }

@@ -1,0 +1,25 @@
+\prim I
+\prim left : I
+\prim right : I
+
+\data S1 : \Set
+  | base
+  | loop I { | left => base
+             | right => base }
+
+\data Seg : \Set
+  | p1
+  | p2
+  | loop I { | left => p1
+             | right => p2 }
+
+\data Torus : \Set
+  | point
+  | line1 I { | left => point
+              | right => point }
+  | line2 I { | left => point
+              | right => point }
+  | face I I { | left, i => line2 i
+               | right, i => line2 i
+               | i, left => line1 i
+               | i, right => line1 i }

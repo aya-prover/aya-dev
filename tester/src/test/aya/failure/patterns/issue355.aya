@@ -1,0 +1,8 @@
+\prim I
+
+\open \data Nat : \Set
+ | zero
+ | suc Nat
+
+\def addN (a : I) : Nat
+ | left => zero
