@@ -4,7 +4,6 @@ package org.aya.tyck.unify;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
