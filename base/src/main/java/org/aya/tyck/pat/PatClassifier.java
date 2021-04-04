@@ -5,6 +5,7 @@ package org.aya.tyck.pat;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatUnify;
@@ -89,6 +90,29 @@ public record PatClassifier(
       builder.shiftEmpty(explicit);
       return classifySub(hasTuple, coverage);
     }
+    // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
+    var buffer = Buffer.<PatClass>of();
+    if (subPatsSeq.anyMatch(subPats -> subPats.head() instanceof Pat.Prim)) {
+      if (coverage) {
+        // TODO[ice] function cannot match over intervals
+        throw new ExprTycker.TyckerException();
+      }
+      for (var def : PrimDef.LEFT_RIGHT) {
+        var matchy = subPatsSeq.mapIndexedNotNull((ix, subPats) -> {
+          var head = subPats.head();
+          return head instanceof Pat.Prim prim && prim.ref() == def.ref()
+            || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
+        });
+        builder.shift(new PatTree(def.ref().name(), explicit));
+        builder.reduce();
+        var classes = new PatClass(matchy.map(SubPats::ix))
+          .extract(subPatsSeq).map(SubPats::drop);
+        var rest = classifySub(classes, coverage);
+        builder.unshift();
+        buffer.appendAll(rest);
+      }
+      return buffer.toImmutableSeq();
+    }
     var hasMatch = subPatsSeq.view()
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Ctor ctor ? ctor.type() : null)
       .firstOption();
@@ -98,8 +122,6 @@ public record PatClassifier(
       builder.unshift();
       return classifySub(subPatsSeq.map(SubPats::drop), coverage);
     }
-    // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
-    var buffer = Buffer.<PatClass>of();
     var dataCall = hasMatch.get();
     for (var ctor : dataCall.ref().core.body()) {
       var conTele = ctor.conTele();
@@ -109,9 +131,8 @@ public record PatClassifier(
         conTele = Term.Param.subst(conTele, matchy);
       }
       var conTeleCapture = conTele;
-      var matches = subPatsSeq.view()
-        .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()))
-        .toImmutableSeq();
+      var matches = subPatsSeq.mapIndexedNotNull((ix, subPats) ->
+        matches(subPats, ix, conTeleCapture, ctor.ref()));
       builder.shift(new PatTree(ctor.ref().name(), explicit));
       if (matches.isEmpty()) {
         if (coverage) {

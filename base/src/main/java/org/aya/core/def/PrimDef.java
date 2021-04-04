@@ -73,6 +73,8 @@ public final record PrimDef(
       PrimDef::arcoe, "arcoe");
   }
 
+  public static final @NotNull ImmutableSeq<PrimDef> LEFT_RIGHT = ImmutableSeq.of(PrimDef.LEFT, PrimDef.RIGHT);
+
   public @NotNull Term unfold(@NotNull CallTerm.Prim primCall) {
     return unfold.apply(primCall);
   }
