@@ -130,11 +130,11 @@ public record StmtTycker(
   }
 
   @NotNull private ImmutableSeq<Pat.PrototypeClause> elabClauses(
-    PatTycker patTycker, ExprRefSubst patSubst, Def.Signature signature,
+    PatTycker patTycker, @Nullable ExprRefSubst patSubst, Def.Signature signature,
     LocalCtx cumulativeCtx, @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) {
     return clauses.map(c -> {
-      patTycker.subst().resetTo(patSubst);
+      if (patSubst != null) patTycker.subst().resetTo(patSubst);
       return patTycker.visitMatch(c, signature, cumulativeCtx.localMap());
     });
   }
@@ -157,13 +157,14 @@ public record StmtTycker(
     return new StructDef(decl.ref, ctxTele, tele, result, decl.fields.map(field -> visitField(field, tycker)));
   }
 
-  @Override
-  public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
+  @Override public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
     var tele = checkTele(tycker, field.telescope);
     var structRef = field.structRef;
     var result = field.result.accept(tycker, null).wellTyped();
-    // TODO[kiva]: ctxTele?
     field.signature = new Def.Signature(ImmutableSeq.of(), tele, result);
+    var cumulativeCtx = tycker.localCtx.derive();
+    var patTycker = new PatTycker(tycker);
+    var elabClauses = elabClauses(patTycker, null, field.signature, cumulativeCtx, field.clauses);
     var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
     return new StructDef.Field(structRef, field.ref, tele, result, body, field.coerce);
   }
