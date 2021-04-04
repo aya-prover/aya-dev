@@ -5,6 +5,6 @@ In file $FILE:9:5 ->
   9 | \def abs (n : Int) : Nat
            ^-^
   
-Error: The 1st clause matches on a constructor with condition(s). When checking the 1st condition, we failed to unify `zero` and `suc zero`
+Error: The 2nd clause matches on a constructor with condition(s). When checking the 1st condition, we failed to unify `zero` and `suc zero`
 Tycking interrupted due to errors.
 What are you doing?
