@@ -257,7 +257,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     structTele.view().zip(structCall.args())
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
-    var fields = Buffer.<Tuple2<String, Term>>of();
+    var fields = Buffer.<Tuple2<DefVar<StructDef.Field, Decl.StructField>, Term>>of();
     var missing = Buffer.<String>of();
     var conFields = expr.fields().view();
 
@@ -269,7 +269,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         else {
           // use default value from defField
           var field = defField.body().get().subst(subst);
-          fields.append(Tuple.of(defField.ref().name(), field));
+          fields.append(Tuple.of(defField.ref(), field));
           subst.add(defField.ref(), field);
         }
         continue;
@@ -280,7 +280,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var fieldRes = conField.accept(this, null);
       unifyTyThrowing(type, fieldRes.type.subst(subst), conField);
       var field = fieldRes.wellTyped.subst(subst);
-      fields.append(Tuple.of(defField.ref().name(), field));
+      fields.append(Tuple.of(defField.ref(), field));
       subst.add(defField.ref(), field);
     }
 
