@@ -556,7 +556,7 @@ public sealed interface Doc extends Docile {
    * @return concat document
    */
   @Contract("_ -> new")
-  static @NotNull Doc hcat(@NotNull Seq<@NotNull Doc> docs) {
+  static @NotNull Doc hcat(@NotNull SeqLike<@NotNull Doc> docs) {
     return concatWith(Doc::simpleCat, docs);
   }
 
