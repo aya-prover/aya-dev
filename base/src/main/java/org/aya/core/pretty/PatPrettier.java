@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pretty;
 
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
-import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
@@ -41,19 +41,18 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
       Doc.styled(TermPrettier.KEYWORD, "\\impossible"));
   }
 
-  @Override
-  public Doc visitPrim(Pat.@NotNull Prim prim, Boolean aBoolean) {
-    var hyperLink = Doc.hyperLink(Doc.styled(TermPrettier.CON_CALL,
-      prim.ref().name()), new StringLink("#" + prim.ref().hashCode()), null);
+  @Override public Doc visitPrim(Pat.@NotNull Prim prim, Boolean aBoolean) {
     boolean ex = prim.explicit();
-    return Doc.wrap(ex ? "" : "{", ex ? "" : "}", hyperLink);
+    return Doc.wrap(ex ? "" : "{", ex ? "" : "}", hyperLink(prim.ref()));
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
-    var hyperLink = Doc.hyperLink(Doc.styled(TermPrettier.CON_CALL,
-      ctor.ref().name()), new StringLink("#" + ctor.ref().hashCode()), null);
-    var ctorDoc = Doc.cat(hyperLink, visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" ")));
+    var ctorDoc = Doc.cat(hyperLink(ctor.ref()), visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" ")));
     return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());
+  }
+
+  @NotNull private Doc hyperLink(DefVar<?, ?> ref) {
+    return Doc.linkRef(Doc.styled(TermPrettier.CON_CALL, ref.name()), ref.hashCode());
   }
 
   public static @NotNull Doc ctorDoc(Boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs) {

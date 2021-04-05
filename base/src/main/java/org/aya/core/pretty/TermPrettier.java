@@ -5,7 +5,6 @@ package org.aya.core.pretty;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
-import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
@@ -110,7 +109,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
       Doc.styled(KEYWORD, "\\new"),
       Doc.symbol(" { "),
       Doc.hsep(newTerm.params().view().map(t ->
-        Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.symbol("=>"), t._2.toDoc())
+        Doc.hsep(Doc.plain("|"), Doc.plain(t._1.name()), Doc.symbol("=>"), t._2.toDoc())
       )),
       Doc.symbol(" }")
     );
@@ -139,7 +138,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
     boolean nestedCall
   ) {
-    var hyperLink = Doc.hyperLink(Doc.styled(style, fn.name()), new StringLink("#" + fn.hashCode()), null);
+    var hyperLink = Doc.linkRef(Doc.styled(style, fn.name()), fn.hashCode());
     return visitCalls(hyperLink, args, (term -> term.accept(this, true)), nestedCall);
   }
 

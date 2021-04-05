@@ -63,11 +63,11 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   }
 
   public static @NotNull Doc link(@NotNull Var ref, @NotNull Style color) {
-    return Doc.hashCodeLink(Doc.styled(color, ref.name()), ref.hashCode());
+    return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
   public static @NotNull Doc plainLink(@NotNull Var ref) {
-    return Doc.hashCodeLink(Doc.plain(ref.name()), ref.hashCode());
+    return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
   }
 
   @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
@@ -98,7 +98,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   public static @NotNull Doc primDoc(Var ref) {
     return Doc.hcat(
       Doc.styled(TermPrettier.KEYWORD, "\\prim "),
-      Doc.hashCodeLink(Doc.styled(TermPrettier.FN_CALL, ref.name()), ref.hashCode())
+      Doc.linkDef(Doc.styled(TermPrettier.FN_CALL, ref.name()), ref.hashCode())
     );
   }
 }
