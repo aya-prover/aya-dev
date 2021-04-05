@@ -40,7 +40,6 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       FileModuleLoader.tyckModule(loader, program, reporter,
         () -> writeCode(flags.distillInfo(), program, CliArgs.DistillStage.Scoped),
         defs -> writeCode(flags.distillInfo(), defs, CliArgs.DistillStage.Typed), builder);
-      PrimDef.clearConcrete();
     } catch (ExprTycker.TyckerException e) {
       FileModuleLoader.handleInternalError(e);
       return e.exitCode();
@@ -49,6 +48,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       reporter.reportString(e.stage().name() + " interrupted due to errors.");
       if (flags.interruptedTrace()) e.printStackTrace();
     }
+    PrimDef.clearConcrete();
     if (reporter.isEmpty()) {
       reporter.reportString(flags.message().successNotion());
       return 0;
