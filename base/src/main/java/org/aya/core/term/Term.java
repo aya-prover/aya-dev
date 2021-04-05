@@ -34,7 +34,7 @@ import org.jetbrains.annotations.TestOnly;
  *
  * @author ice1000
  */
-@Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
+@Debug.Renderer(text = "toDoc().debugRender()")
 public interface Term extends CoreTerm {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
   <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
@@ -133,7 +133,7 @@ public interface Term extends CoreTerm {
   /**
    * @author re-xyr
    */
-  @Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
+  @Debug.Renderer(text = "toDoc().debugRender()")
   record Param(
     @NotNull LocalVar ref,
     @NotNull Term type,

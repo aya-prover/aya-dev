@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author kiva, ice1000
  */
-@Debug.Renderer(text = "toTerm().toDoc().renderWithPageWidth(114514)")
+@Debug.Renderer(text = "toTerm().toDoc().debugRender()")
 public sealed interface Pat extends CorePat {
   @Override @NotNull Term type();
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);

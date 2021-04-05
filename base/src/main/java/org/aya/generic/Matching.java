@@ -21,7 +21,7 @@ import java.util.function.Function;
  * @param <Body>    {@link Term} or {@link Expr}
  * @author ice1000
  */
-@Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
+@Debug.Renderer(text = "toDoc().debugRender()")
 public record Matching<Matcher extends Docile, Body extends Docile>(
   @NotNull ImmutableSeq<Matcher> patterns,
   @NotNull Body body

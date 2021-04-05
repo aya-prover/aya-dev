@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author kiva, ice1000
  */
-@Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
+@Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Pattern extends ConcretePat {
   @Override default @NotNull Doc toDoc() {
     return accept(PatternPrettier.INSTANCE, false);

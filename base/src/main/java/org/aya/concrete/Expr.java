@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 /**
  * @author re-xyr
  */
-@Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
+@Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Expr extends ConcreteExpr {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 

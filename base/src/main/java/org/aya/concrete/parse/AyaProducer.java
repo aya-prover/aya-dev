@@ -509,7 +509,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var first = atoms.first().apply(true);
     if (!(first instanceof Pattern.Bind bind)) {
       reporter.report(new ParseError(first.sourcePos(),
-        "`" + first.toDoc().renderWithPageWidth(114514) + "` is not a constructor name"));
+        "`" + first.toDoc().debugRender() + "` is not a constructor name"));
       throw new ParsingInterruptedException();
     }
     return (ex, as) -> new Pattern.Ctor(

@@ -75,7 +75,7 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
    *
    * @author ice1000
    */
-  @Debug.Renderer(text = "toDoc().renderWithPageWidth(114514)")
+  @Debug.Renderer(text = "toDoc().debugRender()")
   record Signature(
     @NotNull ImmutableSeq<Term.@NotNull Param> contextParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,

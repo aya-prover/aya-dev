@@ -67,6 +67,10 @@ public sealed interface Doc extends Docile {
     return this.renderToString(config);
   }
 
+  default @NotNull String debugRender() {
+    return renderWithPageWidth(114514);
+  }
+
   //endregion
 
   //region Doc Variants

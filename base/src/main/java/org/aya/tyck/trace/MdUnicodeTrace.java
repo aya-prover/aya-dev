@@ -7,7 +7,6 @@ import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
-  public static final int WIDTH = 114514;
   public final @NotNull StringBuilder builder;
   private int indent = 0;
   private final int indentation;
@@ -32,10 +31,10 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, Unit unit) {
     indent();
     builder.append("+ \u22A2 `")
-      .append(t.expr().toDoc().renderWithPageWidth(WIDTH))
+      .append(t.expr().toDoc().debugRender())
       .append("`");
     if (t.term() != null) builder.append(" : ")
-      .append(t.term().toDoc().renderWithPageWidth(WIDTH));
+      .append(t.term().toDoc().debugRender());
     visitSub(t.children());
     return unit;
   }
@@ -55,10 +54,10 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
     indent();
     builder.append("+ \u22A2 ")
-      .append(t.lhs().toDoc().renderWithPageWidth(WIDTH))
+      .append(t.lhs().toDoc().debugRender())
       .append(" \u2261 ")
-      .append(t.rhs().toDoc().renderWithPageWidth(WIDTH));
-    if (t.type() != null) builder.append(" : ").append(t.type().toDoc().renderWithPageWidth(WIDTH));
+      .append(t.rhs().toDoc().debugRender());
+    if (t.type() != null) builder.append(" : ").append(t.type().toDoc().debugRender());
     visitSub(t.children());
     return unit;
   }
@@ -66,9 +65,9 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
   @Override public Unit visitTyck(Trace.@NotNull TyckT t, Unit unit) {
     indent();
     builder.append("+ result \u22A2 `")
-      .append(t.term().toDoc().renderWithPageWidth(WIDTH))
+      .append(t.term().toDoc().debugRender())
       .append("` \u2191 ")
-      .append(t.type().toDoc().renderWithPageWidth(WIDTH))
+      .append(t.type().toDoc().debugRender())
       .append(lineSep);
     assert t.children().isEmpty();
     return unit;
@@ -77,9 +76,9 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
   @Override public Unit visitPat(Trace.@NotNull PatT t, Unit unit) {
     indent();
     builder.append("+ pat \u22A2 `")
-      .append(t.pat().toDoc().renderWithPageWidth(WIDTH))
+      .append(t.pat().toDoc().debugRender())
       .append("` : ")
-      .append(t.term().toDoc().renderWithPageWidth(WIDTH))
+      .append(t.term().toDoc().debugRender())
       .append(lineSep);
     visitSub(t.children());
     return unit;
