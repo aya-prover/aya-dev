@@ -136,8 +136,11 @@ public class ParseTest {
     ));
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
       && app.arguments().sizeEquals(1)
+      && !app.toDoc().debugRender().isEmpty()
       && app.arguments().get(0).term() instanceof Expr.TupExpr tup
       && tup.items().sizeEquals(3));
+    assertTrue(parseExpr("\\new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
+      && !neo.toDoc().debugRender().isEmpty());
   }
 
   private void parseImport(@Language("TEXT") String code) {

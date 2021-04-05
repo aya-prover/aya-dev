@@ -3,11 +3,13 @@
 package org.aya.core;
 
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.tyck.TyckExprTest;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -38,6 +40,29 @@ public class DistillerTest {
       \\open \\data Int : \\Set | pos Nat | neg Nat { | zero => pos zero }
       \\open \\data Fin (n : Nat) : \\Set | suc m => fzero | suc m => fsuc (Fin m)
       """).renderToHtml().isEmpty());
+  }
+
+  @Test public void neo() {
+    var defs = TyckDeclTest.successTyckDecls("""
+      \\prim I \\prim left
+
+      \\struct Pair (A : \\Set) (B : \\Set) : \\Set
+        | fst : A
+        | snd : B
+        | we-are-together : \\Sig A ** B => (fst, snd)
+
+      \\def test-nat-pair : Pair I I =>
+        \\new Pair I I { | fst => left | snd => left }
+
+      \\def make-pair (A, B : \\Set) (a : A) (b : B) : Pair A B =>
+        \\new Pair A B { | fst => a | snd => b }
+      """);
+    assertFalse(defs.get(3).toDoc().debugRender().isEmpty());
+    assertFalse(defs.get(4).toDoc().debugRender().isEmpty());
+  }
+
+  @AfterEach public void tearDown() {
+    PrimDef.clearConcrete();
   }
 
   @NotNull private Doc declDoc(@Language("TEXT") String text) {

@@ -5,11 +5,13 @@ package org.aya.core;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
 import org.aya.tyck.TyckDeclTest;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
@@ -111,5 +113,9 @@ public class NormalizeTest extends LispTestCase {
       && conCall.conArgs().isEmpty());
     assertTrue(normalizer.apply(6) instanceof CallTerm.Con conCall
       && Objects.equals(conCall.ref().name(), "suc"));
+  }
+
+  @AfterEach public void tearDown() {
+    PrimDef.clearConcrete();
   }
 }
