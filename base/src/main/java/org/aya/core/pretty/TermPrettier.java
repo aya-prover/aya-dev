@@ -25,6 +25,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull Style DATA_CALL = Style.color("aya:DataCall");
   public static final @NotNull Style STRUCT_CALL = Style.color("aya:StructCall");
   public static final @NotNull Style CON_CALL = Style.color("aya:ConCall");
+  public static final @NotNull Style FIELD_CALL = Style.color("aya:FieldCall");
 
   private TermPrettier() {
   }
@@ -108,9 +109,9 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.styled(KEYWORD, "\\new"),
       Doc.symbol(" { "),
-      Doc.hsep(newTerm.params().view().map(t ->
-        Doc.hsep(Doc.plain("|"), Doc.plain(t._1.name()), Doc.symbol("=>"), t._2.toDoc())
-      )),
+      Doc.hsep(newTerm.params().view().map(t -> Doc.hsep(Doc.plain("|"),
+        Doc.linkRef(Doc.styled(FIELD_CALL, t._1.name()), t._1.hashCode()),
+        Doc.symbol("=>"), t._2.toDoc()))),
       Doc.symbol(" }")
     );
   }
