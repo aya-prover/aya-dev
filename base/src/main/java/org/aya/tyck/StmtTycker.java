@@ -3,10 +3,13 @@
 package org.aya.tyck;
 
 import org.aya.api.error.Reporter;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.Signatured;
+import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
@@ -14,6 +17,7 @@ import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.core.term.UnivTerm;
 import org.aya.generic.GenericBuilder;
+import org.aya.generic.Matching;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
@@ -107,19 +111,32 @@ public record StmtTycker(
     var signature = new Def.Signature(ImmutableSeq.of(), tele, dataCall);
     ctor.signature = signature;
     var cumulativeCtx = tycker.localCtx.derive();
-    var elabClauses = ctor.clauses.map(c -> {
-      patTycker.subst().resetTo(patSubst);
-      return patTycker.visitMatch(c, signature, cumulativeCtx.localMap());
-    });
+    var elabClauses = elabClauses(patTycker, patSubst, signature, cumulativeCtx, ctor.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
-    if (matchings.isNotEmpty()) {
-      var classification = PatClassifier.classify(elabClauses, tycker.reporter, ctor.sourcePos, false);
-      PatClassifier.confluence(elabClauses, tycker, ctor.sourcePos, signature.result(), classification);
-      Conquer.against(matchings, cumulativeCtx, tycker, ctor.sourcePos, signature);
-    }
+    ensureConfluent(tycker, signature, cumulativeCtx, elabClauses, matchings, ctor.sourcePos, false);
     return elaborated;
+  }
+
+  private void ensureConfluent(
+    ExprTycker tycker, Def.Signature signature, LocalCtx ctx, ImmutableSeq<Pat.PrototypeClause> elabClauses,
+    ImmutableSeq<@NotNull Matching<Pat, Term>> matchings, @NotNull SourcePos pos, boolean coverage
+  ) {
+    if (!matchings.isNotEmpty()) return;
+    var classification = PatClassifier.classify(elabClauses, tycker.reporter, pos, coverage);
+    PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
+    Conquer.against(matchings, ctx, tycker, pos, signature);
+  }
+
+  @NotNull private ImmutableSeq<Pat.PrototypeClause> elabClauses(
+    PatTycker patTycker, ExprRefSubst patSubst, Def.Signature signature,
+    LocalCtx cumulativeCtx, @NotNull ImmutableSeq<Pattern.Clause> clauses
+  ) {
+    return clauses.map(c -> {
+      patTycker.subst().resetTo(patSubst);
+      return patTycker.visitMatch(c, signature, cumulativeCtx.localMap());
+    });
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
@@ -171,11 +188,7 @@ public record StmtTycker(
     var elabClauses = what._2.getRightValue();
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(matchings));
-    if (matchings.isNotEmpty()) {
-      var classification = PatClassifier.classify(elabClauses, tycker.reporter, decl.sourcePos, true);
-      PatClassifier.confluence(elabClauses, tycker, decl.sourcePos, resultTy, classification);
-      Conquer.against(matchings, cumulativeCtx, tycker, decl.sourcePos, signature.value);
-    }
+    ensureConfluent(tycker, signature.value, cumulativeCtx, elabClauses, matchings, decl.sourcePos, true);
     return elaborated;
   }
 
