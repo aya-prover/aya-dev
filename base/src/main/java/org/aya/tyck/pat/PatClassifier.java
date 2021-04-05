@@ -96,10 +96,12 @@ public record PatClassifier(
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
-    if (subPatsSeq.anyMatch(subPats -> subPats.head() instanceof Pat.Prim)) {
+    var lrSplit = subPatsSeq.view()
+      .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
+      .firstOption();
+    if (lrSplit.isDefined()) {
       if (coverage) {
-        @NotNull var intervals = subPatsSeq.map(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null).filterNotNull();
-        this.reporter.report(new MatchingOverIntervalError(pos, intervals.first()));
+        reporter.report(new MatchingOverIntervalError(pos, lrSplit.get()));
         throw new ExprTycker.TyckInterruptedException();
       }
       for (var def : PrimDef.LEFT_RIGHT) {

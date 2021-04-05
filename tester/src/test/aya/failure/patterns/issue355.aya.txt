@@ -5,6 +5,6 @@ In file $FILE:7:5 ->
   7 | \def addN (a : I) : Nat
            ^--^
   
-Error: Cannot match over "Interval" primary type: `left`, see https://agda.readthedocs.io/en/v2.6.1.3/language/cubical.html#the-interval-and-path-types for reason.
+Error: Cannot perform pattern matching `left`
 Tycking interrupted due to errors.
 What are you doing?
