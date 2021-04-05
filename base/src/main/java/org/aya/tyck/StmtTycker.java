@@ -165,8 +165,11 @@ public record StmtTycker(
     var cumulativeCtx = tycker.localCtx.derive();
     var patTycker = new PatTycker(tycker);
     var elabClauses = elabClauses(patTycker, null, field.signature, cumulativeCtx, field.clauses);
+    var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
-    return new StructDef.Field(structRef, field.ref, tele, result, body, field.coerce);
+    var elaborated = new StructDef.Field(structRef, field.ref, tele, result, matchings, body, field.coerce);
+    ensureConfluent(tycker, field.signature, cumulativeCtx, elabClauses, matchings, field.sourcePos, false);
+    return elaborated;
   }
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {

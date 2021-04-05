@@ -4,7 +4,9 @@ package org.aya.core.def;
 
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
+import org.aya.generic.Matching;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,7 @@ public final record StructDef(
     @NotNull DefVar<Field, Decl.StructField> ref,
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull Term result,
+    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
     @NotNull Option<Term> body,
     boolean coerce
   ) implements Def {
