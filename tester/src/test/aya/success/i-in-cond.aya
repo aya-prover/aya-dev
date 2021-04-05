@@ -23,3 +23,6 @@
                | right, i => line2 i
                | i, left => line1 i
                | i, right => line1 i }
+
+\def idp {A : \Set} (a : A) (i : I) : A
+ | a, i => a
