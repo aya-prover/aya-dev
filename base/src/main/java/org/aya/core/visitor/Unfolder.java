@@ -10,6 +10,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.Set;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
@@ -37,10 +38,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.fullArgs().map(arg -> visitArg(arg, p));
-    var tele = def.fullTelescope();
-    assert args.sizeEquals(tele.size());
-    assert Term.Param.checkSubst(tele, args);
-    var volynskaya = tryUnfoldClauses(p, args, buildSubst(tele, args), def.clauses());
+    var tele = def.fullTelescope().toImmutableSeq();
+    var volynskaya = tryUnfoldClauses(p, args, checkAndBuildSubst(tele, args), def.clauses());
     return volynskaya != null ? volynskaya : conCall;
   }
 
@@ -49,14 +48,18 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return fnCall;
     var args = fnCall.fullArgs().map(arg -> visitArg(arg, p));
-    // This shouldn't fail
-    assert args.sizeEquals(def.fullTelescope().size());
-    assert Term.Param.checkSubst(def.fullTelescope(), args);
-    var subst = buildSubst(def.fullTelescope(), args);
+    var subst = checkAndBuildSubst(def.fullTelescope().toImmutableSeq(), args);
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, body.getRightValue());
     return volynskaya != null ? volynskaya : fnCall;
+  }
+  private @NotNull Substituter.TermSubst
+  checkAndBuildSubst(ImmutableSeq<Term.Param> fullTelescope, SeqView<Arg<Term>> args) {
+    // This shouldn't fail
+    assert args.sizeEquals(fullTelescope.size());
+    assert Term.Param.checkSubst(fullTelescope, args);
+    return buildSubst(fullTelescope, args);
   }
 
   @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
@@ -67,10 +70,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = hole.ref().core();
     // Not yet type checked
     var args = hole.fullArgs().map(arg -> visitArg(arg, p));
-    // This shouldn't fail
-    assert args.sizeEquals(def.fullTelescope().size());
-    assert Term.Param.checkSubst(def.fullTelescope(), args);
-    var subst = buildSubst(def.fullTelescope(), args);
+    var subst = checkAndBuildSubst(def.fullTelescope().toImmutableSeq(), args);
     var body = def.body;
     if (body == null) return hole;
     return body.subst(subst).accept(this, p);

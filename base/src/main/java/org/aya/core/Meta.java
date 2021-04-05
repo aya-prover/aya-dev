@@ -5,6 +5,7 @@ package org.aya.core;
 import org.aya.api.ref.HoleVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
+import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +17,8 @@ public final class Meta {
   public @NotNull Term result;
   public @Nullable Term body;
 
-  public ImmutableSeq<Term.Param> fullTelescope() {
-    return contextTele.view().concat(telescope).toImmutableSeq();
+  public SeqView<Term.Param> fullTelescope() {
+    return contextTele.view().concat(telescope);
   }
 
   public boolean solve(@NotNull HoleVar<Meta> v, @NotNull Term t) {
