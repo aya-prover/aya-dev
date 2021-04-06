@@ -38,8 +38,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.fullArgs().map(arg -> visitArg(arg, p));
-    var tele = def.fullTelescope().toImmutableSeq();
-    var volynskaya = tryUnfoldClauses(p, args, checkAndBuildSubst(tele, args), def.clauses());
+    var subst = checkAndBuildSubst(def.fullTelescope(), args);
+    var volynskaya = tryUnfoldClauses(p, args, subst, def.clauses());
     return volynskaya != null ? volynskaya : conCall;
   }
 
@@ -48,15 +48,16 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return fnCall;
     var args = fnCall.fullArgs().map(arg -> visitArg(arg, p));
-    var subst = checkAndBuildSubst(def.fullTelescope().toImmutableSeq(), args);
+    var subst = checkAndBuildSubst(def.fullTelescope(), args);
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, body.getRightValue());
     return volynskaya != null ? volynskaya : fnCall;
   }
   private @NotNull Substituter.TermSubst
-  checkAndBuildSubst(ImmutableSeq<Term.Param> fullTelescope, SeqView<Arg<Term>> args) {
+  checkAndBuildSubst(SeqView<Term.Param> fullTelescope, SeqView<Arg<Term>> args) {
     // This shouldn't fail
+    // Assertions are enabled optionally, so we could perform some somehow-expensive operations
     assert args.sizeEquals(fullTelescope.size());
     assert Term.Param.checkSubst(fullTelescope, args);
     return buildSubst(fullTelescope, args);
@@ -70,7 +71,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = hole.ref().core();
     // Not yet type checked
     var args = hole.fullArgs().map(arg -> visitArg(arg, p));
-    var subst = checkAndBuildSubst(def.fullTelescope().toImmutableSeq(), args);
+    var subst = checkAndBuildSubst(def.fullTelescope(), args);
     var body = def.body;
     if (body == null) return hole;
     return body.subst(subst).accept(this, p);
@@ -101,11 +102,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull Set<@NotNull Var> unfolding,
     @NotNull MutableSet<@NotNull Var> unfolded
   ) implements Unfolder<Unit> {
-    @Override
-    public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit emptyTuple) {
+    @Override public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit unit) {
       if (!unfolding.contains(fnCall.ref())) return fnCall;
       unfolded.add(fnCall.ref());
-      return Unfolder.super.visitFnCall(fnCall, emptyTuple);
+      return Unfolder.super.visitFnCall(fnCall, unit);
     }
 
     @Override public @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
