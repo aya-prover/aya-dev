@@ -135,7 +135,8 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
 
   private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
-    for (var arg : lhs.args().view().zip(lhs.ref().core().telescope)) {
+    var meta = lhs.ref().core();
+    for (var arg : lhs.args().view().zip(meta.telescope)) {
       if (arg._1.term() instanceof RefTerm ref) {
         // TODO[xyr]: do scope checking here
         subst.add(ref.var(), new RefTerm(arg._2.ref()));
@@ -145,13 +146,14 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     }
     var correspondence = MutableHashMap.<Var, Term>of();
     defeq.varSubst.forEach((k, v) -> correspondence.set(k, new RefTerm(v)));
-    return rhs.subst(subst.add(Unfolder.buildSubst(lhs.ref().core().contextTele, lhs.contextArgs())).add(new Substituter.TermSubst(correspondence)));
+    return rhs.subst(subst.add(Unfolder.buildSubst(meta.contextTele, lhs.contextArgs())).add(new Substituter.TermSubst(correspondence)));
   }
 
   @Override
   public @NotNull Boolean visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs, @NotNull Term type) {
+    var meta = lhs.ref().core();
     if (rhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
-      var holeTy = FormTerm.Pi.make(false, lhs.ref().core().telescope, lhs.ref().core().result);
+      var holeTy = FormTerm.Pi.make(false, meta.telescope, meta.result);
       for (var arg : lhs.args().view().zip(rcall.args())) {
         if (!(holeTy instanceof FormTerm.Pi holePi))
           throw new IllegalStateException("meta arg size larger than param size. this should not happen");
@@ -165,8 +167,8 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       reporter.report(new HoleBadSpineWarn(lhs, defeq.pos));
       return false;
     }
-    assert lhs.ref().core().body == null;
-    var success = lhs.ref().core().solve(lhs.ref(), solved);
+    assert meta.body == null;
+    var success = meta.solve(lhs.ref(), solved);
     if (!success) {
       reporter.report(new RecursiveSolutionError(lhs.ref(), solved, untypedDefeq.defeq().pos));
       throw new ExprTycker.TyckInterruptedException();

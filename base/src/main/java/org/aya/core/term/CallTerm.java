@@ -35,17 +35,18 @@ public sealed interface CallTerm extends Term {
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
     if (f instanceof Hole hole) {
-      var ret = hole.ref.core().result;
+      var meta = hole.ref.core();
+      var ret = meta.result;
       if (ret instanceof FormTerm.Pi pi) {
         var paramRef = new LocalVar(Constants.ANONYMOUS_PREFIX);
-        hole.ref.core().telescope.append(new Term.Param(
+        meta.telescope.append(new Term.Param(
           paramRef,
           pi.param().type(),
           arg.explicit()
         ));
-        hole.ref.core().result = pi.body().subst(pi.param().ref(), new RefTerm(paramRef));
+        meta.result = pi.body().subst(pi.param().ref(), new RefTerm(paramRef));
       }
-      return new Hole(hole.ref(), hole.contextArgs(), hole.args.appended(arg));
+      return new Hole(hole.ref, hole.contextArgs, hole.args.appended(arg));
     }
     if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, arg);
     var param = lam.param();
