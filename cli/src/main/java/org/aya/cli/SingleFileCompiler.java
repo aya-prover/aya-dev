@@ -42,6 +42,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
         defs -> writeCode(flags.distillInfo(), defs, CliArgs.DistillStage.Typed), builder);
     } catch (ExprTycker.TyckerException e) {
       FileModuleLoader.handleInternalError(e);
+      reporter.reportString("Internal error");
       return e.exitCode();
     } catch (InterruptException e) {
       // TODO[ice]: proper error handling
