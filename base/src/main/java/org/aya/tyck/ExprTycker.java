@@ -244,7 +244,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
     });
     var last = expr.last().accept(this, against);
-    return new Result(new SigmaTerm(expr.co(), Term.Param.fromBuffer(resultTele), last.wellTyped), against);
+    resultTele.append(Tuple.of(new LocalVar(Constants.ANONYMOUS_PREFIX), false, last.wellTyped));
+    return new Result(new SigmaTerm(expr.co(), Term.Param.fromBuffer(resultTele)), against);
   }
 
   @Rule.Check(partialSynth = true)
@@ -450,7 +451,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         }
       }
     }
-    var resultType = new SigmaTerm(false, resultTele.toImmutableSeq(), resultLast.value);
+    resultTele.append(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), resultLast.value, false));
+    var resultType = new SigmaTerm(false, resultTele.toImmutableSeq());
     return new Result(new TupTerm(items.toImmutableSeq()), resultType);
   }
 

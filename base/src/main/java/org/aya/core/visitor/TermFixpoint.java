@@ -2,9 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
 import org.aya.tyck.sort.Sort;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +80,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
       new Term.Param(param.ref(), param.type().accept(this, p), param.explicit()));
     var body = term.body().accept(this, p);
     if (params.sameElements(term.params(), true) && body == term.body()) return term;
-    return new SigmaTerm(term.co(), params, body);
+    params.appended(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), body, false));
+    return new SigmaTerm(term.co(), params);
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {

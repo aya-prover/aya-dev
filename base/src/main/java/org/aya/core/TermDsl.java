@@ -11,6 +11,7 @@ import org.aya.core.def.FnDef;
 import org.aya.core.term.*;
 import org.aya.parser.LispBaseVisitor;
 import org.aya.parser.LispParser;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.immutable.ImmutableVector;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -66,8 +67,8 @@ public class TermDsl extends LispBaseVisitor<Term> {
       case "lam" -> new LamTerm(exprToParam(exprs.get(0)), exprs.get(1).accept(this));
       case "Pi" -> new PiTerm(false, exprToParam(exprs.get(0)), exprs.get(1).accept(this));
       case "Copi" -> new PiTerm(true, exprToParam(exprs.get(0)), exprs.get(1).accept(this));
-      case "Sigma" -> new SigmaTerm(false, exprToParams(exprs.get(0)), exprs.get(1).accept(this));
-      case "Cosigma" -> new SigmaTerm(true, exprToParams(exprs.get(0)), exprs.get(1).accept(this));
+      case "Sigma" -> new SigmaTerm(false, exprToParams(exprs.get(0)).appended(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), exprs.get(1).accept(this), false)));
+      case "Cosigma" -> new SigmaTerm(true, exprToParams(exprs.get(0)).appended(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), exprs.get(1).accept(this), false)));
       case "tup" -> new TupTerm(exprs.stream().collect(ImmutableVector.factory()).map(expr -> expr.accept(this)));
       case "proj" -> new ProjTerm(exprs.get(0).accept(this), parseInt(exprs.get(1).getText()));
       default -> new RefTerm((LocalVar) ref(rule));

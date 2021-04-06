@@ -10,7 +10,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author re-xyr
  */
-public record SigmaTerm(boolean co, @NotNull ImmutableSeq<@NotNull Param> params, @NotNull Term body) implements Term {
+public record SigmaTerm(boolean co, @NotNull ImmutableSeq<@NotNull Param> params) implements Term {
+  public Term body() {
+    return params.last().type();
+  }
+
   @Override @Contract(pure = true) public @NotNull Decision whnf() {
     return Decision.YES;
   }
