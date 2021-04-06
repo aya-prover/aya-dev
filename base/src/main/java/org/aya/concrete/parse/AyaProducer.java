@@ -630,13 +630,11 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public @NotNull Expr visitType(@NotNull AyaParser.TypeContext ctx) {
+  @Override public @NotNull Expr visitType(@NotNull AyaParser.TypeContext ctx) {
     return visitExpr(ctx.expr());
   }
 
-  @Override
-  public @NotNull Stmt visitImportCmd(AyaParser.ImportCmdContext ctx) {
+  @Override public @NotNull Stmt visitImportCmd(AyaParser.ImportCmdContext ctx) {
     final var id = ctx.ID();
     return new Stmt.ImportStmt(
       sourcePosOf(ctx),
@@ -645,8 +643,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public @NotNull ImmutableSeq<Stmt> visitOpenCmd(AyaParser.OpenCmdContext ctx) {
+  @Override public @NotNull ImmutableSeq<Stmt> visitOpenCmd(AyaParser.OpenCmdContext ctx) {
     var accessibility = ctx.PUBLIC() == null
       ? Stmt.Accessibility.Private
       : Stmt.Accessibility.Public;
@@ -669,9 +666,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Stmt.OpenStmt.UseHide(
       ctxs.stream()
         .map(AyaParser.UseContext::useHideList)
-        .map(AyaParser.UseHideListContext::ids)
-        .flatMap(this::visitIds)
-        .map(Tuple2::getValue)
+        .map(AyaParser.UseHideListContext::idsComma)
+        .flatMap(this::visitIdsComma)
         .collect(ImmutableSeq.factory()),
       Stmt.OpenStmt.UseHide.Strategy.Using);
   }
@@ -680,22 +676,19 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Stmt.OpenStmt.UseHide(
       ctxs.stream()
         .map(AyaParser.HideContext::useHideList)
-        .map(AyaParser.UseHideListContext::ids)
-        .flatMap(this::visitIds)
-        .map(Tuple2::getValue)
+        .map(AyaParser.UseHideListContext::idsComma)
+        .flatMap(this::visitIdsComma)
         .collect(ImmutableSeq.factory()),
       Stmt.OpenStmt.UseHide.Strategy.Hiding);
   }
 
-  @Override
-  public @NotNull Stmt.OpenStmt.UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
+  @Override public @NotNull Stmt.OpenStmt.UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
     var use = ctx.use();
     if (use != null) return visitUse(use);
     return visitHide(ctx.hide());
   }
 
-  @Override
-  public @NotNull Stmt.ModuleStmt visitModule(AyaParser.ModuleContext ctx) {
+  @Override public @NotNull Stmt.ModuleStmt visitModule(AyaParser.ModuleContext ctx) {
     return new Stmt.ModuleStmt(
       sourcePosOf(ctx),
       ctx.ID().getText(),
@@ -703,21 +696,19 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public @NotNull Stream<Tuple2<SourcePos, String>> visitIds(AyaParser.IdsContext ctx) {
-    return ctx.ID().stream()
-      .map(id -> Tuple.of(sourcePosOf(id), id.getText()));
+  @Override public @NotNull Stream<Tuple2<SourcePos, String>> visitIds(AyaParser.IdsContext ctx) {
+    return ctx.ID().stream().map(id -> Tuple.of(sourcePosOf(id), id.getText()));
   }
 
-  @Override
-  public @NotNull ImmutableSeq<@NotNull String> visitModuleName(AyaParser.ModuleNameContext ctx) {
-    return ctx.ID().stream()
-      .map(ParseTree::getText)
-      .collect(ImmutableSeq.factory());
+  @Override public @NotNull Stream<String> visitIdsComma(AyaParser.IdsCommaContext ctx) {
+    return ctx.ID().stream().map(ParseTree::getText);
   }
 
-  @Override
-  public @NotNull Assoc visitAssoc(AyaParser.AssocContext ctx) {
+  @Override public @NotNull ImmutableSeq<@NotNull String> visitModuleName(AyaParser.ModuleNameContext ctx) {
+    return ImmutableSeq.from(ctx.ID()).map(ParseTree::getText);
+  }
+
+  @Override public @NotNull Assoc visitAssoc(AyaParser.AssocContext ctx) {
     if (ctx.FIX() != null) return Assoc.Fix;
     if (ctx.FIXL() != null) return Assoc.FixL;
     if (ctx.FIXR() != null) return Assoc.FixR;
@@ -728,8 +719,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  @Override
-  public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {
+  @Override public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {
     if (ctx.ERASE() != null) return Modifier.Erase;
     if (ctx.INLINE() != null) return Modifier.Inline;
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());

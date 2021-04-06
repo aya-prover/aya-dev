@@ -31,7 +31,7 @@ public class PatCCTest {
   public void addCC() {
     var decls = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
-      \\def add (a, b : Nat) : Nat
+      \\def add (a b : Nat) : Nat
        | zero, b => b
        | a, zero => a
        | suc a, b => suc (add a b)
@@ -47,7 +47,7 @@ public class PatCCTest {
   public void maxCC() {
     var decls = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
-      \\def max (a, b : Nat) : Nat
+      \\def max (a b : Nat) : Nat
        | zero, b => b
        | a, zero => a
        | suc a, suc b => suc (max a b)""");

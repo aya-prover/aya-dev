@@ -76,7 +76,7 @@ public class NormalizeTest extends LispTestCase {
   @Test public void unfoldPatterns() {
     var defs = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
-      \\def tracy (a, b : Nat) : Nat
+      \\def tracy (a b : Nat) : Nat
        | zero, a => a
        | a, zero => a
        | suc a, b => suc (tracy a b)

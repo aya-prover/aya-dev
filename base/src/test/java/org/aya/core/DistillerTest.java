@@ -23,7 +23,7 @@ public class DistillerTest {
     var doc1 = declDoc("\\def id {A : \\Set} (a : A) : A => a");
     var doc2 = declDoc("\\def id {A : \\Set} (a : A) => a");
     var doc3 = declDoc("""
-      \\def curry3 (A, B, C, D : \\Set)
+      \\def curry3 (A  B  C  D : \\Set)
                   (f : \\Pi (x : \\Sig A B ** C) -> D)
                   (a : A) (b : B) (c : C) : D
         => f (a, b, c)
@@ -54,7 +54,7 @@ public class DistillerTest {
       \\def test-nat-pair : Pair I I =>
         \\new Pair I I { | fst => left | snd => left }
 
-      \\def make-pair (A, B : \\Set) (a : A) (b : B) : Pair A B =>
+      \\def make-pair (A B : \\Set) (a : A) (b : B) : Pair A B =>
         \\new Pair A B { | fst => a | snd => b }
       """);
     assertFalse(defs.get(3).toDoc().debugRender().isEmpty());

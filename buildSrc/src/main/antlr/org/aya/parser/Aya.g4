@@ -17,7 +17,7 @@ useHide : use+
         | hide+;
 use : USING useHideList;
 hide : HIDING useHideList;
-useHideList : LPAREN ids ')';
+useHideList : LPAREN idsComma ')';
 
 moduleName : ID ('.' ID)*;
 
@@ -50,7 +50,7 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : '\\struct' ID tele* type? ('\\extends' ids)? ('|' field)* abuse?;
+structDecl : '\\struct' ID tele* type? ('\\extends' idsComma)? ('|' field)* abuse?;
 
 primDecl : '\\prim' ID tele* type? ;
 
@@ -124,13 +124,14 @@ tele : literal
      ;
 
 // Explicit arguments may be anonymous
-teleBinder : teleMaybeTypedExpr
-           | expr;
+teleBinder : expr
+           | teleMaybeTypedExpr ;
 
 teleMaybeTypedExpr : ids type?;
 
 // utilities
-ids : (ID ',')* ID?;
+idsComma : (ID ',')* ID?;
+ids : ID*;
 type : ':' expr;
 
 // operators

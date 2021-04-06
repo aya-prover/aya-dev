@@ -134,7 +134,6 @@ public interface Term extends CoreTerm {
   /**
    * @author re-xyr
    */
-  @Debug.Renderer(text = "toDoc().debugRender()")
   record Param(
     @NotNull LocalVar ref,
     @NotNull Term type,

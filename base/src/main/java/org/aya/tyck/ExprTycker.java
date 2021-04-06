@@ -247,8 +247,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new SigmaTerm(expr.co(), Term.Param.fromBuffer(resultTele), last.wellTyped), against);
   }
 
-  @Override
-  public Result visitNew(Expr.@NotNull NewExpr expr, @Nullable Term term) {
+  @Rule.Check(partialSynth = true)
+  @Override public Result visitNew(Expr.@NotNull NewExpr expr, @Nullable Term term) {
     var struct = expr.struct().accept(this, null).wellTyped;
     if (!(struct instanceof CallTerm.Struct structCall))
       return wantButNo(expr.struct(), struct, "struct type");
@@ -286,10 +286,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         throw new TyckerException();
       }
       for (var t : telescope.view().zip(conField.bindings())) fieldSubst.good().put(t._2._2, t._1.ref());
-      var field = localCtx.with(telescope, () -> {
-        var fieldRes = conField.body().accept(fieldSubst, Unit.unit()).accept(this, type);
-        return fieldRes.wellTyped;
-      });
+      var field = localCtx.with(telescope, () -> conField.body()
+        .accept(fieldSubst, Unit.unit())
+        .accept(this, type).wellTyped);
       fields.append(Tuple.of(defField.ref(), field));
       subst.add(defField.ref(), field);
     }
@@ -303,8 +302,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckInterruptedException();
     }
 
-    // TODO: and then create a StructTerm? what about reusing the TupTerm?
-    return new Result(new NewTerm(fields.toImmutableSeq()), structCall.subst(subst));
+    if (term != null) unifyTyThrowing(term, structCall, expr);
+    return new Result(new NewTerm(fields.toImmutableSeq()), structCall);
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {

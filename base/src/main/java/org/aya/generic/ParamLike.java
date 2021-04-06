@@ -6,6 +6,7 @@ import org.aya.api.ref.Var;
 import org.aya.core.pretty.DefPrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
  *               {@link org.aya.core.term.Term} or {@link org.aya.concrete.Expr}.
  * @author ice1000
  */
+@Debug.Renderer(text = "toDoc().debugRender()")
 public interface ParamLike<Expr extends Docile> extends Docile {
   boolean explicit();
   @NotNull Var ref();

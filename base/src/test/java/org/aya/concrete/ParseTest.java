@@ -94,7 +94,7 @@ public class ParseTest {
     parseAndPretty("\\def id {A : \\114-Type514} (a : A) : A => a", """
         \\public \\def id {A : \\114-Type514} (a : A) : A => a
       """);
-    parseAndPretty("\\def xx {A, B : \\114-Type514} (a : A) : A => a", """
+    parseAndPretty("\\def xx {A B : \\114-Type514} (a : A) : A => a", """
         \\public \\def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
       """);
     parseAndPretty("\\data Nat | Z | S Nat", """
