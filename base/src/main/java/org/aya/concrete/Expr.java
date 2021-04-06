@@ -266,12 +266,18 @@ public sealed interface Expr extends ConcreteExpr {
   record NewExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr struct,
-    @NotNull ImmutableSeq<Tuple2<String, Expr>> fields
+    @NotNull ImmutableSeq<Field> fields
   ) implements Expr {
-    @Override
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNew(this, p);
     }
+  }
+
+  record Field(
+    @NotNull String name,
+    @NotNull ImmutableSeq<Tuple2<SourcePos, LocalVar>> bindings,
+    @NotNull Expr body
+  ) {
   }
 
   /**

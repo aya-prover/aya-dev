@@ -81,7 +81,7 @@ expr : atom argument*                             # app
      | MATCH expr (',' expr)* clauses             # match
      ;
 
-newArg : '|' ID IMPLIES expr;
+newArg : '|' ID ids IMPLIES expr;
 
 atom : literal
      | LPAREN (expr ',')* expr? ')'

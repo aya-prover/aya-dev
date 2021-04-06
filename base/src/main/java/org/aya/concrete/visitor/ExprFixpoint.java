@@ -5,7 +5,6 @@ package org.aya.concrete.visitor;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
@@ -85,9 +84,15 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitNew(Expr.@NotNull NewExpr expr, P p) {
     var struct = expr.struct().accept(this, p);
-    var fields = expr.fields().map(t -> Tuple.of(t._1, t._2.accept(this, p)));
+    var fields = expr.fields().map(t -> visitField(t, p));
     if (expr.struct() == struct && fields.sameElements(expr.fields(), true)) return expr;
     return new Expr.NewExpr(expr.sourcePos(), struct, fields);
+  }
+
+  default Expr.@NotNull Field visitField(@NotNull Expr.Field t, P p) {
+    var accept = t.body().accept(this, p);
+    if (accept == t.body()) return t;
+    return new Expr.Field(t.name(), t.bindings(), accept);
   }
 
   @Override default @NotNull Expr visitLitInt(Expr.@NotNull LitIntExpr expr, P p) {

@@ -257,9 +257,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Expr.NewExpr(
       sourcePosOf(ctx),
       visitExpr(ctx.expr()),
-      ctx.newArg().stream()
-        .map(na -> Tuple.of(na.ID().getText(), visitExpr(na.expr())))
-        .collect(ImmutableSeq.factory())
+      ImmutableSeq.from(ctx.newArg())
+        .map(na -> new Expr.Field(na.ID().getText(), visitIds(na.ids())
+          .map(t -> Tuple.of(t._1, new LocalVar(t._2)))
+          .collect(ImmutableSeq.factory()), visitExpr(na.expr())))
     );
   }
 

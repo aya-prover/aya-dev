@@ -105,7 +105,9 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
       expr.struct().toDoc(),
       Doc.symbol(" { "),
       Doc.hsep(expr.fields().view().map(t ->
-        Doc.hsep(Doc.plain("|"), Doc.plain(t._1), Doc.plain("=>"), t._2.toDoc())
+        Doc.hsep(Doc.plain("|"), Doc.plain(t.name()),
+          Doc.join(Doc.plain(" "), t.bindings().map(v -> Doc.plain(v._2.name()))),
+          Doc.plain("=>"), t.body().toDoc())
       )),
       Doc.symbol(" }")
     );

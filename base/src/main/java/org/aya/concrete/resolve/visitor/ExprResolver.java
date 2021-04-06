@@ -60,6 +60,11 @@ public final class ExprResolver implements ExprFixpoint<Context> {
     return new Expr.LamExpr(expr.sourcePos(), param._1, body);
   }
 
+  @Override public Expr.@NotNull Field visitField(Expr.@NotNull Field t, Context context) {
+    for (var binding : t.bindings()) context = context.bind(binding._2, binding._1);
+    return ExprFixpoint.super.visitField(t, context);
+  }
+
   @Override public @NotNull Expr visitPi(@NotNull Expr.PiExpr expr, Context ctx) {
     var param = visitParam(expr.param(), ctx);
     var last = expr.last().accept(this, param._2);

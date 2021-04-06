@@ -259,10 +259,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
     var fields = Buffer.<Tuple2<DefVar<StructDef.Field, Decl.StructField>, Term>>of();
     var missing = Buffer.<String>of();
-    var conFields = expr.fields().view();
+    var conFields = expr.fields();
 
     for (var defField : structRef.core.fields()) {
-      var conFieldOpt = conFields.find(t -> t._1.equals(defField.ref().name())).map(t -> t._2);
+      var conFieldOpt = conFields.find(t -> t.name().equals(defField.ref().name()));
       if (conFieldOpt.isEmpty()) {
         if (defField.body().isEmpty())
           missing.append(defField.ref().name()); // no value available, skip and prepare error reporting
@@ -275,11 +275,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         continue;
       }
       var conField = conFieldOpt.get();
-      conFields = conFields.dropWhile(t -> t._2 == conField);
+      conFields = conFields.dropWhile(t -> t == conField);
       var type = Def.defResult(defField.ref()).subst(subst);
-      var fieldRes = conField.accept(this, null);
-      unifyTyThrowing(type, fieldRes.type.subst(subst), conField);
-      var field = fieldRes.wellTyped.subst(subst);
+      var fieldRes = conField.body().accept(this, type);
+      var field = fieldRes.wellTyped;
       fields.append(Tuple.of(defField.ref(), field));
       subst.add(defField.ref(), field);
     }
@@ -289,7 +288,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckInterruptedException();
     }
     if (conFields.isNotEmpty()) {
-      reporter.report(new NoSuchFieldError(expr.sourcePos(), conFields.map(t -> t._1).toImmutableSeq()));
+      reporter.report(new NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name).toImmutableSeq()));
       throw new TyckInterruptedException();
     }
 
