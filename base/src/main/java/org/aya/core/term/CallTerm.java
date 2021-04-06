@@ -55,10 +55,11 @@ public sealed interface CallTerm extends Term {
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      var core = ref.core;
       // Recursive case is irreducible
-      if (ref.core == null) return Decision.YES;
-      // TODO[xyr]: after adding inductive datatypes, we need to check if the function pattern matches.
-      return Decision.NO;
+      if (core == null) return Decision.YES;
+      if (core.body().isLeft()) return Decision.NO;
+      return Decision.MAYBE;
     }
   }
 
@@ -70,8 +71,7 @@ public sealed interface CallTerm extends Term {
       return visitor.visitPrimCall(this, p);
     }
 
-    @Override
-    public @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs() {
+    @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs() {
       return ImmutableSeq.of();
     }
 
@@ -154,12 +154,11 @@ public sealed interface CallTerm extends Term {
     }
 
     @Override public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref() {
-      return head().ref;
+      return head.ref;
     }
 
-    @Override
-    public @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs() {
-      return head.contextArgs();
+    @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs() {
+      return head.contextArgs;
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
