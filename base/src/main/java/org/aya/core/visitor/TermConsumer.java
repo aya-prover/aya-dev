@@ -12,7 +12,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override
   default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
-    visitArgs(p, term.argsBuf());
+    visitArgs(p, term.args());
     return Unit.unit();
   }
 

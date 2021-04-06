@@ -16,8 +16,6 @@ import org.aya.core.def.StructDef;
 import org.aya.core.visitor.Substituter;
 import org.aya.util.Constants;
 import org.aya.util.Decision;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
@@ -47,7 +45,7 @@ public sealed interface CallTerm extends Term {
         ));
         hole.ref.core().result = pi.body().subst(pi.param().ref(), new RefTerm(paramRef));
       }
-      return new Hole(hole.ref(), hole.contextArgs(), hole.argsBuf.view().appended(arg));
+      return new Hole(hole.ref(), hole.contextArgs(), hole.args.appended(arg));
     }
     if (!(f instanceof LamTerm lam)) return new AppTerm(f, arg);
     var param = lam.param();
@@ -201,14 +199,10 @@ public sealed interface CallTerm extends Term {
   record Hole(
     @NotNull HoleVar<Meta> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
-    @NotNull SeqLike<@NotNull Arg<Term>> argsBuf
+    @NotNull ImmutableSeq<@NotNull Arg<Term>> args
   ) implements CallTerm {
     public Hole(@NotNull HoleVar<Meta> var, @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs) {
-      this(var, contextArgs, Seq.of());
-    }
-
-    @Override public @NotNull ImmutableSeq<Arg<Term>> args() {
-      return argsBuf.toImmutableSeq();
+      this(var, contextArgs, ImmutableSeq.of());
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

@@ -7,7 +7,6 @@ import org.aya.api.util.Arg;
 import org.aya.core.term.*;
 import org.aya.tyck.sort.Sort;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,10 +18,10 @@ import java.util.function.BiFunction;
 public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole term, P p) {
     var contextArgs = term.contextArgs().map(arg -> visitArg(arg, p));
-    var args = term.argsBuf().view().map(arg -> visitArg(arg, p));
+    var args = term.args().view().map(arg -> visitArg(arg, p));
     if (term.contextArgs().sameElements(contextArgs, true)
       && term.args().sameElements(args, true)) return term;
-    return new CallTerm.Hole(term.ref(), contextArgs, args.collect(Buffer.factory()));
+    return new CallTerm.Hole(term.ref(), contextArgs, args.toImmutableSeq());
   }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {

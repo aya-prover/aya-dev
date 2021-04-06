@@ -135,7 +135,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
 
   private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
-    for (var arg : lhs.argsBuf().view().zip(lhs.ref().core().telescope)) {
+    for (var arg : lhs.args().view().zip(lhs.ref().core().telescope)) {
       if (arg._1.term() instanceof RefTerm ref) {
         // TODO[xyr]: do scope checking here
         subst.add(ref.var(), new RefTerm(arg._2.ref()));
@@ -152,8 +152,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   public @NotNull Boolean visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs, @NotNull Term type) {
     if (rhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
       var holeTy = PiTerm.make(false, lhs.ref().core().telescope, lhs.ref().core().result);
-      for (var arg : lhs.argsBuf().view().zip(rcall.argsBuf())) {
-        if (!(holeTy instanceof PiTerm holePi)) throw new IllegalStateException("meta arg size larger than param size. this should not happen");
+      for (var arg : lhs.args().view().zip(rcall.args())) {
+        if (!(holeTy instanceof PiTerm holePi))
+          throw new IllegalStateException("meta arg size larger than param size. this should not happen");
         if (!defeq.compare(arg._1.term(), arg._2.term(), holePi.param().type())) return false;
         holeTy = holePi.body().subst(holePi.param().ref(), arg._1.term());
       }
