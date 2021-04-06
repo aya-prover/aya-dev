@@ -5,11 +5,13 @@ package org.aya.core.term;
 import org.aya.core.pat.Pat;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-final class TermToPat implements Term.Visitor<Unit, Pat> {
+final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
   static final @NotNull TermToPat INSTANCE = new TermToPat();
 
-  private TermToPat(){}
+  private TermToPat() {
+  }
 
   @Override public Pat visitRef(@NotNull RefTerm term, Unit unit) {
     return new Pat.Bind(true, term.var(), term);
