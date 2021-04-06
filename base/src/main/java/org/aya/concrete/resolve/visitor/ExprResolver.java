@@ -73,7 +73,6 @@ public final class ExprResolver implements ExprFixpoint<Context> {
 
   @Override public @NotNull Expr visitTelescopicSigma(@NotNull Expr.TelescopicSigmaExpr expr, Context ctx) {
     var params = resolveParams(expr.params(), ctx);
-    var last = expr.last().accept(this, params._2);
-    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), params._1.collect(ImmutableSeq.factory()), last);
+    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), params._1.collect(ImmutableSeq.factory()));
   }
 }

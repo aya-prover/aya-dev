@@ -203,8 +203,7 @@ public sealed interface Expr extends ConcreteExpr {
   record TelescopicSigmaExpr(
     @NotNull SourcePos sourcePos,
     boolean co,
-    @NotNull ImmutableSeq<@NotNull Param> params,
-    @NotNull Expr last
+    @NotNull ImmutableSeq<@NotNull Param> params
   ) implements Expr, TelescopicExpr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTelescopicSigma(this, p);

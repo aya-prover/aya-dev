@@ -54,7 +54,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
 
   @Override default Unit visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
     visitParams(expr.params(), p);
-    return expr.last().accept(this, p);
+    return Unit.unit();
   }
 
   @Override default Unit visitTup(Expr.@NotNull TupExpr expr, P p) {

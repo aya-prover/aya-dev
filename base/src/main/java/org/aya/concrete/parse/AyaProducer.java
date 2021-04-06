@@ -366,8 +366,11 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Expr.TelescopicSigmaExpr(
       sourcePosOf(ctx),
       false,
-      visitTelescope(ctx.tele()),
-      visitExpr(ctx.expr())
+      visitTelescope(ctx.tele()).appended(new Expr.Param(
+        visitExpr(ctx.expr()).sourcePos(),
+        new LocalVar(Constants.ANONYMOUS_PREFIX),
+        visitExpr(ctx.expr()),
+        true))
     );
   }
 

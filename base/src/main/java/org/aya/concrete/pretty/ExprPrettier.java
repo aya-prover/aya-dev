@@ -54,9 +54,9 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\Sig")),
       Doc.plain(" "),
-      StmtPrettier.INSTANCE.visitTele(expr.params()),
+      StmtPrettier.INSTANCE.visitTele(expr.params().dropLast(1)),
       Doc.plain(" ** "),
-      expr.last().toDoc()
+      expr.params().last().type().toDoc()
     );
   }
 

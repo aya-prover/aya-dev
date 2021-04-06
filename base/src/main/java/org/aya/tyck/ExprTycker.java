@@ -243,8 +243,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var result = type.accept(this, against);
       resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
     });
-    var last = expr.last().accept(this, against);
-    resultTele.append(Tuple.of(new LocalVar(Constants.ANONYMOUS_PREFIX), false, last.wellTyped));
     return new Result(new SigmaTerm(expr.co(), Term.Param.fromBuffer(resultTele)), against);
   }
 
