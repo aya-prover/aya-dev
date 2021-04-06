@@ -6,6 +6,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
 import org.glavo.kala.collection.Seq;
@@ -128,7 +129,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
     return visitCalls(fn.toDoc(), Seq.of(arg),
-      (term -> term.accept(this, true)), nestedCall);
+      term -> term.accept(this, true), nestedCall);
   }
 
   private Doc visitCalls(
@@ -140,7 +141,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return visitCalls(hyperLink, args, (term -> term.accept(this, true)), nestedCall);
   }
 
-  public <T> @NotNull Doc visitCalls(
+  public <T extends Docile> @NotNull Doc visitCalls(
     @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
     @NotNull Function<T, Doc> formatter, boolean nestedCall
   ) {
