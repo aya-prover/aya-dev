@@ -355,21 +355,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
     var f = expr.function().accept(this, null);
     var resultTerm = f.wellTyped;
-    var type = f.type.normalize(NormalizeMode.WHNF);
+    if (!(f.type instanceof FormTerm.Pi piTerm)) return wantButNo(expr, f.type, "pi type");
+    var pi = piTerm;
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
       var argLicit = arg.explicit();
-      if (resultTerm instanceof CallTerm.Hole call) {
-        var newParam = new Term.Param(
-          new LocalVar(Constants.ANONYMOUS_PREFIX),
-          localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX),
-          argLicit
-        );
-        call.ref().core().telescope.append(newParam);
-        type = new FormTerm.Pi(false, newParam, type);
-      }
-      if (!(type instanceof FormTerm.Pi pi)) return wantButNo(expr, f.type, "pi type");
       while (pi.param().explicit() != argLicit) {
         if (argLicit) {
           // that implies paramLicit == false
@@ -379,7 +370,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           var holeArg = new Arg<>(holeApp, false);
           resultTerm = CallTerm.make(resultTerm, holeArg);
           pi = instPi(expr, pi, subst, holeArg);
-          type = pi;
         } else {
           // TODO[ice]: no implicit argument expected, but inserted.
           throw new TyckerException();
@@ -389,10 +379,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var newArg = new Arg<>(elabArg.wellTyped, argLicit);
       resultTerm = CallTerm.make(resultTerm, newArg);
       // so, in the end, the pi term is not updated, its body would be the eliminated type
-      if (iter.hasNext()) type = instPi(expr, pi, subst, newArg);
+      if (iter.hasNext()) pi = instPi(expr, pi, subst, newArg);
       else subst.map().put(pi.param().ref(), newArg.term());
     }
-    if (!(type instanceof FormTerm.Pi pi)) return wantButNo(expr, f.type, "pi type");
     var codomain = pi.body().subst(subst);
     if (term != null) unifyTyThrowing(term, codomain, expr);
     return new Result(resultTerm, codomain);
