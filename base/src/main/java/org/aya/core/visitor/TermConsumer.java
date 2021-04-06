@@ -21,16 +21,16 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     return term.body().accept(this, p);
   }
 
-  @Override default Unit visitUniv(@NotNull UnivTerm term, P p) {
+  @Override default Unit visitUniv(@NotNull FormTerm.Univ term, P p) {
     return Unit.unit();
   }
 
-  @Override default Unit visitPi(@NotNull PiTerm term, P p) {
+  @Override default Unit visitPi(@NotNull FormTerm.Pi term, P p) {
     term.param().type().accept(this, p);
     return term.body().accept(this, p);
   }
 
-  @Override default Unit visitSigma(@NotNull SigmaTerm term, P p) {
+  @Override default Unit visitSigma(@NotNull FormTerm.Sigma term, P p) {
     term.params().forEach(param -> param.type().accept(this, p));
     return Unit.unit();
   }

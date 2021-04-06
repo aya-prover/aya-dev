@@ -13,9 +13,8 @@ import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
-import org.aya.core.term.PiTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import org.aya.core.term.UnivTerm;
 import org.aya.generic.GenericBuilder;
 import org.aya.generic.Matching;
 import org.aya.tyck.pat.Conquer;
@@ -76,8 +75,8 @@ public record StmtTycker(
       }
       var result = decl.result.accept(tycker, null).wellTyped();
       tycker.unifyTyThrowing(
-        PiTerm.make(false, tele, result),
-        PiTerm.make(false, core.telescope(), core.result()),
+        FormTerm.Pi.make(false, tele, result),
+        FormTerm.Pi.make(false, core.telescope(), core.result()),
         decl.result
       );
       decl.signature = new Def.Signature(ImmutableSeq.empty(), tele, result);
@@ -142,7 +141,7 @@ public record StmtTycker(
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var ctxTele = tycker.localCtx.extract();
     var tele = checkTele(tycker, decl.telescope);
-    final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+    final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     decl.signature = new Def.Signature(ctxTele, tele, result);
     var body = decl.body.map(clause -> visitCtor(clause, tycker));
     var collectedBody = body.collect(ImmutableSeq.factory());
@@ -152,7 +151,7 @@ public record StmtTycker(
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
     var ctxTele = tycker.localCtx.extract();
     var tele = checkTele(tycker, decl.telescope);
-    final var result = tycker.checkExpr(decl.result, UnivTerm.OMEGA).wellTyped();
+    final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     decl.signature = new Def.Signature(ctxTele, tele, result);
     return new StructDef(decl.ref, ctxTele, tele, result, decl.fields.map(field -> visitField(field, tycker)));
   }

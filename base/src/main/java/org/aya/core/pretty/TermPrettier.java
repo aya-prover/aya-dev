@@ -47,7 +47,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
-  public Doc visitPi(@NotNull PiTerm term, Boolean nestedCall) {
+  public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
     // TODO[kiva]: term.co
     return Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\Pi")),
@@ -59,7 +59,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
-  public Doc visitSigma(@NotNull SigmaTerm term, Boolean nestedCall) {
+  public Doc visitSigma(@NotNull FormTerm.Sigma term, Boolean nestedCall) {
     return Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\Sig")),
       Doc.plain(" "),
@@ -69,7 +69,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override public Doc visitUniv(@NotNull UnivTerm term, Boolean nestedCall) {
+  @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
     // TODO: level
     return Doc.styled(KEYWORD, "\\Type");
   }

@@ -2,11 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
-import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
 import org.aya.tyck.sort.Sort;
-import org.aya.util.Constants;
 import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,21 +62,21 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return visitParameterized(term.param(), term.body(), p, term, LamTerm::new);
   }
 
-  @Override default @NotNull Term visitUniv(@NotNull UnivTerm term, P p) {
+  @Override default @NotNull Term visitUniv(@NotNull FormTerm.Univ term, P p) {
     var sort = visitSort(term.sort(), p);
     if (sort == term.sort()) return term;
-    return new UnivTerm(sort);
+    return new FormTerm.Univ(sort);
   }
 
-  @Override default @NotNull Term visitPi(@NotNull PiTerm term, P p) {
-    return visitParameterized(term.param(), term.body(), p, term, (a, t) -> new PiTerm(term.co(), a, t));
+  @Override default @NotNull Term visitPi(@NotNull FormTerm.Pi term, P p) {
+    return visitParameterized(term.param(), term.body(), p, term, (a, t) -> new FormTerm.Pi(term.co(), a, t));
   }
 
-  @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
+  @Override default @NotNull Term visitSigma(@NotNull FormTerm.Sigma term, P p) {
     var params = term.params().map(param ->
       new Term.Param(param.ref(), param.type().accept(this, p), param.explicit()));
     if (params.sameElements(term.params(), true)) return term;
-    return new SigmaTerm(term.co(), params);
+    return new FormTerm.Sigma(term.co(), params);
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {

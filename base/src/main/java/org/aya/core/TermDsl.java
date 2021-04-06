@@ -54,7 +54,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     var rule = ctx.IDENT().getText();
     var exprs = ctx.expr();
     return switch (rule) {
-      case "U" -> UnivTerm.OMEGA;
+      case "U" -> FormTerm.Univ.OMEGA;
       case "app" -> new AppTerm(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new CallTerm.Fn(
         (DefVar<FnDef, Decl.FnDecl>) ref(exprs.get(0).getText()),
@@ -65,10 +65,10 @@ public class TermDsl extends LispBaseVisitor<Term> {
           .collect(ImmutableSeq.factory()));
       case "iapp" -> new AppTerm(exprs.get(0).accept(this), Arg.implicit(exprs.get(1).accept(this)));
       case "lam" -> new LamTerm(exprToParam(exprs.get(0)), exprs.get(1).accept(this));
-      case "Pi" -> new PiTerm(false, exprToParam(exprs.get(0)), exprs.get(1).accept(this));
-      case "Copi" -> new PiTerm(true, exprToParam(exprs.get(0)), exprs.get(1).accept(this));
-      case "Sigma" -> new SigmaTerm(false, exprToParams(exprs.get(0)).appended(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), exprs.get(1).accept(this), true)));
-      case "Cosigma" -> new SigmaTerm(true, exprToParams(exprs.get(0)).appended(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), exprs.get(1).accept(this), true)));
+      case "Pi" -> new FormTerm.Pi(false, exprToParam(exprs.get(0)), exprs.get(1).accept(this));
+      case "Copi" -> new FormTerm.Pi(true, exprToParam(exprs.get(0)), exprs.get(1).accept(this));
+      case "Sigma" -> new FormTerm.Sigma(false, exprToParams(exprs.get(0)).appended(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), exprs.get(1).accept(this), true)));
+      case "Cosigma" -> new FormTerm.Sigma(true, exprToParams(exprs.get(0)).appended(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), exprs.get(1).accept(this), true)));
       case "tup" -> new TupTerm(exprs.stream().collect(ImmutableVector.factory()).map(expr -> expr.accept(this)));
       case "proj" -> new ProjTerm(exprs.get(0).accept(this), parseInt(exprs.get(1).getText()));
       default -> new RefTerm((LocalVar) ref(rule));

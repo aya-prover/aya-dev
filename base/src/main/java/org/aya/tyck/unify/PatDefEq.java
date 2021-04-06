@@ -46,17 +46,17 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
-  public @NotNull Boolean visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
   @Override
-  public @NotNull Boolean visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
   @Override
-  public @NotNull Boolean visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
@@ -123,7 +123,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   private @NotNull Boolean passDown(@NotNull Term lhs, @NotNull Term preRhs, @NotNull Term type) {
     var inferred = untypedDefeq.compare(lhs, preRhs);
     if (inferred == null) return false;
-    return defeq.compare(inferred, type, UnivTerm.OMEGA); // TODO[xyr]: proper subtyping?
+    return defeq.compare(inferred, type, FormTerm.Univ.OMEGA); // TODO[xyr]: proper subtyping?
   }
 
   public PatDefEq(@NotNull TypedDefEq defeq, @NotNull Ordering ord, @NotNull Reporter reporter) {
@@ -151,9 +151,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   @Override
   public @NotNull Boolean visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs, @NotNull Term type) {
     if (rhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
-      var holeTy = PiTerm.make(false, lhs.ref().core().telescope, lhs.ref().core().result);
+      var holeTy = FormTerm.Pi.make(false, lhs.ref().core().telescope, lhs.ref().core().result);
       for (var arg : lhs.args().view().zip(rcall.args())) {
-        if (!(holeTy instanceof PiTerm holePi))
+        if (!(holeTy instanceof FormTerm.Pi holePi))
           throw new IllegalStateException("meta arg size larger than param size. this should not happen");
         if (!defeq.compare(arg._1.term(), arg._2.term(), holePi.param().type())) return false;
         holeTy = holePi.body().subst(holePi.param().ref(), arg._1.term());

@@ -36,7 +36,7 @@ public sealed interface CallTerm extends Term {
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
     if (f instanceof Hole hole) {
       var ret = hole.ref.core().result;
-      if (ret instanceof PiTerm pi) {
+      if (ret instanceof FormTerm.Pi pi) {
         var paramRef = new LocalVar(Constants.ANONYMOUS_PREFIX);
         hole.ref.core().telescope.append(new Term.Param(
           paramRef,

@@ -8,8 +8,8 @@ import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.LamTerm;
-import org.aya.core.term.PiTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
@@ -61,7 +61,7 @@ public class TyckExprTest {
     var result = lamAaa
       .accept(visitor, piUAA);
     assertNotNull(result);
-    if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof PiTerm dt)) {
+    if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof FormTerm.Pi dt)) {
       fail();
       return;
     }
@@ -69,7 +69,7 @@ public class TyckExprTest {
     assertEquals(lam.body().toDoc(), lam_aa.toDoc());
     var newVar = new RefTerm(new LocalVar("xyr"));
     assertEquals(newVar, CallTerm.make(lam_aa, new Arg<>(newVar, true)));
-    assertTrue(dt.body() instanceof PiTerm pi
+    assertTrue(dt.body() instanceof FormTerm.Pi pi
       && pi.body() instanceof RefTerm ref
       && ref.var() == dt.param().ref());
   }

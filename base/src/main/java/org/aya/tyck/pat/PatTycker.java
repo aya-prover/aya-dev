@@ -15,9 +15,8 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
-import org.aya.core.term.SigmaTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import org.aya.core.term.UnivTerm;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.GenericBuilder;
@@ -145,7 +144,7 @@ public record PatTycker(
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
     if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), t);
-    if (!(t instanceof SigmaTerm sigma)) {
+    if (!(t instanceof FormTerm.Sigma sigma)) {
       // TODO[ice]: requires pretty printing patterns
       throw new ExprTycker.TyckerException();
     }
@@ -153,7 +152,7 @@ public record PatTycker(
     var sig = new Def.Signature(
       ImmutableSeq.of(),
       sigma.params(),
-      UnivTerm.OMEGA);
+      FormTerm.Univ.OMEGA);
     if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), sigma);
     return new Pat.Tuple(tuple.explicit(),
       visitPatterns(new Ref<>(sig), tuple.patterns()), tuple.as(), sigma);

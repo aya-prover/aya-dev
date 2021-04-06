@@ -94,9 +94,9 @@ public interface Term extends CoreTerm {
     }
     R visitRef(@NotNull RefTerm term, P p);
     R visitLam(@NotNull LamTerm term, P p);
-    R visitPi(@NotNull PiTerm term, P p);
-    R visitSigma(@NotNull SigmaTerm term, P p);
-    R visitUniv(@NotNull UnivTerm term, P p);
+    R visitPi(@NotNull FormTerm.Pi term, P p);
+    R visitSigma(@NotNull FormTerm.Sigma term, P p);
+    R visitUniv(@NotNull FormTerm.Univ term, P p);
     R visitApp(@NotNull AppTerm term, P p);
     R visitFnCall(CallTerm.@NotNull Fn fnCall, P p);
     R visitDataCall(CallTerm.@NotNull Data dataCall, P p);
@@ -116,9 +116,9 @@ public interface Term extends CoreTerm {
     }
     R visitRef(@NotNull RefTerm term, P p, Q q);
     R visitLam(@NotNull LamTerm term, P p, Q q);
-    R visitPi(@NotNull PiTerm term, P p, Q q);
-    R visitSigma(@NotNull SigmaTerm term, P p, Q q);
-    R visitUniv(@NotNull UnivTerm term, P p, Q q);
+    R visitPi(@NotNull FormTerm.Pi term, P p, Q q);
+    R visitSigma(@NotNull FormTerm.Sigma term, P p, Q q);
+    R visitUniv(@NotNull FormTerm.Univ term, P p, Q q);
     R visitApp(@NotNull AppTerm term, P p, Q q);
     R visitFnCall(CallTerm.@NotNull Fn fnCall, P p, Q q);
     R visitDataCall(CallTerm.@NotNull Data dataCall, P p, Q q);

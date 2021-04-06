@@ -33,12 +33,12 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
     else return Unfolder.super.visitLam(term, mode);
   }
 
-  @Override public @NotNull Term visitPi(@NotNull PiTerm term, NormalizeMode mode) {
+  @Override public @NotNull Term visitPi(@NotNull FormTerm.Pi term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
     else return Unfolder.super.visitPi(term, mode);
   }
 
-  @Override public @NotNull Term visitSigma(@NotNull SigmaTerm term, NormalizeMode mode) {
+  @Override public @NotNull Term visitSigma(@NotNull FormTerm.Sigma term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
     else return Unfolder.super.visitSigma(term, mode);
   }

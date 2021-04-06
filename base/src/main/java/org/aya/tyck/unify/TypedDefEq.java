@@ -83,7 +83,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   public <T> T checkParam(Term.@NotNull Param l, Term.@NotNull Param r, Supplier<T> fail, Supplier<T> success) {
     if (l.explicit() != r.explicit()) return fail.get();
-    if (!compare(l.type(), r.type(), UnivTerm.OMEGA)) return fail.get();
+    if (!compare(l.type(), r.type(), FormTerm.Univ.OMEGA)) return fail.get();
     varSubst.put(r.ref(), l.ref());
     varSubst.put(l.ref(), r.ref());
     var result = localCtx.with(l, () -> localCtx.with(r, success));
@@ -110,7 +110,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     throw new IllegalStateException("LamTerm can never be a type of any term");
   }
 
-  @Override public @NotNull Boolean visitUniv(@NotNull UnivTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
@@ -180,7 +180,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitPi(@NotNull PiTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitPi(@NotNull FormTerm.Pi type, @NotNull Term lhs, @NotNull Term rhs) {
     var dummyVar = new LocalVar("dummy");
     var dummy = new RefTerm(dummyVar);
     var dummyArg = new Arg<Term>(dummy, type.param().explicit());
@@ -189,7 +189,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitSigma(@NotNull SigmaTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma type, @NotNull Term lhs, @NotNull Term rhs) {
     var params = type.params().view();
     for (int i = 1, size = type.params().size(); i <= size; i++) {
       var l = new ProjTerm(lhs, i);

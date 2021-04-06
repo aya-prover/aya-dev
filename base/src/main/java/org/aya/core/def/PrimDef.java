@@ -50,7 +50,7 @@ public final record PrimDef(
     return visitor.visitPrim(this, p);
   }
 
-  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), UnivTerm.OMEGA, prim -> prim, "I");
+  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), FormTerm.Univ.OMEGA, prim -> prim, "I");
   public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of());
   public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
   public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");
@@ -65,7 +65,7 @@ public final record PrimDef(
     var baseAtLeft = new AppTerm(new RefTerm(paramA), Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty())));
     ARCOE = new PrimDef(
       ImmutableSeq.of(
-        new Term.Param(paramA, new PiTerm(false, paramIToATy, UnivTerm.OMEGA), true),
+        new Term.Param(paramA, new FormTerm.Pi(false, paramIToATy, FormTerm.Univ.OMEGA), true),
         new Term.Param(new LocalVar("base"), baseAtLeft, true),
         new Term.Param(paramI, INTERVAL_CALL, true)
       ),

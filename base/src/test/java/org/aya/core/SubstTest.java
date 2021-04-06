@@ -3,7 +3,7 @@
 package org.aya.core;
 
 import org.aya.core.term.AppTerm;
-import org.aya.core.term.UnivTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.visitor.Substituter;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
@@ -23,13 +23,13 @@ public class SubstTest extends LispTestCase {
   public void unrelatedSubst() {
     var term = Lisp.parse("(app beta lambda)");
     assertTrue(term instanceof AppTerm);
-    assertEquals(term, term.subst(new Substituter.TermSubst(() -> "lambda", UnivTerm.OMEGA)));
+    assertEquals(term, term.subst(new Substituter.TermSubst(() -> "lambda", FormTerm.Univ.OMEGA)));
   }
 
   @Test
   public void relatedSubst() {
     var term = Lisp.parse("(app tony beta)", vars);
     assertTrue(term instanceof AppTerm);
-    assertNotEquals(term, term.subst(new Substituter.TermSubst(vars.get("beta"), UnivTerm.OMEGA)));
+    assertNotEquals(term, term.subst(new Substituter.TermSubst(vars.get("beta"), FormTerm.Univ.OMEGA)));
   }
 }

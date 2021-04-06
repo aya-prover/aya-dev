@@ -21,15 +21,15 @@ final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
     return null;
   }
 
-  @Override public Pat visitPi(@NotNull PiTerm term, Unit unit) {
+  @Override public Pat visitPi(@NotNull FormTerm.Pi term, Unit unit) {
     return null;
   }
 
-  @Override public Pat visitSigma(@NotNull SigmaTerm term, Unit unit) {
+  @Override public Pat visitSigma(@NotNull FormTerm.Sigma term, Unit unit) {
     return null;
   }
 
-  @Override public Pat visitUniv(@NotNull UnivTerm term, Unit unit) {
+  @Override public Pat visitUniv(@NotNull FormTerm.Univ term, Unit unit) {
     return null;
   }
 

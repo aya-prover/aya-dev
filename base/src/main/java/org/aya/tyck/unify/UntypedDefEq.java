@@ -39,7 +39,7 @@ public record UntypedDefEq(
   @Override public @Nullable Term visitApp(@NotNull AppTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof AppTerm rhs)) return null;
     var preFnType = compare(lhs.fn(), rhs.fn());
-    if (!(preFnType instanceof PiTerm fnType)) return null;
+    if (!(preFnType instanceof FormTerm.Pi fnType)) return null;
     if (!defeq.compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) return null;
     return fnType.body().subst(fnType.param().ref(), lhs.arg().term());
   }
@@ -47,7 +47,7 @@ public record UntypedDefEq(
   @Override public @Nullable Term visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof ProjTerm rhs)) return null;
     var preTupType = compare(lhs.tup(), rhs.tup());
-    if (!(preTupType instanceof SigmaTerm tupType)) return null;
+    if (!(preTupType instanceof FormTerm.Sigma tupType)) return null;
     if (lhs.ix() != rhs.ix()) return null;
     var params = tupType.params();
     for (int i = 1; i < lhs.ix(); i++) {
@@ -63,27 +63,27 @@ public record UntypedDefEq(
     throw new IllegalStateException("No visitHole in UntypedDefEq");
   }
 
-  @Override public @Nullable Term visitPi(@NotNull PiTerm lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof PiTerm rhs)) return null;
+  @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof FormTerm.Pi rhs)) return null;
     return defeq.checkParam(lhs.param(), rhs.param(), () -> null, () -> {
-      var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
+      var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA);
       if (!bodyIsOk) return null;
-      return UnivTerm.OMEGA;
+      return FormTerm.Univ.OMEGA;
     });
   }
 
-  @Override public @Nullable Term visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof SigmaTerm rhs)) return null;
+  @Override public @Nullable Term visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof FormTerm.Sigma rhs)) return null;
     return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
-      var bodyIsOk = defeq.compare(lhs.params().last().type(), rhs.params().last().type(), UnivTerm.OMEGA);
+      var bodyIsOk = defeq.compare(lhs.params().last().type(), rhs.params().last().type(), FormTerm.Univ.OMEGA);
       if (!bodyIsOk) return null;
-      return UnivTerm.OMEGA;
+      return FormTerm.Univ.OMEGA;
     });
   }
 
-  @Override public @Nullable Term visitUniv(@NotNull UnivTerm lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof UnivTerm)) return null;
-    return UnivTerm.OMEGA;
+  @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof FormTerm.Univ)) return null;
+    return FormTerm.Univ.OMEGA;
   }
 
   @Override public @Nullable Term visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs) {
