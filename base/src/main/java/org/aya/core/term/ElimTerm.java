@@ -13,6 +13,15 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public sealed interface ElimTerm extends Term {
+  @NotNull Term of();
+
+  @Override @Contract(pure = true) default @NotNull Decision whnf() {
+    var of = of();
+    if (of instanceof IntroTerm) return Decision.NO;
+    if (of.whnf() == Decision.YES) return Decision.YES;
+    return Decision.MAYBE;
+  }
+
   /**
    * @author re-xyr
    */
@@ -24,19 +33,9 @@ public sealed interface ElimTerm extends Term {
     @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitProj(this, p, q);
     }
-
-    @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      if (of instanceof IntroTerm) return Decision.NO;
-      else return of.whnf();
-    }
   }
 
   record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
-    @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      if (of() instanceof IntroTerm) return Decision.NO;
-      return of().whnf();
-    }
-
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }
