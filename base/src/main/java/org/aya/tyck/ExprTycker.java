@@ -33,6 +33,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.function.TriFunction;
+import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.tuple.Unit;
@@ -240,7 +241,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         throw new TyckerException();
       }
       var result = type.accept(this, against);
-      resultTele.append(org.glavo.kala.tuple.Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
+      resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
     });
     return new Result(new FormTerm.Sigma(expr.co(), Term.Param.fromBuffer(resultTele)), against);
   }
@@ -269,7 +270,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         else {
           // use default value from defField
           var field = defField.body().get().subst(subst);
-          fields.append(org.glavo.kala.tuple.Tuple.of(defField.ref(), field));
+          fields.append(Tuple.of(defField.ref(), field));
           subst.add(defField.ref(), field);
         }
         continue;
@@ -287,7 +288,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var field = localCtx.with(telescope, () -> conField.body()
         .accept(fieldSubst, Unit.unit())
         .accept(this, type).wellTyped);
-      fields.append(org.glavo.kala.tuple.Tuple.of(defField.ref(), field));
+      fields.append(Tuple.of(defField.ref(), field));
       subst.add(defField.ref(), field);
     }
 
@@ -480,7 +481,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    */
   public static record Result(@NotNull Term wellTyped, @NotNull Term type) {
     @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
-      return org.glavo.kala.tuple.Tuple.of(type, wellTyped);
+      return Tuple.of(type, wellTyped);
     }
   }
 }
