@@ -190,14 +190,13 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   @Override
   public @NotNull Boolean visitSigma(@NotNull SigmaTerm type, @NotNull Term lhs, @NotNull Term rhs) {
-    var params = type.params();
-    for (int i = 1; i <= type.params().size(); i++) {
+    var params = type.params().view();
+    for (int i = 1, size = type.params().size(); i <= size; i++) {
       var l = new ProjTerm(lhs, i);
       var currentParam = params.first();
       if (!compare(l, new ProjTerm(rhs, i), currentParam.type())) return false;
       params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
     }
-    var len = type.params().size() + 1;
-    return compare(new ProjTerm(lhs, len), new ProjTerm(rhs, len), params.last().type());
+    return true;
   }
 }

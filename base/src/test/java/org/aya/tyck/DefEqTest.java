@@ -111,8 +111,9 @@ public class DefEqTest extends LispTestCase {
   public void etaTup() {
     var etaed = Lisp.parse("(tup (proj t 1) (proj t 2))", vars);
     var type = typeSigma;
-    assertTrue(eq.compare(etaed, Lisp.parse("t", vars), type));
-    assertTrue(eq.compare(Lisp.parse("t", vars), etaed, type));
+    var t = Lisp.parse("t", vars);
+    assertTrue(eq.compare(etaed, t, type));
+    assertTrue(eq.compare(t, etaed, type));
     assertFalse(eq.compare(etaed, Lisp.parse("tt", vars), type));
   }
 

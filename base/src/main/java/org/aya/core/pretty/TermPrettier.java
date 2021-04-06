@@ -62,7 +62,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\Sig")),
       Doc.plain(" "),
-      visitTele(term.params().dropLast(1)),
+      visitTele(term.params().view().dropLast(1)),
       Doc.plain(" ** "),
       term.params().last().toDoc()
     );

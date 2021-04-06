@@ -449,7 +449,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         }
       }
     }
-    resultTele.append(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), resultLast.value, false));
+    resultTele.append(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), resultLast.value, true));
     var resultType = new SigmaTerm(false, resultTele.toImmutableSeq());
     return new Result(new TupTerm(items.toImmutableSeq()), resultType);
   }

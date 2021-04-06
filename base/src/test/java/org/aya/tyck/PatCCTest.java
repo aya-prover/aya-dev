@@ -58,8 +58,7 @@ public class PatCCTest {
     assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
   }
 
-  @Test
-  public void tupleCC() {
+  @Test public void tupleCC() {
     var decls = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
       \\open \\data Unit : \\Set | unit Nat
