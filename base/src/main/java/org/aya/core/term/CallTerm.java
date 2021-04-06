@@ -4,7 +4,6 @@ package org.aya.core.term;
 
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.HoleVar;
-import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
@@ -13,8 +12,6 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.def.StructDef;
-import org.aya.core.visitor.Substituter;
-import org.aya.util.Constants;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -35,22 +32,13 @@ public sealed interface CallTerm extends Term {
 
   @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
     if (f instanceof Hole hole) {
-      var meta = hole.ref.core();
-      var ret = meta.result;
-      if (ret instanceof FormTerm.Pi pi) {
-        var paramRef = new LocalVar(Constants.ANONYMOUS_PREFIX);
-        meta.telescope.append(new Term.Param(
-          paramRef,
-          pi.param().type(),
-          arg.explicit()
-        ));
-        meta.result = pi.body().subst(pi.param().ref(), new RefTerm(paramRef));
-      }
-      return new Hole(hole.ref, hole.contextArgs, hole.args.appended(arg));
+      if (hole.args.size() < hole.ref.core().telescope.size())
+        return new Hole(hole.ref, hole.contextArgs, hole.args.appended(arg));
     }
     if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, arg);
     var param = lam.param();
-    return lam.body().subst(new Substituter.TermSubst(param.ref(), arg.term()));
+    assert arg.explicit() == param.explicit();
+    return lam.body().subst(param.ref(), arg.term());
   }
 
   record Fn(
@@ -199,10 +187,10 @@ public sealed interface CallTerm extends Term {
    */
   record Hole(
     @NotNull HoleVar<Meta> ref,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Arg<Term>> args
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
   ) implements CallTerm {
-    public Hole(@NotNull HoleVar<Meta> var, @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs) {
+    public Hole(@NotNull HoleVar<Meta> var, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs) {
       this(var, contextArgs, ImmutableSeq.of());
     }
 

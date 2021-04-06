@@ -110,7 +110,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     var resultParam = new Term.Param(var, type, param.explicit());
     return localCtx.with(resultParam, () -> {
-      var body = dt.body().subst(dt.param().ref(), new RefTerm(var));
+      var body = dt.substBody(new RefTerm(var));
       var rec = expr.body().accept(this, body);
       return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
     });
@@ -390,7 +390,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       resultTerm = CallTerm.make(resultTerm, newArg);
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) type = instPi(expr, pi, subst, newArg);
-      else subst.add(pi.param().ref(), newArg.term());
+      else subst.map().put(pi.param().ref(), newArg.term());
     }
     if (!(type instanceof FormTerm.Pi pi)) return wantButNo(expr, f.type, "pi type");
     var codomain = pi.body().subst(subst);

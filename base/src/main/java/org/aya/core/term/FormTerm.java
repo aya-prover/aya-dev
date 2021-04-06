@@ -31,6 +31,10 @@ public sealed interface FormTerm extends Term {
       return visitor.visitPi(this, p, q);
     }
 
+    public @NotNull Term substBody(@NotNull Term term) {
+      return body.subst(param.ref(), term);
+    }
+
     public static @NotNull Term make(boolean co, @NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
       return telescope.view().reversed().foldLeft(body, (t, p) -> new Pi(co, p, t));
     }

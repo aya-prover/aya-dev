@@ -124,7 +124,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     var name = term.ref().name();
     var filling = term.args().isEmpty() ? Doc.empty() : Doc.hsep(term.args().view()
       .map(t -> t.term().toDoc()));
-    return Doc.hsep(Doc.symbol("{"), filling, Doc.plain(name), Doc.symbol("?}"));
+    return Doc.hcat(Doc.symbol("{"), filling, Doc.plain(name), Doc.symbol("?}"));
   }
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {

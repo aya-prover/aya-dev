@@ -158,7 +158,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
         if (!(holeTy instanceof FormTerm.Pi holePi))
           throw new IllegalStateException("meta arg size larger than param size. this should not happen");
         if (!defeq.compare(arg._1.term(), arg._2.term(), holePi.param().type())) return false;
-        holeTy = holePi.body().subst(holePi.param().ref(), arg._1.term());
+        holeTy = holePi.substBody(arg._1.term());
       }
       return true;
     }

@@ -41,7 +41,7 @@ public record UntypedDefEq(
     var preFnType = compare(lhs.of(), rhs.of());
     if (!(preFnType instanceof FormTerm.Pi fnType)) return null;
     if (!defeq.compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) return null;
-    return fnType.body().subst(fnType.param().ref(), lhs.arg().term());
+    return fnType.substBody(lhs.arg().term());
   }
 
   @Override public @Nullable Term visitProj(@NotNull ElimTerm.Proj lhs, @NotNull Term preRhs) {

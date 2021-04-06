@@ -185,7 +185,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     var dummy = new RefTerm(dummyVar);
     var dummyArg = new Arg<Term>(dummy, type.param().explicit());
     return localCtx.with(dummyVar, type.param().type(), () ->
-      compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.body().subst(type.param().ref(), dummy)));
+      compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.substBody(dummy)));
   }
 
   @Override
