@@ -26,10 +26,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.tuple.Unit;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Debug;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 /**
  * A well-typed and terminating term.
@@ -52,7 +49,7 @@ public interface Term extends CoreTerm {
     visitor.traceExit(ret);
     return ret;
   }
-  @Override default @NotNull CorePat toPat() {
+  @Override default @Nullable CorePat toPat() {
     return accept(TermToPat.INSTANCE, Unit.unit());
   }
   @Contract(pure = true) @NotNull Decision whnf();
