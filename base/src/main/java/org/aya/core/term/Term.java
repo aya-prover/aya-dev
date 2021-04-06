@@ -10,10 +10,7 @@ import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.pat.Pat;
 import org.aya.core.pretty.TermPrettier;
-import org.aya.core.visitor.Normalizer;
-import org.aya.core.visitor.Stripper;
-import org.aya.core.visitor.Substituter;
-import org.aya.core.visitor.VarConsumer;
+import org.aya.core.visitor.*;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.sort.LevelSubst;
@@ -93,19 +90,19 @@ public interface Term extends CoreTerm {
     default void traceExit(R r) {
     }
     R visitRef(@NotNull RefTerm term, P p);
-    R visitLam(@NotNull LamTerm term, P p);
+    R visitLam(@NotNull IntroTerm.Lambda term, P p);
     R visitPi(@NotNull FormTerm.Pi term, P p);
     R visitSigma(@NotNull FormTerm.Sigma term, P p);
     R visitUniv(@NotNull FormTerm.Univ term, P p);
-    R visitApp(@NotNull AppTerm term, P p);
+    R visitApp(@NotNull ElimTerm.App term, P p);
     R visitFnCall(CallTerm.@NotNull Fn fnCall, P p);
     R visitDataCall(CallTerm.@NotNull Data dataCall, P p);
     R visitConCall(CallTerm.@NotNull Con conCall, P p);
     R visitStructCall(CallTerm.@NotNull Struct structCall, P p);
     R visitPrimCall(@NotNull CallTerm.Prim prim, P p);
-    R visitTup(@NotNull TupTerm term, P p);
-    R visitNew(@NotNull NewTerm newTerm, P p);
-    R visitProj(@NotNull ProjTerm term, P p);
+    R visitTup(@NotNull IntroTerm.Tuple term, P p);
+    R visitNew(@NotNull IntroTerm.New newTerm, P p);
+    R visitProj(@NotNull ElimTerm.Proj term, P p);
     R visitHole(@NotNull CallTerm.Hole term, P p);
   }
 
@@ -115,19 +112,19 @@ public interface Term extends CoreTerm {
     default void traceExit(R r) {
     }
     R visitRef(@NotNull RefTerm term, P p, Q q);
-    R visitLam(@NotNull LamTerm term, P p, Q q);
+    R visitLam(@NotNull IntroTerm.Lambda term, P p, Q q);
     R visitPi(@NotNull FormTerm.Pi term, P p, Q q);
     R visitSigma(@NotNull FormTerm.Sigma term, P p, Q q);
     R visitUniv(@NotNull FormTerm.Univ term, P p, Q q);
-    R visitApp(@NotNull AppTerm term, P p, Q q);
+    R visitApp(@NotNull ElimTerm.App term, P p, Q q);
     R visitFnCall(CallTerm.@NotNull Fn fnCall, P p, Q q);
     R visitDataCall(CallTerm.@NotNull Data dataCall, P p, Q q);
     R visitConCall(CallTerm.@NotNull Con conCall, P p, Q q);
     R visitStructCall(CallTerm.@NotNull Struct structCall, P p, Q q);
     R visitPrimCall(@NotNull CallTerm.Prim prim, P p, Q q);
-    R visitTup(@NotNull TupTerm term, P p, Q q);
-    R visitNew(@NotNull NewTerm newTerm, P p, Q q);
-    R visitProj(@NotNull ProjTerm term, P p, Q q);
+    R visitTup(@NotNull IntroTerm.Tuple term, P p, Q q);
+    R visitNew(@NotNull IntroTerm.New newTerm, P p, Q q);
+    R visitProj(@NotNull ElimTerm.Proj term, P p, Q q);
     R visitHole(@NotNull CallTerm.Hole term, P p, Q q);
   }
 

@@ -36,22 +36,22 @@ public record UntypedDefEq(
     return null;
   }
 
-  @Override public @Nullable Term visitApp(@NotNull AppTerm lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof AppTerm rhs)) return null;
+  @Override public @Nullable Term visitApp(@NotNull ElimTerm.App lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof ElimTerm.App rhs)) return null;
     var preFnType = compare(lhs.fn(), rhs.fn());
     if (!(preFnType instanceof FormTerm.Pi fnType)) return null;
     if (!defeq.compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) return null;
     return fnType.body().subst(fnType.param().ref(), lhs.arg().term());
   }
 
-  @Override public @Nullable Term visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof ProjTerm rhs)) return null;
+  @Override public @Nullable Term visitProj(@NotNull ElimTerm.Proj lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof ElimTerm.Proj rhs)) return null;
     var preTupType = compare(lhs.tup(), rhs.tup());
     if (!(preTupType instanceof FormTerm.Sigma tupType)) return null;
     if (lhs.ix() != rhs.ix()) return null;
     var params = tupType.params();
     for (int i = 1; i < lhs.ix(); i++) {
-      var l = new ProjTerm(lhs, i);
+      var l = new ElimTerm.Proj(lhs, i);
       var currentParam = params.first();
       params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
     }
@@ -86,11 +86,11 @@ public record UntypedDefEq(
     return FormTerm.Univ.OMEGA;
   }
 
-  @Override public @Nullable Term visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitTup in UntypedDefEq");
   }
 
-  @Override public @Nullable Term visitNew(@NotNull NewTerm newTerm, @NotNull Term term) {
+  @Override public @Nullable Term visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term) {
     throw new IllegalStateException("No visitStruct in UntypedDefEq");
   }
 
@@ -116,7 +116,7 @@ public record UntypedDefEq(
 
   @Override
   public @Nullable
-  Term visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs) {
+  Term visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitLam in UntypedDefEq");
   }
 

@@ -16,7 +16,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  @Override default Unit visitLam(@NotNull LamTerm term, P p) {
+  @Override default Unit visitLam(@NotNull IntroTerm.Lambda term, P p) {
     term.param().type().accept(this, p);
     return term.body().accept(this, p);
   }
@@ -43,7 +43,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     arg.term().accept(this, p);
   }
 
-  @Override default Unit visitApp(@NotNull AppTerm term, P p) {
+  @Override default Unit visitApp(@NotNull ElimTerm.App term, P p) {
     visitArg(term.arg(), p);
     return term.fn().accept(this, p);
   }
@@ -75,7 +75,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  @Override default Unit visitTup(@NotNull TupTerm term, P p) {
+  @Override default Unit visitTup(@NotNull IntroTerm.Tuple term, P p) {
     term.items().forEach(item -> item.accept(this, p));
     return Unit.unit();
   }
@@ -84,12 +84,12 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     args.forEach(arg -> visitArg(arg, p));
   }
 
-  @Override default Unit visitNew(@NotNull NewTerm newTerm, P p) {
+  @Override default Unit visitNew(@NotNull IntroTerm.New newTerm, P p) {
     newTerm.params().forEach(t -> t._2.accept(this, p));
     return Unit.unit();
   }
 
-  @Override default Unit visitProj(@NotNull ProjTerm term, P p) {
+  @Override default Unit visitProj(@NotNull ElimTerm.Proj term, P p) {
     return term.tup().accept(this, p);
   }
 }

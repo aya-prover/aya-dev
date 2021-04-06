@@ -42,7 +42,7 @@ public final record PrimDef(
     var argI = args.get(2).term();
     if (argI instanceof CallTerm.Prim primCall && primCall.ref() == LEFT.ref) return argBase;
     var argA = args.get(0).term();
-    if (argA instanceof LamTerm lambda && lambda.body().findUsages(lambda.param().ref()) == 0) return argBase;
+    if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0) return argBase;
     return prim;
   }
 
@@ -62,14 +62,14 @@ public final record PrimDef(
     var paramA = new LocalVar("A");
     var paramI = new LocalVar("i");
     var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), INTERVAL_CALL, true);
-    var baseAtLeft = new AppTerm(new RefTerm(paramA), Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty())));
+    var baseAtLeft = new ElimTerm.App(new RefTerm(paramA), Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty())));
     ARCOE = new PrimDef(
       ImmutableSeq.of(
         new Term.Param(paramA, new FormTerm.Pi(false, paramIToATy, FormTerm.Univ.OMEGA), true),
         new Term.Param(new LocalVar("base"), baseAtLeft, true),
         new Term.Param(paramI, INTERVAL_CALL, true)
       ),
-      new AppTerm(new RefTerm(paramA), Arg.explicit(new RefTerm(paramI))),
+      new ElimTerm.App(new RefTerm(paramA), Arg.explicit(new RefTerm(paramI))),
       PrimDef::arcoe, "arcoe");
   }
 

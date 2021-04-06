@@ -9,7 +9,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
-import org.aya.core.term.LamTerm;
+import org.aya.core.term.IntroTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
@@ -61,7 +61,7 @@ public class TyckExprTest {
     var result = lamAaa
       .accept(visitor, piUAA);
     assertNotNull(result);
-    if (!(result.wellTyped() instanceof LamTerm lam && result.type() instanceof FormTerm.Pi dt)) {
+    if (!(result.wellTyped() instanceof IntroTerm.Lambda lam && result.type() instanceof FormTerm.Pi dt)) {
       fail();
       return;
     }

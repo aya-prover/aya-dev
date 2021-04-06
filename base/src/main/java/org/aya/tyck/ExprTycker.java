@@ -33,7 +33,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.function.TriFunction;
-import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.tuple.Unit;
@@ -112,7 +111,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return localCtx.with(resultParam, () -> {
       var body = dt.body().subst(dt.param().ref(), new RefTerm(var));
       var rec = expr.body().accept(this, body);
-      return new Result(new LamTerm(resultParam, rec.wellTyped), dt);
+      return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
     });
   }
 
@@ -156,7 +155,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var telescopes = DataDef.Ctor.telescopes(conVar);
       var tele = Def.defTele(conVar);
       var type = FormTerm.Pi.make(false, tele, Def.defResult(conVar));
-      return new Result(LamTerm.make(tele, telescopes.toConCall(conVar)), type);
+      return new Result(IntroTerm.Lambda.make(tele, telescopes.toConCall(conVar)), type);
     } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
@@ -191,7 +190,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       ctxTele.view().map(Term.Param::toArg).toImmutableSeq(),
       tele.view().map(Term.Param::toArg).toImmutableSeq());
     var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar));
-    return new Result(LamTerm.make(tele, body), type);
+    return new Result(IntroTerm.Lambda.make(tele, body), type);
   }
 
   private boolean unifyTy(Term upper, Term lower, @NotNull SourcePos pos) {
@@ -241,7 +240,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         throw new TyckerException();
       }
       var result = type.accept(this, against);
-      resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
+      resultTele.append(org.glavo.kala.tuple.Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
     });
     return new Result(new FormTerm.Sigma(expr.co(), Term.Param.fromBuffer(resultTele)), against);
   }
@@ -270,7 +269,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         else {
           // use default value from defField
           var field = defField.body().get().subst(subst);
-          fields.append(Tuple.of(defField.ref(), field));
+          fields.append(org.glavo.kala.tuple.Tuple.of(defField.ref(), field));
           subst.add(defField.ref(), field);
         }
         continue;
@@ -288,7 +287,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var field = localCtx.with(telescope, () -> conField.body()
         .accept(fieldSubst, Unit.unit())
         .accept(this, type).wellTyped);
-      fields.append(Tuple.of(defField.ref(), field));
+      fields.append(org.glavo.kala.tuple.Tuple.of(defField.ref(), field));
       subst.add(defField.ref(), field);
     }
 
@@ -302,7 +301,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     if (term != null) unifyTyThrowing(term, structCall, expr);
-    return new Result(new NewTerm(fields.toImmutableSeq()), structCall);
+    return new Result(new IntroTerm.New(fields.toImmutableSeq()), structCall);
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
@@ -338,10 +337,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var fieldsBefore = telescope.take(index);
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
     fieldsBefore.forEachIndexed((i, param) ->
-      subst.add(param.ref(), new ProjTerm(projectee.wellTyped, i + 1)));
+      subst.add(param.ref(), new ElimTerm.Proj(projectee.wellTyped, i + 1)));
     type = type.subst(subst);
     unifyTyThrowing(term, type, expr);
-    return new Result(new ProjTerm(projectee.wellTyped, ix), type);
+    return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type);
   }
 
   @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
@@ -451,7 +450,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     resultTele.append(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), resultLast.value, true));
     var resultType = new FormTerm.Sigma(false, resultTele.toImmutableSeq());
-    return new Result(new TupTerm(items.toImmutableSeq()), resultType);
+    return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
   }
 
   @Override public Result catchUnhandled(@NotNull Expr expr, Term term) {
@@ -481,7 +480,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    */
   public static record Result(@NotNull Term wellTyped, @NotNull Term type) {
     @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
-      return Tuple.of(type, wellTyped);
+      return org.glavo.kala.tuple.Tuple.of(type, wellTyped);
     }
   }
 }

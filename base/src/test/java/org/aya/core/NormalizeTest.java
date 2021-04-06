@@ -38,7 +38,7 @@ public class NormalizeTest extends LispTestCase {
 
   @Test public void redexNormalize() {
     var term = Lisp.parse("(app (lam (a (U) ex) a) b)");
-    assertTrue(term instanceof AppTerm);
+    assertTrue(term instanceof ElimTerm.App);
     var whnf = term.normalize(NormalizeMode.WHNF);
     var nf = term.normalize(NormalizeMode.NF);
     assertTrue(whnf instanceof RefTerm);
@@ -54,10 +54,10 @@ public class NormalizeTest extends LispTestCase {
   @Test public void nfNormalizeCanonical() {
     // \x : U. (\a : U. a) b
     var term = Lisp.parse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
-    assertTrue(((LamTerm) term).body() instanceof AppTerm);
+    assertTrue(((IntroTerm.Lambda) term).body() instanceof ElimTerm.App);
     var nf = term.normalize(NormalizeMode.NF);
     assertNotEquals(term, nf);
-    assertTrue(((LamTerm) nf).body() instanceof RefTerm);
+    assertTrue(((IntroTerm.Lambda) nf).body() instanceof RefTerm);
   }
 
   @Test public void unfoldDef() {

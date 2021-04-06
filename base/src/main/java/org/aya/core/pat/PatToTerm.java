@@ -5,9 +5,9 @@ package org.aya.core.pat;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.IntroTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.core.term.TupTerm;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
   }
 
   @Override public Term visitTuple(Pat.@NotNull Tuple tuple, Unit unit) {
-    return new TupTerm(tuple.pats().map(p -> p.accept(this, Unit.unit())));
+    return new IntroTerm.Tuple(tuple.pats().map(p -> p.accept(this, Unit.unit())));
   }
 
   @Override public Term visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {

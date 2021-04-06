@@ -36,7 +36,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
-  public Doc visitLam(@NotNull LamTerm term, Boolean nestedCall) {
+  public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
     return Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\lam")),
       Doc.plain(" "),
@@ -74,7 +74,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return Doc.styled(KEYWORD, "\\Type");
   }
 
-  @Override public Doc visitApp(@NotNull AppTerm term, Boolean nestedCall) {
+  @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
     return visitCalls(term.fn(), term.arg(), nestedCall);
   }
 
@@ -99,13 +99,13 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override
-  public Doc visitTup(@NotNull TupTerm term, Boolean nestedCall) {
+  public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
     var items = Doc.join(Doc.plain(", "), term.items().stream()
       .map(Term::toDoc));
     return Doc.cat(Doc.plain("("), items, Doc.plain(")"));
   }
 
-  @Override public Doc visitNew(@NotNull NewTerm newTerm, Boolean aBoolean) {
+  @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Boolean aBoolean) {
     return Doc.cat(
       Doc.styled(KEYWORD, "\\new"),
       Doc.symbol(" { "),
@@ -116,7 +116,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override public Doc visitProj(@NotNull ProjTerm term, Boolean nestedCall) {
+  @Override public Doc visitProj(@NotNull ElimTerm.Proj term, Boolean nestedCall) {
     return Doc.cat(term.tup().toDoc(), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
   }
 

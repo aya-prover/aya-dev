@@ -41,7 +41,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
-  public @NotNull Boolean visitLam(@NotNull LamTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs, @NotNull Term type) {
     throw new IllegalStateException("No visitLam in PatDefEq");
   }
 
@@ -61,7 +61,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
-  public @NotNull Boolean visitApp(@NotNull AppTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitApp(@NotNull ElimTerm.App lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
@@ -106,17 +106,17 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
-  public @NotNull Boolean visitTup(@NotNull TupTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs, @NotNull Term type) {
     throw new IllegalStateException("No visitTup in TermDirectedDefEq");
   }
 
   @Override
-  public @NotNull Boolean visitNew(@NotNull NewTerm newTerm, @NotNull Term term, @NotNull Term term2) {
+  public @NotNull Boolean visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term, @NotNull Term term2) {
     throw new IllegalStateException("No visitStruct in TermDirectedDefEq");
   }
 
   @Override
-  public @NotNull Boolean visitProj(@NotNull ProjTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitProj(@NotNull ElimTerm.Proj lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 

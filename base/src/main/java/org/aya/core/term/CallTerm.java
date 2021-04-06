@@ -47,7 +47,7 @@ public sealed interface CallTerm extends Term {
       }
       return new Hole(hole.ref(), hole.contextArgs(), hole.args.appended(arg));
     }
-    if (!(f instanceof LamTerm lam)) return new AppTerm(f, arg);
+    if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, arg);
     var param = lam.param();
     return lam.body().subst(new Substituter.TermSubst(param.ref(), arg.term()));
   }

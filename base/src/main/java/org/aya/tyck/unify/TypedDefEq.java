@@ -106,7 +106,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
-  @Override public @NotNull Boolean visitLam(@NotNull LamTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitLam(@NotNull IntroTerm.Lambda type, @NotNull Term lhs, @NotNull Term rhs) {
     throw new IllegalStateException("LamTerm can never be a type of any term");
   }
 
@@ -114,7 +114,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
-  @Override public @NotNull Boolean visitApp(@NotNull AppTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitApp(@NotNull ElimTerm.App type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
@@ -140,17 +140,17 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitTup(@NotNull TupTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitTup(@NotNull IntroTerm.Tuple type, @NotNull Term lhs, @NotNull Term rhs) {
     throw new IllegalStateException("TupTerm can never be a type of any term");
   }
 
   @Override
-  public @NotNull Boolean visitNew(@NotNull NewTerm newTerm, @NotNull Term term, @NotNull Term term2) {
+  public @NotNull Boolean visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term, @NotNull Term term2) {
     throw new IllegalStateException("NewTerm can never be a type of any term");
   }
 
   @Override
-  public @NotNull Boolean visitProj(@NotNull ProjTerm type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitProj(@NotNull ElimTerm.Proj type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
@@ -192,9 +192,9 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma type, @NotNull Term lhs, @NotNull Term rhs) {
     var params = type.params().view();
     for (int i = 1, size = type.params().size(); i <= size; i++) {
-      var l = new ProjTerm(lhs, i);
+      var l = new ElimTerm.Proj(lhs, i);
       var currentParam = params.first();
-      if (!compare(l, new ProjTerm(rhs, i), currentParam.type())) return false;
+      if (!compare(l, new ElimTerm.Proj(rhs, i), currentParam.type())) return false;
       params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
     }
     return true;

@@ -1,14 +1,15 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.core.term;
+package org.aya.core.visitor;
 
 import org.aya.core.pat.Pat;
+import org.aya.core.term.*;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
-  static final @NotNull TermToPat INSTANCE = new TermToPat();
+public final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
+  public static final @NotNull TermToPat INSTANCE = new TermToPat();
 
   private TermToPat() {
   }
@@ -17,7 +18,7 @@ final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
     return new Pat.Bind(true, term.var(), term);
   }
 
-  @Override public Pat visitLam(@NotNull LamTerm term, Unit unit) {
+  @Override public Pat visitLam(@NotNull IntroTerm.Lambda term, Unit unit) {
     return null;
   }
 
@@ -33,7 +34,7 @@ final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
     return null;
   }
 
-  @Override public Pat visitApp(@NotNull AppTerm term, Unit unit) {
+  @Override public Pat visitApp(@NotNull ElimTerm.App term, Unit unit) {
     return null;
   }
 
@@ -60,16 +61,16 @@ final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
     return null;
   }
 
-  @Override public Pat visitTup(@NotNull TupTerm term, Unit unit) {
+  @Override public Pat visitTup(@NotNull IntroTerm.Tuple term, Unit unit) {
     return new Pat.Tuple(true,
       term.items().map(t -> t.accept(this, unit)), null, term);
   }
 
-  @Override public Pat visitNew(@NotNull NewTerm newTerm, Unit unit) {
+  @Override public Pat visitNew(@NotNull IntroTerm.New newTerm, Unit unit) {
     return null;
   }
 
-  @Override public Pat visitProj(@NotNull ProjTerm term, Unit unit) {
+  @Override public Pat visitProj(@NotNull ElimTerm.Proj term, Unit unit) {
     return null;
   }
 

@@ -14,13 +14,13 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
   @Contract(pure = true) private Normalizer() {
   }
 
-  @Override public @NotNull Term visitApp(@NotNull AppTerm term, NormalizeMode mode) {
+  @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {
     var fn = term.fn();
     if (term.whnf() != Decision.NO) {
       if (mode != NormalizeMode.NF) return term;
       else return CallTerm.make(fn, visitArg(term.arg(), mode));
     }
-    if (fn instanceof LamTerm lam) return CallTerm.make(lam, term.arg()).accept(this, mode);
+    if (fn instanceof IntroTerm.Lambda lam) return CallTerm.make(lam, term.arg()).accept(this, mode);
     else return CallTerm.make(fn.accept(this, mode), term.arg()).accept(this, mode);
   }
 
@@ -28,7 +28,7 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
     return term;
   }
 
-  @Override public @NotNull Term visitLam(@NotNull LamTerm term, NormalizeMode mode) {
+  @Override public @NotNull Term visitLam(@NotNull IntroTerm.Lambda term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
     else return Unfolder.super.visitLam(term, mode);
   }
@@ -43,15 +43,15 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
     else return Unfolder.super.visitSigma(term, mode);
   }
 
-  @Override public @NotNull Term visitTup(@NotNull TupTerm term, NormalizeMode mode) {
+  @Override public @NotNull Term visitTup(@NotNull IntroTerm.Tuple term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
     else return Unfolder.super.visitTup(term, mode);
   }
 
-  @Override public @NotNull Term visitProj(@NotNull ProjTerm term, NormalizeMode mode) {
+  @Override public @NotNull Term visitProj(@NotNull ElimTerm.Proj term, NormalizeMode mode) {
     var tup = term.tup().accept(this, NormalizeMode.WHNF);
     var ix = term.ix();
-    if (!(tup instanceof TupTerm t)) return new ProjTerm(tup, ix);
+    if (!(tup instanceof IntroTerm.Tuple t)) return new ElimTerm.Proj(tup, ix);
     // should not fail due to tycking
     assert ix <= t.items().size();
     assert ix > 0;

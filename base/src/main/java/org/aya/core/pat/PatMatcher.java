@@ -5,8 +5,8 @@ package org.aya.core.pat;
 import org.aya.api.util.Arg;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
-import org.aya.core.term.TupTerm;
 import org.aya.core.visitor.Substituter;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -60,7 +60,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   }
 
   @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Term term) {
-    if (!(term instanceof TupTerm tup)) throw new Mismatch();
+    if (!(term instanceof IntroTerm.Tuple tup)) throw new Mismatch();
     var as = tuple.as();
     if (as != null) subst.map().put(as, tup);
     return visitList(tuple.pats(), tup.items());
