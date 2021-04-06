@@ -16,31 +16,31 @@ final class TermToPat implements Term.Visitor<Unit, Pat> {
   }
 
   @Override public Pat visitLam(@NotNull LamTerm term, Unit unit) {
-    return new Pat.Absurd(true, term);
+    return null;
   }
 
   @Override public Pat visitPi(@NotNull PiTerm term, Unit unit) {
-    return new Pat.Absurd(true, term);
+    return null;
   }
 
   @Override public Pat visitSigma(@NotNull SigmaTerm term, Unit unit) {
-    return new Pat.Absurd(true, term);
+    return null;
   }
 
   @Override public Pat visitUniv(@NotNull UnivTerm term, Unit unit) {
-    return new Pat.Absurd(true, term);
+    return null;
   }
 
   @Override public Pat visitApp(@NotNull AppTerm term, Unit unit) {
-    return new Pat.Absurd(true, term);
+    return null;
   }
 
   @Override public Pat visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
-    return new Pat.Absurd(true, fnCall);
+    return null;
   }
 
   @Override public Pat visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {
-    return new Pat.Absurd(true, dataCall);
+    return null;
   }
 
   @Override public Pat visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
@@ -51,11 +51,11 @@ final class TermToPat implements Term.Visitor<Unit, Pat> {
   }
 
   @Override public Pat visitStructCall(@NotNull CallTerm.Struct structCall, Unit unit) {
-    return new Pat.Absurd(true, structCall);
+    return null;
   }
 
   @Override public Pat visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
-    return new Pat.Absurd(true, prim);
+    return null;
   }
 
   @Override public Pat visitTup(@NotNull TupTerm term, Unit unit) {
@@ -64,14 +64,14 @@ final class TermToPat implements Term.Visitor<Unit, Pat> {
   }
 
   @Override public Pat visitNew(@NotNull NewTerm newTerm, Unit unit) {
-    return new Pat.Absurd(true, newTerm);
+    return null;
   }
 
   @Override public Pat visitProj(@NotNull ProjTerm term, Unit unit) {
-    return new Pat.Absurd(true, term);
+    return null;
   }
 
   @Override public Pat visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-    return new Pat.Absurd(true, term);
+    return null;
   }
 }
