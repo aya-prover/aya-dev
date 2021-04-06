@@ -18,7 +18,6 @@ public sealed interface ElimTerm extends Term {
   @Override @Contract(pure = true) default @NotNull Decision whnf() {
     var of = of();
     if (of instanceof IntroTerm) return Decision.NO;
-    if (of.whnf() == Decision.YES) return Decision.YES;
     return Decision.MAYBE;
   }
 
