@@ -16,7 +16,7 @@ public sealed interface ElimTerm extends Term {
   /**
    * @author re-xyr
    */
-  record Proj(@NotNull Term tup, int ix) implements ElimTerm {
+  record Proj(@NotNull Term of, int ix) implements ElimTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);
     }
@@ -26,15 +26,15 @@ public sealed interface ElimTerm extends Term {
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      if (tup instanceof IntroTerm.Tuple) return Decision.NO;
-      else return tup.whnf();
+      if (of instanceof IntroTerm) return Decision.NO;
+      else return of.whnf();
     }
   }
 
-  record App(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg) implements Term {
+  record App(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) implements ElimTerm {
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      if (fn() instanceof IntroTerm.Lambda) return Decision.NO;
-      return fn().whnf();
+      if (of() instanceof IntroTerm) return Decision.NO;
+      return of().whnf();
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

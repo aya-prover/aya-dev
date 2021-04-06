@@ -45,7 +45,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override default Unit visitApp(@NotNull ElimTerm.App term, P p) {
     visitArg(term.arg(), p);
-    return term.fn().accept(this, p);
+    return term.of().accept(this, p);
   }
 
   @Override default Unit visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
@@ -90,6 +90,6 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitProj(@NotNull ElimTerm.Proj term, P p) {
-    return term.tup().accept(this, p);
+    return term.of().accept(this, p);
   }
 }

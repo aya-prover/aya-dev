@@ -15,7 +15,7 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
   }
 
   @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {
-    var fn = term.fn();
+    var fn = term.of();
     if (term.whnf() != Decision.NO) {
       if (mode != NormalizeMode.NF) return term;
       else return CallTerm.make(fn, visitArg(term.arg(), mode));
@@ -49,7 +49,7 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
   }
 
   @Override public @NotNull Term visitProj(@NotNull ElimTerm.Proj term, NormalizeMode mode) {
-    var tup = term.tup().accept(this, NormalizeMode.WHNF);
+    var tup = term.of().accept(this, NormalizeMode.WHNF);
     var ix = term.ix();
     if (!(tup instanceof IntroTerm.Tuple t)) return new ElimTerm.Proj(tup, ix);
     // should not fail due to tycking

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.*;
  * @author ice1000
  */
 @Debug.Renderer(text = "toDoc().debugRender()")
-public interface Term extends CoreTerm {
+public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTerm, IntroTerm, RefTerm {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
   <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

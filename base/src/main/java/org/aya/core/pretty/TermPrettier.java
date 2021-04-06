@@ -75,7 +75,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
-    return visitCalls(term.fn(), term.arg(), nestedCall);
+    return visitCalls(term.of(), term.arg(), nestedCall);
   }
 
   @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
@@ -117,7 +117,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitProj(@NotNull ElimTerm.Proj term, Boolean nestedCall) {
-    return Doc.cat(term.tup().toDoc(), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+    return Doc.cat(term.of().toDoc(), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
   }
 
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {

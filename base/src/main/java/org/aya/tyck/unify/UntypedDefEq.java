@@ -38,7 +38,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitApp(@NotNull ElimTerm.App lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof ElimTerm.App rhs)) return null;
-    var preFnType = compare(lhs.fn(), rhs.fn());
+    var preFnType = compare(lhs.of(), rhs.of());
     if (!(preFnType instanceof FormTerm.Pi fnType)) return null;
     if (!defeq.compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) return null;
     return fnType.body().subst(fnType.param().ref(), lhs.arg().term());
@@ -46,7 +46,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitProj(@NotNull ElimTerm.Proj lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof ElimTerm.Proj rhs)) return null;
-    var preTupType = compare(lhs.tup(), rhs.tup());
+    var preTupType = compare(lhs.of(), rhs.of());
     if (!(preTupType instanceof FormTerm.Sigma tupType)) return null;
     if (lhs.ix() != rhs.ix()) return null;
     var params = tupType.params();

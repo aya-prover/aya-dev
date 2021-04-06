@@ -93,9 +93,9 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitApp(@NotNull ElimTerm.App term, P p) {
-    var function = term.fn().accept(this, p);
+    var function = term.of().accept(this, p);
     var arg = visitArg(term.arg(), p);
-    if (function == term.fn() && arg == term.arg()) return term;
+    if (function == term.of() && arg == term.arg()) return term;
     return CallTerm.make(function, arg);
   }
 
@@ -127,8 +127,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitProj(@NotNull ElimTerm.Proj term, P p) {
-    var tuple = term.tup().accept(this, p);
-    if (tuple == term.tup()) return term;
+    var tuple = term.of().accept(this, p);
+    if (tuple == term.of()) return term;
     return new ElimTerm.Proj(tuple, term.ix());
   }
 }
