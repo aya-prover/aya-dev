@@ -6,6 +6,7 @@ import org.aya.tyck.sort.Sort;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,6 +34,16 @@ public sealed interface FormTerm extends Term {
 
     public @NotNull Term substBody(@NotNull Term term) {
       return body.subst(param.ref(), term);
+    }
+
+    public @NotNull Term parameters(@NotNull Buffer<Term.@NotNull Param> params) {
+      params.append(param);
+      var t = body;
+      while (t instanceof Pi pi) {
+        params.append(pi.param);
+        t = pi.body;
+      }
+      return t;
     }
 
     public static @NotNull Term make(boolean co, @NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {

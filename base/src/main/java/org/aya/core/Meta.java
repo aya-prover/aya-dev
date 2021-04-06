@@ -4,6 +4,7 @@ package org.aya.core;
 
 import org.aya.api.ref.HoleVar;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -13,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 public final class Meta {
   public final @NotNull ImmutableSeq<Term.Param> contextTele;
-  public final @NotNull Buffer<Term.Param> telescope = Buffer.of();
-  public @NotNull Term result;
+  public final @NotNull ImmutableSeq<Term.Param> telescope;
+  public final @NotNull Term result;
   public @Nullable Term body;
 
   public SeqView<Term.Param> fullTelescope() {
@@ -30,8 +31,17 @@ public final class Meta {
     return true;
   }
 
-  public Meta(@NotNull ImmutableSeq<Term.Param> contextTele, @NotNull Term result) {
+  private Meta(@NotNull ImmutableSeq<Term.Param> contextTele, @NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result) {
     this.contextTele = contextTele;
+    this.telescope = telescope;
     this.result = result;
+  }
+
+  public static @NotNull Meta from(@NotNull ImmutableSeq<Term.Param> contextTele, @NotNull Term result) {
+    if (result instanceof FormTerm.Pi pi) {
+      var buf = Buffer.<Term.Param>of();
+      var r = pi.parameters(buf);
+      return new Meta(contextTele, buf.toImmutableSeq(), r);
+    } else return new Meta(contextTele, ImmutableSeq.empty(), result);
   }
 }

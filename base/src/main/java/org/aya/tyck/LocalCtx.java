@@ -6,6 +6,7 @@ import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -29,9 +30,10 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
 
   public @NotNull Term freshHole(@NotNull Term type, @NotNull String name) {
     var ctxTele = extract();
-    var meta = new Meta(ctxTele, type);
+    var meta = Meta.from(ctxTele, type);
     var ref = new HoleVar<>(name, meta);
-    return new CallTerm.Hole(ref, ctxTele.map(Term.Param::toArg));
+    var hole = new CallTerm.Hole(ref, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
+    return IntroTerm.Lambda.make(meta.telescope, hole);
   }
 
   public <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
