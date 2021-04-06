@@ -38,6 +38,13 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     return with(param.ref(), param.type(), action);
   }
 
+  public <T> T with(@NotNull ImmutableSeq<Term.Param> params, @NotNull Supplier<T> action) {
+    for (var param : params) localMap.put(param.ref(), param.type());
+    T result = action.get();
+    for (var param : params) localMap.remove(param.ref());
+    return result;
+  }
+
   public <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
     localMap.put(var, type);
     var result = action.get();

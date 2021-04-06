@@ -13,6 +13,7 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Signatured;
+import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -35,6 +36,7 @@ import org.glavo.kala.function.TriFunction;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
+import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -277,8 +279,17 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var conField = conFieldOpt.get();
       conFields = conFields.dropWhile(t -> t == conField);
       var type = Def.defResult(defField.ref()).subst(subst);
-      var fieldRes = conField.body().accept(this, type);
-      var field = fieldRes.wellTyped;
+      var fieldSubst = new ExprRefSubst(reporter);
+      var telescope = Def.defTele(defField.ref());
+      if (!telescope.sizeEquals(conField.bindings().size())) {
+        // TODO[ice]: number of args don't match
+        throw new TyckerException();
+      }
+      for (var t : telescope.view().zip(conField.bindings())) fieldSubst.good().put(t._2._2, t._1.ref());
+      var field = localCtx.with(telescope, () -> {
+        var fieldRes = conField.body().accept(fieldSubst, Unit.unit()).accept(this, type);
+        return fieldRes.wellTyped;
+      });
       fields.append(Tuple.of(defField.ref(), field));
       subst.add(defField.ref(), field);
     }

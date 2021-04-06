@@ -20,6 +20,10 @@ public record ExprRefSubst(
   @NotNull MutableHashMap<Var, Var> good,
   @NotNull MutableHashSet<Var> bad
 ) implements ExprFixpoint<Unit>, Cloneable {
+  public ExprRefSubst(@NotNull Reporter reporter) {
+    this(reporter, MutableHashMap.of(), MutableHashSet.of());
+  }
+
   @Override public @NotNull Expr visitRef(@NotNull Expr.RefExpr expr, Unit unit) {
     var v = expr.resolvedVar();
     if (bad.contains(v)) {

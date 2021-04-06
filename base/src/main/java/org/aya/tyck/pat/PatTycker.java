@@ -27,8 +27,6 @@ import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableHashSet;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -64,7 +62,7 @@ public record PatTycker(
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new ExprRefSubst(exprTycker.reporter, MutableHashMap.of(), MutableHashSet.of()), exprTycker.traceBuilder);
+    this(exprTycker, new ExprRefSubst(exprTycker.reporter), exprTycker.traceBuilder);
   }
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClause(

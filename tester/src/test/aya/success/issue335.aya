@@ -7,4 +7,4 @@
    | right => b
  }
 \def path {A : \Pi I -> \Set} (p : \Pi (i : I) -> A i)
-  => \new Path A (p left) (p right) { | at => p }
+  => \new Path A (p left) (p right) { | at i => p i }
