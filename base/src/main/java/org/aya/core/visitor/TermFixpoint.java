@@ -78,9 +78,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitSigma(@NotNull SigmaTerm term, P p) {
     var params = term.params().map(param ->
       new Term.Param(param.ref(), param.type().accept(this, p), param.explicit()));
-    var body = term.body().accept(this, p);
-    if (params.sameElements(term.params(), true) && body == term.body()) return term;
-    params.appended(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), body, false));
+    if (params.sameElements(term.params(), true)) return term;
     return new SigmaTerm(term.co(), params);
   }
 

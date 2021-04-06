@@ -50,15 +50,13 @@ public record UntypedDefEq(
     if (!(preTupType instanceof SigmaTerm tupType)) return null;
     if (lhs.ix() != rhs.ix()) return null;
     var params = tupType.params();
-    var body = tupType.body();
     for (int i = 1; i < lhs.ix(); i++) {
       var l = new ProjTerm(lhs, i);
       var currentParam = params.first();
       params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
-      body = body.subst(currentParam.ref(), l);
     }
     if (params.isNotEmpty()) return params.first().type();
-    return body;
+    return params.last().type();
   }
 
   @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term preRhs) {
@@ -77,7 +75,7 @@ public record UntypedDefEq(
   @Override public @Nullable Term visitSigma(@NotNull SigmaTerm lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof SigmaTerm rhs)) return null;
     return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
-      var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), UnivTerm.OMEGA);
+      var bodyIsOk = defeq.compare(lhs.params().last().type(), rhs.params().last().type(), UnivTerm.OMEGA);
       if (!bodyIsOk) return null;
       return UnivTerm.OMEGA;
     });

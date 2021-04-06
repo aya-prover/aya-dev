@@ -335,7 +335,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       // TODO[ice]: too large index
       throw new TyckerException();
     }
-    var type = index == telescope.size() ? sigma.body() : telescope.get(index).type();
+    var type = telescope.get(index).type();
     // instantiate the type
     var fieldsBefore = telescope.take(index);
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
@@ -425,7 +425,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return wantButNo(expr, term, "sigma type");
     } else {
       var againstTele = dt.params().view();
-      var last = dt.body();
+      var last = dt.params().last().type();
       for (var iter = expr.items().iterator(); iter.hasNext(); ) {
         var item = iter.next();
         if (againstTele.isEmpty()) {

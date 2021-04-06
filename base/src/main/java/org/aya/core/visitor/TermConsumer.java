@@ -32,7 +32,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override default Unit visitSigma(@NotNull SigmaTerm term, P p) {
     term.params().forEach(param -> param.type().accept(this, p));
-    return term.body().accept(this, p);
+    return Unit.unit();
   }
 
   @Override default Unit visitRef(@NotNull RefTerm term, P p) {

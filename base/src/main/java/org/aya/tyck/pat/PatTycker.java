@@ -152,7 +152,7 @@ public record PatTycker(
     // sig.result is a dummy term
     var sig = new Def.Signature(
       ImmutableSeq.of(),
-      sigma.params().appended(new Term.Param(new LocalVar("_"), sigma.body(), true)),
+      sigma.params(),
       UnivTerm.OMEGA);
     if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), sigma);
     return new Pat.Tuple(tuple.explicit(),
