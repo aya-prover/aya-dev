@@ -167,7 +167,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
       return new Param(ref, type.subst(subst, levelSubst), explicit);
     }
 
-    public static @NotNull Term.Param mock(@NotNull CallTerm.Hole hole, boolean explicit) {
+    public static @NotNull Term.Param mock(@NotNull Term hole, boolean explicit) {
       return new Param(new LocalVar(Constants.ANONYMOUS_PREFIX), hole, explicit);
     }
 

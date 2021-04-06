@@ -376,7 +376,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX);
           // TODO: maybe we should create a concrete hole and check it against the type
           //  in case we can synthesize this term via its type only
-          var holeArg = new Arg<Term>(holeApp, false);
+          var holeArg = new Arg<>(holeApp, false);
           resultTerm = CallTerm.make(resultTerm, holeArg);
           pi = instPi(expr, pi, subst, holeArg);
           type = pi;

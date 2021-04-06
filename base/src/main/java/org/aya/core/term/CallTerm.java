@@ -202,6 +202,7 @@ public sealed interface CallTerm extends Term {
     }
 
     @Contract(pure = true) @Override public @NotNull Decision whnf() {
+      if (ref.core().body == null) return Decision.YES;
       return Decision.MAYBE;
     }
   }

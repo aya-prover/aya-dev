@@ -15,7 +15,7 @@ import java.util.function.BiFunction;
 public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole term, P p) {
     var contextArgs = term.contextArgs().map(arg -> visitArg(arg, p));
-    var args = term.args().view().map(arg -> visitArg(arg, p));
+    var args = term.args().map(arg -> visitArg(arg, p));
     if (term.contextArgs().sameElements(contextArgs, true)
       && term.args().sameElements(args, true)) return term;
     return new CallTerm.Hole(term.ref(), contextArgs, args.toImmutableSeq());
