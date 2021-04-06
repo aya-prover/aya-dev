@@ -2,7 +2,7 @@ In file $FILE:5:5 ->
 
   3 |  | suc Nat
   4 | 
-  5 | \def add {a, b : Nat} : Nat
+  5 | \def add {a b : Nat} : Nat
            ^-^
   
 Error: Unhandled case: {zero}, {suc}

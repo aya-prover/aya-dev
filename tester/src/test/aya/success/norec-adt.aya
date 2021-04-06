@@ -6,9 +6,9 @@
  | just A
  | nothing
 
-\data Either (A, B : \Set) : \Set
+\data Either (A B : \Set) : \Set
  | left A
  | right B
 
-\data Both (A, B : \Set) : \Set
+\data Both (A B : \Set) : \Set
  | pair A B

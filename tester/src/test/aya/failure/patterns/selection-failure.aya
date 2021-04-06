@@ -4,6 +4,6 @@
 \open \data Vect (A : \Set) (n : Nat) : \Set
  | A, zero => vnil
  | A, suc m => vcons A (Vect A m)
-\def mapImpl {A, B : \Set} {n : Nat} (f : \Pi A -> B) (xs : Vect A n) : Vect B n
+\def mapImpl {A B : \Set} {n : Nat} (f : \Pi A -> B) (xs : Vect A n) : Vect B n
  | f, vnil => vnil {_}
  | f, vcons x xs => vcons (f x) (mapImpl n f xs)

@@ -1,7 +1,7 @@
 \open \data Nat : \Set
  | zero | suc Nat
 
-\def add {a, b : Nat} : Nat
+\def add {a b : Nat} : Nat
  | {zero}, {suc b} => b
  | {suc a}, {zero} => a
  | {suc a}, {b} => suc (add {a} {b})

@@ -6,7 +6,7 @@
  | suc m => fzero
  | suc m => fsuc (Fin m)
 
-\def addN (a, b : Nat) : Nat
+\def addN (a b : Nat) : Nat
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (addN a b)
@@ -17,7 +17,7 @@
  | suc n, fzero => zero
  | suc n, fsuc a => suc (finToNat n a)
 
-\def addF (m, n : Nat) (a : Fin m) (b : Fin n) : Fin (addN (finToNat m a) n)
+\def addF (m n : Nat) (a : Fin m) (b : Fin n) : Fin (addN (finToNat m a) n)
  | zero, n, \impossible
  | m, zero, a, \impossible
  | suc mp, suc n, fzero, a => a

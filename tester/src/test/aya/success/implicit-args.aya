@@ -3,7 +3,7 @@
 \def not (b : Bool) : Bool
  | true => false
  | false => true
-\def ifElse {A : \Set} (b : Bool) (x, y : A) : A
+\def ifElse {A : \Set} (b : Bool) (x y : A) : A
  | true, x, y => x
  | false, x, y => y
 \open \data TermTy : \Set | natT | boolT
@@ -28,7 +28,7 @@
 \def len {A : \Set} (xs : List A) : Nat
  | nil => zero
  | cons x xs => suc (len xs)
-\def map {A, B : \Set} (f : \Pi A -> B) (xs : List A) : List B
+\def map {A B : \Set} (f : \Pi A -> B) (xs : List A) : List B
  | f, nil => nil {_}
  | f, cons x xs => cons (f x) (map f xs)
 \def filter {A : \Set} (f : \Pi A -> Bool) (xs : List A) : List A

@@ -2,7 +2,7 @@
  | zero
  | suc Nat
 
-\def add {a, b : Nat} : Nat
+\def add {a b : Nat} : Nat
  | {zero}, {zero} => b
  | {suc a}, {zero} => a
  | {suc a}, {b} => suc (add {a} {b})

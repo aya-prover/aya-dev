@@ -3,7 +3,7 @@
 \def not (b : Bool) : Bool
  | true => false
  | false => true
-\def ifElse (A : \Set) (b : Bool) (x, y : A) : A
+\def ifElse (A : \Set) (b : Bool) (x y : A) : A
  | A, true, x, y => x
  | A, false, x, y => y
 \open \data TermTy : \Set | natT | boolT
