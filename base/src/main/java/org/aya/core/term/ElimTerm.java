@@ -2,10 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
-import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
-import org.aya.concrete.Decl;
-import org.aya.core.def.StructDef;
 import org.aya.util.Decision;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -35,19 +32,6 @@ public sealed interface ElimTerm extends Term {
 
     @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitProj(this, p, q);
-    }
-  }
-
-  /**
-   * @author ice1000
-   */
-  record Access(@NotNull Term of, @NotNull DefVar<StructDef.Field, Decl.StructField> ref) implements ElimTerm {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitAccess(this, p);
-    }
-
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitAccess(this, p, q);
     }
   }
 

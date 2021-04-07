@@ -103,7 +103,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     R visitTup(@NotNull IntroTerm.Tuple term, P p);
     R visitNew(@NotNull IntroTerm.New newTerm, P p);
     R visitProj(@NotNull ElimTerm.Proj term, P p);
-    R visitAccess(@NotNull ElimTerm.Access term, P p);
+    R visitAccess(@NotNull CallTerm.Access term, P p);
     R visitHole(@NotNull CallTerm.Hole term, P p);
   }
 
@@ -126,7 +126,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     R visitTup(@NotNull IntroTerm.Tuple term, P p, Q q);
     R visitNew(@NotNull IntroTerm.New newTerm, P p, Q q);
     R visitProj(@NotNull ElimTerm.Proj term, P p, Q q);
-    R visitAccess(@NotNull ElimTerm.Access term, P p, Q q);
+    R visitAccess(@NotNull CallTerm.Access term, P p, Q q);
     R visitHole(@NotNull CallTerm.Hole term, P p, Q q);
   }
 

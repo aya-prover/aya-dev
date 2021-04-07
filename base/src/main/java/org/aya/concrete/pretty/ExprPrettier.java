@@ -9,6 +9,9 @@ import org.aya.util.Constants;
 import org.aya.util.StringEscapeUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+import java.util.function.Function;
+
 /**
  * @author ice1000, kiva
  * @see TermPrettier
@@ -56,7 +59,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
       Doc.plain(" "),
       StmtPrettier.INSTANCE.visitTele(expr.params().dropLast(1)),
       Doc.plain(" ** "),
-      expr.params().last().type().toDoc()
+      Objects.requireNonNull(expr.params().last().type()).toDoc()
     );
   }
 
@@ -96,7 +99,9 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitProj(Expr.@NotNull ProjExpr expr, Boolean nestedCall) {
-    return Doc.cat(expr.tup().toDoc(), Doc.plain("."), Doc.plain(String.valueOf(expr.ix())));
+    return Doc.cat(expr.tup().toDoc(), Doc.plain("."), Doc.plain(expr.ix().fold(
+      Objects::toString, Function.identity()
+    )));
   }
 
   @Override public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {

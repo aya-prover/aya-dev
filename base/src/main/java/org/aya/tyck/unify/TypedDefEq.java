@@ -155,7 +155,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override
-  public @NotNull Boolean visitAccess(@NotNull ElimTerm.Access type, @NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull Boolean visitAccess(@NotNull CallTerm.Access type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 

@@ -189,8 +189,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var ctxTele = Def.defContextTele(defVar);
     // ice: should we rename the vars in this telescope? Probably not.
     var body = function.apply(defVar,
-      ctxTele.view().map(Term.Param::toArg).toImmutableSeq(),
-      tele.view().map(Term.Param::toArg).toImmutableSeq());
+      ctxTele.map(Term.Param::toArg),
+      tele.map(Term.Param::toArg));
     var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar));
     return new Result(IntroTerm.Lambda.make(tele, body), type);
   }
@@ -313,29 +313,35 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       ix -> visitIntProj(from, ix, projectee),
       sp -> visitStructProj(from, sp, projectee)
     );
-    unifyTyThrowing(term, result.type, expr);
+    if (term != null) unifyTyThrowing(term, result.type, expr);
     return result;
   }
 
   private Result visitStructProj(Expr struct, String fieldName, Result projectee) {
-    if (!(projectee.type instanceof CallTerm.Struct structCall))
-      return wantButNo(struct, projectee.type, "struct type");
+    var whnf = projectee.type.normalize(NormalizeMode.WHNF);
+    if (!(whnf instanceof CallTerm.Struct structCall))
+      return wantButNo(struct, whnf, "struct type");
 
-    var core = structCall.ref().core;
-    if (core == null) throw new UnsupportedOperationException("TODO");
-    var projected = core.fields().find(field -> Objects.equals(field.ref().name(), fieldName));
+    var structCore = structCall.ref().core;
+    if (structCore == null) throw new UnsupportedOperationException("TODO");
+    var projected = structCore.fields().find(field -> Objects.equals(field.ref().name(), fieldName));
     if (projected.isEmpty()) {
       // TODO[ice]: field not found
       throw new TyckerException();
     }
     // TODO[ice]: instantiate the type
     var field = projected.get();
-    return new Result(new ElimTerm.Access(projectee.wellTyped, field.ref()), field.result());
+    var ctxTele = Def.defContextTele(field.ref());
+    var tele = Def.defTele(field.ref());
+    var access = new CallTerm.Access(projectee.wellTyped, field.ref(),
+      ctxTele.map(Term.Param::toArg), tele.map(Term.Param::toArg));
+    return new Result(IntroTerm.Lambda.make(tele, access), field.result());
   }
 
   private Result visitIntProj(Expr tuple, int ix, Result projectee) {
-    if (!(projectee.type instanceof FormTerm.Sigma sigma && !sigma.co()))
-      return wantButNo(tuple, projectee.type, "sigma type");
+    var whnf = projectee.type.normalize(NormalizeMode.WHNF);
+    if (!(whnf instanceof FormTerm.Sigma sigma && !sigma.co()))
+      return wantButNo(tuple, whnf, "sigma type");
     var telescope = sigma.params();
     var index = ix - 1;
     if (index < 0) {

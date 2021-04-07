@@ -206,4 +206,28 @@ public sealed interface CallTerm extends Term {
       return Decision.MAYBE;
     }
   }
+
+  /**
+   * @author ice1000
+   */
+  record Access(
+    @NotNull Term of,
+    @NotNull DefVar<StructDef.Field, Decl.StructField> ref,
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
+  ) implements CallTerm {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitAccess(this, p);
+    }
+
+    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
+      return visitor.visitAccess(this, p, q);
+    }
+
+    @Override public @NotNull Decision whnf() {
+      if (of instanceof IntroTerm) return Decision.NO;
+      if (of.whnf() == Decision.YES) return Decision.YES;
+      return Decision.MAYBE;
+    }
+  }
 }

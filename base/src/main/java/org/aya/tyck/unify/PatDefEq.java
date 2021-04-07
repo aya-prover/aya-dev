@@ -121,7 +121,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override
-  public @NotNull Boolean visitAccess(@NotNull ElimTerm.Access lhs, @NotNull Term preRhs, @NotNull Term type) {
+  public @NotNull Boolean visitAccess(@NotNull CallTerm.Access lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 

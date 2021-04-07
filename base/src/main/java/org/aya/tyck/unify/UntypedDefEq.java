@@ -45,8 +45,8 @@ public record UntypedDefEq(
     return fnType.substBody(lhs.arg().term());
   }
 
-  @Override public @Nullable Term visitAccess(ElimTerm.@NotNull Access lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof ElimTerm.Access rhs)) return null;
+  @Override public @Nullable Term visitAccess(CallTerm.@NotNull Access lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof CallTerm.Access rhs)) return null;
     var preStructType = compare(lhs.of(), rhs.of());
     if (!(preStructType instanceof CallTerm.Struct structType)) return null;
     if (lhs.ref() != rhs.ref()) return null;

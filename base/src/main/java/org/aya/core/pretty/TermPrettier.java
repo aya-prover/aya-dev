@@ -120,10 +120,11 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return Doc.cat(term.of().toDoc(), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
   }
 
-  @Override public Doc visitAccess(ElimTerm.@NotNull Access term, Boolean aBoolean) {
+  @Override public Doc visitAccess(CallTerm.@NotNull Access term, Boolean nestedCall) {
     var ref = term.ref();
-    return Doc.cat(term.of().toDoc(), Doc.symbol("."),
+    var doc = Doc.cat(term.of().toDoc(), Doc.symbol("."),
       Doc.linkRef(Doc.styled(TermPrettier.FIELD_CALL, ref.name()), ref.hashCode()));
+    return visitCalls(doc, term.args(), t -> t.accept(this, true), nestedCall);
   }
 
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
@@ -144,7 +145,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     boolean nestedCall
   ) {
     var hyperLink = Doc.linkRef(Doc.styled(style, fn.name()), fn.hashCode());
-    return visitCalls(hyperLink, args, (term -> term.accept(this, true)), nestedCall);
+    return visitCalls(hyperLink, args, term -> term.accept(this, true), nestedCall);
   }
 
   public <T extends Docile> @NotNull Doc visitCalls(
