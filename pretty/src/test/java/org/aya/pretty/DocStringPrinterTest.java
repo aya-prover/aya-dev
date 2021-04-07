@@ -73,15 +73,15 @@ public class DocStringPrinterTest {
   @Test public void testNestedHang() {
     var doc = vcat(
       plain("shakedown street"),
-      hang(2, vcat(
+      indent(2, vcat(
         plain("grateful dead"),
-        hang(2, vcat(
+        indent(2, vcat(
           plain("heaven's on fire"),
           plain("kiss"))))));
     assertEquals("""
       shakedown street
-        grateful dead
-        heaven's on fire
+          grateful dead
+          heaven's on fire
         kiss""", doc.renderWithPageWidth(80));
   }
 

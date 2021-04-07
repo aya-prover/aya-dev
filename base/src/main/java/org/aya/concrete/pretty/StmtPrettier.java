@@ -82,7 +82,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.body.isEmpty() ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
+        : Doc.cat(Doc.line(), Doc.indent(2, Doc.vcat(
         decl.body.stream().map(ctor -> ctor.accept(this, Unit.unit())))))
     );
   }
@@ -124,7 +124,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.fields.isEmpty() ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
+        : Doc.cat(Doc.line(), Doc.indent(2, Doc.vcat(
         decl.fields.stream().map(field -> field.accept(this, Unit.unit())))))
     );
   }
@@ -159,7 +159,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.body.isLeft() ? Doc.symbol(" => ") : Doc.empty(),
       decl.body.fold(Expr::toDoc, clauses ->
-        Doc.hcat(Doc.line(), Doc.hang(2, visitClauses(clauses, false)))),
+        Doc.hcat(Doc.line(), Doc.indent(2, visitClauses(clauses, false)))),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
         : Doc.cat(Doc.plain(" "), Doc.styled(TermPrettier.KEYWORD, "\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))

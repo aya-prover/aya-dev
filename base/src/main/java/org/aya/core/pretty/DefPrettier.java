@@ -31,7 +31,8 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isLeft() ? Doc.symbol(" => ") : Doc.empty(),
       def.body().fold(Term::toDoc, clauses ->
-        Doc.hcat(Doc.line(), Doc.hang(2, visitClauses(clauses))))
+        clauses.isEmpty() ? Doc.empty() :
+          Doc.hcat(Doc.line(), Doc.indent(2, visitClauses(clauses))))
     );
   }
 
@@ -41,15 +42,13 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   }
 
   private Doc visitConditions(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
-    if (clauses.isEmpty()) return Doc.empty();
     return Doc.vcat(
       Doc.symbol(" {"),
-      Doc.hang(4, visitClauses(clauses)),
+      Doc.indent(2, visitClauses(clauses)),
       Doc.symbol("}"));
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
-    if (clauses.isEmpty()) return Doc.empty();
     return Doc.vcat(clauses.view()
       .map(PatPrettier.INSTANCE::matchy)
       .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
@@ -63,7 +62,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isEmpty() ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
+        : Doc.cat(Doc.line(), Doc.indent(2, Doc.vcat(
         def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))))
     );
   }
@@ -97,7 +96,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc(),
       def.fields().isEmpty() ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
+        : Doc.cat(Doc.line(), Doc.indent(2, Doc.vcat(
         def.fields().view().map(field -> field.accept(this, Unit.unit())))))
     );
   }
