@@ -39,7 +39,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
-    var subst = checkAndBuildSubst(def.fullTelescope(), args.view());
+    var subst = checkAndBuildSubst(def.fullTelescope(), args);
     var volynskaya = tryUnfoldClauses(p, args, subst, def.clauses());
     return volynskaya != null ? volynskaya : new CallTerm.Con(conCall.head(), args.drop(def.telescope().size()).toImmutableSeq());
   }
@@ -49,14 +49,14 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return fnCall;
     var args = fnCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
-    var subst = checkAndBuildSubst(def.fullTelescope(), args.view());
+    var subst = checkAndBuildSubst(def.fullTelescope(), args);
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, body.getRightValue());
     return volynskaya != null ? volynskaya : new CallTerm.Fn(fnCall.ref(), fnCall.contextArgs(), args);
   }
   private @NotNull Substituter.TermSubst
-  checkAndBuildSubst(SeqView<Term.Param> fullTelescope, SeqView<Arg<Term>> args) {
+  checkAndBuildSubst(SeqView<Term.Param> fullTelescope, SeqLike<Arg<Term>> args) {
     // This shouldn't fail
     // Assertions are enabled optionally, so we could perform some somehow-expensive operations
     assert args.sizeEquals(fullTelescope.size());
@@ -101,7 +101,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (!(nevv instanceof IntroTerm.New n)) {
       var contextArgs = term.contextArgs().map(arg -> visitArg(arg, p));
       var args = term.args().map(arg -> visitArg(arg, p));
-      var argsSubst = checkAndBuildSubst(core.telescope().view(), args.view());
+      var argsSubst = checkAndBuildSubst(core.telescope().view(), args);
       var mischa = tryUnfoldClauses(p, args, argsSubst, core.clauses());
       if (mischa != null) return mischa;
       return new CallTerm.Access(nevv, field, contextArgs, args);
