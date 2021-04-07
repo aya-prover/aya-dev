@@ -7,8 +7,8 @@ import org.aya.concrete.Decl;
 import org.aya.core.def.StructDef;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ public sealed interface IntroTerm extends Term {
    * @author kiva
    */
   record New(
-    @NotNull ImmutableSeq<Tuple2<DefVar<StructDef.Field, Decl.StructField>, Term>> params
+    @NotNull ImmutableMap<DefVar<StructDef.Field, Decl.StructField>, Term> params
   ) implements IntroTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNew(this, p);

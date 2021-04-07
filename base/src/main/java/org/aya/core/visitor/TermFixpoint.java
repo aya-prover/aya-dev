@@ -5,6 +5,8 @@ package org.aya.core.visitor;
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
 import org.aya.tyck.sort.Sort;
+import org.glavo.kala.collection.immutable.ImmutableMap;
+import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
@@ -120,9 +122,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitNew(@NotNull IntroTerm.New struct, P p) {
-    var items = struct.params()
-      .map(t -> org.glavo.kala.tuple.Tuple.of(t._1, t._2.accept(this, p)));
-    if (struct.params().sameElements(items, true)) return struct;
+    var itemsView = struct.params().view()
+      .map((k, v) -> Tuple.of(k, v.accept(this, p)));
+    var items = ImmutableMap.from(itemsView);
+    // if (struct.params().view().sameElements(items, true)) return struct;
     return new IntroTerm.New(items);
   }
 

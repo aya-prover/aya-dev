@@ -109,9 +109,11 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return Doc.cat(
       Doc.styled(KEYWORD, "\\new"),
       Doc.symbol(" { "),
-      Doc.hsep(newTerm.params().view().map(t -> Doc.hsep(Doc.plain("|"),
-        Doc.linkRef(Doc.styled(FIELD_CALL, t._1.name()), t._1.hashCode()),
-        Doc.symbol("=>"), t._2.toDoc()))),
+      Doc.hsep(newTerm.params().view()
+        .map((k, v) -> Doc.hsep(Doc.plain("|"),
+          Doc.linkRef(Doc.styled(FIELD_CALL, k.name()), k.hashCode()),
+          Doc.symbol("=>"), v.toDoc()))
+        .toImmutableSeq()),
       Doc.symbol(" }")
     );
   }

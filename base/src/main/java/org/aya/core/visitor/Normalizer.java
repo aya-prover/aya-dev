@@ -51,10 +51,25 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
   @Override public @NotNull Term visitProj(@NotNull ElimTerm.Proj term, NormalizeMode mode) {
     var tup = term.of().accept(this, NormalizeMode.WHNF);
     var ix = term.ix();
-    if (!(tup instanceof IntroTerm.Tuple t)) return new ElimTerm.Proj(tup, ix);
+    if (!(tup instanceof IntroTerm.Tuple t)) return tup == term.of() ? term : new ElimTerm.Proj(tup, ix);
     // should not fail due to tycking
-    assert ix <= t.items().size();
-    assert ix > 0;
+    assert ix <= t.items().size() && ix > 0 : term.toDoc().debugRender();
     return t.items().get(ix - 1).accept(this, mode);
+  }
+
+  @Override public @NotNull Term visitAccess(CallTerm.@NotNull Access term, NormalizeMode mode) {
+    var nevv = term.of().accept(this, NormalizeMode.WHNF);
+    var field = term.ref();
+    if (!(nevv instanceof IntroTerm.New n)) {
+      var contextArgs = term.contextArgs().map(arg -> visitArg(arg, mode));
+      var args = term.args().map(arg -> visitArg(arg, mode));
+      if (nevv == term.of()
+        && term.contextArgs().sameElements(contextArgs, true)
+        && term.args().sameElements(args, true)) return term;
+      return new CallTerm.Access(nevv, field, contextArgs, args);
+    }
+    var core = field.core;
+    var arguments = Unfolder.buildSubst(core.telescope(), term.args());
+    return n.params().get(field).subst(arguments).normalize(mode);
   }
 }

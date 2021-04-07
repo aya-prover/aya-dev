@@ -30,6 +30,7 @@ import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
+import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
@@ -304,7 +305,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     if (term != null) unifyTyThrowing(term, structCall, expr);
-    return new Result(new IntroTerm.New(fields.toImmutableSeq()), structCall);
+    return new Result(new IntroTerm.New(ImmutableMap.from(fields)), structCall);
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
