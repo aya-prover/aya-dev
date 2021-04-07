@@ -86,7 +86,7 @@ public class ParseTest {
       \\def uncurry (A : \\Set) (B : \\Set) (C : \\Set)
                    (f : \\Pi A B -> C)
                    (p : \\Sig A ** B) : C
-        => f p.1 p.2""");
+        => f (p.1) (p.2)""");
     parseData("\\data Unit");
     parseData("\\data Unit \\abusing {}");
     parseData("\\data Unit : A \\abusing {}");
@@ -114,6 +114,8 @@ public class ParseTest {
     assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.AppExpr app
       && app.arguments().get(0).term() instanceof Expr.ProjExpr
       && app.arguments().get(1).term() instanceof Expr.ProjExpr);
+    assertTrue(parseExpr("f a.1") instanceof Expr.ProjExpr proj
+      && proj.tup() instanceof Expr.AppExpr);
     assertTrue(parseExpr("λ a => a") instanceof Expr.LamExpr);
     assertTrue(parseExpr("\\lam a => a") instanceof Expr.LamExpr);
     assertTrue(parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
@@ -220,10 +222,10 @@ public class ParseTest {
     parseAndPretty(
       "\\struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat",
       """
-      \\public \\struct Very-Simple (A : \\Set) : \\Set
-        | x : A
-        | y : Nat
-      """
+        \\public \\struct Very-Simple (A : \\Set) : \\Set
+          | x : A
+          | y : Nat
+        """
     );
     parseAndPretty(
       """
@@ -242,17 +244,17 @@ public class ParseTest {
   @Test
   public void issue350() {
     parseAndPretty("""
-      \\def l : \\Set => \\lam i => Nat
-      """,
+        \\def l : \\Set => \\lam i => Nat
+        """,
       """
-      \\public \\def l : \\Set => \\lam (i : {?}) => Nat
-      """);
+        \\public \\def l : \\Set => \\lam (i : {?}) => Nat
+        """);
     parseAndPretty("""
-      \\def l : \\Set => \\lam (i : I) => Nat
-      """,
+        \\def l : \\Set => \\lam (i : I) => Nat
+        """,
       """
-      \\public \\def l : \\Set => \\lam (i : I) => Nat
-      """);
+        \\public \\def l : \\Set => \\lam (i : I) => Nat
+        """);
   }
 
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {

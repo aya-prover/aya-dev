@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
@@ -306,25 +307,35 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
-    var projectee = expr.tup().accept(this, null);
-    return expr.ix().fold(
-      ix -> visitIntProj(expr, term, projectee),
-      sp -> visitStructProj(expr, term, projectee)
+    var from = expr.tup();
+    var projectee = from.accept(this, null);
+    var result = expr.ix().fold(
+      ix -> visitIntProj(from, ix, projectee),
+      sp -> visitStructProj(from, sp, projectee)
     );
+    unifyTyThrowing(term, result.type, expr);
+    return result;
   }
 
-  private Result visitStructProj(Expr.@NotNull ProjExpr expr, @Nullable Term term, Result projectee) {
+  private Result visitStructProj(Expr struct, String fieldName, Result projectee) {
     if (!(projectee.type instanceof CallTerm.Struct structCall))
-      return wantButNo(expr.tup(), projectee.type, "struct type");
+      return wantButNo(struct, projectee.type, "struct type");
 
+    var core = structCall.ref().core;
+    if (core == null) throw new UnsupportedOperationException("TODO");
+    var projected = core.fields().find(field -> Objects.equals(field.ref().name(), fieldName));
+    if (projected.isEmpty()) {
+      // TODO[ice]: field not found
+      throw new TyckerException();
+    }
+    // TODO[ice]: instantiate the type
     throw new UnsupportedOperationException("TODO");
   }
 
-  private Result visitIntProj(Expr.@NotNull ProjExpr expr, @Nullable Term term, Result projectee) {
+  private Result visitIntProj(Expr tuple, int ix, Result projectee) {
     if (!(projectee.type instanceof FormTerm.Sigma sigma && !sigma.co()))
-      return wantButNo(expr.tup(), projectee.type, "sigma type");
+      return wantButNo(tuple, projectee.type, "sigma type");
     var telescope = sigma.params();
-    var ix = expr.ix().getLeftValue();
     var index = ix - 1;
     if (index < 0) {
       // TODO[ice]: too small index
@@ -339,9 +350,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
     fieldsBefore.forEachIndexed((i, param) ->
       subst.add(param.ref(), new ElimTerm.Proj(projectee.wellTyped, i + 1)));
-    type = type.subst(subst);
-    unifyTyThrowing(term, type, expr);
-    return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type);
+    return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
   }
 
   @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
