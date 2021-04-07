@@ -17,6 +17,7 @@ import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Unfolder;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.BadTypeError;
 import org.aya.tyck.error.MissingFieldError;
@@ -333,10 +334,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var field = projected.get();
     var fieldRef = field.ref();
     var ctxTele = Def.defContextTele(fieldRef);
-    var tele = Def.defTele(fieldRef);
+    var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
+    var tele = Term.Param.subst(Def.defTele(fieldRef), structSubst);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), tele.map(Term.Param::toArg));
-    return new Result(IntroTerm.Lambda.make(tele, access), FormTerm.Pi.make(false, tele, field.result()));
+    return new Result(IntroTerm.Lambda.make(tele, access),
+      FormTerm.Pi.make(false, tele, field.result().subst(structSubst)));
   }
 
   private Result visitProj(Expr tuple, int ix, Result projectee) {
