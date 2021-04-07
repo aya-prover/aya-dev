@@ -166,7 +166,9 @@ public record StmtTycker(
     var elabClauses = elabClauses(patTycker, null, field.signature, cumulativeCtx, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
-    var elaborated = new StructDef.Field(structRef, field.ref, tele, result, matchings, body, field.coerce);
+    var structSig = structRef.concrete.signature;
+    assert structSig != null;
+    var elaborated = new StructDef.Field(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
     ensureConfluent(tycker, field.signature, cumulativeCtx, elabClauses, matchings, field.sourcePos, false);
     return elaborated;
   }

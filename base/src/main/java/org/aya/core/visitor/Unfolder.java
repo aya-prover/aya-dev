@@ -40,8 +40,9 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (def == null) return conCall;
     var args = conCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
-    var volynskaya = tryUnfoldClauses(p, args, subst, def.clauses());
-    return volynskaya != null ? volynskaya : conCall;
+    var dropped = args.drop(conCall.contextArgs().size() + conCall.head().dataArgs().size());
+    var volynskaya = tryUnfoldClauses(p, dropped, subst, def.clauses());
+    return volynskaya != null ? volynskaya : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
   }
 
   @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
@@ -101,8 +102,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (!(nevv instanceof IntroTerm.New n)) {
       var args = term.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
       var fieldSubst = checkAndBuildSubst(core.fullTelescope(), args);
-      var mischa = tryUnfoldClauses(p, args, fieldSubst, core.clauses());
-      return mischa != null ? mischa : term;
+      var dropped = args.drop(term.contextArgs().size() + term.structArgs().size());
+      var mischa = tryUnfoldClauses(p, dropped, fieldSubst, core.clauses());
+      return mischa != null ? mischa : new CallTerm.Access(nevv, field,
+        term.contextArgs(), term.structArgs(), dropped);
     }
     var arguments = Unfolder.buildSubst(core.telescope(), term.args());
     return n.params().get(field).subst(arguments).accept(this, p);

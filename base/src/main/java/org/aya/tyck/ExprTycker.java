@@ -336,7 +336,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var fieldRef = field.ref();
     var ctxTele = Def.defContextTele(fieldRef);
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
-    var tele = Term.Param.subst(Def.defTele(fieldRef), structSubst);
+    var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), structCall.args(), tele.map(Term.Param::toArg));
     return new Result(IntroTerm.Lambda.make(tele, access),

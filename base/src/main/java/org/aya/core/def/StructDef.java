@@ -36,6 +36,7 @@ public final record StructDef(
   public static final record Field(
     @NotNull DefVar<StructDef, Decl.StructDecl> structRef,
     @NotNull DefVar<Field, Decl.StructField> ref,
+    @NotNull ImmutableSeq<Term.Param> structTele,
     @NotNull ImmutableSeq<Term.Param> fieldTele,
     @NotNull Term result,
     @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
@@ -47,7 +48,7 @@ public final record StructDef(
     }
 
     @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
-      return structRef.core.telescope().concat(fieldTele);
+      return structTele.concat(fieldTele);
     }
 
     @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
