@@ -24,16 +24,14 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   }
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
-    return Doc.cat(
+    var line1 = Doc.hcat(
       Doc.styled(TermPrettier.KEYWORD, "\\def "),
       link(def.ref(), TermPrettier.FN_CALL),
       visitTele(def.telescope()),
-      Doc.plain(" : "), def.result().toDoc(),
-      def.body().isLeft() ? Doc.symbol(" => ") : Doc.empty(),
-      def.body().fold(Term::toDoc, clauses ->
-        clauses.isEmpty() ? Doc.empty() :
-          Doc.hcat(Doc.line(), Doc.indent(2, visitClauses(clauses))))
-    );
+      Doc.plain(" : "), def.result().toDoc());
+    return def.body().fold(
+      term -> Doc.hcat(line1, Doc.symbol(" => "), term.toDoc()),
+      clauses -> Doc.vcat(line1, Doc.indent(2, visitClauses(clauses))));
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
@@ -41,9 +39,10 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       Doc.hsep(telescope.view().map(Term.Param::toDoc)));
   }
 
-  private Doc visitConditions(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
+  private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
+    if (clauses.isEmpty()) return line1;
     return Doc.vcat(
-      Doc.symbol(" {"),
+      Doc.hcat(line1, Doc.symbol(" {")),
       Doc.indent(2, visitClauses(clauses)),
       Doc.symbol("}"));
   }
@@ -55,16 +54,15 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   }
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
-    return Doc.cat(
+    var line1 = Doc.hcat(
       Doc.styled(TermPrettier.KEYWORD, "\\data"),
       Doc.plain(" "),
       link(def.ref(), TermPrettier.DATA_CALL),
       visitTele(def.telescope()),
-      Doc.plain(" : "), def.result().toDoc(),
-      def.body().isEmpty() ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.indent(2, Doc.vcat(
-        def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))))
-    );
+      Doc.plain(" : "), def.result().toDoc());
+    return Doc.vcat(line1,
+      Doc.vcat(line1, Doc.indent(2, Doc.vcat(
+        def.body().view().map(ctor -> ctor.accept(this, Unit.unit()))))));
   }
 
   public static @NotNull Doc link(@NotNull Var ref, @NotNull Style color) {
@@ -79,36 +77,34 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
     var doc = Doc.cat(
       ctor.coerce() ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       link(ctor.ref(), TermPrettier.CON_CALL),
-      visitTele(ctor.conTele()),
-      visitConditions(ctor.clauses())
+      visitTele(ctor.conTele())
     );
+    Doc line1;
     if (ctor.pats().isNotEmpty()) {
       var pats = Doc.join(Doc.plain(", "), ctor.pats().stream().map(Pat::toDoc));
-      return Doc.hcat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
-    } else return Doc.hcat(Doc.plain("| "), doc);
+      line1 = Doc.hcat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
+    } else line1 = Doc.hcat(Doc.plain("| "), doc);
+    return visitConditions(line1, ctor.clauses());
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
-    return Doc.cat(
+    var line1 = Doc.hcat(
       Doc.styled(TermPrettier.KEYWORD, "\\struct"),
       Doc.plain(" "),
       link(def.ref(), TermPrettier.STRUCT_CALL),
       visitTele(def.telescope()),
-      Doc.plain(" : "), def.result().toDoc(),
-      def.fields().isEmpty() ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.indent(2, Doc.vcat(
-        def.fields().view().map(field -> field.accept(this, Unit.unit())))))
-    );
+      Doc.plain(" : "), def.result().toDoc());
+    return Doc.vcat(line1, Doc.indent(2, Doc.vcat(
+      def.fields().view().map(field -> field.accept(this, Unit.unit())))));
   }
 
   @Override public Doc visitField(@NotNull StructDef.Field field, Unit unit) {
-    return Doc.hcat(
+    return visitConditions(Doc.hcat(
       Doc.plain("| "),
       field.coerce() ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       link(field.ref(), TermPrettier.FIELD_CALL),
-      visitTele(field.fieldTele()),
-      visitConditions(field.clauses())
-    );
+      visitTele(field.fieldTele())
+    ), field.clauses());
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {

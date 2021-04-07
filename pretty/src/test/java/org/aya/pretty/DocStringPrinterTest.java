@@ -70,11 +70,11 @@ public class DocStringPrinterTest {
         114514""", doc.renderWithPageWidth(80));
   }
 
-  @Test public void testNestedHang() {
+  @Test public void testNestedIndent() {
     var doc = vcat(
       plain("shakedown street"),
       indent(2, vcat(
-        plain("grateful dead"),
+        hcat(plain("grateful "), plain("dead")),
         indent(2, vcat(
           plain("heaven's on fire"),
           plain("kiss"))))));
