@@ -57,14 +57,32 @@ public class DocStringPrinterTest {
     assertEquals("prefix    boynextdoor\n          dooooor    postfix", doc.renderWithPageWidth(80));
   }
 
-  @Test
-  public void testVCatHang() {
+  @Test public void testVCatHang() {
     var doc = vcat(
       plain("boy"),
       hang(4, plain("boynextdoor\ndooooor")),
       hang(2, plain("114514"))
     );
-    assertEquals("boy\n    boynextdoor\n    dooooor\n  114514", doc.renderWithPageWidth(80));
+    assertEquals("""
+      boy
+          boynextdoor
+          dooooor
+        114514""", doc.renderWithPageWidth(80));
+  }
+
+  @Test public void testNestedHang() {
+    var doc = vcat(
+      plain("shakedown street"),
+      hang(2, vcat(
+        plain("grateful dead"),
+        hang(2, vcat(
+          plain("heaven's on fire"),
+          plain("kiss"))))));
+    assertEquals("""
+      shakedown street
+        grateful dead
+        heaven's on fire
+        kiss""", doc.renderWithPageWidth(80));
   }
 
   @Test
