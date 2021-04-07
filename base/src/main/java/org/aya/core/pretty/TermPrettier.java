@@ -126,7 +126,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     var ref = term.ref();
     var doc = Doc.cat(term.of().toDoc(), Doc.symbol("."),
       Doc.linkRef(Doc.styled(TermPrettier.FIELD_CALL, ref.name()), ref.hashCode()));
-    return visitCalls(doc, term.args(), t -> t.accept(this, true), nestedCall);
+    return visitCalls(doc, term.fieldArgs(), t -> t.accept(this, true), nestedCall);
   }
 
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {

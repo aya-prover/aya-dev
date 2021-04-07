@@ -92,7 +92,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitAccess(@NotNull CallTerm.Access term, P p) {
-    visitArgs(p, term.args());
+    visitArgs(p, term.fieldArgs());
     visitArgs(p, term.contextArgs());
     return term.of().accept(this, p);
   }

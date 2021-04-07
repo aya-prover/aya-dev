@@ -214,7 +214,8 @@ public sealed interface CallTerm extends Term {
     @NotNull Term of,
     @NotNull DefVar<StructDef.Field, Decl.StructField> ref,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitAccess(this, p);
@@ -222,6 +223,10 @@ public sealed interface CallTerm extends Term {
 
     @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitAccess(this, p, q);
+    }
+
+    @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> args() {
+      return structArgs.concat(fieldArgs);
     }
 
     @Override public @NotNull Decision whnf() {

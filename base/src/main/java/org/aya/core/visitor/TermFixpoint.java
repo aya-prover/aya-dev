@@ -138,10 +138,12 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitAccess(@NotNull CallTerm.Access term, P p) {
     var tuple = term.of().accept(this, p);
     var contextArgs = term.contextArgs().map(arg -> visitArg(arg, p));
-    var args = term.args().map(arg -> visitArg(arg, p));
-    if (term.args().sameElements(args, true)
-      && term.args().sameElements(args, true)
+    var args = term.fieldArgs().map(arg -> visitArg(arg, p));
+    var structArgs = term.structArgs().map(arg -> visitArg(arg, p));
+    if (term.fieldArgs().sameElements(args, true)
+      && term.structArgs().sameElements(structArgs, true)
+      && term.contextArgs().sameElements(contextArgs, true)
       && tuple == term.of()) return term;
-    return new CallTerm.Access(tuple, term.ref(), contextArgs, args);
+    return new CallTerm.Access(tuple, term.ref(), contextArgs, structArgs, args);
   }
 }

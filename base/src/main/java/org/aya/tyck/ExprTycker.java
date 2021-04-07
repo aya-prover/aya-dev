@@ -282,7 +282,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       conFields = conFields.dropWhile(t -> t == conField);
       var type = Def.defResult(defField.ref()).subst(subst);
       var fieldSubst = new ExprRefSubst(reporter);
-      var telescope = Def.defTele(defField.ref());
+      var telescope = defField.ref().core.fieldTele();
       if (!telescope.sizeEquals(conField.bindings().size())) {
         // TODO[ice]: number of args don't match
         throw new TyckerException();
@@ -338,7 +338,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var tele = Term.Param.subst(Def.defTele(fieldRef), structSubst);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
-      ctxTele.map(Term.Param::toArg), tele.map(Term.Param::toArg));
+      ctxTele.map(Term.Param::toArg), structCall.args(), tele.map(Term.Param::toArg));
     return new Result(IntroTerm.Lambda.make(tele, access),
       FormTerm.Pi.make(false, tele, field.result().subst(structSubst)));
   }

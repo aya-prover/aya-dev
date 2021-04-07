@@ -99,12 +99,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var field = term.ref();
     var core = field.core;
     if (!(nevv instanceof IntroTerm.New n)) {
-      var contextArgs = term.contextArgs().map(arg -> visitArg(arg, p));
-      var args = term.args().map(arg -> visitArg(arg, p));
-      var argsSubst = checkAndBuildSubst(core.telescope().view(), args);
-      var mischa = tryUnfoldClauses(p, args, argsSubst, core.clauses());
-      if (mischa != null) return mischa;
-      return new CallTerm.Access(nevv, field, contextArgs, args);
+      var args = term.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
+      var fieldSubst = checkAndBuildSubst(core.fullTelescope(), args);
+      var mischa = tryUnfoldClauses(p, args, fieldSubst, core.clauses());
+      return mischa != null ? mischa : term;
     }
     var arguments = Unfolder.buildSubst(core.telescope(), term.args());
     return n.params().get(field).subst(arguments).accept(this, p);
