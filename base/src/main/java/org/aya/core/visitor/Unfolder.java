@@ -7,6 +7,7 @@ import org.aya.api.util.Arg;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqLike;
@@ -37,22 +38,22 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = conCall.ref().core;
     // Not yet type checked
     if (def == null) return conCall;
-    var args = conCall.fullArgs().map(arg -> visitArg(arg, p));
-    var subst = checkAndBuildSubst(def.fullTelescope(), args);
+    var args = conCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
+    var subst = checkAndBuildSubst(def.fullTelescope(), args.view());
     var volynskaya = tryUnfoldClauses(p, args, subst, def.clauses());
-    return volynskaya != null ? volynskaya : conCall;
+    return volynskaya != null ? volynskaya : new CallTerm.Con(conCall.head(), args.drop(def.telescope().size()).toImmutableSeq());
   }
 
   @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
     var def = fnCall.ref().core;
     // Not yet type checked
     if (def == null) return fnCall;
-    var args = fnCall.fullArgs().map(arg -> visitArg(arg, p));
-    var subst = checkAndBuildSubst(def.fullTelescope(), args);
+    var args = fnCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
+    var subst = checkAndBuildSubst(def.fullTelescope(), args.view());
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, body.getRightValue());
-    return volynskaya != null ? volynskaya : fnCall;
+    return volynskaya != null ? volynskaya : new CallTerm.Fn(fnCall.ref(), fnCall.contextArgs(), args);
   }
   private @NotNull Substituter.TermSubst
   checkAndBuildSubst(SeqView<Term.Param> fullTelescope, SeqView<Arg<Term>> args) {
@@ -91,6 +92,22 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     }
     // Unfold failed
     return null;
+  }
+
+  default @NotNull Term visitAccess(CallTerm.@NotNull Access term, P p) {
+    var nevv = term.of().accept(this, p);
+    var field = term.ref();
+    var core = field.core;
+    if (!(nevv instanceof IntroTerm.New n)) {
+      var contextArgs = term.contextArgs().map(arg -> visitArg(arg, p));
+      var args = term.args().map(arg -> visitArg(arg, p));
+      var argsSubst = checkAndBuildSubst(core.telescope().view(), args.view());
+      var mischa = tryUnfoldClauses(p, args, argsSubst, core.clauses());
+      if (mischa != null) return mischa;
+      return new CallTerm.Access(nevv, field, contextArgs, args);
+    }
+    var arguments = Unfolder.buildSubst(core.telescope(), term.args());
+    return n.params().get(field).subst(arguments).accept(this, p);
   }
 
   /**
