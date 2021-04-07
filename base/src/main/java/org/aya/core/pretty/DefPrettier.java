@@ -84,11 +84,26 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
-    throw new UnsupportedOperationException();
+    return Doc.cat(
+      Doc.styled(TermPrettier.KEYWORD, "\\struct"),
+      Doc.plain(" "),
+      link(def.ref(), TermPrettier.STRUCT_CALL),
+      visitTele(def.telescope()),
+      Doc.plain(" : "), def.result().toDoc(),
+      def.fields().isEmpty() ? Doc.empty()
+        : Doc.cat(Doc.line(), Doc.hang(2, Doc.vcat(
+        def.fields().view().map(field -> field.accept(this, Unit.unit())))))
+    );
   }
 
-  @Override public Doc visitField(@NotNull StructDef.Field def, Unit unit) {
-    throw new UnsupportedOperationException();
+  @Override public Doc visitField(@NotNull StructDef.Field field, Unit unit) {
+    return Doc.hcat(
+      Doc.plain("| "),
+      field.coerce() ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
+      link(field.ref(), TermPrettier.FIELD_CALL),
+      visitTele(field.fieldTele()),
+      visitClauses(field.clauses(), true)
+    );
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {
