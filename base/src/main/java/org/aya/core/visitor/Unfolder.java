@@ -30,7 +30,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
   ) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
-    self.forEachIndexed((i, param) -> subst.add(param.ref(), args.get(i).term()));
+    self.view().zip(args).forEach(t -> subst.add(t._1.ref(), t._2.term()));
     return subst;
   }
 
@@ -41,7 +41,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var args = conCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
     var volynskaya = tryUnfoldClauses(p, args, subst, def.clauses());
-    return volynskaya != null ? volynskaya : new CallTerm.Con(conCall.head(), args.drop(def.telescope().size()).toImmutableSeq());
+    return volynskaya != null ? volynskaya : conCall;
   }
 
   @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {

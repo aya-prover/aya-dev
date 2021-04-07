@@ -27,8 +27,7 @@ public class PatCCTest {
     return PatClassifier.classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, true);
   }
 
-  @Test
-  public void addCC() {
+  @Test public void addCC() {
     var decls = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
       \\def add (a b : Nat) : Nat
@@ -43,8 +42,7 @@ public class PatCCTest {
       assertEquals(2, cls.contents().size()));
   }
 
-  @Test
-  public void maxCC() {
+  @Test public void maxCC() {
     var decls = TyckDeclTest.successTyckDecls("""
       \\open \\data Nat : \\Set | zero | suc Nat
       \\def max (a b : Nat) : Nat
