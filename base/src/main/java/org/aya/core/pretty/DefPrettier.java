@@ -31,7 +31,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       Doc.plain(" : "), def.result().toDoc(),
       def.body().isLeft() ? Doc.symbol(" => ") : Doc.empty(),
       def.body().fold(Term::toDoc, clauses ->
-        Doc.hcat(Doc.line(), Doc.hang(2, visitClauses(clauses, false))))
+        Doc.hcat(Doc.line(), Doc.hang(2, visitClauses(clauses))))
     );
   }
 
@@ -40,13 +40,19 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       Doc.hsep(telescope.view().map(Term.Param::toDoc)));
   }
 
-  private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses, boolean wrapInBraces) {
+  private Doc visitConditions(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
     if (clauses.isEmpty()) return Doc.empty();
-    var clausesDoc = Doc.vcat(
-      clauses.view()
-        .map(PatPrettier.INSTANCE::matchy)
-        .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
-    return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
+    return Doc.vcat(
+      Doc.symbol(" {"),
+      Doc.hang(4, visitClauses(clauses)),
+      Doc.symbol("}"));
+  }
+
+  private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
+    if (clauses.isEmpty()) return Doc.empty();
+    return Doc.vcat(clauses.view()
+      .map(PatPrettier.INSTANCE::matchy)
+      .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
   }
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
@@ -75,7 +81,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       ctor.coerce() ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       link(ctor.ref(), TermPrettier.CON_CALL),
       visitTele(ctor.conTele()),
-      visitClauses(ctor.clauses(), true)
+      visitConditions(ctor.clauses())
     );
     if (ctor.pats().isNotEmpty()) {
       var pats = Doc.join(Doc.plain(", "), ctor.pats().stream().map(Pat::toDoc));
@@ -102,7 +108,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       field.coerce() ? Doc.styled(TermPrettier.KEYWORD, "\\coerce ") : Doc.empty(),
       link(field.ref(), TermPrettier.FIELD_CALL),
       visitTele(field.fieldTele()),
-      visitClauses(field.clauses(), true)
+      visitConditions(field.clauses())
     );
   }
 
