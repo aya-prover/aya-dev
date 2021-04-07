@@ -60,9 +60,8 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       link(def.ref(), TermPrettier.DATA_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc());
-    return Doc.vcat(line1,
-      Doc.vcat(line1, Doc.indent(2, Doc.vcat(
-        def.body().view().map(ctor -> ctor.accept(this, Unit.unit()))))));
+    return Doc.vcat(line1, Doc.indent(2, Doc.vcat(
+      def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
 
   public static @NotNull Doc link(@NotNull Var ref, @NotNull Style color) {
@@ -88,13 +87,12 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
-    var line1 = Doc.hcat(
+    return Doc.vcat(Doc.hcat(
       Doc.styled(TermPrettier.KEYWORD, "\\struct"),
       Doc.plain(" "),
       link(def.ref(), TermPrettier.STRUCT_CALL),
       visitTele(def.telescope()),
-      Doc.plain(" : "), def.result().toDoc());
-    return Doc.vcat(line1, Doc.indent(2, Doc.vcat(
+      Doc.plain(" : "), def.result().toDoc()), Doc.indent(2, Doc.vcat(
       def.fields().view().map(field -> field.accept(this, Unit.unit())))));
   }
 
