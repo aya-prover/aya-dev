@@ -85,6 +85,21 @@ public class DocStringPrinterTest {
         kiss""", doc.renderWithPageWidth(80));
   }
 
+  @Test public void testNestedNest() {
+    var doc = vcat(
+      plain("shakedown street"),
+      nest(2, vcat(
+        hcat(plain("grateful "), plain("dead")),
+        nest(2, vcat(
+          plain("heaven's on fire"),
+          plain("kiss"))))));
+    assertEquals("""
+      shakedown street
+        grateful dead
+          heaven's on fire
+          kiss""", doc.renderWithPageWidth(80));
+  }
+
   @Test
   public void testVCat() {
     var doc = vcat(plain("11"), plain("45"), plain("14"));

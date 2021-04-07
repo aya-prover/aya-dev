@@ -31,7 +31,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       Doc.plain(" : "), def.result().toDoc());
     return def.body().fold(
       term -> Doc.hcat(line1, Doc.symbol(" => "), term.toDoc()),
-      clauses -> Doc.vcat(line1, Doc.indent(2, visitClauses(clauses))));
+      clauses -> Doc.vcat(line1, Doc.nest(2, visitClauses(clauses))));
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
@@ -43,7 +43,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
     if (clauses.isEmpty()) return line1;
     return Doc.vcat(
       Doc.hcat(line1, Doc.symbol(" {")),
-      Doc.indent(2, visitClauses(clauses)),
+      Doc.nest(2, visitClauses(clauses)),
       Doc.symbol("}"));
   }
 
@@ -60,7 +60,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       link(def.ref(), TermPrettier.DATA_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc());
-    return Doc.vcat(line1, Doc.indent(2, Doc.vcat(
+    return Doc.vcat(line1, Doc.nest(2, Doc.vcat(
       def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
 
@@ -92,7 +92,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
       Doc.plain(" "),
       link(def.ref(), TermPrettier.STRUCT_CALL),
       visitTele(def.telescope()),
-      Doc.plain(" : "), def.result().toDoc()), Doc.indent(2, Doc.vcat(
+      Doc.plain(" : "), def.result().toDoc()), Doc.nest(2, Doc.vcat(
       def.fields().view().map(field -> field.accept(this, Unit.unit())))));
   }
 
