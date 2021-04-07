@@ -9,9 +9,7 @@ import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
-
-  @Override
-  default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
+  @Override default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
     visitArgs(p, term.args());
     return Unit.unit();
   }
@@ -90,6 +88,10 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitProj(@NotNull ElimTerm.Proj term, P p) {
+    return term.of().accept(this, p);
+  }
+
+  @Override default Unit visitAccess(@NotNull ElimTerm.Access term, P p) {
     return term.of().accept(this, p);
   }
 }

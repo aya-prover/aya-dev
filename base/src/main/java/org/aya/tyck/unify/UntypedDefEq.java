@@ -3,6 +3,7 @@
 package org.aya.tyck.unify;
 
 import org.aya.api.util.NormalizeMode;
+import org.aya.core.def.Def;
 import org.aya.core.term.*;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,14 @@ public record UntypedDefEq(
     if (!(preFnType instanceof FormTerm.Pi fnType)) return null;
     if (!defeq.compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) return null;
     return fnType.substBody(lhs.arg().term());
+  }
+
+  @Override public @Nullable Term visitAccess(ElimTerm.@NotNull Access lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof ElimTerm.Access rhs)) return null;
+    var preStructType = compare(lhs.of(), rhs.of());
+    if (!(preStructType instanceof CallTerm.Struct structType)) return null;
+    if (lhs.ref() != rhs.ref()) return null;
+    return Def.defResult(lhs.ref());
   }
 
   @Override public @Nullable Term visitProj(@NotNull ElimTerm.Proj lhs, @NotNull Term preRhs) {
@@ -114,9 +123,7 @@ public record UntypedDefEq(
     throw new IllegalStateException("No visitCon in UntypedDefEq");
   }
 
-  @Override
-  public @Nullable
-  Term visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs) {
+  @Override public @Nullable Term visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitLam in UntypedDefEq");
   }
 

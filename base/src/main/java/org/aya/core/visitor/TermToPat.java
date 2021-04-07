@@ -74,6 +74,10 @@ public final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
     return null;
   }
 
+  @Override public Pat visitAccess(@NotNull ElimTerm.Access term, Unit unit) {
+    return null;
+  }
+
   @Override public Pat visitHole(CallTerm.@NotNull Hole term, Unit unit) {
     return null;
   }

@@ -120,6 +120,11 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return passDown(lhs, preRhs, type);
   }
 
+  @Override
+  public @NotNull Boolean visitAccess(@NotNull ElimTerm.Access lhs, @NotNull Term preRhs, @NotNull Term type) {
+    return passDown(lhs, preRhs, type);
+  }
+
   private @NotNull Boolean passDown(@NotNull Term lhs, @NotNull Term preRhs, @NotNull Term type) {
     var inferred = untypedDefeq.compare(lhs, preRhs);
     if (inferred == null) return false;

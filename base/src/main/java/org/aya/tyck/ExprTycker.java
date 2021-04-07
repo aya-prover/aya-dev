@@ -329,7 +329,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       throw new TyckerException();
     }
     // TODO[ice]: instantiate the type
-    throw new UnsupportedOperationException("TODO");
+    var field = projected.get();
+    return new Result(new ElimTerm.Access(projectee.wellTyped, field.ref()), field.result());
   }
 
   private Result visitIntProj(Expr tuple, int ix, Result projectee) {
