@@ -310,14 +310,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var from = expr.tup();
     var projectee = from.accept(this, null);
     var result = expr.ix().fold(
-      ix -> visitIntProj(from, ix, projectee),
-      sp -> visitStructProj(from, sp, projectee)
+      ix -> visitProj(from, ix, projectee),
+      sp -> visitAccess(from, sp, projectee)
     );
     if (term != null) unifyTyThrowing(term, result.type, expr);
     return result;
   }
 
-  private Result visitStructProj(Expr struct, String fieldName, Result projectee) {
+  private Result visitAccess(Expr struct, String fieldName, Result projectee) {
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof CallTerm.Struct structCall))
       return wantButNo(struct, whnf, "struct type");
@@ -331,14 +331,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     // TODO[ice]: instantiate the type
     var field = projected.get();
-    var ctxTele = Def.defContextTele(field.ref());
-    var tele = Def.defTele(field.ref());
-    var access = new CallTerm.Access(projectee.wellTyped, field.ref(),
+    var fieldRef = field.ref();
+    var ctxTele = Def.defContextTele(fieldRef);
+    var tele = Def.defTele(fieldRef);
+    var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), tele.map(Term.Param::toArg));
-    return new Result(IntroTerm.Lambda.make(tele, access), field.result());
+    return new Result(IntroTerm.Lambda.make(tele, access), FormTerm.Pi.make(false, tele, field.result()));
   }
 
-  private Result visitIntProj(Expr tuple, int ix, Result projectee) {
+  private Result visitProj(Expr tuple, int ix, Result projectee) {
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof FormTerm.Sigma sigma && !sigma.co()))
       return wantButNo(tuple, whnf, "sigma type");
