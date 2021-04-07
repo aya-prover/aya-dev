@@ -895,15 +895,10 @@ public sealed interface Doc extends Docile {
     return makeCat(first, second, Cat::new);
   }
 
-  private static @NotNull Doc makeCat(@NotNull Doc first,
-                                      @NotNull Doc second,
-                                      @NotNull BinaryOperator<Doc> maker) {
-    if (first instanceof Empty) {
-      return second;
-    }
-    if (second instanceof Empty) {
-      return first;
-    }
+  private static @NotNull Doc
+  makeCat(@NotNull Doc first, @NotNull Doc second, @NotNull BinaryOperator<Doc> maker) {
+    if (first instanceof Empty) return second;
+    if (second instanceof Empty) return first;
     return maker.apply(first, second);
   }
 

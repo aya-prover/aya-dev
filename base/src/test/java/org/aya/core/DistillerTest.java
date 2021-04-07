@@ -43,8 +43,9 @@ public class DistillerTest {
   }
 
   @Test public void neo() {
-    var defs = TyckDeclTest.successTyckDecls("""
+    assertFalse(declDoc("""
       \\prim I \\prim left
+      \\prim right
 
       \\struct Pair (A : \\Set) (B : \\Set) : \\Set
         | fst : A
@@ -56,9 +57,20 @@ public class DistillerTest {
 
       \\def make-pair (A B : \\Set) (a : A) (b : B) : Pair A B =>
         \\new Pair A B { | fst => a | snd => b }
-      """);
-    assertFalse(defs.get(3).toDoc().debugRender().isEmpty());
-    assertFalse(defs.get(4).toDoc().debugRender().isEmpty());
+      """).renderToHtml().isEmpty());
+  }
+
+  @Test public void path() {
+    assertFalse(declDoc("""
+      \\prim I \\prim left \\prim right
+      \\struct Path (A : \\Pi I -> \\Set) (a : A left) (b : A right) : \\Set
+       | at (i : I) : A i {
+         | left => a
+         | right => b
+       }
+      \\def path {A : \\Pi I -> \\Set} (p : \\Pi (i : I) -> A i)
+        => \\new Path A (p left) (p right) { | at i => p i }
+      """).renderToTeX().isEmpty());
   }
 
   @AfterEach public void tearDown() {
