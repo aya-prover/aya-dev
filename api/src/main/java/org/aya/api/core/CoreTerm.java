@@ -10,13 +10,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author kiva
+ * @author kiva, ice1000
  */
 @ApiStatus.NonExtendable
 public interface CoreTerm extends Docile {
   int findUsages(@NotNull Var var);
   @NotNull CoreTerm normalize(@NotNull NormalizeMode mode);
   @Nullable CorePat toPat();
-  // TODO[kiva]: what in general does a term should have to expose to the outside world?
-  //  ice: synthType, isType, etc.
+  @NotNull CoreTerm strip();
 }
