@@ -2,6 +2,7 @@
 [![](https://jitpack.io/v/aya-prover/aya-dev.svg)](https://jitpack.io/#aya-prover/aya-dev)
 [![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
+[![](https://tokei.rs/b1/github/aya-prover/aya-dev?category=code)](https://github.com/XAMPPRocky/tokei)
 
 You need Java 16 to setup this project.
 

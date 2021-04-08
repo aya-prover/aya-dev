@@ -1,4 +1,4 @@
-name: Gradle Check
+name : test
 on:
   push:
     branches:
