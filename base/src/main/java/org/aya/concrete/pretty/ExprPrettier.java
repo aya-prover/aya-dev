@@ -78,7 +78,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     return TermPrettier.INSTANCE.visitCalls(
       expr.function().toDoc(),
       expr.arguments(),
-      arg -> arg.accept(this, true),
+      (nest, arg) -> arg.accept(this, nest),
       nestedCall
     );
   }

@@ -13,7 +13,7 @@ import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * @author ice1000, kiva
@@ -37,36 +37,38 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override
   public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
-    return Doc.cat(
+    var doc = Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\lam")),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.symbol(" => "),
       term.body().toDoc()
     );
+    return nestedCall ? Doc.wrap("(", ")", doc) : doc;
   }
 
   @Override
   public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
     // TODO[kiva]: term.co
-    return Doc.cat(
+    var doc = Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\Pi")),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.symbol(" -> "),
       term.body().toDoc()
     );
+    return nestedCall ? Doc.wrap("(", ")", doc) : doc;
   }
 
-  @Override
-  public Doc visitSigma(@NotNull FormTerm.Sigma term, Boolean nestedCall) {
-    return Doc.cat(
+  @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Boolean nestedCall) {
+    var doc = Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\Sig")),
       Doc.plain(" "),
       visitTele(term.params().view().dropLast(1)),
       Doc.plain(" ** "),
       term.params().last().toDoc()
     );
+    return nestedCall ? Doc.wrap("(", ")", doc) : doc;
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
@@ -126,7 +128,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     var ref = term.ref();
     var doc = Doc.cat(term.of().toDoc(), Doc.symbol("."),
       Doc.linkRef(Doc.styled(TermPrettier.FIELD_CALL, ref.name()), ref.hashCode()));
-    return visitCalls(doc, term.fieldArgs(), t -> t.accept(this, true), nestedCall);
+    return visitCalls(doc, term.fieldArgs(), (n, t) -> t.accept(this, n), nestedCall);
   }
 
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
@@ -138,7 +140,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
     return visitCalls(fn.toDoc(), Seq.of(arg),
-      term -> term.accept(this, true), nestedCall);
+      (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
   private Doc visitCalls(
@@ -147,12 +149,12 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     boolean nestedCall
   ) {
     var hyperLink = Doc.linkRef(Doc.styled(style, fn.name()), fn.hashCode());
-    return visitCalls(hyperLink, args, term -> term.accept(this, true), nestedCall);
+    return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
   public <T extends Docile> @NotNull Doc visitCalls(
     @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
-    @NotNull Function<T, Doc> formatter, boolean nestedCall
+    @NotNull BiFunction<Boolean, T, Doc> formatter, boolean nestedCall
   ) {
     if (args.isEmpty()) {
       return fn;
@@ -165,10 +167,9 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
           // Do not use `arg.term().toDoc()` because we want to
           // wrap args in parens if we are inside a nested call
           // such as `suc (suc (suc n))`
-          var argDoc = formatter.apply(arg.term());
           return arg.explicit()
-            ? argDoc
-            : Doc.wrap("{", "}", argDoc);
+            ? formatter.apply(true, arg.term())
+            : Doc.wrap("{", "}", formatter.apply(false, arg.term()));
         }))
     );
     return nestedCall ? Doc.wrap("(", ")", call) : call;
