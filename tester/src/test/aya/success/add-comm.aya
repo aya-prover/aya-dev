@@ -1,0 +1,43 @@
+\prim I
+\prim left
+\prim right
+\struct Path (A : \Pi I -> \Set) (a : A left) (b : A right) : \Set
+ | at (i : I) : A i {
+   | left => a
+   | right => b
+ }
+\def path {A : \Pi I -> \Set} (p : \Pi (i : I) -> A i)
+  => \new Path A (p left) (p right) { | at i => p i }
+\def Eq {A : \Set} (a b : A) : \Set => Path (\lam i => A) a b
+\def idp {A : \Set} (a : A) : Eq a a => path (\lam i => a)
+
+\prim arcoe
+\def hfill2d {A : \Set}
+  {a b c d : A}
+  (p : Eq a b)
+  (q : Eq b d)
+  (r : Eq a c)
+  (i j : I) : A
+  => (arcoe (\lam k => Eq ((r.at) k) ((q.at) k)) p i .at) j
+\def hcomp2d {A : \Set}
+  {a b c d : A}
+  (p : Eq a b)
+  (q : Eq b d)
+  (r : Eq a c) : Eq c d
+  => path (hfill2d p q r right)
+
+\def sym {A : \Set} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) (idp a) p
+\def trans {A : \Set} {a b c : A} (p : Eq a b) (q : Eq b c) : Eq a c => hcomp2d p q (idp a)
+\def pmap {A B : \Set} (f : \Pi A -> B) {a b : A} (p : Eq a b)
+  : Eq (f a) (f b) => path (\lam i => f ((p.at) i))
+\open \data Nat : \Set | zero | suc Nat
+
+\def addN (a b : Nat) : Nat
+ | zero, a => a
+ | a, zero => a
+ | suc a, b => suc (addN a b)
+ | a, suc b => suc (addN a b)
+
+\def addN-comm (a b : Nat) : Eq (addN a b) (addN b a)
+  | zero, a => idp a
+  | suc a, b => pmap suc (addN-comm a b)

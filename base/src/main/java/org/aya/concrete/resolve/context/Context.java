@@ -30,8 +30,7 @@ public interface Context {
 
   @NotNull Reporter reporter();
 
-  @Contract("_->fail")
-  default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
+  @Contract("_->fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
     reporter().report(problem);
     throw new ResolvingInterruptedException();
   }
