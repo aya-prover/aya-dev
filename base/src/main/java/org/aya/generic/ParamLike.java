@@ -21,11 +21,17 @@ public interface ParamLike<Expr extends Docile> extends Docile {
   @NotNull Var ref();
   @Nullable Expr type();
   @Override default @NotNull Doc toDoc() {
+    return toDoc(nameDoc());
+  }
+  default @NotNull Doc nameDoc() {
+    return DefPrettier.plainLink(ref());
+  }
+  default @NotNull Doc toDoc(@NotNull Doc names) {
     var explicit = explicit();
     var type = type();
     return Doc.hcat(
       Doc.plain(explicit ? "(" : "{"),
-      DefPrettier.plainLink(ref()),
+      names,
       type == null ? Doc.empty() : Doc.hcat(Doc.plain(" : "), type.toDoc()),
       Doc.plain(explicit ? ")" : "}")
     );

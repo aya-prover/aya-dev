@@ -10,8 +10,11 @@ import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author ice1000
@@ -35,8 +38,20 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
-    return telescope.isEmpty() ? Doc.empty() : Doc.cat(Doc.plain(" "),
-      Doc.hsep(telescope.view().map(Term.Param::toDoc)));
+    if (telescope.isEmpty()) return Doc.empty();
+    var last = telescope.first();
+    var buf = Buffer.<Doc>of();
+    var names = Buffer.of(last.nameDoc());
+    for (var param : telescope.view().drop(1)) {
+      if (!Objects.equals(param.type(), last.type())) {
+        buf.append(last.toDoc(Doc.hsep(names)));
+        names.clear();
+        last = param;
+      }
+      names.append(param.nameDoc());
+    }
+    buf.append(last.toDoc(Doc.hsep(names)));
+    return Doc.cat(Doc.plain(" "), Doc.hsep(buf));
   }
 
   private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
