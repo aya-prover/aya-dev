@@ -1,4 +1,4 @@
-name: Commit Message Check
+name: commit message
 on:
   pull_request:
     branches:
