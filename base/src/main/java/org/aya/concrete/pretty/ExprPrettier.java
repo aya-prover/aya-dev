@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.pretty;
 
+import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.core.pretty.TermPrettier;
 import org.aya.pretty.doc.Doc;
@@ -124,5 +125,15 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
 
   @Override public Doc visitLitString(Expr.@NotNull LitStringExpr expr, Boolean nestedCall) {
     return Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(expr.string()) + "\"");
+  }
+
+  @Override
+  public Doc visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Boolean nestedCall) {
+    return TermPrettier.INSTANCE.visitCalls(
+      binOpSeq.seq().first().expr().toDoc(),
+      binOpSeq.seq().view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
+      (nest, arg) -> arg.accept(this, nest),
+      nestedCall
+    );
   }
 }

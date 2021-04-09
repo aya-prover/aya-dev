@@ -23,6 +23,7 @@ import org.aya.parser.AyaParser;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.LinkedBuffer;
 import org.glavo.kala.collection.mutable.MutableHashSet;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.control.Option;
@@ -256,19 +257,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
-    var argument = ctx.argument();
-    var fn = ctx.expr();
-    return new Expr.AppExpr(
-      sourcePosOf(ctx),
-      visitExpr(fn),
-      visitArguments(argument.stream())
-    );
-  }
-
-  private @NotNull ImmutableSeq<Arg<Expr>> visitArguments(@NotNull Stream<AyaParser.ArgumentContext> args) {
-    return args
+    var head = new BinOpParser.Elem(visitExpr(ctx.expr()), true);
+    var tail = ctx.argument().stream()
       .map(this::visitArgument)
-      .collect(ImmutableSeq.factory());
+      .map(a -> new BinOpParser.Elem(a.term(), a.explicit()))
+      .collect(LinkedBuffer.factory());
+    tail.push(head);
+    return new Expr.BinOpSeq(sourcePosOf(ctx), tail.toImmutableSeq());
   }
 
   @Override public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {

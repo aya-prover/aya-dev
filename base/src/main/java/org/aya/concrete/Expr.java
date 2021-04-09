@@ -8,6 +8,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.concrete.parse.BinOpParser;
 import org.aya.concrete.pretty.ExprPrettier;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
@@ -67,6 +68,7 @@ public sealed interface Expr extends ConcreteExpr {
     R visitNew(@NotNull NewExpr expr, P p);
     R visitLitInt(@NotNull LitIntExpr expr, P p);
     R visitLitString(@NotNull LitStringExpr expr, P p);
+    R visitBinOpSeq(@NotNull BinOpSeq binOpSeq, P p);
   }
 
   interface BaseVisitor<P, R> extends Visitor<P, R> {
@@ -108,6 +110,9 @@ public sealed interface Expr extends ConcreteExpr {
       return catchUnhandled(expr, p);
     }
     @Override default R visitLitString(@NotNull LitStringExpr expr, P p) {
+      return catchUnhandled(expr, p);
+    }
+    @Override default R visitBinOpSeq(@NotNull BinOpSeq expr, P p) {
       return catchUnhandled(expr, p);
     }
   }
@@ -281,6 +286,19 @@ public sealed interface Expr extends ConcreteExpr {
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitString(this, p);
+    }
+  }
+
+  /**
+   * @author kiva
+   */
+  record BinOpSeq(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<BinOpParser.Elem> seq
+  ) implements Expr {
+    @Override
+    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitBinOpSeq(this, p);
     }
   }
 
