@@ -1,13 +1,13 @@
-\def id {A : \Set} (a : A) : A
+def id {A : \Set} (a : A) : A
  | {A}, a => a
 
-\def id2 {A : \Set} (a : A) : A
+def id2 {A : \Set} (a : A) : A
  | a => a
 
-\open \data Nat : \Set
+open data Nat : \Set
  | zero | suc Nat
 
-\def add {a b : Nat} : Nat
+def add {a b : Nat} : Nat
  | {zero}, {b} => b
  | {a}, {zero} => a
  | {suc a}, {b} => suc (add {a} {b})

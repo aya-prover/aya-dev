@@ -1,7 +1,7 @@
 In file $FILE:2:6 ->
 
-  1 | \prim I
-  2 | \prim I
+  1 | prim I
+  2 | prim I
             ^^
   
 Error: Redefinition of primitive `I`

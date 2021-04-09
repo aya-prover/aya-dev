@@ -39,9 +39,9 @@ assoc : INFIX
       | TWIN
       ;
 
-abuse : '\\abusing' (LBRACE stmt* '}' | stmt);
+abuse : 'abusing' (LBRACE stmt* '}' | stmt);
 
-fnDecl : '\\def' fnModifiers* assoc? ID tele* type? fnBody abuse?;
+fnDecl : 'def' fnModifiers* assoc? ID tele* type? fnBody abuse?;
 
 fnBody : IMPLIES expr
        | ('|' clause)+ ;
@@ -50,15 +50,15 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : '\\struct' ID tele* type? ('\\extends' idsComma)? ('|' field)* abuse?;
+structDecl : 'struct' ID tele* type? ('extends' idsComma)? ('|' field)* abuse?;
 
-primDecl : '\\prim' ID tele* type? ;
+primDecl : 'prim' ID tele* type? ;
 
 field : COERCE? ID tele* type clauses? # fieldDecl
       | ID tele* type? IMPLIES expr    # fieldImpl
       ;
 
-dataDecl : (PUBLIC? OPEN)? '\\data' ID tele* type? dataBody* abuse?;
+dataDecl : (PUBLIC? OPEN)? 'data' ID tele* type? dataBody* abuse?;
 
 dataBody : ('|' dataCtor)       # dataCtors
          | dataCtorClause       # dataClauses
@@ -68,7 +68,7 @@ dataCtor : COERCE? ID tele* clauses?;
 
 dataCtorClause : '|' patterns IMPLIES dataCtor;
 
-module : '\\module' ID LBRACE stmt* '}';
+module : 'module' ID LBRACE stmt* '}';
 
 // expressions
 expr : atom argument*                  # app
@@ -140,13 +140,13 @@ INFIX : '`' ID '`';
 POSTFIX : '`' ID;
 
 // associativities
-INFIXN : '\\infix';
-INFIXL : '\\infixl';
-INFIXR : '\\infixr';
-FIX : '\\fix';
-FIXL : '\\fixl';
-FIXR : '\\fixr';
-TWIN : '\\twin';
+INFIXN : 'infix';
+INFIXL : 'infixl';
+INFIXR : 'infixr';
+FIX : 'fix';
+FIXL : 'fixl';
+FIXR : 'fixr';
+TWIN : 'twin';
 
 // universe
 UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h' | 'h-')? 'Type' NUMBER?;
@@ -155,15 +155,15 @@ PROP : '\\Prop';
 
 // other keywords
 AS : '\\as';
-OPEN : '\\open';
-IMPORT : '\\import';
-PUBLIC : '\\public';
-PRIVATE : '\\private';
-USING : '\\using';
-HIDING : '\\hiding';
-COERCE : '\\coerce';
-ERASE : '\\erase';
-INLINE : '\\inline';
+OPEN : 'open';
+IMPORT : 'import';
+PUBLIC : 'public';
+PRIVATE : 'private';
+USING : 'using';
+HIDING : 'hiding';
+COERCE : 'coerce';
+ERASE : 'erase';
+INLINE : 'inline';
 SIGMA : '\\Sig' | '\u03A3';
 LAMBDA : '\\lam' | '\u03BB';
 PI : '\\Pi' | '\u03A0';

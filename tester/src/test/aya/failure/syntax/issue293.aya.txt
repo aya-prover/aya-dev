@@ -2,7 +2,7 @@ In file $FILE:7:38 ->
 
   5 |   | 我们
   6 |   | 他们
-  7 | \def 测测测测测测测测测 : 单人代词 => 我们
+  7 | def 测测测测测测测测测 : 单人代词 => 我们
                                             ^-^
   
 Error: The expected type `单人代词` does not match the actual type `多人代词`

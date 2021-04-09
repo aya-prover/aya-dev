@@ -29,8 +29,8 @@ public class PatCCTest {
 
   @Test public void addCC() {
     var decls = TyckDeclTest.successTyckDecls("""
-      \\open \\data Nat : \\Set | zero | suc Nat
-      \\def add (a b : Nat) : Nat
+      open data Nat : \\Set | zero | suc Nat
+      def add (a b : Nat) : Nat
        | zero, b => b
        | a, zero => a
        | suc a, b => suc (add a b)
@@ -44,8 +44,8 @@ public class PatCCTest {
 
   @Test public void maxCC() {
     var decls = TyckDeclTest.successTyckDecls("""
-      \\open \\data Nat : \\Set | zero | suc Nat
-      \\def max (a b : Nat) : Nat
+      open data Nat : \\Set | zero | suc Nat
+      def max (a b : Nat) : Nat
        | zero, b => b
        | a, zero => a
        | suc a, suc b => suc (max a b)""");
@@ -58,9 +58,9 @@ public class PatCCTest {
 
   @Test public void tupleCC() {
     var decls = TyckDeclTest.successTyckDecls("""
-      \\open \\data Nat : \\Set | zero | suc Nat
-      \\open \\data Unit : \\Set | unit Nat
-      \\def max (a : \\Sig Nat ** Nat) (b : Unit) : Nat
+      open data Nat : \\Set | zero | suc Nat
+      open data Unit : \\Set | unit Nat
+      def max (a : \\Sig Nat ** Nat) (b : Unit) : Nat
        | (zero, b), unit x => b
        | (a, zero), y => a
        | (suc a, suc b), unit y => suc (max (a, b) (unit zero))""");

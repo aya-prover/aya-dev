@@ -27,7 +27,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
 
   @Override public Doc visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
     return Doc.cat(
-      Doc.styled(TermPrettier.KEYWORD, "\\import"),
+      Doc.styled(TermPrettier.KEYWORD, "import"),
       Doc.plain(" "),
       Doc.symbol(cmd.path().joinToString("::")),
       Doc.plain(" "),
@@ -41,13 +41,13 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     return Doc.cat(
       visitAccess(cmd.accessibility()),
       Doc.plain(" "),
-      Doc.styled(TermPrettier.KEYWORD, "\\open"),
+      Doc.styled(TermPrettier.KEYWORD, "open"),
       Doc.plain(" "),
       Doc.plain(cmd.path().joinToString("::")),
       Doc.plain(" "),
       Doc.styled(TermPrettier.KEYWORD, switch (cmd.useHide().strategy()) {
-        case Using -> "\\using ";
-        case Hiding -> "\\hiding ";
+        case Using -> "using ";
+        case Hiding -> "hiding ";
       }),
       Doc.plain("("),
       Doc.plain(cmd.useHide().list().joinToString(", ")),
@@ -74,7 +74,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.styled(TermPrettier.KEYWORD, "\\data"),
+      Doc.styled(TermPrettier.KEYWORD, "data"),
       Doc.plain(" "),
       Doc.plain(decl.ref.name()),
       visitTele(decl.telescope),
@@ -116,7 +116,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.styled(TermPrettier.KEYWORD, "\\struct"),
+      Doc.styled(TermPrettier.KEYWORD, "struct"),
       Doc.plain(" "),
       Doc.plain(decl.ref.name()),
       visitTele(decl.telescope),
@@ -149,7 +149,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.styled(TermPrettier.KEYWORD, "\\def"),
+      Doc.styled(TermPrettier.KEYWORD, "def"),
       decl.modifiers.isEmpty() ? Doc.plain(" ") :
         decl.modifiers.stream().map(this::visitModifier).reduce(Doc.empty(), Doc::hsep),
       Doc.plain(decl.ref.name()),
@@ -162,7 +162,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
         Doc.hcat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
-        : Doc.cat(Doc.plain(" "), Doc.styled(TermPrettier.KEYWORD, "\\abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
+        : Doc.cat(Doc.plain(" "), Doc.styled(TermPrettier.KEYWORD, "abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
     );
   }
 

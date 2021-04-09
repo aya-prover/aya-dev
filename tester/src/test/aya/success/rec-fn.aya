@@ -1,2 +1,2 @@
-\def boom : \oo-Type => boom
-\def boomTIZ (a : \Set) : \oo-Type => boomTIZ a
+def boom : \oo-Type => boom
+def boomTIZ (a : \Set) : \oo-Type => boomTIZ a

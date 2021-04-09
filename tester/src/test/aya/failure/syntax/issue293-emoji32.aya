@@ -1,14 +1,14 @@
-\open \data 😊 : \Set
+open data 😊 : \Set
   | 🐎
   | 🐴
 
-\open \data 😭 : \Set
+open data 😭 : \Set
   | 🐰
   | 🐇
 
-\open \data 😂 : \Set
+open data 😂 : \Set
   | 🐒
   | 🐵
 
-\def u : 😊 => 🐒
+def u : 😊 => 🐒
 

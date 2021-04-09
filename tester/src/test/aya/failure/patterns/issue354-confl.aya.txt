@@ -2,7 +2,7 @@ In file $FILE:9:5 ->
 
   7 |  | neg Nat { | zero => pos zero }
   8 | 
-  9 | \def abs (n : Int) : Nat
+  9 | def abs (n : Int) : Nat
            ^-^
   
 Error: The 2nd clause matches on a constructor with condition(s). When checking the 1st condition, we failed to unify `zero` and `suc zero`

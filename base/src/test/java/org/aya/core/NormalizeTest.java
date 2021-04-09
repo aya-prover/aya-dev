@@ -75,16 +75,16 @@ public class NormalizeTest extends LispTestCase {
 
   @Test public void unfoldPatterns() {
     var defs = TyckDeclTest.successTyckDecls("""
-      \\open \\data Nat : \\Set | zero | suc Nat
-      \\def tracy (a b : Nat) : Nat
+      open data Nat : \\Set | zero | suc Nat
+      def tracy (a b : Nat) : Nat
        | zero, a => a
        | a, zero => a
        | suc a, b => suc (tracy a b)
        | a, suc b => suc (tracy a b)
-      \\def xyr : Nat => tracy zero (suc zero)
-      \\def kiva : Nat => tracy (suc zero) zero
-      \\def overlap (a : Nat) : Nat => tracy a zero
-      \\def overlap2 (a : Nat) : Nat => tracy zero a""");
+      def xyr : Nat => tracy zero (suc zero)
+      def kiva : Nat => tracy (suc zero) zero
+      def overlap (a : Nat) : Nat => tracy a zero
+      def overlap2 (a : Nat) : Nat => tracy zero a""");
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i))
       .body().getLeftValue().normalize(NormalizeMode.NF);
     assertTrue(normalizer.apply(2) instanceof CallTerm.Con conCall
@@ -99,13 +99,13 @@ public class NormalizeTest extends LispTestCase {
 
   @Test public void unfoldPrim() {
     var defs = TyckDeclTest.successTyckDecls("""
-      \\data Nat : \\Set | zero | suc Nat
-      \\prim I
-      \\prim left
-      \\prim right
-      \\prim arcoe
-      \\def xyr : Nat => arcoe (\\lam i => Nat) Nat::zero left
-      \\def kiva : Nat => arcoe (\\lam i => Nat) (Nat::suc Nat::zero) right""");
+      data Nat : \\Set | zero | suc Nat
+      prim I
+      prim left
+      prim right
+      prim arcoe
+      def xyr : Nat => arcoe (\\lam i => Nat) Nat::zero left
+      def kiva : Nat => arcoe (\\lam i => Nat) (Nat::suc Nat::zero) right""");
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i))
       .body().getLeftValue().normalize(NormalizeMode.NF);
     assertTrue(normalizer.apply(5) instanceof CallTerm.Con conCall

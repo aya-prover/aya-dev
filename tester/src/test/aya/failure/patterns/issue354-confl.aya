@@ -1,11 +1,11 @@
-\open \data Nat : \Set
+open data Nat : \Set
  | zero
  | suc Nat
 
-\open \data Int : \Set
+open data Int : \Set
  | pos Nat
  | neg Nat { | zero => pos zero }
 
-\def abs (n : Int) : Nat
+def abs (n : Int) : Nat
  | pos n => suc n
  | neg n => n

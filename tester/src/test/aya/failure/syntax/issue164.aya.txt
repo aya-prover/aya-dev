@@ -1,6 +1,6 @@
 In file $FILE:3:27 ->
 
-  1 | \def uncurry (A : \Set) (B : \Set) (C : \Set)
+  1 | def uncurry (A : \Set) (B : \Set) (C : \Set)
   2 |              (f : \Pi A B -> C)
   3 |              (p : \Sig A  B) : C
                                  ^^

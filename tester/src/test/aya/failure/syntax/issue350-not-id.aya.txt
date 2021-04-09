@@ -1,6 +1,6 @@
 In file $FILE:1:22 ->
 
-  1 | \def x : \Set => \lam 1 => x
+  1 | def x : \Set => \lam 1 => x
                             ^^
   
 Error: Parser error: `1` is not a parameter name

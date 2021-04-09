@@ -1,7 +1,7 @@
-\struct Pair (A : \Set) (B : \Set) : \Set
+struct Pair (A : \Set) (B : \Set) : \Set
   | fst : A
   | snd : B
   | we-are-together : \Sig A ** B => (fst, snd)
 
-\def make-pair (A B : \Set) (a : A) (b : B) : Pair A B =>
+def make-pair (A B : \Set) (a : A) (b : B) : Pair A B =>
   \new Pair A B { }

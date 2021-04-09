@@ -65,7 +65,7 @@ public sealed interface Stmt extends Docile
    * @author re-xyr
    */
   enum Accessibility {
-    Private("\\private"),
+    Private("private"),
     Public("\\public");
     public final @NotNull String keyword;
 

@@ -33,8 +33,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TyckDeclTest {
   @Test
   public void testIdFunc() {
-    idFuncTestCase("\\def id {A : \\Set} (a : A) : A => a");
-    idFuncTestCase("\\def id {A : \\Set} (a : A) => a");
+    idFuncTestCase("def id {A : \\Set} (a : A) : A => a");
+    idFuncTestCase("def id {A : \\Set} (a : A) => a");
   }
 
   public void idFuncTestCase(@NotNull @NonNls @Language("TEXT") String code) {
@@ -60,8 +60,8 @@ public class TyckDeclTest {
   @Test
   public void ctorPatScoping() {
     var defs = successTyckDecls("""
-      \\data Nat : \\Set | zero | suc Nat
-      \\def xyr (zero : Nat) : Nat
+      data Nat : \\Set | zero | suc Nat
+      def xyr (zero : Nat) : Nat
         | zero => zero
         | suc n => zero""");
     var nat = (DataDef) defs.get(0);

@@ -1,2 +1,2 @@
-\def test (a : \Set) : \Set
+def test (a : \Set) : \Set
  | x y => a

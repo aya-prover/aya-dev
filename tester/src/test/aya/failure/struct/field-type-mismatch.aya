@@ -1,14 +1,14 @@
-\open \data Nat : \Set
+open data Nat : \Set
   | zero
   | suc Nat
 
-\struct Pair (A : \Set) (B : \Set) : \Set
+struct Pair (A : \Set) (B : \Set) : \Set
   | fst : A
   | snd : B
   | we-are-together : \Sig A ** B => (fst, snd)
 
-\def make-pair (A B : \Set) (a : A) (b : B) : Pair A B =>
+def make-pair (A B : \Set) (a : A) (b : B) : Pair A B =>
   \new Pair A B { | fst => a | snd => b }
 
-\def test-nat-pair : Pair Nat Nat =>
+def test-nat-pair : Pair Nat Nat =>
   \new Pair Nat Nat { | fst => make-pair Nat Nat zero zero | snd => suc zero }

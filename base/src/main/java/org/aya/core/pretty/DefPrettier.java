@@ -28,7 +28,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
     var line1 = Doc.hcat(
-      Doc.styled(TermPrettier.KEYWORD, "\\def "),
+      Doc.styled(TermPrettier.KEYWORD, "def "),
       link(def.ref(), TermPrettier.FN_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc());
@@ -70,7 +70,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
     var line1 = Doc.hcat(
-      Doc.styled(TermPrettier.KEYWORD, "\\data"),
+      Doc.styled(TermPrettier.KEYWORD, "data"),
       Doc.plain(" "),
       link(def.ref(), TermPrettier.DATA_CALL),
       visitTele(def.telescope()),
@@ -103,7 +103,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
     return Doc.vcat(Doc.hcat(
-      Doc.styled(TermPrettier.KEYWORD, "\\struct"),
+      Doc.styled(TermPrettier.KEYWORD, "struct"),
       Doc.plain(" "),
       link(def.ref(), TermPrettier.STRUCT_CALL),
       visitTele(def.telescope()),
@@ -126,7 +126,7 @@ public final class DefPrettier implements Def.Visitor<Unit, @NotNull Doc> {
 
   public static @NotNull Doc primDoc(Var ref) {
     return Doc.hcat(
-      Doc.styled(TermPrettier.KEYWORD, "\\prim "),
+      Doc.styled(TermPrettier.KEYWORD, "prim "),
       Doc.linkDef(Doc.styled(TermPrettier.FN_CALL, ref.name()), ref.hashCode())
     );
   }

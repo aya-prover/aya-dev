@@ -1,7 +1,7 @@
 In file $FILE:2:10 ->
 
-  1 | \def Nat : \Set | zero
-  2 | \def p => Nat::suc Nat::zero
+  1 | def Nat : \Set | zero
+  2 | def p => Nat::suc Nat::zero
                 ^------^
   
 Error: The qualified name referred to by `Nat::suc` is not defined in the current scope
