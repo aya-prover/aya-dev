@@ -1,10 +1,10 @@
-In file $FILE:10:29 ->
+In file $FILE:10:28 ->
 
-   8 |   | 🀎
+   8 |   | 馃��
    9 | 
-  10 | def u : ❤️守❤️护❤️最❤️好❤️的❤️ => 🀎
-                                    ^^
+  10 | def u : 鉂わ笍瀹堚潳锔忔姢鉂わ笍鏈�鉂わ笍濂解潳锔忕殑鉂わ笍 => 馃��
+                                   ^^
   
-Error: The expected type `❤️守❤️护❤️最❤️好❤️的❤️` does not match the actual type `❤️`
+Error: The expected type `鉂わ笍瀹堚潳锔忔姢鉂わ笍鏈�鉂わ笍濂解潳锔忕殑鉂わ笍` does not match the actual type `鉂わ笍`
 Tycking interrupted due to errors.
 What are you doing?

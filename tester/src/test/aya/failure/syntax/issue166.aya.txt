@@ -1,8 +1,8 @@
 In file $FILE:1:0 ->
 
   1 | \fuck
-      ^-^
+      ^^
   
-Error: Parser error: token recognition error at: '\fu'
+Error: Parser error: token recognition error at: '\f'
 Parsing interrupted due to errors.
 What are you doing?

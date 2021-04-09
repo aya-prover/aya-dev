@@ -1,9 +1,9 @@
-In file $FILE:9:16 ->
+In file $FILE:9:15 ->
 
   7 |   | false
   8 | 
   9 | def u : Nat => true
-                      ^--^
+                     ^--^
   
 Error: The expected type `Nat` does not match the actual type `Bool`
 Tycking interrupted due to errors.

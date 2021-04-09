@@ -1,7 +1,7 @@
-In file $FILE:1:6 ->
+In file $FILE:1:5 ->
 
   1 | prim YYUT
-            ^--^
+           ^--^
   
 Error: Unknown primitive `YYUT`
 Parsing interrupted due to errors.

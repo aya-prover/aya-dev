@@ -1,9 +1,9 @@
-In file $FILE:5:5 ->
+In file $FILE:5:4 ->
 
   3 |  | suc Nat
   4 | 
   5 | def addN (a b : Nat) : Nat
-           ^--^
+          ^--^
   
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify `suc zero` and `zero`
 Tycking interrupted due to errors.

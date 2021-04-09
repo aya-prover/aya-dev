@@ -1,9 +1,9 @@
-In file $FILE:7:5 ->
+In file $FILE:7:4 ->
 
   5 |  | suc Nat
   6 | 
   7 | def addN (a : I) : Nat
-           ^--^
+          ^--^
   
 Error: Cannot perform pattern matching `left`
 Tycking interrupted due to errors.
