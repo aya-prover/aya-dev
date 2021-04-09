@@ -241,6 +241,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   public @NotNull Expr visitExpr(AyaParser.ExprContext ctx) {
+    if (ctx instanceof AyaParser.SingleContext sin) return visitAtom(sin.atom());
     if (ctx instanceof AyaParser.AppContext app) return visitApp(app);
     if (ctx instanceof AyaParser.ProjContext proj) return visitProj(proj);
     if (ctx instanceof AyaParser.PiContext pi) return visitPi(pi);
@@ -279,11 +280,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override
   public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
     var argument = ctx.argument();
-    var atom = ctx.atom();
-    if (argument.isEmpty()) return visitAtom(atom);
+    var fn = ctx.expr();
     return new Expr.AppExpr(
       sourcePosOf(ctx),
-      visitAtom(atom),
+      visitExpr(fn),
       visitArguments(argument.stream())
     );
   }
@@ -312,7 +312,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override
   public @NotNull Arg<Expr> visitArgument(AyaParser.ArgumentContext ctx) {
     var atom = ctx.atom();
-    if (atom != null) return Arg.explicit(visitAtom(atom));
+    if (atom != null) {
+      var fixes = ctx.projFix();
+      var expr = visitAtom(atom);
+      var projected = fixes.stream().collect(ImmutableSeq.factory())
+        .foldLeft(Tuple.of(sourcePosOf(ctx), expr),
+          (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
+        ._2;
+      return Arg.explicit(projected);
+    }
     if (ctx.LBRACE() != null) {
       var items = ctx.expr().stream()
         .map(this::visitExpr)
@@ -320,8 +328,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       if (items.sizeEquals(1)) return Arg.implicit(items.first());
       return Arg.implicit(new Expr.TupExpr(sourcePosOf(ctx), items));
     }
-    // TODO: . idFix
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(ctx.getClass().getName());
   }
 
   @Override
@@ -421,13 +428,19 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public Expr.@NotNull ProjExpr visitProj(AyaParser.ProjContext proj) {
-    var number = proj.NUMBER();
+    return buildProj(sourcePosOf(proj), visitExpr(proj.expr()), proj.projFix());
+  }
+
+  private Expr.@NotNull ProjExpr buildProj(@NotNull SourcePos sourcePos,
+                                           @NotNull Expr projectee,
+                                           @NotNull AyaParser.ProjFixContext fix) {
+    var number = fix.NUMBER();
     return new Expr.ProjExpr(
-      sourcePosOf(proj),
-      visitExpr(proj.expr()),
+      sourcePos,
+      projectee,
       number != null
         ? Either.left(Integer.parseInt(number.getText()))
-        : Either.right(proj.ID().getText())
+        : Either.right(fix.ID().getText())
     );
   }
 

@@ -75,7 +75,7 @@ expr : atom                            # single
      | expr argument+                  # app
      | NEW expr '{' newArg* '}'        # new
      | <assoc=right> expr TO expr      # arr
-     | expr '.' (NUMBER | ID)          # proj
+     | expr projFix                    # proj
      | PI tele+ TO expr                # pi
      | SIGMA tele+ '**' expr           # sigma
      | LAMBDA tele+ (IMPLIES expr?)?   # lam
@@ -88,9 +88,11 @@ atom : literal
      | LPAREN (expr ',')* expr? ')'
      ;
 
-argument : atom ('.' (NUMBER | ID))*
+argument : atom projFix*
          | LBRACE (expr ',')* expr? '}'
          ;
+
+projFix : '.' (NUMBER | ID);
 
 clauses : LBRACE clause? ('|' clause)* '}' ;
 clause : patterns (IMPLIES expr)? ;
