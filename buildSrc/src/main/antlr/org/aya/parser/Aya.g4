@@ -71,7 +71,8 @@ dataCtorClause : '|' patterns IMPLIES dataCtor;
 module : 'module' ID LBRACE stmt* '}';
 
 // expressions
-expr : atom argument*                  # app
+expr : atom                            # single
+     | expr argument+                  # app
      | NEW expr '{' newArg* '}'        # new
      | <assoc=right> expr TO expr      # arr
      | expr '.' (NUMBER | ID)          # proj
@@ -87,7 +88,7 @@ atom : literal
      | LPAREN (expr ',')* expr? ')'
      ;
 
-argument : atom
+argument : atom ('.' (NUMBER | ID))*
          | LBRACE (expr ',')* expr? '}'
          ;
 
