@@ -3,6 +3,7 @@
 package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.pretty.StmtPrettier;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.pretty.doc.Doc;
@@ -26,6 +27,10 @@ public sealed interface Stmt extends Docile
 
   default void resolve() {
     accept(StmtResolver.INSTANCE, Unit.unit());
+  }
+
+  default void desugar() {
+    accept(Desugarer.INSTANCE, Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc() {

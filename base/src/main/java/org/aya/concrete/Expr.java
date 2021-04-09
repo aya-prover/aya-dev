@@ -8,6 +8,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.parse.BinOpParser;
 import org.aya.concrete.pretty.ExprPrettier;
 import org.aya.concrete.resolve.context.Context;
@@ -18,6 +19,7 @@ import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +46,10 @@ public sealed interface Expr extends ConcreteExpr {
 
   default @NotNull Expr resolve(Reporter reporter) {
     return resolve(new EmptyContext(reporter));
+  }
+
+  default @NotNull Expr desugar() {
+    return accept(Desugarer.INSTANCE, Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc() {

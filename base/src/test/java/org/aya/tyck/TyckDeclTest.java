@@ -51,6 +51,7 @@ public class TyckDeclTest {
     var decl = ParseTest.parseDecl(code)._1;
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     decl.resolve();
+    decl.desugar();
     var def = decl.tyck(ThrowingReporter.INSTANCE, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
@@ -84,6 +85,7 @@ public class TyckDeclTest {
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     decls.forEach(d -> d.accept(ssr, ctx));
     decls.forEach(Stmt::resolve);
+    decls.forEach(Stmt::desugar);
     return decls
       .map(i -> i instanceof Signatured s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
       .filter(Objects::nonNull);
