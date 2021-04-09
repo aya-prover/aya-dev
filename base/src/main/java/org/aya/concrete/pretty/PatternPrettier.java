@@ -61,7 +61,7 @@ public final class PatternPrettier implements Pattern.Visitor<Boolean, Doc> {
       Doc.styled(TermPrettier.CON_CALL, ctor.name()),
       visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" "))
     );
-    return PatPrettier.ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());
+    return PatPrettier.ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, boolean nestedCall, @NotNull Doc delim) {

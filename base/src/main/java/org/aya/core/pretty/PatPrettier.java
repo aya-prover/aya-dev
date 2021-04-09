@@ -48,20 +48,19 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
     var ctorDoc = Doc.cat(hyperLink(ctor.ref()), visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" ")));
-    return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as());
+    return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
   }
 
   @NotNull private Doc hyperLink(DefVar<?, ?> ref) {
     return Doc.linkRef(Doc.styled(TermPrettier.CON_CALL, ref.name()), ref.hashCode());
   }
 
-  public static @NotNull Doc ctorDoc(Boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs) {
+  public static @NotNull Doc ctorDoc(boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
     boolean as = ctorAs != null;
     var withEx = Doc.wrap(ex ? "" : "{", ex ? "" : "}", ctorDoc);
-    var withAs = as
-      ? Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" \\as "), Doc.plain(ctorAs.name()))
-      : withEx;
-    return !ex && !as ? withAs : nestedCall ? Doc.wrap("(", ")", withAs) : withAs;
+    var withAs = !as ? withEx :
+      Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" \\as "), Doc.plain(ctorAs.name()));
+    return !ex && !as ? withAs : nestedCall && !noParams ? Doc.wrap("(", ")", withAs) : withAs;
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
