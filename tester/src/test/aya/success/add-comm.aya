@@ -18,7 +18,7 @@ def hfill2d {A : \Set}
   (q : Eq b d)
   (r : Eq a c)
   (i j : I) : A
-  => (arcoe (\lam k => Eq ((r.at) k) ((q.at) k)) p i .at) j
+  => (arcoe (\lam k => Eq (r.at k) (q.at k)) p i).at j
 def hcomp2d {A : \Set}
   {a b c d : A}
   (p : Eq a b)

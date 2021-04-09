@@ -114,7 +114,9 @@ public class ParseTest {
     assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.AppExpr app
       && app.arguments().get(0).term() instanceof Expr.ProjExpr
       && app.arguments().get(1).term() instanceof Expr.ProjExpr);
-    assertTrue(parseExpr("f a.1") instanceof Expr.ProjExpr proj
+    assertTrue(parseExpr("f a.1") instanceof Expr.AppExpr app
+      && app.arguments().first().term() instanceof Expr.ProjExpr);
+    assertTrue(parseExpr("(f a).1") instanceof Expr.ProjExpr proj
       && proj.tup() instanceof Expr.AppExpr);
     assertTrue(parseExpr("λ a => a") instanceof Expr.LamExpr);
     assertTrue(parseExpr("\\lam a => a") instanceof Expr.LamExpr);
@@ -127,7 +129,7 @@ public class ParseTest {
     assertTrue(parseExpr("\\Sig a ** b") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     assertTrue(parseExpr("\\Sig a b ** c") instanceof Expr.TelescopicSigmaExpr dt && !dt.co());
     assertTrue(parseExpr("\\Pi (x : \\Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.TelescopicSigmaExpr);
-    parseTo("f a . 1", new Expr.ProjExpr(
+    parseTo("(f a) . 1", new Expr.ProjExpr(
       SourcePos.NONE,
       new Expr.AppExpr(
         SourcePos.NONE,
@@ -135,6 +137,15 @@ public class ParseTest {
         ImmutableSeq.of(Arg.explicit(new Expr.UnresolvedExpr(SourcePos.NONE, "a")))
       ),
       Either.left(1)
+    ));
+    parseTo("f a . 1", new Expr.AppExpr(
+      SourcePos.NONE,
+      new Expr.UnresolvedExpr(SourcePos.NONE, "f"),
+      ImmutableSeq.of(Arg.explicit(new Expr.ProjExpr(
+        SourcePos.NONE,
+        new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
+        Either.left(1)
+      )))
     ));
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
       && app.arguments().sizeEquals(1)
