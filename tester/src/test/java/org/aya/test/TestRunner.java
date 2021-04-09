@@ -82,7 +82,7 @@ public class TestRunner {
         }
       } else {
         System.out.println(); // add line break after `--->`
-        generateWorkflow(file, expectedOutFile, hookOut.toString());
+        generateWorkflow(file, expectedOutFile, hookOut.toString(StandardCharsets.UTF_8));
       }
     }
   }

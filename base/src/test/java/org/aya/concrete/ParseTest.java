@@ -92,13 +92,13 @@ public class ParseTest {
     parseData("data Unit : A abusing {}");
     parseData("data T {A : \\114-Type514} : A abusing {}");
     parseAndPretty("def id {A : \\114-Type514} (a : A) : A => a", """
-        \\public def id {A : \\114-Type514} (a : A) : A => a
+        public def id {A : \\114-Type514} (a : A) : A => a
       """);
     parseAndPretty("def xx {A B : \\114-Type514} (a : A) : A => a", """
-        \\public def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
+        public def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
       """);
     parseAndPretty("data Nat | Z | S Nat", """
-      \\public data Nat
+      public data Nat
         | Z
         | S (_ : Nat)
       """);
@@ -169,60 +169,60 @@ public class ParseTest {
   public void patternParseImplicit() {
     parseAndPretty(
       "def simple | a => a",
-      "\\public def simple\n  | a => a"
+      "public def simple\n  | a => a"
     );
     parseAndPretty(
       "def unary-tuples-are-ignored | (a) => a",
-      "\\public def unary-tuples-are-ignored\n  | a => a"
+      "public def unary-tuples-are-ignored\n  | a => a"
     );
     parseAndPretty(
       "def im-unary-tuples-are-ignored | {a} => a",
-      "\\public def im-unary-tuples-are-ignored\n  | {a} => a"
+      "public def im-unary-tuples-are-ignored\n  | {a} => a"
     );
     parseAndPretty(
       "def we-dont-have-unary-tuples | ((((((((a)))))))) => (a)",
-      "\\public def we-dont-have-unary-tuples\n  | a => a"
+      "public def we-dont-have-unary-tuples\n  | a => a"
     );
     parseAndPretty(
       "def we-dont-have-unary-tuples | {{{{{{{{{{a}}}}}}}}}} => a",
-      "\\public def we-dont-have-unary-tuples\n  | {a} => a"
+      "public def we-dont-have-unary-tuples\n  | {a} => a"
     );
     parseAndPretty(
       "def we-dont-have-unary-tuples | ((((((((a)))), b)))) => (a)",
-      "\\public def we-dont-have-unary-tuples\n  | (a, b) => a"
+      "public def we-dont-have-unary-tuples\n  | (a, b) => a"
     );
     parseAndPretty(
       "def tuples | (a,b,c) => a",
-      "\\public def tuples\n  | (a, b, c) => a"
+      "public def tuples\n  | (a, b, c) => a"
     );
     parseAndPretty(
       "def im-tuples | {a,b,c} => a",
-      "\\public def im-tuples\n  | {a, b, c} => a"
+      "public def im-tuples\n  | {a, b, c} => a"
     );
     parseAndPretty(
       "def tuples-with-im | (a,{b},c,d,{ef}) => ef",
-      "\\public def tuples-with-im\n  | (a, {b}, c, d, {ef}) => ef"
+      "public def tuples-with-im\n  | (a, {b}, c, d, {ef}) => ef"
     );
     parseAndPretty(
       "def imtuple-with-extuple | {a, (b, c, d)} => ef",
-      "\\public def imtuple-with-extuple\n  | {a, (b, c, d)} => ef"
+      "public def imtuple-with-extuple\n  | {a, (b, c, d)} => ef"
     );
     parseAndPretty(
       "def im-in-ctor | suc {N} (a) => N",
-      "\\public def im-in-ctor\n  | suc {N} a => N"
+      "public def im-in-ctor\n  | suc {N} a => N"
     );
     parseAndPretty(
       "def im-in-ctor-nested | suc {N} (suc {M} a) => a",
-      "\\public def im-in-ctor-nested\n  | suc {N} (suc {M} a) => a"
+      "public def im-in-ctor-nested\n  | suc {N} (suc {M} a) => a"
     );
     parseAndPretty(
       "def final : Nat | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a",
-      "\\public def final : Nat\n  | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a"
+      "public def final : Nat\n  | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a"
     );
     parseAndPretty(
       "struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat",
       """
-        \\public struct Very-Simple (A : \\Set) : \\Set
+        public struct Very-Simple (A : \\Set) : \\Set
           | x : A
           | y : Nat
         """
@@ -234,7 +234,7 @@ public class ParseTest {
           | y : B zero
         """,
       """
-        \\public struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set
+        public struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set
           | x {X : \\Set} : Nat
           | y : B zero
         """
@@ -247,13 +247,13 @@ public class ParseTest {
         def l : \\Set => \\lam i => Nat
         """,
       """
-        \\public def l : \\Set => \\lam (i : {?}) => Nat
+        public def l : \\Set => \\lam (i : {?}) => Nat
         """);
     parseAndPretty("""
         def l : \\Set => \\lam (i : I) => Nat
         """,
       """
-        \\public def l : \\Set => \\lam (i : I) => Nat
+        public def l : \\Set => \\lam (i : I) => Nat
         """);
   }
 

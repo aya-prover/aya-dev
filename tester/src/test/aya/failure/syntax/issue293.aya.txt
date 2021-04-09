@@ -1,10 +1,10 @@
 In file $FILE:7:37 ->
 
-  5 |   | 鎴戜滑
-  6 |   | 浠栦滑
-  7 | def 娴嬫祴娴嬫祴娴嬫祴娴嬫祴娴� : 鍗曚汉浠ｈ瘝 => 鎴戜滑
+  5 |   | 我们
+  6 |   | 他们
+  7 | def 测测测测测测测测测 : 单人代词 => 我们
                                            ^-^
   
-Error: The expected type `鍗曚汉浠ｈ瘝` does not match the actual type `澶氫汉浠ｈ瘝`
+Error: The expected type `单人代词` does not match the actual type `多人代词`
 Tycking interrupted due to errors.
 What are you doing?

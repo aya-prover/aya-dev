@@ -1,10 +1,10 @@
 In file $FILE:13:14 ->
 
-  11 |   | 馃惖
+  11 |   | 🐵
   12 | 
-  13 | def u : 馃槉 => 馃悞
+  13 | def u : 😊 => 🐒
                      ^^
   
-Error: The expected type `馃槉` does not match the actual type `馃槀`
+Error: The expected type `😊` does not match the actual type `😂`
 Tycking interrupted due to errors.
 What are you doing?
