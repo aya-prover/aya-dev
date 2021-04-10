@@ -369,8 +369,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override
-  public Expr.@NotNull TelescopicSigmaExpr visitSigma(AyaParser.SigmaContext ctx) {
-    return new Expr.TelescopicSigmaExpr(
+  public Expr.@NotNull SigmaExpr visitSigma(AyaParser.SigmaContext ctx) {
+    return new Expr.SigmaExpr(
       sourcePosOf(ctx),
       false,
       visitTelescope(ctx.tele()).appended(new Expr.Param(

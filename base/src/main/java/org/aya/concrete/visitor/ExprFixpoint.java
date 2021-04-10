@@ -46,10 +46,10 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.LamExpr(expr.sourcePos(), bind, body);
   }
 
-  @Override default @NotNull Expr visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, P p) {
+  @Override default @NotNull Expr visitSigma(Expr.@NotNull SigmaExpr expr, P p) {
     var binds = visitParams(expr.params(), p);
     if (binds.sameElements(expr.params(), true)) return expr;
-    return new Expr.TelescopicSigmaExpr(expr.sourcePos(), expr.co(), binds);
+    return new Expr.SigmaExpr(expr.sourcePos(), expr.co(), binds);
   }
 
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {

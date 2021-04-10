@@ -58,7 +58,7 @@ public sealed interface Expr extends ConcreteExpr {
     R visitUnresolved(@NotNull UnresolvedExpr expr, P p);
     R visitLam(@NotNull LamExpr expr, P p);
     R visitPi(@NotNull PiExpr expr, P p);
-    R visitTelescopicSigma(@NotNull TelescopicSigmaExpr expr, P p);
+    R visitSigma(@NotNull SigmaExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
@@ -83,7 +83,7 @@ public sealed interface Expr extends ConcreteExpr {
     @Override default R visitPi(@NotNull PiExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
-    @Override default R visitTelescopicSigma(@NotNull TelescopicSigmaExpr expr, P p) {
+    @Override default R visitSigma(@NotNull Expr.SigmaExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
     @Override default R visitUniv(@NotNull UnivExpr expr, P p) {
@@ -187,13 +187,13 @@ public sealed interface Expr extends ConcreteExpr {
   /**
    * @author re-xyr
    */
-  record TelescopicSigmaExpr(
+  record SigmaExpr(
     @NotNull SourcePos sourcePos,
     boolean co,
     @NotNull ImmutableSeq<@NotNull Param> params
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTelescopicSigma(this, p);
+      return visitor.visitSigma(this, p);
     }
   }
 

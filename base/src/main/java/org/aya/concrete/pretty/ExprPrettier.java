@@ -52,7 +52,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override public Doc visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, Boolean nestedCall) {
+  @Override public Doc visitSigma(Expr.@NotNull SigmaExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
       Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\Sig")),
