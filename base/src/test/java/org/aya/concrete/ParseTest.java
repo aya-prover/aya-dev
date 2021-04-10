@@ -258,7 +258,7 @@ public class ParseTest {
         def l : \\Set => \\lam i => Nat
         """,
       """
-        public def l : \\Set => \\lam (i : {?}) => Nat
+        public def l : \\Set => \\lam (i : _) => Nat
         """);
     parseAndPretty("""
         def l : \\Set => \\lam (i : I) => Nat
