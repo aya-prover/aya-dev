@@ -4,9 +4,9 @@ package org.aya.concrete;
 
 import org.aya.api.Global;
 import org.aya.api.error.SourcePos;
-import org.aya.api.util.Arg;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
+import org.aya.concrete.parse.BinOpParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -103,17 +103,17 @@ public class ParseTest {
   @Test
   public void successExpr() {
     assertTrue(parseExpr("boy") instanceof Expr.UnresolvedExpr);
-    assertTrue(parseExpr("f a") instanceof Expr.AppExpr);
-    assertTrue(parseExpr("f a b c") instanceof Expr.AppExpr);
+    assertTrue(parseExpr("f a") instanceof Expr.BinOpSeq);
+    assertTrue(parseExpr("f a b c") instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("a.1") instanceof Expr.ProjExpr);
     assertTrue(parseExpr("a.1.2") instanceof Expr.ProjExpr);
-    assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.AppExpr app
-      && app.arguments().get(0).term() instanceof Expr.ProjExpr
-      && app.arguments().get(1).term() instanceof Expr.ProjExpr);
-    assertTrue(parseExpr("f a.1") instanceof Expr.AppExpr app
-      && app.arguments().first().term() instanceof Expr.ProjExpr);
+    assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.BinOpSeq app
+      && app.seq().get(1).expr() instanceof Expr.ProjExpr
+      && app.seq().get(2).expr() instanceof Expr.ProjExpr);
+    assertTrue(parseExpr("f a.1") instanceof Expr.BinOpSeq app
+      && app.seq().get(1).expr() instanceof Expr.ProjExpr);
     assertTrue(parseExpr("(f a).1") instanceof Expr.ProjExpr proj
-      && proj.tup() instanceof Expr.AppExpr);
+      && proj.tup() instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("λ a => a") instanceof Expr.LamExpr);
     assertTrue(parseExpr("\\ a => a") instanceof Expr.LamExpr);
     assertTrue(parseExpr("\\ a b => a") instanceof Expr.LamExpr);
@@ -127,26 +127,29 @@ public class ParseTest {
     assertTrue(parseExpr("Pi (x : Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.SigmaExpr);
     parseTo("(f a) . 1", new Expr.ProjExpr(
       SourcePos.NONE,
-      new Expr.AppExpr(
+      new Expr.BinOpSeq(
         SourcePos.NONE,
-        new Expr.UnresolvedExpr(SourcePos.NONE, "f"),
-        ImmutableSeq.of(Arg.explicit(new Expr.UnresolvedExpr(SourcePos.NONE, "a")))
+        ImmutableSeq.of(
+          new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
+          new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
+        )
       ),
       Either.left(1)
     ));
-    parseTo("f a . 1", new Expr.AppExpr(
+    parseTo("f a . 1", new Expr.BinOpSeq(
       SourcePos.NONE,
-      new Expr.UnresolvedExpr(SourcePos.NONE, "f"),
-      ImmutableSeq.of(Arg.explicit(new Expr.ProjExpr(
-        SourcePos.NONE,
-        new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
-        Either.left(1)
-      )))
+      ImmutableSeq.of(
+        new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
+        new BinOpParser.Elem(new Expr.ProjExpr(
+          SourcePos.NONE,
+          new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
+          Either.left(1)
+        ), true))
     ));
-    assertTrue(parseExpr("f (a, b, c)") instanceof Expr.AppExpr app
-      && app.arguments().sizeEquals(1)
+    assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app
+      && app.seq().sizeEquals(2)
       && !app.toDoc().debugRender().isEmpty()
-      && app.arguments().get(0).term() instanceof Expr.TupExpr tup
+      && app.seq().get(1).expr() instanceof Expr.TupExpr tup
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
       && !neo.toDoc().debugRender().isEmpty());
