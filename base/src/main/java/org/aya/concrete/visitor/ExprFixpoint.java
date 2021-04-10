@@ -19,7 +19,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitHole(Expr.@NotNull HoleExpr expr, P p) {
     var h = expr.filling() != null ? expr.filling().accept(this, p) : null;
     if (h == expr.filling()) return expr;
-    return new Expr.HoleExpr(expr.sourcePos(), expr.name(), h);
+    return new Expr.HoleExpr(expr.sourcePos(), expr.explicit(), h);
   }
 
   default @NotNull ImmutableSeq<Expr.@NotNull Param> visitParams(@NotNull ImmutableSeq<Expr.@NotNull Param> params, P p) {

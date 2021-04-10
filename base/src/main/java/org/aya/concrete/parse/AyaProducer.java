@@ -155,7 +155,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override
   public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
-    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), Constants.ANONYMOUS_PREFIX, null);
+    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), false, null);
     var id = ctx.qualifiedId();
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), visitQualifiedId(id));
     var universe = ctx.UNIVERSE();
@@ -181,7 +181,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
-      return new Expr.HoleExpr(sourcePosOf(ctx), null, filling);
+      return new Expr.HoleExpr(sourcePosOf(ctx), true, filling);
     }
     var number = ctx.NUMBER();
     if (number != null) return new Expr.LitIntExpr(sourcePosOf(number), Integer.parseInt(number.getText()));
@@ -362,7 +362,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
         ? sourcePosOf(ctx)
         : sourcePosOf(impliesToken);
 
-      return new Expr.HoleExpr(bodyHolePos, null, null);
+      return new Expr.HoleExpr(bodyHolePos, false, null);
     }
 
     return visitExpr(bodyExpr);
@@ -474,7 +474,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   public @NotNull Expr type(@Nullable AyaParser.TypeContext typeCtx, SourcePos sourcePos) {
     return typeCtx == null
-      ? new Expr.HoleExpr(sourcePos, null, null)
+      ? new Expr.HoleExpr(sourcePos, false, null)
       : visitType(typeCtx);
   }
 

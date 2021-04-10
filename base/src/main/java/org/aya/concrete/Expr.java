@@ -134,7 +134,7 @@ public sealed interface Expr extends ConcreteExpr {
    */
   record HoleExpr(
     @NotNull SourcePos sourcePos,
-    @Nullable String name,
+    boolean explicit,
     @Nullable Expr filling
   ) implements Expr {
     @Override

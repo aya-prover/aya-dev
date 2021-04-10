@@ -221,7 +221,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var param = expr.param();
     final var var = param.ref();
     var type = param.type();
-    if (type == null) type = new Expr.HoleExpr(param.sourcePos(), var.name() + "Ty", null);
+    if (type == null) type = new Expr.HoleExpr(param.sourcePos(), false, null);
     var result = type.accept(this, against);
     var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
     return localCtx.with(resultParam, () -> {
@@ -365,11 +365,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
     // TODO[ice]: deal with unit type
-    var name = expr.name();
-    if (name == null) name = Constants.ANONYMOUS_PREFIX;
-    if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name + "_ty")._2;
+    var name = Constants.ANONYMOUS_PREFIX;
+    if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name)._2;
     var freshHole = localCtx.freshHole(term, name);
-    reporter.report(new Goal(expr, freshHole._1));
+    if (expr.explicit()) reporter.report(new Goal(expr, freshHole._1));
     return new Result(freshHole._2, term);
   }
 

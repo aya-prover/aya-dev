@@ -84,11 +84,9 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Boolean nestedCall) {
-    var name = expr.name();
     var filling = expr.filling();
-    if (name == null && filling == null) return Doc.symbol("{?}");
-    if (name != null) return Doc.plain(name);
-    return Doc.hsep(Doc.symbol("{"), filling.toDoc(), Doc.symbol("?}"));
+    if (filling == null) return Doc.symbol("{??}");
+    return Doc.hsep(Doc.symbol("{?"), filling.toDoc(), Doc.symbol("?}"));
   }
 
   @Override public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
