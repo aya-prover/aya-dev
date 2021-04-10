@@ -171,7 +171,3 @@ tasks.register("githubActions") {
   group = "verification"
   dependsOn(tasks.named("check"), mergeJacocoReports, tasks.findByPath(":cli:copyJarHere"))
 }
-
-tasks.withType<Wrapper>().configureEach {
-  gradleVersion = "7.0-rc-1"
-}
