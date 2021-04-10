@@ -12,6 +12,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +29,12 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     this(MutableHashMap.of(), null);
   }
 
-  public @NotNull Term freshHole(@NotNull Term type, @NotNull String name) {
+  public @NotNull Tuple2<Meta, Term> freshHole(@NotNull Term type, @NotNull String name) {
     var ctxTele = extract();
     var meta = Meta.from(ctxTele, type);
     var ref = new HoleVar<>(name, meta);
     var hole = new CallTerm.Hole(ref, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
-    return IntroTerm.Lambda.make(meta.telescope, hole);
+    return Tuple2.of(meta, IntroTerm.Lambda.make(meta.telescope, hole));
   }
 
   public <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {

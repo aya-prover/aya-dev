@@ -19,10 +19,8 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.error.BadTypeError;
-import org.aya.tyck.error.MissingFieldError;
 import org.aya.tyck.error.NoSuchFieldError;
-import org.aya.tyck.error.UnifyError;
+import org.aya.tyck.error.*;
 import org.aya.tyck.sort.Sort;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.PatDefEq;
@@ -92,8 +90,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Check(partialSynth = true)
   @Override public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
     if (term == null) {
-      var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX);
-      var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX);
+      var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX)._2;
+      var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX)._2;
       term = new FormTerm.Pi(false, Term.Param.mock(domain, expr.param().explicit()), codomain);
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt && !dt.co())) {
@@ -369,8 +367,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     // TODO[ice]: deal with unit type
     var name = expr.name();
     if (name == null) name = Constants.ANONYMOUS_PREFIX;
-    if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name + "_ty");
-    return new Result(localCtx.freshHole(term, name), term);
+    if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name + "_ty")._2;
+    var freshHole = localCtx.freshHole(term, name);
+    reporter.report(new Goal(expr, freshHole._1));
+    return new Result(freshHole._2, term);
   }
 
   @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
@@ -385,7 +385,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       while (pi.param().explicit() != argLicit) {
         if (argLicit) {
           // that implies paramLicit == false
-          var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX);
+          var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX)._2;
           // TODO: maybe we should create a concrete hole and check it against the type
           //  in case we can synthesize this term via its type only
           var holeArg = new Arg<>(holeApp, false);
