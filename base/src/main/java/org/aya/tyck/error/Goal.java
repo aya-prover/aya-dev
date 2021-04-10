@@ -13,11 +13,13 @@ public record Goal(
   @NotNull Meta meta
 ) implements TyckProblem {
   @Override public @NotNull Doc describe() {
-    return Doc.vcat(
+    var doc = Doc.vcat(
       Doc.hcat(Doc.plain("Expected type: "), meta.result.toDoc()),
       Doc.plain("Context:"),
       Doc.vcat(meta.fullTelescope().map(Docile::toDoc))
     );
+    return meta.body == null ? doc :
+      Doc.vcat(Doc.hcat(Doc.plain("Candidate: "), meta.body.toDoc()), doc);
   }
 
   @Override public @NotNull Severity level() {
