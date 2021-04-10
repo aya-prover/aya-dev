@@ -52,11 +52,11 @@ public final class Main {
       distillation,
       cli.modulePaths().map(Paths::get)));
     if (traceBuilder != null) switch (cli.traceFormat) {
-      case ImGui -> {
+      case imgui -> {
         JniLoader.load();
         new ImGuiTrace(sourceCode).mainLoop(traceBuilder.root());
       }
-      case Markdown -> {
+      case markdown -> {
         var printer = new MdUnicodeTrace();
         traceBuilder.root().forEach(e -> e.accept(printer, Unit.unit()));
         System.err.println(printer.builder);

@@ -185,6 +185,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
   defCall(DefVar<D, S> defVar, TriFunction<DefVar<D, S>, ImmutableSeq<Arg<Term>>, ImmutableSeq<Arg<Term>>, Term> function) {
+    // TODO[ice,kiva]: rename telescope -- currently renaming doesn't work
     var tele = Def.defTele(defVar);
     var ctxTele = Def.defContextTele(defVar);
     // ice: should we rename the vars in this telescope? Probably not.

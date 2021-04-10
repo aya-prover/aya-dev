@@ -5,7 +5,9 @@ package org.aya.pretty.doc;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Should be called <code>Prettiable</code>
+ * Should be called <code>Prettiable</code>'
+ *
+ * @author ice1000
  */
 public interface Docile {
   @NotNull Doc toDoc();

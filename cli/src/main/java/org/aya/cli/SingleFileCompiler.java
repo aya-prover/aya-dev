@@ -34,12 +34,12 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
       // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
-      writeCode(flags.distillInfo(), program, CliArgs.DistillStage.Raw);
+      writeCode(flags.distillInfo(), program, CliArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter,
-        () -> writeCode(flags.distillInfo(), program, CliArgs.DistillStage.Scoped),
-        defs -> writeCode(flags.distillInfo(), defs, CliArgs.DistillStage.Typed), builder);
+        () -> writeCode(flags.distillInfo(), program, CliArgs.DistillStage.scoped),
+        defs -> writeCode(flags.distillInfo(), defs, CliArgs.DistillStage.typed), builder);
     } catch (ExprTycker.TyckerException e) {
       FileModuleLoader.handleInternalError(e);
       reporter.reportString("Internal error");
@@ -71,8 +71,8 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     var fileName = ayaFileName
       .substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length());
     switch (flags.distillFormat()) {
-      case HTML -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
-      case LaTeX -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, bool) -> thisDoc.renderToTeX());
+      case html -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
+      case latex -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, bool) -> thisDoc.renderToTeX());
     }
   }
 

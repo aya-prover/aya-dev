@@ -123,8 +123,7 @@ public sealed interface Expr extends ConcreteExpr {
       this(sourcePos, ImmutableSeq.of(name));
     }
 
-    @Override
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnresolved(this, p);
     }
   }
@@ -137,8 +136,7 @@ public sealed interface Expr extends ConcreteExpr {
     boolean explicit,
     @Nullable Expr filling
   ) implements Expr {
-    @Override
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitHole(this, p);
     }
   }
@@ -151,8 +149,7 @@ public sealed interface Expr extends ConcreteExpr {
     @NotNull Expr function,
     @NotNull ImmutableSeq<@NotNull Arg<Expr>> arguments
   ) implements Expr {
-    @Override
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }
   }

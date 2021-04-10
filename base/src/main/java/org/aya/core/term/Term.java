@@ -146,6 +146,10 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
       return new Param(ref, type, false);
     }
 
+    @Contract(" -> new") public @NotNull Param rename() {
+      return new Param(new LocalVar(ref.name()), type, explicit);
+    }
+
     @Override @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
       return new Arg<>(new RefTerm(ref), explicit);
     }
