@@ -64,6 +64,7 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
 
   @Override
   public Unit visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
+    visitDecl(decl);
     if (decl.result != null) decl.result = decl.result.desugar();
     return unit;
   }
