@@ -46,11 +46,10 @@ public record RefFinder(boolean withBody) implements
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitStruct(@NotNull StructDef def, @NotNull Buffer<Def> references) {
+  @Override public Unit visitStruct(@NotNull StructDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(this, references);
-    def.fields().forEach(t -> t.accept(this, references));
+    if (withBody) def.fields().forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 
@@ -59,7 +58,7 @@ public record RefFinder(boolean withBody) implements
     tele(references, def.telescope());
     def.body().forEach(t -> t.accept(this, references));
     def.result().accept(this, references);
-    // TODO[ice]: conditions
+    if (withBody) for (var clause : def.clauses()) clause.body().accept(this, references);
     return Unit.unit();
   }
 
@@ -71,7 +70,7 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(this, references);
-    def.body().forEach(t -> t.accept(this, references));
+   if (withBody) def.body().forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 

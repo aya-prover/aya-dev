@@ -24,7 +24,6 @@ public final record DataDef(
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull Term result,
   @NotNull ImmutableSeq<Ctor> body
-  // TODO: also see RefFinder
 ) implements Def {
   public DataDef {
     ref.core = this;
