@@ -236,15 +236,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitTelescopicSigma(Expr.@NotNull TelescopicSigmaExpr expr, @Nullable Term term) {
     final var against = term != null ? term : new FormTerm.Univ(Sort.OMEGA);
     var resultTele = Buffer.<Tuple3<LocalVar, Boolean, Term>>of();
-    expr.paramsStream().forEach(tuple -> {
-      final var type = tuple._2.type();
+    expr.params().forEach(tuple -> {
+      final var type = tuple.type();
       if (type == null) {
         // TODO[ice]: report error or generate meta?
         //  I guess probably report error for now.
         throw new TyckerException();
       }
       var result = type.accept(this, against);
-      resultTele.append(Tuple.of(tuple._1, tuple._2.explicit(), result.wellTyped));
+      resultTele.append(Tuple.of(tuple.ref(), tuple.explicit(), result.wellTyped));
     });
     return new Result(new FormTerm.Sigma(expr.co(), Term.Param.fromBuffer(resultTele)), against);
   }

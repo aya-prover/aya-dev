@@ -16,14 +16,12 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
-import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * @author re-xyr
@@ -146,17 +144,6 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   /**
-   * @author ice1000
-   */
-  interface TelescopicExpr {
-    @NotNull ImmutableSeq<Param> params();
-
-    default @NotNull Stream<@NotNull Tuple2<@NotNull LocalVar, Param>> paramsStream() {
-      return params().stream().map(p -> Tuple.of(p.ref(), p));
-    }
-  }
-
-  /**
    * @author re-xyr
    */
   record AppExpr(
@@ -204,7 +191,7 @@ public sealed interface Expr extends ConcreteExpr {
     @NotNull SourcePos sourcePos,
     boolean co,
     @NotNull ImmutableSeq<@NotNull Param> params
-  ) implements Expr, TelescopicExpr {
+  ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTelescopicSigma(this, p);
     }
