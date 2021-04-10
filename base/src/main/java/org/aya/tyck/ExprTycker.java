@@ -357,9 +357,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     var type = telescope.get(index).type();
     // instantiate the type
-    var fieldsBefore = telescope.take(index);
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
-    fieldsBefore.forEachIndexed((i, param) ->
+    telescope.view().take(index).reversed().forEachIndexed((i, param) ->
       subst.add(param.ref(), new ElimTerm.Proj(projectee.wellTyped, i + 1)));
     return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
   }
