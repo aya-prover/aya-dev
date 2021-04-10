@@ -70,7 +70,7 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(this, references);
-   if (withBody) def.body().forEach(t -> t.accept(this, references));
+    if (withBody) def.body().forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 

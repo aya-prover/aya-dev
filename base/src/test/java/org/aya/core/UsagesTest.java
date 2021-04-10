@@ -8,6 +8,7 @@ import org.aya.core.visitor.RefFinder;
 import org.aya.test.Lisp;
 import org.aya.test.LispTestCase;
 import org.aya.tyck.TyckDeclTest;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +51,8 @@ public class UsagesTest extends LispTestCase {
       assertFalse(of.isEmpty());
       of.clear();
       def.accept(RefFinder.HEADER_ONLY, of);
-      assertFalse(of.isEmpty());
+      if (Seq.of("Nat", "Int").contains(def.ref().name())) assertTrue(of.isEmpty());
+      else assertFalse(of.isEmpty());
     });
   }
 }
