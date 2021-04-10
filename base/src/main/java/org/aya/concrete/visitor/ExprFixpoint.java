@@ -44,7 +44,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     var bind = visitParams(ImmutableSeq.of(expr.param()), p).get(0);
     var body = expr.last().accept(this, p);
     if (bind == expr.param() && body == expr.last()) return expr;
-    return new Expr.LamExpr(expr.sourcePos(), bind, body);
+    return new Expr.PiExpr(expr.sourcePos(), expr.co(), bind, body);
   }
 
   @Override default @NotNull Expr visitSigma(Expr.@NotNull SigmaExpr expr, P p) {
