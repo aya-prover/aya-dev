@@ -27,8 +27,8 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  private void visitArg(@NotNull Arg<Expr> arg, P p) {
-    arg.term().accept(this, p);
+  private void visitArg(@NotNull Arg<Expr.NamedArg> arg, P p) {
+    arg.term().expr().accept(this, p);
   }
 
   @Override default Unit visitApp(Expr.@NotNull AppExpr expr, P p) {

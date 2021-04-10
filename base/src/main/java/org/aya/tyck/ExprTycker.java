@@ -445,7 +445,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           throw new TyckerException();
         }
       }
-      var elabArg = arg.term().accept(this, pi.param().type());
+      var elabArg = arg.term().expr().accept(this, pi.param().type());
       var newArg = new Arg<>(elabArg.wellTyped, argLicit);
       resultTerm = CallTerm.make(resultTerm, newArg);
       // so, in the end, the pi term is not updated, its body would be the eliminated type

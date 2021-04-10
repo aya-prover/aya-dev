@@ -92,8 +92,8 @@ public class TyckExprTest {
       new Expr.AppExpr(SourcePos.NONE,
         new Expr.RefExpr(SourcePos.NONE, f, "p"),
         ImmutableSeq.of(
-          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, Either.left(1)), true),
-          new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, Either.left(2)), true))));
+          new Arg<>(new Expr.NamedArg(null, new Expr.ProjExpr(SourcePos.NONE, pRef, Either.left(1))), true),
+          new Arg<>(new Expr.NamedArg(null, new Expr.ProjExpr(SourcePos.NONE, pRef, Either.left(2))), true))));
     // Pi(A B C : U)(f : A -> B -> C)(p : A ** B) -> C
     var uncurryTy = Lisp.parse("""
       (Pi (A (U) ex)

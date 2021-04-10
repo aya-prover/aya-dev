@@ -331,7 +331,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override public @NotNull Arg<Expr> visitArgument(AyaParser.ArgumentContext ctx) {
+  @Override public @NotNull Arg<Expr.NamedArg> visitArgument(AyaParser.ArgumentContext ctx) {
     var atom = ctx.atom();
     if (atom != null) {
       var fixes = ctx.projFix();
@@ -340,14 +340,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
         .foldLeft(Tuple.of(sourcePosOf(ctx), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
-      return Arg.explicit(projected);
+      return Arg.explicit(new Expr.NamedArg(null, projected));
     }
     if (ctx.LBRACE() != null) {
       var items = ctx.expr().stream()
         .map(this::visitExpr)
         .collect(ImmutableSeq.factory());
-      if (items.sizeEquals(1)) return Arg.implicit(items.first());
-      return Arg.implicit(new Expr.TupExpr(sourcePosOf(ctx), items));
+      if (items.sizeEquals(1)) return Arg.implicit(new Expr.NamedArg(null, items.first()));
+      var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
+      return Arg.implicit(new Expr.NamedArg(null, tupExpr));
     }
     throw new UnsupportedOperationException(ctx.getClass().getName());
   }

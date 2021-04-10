@@ -61,10 +61,11 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return expr;
   }
 
-  default @NotNull Arg<Expr> visitArg(@NotNull Arg<Expr> arg, P p) {
-    var term = arg.term().accept(this, p);
-    if (term == arg.term()) return arg;
-    return new Arg<>(term, arg.explicit());
+  default @NotNull Arg<Expr.NamedArg> visitArg(@NotNull Arg<Expr.NamedArg> arg, P p) {
+    var term = arg.term().expr().accept(this, p);
+    String name = arg.term().name();
+    if (term == arg.term().expr()) return arg;
+    return new Arg<>(new Expr.NamedArg(name, term), arg.explicit());
   }
 
   @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {

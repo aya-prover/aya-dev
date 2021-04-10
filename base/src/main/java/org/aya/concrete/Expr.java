@@ -19,6 +19,7 @@ import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
@@ -144,10 +145,23 @@ public sealed interface Expr extends ConcreteExpr {
   record AppExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr function,
-    @NotNull ImmutableSeq<@NotNull Arg<Expr>> arguments
+    @NotNull ImmutableSeq<@NotNull Arg<NamedArg>> arguments
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
+    }
+  }
+
+  /**
+   * @author AustinZhu
+   */
+  record NamedArg(
+    @Nullable String name,
+    Expr expr
+  ) implements Docile {
+    @Override
+    public @NotNull Doc toDoc() {
+      return expr.toDoc();
     }
   }
 
