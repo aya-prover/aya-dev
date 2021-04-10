@@ -5,5 +5,5 @@ In file $FILE:2:9 ->
                ^------^
   
 Error: The qualified name referred to by `Nat::suc` is not defined in the current scope
-Resolving interrupted due to errors.
+Resolving interrupted due to error(s).
 What are you doing?

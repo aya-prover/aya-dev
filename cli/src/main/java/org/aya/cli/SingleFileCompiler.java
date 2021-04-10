@@ -45,8 +45,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
       reporter.reportString("Internal error");
       return e.exitCode();
     } catch (InterruptException e) {
-      // TODO[ice]: proper error handling
-      reporter.reportString(e.stage().name() + " interrupted due to errors.");
+      reporter.reportString(e.stage().name() + " interrupted due to error(s).");
       if (flags.interruptedTrace()) e.printStackTrace();
     }
     PrimDef.clearConcrete();

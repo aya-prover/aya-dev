@@ -14,5 +14,5 @@ In file $FILE:8:14 ->
                     ^------^
   
 Error: The expected type `Vect A n` is not a pi type, therefore cannot type a term such as `vnil {_}`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

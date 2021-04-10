@@ -6,5 +6,5 @@ In file $FILE:3:4 ->
           ^--^
   
 Error: Redefinition of constructor `zero`
-Parsing interrupted due to errors.
+Parsing interrupted due to error(s).
 What are you doing?

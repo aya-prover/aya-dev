@@ -6,5 +6,5 @@ In file $FILE:7:37 ->
                                            ^-^
   
 Error: The expected type `单人代词` does not match the actual type `多人代词`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

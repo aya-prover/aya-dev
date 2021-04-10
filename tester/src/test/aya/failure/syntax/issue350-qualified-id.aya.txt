@@ -4,5 +4,5 @@ In file $FILE:1:21 ->
                            ^--^
   
 Error: Parser error: parameter name `A::B` should not be qualified
-Parsing interrupted due to errors.
+Parsing interrupted due to error(s).
 What are you doing?

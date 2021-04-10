@@ -6,5 +6,5 @@ In file $FILE:3:4 ->
           ^--------^
   
 Error: The 1st and the 3rd clauses are not confluent because we failed to unify `suc zero` and `zero`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

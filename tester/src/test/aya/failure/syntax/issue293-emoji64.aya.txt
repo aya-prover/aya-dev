@@ -6,5 +6,5 @@ In file $FILE:10:28 ->
                                    ^^
   
 Error: The expected type `❤️守❤️护❤️最❤️好❤️的❤️` does not match the actual type `❤️`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

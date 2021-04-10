@@ -4,5 +4,5 @@ In file $FILE:1:0 ->
       ^^
   
 Error: Parser error: token recognition error at: '\f'
-Parsing interrupted due to errors.
+Parsing interrupted due to error(s).
 What are you doing?

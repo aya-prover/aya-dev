@@ -6,5 +6,5 @@ In file $FILE:6:35 ->
                                          ^--------^
   
 Error: The expected type `Nat` does not match the actual type `\Pi (b : Unit) -> Nat`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

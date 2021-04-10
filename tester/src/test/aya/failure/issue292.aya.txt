@@ -6,5 +6,5 @@ In file $FILE:9:15 ->
                      ^--^
   
 Error: The expected type `Nat` does not match the actual type `Bool`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

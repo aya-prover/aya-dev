@@ -6,5 +6,5 @@ In file $FILE:14:31 ->
                                       ^-------------------------^
   
 Error: The expected type `Nat` does not match the actual type `Pair Nat Nat`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

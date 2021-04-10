@@ -4,5 +4,5 @@ In file $FILE:1:21 ->
                            ^^
   
 Error: Parser error: `1` is not a parameter name
-Parsing interrupted due to errors.
+Parsing interrupted due to error(s).
 What are you doing?

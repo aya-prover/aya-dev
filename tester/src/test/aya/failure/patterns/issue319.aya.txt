@@ -6,5 +6,5 @@ In file $FILE:5:4 ->
           ^-^
   
 Error: Unhandled case: suc, suc, suc
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

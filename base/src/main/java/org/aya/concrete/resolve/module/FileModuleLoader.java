@@ -32,8 +32,7 @@ public final record FileModuleLoader(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
-  @Override
-  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>>
+  @Override public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>>
   load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     try {
       var parser = AyaParsing.parser(path.foldLeft(basePath, Path::resolve), reporter());
@@ -46,8 +45,7 @@ public final record FileModuleLoader(
       handleInternalError(e);
       return null;
     } catch (InterruptException e) {
-      // TODO[ice]: proper error handling
-      reporter.reportString(e.stage().name() + " interrupted due to errors.");
+      reporter.reportString(e.stage().name() + " interrupted due to error(s).");
       return null;
     }
 

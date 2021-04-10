@@ -6,5 +6,5 @@ In file $FILE:13:10 ->
                  ^---------^
   
 Error: Absurd pattern does not fit here because `zero` is still avaialble
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

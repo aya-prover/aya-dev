@@ -6,5 +6,5 @@ In file $FILE:7:4 ->
           ^--^
   
 Error: Cannot perform pattern matching `left`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?

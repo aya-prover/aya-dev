@@ -6,5 +6,5 @@ In file $FILE:4:4 ->
           ^--^
   
 Error: The 3rd and the 4th clauses are not confluent because we failed to unify `suc (addN (suc b) a)` and `suc (addN (suc a) b)`
-Tycking interrupted due to errors.
+Tycking interrupted due to error(s).
 What are you doing?
