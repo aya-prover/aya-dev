@@ -16,10 +16,10 @@ plugins {
 var deps: Properties by rootProject.ext
 
 deps = Properties()
-deps.load(file("gradle/deps.properties").reader())
+file("gradle/deps.properties").reader().use(deps::load)
 
 allprojects {
-  group = "org.aya"
+  group = "org.aya-prover"
   version = deps.getProperty("version.project")
 }
 
