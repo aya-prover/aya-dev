@@ -315,7 +315,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (atom != null) {
       var fixes = ctx.projFix();
       var expr = visitAtom(atom);
-      var projected = fixes.stream().collect(ImmutableSeq.factory())
+      var projected = ImmutableSeq.from(fixes)
         .foldLeft(Tuple.of(sourcePosOf(ctx), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
