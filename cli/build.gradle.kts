@@ -16,7 +16,7 @@ plugins {
   id("org.beryx.jlink")
 }
 
-val mainClassQName = "${project.group}.cli.Main"
+val mainClassQName = "org.aya.cli.Main"
 tasks.withType<Jar>().configureEach {
   manifest.attributes["Main-Class"] = mainClassQName
 }

@@ -21,7 +21,7 @@ tasks {
 
 tasks.withType<Jar>().configureEach {
   manifest {
-    attributes["Main-Class"] = "${project.group}.qqbot.AppKt"
+    attributes["Main-Class"] = "org.aya.qqbot.AppKt"
     attributes["Build"] = SimpleDateFormat("yyyy/M/dd HH:mm:ss").format(Date())
   }
 }
