@@ -43,7 +43,7 @@ Possible solutions are
 
 * The has-a solution.  Which one of the following is more true, a ring "is-a" multiplicative monoid and "is-a" additive group, or "has-a" multiplicative monoid and "has-a" additive group?  This consideration leads to the following definition:
   ````arend
-  \class Ring (E : \Set)
+  \class Ring (E : Set)
      | mult : Monoid E
      | add : AbGroup E
      | distr (x y z : E) : x mult.* (y add.* z) = (x mult.* y) add.* (x mult.* z)
@@ -58,22 +58,22 @@ Possible solutions are
 
 * Some mix between these two.  What I have in mind is based on the "has-a" solution, with some form of renaming / aliasing:
   ````arend
-  \class Ring (E : \Set)
+  \class Ring (E : Set)
     | mult : Monoid E
     | add : AbGroup E
     \use mult.\all
-    \use add (* \as +, *-assoc \as +-assoc, ...)
+    \use add (* as +, *-assoc as +-assoc, ...)
   ````
   
   with a more clever design (for example, call it `assoc` instead of `*-assoc` in the definition of groups), we can write things like `goal (R : Ring) (x : R) : (zro + ide) + x = zro + (ide + x) => add.assoc _ _ _`, which looks concise and natural.
   
-  This also requires minimal support from the typechecker --- `\use add (* \as +)` can just be syntactic sugar for `+ => add.*`, etc.  In fact this can be emulated in Arend:
+  This also requires minimal support from the typechecker --- `\use add (* as +)` can just be syntactic sugar for `+ => add.*`, etc.  In fact this can be emulated in Arend:
   
   ````arend
   \import Algebra.Group
   \import Algebra.Monoid
 
-  \class RingInterface (E : \Set)
+  \class RingInterface (E : Set)
     | \infixl 7 + : E -> E -> E
     | negative : E -> E
     | zro : E

@@ -153,11 +153,11 @@ TWIN : 'twin';
 
 // universe
 UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h' | 'h-')? 'Type' NUMBER?;
-SET_UNIV : '\\Set' NUMBER?;
-PROP : '\\Prop';
+SET_UNIV : 'Set' NUMBER?;
+PROP : 'Prop';
 
 // other keywords
-AS : '\\as';
+AS : 'as';
 OPEN : 'open';
 IMPORT : 'import';
 PUBLIC : 'public';
@@ -167,14 +167,14 @@ HIDING : 'hiding';
 COERCE : 'coerce';
 ERASE : 'erase';
 INLINE : 'inline';
-SIGMA : '\\Sig' | '\u03A3';
-LAMBDA : '\\lam' | '\u03BB';
-PI : '\\Pi' | '\u03A0';
-MATCH : '\\match';
-ABSURD : '\\impossible';
+SIGMA : 'Sig' | '\u03A3';
+LAMBDA : '\\' | '\u03BB';
+PI : 'Pi' | '\u03A0';
+MATCH : 'match';
+ABSURD : 'impossible';
 TO : '->' | '\u2192';
 IMPLIES : '=>' | '\u21D2';
-NEW : '\\new';
+NEW : 'new';
 
 // markers
 LBRACE : '{';

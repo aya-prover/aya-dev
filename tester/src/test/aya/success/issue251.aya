@@ -1,7 +1,7 @@
-open data Nat : \Set
+open data Nat : Set
  | zero
  | suc Nat
 
-data Fin (n : Nat) : \Set
+data Fin (n : Nat) : Set
  | fzero
  | suc m => fsuc (Fin m)

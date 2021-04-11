@@ -27,8 +27,9 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
   }
 
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
-    Tuple.of("\\Pi", "\\Pi"),
-    Tuple.of("\\Sig", "\\Sigma"),
+    Tuple.of("Pi", "\\Pi"),
+    Tuple.of("Sig", "\\Sigma"),
+    Tuple.of("\\", "\\bda"),
     Tuple.of("=>", "\\Rightarrow"),
     Tuple.of("->", "\\to"),
     Tuple.of("{", "\\{"),

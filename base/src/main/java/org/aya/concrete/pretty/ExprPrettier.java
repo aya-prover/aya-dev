@@ -32,7 +32,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
 
   @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\lam")),
+      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\")),
       Doc.plain(" "),
       expr.param().toDoc(),
       expr.body() instanceof Expr.HoleExpr
@@ -44,7 +44,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override public Doc visitPi(Expr.@NotNull PiExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\Pi")),
+      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("Pi")),
       Doc.plain(" "),
       expr.param().toDoc(),
       Doc.plain(" -> "),
@@ -55,7 +55,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override public Doc visitSigma(Expr.@NotNull SigmaExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("\\Sig")),
+      Doc.styled(TermPrettier.KEYWORD, Doc.symbol("Sig")),
       Doc.plain(" "),
       StmtPrettier.INSTANCE.visitTele(expr.params().dropLast(1)),
       Doc.plain(" ** "),
@@ -66,10 +66,10 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
     int u = expr.uLevel();
     int h = expr.hLevel();
-    if (u == 0 && h == -1) return Doc.styled(TermPrettier.KEYWORD, "\\Prop");
+    if (u == 0 && h == -1) return Doc.styled(TermPrettier.KEYWORD, "Prop");
     return Doc.styled(TermPrettier.KEYWORD, switch (h) {
       case Integer.MAX_VALUE -> "\\oo-Type" + (u == 0 ? "" : u);
-      case 0 -> "\\Set" + (u == 0 ? "" : u);
+      case 0 -> "Set" + (u == 0 ? "" : u);
       default -> "\\" + h + "-Type" + (u == 0 ? "" : u);
     });
   }
@@ -105,7 +105,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
 
   @Override public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {
     return Doc.cat(
-      Doc.styled(TermPrettier.KEYWORD, "\\new "),
+      Doc.styled(TermPrettier.KEYWORD, "new "),
       expr.struct().toDoc(),
       Doc.symbol(" { "),
       Doc.hsep(expr.fields().view().map(t ->

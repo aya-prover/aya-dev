@@ -64,10 +64,10 @@ public class ParseTest {
   @Test
   public void successLiteral() {
     assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
-    parseUniv("\\Prop");
-    parseUniv("\\Set");
-    parseUniv("\\Set0");
-    parseUniv("\\Set233");
+    parseUniv("Prop");
+    parseUniv("Set");
+    parseUniv("Set0");
+    parseUniv("Set233");
     parseUniv("\\2-Type");
     parseUniv("\\2-Type2");
     parseUniv("\\114-Type514");
@@ -80,12 +80,12 @@ public class ParseTest {
   public void successDecl() {
     parseFn("def a => 1");
     parseFn("def a (b : X) => b");
-    parseFn("def a (f : \\Pi a b c d -> a) => b");
-    parseFn("def a (t : \\Sig a b ** s) => b");
+    parseFn("def a (f : Pi a b c d -> a) => b");
+    parseFn("def a (t : Sig a b ** s) => b");
     parseFn("""
-      def uncurry (A : \\Set) (B : \\Set) (C : \\Set)
-                   (f : \\Pi A B -> C)
-                   (p : \\Sig A ** B) : C
+      def uncurry (A : Set) (B : Set) (C : Set)
+                   (f : Pi A B -> C)
+                   (p : Sig A ** B) : C
         => f (p.1) (p.2)""");
     parseData("data Unit");
     parseData("data Unit abusing {}");
@@ -119,16 +119,16 @@ public class ParseTest {
     assertTrue(parseExpr("(f a).1") instanceof Expr.ProjExpr proj
       && proj.tup() instanceof Expr.AppExpr);
     assertTrue(parseExpr("λ a => a") instanceof Expr.LamExpr);
-    assertTrue(parseExpr("\\lam a => a") instanceof Expr.LamExpr);
-    assertTrue(parseExpr("\\lam a b => a") instanceof Expr.LamExpr);
+    assertTrue(parseExpr("\\ a => a") instanceof Expr.LamExpr);
+    assertTrue(parseExpr("\\ a b => a") instanceof Expr.LamExpr);
     assertTrue(parseExpr("Π a -> a") instanceof Expr.PiExpr dt && !dt.co());
-    assertTrue(parseExpr("\\Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
-    assertTrue(parseExpr("\\Pi a b -> a") instanceof Expr.PiExpr dt
+    assertTrue(parseExpr("Pi a -> a") instanceof Expr.PiExpr dt && !dt.co());
+    assertTrue(parseExpr("Pi a b -> a") instanceof Expr.PiExpr dt
       && !dt.co() && dt.last() instanceof Expr.PiExpr);
     assertTrue(parseExpr("Σ a ** b") instanceof Expr.SigmaExpr dt && !dt.co());
-    assertTrue(parseExpr("\\Sig a ** b") instanceof Expr.SigmaExpr dt && !dt.co());
-    assertTrue(parseExpr("\\Sig a b ** c") instanceof Expr.SigmaExpr dt && !dt.co());
-    assertTrue(parseExpr("\\Pi (x : \\Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.SigmaExpr);
+    assertTrue(parseExpr("Sig a ** b") instanceof Expr.SigmaExpr dt && !dt.co());
+    assertTrue(parseExpr("Sig a b ** c") instanceof Expr.SigmaExpr dt && !dt.co());
+    assertTrue(parseExpr("Pi (x : Sig a ** b) -> c") instanceof Expr.PiExpr dt && !dt.co() && dt.param().type() instanceof Expr.SigmaExpr);
     parseTo("(f a) . 1", new Expr.ProjExpr(
       SourcePos.NONE,
       new Expr.AppExpr(
@@ -152,7 +152,7 @@ public class ParseTest {
       && !app.toDoc().debugRender().isEmpty()
       && app.arguments().get(0).term() instanceof Expr.TupExpr tup
       && tup.items().sizeEquals(3));
-    assertTrue(parseExpr("\\new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
+    assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
       && !neo.toDoc().debugRender().isEmpty());
   }
 
@@ -227,26 +227,26 @@ public class ParseTest {
       "public def im-in-ctor-nested\n  | suc {N} (suc {M} a) => a"
     );
     parseAndPretty(
-      "def final : Nat | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a",
-      "public def final : Nat\n  | (suc {m} {suc x} a, fuck, {114514}) \\as Outer => a"
+      "def final : Nat | (suc {m} {suc x} a, fuck, {114514}) as Outer => a",
+      "public def final : Nat\n  | (suc {m} {suc x} a, fuck, {114514}) as Outer => a"
     );
     parseAndPretty(
-      "struct Very-Simple (A : \\Set) : \\Set | x : A | y : Nat",
+      "struct Very-Simple (A : Set) : Set | x : A | y : Nat",
       """
-        public struct Very-Simple (A : \\Set) : \\Set
+        public struct Very-Simple (A : Set) : Set
           | x : A
           | y : Nat
         """
     );
     parseAndPretty(
       """
-        struct With-Tele (B : Nat -> \\Set) : \\Set
-          | x { X : \\Set } : Nat
+        struct With-Tele (B : Nat -> Set) : Set
+          | x { X : Set } : Nat
           | y : B zero
         """,
       """
-        public struct With-Tele (B : \\Pi (_ : Nat) -> \\Set) : \\Set
-          | x {X : \\Set} : Nat
+        public struct With-Tele (B : Pi (_ : Nat) -> Set) : Set
+          | x {X : Set} : Nat
           | y : B zero
         """
     );
@@ -255,16 +255,16 @@ public class ParseTest {
   @Test
   public void issue350() {
     parseAndPretty("""
-        def l : \\Set => \\lam i => Nat
+        def l : Set => \\ i => Nat
         """,
       """
-        public def l : \\Set => \\lam (i : _) => Nat
+        public def l : Set => \\ (i : _) => Nat
         """);
     parseAndPretty("""
-        def l : \\Set => \\lam (i : I) => Nat
+        def l : Set => \\ (i : I) => Nat
         """,
       """
-        public def l : \\Set => \\lam (i : I) => Nat
+        public def l : Set => \\ (i : I) => Nat
         """);
   }
 

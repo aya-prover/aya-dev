@@ -37,7 +37,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
     var doc = Doc.cat(
-      Doc.styled(KEYWORD, Doc.symbol("\\lam")),
+      Doc.styled(KEYWORD, Doc.symbol("\\")),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.symbol(" => "),
@@ -49,7 +49,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   @Override public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
     // TODO[kiva]: term.co
     var doc = Doc.cat(
-      Doc.styled(KEYWORD, Doc.symbol("\\Pi")),
+      Doc.styled(KEYWORD, Doc.symbol("Pi")),
       Doc.plain(" "),
       term.param().toDoc(),
       Doc.symbol(" -> "),
@@ -60,7 +60,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Boolean nestedCall) {
     var doc = Doc.cat(
-      Doc.styled(KEYWORD, Doc.symbol("\\Sig")),
+      Doc.styled(KEYWORD, Doc.symbol("Sig")),
       Doc.plain(" "),
       visitTele(term.params().view().dropLast(1)),
       Doc.plain(" ** "),
@@ -106,7 +106,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
 
   @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Boolean aBoolean) {
     return Doc.cat(
-      Doc.styled(KEYWORD, "\\new"),
+      Doc.styled(KEYWORD, "new"),
       Doc.symbol(" { "),
       Doc.hsep(newTerm.params().view()
         .map((k, v) -> Doc.hsep(Doc.plain("|"),

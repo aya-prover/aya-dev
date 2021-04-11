@@ -1,7 +1,7 @@
-open data Nat : \Set
+open data Nat : Set
   | zero
   | suc Nat
 
-data Int : \Set
+data Int : Set
  | pos Nat
  | neg Nat { | zero => pos zero }

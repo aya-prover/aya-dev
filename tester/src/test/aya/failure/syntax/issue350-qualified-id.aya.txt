@@ -1,7 +1,7 @@
-In file $FILE:1:21 ->
+In file $FILE:1:17 ->
 
-  1 | def x : \Set => \lam A::B => x
-                           ^--^
+  1 | def x : Set => \ A::B => x
+                       ^--^
   
 Error: Parser error: parameter name `A::B` should not be qualified
 Parsing interrupted due to error(s).

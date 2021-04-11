@@ -1,9 +1,9 @@
-def uncurry (A : \Set) (B : \Set) (C : \Set)
-             (f : \Pi A B -> C)
-             (p : \Sig A ** B) : C
+def uncurry (A : Set) (B : Set) (C : Set)
+             (f : Pi A B -> C)
+             (p : Sig A ** B) : C
   => f (p.1) (p.2)
 
-def uncurry3 (A : \Set) (B : \Set) (C : \Set) (D : \Set)
-              (f : \Pi A B C -> D)
-              (p : \Sig A B ** C) : D
+def uncurry3 (A : Set) (B : Set) (C : Set) (D : Set)
+              (f : Pi A B C -> D)
+              (p : Sig A B ** C) : D
   => f (p.1) (p.2) (p.3)

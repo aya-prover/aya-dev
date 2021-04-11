@@ -75,7 +75,7 @@ public class NormalizeTest extends LispTestCase {
 
   @Test public void unfoldPatterns() {
     var defs = TyckDeclTest.successTyckDecls("""
-      open data Nat : \\Set | zero | suc Nat
+      open data Nat : Set | zero | suc Nat
       def tracy (a b : Nat) : Nat
        | zero, a => a
        | a, zero => a
@@ -99,13 +99,13 @@ public class NormalizeTest extends LispTestCase {
 
   @Test public void unfoldPrim() {
     var defs = TyckDeclTest.successTyckDecls("""
-      data Nat : \\Set | zero | suc Nat
+      data Nat : Set | zero | suc Nat
       prim I
       prim left
       prim right
       prim arcoe
-      def xyr : Nat => arcoe (\\lam i => Nat) Nat::zero left
-      def kiva : Nat => arcoe (\\lam i => Nat) (Nat::suc Nat::zero) right""");
+      def xyr : Nat => arcoe (\\ i => Nat) Nat::zero left
+      def kiva : Nat => arcoe (\\ i => Nat) (Nat::suc Nat::zero) right""");
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i))
       .body().getLeftValue().normalize(NormalizeMode.NF);
     assertTrue(normalizer.apply(5) instanceof CallTerm.Con conCall

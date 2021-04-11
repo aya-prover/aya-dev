@@ -3,7 +3,7 @@
     \level 1 => [ \match \elim \0 \with ]
     -- Alternative:
     -- \abuse \level 1 (a b : Empty) : a = b
-    -- I'm using VV's convention for h-levels: h-level 0 = contractible, h-level 1 = \Prop in arend, h-level 2 = \Set
+    -- I'm using VV's convention for h-levels: h-level 0 = contractible, h-level 1 = Prop in arend, h-level 2 = Set
     -- h-level n = \(n+2)-Type
     -- ice: no pattern means absurd pattern
   }
@@ -58,9 +58,9 @@
 \bind × \tighter =
 
 \def curry {A B : \Type} (f : A × B -> C) : A -> B -> C =>
-  \lam x y => f (x ,, y)
-  -- aya keywords can be represented by `\\(\w*)`, and instead of `\lam` we can just use `\`
-  -- ice: but I still propose \lam
+  \ x y => f (x ,, y)
+  -- aya keywords can be represented by `\\(\w*)`, and instead of `\` we can just use `\`
+  -- ice: but I still propose \
 
 \def pairExt {A B : \Type} (p1 p2 : A × B) : p1 .fst = p2 .fst -> p1 .snd = p2 .snd -> p1 = p2 =>
 -- .fst is the postfix application of fst
@@ -77,11 +77,11 @@
   | contr (x : A) : center = x
   \abusing {
     \level 1 => \mzi
-    -- this should make aya put (isContr A) in \Prop for any A
+    -- this should make aya put (isContr A) in Prop for any A
   }
 -- Ok, I reconsidered the issue and think `\record` are still dependent pairs with named projections, not codata.
 
-\def hasHlevel (n : ℕ) : \Type -> \Prop => \match \elim n \with
+\def hasHlevel (n : ℕ) : \Type -> Prop => \match \elim n \with
   | 0 => \ A -> isContr A
   | suc n => \ A (x y : A) -> hasHlevel n (x = y)
--- h-level solver should be able to deduce that hasHlevel is ℕ -> \Type -> \Prop
+-- h-level solver should be able to deduce that hasHlevel is ℕ -> \Type -> Prop

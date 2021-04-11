@@ -1,7 +1,7 @@
 In file $FILE:3:4 ->
 
-  1 | open data Nat : \Set | zero | suc Nat
-  2 | open data Ray (a : Nat) : \Set | zero => eldath
+  1 | open data Nat : Set | zero | suc Nat
+  2 | open data Ray (a : Nat) : Set | zero => eldath
   3 | def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
           ^--------^
   

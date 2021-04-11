@@ -31,7 +31,7 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
       Doc.plain(" "),
       Doc.symbol(cmd.path().joinToString("::")),
       Doc.plain(" "),
-      Doc.styled(TermPrettier.KEYWORD, "\\as"),
+      Doc.styled(TermPrettier.KEYWORD, "as"),
       Doc.plain(" "),
       cmd.asName() == null ? Doc.symbol(cmd.path().joinToString("::")) : Doc.plain(cmd.asName())
     );

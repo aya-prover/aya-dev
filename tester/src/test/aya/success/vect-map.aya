@@ -1,9 +1,9 @@
-open data Nat : \Set
+open data Nat : Set
  | zero
  | suc Nat
-open data Vect (A : \Set) (n : Nat) : \Set
+open data Vect (A : Set) (n : Nat) : Set
  | A, zero => vnil
  | A, suc m => vcons A (Vect A m)
-def map {A B : \Set} (n : Nat) (f : \Pi A -> B) (xs : Vect A n) : Vect B n
+def map {A B : Set} (n : Nat) (f : Pi A -> B) (xs : Vect A n) : Vect B n
  | zero, f, vnil => vnil {_}
  | suc n, f, vcons x xs => vcons (f x) (map n f xs)

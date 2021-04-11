@@ -1,2 +1,2 @@
-def id (A : \Set) (a : A) : A => a
-def id2 (B : \Set) (b : B) : B => id B b
+def id (A : Set) (a : A) : A => a
+def id2 (B : Set) (b : B) : B => id B b

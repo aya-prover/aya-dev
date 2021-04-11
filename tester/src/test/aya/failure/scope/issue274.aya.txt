@@ -1,6 +1,6 @@
 In file $FILE:3:4 ->
 
-  1 | data Z : \Set
+  1 | data Z : Set
   2 |   | zero
   3 |   | zero
           ^--^

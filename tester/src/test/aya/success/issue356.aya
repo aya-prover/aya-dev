@@ -1,13 +1,13 @@
-open data Nat : \Set | zero | suc Nat
-open data Bool : \Set | true | false
-open data TermTy : \Set | natT | boolT
-def termTy (t : TermTy) : \Set
+open data Nat : Set | zero | suc Nat
+open data Bool : Set | true | false
+open data TermTy : Set | natT | boolT
+def termTy (t : TermTy) : Set
  | natT => Nat
  | boolT => Bool
-open data Term (n : TermTy) : \Set
+open data Term (n : TermTy) : Set
  | natT => nat Nat
  | natT => succ (Term natT)
  | boolT => bool Bool
  | boolT => inv (Term boolT)
  | A => case (Term boolT) (Term A) (Term A)
-def Normalize => \Pi (t : TermTy) (x : Term t) -> termTy t
+def Normalize => Pi (t : TermTy) (x : Term t) -> termTy t

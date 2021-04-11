@@ -5,6 +5,6 @@ In file $FILE:6:35 ->
   6 |   | (suc a, suc b), unit y => suc (max (a, b))
                                          ^--------^
   
-Error: The expected type `Nat` does not match the actual type `\Pi (b : Unit) -> Nat`
+Error: The expected type `Nat` does not match the actual type `Pi (b : Unit) -> Nat`
 Tycking interrupted due to error(s).
 What are you doing?

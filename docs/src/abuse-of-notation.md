@@ -8,7 +8,7 @@ has one more disappointing aspect: it makes `Ring` no longer a `Monoid` or an `A
 On master branch Arend, you can do
 
 ```arend
-\class Ring (E : \Set)
+\class Ring (E : Set)
   | \coerce mult : Monoid E
   | \coerce add : AbGroup E
 ```

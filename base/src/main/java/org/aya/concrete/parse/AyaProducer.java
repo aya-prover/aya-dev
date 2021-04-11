@@ -168,7 +168,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     }
     var set = ctx.SET_UNIV();
     if (set != null) {
-      var text = set.getText().substring("\\Set".length());
+      var text = set.getText().substring("Set".length());
       return new Expr.UnivExpr(sourcePosOf(set), visitOptNumber(text, 0), 0);
     }
     var prop = ctx.PROP();

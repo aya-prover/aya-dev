@@ -10,7 +10,7 @@ Part 00.  Some Algebra
 
 Abstract algebra provides an ample supply of examples for testing various language features, since the definition of new algebraic structures often boils down to adding new operations and laws to old ones.  I'll list the concepts in abstract algebra that will be useful in the discussion during this series.  If you know the definition of a concept, it's safe to skip the paragraph; if you have taken a course in graduate-level abstract algebra then it's safe to skip the entire section.  As they are primarily used as examples, we won't dive into their mathematical meaning here.  This [wikipedia page](https://en.wikipedia.org/wiki/Algebraic_structure) contains useful information.
 
-The algebraic structures here are set-based, i.e., they are `\Set`s equipped with additional structures.
+The algebraic structures here are set-based, i.e., they are `Set`s equipped with additional structures.
 
 ~~this part is ideally written in literate arend, if there is such a thing.~~
 
@@ -19,7 +19,7 @@ The algebraic structures here are set-based, i.e., they are `\Set`s equipped wit
 *Semigroups* are sets equipped with an associative binary operation.
 
 ````arend
-\class Semigroup (E : \Set)
+\class Semigroup (E : Set)
   | \infixl 7 * : E -> E -> E
   | *-assoc (x y z : E) : (x * y) * z = x * (y * z)
 ````
@@ -66,7 +66,7 @@ These structures often involve a structure ("base structure") "acting" on anothe
 _G-sets_ are sets equipped with a group action.
 
 ````arend
-\class G-Set (G : Group) (E : \Set)
+\class G-Set (G : Group) (E : Set)
   | \infix 8 ** : G -> E -> E
   | compatibility (x y : G) (z : E) : (x * y) ** z = x ** (y ** z)
 ````
@@ -76,7 +76,7 @@ where the `**` is often called the group action.  Here G is the base structure a
 This definition assumes left-actions; right-actions can also be defined:
 
 ````arend
-\class Right-G-Set (G : Group) (E : \Set)
+\class Right-G-Set (G : Group) (E : Set)
   | \infix 8 ** : E -> G -> E
   | compatibility (x : E) (y z : G) : (x ** y) ** z = x ** (y * z)
 ````

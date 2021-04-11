@@ -1,4 +1,4 @@
-open data Nat : \Set
+open data Nat : Set
  | zero
  | suc Nat
 

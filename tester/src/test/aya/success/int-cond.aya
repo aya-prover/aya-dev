@@ -1,11 +1,11 @@
-open data Nat : \Set
+open data Nat : Set
  | zero
  | suc Nat
 
-open data Int : \Set
+open data Int : Set
  | pos Nat
  | neg Nat { | zero => pos zero }
 
-open data Test : \Set
+open data Test : Set
  | abel Int
  | cain Int { | pos zero => abel (neg (suc zero)) }

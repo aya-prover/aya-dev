@@ -26,7 +26,7 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
       Doc.join(Doc.plain(", "), tuple.pats().stream().map(Pat::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.cat(tup, Doc.styled(TermPrettier.KEYWORD, " \\as "), Doc.plain(tuple.as().name()));
+      : Doc.cat(tup, Doc.styled(TermPrettier.KEYWORD, " as "), Doc.plain(tuple.as().name()));
   }
 
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
@@ -38,7 +38,7 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
   @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Boolean aBoolean) {
     boolean ex = absurd.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.styled(TermPrettier.KEYWORD, "\\impossible"));
+      Doc.styled(TermPrettier.KEYWORD, "impossible"));
   }
 
   @Override public Doc visitPrim(Pat.@NotNull Prim prim, Boolean aBoolean) {
@@ -59,7 +59,7 @@ public final class PatPrettier implements Pat.Visitor<Boolean, Doc> {
     boolean as = ctorAs != null;
     var withEx = Doc.wrap(ex ? "" : "{", ex ? "" : "}", ctorDoc);
     var withAs = !as ? withEx :
-      Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" \\as "), Doc.plain(ctorAs.name()));
+      Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" as "), Doc.plain(ctorAs.name()));
     return !ex && !as ? withAs : nestedCall && !noParams ? Doc.wrap("(", ")", withAs) : withAs;
   }
 

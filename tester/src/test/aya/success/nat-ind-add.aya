@@ -1,8 +1,8 @@
-open data Nat : \Set
+open data Nat : Set
  | zero
  | suc Nat
 
-open data Int : \Set
+open data Int : Set
  | pos Nat
  | neg Nat { | zero => pos zero }
 
@@ -12,10 +12,10 @@ def addN (a b : Nat) : Nat
  | suc a, b => suc (addN a b)
  | a, suc b => suc (addN a b)
 
-def randomTest (a b : Nat) : \Set
- | zero, a => \Pi Nat -> Nat
- | a, zero => \Pi Nat -> Nat
- | suc a, suc b => \Sig Nat ** Nat
+def randomTest (a b : Nat) : Set
+ | zero, a => Pi Nat -> Nat
+ | a, zero => Pi Nat -> Nat
+ | suc a, suc b => Sig Nat ** Nat
 
 def subNI (a b : Nat) : Int
  | zero, a => neg a

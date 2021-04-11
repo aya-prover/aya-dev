@@ -20,25 +20,25 @@ public class DistillerTest {
   }
 
   @Test public void fn() {
-    var doc1 = declDoc("def id {A : \\Set} (a : A) : A => a");
-    var doc2 = declDoc("def id {A : \\Set} (a : A) => a");
+    var doc1 = declDoc("def id {A : Set} (a : A) : A => a");
+    var doc2 = declDoc("def id {A : Set} (a : A) => a");
     var doc3 = declDoc("""
-      def curry3 (A  B  C  D : \\Set)
-                  (f : \\Pi (x : \\Sig A B ** C) -> D)
+      def curry3 (A  B  C  D : Set)
+                  (f : Pi (x : Sig A B ** C) -> D)
                   (a : A) (b : B) (c : C) : D
         => f (a, b, c)
-      def uncurry3 (A : \\Set) (B : \\Set) (C : \\Set) (D : \\Set)
-                    (f : \\Pi A B C -> D)
-                    (p : \\Sig A B ** C) : D
+      def uncurry3 (A : Set) (B : Set) (C : Set) (D : Set)
+                    (f : Pi A B C -> D)
+                    (p : Sig A B ** C) : D
         => f (p.1) (p.2) (p.3)""");
     assertFalse(Doc.cat(doc1, doc2, doc3).renderToHtml().isEmpty());
   }
 
   @Test public void data() {
     assertFalse(declDoc("""
-      open data Nat : \\Set | zero | suc Nat
-      open data Int : \\Set | pos Nat | neg Nat { | zero => pos zero }
-      open data Fin (n : Nat) : \\Set | suc m => fzero | suc m => fsuc (Fin m)
+      open data Nat : Set | zero | suc Nat
+      open data Int : Set | pos Nat | neg Nat { | zero => pos zero }
+      open data Fin (n : Nat) : Set | suc m => fzero | suc m => fsuc (Fin m)
       """).renderToHtml().isEmpty());
   }
 
@@ -47,29 +47,29 @@ public class DistillerTest {
       prim I prim left
       prim right
 
-      struct Pair (A : \\Set) (B : \\Set) : \\Set
+      struct Pair (A : Set) (B : Set) : Set
         | fst : A
         | snd : B
-        | we-are-together : \\Sig A ** B => (fst, snd)
+        | we-are-together : Sig A ** B => (fst, snd)
 
       def test-nat-pair : Pair I I =>
-        \\new Pair I I { | fst => left | snd => left }
+        new Pair I I { | fst => left | snd => left }
 
-      def make-pair (A B : \\Set) (a : A) (b : B) : Pair A B =>
-        \\new Pair A B { | fst => a | snd => b }
+      def make-pair (A B : Set) (a : A) (b : B) : Pair A B =>
+        new Pair A B { | fst => a | snd => b }
       """).renderToHtml().isEmpty());
   }
 
   @Test public void path() {
     assertFalse(declDoc("""
       prim I prim left prim right
-      struct Path (A : \\Pi I -> \\Set) (a : A left) (b : A right) : \\Set
+      struct Path (A : Pi I -> Set) (a : A left) (b : A right) : Set
        | at (i : I) : A i {
          | left => a
          | right => b
        }
-      def path {A : \\Pi I -> \\Set} (p : \\Pi (i : I) -> A i)
-        => \\new Path A (p left) (p right) { | at i => p i }
+      def path {A : Pi I -> Set} (p : Pi (i : I) -> A i)
+        => new Path A (p left) (p right) { | at i => p i }
       """).renderToTeX().isEmpty());
   }
 

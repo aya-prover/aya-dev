@@ -1,1 +1,1 @@
-def x : \Set => \lam A::B => x
+def x : Set => \ A::B => x

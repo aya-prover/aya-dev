@@ -1,9 +1,9 @@
-In file $FILE:6:30 ->
+In file $FILE:6:29 ->
 
   4 | def test
-  5 |  (F : \Pi \Set -> \Set)
-  6 |  (g : \Pi (X : F _) -> F (Neg X)) : Nat => g zero
-                                    ^^
+  5 |  (F : Set -> Set)
+  6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
+                                   ^^
   
 Error: The expected type `\Type` does not match the actual type `F {?_?}`
 Tycking interrupted due to error(s).

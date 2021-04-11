@@ -1,4 +1,4 @@
-open data Nat : \Set
+open data Nat : Set
  | zero
  | suc Nat
 
@@ -8,7 +8,7 @@ def addN (a b : Nat) : Nat
  | suc a, b => suc (addN a b)
  | a, suc b => suc (addN a b)
 
-open data Int : \Set
+open data Int : Set
  | pos Nat
  | neg Nat { | n => pos (addN n n) }
 
