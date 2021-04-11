@@ -207,8 +207,8 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   /**
-   * @param hLevel specified hLevel
-   * @param uLevel specified uLevel
+   * @param hLevel specified hLevel, -1 means unspecified, -2 means infinity
+   * @param uLevel specified uLevel, -1 means unspecified
    * @author re-xyr, ice1000
    */
   record UnivExpr(

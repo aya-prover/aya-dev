@@ -37,7 +37,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -153,26 +152,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), false, null);
     var id = ctx.qualifiedId();
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), visitQualifiedId(id));
-    var universe = ctx.UNIVERSE();
-    if (universe != null) {
-      var universeText = universe.getText();
-      var univTrunc = universeText.substring(1, universeText.indexOf("T"));
-      var hLevel = switch (univTrunc) {
-        default -> Integer.parseInt(univTrunc.substring(0, univTrunc.length() - 1));
-        case "h-", "h" -> -3;
-        case "" -> throw new UnsupportedOperationException("TODO");
-        case "oo-" -> Integer.MAX_VALUE;
-      };
-      var uLevel = visitOptNumber(universeText.substring(universeText.indexOf("e") + 1), 0);
-      return new Expr.UnivExpr(sourcePosOf(universe), uLevel, hLevel);
-    }
-    var set = ctx.SET_UNIV();
-    if (set != null) {
-      var text = set.getText().substring("Set".length());
-      return new Expr.UnivExpr(sourcePosOf(set), visitOptNumber(text, 0), 0);
-    }
-    var prop = ctx.PROP();
-    if (prop != null) return new Expr.UnivExpr(sourcePosOf(prop), 0, -1);
+    if (ctx.TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, -1);
+    if (ctx.H_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, visitOptNumber(ctx.NUMBER(), -1));
+    if (ctx.U_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), -1);
+    if (ctx.SET_UNIV() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), 2);
+    if (ctx.INF_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), -2);
+    if (ctx.PROP() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, 1);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
@@ -185,9 +170,9 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  public int visitOptNumber(@NotNull String number, int defaultVal) {
+  public int visitOptNumber(@Nullable TerminalNode number, int defaultVal) {
     return Option.of(number)
-      .filter(Predicate.not(String::isEmpty))
+      .map(ParseTree::getText)
       .map(Integer::parseInt)
       .getOrDefault(defaultVal);
   }

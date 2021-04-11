@@ -5,6 +5,6 @@ In file $FILE:6:29 ->
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                    ^^
   
-Error: The expected type `\Type` does not match the actual type `F {?_?}`
+Error: The expected type `Type` does not match the actual type `F {?_?}`
 Tycking interrupted due to error(s).
 What are you doing?

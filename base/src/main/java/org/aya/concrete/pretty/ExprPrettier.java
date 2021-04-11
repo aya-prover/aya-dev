@@ -66,11 +66,11 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
     int u = expr.uLevel();
     int h = expr.hLevel();
-    if (u == 0 && h == -1) return Doc.styled(TermPrettier.KEYWORD, "Prop");
     return Doc.styled(TermPrettier.KEYWORD, switch (h) {
-      case Integer.MAX_VALUE -> "\\oo-Type" + (u == 0 ? "" : u);
-      case 0 -> "Set" + (u == 0 ? "" : u);
-      default -> "\\" + h + "-Type" + (u == 0 ? "" : u);
+      case -2 -> "ooType" + (u == -1 ? "" : u);
+      case 2 -> "Set" + (u == -1 ? "" : u);
+      case 1 -> "Prop" + (u == -1 ? "" : u);
+      default -> "Type";
     });
   }
 

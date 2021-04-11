@@ -66,14 +66,10 @@ public class ParseTest {
     assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
     parseUniv("Prop");
     parseUniv("Set");
-    parseUniv("Set0");
-    parseUniv("Set233");
-    parseUniv("\\2-Type");
-    parseUniv("\\2-Type2");
-    parseUniv("\\114-Type514");
-    parseUniv("\\hType2");
-    parseUniv("\\h-Type2");
-    parseUniv("\\oo-Type2");
+    parseUniv("Type");
+    parseUniv("hType");
+    parseUniv("uType");
+    parseUniv("ooType");
   }
 
   @Test
@@ -90,12 +86,12 @@ public class ParseTest {
     parseData("data Unit");
     parseData("data Unit abusing {}");
     parseData("data Unit : A abusing {}");
-    parseData("data T {A : \\114-Type514} : A abusing {}");
-    parseAndPretty("def id {A : \\114-Type514} (a : A) : A => a", """
-        public def id {A : \\114-Type514} (a : A) : A => a
+    parseData("data T {A : Type} : A abusing {}");
+    parseAndPretty("def id {A : Type} (a : A) : A => a", """
+        public def id {A : Type} (a : A) : A => a
       """);
-    parseAndPretty("def xx {A B : \\114-Type514} (a : A) : A => a", """
-        public def xx {A : \\114-Type514} {B : \\114-Type514} (a : A) : A => a
+    parseAndPretty("def xx {A B : Type} (a : A) : A => a", """
+        public def xx {A : Type} {B : Type} (a : A) : A => a
       """);
     parseAndPretty("data Nat | Z | S Nat", """
       public data Nat

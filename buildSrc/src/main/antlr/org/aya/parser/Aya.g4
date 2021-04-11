@@ -117,7 +117,10 @@ literal : qualifiedId
         | LGOAL expr? '?}'
         | NUMBER
         | STRING
-        | UNIVERSE
+        | H_TYPE
+        | U_TYPE
+        | TYPE
+        | INF_TYPE
         | SET_UNIV
         ;
 
@@ -152,8 +155,11 @@ FIXR : 'fixr';
 TWIN : 'twin';
 
 // universe
-UNIVERSE : '\\' (NUMBER '-' | 'oo-' | 'h' | 'h-')? 'Type' NUMBER?;
-SET_UNIV : 'Set' NUMBER?;
+H_TYPE : 'hType';
+U_TYPE : 'uType';
+TYPE : 'Type';
+INF_TYPE : 'ooType';
+SET_UNIV : 'Set';
 PROP : 'Prop';
 
 // other keywords

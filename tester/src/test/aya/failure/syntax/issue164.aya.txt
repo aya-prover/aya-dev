@@ -5,6 +5,6 @@ In file $FILE:3:26 ->
   3 |              (p : Sig A  B) : C
                                 ^^
   
-Error: Parser error: extraneous input ')' expecting {'**', INFIX, POSTFIX, UNIVERSE, SET_UNIV, 'Prop', '{', '(', '{?', NUMBER, '_', STRING, ID}
+Error: Parser error: extraneous input ')' expecting {'**', INFIX, POSTFIX, 'hType', 'uType', 'Type', 'ooType', 'Set', 'Prop', '{', '(', '{?', NUMBER, '_', STRING, ID}
 Parsing interrupted due to error(s).
 What are you doing?
