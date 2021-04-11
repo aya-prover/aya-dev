@@ -23,7 +23,7 @@ allprojects {
   version = deps.getProperty("version.project")
 }
 
-@Suppress("UnstableApiUsage") subprojects {
+subprojects {
   if (name in listOf("docs")) return@subprojects
   val useJacoco = name in listOf("base", "tester", "pretty")
 
@@ -170,5 +170,5 @@ val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
 
 tasks.register("githubActions") {
   group = "verification"
-  dependsOn(tasks.named("check"), mergeJacocoReports, tasks.findByPath(":cli:copyJarHere"))
+  dependsOn(mergeJacocoReports, tasks.findByPath(":cli:jlink"))
 }
