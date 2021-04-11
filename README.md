@@ -11,7 +11,11 @@ gradle use proxies.
 ```bash
 # build Aya as an application which can be used on a
 # Java-free environment to cli/build/image
-./gradlew copyJarHere
+./gradlew jlink
+# build a platform-dependent installer for Aya with the jlink artifact.
+# to cli/build/jpackage
+# Requires https://wixtoolset.org/releases on Windows
+./gradlew jpackage
 # run tests and generate coverage report to build/reports
 ./gradlew mergeJacocoReports
 # do both

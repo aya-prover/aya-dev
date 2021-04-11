@@ -18,12 +18,12 @@ sourceSets.main {
   java.srcDirs(genDir)
 }
 
-tasks.compileJava.configure { dependsOn(generateVersion) }
-tasks.sourcesJar.configure { dependsOn(generateVersion) }
+tasks.compileJava { dependsOn(generateVersion) }
+tasks.sourcesJar { dependsOn(generateVersion) }
 
 val cleanGenerated = tasks.register("cleanGenerated") {
   group = "build"
   genDir.deleteRecursively()
 }
 
-tasks.named("clean").configure { dependsOn(cleanGenerated) }
+tasks.named("clean") { dependsOn(cleanGenerated) }
