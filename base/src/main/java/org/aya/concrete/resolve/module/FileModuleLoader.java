@@ -65,9 +65,8 @@ public final record FileModuleLoader(
     program.forEach(s -> s.accept(shallowResolver, context));
     program.forEach(Stmt::resolve);
     onResolved.runChecked();
-    var delayedReporter = new DelayedReporter(reporter);
     // in case we have un-messaged TyckException
-    try (delayedReporter) {
+    try (var delayedReporter = new DelayedReporter(reporter)) {
       var wellTyped = program
         .mapNotNull(s -> s instanceof Signatured decl ? decl.tyck(delayedReporter, builder) : null);
       onTycked.acceptChecked(wellTyped);
