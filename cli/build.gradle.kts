@@ -14,6 +14,7 @@ dependencies {
 
 plugins {
   id("com.github.johnrengelman.shadow")
+  id("org.beryx.jlink")
 }
 
 tasks.withType<Jar>().configureEach {
@@ -22,6 +23,14 @@ tasks.withType<Jar>().configureEach {
 
 tasks.withType<JavaExec>().configureEach {
   if (Os.isFamily(Os.FAMILY_MAC)) jvmArgs("-XstartOnFirstThread")
+}
+
+jlink {
+  options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+  launcher {
+    name = "aya"
+    jvmArgs = listOf("-XstartOnFirstThread")
+  }
 }
 
 task<Copy>("copyJarHere") {
