@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
@@ -59,6 +60,7 @@ public record StmtTycker(
     var parent = tycker.localCtx.parent();
     assert parent != null;
     tycker.localCtx = parent;
+    if (reporter instanceof DelayedReporter r) r.reportNow();
   }
 
   @Override public PrimDef visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker tycker) {

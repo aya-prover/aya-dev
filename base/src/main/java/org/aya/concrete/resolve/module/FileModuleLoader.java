@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.module;
 
+import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.api.util.BreakingException;
@@ -64,8 +65,13 @@ public final record FileModuleLoader(
     program.forEach(s -> s.accept(shallowResolver, context));
     program.forEach(Stmt::resolve);
     onResolved.runChecked();
-    var wellTyped = program.mapNotNull(s -> s instanceof Signatured decl ? decl.tyck(reporter, builder) : null);
-    onTycked.acceptChecked(wellTyped);
+    var delayedReporter = new DelayedReporter(reporter);
+    // in case we have un-messaged TyckException
+    try (delayedReporter) {
+      var wellTyped = program
+        .mapNotNull(s -> s instanceof Signatured decl ? decl.tyck(delayedReporter, builder) : null);
+      onTycked.acceptChecked(wellTyped);
+    }
     return context;
   }
 
