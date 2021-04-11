@@ -15,7 +15,9 @@ public enum Assoc {
   InfixR(true),
   Fix(false),
   FixL(false),
-  FixR(false);
+  FixR(false),
+
+  NoFix(false);
 
   /**
    * That this fixity is infix.

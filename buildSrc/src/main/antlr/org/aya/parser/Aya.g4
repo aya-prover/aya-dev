@@ -50,21 +50,21 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : 'struct' ID tele* type? ('extends' idsComma)? ('|' field)* abuse?;
+structDecl : 'struct' assoc? ID tele* type? ('extends' idsComma)? ('|' field)* abuse?;
 
-primDecl : 'prim' ID tele* type? ;
+primDecl : 'prim' assoc? ID tele* type? ;
 
 field : COERCE? ID tele* type clauses? # fieldDecl
       | ID tele* type? IMPLIES expr    # fieldImpl
       ;
 
-dataDecl : (PUBLIC? OPEN)? 'data' ID tele* type? dataBody* abuse?;
+dataDecl : (PUBLIC? OPEN)? 'data' assoc? ID tele* type? dataBody* abuse?;
 
 dataBody : ('|' dataCtor)       # dataCtors
          | dataCtorClause       # dataClauses
          ;
 
-dataCtor : COERCE? ID tele* clauses?;
+dataCtor : COERCE? assoc? ID tele* clauses?;
 
 dataCtorClause : '|' patterns IMPLIES dataCtor;
 
