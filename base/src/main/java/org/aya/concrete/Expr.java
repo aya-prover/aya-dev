@@ -210,7 +210,8 @@ public sealed interface Expr extends ConcreteExpr {
    */
   record RefExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Var resolvedVar
+    @NotNull Var resolvedVar,
+    @NotNull String fromName
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitRef(this, p);
