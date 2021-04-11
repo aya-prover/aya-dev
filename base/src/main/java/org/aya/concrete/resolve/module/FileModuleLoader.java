@@ -5,7 +5,7 @@ package org.aya.concrete.resolve.module;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
-import org.aya.api.util.BreakingException;
+import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.Stmt;
@@ -15,7 +15,6 @@ import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.core.def.Def;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -42,14 +41,13 @@ public final record FileModuleLoader(
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
       return null;
-    } catch (ExprTycker.TyckerException e) {
+    } catch (InternalException e) {
       handleInternalError(e);
       return null;
     } catch (InterruptException e) {
       reporter.reportString(e.stage().name() + " interrupted due to error(s).");
       return null;
     }
-
   }
 
   public static <E extends Exception> @NotNull ModuleContext tyckModule(
@@ -74,7 +72,7 @@ public final record FileModuleLoader(
     return context;
   }
 
-  public static void handleInternalError(@NotNull BreakingException e) {
+  public static void handleInternalError(@NotNull InternalException e) {
     e.printStackTrace();
     e.printHint();
     System.err.println("""

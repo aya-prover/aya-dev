@@ -7,7 +7,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
-import org.aya.api.util.BreakingException;
+import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
@@ -473,7 +473,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
   }
 
-  public static class TyckerException extends BreakingException {
+  public static class TyckerException extends InternalException {
     @Override public void printHint() {
       System.err.println("A type error was discovered during type checking.");
     }
