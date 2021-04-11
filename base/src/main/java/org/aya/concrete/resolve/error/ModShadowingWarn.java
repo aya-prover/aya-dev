@@ -16,8 +16,7 @@ public record ModShadowingWarn(
     return Severity.WARN;
   }
 
-  @Override
-  public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The newly created module name `"),
       Doc.plain(modName.joinToString("::")),

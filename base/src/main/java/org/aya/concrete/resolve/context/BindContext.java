@@ -21,18 +21,15 @@ public record BindContext(
   @NotNull String name,
   @NotNull LocalVar ref
 ) implements Context {
-  @Override
-  public @NotNull Context parent() {
+  @Override public @NotNull Context parent() {
     return parent;
   }
 
-  @Override
-  public @NotNull Reporter reporter() {
+  @Override public @NotNull Reporter reporter() {
     return parent.reporter();
   }
 
-  @Override
-  public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+  @Override public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     if (name.equals(this.name)) return ref;
     else return null;
   }

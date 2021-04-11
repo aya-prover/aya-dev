@@ -87,13 +87,11 @@ public sealed interface Stmt extends Docile
     @NotNull ImmutableSeq<@NotNull Stmt> contents
   ) implements Stmt {
 
-    @Override
-    public @NotNull Accessibility accessibility() {
+    @Override public @NotNull Accessibility accessibility() {
       return Accessibility.Public;
     }
 
-    @Override
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitModule(this, p);
     }
   }
@@ -107,13 +105,11 @@ public sealed interface Stmt extends Docile
     @Nullable String asName
   ) implements Stmt {
 
-    @Override
-    public @NotNull Accessibility accessibility() {
+    @Override public @NotNull Accessibility accessibility() {
       return Accessibility.Private;
     }
 
-    @Override
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitImport(this, p);
     }
   }

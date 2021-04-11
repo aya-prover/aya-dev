@@ -11,8 +11,7 @@ public record UnqualifiedNameNotFoundError(
   @NotNull String name,
   @NotNull SourcePos sourcePos
 ) implements Problem {
-  @Override
-  public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The unqualified name referred to by `"),
       Doc.plain(name),

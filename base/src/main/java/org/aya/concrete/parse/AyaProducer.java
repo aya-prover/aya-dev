@@ -93,8 +93,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  @Override
-  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
+  @Override public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
     var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
     if (fnDecl != null) return Tuple.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.of());
@@ -136,25 +135,21 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, true));
   }
 
-  @Override
-  public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(AyaParser.AbuseContext ctx) {
+  @Override public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(AyaParser.AbuseContext ctx) {
     return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
   }
 
-  @Override
-  public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> visitFnBody(AyaParser.FnBodyContext ctx) {
+  @Override public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> visitFnBody(AyaParser.FnBodyContext ctx) {
     var expr = ctx.expr();
     if (expr != null) return Either.left(visitExpr(expr));
     return Either.right(ImmutableSeq.from(ctx.clause()).map(this::visitClause));
   }
 
-  @Override
-  public ImmutableSeq<String> visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
+  @Override public ImmutableSeq<String> visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
     return ctx.ID().stream().map(ParseTree::getText).collect(ImmutableSeq.factory());
   }
 
-  @Override
-  public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
+  @Override public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), false, null);
     var id = ctx.qualifiedId();
     if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), visitQualifiedId(id));
@@ -253,8 +248,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     throw new UnsupportedOperationException("TODO: " + ctx.getClass());
   }
 
-  @Override
-  public @NotNull Expr visitNew(AyaParser.NewContext ctx) {
+  @Override public @NotNull Expr visitNew(AyaParser.NewContext ctx) {
     return new Expr.NewExpr(
       sourcePosOf(ctx),
       visitExpr(ctx.expr()),
@@ -265,8 +259,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public @NotNull Expr visitArr(AyaParser.ArrContext ctx) {
+  @Override public @NotNull Expr visitArr(AyaParser.ArrContext ctx) {
     var from = visitExpr(ctx.expr(0));
     var to = visitExpr(ctx.expr(1));
     return new Expr.PiExpr(
@@ -277,8 +270,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
+  @Override public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
     var argument = ctx.argument();
     var fn = ctx.expr();
     return new Expr.AppExpr(
@@ -294,8 +286,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .collect(ImmutableSeq.factory());
   }
 
-  @Override
-  public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {
+  @Override public @NotNull Expr visitAtom(AyaParser.AtomContext ctx) {
     var literal = ctx.literal();
     if (literal != null) return visitLiteral(literal);
 
@@ -309,8 +300,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public @NotNull Arg<Expr> visitArgument(AyaParser.ArgumentContext ctx) {
+  @Override public @NotNull Arg<Expr> visitArgument(AyaParser.ArgumentContext ctx) {
     var atom = ctx.atom();
     if (atom != null) {
       var fixes = ctx.projFix();
@@ -331,8 +321,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     throw new UnsupportedOperationException(ctx.getClass().getName());
   }
 
-  @Override
-  public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
+  @Override public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
     return (Expr.LamExpr) buildLam(
       sourcePosOf(ctx),
       visitLamTelescope(ctx.tele()).view(),
@@ -368,8 +357,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return visitExpr(bodyExpr);
   }
 
-  @Override
-  public Expr.@NotNull SigmaExpr visitSigma(AyaParser.SigmaContext ctx) {
+  @Override public Expr.@NotNull SigmaExpr visitSigma(AyaParser.SigmaContext ctx) {
     return new Expr.SigmaExpr(
       sourcePosOf(ctx),
       false,
@@ -381,8 +369,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public Expr.@NotNull PiExpr visitPi(AyaParser.PiContext ctx) {
+  @Override public Expr.@NotNull PiExpr visitPi(AyaParser.PiContext ctx) {
     return (Expr.PiExpr) buildPi(
       sourcePosOf(ctx),
       false,
@@ -426,8 +413,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public Expr.@NotNull ProjExpr visitProj(AyaParser.ProjContext proj) {
+  @Override public Expr.@NotNull ProjExpr visitProj(AyaParser.ProjContext proj) {
     return buildProj(sourcePosOf(proj), visitExpr(proj.expr()), proj.projFix());
   }
 
@@ -510,8 +496,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return visitDataCtor(visitPatterns(ctx.patterns()), ctx.dataCtor());
   }
 
-  @Override
-  public @NotNull Pattern visitPattern(AyaParser.PatternContext ctx) {
+  @Override public @NotNull Pattern visitPattern(AyaParser.PatternContext ctx) {
     return visitAtomPatterns(ctx.atomPatterns()).apply(true, null);
   }
 
@@ -538,8 +523,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override
-  public @NotNull BooleanFunction<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
+  @Override public @NotNull BooleanFunction<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
     var sourcePos = sourcePosOf(ctx);
     if (ctx.LPAREN() != null || ctx.LBRACE() != null) {
       var forceEx = ctx.LPAREN() != null;
@@ -566,15 +550,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
-  @Override
-  public @NotNull ImmutableSeq<Pattern> visitPatterns(AyaParser.PatternsContext ctx) {
+  @Override public @NotNull ImmutableSeq<Pattern> visitPatterns(AyaParser.PatternsContext ctx) {
     return ctx.pattern().stream()
       .map(this::visitPattern)
       .collect(ImmutableSeq.factory());
   }
 
-  @Override
-  public @NotNull Pattern.Clause visitClause(AyaParser.ClauseContext ctx) {
+  @Override public @NotNull Pattern.Clause visitClause(AyaParser.ClauseContext ctx) {
     return new Pattern.Clause(sourcePosOf(ctx), visitPatterns(ctx.patterns()),
       Option.of(ctx.expr()).map(this::visitExpr));
   }

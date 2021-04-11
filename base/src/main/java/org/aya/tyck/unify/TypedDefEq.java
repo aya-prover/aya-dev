@@ -139,28 +139,23 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     throw new IllegalStateException("ConCall can never be a type of any term");
   }
 
-  @Override
-  public @NotNull Boolean visitTup(@NotNull IntroTerm.Tuple type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitTup(@NotNull IntroTerm.Tuple type, @NotNull Term lhs, @NotNull Term rhs) {
     throw new IllegalStateException("TupTerm can never be a type of any term");
   }
 
-  @Override
-  public @NotNull Boolean visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term, @NotNull Term term2) {
+  @Override public @NotNull Boolean visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term, @NotNull Term term2) {
     throw new IllegalStateException("NewTerm can never be a type of any term");
   }
 
-  @Override
-  public @NotNull Boolean visitProj(@NotNull ElimTerm.Proj type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitProj(@NotNull ElimTerm.Proj type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitAccess(@NotNull CallTerm.Access type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitAccess(@NotNull CallTerm.Access type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitHole(CallTerm.@NotNull Hole type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitHole(CallTerm.@NotNull Hole type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDirectedDefeq.compare(lhs, rhs, type);
   }
 
@@ -184,8 +179,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     return true;
   }
 
-  @Override
-  public @NotNull Boolean visitPi(@NotNull FormTerm.Pi type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitPi(@NotNull FormTerm.Pi type, @NotNull Term lhs, @NotNull Term rhs) {
     var dummyVar = new LocalVar("dummy");
     var dummy = new RefTerm(dummyVar);
     var dummyArg = new Arg<Term>(dummy, type.param().explicit());
@@ -193,8 +187,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
       compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.substBody(dummy)));
   }
 
-  @Override
-  public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma type, @NotNull Term lhs, @NotNull Term rhs) {
+  @Override public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma type, @NotNull Term lhs, @NotNull Term rhs) {
     var params = type.params().view();
     for (int i = 1, size = type.params().size(); i <= size; i++) {
       var l = new ElimTerm.Proj(lhs, i);

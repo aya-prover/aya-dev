@@ -36,13 +36,11 @@ public record ModuleContext(
     );
   }
 
-  @Override
-  public @NotNull Reporter reporter() {
+  @Override public @NotNull Reporter reporter() {
     return parent.reporter();
   }
 
-  @Override
-  public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+  @Override public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = globals.getOrNull(name);
     if (result == null) return null;
     else if (result.size() == 1) return result.iterator().next().getValue();

@@ -19,25 +19,21 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   private StmtResolver() {
   }
 
-  @Override
-  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
+  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
     visitAll(mod.contents(), unit);
     return unit;
   }
 
-  @Override
-  public Unit visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
+  @Override public Unit visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
+  @Override public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
     return Unit.unit();
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
-  @Override
-  public Unit visitData(Decl.@NotNull DataDecl decl, Unit unit) {
+  @Override public Unit visitData(Decl.@NotNull DataDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
@@ -52,8 +48,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     return unit;
   }
 
-  @Override
-  public Unit visitStruct(Decl.@NotNull StructDecl decl, Unit unit) {
+  @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
@@ -70,8 +65,7 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
-  @Override
-  public Unit visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
+  @Override public Unit visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);

@@ -26,8 +26,7 @@ public final record FnDef(
     ref.core = this;
   }
 
-  @Override
-  public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+  @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitFn(this, p);
   }
 }

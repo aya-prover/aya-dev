@@ -35,8 +35,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return DefPrettier.plainLink(term.var());
   }
 
-  @Override
-  public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
+  @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
     var doc = Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\lam")),
       Doc.plain(" "),
@@ -47,8 +46,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return nestedCall ? Doc.wrap("(", ")", doc) : doc;
   }
 
-  @Override
-  public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
+  @Override public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
     // TODO[kiva]: term.co
     var doc = Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\Pi")),
@@ -100,8 +98,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
     return visitCalls(conCall.ref(), CON_CALL, conCall.conArgs(), nestedCall);
   }
 
-  @Override
-  public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
+  @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
     var items = Doc.join(Doc.plain(", "), term.items().stream()
       .map(Term::toDoc));
     return Doc.cat(Doc.plain("("), items, Doc.plain(")"));

@@ -53,8 +53,7 @@ public record RefFinder(boolean withBody) implements
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitField(@NotNull StructDef.Field def, @NotNull Buffer<Def> references) {
+  @Override public Unit visitField(@NotNull StructDef.Field def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.body().forEach(t -> t.accept(this, references));
     def.result().accept(this, references);

@@ -113,8 +113,7 @@ public interface Context {
   }
 
   class ResolvingInterruptedException extends InterruptException {
-    @Override
-    public InterruptStage stage() {
+    @Override public InterruptStage stage() {
       return InterruptStage.Resolving;
     }
   }

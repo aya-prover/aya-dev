@@ -35,38 +35,31 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return lhs.accept(this, rhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs, @NotNull Term type) {
     throw new IllegalStateException("No visitLam in PatDefEq");
   }
 
-  @Override
-  public @NotNull Boolean visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitApp(@NotNull ElimTerm.App lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitApp(@NotNull ElimTerm.App lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
-  @Override
-  public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref())
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
@@ -105,18 +98,15 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       && defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), DataDef.Ctor.conTele(lhs.ref()));
   }
 
-  @Override
-  public @NotNull Boolean visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs, @NotNull Term type) {
     throw new IllegalStateException("No visitTup in TermDirectedDefEq");
   }
 
-  @Override
-  public @NotNull Boolean visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term, @NotNull Term term2) {
+  @Override public @NotNull Boolean visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term, @NotNull Term term2) {
     throw new IllegalStateException("No visitStruct in TermDirectedDefEq");
   }
 
-  @Override
-  public @NotNull Boolean visitProj(@NotNull ElimTerm.Proj lhs, @NotNull Term preRhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitProj(@NotNull ElimTerm.Proj lhs, @NotNull Term preRhs, @NotNull Term type) {
     return passDown(lhs, preRhs, type);
   }
 
@@ -154,8 +144,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return rhs.subst(subst.add(Unfolder.buildSubst(meta.contextTele, lhs.contextArgs())).add(new Substituter.TermSubst(correspondence)));
   }
 
-  @Override
-  public @NotNull Boolean visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs, @NotNull Term type) {
+  @Override public @NotNull Boolean visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs, @NotNull Term type) {
     var meta = lhs.ref().core();
     if (rhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
       var holeTy = FormTerm.Pi.make(false, meta.telescope, meta.result);

@@ -46,8 +46,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     return new TermDsl(refs).exprToParams(parser(text).expr());
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
+  @Override @SuppressWarnings("unchecked")
   public Term visitExpr(LispParser.ExprContext ctx) {
     var atom = ctx.atom();
     if (atom != null) return atom.accept(this);
@@ -113,8 +112,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
     };
   }
 
-  @Override
-  public Term visitAtom(LispParser.AtomContext ctx) {
+  @Override public Term visitAtom(LispParser.AtomContext ctx) {
     var number = ctx.NUMBER();
     var ident = ctx.IDENT();
     if (ident != null) return new RefTerm((LocalVar) ref(ident.getText()));

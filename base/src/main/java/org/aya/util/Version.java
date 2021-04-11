@@ -40,8 +40,7 @@ public record Version(
     return major + "." + minor + "." + patch;
   }
 
-  @Override
-  public String toString() {
+  @Override public String toString() {
     return BigInteger.ZERO.equals(patch)
       ? BigInteger.ZERO.equals(minor)
       ? major.toString()
@@ -49,8 +48,7 @@ public record Version(
       : major + "." + minor + "." + patch;
   }
 
-  @Override
-  public int compareTo(Version o) {
+  @Override public int compareTo(Version o) {
     int i = major.compareTo(o.major);
     if (i != 0) return i;
     int j = minor.compareTo(o.minor);

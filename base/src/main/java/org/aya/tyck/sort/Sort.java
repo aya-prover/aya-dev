@@ -27,8 +27,7 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) implements Leve
     return var == LevelVar.UP ? uLevel : var == LevelVar.HP ? hLevel : null;
   }
 
-  @Contract("_ -> new") @Override
-  public @NotNull LevelSubst subst(@NotNull LevelSubst substitution) {
+  @Contract("_ -> new") @Override public @NotNull LevelSubst subst(@NotNull LevelSubst substitution) {
     return new Sort(uLevel.subst(substitution), hLevel.subst(substitution));
   }
 

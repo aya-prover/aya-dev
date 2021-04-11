@@ -12,16 +12,14 @@ public record NoSuchFieldError(
   @NotNull SourcePos sourcePos,
   @NotNull ImmutableSeq<String> notFound
 ) implements Problem {
-  @Override
-  public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("No such field(s): "),
       Doc.join(Doc.plain(", "), notFound.stream().map(m -> Doc.wrap("`", "`", Doc.plain(m))))
     );
   }
 
-  @Override
-  public @NotNull Severity level() {
+  @Override public @NotNull Severity level() {
     return Severity.ERROR;
   }
 }

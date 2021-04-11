@@ -21,24 +21,21 @@ import org.jetbrains.annotations.NotNull;
  */
 public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
-  @Override
-  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
+  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();
     visitAll(mod.contents(), newCtx);
     context.importModule(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports(), mod.sourcePos());
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitImport(Stmt.@NotNull ImportStmt cmd, @NotNull ModuleContext context) {
+  @Override public Unit visitImport(Stmt.@NotNull ImportStmt cmd, @NotNull ModuleContext context) {
     var success = loader.load(cmd.path());
     if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path(), cmd.sourcePos()));
     context.importModule(cmd.path(), Stmt.Accessibility.Private, success, cmd.sourcePos());
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, @NotNull ModuleContext context) {
+  @Override public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, @NotNull ModuleContext context) {
     context.openModule(
       cmd.path(),
       cmd.accessibility(),
@@ -61,8 +58,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
+  @Override public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     var dataInnerCtx = context.derive();
     var ctorSymbols = decl.body.toImmutableSeq()
@@ -89,8 +85,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
+  @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     var structInnerCtx = context.derive();
     decl.fields.forEach(field -> structInnerCtx.addGlobal(
@@ -104,8 +99,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
     return Unit.unit();
   }
 
-  @Override
-  public Unit visitFn(Decl.@NotNull FnDecl decl, @NotNull ModuleContext context) {
+  @Override public Unit visitFn(Decl.@NotNull FnDecl decl, @NotNull ModuleContext context) {
     // TODO[xyr]: abuse block currently have no use, so we ignore it for now.
     return visitDecl(decl, context);
   }

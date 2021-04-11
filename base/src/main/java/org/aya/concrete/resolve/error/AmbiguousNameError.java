@@ -18,8 +18,7 @@ public record AmbiguousNameError(
     return Severity.ERROR;
   }
 
-  @Override
-  public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The unqualified name referred to by `"),
       Doc.plain(name),

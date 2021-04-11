@@ -23,8 +23,7 @@ public record DelayedReporter(
     problems.clear();
   }
 
-  @Override
-  public void close() {
+  @Override public void close() {
     reportNow();
   }
 }

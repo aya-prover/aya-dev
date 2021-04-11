@@ -114,8 +114,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
       this(term, pat, pos, Buffer.of());
     }
 
-    @Override
-    public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPat(this, p);
     }
   }

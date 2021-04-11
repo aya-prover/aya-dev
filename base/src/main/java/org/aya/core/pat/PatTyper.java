@@ -21,8 +21,7 @@ record PatTyper(@NotNull LocalCtx localCtx) implements Pat.Visitor<Unit, Unit> {
     throw new IllegalStateException();
   }
 
-  @Override
-  public Unit visitPrim(Pat.@NotNull Prim prim, Unit unit) {
+  @Override public Unit visitPrim(Pat.@NotNull Prim prim, Unit unit) {
     return unit;
   }
 

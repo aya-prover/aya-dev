@@ -18,13 +18,11 @@ import org.jetbrains.annotations.Nullable;
 public record EmptyContext(
   @NotNull Reporter reporter
 ) implements Context {
-  @Override
-  public @Nullable Context parent() {
+  @Override public @Nullable Context parent() {
     return null;
   }
 
-  @Override
-  public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+  @Override public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     return null;
   }
 

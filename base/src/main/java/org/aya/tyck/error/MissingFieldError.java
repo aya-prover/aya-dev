@@ -12,16 +12,14 @@ public record MissingFieldError(
   @NotNull SourcePos sourcePos,
   @NotNull ImmutableSeq<String> missing
 ) implements Problem {
-  @Override
-  public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("Missing field(s): "),
       Doc.join(Doc.plain(", "), missing.stream().map(m -> Doc.wrap("`", "`", Doc.plain(m))))
     );
   }
 
-  @Override
-  public @NotNull Severity level() {
+  @Override public @NotNull Severity level() {
     return Severity.ERROR;
   }
 }

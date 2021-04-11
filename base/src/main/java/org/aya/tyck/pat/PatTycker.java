@@ -50,13 +50,11 @@ public record PatTycker(
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override
-  public void traceEntrance(@NotNull Pattern pat, Term term) {
+  @Override public void traceEntrance(@NotNull Pattern pat, Term term) {
     tracing(builder -> builder.shift(new Trace.PatT(term, pat, pat.sourcePos())));
   }
 
-  @Override
-  public void traceExit(Pat pat, @NotNull Pattern pattern, Term term) {
+  @Override public void traceExit(Pat pat, @NotNull Pattern pattern, Term term) {
     tracing(GenericBuilder::reduce);
   }
 

@@ -14,8 +14,7 @@ public record QualifiedNameNotFoundError(
   @NotNull String name,
   @NotNull SourcePos sourcePos
 ) implements Problem {
-  @Override
-  public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The qualified name referred to by `"),
       Doc.plain(modName.joinToString(Constants.SCOPE_SEPARATOR)),

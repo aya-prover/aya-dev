@@ -15,8 +15,7 @@ public record AmbiguousNameWarn(
     return Severity.WARN;
   }
 
-  @Override
-  public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The name being defined `"),
       Doc.plain(name),

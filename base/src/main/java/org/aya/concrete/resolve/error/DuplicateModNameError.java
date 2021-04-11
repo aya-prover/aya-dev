@@ -12,8 +12,7 @@ public record DuplicateModNameError(
   @NotNull Seq<String> modName,
   @NotNull SourcePos sourcePos
 ) implements Problem {
-  @Override
-  public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The module name being added `"),
       Doc.plain(modName.joinToString("::")),
