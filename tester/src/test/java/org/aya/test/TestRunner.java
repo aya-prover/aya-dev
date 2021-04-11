@@ -50,8 +50,9 @@ public class TestRunner {
     var expectedOutFile = file.resolveSibling(file.getFileName() + ".txt");
 
     var hookOut = new ByteArrayOutputStream();
-    final var reporter = new CountingReporter(new StreamReporter(
-      file, Problem.readSourceCode(file), new PrintStream(hookOut, true, StandardCharsets.UTF_8)));
+    final var reporter = new CountingReporter(new StreamReporter(file,
+      Problem.readSourceCode(file),
+      new PrintStream(hookOut, true, StandardCharsets.UTF_8)));
 
     System.out.print(file.getFileName() + " ---> ");
 
