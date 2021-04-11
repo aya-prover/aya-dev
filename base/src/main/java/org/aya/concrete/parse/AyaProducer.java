@@ -150,24 +150,25 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
-    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), false, null);
+    var pos = sourcePosOf(ctx);
+    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(pos, false, null);
     var id = ctx.qualifiedId();
-    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), visitQualifiedId(id));
-    if (ctx.TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, -1);
-    if (ctx.H_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, visitOptNumber(ctx.NUMBER(), -1));
-    if (ctx.U_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), -1);
-    if (ctx.SET_UNIV() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), 2);
-    if (ctx.INF_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), -2);
-    if (ctx.PROP() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, 1);
+    if (id != null) return new Expr.UnresolvedExpr(pos, visitQualifiedId(id));
+    if (ctx.TYPE() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.POLYMORPHIC, Expr.UnivExpr.POLYMORPHIC);
+    if (ctx.H_TYPE() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.POLYMORPHIC, Expr.UnivExpr.NEEDED);
+    if (ctx.U_TYPE() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.NEEDED, Expr.UnivExpr.POLYMORPHIC);
+    if (ctx.SET_UNIV() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.POLYMORPHIC, 2);
+    if (ctx.INF_TYPE() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.POLYMORPHIC, Expr.UnivExpr.INFINITY);
+    if (ctx.PROP() != null) return new Expr.UnivExpr(pos, 0, 1);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
-      return new Expr.HoleExpr(sourcePosOf(ctx), true, filling);
+      return new Expr.HoleExpr(pos, true, filling);
     }
     var number = ctx.NUMBER();
-    if (number != null) return new Expr.LitIntExpr(sourcePosOf(number), Integer.parseInt(number.getText()));
+    if (number != null) return new Expr.LitIntExpr(pos, Integer.parseInt(number.getText()));
     var string = ctx.STRING();
-    if (string != null) return new Expr.LitStringExpr(sourcePosOf(string), string.getText());
+    if (string != null) return new Expr.LitStringExpr(pos, string.getText());
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 

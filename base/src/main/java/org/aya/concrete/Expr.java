@@ -218,15 +218,25 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   /**
-   * @param hLevel specified hLevel, -1 means unspecified, -2 means infinity
-   * @param uLevel specified uLevel, -1 means unspecified
+   * @param hLevel specified homotopy level if positive
+   * @param uLevel specified universe level if positive
    * @author re-xyr, ice1000
+   * @see UnivExpr#NEEDED
+   * @see UnivExpr#POLYMORPHIC
+   * @see UnivExpr#INFINITY
    */
   record UnivExpr(
     @NotNull SourcePos sourcePos,
     int uLevel,
     int hLevel
   ) implements Expr {
+    /** Must be specified but yet unspecified */
+    public static final int NEEDED = -1;
+    /** Can either be specified or polymorphic */
+    public static final int POLYMORPHIC = -2;
+    /** Specified to be infinity */
+    public static final int INFINITY = -3;
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }
