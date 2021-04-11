@@ -2,15 +2,20 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.gradle
 
+import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class GenerateVersionTask extends WriteFileTask {
+class GenerateVersionTask extends DefaultTask {
   {
     className = "GeneratedVersion"
     group = "build setup"
   }
 
+  @OutputDirectory File outputDir
+  @Input String className
+  @Input def basePackage = project.group
   @Input def taskVersion = project.version
 
   @TaskAction def run() {

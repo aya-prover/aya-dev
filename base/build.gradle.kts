@@ -9,7 +9,8 @@ dependencies {
 
 val genDir = file("src/main/gen")
 val generateVersion = tasks.register<org.aya.gradle.GenerateVersionTask>("generateVersion") {
-  outputDir = genDir.resolve("${project.group.toString().replace('.', '/')}/prelude")
+  basePackage = "org.aya"
+  outputDir = genDir.resolve("org/aya/prelude")
 }
 
 idea.module.generatedSourceDirs.add(genDir)
