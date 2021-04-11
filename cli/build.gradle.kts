@@ -17,19 +17,23 @@ plugins {
   id("org.beryx.jlink")
 }
 
+val mainClassQName = "${project.group}.cli.Main"
 tasks.withType<Jar>().configureEach {
-  manifest.attributes["Main-Class"] = "${project.group}.cli.Main"
+  manifest.attributes["Main-Class"] = mainClassQName
 }
 
-tasks.withType<JavaExec>().configureEach {
-  if (Os.isFamily(Os.FAMILY_MAC)) jvmArgs("-XstartOnFirstThread")
+val isMac = Os.isFamily(Os.FAMILY_MAC)
+if (isMac) tasks.withType<JavaExec>().configureEach {
+  jvmArgs("-XstartOnFirstThread")
 }
 
 jlink {
   options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+  mainClass.set(mainClassQName)
   launcher {
     name = "aya"
-    jvmArgs = listOf("-XstartOnFirstThread")
+    jvmArgs = mutableListOf("--enable-preview")
+    if (isMac) jvmArgs.add("-XstartOnFirstThread")
   }
 }
 
