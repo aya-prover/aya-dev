@@ -87,8 +87,9 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
 
   @Override
   public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
-    return new BinOpParser(binOpSeq.seq().view())
-      .build(binOpSeq.sourcePos())
-      .desugar();
+    // TODO[kiva]: convert hole app?
+    return new BinOpParser(binOpSeq.seq().view()
+      .map(e -> new BinOpParser.Elem(e.expr().desugar(), e.explicit()))
+    ).build(binOpSeq.sourcePos());
   }
 }
