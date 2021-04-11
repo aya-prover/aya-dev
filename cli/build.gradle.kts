@@ -21,6 +21,10 @@ tasks.withType<Jar>().configureEach {
   manifest.attributes["Main-Class"] = mainClassQName
 }
 
+tasks.withType<AbstractCopyTask>().configureEach {
+  duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
 val isMac = Os.isFamily(Os.FAMILY_MAC)
 if (isMac) tasks.withType<JavaExec>().configureEach {
   jvmArgs("-XstartOnFirstThread")
@@ -34,10 +38,4 @@ jlink {
     jvmArgs = mutableListOf("--enable-preview")
     if (isMac) jvmArgs.add("-XstartOnFirstThread")
   }
-}
-
-task<Copy>("copyJarHere") {
-  dependsOn("shadowJar")
-  from(buildDir.resolve("libs").resolve("${project.name}-$version-all.jar"))
-  into(rootProject.buildDir)
 }

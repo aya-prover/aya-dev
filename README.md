@@ -9,9 +9,10 @@ You need Java SE 16 to set this project up. This also means if your choice of ID
 gradle use proxies.
 
 ```bash
-# create a runnable jar at the root directory of the repo
+# build Aya as an application which can be used on a
+# Java-free environment to cli/build/image
 ./gradlew copyJarHere
-# run tests and generate coverage report
+# run tests and generate coverage report to build/reports
 ./gradlew mergeJacocoReports
 # do both
 ./gradlew githubActions

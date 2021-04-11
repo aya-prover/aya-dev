@@ -64,7 +64,10 @@ subprojects {
   }
 
   tasks.withType<Javadoc>().configureEach {
-    (options as StandardJavadocDocletOptions).tags(
+    val options = options as StandardJavadocDocletOptions
+    options.addBooleanOption("-enable-preview", true)
+    options.addStringOption("-source", "16")
+    options.tags(
       "apiNote:a:API Note:",
       "implSpec:a:Implementation Requirements:",
       "implNote:a:Implementation Note:",
