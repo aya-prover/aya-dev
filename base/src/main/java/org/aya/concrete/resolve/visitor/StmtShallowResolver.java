@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.visitor;
 
+import org.aya.api.error.SourcePos;
+import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.context.Context;
@@ -46,6 +48,19 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
     return Unit.unit();
   }
 
+  private void visitOperator(@NotNull ModuleContext context, @NotNull Decl.Operator operator,
+                             Stmt.@NotNull Accessibility accessibility, @NotNull Var ref,
+                             @NotNull SourcePos sourcePos) {
+    var op = operator.asOperator();
+    if (op != null && op._1 != null) context.addGlobal(
+      Context.TOP_LEVEL_MOD_NAME,
+      op._1,
+      accessibility,
+      ref,
+      sourcePos
+    );
+  }
+
   private Unit visitDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
     context.addGlobal(
       Context.TOP_LEVEL_MOD_NAME,
@@ -54,6 +69,9 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
       decl.ref(),
       decl.sourcePos()
     );
+    if (decl instanceof Decl.Operator opDecl) {
+      visitOperator(context, opDecl, decl.accessibility, decl.ref(), decl.sourcePos);
+    }
     decl.ctx = context;
     return Unit.unit();
   }
@@ -70,6 +88,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
           ctor.ref,
           ctor.sourcePos
         );
+        visitOperator(context, ctor, Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
         return Tuple2.of(ctor.ref.name(), ctor.ref);
       });
 
