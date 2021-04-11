@@ -4,7 +4,6 @@ package org.aya.test;
 
 import org.aya.api.Global;
 import org.aya.api.error.CountingReporter;
-import org.aya.api.error.Problem;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
@@ -47,24 +46,26 @@ public class TestRunner {
   }
 
   private void runFile(@NotNull Path file, boolean expectSuccess) {
-    var expectedOutFile = file.resolveSibling(file.getFileName() + ".txt");
-
-    var hookOut = new ByteArrayOutputStream();
-    final var reporter = new CountingReporter(new StreamReporter(file,
-      Problem.readSourceCode(file),
-      new PrintStream(hookOut, true, StandardCharsets.UTF_8)));
-
-    System.out.print(file.getFileName() + " ---> ");
-
     try {
+      var hookOut = new ByteArrayOutputStream();
+      var reporter = new CountingReporter(new StreamReporter(file,
+        Files.readString(file),
+        new PrintStream(hookOut, true, StandardCharsets.UTF_8)));
+
+      System.out.print(file.getFileName() + " ---> ");
       new SingleFileCompiler(reporter, file, null)
         .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
+
+      postRun(file, expectSuccess, hookOut.toString(StandardCharsets.UTF_8), reporter);
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }
+  }
 
+  private void postRun(@NotNull Path file, boolean expectSuccess, String output, CountingReporter reporter) {
+    var expectedOutFile = file.resolveSibling(file.getFileName() + ".txt");
     if (Files.exists(expectedOutFile)) {
-      checkOutput(file, expectedOutFile, hookOut.toString(StandardCharsets.UTF_8));
+      checkOutput(file, expectedOutFile, output);
       System.out.println("success");
     } else {
       if (expectSuccess) {
@@ -78,12 +79,12 @@ public class TestRunner {
                 %s
               ----------------------------------------
               """,
-            hookOut);
+            output);
           fail("The test case <" + file.getFileName() + "> should pass, but it fails.");
         }
       } else {
         System.out.println(); // add line break after `--->`
-        generateWorkflow(file, expectedOutFile, hookOut.toString(StandardCharsets.UTF_8));
+        generateWorkflow(file, expectedOutFile, output);
       }
     }
   }

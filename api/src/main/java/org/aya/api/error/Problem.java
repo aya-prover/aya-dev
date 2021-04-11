@@ -6,8 +6,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -34,16 +32,6 @@ public interface Problem {
   @NotNull Severity level();
   default @NotNull Stage stage() {
     return Stage.OTHER;
-  }
-
-  static @NotNull String readSourceCode(@NotNull Path filePath) {
-    String sourceCode;
-    try {
-      sourceCode = Files.readString(filePath);
-    } catch (IOException ignore) {
-      sourceCode = "<error-reading-file>";
-    }
-    return sourceCode;
   }
 
   default @NotNull PrettyError toPrettyError(

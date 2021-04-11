@@ -4,14 +4,16 @@ package org.aya.cli;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import org.aya.api.error.Problem;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.tuple.Unit;
 import org.ice1000.jimgui.util.JniLoader;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class Main {
@@ -37,7 +39,7 @@ public final class Main {
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
     var filePath = Paths.get(inputFile);
-    var sourceCode = Problem.readSourceCode(filePath);
+    var sourceCode = checkAndRead(filePath, inputFile);
     var traceBuilder = cli.traceFormat != null ? new Trace.Builder() : null;
     var reporter = new CliReporter(filePath, sourceCode);
     var compiler = new SingleFileCompiler(reporter, filePath, traceBuilder);
@@ -63,5 +65,15 @@ public final class Main {
       }
     }
     System.exit(status);
+  }
+
+  private static @NotNull String checkAndRead(@NotNull Path filePath, @NotNull String fileDisplayName) {
+    try {
+      return Files.readString(filePath);
+    } catch (IOException e) {
+      System.err.println(fileDisplayName + ": file not found");
+    }
+    System.exit(1);
+    throw new IllegalStateException();
   }
 }
