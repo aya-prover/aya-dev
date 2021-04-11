@@ -1,0 +1,12 @@
+In file $FILE:41:56 ->
+
+  39 |  | a, suc b => suc (addN a b)
+  40 | 
+  41 | def addN-identity (a : Nat) : Eq (addN a zero) a => idp {? ?}
+                                                               ^---^
+  
+Goal: Candidate: a
+      Expected type: {?_?}
+      Context:
+      {a : Nat}
+That looks right!
