@@ -59,13 +59,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       }
     }
 
-    reportErrors(reporter.problems);
+    reportErrors(reporter);
   }
 
-  public void reportErrors(@NotNull Buffer<Tuple2<@Nullable String, @NotNull Problem>> problems) {
+  public void reportErrors(@NotNull LspReporter reporter) {
     lastErrorReportedFiles.forEach(f ->
       Log.reportErrors(new PublishDiagnosticsParams(f, Collections.emptyList())));
-    var diags = problems.stream()
+    var diags = reporter.problems.stream()
       .filter(t -> t._1 != null && t._2.sourcePos() != SourcePos.NONE)
       .map(t -> {
         Log.d(t._2.describe().debugRender());
@@ -82,6 +82,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
           .collect(Collectors.toList())
       ));
     }
+    reporter.stringLogs.forEach(Log::d);
     lastErrorReportedFiles = diags.keySet();
   }
 
@@ -146,10 +147,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   static final class LspReporter implements Reporter {
     private final @NotNull Buffer<Tuple2<@Nullable String, @NotNull Problem>> problems = Buffer.of();
+    private final @NotNull Buffer<String> stringLogs = Buffer.of();
     private @Nullable String currentFile = null;
 
     @Override public void report(@NotNull Problem problem) {
       problems.append(Tuple.of(currentFile, problem));
+    }
+
+    @Override public void reportString(@NotNull String s) {
+      stringLogs.append(s);
     }
   }
 }
