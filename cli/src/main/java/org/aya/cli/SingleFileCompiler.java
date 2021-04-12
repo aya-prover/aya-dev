@@ -7,6 +7,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.Decl;
+import org.aya.concrete.Stmt;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
@@ -30,12 +31,13 @@ import java.util.function.Consumer;
 
 public record SingleFileCompiler(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
   public int compile(@NotNull Path sourceFile, @NotNull CompilerFlags flags) throws IOException {
-    return compile(sourceFile, flags, null);
+    return compile(sourceFile, flags, null, null);
   }
 
   public int compile(@NotNull Path sourceFile,
                      @NotNull CompilerFlags flags,
-                     @Nullable Consumer<ImmutableSeq<Def>> onSuccess) throws IOException {
+                     @Nullable Consumer<ImmutableSeq<Stmt>> onResolved,
+                     @Nullable Consumer<ImmutableSeq<Def>> onTycked) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var parser = AyaParsing.parser(sourceFile, reporter);
     try {
@@ -45,10 +47,13 @@ public record SingleFileCompiler(@NotNull Reporter reporter, Trace.@Nullable Bui
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter,
-        () -> distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.scoped),
+        () -> {
+          distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.scoped);
+          if (onResolved != null) onResolved.accept(program);
+        },
         defs -> {
           distill(sourceFile, flags.distillInfo(), defs, CliArgs.DistillStage.typed);
-          if (onSuccess != null) onSuccess.accept(defs);
+          if (onTycked != null) onTycked.accept(defs);
         }, builder);
     } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);

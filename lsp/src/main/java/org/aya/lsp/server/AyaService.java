@@ -9,6 +9,8 @@ import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.core.def.Def;
 import org.aya.lsp.Log;
+import org.aya.lsp.highlight.Highlighter;
+import org.aya.lsp.highlight.Symbol;
 import org.aya.lsp.language.PublishSyntaxHighlightParams;
 import org.aya.pretty.doc.Doc;
 import org.eclipse.lsp4j.*;
@@ -57,11 +59,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       Log.d("Recompiling %s", filePath.toAbsolutePath());
       reporter.currentFile = uri;
       try {
+        var symbols = Buffer.<Symbol>of();
         // TODO[kiva]: refactor error reporting system that handles current file properly
-        compiler.compile(filePath, compilerFlags, defs -> {
-          libraryManager.loaded.put(uri, defs);
-          Log.publishSyntaxHighlight(new PublishSyntaxHighlightParams(uri));
-        });
+        compiler.compile(filePath, compilerFlags,
+          stmts -> Highlighter.buildResolved(symbols, stmts),
+          defs -> {
+            libraryManager.loaded.put(uri, defs);
+            Highlighter.buildTycked(symbols, defs);
+            Log.publishSyntaxHighlight(new PublishSyntaxHighlightParams(uri, symbols));
+          });
       } catch (IOException e) {
         reporter.report(new LspIOError(filePath));
       }
