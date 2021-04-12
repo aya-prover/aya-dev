@@ -2,17 +2,18 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp;
 
+import org.aya.lsp.language.AyaLanguageClient;
+import org.aya.lsp.language.PublishSyntaxHighlightParams;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.services.LanguageClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Log {
-  private static @Nullable LanguageClient CLIENT = null;
+  private static @Nullable AyaLanguageClient CLIENT = null;
 
-  public static void init(@NotNull LanguageClient client) {
+  public static void init(@NotNull AyaLanguageClient client) {
     if (CLIENT == null) synchronized (Log.class) {
       if (CLIENT == null) CLIENT = client;
         // if the code was right, this should never happen
@@ -20,8 +21,12 @@ public class Log {
     }
   }
 
-  public static void reportErrors(PublishDiagnosticsParams params) {
+  public static void publishErrors(PublishDiagnosticsParams params) {
     if (CLIENT != null) CLIENT.publishDiagnostics(params);
+  }
+
+  public static void publishSyntaxHighlight(PublishSyntaxHighlightParams params) {
+    if (CLIENT != null) CLIENT.publishSyntaxHighlight(params);
   }
 
   public static void i(@NotNull String fmt, Object... args) {

@@ -1,18 +1,23 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.lsp;
+package org.aya.lsp.server;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
+import org.aya.core.def.Def;
+import org.aya.lsp.Log;
+import org.aya.lsp.language.PublishSyntaxHighlightParams;
 import org.aya.pretty.doc.Doc;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +35,7 @@ import java.util.stream.Collectors;
 public class AyaService implements WorkspaceService, TextDocumentService {
   private final Buffer<Path> modulePath = Buffer.of();
   private Set<String> lastErrorReportedFiles = Collections.emptySet();
+  private LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of());
 
   public void registerLibrary(@NotNull Path path) {
     // TODO[kiva]: work with Library System when it is finished
@@ -52,7 +58,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       try {
         // TODO[kiva]: refactor error reporting system that handles current file properly
         compiler.compile(filePath, compilerFlags, defs -> {
-          // TODO[kiva]: typed syntax highlight
+          libraryManager.loaded.put(uri, defs);
+          Log.publishSyntaxHighlight(new PublishSyntaxHighlightParams(uri));
         });
       } catch (IOException e) {
         reporter.report(new LspIOError(filePath));
@@ -64,7 +71,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public void reportErrors(@NotNull LspReporter reporter) {
     lastErrorReportedFiles.forEach(f ->
-      Log.reportErrors(new PublishDiagnosticsParams(f, Collections.emptyList())));
+      Log.publishErrors(new PublishDiagnosticsParams(f, Collections.emptyList())));
     var diags = reporter.problems.stream()
       .filter(t -> t._1 != null && t._2.sourcePos() != SourcePos.NONE)
       .map(t -> {
@@ -76,7 +83,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       .collect(Collectors.groupingBy(t -> t._1));
     for (var diag : diags.entrySet()) {
       Log.d("Found %d issues in %s", diag.getValue().size(), diag.getKey());
-      Log.reportErrors(new PublishDiagnosticsParams(
+      Log.publishErrors(new PublishDiagnosticsParams(
         diag.getKey(),
         diag.getValue().stream().map(v -> v._2)
           .collect(Collectors.toList())
@@ -157,5 +164,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     @Override public void reportString(@NotNull String s) {
       stringLogs.append(s);
     }
+  }
+
+  static final record LspLibraryManager(
+    @NotNull MutableHashMap<@NotNull String, ImmutableSeq<Def>> loaded
+  ) {
   }
 }

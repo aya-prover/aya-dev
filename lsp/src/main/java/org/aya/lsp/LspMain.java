@@ -4,8 +4,10 @@ package org.aya.lsp;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import org.aya.lsp.language.AyaLanguageClient;
+import org.aya.lsp.server.AyaServer;
 import org.aya.prelude.GeneratedVersion;
-import org.eclipse.lsp4j.launch.LSPLauncher;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -44,8 +46,9 @@ public class LspMain {
 
     var executor = Executors.newSingleThreadExecutor(f -> new Thread(f, "client"));
     var server = new AyaServer();
-    var launcher = LSPLauncher.createServerLauncher(
+    var launcher = Launcher.createLauncher(
       server,
+      AyaLanguageClient.class,
       startup.in,
       startup.out,
       executor,

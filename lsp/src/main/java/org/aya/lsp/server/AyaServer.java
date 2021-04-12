@@ -1,7 +1,9 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.lsp;
+package org.aya.lsp.server;
 
+import org.aya.lsp.Log;
+import org.aya.lsp.language.AyaLanguageClient;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.*;
@@ -16,7 +18,7 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
   private final AyaService service = new AyaService();
 
   @Override public void connect(@NotNull LanguageClient client) {
-    Log.init(client);
+    Log.init(((AyaLanguageClient) client));
   }
 
   @Override public @NotNull CompletableFuture<InitializeResult> initialize(InitializeParams params) {
