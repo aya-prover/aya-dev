@@ -4,6 +4,7 @@ package org.aya.lsp;
 
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,10 @@ public class Log {
         // if the code was right, this should never happen
       else throw new IllegalStateException("double initialization occurred");
     }
+  }
+
+  public static void reportErrors(PublishDiagnosticsParams params) {
+    if (CLIENT != null) CLIENT.publishDiagnostics(params);
   }
 
   public static void i(@NotNull String fmt, Object... args) {

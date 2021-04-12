@@ -13,8 +13,7 @@ public record DelayedReporter(
     this(delegated, Buffer.of());
   }
 
-  @Override
-  public void report(@NotNull Problem problem) {
+  @Override public void report(@NotNull Problem problem) {
     problems.append(problem);
   }
 

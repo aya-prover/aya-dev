@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.printer;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * This class was designed to support various PrettyPrint backend.
  * Example usage:
@@ -37,7 +39,7 @@ public interface PrinterConfig {
     return INFINITE_SIZE;
   }
 
-  default Stylist getStyleFormatter() {
+  default @NotNull Stylist getStyleFormatter() {
     return new Stylist() {
     };
   }
