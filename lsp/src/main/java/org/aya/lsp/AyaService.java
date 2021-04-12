@@ -5,29 +5,30 @@ package org.aya.lsp;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
+import org.jetbrains.annotations.NotNull;
+
+import java.nio.file.Path;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
   @Override public void didOpen(DidOpenTextDocumentParams params) {
-
   }
 
   @Override public void didChange(DidChangeTextDocumentParams params) {
-
   }
 
   @Override public void didClose(DidCloseTextDocumentParams params) {
-
   }
 
   @Override public void didSave(DidSaveTextDocumentParams params) {
-
   }
 
   @Override public void didChangeConfiguration(DidChangeConfigurationParams params) {
-
   }
 
   @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+  }
 
+  public void registerLibrary(@NotNull Path path) {
+    // TODO[kiva]: work with Library System
   }
 }
