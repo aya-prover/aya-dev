@@ -6,7 +6,9 @@ dependencies {
   implementation(project(":cli"))
   implementation(project(":api"))
   implementation(project(":base"))
+  implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j", version = deps.getProperty("version.lsp4j"))
   implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc", version = deps.getProperty("version.lsp4j"))
+  implementation("com.beust", "jcommander", version = deps.getProperty("version.jcommander"))
 }
 
 plugins {
