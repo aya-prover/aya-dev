@@ -52,11 +52,9 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       try {
         // TODO[kiva]: refactor error reporting system that handles current file properly
         reporter.currentFile = uri;
-        int status = compiler.compile(filePath, compilerFlags, defs -> {
+        compiler.compile(filePath, compilerFlags, defs -> {
           // TODO[kiva]: typed syntax highlight
-          Log.i("Compiled %s", filePath.toAbsolutePath());
         });
-        Log.d("Compiler finished with code %d", status);
       } catch (IOException e) {
         reporter.report(new LspIOError(filePath));
       }
