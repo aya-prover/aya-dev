@@ -9,6 +9,7 @@ import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.pretty.doc.Doc;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -17,6 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
   private final Buffer<Path> modulePath = Buffer.of();
@@ -39,12 +43,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
     for (var change : params.getChanges()) {
       var uri = Path.of(URI.create(change.getUri()));
+      Log.d("Recompiling %s", uri.toAbsolutePath());
       try {
         int status = compiler.compile(uri, compilerFlags, defs -> {
           // TODO[kiva]: typed syntax highlight
           Log.i("Compiled %s", uri.toAbsolutePath());
         });
-        reporter.reportString("Compiler finished with code " + status);
+        Log.d("Compiler finished with code %d", status);
       } catch (IOException e) {
         reporter.report(new LspIOError(uri));
       }
@@ -69,6 +74,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   @Override public void didChangeConfiguration(DidChangeConfigurationParams params) {
+  }
+
+  @Override
+  public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
+    return CompletableFuture.supplyAsync(() -> Either.forLeft(Collections.emptyList()));
   }
 
   static record LspIOError(@NotNull Path file) implements Problem {

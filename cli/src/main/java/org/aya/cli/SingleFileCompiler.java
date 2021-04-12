@@ -4,6 +4,7 @@ package org.aya.cli;
 
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
+import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.Decl;
 import org.aya.concrete.parse.AyaParsing;
@@ -15,7 +16,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -50,7 +50,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, Trace.@Nullable Bui
           distill(sourceFile, flags.distillInfo(), defs, CliArgs.DistillStage.typed);
           if (onSuccess != null) onSuccess.accept(defs);
         }, builder);
-    } catch (ExprTycker.TyckerException e) {
+    } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);
       reporter.reportString("Internal error");
       return e.exitCode();

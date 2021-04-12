@@ -33,7 +33,8 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
       workCap.setWorkspaceFolders(workOps);
       cap.setWorkspace(workCap);
 
-      params.getWorkspaceFolders().forEach(f ->
+      var folders = params.getWorkspaceFolders();
+      if (folders != null) folders.forEach(f ->
         service.registerLibrary(Path.of(URI.create(f.getUri()))));
 
       return new InitializeResult(cap);
