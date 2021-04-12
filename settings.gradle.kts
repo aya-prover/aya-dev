@@ -21,6 +21,7 @@ include(
   "parser",
   "base",
   "pretty",
+  "lsp",
 )
 
 var deps = Properties()
