@@ -57,8 +57,9 @@ public record SingleFileCompiler(@NotNull Reporter reporter, Trace.@Nullable Bui
     } catch (InterruptException e) {
       reporter.reportString(e.stage().name() + " interrupted due to error(s).");
       if (flags.interruptedTrace()) e.printStackTrace();
+    } finally {
+      PrimDef.clearConcrete();
     }
-    PrimDef.clearConcrete();
     if (reporter.isEmpty()) {
       reporter.reportString(flags.message().successNotion());
       return 0;
