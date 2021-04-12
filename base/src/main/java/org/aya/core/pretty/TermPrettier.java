@@ -8,7 +8,6 @@ import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
-import org.aya.pretty.doc.Styles;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
@@ -21,12 +20,12 @@ import java.util.function.BiFunction;
  */
 public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull TermPrettier INSTANCE = new TermPrettier();
-  public static final @NotNull Styles KEYWORD = Style.bold().and().color("aya:Keyword");
-  public static final @NotNull Style FN_CALL = Style.color("aya:FnCall");
-  public static final @NotNull Style DATA_CALL = Style.color("aya:DataCall");
-  public static final @NotNull Style STRUCT_CALL = Style.color("aya:StructCall");
-  public static final @NotNull Style CON_CALL = Style.color("aya:ConCall");
-  public static final @NotNull Style FIELD_CALL = Style.color("aya:FieldCall");
+  public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
+  public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
+  public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
+  public static final @NotNull Style STRUCT_CALL = Style.preset("aya:StructCall");
+  public static final @NotNull Style CON_CALL = Style.preset("aya:ConCall");
+  public static final @NotNull Style FIELD_CALL = Style.preset("aya:FieldCall");
 
   private TermPrettier() {
   }

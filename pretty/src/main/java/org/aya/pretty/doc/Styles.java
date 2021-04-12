@@ -6,7 +6,7 @@ import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 
 public class Styles {
-  Buffer<Style> styles;
+  public Buffer<Style> styles;
 
   Styles(Style style) {
     this.styles = Buffer.of(style);
@@ -59,6 +59,11 @@ public class Styles {
 
   public @NotNull Styles custom(@NotNull Style.CustomStyle style) {
     styles.append(style);
+    return this;
+  }
+
+  public @NotNull Styles preset(@NotNull String styleName) {
+    styles.append(new Style.Preset(styleName));
     return this;
   }
 }

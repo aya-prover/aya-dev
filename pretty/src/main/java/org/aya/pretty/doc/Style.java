@@ -28,6 +28,9 @@ public sealed interface Style {
   final record ColorHex(int color, boolean background) implements Style {
   }
 
+  final record Preset(@NotNull String styleName) implements Style {
+  }
+
   /**
    * Make your custom style a subclass of this one. For example:
    * <pre>
@@ -74,5 +77,9 @@ public sealed interface Style {
 
   static @NotNull Style colorBg(int color) {
     return new ColorHex(color, true);
+  }
+
+  static @NotNull Style preset(@NotNull String styleName) {
+    return new Preset(styleName);
   }
 }
