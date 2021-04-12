@@ -119,6 +119,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> Either.forLeft(Collections.emptyList()));
   }
 
+  @Override
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
+    return CompletableFuture.supplyAsync(() -> Either.forLeft(Collections.emptyList()));
+  }
+
   static record LspIOError(@NotNull Path file) implements Problem {
     @Override public @NotNull SourcePos sourcePos() {
       return SourcePos.NONE;
