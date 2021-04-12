@@ -9,6 +9,7 @@ import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.core.def.Def;
 import org.aya.lsp.Log;
+import org.aya.lsp.LspRange;
 import org.aya.lsp.highlight.Highlighter;
 import org.aya.lsp.highlight.Symbol;
 import org.aya.lsp.language.PublishSyntaxHighlightParams;
@@ -83,7 +84,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       .filter(t -> t._1 != null && t._2.sourcePos() != SourcePos.NONE)
       .map(t -> {
         Log.d(t._2.describe().debugRender());
-        return Tuple.of(t._1, new Diagnostic(rangeOf(t._2),
+        return Tuple.of(t._1, new Diagnostic(LspRange.from(t._2.sourcePos()),
           t._2.describe().debugRender(),
           severityOf(t._2), "Aya"));
       })
@@ -97,13 +98,6 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       ));
     }
     lastErrorReportedFiles = diags.keySet();
-  }
-
-  private Range rangeOf(@NotNull Problem problem) {
-    var sourcePos = problem.sourcePos();
-    if (sourcePos == SourcePos.NONE) return new Range();
-    return new Range(new Position(sourcePos.startLine() - 1, sourcePos.startColumn()),
-      new Position(sourcePos.endLine() - 1, sourcePos.endColumn()));
   }
 
   private DiagnosticSeverity severityOf(@NotNull Problem problem) {

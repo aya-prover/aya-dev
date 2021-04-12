@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.highlight;
 
-import org.aya.api.error.SourcePos;
+import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 
 public record Symbol(
-  @NotNull SourcePos sourcePos,
+  @NotNull Range range,
   @NotNull Kind kind
 ) {
   public enum Kind {

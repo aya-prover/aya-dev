@@ -2,10 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.highlight;
 
-import org.aya.api.error.SourcePos;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
 import org.aya.core.def.*;
+import org.aya.lsp.LspRange;
+import org.eclipse.lsp4j.Range;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
@@ -26,9 +27,14 @@ public class Highlighter implements
     stmts.forEach(stmt -> stmt.accept(INSTANCE, buffer));
   }
 
-  private @NotNull SourcePos posOf(Def def) {
-    return def.ref().concrete.sourcePos;
+  private @NotNull Range posOf(@NotNull Def def) {
+    return LspRange.from(def.ref().concrete.sourcePos);
   }
+
+  private @NotNull Range posOf(@NotNull Stmt stmt) {
+    return LspRange.from(stmt.sourcePos());
+  }
+
 
   // Def
   @Override public Unit visitFn(@NotNull FnDef def, @NotNull Buffer<Symbol> buffer) {
@@ -64,17 +70,17 @@ public class Highlighter implements
   }
 
   @Override public Unit visitImport(Stmt.@NotNull ImportStmt cmd, @NotNull Buffer<Symbol> buffer) {
-    buffer.append(new Symbol(cmd.sourcePos(), Symbol.Kind.ModuleDef));
+    buffer.append(new Symbol(posOf(cmd), Symbol.Kind.ModuleDef));
     return Unit.unit();
   }
 
   @Override public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, @NotNull Buffer<Symbol> buffer) {
-    buffer.append(new Symbol(cmd.sourcePos(), Symbol.Kind.ModuleDef));
+    buffer.append(new Symbol(posOf(cmd), Symbol.Kind.ModuleDef));
     return Unit.unit();
   }
 
   @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull Buffer<Symbol> buffer) {
-    buffer.append(new Symbol(mod.sourcePos(), Symbol.Kind.ModuleDef));
+    buffer.append(new Symbol(posOf(mod), Symbol.Kind.ModuleDef));
     return Unit.unit();
   }
 
