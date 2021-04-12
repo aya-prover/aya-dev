@@ -135,6 +135,11 @@ subprojects {
             name.set("Tesla Ice Zhang")
             email.set("ice1000kotlin@foxmail.com")
           }
+          developer {
+            id.set("imkiva")
+            name.set("Kiva Oyama")
+            email.set("imkiva@islovely.icu")
+          }
         }
         scm {
           connection.set("scm:git:$githubUrl")
