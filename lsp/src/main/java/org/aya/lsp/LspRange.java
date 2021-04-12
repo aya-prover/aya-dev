@@ -11,6 +11,6 @@ public class LspRange {
   public static @NotNull Range from(@NotNull SourcePos sourcePos) {
     if (sourcePos == SourcePos.NONE) return new Range();
     return new Range(new Position(sourcePos.startLine() - 1, sourcePos.startColumn()),
-      new Position(sourcePos.endLine() - 1, sourcePos.endColumn()));
+      new Position(sourcePos.endLine() - 1, sourcePos.endColumn() + 1));
   }
 }
