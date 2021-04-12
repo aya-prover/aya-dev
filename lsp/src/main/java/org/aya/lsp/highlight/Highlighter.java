@@ -85,18 +85,18 @@ public class Highlighter implements
   }
 
   @Override public Unit visitData(@NotNull Decl.DataDecl decl, @NotNull Buffer<Symbol> buffer) {
-    throw new UnsupportedOperationException("should highlight Decl after tycked");
+    return Unit.unit();
   }
 
   @Override public Unit visitStruct(@NotNull Decl.StructDecl decl, @NotNull Buffer<Symbol> buffer) {
-    throw new UnsupportedOperationException("should highlight Struct after tycked");
+    return Unit.unit();
   }
 
   @Override public Unit visitFn(@NotNull Decl.FnDecl decl, @NotNull Buffer<Symbol> buffer) {
-    throw new UnsupportedOperationException("should highlight Fn after tycked");
+    return Unit.unit();
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, @NotNull Buffer<Symbol> buffer) {
-    throw new UnsupportedOperationException("should highlight Prim after tycked");
+    return Unit.unit();
   }
 }
