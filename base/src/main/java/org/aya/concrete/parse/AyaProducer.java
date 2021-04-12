@@ -615,7 +615,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override public @NotNull Stmt visitImportCmd(AyaParser.ImportCmdContext ctx) {
     final var id = ctx.ID();
     return new Stmt.ImportStmt(
-      sourcePosOf(ctx),
+      sourcePosOf(ctx.moduleName()),
       visitModuleName(ctx.moduleName()),
       id == null ? null : id.getText()
     );
@@ -628,7 +628,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var useHide = ctx.useHide();
     var modName = visitModuleName(ctx.moduleName());
     var open = new Stmt.OpenStmt(
-      sourcePosOf(ctx),
+      sourcePosOf(ctx.moduleName()),
       accessibility,
       modName,
       useHide != null ? visitUseHide(useHide) : Stmt.OpenStmt.UseHide.EMPTY
@@ -668,7 +668,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override public @NotNull Stmt.ModuleStmt visitModule(AyaParser.ModuleContext ctx) {
     return new Stmt.ModuleStmt(
-      sourcePosOf(ctx),
+      sourcePosOf(ctx.ID()),
       ctx.ID().getText(),
       ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt)
     );
