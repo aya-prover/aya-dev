@@ -34,11 +34,12 @@ import java.util.stream.Collectors;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
   private final Buffer<Path> modulePath = Buffer.of();
+  private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of());
   private Set<String> lastErrorReportedFiles = Collections.emptySet();
-  private LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of());
 
   public void registerLibrary(@NotNull Path path) {
     // TODO[kiva]: work with Library System when it is finished
+    Log.i("Adding library path %s", path);
     modulePath.append(path);
   }
 
@@ -89,7 +90,6 @@ public class AyaService implements WorkspaceService, TextDocumentService {
           .collect(Collectors.toList())
       ));
     }
-    reporter.stringLogs.forEach(Log::d);
     lastErrorReportedFiles = diags.keySet();
   }
 
@@ -154,15 +154,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   static final class LspReporter implements Reporter {
     private final @NotNull Buffer<Tuple2<@Nullable String, @NotNull Problem>> problems = Buffer.of();
-    private final @NotNull Buffer<String> stringLogs = Buffer.of();
     private @Nullable String currentFile = null;
 
     @Override public void report(@NotNull Problem problem) {
       problems.append(Tuple.of(currentFile, problem));
-    }
-
-    @Override public void reportString(@NotNull String s) {
-      stringLogs.append(s);
     }
   }
 
