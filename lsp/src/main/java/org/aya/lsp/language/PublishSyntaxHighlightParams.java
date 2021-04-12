@@ -7,17 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class PublishSyntaxHighlightParams {
-  private @NotNull String uri;
+  public @NotNull String uri;
 
   public PublishSyntaxHighlightParams(@NotNull String uri) {
-    this.uri = uri;
-  }
-
-  public @NotNull String getUri() {
-    return uri;
-  }
-
-  public void setUri(@NotNull String uri) {
     this.uri = uri;
   }
 
