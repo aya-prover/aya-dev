@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar;
 
-import org.aya.api.util.Arg;
 import org.aya.concrete.*;
+import org.aya.concrete.parse.BinOpParser;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -87,13 +87,8 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
 
   @Override
   public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
-    // TODO: implement
-    return new Expr.AppExpr(
-      binOpSeq.sourcePos(),
-      binOpSeq.seq().first().expr().desugar(),
-      binOpSeq.seq().view().drop(1)
-        .map(e -> new Arg<>(e.expr().desugar(), e.explicit()))
-        .toImmutableSeq()
-    );
+    return new BinOpParser(binOpSeq.seq().view())
+      .build(binOpSeq.sourcePos())
+      .desugar();
   }
 }
