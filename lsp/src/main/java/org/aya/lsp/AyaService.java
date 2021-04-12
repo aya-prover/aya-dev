@@ -7,7 +7,6 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
-import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -49,9 +48,9 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var uri = change.getUri();
       var filePath = Path.of(URI.create(uri));
       Log.d("Recompiling %s", filePath.toAbsolutePath());
+      reporter.currentFile = uri;
       try {
         // TODO[kiva]: refactor error reporting system that handles current file properly
-        reporter.currentFile = uri;
         compiler.compile(filePath, compilerFlags, defs -> {
           // TODO[kiva]: typed syntax highlight
         });
@@ -67,23 +66,30 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     lastErrorReportedFiles.forEach(f ->
       Log.reportErrors(new PublishDiagnosticsParams(f, Collections.emptyList())));
     var diags = problems.stream()
-      .filter(t -> t._1 != null)
-      .map(t -> Tuple.of(t._1, new Diagnostic(rangeOf(t._2),
-        t._2.describe().renderToString(StringPrinterConfig.plain()),
-        severityOf(t._2), "Aya")))
+      .filter(t -> t._1 != null && t._2.sourcePos() != SourcePos.NONE)
+      .map(t -> {
+        Log.d(t._2.describe().debugRender());
+        return Tuple.of(t._1, new Diagnostic(rangeOf(t._2),
+          t._2.describe().debugRender(),
+          severityOf(t._2), "Aya"));
+      })
       .collect(Collectors.groupingBy(t -> t._1));
     for (var diag : diags.entrySet()) {
-      Log.reportErrors(new PublishDiagnosticsParams(diag.getKey(), diag.getValue().stream()
-        .map(v -> v._2).collect(Collectors.toList())));
+      Log.d("Found %d issues in %s", diag.getValue().size(), diag.getKey());
+      Log.reportErrors(new PublishDiagnosticsParams(
+        diag.getKey(),
+        diag.getValue().stream().map(v -> v._2)
+          .collect(Collectors.toList())
+      ));
     }
     lastErrorReportedFiles = diags.keySet();
-    problems.clear();
   }
 
   private Range rangeOf(@NotNull Problem problem) {
     var sourcePos = problem.sourcePos();
-    return new Range(new Position(sourcePos.startLine(), sourcePos.startColumn()),
-      new Position(sourcePos.endLine(), sourcePos.endColumn()));
+    if (sourcePos == SourcePos.NONE) return new Range();
+    return new Range(new Position(sourcePos.startLine() - 1, sourcePos.startColumn()),
+      new Position(sourcePos.endLine() - 1, sourcePos.endColumn()));
   }
 
   private DiagnosticSeverity severityOf(@NotNull Problem problem) {
