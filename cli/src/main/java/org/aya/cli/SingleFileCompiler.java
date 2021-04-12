@@ -26,20 +26,30 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
-public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path filePath, Trace.@Nullable Builder builder) {
-  public int compile(@NotNull CompilerFlags flags) throws IOException {
+public record SingleFileCompiler(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
+  public int compile(@NotNull Path sourceFile, @NotNull CompilerFlags flags) throws IOException {
+    return compile(sourceFile, flags, null);
+  }
+
+  public int compile(@NotNull Path sourceFile,
+                     @NotNull CompilerFlags flags,
+                     @Nullable Consumer<ImmutableSeq<Def>> onSuccess) throws IOException {
     var reporter = new CountingReporter(this.reporter);
-    var parser = AyaParsing.parser(filePath, reporter);
+    var parser = AyaParsing.parser(sourceFile, reporter);
     try {
       var program = new AyaProducer(reporter).visitProgram(parser.program());
       // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
-      writeCode(flags.distillInfo(), program, CliArgs.DistillStage.raw);
+      distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().map(path ->
         new CachedModuleLoader(new FileModuleLoader(path, reporter, builder))));
       FileModuleLoader.tyckModule(loader, program, reporter,
-        () -> writeCode(flags.distillInfo(), program, CliArgs.DistillStage.scoped),
-        defs -> writeCode(flags.distillInfo(), defs, CliArgs.DistillStage.typed), builder);
+        () -> distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.scoped),
+        defs -> {
+          distill(sourceFile, flags.distillInfo(), defs, CliArgs.DistillStage.typed);
+          if (onSuccess != null) onSuccess.accept(defs);
+        }, builder);
     } catch (ExprTycker.TyckerException e) {
       FileModuleLoader.handleInternalError(e);
       reporter.reportString("Internal error");
@@ -58,15 +68,16 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @NotNull Path fileP
     }
   }
 
-  private void writeCode(
+  private void distill(
+    @NotNull Path sourceFile,
     @Nullable CompilerFlags.DistillInfo flags,
     ImmutableSeq<? extends Docile> doc,
     @NotNull CliArgs.DistillStage currentStage
   ) throws IOException {
     if (flags == null || currentStage != flags.distillStage()) return;
-    var ayaFileName = filePath.getFileName().toString();
+    var ayaFileName = sourceFile.getFileName().toString();
     var dotIndex = ayaFileName.indexOf('.');
-    var distillDir = filePath.resolveSibling(flags.distillDir());
+    var distillDir = sourceFile.resolveSibling(flags.distillDir());
     if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
     var fileName = ayaFileName
       .substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length());

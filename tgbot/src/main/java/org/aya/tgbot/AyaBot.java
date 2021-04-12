@@ -50,8 +50,8 @@ public record AyaBot(@NotNull TelegramBot bot) implements UpdatesListener {
       Files.writeString(file, txt, CHARSET);
       var hookOut = new ByteArrayOutputStream();
       var reporter = new StreamReporter(file, txt, new PrintStream(hookOut));
-      var e = new SingleFileCompiler(reporter, file, null)
-        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
+      var e = new SingleFileCompiler(reporter, null)
+        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
       return hookOut.toString(CHARSET) + "\n\n Exited with " + e;
     } catch (IOException e) {
       return "error reading file " + file.toAbsolutePath();

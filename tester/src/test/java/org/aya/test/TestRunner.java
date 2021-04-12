@@ -53,8 +53,8 @@ public class TestRunner {
         new PrintStream(hookOut, true, StandardCharsets.UTF_8)));
 
       System.out.print(file.getFileName() + " ---> ");
-      new SingleFileCompiler(reporter, file, null)
-        .compile(new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
+      new SingleFileCompiler(reporter, null)
+        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
 
       postRun(file, expectSuccess, hookOut.toString(StandardCharsets.UTF_8), reporter);
     } catch (IOException e) {
