@@ -7,7 +7,7 @@ import org.aya.lsp.language.AyaLanguageClient;
 import org.aya.lsp.language.HighlightResult;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,9 +19,9 @@ import java.util.concurrent.CompletableFuture;
 public class AyaServer implements LanguageClientAware, LanguageServer {
   private final AyaService service = new AyaService();
 
-  @JsonNotification("aya/load")
-  public @NotNull CompletableFuture<@NotNull HighlightResult> load(Object uri) { // TODO: god knows why changing to String causes type mismatch
-    return CompletableFuture.supplyAsync(() -> service.loadFile(uri.toString()));
+  @JsonRequest("aya/load")
+  public @NotNull CompletableFuture<@NotNull HighlightResult> load(String uri) {
+    return CompletableFuture.supplyAsync(() -> service.loadFile(uri));
   }
 
   @Override public void connect(@NotNull LanguageClient client) {
