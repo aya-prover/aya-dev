@@ -7,5 +7,5 @@ import org.eclipse.lsp4j.services.LanguageClient;
 
 public interface AyaLanguageClient extends LanguageClient {
   @JsonNotification("aya/publishSyntaxHighlight")
-  void publishSyntaxHighlight(PublishSyntaxHighlightParams highlight);
+  void publishSyntaxHighlight(HighlightResult highlight);
 }

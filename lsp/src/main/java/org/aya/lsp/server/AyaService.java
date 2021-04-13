@@ -12,8 +12,7 @@ import org.aya.lsp.Log;
 import org.aya.lsp.LspRange;
 import org.aya.lsp.highlight.Highlighter;
 import org.aya.lsp.highlight.Symbol;
-import org.aya.lsp.language.PublishSyntaxHighlightParams;
-import org.aya.pretty.doc.Doc;
+import org.aya.lsp.language.HighlightResult;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -46,35 +45,29 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     modulePath.append(path);
   }
 
-  @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-    var reporter = new LspReporter();
+  public HighlightResult loadFile(@NotNull String uri) {
+    Log.d("Loading %s", uri);
+    // TODO[kiva]: refactor error reporting system that handles current file properly
+    var reporter = new LspReporter(uri);
     var compiler = new SingleFileCompiler(reporter, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
-      modulePath.toImmutableSeq()
-    );
+      modulePath.toImmutableSeq());
 
-    for (var change : params.getChanges()) {
-      var uri = change.getUri();
-      var filePath = Path.of(URI.create(uri));
-      Log.d("Recompiling %s", filePath.toAbsolutePath());
-      reporter.currentFile = uri;
-      try {
-        var symbols = Buffer.<Symbol>of();
-        // TODO[kiva]: refactor error reporting system that handles current file properly
-        compiler.compile(filePath, compilerFlags,
-          stmts -> Highlighter.buildResolved(symbols, stmts),
-          defs -> {
-            libraryManager.loaded.put(uri, defs);
-            Highlighter.buildTycked(symbols, defs);
-            Log.publishSyntaxHighlight(new PublishSyntaxHighlightParams(uri, symbols));
-          });
-      } catch (IOException e) {
-        reporter.report(new LspIOError(filePath));
-      }
+    var filePath = Path.of(URI.create(uri));
+    var symbols = Buffer.<Symbol>of();
+    try {
+      compiler.compile(filePath, compilerFlags,
+        stmts -> Highlighter.buildResolved(symbols, stmts),
+        defs -> {
+          libraryManager.loaded.put(uri, defs);
+          Highlighter.buildTycked(symbols, defs);
+        });
+    } catch (IOException e) {
+      Log.e("Unable to read file %s", filePath.toAbsolutePath());
     }
-
     reportErrors(reporter);
+    return new HighlightResult(uri, symbols);
   }
 
   public void reportErrors(@NotNull LspReporter reporter) {
@@ -98,6 +91,9 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       ));
     }
     lastErrorReportedFiles = diags.keySet();
+  }
+
+  @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
   }
 
   private DiagnosticSeverity severityOf(@NotNull Problem problem) {
@@ -138,30 +134,20 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return CompletableFuture.supplyAsync(() -> Either.forLeft(Collections.emptyList()));
   }
 
-  static record LspIOError(@NotNull Path file) implements Problem {
-    @Override public @NotNull SourcePos sourcePos() {
-      return SourcePos.NONE;
-    }
-
-    @Override public @NotNull Doc describe() {
-      return Doc.plain("Unable to read file: " + file.toAbsolutePath());
-    }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
-  }
-
-  static final class LspReporter implements Reporter {
+  public static final class LspReporter implements Reporter {
     private final @NotNull Buffer<Tuple2<@Nullable String, @NotNull Problem>> problems = Buffer.of();
-    private @Nullable String currentFile = null;
+    private final @NotNull String currentFileUri;
+
+    public LspReporter(@NotNull String uri) {
+      this.currentFileUri = uri;
+    }
 
     @Override public void report(@NotNull Problem problem) {
-      problems.append(Tuple.of(currentFile, problem));
+      problems.append(Tuple.of(currentFileUri, problem));
     }
   }
 
-  static final record LspLibraryManager(
+  public static final record LspLibraryManager(
     @NotNull MutableHashMap<@NotNull String, ImmutableSeq<Def>> loaded
   ) {
   }

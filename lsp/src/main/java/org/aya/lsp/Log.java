@@ -3,7 +3,6 @@
 package org.aya.lsp;
 
 import org.aya.lsp.language.AyaLanguageClient;
-import org.aya.lsp.language.PublishSyntaxHighlightParams;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
@@ -23,10 +22,6 @@ public class Log {
 
   public static void publishErrors(PublishDiagnosticsParams params) {
     if (CLIENT != null) CLIENT.publishDiagnostics(params);
-  }
-
-  public static void publishSyntaxHighlight(PublishSyntaxHighlightParams params) {
-    if (CLIENT != null) CLIENT.publishSyntaxHighlight(params);
   }
 
   public static void i(@NotNull String fmt, Object... args) {

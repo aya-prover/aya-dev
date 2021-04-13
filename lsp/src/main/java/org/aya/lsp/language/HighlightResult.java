@@ -9,11 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public record PublishSyntaxHighlightParams(
+public record HighlightResult(
   @NotNull String uri,
   @NotNull List<Symbol> symbols
 ) {
-  public PublishSyntaxHighlightParams(@NotNull String uri, @NotNull Buffer<Symbol> symbols) {
+  public HighlightResult(@NotNull String uri, @NotNull Buffer<Symbol> symbols) {
     this(uri, symbols.stream().collect(Collectors.toList()));
   }
 }
