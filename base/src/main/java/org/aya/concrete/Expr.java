@@ -66,7 +66,7 @@ public sealed interface Expr extends ConcreteExpr {
     R visitLam(@NotNull LamExpr expr, P p);
     R visitPi(@NotNull PiExpr expr, P p);
     R visitSigma(@NotNull SigmaExpr expr, P p);
-    R visitUniv(@NotNull UnivExpr expr, P p);
+    R visitRawUniv(@NotNull Expr.RawUnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
     R visitTup(@NotNull TupExpr expr, P p);
@@ -94,7 +94,7 @@ public sealed interface Expr extends ConcreteExpr {
     @Override default R visitSigma(@NotNull Expr.SigmaExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
-    @Override default R visitUniv(@NotNull UnivExpr expr, P p) {
+    @Override default R visitRawUniv(@NotNull Expr.RawUnivExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
     @Override default R visitApp(@NotNull AppExpr expr, P p) {
@@ -221,11 +221,11 @@ public sealed interface Expr extends ConcreteExpr {
    * @param hLevel specified homotopy level if positive
    * @param uLevel specified universe level if positive
    * @author re-xyr, ice1000
-   * @see UnivExpr#NEEDED
-   * @see UnivExpr#POLYMORPHIC
-   * @see UnivExpr#INFINITY
+   * @see RawUnivExpr#NEEDED
+   * @see RawUnivExpr#POLYMORPHIC
+   * @see RawUnivExpr#INFINITY
    */
-  record UnivExpr(
+  record RawUnivExpr(
     @NotNull SourcePos sourcePos,
     int uLevel,
     int hLevel
@@ -238,7 +238,7 @@ public sealed interface Expr extends ConcreteExpr {
     public static final int INFINITY = -3;
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitUniv(this, p);
+      return visitor.visitRawUniv(this, p);
     }
   }
 

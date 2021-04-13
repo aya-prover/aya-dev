@@ -4,7 +4,6 @@ package org.aya.concrete.visitor;
 
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
-import org.aya.concrete.parse.BinOpParser;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +52,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.SigmaExpr(expr.sourcePos(), expr.co(), binds);
   }
 
-  @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
+  @Override default @NotNull Expr visitRawUniv(Expr.@NotNull RawUnivExpr expr, P p) {
     return expr;
   }
 
@@ -105,6 +104,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, P p) {
     return new Expr.BinOpSeq(binOpSeq.sourcePos(),
-      binOpSeq.seq().map(e -> new BinOpParser.Elem(e.expr().accept(this, p), e.explicit())));
+      binOpSeq.seq().map(elem -> elem.mapExpr(e -> e.accept(this, p))));
   }
 }

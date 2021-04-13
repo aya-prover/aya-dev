@@ -27,8 +27,7 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
     return new Pattern.Clause(c.sourcePos(), c.patterns(), c.expr().map(Expr::desugar));
   }
 
-  @Override
-  public Unit visitData(@NotNull Decl.DataDecl decl, Unit unit) {
+  @Override public Unit visitData(@NotNull Decl.DataDecl decl, Unit unit) {
     visitDecl(decl);
     decl.result = decl.result.desugar();
     decl.body.forEach(ctor -> {
@@ -38,8 +37,7 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
     return unit;
   }
 
-  @Override
-  public Unit visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
+  @Override public Unit visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
     visitDecl(decl);
     decl.result = decl.result.desugar();
     decl.fields.forEach(f -> {
@@ -51,8 +49,7 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
     return unit;
   }
 
-  @Override
-  public Unit visitFn(@NotNull Decl.FnDecl decl, Unit unit) {
+  @Override public Unit visitFn(@NotNull Decl.FnDecl decl, Unit unit) {
     visitDecl(decl);
     decl.result = decl.result.desugar();
     decl.body = decl.body.map(
@@ -62,8 +59,7 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
     return unit;
   }
 
-  @Override
-  public Unit visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
+  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
     visitDecl(decl);
     if (decl.result != null) decl.result = decl.result.desugar();
     return unit;
@@ -74,20 +70,26 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
     return unit;
   }
 
-  @Override
-  public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
+  @Override public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
     return unit;
   }
 
-  @Override
-  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
+  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
     mod.contents().forEach(Stmt::desugar);
     return unit;
   }
 
-  @Override
-  public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
-    return new BinOpParser(binOpSeq.seq().view())
+  @Override public @NotNull Expr visitApp(@NotNull Expr.AppExpr expr, Unit unit) {
+    if (expr.function() instanceof Expr.RawUnivExpr univ) {
+      // TODO
+    }
+    return ExprFixpoint.super.visitApp(expr, unit);
+  }
+
+  @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
+    var seq = binOpSeq.seq();
+    assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
+    return new BinOpParser(seq.view())
       .build(binOpSeq.sourcePos())
       .desugar();
   }

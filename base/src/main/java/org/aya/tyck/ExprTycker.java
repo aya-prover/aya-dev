@@ -123,7 +123,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
-  @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
+  @Override public Result visitRawUniv(Expr.@NotNull RawUnivExpr expr, @Nullable Term term) {
     if (term == null) return new Result(new FormTerm.Univ(Sort.OMEGA), new FormTerm.Univ(Sort.OMEGA));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
       // TODO[level]

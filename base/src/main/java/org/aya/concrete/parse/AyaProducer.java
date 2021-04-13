@@ -154,12 +154,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(pos, false, null);
     var id = ctx.qualifiedId();
     if (id != null) return new Expr.UnresolvedExpr(pos, visitQualifiedId(id));
-    if (ctx.TYPE() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.POLYMORPHIC, Expr.UnivExpr.POLYMORPHIC);
-    if (ctx.H_TYPE() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.POLYMORPHIC, Expr.UnivExpr.NEEDED);
-    if (ctx.U_TYPE() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.NEEDED, Expr.UnivExpr.POLYMORPHIC);
-    if (ctx.SET_UNIV() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.POLYMORPHIC, 2);
-    if (ctx.INF_TYPE() != null) return new Expr.UnivExpr(pos, Expr.UnivExpr.POLYMORPHIC, Expr.UnivExpr.INFINITY);
-    if (ctx.PROP() != null) return new Expr.UnivExpr(pos, 0, 1);
+    if (ctx.TYPE() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, Expr.RawUnivExpr.POLYMORPHIC);
+    if (ctx.H_TYPE() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, Expr.RawUnivExpr.NEEDED);
+    if (ctx.U_TYPE() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.NEEDED, Expr.RawUnivExpr.POLYMORPHIC);
+    if (ctx.SET_UNIV() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, 2);
+    if (ctx.INF_TYPE() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, Expr.RawUnivExpr.INFINITY);
+    if (ctx.PROP() != null) return new Expr.RawUnivExpr(pos, 0, 1);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);

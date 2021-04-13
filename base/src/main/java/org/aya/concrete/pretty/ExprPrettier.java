@@ -64,9 +64,9 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     );
   }
 
-  @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
+  @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Boolean nestedCall) {
     return Doc.styled(TermPrettier.KEYWORD, switch (expr.hLevel()) {
-      case Expr.UnivExpr.INFINITY -> "ooType";
+      case Expr.RawUnivExpr.INFINITY -> "ooType";
       case 2 -> "Set";
       case 1 -> "Prop";
       default -> "Type";

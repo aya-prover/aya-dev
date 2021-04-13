@@ -8,6 +8,8 @@ import org.aya.concrete.Expr;
 import org.glavo.kala.collection.SeqView;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 public record BinOpParser(@NotNull SeqView<@NotNull Elem> seq) {
   @NotNull public Expr build(SourcePos sourcePos) {
     // TODO: implement
@@ -25,5 +27,8 @@ public record BinOpParser(@NotNull SeqView<@NotNull Elem> seq) {
    * but only used in binary operator building
    */
   public record Elem(@NotNull Expr expr, boolean explicit) {
+    public @NotNull Elem mapExpr(@NotNull Function<Expr, Expr> map) {
+      return new Elem(map.apply(expr), explicit);
+    }
   }
 }

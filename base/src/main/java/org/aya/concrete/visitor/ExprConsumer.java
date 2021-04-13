@@ -23,7 +23,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  @Override default Unit visitUniv(Expr.@NotNull UnivExpr expr, P p) {
+  @Override default Unit visitRawUniv(Expr.@NotNull RawUnivExpr expr, P p) {
     return Unit.unit();
   }
 
