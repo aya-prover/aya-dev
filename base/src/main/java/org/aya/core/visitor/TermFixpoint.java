@@ -3,8 +3,8 @@
 package org.aya.core.visitor;
 
 import org.aya.api.util.Arg;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
-import org.aya.tyck.sort.Sort;
 import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;

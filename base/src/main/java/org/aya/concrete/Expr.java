@@ -5,6 +5,7 @@ package org.aya.concrete;
 import org.aya.api.concrete.ConcreteExpr;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LevelVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
@@ -14,9 +15,9 @@ import org.aya.concrete.pretty.ExprPrettier;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
+import org.aya.core.sort.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.LevelVar;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
@@ -219,8 +220,8 @@ public sealed interface Expr extends ConcreteExpr {
 
   record UnivExpr(
     @NotNull SourcePos sourcePos,
-    LevelVar uLevel,
-    LevelVar hLevel
+    @NotNull LevelVar<Level> uLevel,
+    @NotNull LevelVar<Level> hLevel
   ) implements Expr {
     /** Must be specified but yet unspecified */
     public static final int NEEDED = -1;

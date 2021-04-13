@@ -4,8 +4,8 @@ package org.aya.tyck.error;
 
 import org.aya.api.error.Problem;
 import org.aya.concrete.Expr;
+import org.aya.core.sort.LevelEqn;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.sort.LevelEqn;
 import org.glavo.kala.collection.Collection;
 import org.jetbrains.annotations.NotNull;
 

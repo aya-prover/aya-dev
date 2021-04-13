@@ -1,11 +1,11 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.tyck.sort;
+package org.aya.core.sort;
 
-import org.aya.api.ref.Var;
-import org.aya.tyck.sort.Sort.Level;
-import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.aya.api.ref.LevelVar;
+import org.aya.core.sort.Sort.Level;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.collection.mutable.MutableTreeMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +18,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface LevelSubst {
   boolean isEmpty();
-  @Nullable Level get(@NotNull Var var);
+  @Nullable Level get(@NotNull LevelVar<Level> var);
   @NotNull LevelSubst subst(@NotNull LevelSubst subst);
-  @NotNull LevelSubst EMPTY = new Simple(MutableHashMap.of());
+  @NotNull LevelSubst EMPTY = new Simple(MutableTreeMap.of((o1, o2) -> {
+    throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
+  }));
 
-  record Simple(@NotNull MutableMap<@NotNull Var, @NotNull Level> map) implements LevelSubst {
-    public void add(@NotNull Var var, @NotNull Level level) {
+  record Simple(@NotNull MutableMap<@NotNull LevelVar<Level>, @NotNull Level> map) implements LevelSubst {
+    public void add(@NotNull LevelVar<Level> var, @NotNull Level level) {
       map.put(var, level);
     }
 
@@ -31,15 +33,14 @@ public interface LevelSubst {
       return map.isEmpty();
     }
 
-    @Override public @Nullable Level get(@NotNull Var var) {
+    @Override public @Nullable Level get(@NotNull LevelVar<Level> var) {
       return map.getOrNull(var);
     }
 
     @Override public @NotNull LevelSubst subst(@NotNull LevelSubst subst) {
       if (isEmpty()) return this;
-      var result = new Simple(new MutableHashMap<>());
       map.replaceAll((var, term) -> term.subst(subst));
-      return result;
+      return this;
     }
   }
 }
