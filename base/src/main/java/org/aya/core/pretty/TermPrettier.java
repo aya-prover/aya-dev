@@ -26,6 +26,7 @@ public final class TermPrettier implements Term.Visitor<Boolean, Doc> {
   public static final @NotNull Style STRUCT_CALL = Style.preset("aya:StructCall");
   public static final @NotNull Style CON_CALL = Style.preset("aya:ConCall");
   public static final @NotNull Style FIELD_CALL = Style.preset("aya:FieldCall");
+  public static final @NotNull Style GENERALIZED = Style.preset("aya:Generalized");
 
   private TermPrettier() {
   }

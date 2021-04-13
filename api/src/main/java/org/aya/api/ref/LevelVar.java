@@ -10,8 +10,18 @@ public record LevelVar<Level>(
   @NotNull Kind kind,
   @NotNull Ref<@NotNull Level> level
 ) implements Var {
+  public LevelVar(@NotNull String name, @NotNull Kind kind) {
+    this(name, kind, new Ref<>());
+  }
+
   public enum Kind {
-    Universe,
-    Homotopy
+    Universe("ulevel"),
+    Homotopy("hlevel");
+
+    public final @NotNull String keyword;
+
+    Kind(@NotNull String keyword) {
+      this.keyword = keyword;
+    }
   }
 }

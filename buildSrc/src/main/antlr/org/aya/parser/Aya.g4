@@ -162,8 +162,8 @@ TWIN : 'twin';
 // universe
 HTYPE : 'hType';
 UTYPE : 'uType';
-ULEVEL : 'ulevels';
-HLEVEL : 'hlevels';
+ULEVEL : 'ulevel';
+HLEVEL : 'hlevel';
 TYPE : 'Type';
 INF_TYPE : 'ooType';
 SET_UNIV : 'Set';

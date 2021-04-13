@@ -8,6 +8,7 @@ import org.aya.core.pretty.TermPrettier;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -186,5 +187,14 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     return block.sizeEquals(1)
       ? block.get(0).toDoc()
       : Doc.vcat(block.stream().map(Stmt::toDoc));
+  }
+
+  @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
+    var vars = levels.levels().map(Tuple2::getValue).map(t ->
+      Doc.linkDef(Doc.styled(TermPrettier.GENERALIZED, t.name()), t.hashCode()));
+    return Doc.hcat(
+      Doc.styled(TermPrettier.KEYWORD, levels.kind().keyword),
+      Doc.plain(" "),
+      Doc.hsep(vars));
   }
 }

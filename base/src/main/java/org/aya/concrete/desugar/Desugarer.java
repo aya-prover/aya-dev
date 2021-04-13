@@ -93,4 +93,8 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
       .build(binOpSeq.sourcePos())
       .desugar();
   }
+
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
+    return unit;
+  }
 }

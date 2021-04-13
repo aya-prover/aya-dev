@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.visitor;
 
 import org.aya.concrete.Decl;
+import org.aya.concrete.Generalize;
 import org.aya.concrete.Stmt;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
@@ -79,6 +80,10 @@ public final class StmtResolver implements Stmt.Visitor<Unit, Unit> {
     var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     if (decl.result != null) decl.result = decl.result.resolve(local._2);
+    return unit;
+  }
+
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
     return unit;
   }
 }

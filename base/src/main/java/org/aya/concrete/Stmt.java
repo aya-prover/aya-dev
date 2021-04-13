@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * @author kiva
  */
 public sealed interface Stmt extends Docile
-  permits Decl, Stmt.ImportStmt, Stmt.ModuleStmt, Stmt.OpenStmt {
+  permits Decl, Generalize, Stmt.ImportStmt, Stmt.ModuleStmt, Stmt.OpenStmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
@@ -40,12 +40,16 @@ public sealed interface Stmt extends Docile
   /**
    * @author re-xyr
    */
-  interface Visitor<P, R> extends Decl.Visitor<P, R> {
+  interface Visitor<P, R> extends Decl.Visitor<P, R>, Generalize.Visitor<P, R> {
     default void traceEntrance(@NotNull Stmt stmt, P p) {
     }
-    @ApiStatus.NonExtendable
-    @Override default void traceEntrance(@NotNull Decl decl, P p) {
+    @ApiStatus.NonExtendable @Override default void traceEntrance(@NotNull Decl decl, P p) {
       traceEntrance((Stmt) decl, p);
+    }
+    @Override default void traceExit(P p, R r) {
+    }
+    @ApiStatus.NonExtendable @Override default void traceEntrance(@NotNull Generalize generalize, P p) {
+      traceEntrance((Stmt) generalize, p);
     }
     default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       stmts.forEach(stmt -> stmt.accept(this, p));
