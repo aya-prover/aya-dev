@@ -4,7 +4,6 @@ package org.aya.ref;
 
 import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,15 +23,7 @@ public record LevelVar(
   }
 
   public enum Kind {
-    U(UP), H(HP);
-
-    public final @NotNull LevelVar std;
-
-    @Contract(pure = true) Kind(@NotNull LevelVar std) {
-      this.std = std;
-    }
+    Universe,
+    Homotopy
   }
-
-  public static final @NotNull LevelVar UP = new LevelVar("ul", Kind.U);
-  public static final @NotNull LevelVar HP = new LevelVar("hl", Kind.H);
 }

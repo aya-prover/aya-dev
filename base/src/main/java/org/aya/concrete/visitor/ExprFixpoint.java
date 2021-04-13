@@ -56,6 +56,10 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return expr;
   }
 
+  @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
+    return expr;
+  }
+
   default @NotNull Arg<Expr> visitArg(@NotNull Arg<Expr> arg, P p) {
     var term = arg.term().accept(this, p);
     if (term == arg.term()) return arg;

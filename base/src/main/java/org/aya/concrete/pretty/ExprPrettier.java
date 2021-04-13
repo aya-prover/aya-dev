@@ -73,6 +73,10 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
     });
   }
 
+  @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
+    return Doc.plain("Type");
+  }
+
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
     return TermPrettier.INSTANCE.visitCalls(
       expr.function().toDoc(),
