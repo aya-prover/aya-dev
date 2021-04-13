@@ -12,10 +12,6 @@ dependencies {
   testImplementation(project(":tester"))
 }
 
-plugins {
-  id("org.beryx.jlink")
-}
-
 val mainClassQName = "org.aya.cli.Main"
 tasks.withType<Jar>().configureEach {
   manifest.attributes["Main-Class"] = mainClassQName
@@ -28,14 +24,4 @@ tasks.withType<AbstractCopyTask>().configureEach {
 val isMac = Os.isFamily(Os.FAMILY_MAC)
 if (isMac) tasks.withType<JavaExec>().configureEach {
   jvmArgs("-XstartOnFirstThread")
-}
-
-jlink {
-  options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
-  mainClass.set(mainClassQName)
-  launcher {
-    name = "aya"
-    jvmArgs = mutableListOf("--enable-preview")
-    if (isMac) jvmArgs.add("-XstartOnFirstThread")
-  }
 }

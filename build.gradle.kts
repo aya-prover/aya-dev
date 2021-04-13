@@ -178,5 +178,5 @@ val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
 
 tasks.register("githubActions") {
   group = "verification"
-  dependsOn(mergeJacocoReports, tasks.findByPath(":cli:jlink"))
+  dependsOn(mergeJacocoReports, tasks.findByPath(":lsp:jlink"))
 }
