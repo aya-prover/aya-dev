@@ -223,13 +223,6 @@ public sealed interface Expr extends ConcreteExpr {
     @NotNull LevelVar<Level> uLevel,
     @NotNull LevelVar<Level> hLevel
   ) implements Expr {
-    /** Must be specified but yet unspecified */
-    public static final int NEEDED = -1;
-    /** Can either be specified or polymorphic */
-    public static final int POLYMORPHIC = -2;
-    /** Specified to be infinity */
-    public static final int INFINITY = -3;
-
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }

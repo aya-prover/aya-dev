@@ -9,6 +9,8 @@ stmt : decl
      | importCmd
      | openCmd
      | module
+     | levels
+     | generalize
      ;
 
 importCmd : IMPORT moduleName (AS ID)?;
@@ -18,6 +20,9 @@ useHide : use+
 use : USING useHideList;
 hide : HIDING useHideList;
 useHideList : LPAREN idsComma ')';
+
+levels : (ULEVEL | HLEVEL) ids ;
+generalize : 'variable' ids type ;
 
 moduleName : ID ('.' ID)*;
 
@@ -117,8 +122,8 @@ literal : qualifiedId
         | LGOAL expr? '?}'
         | NUMBER
         | STRING
-        | H_TYPE
-        | U_TYPE
+        | HTYPE
+        | UTYPE
         | TYPE
         | INF_TYPE
         | SET_UNIV
@@ -155,8 +160,10 @@ FIXR : 'fixr';
 TWIN : 'twin';
 
 // universe
-H_TYPE : 'hType';
-U_TYPE : 'uType';
+HTYPE : 'hType';
+UTYPE : 'uType';
+ULEVEL : 'ulevels';
+HLEVEL : 'hlevels';
 TYPE : 'Type';
 INF_TYPE : 'ooType';
 SET_UNIV : 'Set';
