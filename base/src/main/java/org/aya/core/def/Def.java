@@ -5,8 +5,8 @@ package org.aya.core.def;
 import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
-import org.aya.core.pretty.DefPrettier;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.CoreDistiller;
 import org.aya.core.visitor.Substituter;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -55,7 +55,7 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Doc toDoc() {
-    return accept(DefPrettier.INSTANCE, Unit.unit());
+    return accept(CoreDistiller.INSTANCE, Unit.unit());
   }
 
   /**

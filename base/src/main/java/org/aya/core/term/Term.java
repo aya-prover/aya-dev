@@ -10,7 +10,6 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.pat.Pat;
-import org.aya.core.pretty.TermPrettier;
 import org.aya.core.visitor.*;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
@@ -82,7 +81,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   }
 
   @Override default @NotNull Doc toDoc() {
-    return accept(TermPrettier.INSTANCE, false);
+    return accept(CoreDistiller.INSTANCE, false);
   }
 
   interface Visitor<P, R> {

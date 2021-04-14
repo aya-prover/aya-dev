@@ -3,7 +3,7 @@
 package org.aya.generic;
 
 import org.aya.api.ref.Var;
-import org.aya.core.pretty.DefPrettier;
+import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.Debug;
@@ -24,7 +24,7 @@ public interface ParamLike<Expr extends Docile> extends Docile {
     return toDoc(nameDoc());
   }
   default @NotNull Doc nameDoc() {
-    return DefPrettier.plainLink(ref());
+    return CoreDistiller.plainLink(ref());
   }
   default @NotNull Doc toDoc(@NotNull Doc names) {
     var explicit = explicit();
