@@ -10,7 +10,7 @@ import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public interface PatternProblem extends Problem {
+public sealed interface PatternProblem extends Problem {
   @NotNull Pattern pattern();
 
   @Override default @NotNull SourcePos sourcePos() {

@@ -16,7 +16,7 @@ import org.aya.core.visitor.Substituter;
 import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LocalCtx;
-import org.aya.tyck.error.ConditionError;
+import org.aya.tyck.error.ClausesProblem;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -78,13 +78,13 @@ public record Conquer(
     var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
       new Substituter.TermSubst(MutableMap.of()), matchings);
     if (volynskaya == null) {
-      tycker.reporter.report(new ConditionError(sourcePos, nth + 1, i, newBody, null));
+      tycker.reporter.report(new ClausesProblem.Conditions(sourcePos, nth + 1, i, newBody, null));
       throw new ExprTycker.TyckInterruptedException();
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
       .compare(newBody, volynskaya, signature.result().subst(matchy));
     if (!unification) {
-      tycker.reporter.report(new ConditionError(sourcePos, nth + 1, i, newBody, volynskaya));
+      tycker.reporter.report(new ClausesProblem.Conditions(sourcePos, nth + 1, i, newBody, volynskaya));
       throw new ExprTycker.TyckInterruptedException();
     }
   }

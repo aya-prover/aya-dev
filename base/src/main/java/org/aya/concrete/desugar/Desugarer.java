@@ -15,22 +15,21 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
   }
 
   private void visitSignatured(@NotNull Signatured signatured) {
-    signatured.telescope = signatured.telescope.map(p -> p.mapExpr(Expr::desugar));
+    signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> expr.accept(this, Unit.unit())));
   }
 
   private void visitDecl(@NotNull Decl decl) {
     visitSignatured(decl);
-    decl.abuseBlock.forEach(Stmt::desugar);
+    decl.abuseBlock.forEach(stmt -> stmt.accept(this, Unit.unit()));
   }
 
   private Pattern.Clause visitClause(@NotNull Pattern.Clause c) {
-    return new Pattern.Clause(c.sourcePos(), c.patterns(), c.expr().map(Expr::desugar));
+    return new Pattern.Clause(c.sourcePos(), c.patterns(), c.expr().map(expr -> expr.accept(this, Unit.unit())));
   }
 
-  @Override
-  public Unit visitData(@NotNull Decl.DataDecl decl, Unit unit) {
+  @Override public Unit visitData(@NotNull Decl.DataDecl decl, Unit unit) {
     visitDecl(decl);
-    decl.result = decl.result.desugar();
+    decl.result = decl.result.accept(this, Unit.unit());
     decl.body.forEach(ctor -> {
       visitSignatured(ctor);
       ctor.clauses = ctor.clauses.map(this::visitClause);
@@ -38,50 +37,44 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
     return unit;
   }
 
-  @Override
-  public Unit visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
+  @Override public Unit visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
     visitDecl(decl);
-    decl.result = decl.result.desugar();
+    decl.result = decl.result.accept(this, Unit.unit());
     decl.fields.forEach(f -> {
       visitSignatured(f);
-      f.result = f.result.desugar();
+      f.result = f.result.accept(this, Unit.unit());
       f.clauses = f.clauses.map(this::visitClause);
-      f.body = f.body.map(Expr::desugar);
+      f.body = f.body.map(expr -> expr.accept(this, Unit.unit()));
     });
     return unit;
   }
 
-  @Override
-  public Unit visitFn(@NotNull Decl.FnDecl decl, Unit unit) {
+  @Override public Unit visitFn(@NotNull Decl.FnDecl decl, Unit unit) {
     visitDecl(decl);
-    decl.result = decl.result.desugar();
+    decl.result = decl.result.accept(this, Unit.unit());
     decl.body = decl.body.map(
-      Expr::desugar,
+      expr -> expr.accept(this, Unit.unit()),
       clauses -> clauses.map(this::visitClause)
     );
     return unit;
   }
 
-  @Override
-  public Unit visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
+  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
     visitDecl(decl);
-    if (decl.result != null) decl.result = decl.result.desugar();
+    if (decl.result != null) decl.result = decl.result.accept(this, Unit.unit());
     return unit;
   }
 
-  @Override
-  public Unit visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
+  @Override public Unit visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
     return unit;
   }
 
-  @Override
-  public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
+  @Override public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
     return unit;
   }
 
-  @Override
-  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
-    mod.contents().forEach(Stmt::desugar);
+  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
+    mod.contents().forEach(stmt -> stmt.accept(this, Unit.unit()));
     return unit;
   }
 
@@ -90,6 +83,6 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
     return new BinOpParser(binOpSeq.seq().view())
       .build(binOpSeq.sourcePos())
-      .desugar();
+      .accept(this, Unit.unit());
   }
 }
