@@ -9,6 +9,9 @@ import org.aya.concrete.Stmt;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author ice1000
+ */
 public interface StmtFixpoint extends ExprFixpoint<Unit>, Stmt.Visitor<Unit, Unit>, Signatured.Visitor<Unit, Unit>, Decl.Visitor<Unit, Unit> {
   default void visitSignatured(@NotNull Signatured signatured) {
     signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> expr.accept(this, Unit.unit())));

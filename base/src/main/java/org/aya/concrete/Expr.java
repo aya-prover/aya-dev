@@ -44,12 +44,12 @@ public sealed interface Expr extends ConcreteExpr {
     return accept(ExprResolver.INSTANCE, context);
   }
 
-  default @NotNull Expr resolve(Reporter reporter) {
+  @Override default @NotNull Expr resolve(@NotNull Reporter reporter) {
     return resolve(new EmptyContext(reporter));
   }
 
-  default @NotNull Expr desugar() {
-    return accept(Desugarer.INSTANCE, Unit.unit());
+  @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
+    return accept(new Desugarer(reporter), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc() {
