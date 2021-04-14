@@ -74,7 +74,7 @@ public record PatTycker(
       tracing(GenericBuilder::reduce);
       return elabClause;
     });
-    return Tuple.of(signature.value.result().strip(), res);
+    return Tuple.of(signature.value.result().strip(subst.reporter()), res);
   }
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
