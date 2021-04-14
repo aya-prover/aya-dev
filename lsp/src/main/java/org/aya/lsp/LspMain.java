@@ -66,7 +66,7 @@ public class LspMain {
   private static @NotNull Startup runClient(@NotNull LspArgs cli) throws IOException {
     Log.i("Client mode, connecting to %s:%d", cli.host, cli.port);
     var socket = new Socket(cli.host, cli.port);
-    return new Startup(socket.getInputStream(), socket.getOutputStream());
+    return new Startup(new CloseAwareInputStream(socket.getInputStream()), socket.getOutputStream());
   }
 
   private static @NotNull Startup runServer(@NotNull LspArgs cli) throws IOException {
@@ -74,7 +74,32 @@ public class LspMain {
     var server = new ServerSocket(cli.port, 0, InetAddress.getByName(cli.host));
     var client = server.accept();
     server.close();
-    return new Startup(client.getInputStream(), client.getOutputStream());
+    return new Startup(new CloseAwareInputStream(client.getInputStream()), client.getOutputStream());
+  }
+
+  private static class CloseAwareInputStream extends InputStream {
+    private final InputStream inputStream;
+
+    private CloseAwareInputStream(InputStream inputStream) {
+      this.inputStream = inputStream;
+    }
+
+    private int closeIfRemoteClosed(int len) throws IOException {
+      if (len < 0) inputStream.close();
+      return len;
+    }
+
+    @Override public int read() throws IOException {
+      return closeIfRemoteClosed(inputStream.read());
+    }
+
+    @Override public int read(byte @NotNull [] b) throws IOException {
+      return closeIfRemoteClosed(inputStream.read(b));
+    }
+
+    @Override public int read(byte @NotNull [] b, int off, int len) throws IOException {
+      return closeIfRemoteClosed(inputStream.read(b, off, len));
+    }
   }
 
   private static record Startup(
