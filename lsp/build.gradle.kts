@@ -5,11 +5,11 @@ import org.apache.tools.ant.taskdefs.condition.Os
 dependencies {
   val deps: java.util.Properties by rootProject.ext
   implementation(project(":cli"))
-  implementation(project(":api"))
   implementation(project(":base"))
   implementation(project(":parser"))
-  implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j", version = deps.getProperty("version.lsp4j"))
-  implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc", version = deps.getProperty("version.lsp4j"))
+  val lsp4jVersion = deps.getProperty("version.lsp4j")
+  implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j", version = lsp4jVersion)
+  implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc", version = lsp4jVersion)
   implementation("com.beust", "jcommander", version = deps.getProperty("version.jcommander"))
 }
 
@@ -23,7 +23,7 @@ tasks.withType<Jar>().configureEach {
   manifest.attributes["Main-Class"] = lspMainClassQName
 }
 
-tasks.withType<JavaCompile> {
+tasks.withType<JavaCompile>().configureEach {
   doFirst {
     options.compilerArgs.addAll(listOf("--module-path", classpath.asPath))
   }
@@ -49,13 +49,14 @@ jlink {
 }
 
 val jlinkTask = tasks.named("jlink")
+val imageDir = buildDir.resolve("image")
 jlinkTask.configure {
   doLast {
-    file("aya.bat").copyTo(buildDir.resolve("image/bin/aya.bat"), overwrite = true)
-    file("aya-lsp.bat").copyTo(buildDir.resolve("image/bin/aya-lsp.bat"), overwrite = true)
+    file("aya.bat").copyTo(imageDir.resolve("bin/aya.bat"), overwrite = true)
+    file("aya-lsp.bat").copyTo(imageDir.resolve("bin/aya-lsp.bat"), overwrite = true)
 
-    val aya = buildDir.resolve("image/bin/aya")
-    val ayalsp = buildDir.resolve("image/bin/aya-lsp")
+    val aya = imageDir.resolve("bin/aya")
+    val ayalsp = imageDir.resolve("bin/aya-lsp")
     file("aya.sh").copyTo(aya, overwrite = true)
     file("aya-lsp.sh").copyTo(ayalsp, overwrite = true)
     aya.setExecutable(true)
@@ -65,6 +66,6 @@ jlinkTask.configure {
 
 if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
   dependsOn(jlinkTask)
-  from(buildDir.resolve("image"))
+  from(imageDir)
   into(file(rootProject.property("installDir").toString()))
 }
