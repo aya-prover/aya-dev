@@ -71,7 +71,7 @@ public final class Main {
     try {
       return Files.readString(filePath);
     } catch (IOException e) {
-      System.err.println(fileDisplayName + ": file not found");
+      System.err.println(fileDisplayName + ": file not found (" + filePath + ")");
     }
     System.exit(1);
     throw new IllegalStateException();

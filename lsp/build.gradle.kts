@@ -47,3 +47,17 @@ jlink {
     if (isMac) jvmArgs.add("-XstartOnFirstThread")
   }
 }
+
+val jlinkTask = tasks.named("jlink")
+jlinkTask.configure {
+  doLast {
+    file("aya.bat").copyTo(buildDir.resolve("image/bin/aya.bat"), overwrite = true)
+    file("aya-lsp.bat").copyTo(buildDir.resolve("image/bin/aya-lsp.bat"), overwrite = true)
+  }
+}
+
+if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
+  dependsOn(jlinkTask)
+  from(buildDir.resolve("image"))
+  into(file(rootProject.property("installDir").toString()))
+}

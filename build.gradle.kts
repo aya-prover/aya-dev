@@ -140,6 +140,11 @@ subprojects {
             name.set("Kiva Oyama")
             email.set("imkiva@islovely.icu")
           }
+          developer {
+            id.set("re-xyr")
+            name.set("Xy Ren")
+            email.set("xy.r@outlook.com")
+          }
         }
         scm {
           connection.set("scm:git:$githubUrl")
