@@ -21,7 +21,8 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.GenericBuilder;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.error.*;
+import org.aya.tyck.error.NotYetTyckedError;
+import org.aya.tyck.error.PatternProblem;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -80,7 +81,7 @@ public record PatTycker(
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
     var selection = selectCtor(term, null, subst.reporter(), absurd);
     if (selection != null) {
-      subst.reporter().report(new PossiblePatError(absurd, selection._3));
+      subst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
       // This is actually not necessary. Do we want to delete it?
       throw new ExprTycker.TyckInterruptedException();
     }
@@ -183,7 +184,7 @@ public record PatTycker(
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name(), subst.reporter(), ctor);
     if (realCtor == null) {
-      subst.reporter().report(new UnknownCtorError(ctor));
+      subst.reporter().report(new PatternProblem.UnknownCtor(ctor));
       throw new ExprTycker.TyckInterruptedException();
     }
     var ctorCore = realCtor._3.ref().core;
@@ -200,7 +201,7 @@ public record PatTycker(
   private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
   selectCtor(Term param, @Nullable String name, @NotNull Reporter reporter, @NotNull Pattern pos) {
     if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
-      reporter.report(new SplittingOnNonData(pos, param));
+      reporter.report(new PatternProblem.SplittingOnNonData(pos, param));
       return null;
     }
     var core = dataCall.ref().core;
@@ -218,7 +219,7 @@ public record PatTycker(
       // if the name-matching constructor mismatches the type,
       // we get an error.
       var severity = reporter == IgnoringReporter.INSTANCE ? Problem.Severity.WARN : Problem.Severity.ERROR;
-      subst.reporter().report(new UnavailableCtorError(pos, severity));
+      subst.reporter().report(new PatternProblem.UnavailableCtor(pos, severity));
       return null;
     }
     return null;

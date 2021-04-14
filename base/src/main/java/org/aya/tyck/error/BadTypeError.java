@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
-import org.aya.api.error.Problem;
+import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
@@ -12,7 +12,7 @@ public record BadTypeError(
   @NotNull Expr expr,
   @NotNull Doc expectedType,
   @NotNull Term actualType
-) implements Problem, ExprProblem {
+) implements ExprProblem {
   @Override public @NotNull Severity level() {
     return Severity.ERROR;
   }

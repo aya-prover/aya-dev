@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar;
 
+import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.error.ExprProblem;
 import org.jetbrains.annotations.NotNull;
 
 public record WrongLevelError(@NotNull Expr.AppExpr expr, int expected) implements ExprProblem {

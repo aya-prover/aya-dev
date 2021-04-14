@@ -13,8 +13,8 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ConfluenceError;
-import org.aya.tyck.error.MatchingOverIntervalError;
 import org.aya.tyck.error.MissingCaseError;
+import org.aya.tyck.error.SplitIntervalError;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
@@ -101,7 +101,7 @@ public record PatClassifier(
       .firstOption();
     if (lrSplit.isDefined()) {
       if (coverage) {
-        reporter.report(new MatchingOverIntervalError(pos, lrSplit.get()));
+        reporter.report(new SplitIntervalError(pos, lrSplit.get()));
         throw new ExprTycker.TyckInterruptedException();
       }
       for (var def : PrimDef.LEFT_RIGHT) {
