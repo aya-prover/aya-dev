@@ -53,6 +53,13 @@ jlinkTask.configure {
   doLast {
     file("aya.bat").copyTo(buildDir.resolve("image/bin/aya.bat"), overwrite = true)
     file("aya-lsp.bat").copyTo(buildDir.resolve("image/bin/aya-lsp.bat"), overwrite = true)
+
+    val aya = buildDir.resolve("image/bin/aya")
+    val ayalsp = buildDir.resolve("image/bin/aya-lsp")
+    file("aya.sh").copyTo(aya, overwrite = true)
+    file("aya-lsp.sh").copyTo(ayalsp, overwrite = true)
+    aya.setExecutable(true)
+    ayalsp.setExecutable(true)
   }
 }
 
