@@ -10,7 +10,6 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.pat.Pat;
-import org.aya.core.pretty.TermPrettier;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.visitor.*;
 import org.aya.generic.ParamLike;

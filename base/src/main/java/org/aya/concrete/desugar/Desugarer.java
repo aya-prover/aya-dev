@@ -5,6 +5,7 @@ package org.aya.concrete.desugar;
 import org.aya.api.error.ExprProblem;
 import org.aya.api.error.Reporter;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Generalize;
 import org.aya.concrete.parse.BinOpParser;
 import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.pretty.doc.Doc;
@@ -15,7 +16,7 @@ public record Desugarer(@NotNull Reporter reporter) implements StmtFixpoint {
   @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
     var seq = binOpSeq.seq();
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
-    return new BinOpParser(binOpSeq.seq().view())
+    return new BinOpParser(seq.view())
       .build(binOpSeq.sourcePos())
       .accept(this, Unit.unit());
   }
