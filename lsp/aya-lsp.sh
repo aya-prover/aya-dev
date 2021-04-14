@@ -11,8 +11,6 @@ AYA_MODULE="org.aya.lsp"
 AYA_MAIN="org.aya.lsp.LspMain"
 AYA_NAME="Aya"
 AYA_JVM_OPTS='"--enable-preview" "-XstartOnFirstThread"'
-# only available in macOS, pictures are in .icns format
-AYA_ICON=""
 
 ###################################
 # DO NOT EDIT BELOW
@@ -90,11 +88,6 @@ if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then
     else
         warn "Could not query maximum file descriptor limit: $MAX_FD_LIMIT"
     fi
-fi
-
-# For Darwin, add options to specify how the application appears in the dock
-if $darwin; then
-    AYA_VM_OPTS="$AYA_VM_OPTS \"-Xdock:name=$APP_NAME\" \"-Xdock:icon=$AYA_ICON\""
 fi
 
 # For Cygwin or MSYS, switch paths to Windows format before running java
