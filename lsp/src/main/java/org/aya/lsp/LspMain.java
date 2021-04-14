@@ -73,6 +73,7 @@ public class LspMain {
     Log.i("Server mode, listening on %s:%d", cli.host, cli.port);
     var server = new ServerSocket(cli.port, 0, InetAddress.getByName(cli.host));
     var client = server.accept();
+    server.close();
     return new Startup(client.getInputStream(), client.getOutputStream());
   }
 
