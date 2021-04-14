@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public record Goal(
   @NotNull Expr.HoleExpr expr,
   @NotNull Meta meta
-) implements TyckProblem {
+) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     var doc = Doc.vcat(
       Doc.hcat(Doc.plain("Expected type: "), meta.result.toDoc()),

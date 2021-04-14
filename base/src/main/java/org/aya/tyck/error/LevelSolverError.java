@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public record LevelSolverError(
   @NotNull Expr expr,
   @NotNull Collection<? extends LevelEqn> eqn
-) implements TyckProblem, Problem {
+) implements ExprProblem, Problem {
   @Override public @NotNull Doc describe() {
     // TODO[ice]: improve this
     return Doc.plain("Cannot solve equation: " + eqn);

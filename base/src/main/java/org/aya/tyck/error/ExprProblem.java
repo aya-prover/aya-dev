@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public interface TyckProblem extends Problem {
+public interface ExprProblem extends Problem {
   @NotNull Expr expr();
 
   @Override default @NotNull SourcePos sourcePos() {

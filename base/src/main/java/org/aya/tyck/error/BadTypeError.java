@@ -12,7 +12,7 @@ public record BadTypeError(
   @NotNull Expr expr,
   @NotNull Doc expectedType,
   @NotNull Term actualType
-) implements Problem, TyckProblem {
+) implements Problem, ExprProblem {
   @Override public @NotNull Severity level() {
     return Severity.ERROR;
   }

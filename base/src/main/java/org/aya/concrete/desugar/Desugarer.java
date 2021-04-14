@@ -85,8 +85,9 @@ public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, U
     return unit;
   }
 
-  @Override
-  public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
+  @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
+    var seq = binOpSeq.seq();
+    assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
     return new BinOpParser(binOpSeq.seq().view())
       .build(binOpSeq.sourcePos())
       .desugar();
