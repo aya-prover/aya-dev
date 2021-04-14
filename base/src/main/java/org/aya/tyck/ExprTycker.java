@@ -78,8 +78,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public @NotNull Result finalize(@NotNull Result result) {
     return new Result(
-      result.wellTyped.strip(),
-      result.type.strip()
+      result.wellTyped.strip(reporter),
+      result.type.strip(reporter)
     );
   }
 
@@ -90,8 +90,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Check(partialSynth = true)
   @Override public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
     if (term == null) {
-      var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX)._2;
-      var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX)._2;
+      var sourcePos = expr.param().sourcePos();
+      var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX, sourcePos)._2;
+      var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX, sourcePos)._2;
       term = new FormTerm.Pi(false, Term.Param.mock(domain, expr.param().explicit()), codomain);
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt && !dt.co())) {
@@ -377,8 +378,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
     // TODO[ice]: deal with unit type
     var name = Constants.ANONYMOUS_PREFIX;
-    if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name)._2;
-    var freshHole = localCtx.freshHole(term, name);
+    if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name, expr.sourcePos())._2;
+    var freshHole = localCtx.freshHole(term, name, expr.sourcePos());
     if (expr.explicit()) reporter.report(new Goal(expr, freshHole._1));
     return new Result(freshHole._2, term);
   }
@@ -395,7 +396,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       while (pi.param().explicit() != argLicit) {
         if (argLicit) {
           // that implies paramLicit == false
-          var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX)._2;
+          var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX, arg.term().sourcePos())._2;
           // TODO: maybe we should create a concrete hole and check it against the type
           //  in case we can synthesize this term via its type only
           var holeArg = new Arg<>(holeApp, false);

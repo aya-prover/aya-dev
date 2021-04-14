@@ -62,7 +62,7 @@ public final record FileModuleLoader(
     var shallowResolver = new StmtShallowResolver(recurseLoader);
     program.forEach(s -> s.accept(shallowResolver, context));
     program.forEach(Stmt::resolve);
-    program.forEach(Stmt::desugar);
+    program.forEach(stmt -> stmt.desugar(reporter));
     onResolved.runChecked();
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {

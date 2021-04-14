@@ -9,9 +9,9 @@ import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.PrimDef;
-import org.aya.core.pretty.PatPrettier;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.CoreDistiller;
 import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.LocalCtx;
@@ -37,7 +37,7 @@ public sealed interface Pat extends CorePat {
     return new Arg<>(toTerm(), explicit());
   }
   @Override default @NotNull Doc toDoc() {
-    return accept(PatPrettier.INSTANCE, false);
+    return accept(CoreDistiller.INSTANCE, false);
   }
   default void storeBindings(@NotNull LocalCtx localCtx) {
     accept(new PatTyper(localCtx), Unit.unit());

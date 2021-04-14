@@ -2,96 +2,34 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar;
 
-import org.aya.concrete.*;
+import org.aya.api.error.ExprProblem;
+import org.aya.api.error.Reporter;
+import org.aya.concrete.Expr;
 import org.aya.concrete.parse.BinOpParser;
-import org.aya.concrete.visitor.ExprFixpoint;
+import org.aya.concrete.visitor.StmtFixpoint;
+import org.aya.pretty.doc.Doc;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, Unit> {
-  public static final Desugarer INSTANCE = new Desugarer();
-
-  private Desugarer() {
-  }
-
-  private void visitSignatured(@NotNull Signatured signatured) {
-    signatured.telescope = signatured.telescope.map(p -> p.mapExpr(Expr::desugar));
-  }
-
-  private void visitDecl(@NotNull Decl decl) {
-    visitSignatured(decl);
-    decl.abuseBlock.forEach(Stmt::desugar);
-  }
-
-  private Pattern.Clause visitClause(@NotNull Pattern.Clause c) {
-    return new Pattern.Clause(c.sourcePos(), c.patterns(), c.expr().map(Expr::desugar));
-  }
-
-  @Override public Unit visitData(@NotNull Decl.DataDecl decl, Unit unit) {
-    visitDecl(decl);
-    decl.result = decl.result.desugar();
-    decl.body.forEach(ctor -> {
-      visitSignatured(ctor);
-      ctor.clauses = ctor.clauses.map(this::visitClause);
-    });
-    return unit;
-  }
-
-  @Override public Unit visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
-    visitDecl(decl);
-    decl.result = decl.result.desugar();
-    decl.fields.forEach(f -> {
-      visitSignatured(f);
-      f.result = f.result.desugar();
-      f.clauses = f.clauses.map(this::visitClause);
-      f.body = f.body.map(Expr::desugar);
-    });
-    return unit;
-  }
-
-  @Override public Unit visitFn(@NotNull Decl.FnDecl decl, Unit unit) {
-    visitDecl(decl);
-    decl.result = decl.result.desugar();
-    decl.body = decl.body.map(
-      Expr::desugar,
-      clauses -> clauses.map(this::visitClause)
-    );
-    return unit;
-  }
-
-  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
-    visitDecl(decl);
-    if (decl.result != null) decl.result = decl.result.desugar();
-    return unit;
-  }
-
-  @Override
-  public Unit visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
-    return unit;
-  }
-
-  @Override public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
-    return unit;
-  }
-
-  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
-    mod.contents().forEach(Stmt::desugar);
-    return unit;
-  }
-
-  @Override public @NotNull Expr visitApp(@NotNull Expr.AppExpr expr, Unit unit) {
-    if (expr.function() instanceof Expr.RawUnivExpr univ) {
-      // TODO
-    }
-    return ExprFixpoint.super.visitApp(expr, unit);
-  }
-
+public record Desugarer(@NotNull Reporter reporter) implements StmtFixpoint {
   @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
     var seq = binOpSeq.seq();
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
-    return new BinOpParser(seq.view())
+    return new BinOpParser(binOpSeq.seq().view())
       .build(binOpSeq.sourcePos())
-      .desugar();
+      .accept(this, Unit.unit());
+  }
+
+  public static record WrongLevelError(@NotNull Expr.AppExpr expr, int expected) implements ExprProblem {
+    @Override public @NotNull Doc describe() {
+      return Doc.hcat(
+        Doc.plain("Expected " + expected + " level(s)")
+      );
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
   }
 
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, Unit unit) {

@@ -11,11 +11,11 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.parse.BinOpParser;
-import org.aya.concrete.pretty.ExprPrettier;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.core.sort.Level;
+import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -46,16 +46,16 @@ public sealed interface Expr extends ConcreteExpr {
     return accept(ExprResolver.INSTANCE, context);
   }
 
-  default @NotNull Expr resolve(Reporter reporter) {
+  @Override default @NotNull Expr resolve(@NotNull Reporter reporter) {
     return resolve(new EmptyContext(reporter));
   }
 
-  default @NotNull Expr desugar() {
-    return accept(Desugarer.INSTANCE, Unit.unit());
+  @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
+    return accept(new Desugarer(reporter), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc() {
-    return accept(ExprPrettier.INSTANCE, false);
+    return accept(ConcreteDistiller.INSTANCE, false);
   }
 
   interface Visitor<P, R> {

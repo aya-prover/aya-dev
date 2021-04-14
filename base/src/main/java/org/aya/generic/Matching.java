@@ -4,10 +4,10 @@ package org.aya.generic;
 
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.pretty.PatternPrettier;
+import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.core.pat.Pat;
-import org.aya.core.pretty.PatPrettier;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -31,9 +31,9 @@ public record Matching<Matcher extends Docile, Body extends Docile>(
     if (first.isDefined()) {
       var matcher = first.get();
       if (matcher instanceof Pat && body instanceof Term)
-        return PatPrettier.INSTANCE.matchy((Matching<Pat, Term>) this);
+        return CoreDistiller.INSTANCE.matchy((Matching<Pat, Term>) this);
       else if (matcher instanceof Pattern && body instanceof Expr)
-        return PatternPrettier.INSTANCE.matchy((Matching<Pattern, Expr>) this);
+        return ConcreteDistiller.INSTANCE.matchy((Matching<Pattern, Expr>) this);
     }
     return Doc.hcat(Doc.hcat(patterns.view().map(Docile::toDoc)), Doc.symbol(" => "), body.toDoc());
   }

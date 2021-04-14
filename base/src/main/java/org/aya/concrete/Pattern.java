@@ -6,7 +6,7 @@ import org.aya.api.concrete.ConcretePat;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
-import org.aya.concrete.pretty.PatternPrettier;
+import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 @Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Pattern extends ConcretePat {
   @Override default @NotNull Doc toDoc() {
-    return accept(PatternPrettier.INSTANCE, false);
+    return accept(ConcreteDistiller.INSTANCE, false);
   }
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

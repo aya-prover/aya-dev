@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
+import org.aya.api.error.ExprProblem;
 import org.aya.api.error.Problem;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
@@ -12,7 +13,7 @@ public record UnifyError(
   @NotNull Expr expr,
   @NotNull Term expected,
   @NotNull Term actual
-) implements TyckProblem, Problem {
+) implements ExprProblem, Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("The expected type `"),

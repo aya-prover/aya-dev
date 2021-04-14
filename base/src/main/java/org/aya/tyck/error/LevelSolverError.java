@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
-import org.aya.api.error.Problem;
+import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
 import org.aya.core.sort.LevelEqn;
 import org.aya.pretty.doc.Doc;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public record LevelSolverError(
   @NotNull Expr expr,
   @NotNull Collection<? extends LevelEqn> eqn
-) implements TyckProblem, Problem {
+) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     // TODO[ice]: improve this
     return Doc.plain("Cannot solve equation: " + eqn);
