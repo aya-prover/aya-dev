@@ -21,8 +21,8 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
 
   @JsonRequest("aya/load")
   public @NotNull CompletableFuture<@NotNull HighlightResult> load(Object uri) {
-    assert uri instanceof String; // TODO: figure out why
-    return CompletableFuture.supplyAsync(() -> service.loadFile(uri.toString()));
+    var uriString = (String) uri; // TODO: figure out why
+    return CompletableFuture.supplyAsync(() -> service.loadFile(uriString));
   }
 
   @Override public void connect(@NotNull LanguageClient client) {

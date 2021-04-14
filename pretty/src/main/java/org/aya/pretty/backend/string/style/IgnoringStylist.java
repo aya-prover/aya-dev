@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class IgnoringStylist extends StringStylist {
   public static final IgnoringStylist INSTANCE = new IgnoringStylist();
 
-  public IgnoringStylist() {
+  private IgnoringStylist() {
   }
 
   @Override public void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside) {

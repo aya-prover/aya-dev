@@ -41,7 +41,7 @@ public class LspMain {
     var startup = switch (cli.mode) {
       case server -> runServer(cli);
       case client -> runClient(cli);
-      case debug -> runDebug(cli);
+      case debug -> runDebug();
     };
 
     var executor = Executors.newSingleThreadExecutor(f -> new Thread(f, "client"));
@@ -58,7 +58,7 @@ public class LspMain {
     launcher.startListening();
   }
 
-  private static @NotNull Startup runDebug(@NotNull LspArgs cli) {
+  private static @NotNull Startup runDebug() {
     Log.i("Debug mode, using stdin and stdout");
     return new Startup(System.in, System.out);
   }
