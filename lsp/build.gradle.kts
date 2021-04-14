@@ -44,7 +44,6 @@ jlink {
     mainClass = "org.aya.cli.Main"
     moduleName = "org.aya.cli"
     jvmArgs = mutableListOf("--enable-preview")
-    if (isMac) jvmArgs.add("-XstartOnFirstThread")
   }
 }
 

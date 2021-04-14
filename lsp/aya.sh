@@ -10,7 +10,7 @@
 AYA_MODULE="org.aya.cli"
 AYA_MAIN="org.aya.cli.Main"
 AYA_NAME="Aya"
-AYA_JVM_OPTS='"--enable-preview" "-XstartOnFirstThread"'
+AYA_JVM_OPTS='"--enable-preview"'
 
 ###################################
 # DO NOT EDIT BELOW
@@ -88,6 +88,11 @@ if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then
     else
         warn "Could not query maximum file descriptor limit: $MAX_FD_LIMIT"
     fi
+fi
+
+# For Darwin, add options to make imgui work
+if $darwin; then
+    AYA_VM_OPTS="$AYA_VM_OPTS -XstartOnFirstThread"
 fi
 
 # For Cygwin or MSYS, switch paths to Windows format before running java
