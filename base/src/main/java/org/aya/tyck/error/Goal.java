@@ -3,6 +3,7 @@
 package org.aya.tyck.error;
 
 import org.aya.api.error.ExprProblem;
+import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.core.Meta;
 import org.aya.pretty.doc.Doc;
@@ -16,6 +17,7 @@ public record Goal(
   @Override public @NotNull Doc describe() {
     var doc = Doc.vcat(
       Doc.hcat(Doc.plain("Expected type: "), meta.result.toDoc()),
+      Doc.hcat(Doc.plain("Normalized: "), meta.result.normalize(NormalizeMode.NF).toDoc()),
       Doc.plain("Context:"),
       Doc.vcat(meta.fullTelescope().map(Docile::toDoc))
     );
