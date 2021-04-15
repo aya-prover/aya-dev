@@ -8,6 +8,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.InterruptException;
+import org.aya.concrete.QualifiedID;
 import org.aya.concrete.resolve.error.QualifiedNameNotFoundError;
 import org.aya.concrete.resolve.error.ShadowingWarn;
 import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
@@ -33,6 +34,13 @@ public interface Context {
   @Contract("_->fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
     reporter().report(problem);
     throw new ResolvingInterruptedException();
+  }
+
+  default @NotNull Var get(@NotNull QualifiedID name) {
+    var isUnqualified = name.isUnqualified();
+    return isUnqualified
+      ? getUnqualified(name.justName(), name.sourcePos())
+      : getQualified(name, name.sourcePos());
   }
 
   @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);
@@ -65,9 +73,10 @@ public interface Context {
     return result;
   }
 
-  default @NotNull Var getQualified(@NotNull Seq<@NotNull String> fullName, @NotNull SourcePos sourcePos) {
-    var name = fullName.last();
-    var modName = fullName.view().dropLast(1).toSeq();
+  default @NotNull Var getQualified(@NotNull QualifiedID qualifiedID, @NotNull SourcePos sourcePos) {
+    var view = qualifiedID.ids().view();
+    var name = view.last();
+    var modName = view.dropLast(1).toSeq();
     return getQualified(modName, name, sourcePos);
   }
 

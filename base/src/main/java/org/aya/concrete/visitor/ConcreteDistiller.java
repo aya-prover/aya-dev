@@ -40,7 +40,7 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Boolean nestedCall) {
-    return Doc.plain(expr.name().joinToString(Constants.SCOPE_SEPARATOR));
+    return Doc.plain(expr.name().join());
   }
 
   @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
@@ -251,6 +251,23 @@ public final class ConcreteDistiller implements
       Doc.vcat(mod.contents().stream().map(Stmt::toDoc)),
       Doc.hardLine(),
       Doc.plain("}")
+    );
+  }
+
+  @Override public Doc visitBind(Stmt.@NotNull BindStmt bind, Unit unit) {
+    return Doc.cat(
+      visitAccess(bind.accessibility()),
+      Doc.plain(" "),
+      Doc.styled(CoreDistiller.KEYWORD, "bind"),
+      Doc.plain(" "),
+      Doc.plain(bind.op().join()),
+      Doc.plain(" "),
+      Doc.styled(CoreDistiller.KEYWORD, switch (bind.pred()) {
+        case Looser -> "looser";
+        case Tighter -> "tighter";
+      }),
+      Doc.plain(" "),
+      Doc.plain(bind.target().join())
     );
   }
 

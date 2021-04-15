@@ -9,8 +9,9 @@ import org.aya.api.ref.LevelVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.concrete.desugar.BinOpParser;
+import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.parse.BinOpParser;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
@@ -46,12 +47,13 @@ public sealed interface Expr extends ConcreteExpr {
     return accept(ExprResolver.INSTANCE, context);
   }
 
+
   @Override default @NotNull Expr resolve(@NotNull Reporter reporter) {
     return resolve(new EmptyContext(reporter));
   }
 
   @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
-    return accept(new Desugarer(reporter), Unit.unit());
+    return accept(new Desugarer(reporter, new BinOpSet(reporter)), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc() {
@@ -104,10 +106,10 @@ public sealed interface Expr extends ConcreteExpr {
    */
   record UnresolvedExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<String> name
+    @NotNull QualifiedID name
   ) implements Expr {
     public UnresolvedExpr(@NotNull SourcePos sourcePos, @NotNull String name) {
-      this(sourcePos, ImmutableSeq.of(name));
+      this(sourcePos, new QualifiedID(sourcePos, name));
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -186,7 +188,8 @@ public sealed interface Expr extends ConcreteExpr {
    */
   record RefExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull Var resolvedVar
+    @NotNull Var resolvedVar,
+    @NotNull String resolvedFrom
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitRef(this, p);

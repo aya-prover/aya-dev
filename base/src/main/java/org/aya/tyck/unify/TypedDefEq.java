@@ -4,14 +4,17 @@ package org.aya.tyck.unify;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
+import org.aya.core.visitor.Substituter;
 import org.aya.tyck.LocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,7 +131,24 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   @Override
   public @NotNull Boolean visitStructCall(@NotNull CallTerm.Struct type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    var fieldSigs = type.ref().core.fields();
+    var paramSubst = type.ref().core.fullTelescope().zip(type.fullArgs()).map(x ->
+      Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
+    var fieldSubst = new Substituter.TermSubst(MutableHashMap.of());
+    for (var fieldSig : fieldSigs) {
+      var dummyVars = fieldSig.fieldTele().map(par ->
+        new LocalVar(par.ref().name()));
+      var dummy = dummyVars.zip(fieldSig.fieldTele()).map(vpa ->
+        new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
+      var res = localCtx.with(dummyVars.zip(fieldSig.fieldTele()).map(vpa -> new Term.Param(vpa._1, vpa._2.type(), vpa._2.explicit())), () -> {
+        var l = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.args(), dummy);
+        var r = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.args(), dummy);
+        fieldSubst.add(fieldSig.ref(), l);
+        return compare(l, r, fieldSig.result().subst(paramSubst).subst(fieldSubst));
+      });
+      if (!res) return false;
+    }
+    return true;
   }
 
   @Override public @NotNull Boolean visitPrimCall(CallTerm.@NotNull Prim type, @NotNull Term lhs, @NotNull Term rhs) {

@@ -12,6 +12,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.*;
+import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.core.def.PrimDef;
@@ -71,6 +72,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     }
     return new Decl.PrimDecl(
       sourcePos,
+      visitAssoc(ctx.assoc()),
       ref,
       visitTelescope(ctx.tele()),
       type == null ? null : visitType(type)
@@ -91,6 +93,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (mod != null) return ImmutableSeq.of(visitModule(mod));
     var levels = ctx.levels();
     if (levels != null) return ImmutableSeq.of(visitLevels(levels));
+    var bind = ctx.bind();
+    if (bind != null) return ImmutableSeq.of(visitBind(bind));
     return unreachable(ctx);
   }
 
@@ -99,6 +103,25 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Generalize.Levels(sourcePosOf(ctx), kind, visitIds(ctx.ids())
       .map(t -> Tuple.of(t._1, new LevelVar<Level>(t._2, LevelVar.Kind.Universe)))
       .collect(ImmutableSeq.factory()));
+  }
+
+
+  @Override public Stmt.@NotNull BindStmt visitBind(AyaParser.BindContext ctx) {
+    return new Stmt.BindStmt(
+      sourcePosOf(ctx),
+      visitQualifiedId(ctx.qualifiedId(0)),
+      visitBindPred(ctx.bindPred()),
+      visitQualifiedId(ctx.qualifiedId(1)),
+      new Ref<>(null),
+      new Ref<>(null),
+      new Ref<>(null)
+    );
+  }
+
+  @Override public Stmt.@NotNull BindPred visitBindPred(AyaParser.BindPredContext ctx) {
+    if (ctx.TIGHTER() != null) return Stmt.BindPred.Tighter;
+    if (ctx.LOOSER() != null) return Stmt.BindPred.Looser;
+    return unreachable(ctx);
   }
 
   private <T> T unreachable(ParserRuleContext ctx) {
@@ -130,7 +153,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       sourcePosOf(ctx.ID()),
       accessibility,
       modifiers,
-      assocCtx == null ? null : visitAssoc(assocCtx),
+      visitAssoc(assocCtx),
       ctx.ID().getText(),
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
@@ -157,8 +180,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return Either.right(ImmutableSeq.from(ctx.clause()).map(this::visitClause));
   }
 
-  @Override public ImmutableSeq<String> visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
-    return ctx.ID().stream().map(ParseTree::getText).collect(ImmutableSeq.factory());
+  @Override public QualifiedID visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
+    return new QualifiedID(sourcePosOf(ctx),
+      ctx.ID().stream().map(ParseTree::getText)
+        .collect(ImmutableSeq.factory()));
   }
 
   @Override public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
@@ -201,12 +226,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       throw new ParsingInterruptedException();
     }
     var id = visitQualifiedId(idCtx);
-    if (id.sizeGreaterThan(1)) {
+    if (id.isQualified()) {
       reporter.report(new ParseError(sourcePosOf(ctx),
         "parameter name `" + ctx.getText() + "` should not be qualified"));
       throw new ParsingInterruptedException();
     }
-    return id.first();
+    return id.justName();
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx, boolean isLamTele) {
@@ -434,6 +459,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
+      visitAssoc(ctx.assoc()),
       ctx.ID().getText(),
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
@@ -471,6 +497,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
     return new Decl.DataCtor(
       sourcePosOf(id),
+      visitAssoc(ctx.assoc()),
       id.getText(),
       telescope,
       visitClauses(ctx.clauses()),
@@ -573,6 +600,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Decl.StructDecl(
       sourcePosOf(id),
       accessibility,
+      visitAssoc(ctx.assoc()),
       id.getText(),
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
@@ -696,14 +724,15 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return ImmutableSeq.from(ctx.ID()).map(ParseTree::getText);
   }
 
-  @Override public @NotNull Assoc visitAssoc(AyaParser.AssocContext ctx) {
-    if (ctx.FIX() != null) return Assoc.Fix;
-    if (ctx.FIXL() != null) return Assoc.FixL;
-    if (ctx.FIXR() != null) return Assoc.FixR;
-    if (ctx.INFIX() != null) return Assoc.Infix;
-    if (ctx.INFIXL() != null) return Assoc.InfixL;
-    if (ctx.INFIXR() != null) return Assoc.InfixR;
-    if (ctx.TWIN() != null) return Assoc.Twin;
+  @Override public @Nullable Tuple2<@Nullable String, @NotNull Assoc> visitAssoc(@Nullable AyaParser.AssocContext ctx) {
+    if (ctx == null) return null;
+    if (ctx.FIX() != null) return Tuple.of(null, Assoc.Fix);
+    if (ctx.FIXL() != null) return Tuple.of(null, Assoc.FixL);
+    if (ctx.FIXR() != null) return Tuple.of(null, Assoc.FixR);
+    if (ctx.INFIX() != null) return Tuple.of(ctx.INFIX().getText().replace("`", ""), Assoc.Infix);
+    if (ctx.INFIXL() != null) return Tuple.of(null, Assoc.InfixL);
+    if (ctx.INFIXR() != null) return Tuple.of(null, Assoc.InfixR);
+    if (ctx.TWIN() != null) return Tuple.of(null, Assoc.Twin);
     return unreachable(ctx);
   }
 
