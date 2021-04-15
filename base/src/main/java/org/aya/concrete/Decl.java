@@ -30,7 +30,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public final @NotNull ImmutableSeq<Stmt> abuseBlock;
   public @Nullable Context ctx = null;
 
-  public interface Operator {
+  public interface OpDecl {
     @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator();
   }
 
@@ -86,7 +86,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @see PrimDef
    * @see PrimDef#PRIMITIVES
    */
-  public static final class PrimDecl extends Decl implements Operator {
+  public static final class PrimDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<@NotNull ? extends PrimDef, PrimDecl> ref;
     public @Nullable Expr result;
     public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
@@ -120,7 +120,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
   }
 
-  public static final class DataCtor extends Signatured implements Operator {
+  public static final class DataCtor extends Signatured implements OpDecl {
     public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
@@ -163,7 +163,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @author kiva
    * @see DataDef
    */
-  public static final class DataDecl extends Decl implements Operator {
+  public static final class DataDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
     public final @NotNull ImmutableSeq<DataCtor> body;
@@ -206,7 +206,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    *
    * @author vont
    */
-  public static final class StructDecl extends Decl implements Operator {
+  public static final class StructDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
@@ -285,7 +285,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @author re-xyr
    * @see FnDef
    */
-  public static final class FnDecl extends Decl implements Operator {
+  public static final class FnDecl extends Decl implements OpDecl {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
     public final @NotNull DefVar<FnDef, FnDecl> ref;

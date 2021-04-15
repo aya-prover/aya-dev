@@ -28,4 +28,5 @@ module org.aya {
   exports org.aya.tyck;
   exports org.aya.util.cancel;
   exports org.aya.util;
+  exports org.aya.concrete.priority;
 }

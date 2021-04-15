@@ -6,7 +6,7 @@ import org.aya.api.Global;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
-import org.aya.concrete.parse.BinOpParser;
+import org.aya.concrete.priority.BinOpParser;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;

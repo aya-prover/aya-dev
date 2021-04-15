@@ -9,8 +9,9 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.parse.BinOpParser;
 import org.aya.concrete.pretty.ExprPrettier;
+import org.aya.concrete.priority.BinOpParser;
+import org.aya.concrete.priority.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
@@ -19,7 +20,6 @@ import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +48,8 @@ public sealed interface Expr extends ConcreteExpr {
     return resolve(new EmptyContext(reporter));
   }
 
-  default @NotNull Expr desugar() {
-    return accept(Desugarer.INSTANCE, Unit.unit());
+  default @NotNull Expr desugar(@NotNull BinOpSet opSet) {
+    return accept(Desugarer.INSTANCE, opSet);
   }
 
   @Override default @NotNull Doc toDoc() {
@@ -128,10 +128,10 @@ public sealed interface Expr extends ConcreteExpr {
    */
   record UnresolvedExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<String> name
+    @NotNull QualifiedID name
   ) implements Expr {
     public UnresolvedExpr(@NotNull SourcePos sourcePos, @NotNull String name) {
-      this(sourcePos, ImmutableSeq.of(name));
+      this(sourcePos, new QualifiedID(sourcePos, name));
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

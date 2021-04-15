@@ -3,93 +3,98 @@
 package org.aya.concrete.desugar;
 
 import org.aya.concrete.*;
-import org.aya.concrete.parse.BinOpParser;
+import org.aya.concrete.priority.BinOpParser;
+import org.aya.concrete.priority.BinOpSet;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-public final class Desugarer implements ExprFixpoint<Unit>, Stmt.Visitor<Unit, Unit> {
+public final class Desugarer implements ExprFixpoint<BinOpSet>, Stmt.Visitor<BinOpSet, Unit> {
   public static final Desugarer INSTANCE = new Desugarer();
 
   private Desugarer() {
   }
 
-  private void visitSignatured(@NotNull Signatured signatured) {
-    signatured.telescope = signatured.telescope.map(p -> p.mapExpr(Expr::desugar));
+  private void visitSignatured(@NotNull Signatured signatured, BinOpSet opSet) {
+    signatured.telescope = signatured.telescope.map(p -> p.mapExpr(e -> e.desugar(opSet)));
   }
 
-  private void visitDecl(@NotNull Decl decl) {
-    visitSignatured(decl);
-    decl.abuseBlock.forEach(Stmt::desugar);
+  private void visitDecl(@NotNull Decl decl, BinOpSet opSet) {
+    visitSignatured(decl, opSet);
+    decl.abuseBlock.forEach(s -> s.desugar(opSet));
   }
 
-  private Pattern.Clause visitClause(@NotNull Pattern.Clause c) {
-    return new Pattern.Clause(c.sourcePos(), c.patterns(), c.expr().map(Expr::desugar));
+  private Pattern.Clause visitClause(@NotNull Pattern.Clause c, BinOpSet opSet) {
+    return new Pattern.Clause(c.sourcePos(), c.patterns(), c.expr().map(e -> e.desugar(opSet)));
   }
 
   @Override
-  public Unit visitData(@NotNull Decl.DataDecl decl, Unit unit) {
-    visitDecl(decl);
-    decl.result = decl.result.desugar();
+  public Unit visitData(@NotNull Decl.DataDecl decl, BinOpSet opSet) {
+    visitDecl(decl, opSet);
+    decl.result = decl.result.desugar(opSet);
     decl.body.forEach(ctor -> {
-      visitSignatured(ctor);
-      ctor.clauses = ctor.clauses.map(this::visitClause);
+      visitSignatured(ctor, opSet);
+      ctor.clauses = ctor.clauses.map(c -> visitClause(c, opSet));
     });
-    return unit;
+    return Unit.unit();
   }
 
   @Override
-  public Unit visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
-    visitDecl(decl);
-    decl.result = decl.result.desugar();
+  public Unit visitStruct(@NotNull Decl.StructDecl decl, BinOpSet opSet) {
+    visitDecl(decl, opSet);
+    decl.result = decl.result.desugar(opSet);
     decl.fields.forEach(f -> {
-      visitSignatured(f);
-      f.result = f.result.desugar();
-      f.clauses = f.clauses.map(this::visitClause);
-      f.body = f.body.map(Expr::desugar);
+      visitSignatured(f, opSet);
+      f.result = f.result.desugar(opSet);
+      f.clauses = f.clauses.map(c -> visitClause(c, opSet));
+      f.body = f.body.map(e -> e.desugar(opSet));
     });
-    return unit;
+    return Unit.unit();
   }
 
   @Override
-  public Unit visitFn(@NotNull Decl.FnDecl decl, Unit unit) {
-    visitDecl(decl);
-    decl.result = decl.result.desugar();
+  public Unit visitFn(@NotNull Decl.FnDecl decl, BinOpSet opSet) {
+    visitDecl(decl, opSet);
+    decl.result = decl.result.desugar(opSet);
     decl.body = decl.body.map(
-      Expr::desugar,
-      clauses -> clauses.map(this::visitClause)
+      e -> e.desugar(opSet),
+      clauses -> clauses.map(c -> visitClause(c, opSet))
     );
-    return unit;
+    return Unit.unit();
   }
 
   @Override
-  public Unit visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
-    visitDecl(decl);
-    if (decl.result != null) decl.result = decl.result.desugar();
-    return unit;
+  public Unit visitPrim(@NotNull Decl.PrimDecl decl, BinOpSet opSet) {
+    visitDecl(decl, opSet);
+    if (decl.result != null) decl.result = decl.result.desugar(opSet);
+    return Unit.unit();
   }
 
   @Override
-  public Unit visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
-    return unit;
+  public Unit visitImport(Stmt.@NotNull ImportStmt cmd, BinOpSet opSet) {
+    return Unit.unit();
   }
 
   @Override
-  public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, Unit unit) {
-    return unit;
+  public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, BinOpSet opSet) {
+    return Unit.unit();
   }
 
   @Override
-  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, Unit unit) {
-    mod.contents().forEach(Stmt::desugar);
-    return unit;
+  public Unit visitModule(Stmt.@NotNull ModuleStmt mod, BinOpSet opSet) {
+    mod.contents().forEach(s -> s.desugar(opSet));
+    return Unit.unit();
+  }
+
+  @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, BinOpSet opSet) {
+    return Unit.unit();
   }
 
   @Override
-  public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
+  public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, BinOpSet opSet) {
     // TODO[kiva]: convert hole app?
-    return new BinOpParser(binOpSeq.seq().view()
-      .map(e -> new BinOpParser.Elem(e.expr().desugar(), e.explicit()))
+    return new BinOpParser(opSet, binOpSeq.seq().view()
+      .map(e -> new BinOpParser.Elem(e.expr().desugar(opSet), e.explicit()))
     ).build(binOpSeq.sourcePos());
   }
 }

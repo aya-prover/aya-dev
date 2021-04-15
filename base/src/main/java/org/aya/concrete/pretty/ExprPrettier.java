@@ -6,7 +6,6 @@ import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.core.pretty.TermPrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.Constants;
 import org.aya.util.StringEscapeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +27,7 @@ public final class ExprPrettier implements Expr.Visitor<Boolean, Doc> {
   }
 
   @Override public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Boolean nestedCall) {
-    return Doc.plain(expr.name().joinToString(Constants.SCOPE_SEPARATOR));
+    return Doc.plain(expr.name().join());
   }
 
   @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {

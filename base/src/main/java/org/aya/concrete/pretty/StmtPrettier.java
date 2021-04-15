@@ -70,6 +70,23 @@ public final class StmtPrettier implements Signatured.Visitor<Unit, Doc>, Stmt.V
     );
   }
 
+  @Override public Doc visitBind(Stmt.@NotNull BindStmt bind, Unit unit) {
+    return Doc.cat(
+      visitAccess(bind.accessibility()),
+      Doc.plain(" "),
+      Doc.styled(TermPrettier.KEYWORD, "bind"),
+      Doc.plain(" "),
+      Doc.plain(bind.op().join()),
+      Doc.plain(" "),
+      Doc.styled(TermPrettier.KEYWORD, switch (bind.pred()) {
+        case Looser -> "looser";
+        case Tighter -> "tighter";
+      }),
+      Doc.plain(" "),
+      Doc.plain(bind.target().join())
+    );
+  }
+
   @Override public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {
     return Doc.cat(
       visitAccess(decl.accessibility()),

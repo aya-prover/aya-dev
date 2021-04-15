@@ -48,10 +48,15 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
     return Unit.unit();
   }
 
-  private void visitOperator(@NotNull ModuleContext context, @NotNull Decl.Operator operator,
+  @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, @NotNull ModuleContext context) {
+    bind.context().value = context;
+    return Unit.unit();
+  }
+
+  private void visitOperator(@NotNull ModuleContext context, @NotNull Decl.OpDecl opDecl,
                              Stmt.@NotNull Accessibility accessibility, @NotNull Var ref,
                              @NotNull SourcePos sourcePos) {
-    var op = operator.asOperator();
+    var op = opDecl.asOperator();
     if (op != null && op._1 != null) context.addGlobal(
       Context.TOP_LEVEL_MOD_NAME,
       op._1,
@@ -69,7 +74,7 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
       decl.ref(),
       decl.sourcePos()
     );
-    if (decl instanceof Decl.Operator opDecl) {
+    if (decl instanceof Decl.OpDecl opDecl) {
       visitOperator(context, opDecl, decl.accessibility, decl.ref(), decl.sourcePos);
     }
     decl.ctx = context;

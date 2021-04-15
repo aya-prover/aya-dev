@@ -10,10 +10,8 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.Assoc;
-import org.aya.concrete.Decl;
-import org.aya.concrete.Expr;
-import org.aya.concrete.Pattern;
-import org.aya.concrete.Stmt;
+import org.aya.concrete.*;
+import org.aya.concrete.priority.BinOpParser;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.core.def.PrimDef;
@@ -146,8 +144,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return Either.right(ImmutableSeq.from(ctx.clause()).map(this::visitClause));
   }
 
-  @Override public ImmutableSeq<String> visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
-    return ctx.ID().stream().map(ParseTree::getText).collect(ImmutableSeq.factory());
+  @Override public QualifiedID visitQualifiedId(AyaParser.QualifiedIdContext ctx) {
+    return new QualifiedID(sourcePosOf(ctx),
+      ctx.ID().stream().map(ParseTree::getText)
+        .collect(ImmutableSeq.factory()));
   }
 
   @Override public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
@@ -187,12 +187,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       throw new ParsingInterruptedException();
     }
     var id = visitQualifiedId(idCtx);
-    if (id.sizeGreaterThan(1)) {
+    if (id.isQualified()) {
       reporter.report(new ParseError(sourcePosOf(ctx),
         "parameter name `" + ctx.getText() + "` should not be qualified"));
       throw new ParsingInterruptedException();
     }
-    return id.first();
+    return id.justName();
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx, boolean isLamTele) {
