@@ -160,27 +160,23 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitNumber(Pattern.@NotNull Number number, Boolean nestedCall) {
-    boolean ex = number.explicit();
-    return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.plain(String.valueOf(number.number())));
+    var doc = Doc.plain(String.valueOf(number.number()));
+    return number.explicit() ? doc : Doc.wrap("{", "}", doc);
   }
 
   @Override public Doc visitBind(Pattern.@NotNull Bind bind, Boolean nestedCall) {
-    boolean ex = bind.explicit();
-    return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.plain(bind.bind().name()));
+    var doc = Doc.plain(bind.bind().name());
+    return bind.explicit() ? doc : Doc.wrap("{", "}", doc);
   }
 
   @Override public Doc visitAbsurd(Pattern.@NotNull Absurd absurd, Boolean aBoolean) {
-    boolean ex = absurd.explicit();
-    return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.styled(CoreDistiller.KEYWORD, "impossible"));
+    var doc = Doc.styled(CoreDistiller.KEYWORD, "impossible");
+    return absurd.explicit() ? doc : Doc.wrap("{", "}", doc);
   }
 
   @Override public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Boolean nestedCall) {
-    boolean ex = calmFace.explicit();
-    return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      Doc.plain(Constants.ANONYMOUS_PREFIX));
+    var doc = Doc.plain(Constants.ANONYMOUS_PREFIX);
+    return calmFace.explicit() ? doc : Doc.wrap("{", "}", doc);
   }
 
   @Override public Doc visitCtor(Pattern.@NotNull Ctor ctor, Boolean nestedCall) {
