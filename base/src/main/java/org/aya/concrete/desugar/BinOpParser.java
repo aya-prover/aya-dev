@@ -83,19 +83,18 @@ public final class BinOpParser {
     assert prefixes.isNotEmpty();
     if (prefixes.sizeEquals(1)) return prefixes.first().expr;
 
-    var r = new Expr.AppExpr(
+    return new Expr.AppExpr(
       sourcePos,
       prefixes.first().expr,
       prefixes.view().drop(1)
         .map(e -> new Arg<>(e.expr(), e.explicit()))
         .toImmutableSeq()
     );
-    return r;
   }
 
   private Expr.@NotNull AppExpr makeBinApp(@NotNull Elem op) {
-    var rhs = prefixes.pop();
     var lhs = prefixes.pop();
+    var rhs = prefixes.pop();
     return new Expr.AppExpr(
       computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
       op.expr,
