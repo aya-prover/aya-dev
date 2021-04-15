@@ -9,6 +9,7 @@ import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.Stmt;
+import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.context.EmptyContext;
@@ -61,8 +62,9 @@ public final record FileModuleLoader(
     var context = new EmptyContext(reporter).derive();
     var shallowResolver = new StmtShallowResolver(recurseLoader);
     program.forEach(s -> s.accept(shallowResolver, context));
-    program.forEach(Stmt::resolve);
-    program.forEach(stmt -> stmt.desugar(reporter));
+    var opSet = new BinOpSet(reporter);
+    program.forEach(s -> s.resolve(opSet));
+    program.forEach(s -> s.desugar(reporter, opSet));
     onResolved.runChecked();
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {

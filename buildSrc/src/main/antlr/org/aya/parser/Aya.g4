@@ -9,16 +9,20 @@ stmt : decl
      | importCmd
      | openCmd
      | module
+     | bind
      ;
 
 importCmd : IMPORT moduleName (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? moduleName useHide?;
+module : 'module' ID LBRACE stmt* '}';
+bind : 'bind' qualifiedId bindPred qualifiedId;
+bindPred : (TIGHTER | LOOSER);
+
 useHide : use+
         | hide+;
 use : USING useHideList;
 hide : HIDING useHideList;
 useHideList : LPAREN idsComma ')';
-
 moduleName : ID ('.' ID)*;
 
 // declarations
@@ -50,25 +54,23 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : 'struct' ID tele* type? ('extends' idsComma)? ('|' field)* abuse?;
+structDecl : 'struct' assoc? ID tele* type? ('extends' idsComma)? ('|' field)* abuse?;
 
-primDecl : 'prim' ID tele* type? ;
+primDecl : 'prim' assoc? ID tele* type? ;
 
 field : COERCE? ID tele* type clauses? # fieldDecl
       | ID tele* type? IMPLIES expr    # fieldImpl
       ;
 
-dataDecl : (PUBLIC? OPEN)? 'data' ID tele* type? dataBody* abuse?;
+dataDecl : (PUBLIC? OPEN)? 'data' assoc? ID tele* type? dataBody* abuse?;
 
 dataBody : ('|' dataCtor)       # dataCtors
          | dataCtorClause       # dataClauses
          ;
 
-dataCtor : COERCE? ID tele* clauses?;
+dataCtor : COERCE? assoc? ID tele* clauses?;
 
 dataCtorClause : '|' patterns IMPLIES dataCtor;
-
-module : 'module' ID LBRACE stmt* '}';
 
 // expressions
 expr : atom                            # single
@@ -144,6 +146,10 @@ type : ':' expr;
 idFix : INFIX | POSTFIX | ID;
 INFIX : '`' ID '`';
 POSTFIX : '`' ID;
+
+// bind
+TIGHTER : 'tighter';
+LOOSER : 'looser';
 
 // associativities
 INFIXN : 'infix';
