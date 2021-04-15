@@ -14,6 +14,7 @@ import org.aya.util.StringEscapeUtil;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,15 +76,17 @@ public final class ConcreteDistiller implements
     );
   }
 
-  @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
-    int u = expr.uLevel();
-    int h = expr.hLevel();
-    return Doc.styled(CoreDistiller.KEYWORD, switch (h) {
-      case -2 -> "ooType" + (u == -1 ? "" : u);
-      case 2 -> "Set" + (u == -1 ? "" : u);
-      case 1 -> "Prop" + (u == -1 ? "" : u);
+  @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Boolean nestedCall) {
+    return Doc.styled(CoreDistiller.KEYWORD, switch (expr.hLevel()) {
+      case Expr.RawUnivExpr.INFINITY -> "ooType";
+      case 2 -> "Set";
+      case 1 -> "Prop";
       default -> "Type";
     });
+  }
+
+  @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
+    return Doc.plain("Type");
   }
 
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
@@ -384,5 +387,14 @@ public final class ConcreteDistiller implements
     return block.sizeEquals(1)
       ? block.get(0).toDoc()
       : Doc.vcat(block.stream().map(Stmt::toDoc));
+  }
+
+  @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
+    var vars = levels.levels().map(Tuple2::getValue).map(t ->
+      Doc.linkDef(Doc.styled(CoreDistiller.GENERALIZED, t.name()), t.hashCode()));
+    return Doc.hcat(
+      Doc.styled(CoreDistiller.KEYWORD, levels.kind().keyword),
+      Doc.plain(" "),
+      Doc.hsep(vars));
   }
 }

@@ -53,6 +53,10 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.SigmaExpr(expr.sourcePos(), expr.co(), binds);
   }
 
+  @Override default @NotNull Expr visitRawUniv(Expr.@NotNull RawUnivExpr expr, P p) {
+    return expr;
+  }
+
   @Override default @NotNull Expr visitUniv(Expr.@NotNull UnivExpr expr, P p) {
     return expr;
   }

@@ -15,13 +15,13 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.NoSuchFieldError;
 import org.aya.tyck.error.*;
-import org.aya.tyck.sort.Sort;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.PatDefEq;
 import org.aya.tyck.unify.Rule;
@@ -124,7 +124,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth
+  @Override public Result visitRawUniv(Expr.@NotNull RawUnivExpr expr, @Nullable Term term) {
+    // TODO[remove]
+    if (term == null) return new Result(new FormTerm.Univ(Sort.OMEGA), new FormTerm.Univ(Sort.OMEGA));
+    if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
+      return new Result(new FormTerm.Univ(Sort.OMEGA), univ);
+    }
+    return wantButNo(expr, term, "universe term");
+  }
+
+  @Rule.Synth
   @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
+    // TODO[rewrite]
     if (term == null) return new Result(new FormTerm.Univ(Sort.OMEGA), new FormTerm.Univ(Sort.OMEGA));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
       // TODO[level]

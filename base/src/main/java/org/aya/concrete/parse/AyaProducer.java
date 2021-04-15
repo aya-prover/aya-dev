@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LevelVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.Assoc;
@@ -15,6 +16,7 @@ import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.core.def.PrimDef;
+import org.aya.core.sort.Level;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
@@ -89,9 +91,18 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     }
     var mod = ctx.module();
     if (mod != null) return ImmutableSeq.of(visitModule(mod));
+    var levels = ctx.levels();
+    if (levels != null) return ImmutableSeq.of(visitLevels(levels));
     var bind = ctx.bind();
     if (bind != null) return ImmutableSeq.of(visitBind(bind));
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    return unreachable(ctx);
+  }
+
+  @Override public Generalize visitLevels(AyaParser.LevelsContext ctx) {
+    var kind = ctx.HLEVEL() != null ? LevelVar.Kind.Homotopy : LevelVar.Kind.Universe;
+    return new Generalize.Levels(sourcePosOf(ctx), kind, visitIds(ctx.ids())
+      .map(t -> Tuple.of(t._1, new LevelVar<Level>(t._2, LevelVar.Kind.Universe)))
+      .collect(ImmutableSeq.factory()));
   }
 
   @Override public Stmt.@NotNull BindStmt visitBind(AyaParser.BindContext ctx) {
@@ -109,6 +120,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override public Stmt.@NotNull BindPred visitBindPred(AyaParser.BindPredContext ctx) {
     if (ctx.TIGHTER() != null) return Stmt.BindPred.Tighter;
     if (ctx.LOOSER() != null) return Stmt.BindPred.Looser;
+    return unreachable(ctx);
+  }
+
+  private <T> T unreachable(ParserRuleContext ctx) {
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
@@ -122,7 +137,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (structDecl != null) return Tuple.of(visitStructDecl(structDecl, accessibility), ImmutableSeq.of());
     var primDecl = ctx.primDecl();
     if (primDecl != null) return Tuple.of(visitPrimDecl(primDecl), ImmutableSeq.of());
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    return unreachable(ctx);
   }
 
   public Decl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
@@ -171,25 +186,28 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public @NotNull Expr visitLiteral(AyaParser.LiteralContext ctx) {
-    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(sourcePosOf(ctx), false, null);
+    var pos = sourcePosOf(ctx);
+    if (ctx.CALM_FACE() != null) return new Expr.HoleExpr(pos, false, null);
     var id = ctx.qualifiedId();
-    if (id != null) return new Expr.UnresolvedExpr(sourcePosOf(id), visitQualifiedId(id));
-    if (ctx.TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, -1);
-    if (ctx.H_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, visitOptNumber(ctx.NUMBER(), -1));
-    if (ctx.U_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), -1);
-    if (ctx.SET_UNIV() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), 2);
-    if (ctx.INF_TYPE() != null) return new Expr.UnivExpr(sourcePosOf(ctx), visitOptNumber(ctx.NUMBER(), -1), -2);
-    if (ctx.PROP() != null) return new Expr.UnivExpr(sourcePosOf(ctx), -1, 1);
+    if (id != null) return new Expr.UnresolvedExpr(pos, visitQualifiedId(id));
+    if (ctx.TYPE() != null)
+      return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, Expr.RawUnivExpr.POLYMORPHIC);
+    if (ctx.HTYPE() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, Expr.RawUnivExpr.NEEDED);
+    if (ctx.UTYPE() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.NEEDED, Expr.RawUnivExpr.POLYMORPHIC);
+    if (ctx.SET_UNIV() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, 2);
+    if (ctx.INF_TYPE() != null)
+      return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, Expr.RawUnivExpr.INFINITY);
+    if (ctx.PROP() != null) return new Expr.RawUnivExpr(pos, 0, 1);
     if (ctx.LGOAL() != null) {
       var fillingExpr = ctx.expr();
       var filling = fillingExpr == null ? null : visitExpr(fillingExpr);
-      return new Expr.HoleExpr(sourcePosOf(ctx), true, filling);
+      return new Expr.HoleExpr(pos, true, filling);
     }
     var number = ctx.NUMBER();
-    if (number != null) return new Expr.LitIntExpr(sourcePosOf(number), Integer.parseInt(number.getText()));
+    if (number != null) return new Expr.LitIntExpr(pos, Integer.parseInt(number.getText()));
     var string = ctx.STRING();
-    if (string != null) return new Expr.LitStringExpr(sourcePosOf(string), string.getText());
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    if (string != null) return new Expr.LitStringExpr(pos, string.getText());
+    return unreachable(ctx);
   }
 
   public int visitOptNumber(@Nullable TerminalNode number, int defaultVal) {
@@ -230,8 +248,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       teleMaybeTypedExpr = teleBinder.teleMaybeTypedExpr();
     }
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
-    assert ctx.LBRACE() != null;
-    return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(false);
+    if (ctx.LBRACE() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(false);
+    return unreachable(ctx);
   }
 
   @Override
@@ -469,8 +487,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   private @NotNull Decl.DataCtor visitDataBody(AyaParser.DataBodyContext ctx) {
     if (ctx instanceof AyaParser.DataCtorsContext dcc) return visitDataCtor(ImmutableSeq.empty(), dcc.dataCtor());
     if (ctx instanceof AyaParser.DataClausesContext dcc) return visitDataCtorClause(dcc.dataCtorClause());
-
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    return unreachable(ctx);
   }
 
   public Decl.DataCtor visitDataCtor(@NotNull ImmutableSeq<Pattern> patterns, AyaParser.DataCtorContext ctx) {
@@ -490,9 +507,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override public ImmutableSeq<Pattern.Clause> visitClauses(@Nullable AyaParser.ClausesContext ctx) {
     if (ctx == null) return ImmutableSeq.empty();
-    return ctx.clause().stream()
-      .map(this::visitClause)
-      .collect(ImmutableSeq.factory());
+    return ImmutableSeq.from(ctx.clause()).map(this::visitClause);
   }
 
   @Override public @NotNull Decl.DataCtor visitDataCtorClause(AyaParser.DataCtorClauseContext ctx) {
@@ -550,7 +565,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText()), new Ref<>());
     if (ctx.ABSURD() != null) return ex -> new Pattern.Absurd(sourcePos, ex);
 
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    return unreachable(ctx);
   }
 
   @Override public @NotNull ImmutableSeq<Pattern> visitPatterns(AyaParser.PatternsContext ctx) {
@@ -595,13 +610,11 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   private ImmutableSeq<Decl.StructField> visitFields(List<AyaParser.FieldContext> field) {
-    return field.stream()
-      .map(fieldCtx -> {
-        if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
-        else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
-        else throw new IllegalArgumentException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
-      })
-      .collect(ImmutableSeq.factory());
+    return ImmutableSeq.from(field).map(fieldCtx -> {
+      if (fieldCtx instanceof AyaParser.FieldDeclContext fieldDecl) return visitFieldDecl(fieldDecl);
+      else if (fieldCtx instanceof AyaParser.FieldImplContext fieldImpl) return visitFieldImpl(fieldImpl);
+      else throw new IllegalArgumentException(fieldCtx.getClass() + " is neither FieldDecl nor FieldImpl!");
+    });
   }
 
   @Override public Decl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
@@ -719,13 +732,13 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx.INFIXL() != null) return Tuple.of(null, Assoc.InfixL);
     if (ctx.INFIXR() != null) return Tuple.of(null, Assoc.InfixR);
     if (ctx.TWIN() != null) return Tuple.of(null, Assoc.Twin);
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    return unreachable(ctx);
   }
 
   @Override public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {
     if (ctx.ERASE() != null) return Modifier.Erase;
     if (ctx.INLINE() != null) return Modifier.Inline;
-    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+    return unreachable(ctx);
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {

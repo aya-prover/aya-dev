@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.visitor;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
+import org.aya.concrete.Generalize;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
@@ -78,6 +79,18 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
       visitOperator(context, opDecl, decl.accessibility, decl.ref(), decl.sourcePos);
     }
     decl.ctx = context;
+    return Unit.unit();
+  }
+
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull ModuleContext context) {
+    for (var level : levels.levels())
+      context.addGlobal(
+        Context.TOP_LEVEL_MOD_NAME,
+        level._2.name(),
+        levels.accessibility(),
+        level._2,
+        level._1
+      );
     return Unit.unit();
   }
 

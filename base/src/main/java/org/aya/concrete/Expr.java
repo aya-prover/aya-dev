@@ -5,6 +5,7 @@ package org.aya.concrete;
 import org.aya.api.concrete.ConcreteExpr;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LevelVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
@@ -14,6 +15,7 @@ import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
+import org.aya.core.sort.Level;
 import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
@@ -68,6 +70,7 @@ public sealed interface Expr extends ConcreteExpr {
     R visitLam(@NotNull LamExpr expr, P p);
     R visitPi(@NotNull PiExpr expr, P p);
     R visitSigma(@NotNull SigmaExpr expr, P p);
+    R visitRawUniv(@NotNull RawUnivExpr expr, P p);
     R visitUniv(@NotNull UnivExpr expr, P p);
     R visitApp(@NotNull AppExpr expr, P p);
     R visitHole(@NotNull HoleExpr expr, P p);
@@ -81,37 +84,10 @@ public sealed interface Expr extends ConcreteExpr {
 
   interface BaseVisitor<P, R> extends Visitor<P, R> {
     R catchUnhandled(@NotNull Expr expr, P p);
-    @Override default R visitRef(@NotNull RefExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
     @Override default R visitUnresolved(@NotNull UnresolvedExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
-    @Override default R visitLam(@NotNull LamExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitPi(@NotNull PiExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitSigma(@NotNull Expr.SigmaExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitUniv(@NotNull UnivExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitApp(@NotNull AppExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitHole(@NotNull HoleExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitTup(@NotNull TupExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitProj(@NotNull ProjExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitNew(@NotNull NewExpr expr, P p) {
+    @Override default R visitRawUniv(@NotNull Expr.RawUnivExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
     @Override default R visitLitInt(@NotNull LitIntExpr expr, P p) {
@@ -221,14 +197,34 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   /**
-   * @param hLevel specified hLevel, -1 means unspecified, -2 means infinity
-   * @param uLevel specified uLevel, -1 means unspecified
+   * @param hLevel specified homotopy level if positive
+   * @param uLevel specified universe level if positive
    * @author re-xyr, ice1000
+   * @see RawUnivExpr#NEEDED
+   * @see RawUnivExpr#POLYMORPHIC
+   * @see RawUnivExpr#INFINITY
    */
-  record UnivExpr(
+  record RawUnivExpr(
     @NotNull SourcePos sourcePos,
     int uLevel,
     int hLevel
+  ) implements Expr {
+    /** Must be specified but yet unspecified */
+    public static final int NEEDED = -1;
+    /** Can either be specified or polymorphic */
+    public static final int POLYMORPHIC = -2;
+    /** Specified to be infinity */
+    public static final int INFINITY = -3;
+
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitRawUniv(this, p);
+    }
+  }
+
+  record UnivExpr(
+    @NotNull SourcePos sourcePos,
+    @NotNull LevelVar<Level> uLevel,
+    @NotNull LevelVar<Level> hLevel
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);

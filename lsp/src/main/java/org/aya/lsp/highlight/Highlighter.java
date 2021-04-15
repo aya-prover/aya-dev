@@ -3,6 +3,7 @@
 package org.aya.lsp.highlight;
 
 import org.aya.concrete.Decl;
+import org.aya.concrete.Generalize;
 import org.aya.concrete.Stmt;
 import org.aya.core.def.*;
 import org.aya.lsp.LspRange;
@@ -103,6 +104,11 @@ public class Highlighter implements
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, @NotNull Buffer<Symbol> buffer) {
+    return Unit.unit();
+  }
+
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull Buffer<Symbol> symbols) {
+    for (var level : levels.levels()) symbols.append(new Symbol(LspRange.from(level._1), Symbol.Kind.Param));
     return Unit.unit();
   }
 }

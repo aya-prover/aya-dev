@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
-import org.aya.tyck.sort.Sort;
+import org.aya.core.sort.Sort;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;

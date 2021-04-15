@@ -3,13 +3,14 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
+import org.aya.core.sort.LevelSubst;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.tyck.sort.LevelSubst;
-import org.aya.tyck.sort.Sort;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.glavo.kala.collection.mutable.MutableTreeMap;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,9 @@ public record Substituter(
     childrenArray = "map.asJava().entrySet().toArray()",
     hasChildren = "map.isNotEmpty()")
   public static record TermSubst(@NotNull MutableMap<@NotNull Var, @NotNull Term> map) {
-    public static final @NotNull TermSubst EMPTY = new TermSubst(new MutableHashMap<>(0));
+    public static final @NotNull TermSubst EMPTY = new TermSubst(MutableTreeMap.of((o1, o2) -> {
+      throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
+    }));
 
     public TermSubst(@NotNull Var var, @NotNull Term term) {
       this(MutableHashMap.of(var, term));

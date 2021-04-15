@@ -172,7 +172,7 @@ public class ParseTest {
   }
 
   private void parseUniv(@Language("TEXT") String code) {
-    assertTrue(parseExpr(code) instanceof Expr.UnivExpr);
+    assertTrue(parseExpr(code) instanceof Expr.RawUnivExpr);
   }
 
   @Test

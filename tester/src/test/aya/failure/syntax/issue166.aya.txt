@@ -1,8 +1,0 @@
-In file $FILE:1:0 ->
-
-  1 | \fuck
-      ^^
-  
-Error: Parser error: mismatched input '\' expecting {<EOF>, 'module', 'bind', 'def', 'struct', 'prim', 'data', 'open', 'import', 'public', 'private'}
-Parsing interrupted due to error(s).
-What are you doing?

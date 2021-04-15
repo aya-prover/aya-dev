@@ -2,10 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.visitor;
 
-import org.aya.concrete.Decl;
-import org.aya.concrete.Pattern;
-import org.aya.concrete.Signatured;
-import org.aya.concrete.Stmt;
+import org.aya.concrete.*;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,6 +77,14 @@ public interface StmtFixpoint extends ExprFixpoint<Unit>, Stmt.Visitor<Unit, Uni
     field.result = field.result.accept(this, Unit.unit());
     field.clauses = field.clauses.map(this::visitClause);
     field.body = field.body.map(expr -> expr.accept(this, Unit.unit()));
+    return unit;
+  }
+
+  @Override default Unit visitBind(Stmt.@NotNull BindStmt bind, Unit unit) {
+    return unit;
+  }
+
+  @Override default Unit visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
     return unit;
   }
 }
