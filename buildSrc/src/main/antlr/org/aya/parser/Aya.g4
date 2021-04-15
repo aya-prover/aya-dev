@@ -9,16 +9,20 @@ stmt : decl
      | importCmd
      | openCmd
      | module
+     | bind
      ;
 
 importCmd : IMPORT moduleName (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? moduleName useHide?;
+module : 'module' ID LBRACE stmt* '}';
+bind : 'bind' qualifiedId bindPred qualifiedId;
+bindPred : (TIGHTER | LOOSER);
+
 useHide : use+
         | hide+;
 use : USING useHideList;
 hide : HIDING useHideList;
 useHideList : LPAREN idsComma ')';
-
 moduleName : ID ('.' ID)*;
 
 // declarations
@@ -67,8 +71,6 @@ dataBody : ('|' dataCtor)       # dataCtors
 dataCtor : COERCE? assoc? ID tele* clauses?;
 
 dataCtorClause : '|' patterns IMPLIES dataCtor;
-
-module : 'module' ID LBRACE stmt* '}';
 
 // expressions
 expr : atom                            # single
@@ -144,6 +146,10 @@ type : ':' expr;
 idFix : INFIX | POSTFIX | ID;
 INFIX : '`' ID '`';
 POSTFIX : '`' ID;
+
+// bind
+TIGHTER : 'tighter';
+LOOSER : 'looser';
 
 // associativities
 INFIXN : 'infix';
