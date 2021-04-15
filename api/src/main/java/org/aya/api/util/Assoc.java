@@ -16,7 +16,6 @@ public enum Assoc {
   Fix(false),
   FixL(false),
   FixR(false),
-
   NoFix(false);
 
   /**

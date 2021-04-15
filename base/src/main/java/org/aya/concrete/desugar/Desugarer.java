@@ -11,7 +11,7 @@ import org.aya.pretty.doc.Doc;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-public record Desugarer(@NotNull Reporter reporter, BinOpSet opSet) implements StmtFixpoint {
+public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) implements StmtFixpoint {
   @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
     var seq = binOpSeq.seq();
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();

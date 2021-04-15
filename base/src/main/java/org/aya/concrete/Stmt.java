@@ -33,7 +33,7 @@ public sealed interface Stmt extends Docile
     accept(StmtResolver.INSTANCE, opSet);
   }
 
-  default void desugar(@NotNull Reporter reporter, BinOpSet opSet) {
+  default void desugar(@NotNull Reporter reporter, @NotNull BinOpSet opSet) {
     accept(new Desugarer(reporter, opSet), Unit.unit());
   }
 
