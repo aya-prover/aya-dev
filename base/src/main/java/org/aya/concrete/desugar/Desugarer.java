@@ -16,7 +16,6 @@ import org.aya.tyck.ExprTycker;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
-import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,16 +41,16 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       } else if (uLevel >= 0) {
         var args = expectArgs(expr, 1);
         var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
-        return new Expr.UnivExpr(pos, intLevel(LevelVar.Kind.Universe, uLevel), h);
+        return new Expr.UnivExpr(pos, Level.Constant.make(uLevel, LevelVar.Kind.Universe), h);
       } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
         var args = expectArgs(expr, 1);
         var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
-        return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, h);
+        return new Expr.UnivExpr(pos, Level.Polymorphic.make(0, LevelVar.Kind.Universe), h);
       } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
     } else if (hLevel >= 0) {
-      return withHomotopyLevel(expr, uLevel, pos, intLevel(LevelVar.Kind.Homotopy, hLevel));
+      return withHomotopyLevel(expr, uLevel, pos, Level.Constant.make(hLevel, LevelVar.Kind.Homotopy));
     } else if (hLevel == Expr.RawUnivExpr.POLYMORPHIC) {
-      return withHomotopyLevel(expr, uLevel, pos, Level.Polymorphic.H_VAR);
+      return withHomotopyLevel(expr, uLevel, pos, Level.Polymorphic.make(0, LevelVar.Kind.Homotopy));
     } else throw new IllegalStateException("Invalid hLevel: " + hLevel);
   }
 
@@ -60,7 +59,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   ) {
     if (uLevel >= 0) {
       expectArgs(expr, 0);
-      var u = intLevel(LevelVar.Kind.Universe, uLevel);
+      var u = Level.Constant.make(uLevel, LevelVar.Kind.Universe);
       return new Expr.UnivExpr(pos, u, h);
     } else if (uLevel == Expr.RawUnivExpr.NEEDED) {
       var args = expectArgs(expr, 1);
@@ -68,7 +67,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       return new Expr.UnivExpr(pos, u, h);
     } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
       expectArgs(expr, 0);
-      return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, h);
+      return new Expr.UnivExpr(pos, Level.Polymorphic.make(0, LevelVar.Kind.Universe), h);
     } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
   }
 
@@ -91,10 +90,6 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       throw new ExprTycker.TyckerException();
     }
     return u;
-  }
-
-  @NotNull private LevelVar<Level> intLevel(LevelVar.Kind kind, int level) {
-    return new LevelVar<>(Constants.ANONYMOUS_PREFIX, kind, new Ref<>(new Level.Constant(level)));
   }
 
   @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {

@@ -20,16 +20,16 @@ public sealed interface Level {
    * Unlike {@link Reference}, this one is the implicit polymorphic level.
    * It is related to the underlying definition.
    */
-  final class Polymorphic implements Level {
-    public static final @NotNull Level.Polymorphic INSTANCE = new Polymorphic();
-    public static final @NotNull LevelVar<Level> H_VAR = new LevelVar<>(Constants.ANONYMOUS_PREFIX, LevelVar.Kind.Homotopy, new Ref<>(INSTANCE));
-    public static final @NotNull LevelVar<Level> U_VAR = new LevelVar<>(Constants.ANONYMOUS_PREFIX, LevelVar.Kind.Universe, new Ref<>(INSTANCE));
-
-    private Polymorphic() {
+  record Polymorphic(int lift) implements Level {
+    public static @NotNull LevelVar<Level> make(int lift, LevelVar.Kind kind) {
+      return new LevelVar<>(Constants.ANONYMOUS_PREFIX, kind, new Ref<>(new Polymorphic(lift)));
     }
   }
 
   record Constant(int value) implements Level {
+    public static @NotNull LevelVar<Level> make(int level, LevelVar.Kind kind) {
+      return new LevelVar<>(Constants.ANONYMOUS_PREFIX, kind, new Ref<>(new Constant(level)));
+    }
   }
 
   record Reference(@NotNull LevelVar<Level> ref, int lift) implements Level {

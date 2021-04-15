@@ -123,19 +123,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     throw new TyckInterruptedException();
   }
 
-  @Rule.Synth
-  @Override public Result visitRawUniv(Expr.@NotNull RawUnivExpr expr, @Nullable Term term) {
-    // TODO[remove]
-    if (term == null) return new Result(new FormTerm.Univ(Sort.OMEGA), new FormTerm.Univ(Sort.OMEGA));
-    if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
-      return new Result(new FormTerm.Univ(Sort.OMEGA), univ);
-    }
-    return wantButNo(expr, term, "universe term");
-  }
-
-  @Rule.Synth
-  @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    // TODO[rewrite]
+  @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
     if (term == null) return new Result(new FormTerm.Univ(Sort.OMEGA), new FormTerm.Univ(Sort.OMEGA));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
       // TODO[level]
