@@ -13,36 +13,76 @@ import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.core.sort.Level;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.Constants;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author ice1000, kiva
+ */
 public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) implements StmtFixpoint<Unit> {
   @Override public @NotNull Expr visitApp(@NotNull Expr.AppExpr expr, Unit unit) {
-    if (expr.function() instanceof Expr.RawUnivExpr univ) {
-      var uLevel = univ.uLevel();
-      var hLevel = univ.hLevel();
-      if (hLevel >= 0) {
-        var level = intLevel(LevelVar.Kind.Homotopy, hLevel);
-        if (uLevel >= 0) {
-          return new Expr.UnivExpr(univ.sourcePos(),
-            intLevel(LevelVar.Kind.Universe, uLevel),
-            level);
-        }
-      } else if (hLevel == Expr.RawUnivExpr.NEEDED) {
-        if (uLevel == Expr.RawUnivExpr.NEEDED) {
-          var args = expr.arguments();
-          if (!args.sizeEquals(2)) {
-            reporter.report(new WrongLevelError(expr, 2));
-            throw new DesugarInterruptedException();
-          }
-          var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
-          var u = levelVar(args.get(1), LevelVar.Kind.Universe);
-          return new Expr.UnivExpr(univ.sourcePos(), u, h);
-        }
-      }
-    }
+    if (expr.function() instanceof Expr.RawUnivExpr univ) return desugarUniv(expr, univ);
     return StmtFixpoint.super.visitApp(expr, unit);
+  }
+
+  @NotNull private Expr.UnivExpr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) {
+    var uLevel = univ.uLevel();
+    var hLevel = univ.hLevel();
+    var pos = univ.sourcePos();
+    if (hLevel >= 0) {
+      var h = intLevel(LevelVar.Kind.Homotopy, hLevel);
+      if (uLevel >= 0) {
+        expectArgs(expr, 0);
+        var u = intLevel(LevelVar.Kind.Universe, uLevel);
+        return new Expr.UnivExpr(pos, u, h);
+      } else if (uLevel == Expr.RawUnivExpr.NEEDED) {
+        var args = expectArgs(expr, 1);
+        var u = levelVar(args.get(0), LevelVar.Kind.Universe);
+        return new Expr.UnivExpr(pos, u, h);
+      } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
+        expectArgs(expr, 0);
+        return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, h);
+      } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
+    } else if (hLevel == Expr.RawUnivExpr.NEEDED) {
+      if (uLevel == Expr.RawUnivExpr.NEEDED) {
+        var args = expectArgs(expr, 2);
+        var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
+        var u = levelVar(args.get(1), LevelVar.Kind.Universe);
+        return new Expr.UnivExpr(pos, u, h);
+      } else if (uLevel >= 0) {
+        var args = expectArgs(expr, 1);
+        var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
+        return new Expr.UnivExpr(pos, intLevel(LevelVar.Kind.Universe, uLevel), h);
+      } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
+        var args = expectArgs(expr, 1);
+        var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
+        return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, h);
+      } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
+    } else if (hLevel == Expr.RawUnivExpr.POLYMORPHIC) {
+      if (uLevel >= 0) {
+        expectArgs(expr, 0);
+        var u = intLevel(LevelVar.Kind.Universe, uLevel);
+        return new Expr.UnivExpr(pos, u, Level.Polymorphic.H_VAR);
+      } else if (uLevel == Expr.RawUnivExpr.NEEDED) {
+        var args = expectArgs(expr, 1);
+        var u = levelVar(args.get(0), LevelVar.Kind.Universe);
+        return new Expr.UnivExpr(pos, u, Level.Polymorphic.H_VAR);
+      } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
+        expectArgs(expr, 0);
+        return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, Level.Polymorphic.H_VAR);
+      } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
+    } else throw new IllegalStateException("Invalid hLevel: " + hLevel);
+  }
+
+  @NotNull private ImmutableSeq<@NotNull Arg<Expr>> expectArgs(Expr.@NotNull AppExpr expr, int n) {
+    var args = expr.arguments();
+    if (!args.sizeEquals(n)) {
+      reporter.report(new WrongLevelError(expr, n));
+      throw new DesugarInterruptedException();
+    }
+    return args;
   }
 
   private @NotNull LevelVar<Level> levelVar(Arg<Expr> uArg, LevelVar.Kind kind) {
