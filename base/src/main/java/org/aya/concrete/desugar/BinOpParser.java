@@ -50,9 +50,9 @@ public final class BinOpParser {
     // TODO[kiva]: the following code is just supposed to convert
     //  infix expr to prefix expr??? is it??
 
-    for (var expr : seq.reversed()) {
+    for (var expr : seq) {
       var tryOp = expr.asOpDecl();
-      if (opSet.isNotUsedAsOperator(tryOp)) prefixes.push(expr);
+      if (opSet.isNotUsedAsOperator(tryOp)) prefixes.append(expr);
       else {
         var currentOp = opSet.ensureHasElem(tryOp._1, tryOp._2);
         while (opStack.isNotEmpty()) {
@@ -66,7 +66,7 @@ public final class BinOpParser {
           } else if (cmp == BinOpSet.PredCmp.Tighter || cmp == BinOpSet.PredCmp.Equal) {
             var topOp = opStack.pop();
             var appExpr = makeBinApp(topOp._1);
-            prefixes.push(new Elem(appExpr, topOp._1.explicit));
+            prefixes.append(new Elem(appExpr, topOp._1.explicit));
           } else break;
         }
         opStack.push(Tuple.of(expr, currentOp));
@@ -76,7 +76,7 @@ public final class BinOpParser {
     while (opStack.isNotEmpty()) {
       var op = opStack.pop();
       var app = makeBinApp(op._1);
-      prefixes.push(new Elem(app, op._1.explicit));
+      prefixes.append(new Elem(app, op._1.explicit));
     }
 
     assert prefixes.isNotEmpty();
@@ -92,8 +92,8 @@ public final class BinOpParser {
   }
 
   private Expr.@NotNull AppExpr makeBinApp(@NotNull Elem op) {
-    var lhs = prefixes.pop();
-    var rhs = prefixes.pop();
+    var rhs = prefixes.dequeue();
+    var lhs = prefixes.dequeue();
     return new Expr.AppExpr(
       computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
       op.expr,
