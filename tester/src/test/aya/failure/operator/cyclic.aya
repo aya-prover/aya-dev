@@ -1,0 +1,5 @@
+def `+` test1 : Set => test1
+def `x` test2 : Set => test2
+
+bind + tighter x
+bind x tighter +

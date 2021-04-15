@@ -8,7 +8,7 @@ struct Path (A : Pi I -> Set) (a : A left) (b : A right) : Set
  }
 def path {A : Pi I -> Set} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def Eq {A : Set} (a b : A) : Set => Path (\ i => A) a b
+def `≡` Eq {A : Set} (a b : A) : Set => Path (\ i => A) a b
 def idp {A : Set} (a : A) : Eq a a => path (\ i => a)
 
 prim arcoe
@@ -30,14 +30,16 @@ def sym {A : Set} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) (idp a) p
 def trans {A : Set} {a b c : A} (p : Eq a b) (q : Eq b c) : Eq a c => hcomp2d p q (idp a)
 def pmap {A B : Set} (f : Pi A -> B) {a b : A} (p : Eq a b)
   : Eq (f a) (f b) => path (\ i => f (p.at i))
-open data Nat : Set | zero | suc Nat
+open data ℕ : Set | zero | suc ℕ
 
-def addN (a b : Nat) : Nat
+def `+` addN (a b : ℕ) : ℕ
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (addN a b)
  | a, suc b => suc (addN a b)
 
-def addN-comm (a b : Nat) : Eq (addN a b) (addN b a)
+bind + tighter ≡
+
+def +-comm (a b : ℕ) : a + b ≡ b + a
   | zero, a => idp a
-  | suc a, b => pmap suc (addN-comm a b)
+  | suc a, b => pmap suc (+-comm a b)
