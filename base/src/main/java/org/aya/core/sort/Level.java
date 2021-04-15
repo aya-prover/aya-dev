@@ -13,9 +13,9 @@ public sealed interface Level {
     }
   }
 
-  record Constant(int value) {
+  record Constant(int value) implements Level {
   }
 
-  record Reference(@NotNull LevelVar<Level> ref, int lift) {
+  record Reference(@NotNull LevelVar<Level> ref, int lift) implements Level {
   }
 }
