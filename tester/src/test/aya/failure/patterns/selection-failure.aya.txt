@@ -13,6 +13,9 @@ In file $FILE:8:14 ->
   8 |  | f, vnil => vnil {_}
                     ^------^
   
-Error: The expected type `Vect A n` is not a pi type, therefore cannot type a term such as `vnil {_}`
+Error: Expected type: Vect A n
+       Normalized: Vect A n
+       Want: pi type
+       Because we want to type a term such as: vnil {_}
 Tycking interrupted due to error(s).
 What are you doing?

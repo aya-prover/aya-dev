@@ -5,6 +5,10 @@ In file $FILE:10:28 ->
   10 | def u : ❤️守❤️护❤️最❤️好❤️的❤️ => 🀎
                                    ^^
   
-Error: The expected type `❤️守❤️护❤️最❤️好❤️的❤️` does not match the actual type `❤️`
+Error: Expected type: ❤️守❤️护❤️最❤️好❤️的❤️
+       Normalized: ❤️守❤️护❤️最❤️好❤️的❤️
+       Actual type: ❤️
+       Normalized: ❤️
+       They don't match, sorry
 Tycking interrupted due to error(s).
 What are you doing?
