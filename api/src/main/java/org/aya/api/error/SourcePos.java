@@ -6,6 +6,7 @@ import org.aya.api.Global;
 import org.aya.pretty.error.LineColSpan;
 import org.aya.pretty.error.RangeSpan;
 import org.aya.pretty.error.Span;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -40,6 +41,17 @@ public record SourcePos(
     } else {
       return new RangeSpan(input, tokenStartIndex, tokenEndIndex);
     }
+  }
+
+  @Contract("_ -> new") public @NotNull SourcePos union(@NotNull SourcePos other) {
+    return new SourcePos(
+      Math.min(tokenStartIndex, other.tokenStartIndex),
+      Math.max(tokenEndIndex, other.tokenEndIndex),
+      Math.min(startLine, other.startLine),
+      Math.max(startColumn, other.startColumn),
+      Math.max(endLine, other.endLine),
+      Math.max(endColumn, other.endColumn)
+    );
   }
 
   @Override public boolean equals(Object o) {

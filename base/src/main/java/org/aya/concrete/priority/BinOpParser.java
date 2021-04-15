@@ -92,10 +92,14 @@ public final class BinOpParser {
     var rhs = prefixes.pop();
     var lhs = prefixes.pop();
     return new Expr.AppExpr(
-      SourcePos.NONE, // TODO: compute SourcePos from args
+      computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
       op.expr,
       ImmutableSeq.of(lhs.toArg(), rhs.toArg())
     );
+  }
+
+  private @NotNull SourcePos computeSourcePos(@NotNull SourcePos a, @NotNull SourcePos b, @NotNull SourcePos c) {
+    return a.union(b).union(c);
   }
 
   /**
