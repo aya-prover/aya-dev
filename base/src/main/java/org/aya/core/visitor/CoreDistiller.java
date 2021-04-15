@@ -49,7 +49,8 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
-    return plainLink(term.var());
+    var ref = term.var();
+    return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
   }
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
@@ -170,21 +171,18 @@ public final class CoreDistiller implements
     @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
     @NotNull BiFunction<Boolean, T, Doc> formatter, boolean nestedCall
   ) {
-    if (args.isEmpty()) {
-      return fn;
-    }
+    if (args.isEmpty()) return fn;
     var call = Doc.cat(
       fn,
       Doc.plain(" "),
-      Doc.hsep(args.view()
-        .map(arg -> {
-          // Do not use `arg.term().toDoc()` because we want to
-          // wrap args in parens if we are inside a nested call
-          // such as `suc (suc (suc n))`
-          return arg.explicit()
-            ? formatter.apply(true, arg.term())
-            : Doc.wrap("{", "}", formatter.apply(false, arg.term()));
-        }))
+      Doc.hsep(args.view().map(arg -> {
+        // Do not use `arg.term().toDoc()` because we want to
+        // wrap args in parens if we are inside a nested call
+        // such as `suc (suc (suc n))`
+        return arg.explicit()
+          ? formatter.apply(true, arg.term())
+          : Doc.wrap("{", "}", formatter.apply(false, arg.term()));
+      }))
     );
     return nestedCall ? Doc.wrap("(", ")", call) : call;
   }
@@ -204,7 +202,7 @@ public final class CoreDistiller implements
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
     boolean ex = bind.explicit();
     return Doc.wrap(ex ? "" : "{", ex ? "" : "}",
-      plainLink(bind.as()));
+      plainLinkDef(bind.as()));
   }
 
   @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Boolean aBoolean) {
@@ -249,7 +247,7 @@ public final class CoreDistiller implements
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
     var line1 = Doc.hcat(
       Doc.styled(CoreDistiller.KEYWORD, "def "),
-      link(def.ref(), CoreDistiller.FN_CALL),
+      linkDef(def.ref(), CoreDistiller.FN_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc());
     return def.body().fold(
@@ -292,25 +290,25 @@ public final class CoreDistiller implements
     var line1 = Doc.hcat(
       Doc.styled(CoreDistiller.KEYWORD, "data"),
       Doc.plain(" "),
-      link(def.ref(), CoreDistiller.DATA_CALL),
+      linkDef(def.ref(), CoreDistiller.DATA_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc());
     return Doc.vcat(line1, Doc.nest(2, Doc.vcat(
       def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
 
-  public static @NotNull Doc link(@NotNull Var ref, @NotNull Style color) {
+  public static @NotNull Doc linkDef(@NotNull Var ref, @NotNull Style color) {
     return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
-  public static @NotNull Doc plainLink(@NotNull Var ref) {
+  public static @NotNull Doc plainLinkDef(@NotNull Var ref) {
     return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
   }
 
   @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
     var doc = Doc.cat(
       ctor.coerce() ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),
-      link(ctor.ref(), CoreDistiller.CON_CALL),
+      linkDef(ctor.ref(), CoreDistiller.CON_CALL),
       visitTele(ctor.conTele())
     );
     Doc line1;
@@ -325,7 +323,7 @@ public final class CoreDistiller implements
     return Doc.vcat(Doc.hcat(
       Doc.styled(CoreDistiller.KEYWORD, "struct"),
       Doc.plain(" "),
-      link(def.ref(), CoreDistiller.STRUCT_CALL),
+      linkDef(def.ref(), CoreDistiller.STRUCT_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc()), Doc.nest(2, Doc.vcat(
       def.fields().view().map(field -> field.accept(this, Unit.unit())))));
@@ -335,7 +333,7 @@ public final class CoreDistiller implements
     return visitConditions(Doc.hcat(
       Doc.plain("| "),
       field.coerce() ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),
-      link(field.ref(), CoreDistiller.FIELD_CALL),
+      linkDef(field.ref(), CoreDistiller.FIELD_CALL),
       visitTele(field.fieldTele())
     ), field.clauses());
   }

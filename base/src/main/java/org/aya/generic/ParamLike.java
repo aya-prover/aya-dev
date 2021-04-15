@@ -24,7 +24,7 @@ public interface ParamLike<Expr extends Docile> extends Docile {
     return toDoc(nameDoc());
   }
   default @NotNull Doc nameDoc() {
-    return CoreDistiller.plainLink(ref());
+    return CoreDistiller.plainLinkDef(ref());
   }
   default @NotNull Doc toDoc(@NotNull Doc names) {
     var explicit = explicit();
