@@ -14,6 +14,7 @@ import org.aya.core.sort.Level;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.Constants;
 import org.glavo.kala.tuple.Unit;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
 public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) implements StmtFixpoint<Unit> {
@@ -21,15 +22,22 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     if (expr.function() instanceof Expr.RawUnivExpr univ) {
       var uLevel = univ.uLevel();
       var hLevel = univ.hLevel();
-      if (uLevel == Expr.RawUnivExpr.NEEDED) {
-        if (hLevel == Expr.RawUnivExpr.NEEDED) {
+      if (hLevel >= 0) {
+        var level = intLevel(LevelVar.Kind.Homotopy, hLevel);
+        if (uLevel >= 0) {
+          return new Expr.UnivExpr(univ.sourcePos(),
+            intLevel(LevelVar.Kind.Universe, uLevel),
+            level);
+        }
+      } else if (hLevel == Expr.RawUnivExpr.NEEDED) {
+        if (uLevel == Expr.RawUnivExpr.NEEDED) {
           var args = expr.arguments();
           if (!args.sizeEquals(2)) {
             reporter.report(new WrongLevelError(expr, 2));
             throw new DesugarInterruptedException();
           }
-          var h = getLevelLevelVar(args.get(0), LevelVar.Kind.Homotopy);
-          var u = getLevelLevelVar(args.get(1), LevelVar.Kind.Universe);
+          var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
+          var u = levelVar(args.get(1), LevelVar.Kind.Universe);
           return new Expr.UnivExpr(univ.sourcePos(), u, h);
         }
       }
@@ -37,7 +45,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     return StmtFixpoint.super.visitApp(expr, unit);
   }
 
-  private @NotNull LevelVar<Level> getLevelLevelVar(Arg<Expr> uArg, LevelVar.Kind kind) {
+  private @NotNull LevelVar<Level> levelVar(Arg<Expr> uArg, LevelVar.Kind kind) {
     var u = new LevelVar<Level>(Constants.ANONYMOUS_PREFIX, kind);
     if (uArg.term() instanceof Expr.LitIntExpr uLit) u.level().value = new Level.Constant(uLit.integer());
     else {
@@ -46,6 +54,10 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       throw new ExprTycker.TyckerException();
     }
     return u;
+  }
+
+  @NotNull private LevelVar<Level> intLevel(LevelVar.Kind kind, int level) {
+    return new LevelVar<>(Constants.ANONYMOUS_PREFIX, kind, new Ref<>(new Level.Constant(level)));
   }
 
   @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
