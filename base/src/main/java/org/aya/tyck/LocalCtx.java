@@ -2,12 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
@@ -29,9 +31,13 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     this(MutableHashMap.of(), null);
   }
 
-  public @NotNull Tuple2<Meta, Term> freshHole(@NotNull Term type, @NotNull String name) {
+  public @NotNull Tuple2<Meta, Term> freshHole(@NotNull Term type, @NotNull SourcePos sourcePos) {
+    return freshHole(type, Constants.ANONYMOUS_PREFIX, sourcePos);
+  }
+
+  public @NotNull Tuple2<Meta, Term> freshHole(@NotNull Term type, @NotNull String name, @NotNull SourcePos sourcePos) {
     var ctxTele = extract();
-    var meta = Meta.from(ctxTele, type);
+    var meta = Meta.from(ctxTele, type, sourcePos);
     var ref = new HoleVar<>(name, meta);
     var hole = new CallTerm.Hole(ref, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
     return Tuple2.of(meta, IntroTerm.Lambda.make(meta.telescope, hole));

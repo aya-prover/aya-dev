@@ -12,9 +12,7 @@ import org.aya.core.pat.PatUnify;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.error.ConfluenceError;
-import org.aya.tyck.error.MatchingOverIntervalError;
-import org.aya.tyck.error.MissingCaseError;
+import org.aya.tyck.error.ClausesProblem;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
@@ -65,7 +63,7 @@ public record PatClassifier(
         var rhsTerm = rhs.body().subst(rhsSubst);
         var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
-          tycker.reporter.report(new ConfluenceError(pos, lhsInfo._1 + 1, rhsInfo._1 + 1, lhsTerm, rhsTerm));
+          tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1, lhsTerm, rhsTerm));
           throw new ExprTycker.TyckInterruptedException();
         }
       }
@@ -101,7 +99,7 @@ public record PatClassifier(
       .firstOption();
     if (lrSplit.isDefined()) {
       if (coverage) {
-        reporter.report(new MatchingOverIntervalError(pos, lrSplit.get()));
+        reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
         throw new ExprTycker.TyckInterruptedException();
       }
       for (var def : PrimDef.LEFT_RIGHT) {
@@ -145,7 +143,7 @@ public record PatClassifier(
       builder.shift(new PatTree(ctor.ref().name(), explicit));
       if (matches.isEmpty()) {
         if (coverage) {
-          reporter.report(new MissingCaseError(pos, builder.root()));
+          reporter.report(new ClausesProblem.MissingCase(pos, builder.root()));
           throw new ExprTycker.TyckInterruptedException();
         } else {
           builder.reduce();

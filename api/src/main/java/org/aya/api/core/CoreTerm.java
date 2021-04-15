@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.api.core;
 
+import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.pretty.doc.Docile;
@@ -17,5 +18,5 @@ public interface CoreTerm extends Docile {
   int findUsages(@NotNull Var var);
   @NotNull CoreTerm normalize(@NotNull NormalizeMode mode);
   @Nullable CorePat toPat();
-  @NotNull CoreTerm strip();
+  @NotNull CoreTerm strip(@NotNull Reporter reporter);
 }

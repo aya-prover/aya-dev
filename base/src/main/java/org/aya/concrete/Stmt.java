@@ -2,12 +2,13 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.pretty.StmtPrettier;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.visitor.StmtResolver;
+import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -32,12 +33,12 @@ public sealed interface Stmt extends Docile
     accept(StmtResolver.INSTANCE, opSet);
   }
 
-  default void desugar(@NotNull BinOpSet opSet) {
-    accept(Desugarer.INSTANCE, opSet);
+  default void desugar(@NotNull Reporter reporter, BinOpSet opSet) {
+    accept(new Desugarer(reporter, opSet), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc() {
-    return accept(StmtPrettier.INSTANCE, Unit.unit());
+    return accept(ConcreteDistiller.INSTANCE, Unit.unit());
   }
 
   /**

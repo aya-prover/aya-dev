@@ -3,13 +3,13 @@
 package org.aya.core.term;
 
 import org.aya.api.core.CoreTerm;
+import org.aya.api.error.Reporter;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.pat.Pat;
-import org.aya.core.pretty.TermPrettier;
 import org.aya.core.visitor.*;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
@@ -66,8 +66,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     return accept(new Substituter(subst, levelSubst), Unit.unit());
   }
 
-  default @NotNull Term strip() {
-    return accept(new Stripper(), Unit.unit());
+  @Override default @NotNull Term strip(@NotNull Reporter reporter) {
+    return accept(new Zonker(reporter), Unit.unit());
   }
 
   @Override default int findUsages(@NotNull Var var) {
@@ -81,7 +81,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   }
 
   @Override default @NotNull Doc toDoc() {
-    return accept(TermPrettier.INSTANCE, false);
+    return accept(CoreDistiller.INSTANCE, false);
   }
 
   interface Visitor<P, R> {

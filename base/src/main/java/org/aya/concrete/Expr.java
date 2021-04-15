@@ -11,15 +11,16 @@ import org.aya.api.util.Arg;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.pretty.ExprPrettier;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
+import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,16 +45,17 @@ public sealed interface Expr extends ConcreteExpr {
     return accept(ExprResolver.INSTANCE, context);
   }
 
-  default @NotNull Expr resolve(@NotNull Reporter reporter) {
+
+  @Override default @NotNull Expr resolve(@NotNull Reporter reporter) {
     return resolve(new EmptyContext(reporter));
   }
 
-  default @NotNull Expr desugar(@NotNull BinOpSet opSet) {
-    return accept(Desugarer.INSTANCE, opSet);
+  @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
+    return accept(new Desugarer(reporter, new BinOpSet(reporter)), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc() {
-    return accept(ExprPrettier.INSTANCE, false);
+    return accept(ConcreteDistiller.INSTANCE, false);
   }
 
   interface Visitor<P, R> {

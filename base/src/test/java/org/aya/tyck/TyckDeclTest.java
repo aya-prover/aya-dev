@@ -52,7 +52,7 @@ public class TyckDeclTest {
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
     decl.resolve(opSet);
-    decl.desugar(opSet);
+    decl.desugar(ThrowingReporter.INSTANCE, opSet);
     var def = decl.tyck(ThrowingReporter.INSTANCE, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
@@ -87,7 +87,7 @@ public class TyckDeclTest {
     decls.forEach(d -> d.accept(ssr, ctx));
     var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
     decls.forEach(s -> s.resolve(opSet));
-    decls.forEach(s -> s.desugar(opSet));
+    decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE, opSet));
     return decls
       .map(i -> i instanceof Signatured s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
       .filter(Objects::nonNull);

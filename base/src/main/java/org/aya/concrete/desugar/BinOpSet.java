@@ -53,6 +53,10 @@ public record BinOpSet(@NotNull Reporter reporter, @NotNull MutableHashSet<Elem>
     return newElem;
   }
 
+  private void sort() {
+    // TODO[kiva]: check complex cyclic
+  }
+
   public record Elem(
     @NotNull Decl.OpDecl op,
     @NotNull String name,
