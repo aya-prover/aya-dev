@@ -1,0 +1,74 @@
+prim I
+prim left
+prim right
+struct Path (A : Pi I -> Set) (a : A left) (b : A right) : Set
+ | at (i : I) : A i {
+   | left => a
+   | right => b
+ }
+def path {A : Pi I -> Set} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+def Eq {A : Set} (a b : A) : Set => Path (\ i => A) a b
+def idp {A : Set} (a : A) : Eq a a => path (\ i => a)
+
+prim arcoe
+def hfill2d {A : Set}
+  {a b c d : A}
+  (p : Eq a b)
+  (q : Eq b d)
+  (r : Eq a c)
+  (i j : I) : A
+  => (arcoe (\ k => Eq (r.at k) (q.at k)) p i).at j
+def hcomp2d {A : Set}
+  {a b c d : A}
+  (p : Eq a b)
+  (q : Eq b d)
+  (r : Eq a c) : Eq c d
+  => path (hfill2d p q r right)
+
+def sym {A : Set} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) (idp a) p
+def trans {A : Set} {a b c : A} (p : Eq a b) (q : Eq b c) : Eq a c =>
+  hcomp2d p q (idp a)
+def pmap {A B : Set} (f : Pi A -> B) {a b : A} (p : Eq a b)
+  : Eq (f a) (f b) => path (\ i => f (p.at i))
+
+open data Nat : Set | zero | suc Nat
+open data Int : Set
+| pos Nat
+| neg Nat { | zero => pos zero }
+
+def addN (a b : Nat) : Nat
+| zero, a => a
+| a, zero => a
+| suc a, b => suc (addN a b)
+| a, suc b => suc (addN a b)
+
+def addN-comm (a b : Nat) : Eq (addN a b) (addN b a)
+ | zero, a => idp a
+ | a, zero => idp a
+ | suc a, b => pmap suc (addN-comm a _)
+
+def addN-assoc (a b c : Nat) : Eq (addN a (addN b c)) (addN (addN a b) c)
+ | zero, a, b => idp _
+ | suc a, b, c => pmap suc (addN-assoc a b c)
+
+def subNI (a b : Nat) : Int
+| zero, a => neg a
+| a, zero => pos a
+| suc a, suc b => subNI a b
+
+def addI (a b : Int) : Int
+| pos zero, n => n
+| n, pos zero => n
+| neg zero, n => n
+| n, neg zero => n
+| pos n, pos m => pos (addN n m)
+| neg n, neg m => neg (addN n m)
+| neg n, pos m => subNI m n
+| pos n, neg m => subNI n m
+
+def addI-comm (a b : Int) : Eq (addI a b) (addI b a)
+| pos n, pos m => pmap pos (addN-comm n m)
+| neg n, neg m => pmap neg (addN-comm n m)
+| pos n, neg m => idp _
+| neg n, pos m => idp _
