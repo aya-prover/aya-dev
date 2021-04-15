@@ -311,7 +311,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var head = new BinOpParser.Elem(visitExpr(ctx.expr()), true);
     var tail = ctx.argument().stream()
       .map(this::visitArgument)
-      .map(a -> new BinOpParser.Elem(a.term(), a.explicit()))
+      .map(a -> new BinOpParser.Elem(a.term().expr(), a.explicit()))
       .collect(LinkedBuffer.factory());
     tail.push(head);
     return new Expr.BinOpSeq(sourcePosOf(ctx), tail.toImmutableSeq());

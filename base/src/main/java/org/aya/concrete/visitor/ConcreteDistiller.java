@@ -91,7 +91,7 @@ public final class ConcreteDistiller implements
     return CoreDistiller.INSTANCE.visitCalls(
       expr.function().toDoc(),
       expr.arguments(),
-      (nest, arg) -> arg.accept(this, nest),
+      (nest, arg) -> arg.expr().accept(this, nest),
       nestedCall);
   }
 

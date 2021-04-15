@@ -434,7 +434,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       while (pi.param().explicit() != argLicit) {
         if (argLicit) {
           // that implies paramLicit == false
-          var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX, arg.term().sourcePos())._2;
+          var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX, arg.term().expr().sourcePos())._2;
           // TODO: maybe we should create a concrete hole and check it against the type
           //  in case we can synthesize this term via its type only
           var holeArg = new Arg<>(holeApp, false);
