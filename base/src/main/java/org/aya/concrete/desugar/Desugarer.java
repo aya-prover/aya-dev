@@ -48,8 +48,9 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   private @NotNull LevelVar<Level> levelVar(Arg<Expr> uArg, LevelVar.Kind kind) {
     var u = new LevelVar<Level>(Constants.ANONYMOUS_PREFIX, kind);
     if (uArg.term() instanceof Expr.LitIntExpr uLit) u.level().value = new Level.Constant(uLit.integer());
-    else {
-      // TODO[ice]: universe vars
+    else if (uArg.term() instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof LevelVar<?> lv) {
+      u.level().value = new Level.Reference(Level.narrow(lv), 0);
+    } else {
       reporter.report(new BadLevelError(uArg.term()));
       throw new ExprTycker.TyckerException();
     }

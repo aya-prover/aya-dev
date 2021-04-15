@@ -6,6 +6,9 @@ import org.aya.api.ref.LevelVar;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface Level {
+  @SuppressWarnings("unchecked") static LevelVar<Level> narrow(LevelVar<?> levelVar) {
+    return (LevelVar<Level>) levelVar;
+  }
   final class Unsolved implements Level {
     public static final @NotNull Unsolved INSTANCE = new Unsolved();
 
