@@ -29,6 +29,6 @@ public record Arg<T extends Docile>(@NotNull T term, boolean explicit) implement
 
   @Override public @NotNull Doc toDoc() {
     var termDoc = term.toDoc();
-    return explicit() ? termDoc : Doc.wrap("{", "}", termDoc);
+    return explicit() ? termDoc : Doc.braced(termDoc);
   }
 }

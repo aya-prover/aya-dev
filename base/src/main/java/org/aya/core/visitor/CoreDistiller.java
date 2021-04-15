@@ -181,7 +181,7 @@ public final class CoreDistiller implements
         // such as `suc (suc (suc n))`
         return arg.explicit()
           ? formatter.apply(true, arg.term())
-          : Doc.wrap("{", "}", formatter.apply(false, arg.term()));
+          : Doc.braced(formatter.apply(false, arg.term()));
       }))
     );
     return nestedCall ? Doc.wrap("(", ")", call) : call;
@@ -201,17 +201,17 @@ public final class CoreDistiller implements
 
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
     var doc = plainLinkDef(bind.as());
-    return bind.explicit() ? doc : Doc.wrap("{", "}", doc);
+    return bind.explicit() ? doc : Doc.braced(doc);
   }
 
   @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Boolean aBoolean) {
     var doc = Doc.styled(CoreDistiller.KEYWORD, "impossible");
-    return absurd.explicit() ? doc : Doc.wrap("{", "}", doc);
+    return absurd.explicit() ? doc : Doc.braced(doc);
   }
 
   @Override public Doc visitPrim(Pat.@NotNull Prim prim, Boolean aBoolean) {
     var link = hyperLink(prim.ref());
-    return prim.explicit() ? link : Doc.wrap("{", "}", link);
+    return prim.explicit() ? link : Doc.braced(link);
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
@@ -225,7 +225,7 @@ public final class CoreDistiller implements
 
   public static @NotNull Doc ctorDoc(boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
     boolean as = ctorAs != null;
-    var withEx = ex ? ctorDoc : Doc.wrap("{", "}", ctorDoc);
+    var withEx = ex ? ctorDoc : Doc.braced(ctorDoc);
     var withAs = !as ? withEx :
       Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" as "), Doc.plain(ctorAs.name()));
     return !ex && !as ? withAs : nestedCall && !noParams ? Doc.wrap("(", ")", withAs) : withAs;

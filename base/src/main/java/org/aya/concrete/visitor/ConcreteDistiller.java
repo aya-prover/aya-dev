@@ -161,22 +161,22 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitNumber(Pattern.@NotNull Number number, Boolean nestedCall) {
     var doc = Doc.plain(String.valueOf(number.number()));
-    return number.explicit() ? doc : Doc.wrap("{", "}", doc);
+    return number.explicit() ? doc : Doc.braced(doc);
   }
 
   @Override public Doc visitBind(Pattern.@NotNull Bind bind, Boolean nestedCall) {
     var doc = Doc.plain(bind.bind().name());
-    return bind.explicit() ? doc : Doc.wrap("{", "}", doc);
+    return bind.explicit() ? doc : Doc.braced(doc);
   }
 
   @Override public Doc visitAbsurd(Pattern.@NotNull Absurd absurd, Boolean aBoolean) {
     var doc = Doc.styled(CoreDistiller.KEYWORD, "impossible");
-    return absurd.explicit() ? doc : Doc.wrap("{", "}", doc);
+    return absurd.explicit() ? doc : Doc.braced(doc);
   }
 
   @Override public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Boolean nestedCall) {
     var doc = Doc.plain(Constants.ANONYMOUS_PREFIX);
-    return calmFace.explicit() ? doc : Doc.wrap("{", "}", doc);
+    return calmFace.explicit() ? doc : Doc.braced(doc);
   }
 
   @Override public Doc visitCtor(Pattern.@NotNull Ctor ctor, Boolean nestedCall) {
@@ -306,7 +306,7 @@ public final class ConcreteDistiller implements
       clauses.stream()
         .map(this::matchy)
         .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
-    return wrapInBraces ? Doc.wrap("{", "}", clausesDoc) : clausesDoc;
+    return wrapInBraces ? Doc.braced(clausesDoc) : clausesDoc;
   }
 
   @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {

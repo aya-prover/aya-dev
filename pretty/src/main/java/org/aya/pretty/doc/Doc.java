@@ -218,6 +218,10 @@ public sealed interface Doc extends Docile {
     return Doc.cat(Doc.symbol(leftSymbol), doc, Doc.symbol(rightSymbol));
   }
 
+  static @NotNull Doc braced(Doc doc) {
+    return wrap("{", "}", doc);
+  }
+
   /**
    * Return conditional {@link Doc#empty()}
    *
