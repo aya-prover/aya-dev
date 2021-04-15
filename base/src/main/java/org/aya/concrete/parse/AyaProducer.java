@@ -89,6 +89,26 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     }
     var mod = ctx.module();
     if (mod != null) return ImmutableSeq.of(visitModule(mod));
+    var bind = ctx.bind();
+    if (bind != null) return ImmutableSeq.of(visitBind(bind));
+    throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
+  }
+
+  @Override public Stmt.@NotNull BindStmt visitBind(AyaParser.BindContext ctx) {
+    return new Stmt.BindStmt(
+      sourcePosOf(ctx),
+      visitQualifiedId(ctx.qualifiedId(0)),
+      visitBindPred(ctx.bindPred()),
+      visitQualifiedId(ctx.qualifiedId(1)),
+      new Ref<>(null),
+      new Ref<>(null),
+      new Ref<>(null)
+    );
+  }
+
+  @Override public Stmt.@NotNull BindPred visitBindPred(AyaParser.BindPredContext ctx) {
+    if (ctx.TIGHTER() != null) return Stmt.BindPred.Tighter;
+    if (ctx.LOOSER() != null) return Stmt.BindPred.Looser;
     throw new IllegalArgumentException(ctx.getClass() + ": " + ctx.getText());
   }
 
