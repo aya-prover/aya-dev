@@ -5,6 +5,7 @@ In file $FILE:5:0 ->
   5 | bind x tighter +
       ^--------------^
   
-Error: Cyclic operator precedence found after making `x` tighter than `+`; Because `x` is already looser than `+`
+Error: Cyclic operator precedence found after making `x` tighter than `+`
+note: `x` is already looser than `+`
 Resolving interrupted due to error(s).
 What are you doing?

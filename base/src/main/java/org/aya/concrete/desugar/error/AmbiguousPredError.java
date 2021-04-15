@@ -25,4 +25,8 @@ public record AmbiguousPredError(
       Doc.plain("`")
     );
   }
+
+  @Override public @NotNull Doc hint() {
+    return Doc.plain("Use `bind` statement or insert parentheses to make it clear.");
+  }
 }

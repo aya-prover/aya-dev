@@ -22,7 +22,13 @@ public record CyclicOperatorError(
       Doc.plain(already.invert().toString()),
       Doc.plain(" than `"),
       Doc.plain(target),
-      Doc.plain("`; Because `"),
+      Doc.plain("`")
+    );
+  }
+
+  @Override public @NotNull Doc hint() {
+    return Doc.hcat(
+      Doc.plain("`"),
       Doc.plain(op),
       Doc.plain("` is already "),
       Doc.plain(already.toString()),

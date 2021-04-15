@@ -6,6 +6,6 @@ In file $FILE:4:17 ->
                        ^^
   
 Error: Ambiguous operator precedence detected between `+` and `=`
-       Use bind statement or insert parentheses to make it clear
+note: Use `bind` statement or insert parentheses to make it clear.
 Desugaring interrupted due to error(s).
 What are you doing?
