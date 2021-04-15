@@ -18,6 +18,7 @@ public record AyaStyleFamily(
     Tuple.of("aya:DataCall", Style.color("aya:DataCall").and()),
     Tuple.of("aya:StructCall", Style.color("aya:StructCall").and()),
     Tuple.of("aya:ConCall", Style.color("aya:ConCall").and()),
-    Tuple.of("aya:FieldCall", Style.color("aya:FieldCall").and())
+    Tuple.of("aya:FieldCall", Style.color("aya:FieldCall").and()),
+    Tuple.of("aya:Generalized", Style.color("aya:Generalized").and())
   ));
 }
