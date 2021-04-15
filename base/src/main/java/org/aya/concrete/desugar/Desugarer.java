@@ -3,6 +3,7 @@
 package org.aya.concrete.desugar;
 
 import org.aya.api.error.Reporter;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
@@ -16,6 +17,7 @@ import org.aya.util.Constants;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,21 +33,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     var uLevel = univ.uLevel();
     var hLevel = univ.hLevel();
     var pos = univ.sourcePos();
-    if (hLevel >= 0) {
-      var h = intLevel(LevelVar.Kind.Homotopy, hLevel);
-      if (uLevel >= 0) {
-        expectArgs(expr, 0);
-        var u = intLevel(LevelVar.Kind.Universe, uLevel);
-        return new Expr.UnivExpr(pos, u, h);
-      } else if (uLevel == Expr.RawUnivExpr.NEEDED) {
-        var args = expectArgs(expr, 1);
-        var u = levelVar(args.get(0), LevelVar.Kind.Universe);
-        return new Expr.UnivExpr(pos, u, h);
-      } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
-        expectArgs(expr, 0);
-        return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, h);
-      } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
-    } else if (hLevel == Expr.RawUnivExpr.NEEDED) {
+    if (hLevel == Expr.RawUnivExpr.NEEDED) {
       if (uLevel == Expr.RawUnivExpr.NEEDED) {
         var args = expectArgs(expr, 2);
         var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
@@ -60,20 +48,28 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
         var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
         return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, h);
       } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
+    } else if (hLevel >= 0) {
+      return withHomotopyLevel(expr, uLevel, pos, intLevel(LevelVar.Kind.Homotopy, hLevel));
     } else if (hLevel == Expr.RawUnivExpr.POLYMORPHIC) {
-      if (uLevel >= 0) {
-        expectArgs(expr, 0);
-        var u = intLevel(LevelVar.Kind.Universe, uLevel);
-        return new Expr.UnivExpr(pos, u, Level.Polymorphic.H_VAR);
-      } else if (uLevel == Expr.RawUnivExpr.NEEDED) {
-        var args = expectArgs(expr, 1);
-        var u = levelVar(args.get(0), LevelVar.Kind.Universe);
-        return new Expr.UnivExpr(pos, u, Level.Polymorphic.H_VAR);
-      } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
-        expectArgs(expr, 0);
-        return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, Level.Polymorphic.H_VAR);
-      } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
+      return withHomotopyLevel(expr, uLevel, pos, Level.Polymorphic.H_VAR);
     } else throw new IllegalStateException("Invalid hLevel: " + hLevel);
+  }
+
+  @Contract("_, _, _, _ -> new") private Expr.@NotNull UnivExpr withHomotopyLevel(
+    Expr.@NotNull AppExpr expr, int uLevel, @NotNull SourcePos pos, LevelVar<Level> h
+  ) {
+    if (uLevel >= 0) {
+      expectArgs(expr, 0);
+      var u = intLevel(LevelVar.Kind.Universe, uLevel);
+      return new Expr.UnivExpr(pos, u, h);
+    } else if (uLevel == Expr.RawUnivExpr.NEEDED) {
+      var args = expectArgs(expr, 1);
+      var u = levelVar(args.get(0), LevelVar.Kind.Universe);
+      return new Expr.UnivExpr(pos, u, h);
+    } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
+      expectArgs(expr, 0);
+      return new Expr.UnivExpr(pos, Level.Polymorphic.U_VAR, h);
+    } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
   }
 
   @NotNull private ImmutableSeq<@NotNull Arg<Expr>> expectArgs(Expr.@NotNull AppExpr expr, int n) {
