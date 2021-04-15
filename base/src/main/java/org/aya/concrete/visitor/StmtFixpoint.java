@@ -80,6 +80,10 @@ public interface StmtFixpoint extends ExprFixpoint<Unit>, Stmt.Visitor<Unit, Uni
     return unit;
   }
 
+  @Override default Unit visitBind(Stmt.@NotNull BindStmt bind, Unit unit) {
+    return unit;
+  }
+
   @Override default Unit visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
     return unit;
   }

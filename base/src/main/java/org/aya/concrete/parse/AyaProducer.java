@@ -105,7 +105,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .collect(ImmutableSeq.factory()));
   }
 
-
   @Override public Stmt.@NotNull BindStmt visitBind(AyaParser.BindContext ctx) {
     return new Stmt.BindStmt(
       sourcePosOf(ctx),

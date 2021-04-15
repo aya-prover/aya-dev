@@ -5,8 +5,8 @@ package org.aya.concrete.resolve.visitor;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
-import org.aya.concrete.QualifiedID;
 import org.aya.concrete.Generalize;
+import org.aya.concrete.QualifiedID;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
@@ -113,7 +113,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     return Unit.unit();
   }
 
-  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
-    return unit;
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, BinOpSet binOpSet) {
+    return Unit.unit();
   }
 }
