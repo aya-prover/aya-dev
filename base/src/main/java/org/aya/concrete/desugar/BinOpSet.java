@@ -7,6 +7,8 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
+import org.aya.concrete.desugar.error.BindSelfError;
+import org.aya.concrete.desugar.error.DesugarInterruptedException;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.CyclicOperatorError;
 import org.glavo.kala.collection.mutable.MutableHashSet;
@@ -65,6 +67,10 @@ public record BinOpSet(@NotNull Reporter reporter, @NotNull MutableHashSet<Elem>
     @NotNull MutableHashSet<Elem> looser
   ) {
     void register(@NotNull Stmt.BindPred pred, @NotNull Elem that, @NotNull Reporter reporter, @NotNull SourcePos sourcePos) {
+      if (this == that) {
+        reporter.report(new BindSelfError(sourcePos));
+        throw new DesugarInterruptedException();
+      }
       if (pred == Stmt.BindPred.Looser) thisIsLooserThan(that, reporter, sourcePos);
       else thisIsTighterThan(that, reporter, sourcePos);
     }

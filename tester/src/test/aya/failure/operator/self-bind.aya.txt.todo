@@ -1,0 +1,9 @@
+In file $FILE:2:0 ->
+
+  1 | def `+` test1 : Set => test1
+  2 | bind + looser +
+      ^-------------^
+  
+Error: Self bind is not allowed
+Desugaring interrupted due to error(s).
+What are you doing?
