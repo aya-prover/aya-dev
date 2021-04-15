@@ -61,7 +61,7 @@ public final class CoreDistiller implements
       Doc.symbol(" => "),
       term.body().toDoc()
     );
-    return nestedCall ? Doc.wrap("(", ")", doc) : doc;
+    return nestedCall ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
@@ -73,7 +73,7 @@ public final class CoreDistiller implements
       Doc.symbol(" -> "),
       term.body().toDoc()
     );
-    return nestedCall ? Doc.wrap("(", ")", doc) : doc;
+    return nestedCall ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Boolean nestedCall) {
@@ -84,7 +84,7 @@ public final class CoreDistiller implements
       Doc.plain(" ** "),
       term.params().last().toDoc()
     );
-    return nestedCall ? Doc.wrap("(", ")", doc) : doc;
+    return nestedCall ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
@@ -184,7 +184,7 @@ public final class CoreDistiller implements
           : Doc.braced(formatter.apply(false, arg.term()));
       }))
     );
-    return nestedCall ? Doc.wrap("(", ")", call) : call;
+    return nestedCall ? Doc.parened(call) : call;
   }
 
   private Doc visitTele(@NotNull SeqLike<Term.Param> telescope) {
@@ -227,8 +227,8 @@ public final class CoreDistiller implements
     boolean as = ctorAs != null;
     var withEx = ex ? ctorDoc : Doc.braced(ctorDoc);
     var withAs = !as ? withEx :
-      Doc.cat(Doc.wrap("(", ")", withEx), Doc.plain(" as "), Doc.plain(ctorAs.name()));
-    return !ex && !as ? withAs : nestedCall && !noParams ? Doc.wrap("(", ")", withAs) : withAs;
+      Doc.cat(Doc.parened(withEx), Doc.plain(" as "), Doc.plain(ctorAs.name()));
+    return !ex && !as ? withAs : nestedCall && !noParams ? Doc.parened(withAs) : withAs;
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {

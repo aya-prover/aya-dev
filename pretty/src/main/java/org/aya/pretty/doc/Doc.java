@@ -221,6 +221,9 @@ public sealed interface Doc extends Docile {
   static @NotNull Doc braced(Doc doc) {
     return wrap("{", "}", doc);
   }
+  static @NotNull Doc parened(Doc doc) {
+    return wrap("(", ")", doc);
+  }
 
   /**
    * Return conditional {@link Doc#empty()}
