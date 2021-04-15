@@ -166,7 +166,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
       var field = (DefVar<StructDef.Field, Decl.StructField>) var;
       var ty = Def.defResult(field);
-      var refExpr = new Expr.RefExpr(field.concrete.sourcePos(), field);
+      var refExpr = new Expr.RefExpr(field.concrete.sourcePos(), field, field.concrete.ref.name());
       // TODO[ice]: correct this RefTerm
       return refResult(refExpr, expected, ty, new RefTerm(new LocalVar(field.name())));
     } else {

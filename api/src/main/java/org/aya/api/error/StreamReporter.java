@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.api.error;
 
-import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
@@ -21,7 +20,7 @@ public record StreamReporter(@NotNull Path filePath, @NotNull String sourceCode,
   public static @NotNull String errorMsg(@NotNull Path filePath, @NotNull String sourceCode, @NotNull Problem problem) {
     if (problem.sourcePos() == SourcePos.NONE)
       return problem.describe().renderWithPageWidth(114514);
-    var error = problem.toPrettyError(filePath, Doc.empty(), sourceCode).toDoc();
+    var error = problem.toPrettyError(filePath, sourceCode).toDoc();
     return error.renderWithPageWidth(80);
   }
 }

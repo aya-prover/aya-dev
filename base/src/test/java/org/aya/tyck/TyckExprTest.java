@@ -41,7 +41,7 @@ public class TyckExprTest {
       ImmutableSeq.of(
         new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
         new Expr.Param(SourcePos.NONE, a, true)).view(),
-      new Expr.RefExpr(SourcePos.NONE, a));
+      new Expr.RefExpr(SourcePos.NONE, a, "a"));
   }
 
   @Test
@@ -51,7 +51,7 @@ public class TyckExprTest {
     final var lam = new Expr.LamExpr(SourcePos.NONE,
       new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
       new Expr.LamExpr(SourcePos.NONE, new Expr.Param(SourcePos.NONE, a, true),
-        new Expr.RefExpr(SourcePos.NONE, a)));
+        new Expr.RefExpr(SourcePos.NONE, a, "a")));
     idLamTestCase(lam, tycker());
   }
 
@@ -77,7 +77,7 @@ public class TyckExprTest {
   @Test
   public void uncurryLam() {
     var p = new LocalVar("p");
-    var pRef = new Expr.RefExpr(SourcePos.NONE, p);
+    var pRef = new Expr.RefExpr(SourcePos.NONE, p, "p");
     var f = new LocalVar("f");
     // \A B C f p. f(p.1, p.2)
     var uncurry = AyaProducer.buildLam(SourcePos.NONE,
@@ -90,7 +90,7 @@ public class TyckExprTest {
         .collect(ImmutableSeq.factory())
         .view(),
       new Expr.AppExpr(SourcePos.NONE,
-        new Expr.RefExpr(SourcePos.NONE, f),
+        new Expr.RefExpr(SourcePos.NONE, f, "p"),
         ImmutableSeq.of(
           new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, Either.left(1)), true),
           new Arg<>(new Expr.ProjExpr(SourcePos.NONE, pRef, Either.left(2)), true))));

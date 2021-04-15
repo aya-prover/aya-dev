@@ -33,10 +33,12 @@ public interface Problem {
   default @NotNull Stage stage() {
     return Stage.OTHER;
   }
+  default @NotNull Doc hint() {
+    return Doc.empty();
+  }
 
   default @NotNull PrettyError toPrettyError(
     @NotNull Path filePath,
-    @NotNull Doc noteMessage,
     @NotNull String sourceCode
   ) {
     return new PrettyError(
@@ -49,7 +51,7 @@ public interface Problem {
         case ERROR -> Doc.plain("Error:");
       },
       describe(),
-      noteMessage
+      hint()
     );
   }
 }

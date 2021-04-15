@@ -5,7 +5,7 @@ package org.aya.tyck;
 import org.aya.api.ref.Var;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.Signatured;
-import org.aya.concrete.Stmt;
+import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
@@ -50,8 +50,9 @@ public class TyckDeclTest {
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = ParseTest.parseDecl(code)._1;
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
-    decl.resolve();
-    decl.desugar(ThrowingReporter.INSTANCE);
+    var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
+    decl.resolve(opSet);
+    decl.desugar(ThrowingReporter.INSTANCE, opSet);
     var def = decl.tyck(ThrowingReporter.INSTANCE, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
@@ -84,8 +85,9 @@ public class TyckDeclTest {
     var ssr = new StmtShallowResolver(new EmptyModuleLoader());
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     decls.forEach(d -> d.accept(ssr, ctx));
-    decls.forEach(Stmt::resolve);
-    decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE));
+    var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
+    decls.forEach(s -> s.resolve(opSet));
+    decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE, opSet));
     return decls
       .map(i -> i instanceof Signatured s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
       .filter(Objects::nonNull);

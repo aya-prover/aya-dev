@@ -84,6 +84,12 @@ public class Highlighter implements
     return Unit.unit();
   }
 
+  @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, @NotNull Buffer<Symbol> buffer) {
+    buffer.append(new Symbol(LspRange.from(bind.op().sourcePos()), Symbol.Kind.Operator));
+    buffer.append(new Symbol(LspRange.from(bind.target().sourcePos()), Symbol.Kind.Operator));
+    return Unit.unit();
+  }
+
   @Override public Unit visitData(@NotNull Decl.DataDecl decl, @NotNull Buffer<Symbol> buffer) {
     return Unit.unit();
   }
