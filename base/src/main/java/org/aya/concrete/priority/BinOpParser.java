@@ -10,6 +10,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqView;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.DoubleLinkedBuffer;
 import org.glavo.kala.collection.mutable.LinkedBuffer;
 import org.glavo.kala.tuple.Tuple;
@@ -18,23 +19,17 @@ import org.glavo.kala.tuple.Tuple3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record BinOpParser(@NotNull BinOpSet opSet, @NotNull SeqView<@NotNull Elem> seq) {
-  // @NotNull public Expr build(@NotNull SourcePos sourcePos) {
-  //   if (seq.sizeEquals(3) && seq.get(1).assoc().infix) {
-  //     return new Expr.AppExpr(
-  //       sourcePos,
-  //       seq.get(1).expr,
-  //       ImmutableSeq.of(seq.first().toArg(), seq.last().toArg())
-  //     );
-  //   }
-  //   return new Expr.AppExpr(
-  //     sourcePos,
-  //     seq.first().expr(),
-  //     seq.view().drop(1)
-  //       .map(e -> new Arg<>(e.expr(), e.explicit()))
-  //       .toImmutableSeq()
-  //   );
-  // }
+public final class BinOpParser {
+  private final @NotNull BinOpSet opSet;
+  private final @NotNull SeqView<@NotNull Elem> seq;
+
+  public BinOpParser(@NotNull BinOpSet opSet, @NotNull SeqView<@NotNull Elem> seq) {
+    this.opSet = opSet;
+    this.seq = seq;
+  }
+
+  private final LinkedBuffer<Tuple2<BinOpParser.Elem, BinOpSet.Elem>> opStack = LinkedBuffer.of();
+  private final DoubleLinkedBuffer<BinOpParser.Elem> prefixes = DoubleLinkedBuffer.of();
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
     var first = seq.first();
@@ -53,9 +48,6 @@ public record BinOpParser(@NotNull BinOpSet opSet, @NotNull SeqView<@NotNull Ele
     // TODO[kiva]: the following code is just supposed to convert
     //  infix expr to prefix expr??? is it??
 
-    var opStack = LinkedBuffer.<Tuple2<BinOpParser.Elem, BinOpSet.Elem>>of();
-    var prefixes = DoubleLinkedBuffer.<BinOpParser.Elem>of();
-
     for (var expr : seq.reversed()) {
       var tryOp = expr.asOpDecl();
       if (opSet.isNotUsedAsOperator(tryOp)) prefixes.push(expr);
@@ -64,32 +56,50 @@ public record BinOpParser(@NotNull BinOpSet opSet, @NotNull SeqView<@NotNull Ele
         while (opStack.isNotEmpty()) {
           var cmp = opStack.peek()._2.compareWith(currentOp);
           // TODO[kiva]: report
-          if (cmp == BinOpSet.PredCmp.Undefined) throw new IllegalArgumentException("ambiguous operator precedence");
+          if (cmp == BinOpSet.PredCmp.Undefined)
+            throw new IllegalArgumentException("ambiguous operator precedence between " + currentOp.name()
+              + " and " + opStack.peek()._2.name());
           if (cmp == BinOpSet.PredCmp.Tighter) {
             var topOp = opStack.pop();
-            prefixes.push(topOp._1);
+            var appExpr = makeBinApp(topOp._1);
+            prefixes.push(new Elem(appExpr, topOp._1.explicit));
           } else break;
         }
         opStack.push(Tuple.of(expr, currentOp));
       }
     }
 
-    while (opStack.isNotEmpty()) prefixes.push(opStack.pop()._1);
+    while (opStack.isNotEmpty()) {
+      var op = opStack.pop();
+      var app = makeBinApp(op._1);
+      prefixes.push(new Elem(app, op._1.explicit));
+    }
 
     assert prefixes.isNotEmpty();
-    if (prefixes.sizeEquals(1)) return prefixes.pop().expr;
+    if (prefixes.sizeEquals(1)) return prefixes.first().expr;
 
-    return new Expr.AppExpr(
+    var r = new Expr.AppExpr(
       sourcePos,
       prefixes.first().expr,
       prefixes.view().drop(1)
         .map(e -> new Arg<>(e.expr(), e.explicit()))
         .toImmutableSeq()
     );
+    return r;
+  }
+
+  private Expr.@NotNull AppExpr makeBinApp(@NotNull Elem op) {
+    var rhs = prefixes.pop();
+    var lhs = prefixes.pop();
+    return new Expr.AppExpr(
+      SourcePos.NONE, // TODO: compute SourcePos from args
+      op.expr,
+      ImmutableSeq.of(lhs.toArg(), rhs.toArg())
+    );
   }
 
   /**
-   * something like {@link org.aya.api.util.Arg<Expr>}
+   * something like {@link Arg<Expr>}
    * but only used in binary operator building
    */
   public record Elem(@NotNull Expr expr, boolean explicit) {
