@@ -19,8 +19,8 @@ public record StreamReporter(@NotNull Path filePath, @NotNull String sourceCode,
 
   public static @NotNull String errorMsg(@NotNull Path filePath, @NotNull String sourceCode, @NotNull Problem problem) {
     if (problem.sourcePos() == SourcePos.NONE)
-      return problem.describe().renderWithPageWidth(114514);
+      return problem.describe().debugRender();
     var error = problem.toPrettyError(filePath, sourceCode).toDoc();
-    return error.renderWithPageWidth(80);
+    return error.renderWithPageWidth(120);
   }
 }

@@ -3,6 +3,7 @@
 package org.aya.tyck.error;
 
 import org.aya.api.error.ExprProblem;
+import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
@@ -18,14 +19,11 @@ public record BadTypeError(
   }
 
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("The expected type `"),
-      actualType.toDoc(),
-      Doc.plain("` is not a "),
-      expectedType,
-      Doc.plain(", therefore cannot type a term such as `"),
-      expr.toDoc(),
-      Doc.plain("`")
+    return Doc.vcat(
+      Doc.hcat(Doc.plain("Expected type: "), actualType.toDoc()),
+      Doc.hcat(Doc.plain("Normalized: "), actualType.normalize(NormalizeMode.NF).toDoc()),
+      Doc.hcat(Doc.plain("Want: "), expectedType),
+      Doc.hcat(Doc.plain("Because we want to type a term such as: "), expr.toDoc())
     );
   }
 }
