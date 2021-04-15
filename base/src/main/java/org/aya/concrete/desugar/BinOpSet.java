@@ -70,6 +70,7 @@ public record BinOpSet(@NotNull Reporter reporter, @NotNull MutableHashSet<Elem>
     }
 
     public PredCmp compareWith(@NotNull Elem that) {
+      if (this == that) return PredCmp.Equal;
       if (tighter.contains(that)) return PredCmp.Tighter;
       if (looser.contains(that)) return PredCmp.Looser;
       else return PredCmp.Undefined;
@@ -98,5 +99,6 @@ public record BinOpSet(@NotNull Reporter reporter, @NotNull MutableHashSet<Elem>
     Looser,
     Tighter,
     Undefined,
+    Equal,
   }
 }

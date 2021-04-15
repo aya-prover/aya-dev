@@ -63,8 +63,7 @@ public final class BinOpParser {
               peek._2.name(),
               peek._1.expr.sourcePos()));
             throw new DesugarInterruptedException();
-          }
-          if (cmp == BinOpSet.PredCmp.Tighter) {
+          } else if (cmp == BinOpSet.PredCmp.Tighter || cmp == BinOpSet.PredCmp.Equal) {
             var topOp = opStack.pop();
             var appExpr = makeBinApp(topOp._1);
             prefixes.push(new Elem(appExpr, topOp._1.explicit));
