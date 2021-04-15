@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.concrete.priority;
+package org.aya.concrete.desugar;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
@@ -8,6 +8,8 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
+import org.aya.concrete.desugar.error.AmbiguousPredError;
+import org.aya.concrete.desugar.error.DesugarInterruptedException;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -54,11 +56,14 @@ public final class BinOpParser {
       else {
         var currentOp = opSet.ensureHasElem(tryOp._1, tryOp._2);
         while (opStack.isNotEmpty()) {
-          var cmp = opStack.peek()._2.compareWith(currentOp);
-          // TODO[kiva]: report
-          if (cmp == BinOpSet.PredCmp.Undefined)
-            throw new IllegalArgumentException("ambiguous operator precedence between " + currentOp.name()
-              + " and " + opStack.peek()._2.name());
+          var peek = opStack.peek();
+          var cmp = peek._2.compareWith(currentOp);
+          if (cmp == BinOpSet.PredCmp.Undefined) {
+            opSet.reporter().report(new AmbiguousPredError(currentOp.name(),
+              peek._2.name(),
+              peek._1.expr.sourcePos()));
+            throw new DesugarInterruptedException();
+          }
           if (cmp == BinOpSet.PredCmp.Tighter) {
             var topOp = opStack.pop();
             var appExpr = makeBinApp(topOp._1);

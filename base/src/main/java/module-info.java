@@ -8,6 +8,8 @@ module org.aya {
   requires transitive org.glavo.kala.base;
   requires transitive org.glavo.kala.collection;
 
+  exports org.aya.concrete.desugar;
+  exports org.aya.concrete.desugar.error;
   exports org.aya.concrete.parse;
   exports org.aya.concrete.resolve.context;
   exports org.aya.concrete.resolve.module;
@@ -28,5 +30,4 @@ module org.aya {
   exports org.aya.tyck;
   exports org.aya.util.cancel;
   exports org.aya.util;
-  exports org.aya.concrete.priority;
 }

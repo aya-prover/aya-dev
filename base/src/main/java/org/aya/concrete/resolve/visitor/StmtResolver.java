@@ -2,12 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.visitor;
 
+import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.concrete.QualifiedID;
 import org.aya.concrete.Stmt;
-import org.aya.concrete.priority.BinOpSet;
+import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
@@ -41,20 +43,22 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, BinOpSet opSet) {
     var ctx = bind.context().value;
     if (ctx == null) throw new IllegalStateException("no shallow resolver?");
-    var op = resolveOp(ctx, bind.op());
-    var target = resolveOp(ctx, bind.target());
+    var op = resolveOp(opSet.reporter(), ctx, bind.op());
+    var target = resolveOp(opSet.reporter(), ctx, bind.target());
     bind.resolvedOp().value = op._2;
     bind.resolvedTarget().value = target._2;
-    opSet.bind(op, bind.pred(), target);
+    opSet.bind(op, bind.pred(), target, bind.sourcePos());
     return Unit.unit();
   }
 
-  private @NotNull Tuple2<String, Decl.@NotNull OpDecl> resolveOp(@NotNull Context ctx, @NotNull QualifiedID id) {
+  private @NotNull Tuple2<String, Decl.@NotNull OpDecl> resolveOp(@NotNull Reporter reporter,
+                                                                  @NotNull Context ctx,
+                                                                  @NotNull QualifiedID id) {
     var var = ctx.get(id);
     if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof Decl.OpDecl op) {
       return Tuple.of(defVar.name(), op);
     }
-    // TODO[kiva]: non-operator used in bind clause
+    reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
     throw new Context.ResolvingInterruptedException();
   }
 

@@ -1,10 +1,14 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.concrete.priority;
+package org.aya.concrete.desugar;
 
+import org.aya.api.error.Reporter;
+import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
+import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.resolve.error.CyclicOperatorError;
 import org.glavo.kala.collection.mutable.MutableHashSet;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -12,18 +16,19 @@ import org.glavo.kala.tuple.Tuple3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record BinOpSet(@NotNull MutableHashSet<Elem> ops) {
-  public BinOpSet() {
-    this(MutableHashSet.of());
+public record BinOpSet(@NotNull Reporter reporter, @NotNull MutableHashSet<Elem> ops) {
+  public BinOpSet(@NotNull Reporter reporter) {
+    this(reporter, MutableHashSet.of());
   }
 
   public void bind(@NotNull Tuple2<String, Decl.@NotNull OpDecl> op,
                    @NotNull Stmt.BindPred pred,
-                   @NotNull Tuple2<String, Decl.@NotNull OpDecl> target) {
+                   @NotNull Tuple2<String, Decl.@NotNull OpDecl> target,
+                   @NotNull SourcePos sourcePos) {
     var opElem = ensureHasElem(op._1, op._2);
     var targetElem = ensureHasElem(target._1, target._2);
-    opElem.register(pred, targetElem);
-    targetElem.register(pred.invert(), opElem);
+    opElem.register(pred, targetElem, reporter, sourcePos);
+    targetElem.register(pred.invert(), opElem, reporter, sourcePos);
   }
 
   public Assoc assocOf(@Nullable Tuple3<String, Decl.@NotNull OpDecl, String> opDecl) {
@@ -42,7 +47,7 @@ public record BinOpSet(@NotNull MutableHashSet<Elem> ops) {
     if (opData == null) {
       opData = Tuple.of(defName, Assoc.NoFix);
     }
-    var newElem = new Elem(opDecl, opData._1, opData._2,
+    var newElem = new Elem(opDecl, opData._1 != null ? opData._1 : defName, opData._2,
       MutableHashSet.of(), MutableHashSet.of());
     ops.add(newElem);
     return newElem;
@@ -50,14 +55,14 @@ public record BinOpSet(@NotNull MutableHashSet<Elem> ops) {
 
   public record Elem(
     @NotNull Decl.OpDecl op,
-    @Nullable String name,
+    @NotNull String name,
     @NotNull Assoc assoc,
     @NotNull MutableHashSet<Elem> tighter,
     @NotNull MutableHashSet<Elem> looser
   ) {
-    void register(@NotNull Stmt.BindPred pred, @NotNull Elem that) {
-      if (pred == Stmt.BindPred.Looser) thisIsLooserThan(that);
-      else thisIsTighterThan(that);
+    void register(@NotNull Stmt.BindPred pred, @NotNull Elem that, @NotNull Reporter reporter, @NotNull SourcePos sourcePos) {
+      if (pred == Stmt.BindPred.Looser) thisIsLooserThan(that, reporter, sourcePos);
+      else thisIsTighterThan(that, reporter, sourcePos);
     }
 
     public PredCmp compareWith(@NotNull Elem that) {
@@ -66,15 +71,21 @@ public record BinOpSet(@NotNull MutableHashSet<Elem> ops) {
       else return PredCmp.Undefined;
     }
 
-    private void thisIsLooserThan(@NotNull Elem that) {
-      // TODO[kiva]: report
-      if (compareWith(that) == PredCmp.Tighter) throw new IllegalStateException();
+    private void thisIsLooserThan(@NotNull Elem that, @NotNull Reporter reporter, @NotNull SourcePos sourcePos) {
+      if (compareWith(that) == PredCmp.Tighter) {
+        reporter.report(new CyclicOperatorError(sourcePos,
+          name, that.name, Stmt.BindPred.Tighter));
+        throw new Context.ResolvingInterruptedException();
+      }
       looser.add(that);
     }
 
-    private void thisIsTighterThan(@NotNull Elem that) {
-      // TODO[kiva]: report
-      if (compareWith(that) == PredCmp.Looser) throw new IllegalStateException();
+    private void thisIsTighterThan(@NotNull Elem that, @NotNull Reporter reporter, @NotNull SourcePos sourcePos) {
+      if (compareWith(that) == PredCmp.Looser) {
+        reporter.report(new CyclicOperatorError(sourcePos,
+          name, that.name, Stmt.BindPred.Looser));
+        throw new Context.ResolvingInterruptedException();
+      }
       tighter.add(that);
     }
   }

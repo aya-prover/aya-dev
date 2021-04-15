@@ -8,10 +8,10 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.concrete.desugar.BinOpParser;
+import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.pretty.ExprPrettier;
-import org.aya.concrete.priority.BinOpParser;
-import org.aya.concrete.priority.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
@@ -44,7 +44,7 @@ public sealed interface Expr extends ConcreteExpr {
     return accept(ExprResolver.INSTANCE, context);
   }
 
-  default @NotNull Expr resolve(Reporter reporter) {
+  default @NotNull Expr resolve(@NotNull Reporter reporter) {
     return resolve(new EmptyContext(reporter));
   }
 

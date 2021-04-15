@@ -3,9 +3,9 @@
 package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.pretty.StmtPrettier;
-import org.aya.concrete.priority.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.pretty.doc.Doc;
@@ -116,6 +116,13 @@ public sealed interface Stmt extends Docile
       return switch (this) {
         case Tighter -> Looser;
         case Looser -> Tighter;
+      };
+    }
+
+    @Override public String toString() {
+      return switch (this) {
+        case Tighter -> "tighter";
+        case Looser -> "looser";
       };
     }
   }

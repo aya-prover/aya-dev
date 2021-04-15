@@ -3,8 +3,6 @@
 package org.aya.concrete.desugar;
 
 import org.aya.concrete.*;
-import org.aya.concrete.priority.BinOpParser;
-import org.aya.concrete.priority.BinOpSet;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
