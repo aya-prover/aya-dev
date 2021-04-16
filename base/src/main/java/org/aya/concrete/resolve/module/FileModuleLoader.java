@@ -64,6 +64,7 @@ public final record FileModuleLoader(
     program.forEach(s -> s.accept(shallowResolver, context));
     var opSet = new BinOpSet(reporter);
     program.forEach(s -> s.resolve(opSet));
+    opSet.sort();
     program.forEach(s -> s.desugar(reporter, opSet));
     onResolved.runChecked();
     // in case we have un-messaged TyckException

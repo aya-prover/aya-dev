@@ -57,7 +57,7 @@ public final class BinOpParser {
         var currentOp = opSet.ensureHasElem(tryOp._1, tryOp._2);
         while (opStack.isNotEmpty()) {
           var peek = opStack.peek();
-          var cmp = peek._2.compareWith(currentOp);
+          var cmp = opSet.compare(peek._2, currentOp);
           if (cmp == BinOpSet.PredCmp.Undefined) {
             opSet.reporter().report(new OperatorProblem.AmbiguousPredError(currentOp.name(),
               peek._2.name(),
