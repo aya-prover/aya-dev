@@ -27,6 +27,10 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     return StmtFixpoint.super.visitApp(expr, unit);
   }
 
+  @Override public @NotNull Expr visitRawUniv(@NotNull Expr.RawUnivExpr expr, Unit unit) {
+    return desugarUniv(new Expr.AppExpr(expr.sourcePos(), expr, ImmutableSeq.empty()), expr);
+  }
+
   @NotNull private Expr.UnivExpr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) {
     var uLevel = univ.uLevel();
     var hLevel = univ.hLevel();

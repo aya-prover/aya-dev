@@ -131,17 +131,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
+    var u = expr.uLevel().known(equations.vars());
+    if (u == null) u = new Level.Reference(universe, 0);
+    var h = expr.hLevel().known(equations.vars());
+    if (h == null) h = new Level.Reference(homotopy, 0);
+    var sort = new Sort(u, h);
     if (term == null) {
-      var u = expr.uLevel().known(equations.vars());
-      if (u == null) u = new Level.Reference(universe, 0);
-      var h = expr.hLevel().known(equations.vars());
-      if (h == null) h = new Level.Reference(homotopy, 0);
-      var sort = new Sort(u, h);
       return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ()));
     }
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
-      // TODO[level]
-      return new Result(new FormTerm.Univ(Sort.OMEGA), univ);
+      equations.eqns().append(new LevelEqn(sort.hLevel(), univ.sort().hLevel()));
+      equations.eqns().append(new LevelEqn(sort.uLevel(), univ.sort().uLevel()));
+      return new Result(new FormTerm.Univ(sort), univ);
     }
     return wantButNo(expr, term, "universe term");
   }

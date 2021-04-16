@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class LevelEqn {
+public record LevelEqn(@NotNull Level lhs, @NotNull Level rhs) {
   /**
    * A set of level equations.
    */
