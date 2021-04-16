@@ -49,6 +49,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+/**
+ * @apiNote make sure to instantiate this class once for each definition.
+ * Do <em>not</em> use multiple instances in the tycking of one definition
+ * and do <em>not</em> reuse instances of this class in the tycking of multiple definitions.
+ */
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
@@ -136,12 +141,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var h = expr.hLevel().known(equations.vars());
     if (h == null) h = new Level.Reference(homotopy, 0);
     var sort = new Sort(u, h);
-    if (term == null) {
-      return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ()));
-    }
+    if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ()));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
-      equations.eqns().append(new LevelEqn(sort.hLevel(), univ.sort().hLevel()));
-      equations.eqns().append(new LevelEqn(sort.uLevel(), univ.sort().uLevel()));
+      equations.eqns().append(new LevelEqn(sort.succ(), univ.sort()));
       return new Result(new FormTerm.Univ(sort), univ);
     }
     return wantButNo(expr, term, "universe term");
