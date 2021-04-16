@@ -18,10 +18,10 @@ public class LevelEqn {
    * A set of level equations.
    */
   public record Set(
-    @NotNull Buffer<@NotNull LevelVar> vars,
+    @NotNull Buffer<@NotNull LevelVar<Level>> vars,
     @NotNull Buffer<@NotNull LevelEqn> eqns
   ) {
-    public boolean add(Sort.@NotNull Level level1, @NotNull Sort.Level level2, @NotNull Ordering cmp, Expr expr) {
+    public boolean add(@NotNull Level level1, @NotNull Level level2, @NotNull Ordering cmp, Expr expr) {
       throw new UnsupportedOperationException("#93");
     }
 

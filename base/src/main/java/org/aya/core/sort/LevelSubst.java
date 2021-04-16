@@ -3,11 +3,10 @@
 package org.aya.core.sort;
 
 import org.aya.api.ref.LevelVar;
-import org.aya.core.sort.Sort.Level;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.collection.mutable.MutableTreeMap;
+import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * References in Arend:
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface LevelSubst {
   boolean isEmpty();
-  @Nullable Level get(@NotNull LevelVar<Level> var);
+  @NotNull Option<Level> get(@NotNull LevelVar<Level> var);
   @NotNull LevelSubst subst(@NotNull LevelSubst subst);
   @NotNull LevelSubst EMPTY = new Simple(MutableTreeMap.of((o1, o2) -> {
     throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
@@ -33,8 +32,8 @@ public interface LevelSubst {
       return map.isEmpty();
     }
 
-    @Override public @Nullable Level get(@NotNull LevelVar<Level> var) {
-      return map.getOrNull(var);
+    @Override public @NotNull Option<Level> get(@NotNull LevelVar<Level> var) {
+      return map.getOption(var);
     }
 
     @Override public @NotNull LevelSubst subst(@NotNull LevelSubst subst) {

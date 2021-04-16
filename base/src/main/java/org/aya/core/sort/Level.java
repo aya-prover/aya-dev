@@ -17,6 +17,10 @@ public sealed interface Level {
     return (LevelVar<Level>) levelVar;
   }
   @NotNull Level succ();
+  default @NotNull Level subst(@NotNull LevelSubst subst) {
+    return this;
+  }
+
   /**
    * Unlike {@link Reference}, this one is the implicit polymorphic level.
    * It is related to the underlying definition.
@@ -28,6 +32,17 @@ public sealed interface Level {
 
     @Override public @NotNull Level succ() {
       return new Polymorphic(lift + 1);
+    }
+  }
+
+  final class Infinity implements Level {
+    public static final @NotNull Infinity INSTANCE = new Infinity();
+
+    private Infinity() {
+    }
+
+    @Override public @NotNull Level succ() {
+      return this;
     }
   }
 
@@ -44,6 +59,10 @@ public sealed interface Level {
   record Reference(@NotNull LevelVar<Level> ref, int lift) implements Level {
     @Override public @NotNull Level succ() {
       return new Reference(ref, lift + 1);
+    }
+
+    @Override public @NotNull Level subst(@NotNull LevelSubst subst) {
+      return subst.get(ref).getOrDefault(this);
     }
   }
 }

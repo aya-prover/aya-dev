@@ -5,7 +5,6 @@ package org.aya.core.sort;
 import org.aya.concrete.Expr;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Highly inspired from Arend.
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) {
   // TODO[level]
-  public static final @NotNull Sort OMEGA = new Sort(new Level(), new Level());
+  public static final @NotNull Sort OMEGA = new Sort(Level.Infinity.INSTANCE, Level.Infinity.INSTANCE);
 
   public @NotNull Sort substSort(@NotNull LevelSubst subst) {
     // TODO[level]
@@ -27,22 +26,5 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) {
   ) {
     // TODO[level]
     return true;
-  }
-
-  public static class Level {
-    public Level subst(@NotNull LevelSubst subst) {
-      throw new UnsupportedOperationException("#93");
-    }
-
-    @Override public String toString() {
-      return "Level";
-    }
-
-    public static boolean compare(
-      @NotNull Level level1, @NotNull Level level2, @NotNull Ordering cmp,
-      @Nullable LevelEqn.Set equations, Expr expr
-    ) {
-      throw new UnsupportedOperationException("#93");
-    }
   }
 }
