@@ -5,6 +5,7 @@ package org.aya.core.def;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
+import org.aya.core.sort.LevelVar;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -22,6 +23,7 @@ public final record StructDef(
   @NotNull ImmutableSeq<Term.Param> contextTele,
 
   @NotNull ImmutableSeq<Term.Param> telescope,
+  @NotNull ImmutableSeq<LevelVar> levels,
   @NotNull Term result,
   @NotNull ImmutableSeq<Field> fields
 ) implements Def {

@@ -147,7 +147,7 @@ public record StmtTycker(
     decl.signature = new Def.Signature(ctxTele, tele, result);
     var body = decl.body.map(clause -> visitCtor(clause, tycker));
     var collectedBody = body.collect(ImmutableSeq.factory());
-    return new DataDef(decl.ref, ctxTele, tele, result, collectedBody);
+    return new DataDef(decl.ref, ctxTele, tele, tycker.extractLevels(), result, collectedBody);
   }
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
@@ -155,7 +155,7 @@ public record StmtTycker(
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     decl.signature = new Def.Signature(ctxTele, tele, result);
-    return new StructDef(decl.ref, ctxTele, tele, result, decl.fields.map(field -> visitField(field, tycker)));
+    return new StructDef(decl.ref, ctxTele, tele, tycker.extractLevels(), result, decl.fields.map(field -> visitField(field, tycker)));
   }
 
   @Override public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
@@ -190,11 +190,12 @@ public record StmtTycker(
       left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
       right -> patTycker.elabClause(right, signature, cumulativeCtx.localMap())));
     var resultTy = what._1;
-    if (what._2.isLeft())
-      return new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.left(what._2.getLeftValue()));
+    var factory = FnDef.factory(body ->
+      new FnDef(decl.ref, ctxTele, resultTele, tycker.extractLevels(), resultTy, body));
+    if (what._2.isLeft()) return factory.apply(Either.left(what._2.getLeftValue()));
     var elabClauses = what._2.getRightValue();
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
-    var elaborated = new FnDef(decl.ref, ctxTele, resultTele, resultTy, Either.right(matchings));
+    var elaborated = factory.apply(Either.right(matchings));
     ensureConfluent(tycker, signature.value, cumulativeCtx, elabClauses, matchings, decl.sourcePos, true);
     return elaborated;
   }

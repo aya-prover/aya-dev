@@ -31,6 +31,7 @@ import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -50,9 +51,9 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * @apiNote make sure to instantiate this class once for each definition.
- * Do <em>not</em> use multiple instances in the tycking of one definition
- * and do <em>not</em> reuse instances of this class in the tycking of multiple definitions.
+ * @apiNote make sure to instantiate this class once for each {@link Decl}.
+ * Do <em>not</em> use multiple instances in the tycking of one {@link Decl}
+ * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl}s.
  */
 public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
@@ -68,6 +69,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public void traceEntrance(@NotNull Expr expr, Term term) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
+  }
+
+  public @NotNull ImmutableSeq<LevelVar> extractLevels() {
+    return Seq.of(homotopy, universe).view()
+      // TODO[kala]: https://github.com/Glavo/kala-common/issues/35
+      .concat(equations.vars().valuesView().toImmutableSeq()).toImmutableSeq();
   }
 
   @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
