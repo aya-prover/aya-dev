@@ -59,7 +59,7 @@ public final class OperatorProblem {
     @Override public @NotNull Doc describe() {
       return Doc.cat(
         Doc.plain("Precedence circle found between "),
-        Doc.plain(items.view().map(BinOpSet.Elem::name).joinToString(", "))
+        Doc.plain(items.view().map(BinOpSet.Elem::name).sorted().joinToString(", "))
       );
     }
 
