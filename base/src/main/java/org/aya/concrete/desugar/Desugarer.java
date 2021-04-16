@@ -7,9 +7,8 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
-import org.aya.concrete.desugar.error.BadLevelError;
 import org.aya.concrete.desugar.error.DesugarInterruptedException;
-import org.aya.concrete.desugar.error.WrongLevelError;
+import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.core.sort.Level;
 import org.aya.tyck.ExprTycker;
@@ -79,7 +78,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   @NotNull private ImmutableSeq<@NotNull Arg<Expr>> expectArgs(Expr.@NotNull AppExpr expr, int n) {
     var args = expr.arguments();
     if (!args.sizeEquals(n)) {
-      reporter.report(new WrongLevelError(expr, n));
+      reporter.report(new LevelProblem.BadTypeExpr(expr, n));
       throw new DesugarInterruptedException();
     }
     return args;
@@ -89,9 +88,13 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     var u = new LevelVar<Level>(Constants.ANONYMOUS_PREFIX, kind);
     if (uArg.term() instanceof Expr.LitIntExpr uLit) u.level().value = new Level.Constant(uLit.integer());
     else if (uArg.term() instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof LevelVar<?> lv) {
+      if (lv.kind() != kind) {
+        reporter.report(new LevelProblem.BadLevelKind(ref, lv.kind()));
+        throw new DesugarInterruptedException();
+      }
       u.level().value = new Level.Reference(Level.narrow(lv), 0);
     } else {
-      reporter.report(new BadLevelError(uArg.term()));
+      reporter.report(new LevelProblem.BadLevelExpr(uArg.term()));
       throw new ExprTycker.TyckerException();
     }
     return u;
