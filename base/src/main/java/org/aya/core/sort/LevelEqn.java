@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.sort;
 
-import org.aya.api.ref.LevelVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
+import org.aya.concrete.LevelPrevar;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -18,7 +18,7 @@ public class LevelEqn {
    * A set of level equations.
    */
   public record Set(
-    @NotNull Buffer<@NotNull LevelVar<Level>> vars,
+    @NotNull Buffer<@NotNull LevelPrevar> vars,
     @NotNull Buffer<@NotNull LevelEqn> eqns
   ) {
     public boolean add(@NotNull Level level1, @NotNull Level level2, @NotNull Ordering cmp, Expr expr) {

@@ -4,9 +4,9 @@ package org.aya.concrete.desugar;
 
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
+import org.aya.concrete.LevelPrevar;
 import org.aya.concrete.desugar.error.DesugarInterruptedException;
 import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
@@ -34,41 +34,41 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     if (hLevel == Expr.RawUnivExpr.NEEDED) {
       if (uLevel == Expr.RawUnivExpr.NEEDED) {
         var args = expectArgs(expr, 2);
-        var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
-        var u = levelVar(args.get(1), LevelVar.Kind.Universe);
+        var h = levelVar(args.get(0), LevelPrevar.Kind.Homotopy);
+        var u = levelVar(args.get(1), LevelPrevar.Kind.Universe);
         return new Expr.UnivExpr(pos, u, h);
       } else if (uLevel >= 0) {
         var args = expectArgs(expr, 1);
-        var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
-        return new Expr.UnivExpr(pos, Level.Constant.make(uLevel, LevelVar.Kind.Universe), h);
+        var h = levelVar(args.get(0), LevelPrevar.Kind.Homotopy);
+        return new Expr.UnivExpr(pos, Level.Constant.make(uLevel, LevelPrevar.Kind.Universe), h);
       } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
         var args = expectArgs(expr, 1);
-        var h = levelVar(args.get(0), LevelVar.Kind.Homotopy);
-        return new Expr.UnivExpr(pos, Level.Polymorphic.make(0, LevelVar.Kind.Universe), h);
+        var h = levelVar(args.get(0), LevelPrevar.Kind.Homotopy);
+        return new Expr.UnivExpr(pos, Level.Polymorphic.make(0, LevelPrevar.Kind.Universe), h);
       } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
     } else if (hLevel >= 0) {
-      return withHomotopyLevel(expr, uLevel, pos, Level.Constant.make(hLevel, LevelVar.Kind.Homotopy));
+      return withHomotopyLevel(expr, uLevel, pos, Level.Constant.make(hLevel, LevelPrevar.Kind.Homotopy));
     } else if (hLevel == Expr.RawUnivExpr.POLYMORPHIC) {
-      return withHomotopyLevel(expr, uLevel, pos, Level.Polymorphic.make(0, LevelVar.Kind.Homotopy));
+      return withHomotopyLevel(expr, uLevel, pos, Level.Polymorphic.make(0, LevelPrevar.Kind.Homotopy));
     } else if (hLevel == Expr.RawUnivExpr.INFINITY) {
       return withHomotopyLevel(expr, uLevel, pos, Level.Infinity.HOMOTOPY);
     } else throw new IllegalStateException("Invalid hLevel: " + hLevel);
   }
 
   @Contract("_, _, _, _ -> new") private Expr.@NotNull UnivExpr withHomotopyLevel(
-    Expr.@NotNull AppExpr expr, int uLevel, @NotNull SourcePos pos, LevelVar<Level> h
+    Expr.@NotNull AppExpr expr, int uLevel, @NotNull SourcePos pos, LevelPrevar h
   ) {
     if (uLevel >= 0) {
       expectArgs(expr, 0);
-      var u = Level.Constant.make(uLevel, LevelVar.Kind.Universe);
+      var u = Level.Constant.make(uLevel, LevelPrevar.Kind.Universe);
       return new Expr.UnivExpr(pos, u, h);
     } else if (uLevel == Expr.RawUnivExpr.NEEDED) {
       var args = expectArgs(expr, 1);
-      var u = levelVar(args.get(0), LevelVar.Kind.Universe);
+      var u = levelVar(args.get(0), LevelPrevar.Kind.Universe);
       return new Expr.UnivExpr(pos, u, h);
     } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
       expectArgs(expr, 0);
-      return new Expr.UnivExpr(pos, Level.Polymorphic.make(0, LevelVar.Kind.Universe), h);
+      return new Expr.UnivExpr(pos, Level.Polymorphic.make(0, LevelPrevar.Kind.Universe), h);
     } else if (uLevel == Expr.RawUnivExpr.INFINITY) {
       expectArgs(expr, 0);
       return new Expr.UnivExpr(pos, Level.Infinity.UNIVERSE, h);
@@ -84,20 +84,20 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     return args;
   }
 
-  private @NotNull LevelVar<Level> levelVar(Arg<Expr> uArg, LevelVar.Kind kind) {
-    var u = new LevelVar<Level>(Constants.ANONYMOUS_PREFIX, kind);
-    if (uArg.term() instanceof Expr.LitIntExpr uLit) u.level().value = new Level.Constant(uLit.integer());
-    else if (uArg.term() instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof LevelVar<?> lv) {
+  private @NotNull LevelPrevar levelVar(Arg<Expr> uArg, LevelPrevar.Kind kind) {
+    Level level;
+    if (uArg.term() instanceof Expr.LitIntExpr uLit) level = new Level.Constant(uLit.integer());
+    else if (uArg.term() instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof LevelPrevar lv) {
       if (lv.kind() != kind) {
         reporter.report(new LevelProblem.BadLevelKind(ref, lv.kind()));
         throw new DesugarInterruptedException();
       }
-      u.level().value = new Level.Reference(Level.narrow(lv), 0);
+      level = new Level.Reference(lv, 0);
     } else {
       reporter.report(new LevelProblem.BadLevelExpr(uArg.term()));
       throw new ExprTycker.TyckerException();
     }
-    return u;
+    return new LevelPrevar(Constants.ANONYMOUS_PREFIX, kind, level);
   }
 
   @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {

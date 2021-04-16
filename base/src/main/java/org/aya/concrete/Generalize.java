@@ -3,8 +3,6 @@
 package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelVar;
-import org.aya.core.sort.Level;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +28,8 @@ public sealed interface Generalize extends Stmt {
 
   record Levels(
     @NotNull SourcePos sourcePos,
-    @NotNull LevelVar.Kind kind,
-    @NotNull ImmutableSeq<Tuple2<SourcePos, LevelVar<Level>>> levels
+    @NotNull LevelPrevar.Kind kind,
+    @NotNull ImmutableSeq<Tuple2<SourcePos, LevelPrevar>> levels
   ) implements Generalize {
     @Override public <P, R> R doAccept(@NotNull Generalize.Visitor<P, R> visitor, P p) {
       return visitor.visitLevels(this, p);

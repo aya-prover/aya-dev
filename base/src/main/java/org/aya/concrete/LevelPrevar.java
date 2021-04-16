@@ -1,23 +1,23 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.api.ref;
+package org.aya.concrete;
 
-import org.glavo.kala.value.Ref;
+import org.aya.api.ref.Var;
+import org.aya.core.sort.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @param <Level> solved level
- * @param level   null if unsolved
+ * @param level null if unsolved
  * @author ice1000
  */
-public record LevelVar<Level>(
+public record LevelPrevar(
   @NotNull String name,
   @NotNull Kind kind,
-  @NotNull Ref<@Nullable Level> level
+  @Nullable Level level
 ) implements Var {
-  public LevelVar(@NotNull String name, @NotNull Kind kind) {
-    this(name, kind, new Ref<>());
+  public LevelPrevar(@NotNull String name, @NotNull Kind kind) {
+    this(name, kind, null);
   }
 
   public enum Kind {

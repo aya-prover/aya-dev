@@ -7,7 +7,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.Assoc;
@@ -16,7 +15,6 @@ import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.core.def.PrimDef;
-import org.aya.core.sort.Level;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
@@ -99,9 +97,9 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public Generalize visitLevels(AyaParser.LevelsContext ctx) {
-    var kind = ctx.HLEVEL() != null ? LevelVar.Kind.Homotopy : LevelVar.Kind.Universe;
+    var kind = ctx.HLEVEL() != null ? LevelPrevar.Kind.Homotopy : LevelPrevar.Kind.Universe;
     return new Generalize.Levels(sourcePosOf(ctx), kind, visitIds(ctx.ids())
-      .map(t -> Tuple.of(t._1, new LevelVar<Level>(t._2, LevelVar.Kind.Universe)))
+      .map(t -> Tuple.of(t._1, new LevelPrevar(t._2, LevelPrevar.Kind.Universe)))
       .collect(ImmutableSeq.factory()));
   }
 

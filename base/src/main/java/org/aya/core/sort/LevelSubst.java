@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.sort;
 
-import org.aya.api.ref.LevelVar;
+import org.aya.concrete.LevelPrevar;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.collection.mutable.MutableTreeMap;
 import org.glavo.kala.control.Option;
@@ -17,14 +17,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface LevelSubst {
   boolean isEmpty();
-  @NotNull Option<Level> get(@NotNull LevelVar<Level> var);
+  @NotNull Option<Level> get(@NotNull LevelPrevar var);
   @NotNull LevelSubst subst(@NotNull LevelSubst subst);
   @NotNull LevelSubst EMPTY = new Simple(MutableTreeMap.of((o1, o2) -> {
     throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
   }));
 
-  record Simple(@NotNull MutableMap<@NotNull LevelVar<Level>, @NotNull Level> map) implements LevelSubst {
-    public void add(@NotNull LevelVar<Level> var, @NotNull Level level) {
+  record Simple(@NotNull MutableMap<@NotNull LevelPrevar, @NotNull Level> map) implements LevelSubst {
+    public void add(@NotNull LevelPrevar var, @NotNull Level level) {
       map.put(var, level);
     }
 
@@ -32,7 +32,7 @@ public interface LevelSubst {
       return map.isEmpty();
     }
 
-    @Override public @NotNull Option<Level> get(@NotNull LevelVar<Level> var) {
+    @Override public @NotNull Option<Level> get(@NotNull LevelPrevar var) {
       return map.getOption(var);
     }
 
