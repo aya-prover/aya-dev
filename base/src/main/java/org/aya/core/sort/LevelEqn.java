@@ -19,7 +19,8 @@ public record LevelEqn(@NotNull Sort lhs, @NotNull Sort rhs) {
    * A set of level equations.
    */
   public record Set(
-    @NotNull MutableMap<LevelPrevar, LevelVar> vars,
+    @NotNull MutableMap<LevelPrevar, LevelVar> map,
+    @NotNull Buffer<LevelVar> vars,
     @NotNull Buffer<@NotNull LevelEqn> eqns
   ) {
     public boolean add(@NotNull Level level1, @NotNull Level level2, @NotNull Ordering cmp, Expr expr) {
@@ -27,17 +28,17 @@ public record LevelEqn(@NotNull Sort lhs, @NotNull Sort rhs) {
     }
 
     public void add(@NotNull LevelEqn.Set other) {
-      vars.putAll(other.vars);
+      map.putAll(other.map);
       eqns.appendAll(other.eqns);
     }
 
     public void clear() {
-      vars.clear();
+      map.clear();
       eqns.clear();
     }
 
     public boolean isEmpty() {
-      return vars.isEmpty() && eqns.isEmpty();
+      return map.isEmpty() && eqns.isEmpty();
     }
 
     public @Nullable Seq<LevelEqn> solve(@NotNull Map<Var, Integer> solution) {

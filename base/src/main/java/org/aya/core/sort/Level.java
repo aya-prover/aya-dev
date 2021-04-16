@@ -44,6 +44,10 @@ public sealed interface Level {
   }
 
   record Reference(@NotNull LevelVar ref, int lift) implements Level {
+    public Reference(@NotNull LevelVar ref) {
+      this(ref, 0);
+    }
+
     @Override public @NotNull Level succ() {
       return new Reference(ref, lift + 1);
     }

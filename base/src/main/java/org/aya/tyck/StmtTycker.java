@@ -13,6 +13,7 @@ import org.aya.concrete.Signatured;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.sort.Level;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
@@ -81,11 +82,12 @@ public record StmtTycker(
         FormTerm.Pi.make(false, core.telescope(), core.result()),
         decl.result
       );
-      decl.signature = new Def.Signature(ImmutableSeq.empty(), tele, result);
+      decl.signature = new Def.Signature(ImmutableSeq.empty(), ImmutableSeq.empty(), tele, result);
     } else if (decl.result != null) {
       var result = decl.result.accept(tycker, null).wellTyped();
       tycker.unifyTyThrowing(result, core.result(), decl.result);
-    } else decl.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
+    } else decl.signature = new Def.Signature(ImmutableSeq.empty(),
+      ImmutableSeq.empty(), core.telescope(), core.result());
     return core;
   }
 
@@ -95,8 +97,9 @@ public record StmtTycker(
     assert dataSig != null;
     var dataContextArgs = dataSig.contextParam().map(Term.Param::toArg);
     var dataArgs = dataSig.param().map(Term.Param::toArg);
-    var dataCall = new CallTerm.Data(dataRef, dataContextArgs, dataArgs);
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), dataSig.param(), dataCall));
+    var sortParam = dataSig.sortParam();
+    var dataCall = new CallTerm.Data(dataRef, dataContextArgs, sortParam.map(Level.Reference::new), dataArgs);
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), sortParam, dataSig.param(), dataCall));
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
@@ -109,7 +112,7 @@ public record StmtTycker(
         .<Var, Term>toImmutableMap();
       dataCall = (CallTerm.Data) dataCall.subst(subst);
     }
-    var signature = new Def.Signature(ImmutableSeq.of(), tele, dataCall);
+    var signature = new Def.Signature(ImmutableSeq.of(), sortParam, tele, dataCall);
     ctor.signature = signature;
     var cumulativeCtx = tycker.localCtx.derive();
     var elabClauses = elabClauses(patTycker, patSubst, signature, cumulativeCtx, ctor.clauses);
@@ -144,7 +147,7 @@ public record StmtTycker(
     var ctxTele = tycker.localCtx.extract();
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
-    decl.signature = new Def.Signature(ctxTele, tele, result);
+    decl.signature = new Def.Signature(ctxTele, tycker.extractLevels(), tele, result);
     var body = decl.body.map(clause -> visitCtor(clause, tycker));
     var collectedBody = body.collect(ImmutableSeq.factory());
     return new DataDef(decl.ref, ctxTele, tele, tycker.extractLevels(), result, collectedBody);
@@ -154,7 +157,7 @@ public record StmtTycker(
     var ctxTele = tycker.localCtx.extract();
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
-    decl.signature = new Def.Signature(ctxTele, tele, result);
+    decl.signature = new Def.Signature(ctxTele, tycker.extractLevels(), tele, result);
     return new StructDef(decl.ref, ctxTele, tele, tycker.extractLevels(), result, decl.fields.map(field -> visitField(field, tycker)));
   }
 
@@ -162,7 +165,7 @@ public record StmtTycker(
     var tele = checkTele(tycker, field.telescope);
     var structRef = field.structRef;
     var result = field.result.accept(tycker, null).wellTyped();
-    field.signature = new Def.Signature(ImmutableSeq.of(), tele, result);
+    field.signature = new Def.Signature(ImmutableSeq.of(), tycker.extractLevels(), tele, result);
     var cumulativeCtx = tycker.localCtx.derive();
     var patTycker = new PatTycker(tycker);
     var elabClauses = elabClauses(patTycker, null, field.signature, cumulativeCtx, field.clauses);
@@ -182,7 +185,7 @@ public record StmtTycker(
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);
     tracing(GenericBuilder::reduce);
-    var signature = new Ref<>(new Def.Signature(ctxTele, resultTele, resultRes.wellTyped()));
+    var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes.wellTyped()));
     decl.signature = signature.value;
     var patTycker = new PatTycker(tycker);
     var cumulativeCtx = tycker.localCtx.derive();

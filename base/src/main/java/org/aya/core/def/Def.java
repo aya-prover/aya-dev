@@ -5,6 +5,7 @@ package org.aya.core.def;
 import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
+import org.aya.core.sort.LevelVar;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.core.visitor.Substituter;
@@ -33,6 +34,15 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).param;
+  }
+  static @NotNull ImmutableSeq<LevelVar> defLevels(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+    if (defVar.core instanceof DataDef data) return data.levels();
+    else if (defVar.core instanceof FnDef fn) return fn.levels();
+    else if (defVar.core instanceof StructDef struct) return struct.levels();
+    else if (defVar.core instanceof DataDef.Ctor ctor) return defLevels(ctor.dataRef());
+    else if (defVar.core instanceof StructDef.Field field) return defLevels(field.structRef());
+      // guaranteed as this is already a core term
+    else return Objects.requireNonNull(defVar.concrete.signature).sortParam();
   }
   static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.result();
@@ -78,12 +88,14 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
   @Debug.Renderer(text = "toDoc().debugRender()")
   record Signature(
     @NotNull ImmutableSeq<Term.@NotNull Param> contextParam,
+    @NotNull ImmutableSeq<@NotNull LevelVar> sortParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements Docile {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
-      return new Signature(Term.Param.subst(contextParam, subst), substParams(param, subst), result.subst(subst));
+      return new Signature(Term.Param.subst(contextParam, subst),
+        sortParam, substParams(param, subst), result.subst(subst));
     }
 
     @Override public @NotNull Doc toDoc() {
@@ -92,11 +104,12 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {
-      return new Signature(contextParam, param, term);
+      return new Signature(contextParam, sortParam, param, term);
     }
 
     public @NotNull Signature subst(@NotNull Substituter.TermSubst subst) {
-      return new Signature(Term.Param.subst(contextParam, subst), Term.Param.subst(param, subst), result.subst(subst));
+      return new Signature(Term.Param.subst(contextParam, subst), sortParam,
+        Term.Param.subst(param, subst), result.subst(subst));
     }
   }
 }

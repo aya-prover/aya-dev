@@ -45,6 +45,6 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
       .collect(ImmutableSeq.factory());
     var dataArgs = core.dataTele().map(Term.Param::toArg);
-    return new CallTerm.Con(data.ref(), ctor.ref(), data.contextArgs(), dataArgs, args);
+    return new CallTerm.Con(data.ref(), ctor.ref(), data.contextArgs(), dataArgs, data.sortArgs(), args);
   }
 }

@@ -37,7 +37,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.function.TriFunction;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
@@ -59,7 +58,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqn.Set equations = new LevelEqn.Set(MutableMap.of(), Buffer.of());
+  public final @NotNull LevelEqn.Set equations = new LevelEqn.Set(MutableMap.of(), Buffer.of(), Buffer.of());
   public final @NotNull LevelVar homotopy = new LevelVar("h", true);
   public final @NotNull LevelVar universe = new LevelVar("u", true);
 
@@ -74,7 +73,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public @NotNull ImmutableSeq<LevelVar> extractLevels() {
     return Seq.of(homotopy, universe).view()
       // TODO[kala]: https://github.com/Glavo/kala-common/issues/35
-      .concat(equations.vars().valuesView().toImmutableSeq()).toImmutableSeq();
+      .concat(equations.map().valuesView().toImmutableSeq()).toImmutableSeq();
   }
 
   @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
@@ -143,10 +142,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    var u = expr.uLevel().known(equations.vars());
-    if (u == null) u = new Level.Reference(universe, 0);
-    var h = expr.hLevel().known(equations.vars());
-    if (h == null) h = new Level.Reference(homotopy, 0);
+    var u = expr.uLevel().known(equations.map());
+    if (u == null) u = new Level.Reference(universe);
+    var h = expr.hLevel().known(equations.map());
+    if (h == null) h = new Level.Reference(homotopy);
     var sort = new Sort(u, h);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ()));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
@@ -171,7 +170,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall((DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall((DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, args) -> new CallTerm.Prim(v, args));
+      return defCall((DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args));
     } else if (var.core instanceof DataDef || var.concrete instanceof Decl.DataDecl) {
       return defCall((DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {
@@ -208,13 +207,16 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
-  defCall(DefVar<D, S> defVar, TriFunction<DefVar<D, S>, ImmutableSeq<Arg<Term>>, ImmutableSeq<Arg<Term>>, Term> function) {
-    // TODO[ice,kiva]: rename telescope -- currently renaming doesn't work
+  defCall(DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var ctxTele = Def.defContextTele(defVar);
+    // unbound these abstracted variables
+    var levelVars = Def.defLevels(defVar).map(v -> new LevelVar(v.name(), false));
     // ice: should we rename the vars in this telescope? Probably not.
-    var body = function.apply(defVar,
+    equations.vars().appendAll(levelVars);
+    var body = function.make(defVar,
       ctxTele.map(Term.Param::toArg),
+      levelVars.map(Level.Reference::new),
       tele.map(Term.Param::toArg));
     var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar));
     return new Result(IntroTerm.Lambda.make(tele, body), type);
@@ -360,8 +362,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var ctxTele = Def.defContextTele(fieldRef);
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst);
+    var levels = structCore.levels().map(v -> new LevelVar(v.name(), false));
+    equations.vars().appendAll(levels);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
-      ctxTele.map(Term.Param::toArg), structCall.args(), tele.map(Term.Param::toArg));
+      ctxTele.map(Term.Param::toArg), levels.map(Level.Reference::new),
+      structCall.args(), tele.map(Term.Param::toArg));
     return new Result(IntroTerm.Lambda.make(tele, access),
       FormTerm.Pi.make(false, tele, field.result().subst(structSubst)));
   }

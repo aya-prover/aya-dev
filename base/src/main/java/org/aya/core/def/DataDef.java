@@ -5,6 +5,7 @@ package org.aya.core.def;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
+import org.aya.core.sort.Level;
 import org.aya.core.sort.LevelVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
@@ -85,18 +86,16 @@ public final record DataDef(
         var dataDef = core.dataRef.core;
         var conTelescope = core.conTele;
         if (dataDef != null)
-          return new CtorTelescopes(dataDef.contextTele, dataDef.telescope, conTelescope);
-        else {
-          var signature = core.dataRef.concrete.signature;
-          assert signature != null;
-          return new CtorTelescopes(signature.contextParam(), signature.param(), conTelescope);
-        }
+          return new CtorTelescopes(dataDef.contextTele, dataDef.telescope, dataDef.levels, conTelescope);
+        var signature = core.dataRef.concrete.signature;
+        assert signature != null;
+        return new CtorTelescopes(signature.contextParam(), signature.param(), signature.sortParam(), conTelescope);
       }
       var dataSignature = defVar.concrete.dataRef.concrete.signature;
       assert dataSignature != null;
       var conSignature = defVar.concrete.signature;
       assert conSignature != null;
-      return new CtorTelescopes(dataSignature.contextParam(), dataSignature.param(), conSignature.param());
+      return new CtorTelescopes(dataSignature.contextParam(), dataSignature.param(), dataSignature.sortParam(), conSignature.param());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -110,12 +109,14 @@ public final record DataDef(
   public static record CtorTelescopes(
     @NotNull ImmutableSeq<Term.Param> ctxTele,
     @NotNull ImmutableSeq<Term.Param> dataTele,
+    @NotNull ImmutableSeq<LevelVar> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {
       return new CallTerm.Con(fromCtor(conVar), conVar,
         ctxTele.map(Term.Param::toArg),
         dataTele.map(Term.Param::toArg),
+        sortTele.map(Level.Reference::new),
         conTele.map(Term.Param::toArg));
     }
   }

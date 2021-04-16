@@ -58,6 +58,7 @@ public class TermDsl extends LispBaseVisitor<Term> {
       case "fncall" -> new CallTerm.Fn(
         (DefVar<FnDef, Decl.FnDecl>) ref(exprs.get(0).getText()),
         ImmutableSeq.of(),
+        ImmutableSeq.of(),
         exprs.subList(1, exprs.size())
           .stream()
           .map(c -> Arg.explicit(c.accept(this)))

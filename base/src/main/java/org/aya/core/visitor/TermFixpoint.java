@@ -28,7 +28,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var args = dataCall.args().map(arg -> visitArg(arg, p));
     if (dataCall.contextArgs().sameElements(contextArgs, true)
       && dataCall.args().sameElements(args, true)) return dataCall;
-    return new CallTerm.Data(dataCall.ref(), contextArgs, args);
+    return new CallTerm.Data(dataCall.ref(), contextArgs, dataCall.sortArgs(), args);
   }
 
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
@@ -37,7 +37,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));
     if (conCall.head().dataArgs().sameElements(dataArgs, true)
       && conCall.conArgs().sameElements(conArgs, true)) return conCall;
-    var head = new CallTerm.ConHead(conCall.head().dataRef(), conCall.head().ref(), contextArgs, dataArgs);
+    var head = new CallTerm.ConHead(conCall.head().dataRef(), conCall.head().ref(),
+      contextArgs, conCall.sortArgs(), dataArgs);
     return new CallTerm.Con(head, conArgs);
   }
 
@@ -46,7 +47,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var args = structCall.args().map(arg -> visitArg(arg, p));
     if (structCall.contextArgs().sameElements(contextArgs, true)
       && structCall.args().sameElements(args, true)) return structCall;
-    return new CallTerm.Struct(structCall.ref(), contextArgs, args);
+    return new CallTerm.Struct(structCall.ref(), contextArgs, structCall.sortArgs(), args);
   }
 
   private <T> T visitParameterized(
@@ -106,7 +107,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var args = fnCall.args().map(arg -> visitArg(arg, p));
     if (fnCall.args().sameElements(args, true)
       && fnCall.args().sameElements(args, true)) return fnCall;
-    return new CallTerm.Fn(fnCall.ref(), contextArgs, args);
+    return new CallTerm.Fn(fnCall.ref(), contextArgs, fnCall.sortArgs(), args);
   }
 
   @Override default @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
@@ -144,6 +145,6 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
       && term.structArgs().sameElements(structArgs, true)
       && term.contextArgs().sameElements(contextArgs, true)
       && tuple == term.of()) return term;
-    return new CallTerm.Access(tuple, term.ref(), contextArgs, structArgs, args);
+    return new CallTerm.Access(tuple, term.ref(), contextArgs, term.sortArgs(), structArgs, args);
   }
 }
