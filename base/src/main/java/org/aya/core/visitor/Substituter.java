@@ -3,8 +3,8 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
+import org.aya.core.sort.Level;
 import org.aya.core.sort.LevelSubst;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.Map;
@@ -28,7 +28,7 @@ public record Substituter(
     this(termSubst.map, levelSubst);
   }
 
-  @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unused) {
+  @Override public @NotNull Level.Sort visitSort(@NotNull Level.Sort sort, Unit unused) {
     return sort.substSort(levelSubst);
   }
 

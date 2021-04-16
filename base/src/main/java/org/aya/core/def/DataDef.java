@@ -6,7 +6,6 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Level;
-import org.aya.core.sort.LevelVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
@@ -24,7 +23,7 @@ public final record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
   @NotNull ImmutableSeq<Term.Param> contextTele,
   @NotNull ImmutableSeq<Term.Param> telescope,
-  @NotNull ImmutableSeq<LevelVar> levels,
+  @NotNull ImmutableSeq<Level.LVar> levels,
   @NotNull Term result,
   @NotNull ImmutableSeq<Ctor> body
 ) implements Def {
@@ -109,7 +108,7 @@ public final record DataDef(
   public static record CtorTelescopes(
     @NotNull ImmutableSeq<Term.Param> ctxTele,
     @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<LevelVar> sortTele,
+    @NotNull ImmutableSeq<Level.LVar> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {

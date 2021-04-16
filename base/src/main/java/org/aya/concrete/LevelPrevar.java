@@ -4,7 +4,6 @@ package org.aya.concrete;
 
 import org.aya.api.ref.Var;
 import org.aya.core.sort.Level;
-import org.aya.core.sort.LevelVar;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.control.Either;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * 'Prevar' means it is not yet a valid level var. It will be elaborated into
- * {@link org.aya.core.sort.LevelVar}.
+ * {@link Level.LVar}.
  *
  * @param knownValue null if polymorphic or in the ulevel or hlevel definitions and -1 if infinity.
  * @author ice1000
@@ -31,11 +30,11 @@ public record LevelPrevar(
     return new LevelPrevar(Constants.ANONYMOUS_PREFIX, kind, Either.left(level));
   }
 
-  public @Nullable Level known(@NotNull MutableMap<LevelPrevar, LevelVar> mapping) {
+  public @Nullable Level known(@NotNull MutableMap<LevelPrevar, Level.LVar> mapping) {
     if (knownValue == null) return null;
     return knownValue.fold(known -> known == -1 ? Level.Infinity.INSTANCE : new Level.Constant(known),
       prevar -> new Level.Reference(
-        mapping.getOrPut(prevar, () -> new LevelVar(prevar.name, true))));
+        mapping.getOrPut(prevar, () -> new Level.LVar(prevar.name, true))));
   }
 
   public enum Kind {

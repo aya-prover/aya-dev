@@ -36,11 +36,11 @@ public record LevelEqn(@NotNull Level lhs, @NotNull Level rhs) {
    * A set of level equations.
    */
   public record Set(
-    @NotNull Buffer<LevelVar> vars,
+    @NotNull Buffer<Level.LVar> vars,
     @NotNull Reporter reporter,
     @NotNull Buffer<@NotNull LevelEqn> eqns
   ) {
-    public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
+    public void add(@NotNull Level.Sort lhs, @NotNull Level.Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
       add(lhs.hLevel(), rhs.hLevel(), cmp, loc);
       add(lhs.uLevel(), rhs.uLevel(), cmp, loc);
     }
@@ -81,7 +81,7 @@ public record LevelEqn(@NotNull Level lhs, @NotNull Level rhs) {
       return map;
     }
 
-    public void solve(@NotNull MutableMap<LevelVar, Level> solution) {
+    public void solve(@NotNull MutableMap<Level.LVar, Level> solution) {
       throw new UnsupportedOperationException("#93");
     }
   }

@@ -2,11 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.sort;
 
+import org.aya.api.ref.Var;
 import org.aya.concrete.LevelPrevar;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
@@ -32,8 +35,8 @@ public sealed interface Level extends Docile {
     @Override public @NotNull Doc toDoc() {
       return levelDoc(lift, "lp");
     }
-
   }
+
   static @NotNull Doc levelDoc(int lift, String name) {
     return Doc.plain(name + (lift > 0 ? " + " + lift : ""));
   }
@@ -63,8 +66,8 @@ public sealed interface Level extends Docile {
     }
   }
 
-  record Reference(@NotNull LevelVar ref, int lift) implements Level {
-    public Reference(@NotNull LevelVar ref) {
+  record Reference(@NotNull Level.LVar ref, int lift) implements Level {
+    public Reference(@NotNull Level.LVar ref) {
       this(ref, 0);
     }
 
@@ -78,6 +81,43 @@ public sealed interface Level extends Docile {
 
     @Override public @NotNull Doc toDoc() {
       return levelDoc(lift, ref.name());
+    }
+  }
+
+  /**
+   * Not inspired from Arend.
+   * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/sort/Sort.java"
+   * >Sort.java</a>
+   *
+   * @author ice1000
+   */
+  record Sort(@NotNull Level uLevel, @NotNull Level hLevel) {
+    public static final @NotNull Level.Sort OMEGA = new Sort(Infinity.INSTANCE, Infinity.INSTANCE);
+
+    public @NotNull Level.Sort substSort(@NotNull LevelSubst subst) {
+      return new Sort(uLevel.subst(subst), hLevel.subst(subst));
+    }
+
+    @Contract(" -> new") public @NotNull Level.Sort succ() {
+      return new Sort(uLevel.succ(), hLevel.succ());
+    }
+  }
+
+  /**
+   * @param bound true if this is a bound level var, otherwise it needs to be solved.
+   *              In well-typed terms it should always be true.
+   * @author ice1000
+   */
+  record LVar(
+    @NotNull String name,
+    boolean bound
+  ) implements Var {
+    @Override public boolean equals(@Nullable Object o) {
+      return this == o;
+    }
+
+    @Override public int hashCode() {
+      return System.identityHashCode(this);
     }
   }
 }

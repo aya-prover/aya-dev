@@ -18,8 +18,6 @@ import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.sort.Level;
 import org.aya.core.sort.LevelEqn;
-import org.aya.core.sort.LevelVar;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
@@ -59,9 +57,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull LevelEqn.Set equations;
-  private final @NotNull LevelVar homotopy = new LevelVar("h", true);
-  private final @NotNull LevelVar universe = new LevelVar("u", true);
-  public final @NotNull MutableMap<LevelPrevar, LevelVar> levelMapping = MutableMap.of();
+  private final @NotNull Level.LVar homotopy = new Level.LVar("h", true);
+  private final @NotNull Level.LVar universe = new Level.LVar("u", true);
+  public final @NotNull MutableMap<LevelPrevar, Level.LVar> levelMapping = MutableMap.of();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -71,7 +69,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
   }
 
-  public @NotNull ImmutableSeq<LevelVar> extractLevels() {
+  public @NotNull ImmutableSeq<Level.LVar> extractLevels() {
     return Seq.of(homotopy, universe).view()
       .appendedAll(levelMapping.valuesView()).toImmutableSeq();
   }
@@ -147,7 +145,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (u == null) u = new Level.Reference(universe);
     var h = expr.hLevel().known(levelMapping);
     if (h == null) h = new Level.Reference(homotopy);
-    var sort = new Sort(u, h);
+    var sort = new Level.Sort(u, h);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ()));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
       equations.add(sort.succ(), univ.sort(), Ordering.Lt, expr.sourcePos());
@@ -213,7 +211,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var ctxTele = Def.defContextTele(defVar);
     // unbound these abstracted variables
     var levelVars = Def.defLevels(defVar).map(v ->
-      new LevelVar(defVar.name() + "." + v.name(), false));
+      new Level.LVar(defVar.name() + "." + v.name(), false));
     // ice: should we rename the vars in this telescope? Probably not.
     equations.vars().appendAll(levelVars);
     var body = function.make(defVar,
@@ -243,7 +241,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
-    final var against = term != null ? term : new FormTerm.Univ(Sort.OMEGA);
+    final var against = term != null ? term : new FormTerm.Univ(Level.Sort.OMEGA);
     var param = expr.param();
     final var var = param.ref();
     var type = param.type();
@@ -258,7 +256,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth
   @Override public Result visitSigma(Expr.@NotNull SigmaExpr expr, @Nullable Term term) {
-    final var against = term != null ? term : new FormTerm.Univ(Sort.OMEGA);
+    final var against = term != null ? term : new FormTerm.Univ(Level.Sort.OMEGA);
     var resultTele = Buffer.<Tuple3<LocalVar, Boolean, Term>>of();
     expr.params().forEach(tuple -> {
       final var type = tuple.type();
@@ -361,7 +359,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var ctxTele = Def.defContextTele(fieldRef);
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst);
-    var levels = structCore.levels().map(v -> new LevelVar(v.name(), false));
+    var levels = structCore.levels().map(v -> new Level.LVar(v.name(), false));
     equations.vars().appendAll(levels);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), levels.map(Level.Reference::new),

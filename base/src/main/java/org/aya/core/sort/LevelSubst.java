@@ -10,20 +10,20 @@ import org.jetbrains.annotations.NotNull;
 /**
  * References in Arend:
  * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/subst/StdLevelSubstitution.java"
- * >StdLevelSubstitution.java</a> (as {@link Sort}),
+ * >StdLevelSubstitution.java</a> (as {@link Level.Sort}),
  * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/subst/SimpleLevelSubstitution.java"
  * >SimpleLevelSubstitution.java</a>, etc.
  */
 public interface LevelSubst {
   boolean isEmpty();
-  @NotNull Option<Level> get(@NotNull LevelVar var);
+  @NotNull Option<Level> get(@NotNull Level.LVar var);
   @NotNull LevelSubst subst(@NotNull LevelSubst subst);
   @NotNull LevelSubst EMPTY = new Simple(MutableTreeMap.of((o1, o2) -> {
     throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
   }));
 
-  record Simple(@NotNull MutableMap<@NotNull LevelVar, @NotNull Level> map) implements LevelSubst {
-    public void add(@NotNull LevelVar var, @NotNull Level level) {
+  record Simple(@NotNull MutableMap<Level.@NotNull LVar, @NotNull Level> map) implements LevelSubst {
+    public void add(@NotNull Level.LVar var, @NotNull Level level) {
       map.put(var, level);
     }
 
@@ -31,7 +31,7 @@ public interface LevelSubst {
       return map.isEmpty();
     }
 
-    @Override public @NotNull Option<Level> get(@NotNull LevelVar var) {
+    @Override public @NotNull Option<Level> get(@NotNull Level.LVar var) {
       return map.getOption(var);
     }
 
