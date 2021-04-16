@@ -4,6 +4,7 @@ package org.aya.api.ref;
 
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @param <Level> solved level
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public record LevelVar<Level>(
   @NotNull String name,
   @NotNull Kind kind,
-  @NotNull Ref<@NotNull Level> level
+  @NotNull Ref<@Nullable Level> level
 ) implements Var {
   public LevelVar(@NotNull String name, @NotNull Kind kind) {
     this(name, kind, new Ref<>());
