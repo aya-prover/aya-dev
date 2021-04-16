@@ -5,6 +5,11 @@ package org.aya.api.ref;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @param <Level> solved level
+ * @param level   null if unsolved
+ * @author ice1000
+ */
 public record LevelVar<Level>(
   @NotNull String name,
   @NotNull Kind kind,

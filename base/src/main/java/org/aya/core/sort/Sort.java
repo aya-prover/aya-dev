@@ -10,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
  * Highly inspired from Arend.
  * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/sort/Sort.java"
  * >Sort.java</a>
+ *
+ * @author ice1000
  */
 public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) {
-  // TODO[level]
   public static final @NotNull Sort OMEGA = new Sort(Level.Infinity.INSTANCE, Level.Infinity.INSTANCE);
 
   public @NotNull Sort substSort(@NotNull LevelSubst subst) {
-    // TODO[level]
-    return this;
+    return new Sort(uLevel.subst(subst), hLevel.subst(subst));
   }
 
   public static boolean compare(
