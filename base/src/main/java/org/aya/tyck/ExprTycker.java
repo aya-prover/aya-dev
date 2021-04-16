@@ -212,7 +212,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var tele = Def.defTele(defVar);
     var ctxTele = Def.defContextTele(defVar);
     // unbound these abstracted variables
-    var levelVars = Def.defLevels(defVar).map(v -> new LevelVar(v.name(), false));
+    var levelVars = Def.defLevels(defVar).map(v ->
+      new LevelVar(defVar.name() + "." + v.name(), false));
     // ice: should we rename the vars in this telescope? Probably not.
     equations.vars().appendAll(levelVars);
     var body = function.make(defVar,

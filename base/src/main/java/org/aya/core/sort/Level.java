@@ -5,6 +5,7 @@ package org.aya.core.sort;
 import org.aya.concrete.LevelPrevar;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @see LevelPrevar
  * @see org.aya.concrete.Expr.UnivExpr
  */
+@Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Level extends Docile {
   @NotNull Level succ();
   default @NotNull Level subst(@NotNull LevelSubst subst) {

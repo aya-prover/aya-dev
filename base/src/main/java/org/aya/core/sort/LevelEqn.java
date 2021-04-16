@@ -10,11 +10,13 @@ import org.aya.util.Decision;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
  */
+@Debug.Renderer(text = "lhs.toDoc().debugRender() + '=' + rhs.toDoc().debugRender()")
 public record LevelEqn(@NotNull Level lhs, @NotNull Level rhs) {
   public Decision biasedEq(@NotNull Ordering cmp) {
     if (lhs.equals(rhs)) return Decision.YES;
