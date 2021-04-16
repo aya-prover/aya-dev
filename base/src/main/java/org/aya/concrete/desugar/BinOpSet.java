@@ -43,12 +43,14 @@ public record BinOpSet(
   public PredCmp compare(@NotNull Elem lhs, @NotNull Elem rhs) {
     if (lhs == rhs) return PredCmp.Equal;
     if (hasPath(MutableSet.of(), lhs, rhs)) return PredCmp.Tighter;
+    if (hasPath(MutableSet.of(), rhs, lhs)) return PredCmp.Looser;
     return PredCmp.Undefined;
   }
 
   private boolean hasPath(@NotNull MutableSet<Elem> book, @NotNull Elem from, @NotNull Elem to) {
+    if (from == to) return true;
     if (book.contains(from)) return false;
-    for (var test : tighterGraph.get(from)) {
+    for (var test : ensureGraphHas(from)) {
       if (hasPath(book, test, to)) return true;
     }
     book.add(from);
@@ -101,7 +103,6 @@ public record BinOpSet(
     while (stack.isNotEmpty()) {
       var elem = stack.pop();
       count += 1;
-      System.out.println(elem.name);
       tighterGraph.get(elem).forEach(to -> {
         if (--ind.get(to).value == 0) stack.push(to);
       });
