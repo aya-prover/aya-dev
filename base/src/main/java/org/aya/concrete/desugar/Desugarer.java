@@ -51,6 +51,8 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       return withHomotopyLevel(expr, uLevel, pos, Level.Constant.make(hLevel, LevelVar.Kind.Homotopy));
     } else if (hLevel == Expr.RawUnivExpr.POLYMORPHIC) {
       return withHomotopyLevel(expr, uLevel, pos, Level.Polymorphic.make(0, LevelVar.Kind.Homotopy));
+    } else if (hLevel == Expr.RawUnivExpr.INFINITY) {
+      return withHomotopyLevel(expr, uLevel, pos, Level.Infinity.HOMOTOPY);
     } else throw new IllegalStateException("Invalid hLevel: " + hLevel);
   }
 
@@ -68,6 +70,9 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
       expectArgs(expr, 0);
       return new Expr.UnivExpr(pos, Level.Polymorphic.make(0, LevelVar.Kind.Universe), h);
+    } else if (uLevel == Expr.RawUnivExpr.INFINITY) {
+      expectArgs(expr, 0);
+      return new Expr.UnivExpr(pos, Level.Infinity.UNIVERSE, h);
     } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
   }
 

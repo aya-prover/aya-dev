@@ -37,6 +37,8 @@ public sealed interface Level {
 
   final class Infinity implements Level {
     public static final @NotNull Infinity INSTANCE = new Infinity();
+    public static final LevelVar<Level> HOMOTOPY = new LevelVar<>(Constants.ANONYMOUS_PREFIX, LevelVar.Kind.Homotopy, new Ref<>(Infinity.INSTANCE));
+    public static final LevelVar<Level> UNIVERSE = new LevelVar<>(Constants.ANONYMOUS_PREFIX, LevelVar.Kind.Universe, new Ref<>(Infinity.INSTANCE));
 
     private Infinity() {
     }
