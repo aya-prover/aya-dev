@@ -45,11 +45,14 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override public @NotNull Boolean visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
+    if (!(preRhs instanceof FormTerm.Pi rhs)) return false;
+    return defeq.checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> false, () ->
+      defeq.compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA));
   }
 
   @Override public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
+    if (!(preRhs instanceof FormTerm.Sigma rhs)) return false;
+    return defeq.checkParams(lhs.params(), rhs.params(), () -> false, () -> true);
   }
 
   @Override public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs, @NotNull Term type) {

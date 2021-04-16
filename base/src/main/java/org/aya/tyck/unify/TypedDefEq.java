@@ -89,9 +89,9 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     return compare(whnf, rhsWhnf, type);
   }
 
-  public <T> T checkParam(Term.@NotNull Param l, Term.@NotNull Param r, Supplier<T> fail, Supplier<T> success) {
+  public <T> T checkParam(Term.@NotNull Param l, Term.@NotNull Param r, @NotNull Term type, Supplier<T> fail, Supplier<T> success) {
     if (l.explicit() != r.explicit()) return fail.get();
-    if (!compare(l.type(), r.type(), FormTerm.Univ.OMEGA)) return fail.get();
+    if (!compare(l.type(), r.type(), type)) return fail.get();
     varSubst.put(r.ref(), l.ref());
     varSubst.put(l.ref(), r.ref());
     var result = localCtx.with(l, () -> localCtx.with(r, success));
@@ -106,7 +106,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   public <T> T checkParams(SeqLike<Term.@NotNull Param> l, SeqLike<Term.@NotNull Param> r, Supplier<T> fail, Supplier<T> success) {
     if (!l.sizeEquals(r)) return fail.get();
     if (l.isEmpty()) return success.get();
-    return checkParam(l.first(), r.first(), fail, () ->
+    return checkParam(l.first(), r.first(), FormTerm.Univ.OMEGA, fail, () ->
       checkParams(l.view().drop(1), r.view().drop(1), fail, success));
   }
 

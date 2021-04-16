@@ -73,59 +73,51 @@ public record UntypedDefEq(
     throw new IllegalStateException("No visitHole in UntypedDefEq");
   }
 
-  @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof FormTerm.Pi rhs)) return null;
-    return defeq.checkParam(lhs.param(), rhs.param(), () -> null, () -> {
-      var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA);
-      if (!bodyIsOk) return null;
-      return FormTerm.Univ.OMEGA;
-    });
+  @Override public @NotNull Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof FormTerm.Sigma rhs)) return null;
-    return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
-      var bodyIsOk = defeq.compare(lhs.params().last().type(), rhs.params().last().type(), FormTerm.Univ.OMEGA);
-      if (!bodyIsOk) return null;
-      return FormTerm.Univ.OMEGA;
-    });
+  @Override public @NotNull Term visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
-    defeq.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
-    return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ());
+  @Override public @NotNull Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs) {
-    throw new IllegalStateException("No visitTup in UntypedDefEq");
+  private static Term unreachable() {
+    throw new IllegalStateException();
   }
 
-  @Override public @Nullable Term visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term) {
-    throw new IllegalStateException("No visitStruct in UntypedDefEq");
+  @Override public @NotNull Term visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
-    throw new IllegalStateException("No visitFn in UntypedDefEq");
+  @Override public @NotNull Term visitNew(@NotNull IntroTerm.New newTerm, @NotNull Term term) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
-    throw new IllegalStateException("No visitData in UntypedDefEq");
+  @Override public @NotNull Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
-    throw new IllegalStateException("No visitStruct in UntypedDefEq");
+  @Override public @NotNull Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitPrimCall(CallTerm.@NotNull Prim prim, @NotNull Term term) {
-    throw new IllegalStateException("No visitPrim in UntypedDefEq");
+  @Override public @NotNull Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con conCall, @NotNull Term term) {
-    throw new IllegalStateException("No visitCon in UntypedDefEq");
+  @Override public @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, @NotNull Term term) {
+    return unreachable();
   }
 
-  @Override public @Nullable Term visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs) {
-    throw new IllegalStateException("No visitLam in UntypedDefEq");
+  @Override public @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, @NotNull Term term) {
+    return unreachable();
+  }
+
+  @Override public @NotNull Term visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs) {
+    return unreachable();
   }
 }
