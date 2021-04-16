@@ -33,8 +33,9 @@ public record LevelPrevar(
 
   public @Nullable Level known(@NotNull MutableMap<LevelPrevar, LevelVar> mapping) {
     if (knownValue == null) return null;
-    return knownValue.fold(Level.Constant::new, prevar -> new Level.Reference(
-      mapping.getOrPut(prevar, () -> new LevelVar(prevar.name, true)), 0));
+    return knownValue.fold(known -> known == -1 ? Level.Infinity.INSTANCE : new Level.Constant(known),
+      prevar -> new Level.Reference(
+        mapping.getOrPut(prevar, () -> new LevelVar(prevar.name, true))));
   }
 
   public enum Kind {

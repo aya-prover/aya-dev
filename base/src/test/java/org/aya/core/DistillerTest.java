@@ -47,7 +47,7 @@ public class DistillerTest {
       prim I prim left
       prim right
 
-      struct Pair (A : Set) (B : Set) : Set
+      struct Pair (A : ooType) (B : ooType) : Set
         | fst : A
         | snd : B
         | we-are-together : Sig A ** B => (fst, snd)
