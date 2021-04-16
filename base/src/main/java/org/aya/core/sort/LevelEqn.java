@@ -69,6 +69,12 @@ public record LevelEqn(@NotNull Level lhs, @NotNull Level rhs) {
       return vars.isEmpty() && eqns.isEmpty();
     }
 
+    public @NotNull LevelSubst.Simple solve() {
+      var map = new LevelSubst.Simple(MutableMap.of());
+      solve(map.map());
+      return map;
+    }
+
     public void solve(@NotNull MutableMap<LevelVar, Level> solution) {
       throw new UnsupportedOperationException("#93");
     }

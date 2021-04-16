@@ -60,8 +60,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull LevelEqn.Set equations;
-  public final @NotNull LevelVar homotopy = new LevelVar("h", true);
-  public final @NotNull LevelVar universe = new LevelVar("u", true);
+  private final @NotNull LevelVar homotopy = new LevelVar("h", true);
+  private final @NotNull LevelVar universe = new LevelVar("u", true);
   public final @NotNull MutableMap<LevelPrevar, LevelVar> levelMapping = MutableMap.of();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {

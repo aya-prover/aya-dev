@@ -157,8 +157,10 @@ public record StmtTycker(
     var ctxTele = tycker.localCtx.extract();
     var tele = checkTele(tycker, decl.telescope);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
-    decl.signature = new Def.Signature(ctxTele, tycker.extractLevels(), tele, result);
-    return new StructDef(decl.ref, ctxTele, tele, tycker.extractLevels(), result, decl.fields.map(field -> visitField(field, tycker)));
+    // var levelSubst = tycker.equations.solve();
+    var levels = tycker.extractLevels();
+    decl.signature = new Def.Signature(ctxTele, levels, tele, result);
+    return new StructDef(decl.ref, ctxTele, tele, levels, result, decl.fields.map(field -> visitField(field, tycker)));
   }
 
   @Override public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
