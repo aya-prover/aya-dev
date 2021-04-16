@@ -12,6 +12,7 @@ import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
+import org.aya.concrete.LevelPrevar;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
@@ -58,9 +59,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqn.Set equations = new LevelEqn.Set(MutableMap.of(), Buffer.of(), Buffer.of());
+  public final @NotNull LevelEqn.Set equations;
   public final @NotNull LevelVar homotopy = new LevelVar("h", true);
   public final @NotNull LevelVar universe = new LevelVar("u", true);
+  public final @NotNull MutableMap<LevelPrevar, LevelVar> levelMapping = MutableMap.of();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -72,8 +74,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public @NotNull ImmutableSeq<LevelVar> extractLevels() {
     return Seq.of(homotopy, universe).view()
-      // TODO[kala]: https://github.com/Glavo/kala-common/issues/35
-      .concat(equations.map().valuesView().toImmutableSeq()).toImmutableSeq();
+      .appendedAll(levelMapping.valuesView()).toImmutableSeq();
   }
 
   @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
@@ -88,6 +89,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this.reporter = reporter;
     this.localCtx = localCtx;
     this.traceBuilder = traceBuilder;
+    equations = new LevelEqn.Set(Buffer.of(), reporter, Buffer.of());
   }
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
@@ -142,14 +144,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    var u = expr.uLevel().known(equations.map());
+    var u = expr.uLevel().known(levelMapping);
     if (u == null) u = new Level.Reference(universe);
-    var h = expr.hLevel().known(equations.map());
+    var h = expr.hLevel().known(levelMapping);
     if (h == null) h = new Level.Reference(homotopy);
     var sort = new Sort(u, h);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ()));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
-      equations.eqns().append(new LevelEqn(sort.succ(), univ.sort()));
+      equations.add(sort.succ(), univ.sort(), Ordering.Lt, expr);
       return new Result(new FormTerm.Univ(sort), univ);
     }
     return wantButNo(expr, term, "universe term");

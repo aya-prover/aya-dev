@@ -3,6 +3,8 @@
 package org.aya.core.sort;
 
 import org.aya.concrete.LevelPrevar;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @see LevelPrevar
  * @see org.aya.concrete.Expr.UnivExpr
  */
-public sealed interface Level {
+public sealed interface Level extends Docile {
   @NotNull Level succ();
   default @NotNull Level subst(@NotNull LevelSubst subst) {
     return this;
@@ -24,6 +26,14 @@ public sealed interface Level {
     @Override public @NotNull Level succ() {
       return new Polymorphic(lift + 1);
     }
+
+    @Override public @NotNull Doc toDoc() {
+      return levelDoc(lift, "lp");
+    }
+
+  }
+  static @NotNull Doc levelDoc(int lift, String name) {
+    return Doc.plain(name + (lift > 0 ? " + " + lift : ""));
   }
 
   final class Infinity implements Level {
@@ -35,11 +45,19 @@ public sealed interface Level {
     @Override public @NotNull Level succ() {
       return this;
     }
+
+    @Override public @NotNull Doc toDoc() {
+      return Doc.plain("oo");
+    }
   }
 
   record Constant(int value) implements Level {
     @Override public @NotNull Level succ() {
       return new Constant(value + 1);
+    }
+
+    @Override public @NotNull Doc toDoc() {
+      return Doc.plain(String.valueOf(value));
     }
   }
 
@@ -54,6 +72,10 @@ public sealed interface Level {
 
     @Override public @NotNull Level subst(@NotNull LevelSubst subst) {
       return subst.get(ref).getOrDefault(this);
+    }
+
+    @Override public @NotNull Doc toDoc() {
+      return levelDoc(lift, ref.name());
     }
   }
 }
