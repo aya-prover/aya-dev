@@ -3,7 +3,10 @@
 package org.aya.concrete;
 
 import org.aya.api.ref.Var;
+import org.aya.core.sort.Level;
+import org.aya.core.sort.LevelVar;
 import org.aya.util.Constants;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.control.Either;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +29,12 @@ public record LevelPrevar(
 
   public static @NotNull LevelPrevar make(int level, Kind kind) {
     return new LevelPrevar(Constants.ANONYMOUS_PREFIX, kind, Either.left(level));
+  }
+
+  public @Nullable Level known(@NotNull MutableMap<LevelPrevar, LevelVar> mapping) {
+    if (knownValue == null) return null;
+    return knownValue.fold(Level.Constant::new, prevar -> new Level.Reference(
+      mapping.getOrPut(prevar, () -> new LevelVar(prevar.name, true)), 0));
   }
 
   public enum Kind {

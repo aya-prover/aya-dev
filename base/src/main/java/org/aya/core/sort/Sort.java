@@ -4,6 +4,7 @@ package org.aya.core.sort;
 
 import org.aya.concrete.Expr;
 import org.aya.util.Ordering;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,5 +27,9 @@ public record Sort(@NotNull Level uLevel, @NotNull Level hLevel) {
   ) {
     // TODO[level]
     return true;
+  }
+
+  @Contract(" -> new") public @NotNull Sort succ() {
+    return new Sort(uLevel.succ(), hLevel.succ());
   }
 }

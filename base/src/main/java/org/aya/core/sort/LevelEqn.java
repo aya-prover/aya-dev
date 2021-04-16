@@ -4,9 +4,11 @@ package org.aya.core.sort;
 
 import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
+import org.aya.concrete.LevelPrevar;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +19,7 @@ public class LevelEqn {
    * A set of level equations.
    */
   public record Set(
-    @NotNull Buffer<@NotNull LevelVar> vars,
+    @NotNull MutableMap<LevelPrevar, LevelVar> vars,
     @NotNull Buffer<@NotNull LevelEqn> eqns
   ) {
     public boolean add(@NotNull Level level1, @NotNull Level level2, @NotNull Ordering cmp, Expr expr) {
@@ -25,7 +27,7 @@ public class LevelEqn {
     }
 
     public void add(@NotNull LevelEqn.Set other) {
-      vars.appendAll(other.vars);
+      vars.putAll(other.vars);
       eqns.appendAll(other.eqns);
     }
 

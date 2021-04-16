@@ -15,7 +15,9 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
+import org.aya.core.sort.Level;
 import org.aya.core.sort.LevelEqn;
+import org.aya.core.sort.LevelVar;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -33,6 +35,7 @@ import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.function.TriFunction;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -50,7 +53,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqn.Set equations = new LevelEqn.Set(Buffer.of(), Buffer.of());
+  public final @NotNull LevelEqn.Set equations = new LevelEqn.Set(MutableMap.of(), Buffer.of());
+  public final @NotNull LevelVar homotopy = new LevelVar("h", true);
+  public final @NotNull LevelVar universe = new LevelVar("u", true);
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -126,7 +131,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    if (term == null) return new Result(new FormTerm.Univ(Sort.OMEGA), new FormTerm.Univ(Sort.OMEGA));
+    if (term == null) {
+      var u = expr.uLevel().known(equations.vars());
+      if (u == null) u = new Level.Reference(universe, 0);
+      var h = expr.hLevel().known(equations.vars());
+      if (h == null) h = new Level.Reference(homotopy, 0);
+      var sort = new Sort(u, h);
+      return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ()));
+    }
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
       // TODO[level]
       return new Result(new FormTerm.Univ(Sort.OMEGA), univ);
