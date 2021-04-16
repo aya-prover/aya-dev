@@ -150,7 +150,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var sort = new Sort(u, h);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ()));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
-      equations.add(sort.succ(), univ.sort(), Ordering.Lt, expr);
+      equations.add(sort.succ(), univ.sort(), Ordering.Lt, expr.sourcePos());
       return new Result(new FormTerm.Univ(sort), univ);
     }
     return wantButNo(expr, term, "universe term");

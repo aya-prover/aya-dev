@@ -3,7 +3,7 @@
 package org.aya.core.sort;
 
 import org.aya.api.error.Reporter;
-import org.aya.concrete.Expr;
+import org.aya.api.error.SourcePos;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.LevelMismatchError;
 import org.aya.util.Decision;
@@ -38,12 +38,16 @@ public record LevelEqn(@NotNull Level lhs, @NotNull Level rhs) {
     @NotNull Reporter reporter,
     @NotNull Buffer<@NotNull LevelEqn> eqns
   ) {
-    public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull Expr loc) {
-      insertEqn(loc, cmp, new LevelEqn(lhs.hLevel(), rhs.hLevel()));
-      insertEqn(loc, cmp, new LevelEqn(lhs.uLevel(), rhs.uLevel()));
+    public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
+      add(lhs.hLevel(), rhs.hLevel(), cmp, loc);
+      add(lhs.uLevel(), rhs.uLevel(), cmp, loc);
     }
 
-    private void insertEqn(@NotNull Expr loc, @NotNull Ordering cmp, LevelEqn h) {
+    public void add(@NotNull Level lhs, @NotNull Level rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
+      insertEqn(loc, cmp, new LevelEqn(lhs, rhs));
+    }
+
+    private void insertEqn(@NotNull SourcePos loc, @NotNull Ordering cmp, LevelEqn h) {
       switch (h.biasedEq(cmp)) {
         case NO -> {
           reporter.report(new LevelMismatchError(loc, h));

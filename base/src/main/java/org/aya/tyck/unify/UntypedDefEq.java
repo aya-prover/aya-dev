@@ -6,6 +6,7 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.Def;
 import org.aya.core.term.*;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @apiNote Use {@link UntypedDefEq#compare(Term, Term)} instead of visiting directly!
  */
 public record UntypedDefEq(
-  @NotNull TypedDefEq defeq
+  @NotNull TypedDefEq defeq, @NotNull Ordering cmp
 ) implements Term.Visitor<@NotNull Term, @Nullable Term> {
   public @Nullable Term compare(@NotNull Term lhs, @NotNull Term rhs) {
     final var x = lhs.accept(this, rhs);
@@ -91,8 +92,9 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof FormTerm.Univ)) return null;
-    return FormTerm.Univ.OMEGA;
+    if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
+    defeq.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
+    return new FormTerm.Univ(lhs.sort().succ());
   }
 
   @Override public @Nullable Term visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs) {
@@ -125,9 +127,5 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs) {
     throw new IllegalStateException("No visitLam in UntypedDefEq");
-  }
-
-  public UntypedDefEq(@NotNull TypedDefEq defeq) {
-    this.defeq = defeq;
   }
 }

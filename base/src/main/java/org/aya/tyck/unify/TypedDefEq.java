@@ -36,6 +36,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   private final @NotNull PatDefEq termDefeq;
   public final Trace.@Nullable Builder traceBuilder;
   public final @NotNull SourcePos pos;
+  public final @NotNull LevelEqn.Set equations;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -54,14 +55,15 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   public TypedDefEq(
-    @NotNull Reporter reporter, @NotNull Ordering ord, @NotNull LocalCtx localCtx,
+    @NotNull Reporter reporter, @NotNull Ordering cmp, @NotNull LocalCtx localCtx,
     Trace.@Nullable Builder traceBuilder, @NotNull SourcePos pos,
     @NotNull LevelEqn.Set equations
-    ) {
+  ) {
     this.localCtx = localCtx;
     this.traceBuilder = traceBuilder;
     this.pos = pos;
-    this.termDefeq = new PatDefEq(this, ord, reporter);
+    this.equations = equations;
+    this.termDefeq = new PatDefEq(this, cmp, reporter);
   }
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {

@@ -2,16 +2,16 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
-import org.aya.api.error.ExprProblem;
-import org.aya.concrete.Expr;
+import org.aya.api.error.Problem;
+import org.aya.api.error.SourcePos;
 import org.aya.core.sort.LevelEqn;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record LevelMismatchError(
-  @NotNull Expr expr,
+  @NotNull SourcePos sourcePos,
   @NotNull LevelEqn eqn
-) implements ExprProblem {
+) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
       Doc.plain("Level mismatch: "),

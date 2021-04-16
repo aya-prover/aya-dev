@@ -6,6 +6,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.sort.Level;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
@@ -14,6 +15,7 @@ import org.aya.tyck.error.HoleBadSpineWarn;
 import org.aya.tyck.error.RecursiveSolutionError;
 import org.aya.util.Decision;
 import org.aya.util.Ordering;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +30,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   private final @NotNull TypedDefEq defeq;
   private final @NotNull UntypedDefEq untypedDefeq;
 
-  private final @NotNull Ordering ord;
+  private final @NotNull Ordering cmp;
   private final @NotNull Reporter reporter;
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
@@ -64,6 +66,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
     // Lossy comparison
+    levels(lhs.sortArgs(), rhs.sortArgs());
     if (defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()))) return true;
     return defeq.compareWHNF(lhs, rhs, type);
   }
@@ -71,13 +74,19 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   @Override
   public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) return false;
+    levels(lhs.sortArgs(), rhs.sortArgs());
     return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()));
   }
 
   @Override
   public @NotNull Boolean visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) return false;
+    levels(lhs.sortArgs(), rhs.sortArgs());
     return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()));
+  }
+
+  private void levels(ImmutableSeq<@NotNull Level> l, ImmutableSeq<@NotNull Level> r) {
+    for (var levels : l.zip(r)) defeq.equations.add(levels._1, levels._2, cmp, defeq.pos);
   }
 
   @Override
@@ -94,6 +103,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref())
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
+    levels(lhs.sortArgs(), rhs.sortArgs());
     return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), DataDef.Ctor.conTele(lhs.ref()));
   }
 
@@ -120,10 +130,10 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return defeq.compare(inferred, type, FormTerm.Univ.OMEGA); // TODO[xyr]: proper subtyping?
   }
 
-  public PatDefEq(@NotNull TypedDefEq defeq, @NotNull Ordering ord, @NotNull Reporter reporter) {
+  public PatDefEq(@NotNull TypedDefEq defeq, @NotNull Ordering cmp, @NotNull Reporter reporter) {
     this.defeq = defeq;
-    this.untypedDefeq = new UntypedDefEq(defeq);
-    this.ord = ord;
+    this.untypedDefeq = new UntypedDefEq(defeq, cmp);
+    this.cmp = cmp;
     this.reporter = reporter;
   }
 
