@@ -94,7 +94,7 @@ public record UntypedDefEq(
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
     defeq.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
-    return new FormTerm.Univ(lhs.sort().succ());
+    return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ());
   }
 
   @Override public @Nullable Term visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs) {

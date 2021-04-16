@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
   private final @NotNull TypedDefEq defeq;
   private final @NotNull UntypedDefEq untypedDefeq;
-
   private final @NotNull Ordering cmp;
   private final @NotNull Reporter reporter;
 
@@ -54,7 +53,9 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs, @NotNull Term type) {
-    return passDown(lhs, preRhs, type);
+    if (!(preRhs instanceof FormTerm.Univ rhs)) return false;
+    defeq.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
+    return true;
   }
 
   @Override public @NotNull Boolean visitApp(@NotNull ElimTerm.App lhs, @NotNull Term preRhs, @NotNull Term type) {
