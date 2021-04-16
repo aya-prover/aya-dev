@@ -2,15 +2,18 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
+import org.aya.core.sort.LevelEqn;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.LocalCtx;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -20,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -31,7 +33,7 @@ import java.util.function.Supplier;
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
   protected final @NotNull MutableMap<@NotNull LocalVar, @NotNull LocalVar> varSubst = new MutableHashMap<>();
   public final @NotNull LocalCtx localCtx;
-  private final @NotNull PatDefEq termDirectedDefeq;
+  private final @NotNull PatDefEq termDefeq;
   public final Trace.@Nullable Builder traceBuilder;
   public final @NotNull SourcePos pos;
 
@@ -52,13 +54,14 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   public TypedDefEq(
-    @NotNull Function<@NotNull TypedDefEq, @NotNull PatDefEq> createTypedDefEq,
-    @NotNull LocalCtx localCtx, Trace.@Nullable Builder traceBuilder, @NotNull SourcePos pos
-  ) {
+    @NotNull Reporter reporter, @NotNull Ordering ord, @NotNull LocalCtx localCtx,
+    Trace.@Nullable Builder traceBuilder, @NotNull SourcePos pos,
+    @NotNull LevelEqn.Set equations
+    ) {
     this.localCtx = localCtx;
-    this.termDirectedDefeq = createTypedDefEq.apply(this);
     this.traceBuilder = traceBuilder;
     this.pos = pos;
+    this.termDefeq = new PatDefEq(this, ord, reporter);
   }
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
@@ -106,7 +109,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitRef(@NotNull RefTerm type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   @Override public @NotNull Boolean visitLam(@NotNull IntroTerm.Lambda type, @NotNull Term lhs, @NotNull Term rhs) {
@@ -114,19 +117,19 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   @Override public @NotNull Boolean visitApp(@NotNull ElimTerm.App type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   @Override public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   @Override public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   @Override
@@ -152,7 +155,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitPrimCall(CallTerm.@NotNull Prim type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   public @NotNull Boolean visitConCall(@NotNull CallTerm.Con type, @NotNull Term lhs, @NotNull Term rhs) {
@@ -168,15 +171,15 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitProj(@NotNull ElimTerm.Proj type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   @Override public @NotNull Boolean visitAccess(@NotNull CallTerm.Access type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   @Override public @NotNull Boolean visitHole(CallTerm.@NotNull Hole type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDirectedDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs, type);
   }
 
   /**

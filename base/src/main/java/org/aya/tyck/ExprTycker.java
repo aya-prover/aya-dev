@@ -27,7 +27,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.NoSuchFieldError;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.PatDefEq;
 import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
@@ -231,10 +230,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
-    return new TypedDefEq(
-      eq -> new PatDefEq(eq, ord, reporter),
-      ctx, traceBuilder, pos
-    );
+    return new TypedDefEq(reporter, ord, ctx, traceBuilder, pos, equations);
   }
 
   void unifyTyThrowing(Term upper, Term lower, Expr loc) {
