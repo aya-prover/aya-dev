@@ -86,7 +86,7 @@ public final class BinOpParser {
       sourcePos,
       prefixes.first().expr,
       prefixes.view().drop(1)
-        .map(e -> new Arg<>(e.expr(), e.explicit()))
+        .map(e -> new Arg<>(new Expr.NamedArg(null, e.expr()), e.explicit()))
         .toImmutableSeq()
     );
   }
@@ -97,7 +97,7 @@ public final class BinOpParser {
     return new Expr.AppExpr(
       computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
       op.expr,
-      ImmutableSeq.of(lhs.toArg(), rhs.toArg())
+      ImmutableSeq.of(lhs.toNamedArg(null), rhs.toNamedArg(null))
     );
   }
 
@@ -121,6 +121,10 @@ public final class BinOpParser {
 
     public @NotNull Arg<Expr> toArg() {
       return new Arg<>(expr, explicit);
+    }
+
+    public @NotNull Arg<Expr.NamedArg> toNamedArg(@Nullable String name) {
+      return new Arg<>(new Expr.NamedArg(name, expr), explicit);
     }
   }
 }

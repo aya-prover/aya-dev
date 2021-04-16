@@ -109,10 +109,10 @@ public class ParseTest {
     assertTrue(parseExpr("a.1") instanceof Expr.ProjExpr);
     assertTrue(parseExpr("a.1.2") instanceof Expr.ProjExpr);
     assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.BinOpSeq app
-      && app.seq().get(1).expr().expr() instanceof Expr.ProjExpr
-      && app.seq().get(2).expr().expr() instanceof Expr.ProjExpr);
+      && app.seq().get(1).expr() instanceof Expr.ProjExpr
+      && app.seq().get(2).expr() instanceof Expr.ProjExpr);
     assertTrue(parseExpr("f a.1") instanceof Expr.BinOpSeq app
-      && app.seq().get(1).expr().expr() instanceof Expr.ProjExpr);
+      && app.seq().get(1).expr() instanceof Expr.ProjExpr);
     assertTrue(parseExpr("(f a).1") instanceof Expr.ProjExpr proj
       && proj.tup() instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("λ a => a") instanceof Expr.LamExpr);
@@ -132,9 +132,8 @@ public class ParseTest {
         SourcePos.NONE,
         ImmutableSeq.of(
           new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-          new BinOpParser.Elem(
-          new Expr.NamedArg(null, new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
-        ))
+          new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
+        )
       ),
       Either.left(1)
     ));
@@ -142,17 +141,15 @@ public class ParseTest {
       SourcePos.NONE,
       ImmutableSeq.of(
         new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-        new BinOpParser.Elem(
-        new Expr.NamedArg(null, new Expr.ProjExpr(
-          SourcePos.NONE,
-          new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
-          Either.left(1)
-        ), true)))
-    ));
+        new BinOpParser.Elem(new Expr.ProjExpr(SourcePos.NONE,
+          new Expr.UnresolvedExpr(SourcePos.NONE, "a"), Either.left(1)),
+          true))
+      )
+    );
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app
       && app.seq().sizeEquals(2)
       && !app.toDoc().debugRender().isEmpty()
-      && app.seq().get(1).expr().expr() instanceof Expr.TupExpr tup
+      && app.seq().get(1).expr() instanceof Expr.TupExpr tup
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
       && !neo.toDoc().debugRender().isEmpty());

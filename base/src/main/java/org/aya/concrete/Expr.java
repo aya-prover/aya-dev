@@ -157,10 +157,13 @@ public sealed interface Expr extends ConcreteExpr {
    */
   record NamedArg(
     @Nullable String name,
-    Expr expr
+    @NotNull Expr expr
   ) implements Docile {
     @Override
     public @NotNull Doc toDoc() {
+      if (name != null) {
+        return Doc.cat(Doc.plain("{"), Doc.plain(name), Doc.plain(" = "), expr.toDoc(), Doc.plain("}"));
+      }
       return expr.toDoc();
     }
   }

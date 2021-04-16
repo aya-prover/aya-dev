@@ -431,12 +431,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
       var argLicit = arg.explicit();
+      var namedArg = arg.term();
       while (pi.param().explicit() != argLicit) {
-        if (argLicit) {
+        if (argLicit && namedArg.name() == null) {
           // that implies paramLicit == false
-          var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX, arg.term().expr().sourcePos())._2;
+          var holeApp = localCtx.freshHole(pi.param().type(), Constants.ANONYMOUS_PREFIX, namedArg.expr().sourcePos())._2;
           // TODO: maybe we should create a concrete hole and check it against the type
           //  in case we can synthesize this term via its type only
+          var holeArg = new Arg<>(holeApp, false);
+          resultTerm = CallTerm.make(resultTerm, holeArg);
+          pi = instPi(expr, pi, subst, holeArg);
+        } else if (pi.param().ref().name().equals(namedArg.name())) {
+          var holeApp = localCtx.freshHole(pi.param().type(), namedArg.name(), namedArg.expr().sourcePos())._2;
           var holeArg = new Arg<>(holeApp, false);
           resultTerm = CallTerm.make(resultTerm, holeArg);
           pi = instPi(expr, pi, subst, holeArg);
@@ -445,7 +451,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           throw new TyckerException();
         }
       }
-      var elabArg = arg.term().expr().accept(this, pi.param().type());
+      var elabArg = namedArg.expr().accept(this, pi.param().type());
       var newArg = new Arg<>(elabArg.wellTyped, argLicit);
       resultTerm = CallTerm.make(resultTerm, newArg);
       // so, in the end, the pi term is not updated, its body would be the eliminated type
