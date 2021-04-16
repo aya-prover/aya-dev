@@ -4,8 +4,12 @@ package org.aya.concrete.desugar.error;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.desugar.BinOpSet;
 import org.aya.pretty.doc.Doc;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Comparator;
 
 public final class OperatorProblem {
   public record AmbiguousPredError(
@@ -41,6 +45,26 @@ public final class OperatorProblem {
 
     @Override public @NotNull Doc describe() {
       return Doc.plain("Self bind is not allowed");
+    }
+  }
+
+  public record CircleError(
+    @NotNull Buffer<BinOpSet.Elem> items
+  ) implements Problem {
+    @Override public @NotNull SourcePos sourcePos() {
+      return items.view().map(BinOpSet.Elem::firstBind)
+        .max(Comparator.comparingInt(SourcePos::endLine));
+    }
+
+    @Override public @NotNull Doc describe() {
+      return Doc.cat(
+        Doc.plain("Precedence circle found between "),
+        Doc.plain(items.view().map(BinOpSet.Elem::name).joinToString(", "))
+      );
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
     }
   }
 }

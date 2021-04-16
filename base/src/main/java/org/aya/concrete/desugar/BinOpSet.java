@@ -30,8 +30,8 @@ public record BinOpSet(
                    @NotNull Stmt.BindPred pred,
                    @NotNull Tuple2<String, Decl.@NotNull OpDecl> target,
                    @NotNull SourcePos sourcePos) {
-    var opElem = ensureHasElem(op._1, op._2);
-    var targetElem = ensureHasElem(target._1, target._2);
+    var opElem = ensureHasElem(op._1, op._2, sourcePos);
+    var targetElem = ensureHasElem(target._1, target._2, sourcePos);
     if (opElem == targetElem) {
       reporter.report(new OperatorProblem.BindSelfError(sourcePos));
       throw new Context.ResolvingInterruptedException();
@@ -65,9 +65,13 @@ public record BinOpSet(
   }
 
   public Elem ensureHasElem(@NotNull String defName, @NotNull Decl.OpDecl opDecl) {
+    return ensureHasElem(defName, opDecl, SourcePos.NONE);
+  }
+
+  public Elem ensureHasElem(@NotNull String defName, @NotNull Decl.OpDecl opDecl, @NotNull SourcePos sourcePos) {
     var elem = ops.find(e -> e.op == opDecl);
     if (elem.isDefined()) return elem.get();
-    var newElem = Elem.from(defName, opDecl);
+    var newElem = Elem.from(defName, opDecl, sourcePos);
     ops.add(newElem);
     return newElem;
   }
@@ -104,26 +108,27 @@ public record BinOpSet(
     }
 
     if (count != tighterGraph.size()) {
-      var circle = Buffer.<String>of();
+      var circle = Buffer.<Elem>of();
       ind.forEach((e, i) -> {
-        if (i.value > 0) circle.append(e.name);
+        if (i.value > 0) circle.append(e);
       });
-      System.out.println(circle);
-      throw new IllegalArgumentException("Cyclic!");
+      reporter.report(new OperatorProblem.CircleError(circle));
+      throw new Context.ResolvingInterruptedException();
     }
   }
 
   public record Elem(
+    @NotNull SourcePos firstBind,
     @NotNull Decl.OpDecl op,
     @NotNull String name,
     @NotNull Assoc assoc
   ) {
-    private static @NotNull Elem from(@NotNull String defName, Decl.@NotNull OpDecl opDecl) {
+    private static @NotNull Elem from(@NotNull String defName, Decl.@NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
       var opData = opDecl.asOperator();
       if (opData == null) {
         opData = Tuple.of(defName, Assoc.NoFix);
       }
-      return new Elem(opDecl, opData._1 != null ? opData._1 : defName, opData._2);
+      return new Elem(sourcePos, opDecl, opData._1 != null ? opData._1 : defName, opData._2);
     }
   }
 
