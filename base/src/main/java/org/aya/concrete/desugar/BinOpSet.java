@@ -7,30 +7,54 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
-import org.aya.concrete.desugar.error.BindSelfError;
-import org.aya.concrete.desugar.error.DesugarInterruptedException;
+import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.resolve.error.CyclicOperatorError;
-import org.glavo.kala.collection.mutable.MutableHashSet;
+import org.glavo.kala.collection.mutable.*;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record BinOpSet(@NotNull Reporter reporter, @NotNull MutableHashSet<Elem> ops) {
+public record BinOpSet(
+  @NotNull Reporter reporter,
+  @NotNull MutableSet<Elem> ops,
+  @NotNull MutableHashMap<Elem, MutableHashSet<Elem>> tighterGraph
+) {
   public BinOpSet(@NotNull Reporter reporter) {
-    this(reporter, MutableHashSet.of());
+    this(reporter, MutableSet.of(), MutableHashMap.of());
   }
 
   public void bind(@NotNull Tuple2<String, Decl.@NotNull OpDecl> op,
                    @NotNull Stmt.BindPred pred,
                    @NotNull Tuple2<String, Decl.@NotNull OpDecl> target,
                    @NotNull SourcePos sourcePos) {
-    var opElem = ensureHasElem(op._1, op._2);
-    var targetElem = ensureHasElem(target._1, target._2);
-    opElem.register(pred, targetElem, reporter, sourcePos);
-    targetElem.register(pred.invert(), opElem, reporter, sourcePos);
+    var opElem = ensureHasElem(op._1, op._2, sourcePos);
+    var targetElem = ensureHasElem(target._1, target._2, sourcePos);
+    if (opElem == targetElem) {
+      reporter.report(new OperatorProblem.BindSelfError(sourcePos));
+      throw new Context.ResolvingInterruptedException();
+    }
+    if (pred == Stmt.BindPred.Tighter) addTighter(opElem, targetElem);
+    else addTighter(targetElem, opElem);
+  }
+
+  public PredCmp compare(@NotNull Elem lhs, @NotNull Elem rhs) {
+    if (lhs == rhs) return PredCmp.Equal;
+    if (hasPath(MutableSet.of(), lhs, rhs)) return PredCmp.Tighter;
+    if (hasPath(MutableSet.of(), rhs, lhs)) return PredCmp.Looser;
+    return PredCmp.Undefined;
+  }
+
+  private boolean hasPath(@NotNull MutableSet<Elem> book, @NotNull Elem from, @NotNull Elem to) {
+    if (from == to) return true;
+    if (book.contains(from)) return false;
+    for (var test : ensureGraphHas(from)) {
+      if (hasPath(book, test, to)) return true;
+    }
+    book.add(from);
+    return false;
   }
 
   public Assoc assocOf(@Nullable Tuple3<String, Decl.@NotNull OpDecl, String> opDecl) {
@@ -43,61 +67,69 @@ public record BinOpSet(@NotNull Reporter reporter, @NotNull MutableHashSet<Elem>
   }
 
   public Elem ensureHasElem(@NotNull String defName, @NotNull Decl.OpDecl opDecl) {
+    return ensureHasElem(defName, opDecl, SourcePos.NONE);
+  }
+
+  public Elem ensureHasElem(@NotNull String defName, @NotNull Decl.OpDecl opDecl, @NotNull SourcePos sourcePos) {
     var elem = ops.find(e -> e.op == opDecl);
     if (elem.isDefined()) return elem.get();
-    var opData = opDecl.asOperator();
-    if (opData == null) {
-      opData = Tuple.of(defName, Assoc.NoFix);
-    }
-    var newElem = new Elem(opDecl, opData._1 != null ? opData._1 : defName, opData._2,
-      MutableHashSet.of(), MutableHashSet.of());
+    var newElem = Elem.from(defName, opDecl, sourcePos);
     ops.add(newElem);
     return newElem;
   }
 
-  private void sort() {
-    // TODO[kiva]: check complex cyclic
+  private MutableHashSet<Elem> ensureGraphHas(@NotNull Elem elem) {
+    return tighterGraph.getOrPut(elem, MutableHashSet::of);
+  }
+
+  private void addTighter(@NotNull Elem from, @NotNull Elem to) {
+    ensureGraphHas(to);
+    ensureGraphHas(from).add(to);
+  }
+
+  public void sort() {
+    var ind = MutableHashMap.<Elem, Ref<Integer>>of();
+    tighterGraph.forEach((from, tos) -> {
+      ind.putIfAbsent(from, new Ref<>(0));
+      tos.forEach(to -> ind.getOrPut(to, () -> new Ref<>(0)).value += 1);
+    });
+
+    var stack = LinkedBuffer.<Elem>of();
+    ind.forEach((e, i) -> {
+      if (i.value == 0) stack.push(e);
+    });
+
+    var count = 0;
+    while (stack.isNotEmpty()) {
+      var elem = stack.pop();
+      count += 1;
+      tighterGraph.get(elem).forEach(to -> {
+        if (--ind.get(to).value == 0) stack.push(to);
+      });
+    }
+
+    if (count != tighterGraph.size()) {
+      var circle = Buffer.<Elem>of();
+      ind.forEach((e, i) -> {
+        if (i.value > 0) circle.append(e);
+      });
+      reporter.report(new OperatorProblem.CircleError(circle));
+      throw new Context.ResolvingInterruptedException();
+    }
   }
 
   public record Elem(
+    @NotNull SourcePos firstBind,
     @NotNull Decl.OpDecl op,
     @NotNull String name,
-    @NotNull Assoc assoc,
-    @NotNull MutableHashSet<Elem> tighter,
-    @NotNull MutableHashSet<Elem> looser
+    @NotNull Assoc assoc
   ) {
-    void register(@NotNull Stmt.BindPred pred, @NotNull Elem that, @NotNull Reporter reporter, @NotNull SourcePos sourcePos) {
-      if (this == that) {
-        reporter.report(new BindSelfError(sourcePos));
-        throw new DesugarInterruptedException();
+    private static @NotNull Elem from(@NotNull String defName, Decl.@NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
+      var opData = opDecl.asOperator();
+      if (opData == null) {
+        opData = Tuple.of(defName, Assoc.NoFix);
       }
-      if (pred == Stmt.BindPred.Looser) thisIsLooserThan(that, reporter, sourcePos);
-      else thisIsTighterThan(that, reporter, sourcePos);
-    }
-
-    public PredCmp compareWith(@NotNull Elem that) {
-      if (this == that) return PredCmp.Equal;
-      if (tighter.contains(that)) return PredCmp.Tighter;
-      if (looser.contains(that)) return PredCmp.Looser;
-      else return PredCmp.Undefined;
-    }
-
-    private void thisIsLooserThan(@NotNull Elem that, @NotNull Reporter reporter, @NotNull SourcePos sourcePos) {
-      if (compareWith(that) == PredCmp.Tighter) {
-        reporter.report(new CyclicOperatorError(sourcePos,
-          name, that.name, Stmt.BindPred.Tighter));
-        throw new Context.ResolvingInterruptedException();
-      }
-      looser.add(that);
-    }
-
-    private void thisIsTighterThan(@NotNull Elem that, @NotNull Reporter reporter, @NotNull SourcePos sourcePos) {
-      if (compareWith(that) == PredCmp.Looser) {
-        reporter.report(new CyclicOperatorError(sourcePos,
-          name, that.name, Stmt.BindPred.Looser));
-        throw new Context.ResolvingInterruptedException();
-      }
-      tighter.add(that);
+      return new Elem(sourcePos, opDecl, opData._1 != null ? opData._1 : defName, opData._2);
     }
   }
 

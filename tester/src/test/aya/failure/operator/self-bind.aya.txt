@@ -5,5 +5,5 @@ In file $FILE:2:0 ->
       ^-------------^
   
 Error: Self bind is not allowed
-Desugaring interrupted due to error(s).
+Resolving interrupted due to error(s).
 What are you doing?

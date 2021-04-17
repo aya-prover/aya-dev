@@ -8,8 +8,8 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
-import org.aya.concrete.desugar.error.AmbiguousPredError;
 import org.aya.concrete.desugar.error.DesugarInterruptedException;
+import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -57,9 +57,9 @@ public final class BinOpParser {
         var currentOp = opSet.ensureHasElem(tryOp._1, tryOp._2);
         while (opStack.isNotEmpty()) {
           var peek = opStack.peek();
-          var cmp = peek._2.compareWith(currentOp);
+          var cmp = opSet.compare(peek._2, currentOp);
           if (cmp == BinOpSet.PredCmp.Undefined) {
-            opSet.reporter().report(new AmbiguousPredError(currentOp.name(),
+            opSet.reporter().report(new OperatorProblem.AmbiguousPredError(currentOp.name(),
               peek._2.name(),
               peek._1.expr.sourcePos()));
             throw new DesugarInterruptedException();
