@@ -10,7 +10,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
-import org.aya.core.sort.Level;
+import org.aya.generic.Level;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;

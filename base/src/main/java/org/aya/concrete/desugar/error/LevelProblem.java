@@ -3,8 +3,8 @@
 package org.aya.concrete.desugar.error;
 
 import org.aya.api.error.ExprProblem;
+import org.aya.api.ref.LevelGenVar;
 import org.aya.concrete.Expr;
-import org.aya.concrete.LevelPrevar;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +34,7 @@ public sealed interface LevelProblem extends ExprProblem {
   }
 
   record BadLevelKind(
-    @NotNull Expr expr, @NotNull LevelPrevar.Kind kind
+    @NotNull Expr expr, @NotNull LevelGenVar.Kind kind
   ) implements LevelProblem {
     @Override public @NotNull Doc describe() {
       return Doc.plain("I don't want a " + kind.keyword + " here, please use the other one");

@@ -3,7 +3,7 @@
 package org.aya.core.visitor;
 
 import org.aya.api.util.Arg;
-import org.aya.core.sort.Level;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.tuple.Tuple;
@@ -91,7 +91,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return new Arg<>(term, arg.explicit());
   }
 
-  default @NotNull Level.Sort visitSort(@NotNull Level.Sort sort, P p) {
+  default @NotNull Sort visitSort(@NotNull Sort sort, P p) {
     return sort;
   }
 

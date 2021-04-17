@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
-import org.aya.core.sort.Level;
+import org.aya.core.sort.Sort;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -67,8 +67,8 @@ public sealed interface FormTerm extends Term {
   /**
    * @author ice1000
    */
-  record Univ(@NotNull Level.Sort sort) implements FormTerm {
-    public static final @NotNull FormTerm.Univ OMEGA = new Univ(Level.Sort.OMEGA);
+  record Univ(@NotNull Sort sort) implements FormTerm {
+    public static final @NotNull FormTerm.Univ OMEGA = new Univ(Sort.OMEGA);
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);

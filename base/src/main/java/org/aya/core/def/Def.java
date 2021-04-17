@@ -5,7 +5,7 @@ package org.aya.core.def;
 import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
-import org.aya.core.sort.Level;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.core.visitor.Substituter;
@@ -35,7 +35,7 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).param;
   }
-  static @NotNull ImmutableSeq<Level.LVar> defLevels(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+  static @NotNull ImmutableSeq<Sort.LvlVar> defLevels(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     var core = defVar.core;
     if (core instanceof DataDef data) return data.levels();
     else if (core instanceof FnDef fn) return fn.levels();
@@ -90,7 +90,7 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
   @Debug.Renderer(text = "toDoc().debugRender()")
   record Signature(
     @NotNull ImmutableSeq<Term.@NotNull Param> contextParam,
-    @NotNull ImmutableSeq<Level.@NotNull LVar> sortParam,
+    @NotNull ImmutableSeq<Sort.@NotNull LvlVar> sortParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements Docile {

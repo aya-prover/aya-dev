@@ -5,6 +5,7 @@ package org.aya.concrete;
 import org.aya.api.concrete.ConcreteExpr;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
@@ -15,6 +16,7 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.visitor.ConcreteDistiller;
+import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -229,8 +231,8 @@ public sealed interface Expr extends ConcreteExpr {
 
   record UnivExpr(
     @NotNull SourcePos sourcePos,
-    @NotNull LevelPrevar uLevel,
-    @NotNull LevelPrevar hLevel
+    @NotNull Level<LevelGenVar> uLevel,
+    @NotNull Level<LevelGenVar> hLevel
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);

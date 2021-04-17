@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.Assoc;
@@ -97,9 +98,9 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public Generalize visitLevels(AyaParser.LevelsContext ctx) {
-    var kind = ctx.HLEVEL() != null ? LevelPrevar.Kind.Homotopy : LevelPrevar.Kind.Universe;
+    var kind = ctx.HLEVEL() != null ? LevelGenVar.Kind.Homotopy : LevelGenVar.Kind.Universe;
     return new Generalize.Levels(sourcePosOf(ctx), kind, visitIds(ctx.ids())
-      .map(t -> Tuple.of(t._1, new LevelPrevar(t._2, LevelPrevar.Kind.Universe)))
+      .map(t -> Tuple.of(t._1, new LevelGenVar(LevelGenVar.Kind.Universe, t._2)))
       .collect(ImmutableSeq.factory()));
   }
 
