@@ -150,7 +150,7 @@ public record StmtTycker(
     decl.signature = new Def.Signature(ctxTele, tycker.extractLevels(), tele, result);
     var body = decl.body.map(clause -> visitCtor(clause, tycker));
     var collectedBody = body.collect(ImmutableSeq.factory());
-    return new DataDef(decl.ref, ctxTele, tele, tycker.extractLevels(), result, collectedBody);
+    return new DataDef(decl.ref, ctxTele, tele, decl.signature.sortParam(), result, collectedBody);
   }
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
@@ -167,14 +167,14 @@ public record StmtTycker(
     var tele = checkTele(tycker, field.telescope);
     var structRef = field.structRef;
     var result = field.result.accept(tycker, null).wellTyped();
-    field.signature = new Def.Signature(ImmutableSeq.of(), tycker.extractLevels(), tele, result);
+    var structSig = structRef.concrete.signature;
+    assert structSig != null;
+    field.signature = new Def.Signature(ImmutableSeq.of(), structSig.sortParam(), tele, result);
     var cumulativeCtx = tycker.localCtx.derive();
     var patTycker = new PatTycker(tycker);
     var elabClauses = elabClauses(patTycker, null, field.signature, cumulativeCtx, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
-    var structSig = structRef.concrete.signature;
-    assert structSig != null;
     var elaborated = new StructDef.Field(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
     ensureConfluent(tycker, field.signature, cumulativeCtx, elabClauses, matchings, field.sourcePos, false);
     return elaborated;
@@ -196,7 +196,7 @@ public record StmtTycker(
       right -> patTycker.elabClause(right, signature, cumulativeCtx.localMap())));
     var resultTy = what._1;
     var factory = FnDef.factory(body ->
-      new FnDef(decl.ref, ctxTele, resultTele, tycker.extractLevels(), resultTy, body));
+      new FnDef(decl.ref, ctxTele, resultTele, signature.value.sortParam(), resultTy, body));
     if (what._2.isLeft()) return factory.apply(Either.left(what._2.getLeftValue()));
     var elabClauses = what._2.getRightValue();
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
