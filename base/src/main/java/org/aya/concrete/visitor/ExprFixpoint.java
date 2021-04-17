@@ -86,6 +86,18 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix());
   }
 
+  @Override default @NotNull Expr visitLsuc(Expr.@NotNull LSucExpr expr, P p) {
+    var lvl = expr.expr().accept(this, p);
+    if (lvl == expr.expr()) return expr;
+    return new Expr.LSucExpr(expr.sourcePos(), lvl);
+  }
+
+  @Override default @NotNull Expr visitLmax(Expr.@NotNull LMaxExpr expr, P p) {
+    var fields = expr.levels().map(t -> t.accept(this, p));
+    if (fields.sameElements(expr.levels(), true)) return expr;
+    return new Expr.LMaxExpr(expr.sourcePos(), fields);
+  }
+
   @Override default @NotNull Expr visitNew(Expr.@NotNull NewExpr expr, P p) {
     var struct = expr.struct().accept(this, p);
     var fields = expr.fields().map(t -> visitField(t, p));

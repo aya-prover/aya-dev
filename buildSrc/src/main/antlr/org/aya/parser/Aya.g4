@@ -80,9 +80,11 @@ dataCtorClause : '|' patterns IMPLIES dataCtor;
 // expressions
 expr : atom                            # single
      | expr argument+                  # app
-     | NEW expr '{' newArg* '}'        # new
+     | 'new' expr '{' newArg* '}'      # new
      | <assoc=right> expr TO expr      # arr
      | expr projFix                    # proj
+     | 'lsuc' expr                     # lsuc
+     | 'lmax' expr+                    # lmax
      | PI tele+ TO expr                # pi
      | SIGMA tele+ '**' expr           # sigma
      | LAMBDA tele+ (IMPLIES expr?)?   # lam
@@ -193,7 +195,6 @@ MATCH : 'match';
 ABSURD : 'impossible';
 TO : '->' | '\u2192';
 IMPLIES : '=>' | '\u21D2';
-NEW : 'new';
 
 // markers
 LBRACE : '{';

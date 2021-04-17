@@ -76,6 +76,8 @@ public sealed interface Expr extends ConcreteExpr {
     R visitProj(@NotNull ProjExpr expr, P p);
     R visitNew(@NotNull NewExpr expr, P p);
     R visitLitInt(@NotNull LitIntExpr expr, P p);
+    R visitLsuc(@NotNull LSucExpr expr, P p);
+    R visitLmax(@NotNull LMaxExpr expr, P p);
     R visitLitString(@NotNull LitStringExpr expr, P p);
     R visitBinOpSeq(@NotNull BinOpSeq binOpSeq, P p);
   }
@@ -89,6 +91,12 @@ public sealed interface Expr extends ConcreteExpr {
       return catchUnhandled(expr, p);
     }
     @Override default R visitLitInt(@NotNull LitIntExpr expr, P p) {
+      return catchUnhandled(expr, p);
+    }
+    @Override default R visitLsuc(@NotNull LSucExpr expr, P p) {
+      return catchUnhandled(expr, p);
+    }
+    @Override default R visitLmax(@NotNull LMaxExpr expr, P p) {
       return catchUnhandled(expr, p);
     }
     @Override default R visitLitString(@NotNull LitStringExpr expr, P p) {
@@ -274,19 +282,25 @@ public sealed interface Expr extends ConcreteExpr {
   /**
    * @author kiva
    */
-  record LitIntExpr(
-    @NotNull SourcePos sourcePos,
-    int integer
-  ) implements Expr {
+  record LitIntExpr(@NotNull SourcePos sourcePos, int integer) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitInt(this, p);
     }
   }
 
-  record LitStringExpr(
-    @NotNull SourcePos sourcePos,
-    @NotNull String string
-  ) implements Expr {
+  record LSucExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr) implements Expr {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLsuc(this, p);
+    }
+  }
+
+  record LMaxExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Expr> levels) implements Expr {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitLmax(this, p);
+    }
+  }
+
+  record LitStringExpr(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLitString(this, p);
     }

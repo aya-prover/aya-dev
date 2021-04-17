@@ -267,8 +267,18 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx instanceof AyaParser.LamContext lam) return visitLam(lam);
     if (ctx instanceof AyaParser.ArrContext arr) return visitArr(arr);
     if (ctx instanceof AyaParser.NewContext n) return visitNew(n);
+    if (ctx instanceof AyaParser.LsucContext lsuc) return visitLsuc(lsuc);
+    if (ctx instanceof AyaParser.LmaxContext lmax) return visitLmax(lmax);
     // TODO: match
     throw new UnsupportedOperationException("TODO: " + ctx.getClass());
+  }
+
+  @Override public @NotNull Expr visitLsuc(AyaParser.LsucContext ctx) {
+    return new Expr.LSucExpr(sourcePosOf(ctx), visitExpr(ctx.expr()));
+  }
+
+  @Override public @NotNull Expr visitLmax(AyaParser.LmaxContext ctx) {
+    return new Expr.LMaxExpr(sourcePosOf(ctx), ImmutableSeq.from(ctx.expr()).map(this::visitExpr));
   }
 
   @Override public @NotNull Expr visitNew(AyaParser.NewContext ctx) {

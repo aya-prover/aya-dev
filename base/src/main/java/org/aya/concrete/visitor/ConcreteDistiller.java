@@ -50,7 +50,7 @@ public final class ConcreteDistiller implements
       expr.param().toDoc(),
       expr.body() instanceof Expr.HoleExpr
         ? Doc.empty()
-        : Doc.cat(Doc.plain(" => "), expr.body().toDoc())
+        : Doc.cat(Doc.symbol(" => "), expr.body().toDoc())
     );
   }
 
@@ -60,9 +60,8 @@ public final class ConcreteDistiller implements
       Doc.styled(CoreDistiller.KEYWORD, Doc.symbol("Pi")),
       Doc.plain(" "),
       expr.param().toDoc(),
-      Doc.plain(" -> "),
-      expr.last().toDoc()
-    );
+      Doc.symbol(" -> "),
+      expr.last().toDoc());
   }
 
   @Override public Doc visitSigma(Expr.@NotNull SigmaExpr expr, Boolean nestedCall) {
@@ -71,9 +70,8 @@ public final class ConcreteDistiller implements
       Doc.styled(CoreDistiller.KEYWORD, Doc.symbol("Sig")),
       Doc.plain(" "),
       visitTele(expr.params().dropLast(1)),
-      Doc.plain(" ** "),
-      Objects.requireNonNull(expr.params().last().type()).toDoc()
-    );
+      Doc.symbol(" ** "),
+      Objects.requireNonNull(expr.params().last().type()).toDoc());
   }
 
   @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Boolean nestedCall) {
@@ -94,8 +92,23 @@ public final class ConcreteDistiller implements
       expr.function().toDoc(),
       expr.arguments(),
       (nest, arg) -> arg.accept(this, nest),
-      nestedCall
-    );
+      nestedCall);
+  }
+
+  @Override public Doc visitLsuc(Expr.@NotNull LSucExpr expr, Boolean nestedCall) {
+    return CoreDistiller.INSTANCE.visitCalls(
+      Doc.styled(CoreDistiller.KEYWORD, "lsuc"),
+      ImmutableSeq.of(Arg.explicit(expr.expr())),
+      (nest, arg) -> arg.accept(this, nest),
+      nestedCall);
+  }
+
+  @Override public Doc visitLmax(Expr.@NotNull LMaxExpr expr, Boolean nestedCall) {
+    return CoreDistiller.INSTANCE.visitCalls(
+      Doc.styled(CoreDistiller.KEYWORD, "lmax"),
+      expr.levels().map(Arg::explicit),
+      (nest, arg) -> arg.accept(this, nest),
+      nestedCall);
   }
 
   @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Boolean nestedCall) {
