@@ -86,7 +86,23 @@ public record LevelEqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlV
     }
 
     public void solve(@NotNull MutableMap<Sort.LvlVar, Level<Sort.LvlVar>> solution) {
-      throw new UnsupportedOperationException("#93");
+      for (var eqn : eqns) solveEqn(solution, eqn);
+    }
+
+    private void solveEqn(@NotNull MutableMap<Sort.LvlVar, Level<Sort.LvlVar>> solution, @NotNull LevelEqn eqn) {
+      if (eqn.lhs instanceof Level.Reference<Sort.LvlVar> lhs) {
+        if (!lhs.ref().bound()) solution.put(lhs.ref(), eqn.rhs);
+        else if (eqn.rhs instanceof Level.Reference<Sort.LvlVar> rhs) {
+          if (!rhs.ref().bound()) solution.put(rhs.ref(), lhs);
+            // TODO[ice]: two levels to equal?
+          else throw new ExprTycker.TyckerException();
+        } else throw new ExprTycker.TyckerException();
+      } else if (eqn.lhs instanceof Level.Constant<Sort.LvlVar> lhs) {
+        if (eqn.rhs instanceof Level.Reference<Sort.LvlVar> rhs) {
+          if (!rhs.ref().bound()) solution.put(rhs.ref(), lhs);
+          else throw new ExprTycker.TyckerException();
+        }
+      } else throw new ExprTycker.TyckerException();
     }
   }
 }
