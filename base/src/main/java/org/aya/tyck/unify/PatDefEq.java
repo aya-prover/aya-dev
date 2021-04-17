@@ -6,6 +6,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
@@ -89,7 +90,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()));
   }
 
-  private void levels(ImmutableSeq<@NotNull Level> l, ImmutableSeq<@NotNull Level> r) {
+  private void levels(ImmutableSeq<@NotNull Level<Sort.LvlVar>> l, ImmutableSeq<@NotNull Level<Sort.LvlVar>> r) {
     for (var levels : l.zip(r)) defeq.equations.add(levels._1, levels._2, cmp, defeq.pos);
   }
 

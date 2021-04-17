@@ -147,9 +147,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
     var u = transformLevel(expr.uLevel());
-    if (u instanceof Level.Polymorphic) u = new Level.Reference<>(universe);
+    if (u instanceof Level.Polymorphic<Sort.LvlVar>) u = new Level.Reference<>(universe);
     var h = transformLevel(expr.hLevel());
-    if (h instanceof Level.Polymorphic) h = new Level.Reference<>(homotopy);
+    if (h instanceof Level.Polymorphic<Sort.LvlVar>) h = new Level.Reference<>(homotopy);
     var sort = new Sort(u, h);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
     if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {

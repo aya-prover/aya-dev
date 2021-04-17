@@ -10,6 +10,7 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
+import org.aya.core.sort.Sort;
 import org.aya.generic.Level;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.SeqView;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface CallTerm extends Term {
   @NotNull Var ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs();
-  @NotNull ImmutableSeq<@NotNull Level> sortArgs();
+  @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
   default @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {
     return contextArgs().view().concat(args());
@@ -35,7 +36,7 @@ public sealed interface CallTerm extends Term {
     @Contract(pure = true, value = "_,_,_,_->new") @NotNull CallTerm make(
       DefVar<D, S> defVar,
       ImmutableSeq<@NotNull Arg<Term>> ctxArgs,
-      ImmutableSeq<@NotNull Level> sortArgs,
+      ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
       ImmutableSeq<@NotNull Arg<Term>> args
     );
   }
@@ -54,7 +55,7 @@ public sealed interface CallTerm extends Term {
   record Fn(
     @NotNull DefVar<FnDef, Decl.FnDecl> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Level> sortArgs,
+    @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -86,7 +87,7 @@ public sealed interface CallTerm extends Term {
       return ImmutableSeq.of();
     }
 
-    @Override public @NotNull ImmutableSeq<@NotNull Level> sortArgs() {
+    @Override public @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs() {
       return ImmutableSeq.of();
     }
 
@@ -103,7 +104,7 @@ public sealed interface CallTerm extends Term {
   record Data(
     @NotNull DefVar<DataDef, Decl.DataDecl> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Level> sortArgs,
+    @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -129,7 +130,7 @@ public sealed interface CallTerm extends Term {
   record Struct(
     @NotNull DefVar<StructDef, Decl.StructDecl> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Level> sortArgs,
+    @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -149,7 +150,7 @@ public sealed interface CallTerm extends Term {
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Level> sortArgs,
+    @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs
   ) {
     public @NotNull Data underlyingDataCall() {
@@ -166,7 +167,7 @@ public sealed interface CallTerm extends Term {
       @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs,
-      @NotNull ImmutableSeq<@NotNull Level> sortArgs,
+      @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> conArgs
     ) {
       this(new ConHead(dataRef, ref, contextArgs, sortArgs, dataArgs), conArgs);
@@ -180,7 +181,7 @@ public sealed interface CallTerm extends Term {
       return head.contextArgs;
     }
 
-    @Override public @NotNull ImmutableSeq<@NotNull Level> sortArgs() {
+    @Override public @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs() {
       return head.sortArgs;
     }
 
@@ -229,7 +230,7 @@ public sealed interface CallTerm extends Term {
       return Decision.MAYBE;
     }
 
-    @Override public @NotNull ImmutableSeq<@NotNull Level> sortArgs() {
+    @Override public @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs() {
       return ImmutableSeq.of();
     }
   }
@@ -241,7 +242,7 @@ public sealed interface CallTerm extends Term {
     @NotNull Term of,
     @NotNull DefVar<StructDef.Field, Decl.StructField> ref,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Level> sortArgs,
+    @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {
