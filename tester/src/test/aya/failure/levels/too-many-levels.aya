@@ -1,0 +1,7 @@
+ulevel u
+struct Lift (A : Set u) : Set (lsuc u)
+ | value : A
+
+open data Nat : Set | zero
+
+def test => new Lift Nat { | value => zero }

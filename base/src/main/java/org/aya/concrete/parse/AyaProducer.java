@@ -194,6 +194,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx.HTYPE() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, Expr.RawUnivExpr.NEEDED);
     if (ctx.UTYPE() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.NEEDED, Expr.RawUnivExpr.POLYMORPHIC);
     if (ctx.SET_UNIV() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, 2);
+    if (ctx.USET_UNIV() != null) return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.NEEDED, 2);
     if (ctx.INF_TYPE() != null)
       return new Expr.RawUnivExpr(pos, Expr.RawUnivExpr.POLYMORPHIC, Expr.RawUnivExpr.INFINITY);
     if (ctx.PROP() != null) return new Expr.RawUnivExpr(pos, 0, 1);
