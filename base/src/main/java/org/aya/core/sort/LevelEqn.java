@@ -39,8 +39,13 @@ public record LevelEqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlV
   public record Set(
     @NotNull Buffer<Sort.LvlVar> vars,
     @NotNull Reporter reporter,
-    @NotNull Buffer<@NotNull LevelEqn> eqns
+    @NotNull Buffer<@NotNull LevelEqn> eqns,
+    @NotNull MutableMap<Sort.LvlVar, Level<Sort.LvlVar>> solution
   ) {
+    public Set(@NotNull Reporter reporter) {
+      this(Buffer.of(), reporter, Buffer.of(), MutableMap.of());
+    }
+
     public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
       add(lhs.hLevel(), rhs.hLevel(), cmp, loc);
       add(lhs.uLevel(), rhs.uLevel(), cmp, loc);
@@ -79,30 +84,32 @@ public record LevelEqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlV
       return vars.isEmpty() && eqns.isEmpty();
     }
 
-    public @NotNull LevelSubst.Simple solve() {
-      var map = new LevelSubst.Simple(MutableMap.of());
-      solve(map.solution());
-      return map;
+    public void solve() {
+      var newEqns = Buffer.from(eqns);
+      eqns.clear();
+      newEqns.filterTo(eqns, this::solveEqn);
     }
 
-    public void solve(@NotNull MutableMap<Sort.LvlVar, Level<Sort.LvlVar>> solution) {
-      for (var eqn : eqns) solveEqn(solution, eqn);
-    }
-
-    private void solveEqn(@NotNull MutableMap<Sort.LvlVar, Level<Sort.LvlVar>> solution, @NotNull LevelEqn eqn) {
+    private boolean solveEqn(@NotNull LevelEqn eqn) {
       if (eqn.lhs instanceof Level.Reference<Sort.LvlVar> lhs) {
-        if (!lhs.ref().bound()) solution.put(lhs.ref(), eqn.rhs);
-        else if (eqn.rhs instanceof Level.Reference<Sort.LvlVar> rhs) {
-          if (!rhs.ref().bound()) solution.put(rhs.ref(), lhs);
-            // TODO[ice]: two levels to equal?
-          else throw new ExprTycker.TyckerException();
-        } else throw new ExprTycker.TyckerException();
+        if (!lhs.ref().bound()) {
+          solution.put(lhs.ref(), eqn.rhs);
+          return true;
+        } else if (eqn.rhs instanceof Level.Reference<Sort.LvlVar> rhs) {
+          if (!rhs.ref().bound()) {
+            solution.put(rhs.ref(), lhs);
+            return true;
+          }
+        }
       } else if (eqn.lhs instanceof Level.Constant<Sort.LvlVar> lhs) {
         if (eqn.rhs instanceof Level.Reference<Sort.LvlVar> rhs) {
-          if (!rhs.ref().bound()) solution.put(rhs.ref(), lhs);
-          else throw new ExprTycker.TyckerException();
+          if (!rhs.ref().bound()) {
+            solution.put(rhs.ref(), lhs);
+            return true;
+          }
         }
-      } else throw new ExprTycker.TyckerException();
+      }
+      return false;
     }
   }
 }

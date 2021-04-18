@@ -86,7 +86,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this.reporter = reporter;
     this.localCtx = localCtx;
     this.traceBuilder = traceBuilder;
-    equations = new LevelEqn.Set(Buffer.of(), reporter, Buffer.of());
+    equations = new LevelEqn.Set(reporter);
   }
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
