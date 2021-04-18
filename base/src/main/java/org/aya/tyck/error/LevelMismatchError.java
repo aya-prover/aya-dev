@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record LevelMismatchError(
   @NotNull SourcePos sourcePos,
-  @NotNull LevelEqnSet.LevelEqn eqn
+  @NotNull LevelEqnSet.Eqn eqn
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(

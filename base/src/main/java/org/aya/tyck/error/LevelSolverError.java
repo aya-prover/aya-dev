@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record LevelSolverError(
   @NotNull Expr expr,
-  @NotNull Collection<? extends LevelEqnSet.LevelEqn> eqn
+  @NotNull Collection<? extends LevelEqnSet.Eqn> eqn
 ) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     // TODO[ice]: improve this

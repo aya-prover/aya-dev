@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public record LevelEqnSet(
   @NotNull Buffer<Sort.LvlVar> vars,
   @NotNull Reporter reporter,
-  @NotNull Buffer<@NotNull LevelEqn> eqns,
+  @NotNull Buffer<@NotNull Eqn> eqns,
   @NotNull MutableMap<Sort.LvlVar, Level<Sort.LvlVar>> solution
 ) implements LevelSubst.Default {
   public LevelEqnSet(@NotNull Reporter reporter) {
@@ -38,10 +38,10 @@ public record LevelEqnSet(
     @NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs,
     @NotNull Ordering cmp, @NotNull SourcePos loc
   ) {
-    insertEqn(loc, cmp, new LevelEqn(lhs, rhs));
+    insertEqn(loc, cmp, new Eqn(lhs, rhs));
   }
 
-  private void insertEqn(@NotNull SourcePos loc, @NotNull Ordering cmp, LevelEqn h) {
+  private void insertEqn(@NotNull SourcePos loc, @NotNull Ordering cmp, Eqn h) {
     switch (h.biasedEq(cmp)) {
       case NO -> {
         reporter.report(new LevelMismatchError(loc, h));
@@ -66,10 +66,10 @@ public record LevelEqnSet(
   public void solve() {
     var newEqns = Buffer.from(eqns);
     eqns.clear();
-    newEqns.filterTo(eqns, this::solveEqn);
+    newEqns.view().map(this::applyTo).filterTo(eqns, this::solveEqn);
   }
 
-  private boolean solveEqn(@NotNull LevelEqn eqn) {
+  private boolean solveEqn(@NotNull LevelEqnSet.Eqn eqn) {
     if (eqn.lhs() instanceof Level.Reference<Sort.LvlVar> lhs) {
       if (!lhs.ref().bound()) {
         solution.put(lhs.ref(), eqn.rhs());
@@ -95,7 +95,7 @@ public record LevelEqnSet(
    * @author ice1000
    */
   @Debug.Renderer(text = "lhs.toDoc().debugRender() + \" = \" + rhs.toDoc().debugRender()")
-  public static record LevelEqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs) {
+  public static record Eqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs) {
     public Decision biasedEq(@NotNull Ordering cmp) {
       if (lhs.equals(rhs)) return Decision.YES;
       if (lhs instanceof Level.Constant<Sort.LvlVar> l) {

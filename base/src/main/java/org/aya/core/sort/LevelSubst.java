@@ -28,6 +28,12 @@ public interface LevelSubst {
     else return lvl;
   }
 
+  default @NotNull LevelEqnSet.Eqn applyTo(@NotNull LevelEqnSet.Eqn eqn) {
+    var lhs = applyTo(eqn.lhs());
+    var rhs = applyTo(eqn.rhs());
+    return lhs == eqn.lhs() && rhs == eqn.rhs() ? eqn : new LevelEqnSet.Eqn(lhs, rhs);
+  }
+
   record Simple(@NotNull MutableMap<Sort.@NotNull LvlVar, @NotNull Level<Sort.LvlVar>> solution) implements Default {
   }
 

@@ -94,6 +94,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result finalize(@NotNull Result result) {
+    equations.solve();
     return new Result(
       result.wellTyped.zonk(this),
       result.type.zonk(this)
