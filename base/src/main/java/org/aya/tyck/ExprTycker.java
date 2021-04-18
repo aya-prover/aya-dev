@@ -16,7 +16,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Signatured;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
-import org.aya.core.sort.LevelEqn;
+import org.aya.core.sort.LevelEqnSet;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -56,7 +56,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqn.Set equations;
+  public final @NotNull LevelEqnSet equations;
   private final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
   private final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.of();
@@ -86,7 +86,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this.reporter = reporter;
     this.localCtx = localCtx;
     this.traceBuilder = traceBuilder;
-    equations = new LevelEqn.Set(reporter);
+    equations = new LevelEqnSet(reporter);
   }
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {

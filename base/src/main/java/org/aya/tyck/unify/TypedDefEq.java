@@ -8,7 +8,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
-import org.aya.core.sort.LevelEqn;
+import org.aya.core.sort.LevelEqnSet;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.LocalCtx;
@@ -36,7 +36,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   private final @NotNull PatDefEq termDefeq;
   public final Trace.@Nullable Builder traceBuilder;
   public final @NotNull SourcePos pos;
-  public final @NotNull LevelEqn.Set equations;
+  public final @NotNull LevelEqnSet equations;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -57,7 +57,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   public TypedDefEq(
     @NotNull Reporter reporter, @NotNull Ordering cmp, @NotNull LocalCtx localCtx,
     Trace.@Nullable Builder traceBuilder, @NotNull SourcePos pos,
-    @NotNull LevelEqn.Set equations
+    @NotNull LevelEqnSet equations
   ) {
     this.localCtx = localCtx;
     this.traceBuilder = traceBuilder;

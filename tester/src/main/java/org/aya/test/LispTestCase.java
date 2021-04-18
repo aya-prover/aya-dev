@@ -5,7 +5,7 @@ package org.aya.test;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
-import org.aya.core.sort.LevelEqn;
+import org.aya.core.sort.LevelEqnSet;
 import org.aya.core.term.Term;
 import org.aya.tyck.LocalCtx;
 import org.aya.tyck.unify.TypedDefEq;
@@ -21,7 +21,7 @@ public class LispTestCase {
     return new TypedDefEq(
       ThrowingReporter.INSTANCE, Ordering.Eq,
       new LocalCtx(localCtx, null), null, SourcePos.NONE,
-      new LevelEqn.Set(ThrowingReporter.INSTANCE)
+      new LevelEqnSet(ThrowingReporter.INSTANCE)
     );
   }
 

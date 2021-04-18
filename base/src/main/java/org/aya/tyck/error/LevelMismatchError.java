@@ -4,13 +4,13 @@ package org.aya.tyck.error;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
-import org.aya.core.sort.LevelEqn;
+import org.aya.core.sort.LevelEqnSet;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record LevelMismatchError(
   @NotNull SourcePos sourcePos,
-  @NotNull LevelEqn eqn
+  @NotNull LevelEqnSet.LevelEqn eqn
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(

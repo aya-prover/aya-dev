@@ -4,7 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
-import org.aya.core.sort.LevelEqn;
+import org.aya.core.sort.LevelEqnSet;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.Collection;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record LevelSolverError(
   @NotNull Expr expr,
-  @NotNull Collection<? extends LevelEqn> eqn
+  @NotNull Collection<? extends LevelEqnSet.LevelEqn> eqn
 ) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     // TODO[ice]: improve this
