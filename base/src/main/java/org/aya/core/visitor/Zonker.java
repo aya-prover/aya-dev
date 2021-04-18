@@ -5,6 +5,7 @@ package org.aya.core.visitor;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
@@ -30,6 +31,12 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
       throw new ExprTycker.TyckInterruptedException();
     }
     return sol.body.accept(this, Unit.unit());
+  }
+
+  @Override public @NotNull Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
+    var sort = term.sort().substSort(tycker.equations);
+    if (sort == term.sort()) return term;
+    return new FormTerm.Univ(sort);
   }
 
   public static record UnsolvedMeta(@NotNull SourcePos sourcePos) implements Problem {

@@ -70,22 +70,16 @@ public record LevelEqnSet(
   }
 
   private boolean solveEqn(@NotNull LevelEqnSet.Eqn eqn) {
-    if (eqn.lhs() instanceof Level.Reference<Sort.LvlVar> lhs) {
+    if (eqn.lhs instanceof Level.Reference<Sort.LvlVar> lhs) {
       if (!lhs.ref().bound()) {
-        solution.put(lhs.ref(), eqn.rhs());
+        solution.put(lhs.ref(), eqn.rhs.lift(-lhs.lift()));
         return true;
-      } else if (eqn.rhs() instanceof Level.Reference<Sort.LvlVar> rhs) {
-        if (!rhs.ref().bound()) {
-          solution.put(rhs.ref(), lhs);
-          return true;
-        }
       }
-    } else if (eqn.lhs() instanceof Level.Constant<Sort.LvlVar> lhs) {
-      if (eqn.rhs() instanceof Level.Reference<Sort.LvlVar> rhs) {
-        if (!rhs.ref().bound()) {
-          solution.put(rhs.ref(), lhs);
-          return true;
-        }
+    }
+    if (eqn.rhs instanceof Level.Reference<Sort.LvlVar> rhs) {
+      if (!rhs.ref().bound()) {
+        solution.put(rhs.ref(), eqn.lhs.lift(rhs.lift()));
+        return true;
       }
     }
     return false;
