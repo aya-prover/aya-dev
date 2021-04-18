@@ -1,5 +1,8 @@
 open data Nat : Set 0 | zero | suc Nat
 open data Bool : Set 0 | true | false
+open data Int : Set 0
+ | pos Nat
+ | neg Nat { | zero => pos zero }
 def not (b : Bool) : Bool
  | true => false
  | false => true
@@ -34,3 +37,5 @@ def map {A B : Set 0} (f : Pi A -> B) (xs : List A) : List B
 def filter {A : Set 0} (f : Pi A -> Bool) (xs : List A) : List A
  | f, nil => nil {_}
  | f, cons x xs => ifElse (f x) (cons x (filter f xs)) (filter f xs)
+def length1: Nat => len {A => Nat} simple
+def length2: Nat => len (map {B => Nat} pos simple)

@@ -99,6 +99,7 @@ atom : literal
 
 argument : atom projFix*
          | LBRACE (expr ',')* expr? '}'
+         | LBRACE ID IMPLIES expr? '}'
          ;
 
 projFix : '.' (NUMBER | ID);

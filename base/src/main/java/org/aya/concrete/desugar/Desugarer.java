@@ -37,16 +37,16 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     if (hLevel == Expr.RawUnivExpr.NEEDED) {
       if (uLevel == Expr.RawUnivExpr.NEEDED) {
         var args = expectArgs(expr, 2, false);
-        var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term());
-        var u = levelVar(LevelGenVar.Kind.Universe, args.get(1).term());
+        var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term().expr());
+        var u = levelVar(LevelGenVar.Kind.Universe, args.get(1).term().expr());
         return new Expr.UnivExpr(pos, u, h);
       } else if (uLevel >= 0) {
         var args = expectArgs(expr, 1, false);
-        var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term());
+        var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term().expr());
         return new Expr.UnivExpr(pos, new Level.Constant<>(uLevel), h);
       } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
         var args = expectArgs(expr, 1, false);
-        var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term());
+        var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term().expr());
         return new Expr.UnivExpr(pos, new Level.Polymorphic<>(0), h);
       } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
     } else if (hLevel >= 0) {
@@ -55,8 +55,8 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
         var args = expectArgs(expr, 2, true);
         if (args.isNotEmpty()) {
-          var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term());
-          var u = levelVar(LevelGenVar.Kind.Universe, args.get(1).term());
+          var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term().expr());
+          var u = levelVar(LevelGenVar.Kind.Universe, args.get(1).term().expr());
           return new Expr.UnivExpr(pos, u, h);
         } else return new Expr.UnivExpr(pos, new Level.Polymorphic<>(0), new Level.Polymorphic<>(0));
       } else return withHomotopyLevel(expr, uLevel, pos, new Level.Polymorphic<>(0));
@@ -73,19 +73,19 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       return new Expr.UnivExpr(pos, new Level.Constant<>(uLevel), h);
     } else if (uLevel == Expr.RawUnivExpr.NEEDED) {
       var args = expectArgs(expr, 1, false);
-      var u = levelVar(LevelGenVar.Kind.Universe, args.first().term());
+      var u = levelVar(LevelGenVar.Kind.Universe, args.first().term().expr());
       return new Expr.UnivExpr(pos, u, h);
     } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
       var args = expectArgs(expr, 1, true);
       return new Expr.UnivExpr(pos, args.isEmpty() ? new Level.Polymorphic<>(0)
-        : levelVar(LevelGenVar.Kind.Universe, args.first().term()), h);
+        : levelVar(LevelGenVar.Kind.Universe, args.first().term().expr()), h);
     } else if (uLevel == Expr.RawUnivExpr.INFINITY) {
       expectArgs(expr, 0, false);
       return new Expr.UnivExpr(pos, new Level.Infinity<>(), h);
     } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
   }
 
-  @NotNull private ImmutableSeq<@NotNull Arg<Expr>> expectArgs(Expr.@NotNull AppExpr expr, int n, boolean canEmpty) {
+  @NotNull private ImmutableSeq<@NotNull Arg<Expr.NamedArg>> expectArgs(Expr.@NotNull AppExpr expr, int n, boolean canEmpty) {
     var args = expr.arguments();
     if (canEmpty && args.isEmpty()) return args;
     if (!args.sizeEquals(n)) {
