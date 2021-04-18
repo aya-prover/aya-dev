@@ -6,6 +6,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.Map;
@@ -50,7 +51,8 @@ public final record PrimDef(
     return visitor.visitPrim(this, p);
   }
 
-  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), FormTerm.Univ.OMEGA, prim -> prim, "I");
+  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(),
+    new FormTerm.Univ(new Sort(Sort.constant(0), Sort.INF_LVL)), prim -> prim, "I");
   public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of());
   public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
   public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");

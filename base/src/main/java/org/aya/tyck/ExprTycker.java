@@ -70,8 +70,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
-    return Seq.of(homotopy, universe).view()
-      .appendedAll(levelMapping.valuesView()).toImmutableSeq();
+    var std = Seq.of(homotopy, universe).view();
+    if (!equations.constraints(homotopy)) std = std.drop(1);
+    if (!equations.constraints(universe)) std = std.dropLast(1);
+    return std.appendedAll(levelMapping.valuesView()).toImmutableSeq();
   }
 
   @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {

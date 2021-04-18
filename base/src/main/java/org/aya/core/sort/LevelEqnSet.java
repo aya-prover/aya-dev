@@ -53,20 +53,14 @@ public record LevelEqnSet(
     }
   }
 
-  public void add(@NotNull LevelEqnSet other) {
-    vars.appendAll(other.vars);
-    eqns.appendAll(other.eqns);
-  }
-
-  public void clear() {
-    vars.clear();
-    eqns.clear();
-  }
-
   public void solve() {
     var newEqns = Buffer.from(eqns);
     eqns.clear();
     newEqns.view().map(this::applyTo).filterTo(eqns, this::solveEqn);
+  }
+
+  public boolean constraints(@NotNull Sort.LvlVar var) {
+    return eqns.anyMatch(eqn -> eqn.constraints(var));
   }
 
   private boolean solveEqn(@NotNull LevelEqnSet.Eqn eqn) {
@@ -102,6 +96,11 @@ public record LevelEqnSet(
       } else if (lhs instanceof Level.Infinity && rhs instanceof Level.Constant)
         return Decision.bool(cmp == Ordering.Gt);
       return Decision.MAYBE;
+    }
+
+    public boolean constraints(@NotNull Sort.LvlVar var) {
+      return lhs instanceof Level.Reference<Sort.LvlVar> l && l.ref() == var
+        || rhs instanceof Level.Reference<Sort.LvlVar> r && r.ref() == var;
     }
   }
 }

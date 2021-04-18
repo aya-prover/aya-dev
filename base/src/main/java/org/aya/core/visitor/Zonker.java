@@ -34,7 +34,7 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   }
 
   @Override public @NotNull Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    var sort = term.sort().substSort(tycker.equations);
+    var sort = term.sort().freedom(tycker.equations).subst(tycker.equations);
     if (sort == term.sort()) return term;
     return new FormTerm.Univ(sort);
   }
