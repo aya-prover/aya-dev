@@ -96,12 +96,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public @NotNull Result finalize(@NotNull Result result) {
     return new Result(
-      result.wellTyped.strip(reporter),
-      result.type.strip(reporter)
+      result.wellTyped.zonk(this),
+      result.type.zonk(this)
     );
   }
 
-  public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) throws TyckInterruptedException {
+  public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
     return finalize(expr.accept(this, type));
   }
 

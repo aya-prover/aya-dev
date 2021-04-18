@@ -3,7 +3,6 @@
 package org.aya.core.term;
 
 import org.aya.api.core.CoreTerm;
-import org.aya.api.error.Reporter;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -14,6 +13,7 @@ import org.aya.core.sort.LevelSubst;
 import org.aya.core.visitor.*;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.ExprTycker;
 import org.aya.util.Constants;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Map;
@@ -66,8 +66,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     return accept(new Substituter(subst, levelSubst), Unit.unit());
   }
 
-  @Override default @NotNull Term strip(@NotNull Reporter reporter) {
-    return accept(new Zonker(reporter), Unit.unit());
+  default @NotNull Term zonk(@NotNull ExprTycker tycker) {
+    return accept(new Zonker(tycker), Unit.unit());
   }
 
   @Override default int findUsages(@NotNull Var var) {

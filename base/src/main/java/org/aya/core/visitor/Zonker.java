@@ -3,7 +3,6 @@
 package org.aya.core.visitor;
 
 import org.aya.api.error.Problem;
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
@@ -20,13 +19,14 @@ import org.jetbrains.annotations.NotNull;
  * <a href="https://twitter.com/mistakenly_made/status/1382356066688651266">Twitter</a>
  * and <a href="https://stackoverflow.com/a/31890743/7083401">StackOverflow</a>.
  *
+ * @param tycker which stores level equation
  * @author ice1000
  */
-public record Zonker(@NotNull Reporter reporter) implements TermFixpoint<Unit> {
+public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
     var sol = term.ref().core();
     if (sol.body == null) {
-      reporter.report(new UnsolvedMeta(sol.sourcePos));
+      tycker.reporter.report(new UnsolvedMeta(sol.sourcePos));
       throw new ExprTycker.TyckInterruptedException();
     }
     return sol.body.accept(this, Unit.unit());
