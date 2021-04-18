@@ -41,7 +41,7 @@ public record LevelEqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlV
     @NotNull Reporter reporter,
     @NotNull Buffer<@NotNull LevelEqn> eqns,
     @NotNull MutableMap<Sort.LvlVar, Level<Sort.LvlVar>> solution
-  ) {
+  ) implements LevelSubst.Default {
     public Set(@NotNull Reporter reporter) {
       this(Buffer.of(), reporter, Buffer.of(), MutableMap.of());
     }
@@ -78,10 +78,6 @@ public record LevelEqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlV
     public void clear() {
       vars.clear();
       eqns.clear();
-    }
-
-    public boolean isEmpty() {
-      return vars.isEmpty() && eqns.isEmpty();
     }
 
     public void solve() {

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @see Default
  * @see Simple
+ * @see LevelEqn.Set
  */
 public interface LevelSubst {
   boolean isEmpty();
