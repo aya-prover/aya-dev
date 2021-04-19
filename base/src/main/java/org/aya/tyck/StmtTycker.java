@@ -185,14 +185,14 @@ public record StmtTycker(
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     var resultTele = checkTele(tycker, decl.telescope);
     // It might contain unsolved holes, but that's acceptable.
-    var resultRes = tycker.checkNoZonk(decl.result, null).wellTyped();
+    var resultRes = decl.result.accept(tycker, null);
     tracing(GenericBuilder::reduce);
-    var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes));
+    var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes.wellTyped()));
     decl.signature = signature.value;
     var patTycker = new PatTycker(tycker);
     var cumulativeCtx = tycker.localCtx.derive();
     var what = FP.distR(decl.body.map(
-      left -> tycker.checkExpr(left, resultRes).toTuple(),
+      left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
       right -> patTycker.elabClause(right, signature, cumulativeCtx.localMap())));
     var resultTy = what._1;
     var factory = FnDef.factory(body ->
@@ -213,6 +213,7 @@ public record StmtTycker(
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
     });
+    exprTycker.equations.solve();
     return okTele.map(t -> {
       var term = t.type().zonk(exprTycker);
       exprTycker.localCtx.put(t.ref(), term);

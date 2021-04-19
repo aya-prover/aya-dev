@@ -8,6 +8,7 @@ import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.generic.Level;
 import org.aya.util.Constants;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -22,18 +23,20 @@ import java.util.function.Function;
  */
 public final record PrimDef(
   @NotNull ImmutableSeq<Term.Param> telescope,
+  @NotNull ImmutableSeq<Sort.LvlVar> levels,
   @NotNull Term result,
   @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
   @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
 ) implements Def {
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels,
     @NotNull Term result,
     @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
     @NotNull String name
   ) {
     //noinspection ConstantConditions
-    this(telescope, result, unfold, DefVar.core(null, name));
+    this(telescope, levels, result, unfold, DefVar.core(null, name));
     ref.core = this;
   }
 
@@ -51,11 +54,11 @@ public final record PrimDef(
     return visitor.visitPrim(this, p);
   }
 
-  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(),
+  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.of(),
     new FormTerm.Univ(new Sort(Sort.constant(0), Sort.INF_LVL)), prim -> prim, "I");
   public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of());
-  public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
-  public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");
+  public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
+  public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");
 
   /** Short for <em>Arend coe</em>. */
   public static final @NotNull PrimDef ARCOE;
@@ -65,12 +68,16 @@ public final record PrimDef(
     var paramI = new LocalVar("i");
     var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), INTERVAL_CALL, true);
     var baseAtLeft = new ElimTerm.App(new RefTerm(paramA), Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty())));
+    var homotopy = new Sort.LvlVar("h", true);
+    var universe = new Sort.LvlVar("u", true);
+    var result = new FormTerm.Univ(new Sort(new Level.Reference<>(homotopy), new Level.Reference<>(universe)));
     ARCOE = new PrimDef(
       ImmutableSeq.of(
-        new Term.Param(paramA, new FormTerm.Pi(false, paramIToATy, FormTerm.Univ.OMEGA), true),
+        new Term.Param(paramA, new FormTerm.Pi(false, paramIToATy, result), true),
         new Term.Param(new LocalVar("base"), baseAtLeft, true),
         new Term.Param(paramI, INTERVAL_CALL, true)
       ),
+      ImmutableSeq.of(homotopy, universe),
       new ElimTerm.App(new RefTerm(paramA), Arg.explicit(new RefTerm(paramI))),
       PrimDef::arcoe, "arcoe");
   }
