@@ -1,5 +1,5 @@
 ulevel u
-struct Lift (A : uSet u) : uSet (lsuc u)
+struct Lift (A : Set u) : Set (lsuc u)
  | value : A
 
 open data Nat : Set | zero

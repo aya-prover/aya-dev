@@ -131,7 +131,6 @@ literal : qualifiedId
         | TYPE
         | INF_TYPE
         | SET_UNIV
-        | USET_UNIV
         ;
 
 tele : literal
@@ -176,7 +175,6 @@ HLEVEL : 'hlevel';
 TYPE : 'Type';
 INF_TYPE : 'ooType';
 SET_UNIV : 'Set';
-USET_UNIV : 'uSet';
 PROP : 'Prop';
 
 // other keywords

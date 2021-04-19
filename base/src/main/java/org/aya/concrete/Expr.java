@@ -219,7 +219,7 @@ public sealed interface Expr extends ConcreteExpr {
   ) implements Expr {
     /** Must be specified but yet unspecified */
     public static final int NEEDED = -1;
-    /** Can either be specified or polymorphic */
+    /** Can either be specified or polymorphic (must be polymorphic if the other level is needed) */
     public static final int POLYMORPHIC = -2;
     /** Specified to be infinity */
     public static final int INFINITY = -3;
