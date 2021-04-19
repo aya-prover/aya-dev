@@ -1,0 +1,20 @@
+prim I
+prim left
+prim right
+prim invol
+
+struct Path (A : Pi I -> Set) (a : A left) (b : A right) : Set
+  | at (i : I) : A i { | left => a
+                       | right => b }
+
+def path {A : Pi I -> Set} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+
+def `≡` Eq {A : Set} (a b : A) : Set
+  => Path (\ i => A) a b
+
+def idp {A : Set} (a : A) : a ≡ a
+  => path (\ i => a)
+
+def test : Eq (invol left) right
+  => idp _

@@ -51,6 +51,17 @@ public final record PrimDef(
     return prim;
   }
 
+  private static @NotNull Term invol(@NotNull CallTerm.Prim prim) {
+    var arg = prim.args().get(0).term();
+    if (arg instanceof CallTerm.Prim primCall && primCall.ref() == LEFT.ref) {
+      return RIGHT_CALL;
+    } else if (arg instanceof CallTerm.Prim primCall && primCall.ref() == RIGHT.ref) {
+      return LEFT_CALL;
+    } else {
+      return prim;
+    }
+  }
+
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitPrim(this, p);
   }
@@ -60,6 +71,15 @@ public final record PrimDef(
   public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of(), ImmutableSeq.of());
   public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
   public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");
+  public static final @NotNull CallTerm.Prim LEFT_CALL = new CallTerm.Prim(LEFT.ref, ImmutableSeq.of(), ImmutableSeq.of());
+  public static final @NotNull CallTerm.Prim RIGHT_CALL = new CallTerm.Prim(RIGHT.ref, ImmutableSeq.of(), ImmutableSeq.of());
+
+  public static final @NotNull PrimDef INVOL;
+
+  static {
+    var paramI = new LocalVar("i");
+    INVOL = new PrimDef(ImmutableSeq.of(new Term.Param(paramI, INTERVAL_CALL, true)), ImmutableSeq.of(), INTERVAL_CALL, PrimDef::invol, "invol");
+  }
 
   /** Short for <em>Arend coe</em>. */
   public static final @NotNull PrimDef ARCOE;
@@ -111,7 +131,7 @@ public final record PrimDef(
   }
 
   public static final @NotNull Map<@NotNull String, @NotNull PrimDef> PRIMITIVES = ImmutableSeq
-    .of(INTERVAL, LEFT, RIGHT, ARCOE).view()
+    .of(INTERVAL, LEFT, RIGHT, ARCOE, INVOL).view()
     .map(prim -> Tuple.of(prim.ref.name(), prim))
     .toImmutableMap();
 
