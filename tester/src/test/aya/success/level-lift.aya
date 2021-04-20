@@ -2,6 +2,6 @@ ulevel u
 struct Lift (A : Set u) : Set (lsuc u)
  | value : A
 
-open data Nat : Set | zero
+open data Nat : Set 0 | zero
 
 def test => new Lift Nat { | value => zero }

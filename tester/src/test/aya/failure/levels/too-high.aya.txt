@@ -5,6 +5,6 @@ In file $FILE:3:8 ->
   3 |  | cons A (List A)
               ^^
   
-Error: Level mismatch: 1 and 0
+Error: Level mismatch: 1 <= 0
 Tycking interrupted due to error(s).
 What are you doing?
