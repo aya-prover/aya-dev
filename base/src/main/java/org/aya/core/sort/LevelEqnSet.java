@@ -5,6 +5,8 @@ package org.aya.core.sort;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.generic.Level;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.LevelMismatchError;
 import org.aya.util.Decision;
@@ -67,13 +69,13 @@ public record LevelEqnSet(
   private boolean solveEqn(@NotNull LevelEqnSet.Eqn eqn) {
     if (eqn.biasedEq(Ordering.Eq) == Decision.YES) return false;
     if (eqn.lhs instanceof Level.Reference<Sort.LvlVar> lhs) {
-      if (!lhs.ref().bound()) {
+      if (lhs.ref().free()) {
         solution.put(lhs.ref(), eqn.rhs.lift(-lhs.lift()));
         return false;
       }
     }
     if (eqn.rhs instanceof Level.Reference<Sort.LvlVar> rhs) {
-      if (!rhs.ref().bound()) {
+      if (rhs.ref().free()) {
         solution.put(rhs.ref(), eqn.lhs.lift(rhs.lift()));
         return false;
       }
@@ -90,8 +92,8 @@ public record LevelEqnSet(
   /**
    * @author ice1000
    */
-  @Debug.Renderer(text = "lhs.toDoc().debugRender() + \" = \" + rhs.toDoc().debugRender()")
-  public static record Eqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs) {
+  @Debug.Renderer(text = "toDoc().debugRender()")
+  public static record Eqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs) implements Docile {
     public Decision biasedEq(@NotNull Ordering cmp) {
       if (lhs.equals(rhs)) return Decision.YES;
       if (rhs instanceof Level.Infinity) return lhs instanceof Level.Infinity
@@ -113,6 +115,10 @@ public record LevelEqnSet(
 
     public static boolean constraints(Sort.@NotNull LvlVar var, @NotNull Level<Sort.LvlVar> lvl) {
       return lvl instanceof Level.Reference<Sort.LvlVar> l && l.ref() == var;
+    }
+
+    @Override public @NotNull Doc toDoc() {
+      return Doc.hcat(lhs.toDoc(), Doc.symbol(" = "), rhs.toDoc());
     }
   }
 }

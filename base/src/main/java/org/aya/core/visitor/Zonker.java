@@ -11,6 +11,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.error.LevelSolverError;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,12 +40,22 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
 
   @Override public @NotNull Level<Sort.LvlVar> visitLevel(@NotNull Level<Sort.LvlVar> sort, Unit unit) {
     sort = tycker.equations.applyTo(sort);
-    return !(sort instanceof Level.Reference<Sort.LvlVar> ref) || tycker.equations.constraints(ref.ref())
+    sort = !(sort instanceof Level.Reference<Sort.LvlVar> ref) || tycker.equations.constraints(ref.ref())
       ? sort : constant(ref.ref().kind().defaultValue);
+    var sourcePos = Sort.unsolvedPos(sort);
+    if (sourcePos != null) return reportLevelSolverError(sourcePos);
+    else return sort;
+  }
+
+  private <T> T reportLevelSolverError(@NotNull SourcePos pos) {
+    tycker.reporter.report(new LevelSolverError(pos, tycker.equations));
+    throw new ExprTycker.TyckInterruptedException();
   }
 
   @Override public @NotNull Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
     var sort = term.sort().subst(tycker.equations);
+    var sourcePos = sort.unsolvedPos();
+    if (sourcePos != null) return reportLevelSolverError(sourcePos);
     if (sort == term.sort()) return term;
     return new FormTerm.Univ(sort);
   }
