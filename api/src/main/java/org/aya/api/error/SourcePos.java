@@ -79,6 +79,10 @@ public record SourcePos(
     return pos >= tokenStartIndex && pos <= tokenEndIndex;
   }
 
+  public boolean belongsToSomeFile() {
+    return this != SourcePos.NONE && file.isDefined();
+  }
+
   @Override public String toString() {
     return "(" + tokenStartIndex + "-" + tokenEndIndex + ") ["
       + startLine + "," + startColumn + "-" + endLine + "," + endColumn + ']';

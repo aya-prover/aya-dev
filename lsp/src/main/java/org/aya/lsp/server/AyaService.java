@@ -4,7 +4,6 @@ package org.aya.lsp.server;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourcePos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.core.def.Def;
@@ -21,9 +20,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -46,8 +43,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public HighlightResult loadFile(@NotNull String uri) {
     Log.d("Loading %s", uri);
-    // TODO[kiva]: refactor error reporting system that handles current file properly
-    var reporter = new LspReporter(uri);
+    var reporter = new LspReporter();
     var compiler = new SingleFileCompiler(reporter, null, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
@@ -73,13 +69,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     lastErrorReportedFiles.forEach(f ->
       Log.publishErrors(new PublishDiagnosticsParams(f, Collections.emptyList())));
     var diags = reporter.problems.stream()
-      .filter(t -> t._1 != null && t._2.sourcePos() != SourcePos.NONE)
-      .map(t -> {
-        Log.d(t._2.describe().debugRender());
-        return Tuple.of(t._1, new Diagnostic(LspRange.from(t._2.sourcePos()),
-          t._2.describe().debugRender(),
-          severityOf(t._2), "Aya"));
-      })
+      .filter(p -> p.sourcePos().belongsToSomeFile())
+      .peek(p -> Log.d(p.describe().debugRender()))
+      .map(p -> Tuple.of(p.sourcePos().file().get(), new Diagnostic(LspRange.from(p.sourcePos()),
+        p.describe().debugRender(),
+        severityOf(p), "Aya")))
       .collect(Collectors.groupingBy(t -> t._1));
     for (var diag : diags.entrySet()) {
       Log.d("Found %d issues in %s", diag.getValue().size(), diag.getKey());
@@ -134,15 +128,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   public static final class LspReporter implements Reporter {
-    private final @NotNull Buffer<Tuple2<@Nullable String, @NotNull Problem>> problems = Buffer.of();
-    private final @NotNull String currentFileUri;
-
-    public LspReporter(@NotNull String uri) {
-      this.currentFileUri = uri;
-    }
+    private final @NotNull Buffer<@NotNull Problem> problems = Buffer.of();
 
     @Override public void report(@NotNull Problem problem) {
-      problems.append(Tuple.of(currentFileUri, problem));
+      problems.append(problem);
     }
   }
 
