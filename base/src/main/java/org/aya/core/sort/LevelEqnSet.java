@@ -109,9 +109,12 @@ public record LevelEqnSet(
         if (rhs instanceof Level.Constant<Sort.LvlVar> r) return decide(l.value(), r.value());
       }
       if (lhs instanceof Level.Reference<Sort.LvlVar> l
-        && rhs instanceof Level.Reference<Sort.LvlVar> r
-        && l.ref() == r.ref())
-        return decide(l.lift(), r.lift());
+        && rhs instanceof Level.Reference<Sort.LvlVar> r)
+        if (l.ref() == r.ref()) {
+          return decide(l.lift(), r.lift());
+        } else if (l.ref().name().equals(r.ref().name())) {
+          System.out.println("Uma");
+        }
       return Decision.MAYBE;
     }
 

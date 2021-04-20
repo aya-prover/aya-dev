@@ -2,9 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
+import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -17,8 +20,11 @@ import org.aya.util.Decision;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static org.aya.core.visitor.Substituter.TermSubst.EMPTY;
 
 /**
  * The implementation of untyped pattern unification for holes.
@@ -69,27 +75,35 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
     // Lossy comparison
-    levels(lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()))) return true;
+    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), EMPTY, subst))) return true;
     return defeq.compareWHNF(lhs, rhs, type);
   }
 
   @Override
   public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) return false;
-    levels(lhs.sortArgs(), rhs.sortArgs());
-    return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()));
+    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    return defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), EMPTY, subst));
   }
 
   @Override
   public @NotNull Boolean visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) return false;
-    levels(lhs.sortArgs(), rhs.sortArgs());
-    return defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()));
+    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    return defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), EMPTY, subst));
   }
 
-  private void levels(ImmutableSeq<@NotNull Level<Sort.LvlVar>> l, ImmutableSeq<@NotNull Level<Sort.LvlVar>> r) {
-    for (var levels : l.zip(r)) defeq.tycker.equations.add(levels._1, levels._2, cmp, defeq.pos);
+  private @NotNull LevelSubst levels(
+    @NotNull DefVar<? extends Def, ? extends Decl> def,
+    ImmutableSeq<@NotNull Level<Sort.LvlVar>> l, ImmutableSeq<@NotNull Level<Sort.LvlVar>> r
+  ) {
+    var levelSubst = new LevelSubst.Simple(MutableMap.of());
+    for (var levels : l.zip(r).zip(Def.defLevels(def))) {
+      defeq.tycker.equations.add(levels._1._1, levels._1._2, cmp, defeq.pos);
+      levelSubst.solution().put(levels._2, levels._1._1);
+    }
+    return levelSubst;
   }
 
   @Override
@@ -98,7 +112,8 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
     // Lossy comparison
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Def.defTele(lhs.ref()))) return true;
+    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), EMPTY, subst))) return true;
     return defeq.compareWHNF(lhs, rhs, type);
   }
 
@@ -106,8 +121,8 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref())
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
-    levels(lhs.sortArgs(), rhs.sortArgs());
-    return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), DataDef.Ctor.conTele(lhs.ref()));
+    var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
+    return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), EMPTY, subst));
   }
 
   @Override public @NotNull Boolean visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs, @NotNull Term type) {

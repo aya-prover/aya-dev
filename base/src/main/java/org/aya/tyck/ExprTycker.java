@@ -221,24 +221,29 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
   defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
-    var levelSubst = new LevelSubst.Simple(MutableMap.of());
+    var level = levelStuffs(pos, defVar);
+    var tele = Term.Param.subst(Def.defTele(defVar), Substituter.TermSubst.EMPTY, level._1);
+    var ctxTele = Term.Param.subst(Def.defContextTele(defVar), Substituter.TermSubst.EMPTY, level._1);
     // unbound these abstracted variables
-    var defLevels = Def.defLevels(defVar);
-    var levelVars = defLevels.map(v -> {
+    // ice: should we rename the vars in this telescope? Probably not.
+    var body = function.make(defVar,
+      ctxTele.map(Term.Param::toArg),
+      level._2.map(Level.Reference::new),
+      tele.map(Term.Param::toArg));
+    var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
+    return new Result(IntroTerm.Lambda.make(tele, body), type);
+  }
+
+  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort.LvlVar>>
+  levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
+    var levelSubst = new LevelSubst.Simple(MutableMap.of());
+    var levelVars = Def.defLevels(defVar).map(v -> {
       var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), v.kind(), pos);
       levelSubst.solution().put(v, new Level.Reference<>(lvlVar));
       return lvlVar;
     });
-    var tele = Term.Param.subst(Def.defTele(defVar), Substituter.TermSubst.EMPTY, levelSubst);
-    var ctxTele = Term.Param.subst(Def.defContextTele(defVar), Substituter.TermSubst.EMPTY, levelSubst);
-    // ice: should we rename the vars in this telescope? Probably not.
     equations.vars().appendAll(levelVars);
-    var body = function.make(defVar,
-      ctxTele.map(Term.Param::toArg),
-      levelVars.map(Level.Reference::new),
-      tele.map(Term.Param::toArg));
-    var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, levelSubst));
-    return new Result(IntroTerm.Lambda.make(tele, body), type);
+    return Tuple.of(levelSubst, levelVars);
   }
 
   private boolean unifyTy(Term upper, Term lower, @NotNull SourcePos pos) {
@@ -377,14 +382,19 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var fieldRef = field.ref();
     var ctxTele = Def.defContextTele(fieldRef);
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
-    var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst);
-    var levels = structCore.levels().map(v -> new Sort.LvlVar(v.name(), v.kind(), v.pos()));
+    var levelSubst = new LevelSubst.Simple(MutableMap.of());
+    var levels = structCore.levels().map(v -> {
+      final var lvlVar = new Sort.LvlVar(fieldRef.name() + "." + v.name(), v.kind(), struct.sourcePos());
+      levelSubst.solution().put(v, new Level.Reference<>(lvlVar));
+      return lvlVar;
+    });
+    var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst, levelSubst);
     equations.vars().appendAll(levels);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), levels.map(Level.Reference::new),
       structCall.args(), tele.map(Term.Param::toArg));
     return new Result(IntroTerm.Lambda.make(tele, access),
-      FormTerm.Pi.make(false, tele, field.result().subst(structSubst)));
+      FormTerm.Pi.make(false, tele, field.result().subst(structSubst, levelSubst)));
   }
 
   private Result visitProj(Expr tuple, int ix, Result projectee) {
