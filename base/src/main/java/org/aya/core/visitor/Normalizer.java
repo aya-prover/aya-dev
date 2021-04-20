@@ -16,9 +16,7 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
 
   @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {
     var fn = term.of();
-    if (fn instanceof IntroTerm.Lambda lam) return CallTerm.make(lam, term.arg()).accept(this, mode);
-    if (fn.whnf() == Decision.NO) return CallTerm.make(fn.accept(this, mode), term.arg()).accept(this, mode);
-    if (term.whnf() != Decision.NO) {
+    if (term.whnf() == Decision.YES) {
       if (mode != NormalizeMode.NF) return term;
       else return CallTerm.make(fn, visitArg(term.arg(), mode));
     }
