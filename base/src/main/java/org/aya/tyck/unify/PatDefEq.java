@@ -38,6 +38,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     if (lhs.whnf() != Decision.YES) lhs = lhs.normalize(NormalizeMode.WHNF);
+    if (rhs.whnf() != Decision.YES) rhs = rhs.normalize(NormalizeMode.WHNF);
     return lhs.accept(this, rhs, type);
   }
 

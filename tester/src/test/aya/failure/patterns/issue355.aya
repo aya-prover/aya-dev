@@ -1,6 +1,6 @@
 prim I
 
-open data Nat : Set
+open data Nat : Set 0
  | zero
  | suc Nat
 

@@ -1,4 +1,4 @@
-open data Nat : Set | zero | suc Nat
+open data Nat : Set 0 | zero | suc Nat
 open data Ray (a : Nat) : Set | zero => eldath
 def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
  | zero, eldath => suc zero
