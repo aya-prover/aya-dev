@@ -60,23 +60,24 @@ public record LevelEqnSet(
   }
 
   public boolean constraints(@NotNull Sort.LvlVar var) {
-    return eqns.anyMatch(eqn -> eqn.constraints(var));
+    return eqns.anyMatch(eqn -> eqn.constraints(var)) ||
+      solution.valuesView().anyMatch(level -> Eqn.constraints(var, level));
   }
 
   private boolean solveEqn(@NotNull LevelEqnSet.Eqn eqn) {
     if (eqn.lhs instanceof Level.Reference<Sort.LvlVar> lhs) {
       if (!lhs.ref().bound()) {
         solution.put(lhs.ref(), eqn.rhs.lift(-lhs.lift()));
-        return true;
+        return false;
       }
     }
     if (eqn.rhs instanceof Level.Reference<Sort.LvlVar> rhs) {
       if (!rhs.ref().bound()) {
         solution.put(rhs.ref(), eqn.lhs.lift(rhs.lift()));
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   /**
@@ -99,8 +100,11 @@ public record LevelEqnSet(
     }
 
     public boolean constraints(@NotNull Sort.LvlVar var) {
-      return lhs instanceof Level.Reference<Sort.LvlVar> l && l.ref() == var
-        || rhs instanceof Level.Reference<Sort.LvlVar> r && r.ref() == var;
+      return constraints(var, lhs) || constraints(var, rhs);
+    }
+
+    public static boolean constraints(Sort.@NotNull LvlVar var, @NotNull Level<Sort.LvlVar> lvl) {
+      return lvl instanceof Level.Reference<Sort.LvlVar> l && l.ref() == var;
     }
   }
 }
