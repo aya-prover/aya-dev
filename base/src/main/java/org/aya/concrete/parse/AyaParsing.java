@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.aya.api.error.Reporter;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
+import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,14 +24,14 @@ public interface AyaParsing {
       new AyaLexer(CharStreams.fromString(text))));
   }
 
-  @Contract("_, _ -> new")
-  static @NotNull AyaParser parser(@NotNull Path path, @NotNull Reporter reporter) throws IOException {
+  @Contract("_, _, _ -> new")
+  static @NotNull AyaParser parser(@NotNull Path path, @NotNull Option<String> pathDisplay, @NotNull Reporter reporter) throws IOException {
     var intBuffer = IntBuffer.wrap(Files.readString(path).codePoints().toArray());
     var codePointBuffer = CodePointBuffer.withInts(intBuffer);
     var charStream = CodePointCharStream.fromBuffer(codePointBuffer);
     var lexer = new AyaLexer(charStream);
     lexer.removeErrorListeners();
-    var listener = new ReporterErrorListener(reporter);
+    var listener = new ReporterErrorListener(pathDisplay, reporter);
     lexer.addErrorListener(listener);
     var parser = new AyaParser(new CommonTokenStream(lexer));
     parser.removeErrorListeners();

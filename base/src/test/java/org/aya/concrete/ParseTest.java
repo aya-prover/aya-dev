@@ -11,6 +11,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
+import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
-  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(ThrowingReporter.INSTANCE);
+  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(Option.none(), ThrowingReporter.INSTANCE);
 
   @BeforeAll public static void enableTest() {
     Global.enterTestMode();

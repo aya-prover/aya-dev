@@ -35,24 +35,23 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
-  private final Buffer<Path> modulePath = Buffer.of();
-  private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of());
+  private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of(), Buffer.of());
   private Set<String> lastErrorReportedFiles = Collections.emptySet();
 
   public void registerLibrary(@NotNull Path path) {
     // TODO[kiva]: work with Library System when it is finished
     Log.i("Adding library path %s", path);
-    modulePath.append(path);
+    libraryManager.modulePath.append(path);
   }
 
   public HighlightResult loadFile(@NotNull String uri) {
     Log.d("Loading %s", uri);
     // TODO[kiva]: refactor error reporting system that handles current file properly
     var reporter = new LspReporter(uri);
-    var compiler = new SingleFileCompiler(reporter, null);
+    var compiler = new SingleFileCompiler(reporter, null, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
-      modulePath.toImmutableSeq());
+      libraryManager.modulePath.toImmutableSeq());
 
     var filePath = Path.of(URI.create(uri));
     var symbols = Buffer.<Symbol>of();
@@ -60,7 +59,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       compiler.compile(filePath, compilerFlags,
         stmts -> Highlighter.buildResolved(symbols, stmts),
         defs -> {
-          libraryManager.loaded.put(uri, defs);
+          libraryManager.loadedFiles.put(uri, defs);
           Highlighter.buildTycked(symbols, defs);
         });
     } catch (IOException e) {
@@ -148,7 +147,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   public static final record LspLibraryManager(
-    @NotNull MutableHashMap<@NotNull String, ImmutableSeq<Def>> loaded
+    @NotNull MutableHashMap<@NotNull String, ImmutableSeq<Def>> loadedFiles,
+    @NotNull Buffer<Path> modulePath
   ) {
   }
 }

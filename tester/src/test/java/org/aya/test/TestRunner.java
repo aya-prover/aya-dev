@@ -4,6 +4,7 @@ package org.aya.test;
 
 import org.aya.api.Global;
 import org.aya.api.error.CountingReporter;
+import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
@@ -24,6 +25,9 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestRunner {
+  static SourceFileLocator LOCATOR = new SourceFileLocator() {
+  };
+
   @BeforeAll public static void enterTestMode() {
     Global.enterTestMode();
   }
@@ -53,7 +57,7 @@ public class TestRunner {
         new PrintStream(hookOut, true, StandardCharsets.UTF_8)));
 
       System.out.print(file.getFileName() + " ---> ");
-      new SingleFileCompiler(reporter, null)
+      new SingleFileCompiler(reporter, LOCATOR, null)
         .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
 
       postRun(file, expectSuccess, hookOut.toString(StandardCharsets.UTF_8), reporter);

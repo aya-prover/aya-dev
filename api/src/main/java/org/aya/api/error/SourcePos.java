@@ -6,6 +6,7 @@ import org.aya.api.Global;
 import org.aya.pretty.error.LineColSpan;
 import org.aya.pretty.error.RangeSpan;
 import org.aya.pretty.error.Span;
+import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,7 @@ import java.util.Objects;
  */
 @SuppressWarnings("unused")
 public record SourcePos(
+  @NotNull Option<String> file,
   int tokenStartIndex,
   int tokenEndIndex,
   int startLine,
@@ -32,7 +34,7 @@ public record SourcePos(
   /**
    * Single instance SourcePos for mocking tests and other usages.
    */
-  public static final SourcePos NONE = new SourcePos(-1, -1, -1, -1, -1, -1);
+  public static final SourcePos NONE = new SourcePos(Option.none(), -1, -1, -1, -1, -1, -1);
 
   public Span toSpan(@NotNull String input) {
     if (tokenStartIndex == UNAVAILABLE_AND_FUCK_ANTLR4
@@ -45,6 +47,7 @@ public record SourcePos(
 
   @Contract("_ -> new") public @NotNull SourcePos union(@NotNull SourcePos other) {
     return new SourcePos(
+      file,
       Math.min(tokenStartIndex, other.tokenStartIndex),
       Math.max(tokenEndIndex, other.tokenEndIndex),
       Math.min(startLine, other.startLine),
