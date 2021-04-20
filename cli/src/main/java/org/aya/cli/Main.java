@@ -52,7 +52,7 @@ public final class Main {
       message,
       cli.interruptedTrace,
       distillation,
-      cli.modulePaths().map(Paths::get)));
+      cli.modulePaths().view().map(Paths::get)));
     if (traceBuilder != null) switch (cli.traceFormat) {
       case imgui -> {
         JniLoader.load();

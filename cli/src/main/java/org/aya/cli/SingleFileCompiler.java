@@ -49,8 +49,8 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFil
       var program = new AyaProducer(pathDisplay, reporter).visitProgram(parser.program());
       // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
       distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.raw);
-      var loader = new ModuleListLoader(flags.modulePaths().map(path ->
-        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))));
+      var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
+        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
       FileModuleLoader.tyckModule(loader, program, reporter,
         () -> {
           distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.scoped);

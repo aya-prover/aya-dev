@@ -12,16 +12,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author re-xyr
  */
-public final class ModuleListLoader implements ModuleLoader {
-  @NotNull
-  final ImmutableSeq<@NotNull ModuleLoader> loaders;
-
-  public ModuleListLoader(@NotNull ImmutableSeq<@NotNull ModuleLoader> loaders) {
+public record ModuleListLoader(
+  @NotNull ImmutableSeq<? extends ModuleLoader> loaders) implements ModuleLoader {
+  public ModuleListLoader(@NotNull ImmutableSeq<? extends @NotNull ModuleLoader> loaders) {
     this.loaders = loaders;
   }
 
   @Override
-  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  public @Nullable
+  MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     for (var loader : loaders) {
       var mod = loader.load(path, recurseLoader);
       if (mod != null) return mod;

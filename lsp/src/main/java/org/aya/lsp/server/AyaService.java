@@ -51,7 +51,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var compiler = new SingleFileCompiler(reporter, null, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
-      libraryManager.modulePath.toImmutableSeq());
+      libraryManager.modulePath.view());
 
     var filePath = Path.of(URI.create(uri));
     var symbols = Buffer.<Symbol>of();

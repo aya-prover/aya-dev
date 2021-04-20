@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.api.error;
 
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -21,7 +21,7 @@ public interface SourceFileLocator {
     return path.toString();
   }
 
-  record Module(@NotNull ImmutableSeq<Path> modulePath) implements SourceFileLocator {
+  record Module(@NotNull SeqLike<Path> modulePath) implements SourceFileLocator {
     @Override public @NotNull String locate(@NotNull Path path) {
       var abs = path.toAbsolutePath();
       var found = modulePath.find(m -> abs.startsWith(m.toAbsolutePath()));
