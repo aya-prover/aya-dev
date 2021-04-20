@@ -4,6 +4,7 @@ package org.aya.lsp.server;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
+import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.core.def.Def;
@@ -44,7 +45,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public HighlightResult loadFile(@NotNull String uri) {
     Log.d("Loading %s", uri);
     var reporter = new LspReporter();
-    var compiler = new SingleFileCompiler(reporter, null, null);
+    var compiler = new SingleFileCompiler(reporter, libraryManager, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
       libraryManager.modulePath.view());
@@ -138,6 +139,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public static final record LspLibraryManager(
     @NotNull MutableHashMap<@NotNull String, ImmutableSeq<Def>> loadedFiles,
     @NotNull Buffer<Path> modulePath
-  ) {
+  ) implements SourceFileLocator {
+    @Override public @NotNull String locate(@NotNull Path path) {
+      // vscode needs absolute path
+      return path.toAbsolutePath().toString();
+    }
   }
 }
