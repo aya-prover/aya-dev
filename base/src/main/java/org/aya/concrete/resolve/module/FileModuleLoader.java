@@ -34,9 +34,14 @@ public final record FileModuleLoader(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
+  private @NotNull Path resolveFile(@NotNull Seq<@NotNull String> path) {
+    var withoutExt = path.foldLeft(basePath, Path::resolve);
+    return withoutExt.resolveSibling(withoutExt.getFileName() + ".aya");
+  }
+
   @Override public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>>
   load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
-    var sourcePath = path.foldLeft(basePath, Path::resolve);
+    var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports();
