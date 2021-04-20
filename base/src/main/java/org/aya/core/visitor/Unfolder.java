@@ -4,17 +4,21 @@ package org.aya.core.visitor;
 
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
+import org.aya.core.sort.LevelSubst;
+import org.aya.core.sort.Sort.LvlVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.Level;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.Set;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.collection.mutable.MutableSet;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
@@ -29,7 +33,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull SeqLike<Term.@NotNull Param> self,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
   ) {
-    var subst = new Substituter.TermSubst(new MutableHashMap<>());
+    var subst = new Substituter.TermSubst(MutableMap.of());
     self.view().zip(args).forEach(t -> subst.add(t._1.ref(), t._2.term()));
     return subst;
   }
@@ -40,9 +44,18 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (def == null) return conCall;
     var args = conCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
+    var levelParams = Def.defLevels(def.ref());
+    var levelArgs = conCall.sortArgs();
+    var levelSubst = checkAndBuildLevelSubst(levelParams, levelArgs);
     var dropped = args.drop(conCall.contextArgs().size() + conCall.head().dataArgs().size());
-    var volynskaya = tryUnfoldClauses(p, dropped, subst, def.clauses());
+    var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses());
     return volynskaya != null ? volynskaya : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
+  }
+  private @NotNull LevelSubst checkAndBuildLevelSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<@NotNull Level<LvlVar>> levelArgs) {
+    var levelSubst = new LevelSubst.Simple(MutableMap.of());
+    assert levelParams.sizeEquals(levelArgs);
+    for (var app : levelArgs.zip(levelParams)) levelSubst.solution().put(app._2, app._1);
+    return levelSubst;
   }
 
   @Override default @NotNull Term visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
@@ -51,9 +64,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (def == null) return fnCall;
     var args = fnCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
+    var levelSubst = checkAndBuildLevelSubst(def.levels(), fnCall.sortArgs());
     var body = def.body();
-    if (body.isLeft()) return body.getLeftValue().subst(subst).accept(this, p);
-    var volynskaya = tryUnfoldClauses(p, args, subst, body.getRightValue());
+    if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
+    var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
     return volynskaya != null ? volynskaya : new CallTerm.Fn(fnCall.ref(), fnCall.contextArgs(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
@@ -81,14 +95,14 @@ public interface Unfolder<P> extends TermFixpoint<P> {
 
   default @Nullable Term tryUnfoldClauses(
     P p, SeqLike<Arg<Term>> args,
-    Substituter.@NotNull TermSubst subst,
+    Substituter.@NotNull TermSubst subst, LevelSubst levelSubst,
     @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(matchy.patterns(), args);
       if (termSubst != null) {
         subst.add(termSubst);
-        return matchy.body().subst(subst).accept(this, p);
+        return matchy.body().subst(subst, levelSubst).accept(this, p);
       }
     }
     // Unfold failed
@@ -102,8 +116,9 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (!(nevv instanceof IntroTerm.New n)) {
       var args = term.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
       var fieldSubst = checkAndBuildSubst(core.fullTelescope(), args);
+      var levelSubst = checkAndBuildLevelSubst(Def.defLevels(field), term.sortArgs());
       var dropped = args.drop(term.contextArgs().size() + term.structArgs().size());
-      var mischa = tryUnfoldClauses(p, dropped, fieldSubst, core.clauses());
+      var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses());
       return mischa != null ? mischa : new CallTerm.Access(nevv, field,
         term.contextArgs(), term.sortArgs(), term.structArgs(), dropped);
     }
