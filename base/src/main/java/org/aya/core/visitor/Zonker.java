@@ -11,7 +11,6 @@ import org.aya.core.term.Term;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.error.LevelSolverError;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,8 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   }
 
   private <T> T reportLevelSolverError(@NotNull SourcePos pos) {
-    tycker.reporter.report(new LevelSolverError(pos, tycker.equations));
+    tycker.reporter.report(new UnsolvedMeta(pos));
+    tycker.equations.reportAll();
     throw new ExprTycker.TyckInterruptedException();
   }
 

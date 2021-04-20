@@ -182,7 +182,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall(pos, (DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall((DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args, sorts));
+      return defCall(pos, (DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args, sorts));
     } else if (var.core instanceof DataDef || var.concrete instanceof Decl.DataDecl) {
       return defCall(pos, (DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {
@@ -236,7 +236,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       ctxTele.map(Term.Param::toArg),
       levelVars.map(Level.Reference::new),
       tele.map(Term.Param::toArg));
-    var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar));
+    var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, levelSubst));
     return new Result(IntroTerm.Lambda.make(tele, body), type);
   }
 

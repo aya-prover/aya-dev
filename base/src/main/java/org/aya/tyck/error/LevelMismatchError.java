@@ -8,12 +8,13 @@ import org.aya.core.sort.LevelEqnSet;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record LevelMismatchError(
-  @NotNull SourcePos sourcePos,
-  @NotNull LevelEqnSet.Eqn eqn
-) implements Problem {
+public record LevelMismatchError(@NotNull LevelEqnSet.Eqn eqn) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(Doc.plain("Level mismatch: "), eqn.toDoc());
+  }
+
+  @Override public @NotNull SourcePos sourcePos() {
+    return eqn.sourcePos();
   }
 
   @Override public @NotNull Severity level() {

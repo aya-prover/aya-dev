@@ -40,13 +40,13 @@ public record LevelEqnSet(
     @NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs,
     @NotNull Ordering cmp, @NotNull SourcePos loc
   ) {
-    insertEqn(loc, new Eqn(lhs, rhs, cmp));
+    insertEqn(new Eqn(lhs, rhs, cmp, loc));
   }
 
-  private void insertEqn(@NotNull SourcePos loc, Eqn h) {
+  private void insertEqn(Eqn h) {
     switch (h.biasedEq()) {
       case NO -> {
-        reporter.report(new LevelMismatchError(loc, h));
+        reporter.report(new LevelMismatchError(h));
         throw new ExprTycker.TyckInterruptedException();
       }
       case MAYBE -> eqns.append(h);
@@ -59,6 +59,11 @@ public record LevelEqnSet(
     var newEqns = Buffer.from(eqns);
     eqns.clear();
     newEqns.view().map(this::applyTo).filterTo(eqns, this::solveEqn);
+  }
+
+  public void reportAll() {
+    for (var eqn : eqns)
+      reporter.report(new LevelMismatchError(eqn));
   }
 
   public boolean constraints(@NotNull Sort.LvlVar var) {
@@ -84,9 +89,7 @@ public record LevelEqnSet(
   }
 
   public Level<Sort.LvlVar> markUsed(@NotNull Sort.LvlVar universe) {
-    var level = new Level.Reference<>(universe);
-    solution.put(universe, level);
-    return level;
+    return solution.getOrPut(universe, () -> new Level.Reference<>(universe));
   }
 
   /**
@@ -95,7 +98,7 @@ public record LevelEqnSet(
   @Debug.Renderer(text = "toDoc().debugRender()")
   public static record Eqn(
     @NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs,
-    @NotNull Ordering cmp
+    @NotNull Ordering cmp, @NotNull SourcePos sourcePos
   ) implements Docile {
     public @NotNull Decision biasedEq() {
       if (lhs.equals(rhs)) return Decision.YES;
