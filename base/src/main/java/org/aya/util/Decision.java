@@ -7,8 +7,12 @@ import org.jetbrains.annotations.NotNull;
 public enum Decision {
   NO, MAYBE, YES;
 
-  public static @NotNull Decision bool(boolean b) {
+  public static @NotNull Decision confident(boolean b) {
     return b ? YES : NO;
+  }
+
+  public static @NotNull Decision optimistic(boolean b) {
+    return b ? YES : MAYBE;
   }
 
   public @NotNull Decision max(Decision other) {

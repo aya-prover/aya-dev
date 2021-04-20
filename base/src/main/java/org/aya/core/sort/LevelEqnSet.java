@@ -65,6 +65,7 @@ public record LevelEqnSet(
   }
 
   private boolean solveEqn(@NotNull LevelEqnSet.Eqn eqn) {
+    if (eqn.biasedEq(Ordering.Eq) == Decision.YES) return false;
     if (eqn.lhs instanceof Level.Reference<Sort.LvlVar> lhs) {
       if (!lhs.ref().bound()) {
         solution.put(lhs.ref(), eqn.rhs.lift(-lhs.lift()));
@@ -80,6 +81,12 @@ public record LevelEqnSet(
     return true;
   }
 
+  public Level<Sort.LvlVar> markUsed(@NotNull Sort.LvlVar universe) {
+    var level = new Level.Reference<>(universe);
+    solution.put(universe, level);
+    return level;
+  }
+
   /**
    * @author ice1000
    */
@@ -87,15 +94,16 @@ public record LevelEqnSet(
   public static record Eqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs) {
     public Decision biasedEq(@NotNull Ordering cmp) {
       if (lhs.equals(rhs)) return Decision.YES;
+      if (rhs instanceof Level.Infinity) return lhs instanceof Level.Infinity
+        ? Decision.YES : Decision.optimistic(cmp == Ordering.Lt);
+      if (lhs instanceof Level.Infinity) return Decision.optimistic(cmp == Ordering.Gt);
       if (lhs instanceof Level.Constant<Sort.LvlVar> l) {
-        if (rhs instanceof Level.Infinity) return Decision.bool(cmp == Ordering.Lt);
-        else if (rhs instanceof Level.Constant<Sort.LvlVar> r) return switch (cmp) {
-          case Gt -> Decision.bool(l.value() >= r.value());
-          case Eq -> Decision.bool(l.value() == r.value());
-          case Lt -> Decision.bool(l.value() <= r.value());
+        if (rhs instanceof Level.Constant<Sort.LvlVar> r) return switch (cmp) {
+          case Gt -> Decision.confident(l.value() >= r.value());
+          case Eq -> Decision.confident(l.value() == r.value());
+          case Lt -> Decision.confident(l.value() <= r.value());
         };
-      } else if (lhs instanceof Level.Infinity && rhs instanceof Level.Constant)
-        return Decision.bool(cmp == Ordering.Gt);
+      }
       return Decision.MAYBE;
     }
 

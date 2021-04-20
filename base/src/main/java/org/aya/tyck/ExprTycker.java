@@ -17,6 +17,7 @@ import org.aya.concrete.Signatured;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.sort.LevelEqnSet;
+import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
@@ -70,10 +71,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
-    var std = Seq.of(homotopy, universe).view();
-    if (!equations.constraints(homotopy)) std = std.drop(1);
-    if (!equations.constraints(universe)) std = std.dropLast(1);
-    return std.appendedAll(levelMapping.valuesView()).toImmutableSeq();
+    return Seq.of(homotopy, universe).view()
+      .appendedAll(levelMapping.valuesView())
+      .filter(equations::constraints)
+      .toImmutableSeq();
   }
 
   @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
@@ -150,9 +151,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
     var u = transformLevel(expr.uLevel());
-    if (u instanceof Level.Polymorphic<Sort.LvlVar>) u = new Level.Reference<>(universe);
+    if (u instanceof Level.Polymorphic<Sort.LvlVar>) u = equations.markUsed(universe);
     var h = transformLevel(expr.hLevel());
-    if (h instanceof Level.Polymorphic<Sort.LvlVar>) h = new Level.Reference<>(homotopy);
+    if (h instanceof Level.Polymorphic<Sort.LvlVar>) h = equations.markUsed(homotopy);
     var sort = new Sort(u, h);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
     var normTerm = term.normalize(NormalizeMode.WHNF);
@@ -219,14 +220,16 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
   defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
-    var tele = Def.defTele(defVar);
-    var ctxTele = Def.defContextTele(defVar);
+    var levelSubst = new LevelSubst.Simple(MutableMap.of());
     // unbound these abstracted variables
     var defLevels = Def.defLevels(defVar);
     var levelVars = defLevels.map(v -> {
       var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), v.kind(), pos);
+      levelSubst.solution().put(v, new Level.Reference<>(lvlVar));
       return lvlVar;
     });
+    var tele = Term.Param.subst(Def.defTele(defVar), Substituter.TermSubst.EMPTY, levelSubst);
+    var ctxTele = Term.Param.subst(Def.defContextTele(defVar), Substituter.TermSubst.EMPTY, levelSubst);
     // ice: should we rename the vars in this telescope? Probably not.
     equations.vars().appendAll(levelVars);
     var body = function.make(defVar,

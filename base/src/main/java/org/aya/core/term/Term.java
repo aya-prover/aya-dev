@@ -167,17 +167,22 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     }
 
     public static @NotNull ImmutableSeq<Term.Param> subst(
-      @NotNull SeqLike<Term.@NotNull Param> params,
-      @NotNull Substituter.TermSubst subst
+      @NotNull SeqLike<Term.@NotNull Param> params, @NotNull Substituter.TermSubst subst
     ) {
       return params.view().map(param -> param.subst(subst)).toImmutableSeq();
     }
 
     public static @NotNull ImmutableSeq<Term.Param> subst(
-      @NotNull ImmutableSeq<Term.@NotNull Param> params,
-      @NotNull Substituter.TermSubst subst
+      @NotNull ImmutableSeq<Term.@NotNull Param> params, @NotNull Substituter.TermSubst subst
     ) {
       return params.map(param -> param.subst(subst));
+    }
+
+    public static @NotNull ImmutableSeq<Term.Param> subst(
+      @NotNull ImmutableSeq<Term.@NotNull Param> params,
+      @NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst
+    ) {
+      return params.map(param -> param.subst(subst, levelSubst));
     }
 
     public @NotNull Term.Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
