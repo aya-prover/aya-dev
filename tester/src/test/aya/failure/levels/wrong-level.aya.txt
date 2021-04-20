@@ -1,0 +1,10 @@
+In file $FILE:4:18 ->
+
+  2 | ulevel u
+  3 | hlevel h
+  4 | def neg (A : Type u u) : Type (lsuc h) (lsuc u) => A -> Empty
+                        ^^
+  
+Error: I don't want a ulevel here, please use the other one
+Desugaring interrupted due to error(s).
+What are you doing?

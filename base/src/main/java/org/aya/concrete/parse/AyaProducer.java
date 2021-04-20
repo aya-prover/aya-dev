@@ -103,7 +103,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override public Generalize visitLevels(AyaParser.LevelsContext ctx) {
     var kind = ctx.HLEVEL() != null ? LevelGenVar.Kind.Homotopy : LevelGenVar.Kind.Universe;
     return new Generalize.Levels(sourcePosOf(ctx), kind, visitIds(ctx.ids())
-      .map(t -> Tuple.of(t._1, new LevelGenVar(LevelGenVar.Kind.Universe, t._2)))
+      .map(t -> Tuple.of(t._1, new LevelGenVar(kind, t._2)))
       .collect(ImmutableSeq.factory()));
   }
 

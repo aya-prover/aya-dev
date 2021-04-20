@@ -156,11 +156,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (h instanceof Level.Polymorphic<Sort.LvlVar>) h = new Level.Reference<>(homotopy);
     var sort = new Sort(u, h);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
-    if (term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ univ) {
+    var normTerm = term.normalize(NormalizeMode.WHNF);
+    if (normTerm instanceof FormTerm.Univ univ) {
       equations.add(sort.succ(1), univ.sort(), Ordering.Lt, expr.sourcePos());
       return new Result(new FormTerm.Univ(sort), univ);
+    } else {
+      var succ = new FormTerm.Univ(sort.succ(1));
+      unifyTyThrowing(normTerm, succ, expr);
+      return new Result(new FormTerm.Univ(sort), succ);
     }
-    return wantButNo(expr, term, "universe term");
   }
 
   @Rule.Synth @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
@@ -410,7 +414,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
     var f = expr.function().accept(this, null);
     var resultTerm = f.wellTyped;
-    if (!(f.type instanceof FormTerm.Pi piTerm)) return wantButNo(expr, f.type, "pi type");
+    if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
+      return wantButNo(expr, f.type, "pi type");
     var pi = piTerm;
     var subst = new Substituter.TermSubst(new MutableHashMap<>());
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
