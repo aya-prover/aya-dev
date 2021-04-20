@@ -77,17 +77,14 @@ public sealed interface CallTerm extends Term {
 
   record Prim(
     @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> args,
+    @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPrimCall(this, p);
     }
 
     @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> contextArgs() {
-      return ImmutableSeq.of();
-    }
-
-    @Override public @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs() {
       return ImmutableSeq.of();
     }
 

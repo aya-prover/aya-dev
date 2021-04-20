@@ -71,8 +71,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
     var std = Seq.of(homotopy, universe).view();
-    if (!equations.constraints(homotopy)) std = std.drop(1);
-    if (!equations.constraints(universe)) std = std.dropLast(1);
+    // if (!equations.constraints(homotopy)) std = std.drop(1);
+    // if (!equations.constraints(universe)) std = std.dropLast(1);
     return std.appendedAll(levelMapping.valuesView()).toImmutableSeq();
   }
 
@@ -181,7 +181,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall(pos, (DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall(pos, (DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args));
+      return defCall((DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args, sorts));
     } else if (var.core instanceof DataDef || var.concrete instanceof Decl.DataDecl) {
       return defCall(pos, (DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {

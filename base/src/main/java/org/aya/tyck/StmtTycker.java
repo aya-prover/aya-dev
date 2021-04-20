@@ -185,7 +185,7 @@ public record StmtTycker(
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     var resultTele = checkTele(tycker, decl.telescope, null);
     // It might contain unsolved holes, but that's acceptable.
-    var resultRes = decl.result.accept(tycker, null);
+    var resultRes = tycker.checkNoZonk(decl.result, null);
     tracing(GenericBuilder::reduce);
     var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes.wellTyped()));
     decl.signature = signature.value;

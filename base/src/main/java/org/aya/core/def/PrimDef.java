@@ -3,6 +3,7 @@
 package org.aya.core.def;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Decl;
@@ -56,7 +57,7 @@ public final record PrimDef(
 
   public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.of(),
     new FormTerm.Univ(new Sort(Sort.constant(0), Sort.INF_LVL)), prim -> prim, "I");
-  public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of());
+  public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of(), ImmutableSeq.of());
   public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
   public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");
 
@@ -67,9 +68,9 @@ public final record PrimDef(
     var paramA = new LocalVar("A");
     var paramI = new LocalVar("i");
     var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), INTERVAL_CALL, true);
-    var baseAtLeft = new ElimTerm.App(new RefTerm(paramA), Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty())));
-    var homotopy = new Sort.LvlVar("h", true);
-    var universe = new Sort.LvlVar("u", true);
+    var baseAtLeft = new ElimTerm.App(new RefTerm(paramA), Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty(), ImmutableSeq.of())));
+    var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, true);
+    var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, true);
     var result = new FormTerm.Univ(new Sort(new Level.Reference<>(homotopy), new Level.Reference<>(universe)));
     ARCOE = new PrimDef(
       ImmutableSeq.of(
