@@ -70,7 +70,7 @@ public record StmtTycker(
       throw new ExprTycker.TyckerException();
     }
     var core = decl.ref.core;
-    var tele = checkTele(tycker, decl.telescope);
+    var tele = checkTele(tycker, decl.telescope, null);
     if (tele.isNotEmpty()) {
       if (decl.result == null) {
         // TODO[ice]: Expect type and term
@@ -103,7 +103,7 @@ public record StmtTycker(
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
-      param.mapExpr(expr -> expr.accept(patTycker.subst(), Unit.unit()))));
+      param.mapExpr(expr -> expr.accept(patTycker.subst(), Unit.unit()))), dataSig.result());
     var patSubst = patTycker.subst().clone();
     var dataParamView = dataSig.param().view();
     if (pat.isNotEmpty()) {
@@ -145,7 +145,7 @@ public record StmtTycker(
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var ctxTele = tycker.localCtx.extract();
-    var tele = checkTele(tycker, decl.telescope);
+    var tele = checkTele(tycker, decl.telescope, null);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     decl.signature = new Def.Signature(ctxTele, tycker.extractLevels(), tele, result);
     var body = decl.body.map(clause -> visitCtor(clause, tycker));
@@ -155,7 +155,7 @@ public record StmtTycker(
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
     var ctxTele = tycker.localCtx.extract();
-    var tele = checkTele(tycker, decl.telescope);
+    var tele = checkTele(tycker, decl.telescope, null);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     // var levelSubst = tycker.equations.solve();
     var levels = tycker.extractLevels();
@@ -164,7 +164,7 @@ public record StmtTycker(
   }
 
   @Override public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
-    var tele = checkTele(tycker, field.telescope);
+    var tele = checkTele(tycker, field.telescope, null);
     var structRef = field.structRef;
     var result = field.result.accept(tycker, null).wellTyped();
     var structSig = structRef.concrete.signature;
@@ -183,7 +183,7 @@ public record StmtTycker(
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
     var ctxTele = tycker.localCtx.extract();
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
-    var resultTele = checkTele(tycker, decl.telescope);
+    var resultTele = checkTele(tycker, decl.telescope, null);
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = decl.result.accept(tycker, null);
     tracing(GenericBuilder::reduce);
@@ -206,10 +206,10 @@ public record StmtTycker(
   }
 
   private @NotNull ImmutableSeq<Term.Param>
-  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele) {
+  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable Term univ) {
     var okTele = tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
-      var paramRes = exprTycker.checkNoZonk(param.type(), null);
+      var paramRes = exprTycker.checkNoZonk(param.type(), univ);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
     });
