@@ -80,22 +80,23 @@ public final record DataDef(
     /**
      * @return first component: data's telescope, second component: con telescope
      */
-    public static @NotNull CtorTelescopes telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar) {
+    public static @NotNull CtorTelescopes
+    telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar, ImmutableSeq<Level<Sort.LvlVar>> sort) {
       var core = defVar.core;
       if (core != null) {
         var dataDef = core.dataRef.core;
         var conTelescope = core.conTele;
         if (dataDef != null)
-          return new CtorTelescopes(dataDef.contextTele, dataDef.telescope, dataDef.levels, conTelescope);
+          return new CtorTelescopes(dataDef.contextTele, dataDef.telescope, sort, conTelescope);
         var signature = core.dataRef.concrete.signature;
         assert signature != null;
-        return new CtorTelescopes(signature.contextParam(), signature.param(), signature.sortParam(), conTelescope);
+        return new CtorTelescopes(signature.contextParam(), signature.param(), sort, conTelescope);
       }
       var dataSignature = defVar.concrete.dataRef.concrete.signature;
       assert dataSignature != null;
       var conSignature = defVar.concrete.signature;
       assert conSignature != null;
-      return new CtorTelescopes(dataSignature.contextParam(), dataSignature.param(), dataSignature.sortParam(), conSignature.param());
+      return new CtorTelescopes(dataSignature.contextParam(), dataSignature.param(), sort, conSignature.param());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -109,14 +110,14 @@ public final record DataDef(
   public static record CtorTelescopes(
     @NotNull ImmutableSeq<Term.Param> ctxTele,
     @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<Sort.LvlVar> sortTele,
+    @NotNull ImmutableSeq<Level<Sort.LvlVar>> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {
       return new CallTerm.Con(fromCtor(conVar), conVar,
         ctxTele.map(Term.Param::toArg),
         dataTele.map(Term.Param::toArg),
-        sortTele.map(Level.Reference::new),
+        sortTele,
         conTele.map(Term.Param::toArg));
     }
   }

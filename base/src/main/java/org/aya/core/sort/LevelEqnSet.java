@@ -58,12 +58,13 @@ public record LevelEqnSet(
   public void solve() {
     var newEqns = Buffer.from(eqns);
     eqns.clear();
+    var solutionSize = solution.size();
     newEqns.view().map(this::applyTo).filterTo(eqns, this::solveEqn);
+    if (solutionSize != solution.size()) subst(this);
   }
 
   public void reportAll() {
-    for (var eqn : eqns)
-      reporter.report(new LevelMismatchError(eqn));
+    for (var eqn : eqns) reporter.report(new LevelMismatchError(eqn));
   }
 
   public boolean constraints(@NotNull Sort.LvlVar var) {
@@ -107,14 +108,14 @@ public record LevelEqnSet(
       if (lhs instanceof Level.Infinity) return Decision.optimistic(cmp == Ordering.Gt);
       if (lhs instanceof Level.Constant<Sort.LvlVar> l) {
         if (rhs instanceof Level.Constant<Sort.LvlVar> r) return decide(l.value(), r.value());
+        if (l.value() == 0 && rhs instanceof Level.Reference<Sort.LvlVar> r && !r.ref().free())
+          return Decision.optimistic(cmp == Ordering.Lt);
       }
-      if (lhs instanceof Level.Reference<Sort.LvlVar> l
-        && rhs instanceof Level.Reference<Sort.LvlVar> r)
-        if (l.ref() == r.ref()) {
-          return decide(l.lift(), r.lift());
-        } else if (l.ref().name().equals(r.ref().name())) {
-          System.out.println("Uma");
-        }
+      if (lhs instanceof Level.Reference<Sort.LvlVar> l) {
+        if (!l.ref().free() && rhs instanceof Level.Constant<Sort.LvlVar> r && r.value() == 0)
+          return Decision.optimistic(cmp == Ordering.Gt);
+        if (rhs instanceof Level.Reference<Sort.LvlVar> r && l.ref() == r.ref()) return decide(l.lift(), r.lift());
+      }
       return Decision.MAYBE;
     }
 

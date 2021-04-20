@@ -122,8 +122,7 @@ public class DefEqTest extends LispTestCase {
     assertTrue(eq.compare(Lisp.parse("(proj (tup (app (lam (a (U) ex) a) x) y) 1)", vars), Lisp.parse("(app (lam (a (U) ex) a) x)", vars), typeU));
   }
 
-  @Test
-  public void fnCall() {
+  @Test public void fnCall() {
     Lisp.parseDef("id",
       "(y (U) ex null)", "y", "y", vars);
     Lisp.parseDef("id2",

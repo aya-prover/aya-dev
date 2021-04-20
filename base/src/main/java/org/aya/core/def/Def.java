@@ -42,7 +42,7 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
     else if (core instanceof StructDef struct) return struct.levels();
     else if (core instanceof DataDef.Ctor ctor) return defLevels(ctor.dataRef());
     else if (core instanceof StructDef.Field field) return defLevels(field.structRef());
-    else if (core instanceof PrimDef prim) return ImmutableSeq.empty();
+    else if (core instanceof PrimDef prim) return prim.levels();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).sortParam();
   }

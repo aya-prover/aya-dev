@@ -190,8 +190,10 @@ public record PatTycker(
       throw new ExprTycker.TyckInterruptedException();
     }
     var ctorCore = realCtor._3.ref().core;
+    final var dataCall = realCtor._1;
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), ImmutableSeq.of(),
-      Term.Param.subst(ctorCore.conTele(), realCtor._2), realCtor._3.underlyingDataCall()));
+      Term.Param.subst(ctorCore.conTele(), realCtor._2,
+        Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs())), dataCall));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
   }

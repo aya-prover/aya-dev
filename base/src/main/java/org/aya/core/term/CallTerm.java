@@ -257,7 +257,7 @@ public sealed interface CallTerm extends Term {
 
     @Override public @NotNull Decision whnf() {
       if (of instanceof IntroTerm) return Decision.NO;
-      if (of.whnf() == Decision.YES) return Decision.YES;
+      if (of.whnf() == Decision.YES) return Decision.optimistic(ref.core.clauses().isEmpty());
       return Decision.MAYBE;
     }
   }

@@ -99,7 +99,7 @@ public class NormalizeTest extends LispTestCase {
 
   @Test public void unfoldPrim() {
     var defs = TyckDeclTest.successTyckDecls("""
-      data Nat : Set | zero | suc Nat
+      data Nat : Set 0 | zero | suc Nat
       prim I
       prim left
       prim right

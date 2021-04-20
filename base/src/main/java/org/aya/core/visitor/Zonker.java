@@ -31,7 +31,7 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
     var sol = term.ref().core();
     if (sol.body == null) {
-      tycker.reporter.report(new UnsolvedMeta(sol.sourcePos));
+      tycker.reporter.report(new UnsolvedMeta(sol.sourcePos, "meta"));
       throw new ExprTycker.TyckInterruptedException();
     }
     return sol.body.accept(this, Unit.unit());
@@ -47,7 +47,7 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   }
 
   private <T> T reportLevelSolverError(@NotNull SourcePos pos) {
-    tycker.reporter.report(new UnsolvedMeta(pos));
+    tycker.reporter.report(new UnsolvedMeta(pos, "level"));
     tycker.equations.reportAll();
     throw new ExprTycker.TyckInterruptedException();
   }
@@ -60,9 +60,9 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
     return new FormTerm.Univ(sort);
   }
 
-  public static record UnsolvedMeta(@NotNull SourcePos sourcePos) implements Problem {
+  public static record UnsolvedMeta(@NotNull SourcePos sourcePos, @NotNull String what) implements Problem {
     @Override public @NotNull Doc describe() {
-      return Doc.plain("Unsolved meta");
+      return Doc.plain("Unsolved " + what);
     }
 
     @Override public @NotNull Severity level() {

@@ -47,7 +47,7 @@ public record LittleTyper(@NotNull ImmutableSeq<Term.Param> context) implements 
   }
 
   @Override public Term visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
-    return null;
+    return defCall(fnCall.ref(), fnCall.sortArgs());
   }
 
   @Override public Term visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {

@@ -4,6 +4,7 @@ package org.aya.tyck.unify;
 
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
+import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -24,8 +25,6 @@ import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static org.aya.core.visitor.Substituter.TermSubst.EMPTY;
-
 /**
  * The implementation of untyped pattern unification for holes.
  * András Kovács' elaboration-zoo is taken as reference.
@@ -33,11 +32,12 @@ import static org.aya.core.visitor.Substituter.TermSubst.EMPTY;
  * @author re-xyr, ice1000
  */
 public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
-  private final @NotNull TypedDefEq defeq;
+  public final @NotNull TypedDefEq defeq;
   private final @NotNull UntypedDefEq untypedDefeq;
   private final @NotNull Ordering cmp;
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
+    if (lhs.whnf() != Decision.YES) lhs = lhs.normalize(NormalizeMode.WHNF);
     return lhs.accept(this, rhs, type);
   }
 
@@ -71,30 +71,26 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   @Override public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref())
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref())
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
     // Lossy comparison
     var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), EMPTY, subst))) return true;
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return true;
     return defeq.compareWHNF(lhs, rhs, type);
   }
 
   @Override
   public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) return false;
-    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    return defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), EMPTY, subst));
+    return untypedDefeq.visitDataCall(lhs, preRhs) != null;
   }
 
   @Override
   public @NotNull Boolean visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs, @NotNull Term type) {
-    if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) return false;
-    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    return defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), EMPTY, subst));
+    return untypedDefeq.visitStructCall(lhs, preRhs) != null;
   }
 
-  private @NotNull LevelSubst levels(
+  @NotNull LevelSubst levels(
     @NotNull DefVar<? extends Def, ? extends Decl> def,
     ImmutableSeq<@NotNull Level<Sort.LvlVar>> l, ImmutableSeq<@NotNull Level<Sort.LvlVar>> r
   ) {
@@ -113,7 +109,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
         && defeq.compareWHNF(lhs, preRhs, type);
     // Lossy comparison
     var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), EMPTY, subst))) return true;
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return true;
     return defeq.compareWHNF(lhs, rhs, type);
   }
 
@@ -122,7 +118,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       return (lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES)
         && defeq.compareWHNF(lhs, preRhs, type);
     var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
-    return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), EMPTY, subst));
+    return defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), subst));
   }
 
   @Override public @NotNull Boolean visitTup(@NotNull IntroTerm.Tuple lhs, @NotNull Term preRhs, @NotNull Term type) {
@@ -150,7 +146,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
 
   public PatDefEq(@NotNull TypedDefEq defeq, @NotNull Ordering cmp) {
     this.defeq = defeq;
-    this.untypedDefeq = new UntypedDefEq(defeq, cmp);
+    this.untypedDefeq = new UntypedDefEq(this, cmp);
     this.cmp = cmp;
   }
 
@@ -191,7 +187,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     untypedDefeq.compare(solved.synth(meta.contextTele), meta.result);
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
-      defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, untypedDefeq.defeq().pos));
+      defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));
       throw new ExprTycker.TyckInterruptedException();
     }
     return true;

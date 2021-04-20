@@ -38,9 +38,9 @@ public class UsagesTest extends LispTestCase {
   @Test public void refFinder() {
     assertTrue(RefFinder.HEADER_AND_BODY.withBody());
     TyckDeclTest.successTyckDecls("""
-      open data Nat : Set | zero | suc Nat
+      open data Nat : Set 0 | zero | suc Nat
       def one : Nat => suc zero
-      open data Int : Set | pos Nat | neg Nat { | zero => pos zero }
+      open data Int : Set 0 | pos Nat | neg Nat { | zero => pos zero }
       def abs (a : Int) : Nat
        | pos n => n
        | neg n => n

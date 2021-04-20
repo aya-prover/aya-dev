@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @apiNote Use {@link UntypedDefEq#compare(Term, Term)} instead of visiting directly!
  */
 public record UntypedDefEq(
-  @NotNull TypedDefEq defeq, @NotNull Ordering cmp
+  @NotNull PatDefEq defeq, @NotNull Ordering cmp
 ) implements Term.Visitor<@NotNull Term, @Nullable Term> {
   public @Nullable Term compare(@NotNull Term lhs, @NotNull Term rhs) {
     final var x = lhs.accept(this, rhs);
@@ -23,7 +23,7 @@ public record UntypedDefEq(
   }
 
   @Override public void traceEntrance(@NotNull Term lhs, @NotNull Term rhs) {
-    defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.pos));
+    defeq.defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.defeq.pos));
   }
 
   @Override public void traceExit(@Nullable Term term) {
@@ -32,14 +32,14 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs) {
     if (preRhs instanceof RefTerm rhs
-      && defeq.varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var()) {
-      return defeq.localCtx.get(rhs.var());
+      && defeq.defeq.varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var()) {
+      return defeq.defeq.localCtx.get(rhs.var());
     }
     return null;
   }
 
   @Override public @Nullable Term visitApp(@NotNull ElimTerm.App lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof ElimTerm.App rhs)) return null;
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof ElimTerm.App rhs)) return null;
     var preFnType = compare(lhs.of(), rhs.of());
     if (!(preFnType instanceof FormTerm.Pi fnType)) return null;
     if (!defeq.compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) return null;
@@ -75,8 +75,8 @@ public record UntypedDefEq(
 
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof FormTerm.Pi rhs)) return null;
-    return defeq.checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> null, () -> {
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi rhs)) return null;
+    return defeq.defeq.checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> null, () -> {
       var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA);
       if (!bodyIsOk) return null;
       return FormTerm.Univ.OMEGA;
@@ -84,8 +84,8 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof FormTerm.Sigma rhs)) return null;
-    return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Sigma rhs)) return null;
+    return defeq.defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
       var bodyIsOk = defeq.compare(lhs.params().last().type(), rhs.params().last().type(), FormTerm.Univ.OMEGA);
       if (!bodyIsOk) return null;
       return FormTerm.Univ.OMEGA;
@@ -93,8 +93,8 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
-    defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ rhs)) return null;
+    defeq.defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.defeq.pos);
     return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ(1));
   }
 
@@ -114,12 +114,19 @@ public record UntypedDefEq(
     return unreachable();
   }
 
-  @Override public @NotNull Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
-    return unreachable();
+  @Override public @Nullable Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) return null;
+    var subst = defeq.levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    var args = defeq.defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
+    // Do not need to be computed precisely because unification won't need this info
+    return args ? FormTerm.Univ.OMEGA : null;
   }
 
-  @Override public @NotNull Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
-    return unreachable();
+  @Override public @Nullable Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
+    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) return null;
+    var subst = defeq.levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    var args = defeq.defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
+    return args ? FormTerm.Univ.OMEGA : null;
   }
 
   @Override public @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, @NotNull Term term) {
