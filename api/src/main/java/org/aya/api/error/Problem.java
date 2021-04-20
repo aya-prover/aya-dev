@@ -6,8 +6,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-
 /**
  * @author ice1000
  */
@@ -37,13 +35,11 @@ public interface Problem {
     return Doc.empty();
   }
 
-  default @NotNull PrettyError toPrettyError(
-    @NotNull Path filePath,
-    @NotNull String sourceCode
-  ) {
+  default @NotNull PrettyError toPrettyError() {
+    var sourcePos = sourcePos();
     return new PrettyError(
-      filePath.toString(),
-      sourcePos().toSpan(sourceCode),
+      sourcePos.file().getOrDefault("<unknown-file>"),
+      sourcePos.toSpan(sourceCode),
       switch (level()) {
         case WARN -> Doc.plain("Warning:");
         case GOAL -> Doc.plain("Goal:");

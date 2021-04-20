@@ -5,22 +5,20 @@ package org.aya.api.error;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
-import java.nio.file.Path;
 
 /**
  * @author ice1000
  */
-public record StreamReporter(@NotNull Path filePath, @NotNull String sourceCode,
-                             @NotNull PrintStream stream) implements Reporter {
+public record StreamReporter(@NotNull PrintStream stream) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
-    var errorMsg = errorMsg(filePath, sourceCode, problem);
+    var errorMsg = errorMsg(problem);
     stream.println(errorMsg);
   }
 
-  public static @NotNull String errorMsg(@NotNull Path filePath, @NotNull String sourceCode, @NotNull Problem problem) {
+  public static @NotNull String errorMsg(@NotNull Problem problem) {
     if (problem.sourcePos() == SourcePos.NONE)
       return problem.describe().debugRender();
-    var error = problem.toPrettyError(filePath, sourceCode).toDoc();
+    var error = problem.toPrettyError().toDoc();
     return error.renderWithPageWidth(120);
   }
 }

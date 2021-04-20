@@ -52,9 +52,8 @@ public class TestRunner {
   private void runFile(@NotNull Path file, boolean expectSuccess) {
     try {
       var hookOut = new ByteArrayOutputStream();
-      var reporter = new CountingReporter(new StreamReporter(file,
-        Files.readString(file),
-        new PrintStream(hookOut, true, StandardCharsets.UTF_8)));
+      var reporter = new CountingReporter(new StreamReporter(new PrintStream(
+        hookOut, true, StandardCharsets.UTF_8)));
 
       System.out.print(file.getFileName() + " ---> ");
       new SingleFileCompiler(reporter, LOCATOR, null)

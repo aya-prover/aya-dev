@@ -8,14 +8,12 @@ import org.aya.api.error.StreamReporter;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-
 /**
  * @author ice1000
  */
-public record CliReporter(@NotNull Path filePath, @NotNull String sourceCode) implements Reporter {
+public record CliReporter() implements Reporter {
   @Override public void report(@NotNull Problem problem) {
-    var errorMsg = StreamReporter.errorMsg(filePath, sourceCode, problem);
+    var errorMsg = StreamReporter.errorMsg(problem);
     (Seq.of(Problem.Severity.ERROR, Problem.Severity.WARN).contains(problem.level()) ? System.err : System.out)
       .println(errorMsg);
   }
