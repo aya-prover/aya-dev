@@ -13,11 +13,7 @@ public record LevelMismatchError(
   @NotNull LevelEqnSet.Eqn eqn
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("Level mismatch: "),
-      eqn.lhs().toDoc(),
-      Doc.plain(" and "),
-      eqn.rhs().toDoc());
+    return Doc.hcat(Doc.plain("Level mismatch: "), eqn.toDoc());
   }
 
   @Override public @NotNull Severity level() {

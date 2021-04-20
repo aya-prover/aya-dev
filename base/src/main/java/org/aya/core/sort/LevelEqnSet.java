@@ -40,11 +40,11 @@ public record LevelEqnSet(
     @NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs,
     @NotNull Ordering cmp, @NotNull SourcePos loc
   ) {
-    insertEqn(loc, cmp, new Eqn(lhs, rhs));
+    insertEqn(loc, new Eqn(lhs, rhs, cmp));
   }
 
-  private void insertEqn(@NotNull SourcePos loc, @NotNull Ordering cmp, Eqn h) {
-    switch (h.biasedEq(cmp)) {
+  private void insertEqn(@NotNull SourcePos loc, Eqn h) {
+    switch (h.biasedEq()) {
       case NO -> {
         reporter.report(new LevelMismatchError(loc, h));
         throw new ExprTycker.TyckInterruptedException();
@@ -67,7 +67,7 @@ public record LevelEqnSet(
   }
 
   private boolean solveEqn(@NotNull LevelEqnSet.Eqn eqn) {
-    if (eqn.biasedEq(Ordering.Eq) == Decision.YES) return false;
+    if (eqn.biasedEq() == Decision.YES) return false;
     if (eqn.lhs instanceof Level.Reference<Sort.LvlVar> lhs) {
       if (lhs.ref().free()) {
         solution.put(lhs.ref(), eqn.rhs.lift(-lhs.lift()));
@@ -93,20 +93,31 @@ public record LevelEqnSet(
    * @author ice1000
    */
   @Debug.Renderer(text = "toDoc().debugRender()")
-  public static record Eqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs) implements Docile {
-    public Decision biasedEq(@NotNull Ordering cmp) {
+  public static record Eqn(
+    @NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs,
+    @NotNull Ordering cmp
+  ) implements Docile {
+    public @NotNull Decision biasedEq() {
       if (lhs.equals(rhs)) return Decision.YES;
       if (rhs instanceof Level.Infinity) return lhs instanceof Level.Infinity
         ? Decision.YES : Decision.optimistic(cmp == Ordering.Lt);
       if (lhs instanceof Level.Infinity) return Decision.optimistic(cmp == Ordering.Gt);
       if (lhs instanceof Level.Constant<Sort.LvlVar> l) {
-        if (rhs instanceof Level.Constant<Sort.LvlVar> r) return switch (cmp) {
-          case Gt -> Decision.confident(l.value() >= r.value());
-          case Eq -> Decision.confident(l.value() == r.value());
-          case Lt -> Decision.confident(l.value() <= r.value());
-        };
+        if (rhs instanceof Level.Constant<Sort.LvlVar> r) return decide(l.value(), r.value());
       }
+      if (lhs instanceof Level.Reference<Sort.LvlVar> l
+        && rhs instanceof Level.Reference<Sort.LvlVar> r
+        && l.ref() == r.ref())
+        return decide(l.lift(), r.lift());
       return Decision.MAYBE;
+    }
+
+    private @NotNull Decision decide(int lv, int rv) {
+      return switch (cmp) {
+        case Gt -> Decision.confident(lv >= rv);
+        case Eq -> Decision.confident(lv == rv);
+        case Lt -> Decision.confident(lv <= rv);
+      };
     }
 
     public boolean constraints(@NotNull Sort.LvlVar var) {
@@ -118,7 +129,7 @@ public record LevelEqnSet(
     }
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.hcat(lhs.toDoc(), Doc.symbol(" = "), rhs.toDoc());
+      return Doc.hsep(lhs.toDoc(), Doc.symbol(cmp.symbol), rhs.toDoc());
     }
   }
 }

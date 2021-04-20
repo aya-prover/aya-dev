@@ -19,6 +19,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.GenericBuilder;
 import org.aya.generic.Level;
 import org.aya.generic.Matching;
+import org.aya.tyck.error.LevelSolverError;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
@@ -61,6 +62,10 @@ public record StmtTycker(
     var parent = tycker.localCtx.parent();
     assert parent != null;
     tycker.localCtx = parent;
+    var equations = tycker.equations;
+    if (equations.eqns().isNotEmpty()) {
+      reporter.report(new LevelSolverError(def.ref().concrete.sourcePos, equations));
+    }
     if (reporter instanceof DelayedReporter r) r.reportNow();
   }
 
