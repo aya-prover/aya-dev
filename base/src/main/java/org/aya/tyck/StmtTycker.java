@@ -13,9 +13,11 @@ import org.aya.concrete.Signatured;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.sort.LevelSubst;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Substituter;
 import org.aya.generic.GenericBuilder;
 import org.aya.generic.Level;
 import org.aya.generic.Matching;
@@ -25,6 +27,7 @@ import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
@@ -78,12 +81,14 @@ public record StmtTycker(
         throw new ExprTycker.TyckerException();
       }
       var result = decl.result.accept(tycker, null).wellTyped();
-      tycker.unifyTyThrowing(
-        FormTerm.Pi.make(false, tele, result),
-        FormTerm.Pi.make(false, core.telescope(), core.result()),
-        decl.result
-      );
-      decl.signature = new Def.Signature(ImmutableSeq.empty(), ImmutableSeq.empty(), tele, result);
+      var levelSubst = new LevelSubst.Simple(MutableMap.of());
+      // Homotopy level goes first
+      var levels = tycker.extractLevels();
+      for (var lvl : core.levels().zip(levels)) levelSubst.solution().put(lvl._1, new Level.Reference<>(lvl._2));
+      var target = FormTerm.Pi.make(false, core.telescope(), core.result())
+        .subst(Substituter.TermSubst.EMPTY, levelSubst);
+      tycker.unifyTyThrowing(FormTerm.Pi.make(false, tele, result), target, decl.result);
+      decl.signature = new Def.Signature(ImmutableSeq.empty(), levels, tele, result);
     } else if (decl.result != null) {
       var result = decl.result.accept(tycker, null).wellTyped();
       tycker.unifyTyThrowing(result, core.result(), decl.result);

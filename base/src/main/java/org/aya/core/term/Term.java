@@ -84,7 +84,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   @Override default @NotNull Doc toDoc() {
     return accept(CoreDistiller.INSTANCE, false);
   }
-  default @NotNull Term synth(@NotNull ImmutableSeq<Term.Param> context) {
+  default @Nullable Term synth(@NotNull ImmutableSeq<Term.Param> context) {
     return accept(new LittleTyper(context), Unit.unit());
   }
 

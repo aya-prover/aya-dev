@@ -184,7 +184,8 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
       return false;
     }
     assert meta.body == null;
-    untypedDefeq.compare(solved.synth(meta.contextTele), meta.result);
+    var ty = solved.synth(meta.contextTele);
+    if (ty != null) untypedDefeq.compare(ty, meta.result);
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
       defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));

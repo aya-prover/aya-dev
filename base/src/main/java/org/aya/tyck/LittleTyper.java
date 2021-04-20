@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record LittleTyper(@NotNull ImmutableSeq<Term.Param> context) implements Term.Visitor<Unit, Term> {
   @Override public Term visitRef(@NotNull RefTerm term, Unit unit) {
-    return context.find(param -> param.ref() == term.var()).get().type();
+    return context.find(param -> param.ref() == term.var()).map(Term.Param::type).getOrNull();
   }
 
   @Override public Term visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
