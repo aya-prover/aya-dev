@@ -5,8 +5,8 @@ In file $FILE:6:29 ->
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                    ^^
   
-Error: Expected type: Type 2 u
-       Normalized: Type 2 u
+Error: Expected type: Type 2 Neg.u
+       Normalized: Type 2 Neg.u
        Actual type: F {?_?}
        Normalized: F {?_?}
        They don't match, sorry

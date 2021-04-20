@@ -1,0 +1,3 @@
+data List (A : uType 1) : uType 0
+ | nil
+ | cons A (List A)

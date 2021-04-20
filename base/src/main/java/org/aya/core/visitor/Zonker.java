@@ -38,9 +38,9 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   }
 
   @Override public @NotNull Level<Sort.LvlVar> visitLevel(@NotNull Level<Sort.LvlVar> sort, Unit unit) {
-    var newSort = !(sort instanceof Level.Reference<Sort.LvlVar> ref) || tycker.equations.constraints(ref.ref())
+    sort = tycker.equations.applyTo(sort);
+    return !(sort instanceof Level.Reference<Sort.LvlVar> ref) || tycker.equations.constraints(ref.ref())
       ? sort : constant(ref.ref().kind().defaultValue);
-    return tycker.equations.applyTo(newSort);
   }
 
   @Override public @NotNull Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
