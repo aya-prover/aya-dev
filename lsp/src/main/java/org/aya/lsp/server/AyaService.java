@@ -71,7 +71,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var diags = reporter.problems.stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe().debugRender()))
-      .map(p -> Tuple.of(p.sourcePos().file().get(), new Diagnostic(LspRange.from(p.sourcePos()),
+      .map(p -> Tuple.of(p.sourcePos().file().name(), new Diagnostic(LspRange.from(p.sourcePos()),
         p.describe().debugRender(),
         severityOf(p), "Aya")))
       .collect(Collectors.groupingBy(t -> t._1));

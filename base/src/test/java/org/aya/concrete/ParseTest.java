@@ -3,6 +3,7 @@
 package org.aya.concrete;
 
 import org.aya.api.Global;
+import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.parse.AyaParsing;
@@ -11,7 +12,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
-import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple2;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
-  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(Option.none(), ThrowingReporter.INSTANCE);
+  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(SourceFile.NONE, ThrowingReporter.INSTANCE);
 
   @BeforeAll public static void enableTest() {
     Global.enterTestMode();

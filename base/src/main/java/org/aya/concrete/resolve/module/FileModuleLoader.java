@@ -12,7 +12,6 @@ import org.aya.concrete.Signatured;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
@@ -21,7 +20,6 @@ import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.control.Option;
 import org.glavo.kala.function.CheckedConsumer;
 import org.glavo.kala.function.CheckedRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +37,8 @@ public final record FileModuleLoader(
   @Override public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>>
   load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = path.foldLeft(basePath, Path::resolve);
-    var pathDisplay = Option.some(locator.locate(sourcePath));
     try {
-      var parser = AyaParsing.parser(sourcePath, pathDisplay, reporter());
-      var program = new AyaProducer(pathDisplay, reporter).visitProgram(parser.program());
+      var program = AyaParsing.program(locator, reporter, sourcePath);
       return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports();
     } catch (IOException e) {
       reporter.reportString(e.getMessage());

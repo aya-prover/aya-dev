@@ -7,8 +7,12 @@ import org.antlr.v4.runtime.CodePointBuffer;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.aya.api.error.Reporter;
+import org.aya.api.error.SourceFile;
+import org.aya.api.error.SourceFileLocator;
+import org.aya.concrete.Stmt;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -24,18 +28,25 @@ public interface AyaParsing {
       new AyaLexer(CharStreams.fromString(text))));
   }
 
-  @Contract("_, _, _ -> new")
-  static @NotNull AyaParser parser(@NotNull Path path, @NotNull Option<String> pathDisplay, @NotNull Reporter reporter) throws IOException {
-    var intBuffer = IntBuffer.wrap(Files.readString(path).codePoints().toArray());
+  @Contract("_, _ -> new")
+  private static @NotNull AyaParser parser(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
+    var intBuffer = IntBuffer.wrap(sourceFile.sourceCode().codePoints().toArray());
     var codePointBuffer = CodePointBuffer.withInts(intBuffer);
     var charStream = CodePointCharStream.fromBuffer(codePointBuffer);
     var lexer = new AyaLexer(charStream);
     lexer.removeErrorListeners();
-    var listener = new ReporterErrorListener(pathDisplay, reporter);
+    var listener = new ReporterErrorListener(sourceFile, reporter);
     lexer.addErrorListener(listener);
     var parser = new AyaParser(new CommonTokenStream(lexer));
     parser.removeErrorListeners();
     parser.addErrorListener(listener);
     return parser;
+  }
+
+  static @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFileLocator locator, @NotNull Reporter reporter, @NotNull Path path) throws IOException {
+    var sourceCode = Files.readString(path);
+    var sourceFile = new SourceFile(Option.some(locator.locate(path)), sourceCode);
+    var parser = AyaParsing.parser(sourceFile, reporter);
+    return new AyaProducer(sourceFile, reporter).visitProgram(parser.program());
   }
 }

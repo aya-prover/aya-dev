@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.error.Reporter;
+import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
@@ -45,9 +46,9 @@ import java.util.stream.Stream;
  */
 public final class AyaProducer extends AyaBaseVisitor<Object> {
   private final @NotNull Reporter reporter;
-  private final @NotNull Option<String> sourceFile;
+  private final @NotNull SourceFile sourceFile;
 
-  public AyaProducer(@NotNull Option<String> sourceFile, @NotNull Reporter reporter) {
+  public AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
     this.sourceFile = sourceFile;
     this.reporter = reporter;
   }
@@ -354,7 +355,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
     return (Expr.LamExpr) buildLam(
-      sourceFile,
       sourcePosOf(ctx),
       visitLamTelescope(ctx.tele()).view(),
       visitLamBody(ctx)
@@ -362,7 +362,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   public static @NotNull Expr buildLam(
-    @NotNull Option<String> sourceFile,
     SourcePos sourcePos,
     SeqLike<Expr.Param> params,
     Expr body
@@ -371,7 +370,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Expr.LamExpr(
       sourcePos,
       params.first(),
-      buildLam(sourceFile, sourcePosForSubExpr(sourceFile, params, body), params.view().drop(1), body)
+      buildLam(sourcePosForSubExpr(sourcePos.file(), params, body), params.view().drop(1), body)
     );
   }
 
@@ -404,7 +403,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
   @Override public Expr.@NotNull PiExpr visitPi(AyaParser.PiContext ctx) {
     return (Expr.PiExpr) buildPi(
-      sourceFile,
       sourcePosOf(ctx),
       false,
       visitTelescope(ctx.tele()).view(),
@@ -413,7 +411,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   public static @NotNull Expr buildPi(
-    @NotNull Option<String> sourceFile,
     SourcePos sourcePos,
     boolean co,
     SeqLike<Expr.Param> params,
@@ -425,12 +422,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       sourcePos,
       co,
       first,
-      buildPi(sourceFile, sourcePosForSubExpr(sourceFile, params, body), co, params.view().drop(1), body)
+      buildPi(sourcePosForSubExpr(sourcePos.file(), params, body), co, params.view().drop(1), body)
     );
   }
 
   @NotNull
-  private static SourcePos sourcePosForSubExpr(@NotNull Option<String> sourceFile, SeqLike<Expr.Param> params, Expr body) {
+  private static SourcePos sourcePosForSubExpr(@NotNull SourceFile sourceFile, SeqLike<Expr.Param> params, Expr body) {
     var restParamSourcePos = params.stream().skip(1)
       .map(Expr.Param::sourcePos)
       .reduce(SourcePos.NONE, (acc, it) -> {

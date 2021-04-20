@@ -15,7 +15,6 @@ import org.aya.test.Lisp;
 import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
-import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.jupiter.api.Test;
@@ -38,7 +37,7 @@ public class TyckExprTest {
   @TestOnly public static @NotNull Expr lamConnected() {
     var a = new LocalVar("a");
     // \A a.a
-    return AyaProducer.buildLam(Option.none(), SourcePos.NONE,
+    return AyaProducer.buildLam(SourcePos.NONE,
       ImmutableSeq.of(
         new Expr.Param(SourcePos.NONE, new LocalVar("_"), true),
         new Expr.Param(SourcePos.NONE, a, true)).view(),
@@ -81,7 +80,7 @@ public class TyckExprTest {
     var pRef = new Expr.RefExpr(SourcePos.NONE, p, "p");
     var f = new LocalVar("f");
     // \A B C f p. f(p.1, p.2)
-    var uncurry = AyaProducer.buildLam(Option.none(), SourcePos.NONE,
+    var uncurry = AyaProducer.buildLam(SourcePos.NONE,
       Stream
         .concat(
           Stream.of("A", "B", "C").map(LocalVar::new),

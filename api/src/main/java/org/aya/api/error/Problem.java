@@ -38,8 +38,8 @@ public interface Problem {
   default @NotNull PrettyError toPrettyError() {
     var sourcePos = sourcePos();
     return new PrettyError(
-      sourcePos.file().getOrDefault("<unknown-file>"),
-      sourcePos.toSpan(sourceCode),
+      sourcePos.file().name(),
+      sourcePos.toSpan(),
       switch (level()) {
         case WARN -> Doc.plain("Warning:");
         case GOAL -> Doc.plain("Goal:");

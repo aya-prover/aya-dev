@@ -10,7 +10,6 @@ import org.aya.api.util.InterruptException;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
@@ -21,7 +20,6 @@ import org.aya.pretty.doc.Docile;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,11 +41,9 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFil
                      @Nullable Consumer<ImmutableSeq<Def>> onTycked) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
-    var pathDisplay = Option.some(locator.locate(sourceFile));
-    var parser = AyaParsing.parser(sourceFile, pathDisplay, reporter);
     try {
-      var program = new AyaProducer(pathDisplay, reporter).visitProgram(parser.program());
       // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
+      var program = AyaParsing.program(locator, reporter, sourceFile);
       distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());

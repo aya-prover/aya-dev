@@ -4,8 +4,8 @@ package org.aya.concrete.parse;
 
 import org.antlr.v4.runtime.*;
 import org.aya.api.error.Reporter;
+import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourcePos;
-import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReporterErrorListener extends BaseErrorListener {
   private final @NotNull Reporter reporter;
-  private final @NotNull Option<String> sourceFile;
+  private final @NotNull SourceFile sourceFile;
 
-  public ReporterErrorListener(@NotNull Option<String> sourceFile, @NotNull Reporter reporter) {
+  public ReporterErrorListener(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
     this.sourceFile = sourceFile;
     this.reporter = reporter;
   }
