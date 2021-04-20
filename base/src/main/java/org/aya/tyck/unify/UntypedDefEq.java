@@ -73,16 +73,29 @@ public record UntypedDefEq(
     throw new IllegalStateException("No visitHole in UntypedDefEq");
   }
 
-  @Override public @NotNull Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
-    return unreachable();
+
+  @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof FormTerm.Pi rhs)) return null;
+    return defeq.checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> null, () -> {
+      var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA);
+      if (!bodyIsOk) return null;
+      return FormTerm.Univ.OMEGA;
+    });
   }
 
-  @Override public @NotNull Term visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs) {
-    return unreachable();
+  @Override public @Nullable Term visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof FormTerm.Sigma rhs)) return null;
+    return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
+      var bodyIsOk = defeq.compare(lhs.params().last().type(), rhs.params().last().type(), FormTerm.Univ.OMEGA);
+      if (!bodyIsOk) return null;
+      return FormTerm.Univ.OMEGA;
+    });
   }
 
-  @Override public @NotNull Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
-    return unreachable();
+  @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
+    defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
+    return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ(1));
   }
 
   private static Term unreachable() {

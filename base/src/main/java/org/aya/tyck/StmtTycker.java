@@ -186,14 +186,14 @@ public record StmtTycker(
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     var resultTele = checkTele(tycker, decl.telescope, null);
     // It might contain unsolved holes, but that's acceptable.
-    var resultRes = tycker.checkNoZonk(decl.result, null);
+    var resultRes = tycker.checkNoZonk(decl.result, null).wellTyped();
     tracing(GenericBuilder::reduce);
-    var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes.wellTyped()));
+    var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes));
     decl.signature = signature.value;
     var patTycker = new PatTycker(tycker);
     var cumulativeCtx = tycker.localCtx.derive();
     var what = FP.distR(decl.body.map(
-      left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
+      left -> tycker.checkExpr(left, resultRes).toTuple(),
       right -> patTycker.elabClause(right, signature, cumulativeCtx.localMap())));
     var resultTy = what._1;
     var factory = FnDef.factory(body ->

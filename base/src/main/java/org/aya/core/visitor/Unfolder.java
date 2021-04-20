@@ -46,12 +46,13 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
     var levelParams = Def.defLevels(def.ref());
     var levelArgs = conCall.sortArgs();
-    var levelSubst = checkAndBuildLevelSubst(levelParams, levelArgs);
+    var levelSubst = buildSubst(levelParams, levelArgs);
     var dropped = args.drop(conCall.contextArgs().size() + conCall.head().dataArgs().size());
     var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses());
     return volynskaya != null ? volynskaya : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
   }
-  private @NotNull LevelSubst checkAndBuildLevelSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<@NotNull Level<LvlVar>> levelArgs) {
+
+  static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<@NotNull Level<LvlVar>> levelArgs) {
     var levelSubst = new LevelSubst.Simple(MutableMap.of());
     assert levelParams.sizeEquals(levelArgs);
     for (var app : levelArgs.zip(levelParams)) levelSubst.solution().put(app._2, app._1);
@@ -64,7 +65,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (def == null) return fnCall;
     var args = fnCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
-    var levelSubst = checkAndBuildLevelSubst(def.levels(), fnCall.sortArgs());
+    var levelSubst = buildSubst(def.levels(), fnCall.sortArgs());
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
@@ -116,7 +117,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (!(nevv instanceof IntroTerm.New n)) {
       var args = term.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
       var fieldSubst = checkAndBuildSubst(core.fullTelescope(), args);
-      var levelSubst = checkAndBuildLevelSubst(Def.defLevels(field), term.sortArgs());
+      var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
       var dropped = args.drop(term.contextArgs().size() + term.structArgs().size());
       var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses());
       return mischa != null ? mischa : new CallTerm.Access(nevv, field,

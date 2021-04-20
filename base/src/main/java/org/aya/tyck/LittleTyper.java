@@ -7,6 +7,8 @@ import org.aya.concrete.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Level;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
@@ -60,8 +62,10 @@ public record LittleTyper(@NotNull ImmutableSeq<Term.Param> context) implements 
     return defCall(structCall.ref(), structCall.sortArgs());
   }
 
+  @NotNull
   private Term defCall(DefVar<? extends Def, ? extends Decl> ref, ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs) {
-    return null;
+    var levels = Def.defLevels(ref);
+    return Def.defResult(ref).subst(Substituter.TermSubst.EMPTY, Unfolder.buildSubst(levels, sortArgs));
   }
 
   @Override public Term visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {

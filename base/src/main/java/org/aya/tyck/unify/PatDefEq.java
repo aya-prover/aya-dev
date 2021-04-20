@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
-import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -31,7 +30,6 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   private final @NotNull TypedDefEq defeq;
   private final @NotNull UntypedDefEq untypedDefeq;
   private final @NotNull Ordering cmp;
-  private final @NotNull Reporter reporter;
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     return lhs.accept(this, rhs, type);
@@ -58,7 +56,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
 
   @Override public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs, @NotNull Term type) {
     if (!(preRhs instanceof FormTerm.Univ rhs)) return false;
-    defeq.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
+    defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
     return true;
   }
 
@@ -91,7 +89,7 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
   }
 
   private void levels(ImmutableSeq<@NotNull Level<Sort.LvlVar>> l, ImmutableSeq<@NotNull Level<Sort.LvlVar>> r) {
-    for (var levels : l.zip(r)) defeq.equations.add(levels._1, levels._2, cmp, defeq.pos);
+    for (var levels : l.zip(r)) defeq.tycker.equations.add(levels._1, levels._2, cmp, defeq.pos);
   }
 
   @Override
@@ -135,11 +133,10 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     return defeq.compare(inferred, type, FormTerm.Univ.OMEGA); // TODO[xyr]: proper subtyping?
   }
 
-  public PatDefEq(@NotNull TypedDefEq defeq, @NotNull Ordering cmp, @NotNull Reporter reporter) {
+  public PatDefEq(@NotNull TypedDefEq defeq, @NotNull Ordering cmp) {
     this.defeq = defeq;
     this.untypedDefeq = new UntypedDefEq(defeq, cmp);
     this.cmp = cmp;
-    this.reporter = reporter;
   }
 
   private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
@@ -172,13 +169,14 @@ public final class PatDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Te
     }
     var solved = extract(lhs, rhs);
     if (solved == null) {
-      reporter.report(new HoleBadSpineWarn(lhs, defeq.pos));
+      defeq.tycker.reporter.report(new HoleBadSpineWarn(lhs, defeq.pos));
       return false;
     }
     assert meta.body == null;
+    untypedDefeq.compare(solved.synth(meta.contextTele), meta.result);
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
-      reporter.report(new RecursiveSolutionError(lhs.ref(), solved, untypedDefeq.defeq().pos));
+      defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, untypedDefeq.defeq().pos));
       throw new ExprTycker.TyckInterruptedException();
     }
     return true;

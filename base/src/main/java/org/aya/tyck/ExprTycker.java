@@ -178,7 +178,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     } else throw new IllegalStateException("TODO: UnivVar not yet implemented");
   }
 
-  @SuppressWarnings("unchecked") public @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var, Term expected) {
+  @SuppressWarnings("unchecked")
+  public @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var, Term expected) {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall(pos, (DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
@@ -247,7 +248,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
-    return new TypedDefEq(reporter, ord, ctx, traceBuilder, pos, equations);
+    return new TypedDefEq(localCtx, ord, this, pos);
   }
 
   void unifyTyThrowing(Term upper, Term lower, Expr loc) {

@@ -5,8 +5,8 @@ package org.aya.test;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
-import org.aya.core.sort.LevelEqnSet;
 import org.aya.core.term.Term;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LocalCtx;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Ordering;
@@ -18,11 +18,8 @@ public class LispTestCase {
   protected final MutableMap<String, @NotNull Var> vars = MutableMap.create();
 
   protected @NotNull TypedDefEq eq(MutableMap<LocalVar, Term> localCtx) {
-    return new TypedDefEq(
-      ThrowingReporter.INSTANCE, Ordering.Eq,
-      new LocalCtx(localCtx, null), null, SourcePos.NONE,
-      new LevelEqnSet(ThrowingReporter.INSTANCE)
-    );
+    var tycker = new ExprTycker(ThrowingReporter.INSTANCE, new LocalCtx(localCtx, null), null);
+    return new TypedDefEq(tycker.localCtx, Ordering.Eq, tycker, SourcePos.NONE);
   }
 
   @AfterEach

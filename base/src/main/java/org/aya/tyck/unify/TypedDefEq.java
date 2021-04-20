@@ -2,15 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
-import org.aya.core.sort.LevelEqnSet;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
@@ -19,7 +18,6 @@ import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -34,12 +32,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   protected final @NotNull MutableMap<@NotNull LocalVar, @NotNull LocalVar> varSubst = new MutableHashMap<>();
   public final @NotNull LocalCtx localCtx;
   private final @NotNull PatDefEq termDefeq;
-  public final Trace.@Nullable Builder traceBuilder;
+  public final @NotNull ExprTycker tycker;
   public final @NotNull SourcePos pos;
-  public final @NotNull LevelEqnSet equations;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
-    if (traceBuilder != null) consumer.accept(traceBuilder);
+    if (tycker.traceBuilder != null) consumer.accept(tycker.traceBuilder);
   }
 
   void traceEntrance(@NotNull Trace trace) {
@@ -54,16 +51,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     tracing(Trace.Builder::reduce);
   }
 
-  public TypedDefEq(
-    @NotNull Reporter reporter, @NotNull Ordering cmp, @NotNull LocalCtx localCtx,
-    Trace.@Nullable Builder traceBuilder, @NotNull SourcePos pos,
-    @NotNull LevelEqnSet equations
-  ) {
+  public TypedDefEq(@NotNull LocalCtx localCtx, @NotNull Ordering cmp, @NotNull ExprTycker tycker, @NotNull SourcePos pos) {
     this.localCtx = localCtx;
-    this.traceBuilder = traceBuilder;
+    this.tycker = tycker;
     this.pos = pos;
-    this.equations = equations;
-    this.termDefeq = new PatDefEq(this, cmp, reporter);
+    this.termDefeq = new PatDefEq(this, cmp);
   }
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
