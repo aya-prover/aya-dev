@@ -41,8 +41,7 @@ public final class Main {
     var filePath = Paths.get(inputFile);
     var sourceCode = checkAndRead(filePath, inputFile);
     var traceBuilder = cli.traceFormat != null ? new Trace.Builder() : null;
-    var reporter = new CliReporter();
-    var compiler = new SingleFileCompiler(reporter, null, traceBuilder);
+    var compiler = new SingleFileCompiler(CliReporter.INSTANCE, null, traceBuilder);
     var distillation = cli.prettyStage != null ? new CompilerFlags.DistillInfo(
       cli.prettyStage,
       cli.prettyFormat,

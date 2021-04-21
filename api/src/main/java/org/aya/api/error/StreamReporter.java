@@ -11,14 +11,6 @@ import java.io.PrintStream;
  */
 public record StreamReporter(@NotNull PrintStream stream) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
-    var errorMsg = errorMsg(problem);
-    stream.println(errorMsg);
-  }
-
-  public static @NotNull String errorMsg(@NotNull Problem problem) {
-    if (problem.sourcePos() == SourcePos.NONE)
-      return problem.describe().debugRender();
-    var error = problem.toPrettyError().toDoc();
-    return error.renderWithPageWidth(120);
+    stream.println(problem.errorMsg());
   }
 }

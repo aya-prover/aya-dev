@@ -14,23 +14,17 @@ import org.jetbrains.annotations.NotNull;
 public record PrettyError(
   @NotNull String filePath,
   @NotNull Span errorRange,
-  @NotNull Doc tag,
-  @NotNull Doc tagMessage,
-  @NotNull Doc noteMessage
+  @NotNull Doc brief
 ) implements Docile {
   public Doc toDoc(PrettyErrorConfig config) {
     var lineCol = errorRange.normalize(config);
 
-    var doc = Doc.vcat(
+    return Doc.vcat(
       Doc.plain("In file " + filePath + ":" + lineCol.startLine() + ":" + lineCol.startCol() + " ->"),
       Doc.empty(),
       Doc.hang(2, visualizeCode(config, lineCol)),
-      Doc.hsep(tag, Doc.align(tagMessage))
+      brief
     );
-
-    return noteMessage instanceof Doc.Empty
-      ? doc
-      : Doc.vcat(doc, Doc.hsep(Doc.plain("note:"), Doc.align(noteMessage)));
   }
 
   @Override public @NotNull Doc toDoc() {

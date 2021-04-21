@@ -40,14 +40,33 @@ public interface Problem {
     return new PrettyError(
       sourcePos.file().name(),
       sourcePos.toSpan(),
-      switch (level()) {
-        case WARN -> Doc.plain("Warning:");
-        case GOAL -> Doc.plain("Goal:");
-        case INFO -> Doc.plain("Info:");
-        case ERROR -> Doc.plain("Error:");
-      },
-      describe(),
-      hint()
+      brief()
     );
+  }
+
+  default @NotNull Doc brief() {
+    var tag = switch (level()) {
+      case WARN -> Doc.plain("Warning:");
+      case GOAL -> Doc.plain("Goal:");
+      case INFO -> Doc.plain("Info:");
+      case ERROR -> Doc.plain("Error:");
+    };
+    var doc = Doc.hsep(tag, Doc.align(describe()));
+    var hint = hint();
+    return hint instanceof Doc.Empty ? doc : Doc.vcat(
+      doc,
+      Doc.hsep(Doc.plain("note:"), Doc.align(hint))
+    );
+  }
+
+  default @NotNull String errorMsg() {
+    if (sourcePos() == SourcePos.NONE)
+      return describe().debugRender();
+    var error = toPrettyError().toDoc();
+    return error.renderWithPageWidth(120);
+  }
+
+  default @NotNull String briefErrorMsg() {
+    return brief().renderWithPageWidth(120);
   }
 }

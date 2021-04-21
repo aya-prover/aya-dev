@@ -4,16 +4,20 @@ package org.aya.cli;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.StreamReporter;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
  */
-public record CliReporter() implements Reporter {
+public final class CliReporter implements Reporter {
+  public static final CliReporter INSTANCE = new CliReporter();
+
+  private CliReporter() {
+  }
+
   @Override public void report(@NotNull Problem problem) {
-    var errorMsg = StreamReporter.errorMsg(problem);
+    var errorMsg = problem.errorMsg();
     (Seq.of(Problem.Severity.ERROR, Problem.Severity.WARN).contains(problem.level()) ? System.err : System.out)
       .println(errorMsg);
   }
