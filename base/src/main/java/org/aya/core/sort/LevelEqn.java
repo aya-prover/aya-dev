@@ -81,7 +81,7 @@ public record LevelEqn(@NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlV
 
     public @NotNull LevelSubst.Simple solve() {
       var map = new LevelSubst.Simple(MutableMap.of());
-      solve(map.map());
+      solve(map.solution());
       return map;
     }
 

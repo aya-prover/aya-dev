@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.sort;
 
+import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
 import org.aya.generic.Level;
 import org.jetbrains.annotations.Contract;
@@ -19,8 +21,23 @@ public record Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel)
   public static final @NotNull Level<LvlVar> INF_LVL = new Level.Infinity<>();
   public static final @NotNull Sort OMEGA = new Sort(INF_LVL, INF_LVL);
 
-  public @NotNull Sort substSort(@NotNull LevelSubst subst) {
-    return new Sort(subst.applyTo(uLevel), subst.applyTo(hLevel));
+  public static @Nullable SourcePos unsolvedPos(@NotNull Level<LvlVar> lvl) {
+    return lvl instanceof Level.Reference<LvlVar> ref ? ref.ref().pos : null;
+  }
+
+  public @Nullable SourcePos unsolvedPos() {
+    var pos = unsolvedPos(uLevel);
+    return pos != null ? pos : unsolvedPos(hLevel);
+  }
+
+  public static @NotNull Level<LvlVar> constant(int value) {
+    return new Level.Constant<>(value);
+  }
+
+  public @NotNull Sort subst(@NotNull LevelSubst subst) {
+    var u = subst.applyTo(uLevel);
+    var h = subst.applyTo(hLevel);
+    return u == uLevel && h == hLevel ? this : new Sort(u, h);
   }
 
   public @NotNull Sort max(@NotNull Sort other) {
@@ -50,13 +67,15 @@ public record Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel)
   }
 
   /**
-   * @param bound true if this is a bound level var, otherwise it needs to be solved.
-   *              In well-typed terms it should always be true.
+   * @param pos <code>null</code> if this is a bound level var, otherwise it represents the place
+   *            where it gets generated and the level needs to be solved.
+   *            In well-typed terms it should always be <code>null</code>.
    * @author ice1000
    */
   public static final record LvlVar(
     @NotNull String name,
-    boolean bound
+    @NotNull LevelGenVar.Kind kind,
+    @Nullable SourcePos pos
   ) implements Var {
     @Override public boolean equals(@Nullable Object o) {
       return this == o;
@@ -64,6 +83,10 @@ public record Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel)
 
     @Override public int hashCode() {
       return System.identityHashCode(this);
+    }
+
+    public boolean free() {
+      return pos != null;
     }
   }
 }

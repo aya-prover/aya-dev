@@ -5,6 +5,7 @@ package org.aya.core.visitor;
 import org.aya.api.util.Arg;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.generic.Level;
 import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,13 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   default @NotNull Sort visitSort(@NotNull Sort sort, P p) {
+    var h = visitLevel(sort.hLevel(), p);
+    var u = visitLevel(sort.uLevel(), p);
+    if (h == sort.hLevel() && u == sort.uLevel()) return sort;
+    else return new Sort(u, h);
+  }
+
+  default @NotNull Level<Sort.LvlVar> visitLevel(@NotNull Level<Sort.LvlVar> sort, P p) {
     return sort;
   }
 

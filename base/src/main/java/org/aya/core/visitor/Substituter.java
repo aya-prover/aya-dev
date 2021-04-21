@@ -7,6 +7,7 @@ import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.Level;
 import org.glavo.kala.collection.Map;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -28,8 +29,8 @@ public record Substituter(
     this(termSubst.map, levelSubst);
   }
 
-  @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unused) {
-    return sort.substSort(levelSubst);
+  @Override public @NotNull Level<Sort.LvlVar> visitLevel(@NotNull Level<Sort.LvlVar> sort, Unit unit) {
+    return levelSubst.applyTo(sort);
   }
 
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {

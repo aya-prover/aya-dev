@@ -9,11 +9,9 @@ import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * References in Arend:
- * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/subst/StdLevelSubstitution.java"
- * >StdLevelSubstitution.java</a> (as {@link Sort}),
- * <a href="https://github.com/JetBrains/Arend/blob/master/base/src/main/java/org/arend/core/subst/SimpleLevelSubstitution.java"
- * >SimpleLevelSubstitution.java</a>, etc.
+ * @author ice1000
+ * @see Default
+ * @see Simple
  */
 public interface LevelSubst {
   boolean isEmpty();
@@ -29,22 +27,23 @@ public interface LevelSubst {
     else return lvl;
   }
 
-  record Simple(@NotNull MutableMap<Sort.@NotNull LvlVar, @NotNull Level<Sort.LvlVar>> map) implements LevelSubst {
-    public void add(@NotNull Sort.LvlVar var, @NotNull Level<Sort.@NotNull LvlVar> level) {
-      map.put(var, level);
+  record Simple(@NotNull MutableMap<Sort.@NotNull LvlVar, @NotNull Level<Sort.LvlVar>> solution) implements Default {
+  }
+
+  interface Default extends LevelSubst {
+    @NotNull MutableMap<Sort.@NotNull LvlVar, @NotNull Level<Sort.LvlVar>> solution();
+
+    @Override default boolean isEmpty() {
+      return solution().isEmpty();
     }
 
-    @Override public boolean isEmpty() {
-      return map.isEmpty();
+    @Override default @NotNull Option<Level<Sort.@NotNull LvlVar>> get(@NotNull Sort.LvlVar var) {
+      return solution().getOption(var);
     }
 
-    @Override public @NotNull Option<Level<Sort.@NotNull LvlVar>> get(@NotNull Sort.LvlVar var) {
-      return map.getOption(var);
-    }
-
-    @Override public @NotNull LevelSubst subst(@NotNull LevelSubst subst) {
+    @Override default @NotNull LevelSubst subst(@NotNull LevelSubst subst) {
       if (isEmpty()) return this;
-      map.replaceAll((var, term) -> subst.applyTo(term));
+      solution().replaceAll((var, term) -> subst.applyTo(term));
       return this;
     }
   }

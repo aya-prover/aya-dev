@@ -34,7 +34,6 @@ import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
@@ -58,8 +57,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull LevelEqn.Set equations;
-  private final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", true);
-  private final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", true);
+  private final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
+  private final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.of();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -146,7 +145,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull Level<Sort.LvlVar> transformLevel(@NotNull Level<LevelGenVar> level) {
-    return level.map(v -> levelMapping.getOrPut(v, () -> new Sort.LvlVar(v.name(), true)));
+    return level.map(v -> levelMapping.getOrPut(v, () -> new Sort.LvlVar(v.name(), v.kind(), null)));
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
@@ -173,20 +172,20 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var ty = localCtx.get(loc);
       return refResult(expr, term, ty, new RefTerm(loc));
     } else if (var instanceof DefVar<?, ?> defVar) {
-      var result = inferRef(defVar, term);
+      var result = inferRef(expr.sourcePos(), defVar, term);
       return refResult(expr, term, result.type, result.wellTyped);
     } else throw new IllegalStateException("TODO: UnivVar not yet implemented");
   }
 
-  @SuppressWarnings("unchecked") public @NotNull Result inferRef(@NotNull DefVar<?, ?> var, Term expected) {
+  @SuppressWarnings("unchecked") public @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var, Term expected) {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
-      return defCall((DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
+      return defCall(pos, (DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall((DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args));
+      return defCall(pos, (DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args));
     } else if (var.core instanceof DataDef || var.concrete instanceof Decl.DataDecl) {
-      return defCall((DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
+      return defCall(pos, (DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {
-      return defCall((DefVar<StructDef, Decl.StructDecl>) var, CallTerm.Struct::new);
+      return defCall(pos, (DefVar<StructDef, Decl.StructDecl>) var, CallTerm.Struct::new);
     } else if (var.core instanceof DataDef.Ctor || var.concrete instanceof Decl.DataDecl.DataCtor) {
       var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) var;
       var telescopes = DataDef.Ctor.telescopes(conVar);
@@ -219,12 +218,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
-  defCall(DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
+  defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
     var tele = Def.defTele(defVar);
     var ctxTele = Def.defContextTele(defVar);
     // unbound these abstracted variables
-    var levelVars = Def.defLevels(defVar).map(v ->
-      new Sort.LvlVar(defVar.name() + "." + v.name(), false));
+    var defLevels = Def.defLevels(defVar);
+    var levelVars = defLevels.map(v -> {
+      var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), v.kind(), pos);
+      return lvlVar;
+    });
     // ice: should we rename the vars in this telescope? Probably not.
     equations.vars().appendAll(levelVars);
     var body = function.make(defVar,
@@ -291,7 +293,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return wantButNo(expr.struct(), struct, "struct type");
     var structRef = structCall.ref();
 
-    var subst = new Substituter.TermSubst(new MutableHashMap<>());
+    var subst = new Substituter.TermSubst(MutableMap.of());
     var structTele = Def.defTele(structRef);
     structTele.view().zip(structCall.args())
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
@@ -372,7 +374,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var ctxTele = Def.defContextTele(fieldRef);
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst);
-    var levels = structCore.levels().map(v -> new Sort.LvlVar(v.name(), false));
+    var levels = structCore.levels().map(v -> new Sort.LvlVar(v.name(), v.kind(), v.pos()));
     equations.vars().appendAll(levels);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), levels.map(Level.Reference::new),
@@ -396,7 +398,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     var type = telescope.get(index).type();
     // instantiate the type
-    var subst = new Substituter.TermSubst(new MutableHashMap<>());
+    var subst = new Substituter.TermSubst(MutableMap.of());
     telescope.view().take(index).reversed().forEachIndexed((i, param) ->
       subst.add(param.ref(), new ElimTerm.Proj(projectee.wellTyped, i + 1)));
     return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
@@ -417,7 +419,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
       return wantButNo(expr, f.type, "pi type");
     var pi = piTerm;
-    var subst = new Substituter.TermSubst(new MutableHashMap<>());
+    var subst = new Substituter.TermSubst(MutableMap.of());
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
       var argLicit = arg.explicit();
