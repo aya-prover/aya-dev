@@ -29,9 +29,6 @@ public record LittleTyper(@NotNull ImmutableSeq<Term.Param> context) implements 
   }
 
   @Override public Term visitPi(FormTerm.@NotNull Pi term, Unit unit) {
-    // var paramTy = (FormTerm.Univ) term.param().type().accept(this, unit);
-    // var retTy = (FormTerm.Univ) term.body().accept(this, unit);
-    // return new FormTerm.Univ(paramTy.sort().max(retTy.sort()));
     return null;
   }
 
