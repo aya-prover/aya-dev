@@ -1,6 +1,8 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.aya.gradle.CommonTasks
+CommonTasks.fatJar(project)
 
 dependencies {
   val deps: java.util.Properties by rootProject.ext
@@ -18,7 +20,6 @@ plugins {
 }
 
 val lspMainClassQName = "org.aya.lsp.LspMain"
-
 tasks.withType<Jar>().configureEach {
   manifest.attributes["Main-Class"] = lspMainClassQName
 }
