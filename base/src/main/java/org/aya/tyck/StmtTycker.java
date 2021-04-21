@@ -185,14 +185,14 @@ public record StmtTycker(
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     var resultTele = checkTele(tycker, decl.telescope);
     // It might contain unsolved holes, but that's acceptable.
-    var resultRes = decl.result.accept(tycker, null);
+    var resultRes = tycker.checkNoZonk(decl.result, null).wellTyped();
     tracing(GenericBuilder::reduce);
-    var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes.wellTyped()));
+    var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes));
     decl.signature = signature.value;
     var patTycker = new PatTycker(tycker);
     var cumulativeCtx = tycker.localCtx.derive();
     var what = FP.distR(decl.body.map(
-      left -> tycker.checkExpr(left, resultRes.wellTyped()).toTuple(),
+      left -> tycker.checkExpr(left, resultRes).toTuple(),
       right -> patTycker.elabClause(right, signature, cumulativeCtx.localMap())));
     var resultTy = what._1;
     var factory = FnDef.factory(body ->
@@ -207,11 +207,16 @@ public record StmtTycker(
 
   private @NotNull ImmutableSeq<Term.Param>
   checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele) {
-    return tele.map(param -> {
+    var okTele = tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
-      var paramRes = exprTycker.checkExpr(param.type(), null);
+      var paramRes = exprTycker.checkNoZonk(param.type(), null);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
+    });
+    return okTele.map(t -> {
+      var term = t.type().zonk(exprTycker);
+      exprTycker.localCtx.put(t.ref(), term);
+      return new Term.Param(t.ref(), term, t.explicit());
     });
   }
 }

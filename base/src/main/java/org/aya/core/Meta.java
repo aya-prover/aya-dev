@@ -4,7 +4,6 @@ package org.aya.core;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
-import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.glavo.kala.collection.SeqView;
@@ -25,10 +24,7 @@ public final class Meta {
   }
 
   public boolean solve(@NotNull HoleVar<Meta> v, @NotNull Term t) {
-    if (t.findUsages(v) > 0) {
-      return false;
-    }
-    assert !(t instanceof CallTerm.Hole hole) || hole.ref() == v; // [xyr]: what is this?
+    if (t.findUsages(v) > 0) return false;
     body = t;
     return true;
   }

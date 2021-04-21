@@ -23,6 +23,28 @@ public record Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel)
     return new Sort(subst.applyTo(uLevel), subst.applyTo(hLevel));
   }
 
+  public @NotNull Sort max(@NotNull Sort other) {
+    return new Sort(max(uLevel, other.uLevel), max(hLevel, other.hLevel));
+  }
+
+  public static @NotNull Level<LvlVar> max(@NotNull Level<LvlVar> lhs, @NotNull Level<LvlVar> rhs) {
+    if (lhs instanceof Level.Infinity || rhs instanceof Level.Infinity) return INF_LVL;
+    if (lhs instanceof Level.Reference<LvlVar> l) {
+      if (rhs instanceof Level.Reference<LvlVar> r) {
+        if (l.ref() == r.ref()) return new Level.Reference<>(l.ref(), Math.max(l.lift(), r.lift()));
+      } else if (rhs instanceof Level.Constant<LvlVar> r) {
+        if (r.value() <= l.lift()) return l;
+      }
+    } else if (lhs instanceof Level.Constant<LvlVar> l) {
+      if (rhs instanceof Level.Reference<LvlVar> r) {
+        if (l.value() <= r.lift()) return r;
+      } else if (rhs instanceof Level.Constant<LvlVar> r) {
+        return new Level.Constant<>(Math.max(l.value(), r.value()));
+      }
+    }
+    throw new UnsupportedOperationException("TODO: lmax");
+  }
+
   @Contract("_-> new") public @NotNull Sort succ(int n) {
     return new Sort(uLevel.lift(n), hLevel.lift(n));
   }

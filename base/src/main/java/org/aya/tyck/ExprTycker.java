@@ -101,8 +101,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     );
   }
 
+  public @NotNull Result checkNoZonk(@NotNull Expr expr, @Nullable Term type) {
+    return expr.accept(this, type);
+  }
+
   public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
-    return finalize(expr.accept(this, type));
+    return finalize(checkNoZonk(expr, type));
   }
 
   @Rule.Check(partialSynth = true)
