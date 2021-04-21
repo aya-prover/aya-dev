@@ -116,6 +116,7 @@ public record PatTycker(
       while (param.explicit() != pat.explicit()) if (pat.explicit()) {
         var bind = new Pat.Bind(false, new LocalVar(param.ref().name()), param.type());
         results.append(bind);
+        exprTycker.localCtx.put(bind.as(), param.type());
         sig.value = sig.value.inst(bind.toTerm());
         if (sig.value.param().isEmpty()) {
           // TODO[ice]: report error

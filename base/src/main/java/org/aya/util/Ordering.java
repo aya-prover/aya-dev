@@ -8,7 +8,13 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public enum Ordering {
-  Gt, Eq, Lt;
+  Gt(">="), Eq("=="), Lt("<=");
+
+  public final @NotNull String symbol;
+
+  Ordering(@NotNull String symbol) {
+    this.symbol = symbol;
+  }
 
   /**
    * Invert ordering.

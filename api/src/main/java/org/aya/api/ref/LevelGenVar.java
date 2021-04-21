@@ -9,13 +9,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public record LevelGenVar(@NotNull Kind kind, @NotNull String name) implements Var {
   public enum Kind {
-    Universe("ulevel"),
-    Homotopy("hlevel");
+    Universe("ulevel", 0),
+    Homotopy("hlevel", 2);
 
     public final @NotNull String keyword;
+    public final int defaultValue;
 
-    Kind(@NotNull String keyword) {
+    Kind(@NotNull String keyword, int defaultValue) {
       this.keyword = keyword;
+      this.defaultValue = defaultValue;
     }
   }
 }
