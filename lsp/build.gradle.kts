@@ -2,7 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
-CommonTasks.fatJar(project)
+
+val mainClassQName = "org.aya.lsp.LspMain"
+CommonTasks.fatJar(project, mainClassQName)
 
 dependencies {
   val deps: java.util.Properties by rootProject.ext
@@ -19,11 +21,6 @@ plugins {
   id("org.beryx.jlink")
 }
 
-val lspMainClassQName = "org.aya.lsp.LspMain"
-tasks.withType<Jar>().configureEach {
-  manifest.attributes["Main-Class"] = lspMainClassQName
-}
-
 tasks.withType<JavaCompile>().configureEach {
   doFirst {
     options.compilerArgs.addAll(listOf("--module-path", classpath.asPath))
@@ -35,7 +32,7 @@ val isMac = Os.isFamily(Os.FAMILY_MAC)
 jlink {
   options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
   launcher {
-    mainClass.set(lspMainClassQName)
+    mainClass.set(mainClassQName)
     name = "aya-lsp"
     jvmArgs = mutableListOf("--enable-preview")
   }

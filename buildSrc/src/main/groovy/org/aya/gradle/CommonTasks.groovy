@@ -11,14 +11,16 @@ import org.gradle.jvm.tasks.Jar
  * @author ice1000
  */
 class CommonTasks {
-  static TaskProvider<Jar> fatJar(Project project) {
-    return project.tasks.register("fatJar", Jar) {
+  static TaskProvider<Jar> fatJar(Project project, String mainClass) {
+    def fatJar = project.tasks.register("fatJar", Jar) {
       archiveClassifier.set("fat")
       from(project.configurations.runtimeClasspath.collect {
         if (it.isDirectory()) it else project.zipTree(it)
       })
       duplicatesStrategy = DuplicatesStrategy.INCLUDE
       exclude("**/module-info.class")
+      manifest.attributes["Main-Class"] = mainClass
     }
+    fatJar
   }
 }

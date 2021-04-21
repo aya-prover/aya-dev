@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
-CommonTasks.fatJar(project)
+CommonTasks.fatJar(project, "org.aya.cli.Main")
 
 dependencies {
   val deps: java.util.Properties by rootProject.ext
@@ -12,11 +12,6 @@ dependencies {
   implementation(project(":parser"))
   implementation(project(":pretty"))
   testImplementation(project(":tester"))
-}
-
-val mainClassQName = "org.aya.cli.Main"
-tasks.withType<Jar>().configureEach {
-  manifest.attributes["Main-Class"] = mainClassQName
 }
 
 tasks.withType<AbstractCopyTask>().configureEach {
