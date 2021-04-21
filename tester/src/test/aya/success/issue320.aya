@@ -1,8 +1,8 @@
-open data Nat : Set
+open data Nat : Set 0
  | zero
  | suc Nat
 
-open data Fin (n : Nat) : Set
+open data Fin (n : Nat) : Set 0
  | suc m => fzero
  | suc m => fsuc (Fin m)
 

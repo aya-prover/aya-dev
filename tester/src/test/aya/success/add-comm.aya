@@ -1,34 +1,34 @@
 prim I
 prim left
 prim right
-struct Path (A : Pi I -> Set) (a : A left) (b : A right) : Set
+struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
  | at (i : I) : A i {
    | left => a
    | right => b
  }
-def path {A : Pi I -> Set} (p : Pi (i : I) -> A i)
+def path {A : Pi I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `≡` Eq {A : Set} (a b : A) : Set => Path (\ i => A) a b
-def idp {A : Set} (a : A) : a ≡ a => path (\ i => a)
+def `≡` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def idp {A : Type} (a : A) : a ≡ a => path (\ i => a)
 
 prim arcoe
-def hfill2d {A : Set}
+def hfill2d {A : Type}
   {a b c d : A}
   (p : a ≡ b)
   (q : b ≡ d)
   (r : a ≡ c)
   (i j : I) : A
   => (arcoe (\ k => (r.at k) ≡ (q.at k)) p i).at j
-def hcomp2d {A : Set}
+def hcomp2d {A : Type}
   {a b c d : A}
   (p : a ≡ b)
   (q : b ≡ d)
   (r : a ≡ c) : c ≡ d
   => path (hfill2d p q r right)
 
-def sym {A : Set} {a b : A} (p : a ≡ b) : b ≡ a => hcomp2d (idp a) (idp a) p
-def trans {A : Set} {a b c : A} (p : a ≡ b) (q : b ≡ c) : a ≡ c => hcomp2d p q (idp a)
-def pmap {A B : Set} (f : Pi A -> B) {a b : A} (p : a ≡ b)
+def sym {A : Type} {a b : A} (p : a ≡ b) : b ≡ a => hcomp2d (idp a) (idp a) p
+def trans {A : Type} {a b c : A} (p : a ≡ b) (q : b ≡ c) : a ≡ c => hcomp2d p q (idp a)
+def pmap {A B : Type} (f : Pi A -> B) {a b : A} (p : a ≡ b)
   : Eq (f a) (f b) => path (\ i => f (p.at i))
 open data ℕ : Set | zero | suc ℕ
 

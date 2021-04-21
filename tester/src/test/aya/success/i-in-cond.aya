@@ -2,18 +2,18 @@ prim I
 prim left : I
 prim right : I
 
-data S1 : Set
+data S1 : ooType
   | base
   | loop I { | left => base
              | right => base }
 
-data Seg : Set
+data Seg : ooType
   | p1
   | p2
   | loop I { | left => p1
              | right => p2 }
 
-data Torus : Set
+data Torus : ooType
   | point
   | line1 I { | left => point
               | right => point }
