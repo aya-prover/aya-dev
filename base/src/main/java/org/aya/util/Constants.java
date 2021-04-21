@@ -7,5 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Constants {
   @NotNull @NonNls String ANONYMOUS_PREFIX = "_";
+  @NotNull @NonNls String GENERATED_POSTFIX = "$";
   @NotNull @NonNls String SCOPE_SEPARATOR = "::";
 }

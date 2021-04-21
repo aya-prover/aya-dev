@@ -119,10 +119,6 @@ public final class BinOpParser {
       return null;
     }
 
-    public @NotNull Arg<Expr> toArg() {
-      return new Arg<>(expr, explicit);
-    }
-
     public @NotNull Arg<Expr.NamedArg> toNamedArg(@Nullable String name) {
       return new Arg<>(new Expr.NamedArg(name, expr), explicit);
     }
