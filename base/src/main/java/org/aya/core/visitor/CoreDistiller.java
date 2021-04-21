@@ -88,8 +88,9 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
-    // TODO: level
-    return Doc.styled(KEYWORD, "Type");
+    return visitCalls(Doc.styled(KEYWORD, "Type"),
+      Seq.of(term.sort().hLevel(), term.sort().uLevel()).view().map(Arg::explicit),
+      (nest, t) -> t.toDoc(), nestedCall);
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {

@@ -47,7 +47,7 @@ public class DistillerTest {
       prim I prim left
       prim right
 
-      struct Pair (A : ooType) (B : ooType) : Set
+      struct Pair (A : Type) (B : Type) : Type
         | fst : A
         | snd : B
         | we-are-together : Sig A ** B => (fst, snd)
@@ -63,12 +63,12 @@ public class DistillerTest {
   @Test public void path() {
     assertFalse(declDoc("""
       prim I prim left prim right
-      struct Path (A : Pi I -> Set) (a : A left) (b : A right) : Set
+      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
        | at (i : I) : A i {
          | left => a
          | right => b
        }
-      def path {A : Pi I -> Set} (p : Pi (i : I) -> A i)
+      def path {A : Pi I -> Type} (p : Pi (i : I) -> A i)
         => new Path A (p left) (p right) { | at i => p i }
       """).renderToTeX().isEmpty());
   }

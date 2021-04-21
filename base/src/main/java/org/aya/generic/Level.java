@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 /**
+ * @param <V> either {@link org.aya.api.ref.LevelGenVar} (which means level vars in concrete)
+ *            or {@link org.aya.core.sort.Sort.LvlVar} (which means levels in core).
+ *            Used only in {@link Reference}.
  * @author ice1000
  * @see org.aya.concrete.Expr.UnivExpr
  * @see org.aya.core.sort.Sort
@@ -22,7 +25,7 @@ public sealed interface Level<V extends Var> extends Docile {
 
   /**
    * Unlike {@link Reference}, this one is the implicit polymorphic level.
-   * It is related to the underlying definition.
+   * It is related to the underlying definition and are eliminated during tycking (becomes {@link Reference}).
    */
   record Polymorphic<V extends Var>(int lift) implements Level<V> {
     @Override public @NotNull Level<V> lift(int n) {
@@ -52,7 +55,7 @@ public sealed interface Level<V extends Var> extends Docile {
     }
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.plain("oo");
+      return Doc.plain("w");
     }
   }
 

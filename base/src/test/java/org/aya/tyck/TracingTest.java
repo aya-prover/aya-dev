@@ -31,13 +31,13 @@ public class TracingTest {
     show.lineSep = "\n";
     Objects.requireNonNull(checker.traceBuilder).root().forEach(e -> e.accept(show, Unit.unit()));
     assertEquals("""
-        + \u22A2 `\\ (_) => \\ (a) => a` : Pi (A : Type) -> Pi (a : A) -> A
+        + \u22A2 `\\ (_) => \\ (a) => a` : Pi (A : Type w w) -> Pi (a : A) -> A
           + \u22A2 `\\ (a) => a` : Pi (a : _) -> _
             + \u22A2 `a` : _
               + \u22A2 _ \u2261 _
               + result ⊢ `a` ↑ _
             + result ⊢ `\\ (a : _) => a` ↑ Pi (a : _) -> _
-          + result ⊢ `\\ (_ : Type) => \\ (a : _) => a` ↑ Pi (A : Type) -> Pi (a : A) -> A"""
+          + result ⊢ `\\ (_ : Type w w) => \\ (a : _) => a` ↑ Pi (A : Type w w) -> Pi (a : A) -> A"""
       , show.builder.toString().trim());
   }
 }
