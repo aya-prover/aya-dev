@@ -20,7 +20,7 @@ public class Log {
     }
   }
 
-  public static void publishErrors(PublishDiagnosticsParams params) {
+  public static void publishProblems(PublishDiagnosticsParams params) {
     if (CLIENT != null) CLIENT.publishDiagnostics(params);
   }
 

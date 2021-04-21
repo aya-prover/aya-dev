@@ -5,6 +5,7 @@ package org.aya.lsp.server;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
+import org.aya.api.error.SourcePos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.core.def.Def;
@@ -17,6 +18,7 @@ import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
@@ -68,26 +70,41 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public void reportErrors(@NotNull LspReporter reporter) {
     lastErrorReportedFiles.forEach(f ->
-      Log.publishErrors(new PublishDiagnosticsParams(f, Collections.emptyList())));
+      Log.publishProblems(new PublishDiagnosticsParams(f, Collections.emptyList())));
     var diags = reporter.problems.stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe().debugRender()))
-      .map(p -> Tuple.of(p.sourcePos().file().name(), new Diagnostic(LspRange.from(p.sourcePos()),
-        p.describe().debugRender(),
-        severityOf(p), "Aya")))
-      .collect(Collectors.groupingBy(t -> t._1));
+      .map(p -> Tuple.of(p.sourcePos().file().name(), p))
+      .collect(Collectors.groupingBy(
+        t -> t._1,
+        Collectors.mapping(t -> t._2, Seq.factory())
+      ));
+
     for (var diag : diags.entrySet()) {
       Log.d("Found %d issues in %s", diag.getValue().size(), diag.getKey());
-      Log.publishErrors(new PublishDiagnosticsParams(
+      var problems = diag.getValue()
+        .collect(Collectors.groupingBy(Problem::sourcePos, Seq.factory()))
+        .entrySet().stream()
+        .map(kv -> toDiagnostic(kv.getKey(), kv.getValue()))
+        .collect(Collectors.toList());
+      Log.publishProblems(new PublishDiagnosticsParams(
         diag.getKey(),
-        diag.getValue().stream().map(v -> v._2)
-          .collect(Collectors.toList())
+        problems
       ));
     }
     lastErrorReportedFiles = diags.keySet();
   }
 
-  @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+  private @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems) {
+    var msgBuilder = new StringBuilder();
+    var severity = DiagnosticSeverity.Hint;
+    for (var p : problems) {
+      msgBuilder.append(p.briefErrorMsg()).append('\n');
+      var ps = severityOf(p);
+      if (ps.getValue() < severity.getValue()) severity = ps;
+    }
+    return new Diagnostic(LspRange.from(sourcePos),
+      msgBuilder.toString(), severity, "Aya");
   }
 
   private DiagnosticSeverity severityOf(@NotNull Problem problem) {
@@ -99,8 +116,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     };
   }
 
+  @Override public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
+  }
+
   @Override public void didOpen(DidOpenTextDocumentParams params) {
-    Log.d("didOpen: " + params.getTextDocument().getUri());
   }
 
   @Override public void didChange(DidChangeTextDocumentParams params) {
@@ -108,11 +127,9 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   @Override public void didClose(DidCloseTextDocumentParams params) {
-    Log.d("didClose: " + params.getTextDocument().getUri());
   }
 
   @Override public void didSave(DidSaveTextDocumentParams params) {
-    Log.d("didSave: " + params.getTextDocument().getUri());
   }
 
   @Override public void didChangeConfiguration(DidChangeConfigurationParams params) {
