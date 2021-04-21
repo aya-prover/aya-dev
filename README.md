@@ -12,13 +12,16 @@ gradle use proxies.
 # build Aya and its language server as an application which
 # can be used on a Java-free environment to lsp/build/image
 ./gradlew jlink
+# build Aya, its language server, and the telegram bot as an
+# executable jar <project>/build/libs/<project>-<version>-fat.jar
+./gradlew fatJar
 # build a platform-dependent installer for Aya and its language
 # server with the jlink artifact to lsp/build/jpackage
 # Requires https://wixtoolset.org/releases on Windows
 ./gradlew jpackage
 # run tests and generate coverage report to build/reports
 ./gradlew mergeJacocoReports
-# do both
+# do mergeJacocoReports *and* jlink
 ./gradlew githubActions
 ```
 
