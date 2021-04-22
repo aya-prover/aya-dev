@@ -162,7 +162,7 @@ public sealed interface Expr extends ConcreteExpr {
     @Override
     public @NotNull Doc toDoc() {
       if (name != null) {
-        return Doc.braced(Doc.cat(Doc.plain(name), Doc.plain(" => "), expr.toDoc()));
+        return Doc.braced(Doc.cat(Doc.plain(name), Doc.symbol(" => "), expr.toDoc()));
       }
       return expr.toDoc();
     }

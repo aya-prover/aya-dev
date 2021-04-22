@@ -432,19 +432,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var arg = iter.next();
       var argLicit = arg.explicit();
       var namedArg = arg.term();
-      while (pi.param().explicit() != argLicit) {
-        if (argLicit && namedArg.name() == null) {
+      while (pi.param().explicit() != argLicit ||
+        namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
+        if (argLicit || namedArg.name() != null) {
           // that implies paramLicit == false
           var genName = pi.param().ref().name().concat(Constants.GENERATED_POSTFIX);
           var holeApp = localCtx.freshHole(pi.param().type(), genName, namedArg.expr().sourcePos())._2;
           // TODO: maybe we should create a concrete hole and check it against the type
           //  in case we can synthesize this term via its type only
-          var holeArg = new Arg<>(holeApp, false);
-          resultTerm = CallTerm.make(resultTerm, holeArg);
-          pi = instPi(expr, pi, subst, holeArg);
-        } else if (Objects.equals(pi.param().ref().name(), namedArg.name())) {
-          var genName = namedArg.name().concat(Constants.GENERATED_POSTFIX);
-          var holeApp = localCtx.freshHole(pi.param().type(), genName, namedArg.expr().sourcePos())._2;
           var holeArg = new Arg<>(holeApp, false);
           resultTerm = CallTerm.make(resultTerm, holeArg);
           pi = instPi(expr, pi, subst, holeArg);

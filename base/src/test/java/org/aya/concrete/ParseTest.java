@@ -131,8 +131,8 @@ public class ParseTest {
       new Expr.BinOpSeq(
         SourcePos.NONE,
         ImmutableSeq.of(
-          new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-          new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
+          new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
+          new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
         )
       ),
       Either.left(1)
@@ -140,8 +140,8 @@ public class ParseTest {
     parseTo("f a . 1", new Expr.BinOpSeq(
       SourcePos.NONE,
       ImmutableSeq.of(
-        new BinOpParser.Elem(new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-        new BinOpParser.Elem(new Expr.ProjExpr(SourcePos.NONE,
+        new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
+        new BinOpParser.Elem(null, new Expr.ProjExpr(SourcePos.NONE,
           new Expr.UnresolvedExpr(SourcePos.NONE, "a"), Either.left(1)),
           true))
       )

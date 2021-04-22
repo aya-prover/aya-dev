@@ -10,7 +10,6 @@ import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
-import org.aya.api.util.Arg;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.*;
 import org.aya.concrete.desugar.BinOpParser;
@@ -308,10 +307,9 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
-    var head = new BinOpParser.Elem(visitExpr(ctx.expr()), true);
+    var head = new BinOpParser.Elem(null, visitExpr(ctx.expr()), true);
     var tail = ctx.argument().stream()
       .map(this::visitArgument)
-      .map(a -> new BinOpParser.Elem(a.term().expr(), a.explicit()))
       .collect(LinkedBuffer.factory());
     tail.push(head);
     return new Expr.BinOpSeq(sourcePosOf(ctx), tail.toImmutableSeq());
@@ -331,7 +329,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override public @NotNull Arg<Expr.NamedArg> visitArgument(AyaParser.ArgumentContext ctx) {
+  @Override public @NotNull BinOpParser.Elem visitArgument(AyaParser.ArgumentContext ctx) {
     var atom = ctx.atom();
     if (atom != null) {
       var fixes = ctx.projFix();
@@ -340,15 +338,17 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
         .foldLeft(Tuple.of(sourcePosOf(ctx), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
-      return Arg.explicit(new Expr.NamedArg(null, projected));
+      return new BinOpParser.Elem(null, projected, true);
     }
     if (ctx.LBRACE() != null) {
       var items = ctx.expr().stream()
         .map(this::visitExpr)
         .collect(ImmutableSeq.factory());
-      if (items.sizeEquals(1)) return Arg.implicit(new Expr.NamedArg(null, items.first()));
+      var id = ctx.ID();
+      var name = id != null ? id.getText() : null;
+      if (items.sizeEquals(1)) return new BinOpParser.Elem(name, items.first(), false);
       var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
-      return Arg.implicit(new Expr.NamedArg(null, tupExpr));
+      return new BinOpParser.Elem(name, tupExpr, false);
     }
     throw new UnsupportedOperationException(ctx.getClass().getName());
   }

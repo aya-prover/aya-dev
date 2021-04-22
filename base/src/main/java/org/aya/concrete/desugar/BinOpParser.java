@@ -39,9 +39,8 @@ public final class BinOpParser {
       // + f a b c d
       // \lam _ => _ + f a b c d
       var lhs = new LocalVar(Constants.ANONYMOUS_PREFIX);
-      var lhsElem = new Elem(new Expr.RefExpr(SourcePos.NONE, lhs, "_"), true);
-      // TODO[kiva]: workaround for https://github.com/Glavo/kala-common/issues/33
-      var lamSeq = seq.toImmutableSeq().prepended(lhsElem).view();
+      var lhsElem = new Elem(null, new Expr.RefExpr(SourcePos.NONE, lhs, "_"), true);
+      var lamSeq = seq.prepended(lhsElem);
       return new Expr.LamExpr(sourcePos,
         new Expr.Param(SourcePos.NONE, lhs, true),
         new BinOpParser(opSet, lamSeq).build(sourcePos));
@@ -66,7 +65,7 @@ public final class BinOpParser {
           } else if (cmp == BinOpSet.PredCmp.Tighter || cmp == BinOpSet.PredCmp.Equal) {
             var topOp = opStack.pop();
             var appExpr = makeBinApp(topOp._1);
-            prefixes.append(new Elem(appExpr, topOp._1.explicit));
+            prefixes.append(new Elem(null, appExpr, topOp._1.explicit));
           } else break;
         }
         opStack.push(Tuple.of(expr, currentOp));
@@ -76,7 +75,7 @@ public final class BinOpParser {
     while (opStack.isNotEmpty()) {
       var op = opStack.pop();
       var app = makeBinApp(op._1);
-      prefixes.append(new Elem(app, op._1.explicit));
+      prefixes.append(new Elem(null, app, op._1.explicit));
     }
 
     assert prefixes.isNotEmpty();
@@ -86,7 +85,7 @@ public final class BinOpParser {
       sourcePos,
       prefixes.first().expr,
       prefixes.view().drop(1)
-        .map(e -> new Arg<>(new Expr.NamedArg(null, e.expr()), e.explicit()))
+        .map(Elem::toNamedArg)
         .toImmutableSeq()
     );
   }
@@ -97,7 +96,7 @@ public final class BinOpParser {
     return new Expr.AppExpr(
       computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
       op.expr,
-      ImmutableSeq.of(lhs.toNamedArg(null), rhs.toNamedArg(null))
+      ImmutableSeq.of(lhs.toNamedArg(), rhs.toNamedArg())
     );
   }
 
@@ -109,7 +108,7 @@ public final class BinOpParser {
    * something like {@link Arg<Expr>}
    * but only used in binary operator building
    */
-  public record Elem(@NotNull Expr expr, boolean explicit) {
+  public record Elem(@Nullable String name, @NotNull Expr expr, boolean explicit) {
     public @Nullable Tuple3<String, Decl.@NotNull OpDecl, String> asOpDecl() {
       if (expr instanceof Expr.RefExpr ref
         && ref.resolvedVar() instanceof DefVar<?, ?> defVar
@@ -119,7 +118,7 @@ public final class BinOpParser {
       return null;
     }
 
-    public @NotNull Arg<Expr.NamedArg> toNamedArg(@Nullable String name) {
+    public @NotNull Arg<Expr.NamedArg> toNamedArg() {
       return new Arg<>(new Expr.NamedArg(name, expr), explicit);
     }
   }

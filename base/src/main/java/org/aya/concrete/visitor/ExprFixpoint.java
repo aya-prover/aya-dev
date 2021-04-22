@@ -63,9 +63,8 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   default @NotNull Arg<Expr.NamedArg> visitArg(@NotNull Arg<Expr.NamedArg> arg, P p) {
     var term = arg.term().expr().accept(this, p);
-    String name = arg.term().name();
     if (term == arg.term().expr()) return arg;
-    return new Arg<>(new Expr.NamedArg(name, term), arg.explicit());
+    return new Arg<>(new Expr.NamedArg(arg.term().name(), term), arg.explicit());
   }
 
   @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {
@@ -122,6 +121,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, P p) {
     return new Expr.BinOpSeq(binOpSeq.sourcePos(),
-      binOpSeq.seq().map(e -> new BinOpParser.Elem(e.expr().accept(this, p), e.explicit())));
+      binOpSeq.seq().map(e -> new BinOpParser.Elem(e.name(), e.expr().accept(this, p), e.explicit())));
   }
 }
