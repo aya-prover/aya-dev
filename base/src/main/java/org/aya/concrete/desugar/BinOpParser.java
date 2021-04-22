@@ -39,7 +39,7 @@ public final class BinOpParser {
       // + f a b c d
       // \lam _ => _ + f a b c d
       var lhs = new LocalVar(Constants.ANONYMOUS_PREFIX);
-      var lhsElem = new Elem(null, new Expr.RefExpr(SourcePos.NONE, lhs, "_"), true);
+      var lhsElem = new Elem(new Expr.RefExpr(SourcePos.NONE, lhs, "_"), true);
       var lamSeq = seq.prepended(lhsElem);
       return new Expr.LamExpr(sourcePos,
         new Expr.Param(SourcePos.NONE, lhs, true),
@@ -65,7 +65,7 @@ public final class BinOpParser {
           } else if (cmp == BinOpSet.PredCmp.Tighter || cmp == BinOpSet.PredCmp.Equal) {
             var topOp = opStack.pop();
             var appExpr = makeBinApp(topOp._1);
-            prefixes.append(new Elem(null, appExpr, topOp._1.explicit));
+            prefixes.append(new Elem(appExpr, topOp._1.explicit));
           } else break;
         }
         opStack.push(Tuple.of(expr, currentOp));
@@ -75,7 +75,7 @@ public final class BinOpParser {
     while (opStack.isNotEmpty()) {
       var op = opStack.pop();
       var app = makeBinApp(op._1);
-      prefixes.append(new Elem(null, app, op._1.explicit));
+      prefixes.append(new Elem(app, op._1.explicit));
     }
 
     assert prefixes.isNotEmpty();
@@ -109,6 +109,10 @@ public final class BinOpParser {
    * but only used in binary operator building
    */
   public record Elem(@Nullable String name, @NotNull Expr expr, boolean explicit) {
+    public Elem(@NotNull Expr expr, boolean explicit) {
+      this(null, expr, explicit);
+    }
+
     public @Nullable Tuple3<String, Decl.@NotNull OpDecl, String> asOpDecl() {
       if (expr instanceof Expr.RefExpr ref
         && ref.resolvedVar() instanceof DefVar<?, ?> defVar

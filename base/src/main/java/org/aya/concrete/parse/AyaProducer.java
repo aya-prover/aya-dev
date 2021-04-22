@@ -338,7 +338,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
         .foldLeft(Tuple.of(sourcePosOf(ctx), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
-      return new BinOpParser.Elem(null, projected, true);
+      return new BinOpParser.Elem(projected, true);
     }
     if (ctx.LBRACE() != null) {
       var items = ctx.expr().stream()
@@ -348,7 +348,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       var name = id != null ? id.getText() : null;
       if (items.sizeEquals(1)) return new BinOpParser.Elem(name, items.first(), false);
       var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
-      return new BinOpParser.Elem(name, tupExpr, false);
+      return new BinOpParser.Elem(tupExpr, false);
     }
     throw new UnsupportedOperationException(ctx.getClass().getName());
   }

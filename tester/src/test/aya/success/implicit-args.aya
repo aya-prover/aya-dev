@@ -38,4 +38,4 @@ def filter {A : Set 0} (f : Pi A -> Bool) (xs : List A) : List A
  | f, nil => nil {_}
  | f, cons x xs => ifElse (f x) (cons x (filter f xs)) (filter f xs)
 def length1: Nat => len {A => Nat} simple
-def length2: Nat => len (map {B => Nat} pos simple)
+def length2: Nat => len (map {B => Int} pos simple)
