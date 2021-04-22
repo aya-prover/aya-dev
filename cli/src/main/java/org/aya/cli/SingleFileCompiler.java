@@ -32,17 +32,16 @@ import java.util.function.Consumer;
 public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator,
                                  Trace.@Nullable Builder builder) {
   public int compile(@NotNull Path sourceFile, @NotNull CompilerFlags flags) throws IOException {
-    return compile(sourceFile, flags, null, null);
+    return compile(sourceFile, flags, stmts -> {}, defs -> {});
   }
 
   public int compile(@NotNull Path sourceFile,
                      @NotNull CompilerFlags flags,
-                     @Nullable Consumer<ImmutableSeq<Stmt>> onResolved,
-                     @Nullable Consumer<ImmutableSeq<Def>> onTycked) throws IOException {
+                     @NotNull Consumer<ImmutableSeq<Stmt>> onResolved,
+                     @NotNull Consumer<ImmutableSeq<Def>> onTycked) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     try {
-      // [chuigda]: I suggest 80 columns, or we may detect terminal width with some library
       var program = AyaParsing.program(locator, reporter, sourceFile);
       distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
@@ -50,11 +49,11 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFil
       FileModuleLoader.tyckModule(loader, program, reporter,
         () -> {
           distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.scoped);
-          if (onResolved != null) onResolved.accept(program);
+          onResolved.accept(program);
         },
         defs -> {
           distill(sourceFile, flags.distillInfo(), defs, CliArgs.DistillStage.typed);
-          if (onTycked != null) onTycked.accept(defs);
+          onTycked.accept(defs);
         }, builder);
     } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);

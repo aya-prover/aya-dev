@@ -70,8 +70,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     decl.result = decl.result.resolve(local._2);
     for (var ctor : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
-      if (ctor.patterns.isNotEmpty())
-        ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
+      ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
       var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
