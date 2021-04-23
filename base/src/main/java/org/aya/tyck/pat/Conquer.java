@@ -79,13 +79,15 @@ public record Conquer(
     var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
       new Substituter.TermSubst(MutableMap.of()), LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
-      tycker.reporter.report(new ClausesProblem.Conditions(sourcePos, nth + 1, i, newBody, null, currentClause.sourcePos(), conditionPos));
+      tycker.reporter.report(new ClausesProblem.Conditions(
+        sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));
       throw new ExprTycker.TyckInterruptedException();
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
-      .compare(newBody, volynskaya, signature.result().subst(matchy));
+      .compare(newBody, volynskaya._1, signature.result().subst(matchy));
     if (!unification) {
-      tycker.reporter.report(new ClausesProblem.Conditions(sourcePos, nth + 1, i, newBody, volynskaya, currentClause.sourcePos(), conditionPos));
+      tycker.reporter.report(new ClausesProblem.Conditions(
+        sourcePos, nth + 1, i, newBody, volynskaya._1, conditionPos, currentClause.sourcePos(), volynskaya._2));
       throw new ExprTycker.TyckInterruptedException();
     }
   }

@@ -32,8 +32,7 @@ public class TestRunner {
     Global.enterTestMode();
   }
 
-  @Test
-  void runAllAyaTests() throws IOException {
+  @Test void runAllAyaTests() throws IOException {
     var testSourceDir = Paths.get("src", "test", "aya");
     runDir(testSourceDir.resolve("success"), true);
     runDir(testSourceDir.resolve("failure"), false);

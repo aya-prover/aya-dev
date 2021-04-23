@@ -22,14 +22,15 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   private static @NotNull Doc termToHint(@Nullable Term term) {
-    return term == null ? Doc.empty() : Doc.cat(Doc.plain("normalizes to `"), term.toDoc(), Doc.plain("`"));
+    return term == null ? Doc.empty() : Doc.cat(Doc.plain("substituted to `"), term.toDoc(), Doc.plain("`"));
   }
 
   record Conditions(
     @NotNull SourcePos sourcePos,
     int i, int j,
     @NotNull Term lhs, @Nullable Term rhs,
-    @NotNull SourcePos iPos, @NotNull SourcePos jPos
+    @NotNull SourcePos conditionPos,
+    @NotNull SourcePos iPos, @Nullable SourcePos jPos
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
       var result = rhs != null ? Doc.hcat(
@@ -50,8 +51,10 @@ public sealed interface ClausesProblem extends Problem {
     }
 
     @Override public @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
-      return Seq.of(Tuple.of(iPos, termToHint(lhs)),
-        Tuple.of(jPos, termToHint(rhs)));
+      var view = Seq.of(
+        Tuple.of(conditionPos, Doc.plain("relevant condition")),
+        Tuple.of(iPos, termToHint(lhs))).view();
+      return rhs == null ? view : view.concat(Seq.of(Tuple.of(jPos, termToHint(rhs))));
     }
   }
 
@@ -75,7 +78,7 @@ public sealed interface ClausesProblem extends Problem {
       );
     }
 
-    @Override public @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
+    @Override public @NotNull Seq<Tuple2<SourcePos, Doc>> inlineHints() {
       return Seq.of(Tuple.of(iPos, termToHint(lhs)),
         Tuple.of(jPos, termToHint(rhs)));
     }
