@@ -4,8 +4,8 @@ package org.aya.pretty.error;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple;
@@ -23,15 +23,16 @@ public record PrettyError(
 ) implements Docile {
   public @NotNull Doc toDoc(@NotNull PrettyErrorConfig config) {
     var primary = errorRange.normalize(config);
-    var hints = inlineHints.view()
-      .map(kv -> Tuple.of(kv._1.normalize(config), kv._2))
-      .<Span.Data, Doc>toImmutableMap();
-    var full = hints.keysView().foldLeft(primary, Span.Data::union);
+    var hints = inlineHints.view().map(kv -> Tuple.of(kv._1.normalize(config), kv._2));
+    var range = hints.map(kv -> kv._1).foldLeft(primary, Span.Data::union);
+    var allHints = hints.isEmpty()
+      ? Seq.of(Tuple.of(primary, Doc.empty()))
+      : hints;
 
     return Doc.vcat(
       Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
       Doc.empty(),
-      Doc.hang(2, visualizeCode(config, full, hints)),
+      Doc.hang(2, visualizeCode(config, range, allHints)),
       brief
     );
   }
@@ -46,11 +47,9 @@ public record PrettyError(
   }
 
   private @NotNull Doc visualizeCode(@NotNull PrettyErrorConfig config, @NotNull Span.Data fullRange,
-                                     @NotNull ImmutableMap<Span.Data, Doc> hints) {
+                                     @NotNull SeqLike<Tuple2<Span.Data, Doc>> hints) {
     int startLine = fullRange.startLine();
-    int startCol = fullRange.startCol();
     int endLine = fullRange.endLine();
-    int endCol = fullRange.endCol();
     int showMore = config.showMore();
 
     // calculate the maximum char width of line number
@@ -71,15 +70,15 @@ public record PrettyError(
       renderLine(builder, line, lineNo, linenoWidth);
 
       // render error column as underlines
-      if (lineNo == startLine) {
-        builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
-        builder.append("^");
-        int length = endCol - startCol - 1;
-        if (length > 0) {
-          // endCol is in the next line
-          builder.append("-".repeat(length));
-        }
-        builder.append("^");
+      final int finalLineNo = lineNo;
+      var r = hints.find(kv -> kv._1.startLine() == finalLineNo);
+      if (r.isDefined()) {
+        var find = r.get();
+        int startCol = find._1.startCol();
+        int endCol = find._1.endCol();
+        renderHint(builder, startCol, endCol, linenoWidth);
+        var doc = find._2;
+        if (!(doc instanceof Doc.Empty)) builder.append(' ').append(doc.debugRender());
         builder.append('\n');
       }
 
@@ -87,6 +86,17 @@ public record PrettyError(
     }
 
     return Doc.plain(builder.toString());
+  }
+
+  private void renderHint(StringBuilder builder, int startCol, int endCol, int linenoWidth) {
+    builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
+    builder.append("^");
+    int length = endCol - startCol - 1;
+    if (length > 0) {
+      // endCol is in the next line
+      builder.append("-".repeat(length));
+    }
+    builder.append("^");
   }
 
   private void renderLine(StringBuilder builder, String line, int lineNo, int linenoWidth) {
