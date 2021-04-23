@@ -4,11 +4,14 @@ package org.aya.api.error;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Collectors;
 
 /**
  * @author ice1000
@@ -48,7 +51,13 @@ public interface Problem {
       sourcePos.file().name(),
       sourcePos.toSpan(),
       brief(),
-      inlineHints().view().map(kv -> Tuple.of(kv._1.toSpan(), kv._2))
+      inlineHints().stream()
+        .collect(Collectors.groupingBy(t -> t._1,
+          Collectors.mapping(t -> t._2, Seq.factory())))
+        .entrySet()
+        .stream()
+        .map(kv -> Tuple.of(kv.getKey().toSpan(), Doc.join(Doc.plain(", "), kv.getValue())))
+        .collect(Seq.factory())
     );
   }
 

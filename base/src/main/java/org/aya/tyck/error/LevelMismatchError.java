@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 public record LevelMismatchError(@Nullable SourcePos pos, @NotNull Seq<LevelEqnSet.Eqn> eqns) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.plain("Cannot solve " + eqns.size() + " level equation(s)");
+    return Doc.plain("Cannot solve some level equation(s)");
   }
 
   @Override public @NotNull SourcePos sourcePos() {

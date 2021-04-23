@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.test;
 
-import org.aya.api.Global;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.StreamReporter;
@@ -10,7 +9,6 @@ import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -27,10 +25,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestRunner {
   static SourceFileLocator LOCATOR = new SourceFileLocator() {
   };
-
-  @BeforeAll public static void enterTestMode() {
-    Global.enterTestMode();
-  }
 
   @Test void runAllAyaTests() throws IOException {
     var testSourceDir = Paths.get("src", "test", "aya");

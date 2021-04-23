@@ -1,42 +1,18 @@
-In file $FILE:6:28 ->
+In file $FILE:6:4 ->
 
   4 | def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
   5 | def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
   6 | def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)
-                                  ^-----^
+                                  ^-----^ h + 2 <= h + 1, u + 2 <= u + 1
   
-Error: Level mismatch: h + 2 <= h + 1
-In file $FILE:6:28 ->
-
-  4 | def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
-  5 | def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
-  6 | def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)
-                                  ^-----^
-  
-Error: Level mismatch: u + 2 <= u + 1
-In file $FILE:6:45 ->
-
-  4 | def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
-  5 | def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
-  6 | def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)
-                                                   ^-----^
-  
-Error: Level mismatch: h + 2 <= h + 1
-In file $FILE:6:45 ->
-
-  4 | def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
-  5 | def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
-  6 | def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)
-                                                   ^-----^
-  
-Error: Level mismatch: u + 2 <= u + 1
+Error: Cannot solve some level equation(s)
 In file $FILE:7:40 ->
 
   5 | def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
   6 | def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)
   7 | def tau (t : P (P U)) : U => \ X f p => t (\ x => p (f (x X f)))
-                                              ^----------------------^
+                                              ^----------------------^ h + 2 <= h + 1
   
-Error: Level mismatch: h + 2 <= h + 1
+Error: Cannot solve some level equation(s)
 Tycking interrupted due to error(s).
 What are you doing?
