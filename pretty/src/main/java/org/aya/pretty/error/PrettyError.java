@@ -5,6 +5,7 @@ package org.aya.pretty.error;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableMap;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Option;
 import org.glavo.kala.tuple.Tuple;
@@ -30,7 +31,7 @@ public record PrettyError(
     return Doc.vcat(
       Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
       Doc.empty(),
-      Doc.hang(2, visualizeCode(config, full)),
+      Doc.hang(2, visualizeCode(config, full, hints)),
       brief
     );
   }
@@ -44,11 +45,12 @@ public record PrettyError(
     return line.replaceAll("\t", " ".repeat(tabWidth));
   }
 
-  private @NotNull Doc visualizeCode(PrettyErrorConfig config, Span.Data lineCol) {
-    int startLine = lineCol.startLine();
-    int startCol = lineCol.startCol();
-    int endLine = lineCol.endLine();
-    int endCol = lineCol.endCol();
+  private @NotNull Doc visualizeCode(@NotNull PrettyErrorConfig config, @NotNull Span.Data fullRange,
+                                     @NotNull ImmutableMap<Span.Data, Doc> hints) {
+    int startLine = fullRange.startLine();
+    int startCol = fullRange.startCol();
+    int endLine = fullRange.endLine();
+    int endCol = fullRange.endCol();
     int showMore = config.showMore();
 
     // calculate the maximum char width of line number
@@ -63,49 +65,25 @@ public record PrettyError(
       .collect(Buffer.factory());
 
     var builder = new StringBuilder();
+    int lineNo = Math.max(startLine - showMore, 1);
 
-    // When there are too many lines of code, we only print
-    // the first few lines and the last few lines, omitting the middle.
-    if (lines.sizeGreaterThanOrEquals(9)) {
-      // render SHOW_MORE_LINE before startLine
-      for (int i = 0; i < showMore; ++i) {
-        renderLine(builder, lines.get(i), Math.max(startLine + i - showMore, 1), linenoWidth);
-      }
+    for (String line : lines) {
+      renderLine(builder, line, lineNo, linenoWidth);
 
-      // render first few lions from startLine
-      for (int i = 0; i < 3; ++i) {
-        renderLine(builder, lines.get(i + showMore), startLine + i, linenoWidth);
-      }
-
-      // omitting the middle
-      renderLine(builder, "...", Option.none(), linenoWidth);
-
-      // render last few lines before endLine
-      for (int i = 3; i > 0; --i) {
-        renderLine(builder, lines.get(lines.size() - i), endLine - i + 1, linenoWidth);
-      }
-
-    } else {
-      // here we print all lines because the code is shorter.
-      int lineNo = Math.max(startLine - showMore, 1);
-      for (String line : lines) {
-        renderLine(builder, line, lineNo, linenoWidth);
-
-        // render error column as underlines
-        if (lineNo == startLine) {
-          builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
-          builder.append("^");
-          int length = endCol - startCol - 1;
-          if (length > 0) {
-            // endCol is in the next line
-            builder.append("-".repeat(length));
-          }
-          builder.append("^");
-          builder.append('\n');
+      // render error column as underlines
+      if (lineNo == startLine) {
+        builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
+        builder.append("^");
+        int length = endCol - startCol - 1;
+        if (length > 0) {
+          // endCol is in the next line
+          builder.append("-".repeat(length));
         }
-
-        lineNo++;
+        builder.append("^");
+        builder.append('\n');
       }
+
+      lineNo++;
     }
 
     return Doc.plain(builder.toString());
