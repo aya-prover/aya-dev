@@ -8,7 +8,11 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.pat.PatTree;
+import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +24,8 @@ public sealed interface ClausesProblem extends Problem {
   record Conditions(
     @NotNull SourcePos sourcePos,
     int i, int j,
-    @NotNull Term lhs, @Nullable Term rhs
+    @NotNull Term lhs, @Nullable Term rhs,
+    @NotNull SourcePos iPos, @NotNull SourcePos jPos
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
       var result = rhs != null ? Doc.hcat(
@@ -39,12 +44,22 @@ public sealed interface ClausesProblem extends Problem {
         result
       );
     }
+
+    @Override public @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
+      return Seq.of(Tuple.of(iPos, hintFor(lhs)),
+        Tuple.of(jPos, hintFor(rhs)));
+    }
+
+    private @NotNull Doc hintFor(@Nullable Term term) {
+      return term == null ? Doc.empty() : Doc.cat(Doc.plain("normalizes to `"), term.toDoc(), Doc.plain("`"));
+    }
   }
 
   record Confluence(
     @NotNull SourcePos sourcePos,
     int i, int j,
-    @NotNull Term lhs, @NotNull Term rhs
+    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull SourcePos iPos, @NotNull SourcePos jPos
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
       return Doc.hcat(
@@ -58,6 +73,15 @@ public sealed interface ClausesProblem extends Problem {
         rhs.toDoc(),
         Doc.plain("`")
       );
+    }
+
+    @Override public @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
+      return Seq.of(Tuple.of(iPos, hintFor(lhs)),
+        Tuple.of(jPos, hintFor(rhs)));
+    }
+
+    private @NotNull Doc hintFor(@NotNull Term term) {
+      return Doc.cat(Doc.plain("normalizes to `"), term.toDoc(), Doc.plain("`"));
     }
   }
 

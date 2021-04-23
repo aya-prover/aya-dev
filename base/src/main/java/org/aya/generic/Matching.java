@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.generic;
 
+import org.aya.api.error.SourcePos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ConcreteDistiller;
@@ -23,6 +24,7 @@ import java.util.function.Function;
  */
 @Debug.Renderer(text = "toDoc().debugRender()")
 public record Matching<Matcher extends Docile, Body extends Docile>(
+  @NotNull SourcePos sourcePos,
   @NotNull ImmutableSeq<Matcher> patterns,
   @NotNull Body body
 ) implements Docile {
@@ -39,6 +41,6 @@ public record Matching<Matcher extends Docile, Body extends Docile>(
   }
 
   public @NotNull <NoBody extends Docile> Matching<Matcher, NoBody> mapBody(@NotNull Function<Body, NoBody> f) {
-    return new Matching<>(patterns, f.apply(body));
+    return new Matching<>(sourcePos, patterns, f.apply(body));
   }
 }

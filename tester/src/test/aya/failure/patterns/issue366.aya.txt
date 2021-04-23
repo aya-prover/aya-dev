@@ -3,7 +3,11 @@ In file $FILE:3:4 ->
   1 | open data Nat : Set 0 | zero | suc Nat
   2 | open data Ray (a : Nat) : Set | zero => eldath
   3 | def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
-          ^--------^
+  4 |  | zero, eldath => suc zero
+         ^----------------------^ normalizes to `suc zero`
+  5 |  | suc n, impossible
+  6 |  | zero, eldath => zero
+         ^------------------^ normalizes to `zero`
   
 Error: The 1st and the 3rd clauses are not confluent because we failed to unify `suc zero` and `zero`
 Tycking interrupted due to error(s).

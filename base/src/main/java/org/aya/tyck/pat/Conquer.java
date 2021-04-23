@@ -63,12 +63,12 @@ public record Conquer(
     for (int i = 0, size = conditions.size(); i < size; i++) {
       var condition = conditions.get(i);
       var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
-      if (matchy != null) checkConditions(ctor, nth, i + 1, condition.body(), matchy);
+      if (matchy != null) checkConditions(ctor, nth, i + 1, condition.body(), matchy, condition.sourcePos());
     }
     return Unit.unit();
   }
 
-  private void checkConditions(Pat ctor, int nth, int i, Term condition, Substituter.TermSubst matchy) {
+  private void checkConditions(Pat ctor, int nth, int i, Term condition, Substituter.TermSubst matchy, SourcePos conditionPos) {
     var currentClause = matchings.get(nth);
     var newBody = currentClause.body().subst(matchy);
     var newArgs = currentClause.patterns().map(pat -> new Arg<>(pat.accept(new PatToTerm() {
@@ -79,13 +79,13 @@ public record Conquer(
     var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
       new Substituter.TermSubst(MutableMap.of()), LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
-      tycker.reporter.report(new ClausesProblem.Conditions(sourcePos, nth + 1, i, newBody, null));
+      tycker.reporter.report(new ClausesProblem.Conditions(sourcePos, nth + 1, i, newBody, null, currentClause.sourcePos(), conditionPos));
       throw new ExprTycker.TyckInterruptedException();
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
       .compare(newBody, volynskaya, signature.result().subst(matchy));
     if (!unification) {
-      tycker.reporter.report(new ClausesProblem.Conditions(sourcePos, nth + 1, i, newBody, volynskaya));
+      tycker.reporter.report(new ClausesProblem.Conditions(sourcePos, nth + 1, i, newBody, volynskaya, currentClause.sourcePos(), conditionPos));
       throw new ExprTycker.TyckInterruptedException();
     }
   }

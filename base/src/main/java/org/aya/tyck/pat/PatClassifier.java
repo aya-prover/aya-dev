@@ -63,7 +63,8 @@ public record PatClassifier(
         var rhsTerm = rhs.body().subst(rhsSubst);
         var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
-          tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1, lhsTerm, rhsTerm));
+          tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
+            lhsTerm, rhsTerm, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
           throw new ExprTycker.TyckInterruptedException();
         }
       }

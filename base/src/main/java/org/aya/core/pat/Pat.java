@@ -3,6 +3,7 @@
 package org.aya.core.pat;
 
 import org.aya.api.core.CorePat;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
@@ -120,15 +121,16 @@ public sealed interface Pat extends CorePat {
    * @author ice1000
    */
   record PrototypeClause(
+    @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pat> patterns,
     @NotNull Option<Term> expr
   ) {
     public static @NotNull PrototypeClause prototypify(@NotNull Matching<Pat, Term> clause) {
-      return new PrototypeClause(clause.patterns(), Option.some(clause.body()));
+      return new PrototypeClause(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
     }
 
     public static @NotNull Option<@NotNull Matching<Pat, Term>> deprototypify(@NotNull PrototypeClause clause) {
-      return clause.expr.map(term -> new Matching<>(clause.patterns, term));
+      return clause.expr.map(term -> new Matching<>(clause.sourcePos, clause.patterns, term));
     }
   }
 }

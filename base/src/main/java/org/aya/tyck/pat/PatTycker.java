@@ -102,7 +102,7 @@ public record PatTycker(
     assert parent != null;
     cumulativeCtx.putAll(exprTycker.localCtx.localMap());
     exprTycker.localCtx = parent;
-    return new Pat.PrototypeClause(patterns, result.map(ExprTycker.Result::wellTyped));
+    return new Pat.PrototypeClause(match.sourcePos(), patterns, result.map(ExprTycker.Result::wellTyped));
   }
 
   public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
