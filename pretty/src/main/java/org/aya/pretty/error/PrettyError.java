@@ -4,8 +4,11 @@ package org.aya.pretty.error;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.control.Option;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,15 +17,20 @@ import org.jetbrains.annotations.NotNull;
 public record PrettyError(
   @NotNull String filePath,
   @NotNull Span errorRange,
-  @NotNull Doc brief
+  @NotNull Doc brief,
+  @NotNull SeqLike<Tuple2<Span, Doc>> inlineHints
 ) implements Docile {
-  public Doc toDoc(PrettyErrorConfig config) {
-    var lineCol = errorRange.normalize(config);
+  public @NotNull Doc toDoc(@NotNull PrettyErrorConfig config) {
+    var primary = errorRange.normalize(config);
+    var hints = inlineHints.view()
+      .map(kv -> Tuple.of(kv._1.normalize(config), kv._2))
+      .<Span.Data, Doc>toImmutableMap();
+    var full = hints.keysView().foldLeft(primary, Span.Data::union);
 
     return Doc.vcat(
-      Doc.plain("In file " + filePath + ":" + lineCol.startLine() + ":" + lineCol.startCol() + " ->"),
+      Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
       Doc.empty(),
-      Doc.hang(2, visualizeCode(config, lineCol)),
+      Doc.hang(2, visualizeCode(config, full)),
       brief
     );
   }
@@ -31,7 +39,7 @@ public record PrettyError(
     return toDoc(PrettyErrorConfig.DEFAULT);
   }
 
-  private @NotNull String visualizeLine(PrettyErrorConfig config, String line) {
+  private @NotNull String visualizeLine(@NotNull PrettyErrorConfig config, @NotNull String line) {
     int tabWidth = config.tabWidth();
     return line.replaceAll("\t", " ".repeat(tabWidth));
   }
@@ -47,14 +55,14 @@ public record PrettyError(
     int linenoWidth = Math.max(widthOfLineNumber(startLine), widthOfLineNumber(endLine));
 
     // collect lines from (startLine - SHOW_MORE_LINE) to (endLine + SHOW_MORE_LINE)
-    Buffer<String> lines = errorRange.input()
+    var lines = errorRange.input()
       .lines()
       .skip(Math.max(startLine - 1 - showMore, 0))
       .limit(endLine - startLine + 1 + showMore)
       .map(line -> visualizeLine(config, line))
       .collect(Buffer.factory());
 
-    StringBuilder builder = new StringBuilder();
+    var builder = new StringBuilder();
 
     // When there are too many lines of code, we only print
     // the first few lines and the last few lines, omitting the middle.

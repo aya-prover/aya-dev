@@ -14,7 +14,7 @@ import java.util.Objects;
 /**
  * Position in source code.
  * This class is usually constructed using antlr4's utility function
- * {@code ctx.getSourceInterval()}.
+ * {@code ctx.getStart()} and {@code ctx.getStop()}.
  *
  * @author kiva
  */
@@ -90,7 +90,7 @@ public record SourcePos(
   @Override
   public int hashCode() {
     // the equals() returns true in tests, so hashCode() should
-    // be a constant according to JavaSE documentation.
+    // be a constant according to JLS
     if (Global.isTest()) return 0;
     return Objects.hash(tokenStartIndex, tokenEndIndex, startLine, startColumn, endLine, endColumn);
   }

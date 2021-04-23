@@ -18,5 +18,14 @@ public interface Span {
     public boolean contains(int line, int column) {
       return line >= startLine && line <= endLine && column >= startCol && column <= endCol;
     }
+
+    public @NotNull Data union(@NotNull Data other) {
+      return new Data(
+        Math.min(startLine, other.startLine),
+        Math.max(startCol, other.startCol),
+        Math.max(endLine, other.endLine),
+        Math.max(endCol, other.endCol)
+      );
+    }
   }
 }

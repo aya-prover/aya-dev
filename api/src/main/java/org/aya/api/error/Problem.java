@@ -4,6 +4,10 @@ package org.aya.api.error;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
+import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,13 +38,17 @@ public interface Problem {
   default @NotNull Doc hint() {
     return Doc.empty();
   }
+  default @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
+    return ImmutableSeq.empty();
+  }
 
   default @NotNull PrettyError toPrettyError() {
     var sourcePos = sourcePos();
     return new PrettyError(
       sourcePos.file().name(),
       sourcePos.toSpan(),
-      brief()
+      brief(),
+      inlineHints().view().map(kv -> Tuple.of(kv._1.toSpan(), kv._2))
     );
   }
 
