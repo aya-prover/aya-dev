@@ -14,6 +14,7 @@ import org.aya.lsp.LspRange;
 import org.aya.lsp.highlight.Highlighter;
 import org.aya.lsp.highlight.Symbol;
 import org.aya.lsp.language.HighlightResult;
+import org.aya.pretty.doc.Doc;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -23,6 +24,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
   private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of(), Buffer.of());
@@ -44,7 +47,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     libraryManager.modulePath.append(path);
   }
 
-  public HighlightResult loadFile(@NotNull String uri) {
+  public @NotNull HighlightResult loadFile(@NotNull String uri) {
     Log.d("Loading %s", uri);
     var reporter = new LspReporter();
     var compiler = new SingleFileCompiler(reporter, libraryManager, null);
@@ -74,6 +77,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var diags = reporter.problems.stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe().debugRender()))
+      .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints().stream().map(t -> new InlineHintProblem(p, t))))
       .map(p -> Tuple.of(p.sourcePos().file().name(), p))
       .collect(Collectors.groupingBy(
         t -> t._1,
@@ -160,6 +164,24 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     @Override public @NotNull String locate(@NotNull Path path) {
       // vscode needs absolute path
       return path.toAbsolutePath().toString();
+    }
+  }
+
+  public record InlineHintProblem(@NotNull Problem owner, Tuple2<SourcePos, Doc> tup) implements Problem {
+    @Override public @NotNull SourcePos sourcePos() {
+      return tup._1;
+    }
+
+    @Override public @NotNull Doc describe() {
+      return tup._2;
+    }
+
+    @Override public @NotNull Severity level() {
+      return owner.level();
+    }
+
+    @Override public @NotNull Doc brief() {
+      return describe();
     }
   }
 }
