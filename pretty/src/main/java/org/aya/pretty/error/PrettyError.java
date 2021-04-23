@@ -66,7 +66,7 @@ public record PrettyError(
     var builder = new StringBuilder();
     int lineNo = Math.max(startLine - showMore, 1);
 
-    for (String line : lines) {
+    for (var line : lines) {
       renderLine(builder, line, lineNo, linenoWidth);
 
       // render error column as underlines

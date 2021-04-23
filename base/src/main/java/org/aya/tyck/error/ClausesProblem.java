@@ -21,6 +21,10 @@ public sealed interface ClausesProblem extends Problem {
     return Severity.ERROR;
   }
 
+  private static @NotNull Doc termToHint(@Nullable Term term) {
+    return term == null ? Doc.empty() : Doc.cat(Doc.plain("normalizes to `"), term.toDoc(), Doc.plain("`"));
+  }
+
   record Conditions(
     @NotNull SourcePos sourcePos,
     int i, int j,
@@ -46,12 +50,8 @@ public sealed interface ClausesProblem extends Problem {
     }
 
     @Override public @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
-      return Seq.of(Tuple.of(iPos, hintFor(lhs)),
-        Tuple.of(jPos, hintFor(rhs)));
-    }
-
-    private @NotNull Doc hintFor(@Nullable Term term) {
-      return term == null ? Doc.empty() : Doc.cat(Doc.plain("normalizes to `"), term.toDoc(), Doc.plain("`"));
+      return Seq.of(Tuple.of(iPos, termToHint(lhs)),
+        Tuple.of(jPos, termToHint(rhs)));
     }
   }
 
@@ -76,12 +76,8 @@ public sealed interface ClausesProblem extends Problem {
     }
 
     @Override public @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
-      return Seq.of(Tuple.of(iPos, hintFor(lhs)),
-        Tuple.of(jPos, hintFor(rhs)));
-    }
-
-    private @NotNull Doc hintFor(@NotNull Term term) {
-      return Doc.cat(Doc.plain("normalizes to `"), term.toDoc(), Doc.plain("`"));
+      return Seq.of(Tuple.of(iPos, termToHint(lhs)),
+        Tuple.of(jPos, termToHint(rhs)));
     }
   }
 
