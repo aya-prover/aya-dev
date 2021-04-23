@@ -11,6 +11,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.error.LevelMismatchError;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
     var sol = term.ref().core();
     if (sol.body == null) {
-      tycker.reporter.report(new UnsolvedMeta(sol.sourcePos, "meta"));
+      tycker.reporter.report(new UnsolvedMeta(sol.sourcePos));
       throw new ExprTycker.TyckInterruptedException();
     }
     return sol.body.accept(this, Unit.unit());
@@ -47,8 +48,7 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   }
 
   private <T> T reportLevelSolverError(@NotNull SourcePos pos) {
-    tycker.reporter.report(new UnsolvedMeta(pos, "level"));
-    tycker.equations.reportAll();
+    tycker.reporter.report(new LevelMismatchError(pos, tycker.equations.eqns()));
     throw new ExprTycker.TyckInterruptedException();
   }
 
@@ -60,9 +60,9 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
     return new FormTerm.Univ(sort);
   }
 
-  public static record UnsolvedMeta(@NotNull SourcePos sourcePos, @NotNull String what) implements Problem {
+  public static record UnsolvedMeta(@NotNull SourcePos sourcePos) implements Problem {
     @Override public @NotNull Doc describe() {
-      return Doc.plain("Unsolved " + what);
+      return Doc.plain("Unsolved meta");
     }
 
     @Override public @NotNull Severity level() {

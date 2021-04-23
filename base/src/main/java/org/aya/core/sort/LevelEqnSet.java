@@ -11,6 +11,7 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.LevelMismatchError;
 import org.aya.util.Decision;
 import org.aya.util.Ordering;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Debug;
@@ -46,7 +47,7 @@ public record LevelEqnSet(
   private void insertEqn(Eqn h) {
     switch (h.biasedEq()) {
       case NO -> {
-        reporter.report(new LevelMismatchError(h));
+        reporter.report(new LevelMismatchError(null, Seq.of(h)));
         throw new ExprTycker.TyckInterruptedException();
       }
       case MAYBE -> eqns.append(h);
@@ -61,10 +62,6 @@ public record LevelEqnSet(
     var solutionSize = solution.size();
     newEqns.view().map(this::applyTo).filterTo(eqns, this::solveEqn);
     if (solutionSize != solution.size()) subst(this);
-  }
-
-  public void reportAll() {
-    for (var eqn : eqns) reporter.report(new LevelMismatchError(eqn));
   }
 
   public boolean constraints(@NotNull Sort.LvlVar var) {
