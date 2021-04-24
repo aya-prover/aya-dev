@@ -683,7 +683,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       useHide != null ? visitUseHide(useHide) : Stmt.OpenStmt.UseHide.EMPTY
     );
     if (ctx.IMPORT() != null) return ImmutableSeq.of(
-      new Stmt.ImportStmt(sourcePosOf(ctx), modName, null),
+      new Stmt.ImportStmt(sourcePosOf(ctx.moduleName()), modName, null),
       open
     );
     else return ImmutableSeq.of(open);
