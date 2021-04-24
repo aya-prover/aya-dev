@@ -26,5 +26,6 @@ public record Symbol(
     StructCall,
     ConCall,
     FieldCall,
+    PrimCall,
   }
 }

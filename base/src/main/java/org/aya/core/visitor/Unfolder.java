@@ -71,7 +71,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
-    return volynskaya != null ? volynskaya._1 : new CallTerm.Fn(fnCall.ref(), fnCall.contextArgs(), fnCall.sortArgs(), args);
+    return volynskaya != null ? volynskaya._1 : new CallTerm.Fn(fnCall.sourcePos(), fnCall.ref(), fnCall.contextArgs(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
   checkAndBuildSubst(SeqView<Term.Param> fullTelescope, SeqLike<Arg<Term>> args) {
@@ -123,7 +123,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
       var dropped = args.drop(term.contextArgs().size() + term.structArgs().size());
       var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses());
-      return mischa != null ? mischa._1 : new CallTerm.Access(nevv, field,
+      return mischa != null ? mischa._1 : new CallTerm.Access(term.sourcePos(), nevv, field,
         term.contextArgs(), term.sortArgs(), term.structArgs(), dropped);
     }
     var arguments = Unfolder.buildSubst(core.telescope(), term.args());

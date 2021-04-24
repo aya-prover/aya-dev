@@ -19,7 +19,6 @@ import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * @author ice1000, kiva
@@ -127,7 +126,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitProj(Expr.@NotNull ProjExpr expr, Boolean nestedCall) {
     return Doc.cat(expr.tup().toDoc(), Doc.plain("."), Doc.plain(expr.ix().fold(
-      Objects::toString, Function.identity()
+      Objects::toString, t -> t._2
     )));
   }
 

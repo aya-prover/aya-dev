@@ -106,7 +106,7 @@ public record StmtTycker(
     var dataContextArgs = dataSig.contextParam().map(Term.Param::toArg);
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var sortParam = dataSig.sortParam();
-    var dataCall = new CallTerm.Data(dataRef, dataContextArgs, sortParam.map(Level.Reference::new), dataArgs);
+    var dataCall = new CallTerm.Data(SourcePos.NONE, dataRef, dataContextArgs, sortParam.map(Level.Reference::new), dataArgs);
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), sortParam, dataSig.param(), dataCall));
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);

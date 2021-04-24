@@ -138,8 +138,8 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
       var dummy = dummyVars.zip(fieldSig.fieldTele()).map(vpa ->
         new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
       var res = localCtx.with(dummyVars.zip(fieldSig.fieldTele()).map(vpa -> new Term.Param(vpa._1, vpa._2.type(), vpa._2.explicit())), () -> {
-        var l = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
-        var r = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
+        var l = new CallTerm.Access(SourcePos.NONE, lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
+        var r = new CallTerm.Access(SourcePos.NONE, lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
         fieldSubst.add(fieldSig.ref(), l);
         return compare(l, r, fieldSig.result().subst(paramSubst).subst(fieldSubst));
       });

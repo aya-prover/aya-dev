@@ -2,11 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.highlight;
 
+import org.aya.api.error.SourcePos;
+import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Generalize;
 import org.aya.concrete.Stmt;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.generic.Matching;
@@ -104,8 +107,8 @@ public class Highlighter implements
     return Unit.unit();
   }
 
-  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull Buffer<Symbol> symbols) {
-    for (var level : levels.levels()) symbols.append(new Symbol(LspRange.from(level._1), Symbol.Kind.Param));
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull Buffer<Symbol> buffer) {
+    for (var level : levels.levels()) buffer.append(new Symbol(LspRange.from(level._1), Symbol.Kind.Param));
     return Unit.unit();
   }
 
@@ -113,27 +116,72 @@ public class Highlighter implements
 
   // region term
 
+  private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull Buffer<Symbol> buffer) {
+    if (ref.core instanceof FnDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.FnCall));
+    else if (ref.core instanceof PrimDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.PrimCall));
+    else if (ref.core instanceof DataDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.DataCall));
+    else if (ref.core instanceof DataDef.Ctor) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.ConCall));
+    else if (ref.core instanceof StructDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.StructCall));
+    else if (ref.core instanceof StructDef.Field)
+      buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.FieldCall));
+  }
+
+  @Override public Unit visitFnCall(CallTerm.@NotNull Fn fnCall, @NotNull Buffer<Symbol> buffer) {
+    visitCall(fnCall.ref(), fnCall.sourcePos(), buffer);
+    visitArgs(buffer, fnCall.args());
+    return Unit.unit();
+  }
+
+  @Override public Unit visitPrimCall(CallTerm.@NotNull Prim prim, @NotNull Buffer<Symbol> buffer) {
+    visitCall(prim.ref(), prim.sourcePos(), buffer);
+    visitArgs(buffer, prim.args());
+    return Unit.unit();
+  }
+
+  @Override public Unit visitDataCall(CallTerm.@NotNull Data dataCall, @NotNull Buffer<Symbol> buffer) {
+    visitCall(dataCall.ref(), dataCall.sourcePos(), buffer);
+    visitArgs(buffer, dataCall.args());
+    return Unit.unit();
+  }
+
+  @Override public Unit visitConCall(CallTerm.@NotNull Con conCall, @NotNull Buffer<Symbol> buffer) {
+    visitCall(conCall.ref(), conCall.head().sourcePos(), buffer);
+    visitArgs(buffer, conCall.args());
+    return Unit.unit();
+  }
+
+  @Override public Unit visitStructCall(CallTerm.@NotNull Struct structCall, @NotNull Buffer<Symbol> buffer) {
+    visitCall(structCall.ref(), structCall.sourcePos(), buffer);
+    visitArgs(buffer, structCall.args());
+    return Unit.unit();
+  }
+
+  @Override public Unit visitAccess(CallTerm.@NotNull Access term, @NotNull Buffer<Symbol> buffer) {
+    visitCall(term.ref(), term.sourcePos(), buffer);
+    term.of().accept(this, buffer);
+    return Unit.unit();
+  }
 
   // endregion
 
   // region pattern
-  @Override public Unit visitBind(Pat.@NotNull Bind bind, @NotNull Buffer<Symbol> symbols) {
+  @Override public Unit visitBind(Pat.@NotNull Bind bind, @NotNull Buffer<Symbol> buffer) {
     return Unit.unit();
   }
 
-  @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, @NotNull Buffer<Symbol> symbols) {
+  @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, @NotNull Buffer<Symbol> buffer) {
     return Unit.unit();
   }
 
-  @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, @NotNull Buffer<Symbol> symbols) {
+  @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, @NotNull Buffer<Symbol> buffer) {
     return Unit.unit();
   }
 
-  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, @NotNull Buffer<Symbol> symbols) {
+  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, @NotNull Buffer<Symbol> buffer) {
     return Unit.unit();
   }
 
-  @Override public Unit visitPrim(Pat.@NotNull Prim prim, @NotNull Buffer<Symbol> symbols) {
+  @Override public Unit visitPrim(Pat.@NotNull Prim prim, @NotNull Buffer<Symbol> buffer) {
     return Unit.unit();
   }
   // endregion

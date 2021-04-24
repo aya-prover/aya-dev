@@ -183,7 +183,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall(pos, (DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall(pos, (DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args, sorts));
+      return defCall(pos, (DefVar<PrimDef, Decl.PrimDecl>) var, (s, v, ca, sorts, args) -> new CallTerm.Prim(s, v, args, sorts));
     } else if (var.core instanceof DataDef || var.concrete instanceof Decl.DataDecl) {
       return defCall(pos, (DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {
@@ -194,7 +194,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var telescopes = DataDef.Ctor.telescopes(conVar, level._2);
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(false, tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
-      return new Result(IntroTerm.Lambda.make(tele, telescopes.toConCall(conVar)), type);
+      return new Result(IntroTerm.Lambda.make(tele, telescopes.toConCall(pos, conVar)), type);
     } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
@@ -227,7 +227,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var ctxTele = Term.Param.subst(Def.defContextTele(defVar), level._1);
     // unbound these abstracted variables
     // ice: should we rename the vars in this telescope? Probably not.
-    var body = function.make(defVar,
+    var body = function.make(pos,
+      defVar,
       ctxTele.map(Term.Param::toArg),
       level._2,
       tele.map(Term.Param::toArg));
@@ -356,17 +357,17 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
     var from = expr.tup();
-    var projectee = from.accept(this, null);
     var result = expr.ix().fold(
-      ix -> visitProj(from, ix, projectee),
-      sp -> visitAccess(from, sp, projectee)
+      ix -> visitProj(from, ix),
+      sp -> visitAccess(from, sp._2, sp._1)
     );
     if (term != null) unifyTyThrowing(term, result.type, expr);
     return result;
   }
 
-  private Result visitAccess(Expr struct, String fieldName, Result projectee) {
-    var whnf = projectee.type.normalize(NormalizeMode.WHNF);
+  private Result visitAccess(Expr struct, String fieldName, SourcePos fieldPos) {
+    var project = struct.accept(this, null);
+    var whnf = project.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof CallTerm.Struct structCall))
       return wantButNo(struct, whnf, "struct type");
 
@@ -384,15 +385,16 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var levels = levelStuffs(struct.sourcePos(), fieldRef);
     var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst, levels._1);
-    var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
+    var access = new CallTerm.Access(fieldPos, project.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), levels._2,
       structCall.args(), tele.map(Term.Param::toArg));
     return new Result(IntroTerm.Lambda.make(tele, access),
       FormTerm.Pi.make(false, tele, field.result().subst(structSubst, levels._1)));
   }
 
-  private Result visitProj(Expr tuple, int ix, Result projectee) {
-    var whnf = projectee.type.normalize(NormalizeMode.WHNF);
+  private Result visitProj(Expr tuple, int ix) {
+    var project = tuple.accept(this, null);
+    var whnf = project.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof FormTerm.Sigma sigma && !sigma.co()))
       return wantButNo(tuple, whnf, "sigma type");
     var telescope = sigma.params();
@@ -408,8 +410,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     // instantiate the type
     var subst = new Substituter.TermSubst(MutableMap.of());
     telescope.view().take(index).reversed().forEachIndexed((i, param) ->
-      subst.add(param.ref(), new ElimTerm.Proj(projectee.wellTyped, i + 1)));
-    return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
+      subst.add(param.ref(), new ElimTerm.Proj(project.wellTyped, i + 1)));
+    return new Result(new ElimTerm.Proj(project.wellTyped, ix), type.subst(subst));
   }
 
   @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {

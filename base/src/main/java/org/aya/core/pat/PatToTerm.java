@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pat;
 
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.term.CallTerm;
@@ -26,7 +27,8 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
   }
 
   @Override public Term visitPrim(Pat.@NotNull Prim prim, Unit unit) {
-    return new CallTerm.Prim(prim.ref(), ImmutableSeq.empty(), ImmutableSeq.of());
+    // TODO[kiva]: need source pos?
+    return new CallTerm.Prim(SourcePos.NONE, prim.ref(), ImmutableSeq.empty(), ImmutableSeq.of());
   }
 
   @Override public Term visitBind(Pat.@NotNull Bind bind, Unit unit) {
@@ -45,6 +47,7 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
       .collect(ImmutableSeq.factory());
     var dataArgs = core.dataTele().map(Term.Param::toArg);
-    return new CallTerm.Con(data.ref(), ctor.ref(), data.contextArgs(), dataArgs, data.sortArgs(), args);
+    // TODO[kiva]: need source pos?
+    return new CallTerm.Con(SourcePos.NONE, data.ref(), ctor.ref(), data.contextArgs(), dataArgs, data.sortArgs(), args);
   }
 }
