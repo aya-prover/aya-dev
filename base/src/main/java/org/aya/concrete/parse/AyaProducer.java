@@ -480,17 +480,14 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       body,
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
-    if (ctx.OPEN() != null) {
-      return Tuple2.of(
-        data,
-        ImmutableSeq.of(new Stmt.OpenStmt(
-          sourcePosOf(ctx),
-          openAccessibility,
-          ImmutableSeq.of(ctx.ID().getText()),
-          Stmt.OpenStmt.UseHide.EMPTY
-        ))
-      );
-    } else return Tuple2.of(data, ImmutableSeq.of());
+    return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.of() : ImmutableSeq.of(
+      new Stmt.OpenStmt(
+        sourcePosOf(ctx.ID()),
+        openAccessibility,
+        ImmutableSeq.of(ctx.ID().getText()),
+        Stmt.OpenStmt.UseHide.EMPTY
+      )
+    ));
   }
 
   public @NotNull Expr type(@Nullable AyaParser.TypeContext typeCtx, SourcePos sourcePos) {
