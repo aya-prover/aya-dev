@@ -78,6 +78,7 @@ public record PatTycker(
       tracing(GenericBuilder::reduce);
       return elabClause;
     });
+    exprTycker.equations.solve();
     return Tuple.of(signature.value.result().zonk(exprTycker), res);
   }
 

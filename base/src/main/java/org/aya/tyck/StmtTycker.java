@@ -139,6 +139,7 @@ public record StmtTycker(
     var classification = PatClassifier.classify(elabClauses, tycker.reporter, pos, coverage);
     PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
     Conquer.against(matchings, ctx, tycker, pos, signature);
+    tycker.equations.solve();
   }
 
   @NotNull private ImmutableSeq<Pat.PrototypeClause> elabClauses(

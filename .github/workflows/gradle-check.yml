@@ -27,7 +27,7 @@ jobs:
         if: github.repository == 'aya-prover/aya-dev'
         with:
           name: nightly-build
-          path : "cli/build/image"
+          path : ./lsp/build/image
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         if: github.repository == 'aya-prover/aya-dev'
