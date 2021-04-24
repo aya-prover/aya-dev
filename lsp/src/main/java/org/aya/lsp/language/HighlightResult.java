@@ -3,7 +3,7 @@
 package org.aya.lsp.language;
 
 import org.aya.lsp.highlight.Symbol;
-import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public record HighlightResult(
   @NotNull String uri,
   @NotNull List<Symbol> symbols
 ) {
-  public HighlightResult(@NotNull String uri, @NotNull Buffer<Symbol> symbols) {
-    this(uri, symbols.stream().collect(Collectors.toList()));
+  public HighlightResult(@NotNull String uri, @NotNull SeqLike<Symbol> symbols) {
+    this(uri, symbols.collect(Collectors.toList()));
   }
 }

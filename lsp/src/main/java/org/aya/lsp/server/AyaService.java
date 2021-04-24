@@ -68,7 +68,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());
     }
     reportErrors(reporter);
-    return new HighlightResult(uri, symbols);
+    return new HighlightResult(uri, symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
   public void reportErrors(@NotNull LspReporter reporter) {

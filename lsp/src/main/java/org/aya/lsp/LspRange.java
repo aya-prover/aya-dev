@@ -8,8 +8,9 @@ import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 
 public class LspRange {
+  public static final Range NONE = new Range();
   public static @NotNull Range from(@NotNull SourcePos sourcePos) {
-    if (sourcePos == SourcePos.NONE) return new Range();
+    if (sourcePos == SourcePos.NONE) return NONE;
     return new Range(new Position(sourcePos.startLine() - 1, sourcePos.startColumn()),
       new Position(sourcePos.endLine() - 1, sourcePos.endColumn() + 1));
   }
