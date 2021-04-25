@@ -9,7 +9,8 @@ import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
 import org.aya.generic.GenericBuilder;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -34,9 +35,9 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   final class Builder extends GenericBuilder<Trace> {
     // This is used in language server for semantic syntax highlighting,
     // as we don't want to store SourcePos in core terms
-    public final @Nullable MutableHashMap<Term, SourcePos> termMap;
+    public final @Nullable Buffer<Tuple2<Term, SourcePos>> termMap;
 
-    public Builder(@NotNull MutableHashMap<Term, SourcePos> termMap) {
+    public Builder(@NotNull Buffer<Tuple2<Term, SourcePos>> termMap) {
       this.termMap = termMap;
     }
 
@@ -45,7 +46,15 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     }
 
     public void map(@NotNull Term term, @NotNull SourcePos sourcePos) {
-      if (termMap != null) termMap.putIfAbsent(term, sourcePos);
+      if (sourcePos == SourcePos.NONE) return;
+      if (termMap != null) termMap.append(Tuple.of(term, sourcePos));
+    }
+
+    public @NotNull SourcePos getMap(@NotNull Term term) {
+      if (termMap == null) return SourcePos.NONE;
+      var f = termMap.find(t -> t._1 == term).getOrNull();
+      if (f != null) return f._2;
+      return SourcePos.NONE;
     }
 
     @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {

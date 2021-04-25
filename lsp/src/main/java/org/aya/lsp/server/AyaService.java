@@ -51,7 +51,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public @NotNull HighlightResult loadFile(@NotNull String uri) {
     Log.d("Loading %s", uri);
     var reporter = new LspReporter();
-    var trace = new Trace.Builder(MutableHashMap.of());
+    var trace = new Trace.Builder(Buffer.of());
     var compiler = new SingleFileCompiler(reporter, libraryManager, trace);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
@@ -66,6 +66,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
         defs -> {
           libraryManager.loadedFiles.put(uri, defs);
           defs.forEach(d -> d.accept(highlighter, symbols));
+          highlighter.visitCallTerms(symbols);
         });
     } catch (IOException e) {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());

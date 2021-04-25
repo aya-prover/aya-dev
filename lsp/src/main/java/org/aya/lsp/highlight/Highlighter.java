@@ -35,11 +35,6 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
     return LspRange.from(stmt.sourcePos());
   }
 
-  private @NotNull SourcePos sourcePosOf(@NotNull CallTerm callTerm) {
-    if (traceBuilder.termMap == null) return SourcePos.NONE;
-    return traceBuilder.termMap.getOrPut(callTerm, () -> SourcePos.NONE);
-  }
-
   // region def, data, struct, prim, levels
 
   private void visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> ms, @NotNull Buffer<Symbol> buffer) {
@@ -108,7 +103,14 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
 
   // endregion
 
-  // region term
+  // region call terms
+
+  public void visitCallTerms(@NotNull Buffer<Symbol> buffer) {
+    if (traceBuilder.termMap != null) traceBuilder.termMap.forEach(t -> {
+      if (t._1 instanceof CallTerm callTerm && callTerm.ref() instanceof DefVar<?, ?> defVar)
+        visitCall(defVar, t._2, buffer);
+    });
+  }
 
   private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull Buffer<Symbol> buffer) {
     if (ref.core instanceof FnDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.FnCall));
@@ -118,42 +120,6 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
     else if (ref.core instanceof StructDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.StructCall));
     else if (ref.core instanceof StructDef.Field)
       buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.FieldCall));
-  }
-
-  @Override public Unit visitFnCall(CallTerm.@NotNull Fn fnCall, @NotNull Buffer<Symbol> buffer) {
-    visitCall(fnCall.ref(), sourcePosOf(fnCall), buffer);
-    visitArgs(buffer, fnCall.args());
-    return Unit.unit();
-  }
-
-  @Override public Unit visitPrimCall(CallTerm.@NotNull Prim prim, @NotNull Buffer<Symbol> buffer) {
-    visitCall(prim.ref(), sourcePosOf(prim), buffer);
-    visitArgs(buffer, prim.args());
-    return Unit.unit();
-  }
-
-  @Override public Unit visitDataCall(CallTerm.@NotNull Data dataCall, @NotNull Buffer<Symbol> buffer) {
-    visitCall(dataCall.ref(), sourcePosOf(dataCall), buffer);
-    visitArgs(buffer, dataCall.args());
-    return Unit.unit();
-  }
-
-  @Override public Unit visitConCall(CallTerm.@NotNull Con conCall, @NotNull Buffer<Symbol> buffer) {
-    visitCall(conCall.ref(), sourcePosOf(conCall), buffer);
-    visitArgs(buffer, conCall.args());
-    return Unit.unit();
-  }
-
-  @Override public Unit visitStructCall(CallTerm.@NotNull Struct structCall, @NotNull Buffer<Symbol> buffer) {
-    visitCall(structCall.ref(), sourcePosOf(structCall), buffer);
-    visitArgs(buffer, structCall.args());
-    return Unit.unit();
-  }
-
-  @Override public Unit visitAccess(CallTerm.@NotNull Access term, @NotNull Buffer<Symbol> buffer) {
-    visitCall(term.ref(), sourcePosOf(term), buffer);
-    term.of().accept(this, buffer);
-    return Unit.unit();
   }
 
   // endregion
