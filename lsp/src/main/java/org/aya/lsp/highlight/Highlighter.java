@@ -19,7 +19,9 @@ import org.eclipse.lsp4j.Range;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
   Def.Visitor<@NotNull Buffer<Symbol>, Unit>,
@@ -97,7 +99,7 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
   }
 
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull Buffer<Symbol> buffer) {
-    for (var level : levels.levels()) buffer.append(new Symbol(LspRange.from(level._1), Symbol.Kind.Param));
+    for (var level : levels.levels()) buffer.append(new Symbol(LspRange.from(level._1), Symbol.Kind.Generalize));
     return Unit.unit();
   }
 
@@ -163,9 +165,22 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
     return Unit.unit();
   }
 
+  private Symbol.@NotNull Kind kindOf(@NotNull Decl.OpDecl opDecl) {
+    if (opDecl instanceof Decl.FnDecl) return Symbol.Kind.FnCall;
+    else if (opDecl instanceof Decl.StructDecl) return Symbol.Kind.StructCall;
+    else if (opDecl instanceof Decl.PrimDecl) return Symbol.Kind.PrimCall;
+    else if (opDecl instanceof Decl.DataCtor) return Symbol.Kind.ConCall;
+    else throw new IllegalArgumentException("Unsupported operator: " + opDecl.getClass().getName());
+  }
+
+  private void visitOperator(@NotNull Buffer<Symbol> buffer, @NotNull SourcePos sourcePos, @NotNull Ref<Decl.@Nullable OpDecl> ref) {
+    if (ref.value == null) return;
+    buffer.append(new Symbol(LspRange.from(sourcePos), kindOf(ref.value)));
+  }
+
   @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, @NotNull Buffer<Symbol> buffer) {
-    buffer.append(new Symbol(LspRange.from(bind.op().sourcePos()), Symbol.Kind.Operator));
-    buffer.append(new Symbol(LspRange.from(bind.target().sourcePos()), Symbol.Kind.Operator));
+    visitOperator(buffer, bind.op().sourcePos(), bind.resolvedOp());
+    visitOperator(buffer, bind.target().sourcePos(), bind.resolvedTarget());
     return Unit.unit();
   }
 

@@ -19,8 +19,7 @@ public record Symbol(
     FieldDef,
     PrimDef,
     // expressions
-    Param,
-    Operator,
+    Generalize,
     FnCall,
     DataCall,
     StructCall,
