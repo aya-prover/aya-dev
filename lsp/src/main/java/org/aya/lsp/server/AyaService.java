@@ -15,6 +15,7 @@ import org.aya.lsp.highlight.Highlighter;
 import org.aya.lsp.highlight.Symbol;
 import org.aya.lsp.language.HighlightResult;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.trace.Trace;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -50,19 +51,21 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public @NotNull HighlightResult loadFile(@NotNull String uri) {
     Log.d("Loading %s", uri);
     var reporter = new LspReporter();
-    var compiler = new SingleFileCompiler(reporter, libraryManager, null);
+    var trace = new Trace.Builder(MutableHashMap.of());
+    var compiler = new SingleFileCompiler(reporter, libraryManager, trace);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
       libraryManager.modulePath.view());
 
     var filePath = Path.of(URI.create(uri));
     var symbols = Buffer.<Symbol>of();
+    var highlighter = new Highlighter(trace);
     try {
       compiler.compile(filePath, compilerFlags,
-        stmts -> Highlighter.buildResolved(symbols, stmts),
+        stmts -> stmts.forEach(s -> s.accept(highlighter, symbols)),
         defs -> {
           libraryManager.loadedFiles.put(uri, defs);
-          Highlighter.buildTycked(symbols, defs);
+          defs.forEach(d -> d.accept(highlighter, symbols));
         });
     } catch (IOException e) {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());

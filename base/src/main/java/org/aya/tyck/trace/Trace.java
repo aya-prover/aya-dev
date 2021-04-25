@@ -34,9 +34,9 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   final class Builder extends GenericBuilder<Trace> {
     // This is used in language server for semantic syntax highlighting,
     // as we don't want to store SourcePos in core terms
-    public final @Nullable MutableHashMap<Term, Expr> termMap;
+    public final @Nullable MutableHashMap<Term, SourcePos> termMap;
 
-    public Builder(@NotNull MutableHashMap<Term, Expr> termMap) {
+    public Builder(@NotNull MutableHashMap<Term, SourcePos> termMap) {
       this.termMap = termMap;
     }
 
