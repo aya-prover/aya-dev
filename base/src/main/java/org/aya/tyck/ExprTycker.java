@@ -82,7 +82,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       builder.shift(new Trace.TyckT(result.wellTyped, result.type, expr.sourcePos()));
       builder.reduce();
       builder.reduce();
-      if (builder.termMap != null) builder.termMap.put(result.wellTyped, expr.sourcePos());
     });
   }
 
@@ -195,7 +194,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var telescopes = DataDef.Ctor.telescopes(conVar, level._2);
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(false, tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
-      return new Result(IntroTerm.Lambda.make(tele, telescopes.toConCall(conVar)), type);
+      var body = telescopes.toConCall(conVar);
+      tracing(builder -> builder.map(body, pos));
+      return new Result(IntroTerm.Lambda.make(tele, body), type);
     } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
@@ -232,6 +233,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       ctxTele.map(Term.Param::toArg),
       level._2,
       tele.map(Term.Param::toArg));
+    tracing(builder -> builder.map(body, pos));
     var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
     return new Result(IntroTerm.Lambda.make(tele, body), type);
   }
@@ -357,16 +359,16 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
     var from = expr.tup();
-    var projectee = from.accept(this, null);
     var result = expr.ix().fold(
-      ix -> visitProj(from, ix, projectee),
-      sp -> visitAccess(from, sp, projectee)
+      ix -> visitProj(from, ix),
+      sp -> visitAccess(from, sp._2, sp._1)
     );
     if (term != null) unifyTyThrowing(term, result.type, expr);
     return result;
   }
 
-  private Result visitAccess(Expr struct, String fieldName, Result projectee) {
+  private Result visitAccess(Expr struct, String fieldName, SourcePos accessPos) {
+    var projectee = struct.accept(this, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof CallTerm.Struct structCall))
       return wantButNo(struct, whnf, "struct type");
@@ -388,11 +390,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), levels._2,
       structCall.args(), tele.map(Term.Param::toArg));
+    tracing(builder -> builder.map(access, accessPos));
     return new Result(IntroTerm.Lambda.make(tele, access),
       FormTerm.Pi.make(false, tele, field.result().subst(structSubst, levels._1)));
   }
 
-  private Result visitProj(Expr tuple, int ix, Result projectee) {
+  private Result visitProj(Expr tuple, int ix) {
+    var projectee = tuple.accept(this, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof FormTerm.Sigma sigma && !sigma.co()))
       return wantButNo(tuple, whnf, "sigma type");

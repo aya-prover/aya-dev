@@ -44,6 +44,10 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
       this.termMap = null;
     }
 
+    public void map(@NotNull Term term, @NotNull SourcePos sourcePos) {
+      if (termMap != null) termMap.putIfAbsent(term, sourcePos);
+    }
+
     @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {
       return tops;
     }

@@ -274,7 +274,7 @@ public sealed interface Expr extends ConcreteExpr {
   record ProjExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
-    @NotNull Either<Integer, String> ix
+    @NotNull Either<Integer, Tuple2<SourcePos, String>> ix
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);

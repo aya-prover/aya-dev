@@ -14,12 +14,12 @@ import org.aya.util.StringEscapeUtil;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
+import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * @author ice1000, kiva
@@ -127,7 +127,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitProj(Expr.@NotNull ProjExpr expr, Boolean nestedCall) {
     return Doc.cat(expr.tup().toDoc(), Doc.plain("."), Doc.plain(expr.ix().fold(
-      Objects::toString, Function.identity()
+      Objects::toString, Tuple::component2
     )));
   }
 
