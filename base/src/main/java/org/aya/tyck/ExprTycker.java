@@ -82,6 +82,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       builder.shift(new Trace.TyckT(result.wellTyped, result.type, expr.sourcePos()));
       builder.reduce();
       builder.reduce();
+      if (builder.termMap != null) builder.termMap.put(result.wellTyped, expr);
     });
   }
 

@@ -9,6 +9,7 @@ import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
 import org.aya.generic.GenericBuilder;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -31,6 +32,18 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   final class Builder extends GenericBuilder<Trace> {
+    // This is used in language server for semantic syntax highlighting,
+    // as we don't want to store SourcePos in core terms
+    public final @Nullable MutableHashMap<Term, Expr> termMap;
+
+    public Builder(@NotNull MutableHashMap<Term, Expr> termMap) {
+      this.termMap = termMap;
+    }
+
+    public Builder() {
+      this.termMap = null;
+    }
+
     @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {
       return tops;
     }
