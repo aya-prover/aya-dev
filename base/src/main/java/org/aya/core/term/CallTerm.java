@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.Var;
@@ -34,8 +33,7 @@ public sealed interface CallTerm extends Term {
 
   @FunctionalInterface
   interface Factory<D extends Def, S extends Signatured> {
-    @Contract(pure = true, value = "_,_,_,_,_->new") @NotNull CallTerm make(
-      SourcePos sourcePos,
+    @Contract(pure = true, value = "_,_,_,_->new") @NotNull CallTerm make(
       DefVar<D, S> defVar,
       ImmutableSeq<@NotNull Arg<Term>> ctxArgs,
       ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
@@ -55,7 +53,6 @@ public sealed interface CallTerm extends Term {
   }
 
   record Fn(
-    @NotNull SourcePos sourcePos,
     @NotNull DefVar<FnDef, Decl.FnDecl> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
     @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
@@ -79,7 +76,6 @@ public sealed interface CallTerm extends Term {
   }
 
   record Prim(
-    @NotNull SourcePos sourcePos,
     @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args,
     @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs
@@ -103,7 +99,6 @@ public sealed interface CallTerm extends Term {
   }
 
   record Data(
-    @NotNull SourcePos sourcePos,
     @NotNull DefVar<DataDef, Decl.DataDecl> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
     @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
@@ -122,7 +117,7 @@ public sealed interface CallTerm extends Term {
     }
 
     public @NotNull ConHead conHead(@NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ctorRef) {
-      return new ConHead(sourcePos, ref, ctorRef, contextArgs, sortArgs, args);
+      return new ConHead(ref, ctorRef, contextArgs, sortArgs, args);
     }
   }
 
@@ -130,7 +125,6 @@ public sealed interface CallTerm extends Term {
    * @author kiva
    */
   record Struct(
-    @NotNull SourcePos sourcePos,
     @NotNull DefVar<StructDef, Decl.StructDecl> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
     @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
@@ -150,7 +144,6 @@ public sealed interface CallTerm extends Term {
   }
 
   record ConHead(
-    @NotNull SourcePos sourcePos,
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
@@ -158,7 +151,7 @@ public sealed interface CallTerm extends Term {
     @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs
   ) {
     public @NotNull Data underlyingDataCall() {
-      return new Data(sourcePos, dataRef, contextArgs, sortArgs, dataArgs);
+      return new Data(dataRef, contextArgs, sortArgs, dataArgs);
     }
   }
 
@@ -167,7 +160,6 @@ public sealed interface CallTerm extends Term {
     @NotNull ImmutableSeq<Arg<Term>> conArgs
   ) implements CallTerm {
     public Con(
-      @NotNull SourcePos sourcePos,
       @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
       @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> contextArgs,
@@ -175,7 +167,7 @@ public sealed interface CallTerm extends Term {
       @NotNull ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> conArgs
     ) {
-      this(new ConHead(sourcePos, dataRef, ref, contextArgs, sortArgs, dataArgs), conArgs);
+      this(new ConHead(dataRef, ref, contextArgs, sortArgs, dataArgs), conArgs);
     }
 
     @Override public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref() {
@@ -244,7 +236,6 @@ public sealed interface CallTerm extends Term {
    * @author ice1000
    */
   record Access(
-    @NotNull SourcePos sourcePos,
     @NotNull Term of,
     @NotNull DefVar<StructDef.Field, Decl.StructField> ref,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,

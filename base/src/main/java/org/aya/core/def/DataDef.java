@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.def;
 
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
@@ -114,8 +113,8 @@ public final record DataDef(
     @NotNull ImmutableSeq<Level<Sort.LvlVar>> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
-    public @NotNull CallTerm.Con toConCall(@NotNull SourcePos sourcePos, DefVar<Ctor, Decl.DataCtor> conVar) {
-      return new CallTerm.Con(sourcePos, fromCtor(conVar), conVar,
+    public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {
+      return new CallTerm.Con(fromCtor(conVar), conVar,
         ctxTele.map(Term.Param::toArg),
         dataTele.map(Term.Param::toArg),
         sortTele,

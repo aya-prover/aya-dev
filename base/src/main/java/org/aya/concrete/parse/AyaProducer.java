@@ -460,7 +460,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       projectee,
       number != null
         ? Either.left(Integer.parseInt(number.getText()))
-        : Either.right(Tuple.of(sourcePosOf(fix), fix.ID().getText()))
+        : Either.right(fix.ID().getText())
     );
   }
 

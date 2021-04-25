@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core;
 
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -57,7 +56,6 @@ public class TermDsl extends LispBaseVisitor<Term> {
       case "U" -> FormTerm.Univ.OMEGA;
       case "app" -> new ElimTerm.App(exprs.get(0).accept(this), Arg.explicit(exprs.get(1).accept(this)));
       case "fncall" -> new CallTerm.Fn(
-        SourcePos.NONE,
         (DefVar<FnDef, Decl.FnDecl>) ref(exprs.get(0).getText()),
         ImmutableSeq.of(),
         ImmutableSeq.of(),
