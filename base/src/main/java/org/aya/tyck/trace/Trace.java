@@ -45,16 +45,9 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
       this.termMap = null;
     }
 
-    public void map(@NotNull Term term, @NotNull SourcePos sourcePos) {
+    public void set(@NotNull Term term, @NotNull SourcePos sourcePos) {
       if (sourcePos == SourcePos.NONE) return;
       if (termMap != null) termMap.append(Tuple.of(term, sourcePos));
-    }
-
-    public @NotNull SourcePos getMap(@NotNull Term term) {
-      if (termMap == null) return SourcePos.NONE;
-      var f = termMap.find(t -> t._1 == term).getOrNull();
-      if (f != null) return f._2;
-      return SourcePos.NONE;
     }
 
     @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {

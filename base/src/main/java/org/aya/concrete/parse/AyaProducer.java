@@ -675,15 +675,17 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       ? Stmt.Accessibility.Private
       : Stmt.Accessibility.Public;
     var useHide = ctx.useHide();
-    var modName = visitModuleName(ctx.moduleName());
+    var modNameCtx = ctx.moduleName();
+    var namePos = sourcePosOf(modNameCtx);
+    var modName = visitModuleName(modNameCtx);
     var open = new Stmt.OpenStmt(
-      sourcePosOf(ctx.moduleName()),
+      namePos,
       accessibility,
       modName,
       useHide != null ? visitUseHide(useHide) : Stmt.OpenStmt.UseHide.EMPTY
     );
     if (ctx.IMPORT() != null) return ImmutableSeq.of(
-      new Stmt.ImportStmt(sourcePosOf(ctx.moduleName()), modName, null),
+      new Stmt.ImportStmt(namePos, modName, null),
       open
     );
     else return ImmutableSeq.of(open);
