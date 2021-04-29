@@ -336,7 +336,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         // TODO[ice]: number of args don't match
         throw new TyckerException();
       }
-      for (var t : telescope.view().zip(conField.bindings())) fieldSubst.good().put(t._2._2, t._1.ref());
+      for (var t : telescope.view().zip(conField.bindings())) fieldSubst.good().put(t._2.data(), t._1.ref());
       var field = localCtx.with(telescope, () -> conField.body()
         .accept(fieldSubst, Unit.unit())
         .accept(this, type).wellTyped);
@@ -361,7 +361,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var from = expr.tup();
     var result = expr.ix().fold(
       ix -> visitProj(from, ix),
-      sp -> visitAccess(from, sp._2, sp._1)
+      sp -> visitAccess(from, sp.data(), sp.sourcePos())
     );
     if (term != null) unifyTyThrowing(term, result.type, expr);
     return result;

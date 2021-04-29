@@ -4,13 +4,12 @@ package org.aya.tyck.trace;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
 import org.aya.generic.GenericBuilder;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -35,9 +34,9 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   final class Builder extends GenericBuilder<Trace> {
     // This is used in language server for semantic syntax highlighting,
     // as we don't want to store SourcePos in core terms
-    public final @Nullable Buffer<Tuple2<Term, SourcePos>> termMap;
+    public final @Nullable Buffer<WithPos<Term>> termMap;
 
-    public Builder(@NotNull Buffer<Tuple2<Term, SourcePos>> termMap) {
+    public Builder(@NotNull Buffer<WithPos<Term>> termMap) {
       this.termMap = termMap;
     }
 
@@ -47,7 +46,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
 
     public void set(@NotNull Term term, @NotNull SourcePos sourcePos) {
       if (sourcePos == SourcePos.NONE) return;
-      if (termMap != null) termMap.append(Tuple.of(term, sourcePos));
+      if (termMap != null) termMap.append(new WithPos<>(sourcePos, term));
     }
 
     @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {

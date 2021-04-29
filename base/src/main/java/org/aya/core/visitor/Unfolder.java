@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.api.util.WithPos;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
@@ -21,7 +21,6 @@ import org.glavo.kala.collection.Set;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.collection.mutable.MutableSet;
-import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var levelSubst = buildSubst(levelParams, levelArgs);
     var dropped = args.drop(conCall.contextArgs().size() + conCall.head().dataArgs().size());
     var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses());
-    return volynskaya != null ? volynskaya._1 : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
+    return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
   }
 
   static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<@NotNull Level<LvlVar>> levelArgs) {
@@ -71,7 +70,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
-    return volynskaya != null ? volynskaya._1 : new CallTerm.Fn(fnCall.ref(), fnCall.contextArgs(), fnCall.sortArgs(), args);
+    return volynskaya != null ? volynskaya.data() : new CallTerm.Fn(fnCall.ref(), fnCall.contextArgs(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
   checkAndBuildSubst(SeqView<Term.Param> fullTelescope, SeqLike<Arg<Term>> args) {
@@ -96,7 +95,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return body.subst(subst).accept(this, p);
   }
 
-  default @Nullable Tuple2<Term, SourcePos> tryUnfoldClauses(
+  default @Nullable WithPos<Term> tryUnfoldClauses(
     P p, SeqLike<Arg<Term>> args,
     Substituter.@NotNull TermSubst subst, LevelSubst levelSubst,
     @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
@@ -106,7 +105,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       if (termSubst != null) {
         subst.add(termSubst);
         var newBody = matchy.body().subst(subst, levelSubst).accept(this, p);
-        return Tuple2.of(newBody, matchy.sourcePos());
+        return new WithPos<>(matchy.sourcePos(), newBody);
       }
     }
     // Unfold failed
@@ -123,7 +122,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
       var dropped = args.drop(term.contextArgs().size() + term.structArgs().size());
       var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses());
-      return mischa != null ? mischa._1 : new CallTerm.Access(nevv, field,
+      return mischa != null ? mischa.data() : new CallTerm.Access(nevv, field,
         term.contextArgs(), term.sortArgs(), term.structArgs(), dropped);
     }
     var arguments = Unfolder.buildSubst(core.telescope(), term.args());

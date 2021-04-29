@@ -11,6 +11,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Assoc;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.*;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.resolve.error.RedefinitionError;
@@ -102,7 +103,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override public Generalize visitLevels(AyaParser.LevelsContext ctx) {
     var kind = ctx.HLEVEL() != null ? LevelGenVar.Kind.Homotopy : LevelGenVar.Kind.Universe;
     return new Generalize.Levels(sourcePosOf(ctx), kind, visitIds(ctx.ids())
-      .map(t -> Tuple.of(t._1, new LevelGenVar(kind, t._2)))
+      .map(t -> t.map(data -> new LevelGenVar(kind, data)))
       .collect(ImmutableSeq.factory()));
   }
 
@@ -257,7 +258,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public @NotNull Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(AyaParser.TeleMaybeTypedExprContext ctx) {
     var type = type(ctx.type(), sourcePosOf(ctx.ids()));
     return explicit -> visitIds(ctx.ids())
-      .map(v -> new Expr.Param(v._1, new LocalVar(v._2), type, explicit))
+      .map(v -> new Expr.Param(v.sourcePos(), new LocalVar(v.data()), type, explicit))
       .collect(ImmutableSeq.factory());
   }
 
@@ -290,7 +291,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       visitExpr(ctx.expr()),
       ImmutableSeq.from(ctx.newArg())
         .map(na -> new Expr.Field(na.ID().getText(), visitIds(na.ids())
-          .map(t -> Tuple.of(t._1, new LocalVar(t._2)))
+          .map(t -> t.map(LocalVar::new))
           .collect(ImmutableSeq.factory()), visitExpr(na.expr())))
     );
   }
@@ -460,7 +461,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       projectee,
       number != null
         ? Either.left(Integer.parseInt(number.getText()))
-        : Either.right(Tuple.of(sourcePosOf(fix), fix.ID().getText()))
+        : Either.right(new WithPos<>(sourcePosOf(fix), fix.ID().getText()))
     );
   }
 
@@ -469,7 +470,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
     checkRedefinition(RedefinitionError.Kind.Ctor,
-      body.view().map(ctor -> Tuple.of(ctor.ref.name(), ctor.sourcePos)));
+      body.view().map(ctor -> new WithPos<>(ctor.sourcePos, ctor.ref.name())));
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
       accessibility,
@@ -592,12 +593,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   private void checkRedefinition(@NotNull RedefinitionError.Kind kind,
-                                 @NotNull SeqLike<Tuple2<String, SourcePos>> names) {
+                                 @NotNull SeqLike<WithPos<String>> names) {
     var set = MutableHashSet.<String>of();
-    var redefs = names.view().filterNot(n -> set.add(n._1)).toImmutableSeq();
+    var redefs = names.view().filterNot(n -> set.add(n.data())).toImmutableSeq();
     if (redefs.isNotEmpty()) {
       var last = redefs.last();
-      reporter.report(new RedefinitionError(kind, last._1, last._2));
+      reporter.report(new RedefinitionError(kind, last.data(), last.sourcePos()));
       throw new ParsingInterruptedException();
     }
   }
@@ -607,7 +608,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var id = ctx.ID();
     var fields = visitFields(ctx.field());
     checkRedefinition(RedefinitionError.Kind.Field,
-      fields.view().map(field -> Tuple.of(field.ref.name(), field.sourcePos)));
+      fields.view().map(field -> new WithPos<>(field.sourcePos, field.ref.name())));
     return new Decl.StructDecl(
       sourcePosOf(id),
       accessibility,
@@ -725,8 +726,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override public @NotNull Stream<Tuple2<SourcePos, String>> visitIds(AyaParser.IdsContext ctx) {
-    return ctx.ID().stream().map(id -> Tuple.of(sourcePosOf(id), id.getText()));
+  @Override public @NotNull Stream<WithPos<String>> visitIds(AyaParser.IdsContext ctx) {
+    return ctx.ID().stream().map(id -> new WithPos<>(sourcePosOf(id), id.getText()));
   }
 
   @Override public @NotNull Stream<String> visitIdsComma(AyaParser.IdsCommaContext ctx) {

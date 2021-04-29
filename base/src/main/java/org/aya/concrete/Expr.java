@@ -9,6 +9,7 @@ import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
@@ -22,7 +23,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
-import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -274,7 +274,7 @@ public sealed interface Expr extends ConcreteExpr {
   record ProjExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
-    @NotNull Either<Integer, Tuple2<SourcePos, String>> ix
+    @NotNull Either<Integer, WithPos<String>> ix
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);
@@ -293,7 +293,7 @@ public sealed interface Expr extends ConcreteExpr {
 
   record Field(
     @NotNull String name,
-    @NotNull ImmutableSeq<Tuple2<SourcePos, LocalVar>> bindings,
+    @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
     @NotNull Expr body
   ) {
   }

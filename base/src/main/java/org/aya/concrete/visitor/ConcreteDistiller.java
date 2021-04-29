@@ -4,6 +4,7 @@ package org.aya.concrete.visitor;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Arg;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.*;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.generic.Matching;
@@ -14,8 +15,6 @@ import org.aya.util.StringEscapeUtil;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -127,7 +126,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitProj(Expr.@NotNull ProjExpr expr, Boolean nestedCall) {
     return Doc.cat(expr.tup().toDoc(), Doc.plain("."), Doc.plain(expr.ix().fold(
-      Objects::toString, Tuple::component2
+      Objects::toString, WithPos::data
     )));
   }
 
@@ -139,7 +138,7 @@ public final class ConcreteDistiller implements
       Doc.hsep(expr.fields().view().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t.name()),
           t.bindings().isEmpty() ? Doc.empty() :
-            Doc.join(Doc.plain(" "), t.bindings().map(v -> Doc.plain(v._2.name()))),
+            Doc.join(Doc.plain(" "), t.bindings().map(v -> Doc.plain(v.data().name()))),
           Doc.plain("=>"), t.body().toDoc())
       )),
       Doc.symbol(" }")
@@ -399,7 +398,7 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
-    var vars = levels.levels().map(Tuple2::getValue).map(t ->
+    var vars = levels.levels().map(WithPos::data).map(t ->
       Doc.linkDef(Doc.styled(CoreDistiller.GENERALIZED, t.name()), t.hashCode()));
     return Doc.hcat(
       Doc.styled(CoreDistiller.KEYWORD, levels.kind().keyword),

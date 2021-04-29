@@ -6,6 +6,7 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.SourcePos;
+import org.aya.api.util.WithPos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.core.def.Def;
@@ -25,7 +26,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableHashMap;
 import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -171,13 +171,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     }
   }
 
-  public record InlineHintProblem(@NotNull Problem owner, Tuple2<SourcePos, Doc> tup) implements Problem {
+  public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {
     @Override public @NotNull SourcePos sourcePos() {
-      return tup._1;
+      return docWithPos.sourcePos();
     }
 
     @Override public @NotNull Doc describe() {
-      return tup._2;
+      return docWithPos.data();
     }
 
     @Override public @NotNull Severity level() {

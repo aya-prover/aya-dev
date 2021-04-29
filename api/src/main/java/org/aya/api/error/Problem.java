@@ -2,13 +2,13 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.api.error;
 
+import org.aya.api.util.WithPos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Collectors;
@@ -41,7 +41,7 @@ public interface Problem {
   default @NotNull Doc hint() {
     return Doc.empty();
   }
-  default @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
+  default @NotNull SeqLike<WithPos<Doc>> inlineHints() {
     return ImmutableSeq.empty();
   }
 
@@ -52,8 +52,8 @@ public interface Problem {
       sourcePos.toSpan(),
       brief(),
       inlineHints().stream()
-        .collect(Collectors.groupingBy(t -> t._1,
-          Collectors.mapping(t -> t._2, Seq.factory())))
+        .collect(Collectors.groupingBy(WithPos::sourcePos,
+          Collectors.mapping(WithPos::data, Seq.factory())))
         .entrySet()
         .stream()
         .map(kv -> Tuple.of(kv.getKey().toSpan(), Doc.join(Doc.plain(", "), kv.getValue())))

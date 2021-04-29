@@ -84,10 +84,10 @@ public record Conquer(
       throw new ExprTycker.TyckInterruptedException();
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
-      .compare(newBody, volynskaya._1, signature.result().subst(matchy));
+      .compare(newBody, volynskaya.data(), signature.result().subst(matchy));
     if (!unification) {
       tycker.reporter.report(new ClausesProblem.Conditions(
-        sourcePos, nth + 1, i, newBody, volynskaya._1, conditionPos, currentClause.sourcePos(), volynskaya._2));
+        sourcePos, nth + 1, i, newBody, volynskaya.data(), conditionPos, currentClause.sourcePos(), volynskaya.sourcePos()));
       throw new ExprTycker.TyckInterruptedException();
     }
   }

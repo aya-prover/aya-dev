@@ -4,6 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
+import org.aya.api.util.WithPos;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
@@ -11,8 +12,6 @@ import org.aya.tyck.pat.PatTree;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,11 +49,11 @@ public sealed interface ClausesProblem extends Problem {
       );
     }
 
-    @Override public @NotNull SeqLike<Tuple2<SourcePos, Doc>> inlineHints() {
+    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
       var view = Seq.of(
-        Tuple.of(conditionPos, Doc.plain("relevant condition")),
-        Tuple.of(iPos, termToHint(lhs))).view();
-      return rhs == null ? view : view.concat(Seq.of(Tuple.of(jPos, termToHint(rhs))));
+        new WithPos<>(conditionPos, Doc.plain("relevant condition")),
+        new WithPos<>(iPos, termToHint(lhs))).view();
+      return rhs == null || jPos == null ? view : view.concat(Seq.of(new WithPos<>(jPos, termToHint(rhs))));
     }
   }
 
@@ -78,9 +77,9 @@ public sealed interface ClausesProblem extends Problem {
       );
     }
 
-    @Override public @NotNull Seq<Tuple2<SourcePos, Doc>> inlineHints() {
-      return Seq.of(Tuple.of(iPos, termToHint(lhs)),
-        Tuple.of(jPos, termToHint(rhs)));
+    @Override public @NotNull Seq<WithPos<Doc>> inlineHints() {
+      return Seq.of(new WithPos<>(iPos, termToHint(lhs)),
+        new WithPos<>(jPos, termToHint(rhs)));
     }
   }
 

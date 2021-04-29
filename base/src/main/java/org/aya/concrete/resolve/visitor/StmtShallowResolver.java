@@ -83,14 +83,16 @@ public final record StmtShallowResolver(@NotNull ModuleLoader loader)
   }
 
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull ModuleContext context) {
-    for (var level : levels.levels())
+    for (var level : levels.levels()) {
+      var genVar = level.data();
       context.addGlobal(
         Context.TOP_LEVEL_MOD_NAME,
-        level._2.name(),
+        genVar.name(),
         levels.accessibility(),
-        level._2,
-        level._1
+        genVar,
+        level.sourcePos()
       );
+    }
     return Unit.unit();
   }
 

@@ -99,7 +99,8 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
   }
 
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull Buffer<Symbol> buffer) {
-    for (var level : levels.levels()) buffer.append(new Symbol(LspRange.from(level._1), Symbol.Kind.Generalize));
+    for (var level : levels.levels())
+      buffer.append(new Symbol(LspRange.from(level.sourcePos()), Symbol.Kind.Generalize));
     return Unit.unit();
   }
 
@@ -109,8 +110,8 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
 
   public void visitCallTerms(@NotNull Buffer<Symbol> buffer) {
     if (traceBuilder.termMap != null) traceBuilder.termMap.forEach(t -> {
-      if (t._1 instanceof CallTerm callTerm && callTerm.ref() instanceof DefVar<?, ?> defVar)
-        visitCall(defVar, t._2, buffer);
+      if (t.data() instanceof CallTerm callTerm && callTerm.ref() instanceof DefVar<?, ?> defVar)
+        visitCall(defVar, t.sourcePos(), buffer);
     });
   }
 

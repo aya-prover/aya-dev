@@ -61,7 +61,7 @@ public final class ExprResolver implements ExprFixpoint<Context> {
   }
 
   @Override public Expr.@NotNull Field visitField(Expr.@NotNull Field t, Context context) {
-    for (var binding : t.bindings()) context = context.bind(binding._2, binding._1);
+    for (var binding : t.bindings()) context = context.bind(binding.data(), binding.sourcePos());
     return ExprFixpoint.super.visitField(t, context);
   }
 
