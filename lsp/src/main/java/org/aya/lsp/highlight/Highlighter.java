@@ -4,8 +4,10 @@ package org.aya.lsp.highlight;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Generalize;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
@@ -18,16 +20,18 @@ import org.aya.tyck.trace.Trace;
 import org.eclipse.lsp4j.Range;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
+import org.glavo.kala.tuple.Tuple;
+import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
+public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
+                          @NotNull Buffer<Tuple2<Pat, Pattern>> pats) implements Trace.Collector,
   Def.Visitor<@NotNull Buffer<Symbol>, Unit>,
   Stmt.Visitor<@NotNull Buffer<Symbol>, Unit>,
-  TermConsumer<@NotNull Buffer<Symbol>>,
-  Pat.Visitor<@NotNull Buffer<Symbol>, Unit> {
+  TermConsumer<@NotNull Buffer<Symbol>> {
 
   private @NotNull Range rangeOf(@NotNull Def def) {
     return LspRange.from(def.ref().concrete.sourcePos);
@@ -37,11 +41,18 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
     return LspRange.from(stmt.sourcePos());
   }
 
+  @Override public void collectTerm(@NotNull Term term, @NotNull SourcePos sourcePos) {
+    terms.append(new WithPos<>(sourcePos, term));
+  }
+
+  @Override public void collectPat(@NotNull Pat pat, @NotNull Pattern pattern) {
+    pats.append(Tuple.of(pat, pattern));
+  }
+
   // region def, data, struct, prim, levels
 
   private void visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> ms, @NotNull Buffer<Symbol> buffer) {
     ms.forEach(m -> {
-      m.patterns().forEach(p -> p.accept(this, buffer));
       m.body().accept(this, buffer);
     });
   }
@@ -69,7 +80,6 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
   @Override public Unit visitCtor(@NotNull DataDef.Ctor def, @NotNull Buffer<Symbol> buffer) {
     buffer.append(new Symbol(rangeOf(def), Symbol.Kind.ConDef));
     visitTele(def.conTele(), buffer);
-    def.pats().forEach(p -> p.accept(this, buffer));
     visitClauses(def.clauses(), buffer);
     return Unit.unit();
   }
@@ -109,7 +119,7 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
   // region call terms
 
   public void visitCallTerms(@NotNull Buffer<Symbol> buffer) {
-    if (traceBuilder.termMap != null) traceBuilder.termMap.forEach(t -> {
+    terms.forEach(t -> {
       if (t.data() instanceof CallTerm callTerm && callTerm.ref() instanceof DefVar<?, ?> defVar)
         visitCall(defVar, t.sourcePos(), buffer);
     });
@@ -128,24 +138,16 @@ public record Highlighter(Trace.@NotNull Builder traceBuilder) implements
   // endregion
 
   // region pattern
-  @Override public Unit visitBind(Pat.@NotNull Bind bind, @NotNull Buffer<Symbol> buffer) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, @NotNull Buffer<Symbol> buffer) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, @NotNull Buffer<Symbol> buffer) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, @NotNull Buffer<Symbol> buffer) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitPrim(Pat.@NotNull Prim prim, @NotNull Buffer<Symbol> buffer) {
-    return Unit.unit();
+  public void visitPatterns(@NotNull Buffer<Symbol> buffer) {
+    // [kiva]: keep an eye on PatTycker
+    pats.forEach(t -> {
+      if (t._2 instanceof Pattern.Ctor c) {
+        buffer.append(new Symbol(LspRange.from(c.name().sourcePos()), Symbol.Kind.ConCall));
+      } else if (t._2 instanceof Pattern.Bind p) {
+        if (t._1 instanceof Pat.Prim) buffer.append(new Symbol(LspRange.from(p.sourcePos()), Symbol.Kind.PrimCall));
+        else if (t._1 instanceof Pat.Ctor) buffer.append(new Symbol(LspRange.from(p.sourcePos()), Symbol.Kind.ConCall));
+      }
+    });
   }
   // endregion
 
