@@ -58,7 +58,7 @@ public record PatTycker(
   @Override public void traceExit(Pat pat, @NotNull Pattern pattern, Term term) {
     tracing(builder -> {
       builder.reduce();
-      builder.collect(pat, pattern);
+      builder.collect(pat, pattern.sourcePos());
     });
   }
 

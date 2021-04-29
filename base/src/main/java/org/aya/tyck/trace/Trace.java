@@ -37,7 +37,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
    */
   interface Collector {
     void collectTerm(@NotNull Term term, @NotNull SourcePos sourcePos);
-    void collectPat(@NotNull Pat pat, @NotNull Pattern pattern);
+    void collectPat(@NotNull Pat pat, @NotNull SourcePos sourcePos);
   }
 
   final class Builder extends GenericBuilder<Trace> {
@@ -55,8 +55,8 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
       if (collector != null) collector.collectTerm(term, sourcePos);
     }
 
-    public void collect(@NotNull Pat pat, @NotNull Pattern pattern) {
-      if (collector != null) collector.collectPat(pat, pattern);
+    public void collect(@NotNull Pat pat, @NotNull SourcePos sourcePos) {
+      if (collector != null) collector.collectPat(pat, sourcePos);
     }
 
     @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {

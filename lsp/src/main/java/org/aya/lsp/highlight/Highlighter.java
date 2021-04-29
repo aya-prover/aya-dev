@@ -7,7 +7,6 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Generalize;
-import org.aya.concrete.Pattern;
 import org.aya.concrete.Stmt;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
@@ -20,15 +19,13 @@ import org.aya.tyck.trace.Trace;
 import org.eclipse.lsp4j.Range;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
 import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
-                          @NotNull Buffer<Tuple2<Pat, Pattern>> pats) implements Trace.Collector,
+                          @NotNull Buffer<WithPos<Pat>> pats) implements Trace.Collector,
   Def.Visitor<@NotNull Buffer<Symbol>, Unit>,
   Stmt.Visitor<@NotNull Buffer<Symbol>, Unit>,
   TermConsumer<@NotNull Buffer<Symbol>> {
@@ -45,16 +42,14 @@ public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
     terms.append(new WithPos<>(sourcePos, term));
   }
 
-  @Override public void collectPat(@NotNull Pat pat, @NotNull Pattern pattern) {
-    pats.append(Tuple.of(pat, pattern));
+  @Override public void collectPat(@NotNull Pat pat, @NotNull SourcePos sourcePos) {
+    pats.append(new WithPos<>(sourcePos, pat));
   }
 
   // region def, data, struct, prim, levels
 
   private void visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> ms, @NotNull Buffer<Symbol> buffer) {
-    ms.forEach(m -> {
-      m.body().accept(this, buffer);
-    });
+    ms.forEach(m -> m.body().accept(this, buffer));
   }
 
   private void visitTele(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Buffer<Symbol> buffer) {
@@ -141,12 +136,9 @@ public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
   public void visitPatterns(@NotNull Buffer<Symbol> buffer) {
     // [kiva]: keep an eye on PatTycker
     pats.forEach(t -> {
-      if (t._2 instanceof Pattern.Ctor c) {
-        buffer.append(new Symbol(LspRange.from(c.name().sourcePos()), Symbol.Kind.ConCall));
-      } else if (t._2 instanceof Pattern.Bind p) {
-        if (t._1 instanceof Pat.Prim) buffer.append(new Symbol(LspRange.from(p.sourcePos()), Symbol.Kind.PrimCall));
-        else if (t._1 instanceof Pat.Ctor) buffer.append(new Symbol(LspRange.from(p.sourcePos()), Symbol.Kind.ConCall));
-      }
+      var range = LspRange.from(t.sourcePos());
+      if (t.data() instanceof Pat.Ctor) buffer.append(new Symbol(range, Symbol.Kind.ConCall));
+      if (t.data() instanceof Pat.Prim) buffer.append(new Symbol(range, Symbol.Kind.PrimCall));
     });
   }
   // endregion
