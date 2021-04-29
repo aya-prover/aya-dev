@@ -56,7 +56,10 @@ public record PatTycker(
   }
 
   @Override public void traceExit(Pat pat, @NotNull Pattern pattern, Term term) {
-    tracing(GenericBuilder::reduce);
+    tracing(builder -> {
+      builder.reduce();
+      builder.collect(pat, pattern);
+    });
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
@@ -184,7 +187,7 @@ public record PatTycker(
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
-    var realCtor = selectCtor(param, ctor.name(), subst.reporter(), ctor);
+    var realCtor = selectCtor(param, ctor.name().data(), subst.reporter(), ctor);
     if (realCtor == null) {
       subst.reporter().report(new PatternProblem.UnknownCtor(ctor));
       throw new ExprTycker.TyckInterruptedException();

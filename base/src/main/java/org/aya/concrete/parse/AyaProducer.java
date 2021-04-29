@@ -548,7 +548,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return (ex, as) -> new Pattern.Ctor(
       sourcePosOf(ctx),
       ex,
-      bind.bind().name(),
+      new WithPos<>(bind.sourcePos(), bind.bind().name()),
       atoms.view().drop(1).map(p -> p.apply(true)).collect(ImmutableSeq.factory()),
       as
     );

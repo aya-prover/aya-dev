@@ -193,7 +193,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitCtor(Pattern.@NotNull Ctor ctor, Boolean nestedCall) {
     var ctorDoc = Doc.cat(
-      Doc.styled(CoreDistiller.CON_CALL, ctor.name()),
+      Doc.styled(CoreDistiller.CON_CALL, ctor.name().data()),
       visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" "))
     );
     return CoreDistiller.ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());

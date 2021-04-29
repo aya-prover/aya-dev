@@ -4,9 +4,9 @@ package org.aya.tyck.trace;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
-import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.GenericBuilder;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -31,22 +31,32 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
-  final class Builder extends GenericBuilder<Trace> {
-    // This is used in language server for semantic syntax highlighting,
-    // as we don't want to store SourcePos in core terms
-    public final @Nullable Buffer<WithPos<Term>> termMap;
+  /**
+   * This is used in language server for semantic syntax highlighting,
+   * as we don't want to store SourcePos in core terms
+   */
+  interface Collector {
+    void collectTerm(@NotNull Term term, @NotNull SourcePos sourcePos);
+    void collectPat(@NotNull Pat pat, @NotNull Pattern pattern);
+  }
 
-    public Builder(@NotNull Buffer<WithPos<Term>> termMap) {
-      this.termMap = termMap;
+  final class Builder extends GenericBuilder<Trace> {
+    public final @Nullable Collector collector;
+
+    public Builder(@NotNull Collector collector) {
+      this.collector = collector;
     }
 
     public Builder() {
-      this.termMap = null;
+      this.collector = null;
     }
 
-    public void set(@NotNull Term term, @NotNull SourcePos sourcePos) {
-      if (sourcePos == SourcePos.NONE) return;
-      if (termMap != null) termMap.append(new WithPos<>(sourcePos, term));
+    public void collect(@NotNull Term term, @NotNull SourcePos sourcePos) {
+      if (collector != null) collector.collectTerm(term, sourcePos);
+    }
+
+    public void collect(@NotNull Pat pat, @NotNull Pattern pattern) {
+      if (collector != null) collector.collectPat(pat, pattern);
     }
 
     @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {

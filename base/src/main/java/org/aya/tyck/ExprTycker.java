@@ -195,7 +195,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(false, tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
       var body = telescopes.toConCall(conVar);
-      tracing(builder -> builder.set(body, pos));
+      tracing(builder -> builder.collect(body, pos));
       return new Result(IntroTerm.Lambda.make(tele, body), type);
     } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
@@ -233,7 +233,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       ctxTele.map(Term.Param::toArg),
       level._2,
       tele.map(Term.Param::toArg));
-    tracing(builder -> builder.set(body, pos));
+    tracing(builder -> builder.collect(body, pos));
     var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
     return new Result(IntroTerm.Lambda.make(tele, body), type);
   }
@@ -390,7 +390,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
       ctxTele.map(Term.Param::toArg), levels._2,
       structCall.args(), tele.map(Term.Param::toArg));
-    tracing(builder -> builder.set(access, accessPos));
+    tracing(builder -> builder.collect(access, accessPos));
     return new Result(IntroTerm.Lambda.make(tele, access),
       FormTerm.Pi.make(false, tele, field.result().subst(structSubst, levels._1)));
   }

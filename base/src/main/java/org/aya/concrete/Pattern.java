@@ -6,6 +6,7 @@ import org.aya.api.concrete.ConcretePat;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -102,7 +103,7 @@ public sealed interface Pattern extends ConcretePat {
   record Ctor(
     @NotNull SourcePos sourcePos,
     boolean explicit,
-    @NotNull String name,
+    @NotNull WithPos<String> name,
     @NotNull ImmutableSeq<Pattern> params,
     @Nullable LocalVar as
   ) implements Pattern {

@@ -4,6 +4,7 @@ package org.aya.tyck.pat;
 
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.Pattern;
 import org.aya.generic.GenericBuilder;
 import org.aya.pretty.doc.Doc;
@@ -26,7 +27,7 @@ public record PatTree(
 
   private @NotNull Pattern toPattern() {
     if (children.isEmpty()) return new Pattern.Bind(SourcePos.NONE, explicit, new LocalVar(s), new Ref<>());
-    return new Pattern.Ctor(SourcePos.NONE, explicit, s, children.view().map(PatTree::toPattern).toImmutableSeq(), null);
+    return new Pattern.Ctor(SourcePos.NONE, explicit, new WithPos<>(SourcePos.NONE, s), children.view().map(PatTree::toPattern).toImmutableSeq(), null);
   }
 
   @Override public @NotNull Doc toDoc() {
