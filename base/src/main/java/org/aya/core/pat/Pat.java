@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * @author kiva, ice1000
  */
@@ -127,6 +129,10 @@ public sealed interface Pat extends CorePat {
   ) {
     public static @NotNull PrototypeClause prototypify(@NotNull Matching<Pat, Term> clause) {
       return new PrototypeClause(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
+    }
+
+    public @NotNull PrototypeClause mapTerm(@NotNull Function<Term, Term> termMap) {
+      return new PrototypeClause(sourcePos, patterns, expr.map(termMap));
     }
 
     public static @NotNull Option<@NotNull Matching<Pat, Term>> deprototypify(@NotNull PrototypeClause clause) {

@@ -80,8 +80,7 @@ public record PatTycker(
       return elabClause;
     });
     exprTycker.equations.solve();
-    return Tuple.of(signature.value.result().zonk(exprTycker),
-      res.map(c -> new Pat.PrototypeClause(c.sourcePos(), c.patterns(), c.expr().map(e -> e.zonk(exprTycker)))));
+    return Tuple.of(signature.value.result().zonk(exprTycker), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker))));
   }
 
   @NotNull public ImmutableSeq<Pat.PrototypeClause> elabClauses(
@@ -93,7 +92,7 @@ public record PatTycker(
       return visitMatch(c, signature, cumulativeCtx.localMap());
     });
     exprTycker.equations.solve();
-    return checked.map(c -> new Pat.PrototypeClause(c.sourcePos(), c.patterns(), c.expr().map(e -> e.zonk(exprTycker))));
+    return checked.map(c -> c.mapTerm(e -> e.zonk(exprTycker)));
   }
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
