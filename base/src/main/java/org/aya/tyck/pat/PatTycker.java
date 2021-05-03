@@ -21,6 +21,7 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.GenericBuilder;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.LocalCtx;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.error.PatternProblem;
 import org.aya.tyck.trace.Trace;
@@ -66,7 +67,7 @@ public record PatTycker(
     this(exprTycker, new ExprRefSubst(exprTycker.reporter), exprTycker.traceBuilder);
   }
 
-  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClause(
+  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClauses(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     Ref<Def.@NotNull Signature> signature,
     @NotNull MutableMap<LocalVar, Term> cumulativeCtx
@@ -79,7 +80,20 @@ public record PatTycker(
       return elabClause;
     });
     exprTycker.equations.solve();
-    return Tuple.of(signature.value.result().zonk(exprTycker), res);
+    return Tuple.of(signature.value.result().zonk(exprTycker),
+      res.map(c -> new Pat.PrototypeClause(c.sourcePos(), c.patterns(), c.expr().map(e -> e.zonk(exprTycker)))));
+  }
+
+  @NotNull public ImmutableSeq<Pat.PrototypeClause> elabClauses(
+    @Nullable ExprRefSubst patSubst, Def.Signature signature,
+    LocalCtx cumulativeCtx, @NotNull ImmutableSeq<Pattern.Clause> clauses
+  ) {
+    var checked = clauses.map(c -> {
+      if (patSubst != null) subst().resetTo(patSubst);
+      return visitMatch(c, signature, cumulativeCtx.localMap());
+    });
+    exprTycker.equations.solve();
+    return checked.map(c -> new Pat.PrototypeClause(c.sourcePos(), c.patterns(), c.expr().map(e -> e.zonk(exprTycker))));
   }
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
@@ -99,9 +113,10 @@ public record PatTycker(
     var sig = new Ref<>(signature);
     exprTycker.localCtx = exprTycker.localCtx.derive();
     var patterns = visitPatterns(sig, match.patterns());
+    var type = sig.value.result();
     var result = match.expr()
       .map(e -> e.accept(subst, Unit.unit()))
-      .map(e -> exprTycker.checkExpr(e, sig.value.result()));
+      .map(e -> exprTycker.checkNoZonk(e, type));
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     cumulativeCtx.putAll(exprTycker.localCtx.localMap());

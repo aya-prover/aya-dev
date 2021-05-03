@@ -8,9 +8,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
-import org.aya.concrete.Pattern;
 import org.aya.concrete.Signatured;
-import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
@@ -123,7 +121,7 @@ public record StmtTycker(
     var signature = new Def.Signature(ImmutableSeq.of(), sortParam, tele, dataCall);
     ctor.signature = signature;
     var cumulativeCtx = tycker.localCtx.derive();
-    var elabClauses = elabClauses(patTycker, patSubst, signature, cumulativeCtx, ctor.clauses);
+    var elabClauses = patTycker.elabClauses(patSubst, signature, cumulativeCtx, ctor.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
@@ -140,16 +138,6 @@ public record StmtTycker(
     PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
     Conquer.against(matchings, ctx, tycker, pos, signature);
     tycker.equations.solve();
-  }
-
-  @NotNull private ImmutableSeq<Pat.PrototypeClause> elabClauses(
-    PatTycker patTycker, @Nullable ExprRefSubst patSubst, Def.Signature signature,
-    LocalCtx cumulativeCtx, @NotNull ImmutableSeq<Pattern.Clause> clauses
-  ) {
-    return clauses.map(c -> {
-      if (patSubst != null) patTycker.subst().resetTo(patSubst);
-      return patTycker.visitMatch(c, signature, cumulativeCtx.localMap());
-    });
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
@@ -181,7 +169,7 @@ public record StmtTycker(
     field.signature = new Def.Signature(ImmutableSeq.of(), structSig.sortParam(), tele, result);
     var cumulativeCtx = tycker.localCtx.derive();
     var patTycker = new PatTycker(tycker);
-    var elabClauses = elabClauses(patTycker, null, field.signature, cumulativeCtx, field.clauses);
+    var elabClauses = patTycker.elabClauses(null, field.signature, cumulativeCtx, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
     var elaborated = new StructDef.Field(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
@@ -202,7 +190,7 @@ public record StmtTycker(
     var cumulativeCtx = tycker.localCtx.derive();
     var what = FP.distR(decl.body.map(
       left -> tycker.checkExpr(left, resultRes).toTuple(),
-      right -> patTycker.elabClause(right, signature, cumulativeCtx.localMap())));
+      right -> patTycker.elabClauses(right, signature, cumulativeCtx.localMap())));
     var resultTy = what._1;
     var factory = FnDef.factory(body ->
       new FnDef(decl.ref, ctxTele, resultTele, signature.value.sortParam(), resultTy, body));
