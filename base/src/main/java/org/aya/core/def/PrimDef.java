@@ -53,13 +53,11 @@ public final record PrimDef(
 
   private static @NotNull Term invol(@NotNull CallTerm.Prim prim) {
     var arg = prim.args().get(0).term();
-    if (arg instanceof CallTerm.Prim primCall && primCall.ref() == LEFT.ref) {
-      return RIGHT_CALL;
-    } else if (arg instanceof CallTerm.Prim primCall && primCall.ref() == RIGHT.ref) {
-      return LEFT_CALL;
-    } else {
-      return prim;
+    if (arg instanceof CallTerm.Prim primCall) {
+      if (primCall.ref() == LEFT.ref) return RIGHT_CALL;
+      if (primCall.ref() == RIGHT.ref) return LEFT_CALL;
     }
+    return prim;
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
