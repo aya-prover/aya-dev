@@ -29,6 +29,7 @@ public sealed interface Stmt extends Docile
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
+  @Contract(mutates = "this")
   default void resolve(@NotNull BinOpSet opSet) {
     accept(StmtResolver.INSTANCE, opSet);
   }

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
+ * @apiNote used only in concrete syntax.
  */
 public record LevelGenVar(@NotNull Kind kind, @NotNull String name) implements Var {
   public enum Kind {

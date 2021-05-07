@@ -65,13 +65,13 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, BinOpSet opSet) {
-    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
+    var local = ExprResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
     for (var ctor : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
       ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
-      var ctorLocal = ExprResolver.INSTANCE.resolveParams(ctor.telescope, localCtxWithPat.value);
+      var ctorLocal = ExprResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
     }
@@ -79,12 +79,12 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, BinOpSet opSet) {
-    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
+    var local = ExprResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
 
     decl.fields.forEach(field -> {
-      var fieldLocal = ExprResolver.INSTANCE.resolveParams(field.telescope, local._2);
+      var fieldLocal = ExprResolver.resolveParams(field.telescope, local._2);
       field.telescope = fieldLocal._1;
       field.result = field.result.resolve(fieldLocal._2);
       field.body = field.body.map(e -> e.resolve(fieldLocal._2));
@@ -96,7 +96,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, BinOpSet opSet) {
-    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
+    var local = ExprResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.resolve(local._2);
     decl.body = decl.body.map(
@@ -106,7 +106,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, BinOpSet opSet) {
-    var local = ExprResolver.INSTANCE.resolveParams(decl.telescope, decl.ctx);
+    var local = ExprResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     if (decl.result != null) decl.result = decl.result.resolve(local._2);
     return Unit.unit();

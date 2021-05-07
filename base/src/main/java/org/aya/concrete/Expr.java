@@ -45,7 +45,7 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   default @NotNull Expr resolve(@NotNull Context context) {
-    return accept(ExprResolver.INSTANCE, context);
+    return accept(ExprResolver.BODIES, context);
   }
 
 
