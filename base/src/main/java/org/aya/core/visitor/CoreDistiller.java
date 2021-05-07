@@ -3,13 +3,16 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.generic.Level;
 import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -88,9 +91,13 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
-    return visitCalls(Doc.styled(KEYWORD, "Type"),
-      Seq.of(term.sort().hLevel(), term.sort().uLevel()).view().map(Arg::explicit),
-      (nest, t) -> t.toDoc(), nestedCall);
+    if (term.sort().hLevel() instanceof Level.Constant t) {
+      if (t.value() == 1) return Doc.hcat(Doc.styled(KEYWORD, "Prop"));
+      if (t.value() == 2) return Doc.hcat(Doc.styled(KEYWORD, "Set "), term.sort().uLevel().toDoc());
+    } else if (term.sort().hLevel() instanceof Level.Infinity t) {
+      return Doc.styled(KEYWORD, "ooType");
+    }
+    return Doc.hcat(Doc.styled(KEYWORD, "Type "), term.sort().hLevel().toDoc(), Doc.plain(" "), term.sort().uLevel().toDoc());
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
