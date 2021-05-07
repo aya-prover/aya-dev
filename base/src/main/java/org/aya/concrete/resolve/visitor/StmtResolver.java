@@ -11,6 +11,7 @@ import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Unit;
@@ -20,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Resolves expressions inside stmts, after {@link StmtShallowResolver}
  *
- * @author re-xyr, iec1000
+ * @author re-xyr, ice1000
+ * @see StmtShallowResolver
+ * @see ExprResolver
  */
 public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
@@ -52,9 +55,8 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     return Unit.unit();
   }
 
-  private @NotNull Tuple2<String, Decl.@NotNull OpDecl> resolveOp(@NotNull Reporter reporter,
-                                                                  @NotNull Context ctx,
-                                                                  @NotNull QualifiedID id) {
+  private @NotNull Tuple2<String, Decl.@NotNull OpDecl>
+  resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull QualifiedID id) {
     var var = ctx.get(id);
     if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof Decl.OpDecl op) {
       return Tuple.of(defVar.name(), op);
@@ -65,30 +67,34 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, BinOpSet opSet) {
-    var local = ExprResolver.resolveParams(decl.telescope, decl.ctx);
+    var signatureResolver = new ExprResolver(true, Buffer.of());
+    var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
-    decl.result = decl.result.resolve(local._2);
+    decl.result = decl.result.accept(signatureResolver, local._2);
+    var bodyResolver = new ExprResolver(false, signatureResolver.vars());
     for (var ctor : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
       ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
-      var ctorLocal = ExprResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
+      var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
-      ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2));
+      ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
     }
     return Unit.unit();
   }
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, BinOpSet opSet) {
-    var local = ExprResolver.resolveParams(decl.telescope, decl.ctx);
+    var signatureResolver = new ExprResolver(true, Buffer.of());
+    var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
-    decl.result = decl.result.resolve(local._2);
+    decl.result = decl.result.accept(signatureResolver, local._2);
 
+    var bodyResolver = new ExprResolver(false, signatureResolver.vars());
     decl.fields.forEach(field -> {
-      var fieldLocal = ExprResolver.resolveParams(field.telescope, local._2);
+      var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
       field.telescope = fieldLocal._1;
-      field.result = field.result.resolve(fieldLocal._2);
-      field.body = field.body.map(e -> e.resolve(fieldLocal._2));
-      field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2));
+      field.result = field.result.accept(bodyResolver, fieldLocal._2);
+      field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
+      field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
     });
 
     return Unit.unit();
@@ -96,19 +102,21 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, BinOpSet opSet) {
-    var local = ExprResolver.resolveParams(decl.telescope, decl.ctx);
+    var signatureResolver = new ExprResolver(true, Buffer.of());
+    var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
-    decl.result = decl.result.resolve(local._2);
+    decl.result = decl.result.accept(signatureResolver, local._2);
+    var bodyResolver = new ExprResolver(false, signatureResolver.vars());
     decl.body = decl.body.map(
-      expr -> expr.resolve(local._2),
-      pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2)));
+      expr -> expr.accept(bodyResolver, local._2),
+      pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
     return Unit.unit();
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, BinOpSet opSet) {
-    var local = ExprResolver.resolveParams(decl.telescope, decl.ctx);
+    var local = ExprResolver.NO_GENERALIZED.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
-    if (decl.result != null) decl.result = decl.result.resolve(local._2);
+    if (decl.result != null) decl.result = decl.result.accept(ExprResolver.NO_GENERALIZED, local._2);
     return Unit.unit();
   }
 

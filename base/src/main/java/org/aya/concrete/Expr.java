@@ -13,9 +13,6 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.resolve.context.EmptyContext;
-import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
@@ -42,15 +39,6 @@ public sealed interface Expr extends ConcreteExpr {
     var ret = doAccept(visitor, p);
     visitor.traceExit(ret, this, p);
     return ret;
-  }
-
-  default @NotNull Expr resolve(@NotNull Context context) {
-    return accept(ExprResolver.BODIES, context);
-  }
-
-
-  @Override default @NotNull Expr resolve(@NotNull Reporter reporter) {
-    return resolve(new EmptyContext(reporter));
   }
 
   @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {

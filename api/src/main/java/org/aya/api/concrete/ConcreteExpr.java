@@ -11,6 +11,5 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.NonExtendable
 public interface ConcreteExpr extends Docile {
   @NotNull SourcePos sourcePos();
-  @NotNull ConcreteExpr resolve(@NotNull Reporter reporter);
   @NotNull ConcreteExpr desugar(@NotNull Reporter reporter);
 }

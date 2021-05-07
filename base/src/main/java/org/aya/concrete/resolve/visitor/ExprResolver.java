@@ -3,12 +3,14 @@
 package org.aya.concrete.resolve.visitor;
 
 import org.aya.api.ref.LevelGenVar;
+import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
 import org.aya.concrete.visitor.ExprFixpoint;
-import org.aya.tyck.ExprTycker;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -16,21 +18,26 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Resolves bindings.
  *
+ * @param allowGeneralized true for signatures, false for bodies
  * @author re-xyr, ice1000
+ * @see StmtResolver
  */
-public record ExprResolver(boolean allowGeneralized) implements ExprFixpoint<Context> {
-  public static final @NotNull ExprResolver BODIES = new ExprResolver(false);
-  static final @NotNull ExprResolver SIGNATURES = new ExprResolver(true);
+record ExprResolver(boolean allowGeneralized, @NotNull Buffer<Var> vars) implements ExprFixpoint<Context> {
+  static final @NotNull ExprResolver NO_GENERALIZED = new ExprResolver(false, Buffer.of());
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
     var name = expr.name();
     var resolved = ctx.get(name);
-    if (!allowGeneralized && resolved instanceof LevelGenVar) {
-      // TODO: report error
-      throw new ExprTycker.TyckerException();
+    var refExpr = new Expr.RefExpr(sourcePos, resolved, name.justName());
+    if (resolved instanceof LevelGenVar) {
+      if (allowGeneralized) vars.append(resolved);
+      else if (!vars.contains(resolved)) {
+        ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
+        throw new Context.ResolvingInterruptedException();
+      }
     }
-    return new Expr.RefExpr(sourcePos, resolved, name.justName());
+    return refExpr;
   }
 
   public @NotNull Tuple2<Expr.Param, Context> visitParam(@NotNull Expr.Param param, Context ctx) {
@@ -43,12 +50,12 @@ public record ExprResolver(boolean allowGeneralized) implements ExprFixpoint<Con
   }
 
   @Contract(pure = true)
-  public static @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context>
+  public @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context>
   resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
     if (params.isEmpty()) return Tuple2.of(ImmutableSeq.of(), ctx);
     var first = params.first();
     var type = first.type();
-    type = type == null ? null : type.accept(SIGNATURES, ctx);
+    type = type == null ? null : type.accept(this, ctx);
     var newCtx = ctx.bind(first.ref(), first.sourcePos());
     var result = resolveParams(params.view().drop(1), newCtx);
     return Tuple2.of(
