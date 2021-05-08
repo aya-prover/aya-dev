@@ -3,7 +3,6 @@
 package org.aya.core.visitor;
 
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
@@ -91,13 +90,21 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
-    if (term.sort().hLevel() instanceof Level.Constant t) {
-      if (t.value() == 1) return Doc.hcat(Doc.styled(KEYWORD, "Prop"));
-      if (t.value() == 2) return Doc.hcat(Doc.styled(KEYWORD, "Set "), term.sort().uLevel().toDoc());
-    } else if (term.sort().hLevel() instanceof Level.Infinity t) {
-      return Doc.styled(KEYWORD, "ooType");
-    }
-    return Doc.hcat(Doc.styled(KEYWORD, "Type "), term.sort().hLevel().toDoc(), Doc.plain(" "), term.sort().uLevel().toDoc());
+    var sort = term.sort();
+    if (sort.hLevel() instanceof Level.Constant<Sort.LvlVar> t) {
+      if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel());
+      if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel());
+    } else if (sort.hLevel() instanceof Level.Infinity<Sort.LvlVar> t)
+      return univDoc(nestedCall, "ooType", sort.uLevel());
+    return visitCalls(Doc.styled(KEYWORD, "Type"),
+      Seq.of(sort.hLevel(), sort.uLevel()).view().map(Arg::explicit),
+      (nest, t) -> t.toDoc(), nestedCall);
+  }
+
+  public @NotNull Doc univDoc(Boolean nestedCall, String head, @NotNull Level<?> lvl) {
+    return visitCalls(Doc.styled(KEYWORD, head),
+      Seq.of(Arg.explicit(lvl)),
+      (nc, l) -> l.toDoc(), nestedCall);
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {

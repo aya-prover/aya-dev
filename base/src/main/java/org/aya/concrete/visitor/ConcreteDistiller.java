@@ -87,21 +87,14 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
     if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
-      if (t.value() == 1) return univDoc(expr, nestedCall, "Prop");
-      if (t.value() == 2) return univDoc(expr, nestedCall, "Set");
+      if (t.value() == 1) return CoreDistiller.INSTANCE.univDoc(nestedCall, "Prop", expr.uLevel());
+      if (t.value() == 2) return CoreDistiller.INSTANCE.univDoc(nestedCall, "Set", expr.uLevel());
     } else if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
-      return univDoc(expr, nestedCall, "ooType");
+      return CoreDistiller.INSTANCE.univDoc(nestedCall, "ooType", expr.uLevel());
     }
     return CoreDistiller.INSTANCE.visitCalls(
       Doc.styled(CoreDistiller.KEYWORD, "Type"),
-      Seq.of(Arg.explicit(expr.hLevel()), Arg.explicit(expr.uLevel())),
-      (nc, l) -> l.toDoc(), nestedCall);
-  }
-
-  @NotNull private Doc univDoc(Expr.@NotNull UnivExpr expr, Boolean nestedCall, String head) {
-    return CoreDistiller.INSTANCE.visitCalls(
-      Doc.styled(CoreDistiller.KEYWORD, head),
-      Seq.of(Arg.explicit(expr.uLevel())),
+      Seq.of(expr.hLevel(), expr.uLevel()).view().map(Arg::explicit),
       (nc, l) -> l.toDoc(), nestedCall);
   }
 
