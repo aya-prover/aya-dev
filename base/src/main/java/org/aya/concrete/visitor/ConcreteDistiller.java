@@ -77,12 +77,7 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Boolean nestedCall) {
-    return switch (expr.hLevel()) {
-      case 1 -> Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "Prop"), Doc.plain(String.valueOf(expr.uLevel())));
-      case 2 -> Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "Set"), Doc.plain(String.valueOf(expr.uLevel())));
-      case Expr.RawUnivExpr.INFINITY -> Doc.styled(CoreDistiller.KEYWORD, "ooType");
-      default -> Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "Type"), Doc.plain(String.valueOf(expr.hLevel())), Doc.plain(String.valueOf(expr.uLevel())));
-    };
+    return Doc.styled(CoreDistiller.KEYWORD, "Type");
   }
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {

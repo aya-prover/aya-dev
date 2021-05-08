@@ -232,7 +232,7 @@ public class ParseTest {
     parseAndPretty(
       "struct Very-Simple (A : Set) : Set | x : A | y : Nat",
       """
-        public struct Very-Simple (A : Set) : Set
+        public struct Very-Simple (A : Type) : Type
           | x : A
           | y : Nat
         """
@@ -244,8 +244,8 @@ public class ParseTest {
           | y : B zero
         """,
       """
-        public struct With-Tele (B : Pi (_ : Nat) -> Set) : Set
-          | x {X : Set} : Nat
+        public struct With-Tele (B : Pi (_ : Nat) -> Type) : Type
+          | x {X : Type} : Nat
           | y : B zero
         """
     );
@@ -257,13 +257,13 @@ public class ParseTest {
         def l : Set => \\ i => Nat
         """,
       """
-        public def l : Set => \\ (i : _) => Nat
+        public def l : Type => \\ (i : _) => Nat
         """);
     parseAndPretty("""
         def l : Set => \\ (i : I) => Nat
         """,
       """
-        public def l : Set => \\ (i : I) => Nat
+        public def l : Type => \\ (i : I) => Nat
         """);
   }
 
