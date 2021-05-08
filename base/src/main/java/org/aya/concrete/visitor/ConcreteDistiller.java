@@ -3,6 +3,7 @@
 package org.aya.concrete.visitor;
 
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LevelGenVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.*;
@@ -13,6 +14,7 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.aya.util.StringEscapeUtil;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Option;
@@ -75,24 +77,32 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Boolean nestedCall) {
-    if (expr.hLevel() == 1) {
-      return Doc.hcat(Doc.styled(CoreDistiller.KEYWORD,"Prop"));
-    } else if (expr.hLevel() == 2) {
-      return Doc.hcat(Doc.styled(CoreDistiller.KEYWORD,"Set "), Doc.plain(String.valueOf(expr.uLevel())));
-    } else if (expr.hLevel() == Expr.RawUnivExpr.INFINITY) {
-      return Doc.styled(CoreDistiller.KEYWORD,"ooType");
-    }
-    return Doc.hcat(Doc.styled(CoreDistiller.KEYWORD,"Type"), Doc.plain(String.valueOf(expr.hLevel())), Doc.plain(" "), Doc.plain(String.valueOf(expr.uLevel())));
+    return switch (expr.hLevel()) {
+      case 1 -> Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "Prop"), Doc.plain(String.valueOf(expr.uLevel())));
+      case 2 -> Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "Set"), Doc.plain(String.valueOf(expr.uLevel())));
+      case Expr.RawUnivExpr.INFINITY -> Doc.styled(CoreDistiller.KEYWORD, "ooType");
+      default -> Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "Type"), Doc.plain(String.valueOf(expr.hLevel())), Doc.plain(String.valueOf(expr.uLevel())));
+    };
   }
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
-    if (expr.hLevel() instanceof Level.Constant t) {
-      if (t.value() == 1) return Doc.hcat(Doc.styled(CoreDistiller.KEYWORD,"Prop"));
-      if (t.value() == 2) return Doc.hcat(Doc.styled(CoreDistiller.KEYWORD,"Set "), expr.uLevel().toDoc());
-    } else if (expr.hLevel() instanceof Level.Infinity t) {
-      return Doc.styled(CoreDistiller.KEYWORD,"ooType");
+    if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
+      if (t.value() == 1) return univDoc(expr, nestedCall, "Prop");
+      if (t.value() == 2) return univDoc(expr, nestedCall, "Set");
+    } else if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
+      return univDoc(expr, nestedCall, "ooType");
     }
-    return Doc.hcat(Doc.styled(CoreDistiller.KEYWORD,"Type"), expr.hLevel().toDoc(), Doc.plain(" "), expr.uLevel().toDoc());
+    return CoreDistiller.INSTANCE.visitCalls(
+      Doc.styled(CoreDistiller.KEYWORD, "Type"),
+      Seq.of(Arg.explicit(expr.hLevel()), Arg.explicit(expr.uLevel())),
+      (nc, l) -> l.toDoc(), nestedCall);
+  }
+
+  @NotNull private Doc univDoc(Expr.@NotNull UnivExpr expr, Boolean nestedCall, String head) {
+    return CoreDistiller.INSTANCE.visitCalls(
+      Doc.styled(CoreDistiller.KEYWORD, head),
+      Seq.of(Arg.explicit(expr.uLevel())),
+      (nc, l) -> l.toDoc(), nestedCall);
   }
 
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
