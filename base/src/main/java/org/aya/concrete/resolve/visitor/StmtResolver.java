@@ -71,7 +71,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.vars());
+    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels());
     for (var ctor : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
       ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
@@ -88,7 +88,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
 
-    var bodyResolver = new ExprResolver(false, signatureResolver.vars());
+    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels());
     decl.fields.forEach(field -> {
       var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
       field.telescope = fieldLocal._1;
@@ -106,7 +106,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.vars());
+    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels());
     decl.body = decl.body.map(
       expr -> expr.accept(bodyResolver, local._2),
       pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));

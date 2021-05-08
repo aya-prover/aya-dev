@@ -3,7 +3,6 @@
 package org.aya.concrete.resolve.visitor;
 
 import org.aya.api.ref.LevelGenVar;
-import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
@@ -19,10 +18,15 @@ import org.jetbrains.annotations.NotNull;
  * Resolves bindings.
  *
  * @param allowGeneralized true for signatures, false for bodies
+ * @param allowedLevels    will be filled with generalized level vars if allowGeneralized,
+ *                         and represents the allowed generalized level vars otherwise
  * @author re-xyr, ice1000
  * @see StmtResolver
  */
-record ExprResolver(boolean allowGeneralized, @NotNull Buffer<Var> vars) implements ExprFixpoint<Context> {
+record ExprResolver(
+  boolean allowGeneralized,
+  @NotNull Buffer<LevelGenVar> allowedLevels
+) implements ExprFixpoint<Context> {
   static final @NotNull ExprResolver NO_GENERALIZED = new ExprResolver(false, Buffer.of());
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
@@ -30,9 +34,9 @@ record ExprResolver(boolean allowGeneralized, @NotNull Buffer<Var> vars) impleme
     var name = expr.name();
     var resolved = ctx.get(name);
     var refExpr = new Expr.RefExpr(sourcePos, resolved, name.justName());
-    if (resolved instanceof LevelGenVar) {
-      if (allowGeneralized) vars.append(resolved);
-      else if (!vars.contains(resolved)) {
+    if (resolved instanceof LevelGenVar levelVar) {
+      if (allowGeneralized) allowedLevels.append(levelVar);
+      else if (!allowedLevels.contains(levelVar)) {
         ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
         throw new Context.ResolvingInterruptedException();
       }
