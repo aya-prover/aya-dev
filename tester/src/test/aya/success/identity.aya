@@ -1,2 +1,2 @@
 def id {A : Set} (a : A) : A => a
-def id2 {A : Set} : Pi A -> A => \ (a : A) => a
+def id2 {A : Set} : A -> A => \ (a : A) => a
