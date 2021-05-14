@@ -47,7 +47,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
         var args = expectArgs(expr, 1, false);
         var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term().expr());
-        return new Expr.UnivExpr(pos, new Level.Polymorphic<>(0), h);
+        return new Expr.UnivExpr(pos, new Level.Polymorphic(0), h);
       } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
     } else if (hLevel >= 0) {
       return withHomotopyLevel(expr, uLevel, pos, new Level.Constant<>(hLevel));
@@ -58,8 +58,8 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
           var h = levelVar(LevelGenVar.Kind.Homotopy, args.get(0).term().expr());
           var u = levelVar(LevelGenVar.Kind.Universe, args.get(1).term().expr());
           return new Expr.UnivExpr(pos, u, h);
-        } else return new Expr.UnivExpr(pos, new Level.Polymorphic<>(0), new Level.Polymorphic<>(0));
-      } else return withHomotopyLevel(expr, uLevel, pos, new Level.Polymorphic<>(0));
+        } else return new Expr.UnivExpr(pos, new Level.Polymorphic(0), new Level.Polymorphic(0));
+      } else return withHomotopyLevel(expr, uLevel, pos, new Level.Polymorphic(0));
     } else if (hLevel == Expr.RawUnivExpr.INFINITY) {
       return withHomotopyLevel(expr, uLevel, pos, new Level.Infinity<>());
     } else throw new IllegalStateException("Invalid hLevel: " + hLevel);
@@ -77,7 +77,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       return new Expr.UnivExpr(pos, u, h);
     } else if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
       var args = expectArgs(expr, 1, true);
-      return new Expr.UnivExpr(pos, args.isEmpty() ? new Level.Polymorphic<>(0)
+      return new Expr.UnivExpr(pos, args.isEmpty() ? new Level.Polymorphic(0)
         : levelVar(LevelGenVar.Kind.Universe, args.first().term().expr()), h);
     } else if (uLevel == Expr.RawUnivExpr.INFINITY) {
       expectArgs(expr, 0, false);

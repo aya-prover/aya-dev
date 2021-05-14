@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.generic;
 
+import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -27,13 +28,13 @@ public sealed interface Level<V extends Var> extends Docile {
    * Unlike {@link Reference}, this one is the implicit polymorphic level.
    * It is related to the underlying definition and are eliminated during tycking (becomes {@link Reference}).
    */
-  record Polymorphic<V extends Var>(int lift) implements Level<V> {
-    @Override public @NotNull Level<V> lift(int n) {
-      return new Polymorphic<>(lift + n);
+  record Polymorphic(int lift) implements Level<LevelGenVar> {
+    @Override public @NotNull Polymorphic lift(int n) {
+      return new Polymorphic(lift + n);
     }
 
-    @Override public @NotNull <Lvl extends Var> Level<Lvl> map(@NotNull Function<V, Lvl> map) {
-      return new Polymorphic<>(lift);
+    @Override public @NotNull <Lvl extends Var> Level<Lvl> map(@NotNull Function<LevelGenVar, Lvl> map) {
+      throw new UnsupportedOperationException();
     }
 
     @Override public @NotNull Doc toDoc() {

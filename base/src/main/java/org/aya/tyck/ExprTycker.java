@@ -145,15 +145,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     throw new TyckInterruptedException();
   }
 
-  private @NotNull Level<Sort.LvlVar> transformLevel(@NotNull Level<LevelGenVar> level) {
+  private @NotNull Level<Sort.LvlVar> transformLevel(@NotNull Level<LevelGenVar> level, Sort. LvlVar polymorphic) {
+    if (level instanceof Level.Polymorphic) return equations.markUsed(polymorphic);
     return level.map(v -> levelMapping.getOrPut(v, () -> new Sort.LvlVar(v.name(), v.kind(), null)));
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    var u = transformLevel(expr.uLevel());
-    if (u instanceof Level.Polymorphic<Sort.LvlVar>) u = equations.markUsed(universe);
-    var h = transformLevel(expr.hLevel());
-    if (h instanceof Level.Polymorphic<Sort.LvlVar>) h = equations.markUsed(homotopy);
+    var u = transformLevel(expr.uLevel(), universe);
+    var h = transformLevel(expr.hLevel(), homotopy);
     var sort = new Sort(u, h);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
     var normTerm = term.normalize(NormalizeMode.WHNF);
