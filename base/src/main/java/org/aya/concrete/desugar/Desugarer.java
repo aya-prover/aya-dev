@@ -100,6 +100,8 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       return new Level.Constant<>(uLit.integer());
     } else if (expr instanceof Expr.LSucExpr uSuc) {
       return levelVar(kind, uSuc.expr()).lift(1);
+    } else if (expr instanceof Expr.LMaxExpr uMax) {
+      return new Level.Maximum(uMax.levels().map(x -> levelVar(kind, x)));
     } else if (expr instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof LevelGenVar lv) {
       if (lv.kind() != kind) {
         reporter.report(new LevelProblem.BadLevelKind(ref, lv.kind()));

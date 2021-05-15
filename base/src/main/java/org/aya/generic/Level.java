@@ -4,8 +4,10 @@ package org.aya.generic;
 
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
+import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +41,21 @@ public sealed interface Level<V extends Var> extends Docile {
 
     @Override public @NotNull Doc toDoc() {
       return levelDoc(lift, "lp");
+    }
+  }
+
+  record Maximum(ImmutableSeq<Level<LevelGenVar>> among) implements Level<LevelGenVar> {
+    @Override public @NotNull Maximum lift(int n) {
+      return new Maximum(among.map(l -> l.lift(n)));
+    }
+
+    @Override public @NotNull <Lvl extends Var> Level<Lvl> map(@NotNull Function<LevelGenVar, Lvl> map) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public @NotNull Doc toDoc() {
+      return Doc.parened(Doc.hsep(among.map(Docile::toDoc)
+        .prepended(Doc.styled(CoreDistiller.KEYWORD, "max"))));
     }
   }
 
