@@ -2,11 +2,27 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.api.ref.DefVar;
+import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
+import org.aya.concrete.Decl;
+import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.sort.LevelSubst;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Unfolder;
+import org.aya.generic.Level;
+import org.aya.tyck.ExprTycker;
+import org.aya.tyck.error.HoleBadSpineWarn;
+import org.aya.tyck.error.RecursiveSolutionError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.Decision;
 import org.aya.util.Ordering;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableHashMap;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @apiNote Use {@link UntypedDefEq#compare(Term, Term)} instead of visiting directly!
  */
 public record UntypedDefEq(
-  @NotNull PatDefEq defeq, @NotNull Ordering cmp
+  @NotNull TypedDefEq defeq, @NotNull Ordering cmp
 ) implements Term.Visitor<@NotNull Term, @Nullable Term> {
   public @Nullable Term compare(@NotNull Term lhs, @NotNull Term rhs) {
     final var x = lhs.accept(this, rhs);
@@ -23,7 +39,7 @@ public record UntypedDefEq(
   }
 
   @Override public void traceEntrance(@NotNull Term lhs, @NotNull Term rhs) {
-    defeq.defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.defeq.pos));
+    defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.pos));
   }
 
   @Override public void traceExit(@Nullable Term term) {
@@ -32,8 +48,8 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs) {
     if (preRhs instanceof RefTerm rhs
-      && defeq.defeq.varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var()) {
-      return defeq.defeq.localCtx.get(rhs.var());
+      && defeq.varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var()) {
+      return defeq.localCtx.get(rhs.var());
     }
     return null;
   }
@@ -69,14 +85,53 @@ public record UntypedDefEq(
     return params.last().type();
   }
 
-  @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term preRhs) {
-    throw new IllegalStateException("No visitHole in UntypedDefEq");
+  private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
+    var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
+    var meta = lhs.ref().core();
+    for (var arg : lhs.args().view().zip(meta.telescope)) {
+      if (arg._1.term() instanceof RefTerm ref) {
+        // TODO[xyr]: do scope checking here
+        subst.add(ref.var(), new RefTerm(arg._2.ref()));
+        if (rhs == null) return null;
+      } else return null;
+      // TODO[ice]: ^ eta var
+    }
+    var correspondence = MutableHashMap.<Var, Term>of();
+    defeq.varSubst.forEach((k, v) -> correspondence.set(k, new RefTerm(v)));
+    return rhs.subst(subst.add(Unfolder.buildSubst(meta.contextTele, lhs.contextArgs())).add(new Substituter.TermSubst(correspondence)));
   }
 
+  @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs) {
+    var meta = lhs.ref().core();
+    if (rhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
+      var holeTy = FormTerm.Pi.make(false, meta.telescope, meta.result);
+      for (var arg : lhs.args().view().zip(rcall.args())) {
+        if (!(holeTy instanceof FormTerm.Pi holePi))
+          throw new IllegalStateException("meta arg size larger than param size. this should not happen");
+        if (!defeq.compare(arg._1.term(), arg._2.term(), holePi.param().type())) return null;
+        holeTy = holePi.substBody(arg._1.term());
+      }
+      return holeTy;
+    }
+    var solved = extract(lhs, rhs);
+    if (solved == null) {
+      defeq.tycker.reporter.report(new HoleBadSpineWarn(lhs, defeq.pos));
+      return null;
+    }
+    assert meta.body == null;
+    var ty = solved.synth(meta.contextTele);
+    if (ty != null) compare(ty, meta.result);
+    var success = meta.solve(lhs.ref(), solved);
+    if (!success) {
+      defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));
+      throw new ExprTycker.TyckInterruptedException();
+    }
+    return meta.result;
+  }
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
     if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi rhs)) return null;
-    return defeq.defeq.checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> null, () -> {
+    return defeq.checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> null, () -> {
       var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA);
       if (!bodyIsOk) return null;
       return FormTerm.Univ.OMEGA;
@@ -85,7 +140,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs) {
     if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Sigma rhs)) return null;
-    return defeq.defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
+    return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
       var bodyIsOk = defeq.compare(lhs.params().last().type(), rhs.params().last().type(), FormTerm.Univ.OMEGA);
       if (!bodyIsOk) return null;
       return FormTerm.Univ.OMEGA;
@@ -94,7 +149,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
     if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ rhs)) return null;
-    defeq.defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.defeq.pos);
+    defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
     return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ(1));
   }
 
@@ -110,31 +165,84 @@ public record UntypedDefEq(
     return unreachable();
   }
 
-  @Override public @NotNull Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
-    return unreachable();
+  @NotNull LevelSubst levels(
+    @NotNull DefVar<? extends Def, ? extends Decl> def,
+    ImmutableSeq<@NotNull Level<Sort.LvlVar>> l, ImmutableSeq<@NotNull Level<Sort.LvlVar>> r
+  ) {
+    var levelSubst = new LevelSubst.Simple(MutableMap.of());
+    for (var levels : l.zip(r).zip(Def.defLevels(def))) {
+      defeq.tycker.equations.add(levels._1._1, levels._1._2, cmp, defeq.pos);
+      levelSubst.solution().put(levels._2, levels._1._1);
+    }
+    return levelSubst;
+  }
+
+  @Override public @Nullable Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
+    var substMap = MutableMap.<Var, Term>of();
+    for (var pa : lhs.fullArgs().zip(lhs.ref().core.fullTelescope())) {
+      substMap.set(pa._2.ref(), pa._1.term());
+    }
+    var retType = lhs.ref().core.result().subst(substMap);
+    if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref()) {
+      if ((lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES) && defeq.compareWHNF(lhs, preRhs, retType))
+        return retType;
+      else return null;
+    }
+    // Lossy comparison
+    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return retType;
+    if (defeq.compareWHNF(lhs, rhs, retType)) return retType;
+    else return null;
   }
 
   @Override public @Nullable Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
     if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) return null;
-    var subst = defeq.levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    var args = defeq.defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
+    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    var args = defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
     // Do not need to be computed precisely because unification won't need this info
     return args ? FormTerm.Univ.OMEGA : null;
   }
 
   @Override public @Nullable Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
     if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) return null;
-    var subst = defeq.levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    var args = defeq.defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
+    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    var args = defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
     return args ? FormTerm.Univ.OMEGA : null;
   }
 
-  @Override public @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, @NotNull Term term) {
-    return unreachable();
+  @Override public @Nullable Term visitPrimCall(CallTerm.@NotNull Prim lhs, @NotNull Term preRhs) {
+    var substMap = MutableMap.<Var, Term>of();
+    for (var pa : lhs.fullArgs().zip(lhs.ref().core.fullTelescope())) {
+      substMap.set(pa._2.ref(), pa._1.term());
+    }
+    var retType = lhs.ref().core.result().subst(substMap);
+    if (!(preRhs instanceof CallTerm.Prim rhs) || lhs.ref() != rhs.ref()) {
+      if ((lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES) && defeq.compareWHNF(lhs, preRhs, retType))
+        return retType;
+      else return null;
+    }
+    // Lossy comparison
+    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return retType;
+    if (defeq.compareWHNF(lhs, rhs, retType)) return retType;
+    else return null;
   }
 
-  @Override public @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, @NotNull Term term) {
-    return unreachable();
+  @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs) {
+    var substMap = MutableMap.<Var, Term>of();
+    for (var pa : lhs.fullArgs().zip(lhs.ref().core.fullTelescope())) {
+      substMap.set(pa._2.ref(), pa._1.term());
+    }
+    var retType = lhs.ref().core.result().subst(substMap);
+    if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) {
+      if ((lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES) && defeq.compareWHNF(lhs, preRhs, retType))
+        return retType;
+      else return null;
+    }
+    // Lossy comparison
+    var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
+    if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), subst))) return retType;
+    return null;
   }
 
   @Override public @NotNull Term visitLam(@NotNull IntroTerm.Lambda lhs, @NotNull Term preRhs) {

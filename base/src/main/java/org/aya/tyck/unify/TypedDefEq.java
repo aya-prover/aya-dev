@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
   protected final @NotNull MutableMap<@NotNull LocalVar, @NotNull LocalVar> varSubst = new MutableHashMap<>();
   public final @NotNull LocalCtx localCtx;
-  private final @NotNull PatDefEq termDefeq;
+  private final @NotNull UntypedDefEq termDefeq;
   public final @NotNull ExprTycker tycker;
   public final @NotNull SourcePos pos;
 
@@ -55,7 +55,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     this.localCtx = localCtx;
     this.tycker = tycker;
     this.pos = pos;
-    this.termDefeq = new PatDefEq(this, cmp);
+    this.termDefeq = new UntypedDefEq(this, cmp);
   }
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
@@ -103,7 +103,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitRef(@NotNull RefTerm type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   @Override public @NotNull Boolean visitLam(@NotNull IntroTerm.Lambda type, @NotNull Term lhs, @NotNull Term rhs) {
@@ -111,19 +111,19 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitUniv(@NotNull FormTerm.Univ type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   @Override public @NotNull Boolean visitApp(@NotNull ElimTerm.App type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   @Override public @NotNull Boolean visitFnCall(@NotNull CallTerm.Fn type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   @Override public @NotNull Boolean visitDataCall(@NotNull CallTerm.Data type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   @Override
@@ -149,7 +149,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitPrimCall(CallTerm.@NotNull Prim type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   public @NotNull Boolean visitConCall(@NotNull CallTerm.Con type, @NotNull Term lhs, @NotNull Term rhs) {
@@ -165,15 +165,15 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitProj(@NotNull ElimTerm.Proj type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   @Override public @NotNull Boolean visitAccess(@NotNull CallTerm.Access type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   @Override public @NotNull Boolean visitHole(CallTerm.@NotNull Hole type, @NotNull Term lhs, @NotNull Term rhs) {
-    return termDefeq.compare(lhs, rhs, type);
+    return termDefeq.compare(lhs, rhs) != null;
   }
 
   /**
