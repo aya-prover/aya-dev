@@ -4,7 +4,6 @@ package org.aya.core.visitor;
 
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
-import org.aya.util.Decision;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,12 +14,10 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
   }
 
   @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {
-    var fn = term.of();
-    if (term.whnf() == Decision.YES) {
-      if (mode != NormalizeMode.NF) return term;
-      else return CallTerm.make(fn, visitArg(term.arg(), mode));
-    }
-    return CallTerm.make(fn.accept(this, mode), term.arg()).accept(this, mode);
+    var fn = term.of().accept(this, mode);
+    if (fn instanceof IntroTerm.Lambda || mode == NormalizeMode.NF)
+      return CallTerm.make(fn, visitArg(term.arg(), mode));
+    else return term;
   }
 
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, NormalizeMode mode) {
