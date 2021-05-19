@@ -91,17 +91,18 @@ public final class CoreDistiller implements
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
     var sort = term.sort();
-    if (sort.hLevel() instanceof Level.Constant<Sort.LvlVar> t) {
+    var onlyH = sort.onlyH();
+    if (onlyH instanceof Level.Constant<Sort.LvlVar> t) {
       if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel());
       if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel());
-    } else if (sort.hLevel() instanceof Level.Infinity<Sort.LvlVar> t)
+    } else if (onlyH instanceof Level.Infinity<Sort.LvlVar> t)
       return univDoc(nestedCall, "ooType", sort.uLevel());
     return visitCalls(Doc.styled(KEYWORD, "Type"),
       Seq.of(sort.hLevel(), sort.uLevel()).view().map(Arg::explicit),
       (nest, t) -> t.toDoc(), nestedCall);
   }
 
-  public @NotNull Doc univDoc(Boolean nestedCall, String head, @NotNull Level<?> lvl) {
+  public @NotNull Doc univDoc(Boolean nestedCall, String head, @NotNull Docile lvl) {
     return visitCalls(Doc.styled(KEYWORD, head),
       Seq.of(Arg.explicit(lvl)),
       (nc, l) -> l.toDoc(), nestedCall);

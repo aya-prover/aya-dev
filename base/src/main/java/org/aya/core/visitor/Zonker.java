@@ -8,15 +8,12 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.LevelMismatchError;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import static org.aya.core.sort.Sort.constant;
 
 /**
  * Instantiates holes (assuming all holes are solved).
@@ -47,10 +44,8 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
     return sol.body.accept(this, Unit.unit());
   }
 
-  @Override public @NotNull Level<Sort.LvlVar> visitLevel(@NotNull Level<Sort.LvlVar> sort, Unit unit) {
+  @Override public @NotNull Sort.CoreLevel visitLevel(@NotNull Sort.CoreLevel sort, Unit unit) {
     sort = tycker.equations.applyTo(sort);
-    sort = !(sort instanceof Level.Reference<Sort.LvlVar> ref) || tycker.equations.constraints(ref.ref())
-      ? sort : constant(ref.ref().kind().defaultValue);
     var sourcePos = Sort.unsolvedPos(sort);
     if (sourcePos != null) return reportLevelSolverError(sourcePos);
     else return sort;

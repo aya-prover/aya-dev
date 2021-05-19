@@ -58,8 +58,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull LevelEqnSet equations;
-  private final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
-  private final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
+  public final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
+  public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.of();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -72,7 +72,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
     return Seq.of(homotopy, universe).view()
-      .filter(equations::constraints)
+      .filter(equations::used)
       .appendedAll(levelMapping.valuesView())
       .toImmutableSeq();
   }
@@ -145,9 +145,17 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     throw new TyckInterruptedException();
   }
 
-  private @NotNull Level<Sort.LvlVar> transformLevel(@NotNull Level<LevelGenVar> level, Sort. LvlVar polymorphic) {
+  private @NotNull Sort.CoreLevel transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
     if (level instanceof Level.Polymorphic) return equations.markUsed(polymorphic);
-    return level.map(v -> levelMapping.getOrPut(v, () -> new Sort.LvlVar(v.name(), v.kind(), null)));
+    if (level instanceof Level.Maximum m)
+      return Sort.CoreLevel.merge(m.among().map(l -> transformLevel(l, polymorphic)));
+    Level<Sort.LvlVar> core;
+    if (level instanceof Level.Reference<LevelGenVar> v)
+      core = new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), v.ref().kind(), null)));
+    else if (level instanceof Level.Infinity<LevelGenVar>) core = new Level.Infinity<>();
+    else if (level instanceof Level.Constant<LevelGenVar> c) core = new Level.Constant<>(c.value());
+    else throw new IllegalArgumentException(level.toString());
+    return new Sort.CoreLevel(core);
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
@@ -237,16 +245,16 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(IntroTerm.Lambda.make(tele, body), type);
   }
 
-  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Level<Sort.LvlVar>>>
+  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort.CoreLevel>>
   levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
     var levelSubst = new LevelSubst.Simple(MutableMap.of());
     var levelVars = Def.defLevels(defVar).map(v -> {
       var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), v.kind(), pos);
-      levelSubst.solution().put(v, new Level.Reference<>(lvlVar));
+      levelSubst.solution().put(v, new Sort.CoreLevel(new Level.Reference<>(lvlVar)));
       return lvlVar;
     });
     equations.vars().appendAll(levelVars);
-    return Tuple.of(levelSubst, levelVars.map(Level.Reference::new));
+    return Tuple.of(levelSubst, levelVars.map(Level.Reference::new).map(Sort.CoreLevel::new));
   }
 
   private boolean unifyTy(Term upper, Term lower, @NotNull SourcePos pos) {

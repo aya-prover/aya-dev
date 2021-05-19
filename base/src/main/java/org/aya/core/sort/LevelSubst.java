@@ -16,16 +16,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface LevelSubst {
   boolean isEmpty();
-  @NotNull Option<Level<Sort.LvlVar>> get(@NotNull Sort.LvlVar var);
+  @NotNull Option<Sort.CoreLevel> get(@NotNull Sort.LvlVar var);
   @NotNull LevelSubst subst(@NotNull LevelSubst subst);
   @NotNull LevelSubst EMPTY = new Simple(MutableTreeMap.of((o1, o2) -> {
     throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
   }));
 
-  default @NotNull Level<Sort.LvlVar> applyTo(@NotNull Level<Sort.LvlVar> lvl) {
+  default @NotNull Sort.CoreLevel applyTo(@NotNull Level<Sort.LvlVar> lvl) {
     if (lvl instanceof Level.Reference<Sort.LvlVar> ref)
-      return get(ref.ref()).map(n -> n.lift(ref.lift())).getOrDefault(ref);
-    else return lvl;
+      return get(ref.ref()).map(n -> n.lift(ref.lift())).getOrDefault(new Sort.CoreLevel(ref));
+    else return new Sort.CoreLevel(lvl);
+  }
+
+  default @NotNull Sort.CoreLevel applyTo(@NotNull Sort.CoreLevel lvl) {
+    return Sort.CoreLevel.merge(lvl.levels().map(this::applyTo));
   }
 
   default @NotNull LevelEqnSet.Eqn applyTo(@NotNull LevelEqnSet.Eqn eqn) {
@@ -34,17 +38,17 @@ public interface LevelSubst {
     return lhs == eqn.lhs() && rhs == eqn.rhs() ? eqn : new LevelEqnSet.Eqn(lhs, rhs, eqn.cmp(), eqn.sourcePos());
   }
 
-  record Simple(@NotNull MutableMap<Sort.@NotNull LvlVar, @NotNull Level<Sort.LvlVar>> solution) implements Default {
+  record Simple(@NotNull MutableMap<Sort.@NotNull LvlVar, Sort.@NotNull CoreLevel> solution) implements Default {
   }
 
   interface Default extends LevelSubst {
-    @NotNull MutableMap<Sort.@NotNull LvlVar, @NotNull Level<Sort.LvlVar>> solution();
+    @NotNull MutableMap<Sort.@NotNull LvlVar, Sort.@NotNull CoreLevel> solution();
 
     @Override default boolean isEmpty() {
       return solution().isEmpty();
     }
 
-    @Override default @NotNull Option<Level<Sort.@NotNull LvlVar>> get(@NotNull Sort.LvlVar var) {
+    @Override default @NotNull Option<Sort.CoreLevel> get(@NotNull Sort.LvlVar var) {
       return solution().getOption(var);
     }
 

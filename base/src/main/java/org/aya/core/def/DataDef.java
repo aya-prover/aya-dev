@@ -8,7 +8,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Level;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +80,7 @@ public final record DataDef(
      * @return first component: data's telescope, second component: con telescope
      */
     public static @NotNull CtorTelescopes
-    telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar, ImmutableSeq<Level<Sort.LvlVar>> sort) {
+    telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar, ImmutableSeq<Sort.CoreLevel> sort) {
       var core = defVar.core;
       if (core != null) {
         var dataDef = core.dataRef.core;
@@ -110,7 +109,7 @@ public final record DataDef(
   public static record CtorTelescopes(
     @NotNull ImmutableSeq<Term.Param> ctxTele,
     @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<Level<Sort.LvlVar>> sortTele,
+    @NotNull ImmutableSeq<Sort.CoreLevel> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {

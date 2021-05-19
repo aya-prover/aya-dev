@@ -9,7 +9,6 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
-import org.aya.generic.Level;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +60,7 @@ public record LittleTyper(@NotNull ImmutableSeq<Term.Param> context) implements 
   }
 
   @NotNull
-  private Term defCall(DefVar<? extends Def, ? extends Decl> ref, ImmutableSeq<@NotNull Level<Sort.LvlVar>> sortArgs) {
+  private Term defCall(DefVar<? extends Def, ? extends Decl> ref, ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs) {
     var levels = Def.defLevels(ref);
     return Def.defResult(ref).subst(Substituter.TermSubst.EMPTY, Unfolder.buildSubst(levels, sortArgs));
   }

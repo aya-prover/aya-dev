@@ -5,7 +5,11 @@ package org.aya.core.sort;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
+import org.aya.core.visitor.CoreDistiller;
 import org.aya.generic.Level;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,12 +21,25 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public record Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel) {
+public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
+  public Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel) {
+    this(new CoreLevel(uLevel), new CoreLevel(hLevel));
+  }
+
   public static final @NotNull Level<LvlVar> INF_LVL = new Level.Infinity<>();
   public static final @NotNull Sort OMEGA = new Sort(INF_LVL, INF_LVL);
 
-  public static @Nullable SourcePos unsolvedPos(@NotNull Level<LvlVar> lvl) {
+  public @Nullable Level<LvlVar> onlyH() {
+    if (uLevel.levels.sizeEquals(1)) return uLevel.levels.first();
+    else return null;
+  }
+
+  private static @Nullable SourcePos unsolvedPos(@NotNull Level<LvlVar> lvl) {
     return lvl instanceof Level.Reference<LvlVar> ref ? ref.ref().pos : null;
+  }
+
+  public static @Nullable SourcePos unsolvedPos(@NotNull CoreLevel lvl) {
+    return lvl.levels().view().mapNotNull(Sort::unsolvedPos).firstOrNull();
   }
 
   public @Nullable SourcePos unsolvedPos() {
@@ -44,22 +61,8 @@ public record Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel)
     return new Sort(max(uLevel, other.uLevel), max(hLevel, other.hLevel));
   }
 
-  public static @NotNull Level<LvlVar> max(@NotNull Level<LvlVar> lhs, @NotNull Level<LvlVar> rhs) {
-    if (lhs instanceof Level.Infinity || rhs instanceof Level.Infinity) return INF_LVL;
-    if (lhs instanceof Level.Reference<LvlVar> l) {
-      if (rhs instanceof Level.Reference<LvlVar> r) {
-        if (l.ref() == r.ref()) return new Level.Reference<>(l.ref(), Math.max(l.lift(), r.lift()));
-      } else if (rhs instanceof Level.Constant<LvlVar> r) {
-        if (r.value() <= l.lift()) return l;
-      }
-    } else if (lhs instanceof Level.Constant<LvlVar> l) {
-      if (rhs instanceof Level.Reference<LvlVar> r) {
-        if (l.value() <= r.lift()) return r;
-      } else if (rhs instanceof Level.Constant<LvlVar> r) {
-        return new Level.Constant<>(Math.max(l.value(), r.value()));
-      }
-    }
-    throw new UnsupportedOperationException("TODO: lmax");
+  public static @NotNull CoreLevel max(@NotNull CoreLevel lhs, @NotNull CoreLevel rhs) {
+    return new CoreLevel(lhs.levels().appendedAll(rhs.levels()));
   }
 
   @Contract("_-> new") public @NotNull Sort succ(int n) {
@@ -87,6 +90,34 @@ public record Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel)
 
     public boolean free() {
       return pos != null;
+    }
+  }
+
+  /**
+   * @param levels nonempty
+   * @author ice1000
+   */
+  public static record CoreLevel(
+    @NotNull ImmutableSeq<Level<LvlVar>> levels
+  ) implements Docile {
+    public CoreLevel(@NotNull Level<LvlVar> level) {
+      this(ImmutableSeq.of(level));
+    }
+
+    public static @NotNull CoreLevel merge(@NotNull ImmutableSeq<CoreLevel> levels) {
+      if (levels.sizeEquals(1)) return levels.first();
+      return new CoreLevel(levels.flatMap(CoreLevel::levels));
+    }
+
+    public @NotNull CoreLevel lift(int n) {
+      return new CoreLevel(levels.map(l -> l.lift(n)));
+    }
+
+    @Override public @NotNull Doc toDoc() {
+      return levels.sizeEquals(1) ? levels.first().toDoc() : Doc.hsep(
+        Doc.styled(CoreDistiller.KEYWORD, "lmax"),
+        Doc.hsep(levels.map(Docile::toDoc))
+      );
     }
   }
 }

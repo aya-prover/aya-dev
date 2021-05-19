@@ -109,6 +109,12 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return sort;
   }
 
+  default @NotNull Sort.CoreLevel visitLevel(@NotNull Sort.CoreLevel sort, P p) {
+    var levels = sort.levels().map(l -> visitLevel(l, p));
+    if (levels.sameElements(sort.levels(), true)) return sort;
+    return new Sort.CoreLevel(levels);
+  }
+
   @Override default @NotNull Term visitApp(@NotNull ElimTerm.App term, P p) {
     var function = term.of().accept(this, p);
     var arg = visitArg(term.arg(), p);

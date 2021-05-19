@@ -9,11 +9,11 @@ import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.sort.LevelSubst;
+import org.aya.core.sort.Sort;
 import org.aya.core.sort.Sort.LvlVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Level;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.SeqView;
@@ -53,7 +53,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
   }
 
-  static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<@NotNull Level<LvlVar>> levelArgs) {
+  static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<Sort.@NotNull CoreLevel> levelArgs) {
     var levelSubst = new LevelSubst.Simple(MutableMap.of());
     assert levelParams.sizeEquals(levelArgs);
     for (var app : levelArgs.zip(levelParams)) levelSubst.solution().put(app._2, app._1);

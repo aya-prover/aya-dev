@@ -10,8 +10,6 @@ import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 /**
  * @param <V> either {@link org.aya.api.ref.LevelGenVar} (which means level vars in concrete)
  *            or {@link org.aya.core.sort.Sort.LvlVar} (which means levels in core).
@@ -22,7 +20,6 @@ import java.util.function.Function;
  */
 public sealed interface Level<V extends Var> extends Docile {
   @NotNull Level<V> lift(int n);
-  <Lvl extends Var> @NotNull Level<Lvl> map(@NotNull Function<V, Lvl> map);
 
   /**
    * Unlike {@link Reference}, this one is the implicit polymorphic level.
@@ -33,10 +30,6 @@ public sealed interface Level<V extends Var> extends Docile {
       return new Polymorphic(lift + n);
     }
 
-    @Override public @NotNull <Lvl extends Var> Level<Lvl> map(@NotNull Function<LevelGenVar, Lvl> map) {
-      throw new UnsupportedOperationException();
-    }
-
     @Override public @NotNull Doc toDoc() {
       return levelDoc(lift, "lp");
     }
@@ -45,10 +38,6 @@ public sealed interface Level<V extends Var> extends Docile {
   record Maximum(ImmutableSeq<Level<LevelGenVar>> among) implements Level<LevelGenVar> {
     @Override public @NotNull Maximum lift(int n) {
       return new Maximum(among.map(l -> l.lift(n)));
-    }
-
-    @Override public @NotNull <Lvl extends Var> Level<Lvl> map(@NotNull Function<LevelGenVar, Lvl> map) {
-      throw new UnsupportedOperationException();
     }
 
     @Override public @NotNull Doc toDoc() {
@@ -66,10 +55,6 @@ public sealed interface Level<V extends Var> extends Docile {
       return this;
     }
 
-    @Override public @NotNull <Lvl extends Var> Level<Lvl> map(@NotNull Function<V, Lvl> map) {
-      return new Infinity<>();
-    }
-
     @Override public @NotNull Doc toDoc() {
       return Doc.plain("w");
     }
@@ -78,10 +63,6 @@ public sealed interface Level<V extends Var> extends Docile {
   record Constant<V extends Var>(int value) implements Level<V> {
     @Override public @NotNull Level<V> lift(int n) {
       return new Constant<>(value + n);
-    }
-
-    @Override public @NotNull <Lvl extends Var> Level<Lvl> map(@NotNull Function<V, Lvl> map) {
-      return new Constant<>(value);
     }
 
     @Override public @NotNull Doc toDoc() {
@@ -94,10 +75,6 @@ public sealed interface Level<V extends Var> extends Docile {
       this(ref, 0);
     }
 
-    @Override public @NotNull <Lvl extends Var> Level<Lvl> map(@NotNull Function<V, Lvl> map) {
-      return new Reference<>(map.apply(ref), lift);
-    }
-
     @Override public @NotNull Level<V> lift(int n) {
       return new Reference<>(ref, lift + n);
     }
@@ -106,5 +83,4 @@ public sealed interface Level<V extends Var> extends Docile {
       return levelDoc(lift, ref.name());
     }
   }
-
 }

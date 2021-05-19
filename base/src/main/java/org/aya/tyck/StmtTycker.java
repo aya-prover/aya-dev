@@ -12,6 +12,7 @@ import org.aya.concrete.Signatured;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
@@ -84,7 +85,8 @@ public record StmtTycker(
       var levelSubst = new LevelSubst.Simple(MutableMap.of());
       // Homotopy level goes first
       var levels = tycker.extractLevels();
-      for (var lvl : core.levels().zip(levels)) levelSubst.solution().put(lvl._1, new Level.Reference<>(lvl._2));
+      for (var lvl : core.levels().zip(levels))
+        levelSubst.solution().put(lvl._1, new Sort.CoreLevel(new Level.Reference<>(lvl._2)));
       var target = FormTerm.Pi.make(false, core.telescope(), core.result())
         .subst(Substituter.TermSubst.EMPTY, levelSubst);
       tycker.unifyTyThrowing(FormTerm.Pi.make(false, tele, result), target, decl.result);
@@ -104,7 +106,7 @@ public record StmtTycker(
     var dataContextArgs = dataSig.contextParam().map(Term.Param::toArg);
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var sortParam = dataSig.sortParam();
-    var dataCall = new CallTerm.Data(dataRef, dataContextArgs, sortParam.map(Level.Reference::new), dataArgs);
+    var dataCall = new CallTerm.Data(dataRef, dataContextArgs, sortParam.map(Level.Reference::new).map(Sort.CoreLevel::new), dataArgs);
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), sortParam, dataSig.param(), dataCall));
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
