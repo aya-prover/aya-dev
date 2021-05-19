@@ -13,7 +13,6 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
-import org.aya.generic.Level;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.HoleBadSpineWarn;
 import org.aya.tyck.error.RecursiveSolutionError;
@@ -167,7 +166,7 @@ public record UntypedDefEq(
 
   @NotNull LevelSubst levels(
     @NotNull DefVar<? extends Def, ? extends Decl> def,
-    ImmutableSeq<@NotNull Level<Sort.LvlVar>> l, ImmutableSeq<@NotNull Level<Sort.LvlVar>> r
+    ImmutableSeq<Sort.@NotNull CoreLevel> l, ImmutableSeq<Sort.@NotNull CoreLevel> r
   ) {
     var levelSubst = new LevelSubst.Simple(MutableMap.of());
     for (var levels : l.zip(r).zip(Def.defLevels(def))) {

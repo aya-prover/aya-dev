@@ -153,7 +153,7 @@ public class LevelSolver {
     }
   }
 
-  MutableMap<LvlVar, Sort.CoreLevel> solve(@NotNull LevelEqnSet eqns) throws UnsatException {
+  public void solve(@NotNull LevelEqnSet eqns) throws UnsatException {
     var equations = eqns.eqns();
     nodeSize = 0;
     graphMap = MutableMap.create();
@@ -209,7 +209,6 @@ public class LevelSolver {
     }
     if (floyd(g)) throw new UnsatException();
     var gg = dfs(specialEq, 0, g);
-    var ret = eqns.solution();
     for (var name : freeNodes) {
       int u = graphMap.get(name);
       int lowerBound = -gg[u][0];
@@ -233,8 +232,7 @@ public class LevelSolver {
         }
         retList.append(resolveConstantLevel(minv));
       }
-      ret.put(name, new Sort.CoreLevel(retList.toImmutableSeq()));
+      eqns.solution().put(name, new Sort.CoreLevel(retList.toImmutableSeq()));
     }
-    return ret;
   }
 }

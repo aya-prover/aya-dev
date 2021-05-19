@@ -48,6 +48,13 @@ public record LevelEqnSet(
   }
 
   public void solve() {
+    var solver = new LevelSolver();
+    try {
+      solver.solve(this);
+      eqns.clear();
+    } catch (LevelSolver.UnsatException ignored) {
+      // Level unsolved, leave the equations
+    }
   }
 
   /**
