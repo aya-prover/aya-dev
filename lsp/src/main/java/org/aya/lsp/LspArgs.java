@@ -13,7 +13,7 @@ public class LspArgs {
   public @NotNull Mode mode = Mode.server;
   @Parameter(names = {"-H", "--host"}, description = "Specify hostname")
   public @Nullable String host = "localhost";
-  @Parameter(names = {"-p", "--port"}, description = "Specify port", required = true)
+  @Parameter(names = {"-p", "--port"}, description = "Specify port")
   public int port;
 
   @Parameter(names = {"--version"}, description = "Display the current version")
@@ -21,7 +21,7 @@ public class LspArgs {
   @Parameter(names = {"--help", "-h"}, description = "Show this message", help = true)
   public boolean help = false;
 
-  enum Mode {
+  public enum Mode {
     server,
     client,
     debug,

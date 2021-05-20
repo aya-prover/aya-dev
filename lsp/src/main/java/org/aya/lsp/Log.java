@@ -9,7 +9,13 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class Log {
+  private static final @NotNull Path LOG_FILE = Paths.get("last-startup.log");
   private static @Nullable AyaLanguageClient CLIENT = null;
 
   public static void init(@NotNull AyaLanguageClient client) {
@@ -47,6 +53,9 @@ public class Log {
   }
 
   public static void logConsole(@NotNull MessageType type, @NotNull String content) {
-    System.err.printf("[%s]: %s%n", type, content);
+    try {
+      Files.writeString(LOG_FILE, String.format("[%s]: %s%n", type, content));
+    } catch (IOException ignored) {
+    }
   }
 }

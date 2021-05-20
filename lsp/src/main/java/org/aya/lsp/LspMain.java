@@ -32,12 +32,14 @@ public class LspMain {
 
     if (cli.version) {
       System.out.println("Aya Language Server v" + GeneratedVersion.VERSION_STRING);
-    } else if (cli.help) {
+      return;
+    }
+    if (cli.help) {
       commander.usage();
       return;
     }
 
-    Log.i("Hello, this is Aya lanauge server");
+    Log.i("Hello, this is Aya language server");
     var startup = switch (cli.mode) {
       case server -> runServer(cli);
       case client -> runClient(cli);
@@ -71,10 +73,10 @@ public class LspMain {
 
   private static @NotNull Startup runServer(@NotNull LspArgs cli) throws IOException {
     Log.i("Server mode, listening on %s:%d", cli.host, cli.port);
-    var server = new ServerSocket(cli.port, 0, InetAddress.getByName(cli.host));
-    var client = server.accept();
-    server.close();
-    return new Startup(new CloseAwareInputStream(client.getInputStream()), client.getOutputStream());
+    try (var server = new ServerSocket(cli.port, 0, InetAddress.getByName(cli.host))) {
+      var client = server.accept();
+      return new Startup(new CloseAwareInputStream(client.getInputStream()), client.getOutputStream());
+    }
   }
 
   private static class CloseAwareInputStream extends InputStream {
