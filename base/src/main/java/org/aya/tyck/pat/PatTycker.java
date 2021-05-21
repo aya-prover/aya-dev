@@ -59,7 +59,8 @@ public record PatTycker(
   @Override public void traceExit(Pat pat, @NotNull Pattern pattern, Term term) {
     tracing(builder -> {
       builder.reduce();
-      builder.collect(pat, pattern.sourcePos());
+      var pos = pattern instanceof Pattern.Ctor c ? c.name().sourcePos() : pattern.sourcePos();
+      builder.collect(pat, pos);
     });
   }
 
