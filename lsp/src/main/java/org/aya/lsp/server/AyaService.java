@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +41,7 @@ import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
   private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of(), Buffer.of());
-  private Set<String> lastErrorReportedFiles = Collections.emptySet();
+  private Set<URI> lastErrorReportedFiles = Collections.emptySet();
 
   public void registerLibrary(@NotNull Path path) {
     // TODO[kiva]: work with Library System when it is finished
@@ -78,12 +79,12 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public void reportErrors(@NotNull LspReporter reporter) {
     lastErrorReportedFiles.forEach(f ->
-      Log.publishProblems(new PublishDiagnosticsParams(f, Collections.emptyList())));
+      Log.publishProblems(new PublishDiagnosticsParams(f.toString(), Collections.emptyList())));
     var diags = reporter.problems.stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe().debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints().stream().map(t -> new InlineHintProblem(p, t))))
-      .map(p -> Tuple.of(p.sourcePos().file().name(), p))
+      .map(p -> Tuple.of(Paths.get(p.sourcePos().file().name()).toUri(), p))
       .collect(Collectors.groupingBy(
         t -> t._1,
         Collectors.mapping(t -> t._2, Seq.factory())
@@ -97,7 +98,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
         .map(kv -> toDiagnostic(kv.getKey(), kv.getValue()))
         .collect(Collectors.toList());
       Log.publishProblems(new PublishDiagnosticsParams(
-        diag.getKey(),
+        diag.getKey().toString(),
         problems
       ));
     }

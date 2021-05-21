@@ -57,7 +57,9 @@ public class Log {
 
   public static void logConsole(@NotNull MessageType type, @NotNull String content) {
     try {
-      Files.writeString(LOG_FILE, String.format("[%s]: %s%n", type, content),
+      var format = String.format("[%s]: %s%n", type, content);
+      System.err.print(format);
+      Files.writeString(LOG_FILE, format,
         StandardCharsets.UTF_8,
         StandardOpenOption.APPEND);
     } catch (IOException ignored) {
