@@ -118,8 +118,7 @@ public record UntypedDefEq(
       return null;
     }
     assert meta.body == null;
-    var ty = solved.synth(meta.contextTele);
-    if (ty != null) compare(ty, meta.result);
+    compare(solved.synth(meta.contextTele), meta.result);
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
       defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));
@@ -240,7 +239,8 @@ public record UntypedDefEq(
     }
     // Lossy comparison
     var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), subst))) return retType;
+    if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), subst)))
+      return retType;
     return null;
   }
 

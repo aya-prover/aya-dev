@@ -28,11 +28,17 @@ public record LittleTyper(@NotNull ImmutableSeq<Term.Param> context) implements 
   }
 
   @Override public Term visitPi(FormTerm.@NotNull Pi term, Unit unit) {
-    return null;
+    var paramTy = (FormTerm.Univ) term.param().type().accept(this, unit);
+    var retTy = (FormTerm.Univ) term.body().accept(this, unit);
+    return new FormTerm.Univ(paramTy.sort().max(retTy.sort()));
   }
 
   @Override public Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    var univ = term.params().view()
+      .map(param -> (FormTerm.Univ) param.type().accept(this, unit))
+      .map(FormTerm.Univ::sort)
+      .reduce(Sort::max);
+    return new FormTerm.Univ(univ);
   }
 
   @Override public Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
@@ -40,7 +46,7 @@ public record LittleTyper(@NotNull ImmutableSeq<Term.Param> context) implements 
   }
 
   @Override public Term visitApp(ElimTerm.@NotNull App term, Unit unit) {
-    return null;
+    throw new UnsupportedOperationException("TODO");
   }
 
   @Override public Term visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
@@ -70,22 +76,22 @@ public record LittleTyper(@NotNull ImmutableSeq<Term.Param> context) implements 
   }
 
   @Override public Term visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {
-    return null;
+    throw new UnsupportedOperationException("TODO");
   }
 
   @Override public Term visitNew(IntroTerm.@NotNull New newTerm, Unit unit) {
-    return null;
+    throw new UnsupportedOperationException("TODO");
   }
 
   @Override public Term visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
-    return null;
+    throw new UnsupportedOperationException("TODO");
   }
 
   @Override public Term visitAccess(CallTerm.@NotNull Access term, Unit unit) {
-    return null;
+    throw new UnsupportedOperationException("TODO");
   }
 
   @Override public Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-    return null;
+    throw new UnsupportedOperationException("TODO");
   }
 }
