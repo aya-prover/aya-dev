@@ -6,7 +6,7 @@ In file $FILE:41:56 ->
                                                                ^---^
   
 Goal: Candidate: a
-      Expected type: {?Nat?}
+      Expected type: Nat
       Normalized: Nat
       Context:
       {a : Nat}
