@@ -30,7 +30,7 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
   public static final @NotNull Sort OMEGA = new Sort(INF_LVL, INF_LVL);
 
   public @Nullable Level<LvlVar> onlyH() {
-    if (uLevel.levels.sizeEquals(1)) return uLevel.levels.first();
+    if (hLevel.levels.sizeEquals(1)) return hLevel.levels.first();
     else return null;
   }
 

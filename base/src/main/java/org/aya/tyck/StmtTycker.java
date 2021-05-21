@@ -96,6 +96,7 @@ public record StmtTycker(
       tycker.unifyTyThrowing(result, core.result(), decl.result);
     } else decl.signature = new Def.Signature(ImmutableSeq.empty(),
       ImmutableSeq.empty(), core.telescope(), core.result());
+    tycker.equations.solve();
     return core;
   }
 

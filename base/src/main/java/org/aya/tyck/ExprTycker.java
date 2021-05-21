@@ -151,7 +151,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return Sort.CoreLevel.merge(m.among().map(l -> transformLevel(l, polymorphic)));
     Level<Sort.LvlVar> core;
     if (level instanceof Level.Reference<LevelGenVar> v)
-      core = new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), v.ref().kind(), null)));
+      core = new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), v.ref().kind(), null)), v.lift());
     else if (level instanceof Level.Infinity<LevelGenVar>) core = new Level.Infinity<>();
     else if (level instanceof Level.Constant<LevelGenVar> c) core = Sort.constant(c.value());
     else throw new IllegalArgumentException(level.toString());

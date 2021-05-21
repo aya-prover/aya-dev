@@ -68,7 +68,6 @@ public class LevelSolver {
     if (b instanceof Level.Infinity) return;
     if (a instanceof Level.Infinity) {
       a = new Level.Constant<>(INF_SMALL);
-      return;
     }
     if (a instanceof Level.Constant<LvlVar> ca) {
       if (b instanceof Level.Constant<LvlVar> cb) {
