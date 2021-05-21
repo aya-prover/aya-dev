@@ -251,8 +251,12 @@ public class ParseTest {
     );
   }
 
-  @Test
-  public void issue350() {
+  @Test public void globalStmt() {
+    parseAndPretty("bind + tighter =", "public bind + tighter =");
+    parseAndPretty("ulevel uu", "ulevel uu");
+  }
+
+  @Test public void issue350() {
     parseAndPretty("""
         def l : Set => \\ i => Nat
         """,

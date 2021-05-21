@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.Signatured;
+import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
@@ -59,7 +60,7 @@ public class TyckDeclTest {
     assertEquals(zeroCtor.ref(), ((Pat.Ctor) zeroToZero.patterns().get(0)).ref());
   }
 
-  public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
+  public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
     var decls = ParseTest.INSTANCE
       .visitProgram(AyaParsing.parser(text).program());
     var ssr = new StmtShallowResolver(new EmptyModuleLoader());
@@ -69,7 +70,11 @@ public class TyckDeclTest {
     decls.forEach(s -> s.resolve(opSet));
     opSet.sort();
     decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE, opSet));
-    return decls
+    return decls;
+  }
+
+  public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
+    return successDesugarDecls(text)
       .map(i -> i instanceof Signatured s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
       .filter(Objects::nonNull);
   }

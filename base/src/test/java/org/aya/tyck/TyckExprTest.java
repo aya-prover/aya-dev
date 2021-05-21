@@ -5,7 +5,9 @@ package org.aya.tyck;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
+import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Signatured;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
@@ -107,5 +109,23 @@ public class TyckExprTest {
 
   private static @NotNull ExprTycker tycker() {
     return new ExprTycker(ThrowingReporter.INSTANCE, null);
+  }
+
+  @Test public void levelEqns() {
+    var decls = TyckDeclTest.successDesugarDecls("""
+      ulevel uu
+      hlevel hh
+      def Empty : Type (lsuc hh) (lsuc uu) => Pi (A : Type hh uu) -> A
+      def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
+      def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
+      def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)""");
+    decls.dropLast(1).forEach(decl -> {
+      if (decl instanceof Signatured signatured) signatured.tyck(ThrowingReporter.INSTANCE, null);
+    });
+    var decl = (Decl.FnDecl) decls.last();
+    var expr = decl.body.getLeftValue();
+    var tycker = tycker();
+    tycker.checkNoZonk(expr, null);
+    assertFalse(tycker.equations.forZZS().isEmpty());
   }
 }
