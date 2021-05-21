@@ -14,7 +14,6 @@ import org.aya.util.Ordering;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
-import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -93,8 +92,7 @@ public record LevelEqnSet(
   /**
    * @author ice1000
    */
-  @Debug.Renderer(text = "toDoc().debugRender()")
-  public static record Eqn(
+    public static record Eqn(
     @NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs,
     @NotNull Ordering cmp, @NotNull SourcePos sourcePos
   ) implements Docile {

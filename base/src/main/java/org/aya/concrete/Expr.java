@@ -21,7 +21,6 @@ import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Unit;
-import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,6 @@ import java.util.function.Function;
 /**
  * @author re-xyr
  */
-@Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Expr extends ConcreteExpr {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 

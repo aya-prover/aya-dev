@@ -5,7 +5,6 @@ package org.aya.api.util;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  *            {@link org.aya.api.concrete.ConcreteExpr}.
  * @author ice1000
  */
-@Debug.Renderer(text = "toDoc().debugRender()")
 public record Arg<T extends Docile>(@NotNull T term, boolean explicit) implements Docile {
   @Contract("_ -> new") public static <T extends Docile> @NotNull Arg<T> explicit(@NotNull T term) {
     return new Arg<>(term, true);

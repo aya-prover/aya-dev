@@ -8,7 +8,6 @@ import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -21,7 +20,6 @@ import java.util.function.Function;
  * @see org.aya.concrete.Expr.UnivExpr
  * @see org.aya.core.sort.Sort
  */
-@Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Level<V extends Var> extends Docile {
   @NotNull Level<V> lift(int n);
   <Lvl extends Var> @NotNull Level<Lvl> map(@NotNull Function<V, Lvl> map);

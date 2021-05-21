@@ -12,7 +12,6 @@ import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -22,7 +21,6 @@ import java.util.function.Function;
  * @param <Body>    {@link Term} or {@link Expr}
  * @author ice1000
  */
-@Debug.Renderer(text = "toDoc().debugRender()")
 public record Matching<Matcher extends Docile, Body extends Docile>(
   @NotNull SourcePos sourcePos,
   @NotNull ImmutableSeq<Matcher> patterns,

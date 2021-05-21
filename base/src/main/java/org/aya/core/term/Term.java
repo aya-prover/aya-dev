@@ -23,14 +23,16 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Tuple3;
 import org.glavo.kala.tuple.Unit;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * A well-typed and terminating term.
  *
  * @author ice1000
  */
-@Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTerm, IntroTerm, RefTerm {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
   <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);

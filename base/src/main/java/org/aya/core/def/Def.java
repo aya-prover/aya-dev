@@ -16,7 +16,6 @@ import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -87,8 +86,7 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
    *
    * @author ice1000
    */
-  @Debug.Renderer(text = "toDoc().debugRender()")
-  record Signature(
+    record Signature(
     @NotNull ImmutableSeq<Term.@NotNull Param> contextParam,
     @NotNull ImmutableSeq<Sort.@NotNull LvlVar> sortParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
