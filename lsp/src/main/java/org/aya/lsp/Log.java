@@ -10,12 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 public class Log {
-  private static final @NotNull Path LOG_FILE = Paths.get("last-startup.log");
+  private static final @NotNull Path LOG_FILE = Paths.get("last-startup.log").toAbsolutePath();
   private static @Nullable AyaLanguageClient CLIENT = null;
 
   public static void init(@NotNull AyaLanguageClient client) {
@@ -24,6 +26,7 @@ public class Log {
         // if the code was right, this should never happen
       else throw new IllegalStateException("double initialization occurred");
     }
+    i("Log file: %s", LOG_FILE);
   }
 
   public static void publishProblems(PublishDiagnosticsParams params) {
@@ -54,7 +57,9 @@ public class Log {
 
   public static void logConsole(@NotNull MessageType type, @NotNull String content) {
     try {
-      Files.writeString(LOG_FILE, String.format("[%s]: %s%n", type, content));
+      Files.writeString(LOG_FILE, String.format("[%s]: %s%n", type, content),
+        StandardCharsets.UTF_8,
+        StandardOpenOption.APPEND);
     } catch (IOException ignored) {
     }
   }
