@@ -11,6 +11,7 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +57,7 @@ public interface Problem {
           Collectors.mapping(WithPos::data, Seq.factory())))
         .entrySet()
         .stream()
+        .sorted(Comparator.comparing(entry -> entry.getKey().tokenStartIndex()))
         .map(kv -> Tuple.of(kv.getKey().toSpan(), Doc.join(Doc.plain(", "), kv.getValue())))
         .collect(Seq.factory())
     );

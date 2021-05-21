@@ -77,6 +77,6 @@ public record RangeSpan(
   }
 
   @Override public String toString() {
-    return input.substring(start, end);
+    return input.substring(start, end + 1);
   }
 }
