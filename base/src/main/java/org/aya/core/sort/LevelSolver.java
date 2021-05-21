@@ -33,10 +33,10 @@ public class LevelSolver {
     for (var nu : unfreeNodes) {
       int u = graphMap.get(nu);
       if (d[u][0] < 0) return true;
-      if (d[0][u] != INF) return true;
+      if (d[0][u] < LOW_BOUND) return true;
       for (var nv : unfreeNodes) {
         int v = graphMap.get(nv);
-        if (u != v && d[u][v] != INF) return true;
+        if (u != v && d[u][v] < LOW_BOUND) return true;
       }
       for (int v = 1; v <= nodeSize; v++) {
         if (d[u][v] < 0) return true;
@@ -124,7 +124,7 @@ public class LevelSolver {
     var th = l.get(pos);
     var lhsVar = th.lhs().levels();
     var rhsVar = th.rhs().levels();
-    for (Level<LvlVar> max : rhsVar) {
+    for (var max : rhsVar) {
       var gg = new int[nodeSize + 1][nodeSize + 1];
       for (int i = 0; i <= nodeSize; i++) {
         if (nodeSize + 1 >= 0) System.arraycopy(g[i], 0, gg[i], 0, nodeSize + 1);
