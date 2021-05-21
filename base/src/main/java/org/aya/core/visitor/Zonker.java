@@ -52,7 +52,7 @@ public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
   }
 
   private <T> T reportLevelSolverError(@NotNull SourcePos pos) {
-    tycker.reporter.report(new LevelMismatchError(pos, tycker.equations.eqns()));
+    tycker.reporter.report(new LevelMismatchError(pos, tycker.equations.eqns().toImmutableSeq()));
     throw new ExprTycker.TyckInterruptedException();
   }
 

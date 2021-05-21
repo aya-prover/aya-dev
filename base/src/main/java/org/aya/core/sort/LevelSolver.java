@@ -12,6 +12,8 @@ import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.core.sort.Sort.constant;
+
 /**
  * @author danihao123, ice1000
  */
@@ -49,9 +51,10 @@ public class LevelSolver {
     g[u][v] = Math.min(g[u][v], dist);
   }
 
-  MutableSet<LvlVar> unfreeNodes;
-  MutableSet<LvlVar> freeNodes;
-  MutableMap<LvlVar, Integer> graphMap;
+  MutableSet<LvlVar> unfreeNodes = MutableSet.of();
+  MutableSet<LvlVar> freeNodes = MutableSet.of();
+  MutableMap<LvlVar, Integer> graphMap = MutableMap.create();
+  MutableMap<LvlVar, Integer> defaultValues = MutableMap.create();
 
   void genGraphNode(SeqLike<Level<LvlVar>> l) {
     for (var e : l) {
@@ -65,6 +68,7 @@ public class LevelSolver {
     if (b instanceof Level.Infinity) return;
     if (a instanceof Level.Infinity) {
       a = new Level.Constant<>(INF_SMALL);
+      return;
     }
     if (a instanceof Level.Constant<LvlVar> ca) {
       if (b instanceof Level.Constant<LvlVar> cb) {
@@ -100,7 +104,8 @@ public class LevelSolver {
         int defaultValue = th.ref().kind().defaultValue - th.lift();
         int u = graphMap.get(th.ref());
         if (th.ref().free()) {
-          addEdge(g, u, 0, -defaultValue); // 认为自由变量一定大于等于其默认值
+          // addEdge(g, u, 0, -defaultValue); // 认为自由变量一定大于等于其默认值（暂时取消这种想法）
+          defaultValues.put(th.ref(), th.ref().kind().defaultValue);
           freeNodes.add(th.ref());
           // Universe level can't be inf, homotopy can
           if (th.ref().kind() == LevelGenVar.Kind.Universe) {
@@ -136,7 +141,7 @@ public class LevelSolver {
       } catch (UnsatException ignored) {
       }
     }
-    return null;
+    throw new UnsatException();
   }
 
   Level<LvlVar> resolveConstantLevel(int dist) {
@@ -149,16 +154,13 @@ public class LevelSolver {
     if (retU >= INF) {
       return new Level.Infinity<>();
     } else {
-      return new Level.Constant<>(retU);
+      return constant(retU);
     }
   }
 
   public void solve(@NotNull LevelEqnSet eqns) throws UnsatException {
     var equations = eqns.eqns();
     nodeSize = 0;
-    graphMap = MutableMap.create();
-    freeNodes = MutableSet.of();
-    unfreeNodes = MutableSet.of();
     for (var e : equations) {
       genGraphNode(e.lhs().levels());
       genGraphNode(e.rhs().levels());
@@ -211,22 +213,26 @@ public class LevelSolver {
     var gg = dfs(specialEq, 0, g);
     for (var name : freeNodes) {
       int u = graphMap.get(name);
+      int thDefault = defaultValues.get(name);
+      int upperBound = gg[0][u];
+      if (upperBound >= thDefault) {
+        addEdge(gg, u, 0, thDefault);
+      }
       int lowerBound = -gg[u][0];
       if (lowerBound < 0) lowerBound = 0;
-      int upperBound = gg[0][u];
       Buffer<Level<LvlVar>> upperNodes = Buffer.create();
       Buffer<Level<LvlVar>> lowerNodes = Buffer.create();
       for (var nu : unfreeNodes) {
         int v = graphMap.get(nu);
         if (gg[v][u] != INF) upperNodes.append(new Level.Reference<>(nu, gg[v][u]));
-        if (gg[u][v] < LOW_BOUND) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
+        if (gg[u][v] < LOW_BOUND / 2) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
       }
       Buffer<Level<LvlVar>> retList = Buffer.create();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
         if (lowerBound >= LOW_BOUND) {
           retList.append(new Level.Infinity<>());
         } else {
-          retList.append(resolveConstantLevel(lowerBound));
+          if (lowerBound != 0 || lowerNodes.isEmpty()) retList.append(resolveConstantLevel(lowerBound));
           retList.appendAll(lowerNodes);
         }
       } else {

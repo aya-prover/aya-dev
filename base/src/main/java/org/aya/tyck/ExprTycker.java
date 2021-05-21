@@ -153,7 +153,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (level instanceof Level.Reference<LevelGenVar> v)
       core = new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), v.ref().kind(), null)));
     else if (level instanceof Level.Infinity<LevelGenVar>) core = new Level.Infinity<>();
-    else if (level instanceof Level.Constant<LevelGenVar> c) core = new Level.Constant<>(c.value());
+    else if (level instanceof Level.Constant<LevelGenVar> c) core = Sort.constant(c.value());
     else throw new IllegalArgumentException(level.toString());
     return new Sort.CoreLevel(core);
   }

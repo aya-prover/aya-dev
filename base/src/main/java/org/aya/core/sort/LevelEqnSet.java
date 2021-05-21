@@ -53,6 +53,10 @@ public record LevelEqnSet(
     var solver = new LevelSolver();
     try {
       solver.solve(this);
+      for (var lvlVar : vars)
+        if (!solution.containsKey(lvlVar)) {
+          solution.put(lvlVar, new Sort.CoreLevel(Sort.constant(lvlVar.kind().defaultValue)));
+        }
       eqns.clear();
     } catch (LevelSolver.UnsatException ignored) {
       // Level unsolved, leave the equations
