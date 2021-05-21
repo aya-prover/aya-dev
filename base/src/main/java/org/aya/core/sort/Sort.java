@@ -47,10 +47,6 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
     return pos != null ? pos : unsolvedPos(hLevel);
   }
 
-  public static @NotNull Level<LvlVar> constant(int value) {
-    return new Level.Constant<>(value);
-  }
-
   public @NotNull Sort subst(@NotNull LevelSubst subst) {
     var u = subst.applyTo(uLevel);
     var h = subst.applyTo(hLevel);

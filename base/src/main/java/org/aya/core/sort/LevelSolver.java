@@ -12,8 +12,6 @@ import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.core.sort.Sort.constant;
-
 /**
  * @author danihao123, ice1000
  */
@@ -153,7 +151,7 @@ public class LevelSolver {
     if (retU >= INF) {
       return new Level.Infinity<>();
     } else {
-      return constant(retU);
+      return new Level.Constant<>(retU);
     }
   }
 
@@ -216,6 +214,8 @@ public class LevelSolver {
       int upperBound = gg[0][u];
       if (upperBound >= thDefault) {
         addEdge(gg, u, 0, thDefault);
+        floyd(gg);
+        upperBound = gg[0][u]; // 重新跑 Floyd
       }
       int lowerBound = -gg[u][0];
       if (lowerBound < 0) lowerBound = 0;

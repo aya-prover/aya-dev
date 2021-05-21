@@ -55,7 +55,7 @@ public record LevelEqnSet(
       solver.solve(this);
       for (var lvlVar : vars)
         if (!solution.containsKey(lvlVar)) {
-          solution.put(lvlVar, new Sort.CoreLevel(Sort.constant(lvlVar.kind().defaultValue)));
+          solution.put(lvlVar, new Sort.CoreLevel(new Level.Constant<>(lvlVar.kind().defaultValue)));
         }
       eqns.clear();
     } catch (LevelSolver.UnsatException ignored) {

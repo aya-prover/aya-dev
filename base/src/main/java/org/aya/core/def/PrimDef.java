@@ -65,7 +65,7 @@ public final record PrimDef(
   }
 
   public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.of(),
-    new FormTerm.Univ(new Sort(Sort.constant(0), Sort.INF_LVL)), prim -> prim, "I");
+    new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), prim -> prim, "I");
   public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of(), ImmutableSeq.of());
   public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
   public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");
