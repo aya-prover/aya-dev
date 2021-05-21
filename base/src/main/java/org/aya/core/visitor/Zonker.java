@@ -29,6 +29,15 @@ import static org.aya.core.sort.Sort.constant;
  * @author ice1000
  */
 public record Zonker(@NotNull ExprTycker tycker) implements TermFixpoint<Unit> {
+  public static final @NotNull TermFixpoint<Unit> NO_REPORT = new NoReport();
+
+  private static class NoReport implements TermFixpoint<Unit> {
+    @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
+      var sol = term.ref().core();
+      return sol.body != null ? sol.body.accept(this, Unit.unit()) : term;
+    }
+  }
+
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
     var sol = term.ref().core();
     if (sol.body == null) {
