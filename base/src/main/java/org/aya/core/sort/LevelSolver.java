@@ -219,12 +219,16 @@ public class LevelSolver {
       for (var nu : unfreeNodes) {
         int v = graphMap.get(nu);
         if (gg[v][u] != INF) upperNodes.append(new Level.Reference<>(nu, gg[v][u]));
-        if (gg[u][v] != INF) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
+        if (gg[u][v] < LOW_BOUND) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
       }
       Buffer<Level<LvlVar>> retList = Buffer.create();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
-        retList.append(resolveConstantLevel(lowerBound));
-        retList.appendAll(lowerNodes);
+        if (lowerBound >= LOW_BOUND) {
+          retList.append(new Level.Infinity<>());
+        } else {
+          retList.append(resolveConstantLevel(lowerBound));
+          retList.appendAll(lowerNodes);
+        }
       } else {
         int minv = upperBound;
         for (var _l : upperNodes) {

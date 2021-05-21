@@ -4,6 +4,7 @@ package org.aya.core.sort;
 
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LevelGenVar;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
@@ -11,6 +12,7 @@ import org.aya.util.Ordering;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * A set of level equations.
@@ -69,6 +71,17 @@ public record LevelEqnSet(
     return solution.getOrPut(universe, () -> new Sort.CoreLevel(new Level.Reference<>(universe)));
   }
 
+  @TestOnly public @NotNull String forZZS() {
+    var builder = new StringBuilder("List.of(");
+    boolean started = false;
+    for (var eqn : eqns) {
+      if (started) builder.append(", ");
+      started = true;
+      eqn.forZZS(builder);
+    }
+    return builder.append(")").toString();
+  }
+
   /**
    * @author ice1000
    */
@@ -86,6 +99,27 @@ public record LevelEqnSet(
 
     public static boolean used(Sort.@NotNull LvlVar var, @NotNull Sort.CoreLevel lvl) {
       return lvl.levels().anyMatch(level -> used(var, level));
+    }
+
+    @TestOnly public @NotNull String forZZS(@NotNull Level<Sort.LvlVar> level) {
+      if (level instanceof Level.Reference<Sort.LvlVar> reference) {
+        var r = reference.ref();
+        return "new Reference(new Var(\"" + r.name() + "\", " + (r.kind() == LevelGenVar.Kind.Homotopy) + ", " + r.kind().defaultValue + ", " + r.free() + "), " + reference.lift() + ")";
+      } else if (level instanceof Level.Constant<Sort.LvlVar> constant) {
+        return "new Const(" + constant.value() + ")";
+      } else if (level instanceof Level.Infinity<Sort.LvlVar>) {
+        return "new Infinity()";
+      } else return "";
+    }
+
+    @TestOnly public void forZZS(@NotNull StringBuilder builder) {
+      builder.append("new Equation(Ord.")
+        .append(cmp.name())
+        .append(", new Max(List.of(");
+      lhs.levels().joinTo(builder, ", ", this::forZZS);
+      builder.append(")), new Max(List.of(");
+      rhs.levels().joinTo(builder, ", ", this::forZZS);
+      builder.append(")))");
     }
 
     @Override public @NotNull Doc toDoc() {
