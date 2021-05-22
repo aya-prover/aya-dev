@@ -225,8 +225,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     @NotNull Term ty, Term refTerm
   ) {
     if (expected == null) return new Result(refTerm, ty);
-    unifyTyThrowing(expected, ty, expr);
-    return new Result(refTerm, ty);
+    return unifyTyMaybeInsert(expected, ty, refTerm, expr);
   }
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
@@ -267,12 +266,38 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new TypedDefEq(ctx, ord, this, pos);
   }
 
+  /**
+   * Check if <code>lower</code> is a subtype of <code>upper</code>,
+   * and report a type error if it's not the case.
+   *
+   * @see ExprTycker#unifyTyMaybeInsert(Term, Term, Term, Expr)
+   */
   void unifyTyThrowing(Term upper, Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
     if (!unification) {
       reporter.report(new UnifyError(loc, upper, lower));
       throw new TyckInterruptedException();
     }
+  }
+
+  /**
+   * Check if <code>lower</code> is a subtype of <code>upper</code>,
+   * and try to insert implicit arguments to fulfill this goal (if possible).
+   *
+   * @return the term and type after insertion
+   * @see ExprTycker#unifyTyThrowing(Term, Term, Expr)
+   */
+  private Result unifyTyMaybeInsert(Term upper, Term lower, Term term, Expr loc) {
+    if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
+    var subst = new Substituter.TermSubst(MutableMap.of());
+    while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
+      var mock = mockTerm(pi.param(), loc.sourcePos());
+      term = CallTerm.make(term, Arg.implicit(mock));
+      lower = instPi(loc, pi, subst, mock);
+      if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
+    }
+    reporter.report(new UnifyError(loc, upper, lower));
+    throw new TyckInterruptedException();
   }
 
   @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
@@ -370,8 +395,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       ix -> visitProj(from, ix),
       sp -> visitAccess(from, sp.data(), sp.sourcePos())
     );
-    if (term != null) unifyTyThrowing(term, result.type, expr);
-    return result;
+    return term != null ? unifyTyMaybeInsert(term, result.type, result.wellTyped, expr) : result;
   }
 
   private Result visitAccess(Expr struct, String fieldName, SourcePos accessPos) {
@@ -435,7 +459,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
     var f = expr.function().accept(this, null);
-    var resultTerm = f.wellTyped;
+    var app = f.wellTyped;
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
       return wantButNo(expr, f.type, "pi type");
     var pi = piTerm;
@@ -448,32 +472,33 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
         if (argLicit || namedArg.name() != null) {
           // that implies paramLicit == false
-          var genName = pi.param().ref().name().concat(Constants.GENERATED_POSTFIX);
-          var holeApp = localCtx.freshHole(pi.param().type(), genName, namedArg.expr().sourcePos())._2;
-          // TODO: maybe we should create a concrete hole and check it against the type
-          //  in case we can synthesize this term via its type only
-          var holeArg = new Arg<>(holeApp, false);
-          resultTerm = CallTerm.make(resultTerm, holeArg);
-          pi = instPi(expr, pi, subst, holeArg);
+          var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
+          app = CallTerm.make(app, Arg.implicit(holeApp));
+          pi = instPi(expr, pi, subst, holeApp);
         } else {
           // TODO[ice]: no implicit argument expected, but inserted.
           throw new TyckerException();
         }
       }
-      var elabArg = namedArg.expr().accept(this, pi.param().type());
-      var newArg = new Arg<>(elabArg.wellTyped, argLicit);
-      resultTerm = CallTerm.make(resultTerm, newArg);
+      var elabArg = namedArg.expr().accept(this, pi.param().type()).wellTyped;
+      app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
       // so, in the end, the pi term is not updated, its body would be the eliminated type
-      if (iter.hasNext()) pi = instPi(expr, pi, subst, newArg);
-      else subst.map().put(pi.param().ref(), newArg.term());
+      if (iter.hasNext()) pi = instPi(expr, pi, subst, elabArg);
+      else subst.map().put(pi.param().ref(), elabArg);
     }
     var codomain = pi.body().subst(subst);
-    if (term != null) unifyTyThrowing(term, codomain, expr);
-    return new Result(resultTerm, codomain);
+    return term != null ? unifyTyMaybeInsert(term, codomain, app, expr) : new Result(app, codomain);
   }
 
-  private FormTerm.Pi instPi(@NotNull Expr expr, @NotNull FormTerm.Pi pi, Substituter.TermSubst subst, Arg<Term> newArg) {
-    subst.add(pi.param().ref(), newArg.term());
+  private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
+    // TODO: maybe we should create a concrete hole and check it against the type
+    //  in case we can synthesize this term via its type only
+    var genName = param.ref().name().concat(Constants.GENERATED_POSTFIX);
+    return localCtx.freshHole(param.type(), genName, pos)._2;
+  }
+
+  private FormTerm.Pi instPi(@NotNull Expr expr, @NotNull FormTerm.Pi pi, Substituter.TermSubst subst, @NotNull Term arg) {
+    subst.add(pi.param().ref(), arg);
     return pi.body().subst(subst).normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi newPi
       ? newPi : wantButNo(expr, pi.body(), "pi type");
   }
