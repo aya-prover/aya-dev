@@ -178,10 +178,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var var = expr.resolvedVar();
     if (var instanceof LocalVar loc) {
       var ty = localCtx.get(loc);
-      return refResult(expr, term, ty, new RefTerm(loc));
+      return unifyTyMaybeInsert(term, ty, new RefTerm(loc), expr);
     } else if (var instanceof DefVar<?, ?> defVar) {
       var result = inferRef(expr.sourcePos(), defVar, term);
-      return refResult(expr, term, result.type, result.wellTyped);
+      return unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
     } else throw new IllegalStateException("TODO: UnivVar not yet implemented");
   }
 
@@ -213,19 +213,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var ty = Def.defResult(field);
       var refExpr = new Expr.RefExpr(field.concrete.sourcePos(), field, field.concrete.ref.name());
       // TODO[ice]: correct this RefTerm
-      return refResult(refExpr, expected, ty, new RefTerm(new LocalVar(field.name())));
+      return unifyTyMaybeInsert(expected, ty, new RefTerm(new LocalVar(field.name())), refExpr);
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);
     }
-  }
-
-  private @NotNull Result refResult(
-    Expr.@NotNull RefExpr expr, @Nullable Term expected,
-    @NotNull Term ty, Term refTerm
-  ) {
-    if (expected == null) return new Result(refTerm, ty);
-    return unifyTyMaybeInsert(expected, ty, refTerm, expr);
   }
 
   private @NotNull <D extends Def, S extends Signatured> ExprTycker.Result
@@ -256,7 +248,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return Tuple.of(levelSubst, levelVars.map(Level.Reference::new).map(Sort.CoreLevel::new));
   }
 
-  private boolean unifyTy(Term upper, Term lower, @NotNull SourcePos pos) {
+  private boolean unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, pos)));
     tracing(Trace.Builder::reduce);
     return unifier(pos, Ordering.Lt, localCtx).compare(lower, upper, FormTerm.Univ.OMEGA);
@@ -272,7 +264,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    *
    * @see ExprTycker#unifyTyMaybeInsert(Term, Term, Term, Expr)
    */
-  void unifyTyThrowing(Term upper, Term lower, Expr loc) {
+  void unifyTyThrowing(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
     if (!unification) {
       reporter.report(new UnifyError(loc, upper, lower));
@@ -287,13 +279,15 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    * @return the term and type after insertion
    * @see ExprTycker#unifyTyThrowing(Term, Term, Expr)
    */
-  private Result unifyTyMaybeInsert(Term upper, Term lower, Term term, Expr loc) {
+  private Result unifyTyMaybeInsert(@Nullable Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
+    if (upper == null) return new Result(term, lower);
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     var subst = new Substituter.TermSubst(MutableMap.of());
     while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var mock = mockTerm(pi.param(), loc.sourcePos());
       term = CallTerm.make(term, Arg.implicit(mock));
-      lower = instPi(loc, pi, subst, mock);
+      subst.add(pi.param().ref(), mock);
+      lower = pi.body().subst(subst);
       if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     }
     reporter.report(new UnifyError(loc, upper, lower));
@@ -395,7 +389,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       ix -> visitProj(from, ix),
       sp -> visitAccess(from, sp.data(), sp.sourcePos())
     );
-    return term != null ? unifyTyMaybeInsert(term, result.type, result.wellTyped, expr) : result;
+    return unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
   }
 
   private Result visitAccess(Expr struct, String fieldName, SourcePos accessPos) {
@@ -486,8 +480,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       if (iter.hasNext()) pi = instPi(expr, pi, subst, elabArg);
       else subst.map().put(pi.param().ref(), elabArg);
     }
-    var codomain = pi.body().subst(subst);
-    return term != null ? unifyTyMaybeInsert(term, codomain, app, expr) : new Result(app, codomain);
+    return unifyTyMaybeInsert(term, pi.body().subst(subst), app, expr);
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
