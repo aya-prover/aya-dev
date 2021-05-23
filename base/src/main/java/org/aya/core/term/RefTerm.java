@@ -5,11 +5,16 @@ package org.aya.core.term;
 import org.aya.api.ref.LocalVar;
 import org.aya.util.Decision;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
  */
-public final record RefTerm(@NotNull LocalVar var) implements Term {
+public final record RefTerm(@NotNull LocalVar var, @Nullable Term type) implements Term {
+  public RefTerm(@NotNull LocalVar var) {
+    this(var, null);
+  }
+
   @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitRef(this, p);
   }

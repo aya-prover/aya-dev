@@ -84,20 +84,22 @@ public final record PrimDef(
 
   static {
     var paramA = new LocalVar("A");
-    var paramI = new LocalVar("i");
     var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), INTERVAL_CALL, true);
-    var baseAtLeft = new ElimTerm.App(new RefTerm(paramA), Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty(), ImmutableSeq.of())));
+    var paramI = new LocalVar("i");
     var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
     var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
     var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
+    var paramATy = new FormTerm.Pi(false, paramIToATy, result);
+    var aRef = new RefTerm(paramA, paramATy);
+    var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty(), ImmutableSeq.of())));
     ARCOE = new PrimDef(
       ImmutableSeq.of(
-        new Term.Param(paramA, new FormTerm.Pi(false, paramIToATy, result), true),
+        new Term.Param(paramA, paramATy, true),
         new Term.Param(new LocalVar("base"), baseAtLeft, true),
         new Term.Param(paramI, INTERVAL_CALL, true)
       ),
       ImmutableSeq.of(homotopy, universe),
-      new ElimTerm.App(new RefTerm(paramA), Arg.explicit(new RefTerm(paramI))),
+      new ElimTerm.App(aRef, Arg.explicit(new RefTerm(paramI, INTERVAL_CALL))),
       PrimDef::arcoe, "arcoe");
   }
 

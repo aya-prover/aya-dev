@@ -22,7 +22,7 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
   }
 
   @Override public Term visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
-    return new RefTerm(new LocalVar("()"));
+    return new RefTerm(new LocalVar("()"), absurd.type());
   }
 
   @Override public Term visitPrim(Pat.@NotNull Prim prim, Unit unit) {
@@ -30,7 +30,7 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
   }
 
   @Override public Term visitBind(Pat.@NotNull Bind bind, Unit unit) {
-    return new RefTerm(bind.as());
+    return new RefTerm(bind.as(), bind.type());
   }
 
   @Override public Term visitTuple(Pat.@NotNull Tuple tuple, Unit unit) {

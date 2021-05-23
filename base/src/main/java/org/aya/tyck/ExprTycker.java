@@ -134,7 +134,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     var resultParam = new Term.Param(var, type, param.explicit());
     return localCtx.with(resultParam, () -> {
-      var body = dt.substBody(new RefTerm(var));
+      var body = dt.substBody(resultParam.toTerm());
       var rec = expr.body().accept(this, body);
       return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
     });
@@ -178,7 +178,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var var = expr.resolvedVar();
     if (var instanceof LocalVar loc) {
       var ty = localCtx.get(loc);
-      return unifyTyMaybeInsert(term, ty, new RefTerm(loc), expr);
+      return unifyTyMaybeInsert(term, ty, new RefTerm(loc, ty), expr);
     } else if (var instanceof DefVar<?, ?> defVar) {
       var result = inferRef(expr.sourcePos(), defVar, term);
       return unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
@@ -213,7 +213,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var ty = Def.defResult(field);
       var refExpr = new Expr.RefExpr(field.concrete.sourcePos(), field, field.concrete.ref.name());
       // TODO[ice]: correct this RefTerm
-      return unifyTyMaybeInsert(expected, ty, new RefTerm(new LocalVar(field.name())), refExpr);
+      return unifyTyMaybeInsert(expected, ty, new RefTerm(new LocalVar(field.name()), ty), refExpr);
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);

@@ -47,7 +47,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs) {
     if (preRhs instanceof RefTerm rhs
-      && defeq.varSubst.getOrDefault(rhs.var(), rhs.var()) == lhs.var()) {
+      && defeq.varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var()) {
       return defeq.localCtx.get(rhs.var());
     }
     return null;
@@ -90,14 +90,14 @@ public record UntypedDefEq(
     for (var arg : lhs.args().view().zip(meta.telescope)) {
       if (arg._1.term() instanceof RefTerm ref) {
         // TODO[xyr]: do scope checking here
-        subst.add(ref.var(), new RefTerm(arg._2.ref()));
+        subst.add(ref.var(), arg._2.toTerm());
         if (rhs == null) return null;
       } else return null;
       // TODO[ice]: ^ eta var
     }
-    var correspondence = MutableHashMap.<Var, Term>of();
-    defeq.varSubst.forEach((k, v) -> correspondence.set(k, new RefTerm(v)));
-    return rhs.subst(subst.add(Unfolder.buildSubst(meta.contextTele, lhs.contextArgs())).add(new Substituter.TermSubst(correspondence)));
+    subst.add(Unfolder.buildSubst(meta.contextTele, lhs.contextArgs()));
+    defeq.varSubst.forEach(subst::add);
+    return rhs.subst(subst);
   }
 
   @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs) {
@@ -118,7 +118,7 @@ public record UntypedDefEq(
       return null;
     }
     assert meta.body == null;
-    compare(solved.synth(meta.contextTele), meta.result);
+    compare(solved.synth(), meta.result);
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
       defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));

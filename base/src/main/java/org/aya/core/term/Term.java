@@ -86,8 +86,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   @Override default @NotNull Doc toDoc() {
     return accept(CoreDistiller.INSTANCE, false);
   }
-  default @NotNull Term synth(@NotNull ImmutableSeq<Term.Param> context) {
-    return accept(new LittleTyper(context), Unit.unit());
+  default @NotNull Term synth() {
+    return accept(new LittleTyper(), Unit.unit());
   }
 
   interface Visitor<P, R> {
@@ -157,7 +157,11 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     }
 
     @Override @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
-      return new Arg<>(new RefTerm(ref), explicit);
+      return new Arg<>(toTerm(), explicit);
+    }
+
+    @Contract(" -> new") public @NotNull RefTerm toTerm() {
+      return new RefTerm(ref, type);
     }
 
     public @NotNull Term.Param subst(@NotNull Var var, @NotNull Term term) {

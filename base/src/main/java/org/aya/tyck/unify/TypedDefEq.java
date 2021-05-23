@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  * Instead, invoke {@link TypedDefEq#compare(Term, Term, Term)} to do so.
  */
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
-  protected final @NotNull MutableMap<@NotNull LocalVar, @NotNull LocalVar> varSubst = new MutableHashMap<>();
+  protected final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   public final @NotNull LocalCtx localCtx;
   private final @NotNull UntypedDefEq termDefeq;
   public final @NotNull ExprTycker tycker;
@@ -84,8 +84,8 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   public <T> T checkParam(Term.@NotNull Param l, Term.@NotNull Param r, @NotNull Term type, Supplier<T> fail, Supplier<T> success) {
     if (l.explicit() != r.explicit()) return fail.get();
     if (!compare(l.type(), r.type(), type)) return fail.get();
-    varSubst.put(r.ref(), l.ref());
-    varSubst.put(l.ref(), r.ref());
+    varSubst.put(r.ref(), l.toTerm());
+    varSubst.put(l.ref(), r.toTerm());
     var result = localCtx.with(l, () -> localCtx.with(r, success));
     varSubst.remove(r.ref());
     varSubst.remove(l.ref());
@@ -136,7 +136,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
       var dummyVars = fieldSig.fieldTele().map(par ->
         new LocalVar(par.ref().name()));
       var dummy = dummyVars.zip(fieldSig.fieldTele()).map(vpa ->
-        new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
+        new Arg<Term>(new RefTerm(vpa._1, vpa._2.type()), vpa._2.explicit()));
       var res = localCtx.with(dummyVars.zip(fieldSig.fieldTele()).map(vpa -> new Term.Param(vpa._1, vpa._2.type(), vpa._2.explicit())), () -> {
         var l = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
         var r = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
@@ -198,9 +198,10 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   @Override public @NotNull Boolean visitPi(@NotNull FormTerm.Pi type, @NotNull Term lhs, @NotNull Term rhs) {
     var dummyVar = new LocalVar("dummy");
-    var dummy = new RefTerm(dummyVar);
+    var ty = type.param().type();
+    var dummy = new RefTerm(dummyVar, ty);
     var dummyArg = new Arg<Term>(dummy, type.param().explicit());
-    return localCtx.with(dummyVar, type.param().type(), () ->
+    return localCtx.with(dummyVar, ty, () ->
       compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.substBody(dummy)));
   }
 

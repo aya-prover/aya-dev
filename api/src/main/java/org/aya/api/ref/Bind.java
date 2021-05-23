@@ -19,4 +19,5 @@ public interface Bind extends Docile {
   @Contract(pure = true) @Nullable CoreTerm type();
   @Contract(pure = true) boolean explicit();
   @Contract(" -> new") @NotNull Arg<? extends CoreTerm> toArg();
+  @Contract(" -> new") @NotNull CoreTerm toTerm();
 }
