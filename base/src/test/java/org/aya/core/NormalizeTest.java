@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core;
 
-import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
@@ -58,19 +57,6 @@ public class NormalizeTest extends LispTestCase {
     var nf = term.normalize(NormalizeMode.NF);
     assertNotEquals(term, nf);
     assertTrue(((IntroTerm.Lambda) nf).body() instanceof RefTerm);
-  }
-
-  @Test public void unfoldDef() {
-    // (x y : U)
-    var def = Lisp.parseDef("id",
-      "(y (U) ex null)", "y", "y", vars);
-    var term = Lisp.parse("(fncall id kiva)", vars);
-    assertTrue(term instanceof CallTerm.Fn);
-    assertEquals("id", def.ref().name());
-    assertEquals(1, def.telescope().size());
-    var norm = term.normalize(NormalizeMode.WHNF);
-    assertNotEquals(term, norm);
-    assertEquals(new RefTerm((LocalVar) vars.get("kiva")), norm);
   }
 
   @Test public void unfoldPatterns() {

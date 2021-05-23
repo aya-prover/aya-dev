@@ -86,8 +86,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   @Override default @NotNull Doc toDoc() {
     return accept(CoreDistiller.INSTANCE, false);
   }
-  default @NotNull Term synth() {
-    return accept(new LittleTyper(), Unit.unit());
+  default @NotNull Term computeType() {
+    return accept(LittleTyper.INSTANCE, Unit.unit());
   }
 
   interface Visitor<P, R> {

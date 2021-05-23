@@ -20,7 +20,12 @@ import java.util.Objects;
  *
  * @author ice1000
  */
-public record LittleTyper() implements Term.Visitor<Unit, Term> {
+public final class LittleTyper implements Term.Visitor<Unit, Term> {
+  public static final @NotNull LittleTyper INSTANCE = new LittleTyper();
+
+  private LittleTyper() {
+  }
+
   @Override public Term visitRef(@NotNull RefTerm term, Unit unit) {
     return Objects.requireNonNull(term.type());
   }

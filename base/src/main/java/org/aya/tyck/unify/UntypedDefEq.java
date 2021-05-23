@@ -118,7 +118,7 @@ public record UntypedDefEq(
       return null;
     }
     assert meta.body == null;
-    compare(solved.synth(), meta.result);
+    compare(solved.computeType(), meta.result);
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
       defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));

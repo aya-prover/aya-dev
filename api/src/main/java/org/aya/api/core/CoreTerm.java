@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.NonExtendable
 public interface CoreTerm extends Docile {
   int findUsages(@NotNull Var var);
+  @NotNull CoreTerm computeType();
   @NotNull CoreTerm normalize(@NotNull NormalizeMode mode);
   @Nullable CorePat toPat();
 }
