@@ -7,6 +7,7 @@ CommonTasks.fatJar(project, "org.aya.cli.Main")
 dependencies {
   val deps: java.util.Properties by rootProject.ext
   implementation("com.beust", "jcommander", version = deps.getProperty("version.jcommander"))
+  implementation("com.google.code.gson", "gson", version = deps.getProperty("version.gson"))
   implementation("org.ice1000.jimgui", "core", version = deps.getProperty("version.jimgui"))
   implementation(project(":base"))
   implementation(project(":parser"))
