@@ -90,12 +90,11 @@ public record StmtTycker(
       var target = FormTerm.Pi.make(false, core.telescope(), core.result())
         .subst(Substituter.TermSubst.EMPTY, levelSubst);
       tycker.unifyTyThrowing(FormTerm.Pi.make(false, tele, result), target, decl.result);
-      decl.signature = new Def.Signature(ImmutableSeq.empty(), levels, tele, result);
+      decl.signature = new Def.Signature(levels, tele, result);
     } else if (decl.result != null) {
       var result = decl.result.accept(tycker, null).wellTyped();
       tycker.unifyTyThrowing(result, core.result(), decl.result);
-    } else decl.signature = new Def.Signature(ImmutableSeq.empty(),
-      ImmutableSeq.empty(), core.telescope(), core.result());
+    } else decl.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
     tycker.equations.solve();
     return core;
   }
@@ -104,11 +103,10 @@ public record StmtTycker(
     var dataRef = ctor.dataRef;
     var dataSig = dataRef.concrete.signature;
     assert dataSig != null;
-    var dataContextArgs = dataSig.contextParam().map(Term.Param::toArg);
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var sortParam = dataSig.sortParam();
-    var dataCall = new CallTerm.Data(dataRef, dataContextArgs, sortParam.map(Level.Reference::new).map(Sort.CoreLevel::new), dataArgs);
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(), sortParam, dataSig.param(), dataCall));
+    var dataCall = new CallTerm.Data(dataRef, sortParam.map(Level.Reference::new).map(Sort.CoreLevel::new), dataArgs);
+    var sig = new Ref<>(new Def.Signature(sortParam, dataSig.param(), dataCall));
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
@@ -121,7 +119,7 @@ public record StmtTycker(
         .<Var, Term>toImmutableMap();
       dataCall = (CallTerm.Data) dataCall.subst(subst);
     }
-    var signature = new Def.Signature(ImmutableSeq.of(), sortParam, tele, dataCall);
+    var signature = new Def.Signature(sortParam, tele, dataCall);
     ctor.signature = signature;
     var elabClauses = patTycker.elabClauses(patSubst, signature, ctor.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
@@ -143,23 +141,21 @@ public record StmtTycker(
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
-    var ctxTele = tycker.localCtx.extract();
     var tele = checkTele(tycker, decl.telescope, null);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
-    decl.signature = new Def.Signature(ctxTele, tycker.extractLevels(), tele, result);
+    decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
     var body = decl.body.map(clause -> visitCtor(clause, tycker));
     var collectedBody = body.collect(ImmutableSeq.factory());
-    return new DataDef(decl.ref, ctxTele, tele, decl.signature.sortParam(), result, collectedBody);
+    return new DataDef(decl.ref, tele, decl.signature.sortParam(), result, collectedBody);
   }
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
-    var ctxTele = tycker.localCtx.extract();
     var tele = checkTele(tycker, decl.telescope, null);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     // var levelSubst = tycker.equations.solve();
     var levels = tycker.extractLevels();
-    decl.signature = new Def.Signature(ctxTele, levels, tele, result);
-    return new StructDef(decl.ref, ctxTele, tele, levels, result, decl.fields.map(field -> visitField(field, tycker)));
+    decl.signature = new Def.Signature(levels, tele, result);
+    return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field -> visitField(field, tycker)));
   }
 
   @Override public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
@@ -168,7 +164,7 @@ public record StmtTycker(
     var result = field.result.accept(tycker, null).wellTyped();
     var structSig = structRef.concrete.signature;
     assert structSig != null;
-    field.signature = new Def.Signature(ImmutableSeq.of(), structSig.sortParam(), tele, result);
+    field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
     var elabClauses = patTycker.elabClauses(null, field.signature, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
@@ -179,13 +175,12 @@ public record StmtTycker(
   }
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
-    var ctxTele = tycker.localCtx.extract();
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     var resultTele = checkTele(tycker, decl.telescope, null);
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = tycker.checkNoZonk(decl.result, null).wellTyped();
     tracing(GenericBuilder::reduce);
-    var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes));
+    var signature = new Ref<>(new Def.Signature(tycker.extractLevels(), resultTele, resultRes));
     decl.signature = signature.value;
     var patTycker = new PatTycker(tycker);
     var what = FP.distR(decl.body.map(
@@ -193,7 +188,7 @@ public record StmtTycker(
       right -> patTycker.elabClauses(right, signature)));
     var resultTy = what._1;
     var factory = FnDef.factory(body ->
-      new FnDef(decl.ref, ctxTele, resultTele, signature.value.sortParam(), resultTy, body));
+      new FnDef(decl.ref, resultTele, signature.value.sortParam(), resultTy, body));
     if (what._2.isLeft()) return factory.apply(Either.left(what._2.getLeftValue()));
     var elabClauses = what._2.getRightValue();
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);

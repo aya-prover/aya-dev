@@ -163,7 +163,6 @@ public record PatTycker(
     // sig.result is a dummy term
     var sig = new Def.Signature(
       ImmutableSeq.of(),
-      ImmutableSeq.of(),
       sigma.params(),
       FormTerm.Univ.OMEGA);
     if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), sigma);
@@ -203,7 +202,7 @@ public record PatTycker(
     }
     var ctorCore = realCtor._3.ref().core;
     final var dataCall = realCtor._1;
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(), ImmutableSeq.of(),
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(),
       Term.Param.subst(ctorCore.conTele(), realCtor._2,
         Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs())), dataCall));
     var patterns = visitPatterns(sig, ctor.params());

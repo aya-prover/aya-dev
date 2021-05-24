@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 public final record StructDef(
   @NotNull DefVar<StructDef, Decl.StructDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> contextTele,
 
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull ImmutableSeq<Sort.LvlVar> levels,
@@ -51,10 +50,6 @@ public final record StructDef(
 
     @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
       return structTele.concat(fieldTele);
-    }
-
-    @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
-      return structRef().core.contextTele();
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

@@ -91,7 +91,7 @@ public final record PrimDef(
     var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
     var paramATy = new FormTerm.Pi(false, paramIToATy, result);
     var aRef = new RefTerm(paramA, paramATy);
-    var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty(), ImmutableSeq.of())));
+    var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.of(), ImmutableSeq.empty())));
     ARCOE = new PrimDef(
       ImmutableSeq.of(
         new Term.Param(paramA, paramATy, true),
@@ -124,10 +124,6 @@ public final record PrimDef(
       if (signature != null) return signature.result();
     }
     return result;
-  }
-
-  @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
-    return ImmutableSeq.empty();
   }
 
   public static final @NotNull Map<@NotNull String, @NotNull PrimDef> PRIMITIVES = ImmutableSeq

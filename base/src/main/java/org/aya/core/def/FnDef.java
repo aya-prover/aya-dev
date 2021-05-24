@@ -19,7 +19,6 @@ import java.util.function.Function;
  */
 public final record FnDef(
   @NotNull DefVar<FnDef, Decl.FnDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> contextTele,
 
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull ImmutableSeq<Sort.LvlVar> levels,

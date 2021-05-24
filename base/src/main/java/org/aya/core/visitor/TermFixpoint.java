@@ -25,17 +25,14 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
-    var contextArgs = dataCall.contextArgs().map(arg -> visitArg(arg, p));
     var args = dataCall.args().map(arg -> visitArg(arg, p));
     var sortArgs = dataCall.sortArgs().map(sort -> visitLevel(sort, p));
-    if (dataCall.contextArgs().sameElements(contextArgs, true)
-      && dataCall.sortArgs().sameElements(sortArgs, true)
+    if (dataCall.sortArgs().sameElements(sortArgs, true)
       && dataCall.args().sameElements(args, true)) return dataCall;
-    return new CallTerm.Data(dataCall.ref(), contextArgs, sortArgs, args);
+    return new CallTerm.Data(dataCall.ref(), sortArgs, args);
   }
 
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
-    var contextArgs = conCall.head().contextArgs().map(arg -> visitArg(arg, p));
     var dataArgs = conCall.head().dataArgs().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));
     var sortArgs = conCall.sortArgs().map(sort -> visitLevel(sort, p));
@@ -43,18 +40,16 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
       && conCall.sortArgs().sameElements(sortArgs, true)
       && conCall.conArgs().sameElements(conArgs, true)) return conCall;
     var head = new CallTerm.ConHead(conCall.head().dataRef(), conCall.head().ref(),
-      contextArgs, sortArgs, dataArgs);
+      sortArgs, dataArgs);
     return new CallTerm.Con(head, conArgs);
   }
 
   @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
-    var contextArgs = structCall.contextArgs().map(arg -> visitArg(arg, p));
     var args = structCall.args().map(arg -> visitArg(arg, p));
     var sortArgs = structCall.sortArgs().map(sort -> visitLevel(sort, p));
-    if (structCall.contextArgs().sameElements(contextArgs, true)
-      && structCall.sortArgs().sameElements(sortArgs, true)
+    if (structCall.sortArgs().sameElements(sortArgs, true)
       && structCall.args().sameElements(args, true)) return structCall;
-    return new CallTerm.Struct(structCall.ref(), contextArgs, sortArgs, args);
+    return new CallTerm.Struct(structCall.ref(), sortArgs, args);
   }
 
   private <T> T visitParameterized(
@@ -89,13 +84,9 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
-    var type = term.type();
-    if (type != null) {
-      var ty = type.accept(this, p);
-      if (ty == type) return term;
-      return new RefTerm(term.var(), ty);
-    }
-    return term;
+    var ty = term.type().accept(this, p);
+    if (ty == term.type()) return term;
+    return new RefTerm(term.var(), ty);
   }
 
   default @NotNull Arg<Term> visitArg(@NotNull Arg<Term> arg, P p) {
@@ -129,13 +120,12 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
-    var contextArgs = fnCall.contextArgs().map(arg -> visitArg(arg, p));
     var args = fnCall.args().map(arg -> visitArg(arg, p));
     var sortArgs = fnCall.sortArgs().map(sort -> visitLevel(sort, p));
     if (fnCall.args().sameElements(args, true)
       && fnCall.sortArgs().sameElements(sortArgs, true)
       && fnCall.args().sameElements(args, true)) return fnCall;
-    return new CallTerm.Fn(fnCall.ref(), contextArgs, sortArgs, args);
+    return new CallTerm.Fn(fnCall.ref(), sortArgs, args);
   }
 
   @Override default @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
@@ -143,7 +133,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var sortArgs = prim.sortArgs().map(sort -> visitLevel(sort, p));
     if (prim.args().sameElements(args, true)
       && prim.sortArgs().sameElements(sortArgs, true)) return prim;
-    return new CallTerm.Prim(prim.ref(), args, sortArgs);
+    return new CallTerm.Prim(prim.ref(), sortArgs, args);
   }
 
   @Override default @NotNull Term visitTup(@NotNull IntroTerm.Tuple term, P p) {
@@ -168,13 +158,11 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitAccess(@NotNull CallTerm.Access term, P p) {
     var tuple = term.of().accept(this, p);
-    var contextArgs = term.contextArgs().map(arg -> visitArg(arg, p));
     var args = term.fieldArgs().map(arg -> visitArg(arg, p));
     var structArgs = term.structArgs().map(arg -> visitArg(arg, p));
     if (term.fieldArgs().sameElements(args, true)
       && term.structArgs().sameElements(structArgs, true)
-      && term.contextArgs().sameElements(contextArgs, true)
       && tuple == term.of()) return term;
-    return new CallTerm.Access(tuple, term.ref(), contextArgs, term.sortArgs(), structArgs, args);
+    return new CallTerm.Access(tuple, term.ref(), term.sortArgs(), structArgs, args);
   }
 }

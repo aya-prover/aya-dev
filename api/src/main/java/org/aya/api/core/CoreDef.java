@@ -18,6 +18,5 @@ import org.jetbrains.annotations.NotNull;
 public interface CoreDef extends Docile {
   @Contract(pure = true) @NotNull DefVar<? extends CoreDef, ? extends ConcreteDecl> ref();
   @NotNull CoreTerm result();
-  @NotNull ImmutableSeq<? extends Bind> contextTele();
   @NotNull ImmutableSeq<? extends Bind> telescope();
 }

@@ -177,7 +177,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
     var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.fullArgs().zip(lhs.ref().core.fullTelescope())) {
+    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
     var retType = lhs.ref().core.result().subst(substMap);
@@ -210,7 +210,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitPrimCall(CallTerm.@NotNull Prim lhs, @NotNull Term preRhs) {
     var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.fullArgs().zip(lhs.ref().core.fullTelescope())) {
+    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
     var retType = lhs.ref().core.result().subst(substMap);
@@ -228,7 +228,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs) {
     var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.fullArgs().zip(lhs.ref().core.fullTelescope())) {
+    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
     var retType = lhs.ref().core.result().subst(substMap);

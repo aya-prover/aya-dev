@@ -12,7 +12,6 @@ import org.aya.core.visitor.Substituter;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
@@ -24,11 +23,6 @@ import java.util.Objects;
  * @author ice1000
  */
 public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef, PrimDef, StructDef, StructDef.Field {
-  static @NotNull ImmutableSeq<Term.Param> defContextTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
-    if (defVar.core != null) return defVar.core.contextTele();
-      // guaranteed as this is already a core term
-    else return Objects.requireNonNull(defVar.concrete.signature).contextParam;
-  }
   static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
@@ -57,12 +51,7 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
 
   @Override @NotNull Term result();
   @Override @NotNull DefVar<? extends Def, ? extends Signatured> ref();
-  @Override @NotNull ImmutableSeq<Term.Param> contextTele();
   @Override @NotNull ImmutableSeq<Term.Param> telescope();
-
-  default @NotNull SeqView<Term.Param> fullTelescope() {
-    return contextTele().view().concat(telescope());
-  }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Doc toDoc() {
@@ -86,16 +75,14 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
    *
    * @author ice1000
    */
-    record Signature(
-    @NotNull ImmutableSeq<Term.@NotNull Param> contextParam,
+  record Signature(
     @NotNull ImmutableSeq<Sort.@NotNull LvlVar> sortParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements Docile {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
-      return new Signature(Term.Param.subst(contextParam, subst),
-        sortParam, substParams(param, subst), result.subst(subst));
+      return new Signature(sortParam, substParams(param, subst), result.subst(subst));
     }
 
     @Override public @NotNull Doc toDoc() {
@@ -104,12 +91,11 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {
-      return new Signature(contextParam, sortParam, param, term);
+      return new Signature(sortParam, param, term);
     }
 
     public @NotNull Signature subst(@NotNull Substituter.TermSubst subst) {
-      return new Signature(Term.Param.subst(contextParam, subst), sortParam,
-        Term.Param.subst(param, subst), result.subst(subst));
+      return new Signature(sortParam, Term.Param.subst(param, subst), result.subst(subst));
     }
   }
 }

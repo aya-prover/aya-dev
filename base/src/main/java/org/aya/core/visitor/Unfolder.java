@@ -16,7 +16,6 @@ import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.SeqView;
 import org.glavo.kala.collection.Set;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.MutableMap;
@@ -43,12 +42,12 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = conCall.ref().core;
     // Not yet type checked
     if (def == null) return conCall;
-    var args = conCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
-    var subst = checkAndBuildSubst(def.fullTelescope(), args);
+    var args = conCall.args().map(arg -> visitArg(arg, p));
+    var subst = checkAndBuildSubst(def.telescope(), args);
     var levelParams = Def.defLevels(def.ref());
     var levelArgs = conCall.sortArgs();
     var levelSubst = buildSubst(levelParams, levelArgs);
-    var dropped = args.drop(conCall.contextArgs().size() + conCall.head().dataArgs().size());
+    var dropped = args.drop(conCall.head().dataArgs().size());
     var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses());
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
   }
@@ -64,21 +63,21 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var def = fnCall.ref().core;
     // Not yet type checked
     if (def == null) return fnCall;
-    var args = fnCall.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
-    var subst = checkAndBuildSubst(def.fullTelescope(), args);
+    var args = fnCall.args().map(arg -> visitArg(arg, p));
+    var subst = checkAndBuildSubst(def.telescope(), args);
     var levelSubst = buildSubst(def.levels(), fnCall.sortArgs());
     var body = def.body();
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
-    return volynskaya != null ? volynskaya.data() : new CallTerm.Fn(fnCall.ref(), fnCall.contextArgs(), fnCall.sortArgs(), args);
+    return volynskaya != null ? volynskaya.data() : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
-  checkAndBuildSubst(SeqView<Term.Param> fullTelescope, SeqLike<Arg<Term>> args) {
+  checkAndBuildSubst(SeqLike<Term.Param> telescope, SeqLike<Arg<Term>> args) {
     // This shouldn't fail
     // Assertions are enabled optionally, so we could perform some somehow-expensive operations
-    assert args.sizeEquals(fullTelescope.size());
-    assert Term.Param.checkSubst(fullTelescope, args);
-    return buildSubst(fullTelescope, args);
+    assert args.sizeEquals(telescope.size());
+    assert Term.Param.checkSubst(telescope, args);
+    return buildSubst(telescope, args);
   }
 
   @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
@@ -88,7 +87,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
     var def = hole.ref().core();
     // Not yet type checked
-    var args = hole.fullArgs().map(arg -> visitArg(arg, p));
+    var args = hole.fullArgs().view().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
     var body = def.body;
     if (body == null) return hole;
@@ -117,13 +116,13 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var field = term.ref();
     var core = field.core;
     if (!(nevv instanceof IntroTerm.New n)) {
-      var args = term.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
-      var fieldSubst = checkAndBuildSubst(core.fullTelescope(), args);
+      var args = term.args().map(arg -> visitArg(arg, p));
+      var fieldSubst = checkAndBuildSubst(core.telescope().view(), args);
       var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
-      var dropped = args.drop(term.contextArgs().size() + term.structArgs().size());
+      var dropped = args.drop(term.structArgs().size());
       var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses());
       return mischa != null ? mischa.data() : new CallTerm.Access(nevv, field,
-        term.contextArgs(), term.sortArgs(), term.structArgs(), dropped);
+        term.sortArgs(), term.structArgs(), dropped);
     }
     var arguments = Unfolder.buildSubst(core.telescope(), term.args());
     return n.params().get(field).subst(arguments).accept(this, p);

@@ -21,7 +21,6 @@ import java.util.Objects;
  */
 public final record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> contextTele,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull ImmutableSeq<Sort.LvlVar> levels,
   @NotNull Term result,
@@ -61,12 +60,6 @@ public final record DataDef(
       ref.core = this;
     }
 
-    @Override public @NotNull ImmutableSeq<Term.Param> contextTele() {
-      var ref = dataRef();
-      if (ref.core == null) return Objects.requireNonNull(ref.concrete.signature).contextParam();
-      return ref.core.contextTele();
-    }
-
     @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
       return dataTele.concat(conTele);
     }
@@ -86,16 +79,16 @@ public final record DataDef(
         var dataDef = core.dataRef.core;
         var conTelescope = core.conTele;
         if (dataDef != null)
-          return new CtorTelescopes(dataDef.contextTele, dataDef.telescope, sort, conTelescope);
+          return new CtorTelescopes(dataDef.telescope, sort, conTelescope);
         var signature = core.dataRef.concrete.signature;
         assert signature != null;
-        return new CtorTelescopes(signature.contextParam(), signature.param(), sort, conTelescope);
+        return new CtorTelescopes(signature.param(), sort, conTelescope);
       }
       var dataSignature = defVar.concrete.dataRef.concrete.signature;
       assert dataSignature != null;
       var conSignature = defVar.concrete.signature;
       assert conSignature != null;
-      return new CtorTelescopes(dataSignature.contextParam(), dataSignature.param(), sort, conSignature.param());
+      return new CtorTelescopes(dataSignature.param(), sort, conSignature.param());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -107,14 +100,12 @@ public final record DataDef(
    * @author ice1000
    */
   public static record CtorTelescopes(
-    @NotNull ImmutableSeq<Term.Param> ctxTele,
     @NotNull ImmutableSeq<Term.Param> dataTele,
     @NotNull ImmutableSeq<Sort.CoreLevel> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {
       return new CallTerm.Con(fromCtor(conVar), conVar,
-        ctxTele.map(Term.Param::toArg),
         dataTele.map(Term.Param::toArg),
         sortTele,
         conTele.map(Term.Param::toArg));

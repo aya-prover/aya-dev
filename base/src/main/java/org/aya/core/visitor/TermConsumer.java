@@ -34,7 +34,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitRef(@NotNull RefTerm term, P p) {
-    if (term.type() != null) term.type().accept(this, p);
+    term.type().accept(this, p);
     return Unit.unit();
   }
 
@@ -94,7 +94,6 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override default Unit visitAccess(@NotNull CallTerm.Access term, P p) {
     visitArgs(p, term.fieldArgs());
-    visitArgs(p, term.contextArgs());
     return term.of().accept(this, p);
   }
 }

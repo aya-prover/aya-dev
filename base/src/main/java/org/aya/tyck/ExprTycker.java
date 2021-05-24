@@ -190,7 +190,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall(pos, (DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
-      return defCall(pos, (DefVar<PrimDef, Decl.PrimDecl>) var, (v, ca, sorts, args) -> new CallTerm.Prim(v, args, sorts));
+      return defCall(pos, (DefVar<PrimDef, Decl.PrimDecl>) var, CallTerm.Prim::new);
     } else if (var.core instanceof DataDef || var.concrete instanceof Decl.DataDecl) {
       return defCall(pos, (DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {
@@ -224,11 +224,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
     var level = levelStuffs(pos, defVar);
     var tele = Term.Param.subst(Def.defTele(defVar), level._1);
-    var ctxTele = Term.Param.subst(Def.defContextTele(defVar), level._1);
     // unbound these abstracted variables
     // ice: should we rename the vars in this telescope? Probably not.
     var body = function.make(defVar,
-      ctxTele.map(Term.Param::toArg),
       level._2,
       tele.map(Term.Param::toArg));
     tracing(builder -> builder.collect(body, pos));
@@ -408,12 +406,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     // TODO[ice]: instantiate the type
     var field = projected.get();
     var fieldRef = field.ref();
-    var ctxTele = Def.defContextTele(fieldRef);
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var levels = levelStuffs(struct.sourcePos(), fieldRef);
     var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst, levels._1);
-    var access = new CallTerm.Access(projectee.wellTyped, fieldRef,
-      ctxTele.map(Term.Param::toArg), levels._2,
+    var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
       structCall.args(), tele.map(Term.Param::toArg));
     tracing(builder -> builder.collect(access, accessPos));
     return new Result(IntroTerm.Lambda.make(tele, access),
