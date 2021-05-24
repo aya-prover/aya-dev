@@ -3,7 +3,7 @@
 package org.aya.lsp;
 
 import org.aya.api.error.SourcePos;
-import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +19,10 @@ public class LspRange {
       new Position(sourcePos.endLine() - 1, sourcePos.endColumn() + 1));
   }
 
-  public static @NotNull Location toLoc(@NotNull SourcePos sourcePos) {
-    var range = toRange(sourcePos);
-    return new Location(Paths.get(sourcePos.file().name()).toUri().toString(), range);
+  public static @NotNull LocationLink toLoc(@NotNull SourcePos from, @NotNull SourcePos to) {
+    var fromRange = toRange(from);
+    var toRange = toRange(to);
+    return new LocationLink(Paths.get(from.file().name()).toUri().toString(),
+      toRange, toRange, fromRange);
   }
 }

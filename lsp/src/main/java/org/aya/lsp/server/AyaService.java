@@ -6,6 +6,8 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LocalVar;
 import org.aya.api.util.WithPos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
@@ -160,7 +162,16 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var position = params.getPosition();
       var locator = new RefLocator();
       locator.visitAll(loadedFile.concete, new RefLocator.XY(position.getLine() + 1, position.getCharacter()));
-      return Either.forLeft(locator.locations.stream().map(LspRange::toLoc).toList());
+      return Either.forRight(locator.locations.view().mapNotNull(pos -> {
+        if (pos.data() instanceof DefVar<?, ?> defVar) {
+          var target = defVar.concrete.sourcePos();
+          Log.i("Resolved references, result: " + target);
+          return LspRange.toLoc(pos.sourcePos(), target);
+        } else if (pos.data() instanceof LocalVar localVar) {
+          // TODO: location
+          return null;
+        } else return null;
+      }).collect(Collectors.toList()));
     });
   }
 
