@@ -20,7 +20,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>,
   }
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {
-    return new Pattern.Clause(c.sourcePos(), c.patterns(), c.expr().map(expr -> expr.accept(this, pp)));
+    return new Pattern.Clause(c.sourcePos, c.patterns, c.expr.map(expr -> expr.accept(this, pp)));
   }
 
   @Override default Unit visitData(@NotNull Decl.DataDecl decl, P p) {

@@ -113,10 +113,15 @@ public sealed interface Pattern extends ConcretePat {
   /**
    * @author kiva, ice1000
    */
-  record Clause(
-    @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Pattern> patterns,
-    @NotNull Option<Expr> expr
-  ) {
+  final class Clause {
+    public final @NotNull SourcePos sourcePos;
+    public final @NotNull ImmutableSeq<Pattern> patterns;
+    public @NotNull Option<Expr> expr;
+
+    public Clause(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Pattern> patterns, @NotNull Option<Expr> expr) {
+      this.sourcePos = sourcePos;
+      this.patterns = patterns;
+      this.expr = expr;
+    }
   }
 }

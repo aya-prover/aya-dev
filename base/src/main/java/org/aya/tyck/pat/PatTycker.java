@@ -71,7 +71,7 @@ public record PatTycker(
     Ref<Def.@NotNull Signature> signature
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
-      tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos(), "clause " + (1 + index))));
+      tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
       subst.clear();
       var elabClause = visitMatch(clause, signature.value);
       tracing(GenericBuilder::reduce);
@@ -106,15 +106,14 @@ public record PatTycker(
   public Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
     var sig = new Ref<>(signature);
     exprTycker.localCtx = exprTycker.localCtx.derive();
-    var patterns = visitPatterns(sig, match.patterns());
+    var patterns = visitPatterns(sig, match.patterns);
     var type = sig.value.result();
-    var result = match.expr()
-      .map(e -> e.accept(subst, Unit.unit()))
-      .map(e -> exprTycker.checkNoZonk(e, type));
+    match.expr = match.expr.map(e -> e.accept(subst, Unit.unit()));
+    var result = match.expr.map(e -> exprTycker.checkNoZonk(e, type));
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
-    return new Pat.PrototypeClause(match.sourcePos(), patterns, result.map(ExprTycker.Result::wellTyped));
+    return new Pat.PrototypeClause(match.sourcePos, patterns, result.map(ExprTycker.Result::wellTyped));
   }
 
   public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
