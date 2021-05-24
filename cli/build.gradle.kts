@@ -11,7 +11,8 @@ dependencies {
   implementation(project(":base"))
   implementation(project(":parser"))
   implementation(project(":pretty"))
-  testImplementation(project(":tester"))
+  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
+  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
 }
 
 tasks.withType<AbstractCopyTask>().configureEach {

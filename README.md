@@ -37,7 +37,7 @@ gradle use proxies.
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
 [codecov]: https://codecov.io/gh/aya-prover/aya-dev/branch/main/graph/badge.svg?token=Z4CDKG8VSX
 [gitter]: https://badges.gitter.im/aya-prover/community.svg
-[oop]: tester/src/test/aya/success/add-comm.aya
-[path]: tester/src/test/aya/success/cong-sym-trans.aya
+[oop]: base/src/test/resources/success/add-comm.aya
+[path]: base/src/test/resources/success/cong-sym-trans.aya
 [proxy]: https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
-[gadt]: tester/src/test/aya/success/type-safe-norm.aya
+[gadt]: base/src/test/resources/success/type-safe-norm.aya

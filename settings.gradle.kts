@@ -13,7 +13,6 @@ dependencyResolutionManagement {
 
 include(
   "api",
-  "tester",
   "docs",
   "cli",
   "tgbot",

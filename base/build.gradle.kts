@@ -4,7 +4,10 @@ dependencies {
   api(project(":api"))
   implementation(project(":pretty"))
   implementation(project(":parser"))
-  testImplementation(project(":tester"))
+  val deps: java.util.Properties by rootProject.ext
+  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
+  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
+  testImplementation(project(":cli"))
 }
 
 val genDir = file("src/main/gen")
