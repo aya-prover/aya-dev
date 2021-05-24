@@ -64,13 +64,13 @@ public final record PrimDef(
     return visitor.visitPrim(this, p);
   }
 
-  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.of(),
+  public static final @NotNull PrimDef INTERVAL = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
     new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), prim -> prim, "I");
-  public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.of(), ImmutableSeq.of());
+  public static final @NotNull CallTerm.Prim INTERVAL_CALL = new CallTerm.Prim(INTERVAL.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
   public static final @NotNull PrimDef LEFT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "left");
   public static final @NotNull PrimDef RIGHT = new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(), INTERVAL_CALL, prim -> prim, "right");
-  public static final @NotNull CallTerm.Prim LEFT_CALL = new CallTerm.Prim(LEFT.ref, ImmutableSeq.of(), ImmutableSeq.of());
-  public static final @NotNull CallTerm.Prim RIGHT_CALL = new CallTerm.Prim(RIGHT.ref, ImmutableSeq.of(), ImmutableSeq.of());
+  public static final @NotNull CallTerm.Prim LEFT_CALL = new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+  public static final @NotNull CallTerm.Prim RIGHT_CALL = new CallTerm.Prim(RIGHT.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
 
   public static final @NotNull PrimDef INVOL;
 

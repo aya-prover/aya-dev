@@ -86,7 +86,7 @@ public record PatTycker(
     @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) {
     var checked = clauses.map(c -> {
-      if (patSubst != null) subst().resetTo(patSubst);
+      if (patSubst != null) subst.resetTo(patSubst);
       return visitMatch(c, signature);
     });
     exprTycker.equations.solve();
