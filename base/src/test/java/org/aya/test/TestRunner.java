@@ -23,11 +23,11 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestRunner {
-  static SourceFileLocator LOCATOR = new SourceFileLocator() {
+  static @NotNull SourceFileLocator LOCATOR = new SourceFileLocator() {
   };
 
   @Test void runAllAyaTests() throws IOException {
-    var testSourceDir = Paths.get("src", "test", "resources");
+    var testSourceDir = Paths.get("src", "test", "resources").toAbsolutePath();
     runDir(testSourceDir.resolve("success"), true);
     runDir(testSourceDir.resolve("failure"), false);
   }

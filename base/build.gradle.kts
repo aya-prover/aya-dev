@@ -30,3 +30,9 @@ val cleanGenerated = tasks.register("cleanGenerated") {
 }
 
 tasks.named("clean") { dependsOn(cleanGenerated) }
+
+tasks.named<Test>("test") {
+  testLogging.showStandardStreams = true
+  testLogging.showCauses = true
+  inputs.dir(projectDir.resolve("src/test/resources"))
+}
