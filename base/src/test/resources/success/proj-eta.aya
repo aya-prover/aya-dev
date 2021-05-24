@@ -1,0 +1,6 @@
+open data Unit : Set | unit
+open data Eq : Set | true | false Unit { | unit => true }
+
+def test {A B : Set} (t : Sig A ** B) (eq : Eq) : Sig A ** B
+ | t, true => t
+ | t, false unit => (t.1, t.2)
