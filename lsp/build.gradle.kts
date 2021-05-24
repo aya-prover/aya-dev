@@ -61,6 +61,10 @@ jlinkTask.configure {
   }
 }
 
+tasks.withType<AbstractCopyTask>().configureEach {
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
   dependsOn(jlinkTask)
   from(imageDir)

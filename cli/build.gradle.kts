@@ -16,7 +16,7 @@ dependencies {
 }
 
 tasks.withType<AbstractCopyTask>().configureEach {
-  duplicatesStrategy = DuplicatesStrategy.INCLUDE
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 val isMac = Os.isFamily(Os.FAMILY_MAC)
