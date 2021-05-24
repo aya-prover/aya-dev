@@ -5,60 +5,19 @@ package org.aya.core;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
-import org.aya.core.term.*;
-import org.aya.test.Lisp;
-import org.aya.test.LispTestCase;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.RefTerm;
+import org.aya.core.term.Term;
 import org.aya.tyck.TyckDeclTest;
-import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 import java.util.function.IntFunction;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class NormalizeTest extends LispTestCase {
-  private void unchanged(@Language("TEXT") String code) {
-    var term = Lisp.parse(code);
-    assertEquals(term, term.normalize(NormalizeMode.NF));
-    assertEquals(term, term.normalize(NormalizeMode.WHNF));
-  }
-
-  @Test public void noNormalizeNeutral() {
-    unchanged("(app f a)");
-  }
-
-  @Test public void noNormalizeCanonical() {
-    unchanged("(lam (a (U) ex) a)");
-    unchanged("(Pi (a (U) ex) a)");
-    unchanged("(Sigma (a (U) ex null) a)");
-  }
-
-  @Test public void redexNormalize() {
-    var term = Lisp.parse("(app (lam (a (U) ex) a) b)");
-    assertTrue(term instanceof ElimTerm.App);
-    var whnf = term.normalize(NormalizeMode.WHNF);
-    var nf = term.normalize(NormalizeMode.NF);
-    assertTrue(whnf instanceof RefTerm);
-    assertTrue(nf instanceof RefTerm);
-    assertEquals(whnf, nf);
-  }
-
-  @Test public void whnfNoNormalize() {
-    var term = Lisp.parse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
-    assertEquals(term, term.normalize(NormalizeMode.WHNF));
-  }
-
-  @Test public void nfNormalizeCanonical() {
-    // \x : U. (\a : U. a) b
-    var term = Lisp.parse("(lam (x (U) ex) (app (lam (a (U) ex) a) b))");
-    assertTrue(((IntroTerm.Lambda) term).body() instanceof ElimTerm.App);
-    var nf = term.normalize(NormalizeMode.NF);
-    assertNotEquals(term, nf);
-    assertTrue(((IntroTerm.Lambda) nf).body() instanceof RefTerm);
-  }
-
+public class NormalizeTest {
   @Test public void unfoldPatterns() {
     var defs = TyckDeclTest.successTyckDecls("""
       open data Nat : Set | zero | suc Nat

@@ -4,9 +4,8 @@ package org.aya.core;
 
 import org.aya.api.ref.LocalVar;
 import org.aya.core.def.Def;
+import org.aya.core.def.FnDef;
 import org.aya.core.visitor.RefFinder;
-import org.aya.test.Lisp;
-import org.aya.test.LispTestCase;
 import org.aya.tyck.TyckDeclTest;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -14,27 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class UsagesTest extends LispTestCase {
-  @Test public void someUsages() {
-    assertEquals(2, Lisp.parse("(app glavo glavo)", vars).findUsages(vars.get("glavo")));
-  }
-
-  @Test public void lambdaUsages() {
-    assertEquals(1, Lisp.parse("(lam (dio (U) ex) dio)", vars).findUsages(vars.get("dio")));
-  }
-
-  @Test public void tupUsages() {
-    assertEquals(1, Lisp.parse("(tup (U) yume)", vars).findUsages(vars.get("yume")));
-  }
-
-  @Test public void piUsages() {
-    assertEquals(1, Lisp.parse("(Pi (giogio (U) ex) giogio)", vars).findUsages(vars.get("giogio")));
-  }
-
-  @Test public void noUsages() {
-    assertEquals(0, Lisp.parse("(app xy r)", vars).findUsages(new LocalVar("a")));
-  }
-
+public class UsagesTest {
   @Test public void refFinder() {
     assertTrue(RefFinder.HEADER_AND_BODY.withBody());
     TyckDeclTest.successTyckDecls("""
@@ -53,6 +32,8 @@ public class UsagesTest extends LispTestCase {
       def.accept(RefFinder.HEADER_ONLY, of);
       if (Seq.of("Nat", "Int").contains(def.ref().name())) assertTrue(of.isEmpty());
       else assertFalse(of.isEmpty());
+      if (def instanceof FnDef fn && fn.body().isLeft())
+        assertEquals(0, fn.body().getLeftValue().findUsages(new LocalVar("233")));
     });
   }
 }

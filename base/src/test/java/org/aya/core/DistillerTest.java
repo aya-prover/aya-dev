@@ -6,7 +6,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckDeclTest;
-import org.aya.tyck.TyckExprTest;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -15,10 +14,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class DistillerTest {
-  @Test public void term() {
-    assertFalse(TyckExprTest.lamConnected().toDoc().renderToHtml().isEmpty());
-  }
-
   @Test public void fn() {
     var doc1 = declDoc("def id {A : Set} (a : A) : A => a");
     var doc2 = declDoc("def id {A : Set} (a : A) => a");
