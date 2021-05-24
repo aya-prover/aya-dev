@@ -158,14 +158,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var locator = new RefLocator();
       locator.visitAll(loadedFile.concrete, new RefLocator.XY(position.getLine() + 1, position.getCharacter()));
       return Either.forRight(locator.locations.view().mapNotNull(pos -> {
+        SourcePos target;
         if (pos.data() instanceof DefVar<?, ?> defVar) {
-          var target = defVar.concrete.sourcePos();
-          Log.i("Resolved references, result: " + target);
-          return LspRange.toLoc(pos.sourcePos(), target);
+          target = defVar.concrete.sourcePos();
         } else if (pos.data() instanceof LocalVar localVar) {
-          // TODO: location
-          return null;
+          target = localVar.definition();
         } else return null;
+        return LspRange.toLoc(pos.sourcePos(), target);
       }).collect(Collectors.toList()));
     });
   }
