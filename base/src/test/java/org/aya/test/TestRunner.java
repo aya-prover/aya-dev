@@ -118,11 +118,11 @@ public class TestRunner {
   }
 
   private String instantiateVars(@NotNull Path testFile, String template) {
-    return template.replace("$FILE", testFile.toString());
+    return template.replace("$FILE", testFile.toUri().toString());
   }
 
   private String instantiateHoles(@NotNull Path testFile, String template) {
-    return template.replace(testFile.toString(), "$FILE");
+    return template.replace(testFile.toUri().toString(), "$FILE");
   }
 
   private String trimCRLF(String string) {
