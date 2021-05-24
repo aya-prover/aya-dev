@@ -48,9 +48,7 @@ public final class Main {
       Paths.get(cli.prettyDir != null ? cli.prettyDir : ".")
     ) : null;
     var status = compiler.compile(filePath, new CompilerFlags(
-      message,
-      cli.interruptedTrace,
-      distillation,
+      message, cli.interruptedTrace, distillation,
       cli.modulePaths().view().map(Paths::get)));
     if (traceBuilder != null) switch (cli.traceFormat) {
       case imgui -> {

@@ -153,7 +153,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     }
 
     @Contract(" -> new") public @NotNull Param rename() {
-      return new Param(new LocalVar(ref.name()), type, explicit);
+      return new Param(new LocalVar(ref.name(), ref.definition()), type, explicit);
     }
 
     @Override @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {
@@ -201,7 +201,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     }
 
     public static @NotNull Term.Param mock(@NotNull Term hole, boolean explicit) {
-      return new Param(new LocalVar(Constants.ANONYMOUS_PREFIX), hole, explicit);
+      return new Param(Constants.anonymous(), hole, explicit);
     }
 
     @TestOnly @Contract(pure = true)

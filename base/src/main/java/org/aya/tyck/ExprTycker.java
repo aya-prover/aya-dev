@@ -210,9 +210,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
       var field = (DefVar<StructDef.Field, Decl.StructField>) var;
       var ty = Def.defResult(field);
-      var refExpr = new Expr.RefExpr(field.concrete.sourcePos(), field, field.concrete.ref.name());
+      var fieldPos = field.concrete.sourcePos();
+      var refExpr = new Expr.RefExpr(fieldPos, field, field.concrete.ref.name());
       // TODO[ice]: correct this RefTerm
-      return unifyTyMaybeInsert(expected, ty, new RefTerm(new LocalVar(field.name()), ty), refExpr);
+      return unifyTyMaybeInsert(expected, ty, new RefTerm(new LocalVar(field.name(), fieldPos), ty), refExpr);
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);
@@ -503,7 +504,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         .forEach(result -> {
           items.append(result.wellTyped);
           if (resultLast.value != null) resultTele.append(
-            new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), resultLast.value, true));
+            new Term.Param(Constants.anonymous(), resultLast.value, true));
           resultLast.value = result.type;
         });
     } else if (!(term instanceof FormTerm.Sigma dt && !dt.co())) {
@@ -536,7 +537,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         }
       }
     }
-    resultTele.append(new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), resultLast.value, true));
+    resultTele.append(new Term.Param(Constants.anonymous(), resultLast.value, true));
     var resultType = new FormTerm.Sigma(false, resultTele.toImmutableSeq());
     return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
   }

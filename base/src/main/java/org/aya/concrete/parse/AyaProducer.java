@@ -219,7 +219,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .getOrDefault(defaultVal);
   }
 
-  private @NotNull String visitParamLiteral(AyaParser.LiteralContext ctx) {
+  private @NotNull LocalVar visitParamLiteral(AyaParser.LiteralContext ctx) {
     var idCtx = ctx.qualifiedId();
     if (idCtx == null) {
       reporter.report(new ParseError(sourcePosOf(ctx),
@@ -232,21 +232,21 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
         "parameter name `" + ctx.getText() + "` should not be qualified"));
       throw new ParsingInterruptedException();
     }
-    return id.justName();
+    return new LocalVar(id.justName(), sourcePosOf(idCtx));
   }
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx, boolean isLamTele) {
     var literal = ctx.literal();
     if (literal != null) return ImmutableSeq.of(isLamTele
-      ? new Expr.Param(sourcePosOf(ctx), new LocalVar(visitParamLiteral(literal)), type(null, sourcePosOf(ctx)), true)
-      : new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitLiteral(literal), true)
+      ? new Expr.Param(sourcePosOf(ctx), visitParamLiteral(literal), type(null, sourcePosOf(ctx)), true)
+      : new Expr.Param(sourcePosOf(ctx), Constants.anonymous(), visitLiteral(literal), true)
     );
     var teleBinder = ctx.teleBinder();
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (teleBinder != null) {
       var type = teleBinder.expr();
       if (type != null)
-        return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), new LocalVar(Constants.ANONYMOUS_PREFIX), visitExpr(type), true));
+        return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), Constants.anonymous(), visitExpr(type), true));
       teleMaybeTypedExpr = teleBinder.teleMaybeTypedExpr();
     }
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
@@ -258,7 +258,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   public @NotNull Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(AyaParser.TeleMaybeTypedExprContext ctx) {
     var type = type(ctx.type(), sourcePosOf(ctx.ids()));
     return explicit -> visitIds(ctx.ids())
-      .map(v -> new Expr.Param(v.sourcePos(), new LocalVar(v.data()), type, explicit))
+      .map(v -> new Expr.Param(v.sourcePos(), WithPos.toVar(v), type, explicit))
       .collect(ImmutableSeq.factory());
   }
 
@@ -291,7 +291,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       visitExpr(ctx.expr()),
       ImmutableSeq.from(ctx.newArg())
         .map(na -> new Expr.Field(na.ID().getText(), visitIds(na.ids())
-          .map(t -> t.map(LocalVar::new))
+          .map(t -> new WithPos<>(t.sourcePos(), WithPos.toVar(t)))
           .collect(ImmutableSeq.factory()), visitExpr(na.expr())))
     );
   }
@@ -302,7 +302,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Expr.PiExpr(
       sourcePosOf(ctx),
       false,
-      new Expr.Param(sourcePosOf(ctx.expr(0)), new LocalVar(Constants.ANONYMOUS_PREFIX), from, true),
+      new Expr.Param(sourcePosOf(ctx.expr(0)), Constants.anonymous(), from, true),
       to
     );
   }
@@ -396,7 +396,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       false,
       visitTelescope(ctx.tele()).appended(new Expr.Param(
         visitExpr(ctx.expr()).sourcePos(),
-        new LocalVar(Constants.ANONYMOUS_PREFIX),
+        Constants.anonymous(),
         visitExpr(ctx.expr()),
         true))
     );
@@ -561,7 +561,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     if (ctx.LPAREN() != null || ctx.LBRACE() != null) {
       var forceEx = ctx.LPAREN() != null;
       var id = ctx.ID();
-      var as = id != null ? new LocalVar(id.getText()) : null;
+      var as = id != null ? new LocalVar(id.getText(), sourcePosOf(id)) : null;
       var tupElem = ctx.patterns().pattern().stream()
         .map(t -> visitAtomPatterns(t.atomPatterns()))
         .collect(ImmutableSeq.factory());
@@ -577,7 +577,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText()), new Ref<>());
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
     if (ctx.ABSURD() != null) return ex -> new Pattern.Absurd(sourcePos, ex);
 
     return unreachable(ctx);

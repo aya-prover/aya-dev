@@ -38,7 +38,7 @@ public final class BinOpParser {
     if (opSet.assocOf(first.asOpDecl()).infix) {
       // + f a b c d
       // \lam _ => _ + f a b c d
-      var lhs = new LocalVar(Constants.ANONYMOUS_PREFIX);
+      var lhs = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE);
       var lhsElem = new Elem(new Expr.RefExpr(SourcePos.NONE, lhs, "_"), true);
       var lamSeq = seq.prepended(lhsElem);
       return new Expr.LamExpr(sourcePos,

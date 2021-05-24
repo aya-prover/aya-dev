@@ -36,10 +36,11 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFil
     return compile(sourceFile, flags, stmts -> {}, (stmts, defs) -> {});
   }
 
-  public int compile(@NotNull Path sourceFile,
-                     @NotNull CompilerFlags flags,
-                     @NotNull Consumer<ImmutableSeq<Stmt>> onResolved,
-                     @NotNull BiConsumer<ImmutableSeq<Stmt>, ImmutableSeq<Def>> onTycked) throws IOException {
+  public int compile(
+    @NotNull Path sourceFile, @NotNull CompilerFlags flags,
+    @NotNull Consumer<ImmutableSeq<Stmt>> onResolved,
+    @NotNull BiConsumer<ImmutableSeq<Stmt>, ImmutableSeq<Def>> onTycked
+  ) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     try {

@@ -131,7 +131,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     var fieldSubst = new Substituter.TermSubst(MutableHashMap.of());
     for (var fieldSig : fieldSigs) {
       var dummyVars = fieldSig.fieldTele().map(par ->
-        new LocalVar(par.ref().name()));
+        new LocalVar(par.ref().name(), par.ref().definition()));
       var dummy = dummyVars.zip(fieldSig.fieldTele()).map(vpa ->
         new Arg<Term>(new RefTerm(vpa._1, vpa._2.type()), vpa._2.explicit()));
       var l = new CallTerm.Access(lhs, fieldSig.ref(), type.sortArgs(), type.args(), dummy);

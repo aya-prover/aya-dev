@@ -121,7 +121,8 @@ public record PatTycker(
       }
       var param = sig.value.param().first();
       while (param.explicit() != pat.explicit()) if (pat.explicit()) {
-        var bind = new Pat.Bind(false, new LocalVar(param.ref().name()), param.type());
+        // TODO: implicitly generated patterns might be inferred to something else?
+        var bind = new Pat.Bind(false, new LocalVar(param.ref().name(), param.ref().definition()), param.type());
         results.append(bind);
         exprTycker.localCtx.put(bind.as(), param.type());
         sig.value = sig.value.inst(bind.toTerm());
