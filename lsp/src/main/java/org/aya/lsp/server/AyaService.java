@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -88,7 +87,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe().debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints().stream().map(t -> new InlineHintProblem(p, t))))
-      .map(p -> Tuple.of(Paths.get(p.sourcePos().file().name()).toUri(), p))
+      .flatMap(p -> p.sourcePos().file().file().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
         t -> t._1,
         Collectors.mapping(t -> t._2, Seq.factory())
@@ -193,9 +192,9 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     @NotNull MutableHashMap<@NotNull String, AyaFile> loadedFiles,
     @NotNull Buffer<Path> modulePath
   ) implements SourceFileLocator {
-    @Override public @NotNull String locate(@NotNull Path path) {
+    @Override public @NotNull Path locate(@NotNull Path path) {
       // vscode needs absolute path
-      return path.toAbsolutePath().toString();
+      return path.toAbsolutePath();
     }
   }
 

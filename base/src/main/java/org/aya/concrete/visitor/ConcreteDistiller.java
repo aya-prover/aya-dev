@@ -212,7 +212,7 @@ public final class ConcreteDistiller implements
   }
 
   public Doc matchy(Pattern.@NotNull Clause match) {
-      var doc = visitMaybeCtorPatterns(match.patterns, false, Doc.plain(", "));
+    var doc = visitMaybeCtorPatterns(match.patterns, false, Doc.plain(", "));
     return match.expr.map(e -> Doc.cat(doc, Doc.plain(" => "), e.toDoc())).getOrDefault(doc);
   }
 

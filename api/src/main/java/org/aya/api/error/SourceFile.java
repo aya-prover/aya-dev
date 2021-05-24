@@ -5,7 +5,10 @@ package org.aya.api.error;
 import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
-public record SourceFile(@NotNull Option<String> file, @NotNull String sourceCode) {
+import java.net.URI;
+import java.util.Objects;
+
+public record SourceFile(@NotNull Option<URI> file, @NotNull String sourceCode) {
   public static final SourceFile NONE = new SourceFile(Option.none(), "");
 
   public boolean isSomeFile() {
@@ -13,6 +16,6 @@ public record SourceFile(@NotNull Option<String> file, @NotNull String sourceCod
   }
 
   public @NotNull String name() {
-    return file.getOrDefault("<unknown-file>");
+    return file.map(Objects::toString).getOrDefault("<unknown-file>");
   }
 }
