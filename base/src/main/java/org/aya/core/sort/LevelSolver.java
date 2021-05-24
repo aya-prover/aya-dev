@@ -49,10 +49,10 @@ public class LevelSolver {
     g[u][v] = Math.min(g[u][v], dist);
   }
 
-  MutableSet<LvlVar> unfreeNodes = MutableSet.of();
-  MutableSet<LvlVar> freeNodes = MutableSet.of();
-  MutableMap<LvlVar, Integer> graphMap = MutableMap.create();
-  MutableMap<LvlVar, Integer> defaultValues = MutableMap.create();
+  private final MutableSet<LvlVar> unfreeNodes = MutableSet.of();
+  private final MutableSet<LvlVar> freeNodes = MutableSet.of();
+  private final MutableMap<LvlVar, Integer> graphMap = MutableMap.create();
+  private final MutableMap<LvlVar, Integer> defaultValues = MutableMap.create();
 
   void genGraphNode(SeqLike<Level<LvlVar>> l) {
     for (var e : l) {
@@ -101,7 +101,7 @@ public class LevelSolver {
         int defaultValue = th.ref().kind().defaultValue - th.lift();
         int u = graphMap.get(th.ref());
         if (th.ref().free()) {
-          // addEdge(g, u, 0, -defaultValue); // 认为自由变量一定大于等于其默认值（暂时取消这种想法）
+          // addEdge(g, u, 0, -defaultValue);
           defaultValues.put(th.ref(), th.ref().kind().defaultValue);
           freeNodes.add(th.ref());
           // Universe level can't be inf, homotopy can
@@ -215,7 +215,7 @@ public class LevelSolver {
       if (upperBound >= thDefault) {
         addEdge(gg, u, 0, thDefault);
         floyd(gg);
-        upperBound = gg[0][u]; // 重新跑 Floyd
+        upperBound = gg[0][u];
       }
       int lowerBound = -gg[u][0];
       if (lowerBound < 0) lowerBound = 0;
