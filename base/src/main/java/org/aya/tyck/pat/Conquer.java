@@ -16,7 +16,6 @@ import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.LocalCtx;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
@@ -32,18 +31,17 @@ import org.jetbrains.annotations.NotNull;
 public record Conquer(
   @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
   @NotNull SourcePos sourcePos,
-  @NotNull LocalCtx localCtx,
   @NotNull Def.Signature signature,
   @NotNull ExprTycker tycker
 ) implements Pat.Visitor<Integer, Unit> {
   public static void against(
-    @NotNull ImmutableSeq<Matching<Pat, Term>> matchings, @NotNull LocalCtx localCtx,
+    @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
     for (int i = 0, size = matchings.size(); i < size; i++) {
       var matching = matchings.get(i);
       for (var pat : matching.patterns())
-        pat.accept(new Conquer(matchings, pos, localCtx, signature, tycker), i);
+        pat.accept(new Conquer(matchings, pos, signature, tycker), i);
     }
   }
 
@@ -83,7 +81,7 @@ public record Conquer(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));
       throw new ExprTycker.TyckInterruptedException();
     }
-    var unification = tycker.unifier(sourcePos, Ordering.Eq, localCtx)
+    var unification = tycker.unifier(sourcePos, Ordering.Eq)
       .compare(newBody, volynskaya.data(), signature.result().subst(matchy));
     if (!unification) {
       tycker.reporter.report(new ClausesProblem.Conditions(

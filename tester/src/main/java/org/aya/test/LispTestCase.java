@@ -19,7 +19,7 @@ public class LispTestCase {
 
   protected @NotNull TypedDefEq eq(MutableMap<LocalVar, Term> localCtx) {
     var tycker = new ExprTycker(ThrowingReporter.INSTANCE, new LocalCtx(localCtx, null), null);
-    return new TypedDefEq(tycker.localCtx, Ordering.Eq, tycker, SourcePos.NONE);
+    return new TypedDefEq(Ordering.Eq, tycker, SourcePos.NONE);
   }
 
   @AfterEach

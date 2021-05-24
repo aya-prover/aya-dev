@@ -123,23 +123,22 @@ public record StmtTycker(
     }
     var signature = new Def.Signature(ImmutableSeq.of(), sortParam, tele, dataCall);
     ctor.signature = signature;
-    var cumulativeCtx = tycker.localCtx.derive();
-    var elabClauses = patTycker.elabClauses(patSubst, signature, cumulativeCtx, ctor.clauses);
+    var elabClauses = patTycker.elabClauses(patSubst, signature, ctor.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
-    ensureConfluent(tycker, signature, cumulativeCtx, elabClauses, matchings, ctor.sourcePos, false);
+    ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false);
     return elaborated;
   }
 
   private void ensureConfluent(
-    ExprTycker tycker, Def.Signature signature, LocalCtx ctx, ImmutableSeq<Pat.PrototypeClause> elabClauses,
+    ExprTycker tycker, Def.Signature signature, ImmutableSeq<Pat.PrototypeClause> elabClauses,
     ImmutableSeq<@NotNull Matching<Pat, Term>> matchings, @NotNull SourcePos pos, boolean coverage
   ) {
     if (!matchings.isNotEmpty()) return;
     var classification = PatClassifier.classify(elabClauses, tycker.reporter, pos, coverage);
     PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
-    Conquer.against(matchings, ctx, tycker, pos, signature);
+    Conquer.against(matchings, tycker, pos, signature);
     tycker.equations.solve();
   }
 
@@ -170,13 +169,12 @@ public record StmtTycker(
     var structSig = structRef.concrete.signature;
     assert structSig != null;
     field.signature = new Def.Signature(ImmutableSeq.of(), structSig.sortParam(), tele, result);
-    var cumulativeCtx = tycker.localCtx.derive();
     var patTycker = new PatTycker(tycker);
-    var elabClauses = patTycker.elabClauses(null, field.signature, cumulativeCtx, field.clauses);
+    var elabClauses = patTycker.elabClauses(null, field.signature, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
     var elaborated = new StructDef.Field(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
-    ensureConfluent(tycker, field.signature, cumulativeCtx, elabClauses, matchings, field.sourcePos, false);
+    ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false);
     return elaborated;
   }
 
@@ -190,10 +188,9 @@ public record StmtTycker(
     var signature = new Ref<>(new Def.Signature(ctxTele, tycker.extractLevels(), resultTele, resultRes));
     decl.signature = signature.value;
     var patTycker = new PatTycker(tycker);
-    var cumulativeCtx = tycker.localCtx.derive();
     var what = FP.distR(decl.body.map(
       left -> tycker.checkExpr(left, resultRes).toTuple(),
-      right -> patTycker.elabClauses(right, signature, cumulativeCtx.localMap())));
+      right -> patTycker.elabClauses(right, signature)));
     var resultTy = what._1;
     var factory = FnDef.factory(body ->
       new FnDef(decl.ref, ctxTele, resultTele, signature.value.sortParam(), resultTy, body));
@@ -201,7 +198,7 @@ public record StmtTycker(
     var elabClauses = what._2.getRightValue();
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var elaborated = factory.apply(Either.right(matchings));
-    ensureConfluent(tycker, signature.value, cumulativeCtx, elabClauses, matchings, decl.sourcePos, true);
+    ensureConfluent(tycker, signature.value, elabClauses, matchings, decl.sourcePos, true);
     return elaborated;
   }
 

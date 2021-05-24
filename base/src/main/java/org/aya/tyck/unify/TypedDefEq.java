@@ -10,7 +10,6 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.LocalCtx;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
 import org.glavo.kala.collection.SeqLike;
@@ -30,7 +29,6 @@ import java.util.function.Supplier;
  */
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
   protected final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
-  public final @NotNull LocalCtx localCtx;
   private final @NotNull UntypedDefEq termDefeq;
   public final @NotNull ExprTycker tycker;
   public final @NotNull SourcePos pos;
@@ -51,8 +49,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     tracing(Trace.Builder::reduce);
   }
 
-  public TypedDefEq(@NotNull LocalCtx localCtx, @NotNull Ordering cmp, @NotNull ExprTycker tycker, @NotNull SourcePos pos) {
-    this.localCtx = localCtx;
+  public TypedDefEq(@NotNull Ordering cmp, @NotNull ExprTycker tycker, @NotNull SourcePos pos) {
     this.tycker = tycker;
     this.pos = pos;
     this.termDefeq = new UntypedDefEq(this, cmp);
@@ -86,7 +83,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     if (!compare(l.type(), r.type(), type)) return fail.get();
     varSubst.put(r.ref(), l.toTerm());
     varSubst.put(l.ref(), r.toTerm());
-    var result = localCtx.with(l, () -> localCtx.with(r, success));
+    var result = success.get();
     varSubst.remove(r.ref());
     varSubst.remove(l.ref());
     return result;
@@ -137,13 +134,10 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
         new LocalVar(par.ref().name()));
       var dummy = dummyVars.zip(fieldSig.fieldTele()).map(vpa ->
         new Arg<Term>(new RefTerm(vpa._1, vpa._2.type()), vpa._2.explicit()));
-      var res = localCtx.with(dummyVars.zip(fieldSig.fieldTele()).map(vpa -> new Term.Param(vpa._1, vpa._2.type(), vpa._2.explicit())), () -> {
-        var l = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
-        var r = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
-        fieldSubst.add(fieldSig.ref(), l);
-        return compare(l, r, fieldSig.result().subst(paramSubst).subst(fieldSubst));
-      });
-      if (!res) return false;
+      var l = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
+      var r = new CallTerm.Access(lhs, fieldSig.ref(), type.contextArgs(), type.sortArgs(), type.args(), dummy);
+      fieldSubst.add(fieldSig.ref(), l);
+      if (!compare(l, r, fieldSig.result().subst(paramSubst).subst(fieldSubst))) return false;
     }
     return true;
   }
@@ -201,8 +195,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     var ty = type.param().type();
     var dummy = new RefTerm(dummyVar, ty);
     var dummyArg = new Arg<Term>(dummy, type.param().explicit());
-    return localCtx.with(dummyVar, ty, () ->
-      compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.substBody(dummy)));
+    return compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.substBody(dummy));
   }
 
   @Override public @NotNull Boolean visitSigma(@NotNull FormTerm.Sigma type, @NotNull Term lhs, @NotNull Term rhs) {

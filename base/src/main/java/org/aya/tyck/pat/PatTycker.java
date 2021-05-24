@@ -21,14 +21,12 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.GenericBuilder;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.LocalCtx;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.error.PatternProblem;
 import org.aya.tyck.trace.Trace;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableMap;
 import org.glavo.kala.tuple.Tuple;
 import org.glavo.kala.tuple.Tuple2;
 import org.glavo.kala.tuple.Tuple3;
@@ -70,13 +68,12 @@ public record PatTycker(
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClauses(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    Ref<Def.@NotNull Signature> signature,
-    @NotNull MutableMap<LocalVar, Term> cumulativeCtx
+    Ref<Def.@NotNull Signature> signature
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos(), "clause " + (1 + index))));
       subst.clear();
-      var elabClause = visitMatch(clause, signature.value, cumulativeCtx);
+      var elabClause = visitMatch(clause, signature.value);
       tracing(GenericBuilder::reduce);
       return elabClause;
     });
@@ -86,11 +83,11 @@ public record PatTycker(
 
   @NotNull public ImmutableSeq<Pat.PrototypeClause> elabClauses(
     @Nullable ExprRefSubst patSubst, Def.Signature signature,
-    LocalCtx cumulativeCtx, @NotNull ImmutableSeq<Pattern.Clause> clauses
+    @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) {
     var checked = clauses.map(c -> {
       if (patSubst != null) subst().resetTo(patSubst);
-      return visitMatch(c, signature, cumulativeCtx.localMap());
+      return visitMatch(c, signature);
     });
     exprTycker.equations.solve();
     return checked.map(c -> c.mapTerm(e -> e.zonk(exprTycker)));
@@ -106,10 +103,7 @@ public record PatTycker(
     return new Pat.Absurd(absurd.explicit(), term);
   }
 
-  public Pat.PrototypeClause visitMatch(
-    Pattern.@NotNull Clause match, Def.@NotNull Signature signature,
-    @NotNull MutableMap<LocalVar, Term> cumulativeCtx
-  ) {
+  public Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
     var sig = new Ref<>(signature);
     exprTycker.localCtx = exprTycker.localCtx.derive();
     var patterns = visitPatterns(sig, match.patterns());
@@ -119,7 +113,6 @@ public record PatTycker(
       .map(e -> exprTycker.checkNoZonk(e, type));
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
-    cumulativeCtx.putAll(exprTycker.localCtx.localMap());
     exprTycker.localCtx = parent;
     return new Pat.PrototypeClause(match.sourcePos(), patterns, result.map(ExprTycker.Result::wellTyped));
   }

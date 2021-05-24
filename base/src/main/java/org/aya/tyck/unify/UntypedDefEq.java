@@ -48,7 +48,7 @@ public record UntypedDefEq(
   @Override public @Nullable Term visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs) {
     if (preRhs instanceof RefTerm rhs
       && defeq.varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var()) {
-      return defeq.localCtx.get(rhs.var());
+      return rhs.type();
     }
     return null;
   }
