@@ -160,7 +160,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       if (loadedFile == null) return Either.forLeft(Collections.emptyList());
       var position = params.getPosition();
       var locator = new RefLocator();
-      locator.visitAll(loadedFile.concete, new RefLocator.XY(position.getLine() + 1, position.getCharacter()));
+      locator.visitAll(loadedFile.concrete, new RefLocator.XY(position.getLine() + 1, position.getCharacter()));
       return Either.forRight(locator.locations.view().mapNotNull(pos -> {
         if (pos.data() instanceof DefVar<?, ?> defVar) {
           var target = defVar.concrete.sourcePos();
@@ -184,7 +184,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public static final record AyaFile(
     ImmutableSeq<Def> core,
-    ImmutableSeq<Stmt> concete
+    ImmutableSeq<Stmt> concrete
   ) {
   }
 
