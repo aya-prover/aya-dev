@@ -13,8 +13,6 @@ import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * Similar to <code>GetTypeVisitor</code> in Arend.
  *
@@ -27,7 +25,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitRef(@NotNull RefTerm term, Unit unit) {
-    return Objects.requireNonNull(term.type());
+    return term.type();
   }
 
   @Override public Term visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
