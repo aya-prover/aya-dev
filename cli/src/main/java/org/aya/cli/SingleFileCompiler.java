@@ -26,19 +26,20 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator,
                                  Trace.@Nullable Builder builder) {
   public int compile(@NotNull Path sourceFile, @NotNull CompilerFlags flags) throws IOException {
-    return compile(sourceFile, flags, stmts -> {}, defs -> {});
+    return compile(sourceFile, flags, stmts -> {}, (stmts, defs) -> {});
   }
 
   public int compile(@NotNull Path sourceFile,
                      @NotNull CompilerFlags flags,
                      @NotNull Consumer<ImmutableSeq<Stmt>> onResolved,
-                     @NotNull Consumer<ImmutableSeq<Def>> onTycked) throws IOException {
+                     @NotNull BiConsumer<ImmutableSeq<Stmt>, ImmutableSeq<Def>> onTycked) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     try {
@@ -53,7 +54,7 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFil
         },
         defs -> {
           distill(sourceFile, flags.distillInfo(), defs, CliArgs.DistillStage.typed);
-          onTycked.accept(defs);
+          onTycked.accept(program, defs);
         }, builder);
     } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);

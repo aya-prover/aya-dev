@@ -23,6 +23,20 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
+  @Override default Unit visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, P p) {
+    binOpSeq.seq().forEach(e -> e.expr().accept(this, p));
+    return Unit.unit();
+  }
+
+  @Override default Unit visitNew(Expr.@NotNull NewExpr expr, P p) {
+    expr.fields().forEach(e -> e.body().accept(this, p));
+    return expr.struct().accept(this, p);
+  }
+
+  @Override default Unit visitUniv(Expr.@NotNull UnivExpr expr, P p) {
+    return Unit.unit();
+  }
+
   @Override default Unit visitRawUniv(Expr.@NotNull RawUnivExpr expr, P p) {
     return Unit.unit();
   }

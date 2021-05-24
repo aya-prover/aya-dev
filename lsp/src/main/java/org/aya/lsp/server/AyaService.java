@@ -9,6 +9,8 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
+import org.aya.concrete.Stmt;
+import org.aya.concrete.visitor.RefLocator;
 import org.aya.core.def.Def;
 import org.aya.lsp.Log;
 import org.aya.lsp.LspRange;
@@ -64,8 +66,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     try {
       compiler.compile(filePath, compilerFlags,
         stmts -> stmts.forEach(s -> s.accept(highlighter, symbols)),
-        defs -> {
-          libraryManager.loadedFiles.put(uri, defs);
+        (stmts, defs) -> {
+          libraryManager.loadedFiles.put(uri, new AyaFile(defs, stmts));
           defs.forEach(d -> d.accept(highlighter, symbols));
           highlighter.visitCallTerms(symbols);
           highlighter.visitPatterns(symbols);
@@ -113,7 +115,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var ps = severityOf(p);
       if (ps.getValue() < severity.getValue()) severity = ps;
     }
-    return new Diagnostic(LspRange.from(sourcePos),
+    return new Diagnostic(LspRange.toRange(sourcePos),
       msgBuilder.toString(), severity, "Aya");
   }
 
@@ -152,7 +154,14 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
-    return CompletableFuture.supplyAsync(() -> Either.forLeft(Collections.emptyList()));
+    return CompletableFuture.supplyAsync(() -> {
+      var loadedFile = libraryManager.loadedFiles.getOrNull(params.getTextDocument().getUri());
+      if (loadedFile == null) return Either.forLeft(Collections.emptyList());
+      var position = params.getPosition();
+      var locator = new RefLocator();
+      locator.visitAll(loadedFile.concete, new RefLocator.XY(position.getLine() + 1, position.getCharacter()));
+      return Either.forLeft(locator.locations.stream().map(LspRange::toLoc).toList());
+    });
   }
 
   public static final class LspReporter implements Reporter {
@@ -163,8 +172,14 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     }
   }
 
+  public static final record AyaFile(
+    ImmutableSeq<Def> core,
+    ImmutableSeq<Stmt> concete
+  ) {
+  }
+
   public static final record LspLibraryManager(
-    @NotNull MutableHashMap<@NotNull String, ImmutableSeq<Def>> loadedFiles,
+    @NotNull MutableHashMap<@NotNull String, AyaFile> loadedFiles,
     @NotNull Buffer<Path> modulePath
   ) implements SourceFileLocator {
     @Override public @NotNull String locate(@NotNull Path path) {

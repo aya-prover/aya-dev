@@ -31,11 +31,11 @@ public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
   TermConsumer<@NotNull Buffer<Symbol>> {
 
   private @NotNull Range rangeOf(@NotNull Def def) {
-    return LspRange.from(def.ref().concrete.sourcePos);
+    return LspRange.toRange(def.ref().concrete.sourcePos);
   }
 
   private @NotNull Range rangeOf(@NotNull Stmt stmt) {
-    return LspRange.from(stmt.sourcePos());
+    return LspRange.toRange(stmt.sourcePos());
   }
 
   @Override public void collectTerm(@NotNull Term term, @NotNull SourcePos sourcePos) {
@@ -105,7 +105,7 @@ public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
 
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull Buffer<Symbol> buffer) {
     for (var level : levels.levels())
-      buffer.append(new Symbol(LspRange.from(level.sourcePos()), Symbol.Kind.Generalize));
+      buffer.append(new Symbol(LspRange.toRange(level.sourcePos()), Symbol.Kind.Generalize));
     return Unit.unit();
   }
 
@@ -121,13 +121,13 @@ public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
   }
 
   private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull Buffer<Symbol> buffer) {
-    if (ref.core instanceof FnDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.FnCall));
-    else if (ref.core instanceof PrimDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.PrimCall));
-    else if (ref.core instanceof DataDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.DataCall));
-    else if (ref.core instanceof DataDef.Ctor) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.ConCall));
-    else if (ref.core instanceof StructDef) buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.StructCall));
+    if (ref.core instanceof FnDef) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.FnCall));
+    else if (ref.core instanceof PrimDef) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.PrimCall));
+    else if (ref.core instanceof DataDef) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.DataCall));
+    else if (ref.core instanceof DataDef.Ctor) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.ConCall));
+    else if (ref.core instanceof StructDef) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.StructCall));
     else if (ref.core instanceof StructDef.Field)
-      buffer.append(new Symbol(LspRange.from(headPos), Symbol.Kind.FieldCall));
+      buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.FieldCall));
   }
 
   // endregion
@@ -136,7 +136,7 @@ public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
   public void visitPatterns(@NotNull Buffer<Symbol> buffer) {
     // [kiva]: keep an eye on PatTycker
     pats.forEach(t -> {
-      var range = LspRange.from(t.sourcePos());
+      var range = LspRange.toRange(t.sourcePos());
       if (t.data() instanceof Pat.Ctor) buffer.append(new Symbol(range, Symbol.Kind.ConCall));
       if (t.data() instanceof Pat.Prim) buffer.append(new Symbol(range, Symbol.Kind.PrimCall));
     });
@@ -170,7 +170,7 @@ public record Highlighter(@NotNull Buffer<WithPos<Term>> terms,
 
   private void visitOperator(@NotNull Buffer<Symbol> buffer, @NotNull SourcePos sourcePos, @NotNull Ref<Decl.@Nullable OpDecl> ref) {
     if (ref.value == null) return;
-    buffer.append(new Symbol(LspRange.from(sourcePos), kindOf(ref.value)));
+    buffer.append(new Symbol(LspRange.toRange(sourcePos), kindOf(ref.value)));
   }
 
   @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, @NotNull Buffer<Symbol> buffer) {
