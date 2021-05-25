@@ -75,6 +75,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
 
   @Override default Unit visitCtor(Decl.@NotNull DataCtor ctor, P p) {
     visitSignatured(ctor, p);
+    ctor.patterns.forEach(pattern -> pattern.accept(this, p));
     ctor.clauses.forEach(clause -> visitClause(clause, p));
     return Unit.unit();
   }
