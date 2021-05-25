@@ -63,7 +63,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var symbols = Buffer.<Symbol>of();
     try {
       compiler.compile(filePath, compilerFlags,
-        stmts -> {},
+        stmts -> stmts.forEach(d -> d.accept(Highlighter.INSTANCE, symbols)),
         (stmts, defs) -> {
           libraryManager.loadedFiles.put(uri, new AyaFile(defs, stmts));
           stmts.forEach(d -> d.accept(Highlighter.INSTANCE, symbols));

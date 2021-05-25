@@ -6,10 +6,6 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.*;
 import org.aya.concrete.visitor.StmtConsumer;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.FnDef;
-import org.aya.core.def.PrimDef;
-import org.aya.core.def.StructDef;
 import org.aya.lsp.LspRange;
 import org.eclipse.lsp4j.Range;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -77,14 +73,16 @@ public final class Highlighter implements StmtConsumer<@NotNull Buffer<Symbol>> 
   }
 
   private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull Buffer<Symbol> buffer) {
-    if (ref.core instanceof FnDef) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.FnCall));
-    else if (ref.core instanceof PrimDef) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.PrimCall));
-    else if (ref.core instanceof DataDef) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.DataCall));
-    else if (ref.core instanceof DataDef.Ctor)
+    if (ref.concrete instanceof Decl.FnDecl) buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.FnCall));
+    else if (ref.concrete instanceof Decl.PrimDecl)
+      buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.PrimCall));
+    else if (ref.concrete instanceof Decl.DataDecl)
+      buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.DataCall));
+    else if (ref.concrete instanceof Decl.DataCtor)
       buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.ConCall));
-    else if (ref.core instanceof StructDef)
+    else if (ref.concrete instanceof Decl.StructDecl)
       buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.StructCall));
-    else if (ref.core instanceof StructDef.Field)
+    else if (ref.concrete instanceof Decl.StructField)
       buffer.append(new Symbol(LspRange.toRange(headPos), Symbol.Kind.FieldCall));
   }
 
