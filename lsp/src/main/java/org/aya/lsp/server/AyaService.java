@@ -66,7 +66,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       compiler.compile(filePath, compilerFlags,
         stmts -> stmts.forEach(d -> d.accept(Highlighter.INSTANCE, symbols)),
         (stmts, defs) -> {
-          libraryManager.loadedFiles.put(uri, new AyaFile(defs, stmts));
+          libraryManager.loadedFiles.put(filePath, new AyaFile(defs, stmts));
           stmts.forEach(d -> d.accept(Highlighter.INSTANCE, symbols));
         });
     } catch (IOException e) {
@@ -153,7 +153,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = libraryManager.loadedFiles.getOrNull(params.getTextDocument().getUri());
+      var path = Path.of(URI.create(params.getTextDocument().getUri()));
+      var loadedFile = libraryManager.loadedFiles.getOrNull(path);
       if (loadedFile == null) return Either.forLeft(Collections.emptyList());
       var position = params.getPosition();
       var locator = new RefLocator();
@@ -187,7 +188,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   public static final record LspLibraryManager(
-    @NotNull MutableHashMap<@NotNull String, AyaFile> loadedFiles,
+    @NotNull MutableHashMap<@NotNull Path, AyaFile> loadedFiles,
     @NotNull Buffer<Path> modulePath
   ) implements SourceFileLocator {
     @Override public @NotNull Path locate(@NotNull Path path) {
