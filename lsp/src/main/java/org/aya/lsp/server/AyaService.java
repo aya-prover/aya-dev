@@ -82,7 +82,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public void reportErrors(@NotNull LspReporter reporter) {
     lastErrorReportedFiles.forEach(f ->
-      Log.publishProblems(new PublishDiagnosticsParams(f.toString(), Collections.emptyList())));
+      Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
     var diags = reporter.problems.stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe().debugRender()))
@@ -94,14 +94,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       ));
 
     for (var diag : diags.entrySet()) {
-      Log.d("Found %d issues in %s", diag.getValue().size(), diag.getKey());
+      var filePath = diag.getKey();
+      Log.d("Found %d issues in %s", diag.getValue().size(), filePath);
       var problems = diag.getValue()
         .collect(Collectors.groupingBy(Problem::sourcePos, Seq.factory()))
         .entrySet().stream()
         .map(kv -> toDiagnostic(kv.getKey(), kv.getValue()))
         .collect(Collectors.toList());
       Log.publishProblems(new PublishDiagnosticsParams(
-        diag.getKey().toString(),
+        diag.getKey().toUri().toString(),
         problems
       ));
     }
