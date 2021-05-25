@@ -4,7 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.Var;
+import org.aya.api.ref.LocalVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.CoreDistiller;
@@ -37,7 +37,7 @@ public sealed interface HoleProblem extends Problem {
   record BadlyScopedError(
     @NotNull CallTerm.Hole term,
     @NotNull Term solved,
-    @NotNull Seq<Var> scopeCheck,
+    @NotNull Seq<LocalVar> scopeCheck,
     @NotNull SourcePos sourcePos
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {

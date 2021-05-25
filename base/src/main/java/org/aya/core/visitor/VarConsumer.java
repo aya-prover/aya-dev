@@ -2,13 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
@@ -82,15 +83,15 @@ public interface VarConsumer<P> extends TermConsumer<P> {
   }
 
   final class ScopeChecker implements VarConsumer<Unit> {
-    public final @NotNull Seq<? extends Var> allowed;
-    public final @NotNull Buffer<Var> invalidVars = Buffer.create();
+    public final @NotNull ImmutableSeq<LocalVar> allowed;
+    public final @NotNull Buffer<LocalVar> invalidVars = Buffer.create();
 
-    @Contract(pure = true) public ScopeChecker(@NotNull Seq<? extends Var> allowed) {
+    @Contract(pure = true) public ScopeChecker(@NotNull ImmutableSeq<LocalVar> allowed) {
       this.allowed = allowed;
     }
 
     @Contract(mutates = "this") @Override public void visitVar(Var v, Unit unit) {
-      if (!allowed.contains(v)) invalidVars.append(v);
+      if (v instanceof LocalVar local && !allowed.contains(local)) invalidVars.append(local);
     }
   }
 }
