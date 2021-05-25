@@ -20,7 +20,6 @@ import org.aya.lsp.highlight.Highlighter;
 import org.aya.lsp.highlight.Symbol;
 import org.aya.lsp.language.HighlightResult;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.trace.Trace;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -55,9 +54,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public @NotNull HighlightResult loadFile(@NotNull String uri) {
     Log.d("Loading %s", uri);
     var reporter = new LspReporter();
-    var highlighter = new Highlighter(Buffer.of(), Buffer.of());
-    var trace = new Trace.Builder(highlighter);
-    var compiler = new SingleFileCompiler(reporter, libraryManager, trace);
+    var compiler = new SingleFileCompiler(reporter, libraryManager, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
       libraryManager.modulePath.view());
@@ -66,12 +63,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var symbols = Buffer.<Symbol>of();
     try {
       compiler.compile(filePath, compilerFlags,
-        stmts -> stmts.forEach(s -> s.accept(highlighter, symbols)),
+        stmts -> {},
         (stmts, defs) -> {
           libraryManager.loadedFiles.put(uri, new AyaFile(defs, stmts));
-          defs.forEach(d -> d.accept(highlighter, symbols));
-          highlighter.visitCallTerms(symbols);
-          highlighter.visitPatterns(symbols);
+          // defs.forEach(d -> d.accept(Highlighter.INSTANCE, symbols));
+          stmts.forEach(d -> d.accept(Highlighter.INSTANCE, symbols));
         });
     } catch (IOException e) {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());
