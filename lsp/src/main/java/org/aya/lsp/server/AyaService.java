@@ -53,7 +53,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public @NotNull HighlightResult loadFile(@NotNull String uri) {
     var filePath = Path.of(URI.create(uri));
-    Log.d("Loading %s", filePath.toUri().toString());
+    Log.d("Loading %s (vscode: %s)", filePath, uri);
 
     var reporter = new LspReporter();
     var compiler = new SingleFileCompiler(reporter, libraryManager, null);
@@ -83,7 +83,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe().debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints().stream().map(t -> new InlineHintProblem(p, t))))
-      .flatMap(p -> p.sourcePos().file().file().stream().map(uri -> Tuple.of(uri, p)))
+      .flatMap(p -> p.sourcePos().file().path().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
         t -> t._1,
         Collectors.mapping(t -> t._2, Seq.factory())
@@ -165,7 +165,9 @@ public class AyaService implements WorkspaceService, TextDocumentService {
         } else if (pos.data() instanceof LocalVar localVar) {
           target = localVar.definition();
         } else return null;
-        return LspRange.toLoc(pos.sourcePos(), target);
+        var res = LspRange.toLoc(pos.sourcePos(), target);
+        if (res != null) Log.d("Resolved: %s in %s", target, res.getTargetUri());
+        return res;
       }).collect(Collectors.toList()));
     });
   }

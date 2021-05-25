@@ -8,14 +8,14 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public record SourceFile(@NotNull Option<Path> file, @NotNull String sourceCode) {
+public record SourceFile(@NotNull Option<Path> path, @NotNull String sourceCode) {
   public static final SourceFile NONE = new SourceFile(Option.none(), "");
 
   public boolean isSomeFile() {
-    return this != SourceFile.NONE && file.isDefined();
+    return this != SourceFile.NONE && path.isDefined();
   }
 
   public @NotNull String name() {
-    return file.map(Objects::toString).getOrDefault("<unknown-file>");
+    return path.map(Objects::toString).getOrDefault("<unknown-file>");
   }
 }

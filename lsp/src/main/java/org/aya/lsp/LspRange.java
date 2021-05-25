@@ -9,6 +9,7 @@ import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 public class LspRange {
@@ -21,7 +22,7 @@ public class LspRange {
   }
 
   public static @Nullable LocationLink toLoc(@NotNull SourcePos from, @NotNull SourcePos to) {
-    var uri = from.file().file().map(Objects::toString);
+    var uri = from.file().path().map(Path::toUri).map(Objects::toString);
     if (uri.isEmpty()) return null;
     var fromRange = toRange(from);
     var toRange = toRange(to);
