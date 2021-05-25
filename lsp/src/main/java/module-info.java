@@ -8,7 +8,9 @@ module org.aya.lsp {
   exports org.aya.lsp.highlight;
   exports org.aya.lsp.language;
   exports org.aya.lsp.server;
+  exports org.aya.lsp.definition;
 
   opens org.aya.lsp.language to com.google.gson;
   opens org.aya.lsp.highlight to com.google.gson;
+  opens org.aya.lsp.definition to com.google.gson;
 }
