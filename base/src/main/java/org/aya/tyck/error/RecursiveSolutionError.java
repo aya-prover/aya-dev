@@ -4,7 +4,8 @@ package org.aya.tyck.error;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.Var;
+import org.aya.api.ref.HoleVar;
+import org.aya.core.Meta;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record RecursiveSolutionError(
-  @NotNull Var hole,
+  @NotNull HoleVar<Meta> hole,
   @NotNull Term term,
   @NotNull SourcePos sourcePos
 ) implements Problem {

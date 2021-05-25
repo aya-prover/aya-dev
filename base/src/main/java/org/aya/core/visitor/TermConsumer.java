@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   @Override default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
     visitArgs(p, term.args());
+    visitArgs(p, term.contextArgs());
+    var body = term.ref().core().body;
+    if (body != null) body.accept(this, p);
     return Unit.unit();
   }
 
