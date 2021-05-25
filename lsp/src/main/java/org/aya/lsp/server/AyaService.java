@@ -66,7 +66,6 @@ public class AyaService implements WorkspaceService, TextDocumentService {
         stmts -> {},
         (stmts, defs) -> {
           libraryManager.loadedFiles.put(uri, new AyaFile(defs, stmts));
-          // defs.forEach(d -> d.accept(Highlighter.INSTANCE, symbols));
           stmts.forEach(d -> d.accept(Highlighter.INSTANCE, symbols));
         });
     } catch (IOException e) {

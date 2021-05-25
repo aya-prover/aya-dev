@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>, Signatured.Visitor<P, Unit>, Decl.Visitor<P, Unit> {
+public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>, Signatured.Visitor<P, Unit>, Decl.Visitor<P, Unit>, Pattern.Visitor<P, Unit> {
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope.forEach(p -> {
       var type = p.type();
@@ -23,6 +23,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
   }
 
   default void visitClause(@NotNull Pattern.Clause c, P pp) {
+    c.patterns.forEach(pattern -> pattern.accept(this, pp));
     c.expr.forEach(expr -> expr.accept(this, pp));
   }
 
@@ -91,6 +92,32 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
   }
 
   @Override default Unit visitLevels(Generalize.@NotNull Levels levels, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitTuple(Pattern.@NotNull Tuple tuple, P p) {
+    tuple.patterns().forEach(pattern -> pattern.accept(this, p));
+    return Unit.unit();
+  }
+
+  @Override default Unit visitNumber(Pattern.@NotNull Number number, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitAbsurd(Pattern.@NotNull Absurd absurd, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitCalmFace(Pattern.@NotNull CalmFace calmFace, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitBind(Pattern.@NotNull Bind bind, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitCtor(Pattern.@NotNull Ctor ctor, P p) {
+    ctor.params().forEach(pattern -> pattern.accept(this, p));
     return Unit.unit();
   }
 }
