@@ -26,7 +26,7 @@ public interface CoreTerm extends Docile {
    * @param allowed variables allowed in this term.
    * @return the variables in this term that are not allowed.
    */
-  @NotNull Buffer<Var> scopeCheck(@NotNull Seq<Var> allowed);
+  @NotNull Buffer<Var> scopeCheck(@NotNull Seq<? extends Var> allowed);
   @NotNull CoreTerm normalize(@NotNull NormalizeMode mode);
   @Nullable CorePat toPat();
 }

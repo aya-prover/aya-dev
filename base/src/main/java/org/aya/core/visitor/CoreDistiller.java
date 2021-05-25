@@ -51,7 +51,10 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
-    var ref = term.var();
+    return varDoc(term.var());
+  }
+
+  public static @NotNull Doc varDoc(@NotNull Var ref) {
     return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
   }
 

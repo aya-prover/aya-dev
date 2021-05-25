@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
@@ -14,7 +15,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.error.HoleBadSpineWarn;
+import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.error.RecursiveSolutionError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Decision;
@@ -114,17 +115,26 @@ public record UntypedDefEq(
     }
     var solved = extract(lhs, rhs);
     if (solved == null) {
-      defeq.tycker.reporter.report(new HoleBadSpineWarn(lhs, defeq.pos));
+      reporter().report(new HoleProblem.BadSpineError(lhs, defeq.pos));
       return null;
     }
     assert meta.body == null;
     compare(solved.computeType(), meta.result);
+    var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
+    if (scopeCheck.isNotEmpty()) {
+      reporter().report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
+      return null;
+    }
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
-      defeq.tycker.reporter.report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));
+      reporter().report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));
       throw new ExprTycker.TyckInterruptedException();
     }
     return meta.result;
+  }
+
+  private @NotNull Reporter reporter() {
+    return defeq.tycker.reporter;
   }
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {

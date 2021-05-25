@@ -80,7 +80,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     return counter.usageCount();
   }
 
-  @Override default @NotNull Buffer<Var> scopeCheck(@NotNull Seq<Var> allowed) {
+  @Override default @NotNull Buffer<Var> scopeCheck(@NotNull Seq<? extends Var> allowed) {
     var checker = new VarConsumer.ScopeChecker(allowed);
     accept(checker, Unit.unit());
     return checker.invalidVars;

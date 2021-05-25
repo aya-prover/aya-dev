@@ -82,10 +82,10 @@ public interface VarConsumer<P> extends TermConsumer<P> {
   }
 
   final class ScopeChecker implements VarConsumer<Unit> {
-    public final @NotNull Seq<Var> allowed;
+    public final @NotNull Seq<? extends Var> allowed;
     public final @NotNull Buffer<Var> invalidVars = Buffer.create();
 
-    @Contract(pure = true) public ScopeChecker(@NotNull Seq<Var> allowed) {
+    @Contract(pure = true) public ScopeChecker(@NotNull Seq<? extends Var> allowed) {
       this.allowed = allowed;
     }
 
