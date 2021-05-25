@@ -44,7 +44,7 @@ import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
   private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of(), Buffer.of());
-  private Set<URI> lastErrorReportedFiles = Collections.emptySet();
+  private Set<Path> lastErrorReportedFiles = Collections.emptySet();
 
   public void registerLibrary(@NotNull Path path) {
     // TODO[kiva]: work with Library System when it is finished

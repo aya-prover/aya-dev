@@ -5,10 +5,10 @@ package org.aya.api.error;
 import org.glavo.kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URI;
+import java.nio.file.Path;
 import java.util.Objects;
 
-public record SourceFile(@NotNull Option<URI> file, @NotNull String sourceCode) {
+public record SourceFile(@NotNull Option<Path> file, @NotNull String sourceCode) {
   public static final SourceFile NONE = new SourceFile(Option.none(), "");
 
   public boolean isSomeFile() {
