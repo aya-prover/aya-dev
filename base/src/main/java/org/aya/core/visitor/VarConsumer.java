@@ -7,7 +7,9 @@ import org.aya.api.util.Arg;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +78,19 @@ public interface VarConsumer<P> extends TermConsumer<P> {
 
     @Contract(mutates = "this") @Override public void visitVar(Var usage, Unit unit) {
       if (var == usage) usageCount++;
+    }
+  }
+
+  final class ScopeChecker implements VarConsumer<Unit> {
+    public final @NotNull Seq<Var> allowed;
+    public final @NotNull Buffer<Var> invalidVars = Buffer.create();
+
+    @Contract(pure = true) public ScopeChecker(@NotNull Seq<Var> allowed) {
+      this.allowed = allowed;
+    }
+
+    @Contract(mutates = "this") @Override public void visitVar(Var v, Unit unit) {
+      if (!allowed.contains(v)) invalidVars.append(v);
     }
   }
 }

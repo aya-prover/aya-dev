@@ -5,6 +5,8 @@ package org.aya.api.core;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.pretty.doc.Docile;
+import org.glavo.kala.collection.Seq;
+import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +16,17 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.NonExtendable
 public interface CoreTerm extends Docile {
+  /** @return Number of usages of the given var. */
   int findUsages(@NotNull Var var);
+  /** @return The synthesized type of the given term. */
   @NotNull CoreTerm computeType();
+  /**
+   * Perform a scope-check for a given term.
+   *
+   * @param allowed variables allowed in this term.
+   * @return the variables in this term that are not allowed.
+   */
+  @NotNull Buffer<Var> scopeCheck(@NotNull Seq<Var> allowed);
   @NotNull CoreTerm normalize(@NotNull NormalizeMode mode);
   @Nullable CorePat toPat();
 }

@@ -18,6 +18,7 @@ import org.aya.tyck.LittleTyper;
 import org.aya.util.Constants;
 import org.aya.util.Decision;
 import org.glavo.kala.collection.Map;
+import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.SeqLike;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -77,6 +78,12 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     var counter = new VarConsumer.UsageCounter(var);
     accept(counter, Unit.unit());
     return counter.usageCount();
+  }
+
+  @Override default @NotNull Buffer<Var> scopeCheck(@NotNull Seq<Var> allowed) {
+    var checker = new VarConsumer.ScopeChecker(allowed);
+    accept(checker, Unit.unit());
+    return checker.invalidVars;
   }
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
