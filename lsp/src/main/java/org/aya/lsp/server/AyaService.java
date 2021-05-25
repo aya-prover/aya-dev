@@ -52,14 +52,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   public @NotNull HighlightResult loadFile(@NotNull String uri) {
-    Log.d("Loading %s", uri);
+    var filePath = Path.of(URI.create(uri));
+    Log.d("Loading %s", filePath.toUri().toString());
+
     var reporter = new LspReporter();
     var compiler = new SingleFileCompiler(reporter, libraryManager, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
       libraryManager.modulePath.view());
 
-    var filePath = Path.of(URI.create(uri));
     var symbols = Buffer.<Symbol>of();
     try {
       compiler.compile(filePath, compilerFlags,
@@ -97,7 +98,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
         .map(kv -> toDiagnostic(kv.getKey(), kv.getValue()))
         .collect(Collectors.toList());
       Log.publishProblems(new PublishDiagnosticsParams(
-        diag.getKey().toUri().toString(),
+        filePath.toUri().toString(),
         problems
       ));
     }
