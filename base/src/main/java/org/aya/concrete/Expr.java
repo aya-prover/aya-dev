@@ -21,6 +21,7 @@ import org.aya.pretty.doc.Docile;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Unit;
+import org.glavo.kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -255,12 +256,14 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   /**
+   * @param resolvedIx will be modified during tycking
    * @author re-xyr
    */
   record ProjExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
-    @NotNull Either<Integer, WithPos<String>> ix
+    @NotNull Either<Integer, WithPos<String>> ix,
+    @NotNull Ref<@Nullable Var> resolvedIx
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);

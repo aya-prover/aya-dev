@@ -25,13 +25,13 @@ public record PatTree(
     this(s, explicit, Buffer.create());
   }
 
-  private @NotNull Pattern toPattern() {
+  private @NotNull Pattern toPatternForPretty() {
     if (children.isEmpty()) return new Pattern.Bind(SourcePos.NONE, explicit, new LocalVar(s), new Ref<>());
-    return new Pattern.Ctor(SourcePos.NONE, explicit, new WithPos<>(SourcePos.NONE, s), children.view().map(PatTree::toPattern).toImmutableSeq(), null);
+    return new Pattern.Ctor(SourcePos.NONE, explicit, new WithPos<>(SourcePos.NONE, s), children.view().map(PatTree::toPatternForPretty).toImmutableSeq(), null, new Ref<>(null));
   }
 
   @Override public @NotNull Doc toDoc() {
-    return toPattern().toDoc();
+    return toPatternForPretty().toDoc();
   }
 
   public final static class Builder extends GenericBuilder<PatTree> {

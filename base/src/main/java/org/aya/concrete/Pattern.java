@@ -85,7 +85,7 @@ public sealed interface Pattern extends ConcretePat {
   }
 
   /**
-   * @param resolved will be modified during resolving
+   * @param resolved will be set to local binding or ctor head during resolving and tycking
    */
   record Bind(
     @NotNull SourcePos sourcePos,
@@ -98,12 +98,16 @@ public sealed interface Pattern extends ConcretePat {
     }
   }
 
+  /**
+   * @param resolved will be set to ctor head during tycking
+   */
   record Ctor(
     @NotNull SourcePos sourcePos,
     boolean explicit,
     @NotNull WithPos<String> name,
     @NotNull ImmutableSeq<Pattern> params,
-    @Nullable LocalVar as
+    @Nullable LocalVar as,
+    @NotNull Ref<@Nullable Var> resolved
   ) implements Pattern {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);

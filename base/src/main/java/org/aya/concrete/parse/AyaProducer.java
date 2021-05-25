@@ -461,7 +461,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       projectee,
       number != null
         ? Either.left(Integer.parseInt(number.getText()))
-        : Either.right(new WithPos<>(sourcePosOf(fix), fix.ID().getText()))
+        : Either.right(new WithPos<>(sourcePosOf(fix), fix.ID().getText())),
+      new Ref<>(null)
     );
   }
 
@@ -550,7 +551,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       ex,
       new WithPos<>(bind.sourcePos(), bind.bind().name()),
       atoms.view().drop(1).map(p -> p.apply(true)).collect(ImmutableSeq.factory()),
-      as
+      as,
+      new Ref<>(null)
     );
   }
 

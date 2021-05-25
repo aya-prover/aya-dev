@@ -49,7 +49,7 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
     var sourcePos = ctor.sourcePos();
     return Tuple.of(
       bindAs(ctor.as(), newCtx.value, sourcePos),
-      new Pattern.Ctor(sourcePos, ctor.explicit(), ctor.name(), params, ctor.as()));
+      new Pattern.Ctor(sourcePos, ctor.explicit(), ctor.name(), params, ctor.as(), ctor.resolved()));
   }
 
   @Override public Tuple2<Context, Pattern> visitTuple(Pattern.@NotNull Tuple tuple, Context context) {

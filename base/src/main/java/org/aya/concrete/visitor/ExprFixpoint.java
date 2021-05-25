@@ -83,7 +83,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
   @Override default @NotNull Expr visitProj(Expr.@NotNull ProjExpr expr, P p) {
     var tup = expr.tup().accept(this, p);
     if (tup == expr.tup()) return expr;
-    return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix());
+    return new Expr.ProjExpr(expr.sourcePos(), tup, expr.ix(), expr.resolvedIx());
   }
 
   @Override default @NotNull Expr visitLsuc(Expr.@NotNull LSucExpr expr, P p) {

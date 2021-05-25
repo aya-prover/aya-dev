@@ -13,6 +13,7 @@ import org.aya.test.ThrowingReporter;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.control.Either;
 import org.glavo.kala.tuple.Tuple2;
+import org.glavo.kala.value.Ref;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -135,14 +136,15 @@ public class ParseTest {
           new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
         )
       ),
-      Either.left(1)
+      Either.left(1),
+      new Ref<>(null)
     ));
     parseTo("f a . 1", new Expr.BinOpSeq(
       SourcePos.NONE,
       ImmutableSeq.of(
         new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
         new BinOpParser.Elem(null, new Expr.ProjExpr(SourcePos.NONE,
-          new Expr.UnresolvedExpr(SourcePos.NONE, "a"), Either.left(1)),
+          new Expr.UnresolvedExpr(SourcePos.NONE, "a"), Either.left(1), new Ref<>(null)),
           true))
       )
     );
