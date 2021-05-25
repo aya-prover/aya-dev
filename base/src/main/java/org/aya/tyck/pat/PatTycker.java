@@ -55,11 +55,7 @@ public record PatTycker(
   }
 
   @Override public void traceExit(Pat pat, @NotNull Pattern pattern, Term term) {
-    tracing(builder -> {
-      builder.reduce();
-      var pos = pattern instanceof Pattern.Ctor c ? c.name().sourcePos() : pattern.sourcePos();
-      builder.collect(pat, pos);
-    });
+    tracing(GenericBuilder::reduce);
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
@@ -171,13 +167,13 @@ public record PatTycker(
 
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
     var v = bind.bind();
-    var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
     if (t instanceof CallTerm.Prim prim && prim.ref().core == PrimDef.INTERVAL)
       for (var def : PrimDef.LEFT_RIGHT)
         if (Objects.equals(bind.bind().name(), def.ref().name())) {
           subst.bad().add(bind.bind());
           return new Pat.Prim(bind.explicit(), def.ref(), t);
         }
+    var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
     if (selected == null) {
       exprTycker.localCtx.put(v, t);
       return new Pat.Bind(bind.explicit(), v, t);
@@ -199,7 +195,9 @@ public record PatTycker(
       subst.reporter().report(new PatternProblem.UnknownCtor(ctor));
       throw new ExprTycker.TyckInterruptedException();
     }
-    var ctorCore = realCtor._3.ref().core;
+    var ctorRef = realCtor._3.ref();
+    ctor.resolved().value = ctorRef;
+    var ctorCore = ctorRef.core;
     final var dataCall = realCtor._1;
     var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(),
       Term.Param.subst(ctorCore.conTele(), realCtor._2,

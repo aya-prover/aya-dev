@@ -202,7 +202,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(false, tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
       var body = telescopes.toConCall(conVar);
-      tracing(builder -> builder.collect(body, pos));
       return new Result(IntroTerm.Lambda.make(tele, body), type);
     } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
@@ -229,7 +228,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var body = function.make(defVar,
       level._2,
       tele.map(Term.Param::toArg));
-    tracing(builder -> builder.collect(body, pos));
     var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
     return new Result(IntroTerm.Lambda.make(tele, body), type);
   }
@@ -385,12 +383,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var from = expr.tup();
     var result = expr.ix().fold(
       ix -> visitProj(from, ix),
-      sp -> visitAccess(from, sp.data(), sp.sourcePos())
+      sp -> visitAccess(from, sp.data(), expr)
     );
     return unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
   }
 
-  private Result visitAccess(Expr struct, String fieldName, SourcePos accessPos) {
+  private Result visitAccess(Expr struct, String fieldName, Expr.@NotNull ProjExpr expr) {
     var projectee = struct.accept(this, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof CallTerm.Struct structCall))
@@ -406,12 +404,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     // TODO[ice]: instantiate the type
     var field = projected.get();
     var fieldRef = field.ref();
+    expr.resolvedIx().value = fieldRef;
+
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var levels = levelStuffs(struct.sourcePos(), fieldRef);
     var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst, levels._1);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
       structCall.args(), tele.map(Term.Param::toArg));
-    tracing(builder -> builder.collect(access, accessPos));
     return new Result(IntroTerm.Lambda.make(tele, access),
       FormTerm.Pi.make(false, tele, field.result().subst(structSubst, levels._1)));
   }

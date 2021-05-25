@@ -6,7 +6,6 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.GenericBuilder;
 import org.glavo.kala.collection.mutable.Buffer;
@@ -31,34 +30,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
-  /**
-   * This is used in language server for semantic syntax highlighting,
-   * as we don't want to store SourcePos in core terms
-   */
-  interface Collector {
-    void collectTerm(@NotNull Term term, @NotNull SourcePos sourcePos);
-    void collectPat(@NotNull Pat pat, @NotNull SourcePos sourcePos);
-  }
-
   final class Builder extends GenericBuilder<Trace> {
-    public final @Nullable Collector collector;
-
-    public Builder(@NotNull Collector collector) {
-      this.collector = collector;
-    }
-
-    public Builder() {
-      this.collector = null;
-    }
-
-    public void collect(@NotNull Term term, @NotNull SourcePos sourcePos) {
-      if (collector != null) collector.collectTerm(term, sourcePos);
-    }
-
-    public void collect(@NotNull Pat pat, @NotNull SourcePos sourcePos) {
-      if (collector != null) collector.collectPat(pat, sourcePos);
-    }
-
     @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {
       return tops;
     }
