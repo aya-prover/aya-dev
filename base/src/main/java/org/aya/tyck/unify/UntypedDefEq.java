@@ -16,7 +16,6 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.HoleProblem;
-import org.aya.tyck.error.RecursiveSolutionError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Decision;
 import org.aya.util.Ordering;
@@ -127,7 +126,7 @@ public record UntypedDefEq(
     }
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
-      reporter().report(new RecursiveSolutionError(lhs.ref(), solved, defeq.pos));
+      reporter().report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
       throw new ExprTycker.TyckInterruptedException();
     }
     return meta.result;

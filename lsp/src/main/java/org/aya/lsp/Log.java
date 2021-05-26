@@ -17,7 +17,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 public class Log {
-  private static final @NotNull Path LOG_FILE = Paths.get("last-startup.log").toAbsolutePath();
+  private static final @NotNull Path LOG_FILE = Paths.get("aya-last-startup.log").toAbsolutePath();
   private static @Nullable AyaLanguageClient CLIENT = null;
 
   public static void init(@NotNull AyaLanguageClient client) {

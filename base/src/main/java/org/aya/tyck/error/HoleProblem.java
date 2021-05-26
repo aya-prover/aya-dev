@@ -47,4 +47,22 @@ public sealed interface HoleProblem extends Problem {
           Doc.join(Doc.symbol(", "), scopeCheck.stream().map(CoreDistiller::varDoc))));
     }
   }
+
+  /**
+   * @author ice1000
+   */
+  record RecursionError(
+    @NotNull CallTerm.Hole term,
+    @NotNull Term sol,
+    @NotNull SourcePos sourcePos
+  ) implements HoleProblem {
+    @Override public @NotNull Doc describe() {
+      return Doc.hcat(
+        Doc.plain("Trying to solve hole `"),
+        Doc.plain(term.ref().name()),
+        Doc.plain("` as `"),
+        sol.toDoc(),
+        Doc.plain("`, which is recursive"));
+    }
+  }
 }
