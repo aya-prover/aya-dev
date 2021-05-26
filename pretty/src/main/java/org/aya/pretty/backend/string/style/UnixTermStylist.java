@@ -18,6 +18,10 @@ public class UnixTermStylist extends ClosingStylist {
     return Tuple.of("\033[3m", "\033[23m");
   }
 
+  @Override protected Tuple2<String, String> formatCode() {
+    return Tuple.of("`", "'");
+  }
+
   @Override protected Tuple2<String, String> formatBold() {
     return Tuple.of("\033[1m", "\033[22m");
   }

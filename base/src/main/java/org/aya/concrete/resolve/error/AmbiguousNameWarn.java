@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record AmbiguousNameWarn(
@@ -16,12 +17,10 @@ public record AmbiguousNameWarn(
   }
 
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("The name being defined `"),
-      Doc.plain(name),
-      Doc.plain("` introduces ambiguity. "),
-      Doc.plain("It can only be accessed through a qualified name.")
-    );
+    return Doc.vcat(Doc.hsep(Doc.plain("The name being defined"),
+      Doc.styled(Style.code(), Doc.plain(name)),
+      Doc.plain("introduces ambiguity.")),
+      Doc.plain("It can only be accessed through a qualified name."));
   }
 
   @Override public @NotNull Stage stage() {

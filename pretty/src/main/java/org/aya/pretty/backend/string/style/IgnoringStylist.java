@@ -14,6 +14,10 @@ public class IgnoringStylist extends StringStylist {
   }
 
   @Override public void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside) {
-    inside.run();
+    if (style.contains(Style.code())) {
+      builder.append("`");
+      inside.run();
+      builder.append("`");
+    } else inside.run();
   }
 }

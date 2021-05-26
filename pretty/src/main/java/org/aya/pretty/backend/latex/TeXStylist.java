@@ -25,6 +25,10 @@ public class TeXStylist extends ClosingStylist {
     return Tuple.of("\\underline{", "}");
   }
 
+  @Override protected Tuple2<String, String> formatCode() {
+    return Tuple.of("\\fbox{", "}");
+  }
+
   @Override protected Tuple2<String, String> formatColorHex(int rgb, boolean background) {
     return Tuple.of("\\%s[HTML]{%06x}{".formatted(
       background ? "colorbox" : "textcolor", rgb), "}");

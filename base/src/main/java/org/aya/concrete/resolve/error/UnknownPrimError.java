@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record UnknownPrimError(
@@ -12,11 +13,9 @@ public record UnknownPrimError(
   @NotNull String name
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("Unknown primitive `"),
-      Doc.plain(name),
-      Doc.plain("`")
-    );
+    return Doc.hsep(
+      Doc.plain("Unknown primitive"),
+      Doc.styled(Style.code(), Doc.plain(name)));
   }
 
   @Override public @NotNull Severity level() {

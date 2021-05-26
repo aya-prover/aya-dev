@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record UnknownOperatorError(
@@ -12,10 +13,10 @@ public record UnknownOperatorError(
   @NotNull String name
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("Unknown operator `"),
-      Doc.plain(name),
-      Doc.plain("` used in bind statement")
+    return Doc.hsep(
+      Doc.plain("Unknown operator"),
+      Doc.styled(Style.code(), Doc.plain(name)),
+      Doc.plain("used in bind statement")
     );
   }
 

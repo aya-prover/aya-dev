@@ -166,9 +166,9 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
-    var name = term.ref().name();
-    var sol = term.ref().core().body;
-    var filling = sol == null ? Doc.plain(name) : sol.toDoc();
+    var name = term.ref();
+    var sol = name.core().body;
+    var filling = sol == null ? varDoc(name) : sol.toDoc();
     return Doc.hcat(Doc.symbol("{?"), filling, Doc.symbol("?}"));
   }
 

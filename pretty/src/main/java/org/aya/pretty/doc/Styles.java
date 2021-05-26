@@ -27,6 +27,11 @@ public class Styles {
     return this;
   }
 
+  public @NotNull Styles code() {
+    styles.append(Style.Attr.Code);
+    return this;
+  }
+
   public @NotNull Styles underline() {
     styles.append(Style.Attr.Underline);
     return this;

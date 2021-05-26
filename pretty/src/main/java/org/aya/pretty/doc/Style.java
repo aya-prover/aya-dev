@@ -16,6 +16,7 @@ public sealed interface Style {
   }
 
   enum Attr implements Style {
+    Code,
     Italic,
     Bold,
     Strike,
@@ -53,6 +54,10 @@ public sealed interface Style {
 
   static @NotNull Style strike() {
     return Attr.Strike;
+  }
+
+  static @NotNull Style code() {
+    return Attr.Code;
   }
 
   static @NotNull Style underline() {

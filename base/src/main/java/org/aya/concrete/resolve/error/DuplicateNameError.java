@@ -13,9 +13,9 @@ public record DuplicateNameError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
-      Doc.plain("The name being added `"),
+      Doc.plain("The name being added"),
       Doc.plain(name),
-      Doc.plain("` is already defined elsewhere")
+      Doc.plain("is already defined elsewhere")
     );
   }
 

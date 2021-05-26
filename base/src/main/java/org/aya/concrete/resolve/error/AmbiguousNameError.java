@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
@@ -19,13 +20,12 @@ public record AmbiguousNameError(
   }
 
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("The unqualified name referred to by `"),
-      Doc.plain(name),
-      Doc.plain("` is ambiguous. "),
+    return Doc.vcat(Doc.hcat(
+      Doc.plain("The unqualified name referred to by "),
+      Doc.styled(Style.code(), Doc.plain(name)),
+      Doc.plain(" is ambiguous.")),
       Doc.plain("Try using the following module names to qualify the name to disambiguate:"),
-      Doc.nest(1, Doc.vcat(disambiguation.map(a -> Doc.plain(a.joinToString("::"))).toArray(Doc.class)))
-    );
+      Doc.styled(Style.code(), Doc.nest(1, Doc.vcat(disambiguation.map(a -> Doc.plain(a.joinToString("::")))))));
   }
 
   @Override public @NotNull Stage stage() {

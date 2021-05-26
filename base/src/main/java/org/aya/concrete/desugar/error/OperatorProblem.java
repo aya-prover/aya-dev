@@ -5,7 +5,9 @@ package org.aya.concrete.desugar.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
+import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,17 +24,18 @@ public final class OperatorProblem {
     }
 
     @Override public @NotNull Doc describe() {
-      return Doc.hcat(
-        Doc.plain("Ambiguous operator precedence detected between `"),
-        Doc.plain(op1),
-        Doc.plain("` and `"),
-        Doc.plain(op2),
-        Doc.plain("`")
+      return Doc.hsep(
+        Doc.plain("Ambiguous operator precedence detected between"),
+        Doc.styled(Style.code(), Doc.plain(op1)),
+        Doc.plain("and"),
+        Doc.styled(Style.code(), Doc.plain(op2))
       );
     }
 
     @Override public @NotNull Doc hint() {
-      return Doc.plain("Use `bind` statement or insert parentheses to make it clear.");
+      return Doc.hsep(Doc.plain("Use"),
+        Doc.styled(CoreDistiller.KEYWORD.and().code(), Doc.plain("bind")),
+        Doc.plain("statement or insert parentheses to make it clear."));
     }
   }
 

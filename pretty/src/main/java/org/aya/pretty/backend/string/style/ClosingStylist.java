@@ -33,6 +33,7 @@ public abstract class ClosingStylist extends StringStylist {
   protected @NotNull Tuple2<String, String> formatOne(Style style) {
     if (style instanceof Style.Attr attr) {
       return switch (attr) {
+        case Code -> formatCode();
         case Italic -> formatItalic();
         case Bold -> formatBold();
         case Strike -> formatStrike();
@@ -71,6 +72,7 @@ public abstract class ClosingStylist extends StringStylist {
   }
 
   protected abstract Tuple2<String, String> formatItalic();
+  protected abstract Tuple2<String, String> formatCode();
   protected abstract Tuple2<String, String> formatBold();
   protected abstract Tuple2<String, String> formatStrike();
   protected abstract Tuple2<String, String> formatUnderline();

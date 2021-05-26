@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,10 +14,10 @@ public record DuplicateModNameError(
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("The module name being added `"),
-      Doc.plain(modName.joinToString("::")),
-      Doc.plain("` is already defined elsewhere")
+    return Doc.hsep(
+      Doc.plain("The module name being added"),
+      Doc.styled(Style.code(), Doc.plain(modName.joinToString("::"))),
+      Doc.plain("is already defined elsewhere")
     );
   }
 

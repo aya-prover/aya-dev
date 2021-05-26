@@ -5,6 +5,7 @@ package org.aya.tyck.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,9 +14,9 @@ public record NoSuchFieldError(
   @NotNull ImmutableSeq<String> notFound
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("No such field(s): "),
-      Doc.join(Doc.plain(", "), notFound.stream().map(m -> Doc.wrap("`", "`", Doc.plain(m))))
+    return Doc.hsep(Doc.plain("No such field(s):"),
+      Doc.join(Doc.plain(", "), notFound.stream()
+        .map(m -> Doc.styled(Style.code(), Doc.plain(m))))
     );
   }
 

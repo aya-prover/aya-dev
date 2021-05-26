@@ -5,14 +5,15 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record GeneralizedNotAvailableError(@NotNull Expr expr) implements ExprProblem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(
-      Doc.plain("Generalized variable `"),
-      expr.toDoc(),
-      Doc.plain("` not available here")
+    return Doc.hsep(
+      Doc.plain("Generalized variable"),
+      Doc.styled(Style.code(), expr.toDoc()),
+      Doc.plain("not available here")
     );
   }
 

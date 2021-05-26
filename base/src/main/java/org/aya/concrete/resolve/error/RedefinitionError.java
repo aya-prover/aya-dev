@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record RedefinitionError(
@@ -13,8 +14,8 @@ public record RedefinitionError(
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hcat(Doc.plain("Redefinition of "), Doc.plain(kind.prettyName),
-      Doc.plain(" `"), Doc.plain(name), Doc.plain("`"));
+    return Doc.hsep(Doc.plain("Redefinition of"), Doc.plain(kind.prettyName),
+      Doc.styled(Style.code(), Doc.plain(name)));
   }
 
   @Override public @NotNull Severity level() {

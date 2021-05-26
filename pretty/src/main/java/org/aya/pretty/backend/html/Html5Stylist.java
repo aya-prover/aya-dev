@@ -21,6 +21,10 @@ public class Html5Stylist extends ClosingStylist {
     return Tuple.of("<s>", "</s>");
   }
 
+  @Override protected Tuple2<String, String> formatCode() {
+    return Tuple.of("<code>", "</code>");
+  }
+
   @Override protected Tuple2<String, String> formatUnderline() {
     return Tuple.of("<u>", "</u>");
   }

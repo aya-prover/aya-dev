@@ -7,6 +7,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
@@ -334,14 +335,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
     var fields = Buffer.<Tuple2<DefVar<StructDef.Field, Decl.StructField>, Term>>of();
-    var missing = Buffer.<String>of();
+    var missing = Buffer.<Var>of();
     var conFields = expr.fields();
 
     for (var defField : structRef.core.fields()) {
       var conFieldOpt = conFields.find(t -> t.name().equals(defField.ref().name()));
       if (conFieldOpt.isEmpty()) {
         if (defField.body().isEmpty())
-          missing.append(defField.ref().name()); // no value available, skip and prepare error reporting
+          missing.append(defField.ref()); // no value available, skip and prepare error reporting
         else {
           // use default value from defField
           var field = defField.body().get().subst(subst);

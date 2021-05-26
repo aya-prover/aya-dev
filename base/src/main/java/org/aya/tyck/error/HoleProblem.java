@@ -10,6 +10,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,9 +43,11 @@ public sealed interface HoleProblem extends Problem {
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
-        Doc.hcat(Doc.plain("The solution `"), solved.toDoc(), Doc.plain("` is not well-scoped")),
+        Doc.hsep(Doc.plain("The solution"), Doc.styled(Style.code(), solved.toDoc()), Doc.plain("is not well-scoped")),
         Doc.hcat(Doc.plain("In particular, these variables are not in scope: "),
-          Doc.join(Doc.symbol(", "), scopeCheck.stream().map(CoreDistiller::varDoc))));
+          Doc.join(Doc.symbol(", "), scopeCheck.stream()
+            .map(CoreDistiller::varDoc)
+            .map(doc -> Doc.styled(Style.code(), doc)))));
     }
   }
 
@@ -57,12 +60,12 @@ public sealed interface HoleProblem extends Problem {
     @NotNull SourcePos sourcePos
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hcat(
-        Doc.plain("Trying to solve hole `"),
-        Doc.plain(term.ref().name()),
-        Doc.plain("` as `"),
-        sol.toDoc(),
-        Doc.plain("`, which is recursive"));
+      return Doc.hsep(
+        Doc.plain("Trying to solve hole"),
+        Doc.styled(Style.code(), CoreDistiller.plainLinkDef(term.ref())),
+        Doc.plain("as"),
+        Doc.styled(Style.code(), sol.toDoc()),
+        Doc.plain("which is recursive"));
     }
   }
 }
