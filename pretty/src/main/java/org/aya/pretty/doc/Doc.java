@@ -9,7 +9,7 @@ import org.aya.pretty.backend.latex.TeXPrinterConfig;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
-import org.aya.pretty.backend.string.style.IgnoringStylist;
+import org.aya.pretty.backend.string.style.DebugStylist;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
 import org.glavo.kala.collection.Seq;
@@ -63,7 +63,7 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderWithPageWidth(int pageWidth) {
-    var config = new StringPrinterConfig(IgnoringStylist.INSTANCE, pageWidth);
+    var config = new StringPrinterConfig(DebugStylist.INSTANCE, pageWidth);
     return this.renderToString(config);
   }
 

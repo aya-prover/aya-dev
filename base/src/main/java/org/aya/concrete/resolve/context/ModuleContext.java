@@ -114,7 +114,7 @@ public record ModuleContext(
       }
       globals.set(name, MutableHashMap.of());
     } else if (globals.get(name).containsKey(modName)) {
-      reportAndThrow(new DuplicateNameError(name, sourcePos));
+      reportAndThrow(new DuplicateNameError(name, ref, sourcePos));
     } else {
       reporter().report(new AmbiguousNameWarn(name, sourcePos));
     }

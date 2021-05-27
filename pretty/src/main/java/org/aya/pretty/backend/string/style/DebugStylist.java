@@ -7,10 +7,13 @@ import org.aya.pretty.doc.Style;
 import org.glavo.kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
-public class IgnoringStylist extends StringStylist {
-  public static final IgnoringStylist INSTANCE = new IgnoringStylist();
+/**
+ * @author kiva, ice1000
+ */
+public class DebugStylist extends StringStylist {
+  public static final DebugStylist INSTANCE = new DebugStylist();
 
-  private IgnoringStylist() {
+  private DebugStylist() {
   }
 
   @Override public void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside) {
