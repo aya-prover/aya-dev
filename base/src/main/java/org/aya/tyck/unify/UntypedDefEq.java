@@ -102,7 +102,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs) {
     var meta = lhs.ref().core();
-    if (rhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
+    if (rhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
       var holeTy = FormTerm.Pi.make(false, meta.telescope, meta.result);
       for (var arg : lhs.args().view().zip(rcall.args())) {
         if (!(holeTy instanceof FormTerm.Pi holePi))

@@ -97,6 +97,6 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return term.ref().core().result;
   }
 }
