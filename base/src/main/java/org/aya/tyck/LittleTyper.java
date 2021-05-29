@@ -102,7 +102,11 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitAccess(CallTerm.@NotNull Access term, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    var call = (CallTerm.Struct) term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
+    var core = term.ref().core;
+    var subst = Unfolder.buildSubst(core.telescope(), term.fieldArgs())
+      .add(Unfolder.buildSubst(call.ref().core.telescope(), term.structArgs()));
+    return core.result().subst(subst);
   }
 
   @Override public Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
