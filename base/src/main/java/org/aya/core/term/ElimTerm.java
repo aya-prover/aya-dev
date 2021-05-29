@@ -3,7 +3,10 @@
 package org.aya.core.term;
 
 import org.aya.api.util.Arg;
+import org.aya.core.visitor.Substituter;
 import org.aya.util.Decision;
+import org.glavo.kala.collection.immutable.ImmutableSeq;
+import org.glavo.kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +29,15 @@ public sealed interface ElimTerm extends Term {
    * @author re-xyr
    */
   record Proj(@NotNull Term of, int ix) implements ElimTerm {
+    public static @NotNull Substituter.TermSubst
+    projSubst(@NotNull Term term, int index, ImmutableSeq<Param> telescope) {
+      // instantiate the type
+      var subst = new Substituter.TermSubst(MutableMap.of());
+      telescope.view().take(index).reversed().forEachIndexed((i, param) ->
+        subst.add(param.ref(), new Proj(term, i + 1)));
+      return subst;
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);
     }

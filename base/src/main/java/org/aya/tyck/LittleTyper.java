@@ -3,12 +3,14 @@
 package org.aya.tyck;
 
 import org.aya.api.ref.DefVar;
+import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
+import org.aya.util.Constants;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
 import org.glavo.kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -33,14 +35,15 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitPi(FormTerm.@NotNull Pi term, Unit unit) {
-    var paramTy = (FormTerm.Univ) term.param().type().accept(this, unit);
-    var retTy = (FormTerm.Univ) term.body().accept(this, unit);
+    var paramTy = (FormTerm.Univ) term.param().type().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
+    var retTy = (FormTerm.Univ) term.body().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
     return new FormTerm.Univ(paramTy.sort().max(retTy.sort()));
   }
 
   @Override public Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
     var univ = term.params().view()
-      .map(param -> (FormTerm.Univ) param.type().accept(this, unit))
+      .map(param -> (FormTerm.Univ) param.type()
+        .accept(this, Unit.unit()).normalize(NormalizeMode.WHNF))
       .map(FormTerm.Univ::sort)
       .reduce(Sort::max);
     return new FormTerm.Univ(univ);
@@ -51,7 +54,8 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitApp(ElimTerm.@NotNull App term, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    var pi = (FormTerm.Pi) term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
+    return pi.substBody(term.arg().term());
   }
 
   @Override public Term visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
@@ -81,7 +85,8 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return new FormTerm.Sigma(false, term.items().map(item ->
+      new Term.Param(Constants.anonymous(), item.accept(this, Unit.unit()), true)));
   }
 
   @Override public Term visitNew(IntroTerm.@NotNull New newTerm, Unit unit) {
@@ -89,7 +94,11 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    var sigma = (FormTerm.Sigma) term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
+    var index = term.ix() - 1;
+    var telescope = sigma.params();
+    return telescope.get(index).type()
+      .subst(ElimTerm.Proj.projSubst(term.of(), index, telescope));
   }
 
   @Override public Term visitAccess(CallTerm.@NotNull Access term, Unit unit) {
