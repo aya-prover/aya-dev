@@ -43,6 +43,7 @@ public sealed interface IntroTerm extends Term {
    * @author kiva
    */
   record New(
+    @NotNull CallTerm.Struct struct,
     @NotNull ImmutableMap<DefVar<StructDef.Field, Decl.StructField>, Term> params
   ) implements IntroTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

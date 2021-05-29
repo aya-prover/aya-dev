@@ -378,7 +378,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     if (term != null) unifyTyThrowing(term, structCall, expr);
-    return new Result(new IntroTerm.New(ImmutableMap.from(fields)), structCall);
+    return new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {

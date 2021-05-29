@@ -90,7 +90,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitNew(IntroTerm.@NotNull New newTerm, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return newTerm.struct();
   }
 
   @Override public Term visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
