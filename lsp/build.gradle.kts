@@ -14,7 +14,8 @@ dependencies {
   val lsp4jVersion = deps.getProperty("version.lsp4j")
   implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j", version = lsp4jVersion)
   implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc", version = lsp4jVersion)
-  implementation("com.beust", "jcommander", version = deps.getProperty("version.jcommander"))
+  implementation("info.picocli", "picocli", version = deps.getProperty("version.picocli"))
+  annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
 }
 
 plugins {
@@ -69,4 +70,8 @@ if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
   dependsOn(jlinkTask)
   from(imageDir)
   into(file(rootProject.property("installDir").toString()))
+}
+
+tasks.withType<JavaCompile> {
+  options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
 }

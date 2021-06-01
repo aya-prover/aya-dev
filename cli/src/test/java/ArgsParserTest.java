@@ -1,28 +1,48 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 
-import com.beust.jcommander.JCommander;
 import org.aya.cli.CliArgs;
+import org.aya.cli.CliArgs.DistillFormat;
 import org.junit.jupiter.api.Test;
+import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ArgsParserTest {
   @Test
   public void version() {
-    var cli = new CliArgs();
-    var commander = JCommander.newBuilder().addObject(cli).build();
-    commander.parse("--version");
-    assertTrue(cli.version);
+    var cliArgs = new CliArgs();
+    var commandLine = new CommandLine(cliArgs);
+    commandLine.parseArgs("--version");
+    assertTrue(commandLine.isVersionHelpRequested());
   }
 
   @Test
   public void file() {
-    var cli = new CliArgs();
-    var commander = JCommander.newBuilder().addObject(cli).build();
+    var cliArgs = new CliArgs();
+    var commandLine = new CommandLine(cliArgs);
     var s = "boy.aya";
-    commander.parse(s);
-    assertEquals(s, cli.inputFile);
+    commandLine.parseArgs(s);
+    assertEquals(s, cliArgs.inputFile);
+  }
+
+  @Test
+  public void fileAfterDoubleDash() {
+    var cliArgs = new CliArgs();
+    var commandLine = new CommandLine(cliArgs);
+    var s = "boy.aya";
+    commandLine.parseArgs("--", s);
+    assertEquals(s, cliArgs.inputFile);
+  }
+
+  @Test
+  public void defaultValues() {
+    var cliArgs = new CliArgs();
+    var commandLine = new CommandLine(cliArgs);
+    var s = "boy.aya";
+    commandLine.parseArgs(s);
+    assertFalse(cliArgs.interruptedTrace);
+    assertEquals(DistillFormat.html, cliArgs.prettyFormat);
   }
 }
