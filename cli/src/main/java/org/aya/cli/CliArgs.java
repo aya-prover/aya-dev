@@ -4,7 +4,6 @@ package org.aya.cli;
 
 import org.aya.prelude.GeneratedVersion;
 import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -20,9 +19,9 @@ public class CliArgs {
   @Option(names = {"--pretty-format"}, description = "Pretty print format", defaultValue = "html")
   public DistillFormat prettyFormat;
   @Option(names = {"--pretty-dir"}, description = "Output directory of pretty printing")
-  public @Nullable String prettyDir;
+  public String prettyDir;
   @Option(names = {"--trace"}, description = "Print type checking traces")
-  public @Nullable TraceFormat traceFormat;
+  public TraceFormat traceFormat;
   @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")
   public boolean asciiOnly;
   @Option(names = {"--module-path"}, description = "Search for module under this path")
