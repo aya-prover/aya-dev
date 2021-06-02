@@ -10,21 +10,26 @@ import picocli.CommandLine.Parameters;
 
 import java.util.List;
 
-@Command(name = "aya", mixinStandardHelpOptions = true, version = "Aya v" + GeneratedVersion.VERSION_STRING)
+import static org.aya.cli.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
+
+@Command(name = "aya",
+  mixinStandardHelpOptions = true,
+  version = "Aya v" + GeneratedVersion.VERSION_STRING,
+  showDefaultValues = true)
 public class CliArgs {
   @Option(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace;
-  @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage")
+  @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage." + CANDIDATES_ON_A_NEW_LINE)
   public DistillStage prettyStage;
-  @Option(names = {"--pretty-format"}, description = "Pretty print format", defaultValue = "html")
+  @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES_ON_A_NEW_LINE, defaultValue = "html")
   public DistillFormat prettyFormat;
-  @Option(names = {"--pretty-dir"}, description = "Output directory of pretty printing")
+  @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.")
   public String prettyDir;
-  @Option(names = {"--trace"}, description = "Print type checking traces")
+  @Option(names = {"--trace"}, description = "Specify format of printing type checking traces." + CANDIDATES_ON_A_NEW_LINE)
   public TraceFormat traceFormat;
-  @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message")
+  @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message.")
   public boolean asciiOnly;
-  @Option(names = {"--module-path"}, description = "Search for module under this path")
+  @Option(names = {"--module-path"}, description = "Search for module under this path.")
   public List<String> modulePaths;
   @Parameters(paramLabel = "<input-file>")
   public String inputFile;

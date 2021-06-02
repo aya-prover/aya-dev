@@ -6,15 +6,20 @@ import org.aya.prelude.GeneratedVersion;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command(name = "aya-lsp", mixinStandardHelpOptions = true, version = "Aya Language Server v" + GeneratedVersion.VERSION_STRING)
+import static org.aya.cli.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
+
+@Command(name = "aya-lsp",
+  mixinStandardHelpOptions = true,
+  version = "Aya Language Server v" + GeneratedVersion.VERSION_STRING,
+  showDefaultValues = true)
 public class LspArgs {
   @Option(names = {"-m", "--mode"}, description = "Choose which mode to run: " +
     "server mode (listen and wait for connection), client mode (connect to existing port) " +
-    "or debug mode (use stdin and stdout)", defaultValue = "server")
+    "or debug mode (use stdin and stdout)." + CANDIDATES_ON_A_NEW_LINE, defaultValue = "server")
   public Mode mode;
-  @Option(names = {"-H", "--host"}, description = "Specify hostname", defaultValue = "localhost")
+  @Option(names = {"-H", "--host"}, description = "Specify hostname.", defaultValue = "localhost")
   public String host;
-  @Option(names = {"-p", "--port"}, description = "Specify port")
+  @Option(names = {"-p", "--port"}, description = "Specify port.")
   public int port;
 
   public enum Mode {
