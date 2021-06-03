@@ -3,6 +3,7 @@
 package org.aya.core.sort;
 
 import org.aya.api.ref.LevelGenVar;
+import org.aya.core.sort.LevelEqnSet.Eqn;
 import org.aya.core.sort.Sort.LvlVar;
 import org.aya.generic.Level;
 import org.aya.util.Ordering;
@@ -53,6 +54,7 @@ public class LevelSolver {
   private final MutableSet<LvlVar> freeNodes = MutableSet.of();
   private final MutableMap<LvlVar, Integer> graphMap = MutableMap.create();
   private final MutableMap<LvlVar, Integer> defaultValues = MutableMap.create();
+  public final Buffer<Eqn> avoidableEqns = Buffer.create();
 
   void genGraphNode(SeqLike<Level<LvlVar>> l) {
     for (var e : l) {
@@ -115,7 +117,7 @@ public class LevelSolver {
     }
   }
 
-  int[][] dfs(SeqLike<LevelEqnSet.Eqn> l, int pos, int[][] g) throws UnsatException {
+  int[][] dfs(SeqLike<Eqn> l, int pos, int[][] g) throws UnsatException {
     if (pos >= l.size()) {
       if (floyd(g)) {
         throw new UnsatException();
@@ -173,39 +175,8 @@ public class LevelSolver {
       prepareGraphNode(g, e.lhs().levels());
       prepareGraphNode(g, e.rhs().levels());
     }
-    var specialEq = Buffer.<LevelEqnSet.Eqn>of();
-    for (var e : equations) {
-      var ord = e.cmp();
-      var lhs = e.lhs();
-      var rhs = e.rhs();
-      if (ord == Ordering.Gt) {
-        var temp = lhs;
-        lhs = rhs;
-        rhs = temp;
-        ord = Ordering.Lt;
-      }
-      if (ord == Ordering.Lt) {
-        var canBeAvoided = true;
-        for (var v : lhs.levels()) {
-          if (!rhs.levels().contains(v)) {
-            canBeAvoided = false;
-            break;
-          }
-        }
-        if (canBeAvoided) continue;
-        if (rhs.levels().size() == 1) {
-          var right = rhs.levels().get(0);
-          for (var left : lhs.levels()) {
-            dealSingleLt(g, left, right);
-          }
-        } else {
-          specialEq.append(e);
-        }
-      } else {
-        specialEq.append(new LevelEqnSet.Eqn(lhs, rhs, Ordering.Lt, e.sourcePos()));
-        specialEq.append(new LevelEqnSet.Eqn(rhs, lhs, Ordering.Lt, e.sourcePos()));
-      }
-    }
+    var specialEq = Buffer.<Eqn>of();
+    for (var e : equations) populate(g, specialEq, e);
     if (floyd(g)) throw new UnsatException();
     var gg = dfs(specialEq, 0, g);
     for (var name : freeNodes) {
@@ -242,6 +213,42 @@ public class LevelSolver {
         retList.append(resolveConstantLevel(minv));
       }
       eqns.solution().put(name, new Sort.CoreLevel(retList.toImmutableSeq()));
+    }
+  }
+
+  private void populate(int[][] g, Buffer<Eqn> specialEq, Eqn e) throws UnsatException {
+    var ord = e.cmp();
+    var lhs = e.lhs();
+    var rhs = e.rhs();
+    if (ord == Ordering.Gt) {
+      var temp = lhs;
+      lhs = rhs;
+      rhs = temp;
+      ord = Ordering.Lt;
+    }
+    if (ord == Ordering.Lt) {
+      var avoidable = true;
+      for (var v : lhs.levels()) {
+        if (!rhs.levels().contains(v)) {
+          avoidable = false;
+          break;
+        }
+      }
+      if (avoidable) {
+        avoidableEqns.append(e);
+        return;
+      }
+      if (rhs.levels().size() == 1) {
+        var right = rhs.levels().get(0);
+        for (var left : lhs.levels()) {
+          dealSingleLt(g, left, right);
+        }
+      } else {
+        specialEq.append(e);
+      }
+    } else {
+      specialEq.append(new Eqn(lhs, rhs, Ordering.Lt, e.sourcePos()));
+      specialEq.append(new Eqn(rhs, lhs, Ordering.Lt, e.sourcePos()));
     }
   }
 }

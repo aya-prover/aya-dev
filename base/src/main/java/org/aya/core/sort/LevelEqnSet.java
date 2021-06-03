@@ -59,7 +59,11 @@ public record LevelEqnSet(
         }
       eqns.clear();
     } catch (LevelSolver.UnsatException ignored) {
-      // Level unsolved, leave the equations
+      // Level unsolved, leave the 'useful' equations
+      var buf = Buffer.<Eqn>create();
+      eqns.filterNotTo(buf, solver.avoidableEqns::contains);
+      eqns.clear();
+      eqns.appendAll(buf);
     }
   }
 

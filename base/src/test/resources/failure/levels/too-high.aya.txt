@@ -3,7 +3,7 @@ In file $FILE:3:11 ->
   1 | data List (A : uType 1) : uType 0
   2 |  | nil
   3 |  | cons A (List A)
-              ^^ h <= h, 1 <= 0
+              ^^ 1 <= 0
   
 Error: Cannot solve some level equation(s)
 Tycking interrupted due to error(s).
