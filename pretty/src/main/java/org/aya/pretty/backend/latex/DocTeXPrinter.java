@@ -4,8 +4,8 @@ package org.aya.pretty.backend.latex;
 
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
-import org.glavo.kala.collection.Map;
-import org.glavo.kala.tuple.Tuple;
+import kala.collection.Map;
+import kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 /**

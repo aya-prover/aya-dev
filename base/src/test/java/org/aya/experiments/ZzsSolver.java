@@ -2,10 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.experiments;
 
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.collection.mutable.MutableSet;
+import kala.collection.SeqLike;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 
 import java.util.Scanner;
 

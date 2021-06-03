@@ -18,10 +18,10 @@ import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Either;
-import org.glavo.kala.tuple.Unit;
-import org.glavo.kala.value.Ref;
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

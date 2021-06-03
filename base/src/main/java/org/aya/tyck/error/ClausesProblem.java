@@ -10,9 +10,9 @@ import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.pat.PatTree;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.mutable.Buffer;
+import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

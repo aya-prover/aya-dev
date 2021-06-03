@@ -11,7 +11,7 @@ import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
-import org.glavo.kala.collection.Seq;
+import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */

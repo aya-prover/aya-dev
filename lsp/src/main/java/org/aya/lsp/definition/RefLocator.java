@@ -9,8 +9,8 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.StmtConsumer;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -3,7 +3,7 @@
 package org.aya.cli.library;
 
 import org.aya.util.Version;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 
 import java.nio.file.Path;
 

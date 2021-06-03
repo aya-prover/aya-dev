@@ -3,9 +3,9 @@
 package org.aya.concrete.resolve.module;
 
 import org.aya.api.ref.Var;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableMap;
+import kala.collection.Seq;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

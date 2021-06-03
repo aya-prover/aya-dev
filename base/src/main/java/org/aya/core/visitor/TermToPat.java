@@ -4,7 +4,7 @@ package org.aya.core.visitor;
 
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.glavo.kala.tuple.Unit;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

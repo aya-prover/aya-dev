@@ -11,7 +11,7 @@ import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.LevelMismatchError;
-import org.glavo.kala.tuple.Unit;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

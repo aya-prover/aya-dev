@@ -8,9 +8,9 @@ import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.SeqLike;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**

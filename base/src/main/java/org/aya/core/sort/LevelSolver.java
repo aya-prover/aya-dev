@@ -7,10 +7,10 @@ import org.aya.core.sort.LevelEqnSet.Eqn;
 import org.aya.core.sort.Sort.LvlVar;
 import org.aya.generic.Level;
 import org.aya.util.Ordering;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.collection.mutable.MutableSet;
+import kala.collection.SeqLike;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.NotNull;
 
 /**

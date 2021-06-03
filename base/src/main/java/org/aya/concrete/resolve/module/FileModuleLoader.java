@@ -17,11 +17,11 @@ import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.core.def.Def;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.function.CheckedConsumer;
-import org.glavo.kala.function.CheckedRunnable;
+import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
+import kala.function.CheckedConsumer;
+import kala.function.CheckedRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

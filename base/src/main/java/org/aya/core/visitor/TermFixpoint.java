@@ -6,8 +6,8 @@ import org.aya.api.util.Arg;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
-import org.glavo.kala.collection.immutable.ImmutableMap;
-import org.glavo.kala.tuple.Tuple;
+import kala.collection.immutable.ImmutableMap;
+import kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;

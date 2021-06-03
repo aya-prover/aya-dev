@@ -26,11 +26,11 @@ import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.control.Either;
-import org.glavo.kala.tuple.Unit;
-import org.glavo.kala.value.Ref;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
+import kala.control.Either;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

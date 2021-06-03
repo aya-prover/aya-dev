@@ -3,7 +3,7 @@
 package org.aya.pretty.printer;
 
 import org.aya.pretty.doc.Styles;
-import org.glavo.kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableMap;
 
 public interface StyleFamily {
   MutableMap<String, Styles> definedStyles();

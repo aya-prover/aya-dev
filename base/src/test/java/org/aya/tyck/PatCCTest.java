@@ -10,7 +10,7 @@ import org.aya.core.term.Term;
 import org.aya.generic.Matching;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.pat.PatClassifier;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 

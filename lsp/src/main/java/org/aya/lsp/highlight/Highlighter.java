@@ -8,9 +8,9 @@ import org.aya.concrete.*;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.lsp.LspRange;
 import org.eclipse.lsp4j.Range;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Unit;
-import org.glavo.kala.value.Ref;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

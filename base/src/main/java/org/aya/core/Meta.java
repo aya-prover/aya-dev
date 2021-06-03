@@ -6,9 +6,9 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.SeqView;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
+import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

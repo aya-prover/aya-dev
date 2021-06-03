@@ -4,10 +4,10 @@ package org.aya.cli;
 
 import org.aya.api.error.SourcePos;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Unit;
 import org.ice1000.jimgui.*;
 import org.ice1000.jimgui.util.JImGuiUtil;
 import org.ice1000.jimgui.util.JniLoader;

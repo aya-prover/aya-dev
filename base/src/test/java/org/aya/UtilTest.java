@@ -4,7 +4,7 @@ package org.aya;
 
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.Version;
-import org.glavo.kala.collection.Seq;
+import kala.collection.Seq;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

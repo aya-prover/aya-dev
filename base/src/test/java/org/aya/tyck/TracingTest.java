@@ -6,7 +6,7 @@ import org.aya.concrete.Signatured;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.tuple.Unit;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 

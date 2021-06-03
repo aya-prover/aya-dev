@@ -9,8 +9,8 @@ import org.aya.concrete.Pattern;
 import org.aya.generic.GenericBuilder;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.value.Ref;
+import kala.collection.mutable.Buffer;
+import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
 /**

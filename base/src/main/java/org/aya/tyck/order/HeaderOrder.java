@@ -4,9 +4,9 @@ package org.aya.tyck.order;
 
 import org.aya.core.def.Def;
 import org.aya.core.visitor.RefFinder;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableSet;
+import kala.collection.Seq;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -3,7 +3,7 @@
 package org.aya.core.pat;
 
 import org.aya.tyck.LocalCtx;
-import org.glavo.kala.tuple.Unit;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**

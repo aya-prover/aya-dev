@@ -8,7 +8,7 @@ import org.aya.concrete.desugar.BinOpSet;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.glavo.kala.collection.mutable.Buffer;
+import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;

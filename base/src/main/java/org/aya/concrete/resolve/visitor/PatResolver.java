@@ -6,9 +6,9 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.value.Ref;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import kala.value.Ref;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

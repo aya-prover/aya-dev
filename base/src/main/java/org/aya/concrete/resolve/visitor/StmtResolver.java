@@ -11,11 +11,11 @@ import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
-import org.glavo.kala.value.Ref;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
 /**

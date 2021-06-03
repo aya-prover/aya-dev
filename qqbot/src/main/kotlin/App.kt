@@ -17,7 +17,7 @@ import org.aya.cli.CompilerFlags
 import org.aya.cli.CompilerFlags.Message.ASCII
 import org.aya.cli.SingleFileCompiler
 import org.aya.prelude.GeneratedVersion
-import org.glavo.kala.collection.immutable.ImmutableSeq
+import kala.collection.immutable.ImmutableSeq
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets

@@ -4,11 +4,11 @@ package org.aya.pretty.backend.string.style;
 
 import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqView;
-import org.glavo.kala.control.Option;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
+import kala.collection.Seq;
+import kala.collection.SeqView;
+import kala.control.Option;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ClosingStylist extends StringStylist {

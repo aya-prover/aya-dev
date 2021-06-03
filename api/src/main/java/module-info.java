@@ -1,7 +1,7 @@
 module org.aya.api {
   requires static org.jetbrains.annotations;
 
-  requires org.glavo.kala.collection;
+  requires kala.collection;
 
   requires org.aya.pretty;
 
