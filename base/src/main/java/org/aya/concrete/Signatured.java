@@ -8,7 +8,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

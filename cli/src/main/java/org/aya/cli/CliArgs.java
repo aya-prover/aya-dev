@@ -3,7 +3,7 @@
 package org.aya.cli;
 
 import org.aya.prelude.GeneratedVersion;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;

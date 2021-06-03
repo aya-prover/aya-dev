@@ -4,9 +4,9 @@ package org.aya.core.term;
 
 import org.aya.core.sort.Sort;
 import org.aya.util.Decision;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

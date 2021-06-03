@@ -12,10 +12,10 @@ import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.tuple.Tuple2;
+import kala.collection.SeqLike;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

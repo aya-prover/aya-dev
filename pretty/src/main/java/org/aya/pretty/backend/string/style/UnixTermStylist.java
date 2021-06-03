@@ -4,8 +4,8 @@ package org.aya.pretty.backend.string.style;
 
 import org.aya.pretty.backend.string.custom.UnixTermStyle;
 import org.aya.pretty.doc.Style;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 public class UnixTermStylist extends ClosingStylist {

@@ -5,8 +5,8 @@ package org.aya.pretty.style;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
 import org.aya.pretty.printer.StyleFamily;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.tuple.Tuple;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 public record AyaStyleFamily(

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.printer;
 
-import org.glavo.kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableMap;
 
 public interface ColorScheme {
   MutableMap<String, Integer> definedColors();

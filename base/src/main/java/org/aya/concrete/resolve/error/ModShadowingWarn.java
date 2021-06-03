@@ -7,7 +7,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.Seq;
+import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 public record ModShadowingWarn(

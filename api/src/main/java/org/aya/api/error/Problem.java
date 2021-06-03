@@ -5,10 +5,10 @@ package org.aya.api.error;
 import org.aya.api.util.WithPos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Tuple;
+import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;

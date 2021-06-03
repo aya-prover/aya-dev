@@ -9,9 +9,9 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Option;
-import org.glavo.kala.value.Ref;
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
+import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

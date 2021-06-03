@@ -19,9 +19,9 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Decision;
 import org.aya.util.Ordering;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableMap;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

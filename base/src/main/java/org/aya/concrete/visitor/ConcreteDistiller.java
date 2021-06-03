@@ -14,11 +14,11 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.aya.util.StringEscapeUtil;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Option;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

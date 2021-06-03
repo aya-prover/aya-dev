@@ -9,7 +9,7 @@ import org.aya.core.Meta;
 import org.aya.core.visitor.Zonker;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.glavo.kala.tuple.Unit;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public record Goal(

@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.trace;
 
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {

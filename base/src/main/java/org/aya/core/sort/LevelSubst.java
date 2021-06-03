@@ -3,9 +3,9 @@
 package org.aya.core.sort;
 
 import org.aya.generic.Level;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.collection.mutable.MutableTreeMap;
-import org.glavo.kala.control.Option;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableTreeMap;
+import kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
 /**

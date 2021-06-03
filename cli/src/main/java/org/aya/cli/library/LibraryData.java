@@ -5,7 +5,7 @@ package org.aya.cli.library;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import org.aya.util.Version;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Reader;

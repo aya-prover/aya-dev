@@ -8,12 +8,12 @@ import org.aya.api.ref.Var;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.error.*;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.Map;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableMap;
+import kala.collection.Map;
+import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

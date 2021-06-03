@@ -5,7 +5,7 @@ package org.aya.concrete;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.util.WithPos;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface Generalize extends Stmt {

@@ -11,9 +11,9 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.Map;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Tuple;
+import kala.collection.Map;
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Tuple;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

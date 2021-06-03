@@ -4,7 +4,7 @@ package org.aya.cli;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
-import org.glavo.kala.collection.Seq;
+import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 /**

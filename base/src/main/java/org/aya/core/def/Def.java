@@ -11,9 +11,9 @@ import org.aya.core.visitor.CoreDistiller;
 import org.aya.core.visitor.Substituter;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

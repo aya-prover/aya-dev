@@ -7,7 +7,7 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 

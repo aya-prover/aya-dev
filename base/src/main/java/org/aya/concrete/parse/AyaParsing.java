@@ -12,8 +12,8 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.concrete.Stmt;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Option;
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

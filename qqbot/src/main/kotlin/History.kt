@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.qqbot
 
-import org.glavo.kala.collection.mutable.Buffer
+import kala.collection.mutable.Buffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths

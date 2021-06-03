@@ -6,9 +6,9 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.def.StructDef;
 import org.aya.util.Decision;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.immutable.ImmutableMap;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

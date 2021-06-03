@@ -3,8 +3,8 @@
 package org.aya.pretty.style;
 
 import org.aya.pretty.printer.ColorScheme;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.tuple.Tuple;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 /**

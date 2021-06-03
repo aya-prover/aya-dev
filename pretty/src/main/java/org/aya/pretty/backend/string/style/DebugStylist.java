@@ -4,7 +4,7 @@ package org.aya.pretty.backend.string.style;
 
 import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
-import org.glavo.kala.collection.Seq;
+import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -5,7 +5,7 @@ package org.aya.concrete.visitor;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.BinOpParser;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {

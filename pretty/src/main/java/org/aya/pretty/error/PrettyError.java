@@ -4,12 +4,12 @@ package org.aya.pretty.error;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.collection.mutable.Buffer;
-import org.glavo.kala.control.Option;
-import org.glavo.kala.tuple.Tuple;
-import org.glavo.kala.tuple.Tuple2;
+import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.mutable.Buffer;
+import kala.control.Option;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -3,7 +3,7 @@
 package org.aya.concrete.visitor;
 
 import org.aya.concrete.*;
-import org.glavo.kala.tuple.Unit;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**

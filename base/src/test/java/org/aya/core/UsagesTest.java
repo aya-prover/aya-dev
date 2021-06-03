@@ -7,8 +7,8 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.visitor.RefFinder;
 import org.aya.tyck.TyckDeclTest;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.mutable.Buffer;
+import kala.collection.Seq;
+import kala.collection.mutable.Buffer;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

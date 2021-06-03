@@ -7,8 +7,8 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
 import org.aya.core.sort.LevelEqnSet;
 import org.aya.pretty.doc.Doc;
-import org.glavo.kala.collection.Seq;
-import org.glavo.kala.collection.SeqLike;
+import kala.collection.Seq;
+import kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

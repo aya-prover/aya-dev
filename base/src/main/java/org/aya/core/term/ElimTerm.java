@@ -5,8 +5,8 @@ package org.aya.core.term;
 import org.aya.api.util.Arg;
 import org.aya.core.visitor.Substituter;
 import org.aya.util.Decision;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.MutableMap;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

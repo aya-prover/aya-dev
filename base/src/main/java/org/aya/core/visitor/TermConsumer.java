@@ -4,8 +4,8 @@ package org.aya.core.visitor;
 
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
-import org.glavo.kala.collection.SeqLike;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.SeqLike;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public interface TermConsumer<P> extends Term.Visitor<P, Unit> {

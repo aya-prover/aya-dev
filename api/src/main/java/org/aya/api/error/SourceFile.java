@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.api.error;
 
-import org.glavo.kala.control.Option;
+import kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;

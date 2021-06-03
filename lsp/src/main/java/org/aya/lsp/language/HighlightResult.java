@@ -3,7 +3,7 @@
 package org.aya.lsp.language;
 
 import org.aya.lsp.highlight.Symbol;
-import org.glavo.kala.collection.SeqLike;
+import kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

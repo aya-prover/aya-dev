@@ -4,7 +4,7 @@ package org.aya.cli;
 
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
-import org.glavo.kala.tuple.Unit;
+import kala.tuple.Unit;
 import org.ice1000.jimgui.util.JniLoader;
 import org.jetbrains.annotations.NotNull;
 

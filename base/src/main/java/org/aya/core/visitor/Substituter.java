@@ -7,11 +7,11 @@ import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.glavo.kala.collection.Map;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableMap;
-import org.glavo.kala.collection.mutable.MutableTreeMap;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.Map;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableTreeMap;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 

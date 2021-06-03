@@ -4,7 +4,7 @@ package org.aya.concrete;
 
 import org.aya.api.error.SourcePos;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 public record QualifiedID(

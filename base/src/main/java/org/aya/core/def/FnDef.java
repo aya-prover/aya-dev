@@ -8,8 +8,8 @@ import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.control.Either;
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;

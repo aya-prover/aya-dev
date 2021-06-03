@@ -11,8 +11,8 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.util.Constants;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**

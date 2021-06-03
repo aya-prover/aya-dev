@@ -17,7 +17,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.RefTerm;
 import org.aya.generic.Matching;
 import org.aya.test.ThrowingReporter;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSeq;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

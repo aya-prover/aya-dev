@@ -4,8 +4,8 @@ package org.aya.concrete.visitor;
 
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {

@@ -1,8 +1,8 @@
 module org.aya.pretty {
   requires static org.jetbrains.annotations;
 
-  requires org.glavo.kala.base;
-  requires org.glavo.kala.collection;
+  requires kala.base;
+  requires kala.collection;
 
   exports org.aya.pretty.backend.html;
   exports org.aya.pretty.backend.string.custom;

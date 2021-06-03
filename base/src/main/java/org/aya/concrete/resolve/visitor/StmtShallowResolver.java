@@ -11,10 +11,10 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
-import org.glavo.kala.collection.immutable.ImmutableSeq;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.tuple.Tuple2;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableHashMap;
+import kala.tuple.Tuple2;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**

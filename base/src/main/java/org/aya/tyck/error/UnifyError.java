@@ -9,7 +9,7 @@ import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Zonker;
 import org.aya.pretty.doc.Doc;
-import org.glavo.kala.tuple.Unit;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 public record UnifyError(

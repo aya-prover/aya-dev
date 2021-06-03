@@ -7,9 +7,9 @@ import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
 import org.aya.tyck.ExprTycker;
-import org.glavo.kala.collection.mutable.MutableHashMap;
-import org.glavo.kala.collection.mutable.MutableHashSet;
-import org.glavo.kala.tuple.Unit;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableHashSet;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**
