@@ -6,7 +6,6 @@ import picocli.CommandLine;
 
 public class LspMain {
   public static void main(String[] args) {
-    int exitCode = new CommandLine(new Lsp()).execute(args);
-    System.exit(exitCode);
+    new CommandLine(new Lsp()).execute(args);
   }
 }
