@@ -11,25 +11,24 @@ import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
 import org.aya.api.util.WithPos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.concrete.Stmt;
 import org.aya.core.def.Tycked;
-import org.aya.lsp.Log;
-import org.aya.lsp.LspRange;
-import org.aya.lsp.definition.RefLocator;
-import org.aya.lsp.highlight.Highlighter;
-import org.aya.lsp.highlight.Symbol;
-import org.aya.lsp.language.HighlightResult;
+import org.aya.lsp.actions.GotoDefinition;
+import org.aya.lsp.actions.SyntaxHighlight;
+import org.aya.lsp.models.ComputeTypeResult;
+import org.aya.lsp.models.HighlightResult;
+import org.aya.lsp.utils.Log;
+import org.aya.lsp.utils.LspRange;
 import org.aya.pretty.doc.Doc;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -61,13 +60,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       CompilerFlags.Message.EMOJI, false, null,
       libraryManager.modulePath.view());
 
-    var symbols = Buffer.<Symbol>of();
+    var symbols = Buffer.<HighlightResult.Symbol>of();
     try {
       compiler.compile(filePath, compilerFlags,
-        stmts -> stmts.forEach(d -> d.accept(Highlighter.INSTANCE, symbols)),
+        stmts -> stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols)),
         (stmts, defs) -> {
           libraryManager.loadedFiles.put(filePath, new AyaFile(defs, stmts));
-          stmts.forEach(d -> d.accept(Highlighter.INSTANCE, symbols));
+          stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
         });
     } catch (IOException e) {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());
@@ -153,29 +152,26 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var path = Path.of(URI.create(params.getTextDocument().getUri()));
-      var loadedFile = libraryManager.loadedFiles.getOrNull(path);
+      var loadedFile = getLoadedFile(params.getTextDocument().getUri());
       if (loadedFile == null) return Either.forLeft(Collections.emptyList());
-      var position = params.getPosition();
-      var locator = new RefLocator();
-      locator.visitAll(loadedFile.concrete, new RefLocator.XY(position.getLine() + 1, position.getCharacter()));
-      return Either.forRight(locator.locations.view().mapNotNull(pos -> {
-        SourcePos target;
-        if (pos.data() instanceof DefVar<?, ?> defVar) {
-          target = defVar.concrete.sourcePos();
-        } else if (pos.data() instanceof LocalVar localVar) {
-          target = localVar.definition();
-        } else return null;
-        var res = LspRange.toLoc(pos.sourcePos(), target);
-        if (res != null) Log.d("Resolved: %s in %s", target, res.getTargetUri());
-        return res;
-      }).collect(Collectors.toList()));
+      return Either.forRight(GotoDefinition.invoke(params, loadedFile));
     });
   }
 
+  private @Nullable AyaFile getLoadedFile(@NotNull String uri) {
+    return libraryManager.loadedFiles.getOrNull(Path.of(URI.create(uri)));
+  }
+
+  public ComputeTypeResult computeType(@NotNull ComputeTypeResult.Params input) {
+    var loadedFile = getLoadedFile(input.uri());
+    if (loadedFile == null) return ComputeTypeResult.bad(input);
+    // TODO
+    throw new UnsupportedOperationException();
+  }
+
   public static final record AyaFile(
-    ImmutableSeq<Tycked> core,
-    ImmutableSeq<Stmt> concrete
+    @NotNull ImmutableSeq<Tycked> core,
+    @NotNull ImmutableSeq<Stmt> concrete
   ) {
   }
 

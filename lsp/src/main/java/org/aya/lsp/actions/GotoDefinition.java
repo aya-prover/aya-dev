@@ -1,23 +1,50 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.lsp.definition;
+package org.aya.lsp.actions;
 
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.StmtConsumer;
+import org.aya.lsp.server.AyaService;
+import org.aya.lsp.utils.Log;
+import org.aya.lsp.utils.LspRange;
+import org.aya.lsp.utils.XY;
+import org.eclipse.lsp4j.DefinitionParams;
+import org.eclipse.lsp4j.LocationLink;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author ice1000, kiva
  */
-public class RefLocator implements StmtConsumer<RefLocator.XY> {
+public class GotoDefinition implements StmtConsumer<XY> {
   public final @NotNull Buffer<WithPos<Var>> locations = Buffer.of();
+
+  @NotNull
+  public static List<LocationLink> invoke(@NotNull DefinitionParams params, @NotNull AyaService.AyaFile loadedFile) {
+    var locator = new GotoDefinition();
+    locator.visitAll(loadedFile.concrete(), new XY(params.getPosition()));
+    return locator.locations.view().mapNotNull(pos -> {
+      SourcePos target;
+      if (pos.data() instanceof DefVar<?, ?> defVar) {
+        target = defVar.concrete.sourcePos();
+      } else if (pos.data() instanceof LocalVar localVar) {
+        target = localVar.definition();
+      } else return null;
+      var res = LspRange.toLoc(pos.sourcePos(), target);
+      if (res != null) Log.d("Resolved: %s in %s", target, res.getTargetUri());
+      return res;
+    }).collect(Collectors.toList());
+  }
 
   @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
     check(xy, expr.sourcePos(), expr.resolvedVar());
@@ -46,9 +73,6 @@ public class RefLocator implements StmtConsumer<RefLocator.XY> {
   }
 
   private void check(@NotNull XY xy, @NotNull SourcePos sourcePos, Var var) {
-    if (sourcePos.contains(xy.x, xy.y)) locations.append(new WithPos<>(sourcePos, var));
-  }
-
-  public static record XY(int x, int y) {
+    if (xy.inside(sourcePos)) locations.append(new WithPos<>(sourcePos, var));
   }
 }

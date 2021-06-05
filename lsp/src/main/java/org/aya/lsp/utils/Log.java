@@ -1,8 +1,8 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.lsp;
+package org.aya.lsp.utils;
 
-import org.aya.lsp.language.AyaLanguageClient;
+import org.aya.lsp.server.AyaLanguageClient;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;

@@ -5,13 +5,11 @@ module org.aya.lsp {
   requires org.eclipse.lsp4j;
   requires info.picocli;
 
-  exports org.aya.lsp;
-  exports org.aya.lsp.highlight;
-  exports org.aya.lsp.language;
+  exports org.aya.lsp.models;
   exports org.aya.lsp.server;
-  exports org.aya.lsp.definition;
+  exports org.aya.lsp.utils;
+  exports org.aya.lsp;
 
-  opens org.aya.lsp.language to com.google.gson;
-  opens org.aya.lsp.highlight to com.google.gson;
-  opens org.aya.lsp.definition to com.google.gson;
+  opens org.aya.lsp.models to com.google.gson;
+  exports org.aya.lsp.actions;
 }

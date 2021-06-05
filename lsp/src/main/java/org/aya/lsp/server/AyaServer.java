@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.server;
 
-import org.aya.lsp.Log;
-import org.aya.lsp.language.AyaLanguageClient;
-import org.aya.lsp.language.HighlightResult;
+import org.aya.lsp.models.ComputeTypeResult;
+import org.aya.lsp.models.HighlightResult;
+import org.aya.lsp.utils.Log;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
@@ -21,8 +21,13 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
 
   @JsonRequest("aya/load")
   public @NotNull CompletableFuture<@NotNull HighlightResult> load(Object uri) {
-    var uriString = (String) uri; // TODO: figure out why
+    var uriString = (String) uri; // see JavaDoc of JsonRequest
     return CompletableFuture.supplyAsync(() -> service.loadFile(uriString));
+  }
+
+  @JsonRequest("aya/computeType")
+  public @NotNull CompletableFuture<@NotNull ComputeTypeResult> computeType(ComputeTypeResult.Params input) {
+    return CompletableFuture.supplyAsync(() -> service.computeType(input));
   }
 
   @Override public void connect(@NotNull LanguageClient client) {

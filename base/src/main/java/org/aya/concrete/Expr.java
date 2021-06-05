@@ -206,6 +206,14 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   /**
+   * <pre>
+   * def `+` add (a b : Nat) => ...
+   * def test => zero + zero
+   * </pre>
+   *
+   * @param resolvedFrom who refers to resolvedVar? For example, in test,
+   *                     <code>resolvedVar</code> refers to `DefVar of add` while
+   *                     <code>resolvedFrom</code> stores the raw name used in user code.
    * @author ice1000
    */
   record RefExpr(
