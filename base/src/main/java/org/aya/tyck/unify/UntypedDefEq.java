@@ -131,8 +131,8 @@ public record UntypedDefEq(
     return meta.result;
   }
 
-  @Override public @Nullable Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {
-    return null;
+  @Override public @NotNull Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {
+    return ErrorTerm.typeOf(term.toDoc());
   }
 
   private @NotNull Reporter reporter() {

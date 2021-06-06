@@ -171,7 +171,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public @NotNull Boolean visitError(@NotNull ErrorTerm term, @NotNull Term term2, @NotNull Term term3) {
-    return false;
+    return true;
   }
 
   /**
