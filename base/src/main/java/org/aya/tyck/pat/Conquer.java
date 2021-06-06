@@ -2,6 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
@@ -18,9 +21,6 @@ import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.util.Ordering;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -79,14 +79,13 @@ public record Conquer(
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));
-      throw new ExprTycker.TyckInterruptedException();
+      return;
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq)
       .compare(newBody, volynskaya.data(), signature.result().subst(matchy));
     if (!unification) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, volynskaya.data(), conditionPos, currentClause.sourcePos(), volynskaya.sourcePos()));
-      throw new ExprTycker.TyckInterruptedException();
     }
   }
 
@@ -96,7 +95,7 @@ public record Conquer(
 
   @Override public Unit visitPrim(Pat.@NotNull Prim prim, Integer nth) {
     var core = prim.ref().core;
-    if (PrimDef.LEFT_RIGHT.contains(core)) return Unit.unit();
-    throw new ExprTycker.TyckInterruptedException();
+    assert PrimDef.LEFT_RIGHT.contains(core);
+    return Unit.unit();
   }
 }

@@ -12,5 +12,4 @@ In file $FILE:2:3 ->
          ^-^
   
 Error: Unknown constructor `x y`
-Tycking interrupted due to error(s).
 What are you doing?

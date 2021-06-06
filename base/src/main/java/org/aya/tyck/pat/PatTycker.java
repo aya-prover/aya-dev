@@ -91,11 +91,7 @@ public record PatTycker(
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
     var selection = selectCtor(term, null, subst.reporter(), absurd);
-    if (selection != null) {
-      subst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
-      // This is actually not necessary. Do we want to delete it?
-      throw new ExprTycker.TyckInterruptedException();
-    }
+    if (selection != null) subst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
     return new Pat.Absurd(absurd.explicit(), term);
   }
 
@@ -194,7 +190,8 @@ public record PatTycker(
     var realCtor = selectCtor(param, ctor.name().data(), subst.reporter(), ctor);
     if (realCtor == null) {
       subst.reporter().report(new PatternProblem.UnknownCtor(ctor));
-      throw new ExprTycker.TyckInterruptedException();
+      // In case something's wrong, produce a random pattern
+      return new Pat.Bind(ctor.explicit(), new LocalVar(ctor.name().data()), param);
     }
     var ctorRef = realCtor._3.ref();
     ctor.resolved().value = ctorRef;
