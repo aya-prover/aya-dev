@@ -2,16 +2,16 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.api.error;
 
-import org.aya.api.util.WithPos;
-import org.aya.pretty.doc.Doc;
-import org.aya.pretty.error.PrettyError;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
+import org.aya.api.util.WithPos;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.error.PrettyError;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +57,7 @@ public interface Problem {
           Collectors.mapping(WithPos::data, Seq.factory())))
         .entrySet()
         .stream()
-        .sorted(Comparator.comparing(entry -> entry.getKey().tokenStartIndex()))
+        .sorted(Map.Entry.comparingByKey())
         .map(kv -> Tuple.of(kv.getKey().toSpan(), Doc.join(Doc.plain(", "), kv.getValue())))
         .collect(Seq.factory())
     );

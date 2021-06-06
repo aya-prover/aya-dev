@@ -27,7 +27,7 @@ public record SourcePos(
   int startColumn,
   int endLine,
   int endColumn
-) {
+) implements Comparable<SourcePos> {
   public static final int UNAVAILABLE_AND_FUCK_ANTLR4 = -114514;
 
   /**
@@ -93,5 +93,11 @@ public record SourcePos(
     // be a constant according to JLS
     if (Global.isTest()) return 0;
     return Objects.hash(tokenStartIndex, tokenEndIndex, startLine, startColumn, endLine, endColumn);
+  }
+
+  @Override public int compareTo(@NotNull SourcePos o) {
+    var line = Integer.compare(startLine, o.startLine);
+    if (line != 0) return line;
+    return Integer.compare(startColumn, o.startColumn);
   }
 }
