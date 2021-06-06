@@ -2,7 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
-import org.aya.api.error.DelayedReporter;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
+import kala.control.Either;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
@@ -20,17 +24,11 @@ import org.aya.core.visitor.Substituter;
 import org.aya.generic.GenericBuilder;
 import org.aya.generic.Level;
 import org.aya.generic.Matching;
-import org.aya.tyck.error.LevelMismatchError;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.FP;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
-import kala.control.Either;
-import kala.tuple.Unit;
-import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,9 +62,6 @@ public record StmtTycker(
     var parent = tycker.localCtx.parent();
     assert parent != null;
     tycker.localCtx = parent;
-    if (tycker.equations.eqns().isNotEmpty())
-      tycker.reporter.report(new LevelMismatchError(def.ref().concrete.sourcePos, tycker.equations.eqns()));
-    if (reporter instanceof DelayedReporter r) r.reportNow();
   }
 
   @Override public PrimDef visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker tycker) {

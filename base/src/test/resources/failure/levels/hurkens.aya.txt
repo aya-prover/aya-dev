@@ -6,5 +6,4 @@ In file $FILE:6:31 ->
                                   ^-----^ P.hh + 1 <= h + 1, P.uu + 1 <= u + 1
   
 Error: Cannot solve some level equation(s)
-Tycking interrupted due to error(s).
 What are you doing?

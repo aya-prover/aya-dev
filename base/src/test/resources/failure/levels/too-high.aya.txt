@@ -6,5 +6,4 @@ In file $FILE:3:11 ->
               ^^ 1 <= 0
   
 Error: Cannot solve some level equation(s)
-Tycking interrupted due to error(s).
 What are you doing?

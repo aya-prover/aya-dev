@@ -2,13 +2,19 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.module;
 
+import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
+import kala.function.CheckedConsumer;
+import kala.function.CheckedRunnable;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.ref.Var;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
-import org.aya.concrete.Signatured;
+import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
@@ -17,11 +23,6 @@ import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.core.def.Def;
 import org.aya.tyck.trace.Trace;
-import kala.collection.Seq;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
-import kala.function.CheckedConsumer;
-import kala.function.CheckedRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,9 +76,13 @@ public final record FileModuleLoader(
     onResolved.runChecked();
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      var wellTyped = program
-        .mapNotNull(s -> s instanceof Signatured decl ? decl.tyck(delayedReporter, builder) : null);
-      onTycked.acceptChecked(wellTyped);
+      var wellTyped = Buffer.<Def>create();
+      for (var stmt : program)
+        if (stmt instanceof Decl decl) {
+          wellTyped.append(decl.tyck(delayedReporter, builder));
+          if (delayedReporter.problems().isNotEmpty()) break;
+        }
+      onTycked.acceptChecked(wellTyped.toImmutableSeq());
     }
     return context;
   }
