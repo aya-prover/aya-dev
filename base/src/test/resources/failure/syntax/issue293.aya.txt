@@ -10,5 +10,4 @@ Error: Expected type: 单人代词
        Actual type: 多人代词
        Normalized: 多人代词
        They don't match, sorry
-Tycking interrupted due to error(s).
 What are you doing?

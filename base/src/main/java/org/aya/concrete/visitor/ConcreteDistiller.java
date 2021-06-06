@@ -142,7 +142,7 @@ public final class ConcreteDistiller implements
       Doc.styled(CoreDistiller.KEYWORD, "new "),
       expr.struct().toDoc(),
       Doc.symbol(" { "),
-      Doc.hsep(expr.fields().view().map(t ->
+      expr.fields().isEmpty() ? Doc.empty() : Doc.hsep(expr.fields().view().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t.name()),
           t.bindings().isEmpty() ? Doc.empty() :
             Doc.join(Doc.plain(" "), t.bindings().map(v -> Doc.plain(v.data().name()))),

@@ -264,10 +264,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    */
   void unifyTyThrowing(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
-    if (!unification) {
-      reporter.report(new UnifyError(loc, upper, lower));
-      throw new TyckInterruptedException();
-    }
+    if (!unification) reporter.report(new UnifyError(loc, upper, lower));
   }
 
   /**
@@ -289,7 +286,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     }
     reporter.report(new UnifyError(loc, upper, lower));
-    throw new TyckInterruptedException();
+    return new Result(new ErrorTerm(term.toDoc()), upper);
   }
 
   @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
@@ -370,11 +367,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
     if (missing.isNotEmpty()) {
       reporter.report(new MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
-      throw new TyckInterruptedException();
+      return new Result(new ErrorTerm(expr.toDoc()), structCall);
     }
     if (conFields.isNotEmpty()) {
       reporter.report(new NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name).toImmutableSeq()));
-      throw new TyckInterruptedException();
+      return new Result(new ErrorTerm(expr.toDoc()), structCall);
     }
 
     if (term != null) unifyTyThrowing(term, structCall, expr);

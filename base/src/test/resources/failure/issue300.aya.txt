@@ -10,5 +10,4 @@ Error: Expected type: Nat
        Actual type: Pi (b : Unit) -> Nat
        Normalized: Pi (b : Unit) -> Nat
        They don't match, sorry
-Tycking interrupted due to error(s).
 What are you doing?

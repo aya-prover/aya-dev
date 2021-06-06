@@ -6,5 +6,4 @@ In file $FILE:7:2 ->
         ^--------------^
   
 Error: Missing field(s): `fst`, `snd`
-Tycking interrupted due to error(s).
 What are you doing?

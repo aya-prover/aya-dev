@@ -10,5 +10,4 @@ Error: Expected type: 😊
        Actual type: 😂
        Normalized: 😂
        They don't match, sorry
-Tycking interrupted due to error(s).
 What are you doing?
