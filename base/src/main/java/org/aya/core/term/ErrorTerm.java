@@ -28,4 +28,10 @@ public record ErrorTerm(@NotNull Doc description) implements Term {
       Doc.plain("type of"),
       Doc.styled(Style.code(), origin.toDoc())));
   }
+
+  public static @NotNull ErrorTerm unexpected(@NotNull Doc origin) {
+    return new ErrorTerm(Doc.hsep(
+      Doc.plain("unexpected"),
+      Doc.styled(Style.code(), origin)));
+  }
 }

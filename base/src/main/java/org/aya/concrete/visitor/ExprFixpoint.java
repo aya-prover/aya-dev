@@ -2,10 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.visitor;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.BinOpParser;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
@@ -38,6 +38,10 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     var body = expr.body().accept(this, p);
     if (bind == expr.param() && body == expr.body()) return expr;
     return new Expr.LamExpr(expr.sourcePos(), bind, body);
+  }
+
+  @Override default @NotNull Expr visitError(Expr.@NotNull ErrorExpr error, P p) {
+    return error;
   }
 
   @Override default @NotNull Expr visitPi(Expr.@NotNull PiExpr expr, P p) {

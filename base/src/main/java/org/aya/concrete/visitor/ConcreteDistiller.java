@@ -2,6 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.visitor;
 
+import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
+import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.util.Arg;
@@ -14,11 +19,6 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.aya.util.StringEscapeUtil;
-import kala.collection.Seq;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -84,7 +84,7 @@ public final class ConcreteDistiller implements
     if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
       if (t.value() == 1) return CoreDistiller.INSTANCE.univDoc(nestedCall, "Prop", expr.uLevel());
       if (t.value() == 2) return CoreDistiller.INSTANCE.univDoc(nestedCall, "Set", expr.uLevel());
-    } else if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
+    } else if (expr.hLevel() instanceof Level.Infinity<LevelGenVar> t) {
       return CoreDistiller.INSTANCE.univDoc(nestedCall, "ooType", expr.uLevel());
     }
     return CoreDistiller.INSTANCE.visitCalls(
@@ -158,6 +158,10 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitLitString(Expr.@NotNull LitStringExpr expr, Boolean nestedCall) {
     return Doc.plain("\"" + StringEscapeUtil.escapeStringCharacters(expr.string()) + "\"");
+  }
+
+  @Override public Doc visitError(Expr.@NotNull ErrorExpr error, Boolean nestedCall) {
+    return Doc.angled(error.description());
   }
 
   @Override

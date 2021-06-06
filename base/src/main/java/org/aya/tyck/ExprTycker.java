@@ -2,6 +2,16 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import kala.collection.Seq;
+import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import kala.tuple.Tuple3;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
@@ -32,16 +42,6 @@ import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
-import kala.collection.Seq;
-import kala.collection.immutable.ImmutableMap;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
-import kala.tuple.Tuple3;
-import kala.tuple.Unit;
-import kala.value.Ref;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -541,7 +541,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Override public Result catchUnhandled(@NotNull Expr expr, Term term) {
-    throw new UnsupportedOperationException(expr.toDoc().renderWithPageWidth(80)); // TODO[kiva]: get terminal width
+    return new Result(ErrorTerm.unexpected(expr.toDoc()), term);
   }
 
   public static final class TyckInterruptedException extends InterruptException {

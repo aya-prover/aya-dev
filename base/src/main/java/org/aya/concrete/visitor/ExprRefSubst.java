@@ -25,7 +25,10 @@ public record ExprRefSubst(
 
   @Override public @NotNull Expr visitRef(@NotNull Expr.RefExpr expr, Unit unit) {
     var v = expr.resolvedVar();
-    if (bad.contains(v)) reporter.report(new UnqualifiedNameNotFoundError(v.name(), expr.sourcePos()));
+    if (bad.contains(v)) {
+      reporter.report(new UnqualifiedNameNotFoundError(v.name(), expr.sourcePos()));
+      return new Expr.ErrorExpr(expr.sourcePos(), expr.toDoc());
+    }
     var rv = good.getOption(v);
     if (rv.isDefined()) return new Expr.RefExpr(expr.sourcePos(), rv.get(), expr.resolvedFrom()).accept(this, unit);
     else return expr;

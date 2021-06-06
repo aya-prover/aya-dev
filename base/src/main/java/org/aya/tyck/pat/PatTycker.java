@@ -2,6 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import kala.tuple.Tuple3;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.aya.api.error.IgnoringReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -24,14 +32,6 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.error.PatternProblem;
 import org.aya.tyck.trace.Trace;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
-import kala.tuple.Tuple3;
-import kala.tuple.Unit;
-import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,11 +105,11 @@ public record PatTycker(
     var patterns = visitPatterns(sig, match.patterns);
     var type = sig.value.result();
     match.expr = match.expr.map(e -> e.accept(subst, Unit.unit()));
-    var result = match.expr.map(e -> exprTycker.checkNoZonk(e, type));
+    var result = match.expr.map(e -> exprTycker.checkNoZonk(e, type).wellTyped());
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
-    return new Pat.PrototypeClause(match.sourcePos, patterns, result.map(ExprTycker.Result::wellTyped));
+    return new Pat.PrototypeClause(match.sourcePos, patterns, result);
   }
 
   public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {

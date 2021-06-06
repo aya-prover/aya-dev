@@ -2,6 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.aya.api.concrete.ConcreteExpr;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -18,10 +22,6 @@ import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
-import kala.tuple.Unit;
-import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +70,7 @@ public sealed interface Expr extends ConcreteExpr {
     R visitLmax(@NotNull LMaxExpr expr, P p);
     R visitLitString(@NotNull LitStringExpr expr, P p);
     R visitBinOpSeq(@NotNull BinOpSeq binOpSeq, P p);
+    R visitError(@NotNull ErrorExpr error, P p);
   }
 
   interface BaseVisitor<P, R> extends Visitor<P, R> {
@@ -95,6 +96,9 @@ public sealed interface Expr extends ConcreteExpr {
     @Override default R visitBinOpSeq(@NotNull BinOpSeq expr, P p) {
       return catchUnhandled(expr, p);
     }
+    @Override default R visitError(@NotNull ErrorExpr error, P p) {
+      return catchUnhandled(error, p);
+    }
   }
 
   /**
@@ -110,6 +114,12 @@ public sealed interface Expr extends ConcreteExpr {
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnresolved(this, p);
+    }
+  }
+
+  record ErrorExpr(@NotNull SourcePos sourcePos, @NotNull Doc description) implements Expr {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitError(this, p);
     }
   }
 
