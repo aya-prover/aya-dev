@@ -2,15 +2,15 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.highlight;
 
+import kala.collection.mutable.Buffer;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.*;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.lsp.LspRange;
 import org.eclipse.lsp4j.Range;
-import kala.collection.mutable.Buffer;
-import kala.tuple.Unit;
-import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +70,10 @@ public final class Highlighter implements StmtConsumer<@NotNull Buffer<Symbol>> 
     if (expr.resolvedIx().value instanceof DefVar<?, ?> defVar)
       visitCall(defVar, expr.ix().getRightValue().sourcePos(), buffer);
     return StmtConsumer.super.visitProj(expr, buffer);
+  }
+
+  @Override public Unit visitError(Expr.@NotNull ErrorExpr error, @NotNull Buffer<Symbol> symbols) {
+    return Unit.unit();
   }
 
   private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull Buffer<Symbol> buffer) {

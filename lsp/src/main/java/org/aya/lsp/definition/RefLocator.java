@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.definition;
 
+import kala.collection.mutable.Buffer;
+import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
@@ -9,8 +11,6 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.StmtConsumer;
-import kala.collection.mutable.Buffer;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +31,10 @@ public class RefLocator implements StmtConsumer<RefLocator.XY> {
       check(xy, pos.sourcePos(), expr.resolvedIx().get());
     }
     return StmtConsumer.super.visitProj(expr, xy);
+  }
+
+  @Override public Unit visitError(Expr.@NotNull ErrorExpr error, XY xy) {
+    return Unit.unit();
   }
 
   @Override public Unit visitBind(@NotNull Pattern.Bind bind, XY xy) {
