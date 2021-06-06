@@ -2,6 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
+import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
@@ -10,9 +13,6 @@ import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.pat.PatTree;
-import kala.collection.Seq;
-import kala.collection.SeqLike;
-import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,11 +85,11 @@ public sealed interface ClausesProblem extends Problem {
   /**
    * @author ice1000
    */
-  record MissingCase(@NotNull SourcePos sourcePos, @NotNull Buffer<PatTree> pats) implements ClausesProblem {
+  record MissingCase(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<PatTree> pats) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
       return Doc.hcat(
         Doc.plain("Unhandled case: "),
-        Doc.join(Doc.plain(", "), pats.stream().map(PatTree::toDoc))
+        Doc.join(Doc.plain(", "), pats.map(PatTree::toDoc))
       );
     }
   }

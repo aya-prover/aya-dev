@@ -12,5 +12,4 @@ In file $FILE:9:4 ->
           ^--------^ substituted to `zero`
   
 Error: The 2nd clause matches on a constructor with condition(s). When checking the 1st condition, we failed to unify `zero` and `suc zero`
-Tycking interrupted due to error(s).
 What are you doing?

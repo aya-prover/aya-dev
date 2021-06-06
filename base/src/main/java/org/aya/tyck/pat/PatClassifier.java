@@ -2,6 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
+import kala.collection.SeqLike;
+import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.primitive.IntObjTuple2;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
@@ -14,12 +20,6 @@ import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.util.Ordering;
-import kala.collection.SeqLike;
-import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableMap;
-import kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +65,6 @@ public record PatClassifier(
         if (!unification) {
           tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
             lhsTerm, rhsTerm, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
-          throw new ExprTycker.TyckInterruptedException();
         }
       }
     }
@@ -99,10 +98,7 @@ public record PatClassifier(
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
       .firstOption();
     if (lrSplit.isDefined()) {
-      if (coverage) {
-        reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
-        throw new ExprTycker.TyckInterruptedException();
-      }
+      if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
       for (var def : PrimDef.LEFT_RIGHT) {
         var matchy = subPatsSeq.mapIndexedNotNull((ix, subPats) -> {
           var head = subPats.head();
@@ -115,9 +111,11 @@ public record PatClassifier(
           .extract(subPatsSeq)
           .map(SubPats::drop)
           .toImmutableSeq();
-        var rest = classifySub(classes, false);
-        builder.unshift();
-        buffer.appendAll(rest);
+        if (classes.isNotEmpty()) {
+          var rest = classifySub(classes, false);
+          builder.unshift();
+          buffer.appendAll(rest);
+        } else builder.unshift();
       }
       return buffer.toImmutableSeq();
     }
@@ -143,14 +141,10 @@ public record PatClassifier(
         matches(subPats, ix, conTeleCapture, ctor.ref()));
       builder.shift(new PatTree(ctor.ref().name(), explicit));
       if (matches.isEmpty()) {
-        if (coverage) {
-          reporter.report(new ClausesProblem.MissingCase(pos, builder.root()));
-          throw new ExprTycker.TyckInterruptedException();
-        } else {
-          builder.reduce();
-          builder.unshift();
-          continue;
-        }
+        if (coverage) reporter.report(new ClausesProblem.MissingCase(pos, builder.root().toImmutableSeq()));
+        builder.reduce();
+        builder.unshift();
+        continue;
       }
       var classified = classifySub(matches, coverage);
       builder.reduce();

@@ -6,5 +6,4 @@ In file $FILE:4:4 ->
           ^-^
   
 Error: Unhandled case: {zero}, {zero}
-Tycking interrupted due to error(s).
 What are you doing?

@@ -11,5 +11,4 @@ In file $FILE:4:4 ->
          ^------------------------^ substituted to `suc (addN (suc a) b)`
   
 Error: The 3rd and the 4th clauses are not confluent because we failed to unify `suc (addN (suc b) a)` and `suc (addN (suc a) b)`
-Tycking interrupted due to error(s).
 What are you doing?
