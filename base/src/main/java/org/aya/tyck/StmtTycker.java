@@ -65,10 +65,7 @@ public record StmtTycker(
   }
 
   @Override public PrimDef visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker tycker) {
-    if (tycker.localCtx.isNotEmpty()) {
-      // TODO[ice]: cannot put prims into local context
-      throw new ExprTycker.TyckerException();
-    }
+    assert tycker.localCtx.isEmpty();
     var core = decl.ref.core;
     var tele = checkTele(tycker, decl.telescope, null);
     if (tele.isNotEmpty()) {

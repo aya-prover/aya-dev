@@ -39,11 +39,11 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
     var retTyRaw = term.body().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
     if (paramTyRaw instanceof FormTerm.Univ paramTy && retTyRaw instanceof FormTerm.Univ retTy)
       return new FormTerm.Univ(paramTy.sort().max(retTy.sort()));
-    else return ErrorTerm.typeOf(term);
+    else return ErrorTerm.typeOf(term.toDoc());
   }
 
   @Override public Term visitError(@NotNull ErrorTerm term, Unit unit) {
-    return ErrorTerm.typeOf(term);
+    return ErrorTerm.typeOf(term.toDoc());
   }
 
   @Override public Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
@@ -54,7 +54,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
       .toImmutableSeq();
     if (univ.sizeEquals(term.params().size()))
       return new FormTerm.Univ(univ.view().map(FormTerm.Univ::sort).reduce(Sort::max));
-    else return ErrorTerm.typeOf(term);
+    else return ErrorTerm.typeOf(term.toDoc());
   }
 
   @Override public Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
@@ -63,7 +63,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
 
   @Override public Term visitApp(ElimTerm.@NotNull App term, Unit unit) {
     var piRaw = term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
-    return piRaw instanceof FormTerm.Pi pi ? pi.substBody(term.arg().term()) : ErrorTerm.typeOf(term);
+    return piRaw instanceof FormTerm.Pi pi ? pi.substBody(term.arg().term()) : ErrorTerm.typeOf(term.toDoc());
   }
 
   @Override public Term visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
@@ -103,7 +103,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
 
   @Override public Term visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
     var sigmaRaw = term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
-    if (!(sigmaRaw instanceof FormTerm.Sigma sigma)) return ErrorTerm.typeOf(term);
+    if (!(sigmaRaw instanceof FormTerm.Sigma sigma)) return ErrorTerm.typeOf(term.toDoc());
     var index = term.ix() - 1;
     var telescope = sigma.params();
     return telescope.get(index).type()
@@ -112,7 +112,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
 
   @Override public Term visitAccess(CallTerm.@NotNull Access term, Unit unit) {
     var callRaw = term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
-    if (!(callRaw instanceof CallTerm.Struct call)) return ErrorTerm.typeOf(term);
+    if (!(callRaw instanceof CallTerm.Struct call)) return ErrorTerm.typeOf(term.toDoc());
     var core = term.ref().core;
     var subst = Unfolder.buildSubst(core.telescope(), term.fieldArgs())
       .add(Unfolder.buildSubst(call.ref().core.telescope(), term.structArgs()));

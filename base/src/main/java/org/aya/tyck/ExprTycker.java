@@ -20,7 +20,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.InternalException;
-import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
@@ -141,9 +140,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     });
   }
 
-  <T> T wantButNo(@NotNull Expr expr, Term term, String expectedText) {
+  private @NotNull Result wantButNo(@NotNull Expr expr, @NotNull Term term, String expectedText) {
     reporter.report(new BadTypeError(expr, Doc.plain(expectedText), term));
-    throw new TyckInterruptedException();
+    return new Result(new ErrorTerm(expr.toDoc()), term);
   }
 
   private @NotNull Sort.CoreLevel transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
@@ -460,6 +459,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
           app = CallTerm.make(app, Arg.implicit(holeApp));
           pi = instPi(expr, pi, subst, holeApp);
+          if (pi == null) return new Result(new ErrorTerm(expr.toDoc()), f.type);
         } else {
           // TODO[ice]: no implicit argument expected, but inserted.
           throw new TyckerException();
@@ -469,6 +469,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) pi = instPi(expr, pi, subst, elabArg);
+      if (pi == null) return new Result(new ErrorTerm(expr.toDoc()), f.type);
       else subst.map().put(pi.param().ref(), elabArg);
     }
     return unifyTyMaybeInsert(term, pi.body().subst(subst), app, expr);
@@ -481,10 +482,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return localCtx.freshHole(param.type(), genName, pos)._2;
   }
 
-  private FormTerm.Pi instPi(@NotNull Expr expr, @NotNull FormTerm.Pi pi, Substituter.TermSubst subst, @NotNull Term arg) {
+  private @Nullable FormTerm.Pi instPi(@NotNull Expr expr, @NotNull FormTerm.Pi pi, Substituter.TermSubst subst, @NotNull Term arg) {
     subst.add(pi.param().ref(), arg);
-    return pi.body().subst(subst).normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi newPi
-      ? newPi : wantButNo(expr, pi.body(), "pi type");
+    return pi.body().subst(subst).normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi newPi ? newPi : null;
   }
 
   @Rule.Check(partialSynth = true)
@@ -539,12 +539,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public Result catchUnhandled(@NotNull Expr expr, Term term) {
     return new Result(ErrorTerm.unexpected(expr.toDoc()), term);
-  }
-
-  public static final class TyckInterruptedException extends InterruptException {
-    @Override public InterruptStage stage() {
-      return InterruptStage.Tycking;
-    }
   }
 
   public static class TyckerException extends InternalException {

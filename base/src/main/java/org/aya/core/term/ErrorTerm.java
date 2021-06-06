@@ -23,10 +23,10 @@ public record ErrorTerm(@NotNull Doc description) implements Term {
     return Decision.YES;
   }
 
-  public static @NotNull ErrorTerm typeOf(@NotNull Term origin) {
+  public static @NotNull ErrorTerm typeOf(@NotNull Doc origin) {
     return new ErrorTerm(Doc.hsep(
       Doc.plain("type of"),
-      Doc.styled(Style.code(), origin.toDoc())));
+      Doc.styled(Style.code(), origin)));
   }
 
   public static @NotNull ErrorTerm unexpected(@NotNull Doc origin) {

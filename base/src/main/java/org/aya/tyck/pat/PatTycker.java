@@ -191,6 +191,7 @@ public record PatTycker(
     if (realCtor == null) {
       subst.reporter().report(new PatternProblem.UnknownCtor(ctor));
       // In case something's wrong, produce a random pattern
+      PatBindCollector.bindErrors(ctor, exprTycker.localCtx);
       return new Pat.Bind(ctor.explicit(), new LocalVar(ctor.name().data()), param);
     }
     var ctorRef = realCtor._3.ref();

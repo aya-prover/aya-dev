@@ -2,7 +2,7 @@ In file $FILE:8:6 ->
 
   6 |  | A, suc m => vcons A (Vect A m)
   7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
-  8 |  | f, vnil => vnil {_}
+  8 |  | f, vnil => vnil
             ^--^
   
 Warning: Cannot match with `vnil` due to a failed index unification, treating as bind pattern
@@ -10,12 +10,47 @@ In file $FILE:8:14 ->
 
   6 |  | A, suc m => vcons A (Vect A m)
   7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
-  8 |  | f, vnil => vnil {_}
-                    ^------^
+  8 |  | f, vnil => vnil
+                    ^--^
   
-Error: Expected type: Vect A n
+Error: Expected type: Vect B n
+       Normalized: Vect B n
+       Actual type: Vect A n
        Normalized: Vect A n
-       Want: pi type
-       Because we want to type a term such as: vnil {_}
-Tycking interrupted due to error(s).
+       They don't match, sorry
+In file $FILE:9:6 ->
+
+  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  8 |  | f, vnil => vnil
+  9 |  | f, vcons x xs => _
+            ^--------^
+  
+Error: Cannot match with `vcons x xs` due to a failed index unification
+In file $FILE:9:6 ->
+
+  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  8 |  | f, vnil => vnil
+  9 |  | f, vcons x xs => _
+            ^--------^
+  
+Error: Unknown constructor `vcons x xs`
+In file $FILE:9:20 ->
+
+  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  8 |  | f, vnil => vnil
+  9 |  | f, vcons x xs => _
+                          ^^
+  
+Error: Unsolved meta
+In file $FILE:7:4 ->
+
+  5 |  | A, zero => vnil
+  6 |  | A, suc m => vcons A (Vect A m)
+  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  8 |  | f, vnil => vnil
+         ^-------------^ substituted to `<vnil>`
+  9 |  | f, vcons x xs => _
+         ^----------------^ substituted to `<{?_?}>`
+  
+Error: The 1st and the 2nd clauses are not confluent because we failed to unify `<vnil>` and `<{?_?}>`
 What are you doing?
