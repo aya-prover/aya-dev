@@ -2,6 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
@@ -19,9 +22,6 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Decision;
 import org.aya.util.Ordering;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
-import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,6 +130,10 @@ public record UntypedDefEq(
       throw new ExprTycker.TyckInterruptedException();
     }
     return meta.result;
+  }
+
+  @Override public @Nullable Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {
+    return null;
   }
 
   private @NotNull Reporter reporter() {

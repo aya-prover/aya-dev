@@ -2,6 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -16,11 +21,6 @@ import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
-import kala.collection.Seq;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -170,6 +170,10 @@ public final class CoreDistiller implements
     var sol = name.core().body;
     var filling = sol == null ? varDoc(name) : sol.toDoc();
     return Doc.hcat(Doc.symbol("{?"), filling, Doc.symbol("?}"));
+  }
+
+  @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {
+    return Doc.angled(term.description());
   }
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {

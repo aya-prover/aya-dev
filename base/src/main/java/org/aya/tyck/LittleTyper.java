@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Decl;
@@ -11,8 +13,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.util.Constants;
-import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,18 +35,26 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitPi(FormTerm.@NotNull Pi term, Unit unit) {
-    var paramTy = (FormTerm.Univ) term.param().type().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
-    var retTy = (FormTerm.Univ) term.body().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
-    return new FormTerm.Univ(paramTy.sort().max(retTy.sort()));
+    var paramTyRaw = term.param().type().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
+    var retTyRaw = term.body().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
+    if (paramTyRaw instanceof FormTerm.Univ paramTy && retTyRaw instanceof FormTerm.Univ retTy)
+      return new FormTerm.Univ(paramTy.sort().max(retTy.sort()));
+    else return ErrorTerm.typeOf(term);
+  }
+
+  @Override public Term visitError(@NotNull ErrorTerm term, Unit unit) {
+    return ErrorTerm.typeOf(term);
   }
 
   @Override public Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
     var univ = term.params().view()
-      .map(param -> (FormTerm.Univ) param.type()
+      .map(param -> param.type()
         .accept(this, Unit.unit()).normalize(NormalizeMode.WHNF))
-      .map(FormTerm.Univ::sort)
-      .reduce(Sort::max);
-    return new FormTerm.Univ(univ);
+      .filterIsInstance(FormTerm.Univ.class)
+      .toImmutableSeq();
+    if (univ.sizeEquals(term.params().size()))
+      return new FormTerm.Univ(univ.view().map(FormTerm.Univ::sort).reduce(Sort::max));
+    else return ErrorTerm.typeOf(term);
   }
 
   @Override public Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
@@ -54,8 +62,8 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitApp(ElimTerm.@NotNull App term, Unit unit) {
-    var pi = (FormTerm.Pi) term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
-    return pi.substBody(term.arg().term());
+    var piRaw = term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
+    return piRaw instanceof FormTerm.Pi pi ? pi.substBody(term.arg().term()) : ErrorTerm.typeOf(term);
   }
 
   @Override public Term visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
@@ -94,7 +102,8 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
-    var sigma = (FormTerm.Sigma) term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
+    var sigmaRaw = term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
+    if (!(sigmaRaw instanceof FormTerm.Sigma sigma)) return ErrorTerm.typeOf(term);
     var index = term.ix() - 1;
     var telescope = sigma.params();
     return telescope.get(index).type()
@@ -102,7 +111,8 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitAccess(CallTerm.@NotNull Access term, Unit unit) {
-    var call = (CallTerm.Struct) term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
+    var callRaw = term.of().accept(this, unit).normalize(NormalizeMode.WHNF);
+    if (!(callRaw instanceof CallTerm.Struct call)) return ErrorTerm.typeOf(term);
     var core = term.ref().core;
     var subst = Unfolder.buildSubst(core.telescope(), term.fieldArgs())
       .add(Unfolder.buildSubst(call.ref().core.telescope(), term.structArgs()));

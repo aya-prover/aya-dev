@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import kala.tuple.Unit;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +79,10 @@ public final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
   }
 
   @Override public Pat visitHole(CallTerm.@NotNull Hole term, Unit unit) {
+    return null;
+  }
+
+  @Override public @Nullable Pat visitError(@NotNull ErrorTerm term, Unit unit) {
     return null;
   }
 }

@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import kala.collection.immutable.ImmutableMap;
+import kala.tuple.Tuple;
 import org.aya.api.util.Arg;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
-import kala.collection.immutable.ImmutableMap;
-import kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
@@ -30,6 +30,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     if (dataCall.sortArgs().sameElements(sortArgs, true)
       && dataCall.args().sameElements(args, true)) return dataCall;
     return new CallTerm.Data(dataCall.ref(), sortArgs, args);
+  }
+
+  @Override default @NotNull ErrorTerm visitError(@NotNull ErrorTerm term, P p) {
+    return term;
   }
 
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {

@@ -2,10 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
-import org.aya.api.util.Arg;
-import org.aya.core.term.*;
 import kala.collection.SeqLike;
 import kala.tuple.Unit;
+import org.aya.api.util.Arg;
+import org.aya.core.term.*;
 import org.jetbrains.annotations.NotNull;
 
 public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
@@ -89,6 +89,10 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   @Override default Unit visitNew(@NotNull IntroTerm.New newTerm, P p) {
     newTerm.struct().accept(this, p);
     newTerm.params().forEach((k, v) -> v.accept(this, p));
+    return Unit.unit();
+  }
+
+  @Override default Unit visitError(@NotNull ErrorTerm term, P p) {
     return Unit.unit();
   }
 

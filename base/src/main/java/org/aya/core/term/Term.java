@@ -2,6 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
+import kala.collection.Map;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Tuple3;
+import kala.tuple.Unit;
 import org.aya.api.core.CoreTerm;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
@@ -17,12 +23,6 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
 import org.aya.util.Constants;
 import org.aya.util.Decision;
-import kala.collection.Map;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.tuple.Tuple3;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.TestOnly;
  *
  * @author ice1000
  */
-public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTerm, IntroTerm, RefTerm {
+public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTerm, IntroTerm, RefTerm, ErrorTerm {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
   <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q);
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -117,6 +117,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     R visitProj(@NotNull ElimTerm.Proj term, P p);
     R visitAccess(@NotNull CallTerm.Access term, P p);
     R visitHole(@NotNull CallTerm.Hole term, P p);
+    R visitError(@NotNull ErrorTerm term, P p);
   }
 
   interface BiVisitor<P, Q, R> {
@@ -140,6 +141,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     R visitProj(@NotNull ElimTerm.Proj term, P p, Q q);
     R visitAccess(@NotNull CallTerm.Access term, P p, Q q);
     R visitHole(@NotNull CallTerm.Hole term, P p, Q q);
+    R visitError(@NotNull ErrorTerm term, P p, Q q);
   }
 
   /**

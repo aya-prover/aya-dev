@@ -2,6 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import kala.collection.SeqLike;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple2;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -12,10 +16,6 @@ import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.Ordering;
-import kala.collection.SeqLike;
-import kala.collection.mutable.MutableHashMap;
-import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -168,6 +168,10 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   @Override public @NotNull Boolean visitHole(CallTerm.@NotNull Hole type, @NotNull Term lhs, @NotNull Term rhs) {
     return termDefeq.compare(lhs, rhs) != null;
+  }
+
+  @Override public @NotNull Boolean visitError(@NotNull ErrorTerm term, @NotNull Term term2, @NotNull Term term3) {
+    return false;
   }
 
   /**

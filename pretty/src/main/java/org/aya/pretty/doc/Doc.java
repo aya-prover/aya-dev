@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.doc;
 
+import kala.collection.Seq;
+import kala.collection.SeqLike;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlPrinterConfig;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
@@ -12,8 +14,6 @@ import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.style.DebugStylist;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
-import kala.collection.Seq;
-import kala.collection.SeqLike;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -220,6 +220,9 @@ public sealed interface Doc extends Docile {
 
   static @NotNull Doc braced(Doc doc) {
     return wrap("{", "}", doc);
+  }
+  static @NotNull Doc angled(Doc doc) {
+    return wrap("<", ">", doc);
   }
   static @NotNull Doc parened(Doc doc) {
     return wrap("(", ")", doc);
