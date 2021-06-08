@@ -9,14 +9,14 @@ You need Java SE 16 to set this project up. This also means if your choice of ID
 gradle use proxies.
 
 ```bash
-# build Aya and its language server as an application which
-# can be used on a Java-free environment to lsp/build/image
+# build Aya and its language server as applications which
+# can be used in Java-free environments to lsp/build/image
 ./gradlew jlink
-# build Aya, its language server, and the telegram bot as an
-# executable jar <project>/build/libs/<project>-<version>-fat.jar
+# build Aya, its language server, and the telegram bot as
+# executable jars to <project>/build/libs/<project>-<version>-fat.jar
 ./gradlew fatJar
 # build a platform-dependent installer for Aya and its language
-# server with the jlink artifact to lsp/build/jpackage
+# server with the jlink artifacts to lsp/build/jpackage
 # requires https://wixtoolset.org/releases on Windows
 ./gradlew jpackage
 # run tests and generate coverage report to build/reports
