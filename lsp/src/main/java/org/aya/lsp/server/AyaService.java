@@ -2,8 +2,13 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.server;
 
+import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableHashMap;
+import kala.tuple.Tuple;
+import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Problem;
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
@@ -12,7 +17,7 @@ import org.aya.api.util.WithPos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.concrete.Stmt;
-import org.aya.core.def.Def;
+import org.aya.core.def.Tycked;
 import org.aya.lsp.Log;
 import org.aya.lsp.LspRange;
 import org.aya.lsp.definition.RefLocator;
@@ -24,11 +29,6 @@ import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
-import kala.collection.Seq;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableHashMap;
-import kala.tuple.Tuple;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var filePath = Path.of(URI.create(uri));
     Log.d("Loading %s (vscode: %s)", filePath, uri);
 
-    var reporter = new LspReporter();
+    var reporter = new CollectingReporter();
     var compiler = new SingleFileCompiler(reporter, libraryManager, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
@@ -76,10 +76,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return new HighlightResult(uri, symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
-  public void reportErrors(@NotNull LspReporter reporter) {
+  public void reportErrors(@NotNull CollectingReporter reporter) {
     lastErrorReportedFiles.forEach(f ->
       Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
-    var diags = reporter.problems.stream()
+    var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe().debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints().stream().map(t -> new InlineHintProblem(p, t))))
@@ -173,16 +173,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     });
   }
 
-  public static final class LspReporter implements Reporter {
-    private final @NotNull Buffer<@NotNull Problem> problems = Buffer.of();
-
-    @Override public void report(@NotNull Problem problem) {
-      problems.append(problem);
-    }
-  }
-
   public static final record AyaFile(
-    ImmutableSeq<Def> core,
+    ImmutableSeq<Tycked> core,
     ImmutableSeq<Stmt> concrete
   ) {
   }

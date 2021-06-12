@@ -22,7 +22,8 @@ import java.util.Objects;
 /**
  * @author ice1000
  */
-public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef, PrimDef, StructDef, StructDef.Field {
+public sealed interface Def extends CoreDef, Tycked
+  permits DataDef, DataDef.Ctor, FnDef, PrimDef, StructDef, StructDef.Field {
   static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term

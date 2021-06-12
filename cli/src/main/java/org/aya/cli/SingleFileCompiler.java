@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
@@ -15,11 +17,10 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.core.def.Tycked;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.tyck.trace.Trace;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,22 +40,23 @@ public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFil
   public int compile(
     @NotNull Path sourceFile, @NotNull CompilerFlags flags,
     @NotNull Consumer<ImmutableSeq<Stmt>> onResolved,
-    @NotNull BiConsumer<ImmutableSeq<Stmt>, ImmutableSeq<Def>> onTycked
+    @NotNull BiConsumer<ImmutableSeq<Stmt>, ImmutableSeq<Tycked>> onTycked
   ) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     try {
       var program = AyaParsing.program(locator, reporter, sourceFile);
-      distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.raw);
+      var distillInfo = flags.distillInfo();
+      distill(sourceFile, distillInfo, program, CliArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
       FileModuleLoader.tyckModule(loader, program, reporter,
         () -> {
-          distill(sourceFile, flags.distillInfo(), program, CliArgs.DistillStage.scoped);
+          distill(sourceFile, distillInfo, program, CliArgs.DistillStage.scoped);
           onResolved.accept(program);
         },
         defs -> {
-          distill(sourceFile, flags.distillInfo(), defs, CliArgs.DistillStage.typed);
+          distill(sourceFile, distillInfo, defs, CliArgs.DistillStage.typed);
           onTycked.accept(program, defs);
         }, builder);
     } catch (InternalException e) {
