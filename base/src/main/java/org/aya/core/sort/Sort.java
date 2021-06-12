@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.sort;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
@@ -9,7 +10,6 @@ import org.aya.core.visitor.CoreDistiller;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +71,7 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
    *            In well-typed terms it should always be <code>null</code>.
    * @author ice1000
    */
-  public static final record LvlVar(
+  public static record LvlVar(
     @NotNull String name,
     @NotNull LevelGenVar.Kind kind,
     @Nullable SourcePos pos

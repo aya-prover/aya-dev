@@ -2,6 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.visitor;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableHashMap;
+import kala.tuple.Tuple2;
+import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
@@ -11,10 +15,6 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
-import kala.tuple.Tuple2;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author re-xyr
  */
-public final record StmtShallowResolver(@NotNull ModuleLoader loader)
+public record StmtShallowResolver(@NotNull ModuleLoader loader)
   implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();

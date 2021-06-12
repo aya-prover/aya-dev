@@ -2,14 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
-import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @author vont
  */
 
-public final record StructDef(
+public record StructDef(
   @NotNull DefVar<StructDef, Decl.StructDecl> ref,
 
   @NotNull ImmutableSeq<Term.Param> telescope,
@@ -34,7 +34,7 @@ public final record StructDef(
     return visitor.visitStruct(this, p);
   }
 
-  public static final record Field(
+  public static record Field(
     @NotNull DefVar<StructDef, Decl.StructDecl> structRef,
     @NotNull DefVar<Field, Decl.StructField> ref,
     @NotNull ImmutableSeq<Term.Param> structTele,

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
@@ -9,7 +10,6 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -19,7 +19,7 @@ import java.util.Objects;
  *
  * @author kiva
  */
-public final record DataDef(
+public record DataDef(
   @NotNull DefVar<DataDef, Decl.DataDecl> ref,
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull ImmutableSeq<Sort.LvlVar> levels,
@@ -46,7 +46,7 @@ public final record DataDef(
    * @param result  Needs to be substituted before usage.
    * @author ice1000, kiva
    */
-  public static final record Ctor(
+  public static record Ctor(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<Ctor, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> pats,

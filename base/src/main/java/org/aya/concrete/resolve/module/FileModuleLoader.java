@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public final record FileModuleLoader(
+public record FileModuleLoader(
   @NotNull SourceFileLocator locator,
   @NotNull Path basePath,
   @NotNull Reporter reporter,

@@ -2,14 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Matching;
-import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -17,7 +17,7 @@ import java.util.function.Function;
 /**
  * @author ice1000
  */
-public final record FnDef(
+public record FnDef(
   @NotNull DefVar<FnDef, Decl.FnDecl> ref,
 
   @NotNull ImmutableSeq<Term.Param> telescope,

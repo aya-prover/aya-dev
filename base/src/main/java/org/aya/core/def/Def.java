@@ -2,6 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.def;
 
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Unit;
 import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Signatured;
@@ -11,9 +14,6 @@ import org.aya.core.visitor.CoreDistiller;
 import org.aya.core.visitor.Substituter;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,9 +64,9 @@ public sealed interface Def extends CoreDef permits DataDef, DataDef.Ctor, FnDef
   interface Visitor<P, R> {
     R visitFn(@NotNull FnDef def, P p);
     R visitData(@NotNull DataDef def, P p);
-    R visitCtor(DataDef.@NotNull Ctor def, P p);
+    R visitCtor(@NotNull DataDef.Ctor def, P p);
     R visitStruct(@NotNull StructDef def, P p);
-    R visitField(StructDef.@NotNull Field def, P p);
+    R visitField(@NotNull StructDef.Field def, P p);
     R visitPrim(@NotNull PrimDef def, P p);
   }
 

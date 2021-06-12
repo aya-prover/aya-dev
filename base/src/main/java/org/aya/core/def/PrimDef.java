@@ -2,6 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.def;
 
+import kala.collection.Map;
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Tuple;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
@@ -11,9 +14,6 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
 import org.aya.util.Constants;
-import kala.collection.Map;
-import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Tuple;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +22,7 @@ import java.util.function.Function;
 /**
  * @author ice1000
  */
-public final record PrimDef(
+public record PrimDef(
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull ImmutableSeq<Sort.LvlVar> levels,
   @NotNull Term result,
