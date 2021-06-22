@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * @author kiva
  */
 public sealed interface Stmt extends Docile
-  permits Decl, Generalize, Stmt.BindStmt, Stmt.ImportStmt, Stmt.ModuleStmt, Stmt.OpenStmt {
+  permits Decl, Sample, Generalize, Stmt.BindStmt, Stmt.ImportStmt, Stmt.ModuleStmt, Stmt.OpenStmt {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
@@ -44,7 +44,7 @@ public sealed interface Stmt extends Docile
   /**
    * @author re-xyr
    */
-  interface Visitor<P, R> extends Decl.Visitor<P, R>, Generalize.Visitor<P, R> {
+  interface Visitor<P, R> extends Decl.Visitor<P, R>, Generalize.Visitor<P, R>, Sample.Visitor<P, R> {
     default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       stmts.forEach(stmt -> stmt.accept(this, p));
       // [xyr]: Is this OK? The order of visiting must be preserved.

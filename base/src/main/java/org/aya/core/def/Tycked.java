@@ -3,7 +3,7 @@
 package org.aya.core.def;
 
 import kala.collection.Seq;
-import org.aya.api.error.CollectingReporter;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
@@ -17,11 +17,11 @@ public sealed interface Tycked extends Docile permits Def, Tycked.Counterexample
     }
   }
 
-  record Counterexample(@NotNull Def def, @NotNull CollectingReporter reporter) implements Tycked {
+  record Counterexample(@NotNull Def def, @NotNull ImmutableSeq<Problem> problems) implements Tycked {
     @Override public @NotNull Doc toDoc() {
       return Doc.vcat(
         Seq.of(Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "counterexample"), def.toDoc())).view()
-          .concat(reporter.problems().view().map(Problem::brief)));
+          .concat(problems.map(Problem::brief)));
     }
   }
 }
