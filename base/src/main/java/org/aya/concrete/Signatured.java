@@ -2,14 +2,13 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.trace.Trace;
-import kala.collection.immutable.ImmutableSeq;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +36,7 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
   public interface Visitor<P, R> extends Decl.Visitor<P, R> {
     default void traceEntrance(@NotNull Signatured item, P p) {
     }
-    @ApiStatus.NonExtendable
-    @Override default void traceEntrance(@NotNull Decl decl, P p) {
-      traceEntrance((Signatured) decl, p);
+    default void traceExit(P p, R r) {
     }
     R visitCtor(@NotNull Decl.DataCtor ctor, P p);
     R visitField(@NotNull Decl.StructField field, P p);

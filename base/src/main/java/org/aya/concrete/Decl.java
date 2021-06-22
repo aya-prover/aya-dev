@@ -2,6 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
+import kala.control.Option;
+import kala.tuple.Tuple2;
 import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
@@ -9,10 +13,6 @@ import org.aya.api.util.Assoc;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
-import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
-import kala.control.Option;
-import kala.tuple.Tuple2;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -53,11 +53,11 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
   protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    visitor.traceEntrance(this, p);
-    var ret = doAccept(visitor, p);
-    visitor.traceExit(p, ret);
-    return ret;
+  @Override public final <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
+    // [ice]: inlining this will cause compilation failure
+    //noinspection UnnecessaryLocalVariable
+    Decl.Visitor<P, R> declVisitor = visitor;
+    return declVisitor instanceof Signatured.Visitor<P, R> v ? accept(v, p) : Stmt.super.accept(visitor, p);
   }
 
   @ApiStatus.NonExtendable
@@ -71,10 +71,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   }
 
   public interface Visitor<P, R> {
-    default void traceEntrance(@NotNull Decl decl, P p) {
-    }
-    default void traceExit(P p, R r) {
-    }
     R visitData(Decl.@NotNull DataDecl decl, P p);
     R visitStruct(Decl.@NotNull StructDecl decl, P p);
     R visitFn(Decl.@NotNull FnDecl decl, P p);
@@ -87,14 +83,14 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @see PrimDef#PRIMITIVES
    */
   public static final class PrimDecl extends Decl implements OpDecl {
-    public final @NotNull DefVar<@NotNull ? extends PrimDef, PrimDecl> ref;
+    public final @NotNull DefVar<? extends PrimDef, PrimDecl> ref;
     public @Nullable Expr result;
     public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
 
     public PrimDecl(
       @NotNull SourcePos sourcePos,
       @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
-      @NotNull DefVar<@NotNull ? extends PrimDef, PrimDecl> ref,
+      @NotNull DefVar<? extends PrimDef, PrimDecl> ref,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result
     ) {
@@ -106,7 +102,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.ref = ref;
     }
 
-    @Override public @NotNull DefVar<@NotNull ? extends PrimDef, PrimDecl> ref() {
+    @Override public @NotNull DefVar<? extends PrimDef, PrimDecl> ref() {
       return ref;
     }
 

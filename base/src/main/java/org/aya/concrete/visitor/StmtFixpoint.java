@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.visitor;
 
-import org.aya.concrete.*;
 import kala.tuple.Unit;
+import org.aya.concrete.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,8 +53,6 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>,
     return Unit.unit();
   }
 
-  @Override default void traceEntrance(@NotNull Decl decl, P p) {
-  }
   @Override default Unit visitImport(Stmt.@NotNull ImportStmt cmd, P p) {
     return Unit.unit();
   }

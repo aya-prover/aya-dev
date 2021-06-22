@@ -307,9 +307,6 @@ public final class ConcreteDistiller implements
     );
   }
 
-  @Override public void traceEntrance(@NotNull Decl decl, Unit unit) {
-  }
-
   @Override public Doc visitCtor(Decl.@NotNull DataCtor ctor, Unit unit) {
     var doc = Doc.cat(
       ctor.coerce ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),

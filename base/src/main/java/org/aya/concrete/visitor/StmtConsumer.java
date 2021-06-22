@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.visitor;
 
-import org.aya.concrete.*;
 import kala.tuple.Unit;
+import org.aya.concrete.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -55,9 +55,6 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
     visitDecl(decl, p);
     if (decl.result != null) decl.result.accept(this, p);
     return Unit.unit();
-  }
-
-  @Override default void traceEntrance(@NotNull Decl decl, P p) {
   }
 
   @Override default Unit visitImport(Stmt.@NotNull ImportStmt cmd, P p) {

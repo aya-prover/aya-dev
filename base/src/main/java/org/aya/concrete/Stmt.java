@@ -14,7 +14,6 @@ import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,16 +45,6 @@ public sealed interface Stmt extends Docile
    * @author re-xyr
    */
   interface Visitor<P, R> extends Decl.Visitor<P, R>, Generalize.Visitor<P, R> {
-    default void traceEntrance(@NotNull Stmt stmt, P p) {
-    }
-    @ApiStatus.NonExtendable @Override default void traceEntrance(@NotNull Decl decl, P p) {
-      traceEntrance((Stmt) decl, p);
-    }
-    @Override default void traceExit(P p, R r) {
-    }
-    @ApiStatus.NonExtendable @Override default void traceEntrance(@NotNull Generalize generalize, P p) {
-      traceEntrance((Stmt) generalize, p);
-    }
     default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       stmts.forEach(stmt -> stmt.accept(this, p));
       // [xyr]: Is this OK? The order of visiting must be preserved.
@@ -70,10 +59,7 @@ public sealed interface Stmt extends Docile
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    visitor.traceEntrance(this, p);
-    var ret = doAccept(visitor, p);
-    visitor.traceExit(p, ret);
-    return ret;
+    return doAccept(visitor, p);
   }
 
   /**
