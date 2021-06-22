@@ -7,5 +7,4 @@ In file $FILE:4:13 ->
   
 Error: Ambiguous operator precedence detected between `=` and `+`
 note: Use `bind` statement or insert parentheses to make it clear.
-Desugaring interrupted due to error(s).
 What are you doing?

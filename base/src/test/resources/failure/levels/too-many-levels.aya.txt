@@ -6,5 +6,12 @@ In file $FILE:2:17 ->
   3 |  | value : A
   
 Error: Expected 0 level(s)
-Desugaring interrupted due to error(s).
+In file $FILE:2:27 ->
+
+  1 | ulevel u
+  2 | struct Lift (A : Prop u) : Prop (lsuc u)
+                                 ^-----------^
+  3 |  | value : A
+  
+Error: Expected 0 level(s)
 What are you doing?

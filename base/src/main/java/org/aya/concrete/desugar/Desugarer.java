@@ -2,18 +2,17 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Unit;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
-import org.aya.concrete.desugar.error.DesugarInterruptedException;
 import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.generic.Level;
 import org.aya.tyck.ExprTycker;
-import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,15 +21,25 @@ import org.jetbrains.annotations.NotNull;
  */
 public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) implements StmtFixpoint<Unit> {
   @Override public @NotNull Expr visitApp(@NotNull Expr.AppExpr expr, Unit unit) {
-    if (expr.function() instanceof Expr.RawUnivExpr univ) return desugarUniv(expr, univ);
+    if (expr.function() instanceof Expr.RawUnivExpr univ) {
+      try {
+        return desugarUniv(expr, univ);
+      } catch (DesugarInterruption e) {
+        return new Expr.ErrorExpr(univ.sourcePos(), univ.toDoc());
+      }
+    }
     return StmtFixpoint.super.visitApp(expr, unit);
   }
 
   @Override public @NotNull Expr visitRawUniv(@NotNull Expr.RawUnivExpr expr, Unit unit) {
-    return desugarUniv(new Expr.AppExpr(expr.sourcePos(), expr, ImmutableSeq.empty()), expr);
+    try {
+      return desugarUniv(new Expr.AppExpr(expr.sourcePos(), expr, ImmutableSeq.empty()), expr);
+    } catch (DesugarInterruption e) {
+      return new Expr.ErrorExpr(expr.sourcePos(), expr.toDoc());
+    }
   }
 
-  @NotNull private Expr.UnivExpr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) {
+  @NotNull private Expr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) throws DesugarInterruption {
     var uLevel = univ.uLevel();
     var hLevel = univ.hLevel();
     var pos = univ.sourcePos();
@@ -50,7 +59,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
         return new Expr.UnivExpr(pos, new Level.Polymorphic(0), h);
       } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
     } else if (hLevel >= 0) {
-      return withHomotopyLevel(expr, uLevel, pos, new Level.Constant<>(hLevel));
+      return withHLevel(expr, uLevel, pos, new Level.Constant<>(hLevel));
     } else if (hLevel == Expr.RawUnivExpr.POLYMORPHIC) {
       if (uLevel == Expr.RawUnivExpr.POLYMORPHIC) {
         var args = expectArgs(expr, 2, true);
@@ -59,15 +68,15 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
           var u = levelVar(LevelGenVar.Kind.Universe, args.get(1).term().expr());
           return new Expr.UnivExpr(pos, u, h);
         } else return new Expr.UnivExpr(pos, new Level.Polymorphic(0), new Level.Polymorphic(0));
-      } else return withHomotopyLevel(expr, uLevel, pos, new Level.Polymorphic(0));
+      } else return withHLevel(expr, uLevel, pos, new Level.Polymorphic(0));
     } else if (hLevel == Expr.RawUnivExpr.INFINITY) {
-      return withHomotopyLevel(expr, uLevel, pos, new Level.Infinity<>());
+      return withHLevel(expr, uLevel, pos, new Level.Infinity<>());
     } else throw new IllegalStateException("Invalid hLevel: " + hLevel);
   }
 
-  @Contract("_, _, _, _ -> new") private Expr.@NotNull UnivExpr withHomotopyLevel(
-    Expr.@NotNull AppExpr expr, int uLevel, @NotNull SourcePos pos, Level<LevelGenVar> h
-  ) {
+  @Contract("_, _, _, _ -> new")
+  private Expr withHLevel(Expr.@NotNull AppExpr expr, int uLevel, @NotNull SourcePos pos, Level<LevelGenVar> h)
+    throws DesugarInterruption {
     if (uLevel >= 0) {
       expectArgs(expr, 0, false);
       return new Expr.UnivExpr(pos, new Level.Constant<>(uLevel), h);
@@ -85,17 +94,22 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     } else throw new IllegalStateException("Invalid uLevel: " + uLevel);
   }
 
-  @NotNull private ImmutableSeq<@NotNull Arg<Expr.NamedArg>> expectArgs(Expr.@NotNull AppExpr expr, int n, boolean canEmpty) {
+  private @NotNull ImmutableSeq<@NotNull Arg<Expr.NamedArg>>
+  expectArgs(Expr.@NotNull AppExpr expr, int n, boolean canEmpty) throws DesugarInterruption {
     var args = expr.arguments();
     if (canEmpty && args.isEmpty()) return args;
     if (!args.sizeEquals(n)) {
       reporter.report(new LevelProblem.BadTypeExpr(expr, n));
-      throw new DesugarInterruptedException();
+      throw new DesugarInterruption();
     }
     return args;
   }
 
-  private @NotNull Level<LevelGenVar> levelVar(LevelGenVar.Kind kind, @NotNull Expr expr) {
+  // TODO: make this exception checked after https://github.com/Glavo/kala-common/issues/37
+  public static class DesugarInterruption extends RuntimeException {
+  }
+
+  private @NotNull Level<LevelGenVar> levelVar(LevelGenVar.Kind kind, @NotNull Expr expr) throws DesugarInterruption {
     if (expr instanceof Expr.LitIntExpr uLit) {
       return new Level.Constant<>(uLit.integer());
     } else if (expr instanceof Expr.LSucExpr uSuc) {
@@ -105,7 +119,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     } else if (expr instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof LevelGenVar lv) {
       if (lv.kind() != kind) {
         reporter.report(new LevelProblem.BadLevelKind(ref, lv.kind()));
-        throw new DesugarInterruptedException();
+        throw new DesugarInterruption();
       } else return new Level.Reference<>(lv);
     } else {
       reporter.report(new LevelProblem.BadLevelExpr(expr));

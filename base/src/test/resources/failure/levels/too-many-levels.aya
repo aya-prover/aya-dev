@@ -1,7 +1,3 @@
 ulevel u
 struct Lift (A : Prop u) : Prop (lsuc u)
  | value : A
-
-open data Nat : Set | zero
-
-def test => new Lift Nat { | value => zero }

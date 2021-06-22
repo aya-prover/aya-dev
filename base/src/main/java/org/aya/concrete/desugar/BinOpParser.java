@@ -2,15 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar;
 
-import org.aya.api.error.SourcePos;
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.util.Arg;
-import org.aya.concrete.Decl;
-import org.aya.concrete.Expr;
-import org.aya.concrete.desugar.error.DesugarInterruptedException;
-import org.aya.concrete.desugar.error.OperatorProblem;
-import org.aya.util.Constants;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DoubleLinkedBuffer;
@@ -18,6 +9,15 @@ import kala.collection.mutable.LinkedBuffer;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
+import org.aya.api.error.SourcePos;
+import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LocalVar;
+import org.aya.api.util.Arg;
+import org.aya.concrete.Decl;
+import org.aya.concrete.Expr;
+import org.aya.concrete.desugar.error.OperatorProblem;
+import org.aya.pretty.doc.Doc;
+import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +61,7 @@ public final class BinOpParser {
             opSet.reporter().report(new OperatorProblem.AmbiguousPredError(currentOp.name(),
               peek._2.name(),
               peek._1.expr.sourcePos()));
-            throw new DesugarInterruptedException();
+            return new Expr.ErrorExpr(sourcePos, Doc.plain("an application"));
           } else if (cmp == BinOpSet.PredCmp.Tighter || cmp == BinOpSet.PredCmp.Equal) {
             var topOp = opStack.pop();
             var appExpr = makeBinApp(topOp._1);

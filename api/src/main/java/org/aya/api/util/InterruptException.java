@@ -13,7 +13,5 @@ public abstract class InterruptException extends RuntimeException {
   public enum InterruptStage {
     Parsing,
     Resolving,
-    Tycking,
-    Desugaring,
   }
 }
