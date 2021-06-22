@@ -10,6 +10,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Decl;
 import org.aya.concrete.Generalize;
+import org.aya.concrete.Sample;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
@@ -145,6 +146,16 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader)
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, @NotNull ModuleContext moduleContext) {
     visitDecl(decl, moduleContext);
+    return Unit.unit();
+  }
+
+  @Override public Unit visitExample(Sample.@NotNull Working example, @NotNull ModuleContext context) {
+    example.ctx = context;
+    return Unit.unit();
+  }
+
+  @Override public Unit visitCounterexample(Sample.@NotNull Counter example, @NotNull ModuleContext context) {
+    example.ctx = context;
     return Unit.unit();
   }
 }

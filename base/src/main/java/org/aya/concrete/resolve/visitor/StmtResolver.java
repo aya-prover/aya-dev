@@ -2,20 +2,17 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.visitor;
 
-import org.aya.api.error.Reporter;
-import org.aya.api.ref.DefVar;
-import org.aya.concrete.Decl;
-import org.aya.concrete.Generalize;
-import org.aya.concrete.QualifiedID;
-import org.aya.concrete.Stmt;
-import org.aya.concrete.desugar.BinOpSet;
-import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.resolve.error.UnknownOperatorError;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import kala.value.Ref;
+import org.aya.api.error.Reporter;
+import org.aya.api.ref.DefVar;
+import org.aya.concrete.*;
+import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -121,6 +118,14 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, BinOpSet binOpSet) {
+    return Unit.unit();
+  }
+
+  @Override public Unit visitExample(Sample.@NotNull Working example, BinOpSet binOpSet) {
+    return Unit.unit();
+  }
+
+  @Override public Unit visitCounterexample(Sample.@NotNull Counter example, BinOpSet binOpSet) {
     return Unit.unit();
   }
 }
