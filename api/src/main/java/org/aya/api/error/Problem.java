@@ -59,7 +59,7 @@ public interface Problem {
         .stream()
         .sorted(Map.Entry.comparingByKey())
         .map(kv -> Tuple.of(kv.getKey().toSpan(), Doc.join(Doc.plain(", "), kv.getValue())))
-        .collect(Seq.factory())
+        .collect(ImmutableSeq.factory())
     );
   }
 

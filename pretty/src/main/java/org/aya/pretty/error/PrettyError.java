@@ -2,14 +2,15 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.error;
 
-import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,7 +20,7 @@ public record PrettyError(
   @NotNull String filePath,
   @NotNull Span errorRange,
   @NotNull Doc brief,
-  @NotNull SeqLike<Tuple2<Span, Doc>> inlineHints
+  @NotNull ImmutableSeq<Tuple2<Span, Doc>> inlineHints
 ) implements Docile {
   public @NotNull Doc toDoc(@NotNull PrettyErrorConfig config) {
     var primary = errorRange.normalize(config);

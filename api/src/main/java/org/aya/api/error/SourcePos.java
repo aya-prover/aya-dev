@@ -36,12 +36,16 @@ public record SourcePos(
   public static final SourcePos NONE = new SourcePos(SourceFile.NONE, -1, -1, -1, -1, -1, -1);
 
   public Span toSpan() {
-    if (tokenStartIndex == UNAVAILABLE_AND_FUCK_ANTLR4
-      || tokenEndIndex == UNAVAILABLE_AND_FUCK_ANTLR4) {
-      return new LineColSpan(file().sourceCode(), startLine, startColumn, endLine, endColumn);
-    } else {
+    if (indexAvailable()) {
       return new RangeSpan(file().sourceCode(), tokenStartIndex, tokenEndIndex);
+    } else {
+      return new LineColSpan(file().sourceCode(), startLine, startColumn, endLine, endColumn);
     }
+  }
+
+  private boolean indexAvailable() {
+    return tokenStartIndex != UNAVAILABLE_AND_FUCK_ANTLR4
+      && tokenEndIndex != UNAVAILABLE_AND_FUCK_ANTLR4;
   }
 
   @Contract("_ -> new") public @NotNull SourcePos union(@NotNull SourcePos other) {
@@ -96,6 +100,7 @@ public record SourcePos(
   }
 
   @Override public int compareTo(@NotNull SourcePos o) {
+    if (indexAvailable()) return Integer.compare(tokenStartIndex, o.tokenStartIndex);
     var line = Integer.compare(startLine, o.startLine);
     if (line != 0) return line;
     return Integer.compare(startColumn, o.startColumn);
