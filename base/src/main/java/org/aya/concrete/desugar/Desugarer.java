@@ -105,8 +105,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     return args;
   }
 
-  // TODO: make this exception checked after https://github.com/Glavo/kala-common/issues/37
-  public static class DesugarInterruption extends RuntimeException {
+  public static class DesugarInterruption extends Exception {
   }
 
   private @NotNull Level<LevelGenVar> levelVar(LevelGenVar.Kind kind, @NotNull Expr expr) throws DesugarInterruption {
@@ -115,7 +114,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     } else if (expr instanceof Expr.LSucExpr uSuc) {
       return levelVar(kind, uSuc.expr()).lift(1);
     } else if (expr instanceof Expr.LMaxExpr uMax) {
-      return new Level.Maximum(uMax.levels().map(x -> levelVar(kind, x)));
+      return new Level.Maximum(uMax.levels().mapChecked(x -> levelVar(kind, x)));
     } else if (expr instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof LevelGenVar lv) {
       if (lv.kind() != kind) {
         reporter.report(new LevelProblem.BadLevelKind(ref, lv.kind()));
