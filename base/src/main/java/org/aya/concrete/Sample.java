@@ -4,13 +4,13 @@ package org.aya.concrete;
 
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.SourcePos;
-import org.aya.concrete.resolve.context.ModuleContext;
+import org.aya.concrete.resolve.context.ExampleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract sealed class Sample implements Stmt {
   private final @NotNull Signatured delegate;
-  public @Nullable ModuleContext ctx = null;
+  public @Nullable ExampleContext ctx = null;
 
   public interface Visitor<P, R> {
     R visitExample(@NotNull Working example, P p);

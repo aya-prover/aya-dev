@@ -4,6 +4,7 @@ package org.aya.concrete.resolve.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
@@ -13,6 +14,7 @@ import org.aya.concrete.Generalize;
 import org.aya.concrete.Sample;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.resolve.context.ExampleContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
@@ -23,8 +25,14 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author re-xyr
  */
-public record StmtShallowResolver(@NotNull ModuleLoader loader)
-  implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
+public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
+  public final @NotNull ModuleLoader loader;
+  private final @NotNull MutableMap<ModuleContext, ExampleContext> exampleContexts = MutableMap.create();
+
+  public StmtShallowResolver(@NotNull ModuleLoader loader) {
+    this.loader = loader;
+  }
+
   @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();
     visitAll(mod.contents(), newCtx);
@@ -150,12 +158,15 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader)
   }
 
   @Override public Unit visitExample(Sample.@NotNull Working example, @NotNull ModuleContext context) {
-    example.ctx = context;
-    return Unit.unit();
+    return exampleContext(example, context);
   }
 
   @Override public Unit visitCounterexample(Sample.@NotNull Counter example, @NotNull ModuleContext context) {
-    example.ctx = context;
+    return exampleContext(example, context);
+  }
+
+  private Unit exampleContext(@NotNull Sample sample, @NotNull ModuleContext context) {
+    sample.ctx = exampleContexts.getOrPut(context, () -> new ExampleContext(context, MutableMap.create()));
     return Unit.unit();
   }
 }
