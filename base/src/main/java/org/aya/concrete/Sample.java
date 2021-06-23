@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract sealed class Sample implements Stmt {
-  private final @NotNull Signatured delegate;
+  public final @NotNull Signatured delegate;
   public @Nullable ExampleContext ctx = null;
 
   public interface Visitor<P, R> {

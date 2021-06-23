@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.concrete.Sample;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,11 @@ public record ExampleContext(
 ) implements Context {
   @Override public @NotNull Reporter reporter() {
     return parent.reporter();
+  }
+
+  public void addExample(@NotNull Sample.Working sample) {
+    var ref = sample.delegate.ref();
+    examples.put(ref.name(), ref);
   }
 
   @Override public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {

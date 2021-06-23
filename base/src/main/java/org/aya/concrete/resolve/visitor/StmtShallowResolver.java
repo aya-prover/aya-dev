@@ -158,15 +158,16 @@ public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleCo
   }
 
   @Override public Unit visitExample(Sample.@NotNull Working example, @NotNull ModuleContext context) {
-    return exampleContext(example, context);
+    exampleContext(example, context).addExample(example);
+    return Unit.unit();
   }
 
   @Override public Unit visitCounterexample(Sample.@NotNull Counter example, @NotNull ModuleContext context) {
-    return exampleContext(example, context);
+    exampleContext(example, context);
+    return Unit.unit();
   }
 
-  private Unit exampleContext(@NotNull Sample sample, @NotNull ModuleContext context) {
-    sample.ctx = exampleContexts.getOrPut(context, () -> new ExampleContext(context, MutableMap.create()));
-    return Unit.unit();
+  private @NotNull ExampleContext exampleContext(@NotNull Sample sample, @NotNull ModuleContext context) {
+    return sample.ctx = exampleContexts.getOrPut(context, () -> new ExampleContext(context, MutableMap.create()));
   }
 }
