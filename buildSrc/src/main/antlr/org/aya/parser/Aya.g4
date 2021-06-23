@@ -12,13 +12,15 @@ stmt : decl
      | levels
      | generalize
      | bind
+     | sample
      ;
+
+sample : (EXAMPLE | COUNTEREXAMPLE) decl ;
 
 importCmd : IMPORT moduleName (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? moduleName useHide?;
 module : 'module' ID LBRACE stmt* '}';
-bind : 'bind' qualifiedId bindPred qualifiedId;
-bindPred : (TIGHTER | LOOSER);
+bind : 'bind' qualifiedId (TIGHTER | LOOSER) qualifiedId;
 
 useHide : use+
         | hide+;
@@ -158,6 +160,10 @@ POSTFIX : '`' ID;
 // bind
 TIGHTER : 'tighter';
 LOOSER : 'looser';
+
+// samples
+EXAMPLE : 'example';
+COUNTEREXAMPLE : 'counterexample';
 
 // associativities
 INFIXN : 'infix';

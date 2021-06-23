@@ -2,6 +2,16 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.parse;
 
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.LinkedBuffer;
+import kala.collection.mutable.MutableHashSet;
+import kala.control.Either;
+import kala.control.Option;
+import kala.function.BooleanFunction;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import kala.value.Ref;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -21,16 +31,6 @@ import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
 import org.aya.util.Constants;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.LinkedBuffer;
-import kala.collection.mutable.MutableHashSet;
-import kala.control.Either;
-import kala.control.Option;
-import kala.function.BooleanFunction;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
-import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +91,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       var result = visitDecl(decl);
       return result._2.view().prepended(result._1);
     }
+    var sample = ctx.sample();
+    if (sample != null) return ImmutableSeq.of(visitSample(sample));
     var mod = ctx.module();
     if (mod != null) return ImmutableSeq.of(visitModule(mod));
     var levels = ctx.levels();
@@ -111,7 +113,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return new Stmt.BindStmt(
       sourcePosOf(ctx),
       visitQualifiedId(ctx.qualifiedId(0)),
-      visitBindPred(ctx.bindPred()),
+      ctx.TIGHTER() != null ? Stmt.BindPred.Tighter : Stmt.BindPred.Looser,
       visitQualifiedId(ctx.qualifiedId(1)),
       new Ref<>(null),
       new Ref<>(null),
@@ -119,10 +121,10 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override public Stmt.@NotNull BindPred visitBindPred(AyaParser.BindPredContext ctx) {
-    if (ctx.TIGHTER() != null) return Stmt.BindPred.Tighter;
-    if (ctx.LOOSER() != null) return Stmt.BindPred.Looser;
-    return unreachable(ctx);
+  @Override public @NotNull Sample visitSample(AyaParser.SampleContext ctx) {
+    var decl = visitDecl(ctx.decl());
+    // TODO: submodule in example modules
+    return ctx.COUNTEREXAMPLE() != null ? new Sample.Counter(decl._1) : new Sample.Working(decl._1);
   }
 
   private <T> T unreachable(ParserRuleContext ctx) {
