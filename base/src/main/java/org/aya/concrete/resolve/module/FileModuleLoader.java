@@ -15,6 +15,7 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.Decl;
+import org.aya.concrete.Sample;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
@@ -77,11 +78,11 @@ public record FileModuleLoader(
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var wellTyped = Buffer.<Tycked>create();
-      for (var stmt : program)
-        if (stmt instanceof Decl decl) {
-          wellTyped.append(decl.tyck(delayedReporter, builder));
-          if (delayedReporter.problems().isNotEmpty()) break;
-        }
+      for (var stmt : program) {
+        if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder));
+        else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder));
+        if (delayedReporter.problems().isNotEmpty()) break;
+      }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
     }
     return context;

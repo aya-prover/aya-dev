@@ -2,10 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.visitor;
 
-import org.aya.api.util.Arg;
-import org.aya.concrete.Expr;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
+import org.aya.api.util.Arg;
+import org.aya.concrete.Expr;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
@@ -14,6 +14,10 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   }
 
   @Override default Unit visitUnresolved(Expr.@NotNull UnresolvedExpr expr, P p) {
+    return Unit.unit();
+  }
+
+  @Override default Unit visitError(Expr.@NotNull ErrorExpr error, P p) {
     return Unit.unit();
   }
 

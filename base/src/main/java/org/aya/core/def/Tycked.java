@@ -19,8 +19,8 @@ public sealed interface Tycked extends Docile permits Def, Tycked.Counterexample
 
   record Counterexample(@NotNull Def def, @NotNull ImmutableSeq<Problem> problems) implements Tycked {
     @Override public @NotNull Doc toDoc() {
-      return Doc.vcat(
-        Seq.of(Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "counterexample"), def.toDoc())).view()
+      return Doc.vcat(Seq.of(
+        Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "counterexample"), def.toDoc())).view()
           .concat(problems.map(Problem::brief)));
     }
   }

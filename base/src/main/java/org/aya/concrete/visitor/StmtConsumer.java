@@ -118,4 +118,14 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
     ctor.params().forEach(pattern -> pattern.accept(this, p));
     return Unit.unit();
   }
+
+  @Override default void traceExit(P p, Unit unit) {
+  }
+
+  @Override default Unit visitExample(Sample.@NotNull Working example, P p) {
+    return example.delegate.accept(this, p);
+  }
+  @Override default Unit visitCounterexample(Sample.@NotNull Counter example, P p) {
+    return example.delegate.accept(this, p);
+  }
 }

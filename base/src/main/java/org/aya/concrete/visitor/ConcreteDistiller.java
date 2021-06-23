@@ -37,6 +37,9 @@ public final class ConcreteDistiller implements
   private ConcreteDistiller() {
   }
 
+  @Override public void traceExit(Unit unit, Doc doc) {
+  }
+
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
     return Doc.plain(expr.resolvedVar().name());
   }
@@ -412,5 +415,13 @@ public final class ConcreteDistiller implements
       Doc.styled(CoreDistiller.KEYWORD, levels.kind().keyword),
       Doc.plain(" "),
       Doc.hsep(vars));
+  }
+
+  @Override public Doc visitExample(Sample.@NotNull Working example, Unit unit) {
+    return Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "example"), example.delegate.accept(this, unit));
+  }
+
+  @Override public Doc visitCounterexample(Sample.@NotNull Counter example, Unit unit) {
+    return Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "counterexample"), example.delegate.accept(this, unit));
   }
 }

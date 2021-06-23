@@ -85,4 +85,15 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>,
   @Override default Unit visitLevels(Generalize.@NotNull Levels levels, P p) {
     return Unit.unit();
   }
+
+  @Override default void traceExit(P p, Unit unit) {
+  }
+
+  @Override default Unit visitExample(Sample.@NotNull Working example, P p) {
+    return example.delegate.accept(this, p);
+  }
+
+  @Override default Unit visitCounterexample(Sample.@NotNull Counter example, P p) {
+    return example.delegate.accept(this, p);
+  }
 }

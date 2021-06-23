@@ -33,10 +33,6 @@ public class RefLocator implements StmtConsumer<RefLocator.XY> {
     return StmtConsumer.super.visitProj(expr, xy);
   }
 
-  @Override public Unit visitError(Expr.@NotNull ErrorExpr error, XY xy) {
-    return Unit.unit();
-  }
-
   @Override public Unit visitBind(@NotNull Pattern.Bind bind, XY xy) {
     if (bind.resolved().value instanceof DefVar<?, ?> defVar)
       check(xy, bind.sourcePos(), defVar);

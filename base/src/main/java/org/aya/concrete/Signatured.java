@@ -9,7 +9,6 @@ import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.trace.Trace;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,7 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
     return sourcePos;
   }
 
-  public Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
+  public @NotNull Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
     var tycker = new StmtTycker(reporter, builder);
     return accept(tycker, tycker.newTycker());
   }
