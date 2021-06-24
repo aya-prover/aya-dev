@@ -122,10 +122,12 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   @Override public Unit visitExample(Sample.@NotNull Working example, BinOpSet binOpSet) {
+    example.delegate().accept(this, binOpSet);
     return Unit.unit();
   }
 
   @Override public Unit visitCounterexample(Sample.@NotNull Counter example, BinOpSet binOpSet) {
+    example.delegate().accept(this, binOpSet);
     return Unit.unit();
   }
 }

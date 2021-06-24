@@ -1,0 +1,19 @@
+open data Nat : Set 0
+ | zero
+ | suc Nat
+
+def addN (a b : Nat) : Nat
+ | zero, a => a
+ | a, zero => a
+ | suc a, b => suc (addN a b)
+ | a, suc b => suc (addN a b)
+
+open data Int : Set
+ | pos Nat
+ | neg Nat { | zero => pos zero }
+
+example def abs (n : Int) : Nat
+ | pos n => n
+ | neg n => n
+
+counterexample def abs2 (n : Int) => abs n

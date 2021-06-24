@@ -5,6 +5,7 @@ package org.aya.tyck;
 import org.aya.concrete.Sample;
 import org.aya.concrete.Signatured;
 import org.aya.core.def.Tycked;
+import org.aya.tyck.error.CounterexampleError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,12 @@ public final class SampleTycker implements Sample.Visitor<StmtTycker, @Nullable 
 
   @Contract("_, _ -> new") @Override
   public @NotNull Tycked visitCounterexample(Sample.@NotNull Counter example, StmtTycker stmtTycker) {
-    var def = example.delegate().accept(stmtTycker, new ExprTycker(example.reporter(), stmtTycker.traceBuilder()));
-    return new Tycked.Counterexample(def, example.reporter().problems().toImmutableSeq());
+    var delegate = example.delegate();
+    var def = delegate.accept(stmtTycker, new ExprTycker(example.reporter(), stmtTycker.traceBuilder()));
+    var problems = example.reporter().problems().toImmutableSeq();
+    if (problems.isEmpty()) {
+      stmtTycker.reporter().report(new CounterexampleError(delegate.sourcePos(), delegate.ref()));
+    }
+    return new Tycked.Counterexample(def, problems);
   }
 }
