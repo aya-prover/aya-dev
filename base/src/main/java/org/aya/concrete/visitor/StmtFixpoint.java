@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>, Signatured.Visitor<P, Unit>, Decl.Visitor<P, Unit> {
+public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>, Signatured.Visitor<P, Unit> {
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> expr.accept(this, pp)));
   }
@@ -86,14 +86,11 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>,
     return Unit.unit();
   }
 
-  @Override default void traceExit(P p, Unit unit) {
-  }
-
   @Override default Unit visitExample(Sample.@NotNull Working example, P p) {
-    return example.delegate.accept(this, p);
+    return example.delegate().accept(this, p);
   }
 
   @Override default Unit visitCounterexample(Sample.@NotNull Counter example, P p) {
-    return example.delegate.accept(this, p);
+    return example.delegate().accept((Signatured.Visitor<P, Unit>) this, p);
   }
 }

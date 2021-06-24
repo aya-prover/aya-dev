@@ -20,7 +20,7 @@ import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
-import org.aya.concrete.resolve.context.ModuleContext;
+import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.core.def.Tycked;
 import org.aya.tyck.trace.Trace;
@@ -59,7 +59,7 @@ public record FileModuleLoader(
     }
   }
 
-  public static <E extends Exception> @NotNull ModuleContext tyckModule(
+  public static <E extends Exception> @NotNull PhysicalModuleContext tyckModule(
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,

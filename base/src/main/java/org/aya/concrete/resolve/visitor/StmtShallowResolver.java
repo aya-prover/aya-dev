@@ -14,8 +14,9 @@ import org.aya.concrete.Generalize;
 import org.aya.concrete.Sample;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.resolve.context.ExampleContext;
 import org.aya.concrete.resolve.context.ModuleContext;
+import org.aya.concrete.resolve.context.NoExportContext;
+import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   public final @NotNull ModuleLoader loader;
-  private final @NotNull MutableMap<ModuleContext, ExampleContext> exampleContexts = MutableMap.create();
+  private final @NotNull MutableMap<PhysicalModuleContext, NoExportContext> exampleContexts = MutableMap.create();
 
   public StmtShallowResolver(@NotNull ModuleLoader loader) {
     this.loader = loader;
@@ -36,14 +37,14 @@ public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleCo
   @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();
     visitAll(mod.contents(), newCtx);
-    context.importModule(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports(), mod.sourcePos());
+    context.importModules(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports(), mod.sourcePos());
     return Unit.unit();
   }
 
   @Override public Unit visitImport(Stmt.@NotNull ImportStmt cmd, @NotNull ModuleContext context) {
     var success = loader.load(cmd.path());
     if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path(), cmd.sourcePos()));
-    context.importModule(cmd.path(), Stmt.Accessibility.Private, success, cmd.sourcePos());
+    context.importModules(cmd.path(), Stmt.Accessibility.Private, success, cmd.sourcePos());
     return Unit.unit();
   }
 
@@ -121,7 +122,7 @@ public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleCo
         return Tuple2.of(ctor.ref.name(), ctor.ref);
       });
 
-    context.importModule(
+    context.importModules(
       ImmutableSeq.of(decl.ref().name()),
       decl.accessibility(),
       MutableHashMap.of(
@@ -158,16 +159,18 @@ public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleCo
   }
 
   @Override public Unit visitExample(Sample.@NotNull Working example, @NotNull ModuleContext context) {
-    exampleContext(example, context).addExample(example);
+    example.delegate().accept(this, exampleContext(context));
     return Unit.unit();
   }
 
   @Override public Unit visitCounterexample(Sample.@NotNull Counter example, @NotNull ModuleContext context) {
-    exampleContext(example, context);
+    example.delegate().ctx = exampleContext(context);
     return Unit.unit();
   }
 
-  private @NotNull ExampleContext exampleContext(@NotNull Sample sample, @NotNull ModuleContext context) {
-    return sample.ctx = exampleContexts.getOrPut(context, () -> new ExampleContext(context, MutableMap.create()));
+  private @NotNull NoExportContext exampleContext(@NotNull ModuleContext context) {
+    if (context instanceof PhysicalModuleContext physical)
+      return exampleContexts.getOrPut(physical, () -> new NoExportContext(physical));
+    else throw new IllegalArgumentException("Invalid context: " + context);
   }
 }

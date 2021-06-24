@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>, Signatured.Visitor<P, Unit>, Decl.Visitor<P, Unit>, Pattern.Visitor<P, Unit> {
+public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>, Signatured.Visitor<P, Unit>, Pattern.Visitor<P, Unit> {
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope.forEach(p -> {
       var type = p.type();
@@ -119,13 +119,10 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
     return Unit.unit();
   }
 
-  @Override default void traceExit(P p, Unit unit) {
-  }
-
   @Override default Unit visitExample(Sample.@NotNull Working example, P p) {
-    return example.delegate.accept(this, p);
+    return example.delegate().accept(this, p);
   }
   @Override default Unit visitCounterexample(Sample.@NotNull Counter example, P p) {
-    return example.delegate.accept(this, p);
+    return example.delegate().accept((Signatured.Visitor<P, Unit>) this, p);
   }
 }

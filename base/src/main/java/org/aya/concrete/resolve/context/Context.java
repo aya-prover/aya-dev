@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.context;
 
+import kala.collection.Seq;
+import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -13,8 +15,6 @@ import org.aya.concrete.resolve.error.QualifiedNameNotFoundError;
 import org.aya.concrete.resolve.error.ShadowingWarn;
 import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
 import org.aya.util.Constants;
-import kala.collection.Seq;
-import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,8 +117,8 @@ public interface Context {
     return new BindContext(this, name, ref);
   }
 
-  default @NotNull ModuleContext derive() {
-    return new ModuleContext(this);
+  default @NotNull PhysicalModuleContext derive() {
+    return new PhysicalModuleContext(this);
   }
 
   class ResolvingInterruptedException extends InterruptException {

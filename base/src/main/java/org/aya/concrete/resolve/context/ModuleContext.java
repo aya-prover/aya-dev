@@ -22,26 +22,17 @@ import java.util.function.Function;
 /**
  * @author re-xyr
  */
-public record ModuleContext(
-  @NotNull Context parent,
-  @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> globals,
-  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules,
-  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> exports
-) implements Context {
-  public ModuleContext(@NotNull Context parent) {
-    this(parent,
-      MutableHashMap.of(),
-      MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of()),
-      MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of())
-    );
+public sealed interface ModuleContext extends Context permits PhysicalModuleContext, NoExportContext {
+  @Override @NotNull Context parent();
+  @Override default @NotNull Reporter reporter() {
+    return parent().reporter();
   }
 
-  @Override public @NotNull Reporter reporter() {
-    return parent.reporter();
-  }
+  @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions();
+  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules();
 
-  @Override public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    var result = globals.getOrNull(name);
+  @Override default @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+    var result = definitions().getOrNull(name);
     if (result == null) return null;
     else if (result.size() == 1) return result.iterator().next().getValue();
     else {
@@ -51,47 +42,55 @@ public record ModuleContext(
     }
   }
 
-  @Override
-  public @Nullable Var getQualifiedLocalMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
-    var mod = modules.getOrNull(modName);
+  @Override default @Nullable Var
+  getQualifiedLocalMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+    var mod = modules().getOrNull(modName);
     if (mod == null) return null;
     var ref = mod.getOrNull(name);
     if (ref == null) reportAndThrow(new QualifiedNameNotFoundError(modName, name, sourcePos));
     return ref;
   }
 
-  @Override
-  public @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
-    return modules.getOrNull(modName);
+  @Override default @Nullable MutableMap<String, Var>
+  getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
+    return modules().getOrNull(modName);
   }
 
-  public void importModule(
+  default void importModules(
     @NotNull ImmutableSeq<String> modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> module,
     @NotNull SourcePos sourcePos
   ) {
-    module.forEach((name, mod) -> {
-      var componentName = modName.concat(name);
-      if (modules.containsKey(componentName)) {
-        reportAndThrow(new DuplicateModNameError(modName, sourcePos));
-      }
-      if (getModuleMaybe(componentName, sourcePos) != null) {
-        reporter().report(new ModShadowingWarn(componentName, sourcePos));
-      }
-      modules.set(componentName, mod);
-      if (accessibility == Stmt.Accessibility.Public) exports.set(componentName, mod);
-    });
+    module.forEach((name, mod) -> importModule(modName, accessibility, sourcePos,
+      modName.concat(name), mod));
   }
 
-  public void openModule(
+  default void importModule(
+    @NotNull ImmutableSeq<String> modName,
+    @NotNull Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos,
+    Seq<String> componentName,
+    MutableMap<String, Var> mod
+  ) {
+    var modules = modules();
+    if (modules.containsKey(componentName)) {
+      reportAndThrow(new DuplicateModNameError(modName, sourcePos));
+    }
+    if (getModuleMaybe(componentName, sourcePos) != null) {
+      reporter().report(new ModShadowingWarn(componentName, sourcePos));
+    }
+    modules.set(componentName, mod);
+  }
+
+  default void openModule(
     @NotNull Seq<String> modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull Function<String, Boolean> using,
     @NotNull Map<String, String> rename,
     @NotNull SourcePos sourcePos
   ) {
-    var mod = modules.getOrNull(modName);
+    var mod = modules().getOrNull(modName);
     if (mod == null) reportAndThrow(new ModNameNotFoundError(modName, sourcePos));
     mod.forEach((name, ref) -> {
       if (using.apply(name)) {
@@ -101,32 +100,28 @@ public record ModuleContext(
     });
   }
 
-  public void addGlobal(
+  default void addGlobal(
     @NotNull Seq<String> modName,
     @NotNull String name,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull Var ref,
     @NotNull SourcePos sourcePos
   ) {
-    if (!globals.containsKey(name)) {
+    var definitions = definitions();
+    if (!definitions.containsKey(name)) {
       if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
         reporter().report(new ShadowingWarn(name, sourcePos));
       }
-      globals.set(name, MutableHashMap.of());
-    } else if (globals.get(name).containsKey(modName)) {
+      definitions.set(name, MutableHashMap.of());
+    } else if (definitions.get(name).containsKey(modName)) {
       reportAndThrow(new DuplicateNameError(name, ref, sourcePos));
     } else {
       reporter().report(new AmbiguousNameWarn(name, sourcePos));
     }
-    globals.get(name).set(modName, ref);
+    definitions.get(name).set(modName, ref);
     if (modName.equals(TOP_LEVEL_MOD_NAME)) {
       // Defined, not imported.
-      modules.get(TOP_LEVEL_MOD_NAME).set(name, ref);
-    }
-    if (accessibility == Stmt.Accessibility.Public) {
-      if (exports.get(TOP_LEVEL_MOD_NAME).containsKey(name)) {
-        reportAndThrow(new DuplicateExportError(name, sourcePos));
-      } else exports.get(TOP_LEVEL_MOD_NAME).set(name, ref);
+      modules().get(TOP_LEVEL_MOD_NAME).set(name, ref);
     }
   }
 }

@@ -3,23 +3,27 @@
 package org.aya.tyck;
 
 import org.aya.concrete.Sample;
+import org.aya.concrete.Signatured;
 import org.aya.core.def.Tycked;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class SampleTycker implements Sample.Visitor<StmtTycker, Tycked> {
+public final class SampleTycker implements Sample.Visitor<StmtTycker, @Nullable Tycked> {
   public static final @NotNull SampleTycker INSTANCE = new SampleTycker();
 
   private SampleTycker() {
   }
 
-  @Contract("_, _ -> new") @Override
-  public @NotNull Tycked visitExample(Sample.@NotNull Working example, @NotNull StmtTycker stmtTycker) {
-    return new Tycked.Example(example.delegate.accept(stmtTycker, stmtTycker.newTycker()));
+  @Override public @Nullable Tycked visitExample(Sample.@NotNull Working example, @NotNull StmtTycker stmtTycker) {
+    if (example.delegate() instanceof Signatured signatured)
+      return new Tycked.Example(signatured.accept(stmtTycker, stmtTycker.newTycker()));
+    else return null;
   }
 
-  @Override public Tycked visitCounterexample(Sample.@NotNull Counter example, StmtTycker stmtTycker) {
-    var def = example.delegate.accept(stmtTycker, new ExprTycker(example.reporter, stmtTycker.traceBuilder()));
-    return new Tycked.Counterexample(def, example.reporter.problems().toImmutableSeq());
+  @Contract("_, _ -> new") @Override
+  public @NotNull Tycked visitCounterexample(Sample.@NotNull Counter example, StmtTycker stmtTycker) {
+    var def = example.delegate().accept(stmtTycker, new ExprTycker(example.reporter(), stmtTycker.traceBuilder()));
+    return new Tycked.Counterexample(def, example.reporter().problems().toImmutableSeq());
   }
 }
