@@ -70,13 +70,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   }
 
   private Unit visitDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
-    context.addGlobal(
-      Context.TOP_LEVEL_MOD_NAME,
-      decl.ref().name(),
-      decl.accessibility(),
-      decl.ref(),
-      decl.sourcePos()
-    );
+    context.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
     if (decl instanceof Decl.OpDecl opDecl) {
       visitOperator(context, opDecl, decl.accessibility, decl.ref(), decl.sourcePos);
     }
@@ -87,13 +81,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull ModuleContext context) {
     for (var level : levels.levels()) {
       var genVar = level.data();
-      context.addGlobal(
-        Context.TOP_LEVEL_MOD_NAME,
-        genVar.name(),
-        levels.accessibility(),
-        genVar,
-        level.sourcePos()
-      );
+      context.addGlobalSimple(levels.accessibility(), genVar, level.sourcePos());
     }
     return Unit.unit();
   }
@@ -103,13 +91,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
     var dataInnerCtx = context.derive();
     var ctorSymbols = decl.body.toImmutableSeq()
       .map(ctor -> {
-        dataInnerCtx.addGlobal(
-          Context.TOP_LEVEL_MOD_NAME,
-          ctor.ref.name(),
-          Stmt.Accessibility.Public,
-          ctor.ref,
-          ctor.sourcePos
-        );
+        dataInnerCtx.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
         visitOperator(context, ctor, Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
         return Tuple2.of(ctor.ref.name(), ctor.ref);
       });
@@ -129,13 +111,8 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     var structInnerCtx = context.derive();
-    decl.fields.forEach(field -> structInnerCtx.addGlobal(
-      Context.TOP_LEVEL_MOD_NAME,
-      field.ref.name(),
-      Stmt.Accessibility.Public,
-      field.ref,
-      field.sourcePos
-    ));
+    decl.fields.forEach(field -> structInnerCtx
+      .addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos));
     decl.ctx = structInnerCtx;
     return Unit.unit();
   }
@@ -159,7 +136,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
     var childCtx = exampleContext(context).derive();
     var delegate = example.delegate();
     delegate.ctx = childCtx;
-    childCtx.addGlobal(Context.TOP_LEVEL_MOD_NAME, delegate.ref().name(), Stmt.Accessibility.Private, delegate.ref(), delegate.sourcePos);
+    childCtx.addGlobalSimple(Stmt.Accessibility.Private, delegate.ref(), delegate.sourcePos);
     return Unit.unit();
   }
 

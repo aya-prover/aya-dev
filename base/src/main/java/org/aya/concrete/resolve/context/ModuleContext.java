@@ -98,6 +98,10 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
     });
   }
 
+  default void addGlobalSimple(@NotNull Stmt.Accessibility acc, @NotNull Var ref, @NotNull SourcePos sourcePos) {
+    addGlobal(TOP_LEVEL_MOD_NAME, ref.name(), acc, ref, sourcePos);
+  }
+
   default void addGlobal(
     @NotNull Seq<String> modName,
     @NotNull String name,
