@@ -62,12 +62,10 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
     @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> module,
     @NotNull SourcePos sourcePos
   ) {
-    module.forEach((name, mod) -> importModule(modName, accessibility, sourcePos,
-      modName.concat(name), mod));
+    module.forEach((name, mod) -> importModule(accessibility, sourcePos, modName.concat(name), mod));
   }
 
   default void importModule(
-    @NotNull ImmutableSeq<String> modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     Seq<String> componentName,
@@ -75,7 +73,7 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
   ) {
     var modules = modules();
     if (modules.containsKey(componentName)) {
-      reportAndThrow(new DuplicateModNameError(modName, sourcePos));
+      reportAndThrow(new DuplicateModNameError(componentName, sourcePos));
     }
     if (getModuleMaybe(componentName, sourcePos) != null) {
       reporter().report(new ModShadowingWarn(componentName, sourcePos));
