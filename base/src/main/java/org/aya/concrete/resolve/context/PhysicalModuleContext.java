@@ -10,22 +10,21 @@ import org.aya.api.ref.Var;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.error.DuplicateExportError;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author re-xyr
  */
-public record PhysicalModuleContext(
-  @NotNull Context parent,
-  @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions,
-  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules,
-  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> exports
-) implements ModuleContext {
+public final class PhysicalModuleContext implements ModuleContext {
+  public final @NotNull Context parent;
+  public final @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions = MutableHashMap.of();
+  public final @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
+  public final @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
+
+  private @Nullable NoExportContext exampleContext;
+
   public PhysicalModuleContext(@NotNull Context parent) {
-    this(parent,
-      MutableHashMap.of(),
-      MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of()),
-      MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of())
-    );
+    this.parent = parent;
   }
 
   @Override public void importModule(
@@ -51,5 +50,22 @@ public record PhysicalModuleContext(
         reportAndThrow(new DuplicateExportError(name, sourcePos));
       } else exports.get(TOP_LEVEL_MOD_NAME).set(name, ref);
     }
+  }
+
+  public @NotNull NoExportContext exampleContext() {
+    if (exampleContext == null) exampleContext = new NoExportContext(this);
+    return exampleContext;
+  }
+
+  @Override public @NotNull Context parent() {
+    return parent;
+  }
+
+  @Override public @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions() {
+    return definitions;
+  }
+
+  @Override public @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules() {
+    return modules;
   }
 }

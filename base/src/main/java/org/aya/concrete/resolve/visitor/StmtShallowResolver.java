@@ -4,7 +4,6 @@ package org.aya.concrete.resolve.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
-import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   public final @NotNull ModuleLoader loader;
-  private final @NotNull MutableMap<PhysicalModuleContext, NoExportContext> exampleContexts = MutableMap.create();
 
   public StmtShallowResolver(@NotNull ModuleLoader loader) {
     this.loader = loader;
@@ -37,7 +35,7 @@ public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleCo
   @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();
     visitAll(mod.contents(), newCtx);
-    context.importModules(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports(), mod.sourcePos());
+    context.importModules(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports, mod.sourcePos());
     return Unit.unit();
   }
 
@@ -170,7 +168,7 @@ public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleCo
 
   private @NotNull NoExportContext exampleContext(@NotNull ModuleContext context) {
     if (context instanceof PhysicalModuleContext physical)
-      return exampleContexts.getOrPut(physical, () -> new NoExportContext(physical));
+      return physical.exampleContext();
     else throw new IllegalArgumentException("Invalid context: " + context);
   }
 }

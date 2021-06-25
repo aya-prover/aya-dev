@@ -46,7 +46,7 @@ public record FileModuleLoader(
     var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
-      return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports();
+        return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports;
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
       return null;
