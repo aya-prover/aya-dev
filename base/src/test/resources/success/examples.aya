@@ -8,7 +8,7 @@ def addN (a b : Nat) : Nat
  | suc a, b => suc (addN a b)
  | a, suc b => suc (addN a b)
 
-open data Int : Set
+example open data Int : Set
  | pos Nat
  | neg Nat { | zero => pos zero }
 

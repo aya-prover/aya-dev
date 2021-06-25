@@ -25,13 +25,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author re-xyr
  */
-public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
-  public final @NotNull ModuleLoader loader;
-
-  public StmtShallowResolver(@NotNull ModuleLoader loader) {
-    this.loader = loader;
-  }
-
+public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();
     visitAll(mod.contents(), newCtx);
@@ -162,7 +156,10 @@ public final class StmtShallowResolver implements Stmt.Visitor<@NotNull ModuleCo
   }
 
   @Override public Unit visitCounterexample(Sample.@NotNull Counter example, @NotNull ModuleContext context) {
-    example.delegate().ctx = exampleContext(context);
+    var childCtx = exampleContext(context).derive();
+    var delegate = example.delegate();
+    delegate.ctx = childCtx;
+    childCtx.addGlobal(Context.TOP_LEVEL_MOD_NAME, delegate.ref().name(), Stmt.Accessibility.Private, delegate.ref(), delegate.sourcePos);
     return Unit.unit();
   }
 
