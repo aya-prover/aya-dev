@@ -145,4 +145,12 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
       return physical.exampleContext();
     else throw new IllegalArgumentException("Invalid context: " + context);
   }
+
+  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public Unit visitField(@NotNull Decl.StructField field, @NotNull ModuleContext context) {
+    throw new UnsupportedOperationException();
+  }
 }

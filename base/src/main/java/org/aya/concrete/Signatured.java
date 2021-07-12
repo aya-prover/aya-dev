@@ -4,11 +4,8 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.concrete.ConcreteDecl;
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
-import org.aya.tyck.StmtTycker;
-import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,29 +23,6 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
 
   @Override public @NotNull SourcePos sourcePos() {
     return sourcePos;
-  }
-
-  public @NotNull Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
-    var tycker = new StmtTycker(reporter, builder);
-    return accept(tycker, tycker.newTycker());
-  }
-
-  public interface Visitor<P, R> extends Decl.Visitor<P, R> {
-    default void traceEntrance(@NotNull Signatured item, P p) {
-    }
-    default void traceExit(P p, R r) {
-    }
-    R visitCtor(@NotNull Decl.DataCtor ctor, P p);
-    R visitField(@NotNull Decl.StructField field, P p);
-  }
-
-  protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
-  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    visitor.traceEntrance(this, p);
-    var ret = doAccept(visitor, p);
-    visitor.traceExit(p, ret);
-    return ret;
   }
 
   protected Signatured(

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>, Signatured.Visitor<P, Unit> {
+public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> {
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> expr.accept(this, pp)));
   }
@@ -26,14 +26,14 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>,
   @Override default Unit visitData(@NotNull Decl.DataDecl decl, P p) {
     visitDecl(decl, p);
     decl.result = decl.result.accept(this, p);
-    decl.body.forEach(ctor -> ctor.accept(this, p));
+    decl.body.forEach(ctor -> traced(ctor, p, this::visitCtor));
     return Unit.unit();
   }
 
   @Override default Unit visitStruct(@NotNull Decl.StructDecl decl, P p) {
     visitDecl(decl, p);
     decl.result = decl.result.accept(this, p);
-    decl.fields.forEach(f -> f.accept(this, p));
+    decl.fields.forEach(field -> traced(field, p, this::visitField));
     return Unit.unit();
   }
 
@@ -91,6 +91,6 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit>,
   }
 
   @Override default Unit visitCounterexample(Sample.@NotNull Counter example, P p) {
-    return example.delegate().accept((Signatured.Visitor<P, Unit>) this, p);
+    return example.delegate().accept(this, p);
   }
 }

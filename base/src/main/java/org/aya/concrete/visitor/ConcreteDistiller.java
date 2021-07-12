@@ -28,7 +28,6 @@ import java.util.Objects;
  * @see CoreDistiller
  */
 public final class ConcreteDistiller implements
-  Signatured.Visitor<Unit, Doc>,
   Stmt.Visitor<Unit, Doc>,
   Pattern.Visitor<Boolean, Doc>,
   Expr.Visitor<Boolean, Doc> {
@@ -303,7 +302,7 @@ public final class ConcreteDistiller implements
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.body.isEmpty() ? Doc.empty()
         : Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.body.stream().map(ctor -> ctor.accept(this, Unit.unit())))))
+        decl.body.stream().map(ctor -> visitCtor(ctor, Unit.unit())))))
     );
   }
 
@@ -342,7 +341,7 @@ public final class ConcreteDistiller implements
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.fields.isEmpty() ? Doc.empty()
         : Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.fields.stream().map(field -> field.accept(this, Unit.unit())))))
+        decl.fields.stream().map(field -> visitField(field, Unit.unit())))))
     );
   }
 
@@ -421,6 +420,6 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitCounterexample(Sample.@NotNull Counter example, Unit unit) {
     return Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "counterexample"),
-      example.delegate().accept((Stmt.Visitor<Unit, Doc>) this, unit));
+      example.delegate().accept(this, unit));
   }
 }

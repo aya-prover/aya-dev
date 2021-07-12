@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>, Signatured.Visitor<P, Unit>, Pattern.Visitor<P, Unit> {
+public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>, Pattern.Visitor<P, Unit> {
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope.forEach(p -> {
       var type = p.type();
@@ -30,14 +30,14 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
   @Override default Unit visitData(@NotNull Decl.DataDecl decl, P p) {
     visitDecl(decl, p);
     decl.result.accept(this, p);
-    decl.body.forEach(ctor -> ctor.accept(this, p));
+    decl.body.forEach(ctor -> traced(ctor, p, this::visitCtor));
     return Unit.unit();
   }
 
   @Override default Unit visitStruct(@NotNull Decl.StructDecl decl, P p) {
     visitDecl(decl, p);
     decl.result.accept(this, p);
-    decl.fields.forEach(f -> f.accept(this, p));
+    decl.fields.forEach(field -> traced(field, p, this::visitField));
     return Unit.unit();
   }
 
@@ -123,6 +123,6 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
     return example.delegate().accept(this, p);
   }
   @Override default Unit visitCounterexample(Sample.@NotNull Counter example, P p) {
-    return example.delegate().accept((Signatured.Visitor<P, Unit>) this, p);
+    return example.delegate().accept(this, p);
   }
 }

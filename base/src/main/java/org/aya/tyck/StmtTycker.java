@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
-) implements Signatured.Visitor<ExprTycker, Def> {
+) implements Decl.Visitor<ExprTycker, Def> {
   public @NotNull ExprTycker newTycker() {
     return new ExprTycker(reporter, traceBuilder);
   }
@@ -136,7 +136,7 @@ public record StmtTycker(
     var tele = checkTele(tycker, decl.telescope, null);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
-    var body = decl.body.map(clause -> visitCtor(clause, tycker));
+    var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
     var collectedBody = body.collect(ImmutableSeq.factory());
     return new DataDef(decl.ref, tele, decl.signature.sortParam(), result, collectedBody);
   }
@@ -147,7 +147,7 @@ public record StmtTycker(
     // var levelSubst = tycker.equations.solve();
     var levels = tycker.extractLevels();
     decl.signature = new Def.Signature(levels, tele, result);
-    return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field -> visitField(field, tycker)));
+    return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field -> traced(field, tycker, this::visitField)));
   }
 
   @Override public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {

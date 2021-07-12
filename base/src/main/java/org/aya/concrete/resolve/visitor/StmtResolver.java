@@ -62,6 +62,14 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     throw new Context.ResolvingInterruptedException();
   }
 
+  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, BinOpSet binOpSet) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public Unit visitField(@NotNull Decl.StructField field, BinOpSet binOpSet) {
+    throw new UnsupportedOperationException();
+  }
+
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, BinOpSet opSet) {
     var signatureResolver = new ExprResolver(true, Buffer.of());

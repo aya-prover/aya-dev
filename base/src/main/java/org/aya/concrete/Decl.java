@@ -7,18 +7,22 @@ import kala.control.Either;
 import kala.control.Option;
 import kala.tuple.Tuple2;
 import org.aya.api.concrete.ConcreteDecl;
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
+import org.aya.tyck.StmtTycker;
+import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.function.BiFunction;
 
 /**
  * concrete definition, corresponding to {@link Def}.
@@ -53,11 +57,20 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
   protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
+  public @NotNull Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
+    var tycker = new StmtTycker(reporter, builder);
+    return accept(tycker, tycker.newTycker());
+  }
+
   @Override public final <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    // [ice]: inlining this will cause compilation failure
-    //noinspection UnnecessaryLocalVariable
-    Decl.Visitor<P, R> declVisitor = visitor;
-    return declVisitor instanceof Signatured.Visitor<P, R> v ? accept(v, p) : Stmt.super.accept(visitor, p);
+    return accept((Visitor<? super P, ? extends R>) visitor, p);
+  }
+
+  public final <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
+    visitor.traceEntrance(this, p);
+    var ret = doAccept(visitor, p);
+    visitor.traceExit(p, ret);
+    return ret;
   }
 
   @ApiStatus.NonExtendable
@@ -65,12 +78,21 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     return doAccept((Decl.Visitor<P, R>) visitor, p);
   }
 
-  @ApiStatus.NonExtendable
-  public final @Override <P, R> R doAccept(Signatured.@NotNull Visitor<P, R> visitor, P p) {
-    return doAccept((Decl.Visitor<P, R>) visitor, p);
-  }
-
   public interface Visitor<P, R> {
+    default void traceEntrance(@NotNull Signatured item, P p) {
+    }
+    default void traceExit(P p, R r) {
+    }
+
+    @ApiStatus.NonExtendable default <T extends Signatured, RR extends R> RR traced(@NotNull T yeah, P p, @NotNull BiFunction<T, P, RR> f) {
+      traceEntrance(yeah, p);
+      var r = f.apply(yeah, p);
+      traceExit(p, r);
+      return r;
+    }
+
+    @ApiStatus.OverrideOnly R visitCtor(Decl.@NotNull DataCtor ctor, P p);
+    @ApiStatus.OverrideOnly R visitField(Decl.@NotNull StructField field, P p);
     R visitData(Decl.@NotNull DataDecl decl, P p);
     R visitStruct(Decl.@NotNull StructDecl decl, P p);
     R visitFn(Decl.@NotNull FnDecl decl, P p);
@@ -137,10 +159,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.coerce = coerce;
       this.patterns = patterns;
       this.ref = DefVar.concrete(this, name);
-    }
-
-    @Override protected <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitCtor(this, p);
     }
 
     @Override public @NotNull DefVar<DataDef.Ctor, DataCtor> ref() {
@@ -264,10 +282,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.clauses = clauses;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
-    }
-
-    @Override protected <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitField(this, p);
     }
 
     @Override public @NotNull DefVar<? extends Def, StructField> ref() {

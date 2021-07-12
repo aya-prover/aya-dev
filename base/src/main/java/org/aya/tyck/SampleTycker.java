@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import org.aya.concrete.Decl;
 import org.aya.concrete.Sample;
-import org.aya.concrete.Signatured;
 import org.aya.core.def.Tycked;
 import org.aya.tyck.error.CounterexampleError;
 import org.jetbrains.annotations.Contract;
@@ -17,8 +17,8 @@ public final class SampleTycker implements Sample.Visitor<StmtTycker, @Nullable 
   }
 
   @Override public @Nullable Tycked visitExample(Sample.@NotNull Working example, @NotNull StmtTycker stmtTycker) {
-    if (example.delegate() instanceof Signatured signatured)
-      return new Tycked.Example(signatured.accept(stmtTycker, stmtTycker.newTycker()));
+    if (example.delegate() instanceof Decl decl)
+      return new Tycked.Example(decl.accept(stmtTycker, stmtTycker.newTycker()));
     else return null;
   }
 
