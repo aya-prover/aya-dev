@@ -74,6 +74,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     }
     return new Decl.PrimDecl(
       sourcePos,
+      sourcePosOf(ctx),
       visitAssoc(ctx.assoc()),
       ref,
       visitTelescope(ctx.tele()),
@@ -154,6 +155,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
     return new Decl.FnDecl(
       sourcePosOf(ctx.ID()),
+      sourcePosOf(ctx),
       accessibility,
       modifiers,
       visitAssoc(assocCtx),
@@ -476,6 +478,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       body.view().map(ctor -> new WithPos<>(ctor.sourcePos, ctor.ref.name())));
     var data = new Decl.DataDecl(
       sourcePosOf(ctx.ID()),
+      sourcePosOf(ctx),
       accessibility,
       visitAssoc(ctx.assoc()),
       ctx.ID().getText(),
@@ -512,6 +515,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
 
     return new Decl.DataCtor(
       sourcePosOf(id),
+      sourcePosOf(ctx),
       visitAssoc(ctx.assoc()),
       id.getText(),
       telescope,
@@ -579,7 +583,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
+    if (id != null)
+      return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
     if (ctx.ABSURD() != null) return ex -> new Pattern.Absurd(sourcePos, ex);
 
     return unreachable(ctx);
@@ -615,6 +620,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       fields.view().map(field -> new WithPos<>(field.sourcePos, field.ref.name())));
     return new Decl.StructDecl(
       sourcePosOf(id),
+      sourcePosOf(ctx),
       accessibility,
       visitAssoc(ctx.assoc()),
       id.getText(),
@@ -639,6 +645,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var id = ctx.ID();
     return new Decl.StructField(
       sourcePosOf(id),
+      sourcePosOf(ctx),
       id.getText(),
       telescope,
       type(ctx.type(), sourcePosOf(ctx)),
@@ -653,6 +660,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     var id = ctx.ID();
     return new Decl.StructField(
       sourcePosOf(id),
+      sourcePosOf(ctx),
       id.getText(),
       telescope,
       type(ctx.type(), sourcePosOf(ctx)),

@@ -43,12 +43,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   }
 
   protected Decl(
-    @NotNull SourcePos sourcePos,
+    @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
     @NotNull Accessibility accessibility,
     @NotNull ImmutableSeq<Stmt> abuseBlock,
     @NotNull ImmutableSeq<Expr.Param> telescope
   ) {
-    super(sourcePos, telescope);
+    super(sourcePos, entireSourcePos, telescope);
     this.accessibility = accessibility;
     this.abuseBlock = abuseBlock;
   }
@@ -110,14 +110,14 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
 
     public PrimDecl(
-      @NotNull SourcePos sourcePos,
+      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
       @NotNull DefVar<? extends PrimDef, PrimDecl> ref,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result
     ) {
       // TODO[ice]: are we sure? Empty abuse block?
-      super(sourcePos, Accessibility.Public, ImmutableSeq.empty(), telescope);
+      super(sourcePos, entireSourcePos, Accessibility.Public, ImmutableSeq.empty(), telescope);
       this.result = result;
       this.operator = operator;
       ref.concrete = this;
@@ -146,14 +146,16 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
     public final boolean coerce;
 
-    public DataCtor(@NotNull SourcePos sourcePos,
-                    @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
-                    @NotNull String name,
-                    @NotNull ImmutableSeq<Expr.Param> telescope,
-                    @NotNull ImmutableSeq<Pattern.Clause> clauses,
-                    @NotNull ImmutableSeq<Pattern> patterns,
-                    boolean coerce) {
-      super(sourcePos, telescope);
+    public DataCtor(
+      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
+      @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
+      @NotNull String name,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
+      @NotNull ImmutableSeq<Pattern.Clause> clauses,
+      @NotNull ImmutableSeq<Pattern> patterns,
+      boolean coerce
+    ) {
+      super(sourcePos, entireSourcePos, telescope);
       this.clauses = clauses;
       this.operator = operator;
       this.coerce = coerce;
@@ -184,7 +186,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
 
     public DataDecl(
-      @NotNull SourcePos sourcePos,
+      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull Accessibility accessibility,
       @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
       @NotNull String name,
@@ -193,7 +195,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull ImmutableSeq<DataCtor> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
-      super(sourcePos, accessibility, abuseBlock, telescope);
+      super(sourcePos, entireSourcePos, accessibility, abuseBlock, telescope);
       this.result = result;
       this.body = body;
       this.operator = operator;
@@ -228,7 +230,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull Expr result;
 
     public StructDecl(
-      @NotNull SourcePos sourcePos,
+      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull Accessibility accessibility,
       @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
       @NotNull String name,
@@ -238,7 +240,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull ImmutableSeq<StructField> fields,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
-      super(sourcePos, accessibility, abuseBlock, telescope);
+      super(sourcePos, entireSourcePos, accessibility, abuseBlock, telescope);
       this.operator = operator;
       this.result = result;
       this.fields = fields;
@@ -269,14 +271,16 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
     public final boolean coerce;
 
-    public StructField(@NotNull SourcePos sourcePos,
-                       @NotNull String name,
-                       @NotNull ImmutableSeq<Expr.Param> telescope,
-                       @NotNull Expr result,
-                       @NotNull Option<Expr> body,
-                       @NotNull ImmutableSeq<Pattern.Clause> clauses,
-                       boolean coerce) {
-      super(sourcePos, telescope);
+    public StructField(
+      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
+      @NotNull String name,
+      @NotNull ImmutableSeq<Expr.Param> telescope,
+      @NotNull Expr result,
+      @NotNull Option<Expr> body,
+      @NotNull ImmutableSeq<Pattern.Clause> clauses,
+      boolean coerce
+    ) {
+      super(sourcePos, entireSourcePos, telescope);
       this.coerce = coerce;
       this.result = result;
       this.clauses = clauses;
@@ -303,7 +307,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
 
     public FnDecl(
-      @NotNull SourcePos sourcePos,
+      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull Accessibility accessibility,
       @NotNull EnumSet<Modifier> modifiers,
       @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
@@ -313,7 +317,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
       @NotNull ImmutableSeq<Stmt> abuseBlock
     ) {
-      super(sourcePos, accessibility, abuseBlock, telescope);
+      super(sourcePos, entireSourcePos, accessibility, abuseBlock, telescope);
       this.modifiers = modifiers;
       this.operator = operator;
       this.ref = DefVar.concrete(this, name);

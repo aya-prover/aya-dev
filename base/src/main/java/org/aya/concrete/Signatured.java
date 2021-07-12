@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed abstract class Signatured implements ConcreteDecl permits Decl, Decl.DataCtor, Decl.StructField {
   public final @NotNull SourcePos sourcePos;
+  public final @NotNull SourcePos entireSourcePos;
 
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
@@ -27,9 +28,11 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
 
   protected Signatured(
     @NotNull SourcePos sourcePos,
+    @NotNull SourcePos entireSourcePos,
     @NotNull ImmutableSeq<Expr.Param> telescope
   ) {
     this.sourcePos = sourcePos;
+    this.entireSourcePos = entireSourcePos;
     this.telescope = telescope;
   }
 }
