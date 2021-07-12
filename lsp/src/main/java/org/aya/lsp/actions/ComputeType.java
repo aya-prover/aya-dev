@@ -5,7 +5,6 @@ package org.aya.lsp.actions;
 import kala.tuple.Unit;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
-import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.term.Term;
 import org.aya.lsp.models.ComputeTypeResult;
 import org.aya.lsp.server.AyaService;
@@ -13,7 +12,7 @@ import org.aya.lsp.utils.XY;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ComputeType implements StmtConsumer<XY> {
+public class ComputeType implements SyntaxNodeAction {
   public @Nullable WithPos<Term> types = null;
   public final @NotNull AyaService.AyaFile loadedFile;
 
@@ -34,7 +33,7 @@ public class ComputeType implements StmtConsumer<XY> {
 
   @Override public @NotNull Unit visitProj(@NotNull Expr.ProjExpr expr, XY xy) {
     check(xy, expr);
-    return StmtConsumer.super.visitProj(expr, xy);
+    return SyntaxNodeAction.super.visitProj(expr, xy);
   }
 
   private <T extends Expr.WithTerm> void check(@NotNull XY xy, @NotNull T cored) {
