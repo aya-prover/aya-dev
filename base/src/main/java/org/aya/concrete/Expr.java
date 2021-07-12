@@ -102,7 +102,7 @@ public sealed interface Expr extends ConcreteExpr {
     }
   }
 
-  interface WithTerm {
+  sealed interface WithTerm extends Expr {
     @NotNull Ref<Term> theCore();
     default @Nullable Term core() {
       return theCore().value;
