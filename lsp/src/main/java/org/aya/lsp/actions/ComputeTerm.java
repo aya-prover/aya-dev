@@ -18,22 +18,27 @@ import java.util.function.Function;
 public final class ComputeTerm implements SyntaxNodeAction {
   private @Nullable WithPos<Term> result = null;
   private final @NotNull AyaService.AyaFile loadedFile;
-  private final @NotNull Function<Term, Term> map;
+  private final @NotNull Kind kind;
 
-  private ComputeTerm(AyaService.@NotNull AyaFile loadedFile, @NotNull Function<Term, Term> map) {
+  public enum Kind {
+    Type(Term::computeType),
+    Id(Function.identity()),
+    Nf(term -> term.normalize(NormalizeMode.NF)),
+    Whnf(term -> term.normalize(NormalizeMode.WHNF)),
+    ;
+    private final Function<Term, Term> map;
+
+    Kind(Function<Term, Term> map) {
+      this.map = map;
+    }
+  }
+
+  public ComputeTerm(AyaService.@NotNull AyaFile loadedFile, @NotNull Kind kind) {
     this.loadedFile = loadedFile;
-    this.map = map;
+    this.kind = kind;
   }
 
-  public static @NotNull ComputeTypeResult computeType(@NotNull ComputeTypeResult.Params params, @NotNull AyaService.AyaFile loadedFile) {
-    return new ComputeTerm(loadedFile, Term::computeType).invoke(params);
-  }
-
-  public static @NotNull ComputeTypeResult computeNF(@NotNull ComputeTypeResult.Params params, @NotNull AyaService.AyaFile loadedFile) {
-    return new ComputeTerm(loadedFile, term -> term.normalize(NormalizeMode.NF)).invoke(params);
-  }
-
-  private @NotNull ComputeTypeResult invoke(ComputeTypeResult.Params params) {
+  public @NotNull ComputeTypeResult invoke(ComputeTypeResult.Params params) {
     visitAll(loadedFile.concrete(), new XY(params.position));
     return result == null ? ComputeTypeResult.bad(params) : ComputeTypeResult.good(params, result);
   }
@@ -52,7 +57,7 @@ public final class ComputeTerm implements SyntaxNodeAction {
     var sourcePos = cored.sourcePos();
     if (xy.inside(sourcePos)) {
       var core = cored.core();
-      if (core != null) result = new WithPos<>(sourcePos, map.apply(core));
+      if (core != null) result = new WithPos<>(sourcePos, kind.map.apply(core));
     }
   }
 }

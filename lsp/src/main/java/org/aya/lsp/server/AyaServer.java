@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.server;
 
+import org.aya.lsp.actions.ComputeTerm;
 import org.aya.lsp.models.ComputeTypeResult;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.Log;
@@ -27,7 +28,12 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
 
   @JsonRequest("aya/computeType")
   public @NotNull CompletableFuture<@NotNull ComputeTypeResult> computeType(ComputeTypeResult.Params input) {
-    return CompletableFuture.supplyAsync(() -> service.computeType(input));
+    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.Type));
+  }
+
+  @JsonRequest("aya/computeNF")
+  public @NotNull CompletableFuture<@NotNull ComputeTypeResult> computeNF(ComputeTypeResult.Params input) {
+    return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.Nf));
   }
 
   @Override public void connect(@NotNull LanguageClient client) {

@@ -163,10 +163,10 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return libraryManager.loadedFiles.getOrNull(Path.of(URI.create(uri)));
   }
 
-  public ComputeTypeResult computeType(@NotNull ComputeTypeResult.Params input) {
+  public ComputeTypeResult computeTerm(@NotNull ComputeTypeResult.Params input, ComputeTerm.Kind type) {
     var loadedFile = getLoadedFile(input.uri);
     if (loadedFile == null) return ComputeTypeResult.bad(input);
-    return ComputeTerm.computeType(input, loadedFile);
+    return new ComputeTerm(loadedFile, type).invoke(input);
   }
 
   public static final record AyaFile(
