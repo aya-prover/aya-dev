@@ -19,7 +19,7 @@ public class ComputeType implements StmtConsumer<XY> {
 
   public static ComputeTypeResult invoke(@NotNull ComputeTypeResult.Params params, @NotNull AyaService.AyaFile loadedFile) {
     var computer = new ComputeType(loadedFile);
-    computer.visitAll(loadedFile.concrete(), new XY(params.position()));
+    computer.visitAll(loadedFile.concrete(), new XY(params.position));
     return computer.types == null ? ComputeTypeResult.bad(params) : ComputeTypeResult.good(params, computer.types);
   }
 

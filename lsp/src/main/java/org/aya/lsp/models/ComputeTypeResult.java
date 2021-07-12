@@ -14,10 +14,9 @@ public record ComputeTypeResult(
   @NotNull String computedType,
   @NotNull Range range
 ) {
-  public static record Params(
-    @NotNull String uri,
-    @NotNull Position position
-  ) {
+  public static class Params {
+    public String uri;
+    public Position position;
   }
 
   public static @NotNull ComputeTypeResult bad(@NotNull Params params) {
@@ -26,7 +25,7 @@ public record ComputeTypeResult(
   }
 
   public static ComputeTypeResult good(@NotNull Params params, @NotNull WithPos<Term> type) {
-    return new ComputeTypeResult(params.uri, type.data().toDoc().renderToHtml(),
+    return new ComputeTypeResult(params.uri, type.data().toDoc().debugRender(),
       LspRange.toRange(type.sourcePos()));
   }
 }
