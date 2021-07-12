@@ -48,15 +48,27 @@ public record SourcePos(
       && tokenEndIndex != UNAVAILABLE_AND_FUCK_ANTLR4;
   }
 
+  private static int min(int x, int y) {
+    if (x == -1) return y;
+    if (y == -1) return x;
+    return Math.min(x, y);
+  }
+
+  private static int max(int x, int y) {
+    if (x == -1) return y;
+    if (y == -1) return x;
+    return Math.max(x, y);
+  }
+
   @Contract("_ -> new") public @NotNull SourcePos union(@NotNull SourcePos other) {
     return new SourcePos(
       file,
-      Math.min(tokenStartIndex, other.tokenStartIndex),
-      Math.max(tokenEndIndex, other.tokenEndIndex),
-      Math.min(startLine, other.startLine),
-      Math.max(startColumn, other.startColumn),
-      Math.max(endLine, other.endLine),
-      Math.max(endColumn, other.endColumn)
+      min(tokenStartIndex, other.tokenStartIndex),
+      max(tokenEndIndex, other.tokenEndIndex),
+      min(startLine, other.startLine),
+      max(startColumn, other.startColumn),
+      max(endLine, other.endLine),
+      max(endColumn, other.endColumn)
     );
   }
 
