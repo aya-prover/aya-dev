@@ -165,6 +165,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public ComputeTypeResult computeType(@NotNull ComputeTypeResult.Params input) {
     var loadedFile = getLoadedFile(input.uri());
     if (loadedFile == null) return ComputeTypeResult.bad(input);
+
     // TODO
     throw new UnsupportedOperationException();
   }

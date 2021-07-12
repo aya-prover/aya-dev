@@ -175,6 +175,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
+    var result = doVisitRef(expr, term);
+    expr.theCore().set(result.wellTyped);
+    return result;
+  }
+
+  @NotNull private Result doVisitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
     var var = expr.resolvedVar();
     if (var instanceof LocalVar loc) {
       var ty = localCtx.get(loc);
@@ -182,7 +188,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     } else if (var instanceof DefVar<?, ?> defVar) {
       var result = inferRef(expr.sourcePos(), defVar, term);
       return unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
-    } else throw new IllegalStateException("TODO: UnivVar not yet implemented");
+    } else throw new IllegalStateException("Unknown var: " + var.getClass());
   }
 
   @SuppressWarnings("unchecked")
@@ -378,6 +384,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
+    var result = doVisitProj(expr, term);
+    expr.theCore().set(result.wellTyped);
+    return result;
+  }
+
+  @NotNull private Result doVisitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
     var from = expr.tup();
     var result = expr.ix().fold(
       ix -> visitProj(from, ix),

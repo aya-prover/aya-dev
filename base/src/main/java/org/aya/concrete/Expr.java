@@ -18,6 +18,7 @@ import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.visitor.ConcreteDistiller;
+import org.aya.core.term.Term;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
@@ -98,6 +99,13 @@ public sealed interface Expr extends ConcreteExpr {
     }
     @Override default R visitError(@NotNull ErrorExpr error, P p) {
       return catchUnhandled(error, p);
+    }
+  }
+
+  interface WithTerm {
+    @NotNull Ref<Term> theCore();
+    default @Nullable Term core() {
+      return theCore().value;
     }
   }
 
@@ -219,8 +227,13 @@ public sealed interface Expr extends ConcreteExpr {
   record RefExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Var resolvedVar,
-    @NotNull String resolvedFrom
-  ) implements Expr {
+    @NotNull String resolvedFrom,
+    @NotNull Ref<Term> theCore
+  ) implements Expr, WithTerm {
+    public RefExpr(@NotNull SourcePos sourcePos, @NotNull Var resolvedVar, @NotNull String resolvedFrom) {
+      this(sourcePos, resolvedVar, resolvedFrom, new Ref<>());
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitRef(this, p);
     }
@@ -281,8 +294,17 @@ public sealed interface Expr extends ConcreteExpr {
     @NotNull SourcePos sourcePos,
     @NotNull Expr tup,
     @NotNull Either<Integer, WithPos<String>> ix,
-    @NotNull Ref<@Nullable Var> resolvedIx
-  ) implements Expr {
+    @NotNull Ref<@Nullable Var> resolvedIx,
+    @NotNull Ref<Term> theCore
+  ) implements Expr, WithTerm {
+    public ProjExpr(
+      @NotNull SourcePos sourcePos, @NotNull Expr tup,
+      @NotNull Either<Integer, WithPos<String>> ix,
+      @NotNull Ref<@Nullable Var> resolvedIx
+    ) {
+      this(sourcePos, tup, ix, resolvedIx, new Ref<>());
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitProj(this, p);
     }

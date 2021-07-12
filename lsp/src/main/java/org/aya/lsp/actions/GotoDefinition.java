@@ -48,7 +48,6 @@ public class GotoDefinition implements StmtConsumer<XY> {
 
   @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
     check(xy, expr.sourcePos(), expr.resolvedVar());
-    StmtConsumer.super.visitRef(expr, xy);
     return Unit.unit();
   }
 
