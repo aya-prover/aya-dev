@@ -16,7 +16,7 @@ import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.concrete.Stmt;
 import org.aya.core.def.Tycked;
-import org.aya.lsp.actions.ComputeType;
+import org.aya.lsp.actions.ComputeTerm;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.actions.SyntaxHighlight;
 import org.aya.lsp.models.ComputeTypeResult;
@@ -166,7 +166,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   public ComputeTypeResult computeType(@NotNull ComputeTypeResult.Params input) {
     var loadedFile = getLoadedFile(input.uri);
     if (loadedFile == null) return ComputeTypeResult.bad(input);
-    return ComputeType.invoke(input, loadedFile);
+    return ComputeTerm.computeType(input, loadedFile);
   }
 
   public static final record AyaFile(

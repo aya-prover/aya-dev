@@ -3,6 +3,7 @@
 package org.aya.lsp.actions;
 
 import kala.tuple.Unit;
+import org.aya.api.util.NormalizeMode;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
@@ -12,15 +13,27 @@ import org.aya.lsp.utils.XY;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class TermAction implements SyntaxNodeAction {
-  public @Nullable WithPos<Term> result = null;
-  public final @NotNull AyaService.AyaFile loadedFile;
+import java.util.function.Function;
 
-  protected TermAction(AyaService.@NotNull AyaFile loadedFile) {
+public final class ComputeTerm implements SyntaxNodeAction {
+  private @Nullable WithPos<Term> result = null;
+  private final @NotNull AyaService.AyaFile loadedFile;
+  private final @NotNull Function<Term, Term> map;
+
+  private ComputeTerm(AyaService.@NotNull AyaFile loadedFile, @NotNull Function<Term, Term> map) {
     this.loadedFile = loadedFile;
+    this.map = map;
   }
 
-  protected @NotNull ComputeTypeResult invoke(ComputeTypeResult.Params params) {
+  public static @NotNull ComputeTypeResult computeType(@NotNull ComputeTypeResult.Params params, @NotNull AyaService.AyaFile loadedFile) {
+    return new ComputeTerm(loadedFile, Term::computeType).invoke(params);
+  }
+
+  public static @NotNull ComputeTypeResult computeNF(@NotNull ComputeTypeResult.Params params, @NotNull AyaService.AyaFile loadedFile) {
+    return new ComputeTerm(loadedFile, term -> term.normalize(NormalizeMode.NF)).invoke(params);
+  }
+
+  private @NotNull ComputeTypeResult invoke(ComputeTypeResult.Params params) {
     visitAll(loadedFile.concrete(), new XY(params.position));
     return result == null ? ComputeTypeResult.bad(params) : ComputeTypeResult.good(params, result);
   }
@@ -35,13 +48,11 @@ public abstract class TermAction implements SyntaxNodeAction {
     return SyntaxNodeAction.super.visitProj(expr, xy);
   }
 
-  @NotNull protected abstract Term compute(Term core);
-
-  private  <T extends Expr.WithTerm> void check(@NotNull XY xy, @NotNull T cored) {
+  private <T extends Expr.WithTerm> void check(@NotNull XY xy, @NotNull T cored) {
     var sourcePos = cored.sourcePos();
     if (xy.inside(sourcePos)) {
       var core = cored.core();
-      if (core != null) result = new WithPos<>(sourcePos, compute(core));
+      if (core != null) result = new WithPos<>(sourcePos, map.apply(core));
     }
   }
 }
