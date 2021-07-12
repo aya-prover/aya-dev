@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
-import org.aya.concrete.Signatured;
+import kala.tuple.Unit;
+import org.aya.concrete.Decl;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +32,7 @@ public class TracingTest {
        | suc a, suc b => suc (max a b)""");
     var builder = new Trace.Builder();
     decls.forEach(decl -> {
-      if (decl instanceof Signatured signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder);
+      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder);
     });
     return builder;
   }

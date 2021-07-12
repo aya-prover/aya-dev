@@ -2,8 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.Decl;
 import org.aya.concrete.ParseTest;
-import org.aya.concrete.Signatured;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
@@ -17,7 +18,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.RefTerm;
 import org.aya.generic.Matching;
 import org.aya.test.ThrowingReporter;
-import kala.collection.immutable.ImmutableSeq;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +75,7 @@ public class TyckDeclTest {
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
     return successDesugarDecls(text)
-      .map(i -> i instanceof Signatured s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
+      .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
       .filter(Objects::nonNull);
   }
 }
