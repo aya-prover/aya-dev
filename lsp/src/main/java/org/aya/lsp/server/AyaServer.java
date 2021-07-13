@@ -3,7 +3,7 @@
 package org.aya.lsp.server;
 
 import org.aya.lsp.actions.ComputeTerm;
-import org.aya.lsp.models.ComputeTypeResult;
+import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.Log;
 import org.eclipse.lsp4j.*;
@@ -27,12 +27,12 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
   }
 
   @JsonRequest("aya/computeType")
-  public @NotNull CompletableFuture<@NotNull ComputeTypeResult> computeType(ComputeTypeResult.Params input) {
+  public @NotNull CompletableFuture<@NotNull ComputeTermResult> computeType(ComputeTermResult.Params input) {
     return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.Type));
   }
 
   @JsonRequest("aya/computeNF")
-  public @NotNull CompletableFuture<@NotNull ComputeTypeResult> computeNF(ComputeTypeResult.Params input) {
+  public @NotNull CompletableFuture<@NotNull ComputeTermResult> computeNF(ComputeTermResult.Params input) {
     return CompletableFuture.supplyAsync(() -> service.computeTerm(input, ComputeTerm.Kind.Nf));
   }
 

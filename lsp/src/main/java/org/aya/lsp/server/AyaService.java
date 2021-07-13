@@ -19,7 +19,7 @@ import org.aya.core.def.Tycked;
 import org.aya.lsp.actions.ComputeTerm;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.actions.SyntaxHighlight;
-import org.aya.lsp.models.ComputeTypeResult;
+import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
@@ -163,9 +163,9 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return libraryManager.loadedFiles.getOrNull(Path.of(URI.create(uri)));
   }
 
-  public ComputeTypeResult computeTerm(@NotNull ComputeTypeResult.Params input, ComputeTerm.Kind type) {
+  public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
     var loadedFile = getLoadedFile(input.uri);
-    if (loadedFile == null) return ComputeTypeResult.bad(input);
+    if (loadedFile == null) return ComputeTermResult.bad(input);
     return new ComputeTerm(loadedFile, type).invoke(input);
   }
 

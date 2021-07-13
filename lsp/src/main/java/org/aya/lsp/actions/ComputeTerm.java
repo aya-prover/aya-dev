@@ -7,7 +7,7 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
-import org.aya.lsp.models.ComputeTypeResult;
+import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.XY;
 import org.jetbrains.annotations.NotNull;
@@ -38,9 +38,9 @@ public final class ComputeTerm implements SyntaxNodeAction {
     this.kind = kind;
   }
 
-  public @NotNull ComputeTypeResult invoke(ComputeTypeResult.Params params) {
+  public @NotNull ComputeTermResult invoke(ComputeTermResult.Params params) {
     visitAll(loadedFile.concrete(), new XY(params.position));
-    return result == null ? ComputeTypeResult.bad(params) : ComputeTypeResult.good(params, result);
+    return result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, result);
   }
 
   @Override public @NotNull Unit visitRef(@NotNull Expr.RefExpr expr, XY xy) {
