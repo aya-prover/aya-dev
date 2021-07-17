@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
-import org.aya.core.sort.Sort;
-import org.aya.util.Decision;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
+import org.aya.core.sort.Sort;
+import org.aya.util.Decision;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ public sealed interface FormTerm extends Term {
   /**
    * @author re-xyr, kiva, ice1000
    */
-  record Pi(boolean co, @NotNull Term.Param param, @NotNull Term body) implements FormTerm {
+  record Pi(@NotNull Term.Param param, @NotNull Term body) implements FormTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPi(this, p);
     }
@@ -46,15 +46,15 @@ public sealed interface FormTerm extends Term {
       return t;
     }
 
-    public static @NotNull Term make(boolean co, @NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
-      return telescope.view().reversed().foldLeft(body, (t, p) -> new Pi(co, p, t));
+    public static @NotNull Term make(@NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
+      return telescope.view().reversed().foldLeft(body, (t, p) -> new Pi(p, t));
     }
   }
 
   /**
    * @author re-xyr
    */
-  record Sigma(boolean co, @NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm {
+  record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitSigma(this, p);
     }

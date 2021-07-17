@@ -89,7 +89,7 @@ public record PrimDef(
     var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
     var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
     var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
-    var paramATy = new FormTerm.Pi(false, paramIToATy, result);
+    var paramATy = new FormTerm.Pi(paramIToATy, result);
     var aRef = new RefTerm(paramA, paramATy);
     var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.of(), ImmutableSeq.empty())));
     ARCOE = new PrimDef(

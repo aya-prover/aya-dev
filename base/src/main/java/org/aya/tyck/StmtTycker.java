@@ -79,9 +79,9 @@ public record StmtTycker(
       var levels = tycker.extractLevels();
       for (var lvl : core.levels().zip(levels))
         levelSubst.solution().put(lvl._1, new Sort.CoreLevel(new Level.Reference<>(lvl._2)));
-      var target = FormTerm.Pi.make(false, core.telescope(), core.result())
+      var target = FormTerm.Pi.make(core.telescope(), core.result())
         .subst(Substituter.TermSubst.EMPTY, levelSubst);
-      tycker.unifyTyThrowing(FormTerm.Pi.make(false, tele, result), target, decl.result);
+      tycker.unifyTyThrowing(FormTerm.Pi.make(tele, result), target, decl.result);
       decl.signature = new Def.Signature(levels, tele, result);
     } else if (decl.result != null) {
       var result = decl.result.accept(tycker, null).wellTyped();

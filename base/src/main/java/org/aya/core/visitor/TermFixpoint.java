@@ -81,14 +81,14 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitPi(@NotNull FormTerm.Pi term, P p) {
-    return visitParameterized(term.param(), term.body(), p, term, (a, t) -> new FormTerm.Pi(term.co(), a, t));
+    return visitParameterized(term.param(), term.body(), p, term, FormTerm.Pi::new);
   }
 
   @Override default @NotNull Term visitSigma(@NotNull FormTerm.Sigma term, P p) {
     var params = term.params().map(param ->
       new Term.Param(param.ref(), param.type().accept(this, p), param.explicit()));
     if (params.sameElements(term.params(), true)) return term;
-    return new FormTerm.Sigma(term.co(), params);
+    return new FormTerm.Sigma(params);
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {

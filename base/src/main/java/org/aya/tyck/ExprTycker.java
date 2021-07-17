@@ -115,9 +115,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var sourcePos = expr.param().sourcePos();
       var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX, sourcePos)._2;
       var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX, sourcePos)._2;
-      term = new FormTerm.Pi(false, Term.Param.mock(domain, expr.param().explicit()), codomain);
+      term = new FormTerm.Pi(Term.Param.mock(domain, expr.param().explicit()), codomain);
     }
-    if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt && !dt.co())) {
+    if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
       return wantButNo(expr, term, "pi type");
     }
     var param = expr.param();
@@ -206,7 +206,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var level = levelStuffs(pos, conVar);
       var telescopes = DataDef.Ctor.telescopes(conVar, level._2);
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
-      var type = FormTerm.Pi.make(false, tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
+      var type = FormTerm.Pi.make(tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
       var body = telescopes.toConCall(conVar);
       return new Result(IntroTerm.Lambda.make(tele, body), type);
     } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
@@ -235,7 +235,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var body = function.make(defVar,
       level._2,
       tele.map(Term.Param::toArg));
-    var type = FormTerm.Pi.make(false, tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
+    var type = FormTerm.Pi.make(tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
     return new Result(IntroTerm.Lambda.make(tele, body), type);
   }
 
@@ -304,7 +304,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
     return localCtx.with(resultParam, () -> {
       var last = expr.last().accept(this, against);
-      return new Result(new FormTerm.Pi(expr.co(), resultParam, last.wellTyped), against);
+      return new Result(new FormTerm.Pi(resultParam, last.wellTyped), against);
     });
   }
 
@@ -321,7 +321,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var result = type.accept(this, against);
       resultTele.append(Tuple.of(tuple.ref(), tuple.explicit(), result.wellTyped));
     });
-    return new Result(new FormTerm.Sigma(expr.co(), Term.Param.fromBuffer(resultTele)), against);
+    return new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), against);
   }
 
   @Rule.Check(partialSynth = true)
@@ -422,13 +422,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
       structCall.args(), tele.map(Term.Param::toArg));
     return new Result(IntroTerm.Lambda.make(tele, access),
-      FormTerm.Pi.make(false, tele, field.result().subst(structSubst, levels._1)));
+      FormTerm.Pi.make(tele, field.result().subst(structSubst, levels._1)));
   }
 
   private Result visitProj(Expr tuple, int ix) {
     var projectee = tuple.accept(this, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
-    if (!(whnf instanceof FormTerm.Sigma sigma && !sigma.co()))
+    if (!(whnf instanceof FormTerm.Sigma sigma))
       return wantButNo(tuple, whnf, "sigma type");
     var telescope = sigma.params();
     var index = ix - 1;
@@ -514,7 +514,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
             new Term.Param(Constants.anonymous(), resultLast.value, true));
           resultLast.value = result.type;
         });
-    } else if (!(term instanceof FormTerm.Sigma dt && !dt.co())) {
+    } else if (!(term instanceof FormTerm.Sigma dt)) {
       return wantButNo(expr, term, "sigma type");
     } else {
       var againstTele = dt.params().view();
@@ -545,7 +545,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       }
     }
     resultTele.append(new Term.Param(Constants.anonymous(), resultLast.value, true));
-    var resultType = new FormTerm.Sigma(false, resultTele.toImmutableSeq());
+    var resultType = new FormTerm.Sigma(resultTele.toImmutableSeq());
     return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
   }
 

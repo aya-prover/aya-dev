@@ -31,7 +31,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
-    return new FormTerm.Pi(false, term.param(), term.body().accept(this, unit));
+    return new FormTerm.Pi(term.param(), term.body().accept(this, unit));
   }
 
   @Override public Term visitPi(FormTerm.@NotNull Pi term, Unit unit) {
@@ -93,7 +93,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {
-    return new FormTerm.Sigma(false, term.items().map(item ->
+    return new FormTerm.Sigma(term.items().map(item ->
       new Term.Param(Constants.anonymous(), item.accept(this, Unit.unit()), true)));
   }
 
