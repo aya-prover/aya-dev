@@ -553,6 +553,7 @@ public sealed interface Doc extends Docile {
   }
 
   @Contract("_ -> new") static @NotNull Doc vcat(@NotNull SeqLike<@NotNull Doc> docs) {
+    if (docs.isEmpty()) return Doc.empty();
     return join(lineEmpty(), docs);
   }
 

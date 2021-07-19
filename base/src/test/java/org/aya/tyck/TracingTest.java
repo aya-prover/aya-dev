@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
-import kala.tuple.Unit;
 import org.aya.concrete.Decl;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.trace.MdUnicodeTrace;
@@ -40,8 +39,6 @@ public class TracingTest {
   @Test public void traceMd() {
     var builder = mkBuilder();
     var show = new MdUnicodeTrace();
-    show.lineSep = "\n";
-    Objects.requireNonNull(builder).root().forEach(e -> e.accept(show, Unit.unit()));
-    assertFalse(show.builder.toString().isEmpty());
+    assertFalse(show.docify(Objects.requireNonNull(builder)).debugRender().isEmpty());
   }
 }
