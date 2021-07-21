@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core;
 
+import org.aya.concrete.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
@@ -30,11 +31,13 @@ public class DistillerTest {
   }
 
   @Test public void data() {
-    assertFalse(declDoc("""
+    @Language("TEXT") var code = """
       open data Nat : Set | zero | suc Nat
       open data Int : Set | pos Nat | neg Nat { | zero => pos zero }
       open data Fin (n : Nat) : Set | suc m => fzero | suc m => fsuc (Fin m)
-      """).renderToHtml().isEmpty());
+      """;
+    assertFalse(declDoc(code).renderToHtml().isEmpty());
+    assertFalse(declCDoc(code).renderToHtml().isEmpty());
   }
 
   @Test public void neo() {
@@ -56,7 +59,7 @@ public class DistillerTest {
   }
 
   @Test public void path() {
-    assertFalse(declDoc("""
+    @Language("TEXT") var code = """
       prim I prim left prim right
       struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
        | at (i : I) : A i {
@@ -65,14 +68,21 @@ public class DistillerTest {
        }
       def path {A : Pi I -> Type} (p : Pi (i : I) -> A i)
         => new Path A (p left) (p right) { | at i => p i }
-      """).renderToTeX().isEmpty());
+      """;
+    assertFalse(declDoc(code).renderToTeX().isEmpty());
+    tearDown();
+    assertFalse(declCDoc(code).renderToTeX().isEmpty());
   }
 
   @AfterEach public void tearDown() {
     PrimDef.clearConcrete();
   }
 
-  @NotNull private Doc declDoc(@Language("TEXT") String text) {
+  private @NotNull Doc declDoc(@Language("TEXT") String text) {
     return Doc.vcat(TyckDeclTest.successTyckDecls(text).map(Def::toDoc));
+  }
+
+  private @NotNull Doc declCDoc(@Language("TEXT") String text) {
+    return Doc.vcat(TyckDeclTest.successDesugarDecls(text).map(Stmt::toDoc));
   }
 }
