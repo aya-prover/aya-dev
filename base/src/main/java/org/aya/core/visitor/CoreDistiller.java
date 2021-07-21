@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 /**
- * It's called distiller and it serves as the pretty printer.
+ * It's called distiller, and it serves as the pretty printer.
  * Credit after <a
  * href="https://github.com/jonsterling/dreamtt/blob/master/frontend/Distiller.ml">Jon Sterling</a>
  *

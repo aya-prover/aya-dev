@@ -113,8 +113,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
     if (term == null) {
       var sourcePos = expr.param().sourcePos();
-      var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX, sourcePos)._2;
-      var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, Constants.ANONYMOUS_PREFIX, sourcePos)._2;
+      var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
+      var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
       term = new FormTerm.Pi(Term.Param.mock(domain, expr.param().explicit()), codomain);
     }
     if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
@@ -470,7 +470,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           // that implies paramLicit == false
           var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
           app = CallTerm.make(app, Arg.implicit(holeApp));
-          pi = instPi(expr, pi, subst, holeApp);
+          pi = instPi(pi, subst, holeApp);
           if (pi == null) return new Result(new ErrorTerm(expr.toDoc()), f.type);
         } else {
           // TODO[ice]: no implicit argument expected, but inserted.
@@ -480,7 +480,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var elabArg = namedArg.expr().accept(this, pi.param().type()).wellTyped;
       app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
       // so, in the end, the pi term is not updated, its body would be the eliminated type
-      if (iter.hasNext()) pi = instPi(expr, pi, subst, elabArg);
+      if (iter.hasNext()) pi = instPi(pi, subst, elabArg);
       if (pi == null) return new Result(new ErrorTerm(expr.toDoc()), f.type);
       else subst.map().put(pi.param().ref(), elabArg);
     }
@@ -494,7 +494,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return localCtx.freshHole(param.type(), genName, pos)._2;
   }
 
-  private @Nullable FormTerm.Pi instPi(@NotNull Expr expr, @NotNull FormTerm.Pi pi, Substituter.TermSubst subst, @NotNull Term arg) {
+  private FormTerm.@Nullable Pi instPi(@NotNull FormTerm.Pi pi, Substituter.TermSubst subst, @NotNull Term arg) {
     subst.add(pi.param().ref(), arg);
     return pi.body().subst(subst).normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi newPi ? newPi : null;
   }

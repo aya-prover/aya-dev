@@ -107,7 +107,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class PrimDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<? extends PrimDef, PrimDecl> ref;
     public @Nullable Expr result;
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
+    public final @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
 
     public PrimDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -143,7 +143,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public DefVar<DataDef, DataDecl> dataRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
+    public final @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
     public final boolean coerce;
 
     public DataCtor(
@@ -226,7 +226,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
+    public final @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
     public @NotNull Expr result;
 
     public StructDecl(

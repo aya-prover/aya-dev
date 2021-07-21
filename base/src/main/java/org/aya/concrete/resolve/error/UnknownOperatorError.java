@@ -8,10 +8,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
-public record UnknownOperatorError(
-  @NotNull SourcePos sourcePos,
-  @NotNull String name
-) implements Problem {
+public record UnknownOperatorError(@NotNull SourcePos sourcePos, @NotNull String name) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
       Doc.plain("Unknown operator"),

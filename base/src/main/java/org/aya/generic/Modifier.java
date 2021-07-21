@@ -12,7 +12,7 @@ public enum Modifier {
    */
   Erase,
   /**
-   * Denotes that a a function's invocations are eagerly reduced.
+   * Denotes that a function's invocations are eagerly reduced.
    */
   Inline,
 }

@@ -2,16 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
-import org.aya.api.util.Arg;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
-import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.ref.LocalVar;
+import org.aya.api.ref.Var;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.RefTerm;
+import org.aya.core.term.Term;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,10 +36,6 @@ public interface VarConsumer<P> extends TermConsumer<P> {
   @Override default Unit visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
     visitVar(prim.ref(), p);
     return TermConsumer.super.visitPrimCall(prim, p);
-  }
-
-  private void visitArgs(SeqLike<Arg<Term>> args, P p) {
-    args.forEach(i -> i.term().accept(this, p));
   }
 
   @Override default Unit visitDataCall(@NotNull CallTerm.Data dataCall, P p) {

@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * Instead, invoke {@link TypedDefEq#compare(Term, Term, Term)} to do so.
  */
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
-  protected final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
+  final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @NotNull UntypedDefEq termDefeq;
   public final @NotNull ExprTycker tycker;
   public final @NotNull SourcePos pos;

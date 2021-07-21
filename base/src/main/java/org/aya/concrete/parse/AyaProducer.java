@@ -216,13 +216,6 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return unreachable(ctx);
   }
 
-  public int visitOptNumber(@Nullable TerminalNode number, int defaultVal) {
-    return Option.of(number)
-      .map(ParseTree::getText)
-      .map(Integer::parseInt)
-      .getOrDefault(defaultVal);
-  }
-
   private @NotNull LocalVar visitParamLiteral(AyaParser.LiteralContext ctx) {
     var idCtx = ctx.qualifiedId();
     if (idCtx == null) {
@@ -545,7 +538,7 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
       .collect(ImmutableSeq.factory());
     if (atoms.sizeEquals(1)) return (ex, as) -> atoms.first().apply(ex);
 
-    // this apply does nothing on explicitness because we only used its bind
+    // this `apply` does nothing on explicitness because we only used its bind
     var first = atoms.first().apply(true);
     if (!(first instanceof Pattern.Bind bind)) {
       reporter.report(new ParseError(first.sourcePos(),

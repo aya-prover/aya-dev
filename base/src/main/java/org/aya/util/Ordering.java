@@ -15,18 +15,4 @@ public enum Ordering {
   Ordering(@NotNull String symbol) {
     this.symbol = symbol;
   }
-
-  /**
-   * Invert ordering.
-   *
-   * @return {@link Ordering#Gt} when {@code this} is {@link Ordering#Lt} and vice versa
-   * but nothing changes when {@code this} is {@link Ordering#Eq},
-   */
-  public @NotNull Ordering invert() {
-    return switch (this) {
-      case Gt -> Lt;
-      case Eq -> Eq;
-      case Lt -> Gt;
-    };
-  }
 }

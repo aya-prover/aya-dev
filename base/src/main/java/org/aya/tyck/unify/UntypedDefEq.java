@@ -19,7 +19,6 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.Decision;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
