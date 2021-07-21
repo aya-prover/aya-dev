@@ -553,7 +553,6 @@ public sealed interface Doc extends Docile {
   }
 
   @Contract("_ -> new") static @NotNull Doc vcat(@NotNull SeqLike<@NotNull Doc> docs) {
-    if (docs.isEmpty()) return Doc.empty();
     return join(lineEmpty(), docs);
   }
 
@@ -879,7 +878,7 @@ public sealed interface Doc extends Docile {
   //region utility functions
 
   private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull SeqLike<@NotNull Doc> xs) {
-    assert xs.size() > 0;
+    if (xs.size() == 0) return Doc.empty();
     if (xs.size() == 1) {
       return xs.get(0);
     }

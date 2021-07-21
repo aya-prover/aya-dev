@@ -141,7 +141,7 @@ public final class ConcreteDistiller implements
       Doc.styled(CoreDistiller.KEYWORD, "new "),
       expr.struct().toDoc(),
       Doc.symbol(" { "),
-      expr.fields().isEmpty() ? Doc.empty() : Doc.hsep(expr.fields().view().map(t ->
+      Doc.hsep(expr.fields().view().map(t ->
         Doc.hsep(Doc.plain("|"), Doc.plain(t.name()),
           t.bindings().isEmpty() ? Doc.empty() :
             Doc.join(Doc.plain(" "), t.bindings().map(v -> Doc.plain(v.data().name()))),
@@ -302,14 +302,14 @@ public final class ConcreteDistiller implements
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.body.isEmpty() ? Doc.empty()
         : Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.body.stream().map(ctor -> visitCtor(ctor, Unit.unit())))))
+        decl.body.view().map(ctor -> visitCtor(ctor, Unit.unit())))))
     );
   }
 
   @Override public Doc visitCtor(Decl.@NotNull DataCtor ctor, Unit unit) {
     var doc = Doc.cat(
-      ctor.coerce ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),
-      Doc.plain(ctor.ref.name()),
+      CoreDistiller.coe(ctor.coerce),
+      CoreDistiller.linkDef(ctor.ref, CoreDistiller.CON_CALL),
       visitTele(ctor.telescope),
       visitClauses(ctor.clauses, true)
     );
@@ -322,7 +322,7 @@ public final class ConcreteDistiller implements
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {
     if (clauses.isEmpty()) return Doc.empty();
     var clausesDoc = Doc.vcat(
-      clauses.stream()
+      clauses.view()
         .map(this::matchy)
         .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
     return wrapInBraces ? Doc.braced(clausesDoc) : clausesDoc;
@@ -334,22 +334,22 @@ public final class ConcreteDistiller implements
       Doc.plain(" "),
       Doc.styled(CoreDistiller.KEYWORD, "struct"),
       Doc.plain(" "),
-      Doc.plain(decl.ref.name()),
+      CoreDistiller.linkDef(decl.ref, CoreDistiller.STRUCT_CALL),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.fields.isEmpty() ? Doc.empty()
         : Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.fields.stream().map(field -> visitField(field, Unit.unit())))))
+        decl.fields.view().map(field -> visitField(field, Unit.unit())))))
     );
   }
 
   @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
     return Doc.hcat(
       Doc.plain("| "),
-      field.coerce ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),
-      Doc.plain(field.ref.name()),
+      CoreDistiller.coe(field.coerce),
+      CoreDistiller.linkDef(field.ref, CoreDistiller.FIELD_CALL),
       visitTele(field.telescope),
       field.result instanceof Expr.HoleExpr
         ? Doc.empty()
@@ -367,8 +367,8 @@ public final class ConcreteDistiller implements
       Doc.plain(" "),
       Doc.styled(CoreDistiller.KEYWORD, "def"),
       decl.modifiers.isEmpty() ? Doc.plain(" ") :
-        decl.modifiers.stream().map(this::visitModifier).reduce(Doc.empty(), Doc::hsep),
-      Doc.plain(decl.ref.name()),
+        Doc.hsep(Seq.from(decl.modifiers).view().map(this::visitModifier)),
+      CoreDistiller.linkDef(decl.ref, CoreDistiller.FN_CALL),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
@@ -388,8 +388,8 @@ public final class ConcreteDistiller implements
 
   private Doc visitModifier(@NotNull Modifier modifier) {
     return Doc.styled(CoreDistiller.KEYWORD, switch (modifier) {
-      case Inline -> "\\inline";
-      case Erase -> "\\erase";
+      case Inline -> "inline";
+      case Erase -> "erase";
     });
   }
 
