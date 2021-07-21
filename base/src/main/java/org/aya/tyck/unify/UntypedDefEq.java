@@ -32,6 +32,13 @@ public record UntypedDefEq(
   @NotNull TypedDefEq defeq, @NotNull Ordering cmp
 ) implements Term.Visitor<@NotNull Term, @Nullable Term> {
   public @Nullable Term compare(@NotNull Term lhs, @NotNull Term rhs) {
+    // lhs & rhs will both be WHNF if either is not a potentially reducible call
+    if (TypedDefEq.isCall(lhs) || TypedDefEq.isCall(rhs)) {
+      final var ty = lhs.accept(this, rhs);
+      if (ty != null) return ty.normalize(NormalizeMode.WHNF);
+    }
+    lhs = lhs.normalize(NormalizeMode.WHNF);
+    rhs = rhs.normalize(NormalizeMode.WHNF);
     final var x = lhs.accept(this, rhs);
     return x != null ? x.normalize(NormalizeMode.WHNF) : null;
   }
@@ -53,7 +60,7 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitApp(@NotNull ElimTerm.App lhs, @NotNull Term preRhs) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof ElimTerm.App rhs)) return null;
+    if (!(preRhs instanceof ElimTerm.App rhs)) return null;
     var preFnType = compare(lhs.of(), rhs.of());
     if (!(preFnType instanceof FormTerm.Pi fnType)) return null;
     if (!defeq.compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) return null;
@@ -101,7 +108,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs) {
     var meta = lhs.ref().core();
-    if (rhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
+    if (rhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
       var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
       for (var arg : lhs.args().view().zip(rcall.args())) {
         if (!(holeTy instanceof FormTerm.Pi holePi))
@@ -140,7 +147,7 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi rhs)) return null;
+    if (!(preRhs instanceof FormTerm.Pi rhs)) return null;
     return defeq.checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> null, () -> {
       var bodyIsOk = defeq.compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA);
       if (!bodyIsOk) return null;
@@ -149,7 +156,7 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitSigma(@NotNull FormTerm.Sigma lhs, @NotNull Term preRhs) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Sigma rhs)) return null;
+    if (!(preRhs instanceof FormTerm.Sigma rhs)) return null;
     return defeq.checkParams(lhs.params(), rhs.params(), () -> null, () -> {
       var bodyIsOk = defeq.compare(lhs.params().last().type(), rhs.params().last().type(), FormTerm.Univ.OMEGA);
       if (!bodyIsOk) return null;
@@ -158,7 +165,7 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof FormTerm.Univ rhs)) return null;
+    if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
     defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
     return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ(1));
   }
@@ -188,16 +195,12 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref()) return null;
     var substMap = MutableMap.<Var, Term>of();
     for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
     var retType = lhs.ref().core.result().subst(substMap);
-    if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref()) {
-      if ((lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES) && defeq.compareWHNF(lhs, preRhs, retType))
-        return retType;
-      else return null;
-    }
     // Lossy comparison
     var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
     if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return retType;
@@ -206,7 +209,7 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) return null;
+    if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) return null;
     var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
     var args = defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
     // Do not need to be computed precisely because unification won't need this info
@@ -214,23 +217,19 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitStructCall(@NotNull CallTerm.Struct lhs, @NotNull Term preRhs) {
-    if (!(preRhs.normalize(NormalizeMode.WHNF) instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) return null;
+    if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) return null;
     var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
     var args = defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
     return args ? FormTerm.Univ.OMEGA : null;
   }
 
   @Override public @Nullable Term visitPrimCall(CallTerm.@NotNull Prim lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof CallTerm.Prim rhs) || lhs.ref() != rhs.ref()) return null;
     var substMap = MutableMap.<Var, Term>of();
     for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
     var retType = lhs.ref().core.result().subst(substMap);
-    if (!(preRhs instanceof CallTerm.Prim rhs) || lhs.ref() != rhs.ref()) {
-      if ((lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES) && defeq.compareWHNF(lhs, preRhs, retType))
-        return retType;
-      else return null;
-    }
     // Lossy comparison
     var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
     if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return retType;
@@ -239,16 +238,12 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs) {
+    if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) return null;
     var substMap = MutableMap.<Var, Term>of();
     for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
     var retType = lhs.ref().core.result().subst(substMap);
-    if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) {
-      if ((lhs.whnf() != Decision.YES || preRhs.whnf() != Decision.YES) && defeq.compareWHNF(lhs, preRhs, retType))
-        return retType;
-      else return null;
-    }
     // Lossy comparison
     var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
     if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), subst)))

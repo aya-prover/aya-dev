@@ -51,7 +51,6 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   @Override default @Nullable Pat toPat() {
     return accept(TermToPat.INSTANCE, Unit.unit());
   }
-  @Contract(pure = true) @NotNull Decision whnf();
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
     return subst(new Substituter.TermSubst(var, term));

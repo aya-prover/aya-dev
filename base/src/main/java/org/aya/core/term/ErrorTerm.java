@@ -4,7 +4,6 @@ package org.aya.core.term;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.util.Decision;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,11 +18,7 @@ public record ErrorTerm(@NotNull Doc description) implements Term {
     return visitor.visitError(this, p, q);
   }
 
-  @Override public @NotNull Decision whnf() {
-    return Decision.YES;
-  }
-
-  public static @NotNull ErrorTerm typeOf(@NotNull Doc origin) {
+    public static @NotNull ErrorTerm typeOf(@NotNull Doc origin) {
     return new ErrorTerm(Doc.hsep(
       Doc.plain("type of"),
       Doc.styled(Style.code(), origin)));

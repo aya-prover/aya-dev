@@ -11,7 +11,6 @@ import org.aya.concrete.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
 import org.aya.core.sort.Sort;
-import org.aya.util.Decision;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
@@ -59,13 +58,6 @@ public sealed interface CallTerm extends Term {
       return visitor.visitFnCall(this, p, q);
     }
 
-    @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      var core = ref.core;
-      // Recursive case is irreducible
-      if (core == null) return Decision.YES;
-      if (core.body().isLeft()) return Decision.NO;
-      return Decision.MAYBE;
-    }
   }
 
   record Prim(
@@ -81,10 +73,6 @@ public sealed interface CallTerm extends Term {
       return visitor.visitPrimCall(this, p, q);
     }
 
-    @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      if (args.isEmpty()) return Decision.YES;
-      return Decision.MAYBE;
-    }
   }
 
   record Data(
@@ -98,10 +86,6 @@ public sealed interface CallTerm extends Term {
 
     @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitDataCall(this, p, q);
-    }
-
-    @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      return Decision.YES;
     }
 
     public @NotNull ConHead conHead(@NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ctorRef) {
@@ -125,9 +109,6 @@ public sealed interface CallTerm extends Term {
       return visitor.visitStructCall(this, p, q);
     }
 
-    @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      return Decision.YES;
-    }
   }
 
   record ConHead(
@@ -175,12 +156,6 @@ public sealed interface CallTerm extends Term {
       return head.dataArgs.view().concat(conArgs).toImmutableSeq();
     }
 
-    @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      var core = head.ref.core;
-      if (core == null) return Decision.YES;
-      if (core.clauses().isNotEmpty()) return Decision.NO;
-      return Decision.MAYBE;
-    }
   }
 
   /**
@@ -205,11 +180,6 @@ public sealed interface CallTerm extends Term {
 
     @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
       return visitor.visitHole(this, p, q);
-    }
-
-    @Contract(pure = true) @Override public @NotNull Decision whnf() {
-      if (ref.core().body == null) return Decision.YES;
-      return Decision.MAYBE;
     }
 
     @Override public @NotNull ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs() {
@@ -239,10 +209,5 @@ public sealed interface CallTerm extends Term {
       return structArgs.concat(fieldArgs);
     }
 
-    @Override public @NotNull Decision whnf() {
-      if (of instanceof IntroTerm) return Decision.NO;
-      if (of.whnf() == Decision.YES) return Decision.optimistic(ref.core.clauses().isEmpty());
-      return Decision.MAYBE;
-    }
   }
 }

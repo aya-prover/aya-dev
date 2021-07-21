@@ -5,11 +5,9 @@ package org.aya.core.term;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.def.StructDef;
-import org.aya.util.Decision;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,11 +16,8 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public sealed interface IntroTerm extends Term {
-  @Override @Contract(pure = true) default @NotNull Decision whnf() {
-    return Decision.YES;
-  }
 
-  /**
+    /**
    * @author ice1000
    */
   record Lambda(@NotNull Term.Param param, @NotNull Term body) implements IntroTerm {

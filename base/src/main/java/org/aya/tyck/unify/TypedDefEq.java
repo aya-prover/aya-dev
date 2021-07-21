@@ -59,7 +59,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     if (lhs == rhs) return true;
     type = type.normalize(NormalizeMode.WHNF);
     // at least one of them is not an FnCall
-    if (isNotCall(lhs) || isNotCall(rhs) || lhs instanceof ElimTerm.App || rhs instanceof ElimTerm.App) {
+    if (!isCall(lhs) || !isCall(rhs)) {
       lhs = lhs.normalize(NormalizeMode.WHNF);
       rhs = rhs.normalize(NormalizeMode.WHNF);
     }
@@ -67,8 +67,8 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     return type.accept(this, lhs, rhs);
   }
 
-  private boolean isNotCall(@NotNull Term term) {
-    return !(term instanceof CallTerm.Fn || term instanceof CallTerm.Con);
+  public static boolean isCall(@NotNull Term term) {
+    return term instanceof CallTerm.Fn || term instanceof CallTerm.Con || term instanceof CallTerm.Prim;
   }
 
   public boolean compareWHNF(Term lhs, Term preRhs, @NotNull Term type) {

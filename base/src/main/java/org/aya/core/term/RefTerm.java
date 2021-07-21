@@ -3,7 +3,6 @@
 package org.aya.core.term;
 
 import org.aya.api.ref.LocalVar;
-import org.aya.util.Decision;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +17,4 @@ public record RefTerm(@NotNull LocalVar var, @NotNull Term type) implements Term
     return visitor.visitRef(this, p, q);
   }
 
-  @Override public @NotNull Decision whnf() {
-    return Decision.YES;
-  }
 }
