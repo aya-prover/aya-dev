@@ -47,7 +47,7 @@ public sealed interface FormTerm extends Term {
     }
 
     public static @NotNull Term make(@NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
-      return telescope.view().reversed().foldLeft(body, (t, p) -> new Pi(p, t));
+      return telescope.view().foldRight(body, Pi::new);
     }
   }
 

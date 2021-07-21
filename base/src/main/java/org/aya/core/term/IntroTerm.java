@@ -2,13 +2,13 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Decl;
 import org.aya.core.def.StructDef;
 import org.aya.util.Decision;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableMap;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,7 @@ public sealed interface IntroTerm extends Term {
     }
 
     public static @NotNull Term make(@NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
-      return telescope.view().reversed().foldLeft(body, (t, p) -> new Lambda(p, t));
+      return telescope.view().foldRight(body, Lambda::new);
     }
   }
 

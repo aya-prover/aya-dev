@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+import static org.aya.core.visitor.CoreDistiller.*;
+
 /**
  * @author ice1000, kiva
  * @see CoreDistiller
@@ -46,7 +48,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
     return Doc.cat(
-      Doc.styled(CoreDistiller.KEYWORD, Doc.symbol("\\")),
+      Doc.styled(KEYWORD, Doc.symbol("\\")),
       Doc.plain(" "),
       expr.param().toDoc(),
       expr.body() instanceof Expr.HoleExpr
@@ -58,7 +60,7 @@ public final class ConcreteDistiller implements
   @Override public Doc visitPi(Expr.@NotNull PiExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.styled(CoreDistiller.KEYWORD, Doc.symbol("Pi")),
+      Doc.styled(KEYWORD, Doc.symbol("Pi")),
       Doc.plain(" "),
       expr.param().toDoc(),
       Doc.symbol(" -> "),
@@ -68,7 +70,7 @@ public final class ConcreteDistiller implements
   @Override public Doc visitSigma(Expr.@NotNull SigmaExpr expr, Boolean nestedCall) {
     // TODO[kiva]: expr.co
     return Doc.cat(
-      Doc.styled(CoreDistiller.KEYWORD, Doc.symbol("Sig")),
+      Doc.styled(KEYWORD, Doc.symbol("Sig")),
       Doc.plain(" "),
       visitTele(expr.params().dropLast(1)),
       Doc.symbol(" ** "),
@@ -76,24 +78,24 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Boolean nestedCall) {
-    return Doc.styled(CoreDistiller.KEYWORD, "Type");
+    return Doc.styled(KEYWORD, "Type");
   }
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
     if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
-      if (t.value() == 1) return CoreDistiller.INSTANCE.univDoc(nestedCall, "Prop", expr.uLevel());
-      if (t.value() == 2) return CoreDistiller.INSTANCE.univDoc(nestedCall, "Set", expr.uLevel());
+      if (t.value() == 1) return univDoc(nestedCall, "Prop", expr.uLevel());
+      if (t.value() == 2) return univDoc(nestedCall, "Set", expr.uLevel());
     } else if (expr.hLevel() instanceof Level.Infinity<LevelGenVar> t) {
-      return CoreDistiller.INSTANCE.univDoc(nestedCall, "ooType", expr.uLevel());
+      return univDoc(nestedCall, "ooType", expr.uLevel());
     }
-    return CoreDistiller.INSTANCE.visitCalls(
-      Doc.styled(CoreDistiller.KEYWORD, "Type"),
+    return visitCalls(
+      Doc.styled(KEYWORD, "Type"),
       Seq.of(expr.hLevel(), expr.uLevel()).view().map(Arg::explicit),
       (nc, l) -> l.toDoc(), nestedCall);
   }
 
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
-    return CoreDistiller.INSTANCE.visitCalls(
+    return visitCalls(
       expr.function().toDoc(),
       expr.arguments(),
       (nest, arg) -> arg.expr().accept(this, nest),
@@ -101,16 +103,16 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitLsuc(Expr.@NotNull LSucExpr expr, Boolean nestedCall) {
-    return CoreDistiller.INSTANCE.visitCalls(
-      Doc.styled(CoreDistiller.KEYWORD, "lsuc"),
+    return visitCalls(
+      Doc.styled(KEYWORD, "lsuc"),
       ImmutableSeq.of(Arg.explicit(expr.expr())),
       (nest, arg) -> arg.accept(this, nest),
       nestedCall);
   }
 
   @Override public Doc visitLmax(Expr.@NotNull LMaxExpr expr, Boolean nestedCall) {
-    return CoreDistiller.INSTANCE.visitCalls(
-      Doc.styled(CoreDistiller.KEYWORD, "lmax"),
+    return visitCalls(
+      Doc.styled(KEYWORD, "lmax"),
       expr.levels().map(Arg::explicit),
       (nest, arg) -> arg.accept(this, nest),
       nestedCall);
@@ -138,7 +140,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {
     return Doc.cat(
-      Doc.styled(CoreDistiller.KEYWORD, "new "),
+      Doc.styled(KEYWORD, "new "),
       expr.struct().toDoc(),
       Doc.symbol(" { "),
       Doc.hsep(expr.fields().view().map(t ->
@@ -165,7 +167,7 @@ public final class ConcreteDistiller implements
 
   @Override
   public Doc visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Boolean nestedCall) {
-    return CoreDistiller.INSTANCE.visitCalls(
+    return visitCalls(
       binOpSeq.seq().first().expr().toDoc(),
       binOpSeq.seq().view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
       (nest, arg) -> arg.accept(this, nest),
@@ -178,7 +180,7 @@ public final class ConcreteDistiller implements
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
       Doc.join(Doc.plain(", "), tuple.patterns().view().map(Pattern::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.cat(tup, Doc.styled(CoreDistiller.KEYWORD, " as "), Doc.plain(tuple.as().name()));
+      : Doc.cat(tup, Doc.styled(KEYWORD, " as "), Doc.plain(tuple.as().name()));
   }
 
   @Override public Doc visitNumber(Pattern.@NotNull Number number, Boolean nestedCall) {
@@ -192,7 +194,7 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitAbsurd(Pattern.@NotNull Absurd absurd, Boolean aBoolean) {
-    var doc = Doc.styled(CoreDistiller.KEYWORD, "impossible");
+    var doc = Doc.styled(KEYWORD, "impossible");
     return absurd.explicit() ? doc : Doc.braced(doc);
   }
 
@@ -203,10 +205,10 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitCtor(Pattern.@NotNull Ctor ctor, Boolean nestedCall) {
     var ctorDoc = Doc.cat(
-      Doc.styled(CoreDistiller.CON_CALL, ctor.name().data()),
+      Doc.styled(CON_CALL, ctor.name().data()),
       visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" "))
     );
-    return CoreDistiller.ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+    return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, boolean nestedCall, @NotNull Doc delim) {
@@ -224,16 +226,16 @@ public final class ConcreteDistiller implements
   }
 
   private Doc visitAccess(Stmt.@NotNull Accessibility accessibility) {
-    return Doc.styled(CoreDistiller.KEYWORD, accessibility.keyword);
+    return Doc.styled(KEYWORD, accessibility.keyword);
   }
 
   @Override public Doc visitImport(Stmt.@NotNull ImportStmt cmd, Unit unit) {
     return Doc.cat(
-      Doc.styled(CoreDistiller.KEYWORD, "import"),
+      Doc.styled(KEYWORD, "import"),
       Doc.plain(" "),
       Doc.symbol(cmd.path().joinToString("::")),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, "as"),
+      Doc.styled(KEYWORD, "as"),
       Doc.plain(" "),
       cmd.asName() == null ? Doc.symbol(cmd.path().joinToString("::")) : Doc.plain(cmd.asName())
     );
@@ -243,11 +245,11 @@ public final class ConcreteDistiller implements
     return Doc.cat(
       visitAccess(cmd.accessibility()),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, "open"),
+      Doc.styled(KEYWORD, "open"),
       Doc.plain(" "),
       Doc.plain(cmd.path().joinToString("::")),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, switch (cmd.useHide().strategy()) {
+      Doc.styled(KEYWORD, switch (cmd.useHide().strategy()) {
         case Using -> "using ";
         case Hiding -> "hiding ";
       }),
@@ -261,7 +263,7 @@ public final class ConcreteDistiller implements
     return Doc.cat(
       visitAccess(mod.accessibility()),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, "\\module"),
+      Doc.styled(KEYWORD, "\\module"),
       Doc.plain(" "),
       Doc.plain(mod.name()),
       Doc.plain(" {"),
@@ -276,11 +278,11 @@ public final class ConcreteDistiller implements
     return Doc.cat(
       visitAccess(bind.accessibility()),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, "bind"),
+      Doc.styled(KEYWORD, "bind"),
       Doc.plain(" "),
       Doc.plain(bind.op().join()),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, switch (bind.pred()) {
+      Doc.styled(KEYWORD, switch (bind.pred()) {
         case Looser -> "looser";
         case Tighter -> "tighter";
       }),
@@ -293,7 +295,7 @@ public final class ConcreteDistiller implements
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, "data"),
+      Doc.styled(KEYWORD, "data"),
       Doc.plain(" "),
       Doc.plain(decl.ref.name()),
       visitTele(decl.telescope),
@@ -308,8 +310,8 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitCtor(Decl.@NotNull DataCtor ctor, Unit unit) {
     var doc = Doc.cat(
-      CoreDistiller.coe(ctor.coerce),
-      CoreDistiller.linkDef(ctor.ref, CoreDistiller.CON_CALL),
+      coe(ctor.coerce),
+      linkDef(ctor.ref, CON_CALL),
       visitTele(ctor.telescope),
       visitClauses(ctor.clauses, true)
     );
@@ -332,9 +334,9 @@ public final class ConcreteDistiller implements
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, "struct"),
+      Doc.styled(KEYWORD, "struct"),
       Doc.plain(" "),
-      CoreDistiller.linkDef(decl.ref, CoreDistiller.STRUCT_CALL),
+      linkDef(decl.ref, STRUCT_CALL),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
@@ -348,8 +350,8 @@ public final class ConcreteDistiller implements
   @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
     return Doc.hcat(
       Doc.plain("| "),
-      CoreDistiller.coe(field.coerce),
-      CoreDistiller.linkDef(field.ref, CoreDistiller.FIELD_CALL),
+      coe(field.coerce),
+      linkDef(field.ref, FIELD_CALL),
       visitTele(field.telescope),
       field.result instanceof Expr.HoleExpr
         ? Doc.empty()
@@ -365,10 +367,10 @@ public final class ConcreteDistiller implements
     return Doc.cat(
       visitAccess(decl.accessibility()),
       Doc.plain(" "),
-      Doc.styled(CoreDistiller.KEYWORD, "def"),
+      Doc.styled(KEYWORD, "def"),
       decl.modifiers.isEmpty() ? Doc.plain(" ") :
         Doc.hsep(Seq.from(decl.modifiers).view().map(this::visitModifier)),
-      CoreDistiller.linkDef(decl.ref, CoreDistiller.FN_CALL),
+      linkDef(decl.ref, FN_CALL),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
         ? Doc.empty()
@@ -378,16 +380,16 @@ public final class ConcreteDistiller implements
         Doc.hcat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
-        : Doc.cat(Doc.plain(" "), Doc.styled(CoreDistiller.KEYWORD, "abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
+        : Doc.cat(Doc.plain(" "), Doc.styled(KEYWORD, "abusing"), Doc.plain(" "), visitAbuse(decl.abuseBlock))
     );
   }
 
   @Override public Doc visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
-    return CoreDistiller.primDoc(decl.ref);
+    return primDoc(decl.ref);
   }
 
   private Doc visitModifier(@NotNull Modifier modifier) {
-    return Doc.styled(CoreDistiller.KEYWORD, switch (modifier) {
+    return Doc.styled(KEYWORD, switch (modifier) {
       case Inline -> "inline";
       case Erase -> "erase";
     });
@@ -399,27 +401,23 @@ public final class ConcreteDistiller implements
   }
 
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
-    return block.sizeEquals(1)
-      ? block.get(0).toDoc()
-      : Doc.vcat(block.stream().map(Stmt::toDoc));
+    return Doc.vcat(block.stream().map(Stmt::toDoc));
   }
 
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
-    var vars = levels.levels().map(WithPos::data).map(t ->
-      Doc.linkDef(Doc.styled(CoreDistiller.GENERALIZED, t.name()), t.hashCode()));
-    return Doc.hcat(
-      Doc.styled(CoreDistiller.KEYWORD, levels.kind().keyword),
-      Doc.plain(" "),
+    var vars = levels.levels().map(WithPos::data).map(t -> linkDef(t, GENERALIZED));
+    return Doc.hsep(
+      Doc.styled(KEYWORD, levels.kind().keyword),
       Doc.hsep(vars));
   }
 
   @Override public Doc visitExample(Sample.@NotNull Working example, Unit unit) {
-    return Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "example"),
+    return Doc.hsep(Doc.styled(KEYWORD, "example"),
       example.delegate().accept(this, unit));
   }
 
   @Override public Doc visitCounterexample(Sample.@NotNull Counter example, Unit unit) {
-    return Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "counterexample"),
+    return Doc.hsep(Doc.styled(KEYWORD, "counterexample"),
       example.delegate().accept(this, unit));
   }
 }
