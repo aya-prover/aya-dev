@@ -211,19 +211,19 @@ public final class CoreDistiller implements
   }
 
   private Doc visitTele(@NotNull SeqLike<Term.Param> telescope) {
-    return telescope.isEmpty() ? Doc.empty() : Doc.hsep(telescope.view().map(Term.Param::toDoc));
+    return Doc.hsep(telescope.view().map(Term.Param::toDoc));
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
-      Doc.join(Doc.plain(", "), tuple.pats().stream().map(Pat::toDoc)));
+      Doc.join(Doc.plain(", "), tuple.pats().view().map(Pat::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.cat(tup, Doc.styled(CoreDistiller.KEYWORD, " as "), Doc.plain(tuple.as().name()));
+      : Doc.hsep(tup, Doc.styled(CoreDistiller.KEYWORD, "as"), linkDef(tuple.as()));
   }
 
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
-    var doc = plainLinkDef(bind.as());
+    var doc = linkDef(bind.as());
     return bind.explicit() ? doc : Doc.braced(doc);
   }
 
@@ -322,13 +322,13 @@ public final class CoreDistiller implements
     return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
-  public static @NotNull Doc plainLinkDef(@NotNull Var ref) {
+  public static @NotNull Doc linkDef(@NotNull Var ref) {
     return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
   }
 
   @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
     var doc = Doc.cat(
-      ctor.coerce() ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),
+      coe(ctor.coerce()),
       linkDef(ctor.ref(), CoreDistiller.CON_CALL),
       visitTele(ctor.conTele())
     );
@@ -338,6 +338,10 @@ public final class CoreDistiller implements
       line1 = Doc.hcat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
     } else line1 = Doc.hcat(Doc.plain("| "), doc);
     return visitConditions(line1, ctor.clauses());
+  }
+
+  public static @NotNull Doc coe(boolean coerce) {
+    return coerce ? Doc.styled(CoreDistiller.KEYWORD, "coerce ") : Doc.empty();
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
@@ -353,7 +357,7 @@ public final class CoreDistiller implements
   @Override public Doc visitField(@NotNull StructDef.Field field, Unit unit) {
     return visitConditions(Doc.hcat(
       Doc.plain("| "),
-      field.coerce() ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),
+      coe(field.coerce()),
       linkDef(field.ref(), CoreDistiller.FIELD_CALL),
       visitTele(field.fieldTele())
     ), field.clauses());

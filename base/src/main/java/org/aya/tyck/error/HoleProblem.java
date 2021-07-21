@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
+import kala.collection.Seq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
@@ -11,7 +12,6 @@ import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
-import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */
@@ -62,7 +62,7 @@ public sealed interface HoleProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.hsep(
         Doc.plain("Trying to solve hole"),
-        Doc.styled(Style.code(), CoreDistiller.plainLinkDef(term.ref())),
+        Doc.styled(Style.code(), CoreDistiller.linkDef(term.ref())),
         Doc.plain("as"),
         Doc.styled(Style.code(), sol.toDoc()),
         Doc.plain("which is recursive"));
