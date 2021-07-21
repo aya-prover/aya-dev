@@ -4,7 +4,6 @@ package org.aya.cli;
 
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
-import kala.tuple.Unit;
 import org.ice1000.jimgui.util.JniLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,8 +38,7 @@ public class Cli extends CliArgs implements Callable<Integer> {
       }
       case markdown -> {
         var printer = new MdUnicodeTrace();
-        traceBuilder.root().forEach(e -> e.accept(printer, Unit.unit()));
-        System.err.println(printer.builder);
+        System.err.println(printer.docify(traceBuilder).debugRender());
       }
     }
     return status;

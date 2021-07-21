@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public sealed interface FormTerm extends Term {
-
-    /**
+  /**
    * @author re-xyr, kiva, ice1000
    */
   record Pi(@NotNull Term.Param param, @NotNull Term body) implements FormTerm {
@@ -42,7 +41,7 @@ public sealed interface FormTerm extends Term {
     }
 
     public static @NotNull Term make(@NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
-      return telescope.view().reversed().foldLeft(body, (t, p) -> new Pi(p, t));
+      return telescope.view().foldRight(body, Pi::new);
     }
   }
 

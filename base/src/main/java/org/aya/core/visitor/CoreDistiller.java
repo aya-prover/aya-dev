@@ -105,7 +105,7 @@ public final class CoreDistiller implements
       (nest, t) -> t.toDoc(), nestedCall);
   }
 
-  public @NotNull Doc univDoc(Boolean nestedCall, String head, @NotNull Docile lvl) {
+  public static @NotNull Doc univDoc(Boolean nestedCall, String head, @NotNull Docile lvl) {
     return visitCalls(Doc.styled(KEYWORD, head),
       Seq.of(Arg.explicit(lvl)),
       (nc, l) -> l.toDoc(), nestedCall);
@@ -161,7 +161,7 @@ public final class CoreDistiller implements
   @Override public Doc visitAccess(CallTerm.@NotNull Access term, Boolean nestedCall) {
     var ref = term.ref();
     var doc = Doc.cat(term.of().toDoc(), Doc.symbol("."),
-      Doc.linkRef(Doc.styled(CoreDistiller.FIELD_CALL, ref.name()), ref.hashCode()));
+      Doc.linkRef(Doc.styled(FIELD_CALL, ref.name()), ref.hashCode()));
     return visitCalls(doc, term.fieldArgs(), (n, t) -> t.accept(this, n), nestedCall);
   }
 
@@ -190,7 +190,7 @@ public final class CoreDistiller implements
     return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
-  public <T extends Docile> @NotNull Doc visitCalls(
+  public static <T extends Docile> @NotNull Doc visitCalls(
     @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
     @NotNull BiFunction<Boolean, T, Doc> formatter, boolean nestedCall
   ) {
@@ -211,24 +211,24 @@ public final class CoreDistiller implements
   }
 
   private Doc visitTele(@NotNull SeqLike<Term.Param> telescope) {
-    return telescope.isEmpty() ? Doc.empty() : Doc.hsep(telescope.view().map(Term.Param::toDoc));
+    return Doc.hsep(telescope.view().map(Term.Param::toDoc));
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
-      Doc.join(Doc.plain(", "), tuple.pats().stream().map(Pat::toDoc)));
+      Doc.join(Doc.plain(", "), tuple.pats().view().map(Pat::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.cat(tup, Doc.styled(CoreDistiller.KEYWORD, " as "), Doc.plain(tuple.as().name()));
+      : Doc.hsep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
   }
 
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
-    var doc = plainLinkDef(bind.as());
+    var doc = linkDef(bind.as());
     return bind.explicit() ? doc : Doc.braced(doc);
   }
 
   @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Boolean aBoolean) {
-    var doc = Doc.styled(CoreDistiller.KEYWORD, "impossible");
+    var doc = Doc.styled(KEYWORD, "impossible");
     return absurd.explicit() ? doc : Doc.braced(doc);
   }
 
@@ -243,7 +243,7 @@ public final class CoreDistiller implements
   }
 
   @NotNull private Doc hyperLink(DefVar<?, ?> ref) {
-    return Doc.linkRef(Doc.styled(CoreDistiller.CON_CALL, ref.name()), ref.hashCode());
+    return Doc.linkRef(Doc.styled(CON_CALL, ref.name()), ref.hashCode());
   }
 
   public static @NotNull Doc ctorDoc(boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
@@ -267,8 +267,8 @@ public final class CoreDistiller implements
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
     var line1 = Doc.hcat(
-      Doc.styled(CoreDistiller.KEYWORD, "def "),
-      linkDef(def.ref(), CoreDistiller.FN_CALL),
+      Doc.styled(KEYWORD, "def "),
+      linkDef(def.ref(), FN_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc());
     return def.body().fold(
@@ -309,9 +309,9 @@ public final class CoreDistiller implements
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
     var line1 = Doc.hcat(
-      Doc.styled(CoreDistiller.KEYWORD, "data"),
+      Doc.styled(KEYWORD, "data"),
       Doc.plain(" "),
-      linkDef(def.ref(), CoreDistiller.DATA_CALL),
+      linkDef(def.ref(), DATA_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc());
     return Doc.vcat(line1, Doc.nest(2, Doc.vcat(
@@ -322,14 +322,14 @@ public final class CoreDistiller implements
     return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
-  public static @NotNull Doc plainLinkDef(@NotNull Var ref) {
+  public static @NotNull Doc linkDef(@NotNull Var ref) {
     return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
   }
 
   @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
     var doc = Doc.cat(
-      ctor.coerce() ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),
-      linkDef(ctor.ref(), CoreDistiller.CON_CALL),
+      coe(ctor.coerce()),
+      linkDef(ctor.ref(), CON_CALL),
       visitTele(ctor.conTele())
     );
     Doc line1;
@@ -340,11 +340,15 @@ public final class CoreDistiller implements
     return visitConditions(line1, ctor.clauses());
   }
 
+  public static @NotNull Doc coe(boolean coerce) {
+    return coerce ? Doc.styled(KEYWORD, "coerce ") : Doc.empty();
+  }
+
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
     return Doc.vcat(Doc.hcat(
-      Doc.styled(CoreDistiller.KEYWORD, "struct"),
+      Doc.styled(KEYWORD, "struct"),
       Doc.plain(" "),
-      linkDef(def.ref(), CoreDistiller.STRUCT_CALL),
+      linkDef(def.ref(), STRUCT_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc()), Doc.nest(2, Doc.vcat(
       def.fields().view().map(field -> field.accept(this, Unit.unit())))));
@@ -353,8 +357,8 @@ public final class CoreDistiller implements
   @Override public Doc visitField(@NotNull StructDef.Field field, Unit unit) {
     return visitConditions(Doc.hcat(
       Doc.plain("| "),
-      field.coerce() ? Doc.styled(CoreDistiller.KEYWORD, "\\coerce ") : Doc.empty(),
-      linkDef(field.ref(), CoreDistiller.FIELD_CALL),
+      coe(field.coerce()),
+      linkDef(field.ref(), FIELD_CALL),
       visitTele(field.fieldTele())
     ), field.clauses());
   }
@@ -364,9 +368,6 @@ public final class CoreDistiller implements
   }
 
   public static @NotNull Doc primDoc(Var ref) {
-    return Doc.hcat(
-      Doc.styled(CoreDistiller.KEYWORD, "prim "),
-      Doc.linkDef(Doc.styled(CoreDistiller.FN_CALL, ref.name()), ref.hashCode())
-    );
+    return Doc.hsep(Doc.styled(KEYWORD, "prim"), linkDef(ref, FN_CALL));
   }
 }

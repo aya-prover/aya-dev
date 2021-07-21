@@ -16,8 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public sealed interface IntroTerm extends Term {
-
-    /**
+  /**
    * @author ice1000
    */
   record Lambda(@NotNull Term.Param param, @NotNull Term body) implements IntroTerm {
@@ -30,7 +29,7 @@ public sealed interface IntroTerm extends Term {
     }
 
     public static @NotNull Term make(@NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
-      return telescope.view().reversed().foldLeft(body, (t, p) -> new Lambda(p, t));
+      return telescope.view().foldRight(body, Lambda::new);
     }
   }
 

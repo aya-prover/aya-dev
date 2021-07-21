@@ -18,7 +18,7 @@ public record ErrorTerm(@NotNull Doc description) implements Term {
     return visitor.visitError(this, p, q);
   }
 
-    public static @NotNull ErrorTerm typeOf(@NotNull Doc origin) {
+  public static @NotNull ErrorTerm typeOf(@NotNull Doc origin) {
     return new ErrorTerm(Doc.hsep(
       Doc.plain("type of"),
       Doc.styled(Style.code(), origin)));

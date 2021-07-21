@@ -4,90 +4,70 @@ package org.aya.tyck.trace;
 
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.core.visitor.CoreDistiller;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
-public class MdUnicodeTrace implements Trace.Visitor<Unit, Unit> {
-  public final @NotNull StringBuilder builder;
-  private int indent = 0;
-  private final int indentation;
-  public @NotNull String lineSep = System.lineSeparator();
+public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
+  public final int indent;
+  public static final @NotNull Doc plus = Doc.symbol("+");
+  public static final @NotNull Doc colon = Doc.symbol(":");
 
-  public MdUnicodeTrace(int capacity, int indentation) {
-    this.builder = new StringBuilder(capacity);
-    this.indentation = indentation;
+  public MdUnicodeTrace(int indent) {
+    this.indent = indent;
   }
 
   public MdUnicodeTrace() {
-    this(2048, 2);
+    this(2);
   }
 
-  @Override public Unit visitDecl(Trace.@NotNull DeclT t, Unit unit) {
-    indent();
-    builder.append("+ ").append(t.var().name());
-    visitSub(t.children());
-    return unit;
+  @Override public Doc visitDecl(Trace.@NotNull DeclT t, Unit unit) {
+    return Doc.vcat(Doc.hsep(plus, CoreDistiller.varDoc(t.var())),
+      indentedChildren(t.children()));
   }
 
-  @Override public Unit visitExpr(Trace.@NotNull ExprT t, Unit unit) {
-    indent();
-    builder.append("+ \u22A2 `")
-      .append(t.expr().toDoc().debugRender())
-      .append("`");
-    if (t.term() != null) builder.append(" : ")
-      .append(t.term().toDoc().debugRender());
-    visitSub(t.children());
-    return unit;
+  private @NotNull Doc indentedChildren(Buffer<@NotNull Trace> children) {
+    return Doc.nest(indent, Doc.vcat(children.view().map(trace -> trace.accept(this, Unit.unit()))));
   }
 
-  private void indent() {
-    builder.append(" ".repeat(indent));
+  @Override public Doc visitExpr(Trace.@NotNull ExprT t, Unit unit) {
+    var buf = Buffer.of(plus, Doc.symbol("\u22A2"), Doc.styled(Style.code(), t.expr().toDoc()));
+    if (t.term() != null) {
+      buf.append(colon);
+      buf.append(t.term().toDoc());
+    }
+    return Doc.vcat(Doc.hsep(buf), indentedChildren(t.children()));
   }
 
-  private void visitSub(@NotNull Buffer<@NotNull Trace> subtraces) {
-    builder.append(lineSep);
-    if (subtraces.isEmpty()) return;
-    indent += indentation;
-    for (var subtrace : subtraces) subtrace.accept(this, Unit.unit());
-    indent -= indentation;
+  @Override public Doc visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
+    var buf = Buffer.of(plus, Doc.symbol("\u22A2"), t.lhs().toDoc(), Doc.symbol("\u2261"), t.rhs().toDoc());
+    if (t.type() != null) {
+      buf.append(colon);
+      buf.append(t.type().toDoc());
+    }
+    return Doc.vcat(Doc.hsep(buf), indentedChildren(t.children()));
   }
 
-  @Override public Unit visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
-    indent();
-    builder.append("+ \u22A2 ")
-      .append(t.lhs().toDoc().debugRender())
-      .append(" \u2261 ")
-      .append(t.rhs().toDoc().debugRender());
-    if (t.type() != null) builder.append(" : ").append(t.type().toDoc().debugRender());
-    visitSub(t.children());
-    return unit;
-  }
-
-  @Override public Unit visitTyck(Trace.@NotNull TyckT t, Unit unit) {
-    indent();
-    builder.append("+ result \u22A2 `")
-      .append(t.term().toDoc().debugRender())
-      .append("` \u2191 ")
-      .append(t.type().toDoc().debugRender())
-      .append(lineSep);
+  @Override public Doc visitTyck(Trace.@NotNull TyckT t, Unit unit) {
     assert t.children().isEmpty();
-    return unit;
+    return Doc.hsep(plus, Doc.plain("result"), Doc.symbol("\u22A2"),
+      Doc.styled(Style.code(), t.term().toDoc()), Doc.symbol("\u2191"),
+      t.type().toDoc());
   }
 
-  @Override public Unit visitPat(Trace.@NotNull PatT t, Unit unit) {
-    indent();
-    builder.append("+ pat \u22A2 `")
-      .append(t.pat().toDoc().debugRender())
-      .append("` : ")
-      .append(t.term().toDoc().debugRender())
-      .append(lineSep);
-    visitSub(t.children());
-    return unit;
+  @Override public Doc visitPat(Trace.@NotNull PatT t, Unit unit) {
+    return Doc.vcat(Doc.hsep(plus, Doc.plain("pat"), Doc.symbol("\u22A2"),
+        Doc.styled(Style.code(), t.pat().toDoc()), colon,
+        t.term().toDoc()),
+      indentedChildren(t.children()));
   }
 
-  @Override public Unit visitLabel(Trace.@NotNull LabelT t, Unit unit) {
-    indent();
-    builder.append("+ ").append(t.label());
-    visitSub(t.children());
-    return unit;
+  @Override public Doc visitLabel(Trace.@NotNull LabelT t, Unit unit) {
+    return Doc.vcat(Doc.hsep(plus, Doc.plain(t.label())), indentedChildren(t.children()));
+  }
+
+  public @NotNull Doc docify(Trace.@NotNull Builder traceBuilder) {
+    return Doc.vcat(traceBuilder.root().view().map(e -> e.accept(this, Unit.unit())));
   }
 }
