@@ -36,10 +36,7 @@ public class Cli extends CliArgs implements Callable<Integer> {
         JniLoader.load();
         new ImGuiTrace(sourceCode).mainLoop(traceBuilder.root());
       }
-      case markdown -> {
-        var printer = new MdUnicodeTrace();
-        System.err.println(printer.docify(traceBuilder).debugRender());
-      }
+      case markdown -> System.err.println(new MdUnicodeTrace().docify(traceBuilder).debugRender());
     }
     return status;
   }

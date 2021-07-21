@@ -37,8 +37,6 @@ public class TracingTest {
   }
 
   @Test public void traceMd() {
-    var builder = mkBuilder();
-    var show = new MdUnicodeTrace();
-    assertFalse(show.docify(Objects.requireNonNull(builder)).debugRender().isEmpty());
+    assertFalse(new MdUnicodeTrace().docify(Objects.requireNonNull(mkBuilder())).debugRender().isEmpty());
   }
 }
