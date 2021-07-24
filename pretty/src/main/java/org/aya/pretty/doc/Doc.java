@@ -410,28 +410,6 @@ public sealed interface Doc extends Docile {
     return align(nest(deltaNest, doc));
   }
 
-  /**
-   * 'indent' indents document {@param doc} by {@param indent} columns,
-   * starting from the current cursor position.
-   *
-   * <pre>
-   * >>> let doc = reflow "The indent function indents these words!"
-   * >>> putDocW 24 ("prefix" <> indent 4 doc)
-   * prefix    The indent
-   *           function
-   *           indents these
-   *           words!
-   * </pre>
-   *
-   * @param indent number of spaces to increase indentation by
-   * @param doc    document
-   * @return indented document
-   */
-  @Contract("_, _ -> new")
-  static @NotNull Doc indent(int indent, @NotNull Doc doc) {
-    return hang(indent, simpleCat(spaces(indent), doc));
-  }
-
   @Contract("_ -> new")
   static @NotNull Doc ordinal(int n) {
     var m = n % 100;
@@ -479,29 +457,19 @@ public sealed interface Doc extends Docile {
    */
   @Contract("_ -> new")
   static @NotNull Doc group(@NotNull Doc doc) {
-    if (doc instanceof Union) {
-      return doc;
-
-    } else if (doc instanceof FlatAlt alt) {
+    if (doc instanceof Union) return doc;
+    else if (doc instanceof FlatAlt alt) {
       var flattenResult = Flatten.flatDoc(alt.preferWhenFlatten());
-      if (flattenResult instanceof Flatten.Flattened f) {
+      if (flattenResult instanceof Flatten.Flattened f)
         return new Union(f.flattenedDoc(), alt.defaultDoc());
-
-      } else if (flattenResult instanceof Flatten.AlreadyFlat) {
+      else if (flattenResult instanceof Flatten.AlreadyFlat)
         return new Union(alt.preferWhenFlatten(), alt.defaultDoc());
-
-      } else {
-        return alt.defaultDoc();
-      }
+      else return alt.defaultDoc();
 
     } else {
       var flattenResult = Flatten.flatDoc(doc);
-      if (flattenResult instanceof Flatten.Flattened f) {
-        return new Union(f.flattenedDoc(), doc);
-
-      } else {
-        return doc;
-      }
+      if (flattenResult instanceof Flatten.Flattened f) return new Union(f.flattenedDoc(), doc);
+      else return doc;
     }
   }
 
@@ -774,41 +742,6 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * softline behaves like a {@code spaces(1)} if the resulting output fits the page,
-   * otherwise like a {@code line()}.
-   * <p>
-   * For example, here, we have enough space to put everything in one line:
-   *
-   * <pre>
-   * >>> let doc = "lorem ipsum" <> softline <> "dolor sit amet"
-   * >>> putDocW 80 doc
-   * lorem ipsum dolor sit amet
-   * </pre>
-   * If we narrow the page to width 10, the layouter produces a line break:
-   * <pre>
-   * >>> putDocW 10 doc
-   * lorem ipsum
-   * dolor sit amet
-   * </pre>
-   *
-   * @return soft line document
-   */
-  @Contract("-> new")
-  static @NotNull Doc softLine() {
-    return new Union(line(), ONE_WS);
-  }
-
-  /**
-   * Another softLine but result nothing on page when flattened.
-   *
-   * @return soft line document
-   */
-  @Contract("-> new")
-  static @NotNull Doc softLineEmpty() {
-    return new Union(line(), empty());
-  }
-
-  /**
    * Unconditionally line break
    *
    * @return hard line document
@@ -837,19 +770,6 @@ public sealed interface Doc extends Docile {
   @Contract("-> new")
   static @NotNull Doc lineEmpty() {
     return new FlatAlt(new Line(), empty());
-  }
-
-  /**
-   * Insert a number of spaces. Negative values count as 0.
-   *
-   * @param count count of spaces
-   * @return space document
-   */
-  @Contract("_ -> new")
-  static @NotNull Doc spaces(int count) {
-    return count < 0
-      ? empty()
-      : plain(" ".repeat(count));
   }
 
   //endregion
@@ -897,51 +817,29 @@ public sealed interface Doc extends Docile {
     }
 
     static Flatten flatDoc(@NotNull Doc doc) {
-      if (doc instanceof Doc.FlatAlt alt) {
-        return new Flattened(flatten(alt.preferWhenFlatten()));
-
-      } else if (doc instanceof Doc.Line) {
-        return new NeverFlat();
-
-      } else if (doc instanceof Doc.Union u) {
-        return new Flattened(u.shorterOne());
-
-      } else if (doc instanceof Doc.Nest n) {
+      if (doc instanceof Doc.FlatAlt alt) return new Flattened(flatten(alt.preferWhenFlatten()));
+      else if (doc instanceof Doc.Line) return new NeverFlat();
+      else if (doc instanceof Doc.Union u) return new Flattened(u.shorterOne());
+      else if (doc instanceof Doc.Nest n) {
         var result = flatDoc(n.doc());
-        if (result instanceof Flattened f) {
-          return new Flattened(new Doc.Nest(n.indent(), f.flattenedDoc()));
-        } else {
-          return result;
-        }
-
-      } else if (doc instanceof Doc.Column c) {
-        return new Flattened(new Doc.Column(
-          i -> flatten(c.docBuilder().apply(i))
-        ));
-
-      } else if (doc instanceof Doc.Nesting c) {
-        return new Flattened(new Doc.Nesting(
-          i -> flatten(c.docBuilder().apply(i))
-        ));
-
-      } else if (doc instanceof Doc.PageWidth c) {
-        return new Flattened(new Doc.PageWidth(
-          i -> flatten(c.docBuilder().apply(i))
-        ));
-
-      } else if (doc instanceof Doc.Cat c) {
-        return flatCat(c);
-
-      } else if (doc instanceof Doc.Empty
+        if (result instanceof Flattened f) return new Flattened(new Nest(n.indent(), f.flattenedDoc()));
+        else return result;
+      } else if (doc instanceof Doc.Column c) return new Flattened(new Column(
+        i -> flatten(c.docBuilder().apply(i))
+      ));
+      else if (doc instanceof Doc.Nesting c) return new Flattened(new Nesting(
+        i -> flatten(c.docBuilder().apply(i))
+      ));
+      else if (doc instanceof Doc.PageWidth c) return new Flattened(new PageWidth(
+        i -> flatten(c.docBuilder().apply(i))
+      ));
+      else if (doc instanceof Doc.Cat c) return flatCat(c);
+      else if (doc instanceof Doc.Empty
         || doc instanceof Doc.PlainText
         || doc instanceof Doc.SpecialSymbol
         || doc instanceof Doc.HyperLinked
-        || doc instanceof Doc.Styled) {
-        return new AlreadyFlat();
-
-      } else if (doc instanceof Doc.Fail) {
-        return new NeverFlat();
-      }
+        || doc instanceof Doc.Styled) return new AlreadyFlat();
+      else if (doc instanceof Doc.Fail) return new NeverFlat();
 
       throw new IllegalStateException("unreachable");
     }
@@ -950,20 +848,14 @@ public sealed interface Doc extends Docile {
       var l = flatDoc(cat.first());
       var r = flatDoc(cat.second());
 
-      if (l instanceof NeverFlat || r instanceof NeverFlat) {
-        return new NeverFlat();
-      } else if (l instanceof AlreadyFlat && r instanceof AlreadyFlat) {
-        return new AlreadyFlat();
-      }
+      if (l instanceof NeverFlat || r instanceof NeverFlat) return new NeverFlat();
+      else if (l instanceof AlreadyFlat && r instanceof AlreadyFlat) return new AlreadyFlat();
 
       if (l instanceof Flattened x) {
-        if (r instanceof Flattened y) {
-          return new Flattened(new Doc.Cat(x.flattenedDoc(), y.flattenedDoc()));
-        } else if (r instanceof AlreadyFlat) {
-          return new Flattened(new Doc.Cat(x.flattenedDoc(), cat.second()));
-        }
+        if (r instanceof Flattened y) return new Flattened(new Cat(x.flattenedDoc(), y.flattenedDoc()));
+        else if (r instanceof AlreadyFlat) return new Flattened(new Cat(x.flattenedDoc(), cat.second()));
       } else if (l instanceof AlreadyFlat && r instanceof Flattened y) {
-        return new Flattened(new Doc.Cat(cat.first(), y.flattenedDoc()));
+        return new Flattened(new Cat(cat.first(), y.flattenedDoc()));
       }
 
       throw new IllegalStateException("unreachable");
@@ -976,39 +868,21 @@ public sealed interface Doc extends Docile {
      * @return flattened doc
      */
     private static @NotNull Doc flatten(@NotNull Doc doc) {
-      if (doc instanceof Doc.FlatAlt alt) {
-        return flatten(alt.preferWhenFlatten());
-
-      } else if (doc instanceof Doc.Cat cat) {
-        return new Doc.Cat(flatten(cat.first()), flatten(cat.second()));
-
-      } else if (doc instanceof Doc.Nest nest) {
-        return new Doc.Nest(nest.indent(), flatten(nest.doc()));
-
-      } else if (doc instanceof Doc.Line) {
-        return new Doc.Fail();
-
-      } else if (doc instanceof Doc.Union u) {
-        return flatten(u.shorterOne());
-
-      } else if (doc instanceof Doc.Column c) {
-        return new Doc.Column(
-          i -> flatten(c.docBuilder().apply(i))
-        );
-
-      } else if (doc instanceof Doc.Nesting n) {
-        return new Doc.Nesting(
-          i -> flatten(n.docBuilder().apply(i))
-        );
-
-      } else if (doc instanceof Doc.PageWidth n) {
-        return new Doc.PageWidth(
-          i -> flatten(n.docBuilder().apply(i))
-        );
-
-      } else {
-        return doc;
-      }
+      if (doc instanceof Doc.FlatAlt alt) return flatten(alt.preferWhenFlatten());
+      else if (doc instanceof Doc.Cat cat) return new Cat(flatten(cat.first()), flatten(cat.second()));
+      else if (doc instanceof Doc.Nest nest) return new Nest(nest.indent(), flatten(nest.doc()));
+      else if (doc instanceof Doc.Line) return new Fail();
+      else if (doc instanceof Doc.Union u) return flatten(u.shorterOne());
+      else if (doc instanceof Doc.Column c) return new Column(
+        i -> flatten(c.docBuilder().apply(i))
+      );
+      else if (doc instanceof Doc.Nesting n) return new Nesting(
+        i -> flatten(n.docBuilder().apply(i))
+      );
+      else if (doc instanceof Doc.PageWidth n) return new PageWidth(
+        i -> flatten(n.docBuilder().apply(i))
+      );
+      else return doc;
     }
   }
   //endregion

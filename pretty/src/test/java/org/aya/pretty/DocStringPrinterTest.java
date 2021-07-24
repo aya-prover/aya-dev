@@ -23,37 +23,6 @@ public class DocStringPrinterTest {
     assertEquals("    boynextdoor", doc.renderWithPageWidth(80));
   }
 
-  @Test
-  public void testIndent() {
-    var doc = indent(4, plain("boynextdoor"));
-    assertEquals("        boynextdoor", doc.renderWithPageWidth(80));
-  }
-
-  @Test
-  public void testIndentWithPrefixAndSuffix() {
-    var doc = hcat(
-      plain("prefix"),
-      indent(4, vcat(plain("boynextdoor"), plain("dooooor"))),
-      indent(4, plain("postfix"))
-    );
-    assertEquals("prefix    boynextdoor\n          dooooor    postfix", doc.renderWithPageWidth(80));
-  }
-
-  @Test public void testNestedIndent() {
-    var doc = vcat(
-      plain("shakedown street"),
-      indent(2, vcat(
-        hcat(plain("grateful "), plain("dead")),
-        indent(2, vcat(
-          plain("heaven's on fire"),
-          plain("kiss"))))));
-    assertEquals("""
-      shakedown street
-          grateful dead
-          heaven's on fire
-        kiss""", doc.renderWithPageWidth(80));
-  }
-
   @Test public void testNestedNest() {
     var doc = vcat(
       plain("shakedown street"),
