@@ -61,7 +61,7 @@ public final class CoreDistiller implements
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
     var doc = Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("\\")),
-      Doc.plain(" "),
+      Doc.ONE_WS,
       term.param().toDoc(),
       Doc.symbol(" => "),
       term.body().toDoc()
@@ -73,7 +73,7 @@ public final class CoreDistiller implements
     // TODO[kiva]: term.co
     var doc = Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      Doc.plain(" "),
+      Doc.ONE_WS,
       term.param().toDoc(),
       Doc.symbol(" -> "),
       term.body().toDoc()
@@ -84,7 +84,7 @@ public final class CoreDistiller implements
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Boolean nestedCall) {
     var doc = Doc.cat(
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
-      Doc.plain(" "),
+      Doc.ONE_WS,
       visitTele(term.params().view().dropLast(1)),
       Doc.plain(" ** "),
       term.params().last().toDoc()
@@ -197,7 +197,7 @@ public final class CoreDistiller implements
     if (args.isEmpty()) return fn;
     var call = Doc.cat(
       fn,
-      Doc.plain(" "),
+      Doc.ONE_WS,
       Doc.hsep(args.view().map(arg -> {
         // Do not use `arg.term().toDoc()` because we want to
         // wrap args in parens if we are inside a nested call
@@ -238,7 +238,7 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
-    var ctorDoc = Doc.cat(hyperLink(ctor.ref()), visitMaybeCtorPatterns(ctor.params(), true, Doc.plain(" ")));
+    var ctorDoc = Doc.cat(hyperLink(ctor.ref()), visitMaybeCtorPatterns(ctor.params(), true, Doc.ONE_WS));
     return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
   }
 
@@ -255,7 +255,7 @@ public final class CoreDistiller implements
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
-    return patterns.isEmpty() ? Doc.empty() : Doc.cat(Doc.plain(" "), Doc.join(delim,
+    return patterns.isEmpty() ? Doc.empty() : Doc.cat(Doc.ONE_WS, Doc.join(delim,
       patterns.view().map(p -> p.accept(this, nestedCall))));
   }
 
@@ -290,7 +290,7 @@ public final class CoreDistiller implements
       names.append(param.nameDoc());
     }
     buf.append(last.toDoc(Doc.hsep(names)));
-    return Doc.cat(Doc.plain(" "), Doc.hsep(buf));
+    return Doc.cat(Doc.ONE_WS, Doc.hsep(buf));
   }
 
   private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
@@ -310,7 +310,7 @@ public final class CoreDistiller implements
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
     var line1 = Doc.hcat(
       Doc.styled(KEYWORD, "data"),
-      Doc.plain(" "),
+      Doc.ONE_WS,
       linkDef(def.ref(), DATA_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc());
@@ -347,7 +347,7 @@ public final class CoreDistiller implements
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
     return Doc.vcat(Doc.hcat(
       Doc.styled(KEYWORD, "struct"),
-      Doc.plain(" "),
+      Doc.ONE_WS,
       linkDef(def.ref(), STRUCT_CALL),
       visitTele(def.telescope()),
       Doc.plain(" : "), def.result().toDoc()), Doc.nest(2, Doc.vcat(

@@ -31,6 +31,7 @@ import java.util.stream.Stream;
  * @author kiva
  */
 public sealed interface Doc extends Docile {
+  @NotNull Doc ONE_WS = plain(" ");
   @Override default @NotNull Doc toDoc() {
     return this;
   }
@@ -79,6 +80,7 @@ public sealed interface Doc extends Docile {
    * The empty document; conceptually the unit of 'Cat'
    */
   record Empty() implements Doc {
+    static final @NotNull Empty INSTANCE = new Empty();
   }
 
   /**
@@ -247,7 +249,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("-> new")
   static @NotNull Doc empty() {
-    return new Empty();
+    return Empty.INSTANCE;
   }
 
   /**
@@ -626,7 +628,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("_ -> new")
   static @NotNull Doc fillCat(Doc @NotNull ... docs) {
-    return join(new FlatAlt(plain(" "), empty()), docs);
+    return join(new FlatAlt(ONE_WS, empty()), docs);
   }
 
   /**
@@ -753,7 +755,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("_ -> new")
   static @NotNull Doc hsep(@NotNull SeqLike<@NotNull Doc> docs) {
-    return join(Doc.plain(" "), docs);
+    return join(ONE_WS, docs);
   }
 
   /**
@@ -786,7 +788,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("_ -> new")
   static @NotNull Doc fillSep(Doc @NotNull ... docs) {
-    return join(new FlatAlt(plain(" "), new Line()), docs);
+    return join(new FlatAlt(ONE_WS, new Line()), docs);
   }
 
   @Contract("_, _ -> new")
@@ -829,7 +831,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("-> new")
   static @NotNull Doc softLine() {
-    return new Union(line(), plain(" "));
+    return new Union(line(), ONE_WS);
   }
 
   /**
@@ -860,7 +862,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("-> new")
   static @NotNull Doc line() {
-    return new FlatAlt(new Line(), plain(" "));
+    return new FlatAlt(new Line(), ONE_WS);
   }
 
   /**
@@ -908,7 +910,7 @@ public sealed interface Doc extends Docile {
         makeCat(
           first,
           second,
-          (a, b) -> simpleCat(a, plain(" "), b)
+          (a, b) -> simpleCat(a, ONE_WS, b)
         ),
       Seq.of(xs)
     );
