@@ -523,51 +523,16 @@ public sealed interface Doc extends Docile {
     return simpleCat(docs);
   }
 
-  /**
-   * vcat vertically concatenates the documents {@param docs}. If it is
-   * 'group'ed, the line breaks are removed.
-   * In other words vcat is like vsep, with newlines removed instead of
-   * replaced by 'space's.
-   *
-   * <pre>
-   * >>> let docs = Util.words "lorem ipsum dolor"
-   * >>> vcat docs
-   * lorem
-   * ipsum
-   * dolor
-   * >>> group (vcat docs)
-   * loremipsumdolor
-   * </pre>
-   * <p>
-   * Since 'group'ing a 'vcat' is rather common, 'cat' is a built-in shortcut for
-   * it.
-   *
-   * @param docs documents to concat
-   * @return concat document
-   */
   @Contract("_ -> new")
   static @NotNull Doc vcat(Doc @NotNull ... docs) {
-    return join(lineEmpty(), docs);
+    return join(hardLine(), docs);
   }
 
   @Contract("_ -> new") static @NotNull Doc vcat(@NotNull Stream<@NotNull Doc> docs) {
-    return join(lineEmpty(), docs);
+    return join(hardLine(), docs);
   }
 
   @Contract("_ -> new") static @NotNull Doc vcat(@NotNull SeqLike<@NotNull Doc> docs) {
-    return join(lineEmpty(), docs);
-  }
-
-  @Contract("_ -> new")
-  static @NotNull Doc vfcat(Doc @NotNull ... docs) {
-    return join(hardLine(), docs);
-  }
-
-  @Contract("_ -> new") static @NotNull Doc vfcat(@NotNull Stream<@NotNull Doc> docs) {
-    return join(hardLine(), docs);
-  }
-
-  @Contract("_ -> new") static @NotNull Doc vfcat(@NotNull SeqLike<@NotNull Doc> docs) {
     return join(hardLine(), docs);
   }
 
@@ -902,18 +867,6 @@ public sealed interface Doc extends Docile {
 
   private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
     return concatWith(Doc::makeCat, Seq.of(xs));
-  }
-
-  private static @NotNull Doc simpleSpacedCat(Doc @NotNull ... xs) {
-    return concatWith(
-      (first, second) ->
-        makeCat(
-          first,
-          second,
-          (a, b) -> simpleCat(a, ONE_WS, b)
-        ),
-      Seq.of(xs)
-    );
   }
 
   private static @NotNull Doc makeCat(@NotNull Doc first, @NotNull Doc second) {

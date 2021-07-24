@@ -30,7 +30,7 @@ public record PrettyError(
       ? Seq.of(Tuple.of(primary, Doc.empty()))
       : hints;
 
-    return Doc.vfcat(
+    return Doc.vcat(
       Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
       Doc.empty(),
       Doc.hang(2, visualizeCode(config, range, allHints)),
@@ -85,7 +85,7 @@ public record PrettyError(
 
       lineNo++;
     }
-    return Doc.vfcat(docs);
+    return Doc.vcat(docs);
   }
 
   private Doc renderHint(int startCol, int endCol, int linenoWidth) {
