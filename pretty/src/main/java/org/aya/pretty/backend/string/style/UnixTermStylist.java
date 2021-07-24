@@ -44,7 +44,7 @@ public class UnixTermStylist extends ClosingStylist {
         case Reverse -> new StyleToken("\033[7m", "\033[27m", false);
       };
     }
-    return new StyleToken("", "", false);
+    return StyleToken.NULL;
   }
 
   @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean bg) {

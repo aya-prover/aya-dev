@@ -37,6 +37,6 @@ public class Html5Stylist extends ClosingStylist {
 
   @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
     // TODO: html custom style?
-    return new StyleToken("", "", false);
+    return StyleToken.NULL;
   }
 }

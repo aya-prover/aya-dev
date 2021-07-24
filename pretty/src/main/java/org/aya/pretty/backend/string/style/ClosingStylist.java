@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class ClosingStylist extends StringStylist {
   public static record StyleToken(@NotNull String start, @NotNull String end, boolean visible) {
+    public static final @NotNull StyleToken NULL = new StyleToken("", "", false);
   }
 
   @Override
@@ -75,7 +76,7 @@ public abstract class ClosingStylist extends StringStylist {
     var rgb = getColor(color.colorName());
     return rgb.isDefined()
       ? formatColorHex(rgb.get(), background)
-      : new StyleToken("", "", false);
+      : StyleToken.NULL;
   }
 
   protected abstract StyleToken formatItalic();
