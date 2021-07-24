@@ -14,6 +14,7 @@ import org.aya.api.ref.Var;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
+import org.aya.core.pat.PatUnify;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
@@ -57,6 +58,7 @@ public record PatClassifier(
         var rhs = rhsInfo._2;
         var lhsSubst = new Substituter.TermSubst(MutableMap.of());
         var rhsSubst = new Substituter.TermSubst(MutableMap.of());
+        var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
         var lhsTerm = lhs.body().subst(lhsSubst);
         var rhsTerm = rhs.body().subst(rhsSubst);
         var unification = tycker.unifier(pos, Ordering.Eq).compare(lhsTerm, rhsTerm, result);
