@@ -14,12 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class DocStringPrinterTest {
   @Test
-  public void testAlign() {
-    var doc = stickySep(Seq.of(new Doc[]{plain("lorem"), align(vsep(plain("ipsum"), plain("dolor")))}));
-    assertEquals("lorem ipsum\n      dolor", doc.renderWithPageWidth(80));
-  }
-
-  @Test
   public void testHang() {
     var doc = hang(4, plain("boynextdoor"));
     assertEquals("    boynextdoor", doc.renderWithPageWidth(80));
@@ -43,12 +37,6 @@ public class DocStringPrinterTest {
   @Test
   public void testVCat() {
     var doc = vcat(plain("11"), plain("45"), plain("14"));
-    assertEquals("11\n45\n14", doc.renderWithPageWidth(80));
-  }
-
-  @Test
-  public void testVSep() {
-    var doc = vsep(plain("11"), plain("45"), plain("14"));
     assertEquals("11\n45\n14", doc.renderWithPageWidth(80));
   }
 
@@ -86,12 +74,6 @@ public class DocStringPrinterTest {
   public void testCat() {
     var doc = cat(plain("text"), plain("to"), plain("lay"), plain("out"));
     assertEquals("texttolayout", doc.renderWithPageWidth(80));
-  }
-
-  @Test
-  public void testGroup() {
-    var doc = group(new Cat(new Cat(plain("hello"), line()), plain("world")));
-    assertEquals("hello world", doc.renderWithPageWidth(80));
   }
 
   @Test

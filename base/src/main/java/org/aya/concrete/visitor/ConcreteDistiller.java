@@ -267,9 +267,9 @@ public final class ConcreteDistiller implements
       Doc.ONE_WS,
       Doc.plain(mod.name()),
       Doc.plain(" {"),
-      Doc.hardLine(),
+      Doc.line(),
       Doc.vcat(mod.contents().view().map(Stmt::toDoc)),
-      Doc.hardLine(),
+      Doc.line(),
       Doc.plain("}")
     );
   }

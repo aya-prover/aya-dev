@@ -444,33 +444,6 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * group tries laying out {@param doc} into a single line by removing the
-   * contained line breaks; if this does not fit the page, or when a 'hardline'
-   * within {@param doc} prevents it from being flattened, {@param doc} is laid out
-   * without any changes.
-   *
-   * @param doc doc to flat
-   * @return flatten document
-   */
-  @Contract("_ -> new")
-  static @NotNull Doc group(@NotNull Doc doc) {
-    if (doc instanceof Union) return doc;
-    else if (doc instanceof FlatAlt alt) {
-      var flattenResult = Flatten.flatDoc(alt.preferWhenFlatten());
-      if (flattenResult instanceof Flatten.Flattened f)
-        return new Union(f.flattenedDoc(), alt.defaultDoc());
-      else if (flattenResult instanceof Flatten.AlreadyFlat)
-        return new Union(alt.preferWhenFlatten(), alt.defaultDoc());
-      else return alt.defaultDoc();
-
-    } else {
-      var flattenResult = Flatten.flatDoc(doc);
-      if (flattenResult instanceof Flatten.Flattened f) return new Union(f.flattenedDoc(), doc);
-      else return doc;
-    }
-  }
-
-  /**
    * cat tries laying out the documents {@param docs} separated with nothing,
    * and if this does not fit the page, separates them with newlines. This is what
    * differentiates it from 'vcat', which always lays out its contents beneath
@@ -489,84 +462,10 @@ public sealed interface Doc extends Docile {
   }
 
   @Contract("_ -> new") static @NotNull Doc vcat(Doc @NotNull ... docs) {
-    return join(hardLine(), docs);
+    return join(line(), docs);
   }
 
   @Contract("_ -> new") static @NotNull Doc vcat(@NotNull SeqLike<@NotNull Doc> docs) {
-    return join(hardLine(), docs);
-  }
-
-  /**
-   * fillCat concatenates documents {@param docs} horizontally with simpleCat() as
-   * long as it fits the page, then inserts a 'line' and continues doing that
-   * for all documents in {@param docs}. This is similar to how an ordinary word processor
-   * lays out the text if you just keep typing after you hit the maximum line
-   * length. ('line' means that if 'group'ed, the documents are separated with nothing
-   * instead of newlines. See 'fillSep' if you want a 'space' instead.)
-   * <p>
-   * Observe the difference between 'fillSep' and 'fillCat'. 'fillSep'
-   * concatenates the entries 'space'd when 'group'ed,
-   *
-   * <pre>
-   *
-   * >>> let docs = take 20 (cycle (["lorem", "ipsum", "dolor", "sit", "amet"]))
-   * >>> putDocW 40 ("Grouped:" <+> group (fillSep docs))
-   * Grouped: lorem ipsum dolor sit amet
-   * lorem ipsum dolor sit amet lorem ipsum
-   * dolor sit amet lorem ipsum dolor sit
-   * amet
-   *
-   * On the other hand, 'fillCat' concatenates the entries directly when
-   * 'group'ed,
-   *
-   * >>> putDocW 40 ("Grouped:" <+> group (fillCat docs))
-   * Grouped: loremipsumdolorsitametlorem
-   * ipsumdolorsitametloremipsumdolorsitamet
-   * loremipsumdolorsitamet
-   *
-   * </pre>
-   *
-   * @param docs documents to concat
-   * @return concat document
-   */
-  @Contract("_ -> new")
-  static @NotNull Doc fillCat(Doc @NotNull ... docs) {
-    return join(new FlatAlt(ONE_WS, empty()), docs);
-  }
-
-  /**
-   * vsep concatenates all documents {@param docs} above each other. If a
-   * 'group' undoes the line breaks inserted by vsep, the documents are
-   * separated with a 'space' instead.
-   * <p>
-   * Using 'vsep' alone yields
-   *
-   * <pre>
-   * >>> "prefix" <+> vsep ["text", "to", "lay", "out"]
-   * prefix text
-   * to
-   * lay
-   * out
-   * </pre>
-   * The 'align' function can be used to align the documents under their first
-   * element:
-   *
-   * <pre>
-   * >>> "prefix" <+> align (vsep ["text", "to", "lay", "out"])
-   * prefix text
-   *        to
-   *        lay
-   *        out
-   * </pre>
-   * <p>
-   * Since 'group'ing a 'vsep' is rather common, 'sep' is a built-in for doing
-   * that.
-   *
-   * @param docs documents to separate
-   * @return separated documents
-   */
-  @Contract("_ -> new")
-  static @NotNull Doc vsep(Doc @NotNull ... docs) {
     return join(line(), docs);
   }
 
@@ -602,7 +501,7 @@ public sealed interface Doc extends Docile {
    * fillSep concatenates the documents {@param docs} horizontally with a space
    * as long as it fits the page, then inserts a 'line' and continues doing that
    * for all documents in {@param docs}. ('line' means that if 'group'ed, the documents
-   * are separated with a 'space' instead of newlines. Use {@link Doc#fillCat}
+   * are separated with a 'space' instead of newlines. Use {@link Doc#cat}
    * if you do not want a 'space'.
    * <p>
    * Let's print some words to fill the line:
@@ -653,29 +552,8 @@ public sealed interface Doc extends Docile {
    * @return hard line document
    */
   @Contract("-> new")
-  static @NotNull Doc hardLine() {
-    return new Line();
-  }
-
-  /**
-   * The line document advances to the next line
-   * and indents to the current nesting level.
-   *
-   * @return line document
-   */
-  @Contract("-> new")
   static @NotNull Doc line() {
-    return new FlatAlt(new Line(), ONE_WS);
-  }
-
-  /**
-   * Another version of line() but result nothing on page when flattened.
-   *
-   * @return line document
-   */
-  @Contract("-> new")
-  static @NotNull Doc lineEmpty() {
-    return new FlatAlt(new Line(), empty());
+    return new Line();
   }
 
   //endregion
