@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 public record CounterexampleError(@NotNull SourcePos sourcePos, @NotNull Var var) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
-      Doc.plain("The counterexample"),
+      Doc.english("The counterexample"),
       CoreDistiller.varDoc(var),
-      Doc.plain("does not raise any type error."));
+      Doc.english("does not raise any type error."));
   }
 
   @Override public @NotNull Severity level() {

@@ -14,9 +14,9 @@ public record UnqualifiedNameNotFoundError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
-      Doc.plain("The unqualified name referred to by"),
+      Doc.english("The unqualified name referred to by"),
       Doc.styled(Style.code(), Doc.plain(name)),
-      Doc.plain("is not defined in the current scope")
+      Doc.english("is not defined in the current scope")
     );
   }
 

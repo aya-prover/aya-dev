@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.error;
 
+import kala.collection.Seq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.Constants;
-import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 public record ModShadowingWarn(
@@ -20,9 +20,9 @@ public record ModShadowingWarn(
 
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
-      Doc.plain("The newly created module name"),
+      Doc.english("The newly created module name"),
       Doc.styled(Style.code(), Doc.plain(modName.joinToString(Constants.SCOPE_SEPARATOR))),
-      Doc.plain("shadows a previous definition from outer scope")
+      Doc.english("shadows a previous definition from outer scope")
     );
   }
 

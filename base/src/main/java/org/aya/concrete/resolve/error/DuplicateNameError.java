@@ -16,10 +16,10 @@ public record DuplicateNameError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
-      Doc.plain("The name being added"),
+      Doc.english("The name being added"),
       Doc.plain(name),
       Doc.parened(Doc.styled(Style.code(), CoreDistiller.varDoc(ref))),
-      Doc.plain("is already defined elsewhere")
+      Doc.english("is already defined elsewhere")
     );
   }
 

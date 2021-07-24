@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 public record DuplicateModNameError(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
-      Doc.plain("The module name being added"),
+      Doc.english("The module name being added"),
       Doc.styled(Style.code(), Doc.plain(modName.joinToString("::"))),
-      Doc.plain("is already defined elsewhere")
+      Doc.english("is already defined elsewhere")
     );
   }
 

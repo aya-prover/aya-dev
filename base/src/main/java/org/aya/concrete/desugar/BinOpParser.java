@@ -61,7 +61,7 @@ public final class BinOpParser {
             opSet.reporter().report(new OperatorProblem.AmbiguousPredError(currentOp.name(),
               peek._2.name(),
               peek._1.expr.sourcePos()));
-            return new Expr.ErrorExpr(sourcePos, Doc.plain("an application"));
+            return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
           } else if (cmp == BinOpSet.PredCmp.Tighter || cmp == BinOpSet.PredCmp.Equal) {
             var topOp = opStack.pop();
             var appExpr = makeBinApp(topOp._1);

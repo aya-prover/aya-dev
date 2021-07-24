@@ -2,19 +2,19 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
+import kala.collection.Seq;
+import kala.collection.SeqLike;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
 import org.aya.core.sort.LevelEqnSet;
 import org.aya.pretty.doc.Doc;
-import kala.collection.Seq;
-import kala.collection.SeqLike;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record LevelMismatchError(@Nullable SourcePos pos, @NotNull Seq<LevelEqnSet.Eqn> eqns) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.plain("Cannot solve some level equation(s)");
+    return Doc.english("Cannot solve some level equation(s)");
   }
 
   @Override public @NotNull SourcePos sourcePos() {

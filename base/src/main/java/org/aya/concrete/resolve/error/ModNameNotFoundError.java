@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.error;
 
+import kala.collection.Seq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 public record ModNameNotFoundError(
@@ -15,9 +15,9 @@ public record ModNameNotFoundError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
-      Doc.plain("The module name referred to by"),
+      Doc.english("The module name referred to by"),
       Doc.styled(Style.code(), Doc.plain(modName.joinToString("::"))),
-      Doc.plain("is not defined in the current scope")
+      Doc.english("is not defined in the current scope")
     );
   }
 

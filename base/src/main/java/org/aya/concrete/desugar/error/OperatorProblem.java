@@ -2,13 +2,13 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar.error;
 
+import kala.collection.mutable.Buffer;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -25,7 +25,7 @@ public final class OperatorProblem {
 
     @Override public @NotNull Doc describe() {
       return Doc.hsep(
-        Doc.plain("Ambiguous operator precedence detected between"),
+        Doc.english("Ambiguous operator precedence detected between"),
         Doc.styled(Style.code(), Doc.plain(op1)),
         Doc.plain("and"),
         Doc.styled(Style.code(), Doc.plain(op2))
@@ -35,7 +35,7 @@ public final class OperatorProblem {
     @Override public @NotNull Doc hint() {
       return Doc.hsep(Doc.plain("Use"),
         Doc.styled(CoreDistiller.KEYWORD.and().code(), Doc.plain("bind")),
-        Doc.plain("statement or insert parentheses to make it clear."));
+        Doc.english("statement or insert parentheses to make it clear."));
     }
   }
 
@@ -47,7 +47,7 @@ public final class OperatorProblem {
     }
 
     @Override public @NotNull Doc describe() {
-      return Doc.plain("Self bind is not allowed");
+      return Doc.english("Self bind is not allowed");
     }
   }
 
@@ -61,7 +61,8 @@ public final class OperatorProblem {
 
     @Override public @NotNull Doc describe() {
       return Doc.cat(
-        Doc.plain("Precedence circle found between "),
+        Doc.english("Precedence circle found between"),
+        Doc.ONE_WS,
         Doc.plain(items.view().map(BinOpSet.Elem::name).sorted().joinToString(", "))
       );
     }

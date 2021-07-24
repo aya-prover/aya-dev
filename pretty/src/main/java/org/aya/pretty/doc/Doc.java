@@ -455,7 +455,7 @@ public sealed interface Doc extends Docile {
   }
 
   @Contract("_ -> new") static @NotNull Doc english(String text) {
-    if (!text.contains(" ")) return new PlainText(text);
+    if (!text.contains(" ")) return plain(text);
     return fillSep(Seq.from(text.split(" ", -1)).view().map(Doc::plain));
   }
 

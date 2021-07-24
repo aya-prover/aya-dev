@@ -38,13 +38,13 @@ public sealed interface ClausesProblem extends Problem {
         Doc.styled(Style.code(), lhs.toDoc()),
         Doc.plain("and"),
         Doc.styled(Style.code(), rhs.toDoc())
-      ) : Doc.plain("even reduce one of the clause(s) to check condition");
-      return Doc.hcat(
-        Doc.plain("The "),
+      ) : Doc.english("even reduce one of the clause(s) to check condition");
+      return Doc.fillSep(
+        Doc.plain("The"),
         Doc.ordinal(i),
-        Doc.plain(" clause matches on a constructor with condition(s). When checking the "),
+        Doc.english("clause matches on a constructor with condition(s). When checking the"),
         Doc.ordinal(j),
-        Doc.plain(" condition, we failed to "),
+        Doc.english("condition, we failed to"),
         result
       );
     }
@@ -67,9 +67,9 @@ public sealed interface ClausesProblem extends Problem {
       return Doc.hsep(
         Doc.plain("The"),
         Doc.ordinal(i),
-        Doc.plain("and the"),
+        Doc.english("and the"),
         Doc.ordinal(j),
-        Doc.plain("clauses are not confluent because we failed to unify"),
+        Doc.english("clauses are not confluent because we failed to unify"),
         Doc.styled(Style.code(), lhs.toDoc()),
         Doc.plain("and"),
         Doc.styled(Style.code(), rhs.toDoc())

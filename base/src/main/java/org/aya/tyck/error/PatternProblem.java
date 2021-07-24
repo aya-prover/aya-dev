@@ -22,9 +22,9 @@ public sealed interface PatternProblem extends Problem {
   record PossiblePat(@NotNull Pattern pattern, @NotNull CallTerm.ConHead available) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.hsep(
-        Doc.plain("Absurd pattern does not fit here because"),
+        Doc.english("Absurd pattern does not fit here because"),
         Doc.styled(Style.code(), CoreDistiller.varDoc(available.ref())),
-        Doc.plain("is still available")
+        Doc.english("is still available")
       );
     }
 
@@ -36,9 +36,9 @@ public sealed interface PatternProblem extends Problem {
   record SplittingOnNonData(@NotNull Pattern pattern, @NotNull Term type) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.hsep(
-        Doc.plain("Cannot split on a non-inductive type"),
+        Doc.english("Cannot split on a non-inductive type"),
         Doc.styled(Style.code(), type.toDoc()),
-        Doc.plain("with a constructor pattern"),
+        Doc.english("with a constructor pattern"),
         Doc.styled(Style.code(), pattern.toDoc()));
     }
 
@@ -50,10 +50,12 @@ public sealed interface PatternProblem extends Problem {
   record UnavailableCtor(@NotNull Pattern pattern, @NotNull Severity level) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.hcat(
-        Doc.plain("Cannot match with "),
+        Doc.english("Cannot match with"),
+        Doc.ONE_WS,
         Doc.styled(Style.code(), pattern.toDoc()),
-        Doc.plain(" due to a failed index unification"),
-        level == Severity.ERROR ? Doc.empty() : Doc.plain(", treating as bind pattern")
+        Doc.ONE_WS,
+        Doc.english("due to a failed index unification"),
+        level == Severity.ERROR ? Doc.empty() : Doc.english(", treating as bind pattern")
       );
     }
   }
@@ -61,7 +63,7 @@ public sealed interface PatternProblem extends Problem {
   record UnknownCtor(@NotNull Pattern pattern) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.hsep(
-        Doc.plain("Unknown constructor"),
+        Doc.english("Unknown constructor"),
         Doc.styled(Style.code(), pattern.toDoc())
       );
     }

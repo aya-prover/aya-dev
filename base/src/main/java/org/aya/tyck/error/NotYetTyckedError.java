@@ -16,9 +16,9 @@ public record NotYetTyckedError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hcat(
-      Doc.plain("Attempting to use a definition"),
+      Doc.english("Attempting to use a definition"),
       Doc.styled(Style.code(), CoreDistiller.varDoc(var)),
-      Doc.plain("which is not yet type checked"));
+      Doc.english("which is not yet type checked"));
   }
 
   @Override public @NotNull Severity level() {

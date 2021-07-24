@@ -14,9 +14,9 @@ public record DuplicateExportError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
-      Doc.plain("The name being exported"),
+      Doc.english("The name being exported"),
       Doc.styled(Style.code(), Doc.plain(name)),
-      Doc.plain("clashes with another exported definition with the same name"));
+      Doc.english("clashes with another exported definition with the same name"));
   }
 
   @Override public @NotNull Stage stage() {

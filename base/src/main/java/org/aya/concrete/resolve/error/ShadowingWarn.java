@@ -17,9 +17,9 @@ public record ShadowingWarn(
   }
 
   @Override public @NotNull Doc describe() {
-    return Doc.hsep(Doc.plain("The newly bound name"),
+    return Doc.hsep(Doc.english("The newly bound name"),
       Doc.styled(Style.code(), Doc.plain(name)),
-      Doc.plain("shadows a previous local definition from outer scope")
+      Doc.english("shadows a previous local definition from outer scope")
     );
   }
 

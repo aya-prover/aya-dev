@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 public record UnknownOperatorError(@NotNull SourcePos sourcePos, @NotNull String name) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.hsep(
-      Doc.plain("Unknown operator"),
+      Doc.english("Unknown operator"),
       Doc.styled(Style.code(), Doc.plain(name)),
-      Doc.plain("used in bind statement")
+      Doc.english("used in bind statement")
     );
   }
 

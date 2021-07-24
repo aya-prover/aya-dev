@@ -19,9 +19,7 @@ public sealed interface LevelProblem extends ExprProblem {
   record BadTypeExpr(@NotNull Expr.AppExpr expr, int expected)
     implements LevelProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hcat(
-        Doc.plain("Expected " + expected + " level(s)")
-      );
+      return Doc.english("Expected " + expected + " level(s)");
     }
   }
 
@@ -29,7 +27,7 @@ public sealed interface LevelProblem extends ExprProblem {
     @NotNull Expr expr
   ) implements LevelProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hcat(Doc.plain("Expected level expression, got: "), expr.toDoc());
+      return Doc.fillSep(Doc.english("Expected level expression, got:"), expr.toDoc());
     }
   }
 
@@ -37,7 +35,7 @@ public sealed interface LevelProblem extends ExprProblem {
     @NotNull Expr expr, @NotNull LevelGenVar.Kind kind
   ) implements LevelProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.plain("I don't want a " + kind.keyword + " here, please use the other one");
+      return Doc.english("I don't want a " + kind.keyword + " here, please use the other one");
     }
   }
 }
