@@ -81,12 +81,6 @@ public class DocStringPrinterTest {
   }
 
   @Test
-  public void testSep() {
-    var doc = sep(plain("text"), plain("to"), plain("lay"), plain("out"));
-    assertEquals("text to lay out", doc.renderWithPageWidth(80));
-  }
-
-  @Test
   public void testCat() {
     var doc = cat(plain("text"), plain("to"), plain("lay"), plain("out"));
     assertEquals("texttolayout", doc.renderWithPageWidth(80));
@@ -96,12 +90,6 @@ public class DocStringPrinterTest {
   public void testGroup() {
     var doc = group(new Cat(new Cat(plain("hello"), line()), plain("world")));
     assertEquals("hello world", doc.renderWithPageWidth(80));
-  }
-
-  @Test
-  public void testSepNarrow() {
-    var doc = hsep(plain("prefix"), sep(plain("text"), plain("to"), plain("lay"), plain("out")));
-    assertEquals("prefix text\nto\nlay\nout", doc.renderWithPageWidth(20));
   }
 
   @Test

@@ -561,36 +561,6 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * sep tries laying out the documents {@param docs} separated with 'space's,
-   * and if this does not fit the page, separates them with newlines. This is what
-   * differentiates it from 'vsep', which always lays out its contents beneath
-   * each other.
-   *
-   * <pre>
-   * >>> let doc = "prefix" <+> sep ["text", "to", "lay", "out"]
-   * >>> putDocW 80 doc
-   * prefix text to lay out
-   * </pre>
-   * <p>
-   * With a narrower layout, the entries are separated by newlines:
-   *
-   * <pre>
-   * >>> putDocW 20 doc
-   * prefix text
-   * to
-   * lay
-   * out
-   * </pre>
-   *
-   * @param docs documents to separate
-   * @return separated documents
-   */
-  @Contract("_ -> new")
-  static @NotNull Doc sep(Doc @NotNull ... docs) {
-    return group(vsep(docs));
-  }
-
-  /**
    * vsep concatenates all documents {@param docs} above each other. If a
    * 'group' undoes the line breaks inserted by vsep, the documents are
    * separated with a 'space' instead.
@@ -604,11 +574,6 @@ public sealed interface Doc extends Docile {
    * lay
    * out
    * </pre>
-   * <p>
-   * 'group'ing a 'vsep' separates the documents with a 'space' if it fits the
-   * page (and does nothing otherwise). See the {@link Doc#sep(Doc...)} convenience
-   * function for this use case.
-   * <p>
    * The 'align' function can be used to align the documents under their first
    * element:
    *
