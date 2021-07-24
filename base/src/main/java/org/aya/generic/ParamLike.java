@@ -27,11 +27,7 @@ public interface ParamLike<Expr extends Docile> extends Docile {
   default @NotNull Doc toDoc(@NotNull Doc names) {
     var explicit = explicit();
     var type = type();
-    return Doc.hcat(
-      Doc.plain(explicit ? "(" : "{"),
-      names,
-      type == null ? Doc.empty() : Doc.hcat(Doc.plain(" : "), type.toDoc()),
-      Doc.plain(explicit ? ")" : "}")
-    );
+    Doc @NotNull [] docs = new Doc[]{Doc.plain(explicit ? "(" : "{"), names, type == null ? Doc.empty() : Doc.cat(Doc.plain(" : "), type.toDoc()), Doc.plain(explicit ? ")" : "}")};
+    return Doc.cat(docs);
   }
 }

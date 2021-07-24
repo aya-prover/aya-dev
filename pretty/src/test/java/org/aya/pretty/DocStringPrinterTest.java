@@ -29,7 +29,7 @@ public class DocStringPrinterTest {
     var doc = vcat(
       plain("shakedown street"),
       nest(2, vcat(
-        hcat(plain("grateful "), plain("dead")),
+        cat(plain("grateful "), plain("dead")),
         nest(2, vcat(
           plain("heaven's on fire"),
           plain("kiss"))))));
@@ -54,7 +54,7 @@ public class DocStringPrinterTest {
 
   @Test
   public void testHCat() {
-    var doc = hcat(plain("11"), plain("45"), plain("14"));
+    var doc = cat(plain("11"), plain("45"), plain("14"));
     assertEquals("114514", doc.renderWithPageWidth(80));
   }
 

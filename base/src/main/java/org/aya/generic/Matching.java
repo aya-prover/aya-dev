@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.generic;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -11,7 +12,6 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -35,7 +35,7 @@ public record Matching<Matcher extends Docile, Body extends Docile>(
       else if (matcher instanceof Pattern && body instanceof Expr)
         return ConcreteDistiller.INSTANCE.matchy((Matching<Pattern, Expr>) this);
     }
-    return Doc.hcat(Doc.hcat(patterns.view().map(Docile::toDoc)), Doc.symbol(" => "), body.toDoc());
+    return Doc.cat(Doc.cat(patterns.view().map(Docile::toDoc)), Doc.symbol(" => "), body.toDoc());
   }
 
   public @NotNull <NoBody extends Docile> Matching<Matcher, NoBody> mapBody(@NotNull Function<Body, NoBody> f) {

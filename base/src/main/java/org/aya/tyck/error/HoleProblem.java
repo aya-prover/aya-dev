@@ -44,7 +44,7 @@ public sealed interface HoleProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.sep(Doc.english("The solution"), Doc.styled(Style.code(), solved.toDoc()), Doc.plain("is not well-scoped")),
-        Doc.hcat(Doc.english("In particular, these variables are not in scope:"),
+        Doc.cat(Doc.english("In particular, these variables are not in scope:"),
           Doc.ONE_WS,
           Doc.join(Doc.symbol(", "), scopeCheck.stream()
             .map(CoreDistiller::varDoc)

@@ -317,8 +317,8 @@ public final class ConcreteDistiller implements
     );
     if (ctor.patterns.isNotEmpty()) {
       var pats = Doc.join(Doc.plain(", "), ctor.patterns.stream().map(Pattern::toDoc));
-      return Doc.hcat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
-    } else return Doc.hcat(Doc.plain("| "), doc);
+      return Doc.cat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
+    } else return Doc.cat(Doc.plain("| "), doc);
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {
@@ -326,7 +326,7 @@ public final class ConcreteDistiller implements
     var clausesDoc = Doc.vcat(
       clauses.view()
         .map(this::matchy)
-        .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
+        .map(doc -> Doc.cat(Doc.plain("|"), doc)));
     return wrapInBraces ? Doc.braced(clausesDoc) : clausesDoc;
   }
 
@@ -348,19 +348,12 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
-    return Doc.hcat(
-      Doc.plain("| "),
-      coe(field.coerce),
-      linkDef(field.ref, FIELD_CALL),
-      visitTele(field.telescope),
-      field.result instanceof Expr.HoleExpr
+    Doc @NotNull [] docs = new Doc[]{Doc.plain("| "), coe(field.coerce), linkDef(field.ref, FIELD_CALL), visitTele(field.telescope), field.result instanceof Expr.HoleExpr
+      ? Doc.empty()
+      : Doc.cat(Doc.plain(" : "), field.result.toDoc()), field.body.isEmpty()
         ? Doc.empty()
-        : Doc.cat(Doc.plain(" : "), field.result.toDoc()),
-      field.body.isEmpty()
-        ? Doc.empty()
-        : Doc.cat(Doc.symbol(" => "), field.body.get().toDoc()),
-      visitClauses(field.clauses, true)
-    );
+        : Doc.cat(Doc.symbol(" => "), field.body.get().toDoc()), visitClauses(field.clauses, true)};
+    return Doc.cat(docs);
   }
 
   @Override public Doc visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
@@ -376,8 +369,7 @@ public final class ConcreteDistiller implements
         ? Doc.empty()
         : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
       decl.body.isLeft() ? Doc.symbol(" => ") : Doc.empty(),
-      decl.body.fold(Expr::toDoc, clauses ->
-        Doc.hcat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
+      decl.body.fold(Expr::toDoc, clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
       decl.abuseBlock.sizeEquals(0)
         ? Doc.empty()
         : Doc.cat(Doc.ONE_WS, Doc.styled(KEYWORD, "abusing"), Doc.ONE_WS, visitAbuse(decl.abuseBlock))

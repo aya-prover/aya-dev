@@ -19,9 +19,7 @@ public record QualifiedNameNotFoundError(
     return Doc.sep(
       Doc.english("The qualified name referred to by"),
       Doc.styled(Style.code(),
-        Doc.hcat(Doc.plain(modName.joinToString(Constants.SCOPE_SEPARATOR)),
-          Doc.plain(Constants.SCOPE_SEPARATOR),
-          Doc.plain(name))),
+        Doc.cat(Doc.plain(modName.joinToString(Constants.SCOPE_SEPARATOR)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
       Doc.english("is not defined in the current scope")
     );
   }

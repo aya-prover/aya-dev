@@ -87,8 +87,7 @@ public sealed interface Def extends CoreDef, Tycked
     }
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.hcat(Doc.join(Doc.ONE_WS, param.stream().map(Term.Param::toDoc)),
-        Doc.plain(" -> "), result.toDoc());
+      return Doc.cat(Doc.join(Doc.ONE_WS, param.stream().map(Term.Param::toDoc)), Doc.plain(" -> "), result.toDoc());
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {

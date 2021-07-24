@@ -80,7 +80,7 @@ public record PrettyError(
         var hintUnderline = renderHint(startCol, endCol, linenoWidth);
         var doc = find._2;
         if (doc instanceof Doc.Empty) docs.append(hintUnderline);
-        else docs.append(Doc.hcat(hintUnderline, Doc.ONE_WS, doc));
+        else docs.append(Doc.cat(hintUnderline, Doc.ONE_WS, doc));
       }
 
       lineNo++;

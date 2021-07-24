@@ -339,9 +339,7 @@ public sealed interface Doc extends Docile {
    */
   @Contract("_, _ -> new")
   static @NotNull Doc nest(int indent, @NotNull Doc doc) {
-    return indent == 0
-      ? doc
-      : new Nest(indent, doc);
+    return indent == 0 ? doc : new Nest(indent, doc);
   }
 
   /**
@@ -482,9 +480,13 @@ public sealed interface Doc extends Docile {
    * @param docs documents to concat
    * @return cat document
    */
-  @Contract("_ -> new")
-  static @NotNull Doc cat(Doc @NotNull ... docs) {
+  @Contract("_ -> new") static @NotNull Doc cat(@NotNull SeqLike<Doc> docs) {
     return simpleCat(docs);
+  }
+
+  /** @see Doc#cat(Doc...) */
+  @Contract("_ -> new") static @NotNull Doc cat(Doc @NotNull ... docs) {
+    return cat(Seq.of(docs));
   }
 
   @Contract("_ -> new")
@@ -498,28 +500,6 @@ public sealed interface Doc extends Docile {
 
   @Contract("_ -> new") static @NotNull Doc vcat(@NotNull SeqLike<@NotNull Doc> docs) {
     return join(hardLine(), docs);
-  }
-
-  /**
-   * hcat concatenates all documents docs horizontally without any spacing.
-   *
-   * @param docs documents to concat
-   * @return concat document
-   */
-  @Contract("_ -> new")
-  static @NotNull Doc hcat(Doc @NotNull ... docs) {
-    return hcat(Seq.of(docs));
-  }
-
-  /**
-   * hcat concatenates all documents docs horizontally without any spacing.
-   *
-   * @param docs documents to concat
-   * @return concat document
-   */
-  @Contract("_ -> new")
-  static @NotNull Doc hcat(@NotNull SeqLike<@NotNull Doc> docs) {
-    return concatWith(Doc::simpleCat, docs);
   }
 
   /**
@@ -673,7 +653,7 @@ public sealed interface Doc extends Docile {
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
     return concatWith(
-      (x, y) -> simpleCat(x, delim, y),
+      (x, y) -> simpleCat(Seq.of(x, delim, y)),
       docs
     );
   }
@@ -715,14 +695,12 @@ public sealed interface Doc extends Docile {
 
   private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull SeqLike<@NotNull Doc> xs) {
     if (xs.size() == 0) return Doc.empty();
-    if (xs.size() == 1) {
-      return xs.get(0);
-    }
+    if (xs.size() == 1) return xs.get(0);
     return xs.reduce(f); // never null
   }
 
-  private static @NotNull Doc simpleCat(Doc @NotNull ... xs) {
-    return concatWith(Doc::makeCat, Seq.of(xs));
+  private static @NotNull Doc simpleCat(@NotNull SeqLike<@NotNull Doc> xs) {
+    return concatWith(Doc::makeCat, xs);
   }
 
   private static @NotNull Doc makeCat(@NotNull Doc first, @NotNull Doc second) {

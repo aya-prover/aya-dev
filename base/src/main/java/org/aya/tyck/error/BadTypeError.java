@@ -22,10 +22,10 @@ public record BadTypeError(
 
   @Override public @NotNull Doc describe() {
     return Doc.vcat(
-      Doc.hcat(Doc.plain("Expected type: "), actualType.accept(Zonker.NO_REPORT, Unit.unit()).toDoc()),
-      Doc.hcat(Doc.plain("Normalized: "), actualType.normalize(NormalizeMode.NF).toDoc()),
-      Doc.hcat(Doc.plain("Want: "), expectedType),
-      Doc.hcat(Doc.english("Because we want to type a term such as:"), Doc.ONE_WS, expr.toDoc())
+      Doc.cat(Doc.plain("Expected type: "), actualType.accept(Zonker.NO_REPORT, Unit.unit()).toDoc()),
+      Doc.cat(Doc.plain("Normalized: "), actualType.normalize(NormalizeMode.NF).toDoc()),
+      Doc.cat(Doc.plain("Want: "), expectedType),
+      Doc.cat(Doc.english("Because we want to type a term such as:"), Doc.ONE_WS, expr.toDoc())
     );
   }
 }

@@ -20,10 +20,7 @@ public record AmbiguousNameError(
   }
 
   @Override public @NotNull Doc describe() {
-    return Doc.vcat(Doc.hcat(
-      Doc.english("The unqualified name referred to by "),
-      Doc.styled(Style.code(), Doc.plain(name)),
-      Doc.english(" is ambiguous.")),
+    return Doc.vcat(Doc.cat(Doc.english("The unqualified name referred to by "), Doc.styled(Style.code(), Doc.plain(name)), Doc.english(" is ambiguous.")),
       Doc.english("Try using the following module names to qualify the name to disambiguate:"),
       Doc.styled(Style.code(), Doc.nest(1, Doc.vcat(disambiguation.map(a -> Doc.plain(a.joinToString("::")))))));
   }

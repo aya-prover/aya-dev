@@ -169,7 +169,7 @@ public final class CoreDistiller implements
     var name = term.ref();
     var sol = name.core().body;
     var filling = sol == null ? varDoc(name) : sol.toDoc();
-    return Doc.hcat(Doc.symbol("{?"), filling, Doc.symbol("?}"));
+    return Doc.cat(Doc.symbol("{?"), filling, Doc.symbol("?}"));
   }
 
   @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {
@@ -266,13 +266,9 @@ public final class CoreDistiller implements
 
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
-    var line1 = Doc.hcat(
-      Doc.styled(KEYWORD, "def "),
-      linkDef(def.ref(), FN_CALL),
-      visitTele(def.telescope()),
-      Doc.plain(" : "), def.result().toDoc());
+    var line1 = Doc.cat(Doc.styled(KEYWORD, "def "), linkDef(def.ref(), FN_CALL), visitTele(def.telescope()), Doc.plain(" : "), def.result().toDoc());
     return def.body().fold(
-      term -> Doc.hcat(line1, Doc.symbol(" => "), term.toDoc()),
+      term -> Doc.cat(line1, Doc.symbol(" => "), term.toDoc()),
       clauses -> Doc.vcat(line1, Doc.nest(2, visitClauses(clauses))));
   }
 
@@ -296,7 +292,7 @@ public final class CoreDistiller implements
   private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
     if (clauses.isEmpty()) return line1;
     return Doc.vcat(
-      Doc.hcat(line1, Doc.symbol(" {")),
+      Doc.cat(line1, Doc.symbol(" {")),
       Doc.nest(2, visitClauses(clauses)),
       Doc.symbol("}"));
   }
@@ -304,16 +300,11 @@ public final class CoreDistiller implements
   private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
     return Doc.vcat(clauses.view()
       .map(this::matchy)
-      .map(doc -> Doc.hcat(Doc.plain("|"), doc)));
+      .map(doc -> Doc.cat(Doc.plain("|"), doc)));
   }
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
-    var line1 = Doc.hcat(
-      Doc.styled(KEYWORD, "data"),
-      Doc.ONE_WS,
-      linkDef(def.ref(), DATA_CALL),
-      visitTele(def.telescope()),
-      Doc.plain(" : "), def.result().toDoc());
+    var line1 = Doc.cat(Doc.styled(KEYWORD, "data"), Doc.ONE_WS, linkDef(def.ref(), DATA_CALL), visitTele(def.telescope()), Doc.plain(" : "), def.result().toDoc());
     return Doc.vcat(line1, Doc.nest(2, Doc.vcat(
       def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
@@ -335,8 +326,8 @@ public final class CoreDistiller implements
     Doc line1;
     if (ctor.pats().isNotEmpty()) {
       var pats = Doc.join(Doc.plain(", "), ctor.pats().stream().map(Pat::toDoc));
-      line1 = Doc.hcat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
-    } else line1 = Doc.hcat(Doc.plain("| "), doc);
+      line1 = Doc.cat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
+    } else line1 = Doc.cat(Doc.plain("| "), doc);
     return visitConditions(line1, ctor.clauses());
   }
 
@@ -345,22 +336,12 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
-    return Doc.vcat(Doc.hcat(
-      Doc.styled(KEYWORD, "struct"),
-      Doc.ONE_WS,
-      linkDef(def.ref(), STRUCT_CALL),
-      visitTele(def.telescope()),
-      Doc.plain(" : "), def.result().toDoc()), Doc.nest(2, Doc.vcat(
+    return Doc.vcat(Doc.cat(Doc.styled(KEYWORD, "struct"), Doc.ONE_WS, linkDef(def.ref(), STRUCT_CALL), visitTele(def.telescope()), Doc.plain(" : "), def.result().toDoc()), Doc.nest(2, Doc.vcat(
       def.fields().view().map(field -> field.accept(this, Unit.unit())))));
   }
 
   @Override public Doc visitField(@NotNull StructDef.Field field, Unit unit) {
-    return visitConditions(Doc.hcat(
-      Doc.plain("| "),
-      coe(field.coerce()),
-      linkDef(field.ref(), FIELD_CALL),
-      visitTele(field.fieldTele())
-    ), field.clauses());
+    return visitConditions(Doc.cat(Doc.plain("| "), coe(field.coerce()), linkDef(field.ref(), FIELD_CALL), visitTele(field.fieldTele())), field.clauses());
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {

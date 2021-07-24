@@ -49,14 +49,8 @@ public sealed interface PatternProblem extends Problem {
 
   record UnavailableCtor(@NotNull Pattern pattern, @NotNull Severity level) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hcat(
-        Doc.english("Cannot match with"),
-        Doc.ONE_WS,
-        Doc.styled(Style.code(), pattern.toDoc()),
-        Doc.ONE_WS,
-        Doc.english("due to a failed index unification"),
-        level == Severity.ERROR ? Doc.empty() : Doc.english(", treating as bind pattern")
-      );
+      Doc @NotNull [] docs = new Doc[]{Doc.english("Cannot match with"), Doc.ONE_WS, Doc.styled(Style.code(), pattern.toDoc()), Doc.ONE_WS, Doc.english("due to a failed index unification"), level == Severity.ERROR ? Doc.empty() : Doc.english(", treating as bind pattern")};
+      return Doc.cat(docs);
     }
   }
 
