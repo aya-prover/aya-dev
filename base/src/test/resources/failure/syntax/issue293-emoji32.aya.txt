@@ -4,7 +4,7 @@ In file $FILE:13:14 ->
   12 | 
   13 | def u : 😊 => 🐒
                      ^^
-  
+
 Error: Expected type: 😊
        Normalized: 😊
        Actual type: 😂

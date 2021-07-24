@@ -8,6 +8,6 @@ In file $FILE:3:4 ->
   5 |  | suc n, impossible
   6 |  | zero, eldath => zero
          ^------------------^ substituted to `zero`
-  
+
 Error: The 1st and the 3rd clauses are not confluent because we failed to unify `suc zero` and `zero`
 What are you doing?

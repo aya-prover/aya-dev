@@ -3,7 +3,7 @@ In file $FILE:2:16 ->
   1 | ulevel u
   2 | def test => Set u
                       ^^
-  
+
 Error: Generalized variable `u` not available here
 Resolving interrupted due to error(s).
 What are you doing?

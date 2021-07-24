@@ -4,6 +4,6 @@ In file $FILE:19:19 ->
   18 | 
   19 | counterexample def abs2 (n : Int) => abs n
                           ^--^
-  
+
 Error: The counterexample abs2 does not raise any type error.
 What are you doing?

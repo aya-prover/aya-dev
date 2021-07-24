@@ -4,6 +4,6 @@ In file $FILE:4:4 ->
   3 | 
   4 | def add {a b : Nat} : Nat
           ^-^
-  
+
 Error: Unhandled case: {zero}, {zero}
 What are you doing?

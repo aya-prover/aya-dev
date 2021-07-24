@@ -4,7 +4,7 @@ In file $FILE:3:26 ->
   2 |              (f : Pi A B -> C)
   3 |              (p : Sig A  B) : C
                                 ^^
-  
+
 Error: Parser error: extraneous input ')' expecting {'**', INFIX, POSTFIX, 'hType', 'uType', 'Type', 'ooType', 'Set', 'Prop', '{', '(', '{?', NUMBER, '_', STRING, ID}
 Parsing interrupted due to error(s).
 What are you doing?

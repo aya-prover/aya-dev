@@ -7,6 +7,6 @@ In file $FILE:6:3 ->
            ^------------------^ substituted to `pos (suc zero)`
   8 |    | suc zero => pos zero
            ^------------------^ substituted to `pos zero`
-  
+
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify `pos (suc zero)` and `pos zero`
 What are you doing?

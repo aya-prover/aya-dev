@@ -4,7 +4,7 @@ In file $FILE:3:4 ->
   2 |   | zero
   3 |   | zero
           ^--^
-  
+
 Error: Redefinition of constructor `zero`
 Parsing interrupted due to error(s).
 What are you doing?

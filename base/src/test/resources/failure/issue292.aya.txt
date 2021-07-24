@@ -4,7 +4,7 @@ In file $FILE:9:15 ->
   8 | 
   9 | def u : Nat => true
                      ^--^
-  
+
 Error: Expected type: Nat
        Normalized: Nat
        Actual type: Bool

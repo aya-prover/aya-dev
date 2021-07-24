@@ -2,7 +2,7 @@ In file $FILE:1:17 ->
 
   1 | def x : Set => \ 1 => x
                        ^^
-  
+
 Error: Parser error: `1` is not a parameter name
 Parsing interrupted due to error(s).
 What are you doing?

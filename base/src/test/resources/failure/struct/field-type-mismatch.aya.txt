@@ -4,7 +4,7 @@ In file $FILE:14:30 ->
   13 | def test-nat-pair : Pair Nat Nat =>
   14 |   new Pair Nat Nat { | fst => make-pair Nat Nat zero zero | snd => suc zero }
                                      ^-------------------------^
-  
+
 Error: Expected type: Nat
        Normalized: Nat
        Actual type: Pair Nat Nat

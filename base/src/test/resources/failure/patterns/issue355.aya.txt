@@ -4,6 +4,6 @@ In file $FILE:7:4 ->
   6 | 
   7 | def addN (a : I) : Nat
           ^--^
-  
+
 Error: Cannot perform pattern matching `left`
 What are you doing?

@@ -4,6 +4,6 @@ In file $FILE:4:18 ->
   3 | hlevel h
   4 | def neg (A : Type u u) : Type (lsuc h) (lsuc u) => A -> Empty
                         ^^
-  
+
 Error: I don't want a ulevel here, please use the other one
 What are you doing?

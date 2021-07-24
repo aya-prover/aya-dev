@@ -1,7 +1,7 @@
 In file $FILE:2:0 ->
 
   1 | def
-  
+
 Error: Parser error: mismatched input '<EOF>' expecting {INFIX, 'infixl', 'infixr', 'fix', 'fixl', 'fixr', 'twin', 'erase', 'inline', ID}
 Parsing interrupted due to error(s).
 What are you doing?

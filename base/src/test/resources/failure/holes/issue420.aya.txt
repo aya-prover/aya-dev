@@ -4,7 +4,7 @@ In file $FILE:41:56 ->
   40 | 
   41 | def addN-identity (a : Nat) : Eq (addN a zero) a => idp {? ?}
                                                                ^---^
-  
+
 Goal: Candidate: a
       Expected type: Nat
       Normalized: Nat

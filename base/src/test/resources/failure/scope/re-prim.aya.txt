@@ -3,7 +3,7 @@ In file $FILE:2:5 ->
   1 | prim I
   2 | prim I
            ^^
-  
+
 Error: Redefinition of primitive `I`
 Parsing interrupted due to error(s).
 What are you doing?

@@ -4,7 +4,7 @@ In file $FILE:8:6 ->
   7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
   8 |  | f, vnil => vnil
             ^--^
-  
+
 Warning: Cannot match with `vnil` due to a failed index unification, treating as bind pattern
 In file $FILE:8:14 ->
 
@@ -12,7 +12,7 @@ In file $FILE:8:14 ->
   7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
   8 |  | f, vnil => vnil
                     ^--^
-  
+
 Error: Expected type: Vect B n
        Normalized: Vect B n
        Actual type: Vect A n
@@ -24,7 +24,7 @@ In file $FILE:9:6 ->
   8 |  | f, vnil => vnil
   9 |  | f, vcons x xs => _
             ^--------^
-  
+
 Error: Cannot match with `vcons x xs` due to a failed index unification
 In file $FILE:9:6 ->
 
@@ -32,7 +32,7 @@ In file $FILE:9:6 ->
   8 |  | f, vnil => vnil
   9 |  | f, vcons x xs => _
             ^--------^
-  
+
 Error: Unknown constructor `vcons x xs`
 In file $FILE:9:20 ->
 
@@ -40,6 +40,6 @@ In file $FILE:9:20 ->
   8 |  | f, vnil => vnil
   9 |  | f, vcons x xs => _
                           ^^
-  
+
 Error: Unsolved meta
 What are you doing?

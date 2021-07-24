@@ -4,7 +4,7 @@ In file $FILE:6:29 ->
   5 |  (F : Set -> Set)
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                    ^^
-  
+
 Error: Expected type: Set Neg.u
        Normalized: Set Neg.u
        Actual type: F {?_?}
@@ -16,7 +16,7 @@ In file $FILE:6:16 ->
   5 |  (F : Set -> Set)
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                       ^^
-  
+
 Error: Unsolved meta
 In file $FILE:6:44 ->
 
@@ -24,7 +24,7 @@ In file $FILE:6:44 ->
   5 |  (F : Set -> Set)
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                                   ^--^
-  
+
 Error: Expected type: F <{?_?}>
        Normalized: F <{?_?}>
        Actual type: Nat
@@ -36,7 +36,7 @@ In file $FILE:6:42 ->
   5 |  (F : Set -> Set)
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                                 ^----^
-  
+
 Error: Expected type: Nat
        Normalized: Nat
        Actual type: F (Neg <X>)

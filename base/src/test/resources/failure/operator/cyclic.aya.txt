@@ -4,7 +4,7 @@ In file $FILE:9:0 ->
   8 | bind b tighter c
   9 | bind c tighter d
       ^--------------^
-  
+
 Error: Precedence circle found between b, c, d
 Resolving interrupted due to error(s).
 What are you doing?
