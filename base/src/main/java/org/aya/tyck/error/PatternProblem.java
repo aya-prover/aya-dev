@@ -21,7 +21,7 @@ public sealed interface PatternProblem extends Problem {
 
   record PossiblePat(@NotNull Pattern pattern, @NotNull CallTerm.ConHead available) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hsep(
+      return Doc.sep(
         Doc.english("Absurd pattern does not fit here because"),
         Doc.styled(Style.code(), CoreDistiller.varDoc(available.ref())),
         Doc.english("is still available")
@@ -35,7 +35,7 @@ public sealed interface PatternProblem extends Problem {
 
   record SplittingOnNonData(@NotNull Pattern pattern, @NotNull Term type) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hsep(
+      return Doc.sep(
         Doc.english("Cannot split on a non-inductive type"),
         Doc.styled(Style.code(), type.toDoc()),
         Doc.english("with a constructor pattern"),
@@ -62,7 +62,7 @@ public sealed interface PatternProblem extends Problem {
 
   record UnknownCtor(@NotNull Pattern pattern) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hsep(
+      return Doc.sep(
         Doc.english("Unknown constructor"),
         Doc.styled(Style.code(), pattern.toDoc())
       );

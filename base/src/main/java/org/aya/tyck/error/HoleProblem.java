@@ -43,7 +43,7 @@ public sealed interface HoleProblem extends Problem {
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
-        Doc.hsep(Doc.english("The solution"), Doc.styled(Style.code(), solved.toDoc()), Doc.plain("is not well-scoped")),
+        Doc.sep(Doc.english("The solution"), Doc.styled(Style.code(), solved.toDoc()), Doc.plain("is not well-scoped")),
         Doc.hcat(Doc.english("In particular, these variables are not in scope:"),
           Doc.ONE_WS,
           Doc.join(Doc.symbol(", "), scopeCheck.stream()
@@ -61,7 +61,7 @@ public sealed interface HoleProblem extends Problem {
     @NotNull SourcePos sourcePos
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hsep(
+      return Doc.sep(
         Doc.english("Trying to solve hole"),
         Doc.styled(Style.code(), CoreDistiller.linkDef(term.ref())),
         Doc.plain("as"),

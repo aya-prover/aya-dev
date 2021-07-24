@@ -13,7 +13,7 @@ public record DuplicateExportError(
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hsep(
+    return Doc.sep(
       Doc.english("The name being exported"),
       Doc.styled(Style.code(), Doc.plain(name)),
       Doc.english("clashes with another exported definition with the same name"));

@@ -110,9 +110,9 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
     }
 
     @Override public @NotNull Doc toDoc() {
-      return levels.sizeEquals(1) ? levels.first().toDoc() : Doc.hsep(
+      return levels.sizeEquals(1) ? levels.first().toDoc() : Doc.sep(
         Doc.styled(CoreDistiller.KEYWORD, "lmax"),
-        Doc.hsep(levels.map(Docile::toDoc))
+        Doc.sep(levels.map(Docile::toDoc))
       );
     }
   }

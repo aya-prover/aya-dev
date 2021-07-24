@@ -70,11 +70,11 @@ public interface Problem {
       case INFO -> Doc.plain("Info:");
       case ERROR -> Doc.plain("Error:");
     };
-    var doc = Doc.hsep(tag, Doc.align(describe()));
+    var doc = Doc.sep(tag, Doc.align(describe()));
     var hint = hint();
     return hint instanceof Doc.Empty ? doc : Doc.vcat(
       doc,
-      Doc.hsep(Doc.plain("note:"), Doc.align(hint))
+      Doc.sep(Doc.plain("note:"), Doc.align(hint))
     );
   }
 

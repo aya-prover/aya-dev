@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record GeneralizedNotAvailableError(@NotNull Expr expr) implements ExprProblem {
   @Override public @NotNull Doc describe() {
-    return Doc.hsep(
+    return Doc.sep(
       Doc.english("Generalized variable"),
       Doc.styled(Style.code(), expr.toDoc()),
       Doc.english("not available here")

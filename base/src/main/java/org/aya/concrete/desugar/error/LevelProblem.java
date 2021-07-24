@@ -27,7 +27,7 @@ public sealed interface LevelProblem extends ExprProblem {
     @NotNull Expr expr
   ) implements LevelProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.fillSep(Doc.english("Expected level expression, got:"), expr.toDoc());
+      return Doc.sep(Doc.english("Expected level expression, got:"), expr.toDoc());
     }
   }
 

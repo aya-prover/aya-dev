@@ -145,8 +145,8 @@ public final class CoreDistiller implements
     return Doc.cat(
       Doc.styled(KEYWORD, "new"),
       Doc.symbol(" { "),
-      Doc.hsep(newTerm.params().view()
-        .map((k, v) -> Doc.hsep(Doc.plain("|"),
+      Doc.sep(newTerm.params().view()
+        .map((k, v) -> Doc.sep(Doc.plain("|"),
           Doc.linkRef(Doc.styled(FIELD_CALL, k.name()), k.hashCode()),
           Doc.symbol("=>"), v.toDoc()))
         .toImmutableSeq()),
@@ -198,7 +198,7 @@ public final class CoreDistiller implements
     var call = Doc.cat(
       fn,
       Doc.ONE_WS,
-      Doc.hsep(args.view().map(arg -> {
+      Doc.sep(args.view().map(arg -> {
         // Do not use `arg.term().toDoc()` because we want to
         // wrap args in parens if we are inside a nested call
         // such as `suc (suc (suc n))`
@@ -211,7 +211,7 @@ public final class CoreDistiller implements
   }
 
   private Doc visitTele(@NotNull SeqLike<Term.Param> telescope) {
-    return Doc.hsep(telescope.view().map(Term.Param::toDoc));
+    return Doc.sep(telescope.view().map(Term.Param::toDoc));
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
@@ -219,7 +219,7 @@ public final class CoreDistiller implements
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
       Doc.join(Doc.plain(", "), tuple.pats().view().map(Pat::toDoc)));
     return tuple.as() == null ? tup
-      : Doc.hsep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
+      : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
   }
 
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
@@ -283,14 +283,14 @@ public final class CoreDistiller implements
     var names = Buffer.of(last.nameDoc());
     for (var param : telescope.view().drop(1)) {
       if (!Objects.equals(param.type(), last.type())) {
-        buf.append(last.toDoc(Doc.hsep(names)));
+        buf.append(last.toDoc(Doc.sep(names)));
         names.clear();
         last = param;
       }
       names.append(param.nameDoc());
     }
-    buf.append(last.toDoc(Doc.hsep(names)));
-    return Doc.cat(Doc.ONE_WS, Doc.hsep(buf));
+    buf.append(last.toDoc(Doc.sep(names)));
+    return Doc.cat(Doc.ONE_WS, Doc.sep(buf));
   }
 
   private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
@@ -368,6 +368,6 @@ public final class CoreDistiller implements
   }
 
   public static @NotNull Doc primDoc(Var ref) {
-    return Doc.hsep(Doc.styled(KEYWORD, "prim"), linkDef(ref, FN_CALL));
+    return Doc.sep(Doc.styled(KEYWORD, "prim"), linkDef(ref, FN_CALL));
   }
 }

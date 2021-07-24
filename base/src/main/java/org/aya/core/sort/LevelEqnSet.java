@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.sort;
 
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
@@ -9,8 +11,6 @@ import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.Ordering;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -131,7 +131,7 @@ public record LevelEqnSet(
     }
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.hsep(lhs.toDoc(), Doc.symbol(cmp.symbol), rhs.toDoc());
+      return Doc.sep(lhs.toDoc(), Doc.symbol(cmp.symbol), rhs.toDoc());
     }
   }
 }

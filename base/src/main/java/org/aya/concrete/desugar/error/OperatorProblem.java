@@ -24,7 +24,7 @@ public final class OperatorProblem {
     }
 
     @Override public @NotNull Doc describe() {
-      return Doc.hsep(
+      return Doc.sep(
         Doc.english("Ambiguous operator precedence detected between"),
         Doc.styled(Style.code(), Doc.plain(op1)),
         Doc.plain("and"),
@@ -33,7 +33,7 @@ public final class OperatorProblem {
     }
 
     @Override public @NotNull Doc hint() {
-      return Doc.hsep(Doc.plain("Use"),
+      return Doc.sep(Doc.plain("Use"),
         Doc.styled(CoreDistiller.KEYWORD.and().code(), Doc.plain("bind")),
         Doc.english("statement or insert parentheses to make it clear."));
     }

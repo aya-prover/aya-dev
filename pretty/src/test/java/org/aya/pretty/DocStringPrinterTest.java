@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty;
 
+import kala.collection.Seq;
+import org.aya.pretty.doc.Doc;
 import org.junit.jupiter.api.Test;
 
 import static org.aya.pretty.doc.Doc.*;
@@ -13,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class DocStringPrinterTest {
   @Test
   public void testAlign() {
-    var doc = hsep(plain("lorem"), align(vsep(plain("ipsum"), plain("dolor"))));
+    var doc = stickySep(Seq.of(new Doc[]{plain("lorem"), align(vsep(plain("ipsum"), plain("dolor")))}));
     assertEquals("lorem ipsum\n      dolor", doc.renderWithPageWidth(80));
   }
 
@@ -58,25 +60,25 @@ public class DocStringPrinterTest {
 
   @Test
   public void testHSep() {
-    var doc = hsep(plain("11"), plain("45"), plain("14"));
+    var doc = stickySep(Seq.of(new Doc[]{plain("11"), plain("45"), plain("14")}));
     assertEquals("11 45 14", doc.renderWithPageWidth(80));
   }
 
   @Test
   public void testHSepNarrow() {
-    var doc = hsep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
+    var doc = stickySep(Seq.of(new Doc[]{plain("boynext"), plain("next"), plain("door"), plain("doooor")}));
     assertEquals("boynext next door doooor", doc.renderWithPageWidth(5));
   }
 
   @Test
   public void testFillSepNarrow() {
-    var doc = fillSep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
+    var doc = sep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
     assertEquals("boynext\nnext door\ndoooor", doc.renderWithPageWidth(7));
   }
 
   @Test
   public void testFillSep() {
-    var doc = fillSep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
+    var doc = sep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
     assertEquals("boynext next door doooor", doc.renderWithPageWidth(114514));
   }
 

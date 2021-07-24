@@ -48,7 +48,7 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
   }
 
   private <T> T reportError(@NotNull Pat lhs, @NotNull Pat pat) {
-    var doc = Doc.fillSep(lhs.toTerm().toDoc(), Doc.plain("and"), pat.toTerm().toDoc());
+    var doc = Doc.sep(lhs.toTerm().toDoc(), Doc.plain("and"), pat.toTerm().toDoc());
     throw new IllegalArgumentException(doc.debugRender() + " are patterns of different types!");
   }
 

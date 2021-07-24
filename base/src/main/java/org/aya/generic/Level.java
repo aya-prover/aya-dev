@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.generic;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,7 +41,7 @@ public sealed interface Level<V extends Var> extends Docile {
     }
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.parened(Doc.hsep(among.map(Docile::toDoc)
+      return Doc.parened(Doc.sep(among.map(Docile::toDoc)
         .prepended(Doc.styled(CoreDistiller.KEYWORD, "max"))));
     }
   }

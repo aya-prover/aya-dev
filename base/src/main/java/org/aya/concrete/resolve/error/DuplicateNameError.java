@@ -15,7 +15,7 @@ public record DuplicateNameError(
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hsep(
+    return Doc.sep(
       Doc.english("The name being added"),
       Doc.plain(name),
       Doc.parened(Doc.styled(Style.code(), CoreDistiller.varDoc(ref))),

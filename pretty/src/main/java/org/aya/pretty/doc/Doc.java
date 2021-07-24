@@ -434,7 +434,7 @@ public sealed interface Doc extends Docile {
 
   @Contract("_ -> new") static @NotNull Doc english(String text) {
     if (!text.contains(" ")) return plain(text);
-    return fillSep(Seq.from(text.split(" ", -1)).view().map(Doc::plain));
+    return sep(Seq.from(text.split(" ", -1)).view().map(Doc::plain));
   }
 
   /**
@@ -620,35 +620,7 @@ public sealed interface Doc extends Docile {
    * @return separated documents
    */
   @Contract("_ -> new")
-  static @NotNull Doc hsep(Doc @NotNull ... docs) {
-    return hsep(Seq.of(docs));
-  }
-
-  /**
-   * hsep concatenates all documents {@param docs} horizontally with a space,
-   * i.e. it puts a space between all entries.
-   *
-   * <pre>
-   * >>> let docs = Util.words "lorem ipsum dolor sit amet"
-   *
-   * >>> hsep docs
-   * lorem ipsum dolor sit amet
-   *
-   * </pre>
-   * <p>
-   * hsep does not introduce line breaks on its own, even when the page is too
-   * narrow:
-   *
-   * <pre>
-   * >>> putDocW 5 (hsep docs)
-   * lorem ipsum dolor sit amet
-   * </pre>
-   *
-   * @param docs documents to separate
-   * @return separated documents
-   */
-  @Contract("_ -> new")
-  static @NotNull Doc hsep(@NotNull SeqLike<@NotNull Doc> docs) {
+  static @NotNull Doc stickySep(@NotNull SeqLike<@NotNull Doc> docs) {
     return join(ONE_WS, docs);
   }
 
@@ -680,11 +652,11 @@ public sealed interface Doc extends Docile {
    * @param docs documents to separate
    * @return separated documents
    */
-  @Contract("_ -> new") static @NotNull Doc fillSep(Doc @NotNull ... docs) {
+  @Contract("_ -> new") static @NotNull Doc sep(Doc @NotNull ... docs) {
     return join(new FlatAlt(ONE_WS, new Line()), docs);
   }
 
-  @Contract("_ -> new") static @NotNull Doc fillSep(@NotNull SeqLike<Doc> docs) {
+  @Contract("_ -> new") static @NotNull Doc sep(@NotNull SeqLike<Doc> docs) {
     return join(new FlatAlt(ONE_WS, new Line()), docs);
   }
 

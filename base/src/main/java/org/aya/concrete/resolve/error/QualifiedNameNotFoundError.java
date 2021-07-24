@@ -16,7 +16,7 @@ public record QualifiedNameNotFoundError(
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hsep(
+    return Doc.sep(
       Doc.english("The qualified name referred to by"),
       Doc.styled(Style.code(),
         Doc.hcat(Doc.plain(modName.joinToString(Constants.SCOPE_SEPARATOR)),

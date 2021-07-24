@@ -14,7 +14,7 @@ public record ModNameNotFoundError(
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hsep(
+    return Doc.sep(
       Doc.english("The module name referred to by"),
       Doc.styled(Style.code(), Doc.plain(modName.joinToString("::"))),
       Doc.english("is not defined in the current scope")

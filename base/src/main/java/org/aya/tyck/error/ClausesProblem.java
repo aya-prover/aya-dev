@@ -22,7 +22,7 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   private static @NotNull Doc termToHint(@Nullable Term term) {
-    return term == null ? Doc.empty() : Doc.hsep(Doc.plain("substituted to"), Doc.styled(Style.code(), term.toDoc()));
+    return term == null ? Doc.empty() : Doc.sep(Doc.plain("substituted to"), Doc.styled(Style.code(), term.toDoc()));
   }
 
   record Conditions(
@@ -33,13 +33,13 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull SourcePos iPos, @Nullable SourcePos jPos
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
-      var result = rhs != null ? Doc.hsep(
+      var result = rhs != null ? Doc.sep(
         Doc.plain("unify"),
         Doc.styled(Style.code(), lhs.toDoc()),
         Doc.plain("and"),
         Doc.styled(Style.code(), rhs.toDoc())
       ) : Doc.english("even reduce one of the clause(s) to check condition");
-      return Doc.fillSep(
+      return Doc.sep(
         Doc.plain("The"),
         Doc.ordinal(i),
         Doc.english("clause matches on a constructor with condition(s). When checking the"),
@@ -64,7 +64,7 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hsep(
+      return Doc.sep(
         Doc.plain("The"),
         Doc.ordinal(i),
         Doc.english("and the"),
@@ -96,7 +96,7 @@ public sealed interface ClausesProblem extends Problem {
 
   record SplitInterval(@NotNull SourcePos sourcePos, @NotNull Pat pat) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.hsep(
+      return Doc.sep(
         Doc.plain("Cannot perform pattern matching"),
         Doc.styled(Style.code(), pat.toDoc())
       );

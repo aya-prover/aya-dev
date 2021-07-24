@@ -19,13 +19,13 @@ public record ErrorTerm(@NotNull Doc description) implements Term {
   }
 
   public static @NotNull ErrorTerm typeOf(@NotNull Doc origin) {
-    return new ErrorTerm(Doc.hsep(
+    return new ErrorTerm(Doc.sep(
       Doc.plain("type of"),
       Doc.styled(Style.code(), origin)));
   }
 
   public static @NotNull ErrorTerm unexpected(@NotNull Doc origin) {
-    return new ErrorTerm(Doc.hsep(
+    return new ErrorTerm(Doc.sep(
       Doc.plain("unexpected"),
       Doc.styled(Style.code(), origin)));
   }

@@ -13,7 +13,7 @@ public record UnknownPrimError(
   @NotNull String name
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hsep(
+    return Doc.sep(
       Doc.plain("Unknown primitive"),
       Doc.styled(Style.code(), Doc.plain(name)));
   }

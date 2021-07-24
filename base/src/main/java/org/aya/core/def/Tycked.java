@@ -13,14 +13,14 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface Tycked extends Docile permits Def, Tycked.Counterexample, Tycked.Example {
   record Example(@NotNull Def def) implements Tycked {
     @Override public @NotNull Doc toDoc() {
-      return Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "example"), def.toDoc());
+      return Doc.sep(Doc.styled(CoreDistiller.KEYWORD, "example"), def.toDoc());
     }
   }
 
   record Counterexample(@NotNull Def def, @NotNull ImmutableSeq<Problem> problems) implements Tycked {
     @Override public @NotNull Doc toDoc() {
       return Doc.vcat(Seq.of(
-        Doc.hsep(Doc.styled(CoreDistiller.KEYWORD, "counterexample"), def.toDoc())).view()
+        Doc.sep(Doc.styled(CoreDistiller.KEYWORD, "counterexample"), def.toDoc())).view()
           .concat(problems.map(Problem::brief)));
     }
   }

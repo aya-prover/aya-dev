@@ -14,7 +14,7 @@ public record RedefinitionError(
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.hsep(Doc.plain("Redefinition of"), Doc.plain(kind.prettyName),
+    return Doc.sep(Doc.plain("Redefinition of"), Doc.plain(kind.prettyName),
       Doc.styled(Style.code(), Doc.plain(name)));
   }
 

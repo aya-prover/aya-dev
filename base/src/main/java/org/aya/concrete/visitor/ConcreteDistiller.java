@@ -122,7 +122,7 @@ public final class ConcreteDistiller implements
     if (!expr.explicit()) return Doc.symbol("_");
     var filling = expr.filling();
     if (filling == null) return Doc.symbol("{??}");
-    return Doc.hsep(Doc.symbol("{?"), filling.toDoc(), Doc.symbol("?}"));
+    return Doc.sep(Doc.symbol("{?"), filling.toDoc(), Doc.symbol("?}"));
   }
 
   @Override public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
@@ -143,8 +143,8 @@ public final class ConcreteDistiller implements
       Doc.styled(KEYWORD, "new "),
       expr.struct().toDoc(),
       Doc.symbol(" { "),
-      Doc.hsep(expr.fields().view().map(t ->
-        Doc.hsep(Doc.plain("|"), Doc.plain(t.name()),
+      Doc.sep(expr.fields().view().map(t ->
+        Doc.sep(Doc.plain("|"), Doc.plain(t.name()),
           t.bindings().isEmpty() ? Doc.empty() :
             Doc.join(Doc.ONE_WS, t.bindings().map(v -> Doc.plain(v.data().name()))),
           Doc.plain("=>"), t.body().toDoc())
@@ -369,7 +369,7 @@ public final class ConcreteDistiller implements
       Doc.ONE_WS,
       Doc.styled(KEYWORD, "def"),
       decl.modifiers.isEmpty() ? Doc.ONE_WS :
-        Doc.hsep(Seq.from(decl.modifiers).view().map(this::visitModifier)),
+        Doc.sep(Seq.from(decl.modifiers).view().map(this::visitModifier)),
       linkDef(decl.ref, FN_CALL),
       visitTele(decl.telescope),
       decl.result instanceof Expr.HoleExpr
@@ -397,7 +397,7 @@ public final class ConcreteDistiller implements
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Expr.Param> telescope) {
     return telescope.isEmpty() ? Doc.empty() : Doc.cat(Doc.ONE_WS,
-      Doc.hsep(telescope.map(Expr.Param::toDoc)));
+      Doc.sep(telescope.map(Expr.Param::toDoc)));
   }
 
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
@@ -406,18 +406,18 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
     var vars = levels.levels().map(WithPos::data).map(t -> linkDef(t, GENERALIZED));
-    return Doc.hsep(
+    return Doc.sep(
       Doc.styled(KEYWORD, levels.kind().keyword),
-      Doc.hsep(vars));
+      Doc.sep(vars));
   }
 
   @Override public Doc visitExample(Sample.@NotNull Working example, Unit unit) {
-    return Doc.hsep(Doc.styled(KEYWORD, "example"),
+    return Doc.sep(Doc.styled(KEYWORD, "example"),
       example.delegate().accept(this, unit));
   }
 
   @Override public Doc visitCounterexample(Sample.@NotNull Counter example, Unit unit) {
-    return Doc.hsep(Doc.styled(KEYWORD, "counterexample"),
+    return Doc.sep(Doc.styled(KEYWORD, "counterexample"),
       example.delegate().accept(this, unit));
   }
 }

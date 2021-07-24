@@ -23,7 +23,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   }
 
   @Override public Doc visitDecl(Trace.@NotNull DeclT t, Unit unit) {
-    return Doc.vcat(Doc.hsep(plus, CoreDistiller.varDoc(t.var())),
+    return Doc.vcat(Doc.sep(plus, CoreDistiller.varDoc(t.var())),
       indentedChildren(t.children()));
   }
 
@@ -37,7 +37,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
       buf.append(colon);
       buf.append(t.term().toDoc());
     }
-    return Doc.vcat(Doc.hsep(buf), indentedChildren(t.children()));
+    return Doc.vcat(Doc.sep(buf), indentedChildren(t.children()));
   }
 
   @Override public Doc visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
@@ -46,25 +46,25 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
       buf.append(colon);
       buf.append(t.type().toDoc());
     }
-    return Doc.vcat(Doc.hsep(buf), indentedChildren(t.children()));
+    return Doc.vcat(Doc.sep(buf), indentedChildren(t.children()));
   }
 
   @Override public Doc visitTyck(Trace.@NotNull TyckT t, Unit unit) {
     assert t.children().isEmpty();
-    return Doc.hsep(plus, Doc.plain("result"), Doc.symbol("\u22A2"),
+    return Doc.sep(plus, Doc.plain("result"), Doc.symbol("\u22A2"),
       Doc.styled(Style.code(), t.term().toDoc()), Doc.symbol("\u2191"),
       t.type().toDoc());
   }
 
   @Override public Doc visitPat(Trace.@NotNull PatT t, Unit unit) {
-    return Doc.vcat(Doc.hsep(plus, Doc.plain("pat"), Doc.symbol("\u22A2"),
+    return Doc.vcat(Doc.sep(plus, Doc.plain("pat"), Doc.symbol("\u22A2"),
         Doc.styled(Style.code(), t.pat().toDoc()), colon,
         t.term().toDoc()),
       indentedChildren(t.children()));
   }
 
   @Override public Doc visitLabel(Trace.@NotNull LabelT t, Unit unit) {
-    return Doc.vcat(Doc.hsep(plus, Doc.plain(t.label())), indentedChildren(t.children()));
+    return Doc.vcat(Doc.sep(plus, Doc.plain(t.label())), indentedChildren(t.children()));
   }
 
   public @NotNull Doc docify(Trace.@NotNull Builder traceBuilder) {
