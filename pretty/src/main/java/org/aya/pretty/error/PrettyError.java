@@ -85,6 +85,8 @@ public record PrettyError(
 
       lineNo++;
     }
+
+    docs.append(Doc.empty());
     return Doc.vcat(docs);
   }
 

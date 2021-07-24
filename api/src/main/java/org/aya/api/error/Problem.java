@@ -80,7 +80,7 @@ public interface Problem {
 
   default @NotNull String errorMsg() {
     if (sourcePos() == SourcePos.NONE) return describe().debugRender();
-    return toPrettyError().toDoc().renderWithPageWidth(20);
+    return toPrettyError().toDoc().renderWithPageWidth(120);
   }
 
   default @NotNull String briefErrorMsg() {
