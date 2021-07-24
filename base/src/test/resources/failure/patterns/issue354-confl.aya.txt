@@ -11,5 +11,6 @@ In file $FILE:9:4 ->
   11 |  | neg n => n
           ^--------^ substituted to `zero`
 
-Error: The 2nd clause matches on a constructor with condition(s). When checking the 1st condition, we failed to unify `zero` and `suc zero`
+Error: The 2nd clause matches on a constructor with condition(s). When checking the
+       1st condition, we failed to unify `zero` and `suc zero`
 What are you doing?

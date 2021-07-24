@@ -80,10 +80,10 @@ public interface Problem {
 
   default @NotNull String errorMsg() {
     if (sourcePos() == SourcePos.NONE) return describe().debugRender();
-    return toPrettyError().toDoc().renderWithPageWidth(120);
+    return toPrettyError().toDoc().renderWithPageWidth(80);
   }
 
   default @NotNull String briefErrorMsg() {
-    return brief().renderWithPageWidth(120);
+    return brief().renderWithPageWidth(80);
   }
 }

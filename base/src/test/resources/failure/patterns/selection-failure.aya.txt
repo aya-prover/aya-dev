@@ -5,7 +5,8 @@ In file $FILE:8:6 ->
   8 |  | f, vnil => vnil
             ^--^
 
-Warning: Cannot match with `vnil` due to a failed index unification, treating as bind pattern
+Warning: Cannot match with `vnil` due to a failed index unification, treating as
+         bind pattern
 In file $FILE:8:14 ->
 
   6 |  | A, suc m => vcons A (Vect A m)
