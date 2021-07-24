@@ -447,12 +447,11 @@ public sealed interface Doc extends Docile {
   /**
    * Plain text document
    *
-   * @param text text that may contain '\n'
+   * @param text text that may not contain '\n'
    * @return text document of the whole text
    */
   @Contract("_ -> new") static @NotNull Doc plain(String text) {
-    if (!text.contains("\n")) return new PlainText(text);
-    return concatWith((x, y) -> simpleCat(x, hardLine(), y), Seq.from(text.split("\n", -1)).view().map(Doc::plain));
+    return new PlainText(text);
   }
 
   @Contract("_ -> new") static @NotNull Doc english(String text) {
