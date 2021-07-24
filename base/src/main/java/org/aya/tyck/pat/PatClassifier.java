@@ -58,7 +58,7 @@ public record PatClassifier(
         var rhs = rhsInfo._2;
         var lhsSubst = new Substituter.TermSubst(MutableMap.of());
         var rhsSubst = new Substituter.TermSubst(MutableMap.of());
-        var ctx = PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
+        PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
         var lhsTerm = lhs.body().subst(lhsSubst);
         var rhsTerm = rhs.body().subst(rhsSubst);
         var unification = tycker.unifier(pos, Ordering.Eq).compare(lhsTerm, rhsTerm, result);
