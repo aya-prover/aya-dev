@@ -4,37 +4,35 @@ package org.aya.pretty.backend.latex;
 
 import org.aya.pretty.backend.string.style.ClosingStylist;
 import org.aya.pretty.doc.Style;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 public class TeXStylist extends ClosingStylist {
-  @Override protected Tuple2<String, String> formatItalic() {
-    return Tuple.of("\\textit{", "}");
+  @Override protected StyleToken formatItalic() {
+    return new StyleToken("\\textit{", "}", false);
   }
 
-  @Override protected Tuple2<String, String> formatBold() {
-    return Tuple.of("\\textbf{", "}");
+  @Override protected StyleToken formatBold() {
+    return new StyleToken("\\textbf{", "}", false);
   }
 
-  @Override protected Tuple2<String, String> formatStrike() {
-    return Tuple.of("\\sout{", "}");
+  @Override protected StyleToken formatStrike() {
+    return new StyleToken("\\sout{", "}", false);
   }
 
-  @Override protected Tuple2<String, String> formatUnderline() {
-    return Tuple.of("\\underline{", "}");
+  @Override protected StyleToken formatUnderline() {
+    return new StyleToken("\\underline{", "}", false);
   }
 
-  @Override protected Tuple2<String, String> formatCode() {
-    return Tuple.of("\\fbox{", "}");
+  @Override protected StyleToken formatCode() {
+    return new StyleToken("\\fbox{", "}", false);
   }
 
-  @Override protected Tuple2<String, String> formatColorHex(int rgb, boolean background) {
-    return Tuple.of("\\%s[HTML]{%06x}{".formatted(
-      background ? "colorbox" : "textcolor", rgb), "}");
+  @Override protected StyleToken formatColorHex(int rgb, boolean background) {
+    return new StyleToken("\\%s[HTML]{%06x}{".formatted(
+      background ? "colorbox" : "textcolor", rgb), "}", false);
   }
 
-  @Override protected @NotNull Tuple2<String, String> formatCustom(Style.@NotNull CustomStyle style) {
-    return Tuple.of("", "");
+  @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
+    return new StyleToken("", "", false);
   }
 }

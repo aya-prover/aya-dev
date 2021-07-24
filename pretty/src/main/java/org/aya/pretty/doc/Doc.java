@@ -556,6 +556,19 @@ public sealed interface Doc extends Docile {
     return join(lineEmpty(), docs);
   }
 
+  @Contract("_ -> new")
+  static @NotNull Doc vfcat(Doc @NotNull ... docs) {
+    return join(hardLine(), docs);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc vfcat(@NotNull Stream<@NotNull Doc> docs) {
+    return join(hardLine(), docs);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc vfcat(@NotNull SeqLike<@NotNull Doc> docs) {
+    return join(hardLine(), docs);
+  }
+
   /**
    * hcat concatenates all documents docs horizontally without any spacing.
    *

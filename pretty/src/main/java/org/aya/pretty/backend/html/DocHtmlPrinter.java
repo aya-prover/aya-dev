@@ -50,29 +50,29 @@ public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
     <pre class="Aya">
     """;
 
-  @Override protected void renderHeader() {
-    if (config.withHeader) builder.append(HEAD);
-    else builder.append("<pre class=\"Aya\">");
+  @Override protected void renderHeader(@NotNull Cursor cursor) {
+    if (config.withHeader) cursor.invisibleContent(HEAD);
+    else cursor.invisibleContent("<pre class=\"Aya\">");
   }
 
-  @Override protected void renderFooter() {
-    builder.append("</pre>");
-    if (config.withHeader) builder.append("</body></html>");
+  @Override protected void renderFooter(@NotNull Cursor cursor) {
+    cursor.invisibleContent("</pre>");
+    if (config.withHeader) cursor.invisibleContent("</body></html>");
   }
 
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text) {
     if (text.link() instanceof StringLink link) {
-      builder.append("<a ");
-      if (text.id() != null) builder.append("id=\"").append(text.id()).append("\" ");
-      builder.append("href=\"");
-      builder.append(link.linkText());
-      builder.append("\">");
+      cursor.invisibleContent("<a ");
+      if (text.id() != null) cursor.invisibleContent("id=\"" + text.id() + "\" ");
+      cursor.invisibleContent("href=\"");
+      cursor.invisibleContent(link.linkText());
+      cursor.invisibleContent("\">");
       renderDoc(cursor, text.doc());
-      builder.append("</a>");
+      cursor.invisibleContent("</a>");
     } else super.renderHyperLinked(cursor, text);
   }
 
-  @Override protected void renderHardLineBreak() {
-    builder.append("<br>");
+  @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
+    cursor.lineBreakWith("<br>");
   }
 }

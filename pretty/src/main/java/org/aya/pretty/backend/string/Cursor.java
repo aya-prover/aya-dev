@@ -5,30 +5,63 @@ package org.aya.pretty.backend.string;
 import org.jetbrains.annotations.NotNull;
 
 public class Cursor {
+  public interface CursorAPI {
+    @NotNull String makeIndent(int indent);
+  }
+
   int cursor;
   int lineStartCursor;
-  StringBuilder builder;
+  int nestLevel;
+  StringBuilder builder = new StringBuilder();
+  CursorAPI api;
 
-  public Cursor(@NotNull StringBuilder builder) {
-    this.builder = builder;
+  public Cursor(CursorAPI api) {
+    this.api = api;
   }
 
-  public void indent(int indent) {
-    if (indent > 0) cursor += indent;
+  public void content(@NotNull CharSequence content, boolean visible) {
+    if (visible) visibleContent(content);
+    else invisibleContent(content);
   }
 
-  public void visibleContent(@NotNull Runnable r) {
-    var prev = builder.length();
-    r.run();
-    var now = builder.length();
-    cursor += Math.max(0, now - prev);
+  public void invisibleContent(@NotNull CharSequence content) {
+    checkLineStart();
+    builder.append(content);
+  }
+
+  public void visibleContent(@NotNull CharSequence content) {
+    checkLineStart();
+    builder.append(content);
+    moveForward(content.length());
+  }
+
+  private void checkLineStart() {
+    if (isAtLineStart()) {
+      builder.append(api.makeIndent(nestLevel));
+      moveForward(nestLevel);
+    }
+  }
+
+  public void lineBreakWith(@NotNull CharSequence lineBreak) {
+    visibleContent(lineBreak);
+    moveToNewLine();
   }
 
   public boolean isAtLineStart() {
     return cursor == lineStartCursor;
   }
 
-  public void movedToNewLine() {
+  public void moveToNewLine() {
     cursor = lineStartCursor = 0;
+  }
+
+  public void moveForward(int count) {
+    cursor += Math.max(0, count);
+  }
+
+  public void nested(int nest, @NotNull Runnable r) {
+    nestLevel += nest;
+    r.run();
+    nestLevel -= nest;
   }
 }

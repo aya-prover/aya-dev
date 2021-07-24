@@ -4,40 +4,39 @@ package org.aya.pretty.backend.html;
 
 import org.aya.pretty.backend.string.style.ClosingStylist;
 import org.aya.pretty.doc.Style;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 public class Html5Stylist extends ClosingStylist {
-  @Override protected Tuple2<String, String> formatItalic() {
-    return Tuple.of("<i>", "</i>");
+  @Override protected StyleToken formatItalic() {
+    return new StyleToken("<i>", "</i>", false);
   }
 
-  @Override protected Tuple2<String, String> formatBold() {
-    return Tuple.of("<b>", "</b>");
+  @Override protected StyleToken formatBold() {
+    return new StyleToken("<b>", "</b>", false);
   }
 
-  @Override protected Tuple2<String, String> formatStrike() {
-    return Tuple.of("<s>", "</s>");
+  @Override protected StyleToken formatStrike() {
+    return new StyleToken("<s>", "</s>", false);
   }
 
-  @Override protected Tuple2<String, String> formatCode() {
-    return Tuple.of("<code>", "</code>");
+  @Override protected StyleToken formatCode() {
+    return new StyleToken("<code>", "</code>", false);
   }
 
-  @Override protected Tuple2<String, String> formatUnderline() {
-    return Tuple.of("<u>", "</u>");
+  @Override protected StyleToken formatUnderline() {
+    return new StyleToken("<u>", "</u>", false);
   }
 
-  @Override protected Tuple2<String, String> formatColorHex(int rgb, boolean background) {
-    return Tuple.of(
+  @Override protected StyleToken formatColorHex(int rgb, boolean background) {
+    return new StyleToken(
       "<span style=\"%s:#%06x;\">".formatted(background ? "background-color" : "color", rgb),
-      "</span>"
+      "</span>",
+      false
     );
   }
 
-  @Override protected @NotNull Tuple2<String, String> formatCustom(Style.@NotNull CustomStyle style) {
+  @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
     // TODO: html custom style?
-    return Tuple.of("", "");
+    return new StyleToken("", "", false);
   }
 }

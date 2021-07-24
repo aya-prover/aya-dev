@@ -2,22 +2,24 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.string.style;
 
-import org.aya.pretty.backend.string.StringStylist;
-import org.aya.pretty.doc.Style;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.control.Option;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
+import org.aya.pretty.backend.string.Cursor;
+import org.aya.pretty.backend.string.StringStylist;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ClosingStylist extends StringStylist {
-  @Override
-  public void format(@NotNull Seq<Style> styles, @NotNull StringBuilder builder, @NotNull Runnable inside) {
-    formatInternal(styles.view(), builder, inside);
+  public static record StyleToken(@NotNull String start, @NotNull String end, boolean visible) {
   }
 
-  private void formatInternal(@NotNull SeqView<Style> styles, @NotNull StringBuilder builder, @NotNull Runnable inside) {
+  @Override
+  public void format(@NotNull Seq<Style> styles, @NotNull Cursor cursor, @NotNull Runnable inside) {
+    formatInternal(styles.view(), cursor, inside);
+  }
+
+  private void formatInternal(@NotNull SeqView<Style> styles, @NotNull Cursor cursor, @NotNull Runnable inside) {
     if (styles.isEmpty()) {
       inside.run();
       return;
@@ -25,12 +27,12 @@ public abstract class ClosingStylist extends StringStylist {
 
     var style = styles.first();
     var format = formatOne(style);
-    builder.append(format._1);
-    formatInternal(styles.drop(1), builder, inside);
-    builder.append(format._2);
+    cursor.content(format.start, format.visible);
+    formatInternal(styles.drop(1), cursor, inside);
+    cursor.content(format.end, format.visible);
   }
 
-  protected @NotNull Tuple2<String, String> formatOne(Style style) {
+  protected @NotNull StyleToken formatOne(Style style) {
     if (style instanceof Style.Attr attr) {
       return switch (attr) {
         case Code -> formatCode();
@@ -56,26 +58,28 @@ public abstract class ClosingStylist extends StringStylist {
     return colorScheme.definedColors().getOption(colorName);
   }
 
-  protected @NotNull Tuple2<String, String> formatPreset(String styleName) {
-    var style = styleFamily.definedStyles().getOption(styleName);
-    if (style.isEmpty()) return Tuple.of("", "");
-    return style.get().styles.view().map(this::formatOne)
-      .foldLeft(Tuple.of("", ""), (acc, t) ->
-        Tuple.of(acc._1 + t._1, t._2 + acc._2));
+  protected @NotNull StyleToken formatPreset(String styleName) {
+    // var style = styleFamily.definedStyles().getOption(styleName);
+    // if (style.isEmpty()) return new StyleToken("", "", false);
+    // return style.get().styles.view().map(this::formatOne)
+    //   .foldLeft(Tuple.of("", ""), (acc, t) ->
+    //     Tuple.of(acc._1 + t._1, t._2 + acc._2));
+    // TODO
+    return new StyleToken("", "", false);
   }
 
-  protected @NotNull Tuple2<String, String> formatColorName(@NotNull Style.ColorName color, boolean background) {
+  protected @NotNull StyleToken formatColorName(@NotNull Style.ColorName color, boolean background) {
     var rgb = getColor(color.colorName());
     return rgb.isDefined()
       ? formatColorHex(rgb.get(), background)
-      : Tuple.of("", "");
+      : new StyleToken("", "", false);
   }
 
-  protected abstract Tuple2<String, String> formatItalic();
-  protected abstract Tuple2<String, String> formatCode();
-  protected abstract Tuple2<String, String> formatBold();
-  protected abstract Tuple2<String, String> formatStrike();
-  protected abstract Tuple2<String, String> formatUnderline();
-  protected abstract Tuple2<String, String> formatColorHex(int rgb, boolean background);
-  protected abstract @NotNull Tuple2<String, String> formatCustom(@NotNull Style.CustomStyle style);
+  protected abstract StyleToken formatItalic();
+  protected abstract StyleToken formatCode();
+  protected abstract StyleToken formatBold();
+  protected abstract StyleToken formatStrike();
+  protected abstract StyleToken formatUnderline();
+  protected abstract StyleToken formatColorHex(int rgb, boolean background);
+  protected abstract @NotNull StyleToken formatCustom(@NotNull Style.CustomStyle style);
 }

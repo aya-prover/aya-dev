@@ -30,7 +30,7 @@ public record PrettyError(
       ? Seq.of(Tuple.of(primary, Doc.empty()))
       : hints;
 
-    return Doc.vcat(
+    return Doc.vfcat(
       Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
       Doc.empty(),
       Doc.hang(2, visualizeCode(config, range, allHints)),
@@ -64,11 +64,11 @@ public record PrettyError(
       .map(line -> visualizeLine(config, line))
       .collect(Buffer.factory());
 
-    var builder = new StringBuilder();
     int lineNo = Math.max(startLine - showMore, 1);
+    var docs = Buffer.<Doc>of();
 
     for (var line : lines) {
-      renderLine(builder, line, lineNo, linenoWidth);
+      docs.append(renderLine(line, lineNo, linenoWidth));
 
       // render error column as underlines
       final int finalLineNo = lineNo;
@@ -77,19 +77,19 @@ public record PrettyError(
         var find = r.get();
         int startCol = find._1.startCol();
         int endCol = find._1.endCol();
-        renderHint(builder, startCol, endCol, linenoWidth);
+        var hintUnderline = renderHint(startCol, endCol, linenoWidth);
         var doc = find._2;
-        if (!(doc instanceof Doc.Empty)) builder.append(' ').append(doc.debugRender());
-        builder.append('\n');
+        if (doc instanceof Doc.Empty) docs.append(hintUnderline);
+        else docs.append(Doc.hcat(hintUnderline, Doc.plain(" "), doc));
       }
 
       lineNo++;
     }
-
-    return Doc.plain(builder.toString());
+    return Doc.vfcat(docs);
   }
 
-  private void renderHint(StringBuilder builder, int startCol, int endCol, int linenoWidth) {
+  private Doc renderHint(int startCol, int endCol, int linenoWidth) {
+    var builder = new StringBuilder();
     builder.append(" ".repeat(startCol + linenoWidth + " | ".length()));
     builder.append("^");
     int length = endCol - startCol - 1;
@@ -98,20 +98,22 @@ public record PrettyError(
       builder.append("-".repeat(length));
     }
     builder.append("^");
+    return Doc.plain(builder.toString());
   }
 
-  private void renderLine(StringBuilder builder, String line, int lineNo, int linenoWidth) {
-    renderLine(builder, line, Option.of(lineNo), linenoWidth);
+  private Doc renderLine(String line, int lineNo, int linenoWidth) {
+    return renderLine(line, Option.of(lineNo), linenoWidth);
   }
 
-  private void renderLine(StringBuilder builder, String line, Option<Integer> lineNo, int linenoWidth) {
+  private Doc renderLine(String line, Option<Integer> lineNo, int linenoWidth) {
+    var builder = new StringBuilder();
     if (lineNo.isDefined()) {
       builder.append(String.format("%" + linenoWidth + "d | ", lineNo.get()));
     } else {
       builder.append(String.format("%" + linenoWidth + "s | ", ""));
     }
     builder.append(line);
-    builder.append('\n');
+    return Doc.plain(builder.toString());
   }
 
   private int widthOfLineNumber(int line) {

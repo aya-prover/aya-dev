@@ -4,8 +4,6 @@ package org.aya.pretty.backend.string.style;
 
 import org.aya.pretty.backend.string.custom.UnixTermStyle;
 import org.aya.pretty.doc.Style;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
 
 public class UnixTermStylist extends ClosingStylist {
@@ -14,49 +12,50 @@ public class UnixTermStylist extends ClosingStylist {
   private UnixTermStylist() {
   }
 
-  @Override protected Tuple2<String, String> formatItalic() {
-    return Tuple.of("\033[3m", "\033[23m");
+  @Override protected StyleToken formatItalic() {
+    return new StyleToken("\033[3m", "\033[23m", false);
   }
 
-  @Override protected Tuple2<String, String> formatCode() {
-    return Tuple.of("`", "'");
+  @Override protected StyleToken formatCode() {
+    return new StyleToken("`", "'", true);
   }
 
-  @Override protected Tuple2<String, String> formatBold() {
-    return Tuple.of("\033[1m", "\033[22m");
+  @Override protected StyleToken formatBold() {
+    return new StyleToken("\033[1m", "\033[22m", false);
   }
 
-  @Override protected Tuple2<String, String> formatStrike() {
-    return Tuple.of("\033[9m", "\033[29m");
+  @Override protected StyleToken formatStrike() {
+    return new StyleToken("\033[9m", "\033[29m", false);
   }
 
-  @Override protected Tuple2<String, String> formatUnderline() {
-    return Tuple.of("\033[4m", "\033[24m");
+  @Override protected StyleToken formatUnderline() {
+    return new StyleToken("\033[4m", "\033[24m", false);
   }
 
   @Override
-  protected @NotNull Tuple2<String, String> formatCustom(Style.@NotNull CustomStyle style) {
+  protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
     if (style instanceof UnixTermStyle termStyle) {
       return switch (termStyle) {
-        case Dim -> Tuple.of("\033[2m", "\033[22m");
-        case DoubleUnderline -> Tuple.of("\033[21m", "\033[24m");
-        case CurlyUnderline -> Tuple.of("\033[4:3m", "\033[4:0m");
-        case Overline -> Tuple.of("\033[53m", "\033[55m");
-        case Blink -> Tuple.of("\033[5m", "\033[25m");
-        case Reverse -> Tuple.of("\033[7m", "\033[27m");
+        case Dim -> new StyleToken("\033[2m", "\033[22m", false);
+        case DoubleUnderline -> new StyleToken("\033[21m", "\033[24m", false);
+        case CurlyUnderline -> new StyleToken("\033[4:3m", "\033[4:0m", false);
+        case Overline -> new StyleToken("\033[53m", "\033[55m", false);
+        case Blink -> new StyleToken("\033[5m", "\033[25m", false);
+        case Reverse -> new StyleToken("\033[7m", "\033[27m", false);
       };
     }
-    return Tuple.of("", "");
+    return new StyleToken("", "", false);
   }
 
-  @Override protected @NotNull Tuple2<String, String> formatColorHex(int rgb, boolean bg) {
+  @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean bg) {
     int r = (rgb & 0xFF0000) >> 16;
     int g = (rgb & 0xFF00) >> 8;
     int b = (rgb & 0xFF);
 
-    return Tuple.of(
+    return new StyleToken(
       String.format("\033[%d;2;%d;%d;%dm", bg ? 48 : 38, r, g, b),
-      String.format("\033[%dm", bg ? 49 : 39)
+      String.format("\033[%dm", bg ? 49 : 39),
+      false
     );
   }
 }

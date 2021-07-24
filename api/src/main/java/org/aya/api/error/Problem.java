@@ -79,10 +79,8 @@ public interface Problem {
   }
 
   default @NotNull String errorMsg() {
-    if (sourcePos() == SourcePos.NONE)
-      return describe().debugRender();
-    var error = toPrettyError().toDoc();
-    return error.renderWithPageWidth(120);
+    if (sourcePos() == SourcePos.NONE) return describe().debugRender();
+    return toPrettyError().toDoc().renderWithPageWidth(20);
   }
 
   default @NotNull String briefErrorMsg() {

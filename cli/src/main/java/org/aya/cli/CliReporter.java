@@ -4,7 +4,6 @@ package org.aya.cli;
 
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
-import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +17,8 @@ public final class CliReporter implements Reporter {
 
   @Override public void report(@NotNull Problem problem) {
     var errorMsg = problem.errorMsg();
-    (Seq.of(Problem.Severity.ERROR, Problem.Severity.WARN).contains(problem.level()) ? System.err : System.out)
-      .println(errorMsg);
+    var level = problem.level();
+    if (level == Problem.Severity.ERROR || level == Problem.Severity.WARN) System.err.println(errorMsg);
+    else System.out.println(errorMsg);
   }
 }

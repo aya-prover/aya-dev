@@ -13,21 +13,21 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public class StringPrinter<StringConfig extends StringPrinterConfig>
-  implements Printer<String, StringConfig> {
-  protected StringBuilder builder;
+  implements Printer<String, StringConfig>, Cursor.CursorAPI {
   protected StringConfig config;
 
-  private int nestLevel = 0;
+  @Override public @NotNull String makeIndent(int indent) {
+    return " ".repeat(indent);
+  }
 
   @Override
   public @NotNull String render(@NotNull StringConfig config, @NotNull Doc doc) {
-    builder = new StringBuilder();
     this.config = config;
-    var cursorRecord = new Cursor(builder);
-    renderHeader();
-    renderDoc(cursorRecord, doc);
-    renderFooter();
-    return builder.toString();
+    var cursor = new Cursor(this);
+    renderHeader(cursor);
+    renderDoc(cursor, doc);
+    renderFooter(cursor);
+    return cursor.builder.toString();
   }
 
   private int lineRemaining(@NotNull Cursor cursor) {
@@ -61,7 +61,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.Column column) {
       return predictWidth(cursor, column.docBuilder().apply(cursor.cursor));
     } else if (doc instanceof Doc.Nesting nesting) {
-      return predictWidth(cursor, nesting.docBuilder().apply(nestLevel));
+      return predictWidth(cursor, nesting.docBuilder().apply(cursor.nestLevel));
     } else if (doc instanceof Doc.PageWidth pageWidth) {
       return predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
     }
@@ -76,10 +76,10 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     return lineRem == PrinterConfig.INFINITE_SIZE || predictWidth(cursor, a) <= lineRem ? a : b;
   }
 
-  protected void renderHeader() {
+  protected void renderHeader(@NotNull Cursor cursor) {
   }
 
-  protected void renderFooter() {
+  protected void renderFooter(@NotNull Cursor cursor) {
   }
 
   protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc) {
@@ -94,8 +94,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.Styled styled) {
       renderStyled(cursor, styled);
     } else if (doc instanceof Doc.Line) {
-      renderHardLineBreak();
-      cursor.movedToNewLine();
+      renderHardLineBreak(cursor);
       renderLineStart(cursor);
     } else if (doc instanceof Doc.FlatAlt alt) {
       renderFlatAlt(cursor, alt);
@@ -109,7 +108,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.Column column) {
       renderDoc(cursor, column.docBuilder().apply(cursor.cursor));
     } else if (doc instanceof Doc.Nesting nesting) {
-      renderDoc(cursor, nesting.docBuilder().apply(nestLevel));
+      renderDoc(cursor, nesting.docBuilder().apply(cursor.nestLevel));
     } else if (doc instanceof Doc.PageWidth pageWidth) {
       renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
     }
@@ -120,9 +119,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   }
 
   protected void renderNest(@NotNull Cursor cursor, @NotNull Doc.Nest nest) {
-    nestLevel += nest.indent();
-    renderDoc(cursor, nest.doc());
-    nestLevel -= nest.indent();
+    cursor.nested(nest.indent(), () -> renderDoc(cursor, nest.doc()));
   }
 
   protected void renderUnionDoc(@NotNull Cursor cursor, @NotNull Doc.Union union) {
@@ -139,24 +136,20 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderStyled(@NotNull Cursor cursor, @NotNull Doc.Styled styled) {
     var formatter = config.getStyleFormatter();
-    formatter.format(styled.styles(), builder, () -> renderDoc(cursor, styled.doc()));
+    formatter.format(styled.styles(), cursor, () -> renderDoc(cursor, styled.doc()));
   }
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
-    if (cursor.isAtLineStart()) {
-      renderIndent(cursor, nestLevel);
-    }
-    cursor.visibleContent(() -> builder.append(content));
+    // if (cursor.isAtLineStart()) {
+    //   renderIndent(cursor, nestLevel);
+    // }
+    cursor.visibleContent(content);
   }
 
   protected void renderLineStart(@NotNull Cursor cursor) {
   }
 
-  protected void renderIndent(@NotNull Cursor cursor, int indent) {
-    cursor.visibleContent(() -> builder.append(" ".repeat(indent)));
-  }
-
-  protected void renderHardLineBreak() {
-    builder.append('\n');
+  protected void renderHardLineBreak(@NotNull Cursor cursor) {
+    cursor.lineBreakWith("\n");
   }
 }

@@ -2,9 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.string.style;
 
+import kala.collection.Seq;
+import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
-import kala.collection.Seq;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,11 +17,11 @@ public class DebugStylist extends StringStylist {
   private DebugStylist() {
   }
 
-  @Override public void format(@NotNull Seq<Style> style, @NotNull StringBuilder builder, @NotNull Runnable inside) {
+  @Override public void format(@NotNull Seq<Style> style, @NotNull Cursor cursor, @NotNull Runnable inside) {
     if (style.contains(Style.code())) {
-      builder.append("`");
+      cursor.visibleContent("`");
       inside.run();
-      builder.append("`");
+      cursor.visibleContent("`");
     } else inside.run();
   }
 }
