@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
@@ -96,7 +95,7 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * A special symbol that may gets rendered in a special way
+   * A special symbol that may get rendered in a special way
    *
    * @author ice1000
    */
@@ -253,7 +252,7 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * By default, flatAlt renders as {@param defaultDoc}. However when 'group'ed,
+   * By default, flatAlt renders as {@param defaultDoc}. However, when 'group'-ed,
    * {@param preferWhenFlattened} will be preferred, with {@param defaultDoc} as
    * the fallback for the case when {@param preferWhenFlattened} doesn't fit.
    *
@@ -290,7 +289,7 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * Layout a document depending on the current 'nest'ing level.
+   * Layout a document depending on the current 'nest'-ing level.
    * {@link Doc#align(Doc)} is implemented in terms of {@code nesting}.
    *
    * <pre>
@@ -350,7 +349,7 @@ public sealed interface Doc extends Docile {
    * current column. It is used for example to implement {@link Doc#hang(int, Doc)}.
    * <p>
    * As an example, we will put a document right above another one, regardless of
-   * the current nesting level. Without 'align'ment, the second line is put simply
+   * the current nesting level. Without 'align'-ment, the second line is put simply
    * below everything we've had so far,
    *
    * <pre>
@@ -412,7 +411,7 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * indent indents document {@param doc} by {@param indent} columns,
+   * 'indent' indents document {@param doc} by {@param indent} columns,
    * starting from the current cursor position.
    *
    * <pre>
@@ -451,16 +450,14 @@ public sealed interface Doc extends Docile {
    * @param text text that may contain '\n'
    * @return text document of the whole text
    */
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Contract("_ -> new") static @NotNull Doc plain(String text) {
-    if (!text.contains("\n")) {
-      return new PlainText(text);
-    }
+    if (!text.contains("\n")) return new PlainText(text);
+    return concatWith((x, y) -> simpleCat(x, hardLine(), y), Seq.from(text.split("\n", -1)).view().map(Doc::plain));
+  }
 
-    return Arrays.stream(text.split("\n", -1))
-      .map(Doc::plain)
-      .reduce((x, y) -> simpleCat(x, hardLine(), y))
-      .get(); // never null
+  @Contract("_ -> new") static @NotNull Doc english(String text) {
+    if (!text.contains(" ")) return new PlainText(text);
+    return fillSep(Seq.from(text.split(" ", -1)).view().map(Doc::plain));
   }
 
   /**
@@ -751,8 +748,11 @@ public sealed interface Doc extends Docile {
    * @param docs documents to separate
    * @return separated documents
    */
-  @Contract("_ -> new")
-  static @NotNull Doc fillSep(Doc @NotNull ... docs) {
+  @Contract("_ -> new") static @NotNull Doc fillSep(Doc @NotNull ... docs) {
+    return join(new FlatAlt(ONE_WS, new Line()), docs);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc fillSep(@NotNull SeqLike<Doc> docs) {
     return join(new FlatAlt(ONE_WS, new Line()), docs);
   }
 
