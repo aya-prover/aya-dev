@@ -22,5 +22,5 @@ lombok.config
 
 /cli-*-all.jar
 /tgbot-*-all.jar
-/imgui.ini
+imgui.ini
 /diagram.uml
