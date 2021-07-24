@@ -26,10 +26,19 @@ public abstract class ClosingStylist extends StringStylist {
     }
 
     var style = styles.first();
-    var format = formatOne(style);
-    cursor.content(format.start, format.visible);
+    if (style instanceof Style.Preset preset) {
+      formatMany(styles, cursor, inside, formatPreset(preset.styleName()));
+    } else {
+      formatMany(styles, cursor, inside, SeqView.of(formatOne(style)));
+    }
+  }
+
+  private void formatMany(@NotNull SeqView<Style> styles, @NotNull Cursor cursor,
+                          @NotNull Runnable inside,
+                          @NotNull SeqView<StyleToken> formats) {
+    formats.forEach(format -> cursor.content(format.start, format.visible));
     formatInternal(styles.drop(1), cursor, inside);
-    cursor.content(format.end, format.visible);
+    formats.reversed().forEach(format -> cursor.content(format.end, format.visible));
   }
 
   protected @NotNull StyleToken formatOne(Style style) {
@@ -45,8 +54,6 @@ public abstract class ClosingStylist extends StringStylist {
       return formatColorName(color, color.background());
     } else if (style instanceof Style.ColorHex color) {
       return formatColorHex(color.color(), color.background());
-    } else if (style instanceof Style.Preset preset) {
-      return formatPreset(preset.styleName());
     } else if (style instanceof Style.CustomStyle custom) {
       return formatCustom(custom);
     }
@@ -58,14 +65,10 @@ public abstract class ClosingStylist extends StringStylist {
     return colorScheme.definedColors().getOption(colorName);
   }
 
-  protected @NotNull StyleToken formatPreset(String styleName) {
-    // var style = styleFamily.definedStyles().getOption(styleName);
-    // if (style.isEmpty()) return new StyleToken("", "", false);
-    // return style.get().styles.view().map(this::formatOne)
-    //   .foldLeft(Tuple.of("", ""), (acc, t) ->
-    //     Tuple.of(acc._1 + t._1, t._2 + acc._2));
-    // TODO
-    return new StyleToken("", "", false);
+  protected @NotNull SeqView<StyleToken> formatPreset(String styleName) {
+    var style = styleFamily.definedStyles().getOption(styleName);
+    if (style.isEmpty()) return SeqView.empty();
+    return style.get().styles.view().map(this::formatOne);
   }
 
   protected @NotNull StyleToken formatColorName(@NotNull Style.ColorName color, boolean background) {
