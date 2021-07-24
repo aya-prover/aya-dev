@@ -136,7 +136,7 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
-    var items = Doc.join(Doc.plain(", "), term.items().stream()
+    var items = Doc.join(Doc.plain(", "), term.items().view()
       .map(Term::toDoc));
     return Doc.cat(Doc.plain("("), items, Doc.plain(")"));
   }
@@ -325,7 +325,7 @@ public final class CoreDistiller implements
     );
     Doc line1;
     if (ctor.pats().isNotEmpty()) {
-      var pats = Doc.join(Doc.plain(", "), ctor.pats().stream().map(Pat::toDoc));
+      var pats = Doc.join(Doc.plain(", "), ctor.pats().view().map(Pat::toDoc));
       line1 = Doc.cat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
     } else line1 = Doc.cat(Doc.plain("| "), doc);
     return visitConditions(line1, ctor.clauses());

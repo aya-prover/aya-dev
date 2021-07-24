@@ -127,7 +127,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
     return Doc.cat(Doc.symbol("("),
-      Doc.join(Doc.plain(", "), expr.items().stream()
+      Doc.join(Doc.plain(", "), expr.items().view()
         .map(Expr::toDoc)),
       Doc.symbol(")"));
   }
@@ -268,7 +268,7 @@ public final class ConcreteDistiller implements
       Doc.plain(mod.name()),
       Doc.plain(" {"),
       Doc.hardLine(),
-      Doc.vcat(mod.contents().stream().map(Stmt::toDoc)),
+      Doc.vcat(mod.contents().view().map(Stmt::toDoc)),
       Doc.hardLine(),
       Doc.plain("}")
     );
@@ -316,7 +316,7 @@ public final class ConcreteDistiller implements
       visitClauses(ctor.clauses, true)
     );
     if (ctor.patterns.isNotEmpty()) {
-      var pats = Doc.join(Doc.plain(", "), ctor.patterns.stream().map(Pattern::toDoc));
+      var pats = Doc.join(Doc.plain(", "), ctor.patterns.view().map(Pattern::toDoc));
       return Doc.cat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
     } else return Doc.cat(Doc.plain("| "), doc);
   }
@@ -393,7 +393,7 @@ public final class ConcreteDistiller implements
   }
 
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
-    return Doc.vcat(block.stream().map(Stmt::toDoc));
+    return Doc.vcat(block.view().map(Stmt::toDoc));
   }
 
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {

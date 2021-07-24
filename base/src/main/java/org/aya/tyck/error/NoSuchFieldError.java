@@ -15,7 +15,7 @@ public record NoSuchFieldError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(Doc.plain("No such field(s):"),
-      Doc.join(Doc.plain(", "), notFound.stream()
+      Doc.join(Doc.plain(", "), notFound.view()
         .map(m -> Doc.styled(Style.code(), Doc.plain(m))))
     );
   }

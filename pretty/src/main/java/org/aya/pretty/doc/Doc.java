@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
-import java.util.stream.Stream;
 
 /**
  * This class reimplemented Haskell
@@ -489,12 +488,7 @@ public sealed interface Doc extends Docile {
     return cat(Seq.of(docs));
   }
 
-  @Contract("_ -> new")
-  static @NotNull Doc vcat(Doc @NotNull ... docs) {
-    return join(hardLine(), docs);
-  }
-
-  @Contract("_ -> new") static @NotNull Doc vcat(@NotNull Stream<@NotNull Doc> docs) {
+  @Contract("_ -> new") static @NotNull Doc vcat(Doc @NotNull ... docs) {
     return join(hardLine(), docs);
   }
 
@@ -643,11 +637,6 @@ public sealed interface Doc extends Docile {
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
     return join(delim, Seq.of(docs));
-  }
-
-  @Contract("_, _ -> new")
-  static @NotNull Doc join(@NotNull Doc delim, Stream<Doc> docs) {
-    return join(delim, docs.collect(Seq.factory()));
   }
 
   @Contract("_, _ -> new")

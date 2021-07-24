@@ -16,7 +16,7 @@ public record MissingFieldError(
   @NotNull ImmutableSeq<Var> missing
 ) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.cat(Doc.plain("Missing field(s): "), Doc.join(Doc.plain(", "), missing.stream()
+    return Doc.cat(Doc.plain("Missing field(s): "), Doc.join(Doc.plain(", "), missing.view()
         .map(CoreDistiller::varDoc)
         .map(m -> Doc.styled(Style.code(), m))));
   }
