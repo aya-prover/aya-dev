@@ -36,9 +36,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   }
 
   protected int predictWidth(@NotNull Cursor cursor, @NotNull Doc doc) {
-    if (doc instanceof Doc.Fail) {
-      throw new IllegalArgumentException("Doc.Fail passed to renderer");
-    } else if (doc instanceof Doc.Empty) {
+    if (doc instanceof Doc.Empty) {
       return 0;
     } else if (doc instanceof Doc.PlainText text) {
       return text.text().length();
@@ -83,9 +81,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   }
 
   protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc) {
-    if (doc instanceof Doc.Fail) {
-      throw new IllegalArgumentException("Doc.Fail passed to renderer");
-    } else if (doc instanceof Doc.PlainText text) {
+    if (doc instanceof Doc.PlainText text) {
       renderPlainText(cursor, text.text());
     } else if (doc instanceof Doc.SpecialSymbol symbol) {
       renderSpecialSymbol(cursor, symbol.text());
