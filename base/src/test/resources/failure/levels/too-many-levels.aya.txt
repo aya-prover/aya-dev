@@ -10,7 +10,7 @@ In file $FILE:2:27 ->
 
   1 | ulevel u
   2 | struct Lift (A : Prop u) : Prop (lsuc u)
-                                 ^-----------^
+                                 ^----------^
   3 |  | value : A
 
 Error: Expected 0 level(s)
