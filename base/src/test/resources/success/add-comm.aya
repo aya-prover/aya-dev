@@ -11,6 +11,8 @@ def path {A : I -> Type} (p : Pi (i : I) -> A i)
 def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
+bind = looser \app
+
 prim arcoe
 def hfill2d {A : Type}
   {a b c d : A}
@@ -29,7 +31,7 @@ def hcomp2d {A : Type}
 def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) (idp a) p
 def trans {A : Type} {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q (idp a)
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
-  : (f a) = (f b) => path (\ i => f (p.at i))
+  : f a = f b => path (\ i => f (p.at i))
 
 open data ℕ : Set
   | zero
