@@ -4,6 +4,8 @@ package org.aya.pretty.doc;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.string.LinkId;
@@ -16,7 +18,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
 
 import static org.aya.pretty.printer.PrinterConfig.INFINITE_SIZE;
@@ -33,9 +34,11 @@ public sealed interface Doc extends Docile {
   @Override default @NotNull Doc toDoc() {
     return this;
   }
+  default @NotNull SeqLike<Doc> asSeq() {
+    return Seq.of(this);
+  }
 
-  //region Doc Member Functions
-
+  //region Doc APIs
   default @NotNull String renderToString(@NotNull StringPrinterConfig config) {
     var printer = new StringPrinter<>();
     return this.render(printer, config);
@@ -80,11 +83,13 @@ public sealed interface Doc extends Docile {
 
   //region Doc Variants
 
-  /**
-   * The empty document; conceptually the unit of 'Cat'
-   */
+  /** The empty document; conceptually the unit of 'Cat' */
   record Empty() implements Doc {
     static final @NotNull Empty INSTANCE = new Empty();
+
+    @Override public @NotNull SeqLike<Doc> asSeq() {
+      return Seq.of();
+    }
   }
 
   /**
@@ -135,7 +140,10 @@ public sealed interface Doc extends Docile {
   /**
    * Concatenation of two documents
    */
-  record Cat(@NotNull Doc first, @NotNull Doc second) implements Doc {
+  record Cat(@NotNull ImmutableSeq<Doc> inner) implements Doc {
+    @Override public @NotNull SeqLike<Doc> asSeq() {
+      return inner.view().flatMap(Doc::asSeq);
+    }
   }
 
   /**
@@ -531,10 +539,14 @@ public sealed interface Doc extends Docile {
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
-    return concatWith(
-      (x, y) -> simpleCat(Seq.of(x, delim, y)),
-      docs
-    );
+    if (docs.size() == 0) return Doc.empty();
+    var first = docs.first();
+    if (docs.size() == 1) return first;
+    return simpleCat(docs.view().drop(1).foldLeft(Buffer.of(first), (l, r) -> {
+      l.append(delim);
+      l.append(r);
+      return l;
+    }));
   }
 
   /**
@@ -548,28 +560,7 @@ public sealed interface Doc extends Docile {
   }
 
   //endregion
-
-  //region utility functions
-
-  private static @NotNull Doc concatWith(@NotNull BinaryOperator<Doc> f, @NotNull SeqLike<@NotNull Doc> xs) {
-    if (xs.size() == 0) return Doc.empty();
-    if (xs.size() == 1) return xs.get(0);
-    return xs.reduce(f); // never null
-  }
-
   private static @NotNull Doc simpleCat(@NotNull SeqLike<@NotNull Doc> xs) {
-    return concatWith(Doc::makeCat, xs);
+    return new Cat(xs.view().flatMap(Doc::asSeq).toImmutableArray());
   }
-
-  private static @NotNull Doc makeCat(@NotNull Doc first, @NotNull Doc second) {
-    return makeCat(first, second, Cat::new);
-  }
-
-  private static @NotNull Doc
-  makeCat(@NotNull Doc first, @NotNull Doc second, @NotNull BinaryOperator<Doc> maker) {
-    if (first instanceof Empty) return second;
-    if (second instanceof Empty) return first;
-    return maker.apply(first, second);
-  }
-  //endregion
 }

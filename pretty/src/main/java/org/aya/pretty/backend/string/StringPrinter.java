@@ -53,7 +53,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.FlatAlt alt) {
       return predictWidth(cursor, alt.defaultDoc());
     } else if (doc instanceof Doc.Cat cat) {
-      return predictWidth(cursor, cat.first()) + predictWidth(cursor, cat.second());
+      return cat.inner().view().map(inner -> predictWidth(cursor, inner)).reduce(Integer::sum);
     } else if (doc instanceof Doc.Nest nest) {
       return predictWidth(cursor, nest.doc()) + nest.indent();
     } else if (doc instanceof Doc.Union union) {
@@ -97,8 +97,7 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.FlatAlt alt) {
       renderFlatAlt(cursor, alt);
     } else if (doc instanceof Doc.Cat cat) {
-      renderDoc(cursor, cat.first());
-      renderDoc(cursor, cat.second());
+      cat.inner().forEach(inner -> renderDoc(cursor, inner));
     } else if (doc instanceof Doc.Nest nest) {
       renderNest(cursor, nest);
     } else if (doc instanceof Doc.Union union) {
