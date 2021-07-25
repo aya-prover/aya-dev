@@ -36,7 +36,7 @@ public final class BinOpParser {
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
     var first = seq.first();
-    if (opSet.assocOf(first.asOpDeclInternal()).infix) {
+    if (opSet.assocOf(first.asOpDecl()).infix) {
       // + f a b c d
       // \lam _ => _ + f a b c d
       var lhs = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE);
@@ -47,14 +47,11 @@ public final class BinOpParser {
         new BinOpParser(opSet, lamSeq).build(sourcePos));
     }
 
-    // TODO[kiva]: the following code is just supposed to convert
-    //  infix expr to prefix expr??? is it??
-
+    // insert \app operator between elems
     var seqWithApp = Buffer.<BinOpParser.Elem>of();
     boolean lastIsUsedAsOp = false;
     for (var expr : seq) {
-      var tryOp = expr.asOpDeclInternal();
-      if (opSet.isNotUsedAsOperator(tryOp)) {
+      if (expr.isNotUsedAsOp(opSet)) {
         if (!lastIsUsedAsOp && seqWithApp.isNotEmpty()) seqWithApp.append(Elem.OP_APP);
         lastIsUsedAsOp = false;
       } else {
@@ -63,6 +60,7 @@ public final class BinOpParser {
       seqWithApp.append(expr);
     }
 
+    // convert infix to prefix
     for (var expr : seqWithApp) {
       if (expr.isNotUsedAsOp(opSet)) prefixes.append(expr);
       else {
@@ -152,7 +150,7 @@ public final class BinOpParser {
       this(null, expr, explicit);
     }
 
-    private @Nullable Tuple3<String, Decl.@NotNull OpDecl, String> asOpDeclInternal() {
+    private @Nullable Tuple3<String, Decl.@NotNull OpDecl, String> asOpDecl() {
       if (expr instanceof Expr.RefExpr ref
         && ref.resolvedVar() instanceof DefVar<?, ?> defVar
         && defVar.concrete instanceof Decl.OpDecl opDecl) {
@@ -163,7 +161,7 @@ public final class BinOpParser {
 
     public boolean isNotUsedAsOp(@NotNull BinOpSet opSet) {
       if (isBuiltinOp()) return false;
-      var tryOp = asOpDeclInternal();
+      var tryOp = asOpDecl();
       return opSet.isNotUsedAsOperator(tryOp);
     }
 
@@ -172,7 +170,7 @@ public final class BinOpParser {
         if (this == OP_APP) return opSet.ensureHasElem(Decl.OpDecl.APP_NAME, Decl.OpDecl.APP);
         else throw new IllegalStateException("unreachable");
       }
-      var tryOp = asOpDeclInternal();
+      var tryOp = asOpDecl();
       assert tryOp != null; // should never fail
       return opSet.ensureHasElem(tryOp._1, tryOp._2);
     }
