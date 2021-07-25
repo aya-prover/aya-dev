@@ -9,7 +9,7 @@ plugins {
   `java-library`
   `maven-publish`
   signing
-  id("org.beryx.jlink") version "2.23.6" apply false
+  id("org.beryx.jlink") version "2.24.1" apply false
 }
 
 var deps: Properties by rootProject.ext

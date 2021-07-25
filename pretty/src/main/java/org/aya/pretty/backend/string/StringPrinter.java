@@ -151,9 +151,6 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   }
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
-    // if (cursor.isAtLineStart()) {
-    //   renderIndent(cursor, nestLevel);
-    // }
     cursor.visibleContent(content);
   }
 
