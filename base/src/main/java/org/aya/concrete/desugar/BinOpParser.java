@@ -56,6 +56,7 @@ public final class BinOpParser {
       var tryOp = expr.asOpDeclInternal();
       if (opSet.isNotUsedAsOperator(tryOp)) {
         if (!lastIsUsedAsOp && seqWithApp.isNotEmpty()) seqWithApp.append(Elem.OP_APP);
+        lastIsUsedAsOp = false;
       } else {
         lastIsUsedAsOp = true;
       }
