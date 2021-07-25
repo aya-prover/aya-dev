@@ -5,6 +5,7 @@ package org.aya.pretty.backend.html;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.backend.string.StringPrinter;
+import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Html backend, which ignores page width.
  */
-public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
+public class DocHtmlPrinter extends StringPrinter<DocHtmlPrinter.Config> {
   @Language(value = "HTML")
   private static final @NotNull String HEAD = """
     <!DOCTYPE html><html lang="en"><head>
@@ -74,5 +75,14 @@ public class DocHtmlPrinter extends StringPrinter<HtmlPrinterConfig> {
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
     cursor.lineBreakWith("<br>");
+  }
+
+  public static class Config extends StringPrinterConfig {
+    public final boolean withHeader;
+
+    public Config(boolean withHeader) {
+      super(new Html5Stylist(), INFINITE_SIZE);
+      this.withHeader = withHeader;
+    }
   }
 }

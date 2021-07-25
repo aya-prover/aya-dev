@@ -5,9 +5,7 @@ package org.aya.pretty.doc;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
-import org.aya.pretty.backend.html.HtmlPrinterConfig;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
-import org.aya.pretty.backend.latex.TeXPrinterConfig;
 import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
@@ -47,12 +45,12 @@ public sealed interface Doc extends Docile {
 
   default @NotNull String renderToHtml(boolean withHeader) {
     var printer = new DocHtmlPrinter();
-    return this.render(printer, new HtmlPrinterConfig(withHeader));
+    return this.render(printer, new DocHtmlPrinter.Config(withHeader));
   }
 
   default @NotNull String renderToTeX() {
     var printer = new DocTeXPrinter();
-    return this.render(printer, new TeXPrinterConfig());
+    return this.render(printer, new DocTeXPrinter.Config());
   }
 
   default <Out, Config extends PrinterConfig>

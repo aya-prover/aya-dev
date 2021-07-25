@@ -6,12 +6,13 @@ import kala.collection.Map;
 import kala.tuple.Tuple;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
+import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
  */
-public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
+public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
     cursor.invisibleContent("\\begin{tabular}{ll}\n&");
   }
@@ -29,7 +30,7 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
-    Tuple.of("\\", "\\bda"),
+    Tuple.of("\\", "\\backslash"),
     Tuple.of("=>", "\\Rightarrow"),
     Tuple.of("->", "\\to"),
     Tuple.of("{", "\\{"),
@@ -59,5 +60,14 @@ public class DocTeXPrinter extends StringPrinter<TeXPrinterConfig> {
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {
     cursor.lineBreakWith("\\\\\n");
+  }
+
+  /**
+   * @author ice1000
+   */
+  public static class Config extends StringPrinterConfig {
+    public Config() {
+      super(new TeXStylist(), INFINITE_SIZE);
+    }
   }
 }
