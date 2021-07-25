@@ -16,7 +16,7 @@ public final class CliReporter implements Reporter {
   }
 
   @Override public void report(@NotNull Problem problem) {
-    var errorMsg = problem.errorMsg();
+    var errorMsg = problem.computeFullErrorMessage();
     var level = problem.level();
     if (level == Problem.Severity.ERROR || level == Problem.Severity.WARN) System.err.println(errorMsg);
     else System.out.println(errorMsg);

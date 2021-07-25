@@ -78,12 +78,12 @@ public interface Problem {
     );
   }
 
-  default @NotNull String errorMsg() {
-    if (sourcePos() == SourcePos.NONE) return describe().debugRender();
+  default @NotNull String computeFullErrorMessage() {
+    if (sourcePos() == SourcePos.NONE) return describe().commonRender();
     return toPrettyError().toDoc().commonRender();
   }
 
-  default @NotNull String briefErrorMsg() {
+  default @NotNull String computeBriefErrorMessage() {
     return brief().commonRender();
   }
 }
