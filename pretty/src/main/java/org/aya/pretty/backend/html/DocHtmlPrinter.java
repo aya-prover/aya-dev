@@ -81,7 +81,7 @@ public class DocHtmlPrinter extends StringPrinter<DocHtmlPrinter.Config> {
     public final boolean withHeader;
 
     public Config(boolean withHeader) {
-      super(new Html5Stylist(), INFINITE_SIZE);
+      super(new Html5Stylist(), INFINITE_SIZE, true);
       this.withHeader = withHeader;
     }
   }

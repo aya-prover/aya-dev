@@ -8,10 +8,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringPrinterConfig extends PrinterConfig.Basic {
   public @NotNull StringStylist formatter;
+  public final boolean unicode;
 
-  public StringPrinterConfig(@NotNull StringStylist formatter, int pageWidth) {
+  public StringPrinterConfig(@NotNull StringStylist formatter, int pageWidth, boolean unicode) {
     super(pageWidth, INFINITE_SIZE);
     this.formatter = formatter;
+    this.unicode = unicode;
   }
 
   @Override
@@ -20,7 +22,7 @@ public class StringPrinterConfig extends PrinterConfig.Basic {
   }
 
   public static @NotNull StringPrinterConfig unixTerminal(int pageWidth) {
-    return new StringPrinterConfig(UnixTermStylist.INSTANCE, pageWidth);
+    return new StringPrinterConfig(UnixTermStylist.INSTANCE, pageWidth, true);
   }
 
   public static @NotNull StringPrinterConfig unixTerminal() {

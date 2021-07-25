@@ -30,7 +30,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
-    Tuple.of("\\", "\\backslash"),
+    Tuple.of("\\", "\\lambda"),
     Tuple.of("=>", "\\Rightarrow"),
     Tuple.of("->", "\\to"),
     Tuple.of("{", "\\{"),
@@ -46,7 +46,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
         return;
       }
     }
-    super.renderSpecialSymbol(cursor, text);
+    renderPlainText(cursor, text);
   }
 
   @Override public @NotNull String makeIndent(int indent) {
@@ -67,7 +67,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
    */
   public static class Config extends StringPrinterConfig {
     public Config() {
-      super(new TeXStylist(), INFINITE_SIZE);
+      super(new TeXStylist(), INFINITE_SIZE, false);
     }
   }
 }

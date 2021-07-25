@@ -40,6 +40,6 @@ In file $FILE:6:42 ->
 Error: Expected type: Nat
        Normalized: Nat
        Actual type: F (Neg <X>)
-       Normalized: F (Pi (_ : <X>) -> Empty)
+       Normalized: F (Π (_ : <X>) → Empty)
        They don't match, sorry
 What are you doing?

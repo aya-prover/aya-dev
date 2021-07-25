@@ -2,6 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
+import kala.tuple.Tuple2;
+import kala.value.Ref;
 import org.aya.api.Global;
 import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourcePos;
@@ -10,10 +14,6 @@ import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
-import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
-import kala.tuple.Tuple2;
-import kala.value.Ref;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -158,15 +158,15 @@ public class ParseTest {
   }
 
   private void parseImport(@Language("TEXT") String code) {
-    assertTrue(parseStmt(code).first() instanceof Stmt.ImportStmt s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
+    assertTrue(parseStmt(code).first() instanceof Stmt.ImportStmt s && !s.toDoc().debugRender().isEmpty());
   }
 
   private void parseOpen(@Language("TEXT") String code) {
-    assertTrue(parseStmt(code).last() instanceof Stmt.OpenStmt s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
+    assertTrue(parseStmt(code).last() instanceof Stmt.OpenStmt s && !s.toDoc().debugRender().isEmpty());
   }
 
   private void parseFn(@Language("TEXT") String code) {
-    assertTrue(parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc().renderWithPageWidth(114514).isEmpty());
+    assertTrue(parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc().debugRender().isEmpty());
   }
 
   private void parseData(@Language("TEXT") String code) {
@@ -278,7 +278,7 @@ public class ParseTest {
     assertEquals(pretty.trim(), stmt.stream()
       .map(Stmt::toDoc)
       .reduce(Doc.empty(), Doc::vcat)
-      .renderWithPageWidth(114514)
+      .debugRender()
       .trim());
   }
 

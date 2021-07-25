@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.string;
 
+import kala.collection.Map;
+import kala.tuple.Tuple;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.Printer;
 import org.aya.pretty.printer.PrinterConfig;
@@ -110,7 +112,21 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     }
   }
 
+  private static final @NotNull Map<String, String> unicodeMapping = Map.ofEntries(
+    Tuple.of("Pi", "\u03A0"),
+    Tuple.of("Sig", "\u03A3"),
+    Tuple.of("\\", "\u03BB"),
+    Tuple.of("=>", "\u21D2"),
+    Tuple.of("->", "\u2192")
+  );
+
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {
+    if (config.unicode) for (var k : unicodeMapping.keysView()) {
+      if (text.contains(k)) {
+        cursor.visibleContent(text.replace(k, unicodeMapping.get(k)));
+        return;
+      }
+    }
     renderPlainText(cursor, text);
   }
 

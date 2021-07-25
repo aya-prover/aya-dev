@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BinaryOperator;
 import java.util.function.IntFunction;
 
+import static org.aya.pretty.printer.PrinterConfig.INFINITE_SIZE;
+
 /**
  * This class reimplemented Haskell
  * <a href="https://hackage.haskell.org/package/prettyprinter-1.7.0/docs/src/Prettyprinter.Internal.html">
@@ -59,13 +61,19 @@ public sealed interface Doc extends Docile {
     return printer.render(config, this);
   }
 
-  default @NotNull String renderWithPageWidth(int pageWidth) {
-    var config = new StringPrinterConfig(DebugStylist.INSTANCE, pageWidth);
+  default @NotNull String renderWithPageWidth(int pageWidth, boolean unicode) {
+    var config = new StringPrinterConfig(DebugStylist.INSTANCE, pageWidth, unicode);
     return this.renderToString(config);
   }
 
+  /** Produce ASCII and infinite-width output */
   default @NotNull String debugRender() {
-    return renderWithPageWidth(114514);
+    return renderWithPageWidth(INFINITE_SIZE, false);
+  }
+
+  /** Produce unicode and 80-width output */
+  default @NotNull String commonRender() {
+    return renderWithPageWidth(80, true);
   }
 
   //endregion

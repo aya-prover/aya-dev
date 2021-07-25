@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli;
 
-import org.aya.api.error.SourcePos;
-import org.aya.tyck.trace.Trace;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.error.SourcePos;
+import org.aya.tyck.trace.Trace;
 import org.ice1000.jimgui.*;
 import org.ice1000.jimgui.util.JImGuiUtil;
 import org.ice1000.jimgui.util.JniLoader;
@@ -32,7 +32,6 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
     public static final Color PINK = new Color(255, 0, 255);
   }
 
-  public static final int PAGE_WIDTH = 114514;
   private final ImmutableSeq<Integer> sourceCode;
   private @NotNull SourcePos pos;
 
@@ -96,8 +95,8 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
 
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
     var term = t.term();
-    var s = new StringBuilder().append(t.expr().toDoc().renderWithPageWidth(PAGE_WIDTH));
-    if (term != null) s.append(" : ").append(term.toDoc().renderWithPageWidth(PAGE_WIDTH));
+    var s = new StringBuilder().append(t.expr().toDoc().debugRender());
+    if (term != null) s.append(" : ").append(term.toDoc().debugRender());
     var color = term == null ? Color.CYAN : Color.YELLOW;
     visitSub(s.toString(), color, imGui, t.children(), () -> pos = t.expr().sourcePos(), Objects.hashCode(t));
     return Unit.unit();
@@ -122,9 +121,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   }
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
-    var s = new StringBuilder().append(t.lhs().toDoc().renderWithPageWidth(PAGE_WIDTH))
-      .append(" = ").append(t.rhs().toDoc().renderWithPageWidth(PAGE_WIDTH));
-    if (t.type() != null) s.append(" : ").append(t.type().toDoc().renderWithPageWidth(PAGE_WIDTH));
+    var s = new StringBuilder().append(t.lhs().toDoc().debugRender())
+      .append(" = ").append(t.rhs().toDoc().debugRender());
+    if (t.type() != null) s.append(" : ").append(t.type().toDoc().debugRender());
     visitSub(s.toString(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
@@ -137,9 +136,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   @Override public Unit visitTyck(Trace.@NotNull TyckT t, JImGui imGui) {
     var term = t.term();
     var type = t.type();
-    var s = term.toDoc().renderWithPageWidth(PAGE_WIDTH) +
+    var s = term.toDoc().debugRender() +
       " : " +
-      type.toDoc().renderWithPageWidth(PAGE_WIDTH);
+      type.toDoc().debugRender();
     imGui.text("-".repeat(s.length() + 4));
     visitSub(s, Color.YELLOW, imGui, Buffer.of(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
@@ -153,9 +152,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   @Override public Unit visitPat(Trace.@NotNull PatT t, JImGui imGui) {
     var type = t.term();
     var pat = t.pat();
-    var s = pat.toDoc().renderWithPageWidth(PAGE_WIDTH) +
+    var s = pat.toDoc().debugRender() +
       " : " +
-      type.toDoc().renderWithPageWidth(PAGE_WIDTH);
+      type.toDoc().debugRender();
     visitSub(s, Color.PINK, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }

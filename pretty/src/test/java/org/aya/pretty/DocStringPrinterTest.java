@@ -16,7 +16,7 @@ public class DocStringPrinterTest {
   @Test
   public void testHang() {
     var doc = hang(4, plain("boynextdoor"));
-    assertEquals("    boynextdoor", doc.renderWithPageWidth(80));
+    assertEquals("    boynextdoor", doc.commonRender());
   }
 
   @Test public void testNestedNest() {
@@ -31,84 +31,84 @@ public class DocStringPrinterTest {
       shakedown street
         grateful dead
           heaven's on fire
-          kiss""", doc.renderWithPageWidth(80));
+          kiss""", doc.commonRender());
   }
 
   @Test
   public void testVCat() {
     var doc = vcat(plain("11"), plain("45"), plain("14"));
-    assertEquals("11\n45\n14", doc.renderWithPageWidth(80));
+    assertEquals("11\n45\n14", doc.commonRender());
   }
 
   @Test
   public void testHCat() {
     var doc = cat(plain("11"), plain("45"), plain("14"));
-    assertEquals("114514", doc.renderWithPageWidth(80));
+    assertEquals("114514", doc.commonRender());
   }
 
   @Test
   public void testHSep() {
     var doc = stickySep(Seq.of(new Doc[]{plain("11"), plain("45"), plain("14")}));
-    assertEquals("11 45 14", doc.renderWithPageWidth(80));
+    assertEquals("11 45 14", doc.commonRender());
   }
 
   @Test
   public void testHSepNarrow() {
-    var doc = stickySep(Seq.of(new Doc[]{plain("boynext"), plain("next"), plain("door"), plain("doooor")}));
-    assertEquals("boynext next door doooor", doc.renderWithPageWidth(5));
+    var doc = stickySep(Seq.of(plain("boynext"), plain("next"), plain("door"), plain("doooor")));
+    assertEquals("boynext next door doooor", doc.renderWithPageWidth(5, false));
   }
 
   @Test
   public void testFillSepNarrow() {
     var doc = sep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
-    assertEquals("boynext\nnext door\ndoooor", doc.renderWithPageWidth(7));
+    assertEquals("boynext\nnext door\ndoooor", doc.renderWithPageWidth(7, false));
   }
 
   @Test
   public void testFillSep() {
     var doc = sep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
-    assertEquals("boynext next door doooor", doc.renderWithPageWidth(114514));
+    assertEquals("boynext next door doooor", doc.debugRender());
   }
 
   @Test
   public void testCat() {
     var doc = cat(plain("text"), plain("to"), plain("lay"), plain("out"));
-    assertEquals("texttolayout", doc.renderWithPageWidth(80));
+    assertEquals("texttolayout", doc.commonRender());
   }
 
   @Test
   public void testPlainText() {
     var doc = plain("hello world");
-    assertEquals("hello world", doc.renderWithPageWidth(80));
+    assertEquals("hello world", doc.commonRender());
   }
 
   @Test
   public void testMultiline() {
     var doc = plain("hello\nworld\n11451\n4");
-    assertEquals("hello\nworld\n11451\n4", doc.renderWithPageWidth(80));
+    assertEquals("hello\nworld\n11451\n4", doc.commonRender());
   }
 
   @Test
   public void testLineBreak() {
     var doc = plain("hello\n");
-    assertEquals("hello\n", doc.renderWithPageWidth(80));
+    assertEquals("hello\n", doc.commonRender());
   }
 
   @Test
   public void testMultiLineBreak() {
     var doc = plain("hello\n\n\n\n");
-    assertEquals("hello\n\n\n\n", doc.renderWithPageWidth(80));
+    assertEquals("hello\n\n\n\n", doc.commonRender());
   }
 
   @Test
   public void testEmptyText() {
     var doc = plain("");
-    assertEquals("", doc.renderWithPageWidth(80));
+    assertEquals("", doc.commonRender());
   }
 
   @Test
   public void testEmpty() {
     var doc = empty();
-    assertEquals("", doc.renderWithPageWidth(80));
+    assertEquals("", doc.commonRender());
   }
 }
