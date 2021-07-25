@@ -31,8 +31,8 @@ public final class BinOpParser {
     this.seq = seq;
   }
 
-  private final LinkedBuffer<Tuple2<BinOpParser.Elem, BinOpSet.Elem>> opStack = LinkedBuffer.of();
-  private final DoubleLinkedBuffer<BinOpParser.Elem> prefixes = DoubleLinkedBuffer.of();
+  private final LinkedBuffer<Tuple2<Elem, BinOpSet.Elem>> opStack = LinkedBuffer.of();
+  private final DoubleLinkedBuffer<Elem> prefixes = DoubleLinkedBuffer.of();
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
     var first = seq.first();
@@ -107,12 +107,12 @@ public final class BinOpParser {
     if (op == Elem.OP_APP) {
       if (lhs.expr instanceof Expr.AppExpr app && app.function() instanceof Expr.RawUnivExpr univ)
         return new Expr.AppExpr(
-          computeSourcePos(lhs.expr.sourcePos(), rhs.expr.sourcePos()),
+          union(lhs, rhs),
           univ,
           app.arguments().appended(rhs.toNamedArg())
         );
       else return new Expr.AppExpr(
-        computeSourcePos(lhs.expr.sourcePos(), rhs.expr.sourcePos()),
+        union(lhs, rhs),
         lhs.expr,
         ImmutableSeq.of(rhs.toNamedArg())
       );
@@ -127,8 +127,8 @@ public final class BinOpParser {
     return a.union(b).union(c);
   }
 
-  private @NotNull SourcePos computeSourcePos(@NotNull SourcePos a, @NotNull SourcePos b) {
-    return a.union(b);
+  private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b) {
+    return a.expr.sourcePos().union(b.expr.sourcePos());
   }
 
   /**
@@ -136,9 +136,9 @@ public final class BinOpParser {
    * but only used in binary operator building
    */
   public record Elem(@Nullable String name, @NotNull Expr expr, boolean explicit) {
-    private static final Elem OP_APP = new BinOpParser.Elem(
+    private static final Elem OP_APP = new Elem(
       Decl.OpDecl.APP_NAME,
-      new Expr.ErrorExpr(SourcePos.NONE, Doc.plain("fakeApp escaped from BinOpParser")),
+      new Expr.ErrorExpr(SourcePos.NONE, Doc.english("fakeApp escaped from BinOpParser")),
       true
     );
 

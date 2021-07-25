@@ -38,8 +38,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public interface OpDecl {
     @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator();
 
-    String APP_NAME = "\\app";
-    OpDecl APP = () -> Tuple.of(APP_NAME, Assoc.Infix);
+    @NotNull String APP_NAME = "\\app";
+    @NotNull OpDecl APP = () -> Tuple.of(APP_NAME, Assoc.Infix);
   }
 
   @Override public @NotNull Accessibility accessibility() {
@@ -88,7 +88,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     default void traceExit(P p, R r) {
     }
 
-    @ApiStatus.NonExtendable default <T extends Signatured, RR extends R> RR traced(@NotNull T yeah, P p, @NotNull BiFunction<T, P, RR> f) {
+    @ApiStatus.NonExtendable
+    default <T extends Signatured, RR extends R> RR traced(@NotNull T yeah, P p, @NotNull BiFunction<T, P, RR> f) {
       traceEntrance(yeah, p);
       var r = f.apply(yeah, p);
       traceExit(p, r);
