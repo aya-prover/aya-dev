@@ -29,12 +29,12 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     renderHeader(cursor);
     renderDoc(cursor, doc);
     renderFooter(cursor);
-    return cursor.builder.toString();
+    return cursor.result().toString();
   }
 
   private int lineRemaining(@NotNull Cursor cursor) {
     var pw = config.getPageWidth();
-    return pw == PrinterConfig.INFINITE_SIZE ? pw : pw - cursor.cursor;
+    return pw == PrinterConfig.INFINITE_SIZE ? pw : pw - cursor.getCursor();
   }
 
   protected int predictWidth(@NotNull Cursor cursor, @NotNull Doc doc) {
@@ -59,9 +59,9 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.Union union) {
       return predictWidth(cursor, union.longerOne());
     } else if (doc instanceof Doc.Column column) {
-      return predictWidth(cursor, column.docBuilder().apply(cursor.cursor));
+      return predictWidth(cursor, column.docBuilder().apply(cursor.getCursor()));
     } else if (doc instanceof Doc.Nesting nesting) {
-      return predictWidth(cursor, nesting.docBuilder().apply(cursor.nestLevel));
+      return predictWidth(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
     } else if (doc instanceof Doc.PageWidth pageWidth) {
       return predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
     }
@@ -104,9 +104,9 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
     } else if (doc instanceof Doc.Union union) {
       renderUnionDoc(cursor, union);
     } else if (doc instanceof Doc.Column column) {
-      renderDoc(cursor, column.docBuilder().apply(cursor.cursor));
+      renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()));
     } else if (doc instanceof Doc.Nesting nesting) {
-      renderDoc(cursor, nesting.docBuilder().apply(cursor.nestLevel));
+      renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
     } else if (doc instanceof Doc.PageWidth pageWidth) {
       renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
     }

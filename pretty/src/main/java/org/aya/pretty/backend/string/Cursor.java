@@ -9,14 +9,26 @@ public class Cursor {
     @NotNull String makeIndent(int indent);
   }
 
-  int cursor;
-  int lineStartCursor;
-  int nestLevel;
-  StringBuilder builder = new StringBuilder();
-  CursorAPI api;
+  private int cursor;
+  private int nestLevel;
+  private int lineStartCursor;
+  private final StringBuilder builder = new StringBuilder();
+  private final CursorAPI api;
 
   public Cursor(CursorAPI api) {
     this.api = api;
+  }
+
+  public @NotNull CharSequence result() {
+    return builder;
+  }
+
+  public int getCursor() {
+    return cursor;
+  }
+
+  public int getNestLevel() {
+    return nestLevel;
   }
 
   public void content(@NotNull CharSequence content, boolean visible) {
