@@ -31,8 +31,11 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public record SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator,
-                                 Trace.@Nullable Builder builder) {
+public record SingleFileCompiler(
+  @NotNull Reporter reporter,
+  @Nullable SourceFileLocator locator,
+  Trace.@Nullable Builder builder
+) {
   public int compile(@NotNull Path sourceFile, @NotNull CompilerFlags flags) throws IOException {
     return compile(sourceFile, flags, stmts -> {}, (stmts, defs) -> {});
   }
