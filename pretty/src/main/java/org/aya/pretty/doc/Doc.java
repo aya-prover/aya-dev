@@ -6,7 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
-import org.aya.pretty.backend.string.StringLink;
+import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.backend.string.style.DebugStylist;
@@ -104,7 +104,7 @@ public sealed interface Doc extends Docile {
   /**
    * A clickable text line without '\n'.
    */
-  record HyperLinked(@NotNull Doc doc, @NotNull Link link, @Nullable String id) implements Doc {
+  record HyperLinked(@NotNull Doc doc, @NotNull LinkId link, @Nullable String id) implements Doc {
     @Override public String toString() {
       return doc.toString();
     }
@@ -184,18 +184,18 @@ public sealed interface Doc extends Docile {
 
   //region DocFactory functions
   static @NotNull Doc linkDef(@NotNull Doc doc, int hashCode) {
-    return new HyperLinked(doc, new StringLink("#" + hashCode), String.valueOf(hashCode));
+    return new HyperLinked(doc, new LinkId("#" + hashCode), String.valueOf(hashCode));
   }
 
   static @NotNull Doc linkRef(@NotNull Doc doc, int hashCode) {
-    return new HyperLinked(doc, new StringLink("#" + hashCode), null);
+    return new HyperLinked(doc, new LinkId("#" + hashCode), null);
   }
 
-  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull Link link) {
+  static @NotNull Doc hyperLink(@NotNull Doc doc, @NotNull LinkId link) {
     return new HyperLinked(doc, link, null);
   }
 
-  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull Link link) {
+  static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId link) {
     return hyperLink(Doc.plain(plain), link);
   }
 

@@ -3,7 +3,6 @@
 package org.aya.pretty.backend.html;
 
 import org.aya.pretty.backend.string.Cursor;
-import org.aya.pretty.backend.string.StringLink;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
@@ -62,15 +61,14 @@ public class DocHtmlPrinter extends StringPrinter<DocHtmlPrinter.Config> {
   }
 
   @Override protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text) {
-    if (text.link() instanceof StringLink link) {
-      cursor.invisibleContent("<a ");
-      if (text.id() != null) cursor.invisibleContent("id=\"" + text.id() + "\" ");
-      cursor.invisibleContent("href=\"");
-      cursor.invisibleContent(link.linkText());
-      cursor.invisibleContent("\">");
-      renderDoc(cursor, text.doc());
-      cursor.invisibleContent("</a>");
-    } else super.renderHyperLinked(cursor, text);
+    var link = text.link();
+    cursor.invisibleContent("<a ");
+    if (text.id() != null) cursor.invisibleContent("id=\"" + text.id() + "\" ");
+    cursor.invisibleContent("href=\"");
+    cursor.invisibleContent(link.id());
+    cursor.invisibleContent("\">");
+    renderDoc(cursor, text.doc());
+    cursor.invisibleContent("</a>");
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {

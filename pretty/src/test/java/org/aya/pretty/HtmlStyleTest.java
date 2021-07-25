@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty;
 
-import org.aya.pretty.backend.string.StringLink;
+import org.aya.pretty.backend.string.LinkId;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,7 @@ public class HtmlStyleTest {
     var d = Doc.styled(Style.bold().and().italic().colorBG(0xf08f68), "color2");
     var sym = Doc.cat(Doc.symbol("=>"), Doc.symbol("hey"));
     var e = Doc.styled(Style.strike(), Doc.cat(a, b, c, d, sym));
-    var f = Doc.cat(e, Doc.hyperLink("Click me", new StringLink("https://google.com")));
-    return Doc.cat(f, Doc.hyperLink("Show dialog", new StringLink("javascript:alert('hello world');")));
+    var f = Doc.cat(e, Doc.hyperLink("Click me", new LinkId("https://google.com")));
+    return Doc.cat(f, Doc.hyperLink("Show dialog", new LinkId("javascript:alert('hello world');")));
   }
 }

@@ -2,8 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty.backend.string;
 
-import org.aya.pretty.doc.Link;
 import org.jetbrains.annotations.NotNull;
 
-public record StringLink(@NotNull String linkText) implements Link {
+/**
+ * @author imkiva
+ */
+public record LinkId(@NotNull String id) {
 }
