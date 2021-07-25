@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.visitor;
 
 import kala.collection.mutable.Buffer;
+import kala.control.Either;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
@@ -14,6 +15,8 @@ import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * Resolves expressions inside stmts, after {@link StmtShallowResolver}
@@ -53,7 +56,12 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   private @NotNull Tuple2<String, Decl.@NotNull OpDecl>
-  resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull QualifiedID id) {
+  resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull Either<QualifiedID, Decl.OpDecl> idOrOp) {
+    if (idOrOp.isRight()) {
+      var builtin = idOrOp.getRightValue();
+      return Tuple.of(Objects.requireNonNull(builtin.asOperator())._1, builtin);
+    }
+    var id = idOrOp.getLeftValue();
     var var = ctx.get(id);
     if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof Decl.OpDecl op) {
       return Tuple.of(defVar.name(), op);

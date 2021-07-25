@@ -139,8 +139,10 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
   }
 
   @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, @NotNull Buffer<HighlightResult.Symbol> buffer) {
-    visitOperator(buffer, bind.op().sourcePos(), bind.resolvedOp());
-    visitOperator(buffer, bind.target().sourcePos(), bind.resolvedTarget());
+    if (bind.op().isLeft())
+      visitOperator(buffer, bind.op().getLeftValue().sourcePos(), bind.resolvedOp());
+    if (bind.target().isLeft())
+      visitOperator(buffer, bind.target().getLeftValue().sourcePos(), bind.resolvedTarget());
     return StmtConsumer.super.visitBind(bind, buffer);
   }
 

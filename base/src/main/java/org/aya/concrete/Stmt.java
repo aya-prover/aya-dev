@@ -3,6 +3,7 @@
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
@@ -84,9 +85,9 @@ public sealed interface Stmt extends Docile
    */
   record BindStmt(
     @NotNull SourcePos sourcePos,
-    @NotNull QualifiedID op,
+    @NotNull Either<QualifiedID, Decl.OpDecl> op,
     @NotNull BindPred pred,
-    @NotNull QualifiedID target,
+    @NotNull Either<QualifiedID, Decl.OpDecl> target,
     @NotNull Ref<@Nullable Context> context,
     @NotNull Ref<Decl.@Nullable OpDecl> resolvedOp,
     @NotNull Ref<Decl.@Nullable OpDecl> resolvedTarget

@@ -113,13 +113,18 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   @Override public Stmt.@NotNull BindStmt visitBind(AyaParser.BindContext ctx) {
     return new Stmt.BindStmt(
       sourcePosOf(ctx),
-      visitQualifiedId(ctx.qualifiedId(0)),
+      visitBindOp(ctx.bindOp(0)),
       ctx.TIGHTER() != null ? Stmt.BindPred.Tighter : Stmt.BindPred.Looser,
-      visitQualifiedId(ctx.qualifiedId(1)),
+      visitBindOp(ctx.bindOp(1)),
       new Ref<>(null),
       new Ref<>(null),
       new Ref<>(null)
     );
+  }
+
+  @Override public Either<QualifiedID, Decl.OpDecl> visitBindOp(AyaParser.BindOpContext ctx) {
+    if (ctx.OP_APP() != null) return Either.right(Decl.OpDecl.APP);
+    else return Either.left(visitQualifiedId(ctx.qualifiedId()));
   }
 
   @Override public @NotNull Sample visitSample(AyaParser.SampleContext ctx) {

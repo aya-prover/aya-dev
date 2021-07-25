@@ -20,7 +20,8 @@ sample : (EXAMPLE | COUNTEREXAMPLE) decl ;
 importCmd : IMPORT moduleName (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? moduleName useHide?;
 module : 'module' ID LBRACE stmt* '}';
-bind : 'bind' qualifiedId (TIGHTER | LOOSER) qualifiedId;
+bind : 'bind' bindOp (TIGHTER | LOOSER) bindOp;
+bindOp : qualifiedId | OP_APP;
 
 useHide : use+
         | hide+;
@@ -160,6 +161,7 @@ POSTFIX : '`' ID;
 // bind
 TIGHTER : 'tighter';
 LOOSER : 'looser';
+OP_APP : '\\app';
 
 // samples
 EXAMPLE : 'example';
