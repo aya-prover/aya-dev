@@ -4,6 +4,7 @@ package org.aya.concrete.desugar;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import kala.collection.mutable.DoubleLinkedBuffer;
 import kala.collection.mutable.LinkedBuffer;
 import kala.tuple.Tuple;
@@ -35,7 +36,7 @@ public final class BinOpParser {
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
     var first = seq.first();
-    if (opSet.assocOf(first.asOpDecl()).infix) {
+    if (opSet.assocOf(first.asOpDeclInternal()).infix) {
       // + f a b c d
       // \lam _ => _ + f a b c d
       var lhs = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE);
@@ -49,11 +50,22 @@ public final class BinOpParser {
     // TODO[kiva]: the following code is just supposed to convert
     //  infix expr to prefix expr??? is it??
 
+    var seqWithApp = Buffer.<BinOpParser.Elem>of();
+    boolean lastIsUsedAsOp = false;
     for (var expr : seq) {
-      var tryOp = expr.asOpDecl();
-      if (opSet.isNotUsedAsOperator(tryOp)) prefixes.append(expr);
+      var tryOp = expr.asOpDeclInternal();
+      if (opSet.isNotUsedAsOperator(tryOp)) {
+        if (!lastIsUsedAsOp && seqWithApp.isNotEmpty()) seqWithApp.append(Elem.OP_APP);
+      } else {
+        lastIsUsedAsOp = true;
+      }
+      seqWithApp.append(expr);
+    }
+
+    for (var expr : seqWithApp) {
+      if (expr.isNotUsedAsOp(opSet)) prefixes.append(expr);
       else {
-        var currentOp = opSet.ensureHasElem(tryOp._1, tryOp._2);
+        var currentOp = expr.toSetElem(opSet);
         while (opStack.isNotEmpty()) {
           var peek = opStack.peek();
           var cmp = opSet.compare(peek._2, currentOp);
@@ -93,7 +105,19 @@ public final class BinOpParser {
   private Expr.@NotNull AppExpr makeBinApp(@NotNull Elem op) {
     var rhs = prefixes.dequeue();
     var lhs = prefixes.dequeue();
-    return new Expr.AppExpr(
+    if (op == Elem.OP_APP) {
+      if (lhs.expr instanceof Expr.AppExpr app && app.function() instanceof Expr.RawUnivExpr univ)
+        return new Expr.AppExpr(
+          computeSourcePos(lhs.expr.sourcePos(), rhs.expr.sourcePos()),
+          univ,
+          app.arguments().appended(rhs.toNamedArg())
+        );
+      else return new Expr.AppExpr(
+        computeSourcePos(lhs.expr.sourcePos(), rhs.expr.sourcePos()),
+        lhs.expr,
+        ImmutableSeq.of(rhs.toNamedArg())
+      );
+    } else return new Expr.AppExpr(
       computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
       op.expr,
       ImmutableSeq.of(lhs.toNamedArg(), rhs.toNamedArg())
@@ -104,22 +128,52 @@ public final class BinOpParser {
     return a.union(b).union(c);
   }
 
+  private @NotNull SourcePos computeSourcePos(@NotNull SourcePos a, @NotNull SourcePos b) {
+    return a.union(b);
+  }
+
   /**
    * something like {@link Arg<Expr>}
    * but only used in binary operator building
    */
   public record Elem(@Nullable String name, @NotNull Expr expr, boolean explicit) {
+    private static final Elem OP_APP = new BinOpParser.Elem(
+      Decl.OpDecl.APP_NAME,
+      new Expr.ErrorExpr(SourcePos.NONE, Doc.plain("fakeApp escaped from BinOpParser")),
+      true
+    );
+
+    private boolean isBuiltinOp() {
+      return this == OP_APP;
+    }
+
     public Elem(@NotNull Expr expr, boolean explicit) {
       this(null, expr, explicit);
     }
 
-    public @Nullable Tuple3<String, Decl.@NotNull OpDecl, String> asOpDecl() {
+    private @Nullable Tuple3<String, Decl.@NotNull OpDecl, String> asOpDeclInternal() {
       if (expr instanceof Expr.RefExpr ref
         && ref.resolvedVar() instanceof DefVar<?, ?> defVar
         && defVar.concrete instanceof Decl.OpDecl opDecl) {
         return Tuple.of(defVar.name(), opDecl, ref.resolvedFrom());
       }
       return null;
+    }
+
+    public boolean isNotUsedAsOp(@NotNull BinOpSet opSet) {
+      if (isBuiltinOp()) return false;
+      var tryOp = asOpDeclInternal();
+      return opSet.isNotUsedAsOperator(tryOp);
+    }
+
+    public BinOpSet.@NotNull Elem toSetElem(@NotNull BinOpSet opSet) {
+      if (isBuiltinOp()) {
+        if (this == OP_APP) return opSet.ensureHasElem(Decl.OpDecl.APP_NAME, Decl.OpDecl.APP);
+        else throw new IllegalStateException("unreachable");
+      }
+      var tryOp = asOpDeclInternal();
+      assert tryOp != null; // should never fail
+      return opSet.ensureHasElem(tryOp._1, tryOp._2);
     }
 
     public @NotNull Arg<Expr.NamedArg> toNamedArg() {

@@ -38,7 +38,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public interface OpDecl {
     @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator();
 
-    OpDecl APP = () -> Tuple.of("\\app", Assoc.Infix);
+    String APP_NAME = "\\app";
+    OpDecl APP = () -> Tuple.of(APP_NAME, Assoc.Infix);
   }
 
   @Override public @NotNull Accessibility accessibility() {
