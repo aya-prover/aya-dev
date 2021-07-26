@@ -26,6 +26,4 @@ if (isMac) tasks.withType<JavaExec>().configureEach {
   jvmArgs("-XstartOnFirstThread")
 }
 
-tasks.withType<JavaCompile> {
-  options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
-}
+tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }

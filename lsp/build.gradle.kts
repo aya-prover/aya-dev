@@ -72,6 +72,4 @@ if (rootProject.hasProperty("installDir")) tasks.register<Copy>("install") {
   into(file(rootProject.property("installDir").toString()))
 }
 
-tasks.withType<JavaCompile>().configureEach {
-  options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
-}
+tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }

@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 
 /**
@@ -32,7 +33,7 @@ class CommonTasks {
     }
   }
 
-  static def evil(Task task) {
+  static def avoidModuleInfo(Task task) {
     def projectDir = task.project.projectDir
     def moduleInfo = projectDir.resolve("src/main/java/module-info.java")
     def moduleCache = projectDir.resolve("src/main/module-info.java")
@@ -44,5 +45,10 @@ class CommonTasks {
       moduleCache.copyTo(moduleInfo)
       moduleCache.delete()
     }
+  }
+
+  static def picocli(JavaCompile task) {
+    var project = task.project
+    task.options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
   }
 }
