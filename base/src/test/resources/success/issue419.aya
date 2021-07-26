@@ -1,0 +1,10 @@
+prim I
+prim left
+prim right
+struct Path (A : I -> Set) (a : A left) (b : A right) : Set
+ | at (i : I) : A i {
+   | left => a
+   | right => b
+ }
+def path {A : I -> Set} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at => \ i => p i }

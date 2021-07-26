@@ -358,14 +358,20 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var type = Def.defResult(defField.ref()).subst(subst);
       var fieldSubst = new ExprRefSubst(reporter);
       var telescope = defField.ref().core.fieldTele();
-      if (!telescope.sizeEquals(conField.bindings().size())) {
+      var bindings = conField.bindings();
+      if (telescope.sizeLessThan(bindings.size())) {
         // TODO[ice]: number of args don't match
         throw new TyckerException();
       }
-      for (var t : telescope.view().zip(conField.bindings())) fieldSubst.good().put(t._2.data(), t._1.ref());
+      var teleView = telescope.view();
+      for (int i = 0; i < bindings.size(); i++) {
+        fieldSubst.good().put(bindings.get(i).data(), teleView.first().ref());
+        teleView = teleView.drop(1);
+      }
+      final var teleViewFinal = teleView;
       var field = localCtx.with(telescope, () -> conField.body()
         .accept(fieldSubst, Unit.unit())
-        .accept(this, type).wellTyped);
+        .accept(this, FormTerm.Pi.make(teleViewFinal, type)).wellTyped);
       fields.append(Tuple.of(defField.ref(), field));
       subst.add(defField.ref(), field);
     }
