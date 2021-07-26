@@ -6,13 +6,14 @@ import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.core.CoreDef;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 /**
  * @author ice1000
  */
 public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> implements Var {
-  public Concrete concrete;
-  public Core core;
+  public @UnknownNullability Concrete concrete;
+  public @UnknownNullability Core core;
   private final @NotNull String name;
 
   @Contract(pure = true) public @NotNull String name() {
