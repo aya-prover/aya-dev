@@ -16,7 +16,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.RefTerm;
-import org.aya.generic.Matching;
 import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +51,7 @@ public class TyckDeclTest {
     var ctors = nat.body();
     assertEquals(2, ctors.size());
     var clauses = xyr.body().getRightValue();
-    var zeroToZero = ((Matching<?, ?>) clauses.get(0));
+    var zeroToZero = clauses.get(0);
     var zeroCtor = ctors.get(0);
     assertEquals(0, zeroCtor.conTele().size());
     var zeroParam = xyr.telescope().get(0);

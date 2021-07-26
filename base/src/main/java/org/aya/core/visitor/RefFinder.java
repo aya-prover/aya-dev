@@ -2,15 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
-import org.aya.api.ref.DefVar;
-import org.aya.api.ref.Var;
-import org.aya.core.def.*;
-import org.aya.core.pat.Pat;
-import org.aya.core.term.Term;
-import org.aya.generic.Matching;
 import kala.collection.SeqLike;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.ref.DefVar;
+import org.aya.api.ref.Var;
+import org.aya.core.Matching;
+import org.aya.core.def.*;
+import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -73,7 +72,7 @@ public record RefFinder(boolean withBody) implements
     return Unit.unit();
   }
 
-  public void matchy(@NotNull Matching<Pat, Term> match, @NotNull Buffer<Def> defs) {
+  public void matchy(@NotNull Matching match, @NotNull Buffer<Def> defs) {
     match.body().accept(this, defs);
   }
 

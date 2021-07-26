@@ -12,12 +12,12 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.stmt.Decl;
+import org.aya.core.Matching;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.CoreDistiller;
-import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.LocalCtx;
 import org.jetbrains.annotations.Debug;
@@ -127,7 +127,7 @@ public sealed interface Pat extends CorePat {
     @NotNull ImmutableSeq<Pat> patterns,
     @NotNull Option<Term> expr
   ) {
-    public static @NotNull PrototypeClause prototypify(@NotNull Matching<Pat, Term> clause) {
+    public static @NotNull PrototypeClause prototypify(@NotNull Matching clause) {
       return new PrototypeClause(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
     }
 
@@ -135,8 +135,8 @@ public sealed interface Pat extends CorePat {
       return new PrototypeClause(sourcePos, patterns, expr.map(termMap));
     }
 
-    public static @NotNull Option<@NotNull Matching<Pat, Term>> deprototypify(@NotNull PrototypeClause clause) {
-      return clause.expr.map(term -> new Matching<>(clause.sourcePos, clause.patterns, term));
+    public static @NotNull Option<@NotNull Matching> deprototypify(@NotNull PrototypeClause clause) {
+      return clause.expr.map(term -> new Matching(clause.sourcePos, clause.patterns, term));
     }
   }
 }

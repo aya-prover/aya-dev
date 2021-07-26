@@ -2,15 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.core.Matching;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.Term;
-import org.aya.generic.Matching;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.pat.PatClassifier;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class PatCCTest {
   public static @NotNull ImmutableSeq<PatClassifier.PatClass> testClassify(
-    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
+    @NotNull ImmutableSeq<Matching> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos
   ) {
     return PatClassifier.classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, true);

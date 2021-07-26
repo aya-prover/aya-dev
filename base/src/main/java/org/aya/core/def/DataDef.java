@@ -5,11 +5,11 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
+import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Matching;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -52,7 +52,7 @@ public record DataDef(
     @NotNull ImmutableSeq<Pat> pats,
     @NotNull ImmutableSeq<Term.Param> dataTele,
     @NotNull ImmutableSeq<Term.Param> conTele,
-    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses,
+    @NotNull ImmutableSeq<Matching> clauses,
     @NotNull Term result,
     boolean coerce
   ) implements Def {

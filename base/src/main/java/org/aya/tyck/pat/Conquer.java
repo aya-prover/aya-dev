@@ -8,6 +8,7 @@ import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
+import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
@@ -17,7 +18,6 @@ import org.aya.core.sort.LevelSubst;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
-import org.aya.generic.Matching;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.util.Ordering;
@@ -29,13 +29,13 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Conquer(
-  @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
+  @NotNull ImmutableSeq<Matching> matchings,
   @NotNull SourcePos sourcePos,
   @NotNull Def.Signature signature,
   @NotNull ExprTycker tycker
 ) implements Pat.Visitor<Integer, Unit> {
   public static void against(
-    @NotNull ImmutableSeq<Matching<Pat, Term>> matchings,
+    @NotNull ImmutableSeq<Matching> matchings,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
     for (int i = 0, size = matchings.size(); i < size; i++) {

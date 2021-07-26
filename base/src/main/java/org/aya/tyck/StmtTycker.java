@@ -13,6 +13,7 @@ import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
+import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
@@ -23,7 +24,6 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.GenericBuilder;
 import org.aya.generic.Level;
-import org.aya.generic.Matching;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
@@ -123,7 +123,7 @@ public record StmtTycker(
 
   private void ensureConfluent(
     ExprTycker tycker, Def.Signature signature, ImmutableSeq<Pat.PrototypeClause> elabClauses,
-    ImmutableSeq<@NotNull Matching<Pat, Term>> matchings, @NotNull SourcePos pos, boolean coverage
+    ImmutableSeq<@NotNull Matching> matchings, @NotNull SourcePos pos, boolean coverage
   ) {
     if (!matchings.isNotEmpty()) return;
     var classification = PatClassifier.classify(elabClauses, tycker.reporter, pos, coverage);

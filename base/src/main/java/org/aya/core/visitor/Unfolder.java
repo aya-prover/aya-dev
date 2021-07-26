@@ -2,11 +2,17 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import kala.collection.SeqLike;
+import kala.collection.Set;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
+import kala.tuple.Unit;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
+import org.aya.core.Matching;
 import org.aya.core.def.Def;
-import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
@@ -14,13 +20,6 @@ import org.aya.core.sort.Sort.LvlVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.Matching;
-import kala.collection.SeqLike;
-import kala.collection.Set;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableSet;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +96,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   default @Nullable WithPos<Term> tryUnfoldClauses(
     P p, SeqLike<Arg<Term>> args,
     Substituter.@NotNull TermSubst subst, LevelSubst levelSubst,
-    @NotNull ImmutableSeq<Matching<Pat, Term>> clauses
+    @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(matchy.patterns(), args);

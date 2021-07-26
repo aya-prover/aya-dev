@@ -6,9 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
-import kala.control.Option;
 import kala.tuple.Unit;
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
@@ -17,7 +15,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.generic.Level;
-import org.aya.generic.Matching;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
@@ -211,10 +208,6 @@ public final class ConcreteDistiller implements
   public Doc matchy(Pattern.@NotNull Clause match) {
     var doc = visitMaybeCtorPatterns(match.patterns, false, Doc.plain(", "));
     return match.expr.map(e -> Doc.sep(doc, Doc.plain("=>"), e.toDoc())).getOrDefault(doc);
-  }
-
-  public Doc matchy(Matching<Pattern, Expr> match) {
-    return matchy(new Pattern.Clause(SourcePos.NONE, match.patterns(), Option.some(match.body())));
   }
 
   private Doc visitAccess(Stmt.@NotNull Accessibility accessibility) {

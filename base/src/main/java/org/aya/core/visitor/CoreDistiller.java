@@ -12,12 +12,12 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.visitor.ConcreteDistiller;
+import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
-import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
@@ -250,7 +250,7 @@ public final class CoreDistiller implements
       patterns.view().map(p -> p.accept(this, nestedCall)))));
   }
 
-  public Doc matchy(@NotNull Matching<Pat, Term> match) {
+  public Doc matchy(@NotNull Matching match) {
     var doc = visitMaybeCtorPatterns(match.patterns(), false, Doc.plain(", "));
     return Doc.sep(doc, Doc.symbol("=>"), match.body().toDoc());
   }
@@ -284,7 +284,7 @@ public final class CoreDistiller implements
     return Doc.sep(buf);
   }
 
-  private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
+  private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching> clauses) {
     if (clauses.isEmpty()) return line1;
     return Doc.vcat(
       Doc.cat(line1, Doc.symbol(" {")),
@@ -292,7 +292,7 @@ public final class CoreDistiller implements
       Doc.symbol("}"));
   }
 
-  private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
+  private Doc visitClauses(@NotNull ImmutableSeq<Matching> clauses) {
     return Doc.vcat(clauses.view()
       .map(this::matchy)
       .map(doc -> Doc.cat(Doc.symbol("|"), doc)));

@@ -6,10 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.pat.Pat;
+import org.aya.core.Matching;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
-import org.aya.generic.Matching;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -23,14 +22,14 @@ public record FnDef(
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull ImmutableSeq<Sort.LvlVar> levels,
   @NotNull Term result,
-  @NotNull Either<Term, ImmutableSeq<Matching<Pat, Term>>> body
+  @NotNull Either<Term, ImmutableSeq<Matching>> body
 ) implements Def {
   public FnDef {
     ref.core = this;
   }
 
-  public static @NotNull <T> Function<Either<Term, ImmutableSeq<Matching<Pat, Term>>>, T> factory(
-    Function<Either<Term, ImmutableSeq<Matching<Pat, Term>>>, T> function
+  public static @NotNull <T> Function<Either<Term, ImmutableSeq<Matching>>, T> factory(
+    Function<Either<Term, ImmutableSeq<Matching>>, T> function
   ) {
     return function;
   }
