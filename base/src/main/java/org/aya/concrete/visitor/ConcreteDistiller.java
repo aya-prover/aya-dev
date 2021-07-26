@@ -53,9 +53,7 @@ public final class ConcreteDistiller implements
       Doc.styled(KEYWORD, Doc.symbol("\\")),
       Doc.ONE_WS,
       expr.param().toDoc(),
-      expr.body() instanceof Expr.HoleExpr
-        ? Doc.empty()
-        : Doc.cat(Doc.symbol(" => "), expr.body().toDoc())
+      Doc.emptyIf(expr.body() instanceof Expr.HoleExpr, () -> Doc.cat(Doc.symbol(" => "), expr.body().toDoc()))
     );
   }
 
@@ -145,9 +143,9 @@ public final class ConcreteDistiller implements
       expr.struct().toDoc(),
       Doc.symbol(" { "),
       Doc.sep(expr.fields().view().map(t ->
-        Doc.sep(Doc.plain("|"), Doc.plain(t.name()),
-          t.bindings().isEmpty() ? Doc.empty() :
-            Doc.join(Doc.ONE_WS, t.bindings().map(v -> Doc.plain(v.data().name()))),
+        Doc.sep(Doc.symbol("|"), Doc.plain(t.name()),
+          Doc.emptyIf(t.bindings().isEmpty(), () ->
+            Doc.join(Doc.ONE_WS, t.bindings().map(v -> Doc.plain(v.data().name())))),
           Doc.plain("=>"), t.body().toDoc())
       )),
       Doc.symbol(" }")
@@ -213,13 +211,13 @@ public final class ConcreteDistiller implements
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, boolean nestedCall, @NotNull Doc delim) {
-    return patterns.isEmpty() ? Doc.empty() : Doc.cat(Doc.ONE_WS, Doc.join(delim,
-      patterns.view().map(p -> p.accept(this, nestedCall))));
+    return Doc.emptyIf(patterns.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
+      patterns.view().map(p -> p.accept(this, nestedCall)))));
   }
 
   public Doc matchy(Pattern.@NotNull Clause match) {
     var doc = visitMaybeCtorPatterns(match.patterns, false, Doc.plain(", "));
-    return match.expr.map(e -> Doc.cat(doc, Doc.plain(" => "), e.toDoc())).getOrDefault(doc);
+    return match.expr.map(e -> Doc.sep(doc, Doc.plain("=>"), e.toDoc())).getOrDefault(doc);
   }
 
   public Doc matchy(Matching<Pattern, Expr> match) {
@@ -297,12 +295,10 @@ public final class ConcreteDistiller implements
       Doc.ONE_WS,
       Doc.plain(decl.ref.name()),
       visitTele(decl.telescope),
-      decl.result instanceof Expr.HoleExpr
-        ? Doc.empty()
-        : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      decl.body.isEmpty() ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.body.view().map(ctor -> visitCtor(ctor, Unit.unit())))))
+      Doc.emptyIf(decl.result instanceof Expr.HoleExpr, () ->
+        Doc.cat(Doc.plain(" : "), decl.result.toDoc())),
+      Doc.emptyIf(decl.body.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
+        decl.body.view().map(ctor -> visitCtor(ctor, Unit.unit()))))))
     );
   }
 
@@ -315,8 +311,8 @@ public final class ConcreteDistiller implements
     );
     if (ctor.patterns.isNotEmpty()) {
       var pats = Doc.commaList(ctor.patterns.view().map(Pattern::toDoc));
-      return Doc.cat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
-    } else return Doc.cat(Doc.plain("| "), doc);
+      return Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);
+    } else return Doc.sep(Doc.symbol("|"), doc);
   }
 
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {
@@ -336,21 +332,17 @@ public final class ConcreteDistiller implements
       Doc.ONE_WS,
       linkDef(decl.ref, STRUCT_CALL),
       visitTele(decl.telescope),
-      decl.result instanceof Expr.HoleExpr
-        ? Doc.empty()
-        : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      decl.fields.isEmpty() ? Doc.empty()
-        : Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.fields.view().map(field -> visitField(field, Unit.unit())))))
+      Doc.emptyIf(decl.result instanceof Expr.HoleExpr, () -> Doc.cat(Doc.plain(" : "), decl.result.toDoc())),
+      Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
+        decl.fields.view().map(field -> visitField(field, Unit.unit()))))))
     );
   }
 
   @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
-    Doc @NotNull [] docs = new Doc[]{Doc.plain("| "), coe(field.coerce), linkDef(field.ref, FIELD_CALL), visitTele(field.telescope), field.result instanceof Expr.HoleExpr
-      ? Doc.empty()
-      : Doc.cat(Doc.plain(" : "), field.result.toDoc()), field.body.isEmpty()
-        ? Doc.empty()
-        : Doc.cat(Doc.symbol(" => "), field.body.get().toDoc()), visitClauses(field.clauses, true)};
+    Doc @NotNull [] docs = new Doc[]{Doc.plain("| "), coe(field.coerce), linkDef(field.ref, FIELD_CALL), visitTele(field.telescope),
+      Doc.emptyIf(field.result instanceof Expr.HoleExpr, () -> Doc.cat(Doc.plain(" : "), field.result.toDoc())),
+      Doc.emptyIf(field.body.isEmpty(), () -> Doc.cat(Doc.symbol(" => "), field.body.get().toDoc())),
+      visitClauses(field.clauses, true)};
     return Doc.cat(docs);
   }
 
@@ -363,14 +355,10 @@ public final class ConcreteDistiller implements
         Doc.sep(Seq.from(decl.modifiers).view().map(this::visitModifier)),
       linkDef(decl.ref, FN_CALL),
       visitTele(decl.telescope),
-      decl.result instanceof Expr.HoleExpr
-        ? Doc.empty()
-        : Doc.cat(Doc.plain(" : "), decl.result.toDoc()),
-      decl.body.isLeft() ? Doc.symbol(" => ") : Doc.empty(),
+      Doc.emptyIf(decl.result instanceof Expr.HoleExpr, () -> Doc.cat(Doc.plain(" : "), decl.result.toDoc())),
+      Doc.emptyIf(decl.body.isRight(), () -> Doc.symbol(" => ")),
       decl.body.fold(Expr::toDoc, clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
-      decl.abuseBlock.sizeEquals(0)
-        ? Doc.empty()
-        : Doc.cat(Doc.ONE_WS, Doc.styled(KEYWORD, "abusing"), Doc.ONE_WS, visitAbuse(decl.abuseBlock))
+      Doc.emptyIf(decl.abuseBlock.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.styled(KEYWORD, "abusing"), Doc.ONE_WS, visitAbuse(decl.abuseBlock)))
     );
   }
 
@@ -386,8 +374,8 @@ public final class ConcreteDistiller implements
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Expr.Param> telescope) {
-    return telescope.isEmpty() ? Doc.empty() : Doc.cat(Doc.ONE_WS,
-      Doc.sep(telescope.map(Expr.Param::toDoc)));
+    return Doc.emptyIf(telescope.isEmpty(), () -> Doc.cat(Doc.ONE_WS,
+      Doc.sep(telescope.map(Expr.Param::toDoc))));
   }
 
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {

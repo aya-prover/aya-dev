@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 import static org.aya.pretty.printer.PrinterConfig.INFINITE_SIZE;
 
@@ -235,9 +236,8 @@ public sealed interface Doc extends Docile {
    * @param otherwise otherwise
    * @return {@link Empty} when {@code cond} is true, otherwise {@code otherwise}
    */
-  @Contract("_, _ -> new")
-  static @NotNull Doc emptyIf(boolean cond, Doc otherwise) {
-    return cond ? empty() : otherwise;
+  static @NotNull Doc emptyIf(boolean cond, Supplier<@NotNull Doc> otherwise) {
+    return cond ? empty() : otherwise.get();
   }
 
   /**
@@ -245,7 +245,6 @@ public sealed interface Doc extends Docile {
    *
    * @return empty document
    */
-  @Contract("-> new")
   static @NotNull Doc empty() {
     return Empty.INSTANCE;
   }

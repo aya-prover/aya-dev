@@ -142,7 +142,7 @@ public final class CoreDistiller implements
       Doc.styled(KEYWORD, "new"),
       Doc.symbol(" { "),
       Doc.sep(newTerm.params().view()
-        .map((k, v) -> Doc.sep(Doc.plain("|"),
+        .map((k, v) -> Doc.sep(Doc.symbol("|"),
           Doc.linkRef(Doc.styled(FIELD_CALL, k.name()), k.hashCode()),
           Doc.symbol("=>"), v.toDoc()))
         .toImmutableSeq()),
@@ -251,8 +251,8 @@ public final class CoreDistiller implements
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
-    return patterns.isEmpty() ? Doc.empty() : Doc.cat(Doc.ONE_WS, Doc.join(delim,
-      patterns.view().map(p -> p.accept(this, nestedCall))));
+    return Doc.emptyIf(patterns.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
+      patterns.view().map(p -> p.accept(this, nestedCall)))));
   }
 
   public Doc matchy(@NotNull Matching<Pat, Term> match) {
@@ -296,11 +296,16 @@ public final class CoreDistiller implements
   private Doc visitClauses(@NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
     return Doc.vcat(clauses.view()
       .map(this::matchy)
-      .map(doc -> Doc.cat(Doc.plain("|"), doc)));
+      .map(doc -> Doc.cat(Doc.symbol("|"), doc)));
   }
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
-    var line1 = Doc.cat(Doc.styled(KEYWORD, "data"), Doc.ONE_WS, linkDef(def.ref(), DATA_CALL), visitTele(def.telescope()), Doc.plain(" : "), def.result().toDoc());
+    var line1 = Doc.cat(Doc.styled(KEYWORD, "data"),
+      Doc.ONE_WS,
+      linkDef(def.ref(), DATA_CALL),
+      visitTele(def.telescope()),
+      Doc.plain(" : "),
+      def.result().toDoc());
     return Doc.vcat(line1, Doc.nest(2, Doc.vcat(
       def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
@@ -337,7 +342,7 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitField(@NotNull StructDef.Field field, Unit unit) {
-    return visitConditions(Doc.cat(Doc.plain("| "), coe(field.coerce()), linkDef(field.ref(), FIELD_CALL), visitTele(field.fieldTele())), field.clauses());
+    return visitConditions(Doc.cat(Doc.symbol("| "), coe(field.coerce()), linkDef(field.ref(), FIELD_CALL), visitTele(field.fieldTele())), field.clauses());
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {
