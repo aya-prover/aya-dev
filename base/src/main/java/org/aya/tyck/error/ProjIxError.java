@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public record ProjIxError(@NotNull Expr.ProjExpr expr, int actual, int expectedBound) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
-      Doc.english("Wrong projection index. Expected in range"),
+      Doc.english("Wrong projection index. It should be in range"),
       Doc.plain("[1, " + expectedBound + "]"),
       Doc.english("while you wanted the"),
       Doc.ordinal(actual),

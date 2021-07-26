@@ -436,7 +436,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return wantButNo(tuple, whnf, "sigma type");
     var telescope = sigma.params();
     var index = ix - 1;
-    if (index < 0 || index > telescope.size()) {
+    if (index < 0 || index >= telescope.size()) {
       reporter.report(new ProjIxError(proj, ix, telescope.size()));
       var projDoc = proj.toDoc();
       return new Result(new ErrorTerm(projDoc), ErrorTerm.typeOf(projDoc));
