@@ -59,34 +59,30 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
-    var doc = Doc.cat(
+    var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("\\")),
-      Doc.ONE_WS,
       term.param().toDoc(),
-      Doc.symbol(" => "),
+      Doc.symbol("=>"),
       term.body().toDoc()
     );
     return nestedCall ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
-    // TODO[kiva]: term.co
-    var doc = Doc.cat(
+    var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      Doc.ONE_WS,
       term.param().toDoc(),
-      Doc.symbol(" -> "),
+      Doc.symbol("->"),
       term.body().toDoc()
     );
     return nestedCall ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Boolean nestedCall) {
-    var doc = Doc.cat(
+    var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
-      Doc.ONE_WS,
       visitTele(term.params().view().dropLast(1)),
-      Doc.plain(" ** "),
+      Doc.symbol("**"),
       term.params().last().toDoc()
     );
     return nestedCall ? Doc.parened(doc) : doc;

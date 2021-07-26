@@ -34,7 +34,6 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.error.NoSuchFieldError;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.TypedDefEq;
@@ -376,11 +375,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     if (missing.isNotEmpty()) {
-      reporter.report(new MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
+      reporter.report(new FieldProblem.MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
       return new Result(new ErrorTerm(expr.toDoc()), structCall);
     }
     if (conFields.isNotEmpty()) {
-      reporter.report(new NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name).toImmutableSeq()));
+      reporter.report(new FieldProblem.NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name).toImmutableSeq()));
       return new Result(new ErrorTerm(expr.toDoc()), structCall);
     }
 
@@ -397,7 +396,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @NotNull private Result doVisitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
     var from = expr.tup();
     var result = expr.ix().fold(
-      ix -> visitProj(from, ix),
+      ix -> visitProj(from, ix, expr),
       sp -> visitAccess(from, sp.data(), expr)
     );
     return unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
@@ -430,19 +429,17 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       FormTerm.Pi.make(tele, field.result().subst(structSubst, levels._1)));
   }
 
-  private Result visitProj(Expr tuple, int ix) {
+  private @NotNull Result visitProj(@NotNull Expr tuple, int ix, Expr.@NotNull ProjExpr proj) {
     var projectee = tuple.accept(this, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof FormTerm.Sigma sigma))
       return wantButNo(tuple, whnf, "sigma type");
     var telescope = sigma.params();
     var index = ix - 1;
-    if (index < 0) {
-      // TODO[ice]: too small index
-      throw new TyckerException();
-    } else if (index > telescope.size()) {
-      // TODO[ice]: too large index
-      throw new TyckerException();
+    if (index < 0 || index > telescope.size()) {
+      reporter.report(new ProjIxError(proj, ix, telescope.size()));
+      var projDoc = proj.toDoc();
+      return new Result(new ErrorTerm(projDoc), ErrorTerm.typeOf(projDoc));
     }
     var type = telescope.get(index).type();
     var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
