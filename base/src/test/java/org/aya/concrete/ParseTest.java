@@ -262,6 +262,12 @@ public class ParseTest {
     parseAndPretty("ulevel uu", "ulevel uu");
   }
 
+  @Test public void exprPretty() {
+    parseAndPretty("def test => Type (lsuc lzero) (lmax lzero)",
+      "public def test => Type (lsuc lzero) (lmax lzero)");
+    parseAndPretty("def test => {? Type ?}", "public def test => {? Type ?}");
+  }
+
   @Test public void issue350() {
     parseAndPretty("""
         def l : Set => \\ i => Nat

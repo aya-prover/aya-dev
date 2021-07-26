@@ -272,10 +272,7 @@ public final class ConcreteDistiller implements
       Doc.styled(KEYWORD, "data"),
       linkDef(decl.ref, DATA_CALL),
       visitTele(decl.telescope));
-    if (!(decl.result instanceof Expr.HoleExpr)) {
-      prelude.append(Doc.plain(":"));
-      prelude.append(decl.result.toDoc());
-    }
+    appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       Doc.emptyIf(decl.body.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
         decl.body.view().map(ctor -> visitCtor(ctor, Unit.unit()))))))
@@ -308,16 +305,19 @@ public final class ConcreteDistiller implements
   @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
     var prelude = Buffer.of(visitAccess(decl.accessibility()),
       Doc.styled(KEYWORD, "struct"),
-      linkDef(decl.ref, STRUCT_CALL));
-    prelude.append(visitTele(decl.telescope));
-    if (!(decl.result instanceof Expr.HoleExpr)) {
-      prelude.append(Doc.plain(":"));
-      prelude.append(decl.result.toDoc());
-    }
+      linkDef(decl.ref, STRUCT_CALL),
+      visitTele(decl.telescope));
+    appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
         decl.fields.view().map(field -> visitField(field, Unit.unit()))))))
     );
+  }
+
+  private void appendResult(Buffer<Doc> prelude, Expr result) {
+    if (result instanceof Expr.HoleExpr) return;
+    prelude.append(Doc.plain(":"));
+    prelude.append(result.toDoc());
   }
 
   @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
@@ -325,10 +325,7 @@ public final class ConcreteDistiller implements
       coe(field.coerce),
       linkDef(field.ref, FIELD_CALL),
       visitTele(field.telescope));
-    if (!(field.result instanceof Expr.HoleExpr)) {
-      doc.append(Doc.plain(":"));
-      doc.append(field.result.toDoc());
-    }
+    appendResult(doc, field.result);
     if (field.body.isDefined()) {
       doc.append(Doc.symbol("=>"));
       doc.append(field.body.get().toDoc());
@@ -342,10 +339,7 @@ public final class ConcreteDistiller implements
     prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
     prelude.append(linkDef(decl.ref, FN_CALL));
     prelude.append(visitTele(decl.telescope));
-    if (!(decl.result instanceof Expr.HoleExpr)) {
-      prelude.append(Doc.plain(":"));
-      prelude.append(decl.result.toDoc());
-    }
+    appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       decl.body.fold(expr -> Doc.sep(Doc.symbol(" =>"), expr.toDoc()),
         clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
