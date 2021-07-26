@@ -132,9 +132,8 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
-    var items = Doc.commaList(term.items().view()
-      .map(Term::toDoc));
-    return Doc.cat(Doc.plain("("), items, Doc.plain(")"));
+    return Doc.parened(Doc.commaList(term.items().view()
+      .map(Term::toDoc)));
   }
 
   @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Boolean aBoolean) {
@@ -143,7 +142,7 @@ public final class CoreDistiller implements
       Doc.symbol(" { "),
       Doc.sep(newTerm.params().view()
         .map((k, v) -> Doc.sep(Doc.symbol("|"),
-          Doc.linkRef(Doc.styled(FIELD_CALL, k.name()), k.hashCode()),
+          linkRef(k, FIELD_CALL),
           Doc.symbol("=>"), v.toDoc()))
         .toImmutableSeq()),
       Doc.symbol(" }")
@@ -157,7 +156,7 @@ public final class CoreDistiller implements
   @Override public Doc visitAccess(CallTerm.@NotNull Access term, Boolean nestedCall) {
     var ref = term.ref();
     var doc = Doc.cat(term.of().toDoc(), Doc.symbol("."),
-      Doc.linkRef(Doc.styled(FIELD_CALL, ref.name()), ref.hashCode()));
+      linkRef(ref, FIELD_CALL));
     return visitCalls(doc, term.fieldArgs(), (n, t) -> t.accept(this, n), nestedCall);
   }
 
@@ -182,7 +181,7 @@ public final class CoreDistiller implements
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
     boolean nestedCall
   ) {
-    var hyperLink = Doc.linkRef(Doc.styled(style, fn.name()), fn.hashCode());
+    var hyperLink = linkRef(fn, style);
     return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
@@ -229,24 +228,20 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitPrim(Pat.@NotNull Prim prim, Boolean aBoolean) {
-    var link = hyperLink(prim.ref());
+    var link = linkRef(prim.ref(), CON_CALL);
     return prim.explicit() ? link : Doc.braced(link);
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
-    var ctorDoc = Doc.cat(hyperLink(ctor.ref()), visitMaybeCtorPatterns(ctor.params(), true, Doc.ONE_WS));
+    var ctorDoc = Doc.cat(linkRef(ctor.ref(), CON_CALL), visitMaybeCtorPatterns(ctor.params(), true, Doc.ONE_WS));
     return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
-  }
-
-  @NotNull private Doc hyperLink(DefVar<?, ?> ref) {
-    return Doc.linkRef(Doc.styled(CON_CALL, ref.name()), ref.hashCode());
   }
 
   public static @NotNull Doc ctorDoc(boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
     boolean as = ctorAs != null;
     var withEx = ex ? ctorDoc : Doc.braced(ctorDoc);
     var withAs = !as ? withEx :
-      Doc.cat(Doc.parened(withEx), Doc.plain(" as "), Doc.plain(ctorAs.name()));
+      Doc.sep(Doc.parened(withEx), Doc.plain("as"), linkDef(ctorAs));
     return !ex && !as ? withAs : nestedCall && !noParams ? Doc.parened(withAs) : withAs;
   }
 
@@ -257,7 +252,7 @@ public final class CoreDistiller implements
 
   public Doc matchy(@NotNull Matching<Pat, Term> match) {
     var doc = visitMaybeCtorPatterns(match.patterns(), false, Doc.plain(", "));
-    return Doc.cat(doc, Doc.symbol(" => "), match.body().toDoc());
+    return Doc.sep(doc, Doc.symbol("=>"), match.body().toDoc());
   }
 
 
@@ -315,6 +310,10 @@ public final class CoreDistiller implements
 
   public static @NotNull Doc linkDef(@NotNull Var ref, @NotNull Style color) {
     return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
+  }
+
+  public static @NotNull Doc linkRef(@NotNull Var ref, @NotNull Style color) {
+    return Doc.linkRef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
   public static @NotNull Doc linkDef(@NotNull Var ref) {
