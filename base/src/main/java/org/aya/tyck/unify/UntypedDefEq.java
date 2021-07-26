@@ -94,9 +94,8 @@ public record UntypedDefEq(
     var meta = lhs.ref().core();
     for (var arg : lhs.args().view().zip(meta.telescope)) {
       if (arg._1.term() instanceof RefTerm ref) {
-        // TODO[xyr]: do scope checking here
+        if (subst.map().containsKey(ref.var())) return null;
         subst.add(ref.var(), arg._2.toTerm());
-        if (rhs == null) return null;
       } else return null;
       // TODO[ice]: ^ eta var
     }
