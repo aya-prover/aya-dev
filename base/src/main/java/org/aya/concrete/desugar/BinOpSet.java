@@ -10,10 +10,10 @@ import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
-import org.aya.concrete.Decl;
-import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.stmt.OpDecl;
+import org.aya.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +26,9 @@ public record BinOpSet(
     this(reporter, MutableSet.of(), MutableHashMap.of());
   }
 
-  public void bind(@NotNull Tuple2<String, Decl.@NotNull OpDecl> op,
+  public void bind(@NotNull Tuple2<String, @NotNull OpDecl> op,
                    @NotNull Stmt.BindPred pred,
-                   @NotNull Tuple2<String, Decl.@NotNull OpDecl> target,
+                   @NotNull Tuple2<String, @NotNull OpDecl> target,
                    @NotNull SourcePos sourcePos) {
     var opElem = ensureHasElem(op._1, op._2, sourcePos);
     var targetElem = ensureHasElem(target._1, target._2, sourcePos);
@@ -59,20 +59,20 @@ public record BinOpSet(
     return false;
   }
 
-  public Assoc assocOf(@Nullable Tuple3<String, Decl.@NotNull OpDecl, String> opDecl) {
+  public Assoc assocOf(@Nullable Tuple3<String, @NotNull OpDecl, String> opDecl) {
     if (isNotUsedAsOperator(opDecl)) return Assoc.NoFix;
     return ensureHasElem(opDecl._1, opDecl._2).assoc;
   }
 
-  public boolean isNotUsedAsOperator(@Nullable Tuple3<String, Decl.@NotNull OpDecl, String> opDecl) {
+  public boolean isNotUsedAsOperator(@Nullable Tuple3<String, @NotNull OpDecl, String> opDecl) {
     return opDecl == null || opDecl._1.equals(opDecl._3);
   }
 
-  public Elem ensureHasElem(@NotNull String defName, @NotNull Decl.OpDecl opDecl) {
+  public Elem ensureHasElem(@NotNull String defName, @NotNull OpDecl opDecl) {
     return ensureHasElem(defName, opDecl, SourcePos.NONE);
   }
 
-  public Elem ensureHasElem(@NotNull String defName, @NotNull Decl.OpDecl opDecl, @NotNull SourcePos sourcePos) {
+  public Elem ensureHasElem(@NotNull String defName, @NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
     var elem = ops.find(e -> e.op == opDecl);
     if (elem.isDefined()) return elem.get();
     var newElem = Elem.from(defName, opDecl, sourcePos);
@@ -122,11 +122,11 @@ public record BinOpSet(
 
   public record Elem(
     @NotNull SourcePos firstBind,
-    @NotNull Decl.OpDecl op,
+    @NotNull OpDecl op,
     @NotNull String name,
     @NotNull Assoc assoc
   ) {
-    private static @NotNull Elem from(@NotNull String defName, Decl.@NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
+    private static @NotNull Elem from(@NotNull String defName, @NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
       var opData = opDecl.asOperator();
       if (opData == null) {
         opData = Tuple.of(defName, Assoc.NoFix);

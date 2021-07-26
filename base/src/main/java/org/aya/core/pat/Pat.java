@@ -2,12 +2,16 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pat;
 
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
+import kala.tuple.Unit;
 import org.aya.api.core.CorePat;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
-import org.aya.concrete.Decl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
@@ -16,10 +20,6 @@ import org.aya.core.visitor.CoreDistiller;
 import org.aya.generic.Matching;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.LocalCtx;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

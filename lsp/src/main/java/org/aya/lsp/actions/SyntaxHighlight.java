@@ -7,7 +7,9 @@ import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.*;
+import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
+import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.LspRange;
@@ -125,7 +127,7 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
     return StmtConsumer.super.visitModule(mod, buffer);
   }
 
-  private HighlightResult.Symbol.@NotNull Kind kindOf(@NotNull Decl.OpDecl opDecl) {
+  private HighlightResult.Symbol.@NotNull Kind kindOf(@NotNull OpDecl opDecl) {
     if (opDecl instanceof Decl.FnDecl) return HighlightResult.Symbol.Kind.FnCall;
     else if (opDecl instanceof Decl.StructDecl) return HighlightResult.Symbol.Kind.StructCall;
     else if (opDecl instanceof Decl.PrimDecl) return HighlightResult.Symbol.Kind.PrimCall;
@@ -133,7 +135,7 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
     else throw new IllegalArgumentException("Unsupported operator: " + opDecl.getClass().getName());
   }
 
-  private void visitOperator(@NotNull Buffer<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @NotNull Ref<Decl.@Nullable OpDecl> ref) {
+  private void visitOperator(@NotNull Buffer<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @NotNull Ref<@Nullable OpDecl> ref) {
     if (ref.value == null) return;
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(ref.value)));
   }

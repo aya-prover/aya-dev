@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.Signatured;
+import org.aya.concrete.stmt.Signatured;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.CoreDistiller;

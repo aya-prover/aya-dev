@@ -9,7 +9,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
-import org.aya.concrete.Decl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;

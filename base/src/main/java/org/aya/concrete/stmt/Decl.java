@@ -1,17 +1,18 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.concrete;
+package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
-import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Assoc;
+import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
@@ -34,13 +35,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public final @NotNull Accessibility accessibility;
   public final @NotNull ImmutableSeq<Stmt> abuseBlock;
   public @Nullable Context ctx = null;
-
-  public interface OpDecl {
-    @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator();
-
-    @NotNull String APP_NAME = "application";
-    @NotNull OpDecl APP = () -> Tuple.of(APP_NAME, Assoc.Infix);
-  }
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;

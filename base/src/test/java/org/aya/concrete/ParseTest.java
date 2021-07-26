@@ -12,6 +12,8 @@ import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;

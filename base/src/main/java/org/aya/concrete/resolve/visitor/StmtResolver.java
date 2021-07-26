@@ -10,10 +10,11 @@ import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.*;
+import org.aya.concrete.QualifiedID;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
+import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -55,15 +56,15 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     return Unit.unit();
   }
 
-  private @NotNull Tuple2<String, Decl.@NotNull OpDecl>
-  resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull Either<QualifiedID, Decl.OpDecl> idOrOp) {
+  private @NotNull Tuple2<String, @NotNull OpDecl>
+  resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull Either<QualifiedID, OpDecl> idOrOp) {
     if (idOrOp.isRight()) {
       var builtin = idOrOp.getRightValue();
       return Tuple.of(Objects.requireNonNull(builtin.asOperator())._1, builtin);
     }
     var id = idOrOp.getLeftValue();
     var var = ctx.get(id);
-    if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof Decl.OpDecl op) {
+    if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
       return Tuple.of(defVar.name(), op);
     }
     reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));

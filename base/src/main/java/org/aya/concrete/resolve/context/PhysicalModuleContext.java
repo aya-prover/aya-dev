@@ -7,8 +7,8 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.error.DuplicateExportError;
+import org.aya.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

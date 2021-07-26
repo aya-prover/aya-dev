@@ -22,10 +22,13 @@ import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Assoc;
 import org.aya.api.util.WithPos;
-import org.aya.concrete.*;
+import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
+import org.aya.concrete.QualifiedID;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
+import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaBaseVisitor;
@@ -123,8 +126,8 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     );
   }
 
-  @Override public Either<QualifiedID, Decl.OpDecl> visitBindOp(AyaParser.BindOpContext ctx) {
-    if (ctx.OP_APP() != null) return Either.right(Decl.OpDecl.APP);
+  @Override public Either<QualifiedID, OpDecl> visitBindOp(AyaParser.BindOpContext ctx) {
+    if (ctx.OP_APP() != null) return Either.right(OpDecl.APP);
     else return Either.left(visitQualifiedId(ctx.qualifiedId()));
   }
 

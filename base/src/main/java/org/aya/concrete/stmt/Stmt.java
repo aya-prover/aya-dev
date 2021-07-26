@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.concrete;
+package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
@@ -8,6 +8,7 @@ import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.QualifiedID;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.resolve.context.Context;
@@ -85,12 +86,12 @@ public sealed interface Stmt extends Docile
    */
   record BindStmt(
     @NotNull SourcePos sourcePos,
-    @NotNull Either<QualifiedID, Decl.OpDecl> op,
+    @NotNull Either<QualifiedID, OpDecl> op,
     @NotNull BindPred pred,
-    @NotNull Either<QualifiedID, Decl.OpDecl> target,
+    @NotNull Either<QualifiedID, OpDecl> target,
     @NotNull Ref<@Nullable Context> context,
-    @NotNull Ref<Decl.@Nullable OpDecl> resolvedOp,
-    @NotNull Ref<Decl.@Nullable OpDecl> resolvedTarget
+    @NotNull Ref<@Nullable OpDecl> resolvedOp,
+    @NotNull Ref<@Nullable OpDecl> resolvedTarget
   ) implements Stmt {
     @Override public @NotNull Accessibility accessibility() {
       return Accessibility.Public;

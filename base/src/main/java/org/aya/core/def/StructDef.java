@@ -5,7 +5,7 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.Decl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;

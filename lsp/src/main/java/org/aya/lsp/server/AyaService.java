@@ -14,7 +14,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
-import org.aya.concrete.Stmt;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Tycked;
 import org.aya.lsp.actions.ComputeTerm;
 import org.aya.lsp.actions.GotoDefinition;

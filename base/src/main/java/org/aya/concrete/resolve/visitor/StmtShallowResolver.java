@@ -8,16 +8,13 @@ import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.concrete.Decl;
-import org.aya.concrete.Generalize;
-import org.aya.concrete.Sample;
-import org.aya.concrete.Stmt;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.context.NoExportContext;
 import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
+import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -56,7 +53,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
     return Unit.unit();
   }
 
-  private void visitOperator(@NotNull ModuleContext context, @NotNull Decl.OpDecl opDecl,
+  private void visitOperator(@NotNull ModuleContext context, @NotNull OpDecl opDecl,
                              Stmt.@NotNull Accessibility accessibility, @NotNull Var ref,
                              @NotNull SourcePos sourcePos) {
     var op = opDecl.asOperator();
@@ -71,7 +68,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
 
   private Unit visitDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
     context.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
-    if (decl instanceof Decl.OpDecl opDecl) {
+    if (decl instanceof OpDecl opDecl) {
       visitOperator(context, opDecl, decl.accessibility, decl.ref(), decl.sourcePos);
     }
     decl.ctx = context;

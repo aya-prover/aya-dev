@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
-import org.aya.concrete.Decl;
-import org.aya.concrete.Sample;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Sample;
 import org.aya.core.def.Tycked;
 import org.aya.tyck.error.CounterexampleError;
 import org.jetbrains.annotations.Contract;

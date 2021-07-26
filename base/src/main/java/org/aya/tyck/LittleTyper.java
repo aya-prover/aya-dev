@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.NormalizeMode;
-import org.aya.concrete.Decl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;

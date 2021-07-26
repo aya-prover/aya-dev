@@ -9,7 +9,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
-import org.aya.concrete.Decl;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.sort.LevelSubst;

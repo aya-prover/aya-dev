@@ -3,14 +3,14 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.Decl;
 import org.aya.concrete.ParseTest;
-import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;

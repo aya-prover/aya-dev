@@ -14,9 +14,9 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
-import org.aya.concrete.Decl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.OperatorProblem;
+import org.aya.concrete.stmt.OpDecl;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +137,7 @@ public final class BinOpParser {
    */
   public record Elem(@Nullable String name, @NotNull Expr expr, boolean explicit) {
     private static final Elem OP_APP = new Elem(
-      Decl.OpDecl.APP_NAME,
+      OpDecl.APP_NAME,
       new Expr.ErrorExpr(SourcePos.NONE, Doc.english("fakeApp escaped from BinOpParser")),
       true
     );
@@ -150,10 +150,10 @@ public final class BinOpParser {
       this(null, expr, explicit);
     }
 
-    private @Nullable Tuple3<String, Decl.@NotNull OpDecl, String> asOpDecl() {
+    private @Nullable Tuple3<String, @NotNull OpDecl, String> asOpDecl() {
       if (expr instanceof Expr.RefExpr ref
         && ref.resolvedVar() instanceof DefVar<?, ?> defVar
-        && defVar.concrete instanceof Decl.OpDecl opDecl) {
+        && defVar.concrete instanceof OpDecl opDecl) {
         return Tuple.of(defVar.name(), opDecl, ref.resolvedFrom());
       }
       return null;
@@ -167,7 +167,7 @@ public final class BinOpParser {
 
     public BinOpSet.@NotNull Elem toSetElem(@NotNull BinOpSet opSet) {
       if (isBuiltinOp()) {
-        if (this == OP_APP) return opSet.ensureHasElem(Decl.OpDecl.APP_NAME, Decl.OpDecl.APP);
+        if (this == OP_APP) return opSet.ensureHasElem(OpDecl.APP_NAME, OpDecl.APP);
         else throw new IllegalStateException("unreachable");
       }
       var tryOp = asOpDecl();
