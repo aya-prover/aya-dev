@@ -72,9 +72,7 @@ public class LevelSolver {
     }
     if (a instanceof Level.Constant<LvlVar> ca) {
       if (b instanceof Level.Constant<LvlVar> cb) {
-        if (ca.value() > cb.value()) {
-          return true;
-        }
+        return ca.value() > cb.value();
       } else if (b instanceof Level.Reference<LvlVar> rb) {
         // if(!rb.ref().free()) return;
         int u = ca.value();
@@ -119,7 +117,7 @@ public class LevelSolver {
     }
   }
 
-  int[][] dfs(SeqLike<Eqn> l, int pos, int[][] g) throws UnsatException {
+  private int[][] dfs(SeqLike<Eqn> l, int pos, int[][] g) throws UnsatException {
     if (pos >= l.size()) {
       if (floyd(g)) {
         throw new UnsatException();
@@ -145,7 +143,7 @@ public class LevelSolver {
     throw new UnsatException();
   }
 
-  Level<LvlVar> resolveConstantLevel(int dist) {
+  private Level<LvlVar> resolveConstantLevel(int dist) {
     int retU = dist > LOW_BOUND ? INF : dist;
     if (retU >= INF) {
       return new Level.Infinity<>();
@@ -236,22 +234,14 @@ public class LevelSolver {
 
   /** @return true if fail */
   private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort.CoreLevel lhs, Sort.CoreLevel rhs) {
-    var avoidable = true;
-    for (var v : lhs.levels()) {
-      if (!rhs.levels().contains(v)) {
-        avoidable = false;
-        break;
-      }
-    }
-    if (avoidable) {
+    var lhsLevels = lhs.levels();
+    if (lhsLevels.allMatch(v -> rhs.levels().contains(v))) {
       avoidableEqns.append(e);
       return false;
     }
     if (rhs.levels().size() == 1) {
       var right = rhs.levels().get(0);
-      for (var left : lhs.levels()) {
-        if (dealSingleLt(g, left, right)) return true;
-      }
+      return lhsLevels.anyMatch(left -> dealSingleLt(g, left, right));
     } else specialEq.append(e);
     return false;
   }
