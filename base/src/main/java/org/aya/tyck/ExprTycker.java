@@ -37,7 +37,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.NoSuchFieldError;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.Rule;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
