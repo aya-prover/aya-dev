@@ -66,6 +66,7 @@ subprojects {
     val options = options as StandardJavadocDocletOptions
     options.addBooleanOption("-enable-preview", true)
     options.addStringOption("-source", "16")
+    options.encoding("UTF-8")
     options.tags(
       "apiNote:a:API Note:",
       "implSpec:a:Implementation Requirements:",

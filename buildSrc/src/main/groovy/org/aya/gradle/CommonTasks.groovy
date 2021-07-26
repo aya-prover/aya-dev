@@ -4,6 +4,7 @@ package org.aya.gradle
 
 import com.ibm.icu.text.SimpleDateFormat
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
@@ -28,6 +29,20 @@ class CommonTasks {
       )
       //noinspection GroovyAssignabilityCheck
       with project.tasks.jar
+    }
+  }
+
+  static def evil(Task task) {
+    def projectDir = task.project.projectDir
+    def moduleInfo = projectDir.resolve("src/main/java/module-info.java")
+    def moduleCache = projectDir.resolve("src/main/module-info.java")
+    task.doFirst {
+      moduleInfo.copyTo(moduleCache)
+      moduleInfo.delete()
+    }
+    task.doLast {
+      moduleCache.copyTo(moduleInfo)
+      moduleCache.delete()
     }
   }
 }
