@@ -31,7 +31,7 @@ public interface FieldProblem extends Problem {
     @NotNull ImmutableSeq<String> notFound
   ) implements FieldProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(Doc.plain("No such field(s):"),
+      return Doc.sep(Doc.english("No such field(s):"),
         Doc.join(Doc.plain(", "), notFound.view()
           .map(m -> Doc.styled(Style.code(), Doc.plain(m))))
       );

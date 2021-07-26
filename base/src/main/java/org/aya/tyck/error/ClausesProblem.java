@@ -87,14 +87,14 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<PatTree> pats) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.cat(Doc.plain("Unhandled case: "), Doc.join(Doc.plain(", "), pats.map(PatTree::toDoc)));
+      return Doc.sep(Doc.english("Unhandled case:"), Doc.join(Doc.plain(", "), pats.map(PatTree::toDoc)));
     }
   }
 
   record SplitInterval(@NotNull SourcePos sourcePos, @NotNull Pat pat) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(
-        Doc.plain("Cannot perform pattern matching"),
+        Doc.english("Cannot perform pattern matching"),
         Doc.styled(Style.code(), pat.toDoc())
       );
     }

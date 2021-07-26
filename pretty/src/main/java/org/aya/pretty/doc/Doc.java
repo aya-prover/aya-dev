@@ -31,6 +31,7 @@ import static org.aya.pretty.printer.PrinterConfig.INFINITE_SIZE;
  */
 public sealed interface Doc extends Docile {
   @NotNull Doc ONE_WS = plain(" ");
+  @NotNull Doc ALT_WS = flatAlt(ONE_WS, line());
   @Override default @NotNull Doc toDoc() {
     return this;
   }
@@ -525,15 +526,14 @@ public sealed interface Doc extends Docile {
    * @return separated documents
    */
   @Contract("_ -> new") static @NotNull Doc sep(Doc @NotNull ... docs) {
-    return join(flatAlt(ONE_WS, line()), docs);
+    return join(ALT_WS, docs);
   }
 
   @Contract("_ -> new") static @NotNull Doc sep(@NotNull SeqLike<Doc> docs) {
-    return join(flatAlt(ONE_WS, line()), docs);
+    return join(ALT_WS, docs);
   }
 
-  @Contract("_, _ -> new")
-  static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
+  @Contract("_, _ -> new") static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
     return join(delim, Seq.of(docs));
   }
 
