@@ -81,10 +81,8 @@ subprojects {
   if (useJacoco) tasks.jacocoTestReport {
     dependsOn(tasks.test)
     reports {
-      xml.isEnabled = false
-      csv.isEnabled = false
-      html.isEnabled = true
-      html.destination = buildDir.resolve("jacocoHtml")
+      configureReports()
+      html.outputLocation.set(buildDir.resolve("jacocoHtml"))
     }
   }
 
@@ -173,14 +171,16 @@ val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
     }
   }
 
-  reports {
-    xml.isEnabled = true
-    csv.isEnabled = false
-    html.isEnabled = true
-  }
+  reports { configureReports() }
 }
 
 tasks.register("githubActions") {
   group = "verification"
   dependsOn(mergeJacocoReports, tasks.findByPath(":lsp:jlink"))
+}
+
+fun JacocoReportsContainer.configureReports() {
+  xml.required.set(false)
+  csv.required.set(false)
+  html.required.set(true)
 }
