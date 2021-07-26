@@ -5,12 +5,10 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
-import kala.tuple.Tuple2;
 import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
-import org.aya.api.util.Assoc;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
@@ -106,11 +104,11 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class PrimDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<? extends PrimDef, PrimDecl> ref;
     public @Nullable Expr result;
-    public final @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
+    public final @Nullable Operator operator;
 
     public PrimDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
+      @Nullable Operator operator,
       @NotNull DefVar<? extends PrimDef, PrimDecl> ref,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result
@@ -131,8 +129,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return visitor.visitPrim(this, p);
     }
 
-    @Override
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator() {
+    @Override public @Nullable Operator asOperator() {
       return operator;
     }
   }
@@ -142,12 +139,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public DefVar<DataDef, DataDecl> dataRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
-    public final @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
+    public final @Nullable Operator operator;
     public final boolean coerce;
 
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
+      @Nullable Operator operator,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
@@ -166,8 +163,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return ref;
     }
 
-    @Override
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator() {
+    @Override public @Nullable Operator asOperator() {
       return operator;
     }
   }
@@ -182,12 +178,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
     public final @NotNull ImmutableSeq<DataCtor> body;
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
+    public @Nullable Operator operator;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull Accessibility accessibility,
-      @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
+      @Nullable Operator operator,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
@@ -210,8 +206,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return this.ref;
     }
 
-    @Override
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator() {
+    @Override public @Nullable Operator asOperator() {
       return operator;
     }
   }
@@ -225,13 +220,13 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
-    public final @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
+    public final @Nullable Operator operator;
     public @NotNull Expr result;
 
     public StructDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull Accessibility accessibility,
-      @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
+      @Nullable Operator operator,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
@@ -255,8 +250,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return visitor.visitStruct(this, p);
     }
 
-    @Override
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator() {
+    @Override public @Nullable Operator asOperator() {
       return operator;
     }
   }
@@ -300,7 +294,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    */
   public static final class FnDecl extends Decl implements OpDecl {
     public final @NotNull EnumSet<Modifier> modifiers;
-    public final @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator;
+    public final @Nullable Operator operator;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Expr result;
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
@@ -309,7 +303,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull Accessibility accessibility,
       @NotNull EnumSet<Modifier> modifiers,
-      @Nullable Tuple2<@Nullable String, @NotNull Assoc> operator,
+      @Nullable Operator operator,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
@@ -332,8 +326,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return this.ref;
     }
 
-    @Override
-    public @Nullable Tuple2<@Nullable String, @NotNull Assoc> asOperator() {
+    @Override public @Nullable Operator asOperator() {
       return operator;
     }
   }

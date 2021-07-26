@@ -10,7 +10,6 @@ import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.QualifiedID;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
@@ -60,7 +59,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull Either<QualifiedID, OpDecl> idOrOp) {
     if (idOrOp.isRight()) {
       var builtin = idOrOp.getRightValue();
-      return Tuple.of(Objects.requireNonNull(builtin.asOperator())._1, builtin);
+      return Tuple.of(Objects.requireNonNull(builtin.asOperator()).name(), builtin);
     }
     var id = idOrOp.getLeftValue();
     var var = ctx.get(id);

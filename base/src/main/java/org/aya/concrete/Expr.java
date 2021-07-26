@@ -17,6 +17,7 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.core.term.Term;
 import org.aya.generic.Level;

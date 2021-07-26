@@ -57,9 +57,9 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
                              Stmt.@NotNull Accessibility accessibility, @NotNull Var ref,
                              @NotNull SourcePos sourcePos) {
     var op = opDecl.asOperator();
-    if (op != null && op._1 != null) context.addGlobal(
+    if (op != null && op.name() != null) context.addGlobal(
       Context.TOP_LEVEL_MOD_NAME,
-      op._1,
+      op.name(),
       accessibility,
       ref,
       sourcePos

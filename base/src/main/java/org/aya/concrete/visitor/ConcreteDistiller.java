@@ -13,11 +13,7 @@ import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.QualifiedID;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Generalize;
-import org.aya.concrete.stmt.Sample;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.*;
 import org.aya.core.visitor.CoreDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.Matching;
@@ -286,11 +282,11 @@ public final class ConcreteDistiller implements
       Doc.ONE_WS,
       Doc.styled(KEYWORD, "bind"),
       Doc.ONE_WS,
-      Doc.plain(bind.op().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator())._1)),
+      Doc.plain(bind.op().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator()).name())),
       Doc.ONE_WS,
       Doc.styled(KEYWORD, bind.pred().keyword),
       Doc.ONE_WS,
-      Doc.plain(bind.target().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator())._1))
+      Doc.plain(bind.target().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator()).name()))
     );
   }
 

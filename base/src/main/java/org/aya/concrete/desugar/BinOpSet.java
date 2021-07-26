@@ -3,7 +3,6 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.mutable.*;
-import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.value.Ref;
@@ -128,10 +127,9 @@ public record BinOpSet(
   ) {
     private static @NotNull Elem from(@NotNull String defName, @NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
       var opData = opDecl.asOperator();
-      if (opData == null) {
-        opData = Tuple.of(defName, Assoc.NoFix);
-      }
-      return new Elem(sourcePos, opDecl, opData._1 != null ? opData._1 : defName, opData._2);
+      if (opData == null) opData = new OpDecl.Operator(defName, Assoc.NoFix);
+      var name = opData.name();
+      return new Elem(sourcePos, opDecl, name != null ? name : defName, opData.assoc());
     }
   }
 

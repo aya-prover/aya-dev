@@ -8,7 +8,6 @@ import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.concrete.QualifiedID;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.resolve.context.Context;

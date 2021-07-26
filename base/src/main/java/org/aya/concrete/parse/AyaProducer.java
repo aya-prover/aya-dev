@@ -24,7 +24,6 @@ import org.aya.api.util.Assoc;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.QualifiedID;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
@@ -752,15 +751,16 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
     return ImmutableSeq.from(ctx.ID()).map(ParseTree::getText);
   }
 
-  @Override public @Nullable Tuple2<@Nullable String, @NotNull Assoc> visitAssoc(@Nullable AyaParser.AssocContext ctx) {
+  @Override public @Nullable OpDecl.Operator visitAssoc(@Nullable AyaParser.AssocContext ctx) {
     if (ctx == null) return null;
-    if (ctx.FIX() != null) return Tuple.of(null, Assoc.Fix);
-    if (ctx.FIXL() != null) return Tuple.of(null, Assoc.FixL);
-    if (ctx.FIXR() != null) return Tuple.of(null, Assoc.FixR);
-    if (ctx.INFIX() != null) return Tuple.of(ctx.INFIX().getText().replace("`", ""), Assoc.Infix);
-    if (ctx.INFIXL() != null) return Tuple.of(null, Assoc.InfixL);
-    if (ctx.INFIXR() != null) return Tuple.of(null, Assoc.InfixR);
-    if (ctx.TWIN() != null) return Tuple.of(null, Assoc.Twin);
+    if (ctx.FIX() != null) return new OpDecl.Operator(null, Assoc.Fix);
+    if (ctx.FIXL() != null) return new OpDecl.Operator(null, Assoc.FixL);
+    if (ctx.FIXR() != null) return new OpDecl.Operator(null, Assoc.FixR);
+    var infix = ctx.INFIX();
+    if (infix != null) return new OpDecl.Operator(infix.getText().replace("`", ""), Assoc.Infix);
+    if (ctx.INFIXL() != null) return new OpDecl.Operator(null, Assoc.InfixL);
+    if (ctx.INFIXR() != null) return new OpDecl.Operator(null, Assoc.InfixR);
+    if (ctx.TWIN() != null) return new OpDecl.Operator(null, Assoc.Twin);
     return unreachable(ctx);
   }
 
