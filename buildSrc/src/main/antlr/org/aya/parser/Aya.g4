@@ -161,7 +161,7 @@ POSTFIX : '`' ID;
 // bind
 TIGHTER : 'tighter';
 LOOSER : 'looser';
-OP_APP : '\\app';
+OP_APP : 'application';
 
 // samples
 EXAMPLE : 'example';

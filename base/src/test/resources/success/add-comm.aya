@@ -11,7 +11,7 @@ def path {A : I -> Type} (p : Pi (i : I) -> A i)
 def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
-bind = looser \app
+bind = looser application
 
 prim arcoe
 def hfill2d {A : Type}
