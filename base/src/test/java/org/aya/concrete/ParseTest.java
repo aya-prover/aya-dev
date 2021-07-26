@@ -37,7 +37,7 @@ public class ParseTest {
     return INSTANCE.visitExpr(AyaParsing.parser(code).expr());
   }
 
-  private static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
+  public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
     return INSTANCE.visitStmt(AyaParsing.parser(code).stmt()).toImmutableSeq();
   }
 
@@ -65,8 +65,7 @@ public class ParseTest {
       """);
   }
 
-  @Test
-  public void successLiteral() {
+  @Test public void successLiteral() {
     assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
     parseUniv("Prop");
     parseUniv("Set");
@@ -257,16 +256,40 @@ public class ParseTest {
     );
   }
 
+  @Test public void parseStructs() {
+    parseAndPretty(
+      """
+        struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+         | at (i : I) : A i {
+           | left => a
+           | right => b
+         }
+        """,
+      """
+        public struct Path (A : Pi (_ : I) -> Type) (a : A left) (b : A right) : Type
+          | at (i : I) : A i {| left => a
+          | right => b}
+        """
+    );
+    parseAndPretty(
+      "struct Very-Simple (A : Set) : Set | x : A => zero",
+      """
+        public struct Very-Simple (A : Type) : Type
+          | x : A => zero
+        """
+    );
+  }
+
   @Test public void globalStmt() {
     parseAndPretty("bind + tighter =", "public bind + tighter =");
     parseAndPretty("ulevel uu", "ulevel uu");
   }
 
   @Test public void patterns() {
-    parseAndPretty("def final : Nat | _ => a",
-      "public def final : Nat\n  | _ => a");
-    parseAndPretty("def final : Nat | impossible",
-      "public def final : Nat\n  | impossible");
+    parseAndPretty("def inline final : Nat | _ => a",
+      "public def inline final : Nat\n  | _ => a");
+    parseAndPretty("def erase final : Nat | impossible",
+      "public def erase final : Nat\n  | impossible");
   }
 
   @Test public void exprAndCounterexamples() {
@@ -293,9 +316,8 @@ public class ParseTest {
 
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
     var stmt = parseStmt(code);
-    assertEquals(pretty.trim(), stmt.stream()
-      .map(Stmt::toDoc)
-      .reduce(Doc.empty(), Doc::vcat)
+    assertEquals(pretty.trim(), Doc.vcat(stmt.view()
+      .map(Stmt::toDoc))
       .debugRender()
       .trim());
   }
