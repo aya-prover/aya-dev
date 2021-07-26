@@ -2,15 +2,15 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.sort;
 
+import kala.collection.SeqLike;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.core.sort.LevelEqnSet.Eqn;
 import org.aya.core.sort.Sort.LvlVar;
 import org.aya.generic.Level;
 import org.aya.util.Ordering;
-import kala.collection.SeqLike;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -56,7 +56,7 @@ public class LevelSolver {
   private final MutableMap<LvlVar, Integer> defaultValues = MutableMap.create();
   public final Buffer<Eqn> avoidableEqns = Buffer.create();
 
-  void genGraphNode(SeqLike<Level<LvlVar>> l) {
+  private void genGraphNode(SeqLike<Level<LvlVar>> l) {
     for (var e : l) {
       if (e instanceof Level.Reference<LvlVar> th) {
         graphMap.put(th.ref(), ++nodeSize);
@@ -64,15 +64,16 @@ public class LevelSolver {
     }
   }
 
-  void dealSingleLt(int[][] g, Level<LvlVar> a, Level<LvlVar> b) throws UnsatException {
-    if (b instanceof Level.Infinity) return;
+  /** @return true if fail */
+  private boolean dealSingleLt(int[][] g, Level<LvlVar> a, Level<LvlVar> b) {
+    if (b instanceof Level.Infinity) return false;
     if (a instanceof Level.Infinity) {
       a = new Level.Constant<>(INF_SMALL);
     }
     if (a instanceof Level.Constant<LvlVar> ca) {
       if (b instanceof Level.Constant<LvlVar> cb) {
         if (ca.value() > cb.value()) {
-          throw new UnsatException();
+          return true;
         }
       } else if (b instanceof Level.Reference<LvlVar> rb) {
         // if(!rb.ref().free()) return;
@@ -95,6 +96,7 @@ public class LevelSolver {
         addEdge(g, y, x, v - u);
       }
     }
+    return false;
   }
 
   void prepareGraphNode(int[][] g, SeqLike<Level<LvlVar>> l) {
@@ -144,12 +146,7 @@ public class LevelSolver {
   }
 
   Level<LvlVar> resolveConstantLevel(int dist) {
-    int retU;
-    if (dist > LOW_BOUND) {
-      retU = INF;
-    } else {
-      retU = dist;
-    }
+    int retU = dist > LOW_BOUND ? INF : dist;
     if (retU >= INF) {
       return new Level.Infinity<>();
     } else {
@@ -176,7 +173,13 @@ public class LevelSolver {
       prepareGraphNode(g, e.rhs().levels());
     }
     var specialEq = Buffer.<Eqn>of();
-    for (var e : equations) populate(g, specialEq, e);
+    var hasError = equations.view()
+      // Do NOT make this lazy -- the `populate` function has side effects
+      // We need to run populate on all equations
+      .map(e -> populate(g, specialEq, e))
+      .toImmutableSeq()
+      .anyMatch(b -> b);
+    if (hasError) throw new UnsatException();
     if (floyd(g)) throw new UnsatException();
     var gg = dfs(specialEq, 0, g);
     for (var name : freeNodes) {
@@ -190,8 +193,8 @@ public class LevelSolver {
       }
       int lowerBound = -gg[u][0];
       if (lowerBound < 0) lowerBound = 0;
-      Buffer<Level<LvlVar>> upperNodes = Buffer.create();
-      Buffer<Level<LvlVar>> lowerNodes = Buffer.create();
+      var upperNodes = Buffer.<Level<LvlVar>>create();
+      var lowerNodes = Buffer.<Level<LvlVar>>create();
       for (var nu : unfreeNodes) {
         int v = graphMap.get(nu);
         if (gg[v][u] != INF) upperNodes.append(new Level.Reference<>(nu, gg[v][u]));
@@ -216,39 +219,40 @@ public class LevelSolver {
     }
   }
 
-  private void populate(int[][] g, Buffer<Eqn> specialEq, Eqn e) throws UnsatException {
-    var ord = e.cmp();
+  /** @return true if fail */
+  private boolean populate(int[][] g, Buffer<Eqn> specialEq, Eqn e) {
     var lhs = e.lhs();
     var rhs = e.rhs();
-    if (ord == Ordering.Gt) {
-      var temp = lhs;
-      lhs = rhs;
-      rhs = temp;
-      ord = Ordering.Lt;
+    return switch (e.cmp()) {
+      case Gt -> populateLt(g, specialEq, e, rhs, lhs);
+      case Lt -> populateLt(g, specialEq, e, lhs, rhs);
+      case Eq -> {
+        specialEq.append(new Eqn(lhs, rhs, Ordering.Lt, e.sourcePos()));
+        specialEq.append(new Eqn(rhs, lhs, Ordering.Lt, e.sourcePos()));
+        yield false;
+      }
+    };
+  }
+
+  /** @return true if fail */
+  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort.CoreLevel lhs, Sort.CoreLevel rhs) {
+    var avoidable = true;
+    for (var v : lhs.levels()) {
+      if (!rhs.levels().contains(v)) {
+        avoidable = false;
+        break;
+      }
     }
-    if (ord == Ordering.Lt) {
-      var avoidable = true;
-      for (var v : lhs.levels()) {
-        if (!rhs.levels().contains(v)) {
-          avoidable = false;
-          break;
-        }
-      }
-      if (avoidable) {
-        avoidableEqns.append(e);
-        return;
-      }
-      if (rhs.levels().size() == 1) {
-        var right = rhs.levels().get(0);
-        for (var left : lhs.levels()) {
-          dealSingleLt(g, left, right);
-        }
-      } else {
-        specialEq.append(e);
-      }
-    } else {
-      specialEq.append(new Eqn(lhs, rhs, Ordering.Lt, e.sourcePos()));
-      specialEq.append(new Eqn(rhs, lhs, Ordering.Lt, e.sourcePos()));
+    if (avoidable) {
+      avoidableEqns.append(e);
+      return false;
     }
+    if (rhs.levels().size() == 1) {
+      var right = rhs.levels().get(0);
+      for (var left : lhs.levels()) {
+        if (dealSingleLt(g, left, right)) return true;
+      }
+    } else specialEq.append(e);
+    return false;
   }
 }
