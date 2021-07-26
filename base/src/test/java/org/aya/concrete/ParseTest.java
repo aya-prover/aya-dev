@@ -262,10 +262,18 @@ public class ParseTest {
     parseAndPretty("ulevel uu", "ulevel uu");
   }
 
-  @Test public void exprPretty() {
-    parseAndPretty("def test => Type (lsuc lzero) (lmax lzero)",
-      "public def test => Type (lsuc lzero) (lmax lzero)");
-    parseAndPretty("def test => {? Type ?}", "public def test => {? Type ?}");
+  @Test public void patterns() {
+    parseAndPretty("def final : Nat | _ => a",
+      "public def final : Nat\n  | _ => a");
+    parseAndPretty("def final : Nat | impossible",
+      "public def final : Nat\n  | impossible");
+  }
+
+  @Test public void exprAndCounterexamples() {
+    parseAndPretty("example def test => Type (lsuc lzero) (lmax lzero)",
+      "example public def test => Type (lsuc lzero) (lmax lzero)");
+    parseAndPretty("counterexample def test => {? Type ?}",
+      "counterexample public def test => {? Type ?}");
   }
 
   @Test public void issue350() {
