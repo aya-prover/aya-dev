@@ -282,10 +282,7 @@ public final class ConcreteDistiller implements
       Doc.ONE_WS,
       Doc.plain(bind.op().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator())._1)),
       Doc.ONE_WS,
-      Doc.styled(KEYWORD, switch (bind.pred()) {
-        case Looser -> "looser";
-        case Tighter -> "tighter";
-      }),
+      Doc.styled(KEYWORD, bind.pred().keyword),
       Doc.ONE_WS,
       Doc.plain(bind.target().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator())._1))
     );

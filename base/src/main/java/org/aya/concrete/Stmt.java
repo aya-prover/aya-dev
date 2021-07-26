@@ -102,20 +102,19 @@ public sealed interface Stmt extends Docile
   }
 
   enum BindPred {
-    Tighter,
-    Looser;
+    Tighter("tighter"),
+    Looser("looser");
+
+    public final @NotNull String keyword;
+
+    BindPred(@NotNull String keyword) {
+      this.keyword = keyword;
+    }
 
     public @NotNull BindPred invert() {
       return switch (this) {
         case Tighter -> Looser;
         case Looser -> Tighter;
-      };
-    }
-
-    @Override public String toString() {
-      return switch (this) {
-        case Tighter -> "tighter";
-        case Looser -> "looser";
       };
     }
   }

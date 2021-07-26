@@ -2,6 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar;
 
+import kala.collection.mutable.*;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import kala.tuple.Tuple3;
+import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
@@ -9,11 +14,6 @@ import org.aya.concrete.Decl;
 import org.aya.concrete.Stmt;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
-import kala.collection.mutable.*;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
-import kala.tuple.Tuple3;
-import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +36,10 @@ public record BinOpSet(
       reporter.report(new OperatorProblem.BindSelfError(sourcePos));
       throw new Context.ResolvingInterruptedException();
     }
-    if (pred == Stmt.BindPred.Tighter) addTighter(opElem, targetElem);
-    else addTighter(targetElem, opElem);
+    switch (pred) {
+      case Tighter -> addTighter(opElem, targetElem);
+      case Looser -> addTighter(targetElem, opElem);
+    }
   }
 
   public PredCmp compare(@NotNull Elem lhs, @NotNull Elem rhs) {

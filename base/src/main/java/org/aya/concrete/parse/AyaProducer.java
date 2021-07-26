@@ -111,11 +111,12 @@ public final class AyaProducer extends AyaBaseVisitor<Object> {
   }
 
   @Override public Stmt.@NotNull BindStmt visitBind(AyaParser.BindContext ctx) {
+    var bindOp = ctx.bindOp();
     return new Stmt.BindStmt(
       sourcePosOf(ctx),
-      visitBindOp(ctx.bindOp(0)),
+      visitBindOp(bindOp.get(0)),
       ctx.TIGHTER() != null ? Stmt.BindPred.Tighter : Stmt.BindPred.Looser,
-      visitBindOp(ctx.bindOp(1)),
+      visitBindOp(bindOp.get(1)),
       new Ref<>(null),
       new Ref<>(null),
       new Ref<>(null)
