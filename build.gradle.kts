@@ -81,10 +81,7 @@ subprojects {
 
   if (useJacoco) tasks.jacocoTestReport {
     dependsOn(tasks.test)
-    reports {
-      configureReports(false)
-      html.outputLocation.set(buildDir.resolve("jacocoHtml"))
-    }
+    reports { configureReports(false) }
   }
 
   tasks.withType<Test>().configureEach {
@@ -180,8 +177,8 @@ tasks.register("githubActions") {
   dependsOn(mergeJacocoReports, tasks.findByPath(":lsp:jlink"))
 }
 
-fun JacocoReportsContainer.configureReports(xmlEnabled: Boolean) {
-  xml.required.set(xmlEnabled)
+fun JacocoReportsContainer.configureReports(merger: Boolean) {
+  xml.required.set(merger)
   csv.required.set(false)
-  html.required.set(true)
+  html.required.set(!merger)
 }
