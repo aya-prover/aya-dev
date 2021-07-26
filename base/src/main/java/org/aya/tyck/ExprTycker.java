@@ -109,12 +109,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Check(partialSynth = true)
   @Override public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
-    if (term == null) {
-      var sourcePos = expr.param().sourcePos();
-      var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
-      var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
-      term = new FormTerm.Pi(Term.Param.mock(domain, expr.param().explicit()), codomain);
-    }
+    if (term == null) term = generatePi(expr);
+    if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(expr), expr.sourcePos());
     if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
       return wantButNo(expr, term, "pi type");
     }
@@ -136,6 +132,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var rec = expr.body().accept(this, body);
       return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
     });
+  }
+
+  private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {
+    var sourcePos = expr.param().sourcePos();
+    var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
+    var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
+    return new FormTerm.Pi(Term.Param.mock(domain, expr.param().explicit()), codomain);
   }
 
   private @NotNull Result wantButNo(@NotNull Expr expr, @NotNull Term term, String expectedText) {
@@ -506,7 +509,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var items = Buffer.<Term>of();
     final var resultLast = new Ref<Term>();
     final var resultTele = Buffer.<Term.@NotNull Param>of();
-    if (term == null) {
+    if (term == null || term instanceof CallTerm.Hole) {
       // TODO[ice]: forbid one-variable tuple maybe?
       expr.items()
         .map(item -> item.accept(this, null))
@@ -548,6 +551,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     resultTele.append(new Term.Param(Constants.anonymous(), resultLast.value, true));
     var resultType = new FormTerm.Sigma(resultTele.toImmutableSeq());
+    if (term instanceof CallTerm.Hole) unifyTy(term, resultType, expr.sourcePos());
     return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
   }
 

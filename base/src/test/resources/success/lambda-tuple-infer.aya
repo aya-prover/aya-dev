@@ -1,0 +1,13 @@
+open data ℕ : Set
+  | zero
+  | suc ℕ
+
+def `+` addN (a b : ℕ) : ℕ
+ | zero, a => a
+ | a, zero => a
+ | suc a, b => suc (a + b)
+ | a, suc b => suc (a + b)
+
+example def test => \ x => x + zero
+
+example def test2 => (zero, suc zero)
