@@ -31,6 +31,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
     Tuple.of("\\", "\\lambda"),
+    Tuple.of("|", "\\mid"),
     Tuple.of("=>", "\\Rightarrow"),
     Tuple.of("->", "\\to"),
     Tuple.of("{", "\\{"),

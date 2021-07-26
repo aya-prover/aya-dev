@@ -97,6 +97,9 @@ public class ParseTest {
     parseAndPretty("def xx {A B : Type} (a : A) : A => a", """
         public def xx {A : Type} {B : Type} (a : A) : A => a
       """);
+  }
+
+  @Test public void nat() {
     parseAndPretty("data Nat | Z | S Nat", """
       public data Nat
         | Z
@@ -104,8 +107,7 @@ public class ParseTest {
       """);
   }
 
-  @Test
-  public void successExpr() {
+  @Test public void successExpr() {
     assertTrue(parseExpr("boy") instanceof Expr.UnresolvedExpr);
     assertTrue(parseExpr("f a") instanceof Expr.BinOpSeq);
     assertTrue(parseExpr("f a b c") instanceof Expr.BinOpSeq);
@@ -142,12 +144,12 @@ public class ParseTest {
       new Ref<>(null)
     ));
     parseTo("f a . 1", new Expr.BinOpSeq(
-      SourcePos.NONE,
-      ImmutableSeq.of(
-        new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-        new BinOpParser.Elem(null, new Expr.ProjExpr(SourcePos.NONE,
-          new Expr.UnresolvedExpr(SourcePos.NONE, "a"), Either.left(1), new Ref<>(null)),
-          true))
+        SourcePos.NONE,
+        ImmutableSeq.of(
+          new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
+          new BinOpParser.Elem(null, new Expr.ProjExpr(SourcePos.NONE,
+            new Expr.UnresolvedExpr(SourcePos.NONE, "a"), Either.left(1), new Ref<>(null)),
+            true))
       )
     );
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app

@@ -262,10 +262,14 @@ public final class CoreDistiller implements
 
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
-    var line1 = Doc.cat(Doc.styled(KEYWORD, "def "), linkDef(def.ref(), FN_CALL), visitTele(def.telescope()), Doc.plain(" : "), def.result().toDoc());
+    var line1 = Buffer.of(Doc.styled(KEYWORD, "def"),
+      linkDef(def.ref(), FN_CALL),
+      visitTele(def.telescope()),
+      Doc.symbol(":"),
+      def.result().toDoc());
     return def.body().fold(
-      term -> Doc.cat(line1, Doc.symbol(" => "), term.toDoc()),
-      clauses -> Doc.vcat(line1, Doc.nest(2, visitClauses(clauses))));
+      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.toDoc()),
+      clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
   }
 
   /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
@@ -282,7 +286,7 @@ public final class CoreDistiller implements
       names.append(param.nameDoc());
     }
     buf.append(last.toDoc(Doc.sep(names)));
-    return Doc.cat(Doc.ONE_WS, Doc.sep(buf));
+    return Doc.sep(buf);
   }
 
   private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching<Pat, Term>> clauses) {
@@ -300,13 +304,12 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
-    var line1 = Doc.cat(Doc.styled(KEYWORD, "data"),
-      Doc.ONE_WS,
+    var line1 = Buffer.of(Doc.styled(KEYWORD, "data"),
       linkDef(def.ref(), DATA_CALL),
       visitTele(def.telescope()),
-      Doc.plain(" : "),
+      Doc.symbol(":"),
       def.result().toDoc());
-    return Doc.vcat(line1, Doc.nest(2, Doc.vcat(
+    return Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, Doc.vcat(
       def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
 
@@ -319,30 +322,35 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
-    var doc = Doc.cat(
-      coe(ctor.coerce()),
+    var doc = Doc.sepNonEmpty(Buffer.of(coe(ctor.coerce()),
       linkDef(ctor.ref(), CON_CALL),
-      visitTele(ctor.conTele())
-    );
+      visitTele(ctor.conTele())));
     Doc line1;
     if (ctor.pats().isNotEmpty()) {
       var pats = Doc.commaList(ctor.pats().view().map(Pat::toDoc));
-      line1 = Doc.cat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
-    } else line1 = Doc.cat(Doc.plain("| "), doc);
+      line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
+    } else line1 = Doc.sep(Doc.symbol("|"), doc);
     return visitConditions(line1, ctor.clauses());
   }
 
   public static @NotNull Doc coe(boolean coerce) {
-    return coerce ? Doc.styled(KEYWORD, "coerce ") : Doc.empty();
+    return coerce ? Doc.styled(KEYWORD, "coerce") : Doc.empty();
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
-    return Doc.vcat(Doc.cat(Doc.styled(KEYWORD, "struct"), Doc.ONE_WS, linkDef(def.ref(), STRUCT_CALL), visitTele(def.telescope()), Doc.plain(" : "), def.result().toDoc()), Doc.nest(2, Doc.vcat(
+    return Doc.vcat(Doc.sepNonEmpty(Seq.of(Doc.styled(KEYWORD, "struct"),
+      linkDef(def.ref(), STRUCT_CALL),
+      visitTele(def.telescope()),
+      Doc.plain(":"),
+      def.result().toDoc())), Doc.nest(2, Doc.vcat(
       def.fields().view().map(field -> field.accept(this, Unit.unit())))));
   }
 
   @Override public Doc visitField(@NotNull StructDef.Field field, Unit unit) {
-    return visitConditions(Doc.cat(Doc.symbol("| "), coe(field.coerce()), linkDef(field.ref(), FIELD_CALL), visitTele(field.fieldTele())), field.clauses());
+    return visitConditions(Doc.sep(Doc.symbol("|"),
+      coe(field.coerce()),
+      linkDef(field.ref(), FIELD_CALL),
+      visitTele(field.fieldTele())), field.clauses());
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {
