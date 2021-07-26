@@ -132,7 +132,7 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
-    var items = Doc.join(Doc.plain(", "), term.items().view()
+    var items = Doc.commaList(term.items().view()
       .map(Term::toDoc));
     return Doc.cat(Doc.plain("("), items, Doc.plain(")"));
   }
@@ -213,7 +213,7 @@ public final class CoreDistiller implements
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
-      Doc.join(Doc.plain(", "), tuple.pats().view().map(Pat::toDoc)));
+      Doc.commaList(tuple.pats().view().map(Pat::toDoc)));
     return tuple.as() == null ? tup
       : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
   }
@@ -321,7 +321,7 @@ public final class CoreDistiller implements
     );
     Doc line1;
     if (ctor.pats().isNotEmpty()) {
-      var pats = Doc.join(Doc.plain(", "), ctor.pats().view().map(Pat::toDoc));
+      var pats = Doc.commaList(ctor.pats().view().map(Pat::toDoc));
       line1 = Doc.cat(Doc.plain("| "), pats, Doc.symbol(" => "), doc);
     } else line1 = Doc.cat(Doc.plain("| "), doc);
     return visitConditions(line1, ctor.clauses());

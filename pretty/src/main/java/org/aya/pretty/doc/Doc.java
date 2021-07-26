@@ -533,6 +533,10 @@ public sealed interface Doc extends Docile {
     return join(ALT_WS, docs);
   }
 
+  @Contract("_ -> new") static @NotNull Doc commaList(@NotNull SeqLike<Doc> docs) {
+    return join(new Cat(ImmutableSeq.of(Doc.plain(","), ALT_WS)), docs);
+  }
+
   @Contract("_, _ -> new") static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
     return join(delim, Seq.of(docs));
   }

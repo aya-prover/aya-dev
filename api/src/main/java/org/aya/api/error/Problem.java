@@ -58,7 +58,7 @@ public interface Problem {
         .entrySet()
         .stream()
         .sorted(Map.Entry.comparingByKey())
-        .map(kv -> Tuple.of(kv.getKey().toSpan(), Doc.join(Doc.plain(", "), kv.getValue())))
+        .map(kv -> Tuple.of(kv.getKey().toSpan(), Doc.commaList(kv.getValue())))
         .collect(ImmutableSeq.factory())
     );
   }

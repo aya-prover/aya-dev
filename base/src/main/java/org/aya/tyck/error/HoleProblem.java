@@ -30,7 +30,7 @@ public sealed interface HoleProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("Can't perform pattern unification on hole with the following spine:"),
-        Doc.join(Doc.symbol(", "), term.args().map(Docile::toDoc))
+        Doc.commaList(term.args().map(Docile::toDoc))
       );
     }
   }
@@ -46,7 +46,7 @@ public sealed interface HoleProblem extends Problem {
         Doc.sep(Doc.english("The solution"), Doc.styled(Style.code(), solved.toDoc()), Doc.plain("is not well-scoped")),
         Doc.cat(Doc.english("In particular, these variables are not in scope:"),
           Doc.ONE_WS,
-          Doc.join(Doc.symbol(", "), scopeCheck.view()
+          Doc.commaList(scopeCheck.view()
             .map(CoreDistiller::varDoc)
             .map(doc -> Doc.styled(Style.code(), doc)))));
     }

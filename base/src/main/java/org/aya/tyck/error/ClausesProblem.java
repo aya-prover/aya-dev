@@ -87,7 +87,7 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<PatTree> pats) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(Doc.english("Unhandled case:"), Doc.join(Doc.plain(", "), pats.map(PatTree::toDoc)));
+      return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(PatTree::toDoc)));
     }
   }
 

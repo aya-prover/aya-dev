@@ -17,7 +17,7 @@ public interface FieldProblem extends Problem {
     @NotNull ImmutableSeq<Var> missing
   ) implements FieldProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(Doc.english("Missing field(s):"), Doc.join(Doc.plain(", "), missing.view()
+      return Doc.sep(Doc.english("Missing field(s):"), Doc.commaList(missing.view()
         .map(CoreDistiller::varDoc)
         .map(m -> Doc.styled(Style.code(), m))));
     }
@@ -32,7 +32,7 @@ public interface FieldProblem extends Problem {
   ) implements FieldProblem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(Doc.english("No such field(s):"),
-        Doc.join(Doc.plain(", "), notFound.view()
+        Doc.commaList(notFound.view()
           .map(m -> Doc.styled(Style.code(), Doc.plain(m))))
       );
     }

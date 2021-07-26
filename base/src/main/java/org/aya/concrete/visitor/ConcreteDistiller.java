@@ -129,8 +129,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
     return Doc.cat(Doc.symbol("("),
-      Doc.join(Doc.plain(", "), expr.items().view()
-        .map(Expr::toDoc)),
+      Doc.commaList(expr.items().view().map(Expr::toDoc)),
       Doc.symbol(")"));
   }
 
@@ -180,7 +179,7 @@ public final class ConcreteDistiller implements
   @Override public Doc visitTuple(Pattern.@NotNull Tuple tuple, Boolean nestedCall) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
-      Doc.join(Doc.plain(", "), tuple.patterns().view().map(Pattern::toDoc)));
+      Doc.commaList(tuple.patterns().view().map(Pattern::toDoc)));
     return tuple.as() == null ? tup
       : Doc.cat(tup, Doc.styled(KEYWORD, " as "), Doc.plain(tuple.as().name()));
   }
@@ -315,7 +314,7 @@ public final class ConcreteDistiller implements
       visitClauses(ctor.clauses, true)
     );
     if (ctor.patterns.isNotEmpty()) {
-      var pats = Doc.join(Doc.plain(", "), ctor.patterns.view().map(Pattern::toDoc));
+      var pats = Doc.commaList(ctor.patterns.view().map(Pattern::toDoc));
       return Doc.cat(Doc.plain("| "), pats, Doc.plain(" => "), doc);
     } else return Doc.cat(Doc.plain("| "), doc);
   }
