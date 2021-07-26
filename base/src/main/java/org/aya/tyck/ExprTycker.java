@@ -170,7 +170,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return new Result(new FormTerm.Univ(sort), univ);
     } else {
       var succ = new FormTerm.Univ(sort.succ(1));
-      unifyTyThrowing(normTerm, succ, expr);
+      unifyTyReported(normTerm, succ, expr);
       return new Result(new FormTerm.Univ(sort), succ);
     }
   }
@@ -268,7 +268,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    *
    * @see ExprTycker#unifyTyMaybeInsert(Term, Term, Term, Expr)
    */
-  void unifyTyThrowing(@NotNull Term upper, @NotNull Term lower, Expr loc) {
+  void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
     if (!unification) reporter.report(new UnifyError(loc, upper, lower));
   }
@@ -278,7 +278,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    * and try to insert implicit arguments to fulfill this goal (if possible).
    *
    * @return the term and type after insertion
-   * @see ExprTycker#unifyTyThrowing(Term, Term, Expr)
+   * @see ExprTycker#unifyTyReported(Term, Term, Expr)
    */
   private Result unifyTyMaybeInsert(@Nullable Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
     if (upper == null) return new Result(term, lower);
@@ -386,7 +386,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return new Result(new ErrorTerm(expr.toDoc()), structCall);
     }
 
-    if (term != null) unifyTyThrowing(term, structCall, expr);
+    if (term != null) unifyTyReported(term, structCall, expr);
     return new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
   }
 
@@ -510,7 +510,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     final var resultLast = new Ref<Term>();
     final var resultTele = Buffer.<Term.@NotNull Param>of();
     if (term == null || term instanceof CallTerm.Hole) {
-      // TODO[ice]: forbid one-variable tuple maybe?
+      // `expr.items()` is larger than 1 due to parser
       expr.items()
         .map(item -> item.accept(this, null))
         .forEach(result -> {

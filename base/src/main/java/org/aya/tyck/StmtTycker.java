@@ -81,11 +81,11 @@ public record StmtTycker(
         levelSubst.solution().put(lvl._1, new Sort.CoreLevel(new Level.Reference<>(lvl._2)));
       var target = FormTerm.Pi.make(core.telescope(), core.result())
         .subst(Substituter.TermSubst.EMPTY, levelSubst);
-      tycker.unifyTyThrowing(FormTerm.Pi.make(tele, result), target, decl.result);
+      tycker.unifyTyReported(FormTerm.Pi.make(tele, result), target, decl.result);
       decl.signature = new Def.Signature(levels, tele, result);
     } else if (decl.result != null) {
       var result = decl.result.accept(tycker, null).wellTyped();
-      tycker.unifyTyThrowing(result, core.result(), decl.result);
+      tycker.unifyTyReported(result, core.result(), decl.result);
     } else decl.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
     tycker.equations.solve();
     return core;
