@@ -265,12 +265,12 @@ public final class ConcreteDistiller implements
     return Doc.cat(
       visitAccess(mod.accessibility()),
       Doc.ONE_WS,
-      Doc.styled(KEYWORD, "\\module"),
+      Doc.styled(KEYWORD, "module"),
       Doc.ONE_WS,
       Doc.plain(mod.name()),
       Doc.plain(" {"),
       Doc.line(),
-      Doc.vcat(mod.contents().view().map(Stmt::toDoc)),
+      Doc.nest(2, Doc.vcat(mod.contents().view().map(Stmt::toDoc))),
       Doc.line(),
       Doc.plain("}")
     );

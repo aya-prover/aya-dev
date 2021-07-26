@@ -13,7 +13,7 @@ import org.gradle.jvm.tasks.Jar
 /**
  * @author ice1000
  */
-class CommonTasks {
+final class CommonTasks {
   static TaskProvider<Jar> fatJar(Project project, String mainClass) {
     project.tasks.register('fatJar', Jar) {
       archiveClassifier.set 'fat'
@@ -49,6 +49,7 @@ class CommonTasks {
 
   static def picocli(JavaCompile task) {
     var project = task.project
+    // https://picocli.info/#_enabling_the_annotation_processor
     task.options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
   }
 }
