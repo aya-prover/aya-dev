@@ -30,8 +30,8 @@ import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.Modifier;
-import org.aya.parser.AyaBaseVisitor;
 import org.aya.parser.AyaParser;
+import org.aya.parser.AyaParserBaseVisitor;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 /**
  * @author ice1000, kiva
  */
-public final class AyaProducer extends AyaBaseVisitor<Object> {
+public final class AyaProducer extends AyaParserBaseVisitor<Object> {
   private final @NotNull Reporter reporter;
   private final @NotNull SourceFile sourceFile;
 

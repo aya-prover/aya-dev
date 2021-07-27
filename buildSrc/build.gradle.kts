@@ -21,9 +21,13 @@ val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
 
 tasks.withType<AntlrTask>().configureEach {
   outputDirectory = genDir
+  val packageName = "org.aya.parser"
+  val libPath = genDir.resolve(packageName.replace('.', '/')).absoluteFile
+  doFirst { libPath.mkdirs() }
   arguments.addAll(listOf(
-    "-package", "org.aya.parser",
+    "-package", packageName,
     "-no-listener",
+    "-lib", "$libPath",
     "-visitor"
   ))
 }
