@@ -88,7 +88,7 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
     @NotNull Map<String, String> rename,
     @NotNull SourcePos sourcePos
   ) {
-    var mod = modules().getOrNull(modName);
+    var mod = getModuleMaybe(modName, sourcePos);
     if (mod == null) reportAndThrow(new ModNameNotFoundError(modName, sourcePos));
     mod.forEach((name, ref) -> {
       if (using.apply(name)) {

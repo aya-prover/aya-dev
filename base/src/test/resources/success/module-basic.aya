@@ -1,0 +1,10 @@
+module Nat {
+  data N : Set | zero | suc N
+}
+module Int {
+  def bN => Nat::N
+  module bN {
+    public open Nat::N
+  }
+  def two : bN => bN::suc bN::zero
+}
