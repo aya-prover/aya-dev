@@ -321,9 +321,9 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
-    var doc = Doc.sepNonEmpty(Buffer.of(coe(ctor.coerce()),
+    var doc = Doc.sepNonEmpty(coe(ctor.coerce()),
       linkDef(ctor.ref(), CON_CALL),
-      visitTele(ctor.conTele())));
+      visitTele(ctor.conTele()));
     Doc line1;
     if (ctor.pats().isNotEmpty()) {
       var pats = Doc.commaList(ctor.pats().view().map(Pat::toDoc));
@@ -337,11 +337,12 @@ public final class CoreDistiller implements
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
-    return Doc.vcat(Doc.sepNonEmpty(Seq.of(Doc.styled(KEYWORD, "struct"),
+    return Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
       linkDef(def.ref(), STRUCT_CALL),
       visitTele(def.telescope()),
       Doc.plain(":"),
-      def.result().toDoc())), Doc.nest(2, Doc.vcat(
+      def.result().toDoc()
+    ), Doc.nest(2, Doc.vcat(
       def.fields().view().map(field -> field.accept(this, Unit.unit())))));
   }
 
