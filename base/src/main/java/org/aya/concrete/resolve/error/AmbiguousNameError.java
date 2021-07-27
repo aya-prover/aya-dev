@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public record AmbiguousNameError(
   @Override public @NotNull Doc describe() {
     return Doc.vcat(Doc.cat(Doc.english("The unqualified name referred to by "), Doc.styled(Style.code(), Doc.plain(name)), Doc.english(" is ambiguous.")),
       Doc.english("Try using the following module names to qualify the name to disambiguate:"),
-      Doc.styled(Style.code(), Doc.nest(1, Doc.vcat(disambiguation.map(a -> Doc.plain(a.joinToString("::")))))));
+      Doc.styled(Style.code(), Doc.nest(1, Doc.vcat(disambiguation.map(QualifiedID::join).map(Doc::plain)))));
   }
 
   @Override public @NotNull Stage stage() {

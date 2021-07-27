@@ -248,8 +248,7 @@ public class ParseTest {
         struct With-Tele (B : Nat -> Set) : Set
           | x { X : Set } : Nat
           | y : B zero
-        """,
-      """
+        """, """
         public struct With-Tele (B : Pi (_ : Nat) -> Type) : Type
           | x {X : Type} : Nat
           | y : B zero
@@ -265,8 +264,7 @@ public class ParseTest {
            | left => a
            | right => b
          }
-        """,
-      """
+        """, """
         public struct Path (A : Pi (_ : I) -> Type) (a : A left) (b : A right) : Type
           | at (i : I) : A i {| left => a
           | right => b}
@@ -332,8 +330,7 @@ public class ParseTest {
 
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
     var stmt = parseStmt(code);
-    assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-        .map(Stmt::toDoc))
+    assertEquals(pretty.trim(), Doc.vcat(stmt.view().map(Stmt::toDoc))
       .debugRender()
       .trim());
   }

@@ -215,19 +215,19 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitImport(Command.@NotNull Import cmd, Unit unit) {
-    return Doc.sep(
-      Doc.styled(KEYWORD, "import"),
-      Doc.symbol(cmd.path().ids().joinToString(Constants.SCOPE_SEPARATOR)),
-      Doc.styled(KEYWORD, "as"),
-      cmd.asName() == null ? Doc.symbol(cmd.path().ids().joinToString(Constants.SCOPE_SEPARATOR)) : Doc.plain(cmd.asName())
-    );
+    var prelude = Buffer.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
+    if (cmd.asName() != null) {
+      prelude.append(Doc.styled(KEYWORD, "as"));
+      prelude.append(Doc.plain(cmd.asName()));
+    }
+    return Doc.sep(prelude);
   }
 
   @Override public Doc visitOpen(Command.@NotNull Open cmd, Unit unit) {
     return Doc.sep(
       visitAccess(cmd.accessibility()),
       Doc.styled(KEYWORD, "open"),
-      Doc.plain(cmd.path().ids().joinToString("::")),
+      Doc.plain(cmd.path().join()),
       Doc.styled(KEYWORD, switch (cmd.useHide().strategy()) {
         case Using -> "using";
         case Hiding -> "hiding";

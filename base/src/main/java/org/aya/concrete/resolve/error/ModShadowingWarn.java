@@ -5,9 +5,9 @@ package org.aya.concrete.resolve.error;
 import kala.collection.Seq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 public record ModShadowingWarn(
@@ -21,7 +21,7 @@ public record ModShadowingWarn(
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("The newly created module name"),
-      Doc.styled(Style.code(), Doc.plain(modName.joinToString(Constants.SCOPE_SEPARATOR))),
+      Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),
       Doc.english("shadows a previous definition from outer scope")
     );
   }

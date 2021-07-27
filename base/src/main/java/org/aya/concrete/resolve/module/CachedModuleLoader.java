@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.ref.Var;
+import org.aya.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ public final class CachedModuleLoader implements ModuleLoader {
 
   @Override
   public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<String> path, @NotNull ModuleLoader recurseLoader) {
-    var stringifiedPath = path.joinToString("::");
+    var stringifiedPath = QualifiedID.join(path);
     return cache.getOrElse(stringifiedPath, () -> {
       var ctx = loader.load(path, recurseLoader);
       cache.put(stringifiedPath, ctx);

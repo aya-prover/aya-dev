@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import kala.collection.Seq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.util.Constants;
@@ -19,7 +20,7 @@ public record QualifiedNameNotFoundError(
     return Doc.sep(
       Doc.english("The qualified name referred to by"),
       Doc.styled(Style.code(),
-        Doc.cat(Doc.plain(modName.joinToString(Constants.SCOPE_SEPARATOR)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
+        Doc.cat(Doc.plain(QualifiedID.join(modName)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
       Doc.english("is not defined in the current scope")
     );
   }
