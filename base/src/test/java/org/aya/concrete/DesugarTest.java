@@ -21,6 +21,20 @@ public class DesugarTest {
     desugarAndPretty("def test => ooType", "public def test => ooType lp");
   }
 
+  @Test public void modules() {
+    desugarAndPretty("""
+      module Nat {
+       open data ℕ : Set | zero | suc ℕ
+      }
+      """, """
+      public module Nat {
+        public data ℕ : Set lp
+          | zero
+          | suc (_ : ℕ)
+        private open ℕ hiding ()
+      }""");
+  }
+
   private void desugarAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
     var stmt = ParseTest.parseStmt(code);
     stmt.forEach(s -> s.desugar(ThrowingReporter.INSTANCE, new BinOpSet(ThrowingReporter.INSTANCE)));

@@ -281,8 +281,23 @@ public class ParseTest {
     );
   }
 
+  @Test public void modules() {
+    parseAndPretty("""
+      module Nat {
+       open data ℕ : Set | zero | suc ℕ
+      }
+      """, """
+      public module Nat {
+        public data ℕ : Type
+          | zero
+          | suc (_ : ℕ)
+        private open ℕ hiding ()
+      }""");
+  }
+
   @Test public void globalStmt() {
     parseAndPretty("bind + tighter =", "public bind + tighter =");
+    parseAndPretty("bind + tighter application", "public bind + tighter application");
     parseAndPretty("ulevel uu", "ulevel uu");
   }
 
@@ -318,7 +333,7 @@ public class ParseTest {
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-      .map(Stmt::toDoc))
+        .map(Stmt::toDoc))
       .debugRender()
       .trim());
   }

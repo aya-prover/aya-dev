@@ -237,14 +237,12 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitModule(Command.@NotNull Module mod, Unit unit) {
-    return Doc.cat(
+    return Doc.vcat(
       Doc.sep(visitAccess(mod.accessibility()),
         Doc.styled(KEYWORD, "module"),
         Doc.plain(mod.name()),
         Doc.plain("{")),
-      Doc.line(),
       Doc.nest(2, Doc.vcat(mod.contents().view().map(Stmt::toDoc))),
-      Doc.line(),
       Doc.plain("}")
     );
   }
