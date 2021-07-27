@@ -210,8 +210,9 @@ public final class ConcreteDistiller implements
     return match.expr.map(e -> Doc.sep(doc, Doc.plain("=>"), e.toDoc())).getOrDefault(doc);
   }
 
-  private Doc visitAccess(Stmt.@NotNull Accessibility accessibility) {
-    return Doc.styled(KEYWORD, accessibility.keyword);
+  private Doc visitAccess(Stmt.@NotNull Accessibility accessibility, Stmt.Accessibility def) {
+    if (accessibility == def) return Doc.empty();
+    else return Doc.styled(KEYWORD, accessibility.keyword);
   }
 
   @Override public Doc visitImport(Command.@NotNull Import cmd, Unit unit) {
@@ -224,8 +225,8 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitOpen(Command.@NotNull Open cmd, Unit unit) {
-    return Doc.sep(
-      visitAccess(cmd.accessibility()),
+    return Doc.sepNonEmpty(
+      visitAccess(cmd.accessibility(), Stmt.Accessibility.Private),
       Doc.styled(KEYWORD, "open"),
       Doc.plain(cmd.path().join()),
       Doc.styled(KEYWORD, switch (cmd.useHide().strategy()) {
@@ -238,7 +239,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitModule(Command.@NotNull Module mod, Unit unit) {
     return Doc.vcat(
-      Doc.sep(visitAccess(mod.accessibility()),
+      Doc.sep(visitAccess(mod.accessibility(), Stmt.Accessibility.Public),
         Doc.styled(KEYWORD, "module"),
         Doc.plain(mod.name()),
         Doc.plain("{")),
@@ -249,7 +250,6 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitBind(Command.@NotNull Bind bind, Unit unit) {
     return Doc.sep(
-      visitAccess(bind.accessibility()),
       Doc.styled(KEYWORD, "bind"),
       Doc.plain(bind.op().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator()).name())),
       Doc.styled(KEYWORD, bind.pred().keyword),
@@ -259,7 +259,7 @@ public final class ConcreteDistiller implements
 
   @Override public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {
     var prelude = Buffer.of(
-      visitAccess(decl.accessibility()),
+      visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
       Doc.styled(KEYWORD, "data"),
       linkDef(decl.ref, DATA_CALL),
       visitTele(decl.telescope));
@@ -294,7 +294,7 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
-    var prelude = Buffer.of(visitAccess(decl.accessibility()),
+    var prelude = Buffer.of(visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
       Doc.styled(KEYWORD, "struct"),
       linkDef(decl.ref, STRUCT_CALL),
       visitTele(decl.telescope));
@@ -326,7 +326,7 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
-    var prelude = Buffer.of(visitAccess(decl.accessibility()), Doc.styled(KEYWORD, "def"));
+    var prelude = Buffer.of(visitAccess(decl.accessibility(), Stmt.Accessibility.Public), Doc.styled(KEYWORD, "def"));
     prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
     prelude.append(linkDef(decl.ref, FN_CALL));
     prelude.append(visitTele(decl.telescope));

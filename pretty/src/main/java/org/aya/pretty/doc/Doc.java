@@ -535,6 +535,10 @@ public sealed interface Doc extends Docile {
     return join(ALT_WS, docs);
   }
 
+  @Contract("_ -> new") static @NotNull Doc sepNonEmpty(Doc @NotNull ... docs) {
+    return sepNonEmpty(Seq.of(docs));
+  }
+
   @Contract("_ -> new") static @NotNull Doc sepNonEmpty(@NotNull SeqLike<Doc> docs) {
     return sep(docs.view().filterNot(Doc::nonEmpty));
   }

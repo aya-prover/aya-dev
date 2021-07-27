@@ -15,10 +15,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DesugarTest {
   @Test public void simpleUniv() {
-    desugarAndPretty("def test => Type", "public def test => Type lp lp");
-    desugarAndPretty("def test => Set", "public def test => Set lp");
-    desugarAndPretty("def test => Prop", "public def test => Prop 0");
-    desugarAndPretty("def test => ooType", "public def test => ooType lp");
+    desugarAndPretty("def test => Type", "def test => Type lp lp");
+    desugarAndPretty("def test => Set", "def test => Set lp");
+    desugarAndPretty("def test => Prop", "def test => Prop 0");
+    desugarAndPretty("def test => ooType", "def test => ooType lp");
   }
 
   @Test public void modules() {
@@ -27,11 +27,11 @@ public class DesugarTest {
        open data ℕ : Set | zero | suc ℕ
       }
       """, """
-      public module Nat {
-        public data ℕ : Set lp
+      module Nat {
+        data ℕ : Set lp
           | zero
           | suc (_ : ℕ)
-        private open ℕ hiding ()
+        open ℕ hiding ()
       }""");
   }
 
