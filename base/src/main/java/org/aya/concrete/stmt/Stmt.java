@@ -47,10 +47,10 @@ public sealed interface Stmt extends Docile
       // [xyr]: Is this OK? The order of visiting must be preserved.
       // [ice]: I guess so, map should preserve the order.
     }
-    R visitImport(@NotNull Command.ImportStmt cmd, P p);
-    R visitOpen(@NotNull Command.OpenStmt cmd, P p);
-    R visitModule(@NotNull Command.ModuleStmt mod, P p);
-    R visitBind(@NotNull Command.BindStmt bind, P p);
+    R visitImport(@NotNull Command.Import cmd, P p);
+    R visitOpen(@NotNull Command.Open cmd, P p);
+    R visitModule(@NotNull Command.Module mod, P p);
+    R visitBind(@NotNull Command.Bind bind, P p);
   }
 
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);

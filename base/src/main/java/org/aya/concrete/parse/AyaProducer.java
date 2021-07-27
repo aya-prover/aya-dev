@@ -103,12 +103,12 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
       .collect(ImmutableSeq.factory()));
   }
 
-  public Stmt.@NotNull BindStmt visitBind(AyaParser.BindContext ctx) {
+  public Command.@NotNull Bind visitBind(AyaParser.BindContext ctx) {
     var bindOp = ctx.bindOp();
-    return new Stmt.BindStmt(
+    return new Command.Bind(
       sourcePosOf(ctx),
       visitBindOp(bindOp.get(0)),
-      ctx.TIGHTER() != null ? Stmt.BindPred.Tighter : Stmt.BindPred.Looser,
+      ctx.TIGHTER() != null ? Command.BindPred.Tighter : Command.BindPred.Looser,
       visitBindOp(bindOp.get(1)),
       new Ref<>(null),
       new Ref<>(null),
@@ -482,11 +482,11 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
       abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
     );
     return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.of() : ImmutableSeq.of(
-      new Stmt.OpenStmt(
+      new Command.Open(
         sourcePosOf(ctx.ID()),
         openAccessibility,
         ImmutableSeq.of(ctx.ID().getText()),
-        Stmt.OpenStmt.UseHide.EMPTY
+        Command.Open.UseHide.EMPTY
       )
     ));
   }
@@ -670,7 +670,7 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
 
   public @NotNull Stmt visitImportCmd(AyaParser.ImportCmdContext ctx) {
     final var id = ctx.ID();
-    return new Stmt.ImportStmt(
+    return new Command.Import(
       sourcePosOf(ctx.moduleName()),
       visitModuleName(ctx.moduleName()),
       id == null ? null : id.getText()
@@ -685,47 +685,47 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
     var modNameCtx = ctx.moduleName();
     var namePos = sourcePosOf(modNameCtx);
     var modName = visitModuleName(modNameCtx);
-    var open = new Stmt.OpenStmt(
+    var open = new Command.Open(
       namePos,
       accessibility,
       modName,
-      useHide != null ? visitUseHide(useHide) : Stmt.OpenStmt.UseHide.EMPTY
+      useHide != null ? visitUseHide(useHide) : Command.Open.UseHide.EMPTY
     );
     if (ctx.IMPORT() != null) return ImmutableSeq.of(
-      new Stmt.ImportStmt(namePos, modName, null),
+      new Command.Import(namePos, modName, null),
       open
     );
     else return ImmutableSeq.of(open);
   }
 
-  public Stmt.OpenStmt.UseHide visitUse(List<AyaParser.UseContext> ctxs) {
-    return new Stmt.OpenStmt.UseHide(
+  public Command.Open.UseHide visitUse(List<AyaParser.UseContext> ctxs) {
+    return new Command.Open.UseHide(
       ctxs.stream()
         .map(AyaParser.UseContext::useHideList)
         .map(AyaParser.UseHideListContext::idsComma)
         .flatMap(this::visitIdsComma)
         .collect(ImmutableSeq.factory()),
-      Stmt.OpenStmt.UseHide.Strategy.Using);
+      Command.Open.UseHide.Strategy.Using);
   }
 
-  public Stmt.OpenStmt.UseHide visitHide(List<AyaParser.HideContext> ctxs) {
-    return new Stmt.OpenStmt.UseHide(
+  public Command.Open.UseHide visitHide(List<AyaParser.HideContext> ctxs) {
+    return new Command.Open.UseHide(
       ctxs.stream()
         .map(AyaParser.HideContext::useHideList)
         .map(AyaParser.UseHideListContext::idsComma)
         .flatMap(this::visitIdsComma)
         .collect(ImmutableSeq.factory()),
-      Stmt.OpenStmt.UseHide.Strategy.Hiding);
+      Command.Open.UseHide.Strategy.Hiding);
   }
 
-  public @NotNull Stmt.OpenStmt.UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
+  public @NotNull Command.Open.UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
     var use = ctx.use();
     if (use != null) return visitUse(use);
     return visitHide(ctx.hide());
   }
 
-  public @NotNull Stmt.ModuleStmt visitModule(AyaParser.ModuleContext ctx) {
-    return new Stmt.ModuleStmt(
+  public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {
+    return new Command.Module(
       sourcePosOf(ctx.ID()),
       ctx.ID().getText(),
       ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt)

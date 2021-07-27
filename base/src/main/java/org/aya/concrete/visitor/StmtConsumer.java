@@ -58,15 +58,15 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
     return Unit.unit();
   }
 
-  @Override default Unit visitImport(Command.@NotNull ImportStmt cmd, P p) {
+  @Override default Unit visitImport(Command.@NotNull Import cmd, P p) {
     return Unit.unit();
   }
 
-  @Override default Unit visitOpen(Command.@NotNull OpenStmt cmd, P p) {
+  @Override default Unit visitOpen(Command.@NotNull Open cmd, P p) {
     return Unit.unit();
   }
 
-  @Override default Unit visitModule(Command.@NotNull ModuleStmt mod, P p) {
+  @Override default Unit visitModule(Command.@NotNull Module mod, P p) {
     mod.contents().forEach(stmt -> stmt.accept(this, p));
     return Unit.unit();
   }
@@ -86,7 +86,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
     return Unit.unit();
   }
 
-  @Override default Unit visitBind(Command.@NotNull BindStmt bind, P p) {
+  @Override default Unit visitBind(Command.@NotNull Bind bind, P p) {
     return Unit.unit();
   }
 

@@ -23,21 +23,21 @@ import org.jetbrains.annotations.NotNull;
  * @author re-xyr
  */
 public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
-  @Override public Unit visitModule(Command.@NotNull ModuleStmt mod, @NotNull ModuleContext context) {
+  @Override public Unit visitModule(Command.@NotNull Module mod, @NotNull ModuleContext context) {
     var newCtx = context.derive();
     visitAll(mod.contents(), newCtx);
     context.importModules(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports, mod.sourcePos());
     return Unit.unit();
   }
 
-  @Override public Unit visitImport(Command.@NotNull ImportStmt cmd, @NotNull ModuleContext context) {
+  @Override public Unit visitImport(Command.@NotNull Import cmd, @NotNull ModuleContext context) {
     var success = loader.load(cmd.path());
     if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path(), cmd.sourcePos()));
     context.importModules(cmd.path(), Stmt.Accessibility.Private, success, cmd.sourcePos());
     return Unit.unit();
   }
 
-  @Override public Unit visitOpen(Command.@NotNull OpenStmt cmd, @NotNull ModuleContext context) {
+  @Override public Unit visitOpen(Command.@NotNull Open cmd, @NotNull ModuleContext context) {
     context.openModule(
       cmd.path(),
       cmd.accessibility(),
@@ -48,7 +48,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
     return Unit.unit();
   }
 
-  @Override public Unit visitBind(Command.@NotNull BindStmt bind, @NotNull ModuleContext context) {
+  @Override public Unit visitBind(Command.@NotNull Bind bind, @NotNull ModuleContext context) {
     bind.context().value = context;
     return Unit.unit();
   }

@@ -32,7 +32,7 @@ public sealed interface Command extends Stmt {
   /**
    * @author kiva
    */
-  record BindStmt(
+  record Bind(
     @NotNull SourcePos sourcePos,
     @NotNull Either<QualifiedID, OpDecl> op,
     @NotNull BindPred pred,
@@ -53,7 +53,7 @@ public sealed interface Command extends Stmt {
   /**
    * @author re-xyr
    */
-  record ImportStmt(
+  record Import(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<String> path,
     @Nullable String asName
@@ -71,7 +71,7 @@ public sealed interface Command extends Stmt {
   /**
    * @author re-xyr
    */
-  record OpenStmt(
+  record Open(
     @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
     @NotNull ImmutableSeq<String> path,
@@ -107,7 +107,7 @@ public sealed interface Command extends Stmt {
   /**
    * @author re-xyr
    */
-  record ModuleStmt(
+  record Module(
     @NotNull SourcePos sourcePos,
     @NotNull String name,
     @NotNull ImmutableSeq<@NotNull Stmt> contents

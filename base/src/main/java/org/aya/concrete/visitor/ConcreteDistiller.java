@@ -214,7 +214,7 @@ public final class ConcreteDistiller implements
     return Doc.styled(KEYWORD, accessibility.keyword);
   }
 
-  @Override public Doc visitImport(Command.@NotNull ImportStmt cmd, Unit unit) {
+  @Override public Doc visitImport(Command.@NotNull Import cmd, Unit unit) {
     return Doc.sep(
       Doc.styled(KEYWORD, "import"),
       Doc.symbol(cmd.path().joinToString(Constants.SCOPE_SEPARATOR)),
@@ -223,7 +223,7 @@ public final class ConcreteDistiller implements
     );
   }
 
-  @Override public Doc visitOpen(Command.@NotNull OpenStmt cmd, Unit unit) {
+  @Override public Doc visitOpen(Command.@NotNull Open cmd, Unit unit) {
     return Doc.sep(
       visitAccess(cmd.accessibility()),
       Doc.styled(KEYWORD, "open"),
@@ -236,7 +236,7 @@ public final class ConcreteDistiller implements
     );
   }
 
-  @Override public Doc visitModule(Command.@NotNull ModuleStmt mod, Unit unit) {
+  @Override public Doc visitModule(Command.@NotNull Module mod, Unit unit) {
     return Doc.cat(
       Doc.sep(visitAccess(mod.accessibility()),
         Doc.styled(KEYWORD, "module"),
@@ -249,7 +249,7 @@ public final class ConcreteDistiller implements
     );
   }
 
-  @Override public Doc visitBind(Command.@NotNull BindStmt bind, Unit unit) {
+  @Override public Doc visitBind(Command.@NotNull Bind bind, Unit unit) {
     return Doc.sep(
       visitAccess(bind.accessibility()),
       Doc.styled(KEYWORD, "bind"),
