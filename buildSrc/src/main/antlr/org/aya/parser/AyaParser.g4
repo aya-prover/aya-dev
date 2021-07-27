@@ -19,8 +19,8 @@ stmt : decl
 
 sample : (EXAMPLE | COUNTEREXAMPLE) decl ;
 
-importCmd : IMPORT moduleName (AS ID)?;
-openCmd : PUBLIC? OPEN IMPORT? moduleName useHide?;
+importCmd : IMPORT qualifiedId (AS ID)?;
+openCmd : PUBLIC? OPEN IMPORT? qualifiedId useHide?;
 module : MODULE_KW ID LBRACE stmt* RBRACE;
 bind : BIND_KW bindOp (TIGHTER | LOOSER) bindOp;
 bindOp : qualifiedId | OP_APP;
@@ -30,7 +30,6 @@ useHide : use+
 use : USING useHideList;
 hide : HIDING useHideList;
 useHideList : LPAREN idsComma RPAREN;
-moduleName : ID (DOT ID)*;
 
 levels : (ULEVEL | HLEVEL) ids ;
 generalize : VARIABLE ids type ;

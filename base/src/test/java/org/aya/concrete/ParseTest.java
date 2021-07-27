@@ -55,13 +55,13 @@ public class ParseTest {
   @Test
   public void successCmd() {
     parseOpen("open A");
-    parseOpen("open A.B");
+    parseOpen("open A::B");
     parseOpen("open A using ()");
     parseOpen("open A hiding ()");
     parseImport("import A");
-    parseImport("import A.B");
-    parseImport("import A.B using ()");
-    parseAndPretty("open Boy.Next.Door using (door) using (next)", """
+    parseImport("import A::B");
+    parseImport("import A::B using ()");
+    parseAndPretty("open Boy::Next::Door using (door) using (next)", """
         private open Boy::Next::Door using (door, next)
       """);
   }

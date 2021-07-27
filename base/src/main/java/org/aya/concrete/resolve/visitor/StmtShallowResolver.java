@@ -31,15 +31,15 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   }
 
   @Override public Unit visitImport(Command.@NotNull Import cmd, @NotNull ModuleContext context) {
-    var success = loader.load(cmd.path());
-    if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path(), cmd.sourcePos()));
-    context.importModules(cmd.path(), Stmt.Accessibility.Private, success, cmd.sourcePos());
+    var success = loader.load(cmd.path().ids());
+    if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
+    context.importModules(cmd.path().ids(), Stmt.Accessibility.Private, success, cmd.sourcePos());
     return Unit.unit();
   }
 
   @Override public Unit visitOpen(Command.@NotNull Open cmd, @NotNull ModuleContext context) {
     context.openModule(
-      cmd.path(),
+      cmd.path().ids(),
       cmd.accessibility(),
       cmd.useHide()::uses,
       MutableHashMap.of(), // TODO handle renaming

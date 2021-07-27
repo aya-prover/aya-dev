@@ -55,7 +55,7 @@ public sealed interface Command extends Stmt {
    */
   record Import(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<String> path,
+    @NotNull QualifiedID path,
     @Nullable String asName
   ) implements Command {
 
@@ -74,7 +74,7 @@ public sealed interface Command extends Stmt {
   record Open(
     @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
-    @NotNull ImmutableSeq<String> path,
+    @NotNull QualifiedID path,
     @NotNull UseHide useHide
   ) implements Command {
     public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

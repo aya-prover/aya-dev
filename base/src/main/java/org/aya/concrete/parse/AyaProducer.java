@@ -485,7 +485,7 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
       new Command.Open(
         sourcePosOf(ctx.ID()),
         openAccessibility,
-        ImmutableSeq.of(ctx.ID().getText()),
+        new QualifiedID(sourcePosOf(ctx), ctx.ID().getText()),
         Command.Open.UseHide.EMPTY
       )
     ));
@@ -671,8 +671,8 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
   public @NotNull Stmt visitImportCmd(AyaParser.ImportCmdContext ctx) {
     final var id = ctx.ID();
     return new Command.Import(
-      sourcePosOf(ctx.moduleName()),
-      visitModuleName(ctx.moduleName()),
+      sourcePosOf(ctx.qualifiedId()),
+      visitQualifiedId(ctx.qualifiedId()),
       id == null ? null : id.getText()
     );
   }
@@ -682,9 +682,9 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
       ? Stmt.Accessibility.Private
       : Stmt.Accessibility.Public;
     var useHide = ctx.useHide();
-    var modNameCtx = ctx.moduleName();
+    var modNameCtx = ctx.qualifiedId();
     var namePos = sourcePosOf(modNameCtx);
-    var modName = visitModuleName(modNameCtx);
+    var modName = visitQualifiedId(modNameCtx);
     var open = new Command.Open(
       namePos,
       accessibility,
@@ -738,10 +738,6 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
 
   public @NotNull Stream<String> visitIdsComma(AyaParser.IdsCommaContext ctx) {
     return ctx.ID().stream().map(ParseTree::getText);
-  }
-
-  public @NotNull ImmutableSeq<@NotNull String> visitModuleName(AyaParser.ModuleNameContext ctx) {
-    return ImmutableSeq.from(ctx.ID()).map(ParseTree::getText);
   }
 
   public @Nullable OpDecl.Operator visitAssoc(@Nullable AyaParser.AssocContext ctx) {

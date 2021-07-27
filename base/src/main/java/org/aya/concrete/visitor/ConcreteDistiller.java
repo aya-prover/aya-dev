@@ -217,9 +217,9 @@ public final class ConcreteDistiller implements
   @Override public Doc visitImport(Command.@NotNull Import cmd, Unit unit) {
     return Doc.sep(
       Doc.styled(KEYWORD, "import"),
-      Doc.symbol(cmd.path().joinToString(Constants.SCOPE_SEPARATOR)),
+      Doc.symbol(cmd.path().ids().joinToString(Constants.SCOPE_SEPARATOR)),
       Doc.styled(KEYWORD, "as"),
-      cmd.asName() == null ? Doc.symbol(cmd.path().joinToString(Constants.SCOPE_SEPARATOR)) : Doc.plain(cmd.asName())
+      cmd.asName() == null ? Doc.symbol(cmd.path().ids().joinToString(Constants.SCOPE_SEPARATOR)) : Doc.plain(cmd.asName())
     );
   }
 
@@ -227,7 +227,7 @@ public final class ConcreteDistiller implements
     return Doc.sep(
       visitAccess(cmd.accessibility()),
       Doc.styled(KEYWORD, "open"),
-      Doc.plain(cmd.path().joinToString("::")),
+      Doc.plain(cmd.path().ids().joinToString("::")),
       Doc.styled(KEYWORD, switch (cmd.useHide().strategy()) {
         case Using -> "using";
         case Hiding -> "hiding";
