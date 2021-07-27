@@ -178,7 +178,7 @@ tasks.register("githubActions") {
 }
 
 fun JacocoReportsContainer.configureReports(merger: Boolean) {
-  xml.required.set(merger)
+  xml.required.set(!merger)
   csv.required.set(false)
-  html.required.set(!merger)
+  html.required.set(merger)
 }
