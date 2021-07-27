@@ -89,6 +89,9 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
   @Override default Unit visitBind(Command.@NotNull Bind bind, P p) {
     return Unit.unit();
   }
+  @Override default Unit visitRemark(Literate.@NotNull Remark remark, P p) {
+    return Unit.unit();
+  }
 
   @Override default Unit visitLevels(Generalize.@NotNull Levels levels, P p) {
     return Unit.unit();

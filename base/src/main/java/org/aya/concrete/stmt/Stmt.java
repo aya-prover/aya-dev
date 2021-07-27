@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public sealed interface Stmt extends Docile
-  permits Decl, Sample, Generalize, Command {
+  permits Command, Decl, Generalize, Literate.Remark, Sample {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
@@ -51,6 +51,7 @@ public sealed interface Stmt extends Docile
     R visitOpen(@NotNull Command.Open cmd, P p);
     R visitModule(@NotNull Command.Module mod, P p);
     R visitBind(@NotNull Command.Bind bind, P p);
+    R visitRemark(@NotNull Literate.Remark remark, P p);
     R visitLevels(@NotNull Generalize.Levels levels, P p);
     R visitExample(@NotNull Sample.Working example, P p);
     R visitCounterexample(@NotNull Sample.Counter example, P p);

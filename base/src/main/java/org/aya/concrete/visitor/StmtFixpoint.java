@@ -15,6 +15,10 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
     signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> expr.accept(this, pp)));
   }
 
+  @Override default Unit visitRemark(Literate.@NotNull Remark remark, P p) {
+    return Unit.unit();
+  }
+
   default void visitDecl(@NotNull Decl decl, P pp) {
     visitSignatured(decl, pp);
     decl.abuseBlock.forEach(stmt -> stmt.accept(this, pp));
