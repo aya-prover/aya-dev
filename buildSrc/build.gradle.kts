@@ -28,7 +28,6 @@ tasks.withType<AntlrTask>().configureEach {
     "-package", packageName,
     "-no-listener",
     "-lib", "$libPath",
-    "-visitor"
   ))
 }
 
