@@ -11,8 +11,8 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.OpDecl;
-import org.aya.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ public record BinOpSet(
   }
 
   public void bind(@NotNull Tuple2<String, @NotNull OpDecl> op,
-                   @NotNull Stmt.BindPred pred,
+                   @NotNull Command.BindPred pred,
                    @NotNull Tuple2<String, @NotNull OpDecl> target,
                    @NotNull SourcePos sourcePos) {
     var opElem = ensureHasElem(op._1, op._2, sourcePos);

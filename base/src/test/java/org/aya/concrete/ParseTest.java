@@ -12,6 +12,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
+import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
@@ -48,7 +49,7 @@ public class ParseTest {
   @Test
   public void issue141() {
     Assertions.assertEquals(parseStmt("module a {}"),
-      ImmutableSeq.of(new Stmt.ModuleStmt(SourcePos.NONE, "a", ImmutableSeq.empty())));
+      ImmutableSeq.of(new Command.ModuleStmt(SourcePos.NONE, "a", ImmutableSeq.empty())));
   }
 
   @Test
@@ -161,11 +162,11 @@ public class ParseTest {
   }
 
   private void parseImport(@Language("TEXT") String code) {
-    assertTrue(parseStmt(code).first() instanceof Stmt.ImportStmt s && !s.toDoc().debugRender().isEmpty());
+    assertTrue(parseStmt(code).first() instanceof Command.ImportStmt s && !s.toDoc().debugRender().isEmpty());
   }
 
   private void parseOpen(@Language("TEXT") String code) {
-    assertTrue(parseStmt(code).last() instanceof Stmt.OpenStmt s && !s.toDoc().debugRender().isEmpty());
+    assertTrue(parseStmt(code).last() instanceof Command.OpenStmt s && !s.toDoc().debugRender().isEmpty());
   }
 
   private void parseFn(@Language("TEXT") String code) {

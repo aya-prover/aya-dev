@@ -112,17 +112,17 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
 
   // region import, open, module
 
-  @Override public Unit visitImport(Stmt.@NotNull ImportStmt cmd, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitImport(Command.@NotNull ImportStmt cmd, @NotNull Buffer<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(cmd.sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
     return StmtConsumer.super.visitImport(cmd, buffer);
   }
 
-  @Override public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitOpen(Command.@NotNull OpenStmt cmd, @NotNull Buffer<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(cmd.sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
     return StmtConsumer.super.visitOpen(cmd, buffer);
   }
 
-  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitModule(Command.@NotNull ModuleStmt mod, @NotNull Buffer<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(mod.sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
     return StmtConsumer.super.visitModule(mod, buffer);
   }
@@ -140,7 +140,7 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(ref.value)));
   }
 
-  @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitBind(Command.@NotNull BindStmt bind, @NotNull Buffer<HighlightResult.Symbol> buffer) {
     if (bind.op().isLeft())
       visitOperator(buffer, bind.op().getLeftValue().sourcePos(), bind.resolvedOp());
     if (bind.target().isLeft())

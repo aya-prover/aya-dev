@@ -3,27 +3,23 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
 import kala.tuple.Unit;
-import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kiva
  */
 public sealed interface Stmt extends Docile
-  permits Decl, Sample, Generalize, Stmt.BindStmt, Stmt.ImportStmt, Stmt.ModuleStmt, Stmt.OpenStmt {
+  permits Decl, Sample, Generalize, Command {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
@@ -51,10 +47,10 @@ public sealed interface Stmt extends Docile
       // [xyr]: Is this OK? The order of visiting must be preserved.
       // [ice]: I guess so, map should preserve the order.
     }
-    R visitImport(@NotNull ImportStmt cmd, P p);
-    R visitOpen(@NotNull OpenStmt cmd, P p);
-    R visitModule(@NotNull ModuleStmt mod, P p);
-    R visitBind(@NotNull BindStmt bind, P p);
+    R visitImport(@NotNull Command.ImportStmt cmd, P p);
+    R visitOpen(@NotNull Command.OpenStmt cmd, P p);
+    R visitModule(@NotNull Command.ModuleStmt mod, P p);
+    R visitBind(@NotNull Command.BindStmt bind, P p);
   }
 
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
@@ -80,114 +76,4 @@ public sealed interface Stmt extends Docile
     }
   }
 
-  /**
-   * @author kiva
-   */
-  record BindStmt(
-    @NotNull SourcePos sourcePos,
-    @NotNull Either<QualifiedID, OpDecl> op,
-    @NotNull BindPred pred,
-    @NotNull Either<QualifiedID, OpDecl> target,
-    @NotNull Ref<@Nullable Context> context,
-    @NotNull Ref<@Nullable OpDecl> resolvedOp,
-    @NotNull Ref<@Nullable OpDecl> resolvedTarget
-  ) implements Stmt {
-    @Override public @NotNull Accessibility accessibility() {
-      return Accessibility.Public;
-    }
-
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitBind(this, p);
-    }
-  }
-
-  enum BindPred {
-    Tighter("tighter"),
-    Looser("looser");
-
-    public final @NotNull String keyword;
-
-    BindPred(@NotNull String keyword) {
-      this.keyword = keyword;
-    }
-
-    public @NotNull BindPred invert() {
-      return switch (this) {
-        case Tighter -> Looser;
-        case Looser -> Tighter;
-      };
-    }
-  }
-
-  /**
-   * @author re-xyr
-   */
-  record ModuleStmt(
-    @NotNull SourcePos sourcePos,
-    @NotNull String name,
-    @NotNull ImmutableSeq<@NotNull Stmt> contents
-  ) implements Stmt {
-
-    @Override public @NotNull Accessibility accessibility() {
-      return Accessibility.Public;
-    }
-
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitModule(this, p);
-    }
-  }
-
-  /**
-   * @author re-xyr
-   */
-  record ImportStmt(
-    @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<String> path,
-    @Nullable String asName
-  ) implements Stmt {
-
-    @Override public @NotNull Accessibility accessibility() {
-      return Accessibility.Private;
-    }
-
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitImport(this, p);
-    }
-  }
-
-  /**
-   * @author re-xyr
-   */
-  record OpenStmt(
-    @NotNull SourcePos sourcePos,
-    @NotNull Accessibility accessibility,
-    @NotNull ImmutableSeq<String> path,
-    @NotNull UseHide useHide
-  ) implements Stmt {
-    public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitOpen(this, p);
-    }
-
-    /**
-     * @author re-xyr
-     */
-    public record UseHide(@NotNull ImmutableSeq<@NotNull String> list, @NotNull UseHide.Strategy strategy) {
-      public static final UseHide EMPTY = new UseHide(ImmutableSeq.empty(), UseHide.Strategy.Hiding);
-
-      public boolean uses(String name) {
-        return switch (strategy) {
-          case Using -> list.contains(name);
-          case Hiding -> !list.contains(name);
-        };
-      }
-
-      /**
-       * @author re-xyr
-       */
-      public enum Strategy {
-        Using,
-        Hiding,
-      }
-    }
-  }
 }

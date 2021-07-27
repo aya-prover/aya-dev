@@ -54,15 +54,15 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
     return Unit.unit();
   }
 
-  @Override default Unit visitImport(Stmt.@NotNull ImportStmt cmd, P p) {
+  @Override default Unit visitImport(Command.@NotNull ImportStmt cmd, P p) {
     return Unit.unit();
   }
 
-  @Override default Unit visitOpen(Stmt.@NotNull OpenStmt cmd, P p) {
+  @Override default Unit visitOpen(Command.@NotNull OpenStmt cmd, P p) {
     return Unit.unit();
   }
 
-  @Override default Unit visitModule(Stmt.@NotNull ModuleStmt mod, P p) {
+  @Override default Unit visitModule(Command.@NotNull ModuleStmt mod, P p) {
     mod.contents().forEach(stmt -> stmt.accept(this, p));
     return Unit.unit();
   }
@@ -79,7 +79,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
     return Unit.unit();
   }
 
-  @Override default Unit visitBind(Stmt.@NotNull BindStmt bind, P p) {
+  @Override default Unit visitBind(Command.@NotNull BindStmt bind, P p) {
     return Unit.unit();
   }
 

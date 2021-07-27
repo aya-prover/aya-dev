@@ -31,20 +31,20 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   private StmtResolver() {
   }
 
-  @Override public Unit visitModule(Stmt.@NotNull ModuleStmt mod, BinOpSet opSet) {
+  @Override public Unit visitModule(Command.@NotNull ModuleStmt mod, BinOpSet opSet) {
     visitAll(mod.contents(), opSet);
     return Unit.unit();
   }
 
-  @Override public Unit visitImport(Stmt.@NotNull ImportStmt cmd, BinOpSet opSet) {
+  @Override public Unit visitImport(Command.@NotNull ImportStmt cmd, BinOpSet opSet) {
     return Unit.unit();
   }
 
-  @Override public Unit visitOpen(Stmt.@NotNull OpenStmt cmd, BinOpSet opSet) {
+  @Override public Unit visitOpen(Command.@NotNull OpenStmt cmd, BinOpSet opSet) {
     return Unit.unit();
   }
 
-  @Override public Unit visitBind(Stmt.@NotNull BindStmt bind, BinOpSet opSet) {
+  @Override public Unit visitBind(Command.@NotNull BindStmt bind, BinOpSet opSet) {
     var ctx = bind.context().value;
     if (ctx == null) throw new IllegalStateException("no shallow resolver?");
     var op = resolveOp(opSet.reporter(), ctx, bind.op());
