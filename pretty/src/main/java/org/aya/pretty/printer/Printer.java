@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * This class was designed to support various PrettyPrint backend.
  * Example usage:
  * <pre>
- *   public class HtmlPrinter implements Printer<HtmlPrinterConfig> {}
+ *   public class HtmlPrinter implements Printer[HtmlPrinterConfig] {}
  * </pre>
  * <p>
  * For a more practical example, see {@link org.aya.pretty.backend.string.StringPrinter}

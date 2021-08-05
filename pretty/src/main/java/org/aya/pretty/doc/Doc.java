@@ -270,17 +270,6 @@ public sealed interface Doc extends Docile {
    * Layout a document depending on which column it starts at.
    * {@link Doc#align(Doc)} is implemented in terms of {@code column}.
    *
-   * <pre>
-   * >>> column (\l -> "Columns are" <+> pretty l <> "-based.")
-   * Columns are 0-based.
-   *
-   * >>> let doc = "prefix" <+> column (\l -> "| <- column" <+> pretty l)
-   * >>> vsep [indent n doc | n <- [0,4,8]]
-   * prefix | <- column 7
-   *     prefix | <- column 11
-   *         prefix | <- column 15
-   * </pre>
-   *
    * @param docBuilder document generator when current position provided
    * @return column action document
    */
@@ -293,14 +282,6 @@ public sealed interface Doc extends Docile {
    * Layout a document depending on the current 'nest'-ing level.
    * {@link Doc#align(Doc)} is implemented in terms of {@code nesting}.
    *
-   * <pre>
-   * >>> let doc = "prefix" <+> nesting (\l -> brackets ("Nested:" <+> pretty l))
-   * >>> vsep [indent n doc | n <- [0,4,8]]
-   * prefix [Nested: 0]
-   *     prefix [Nested: 4]
-   *         prefix [Nested: 8]
-   * </pre>
-   *
    * @param docBuilder document generator when current nest level provided
    * @return nest level action document
    */
@@ -311,15 +292,6 @@ public sealed interface Doc extends Docile {
 
   /**
    * Layout a document depending on the page width, if one has been specified.
-   *
-   * <pre>
-   * >>> let prettyPageWidth (AvailablePerLine l r) = "Width:" <+> pretty l <> ", ribbon fraction:" <+> pretty r
-   * >>> let doc = "prefix" <+> pageWidth (brackets . prettyPageWidth)
-   * >>> putDocW 32 (vsep [indent n doc | n <- [0,4,8]])
-   * prefix [Width: 32, ribbon fraction: 1.0]
-   *     prefix [Width: 32, ribbon fraction: 1.0]
-   *         prefix [Width: 32, ribbon fraction: 1.0]
-   * </pre>
    *
    * @param docBuilder document generator when page width provided
    * @return page width action document
@@ -350,21 +322,9 @@ public sealed interface Doc extends Docile {
    * As an example, we will put a document right above another one, regardless of
    * the current nesting level. Without 'align'-ment, the second line is put simply
    * below everything we've had so far,
-   *
-   * <pre>
-   * >>> "lorem" <+> vsep ["ipsum", "dolor"]
-   * lorem ipsum
-   * dolor
-   * </pre>
    * <p>
    * If we add an 'align' to the mix, the @'vsep'@'s contents all start in the
    * same column,
-   *
-   * <pre>
-   * >>> "lorem" <+> align (vsep ["ipsum", "dolor"])
-   * lorem ipsum
-   *       dolor
-   * </pre>
    *
    * @param doc document to be aligned
    * @return aligned document
@@ -379,26 +339,11 @@ public sealed interface Doc extends Docile {
    * hang lays out the document {@param doc} with a nesting level set to the
    * /current column/ plus {@param deltaNest}.
    * Negative values are allowed, and decrease the nesting level accordingly.
-   *
-   * <pre>
-   * >>> let doc = reflow "Indenting these words with hang"
-   * >>> putDocW 24 ("prefix" <+> hang 4 doc)
-   * prefix Indenting these
-   *            words with
-   *            hang
-   * </pre>
    * <p>
    * This differs from {@link Doc#nest(int, Doc)}, which is based on
    * the /current nesting level/ plus {@code indent}.
    * When you're not sure, try the more efficient 'nest' first. In our
    * example, this would yield
-   *
-   * <pre>
-   * >>> let doc = reflow "Indenting these words with nest"
-   * >>> putDocW 24 ("prefix" <+> nest 4 doc)
-   * prefix Indenting these
-   *     words with nest
-   * </pre>
    *
    * @param deltaNest change of nesting level, relative to the start of the first line
    * @param doc       document to indent
@@ -472,24 +417,10 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * hsep concatenates all documents {@param docs} horizontally with a space,
+   * stickySep concatenates all documents {@param docs} horizontally with a space,
    * i.e. it puts a space between all entries.
-   *
-   * <pre>
-   * >>> let docs = Util.words "lorem ipsum dolor sit amet"
-   *
-   * >>> hsep docs
-   * lorem ipsum dolor sit amet
-   *
-   * </pre>
    * <p>
-   * hsep does not introduce line breaks on its own, even when the page is too
-   * narrow:
-   *
-   * <pre>
-   * >>> putDocW 5 (hsep docs)
-   * lorem ipsum dolor sit amet
-   * </pre>
+   * stickySep does not introduce line breaks on its own, even when the page is too narrow:
    *
    * @param docs documents to separate
    * @return separated documents
@@ -510,22 +441,6 @@ public sealed interface Doc extends Docile {
    * if you do not want a 'space'.
    * <p>
    * Let's print some words to fill the line:
-   *
-   * <pre>
-   *
-   * >>> let docs = take 20 (cycle ["lorem", "ipsum", "dolor", "sit", "amet"])
-   * >>> putDocW 80 ("Docs:" <+> fillSep docs)
-   * Docs: lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor
-   * sit amet lorem ipsum dolor sit amet
-   *
-   * The same document, printed at a width of only 40, yields
-   *
-   * >>> putDocW 40 ("Docs:" <+> fillSep docs)
-   * Docs: lorem ipsum dolor sit amet lorem
-   * ipsum dolor sit amet lorem ipsum dolor
-   * sit amet lorem ipsum dolor sit amet
-   *
-   * </pre>
    *
    * @param docs documents to separate
    * @return separated documents
