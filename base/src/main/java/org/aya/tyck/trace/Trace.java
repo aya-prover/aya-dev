@@ -2,13 +2,13 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.trace;
 
+import kala.collection.mutable.Buffer;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
 import org.aya.generic.GenericBuilder;
-import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -25,7 +25,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     R visitDecl(@NotNull DeclT t, P p);
     R visitTyck(@NotNull TyckT t, P p);
     R visitPat(@NotNull PatT t, P p);
-    R visitLabel(@NotNull Trace.LabelT t, P p);
+    R visitLabel(@NotNull LabelT t, P p);
   }
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);

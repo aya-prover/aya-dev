@@ -133,6 +133,7 @@ public record UntypedDefEq(
       reporter().report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
       return new ErrorTerm(solved.toDoc());
     }
+    defeq.tracing(builder -> builder.append(new Trace.LabelT(defeq().pos, "Hole solved!")));
     return meta.result;
   }
 
