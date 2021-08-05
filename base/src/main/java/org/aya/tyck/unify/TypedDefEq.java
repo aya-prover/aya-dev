@@ -33,7 +33,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   public final @NotNull ExprTycker tycker;
   public final @NotNull SourcePos pos;
 
-  private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
+  void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (tycker.traceBuilder != null) consumer.accept(tycker.traceBuilder);
   }
 

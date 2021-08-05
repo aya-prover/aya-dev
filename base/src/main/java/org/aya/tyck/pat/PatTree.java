@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
+import kala.collection.mutable.Buffer;
+import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.WithPos;
@@ -9,8 +11,6 @@ import org.aya.concrete.Pattern;
 import org.aya.generic.GenericBuilder;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
-import kala.collection.mutable.Buffer;
-import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,8 +36,7 @@ public record PatTree(
 
   public final static class Builder extends GenericBuilder<PatTree> {
     public void shiftEmpty(boolean explicit) {
-      shift(new PatTree("_", explicit));
-      reduce();
+      append(new PatTree("_", explicit));
     }
   }
 }

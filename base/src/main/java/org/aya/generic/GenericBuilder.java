@@ -28,6 +28,10 @@ public abstract class GenericBuilder<T extends GenericBuilder.Tree<T>> {
     tops.addLast(Buffer.of());
   }
 
+  public void append(@NotNull T trace) {
+    shift(trace);
+    reduce();
+  }
 
   public void shift(@NotNull T trace) {
     Objects.requireNonNull(tops.getLast()).append(trace);

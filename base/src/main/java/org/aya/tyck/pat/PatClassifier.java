@@ -105,8 +105,7 @@ public record PatClassifier(
           return head instanceof Pat.Prim prim && prim.ref() == def.ref()
             || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
         });
-        builder.shift(new PatTree(def.ref().name(), explicit));
-        builder.reduce();
+        builder.append(new PatTree(def.ref().name(), explicit));
         var classes = new PatClass(matchy.view().map(SubPats::ix))
           .extract(subPatsSeq)
           .map(SubPats::drop)

@@ -77,8 +77,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
     tracing(builder -> {
-      builder.shift(new Trace.TyckT(result.wellTyped.freezeHoles(), result.type.freezeHoles(), expr.sourcePos()));
-      builder.reduce();
+      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(), result.type.freezeHoles(), expr.sourcePos()));
       builder.reduce();
     });
   }
@@ -253,8 +252,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private boolean unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
-    tracing(builder -> builder.shift(new Trace.UnifyT(lower, upper, pos)));
-    tracing(Trace.Builder::reduce);
+    tracing(builder -> builder.append(new Trace.UnifyT(lower, upper, pos)));
     return unifier(pos, Ordering.Lt).compare(lower, upper, FormTerm.Univ.OMEGA);
   }
 
