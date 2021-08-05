@@ -65,7 +65,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Override public void traceEntrance(@NotNull Expr expr, Term term) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, term)));
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, term == null ? null : term.freezeHoles())));
   }
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
@@ -77,7 +77,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
     tracing(builder -> {
-      builder.shift(new Trace.TyckT(result.wellTyped, result.type, expr.sourcePos()));
+      builder.shift(new Trace.TyckT(result.wellTyped.freezeHoles(), result.type.freezeHoles(), expr.sourcePos()));
       builder.reduce();
       builder.reduce();
     });

@@ -21,6 +21,7 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
+import org.aya.tyck.trace.HoleFreezer;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +86,10 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
     return accept(Normalizer.INSTANCE, mode);
+  }
+
+  default @NotNull Term freezeHoles() {
+    return accept(HoleFreezer.INSTANCE, Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc() {

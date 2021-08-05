@@ -7,9 +7,15 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * @param isReallyError true if this is indeed an error,
+ *                      false if this is just for pretty printing placeholder
  * @author ice1000
  */
-public record ErrorTerm(@NotNull Doc description) implements Term {
+public record ErrorTerm(@NotNull Doc description, boolean isReallyError) implements Term {
+  public ErrorTerm(@NotNull Doc description) {
+    this(description, true);
+  }
+
   @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitError(this, p);
   }

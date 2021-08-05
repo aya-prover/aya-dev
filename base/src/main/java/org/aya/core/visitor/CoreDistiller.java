@@ -163,12 +163,11 @@ public final class CoreDistiller implements
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
     var name = term.ref();
     var sol = name.core().body;
-    var filling = sol == null ? varDoc(name) : sol.toDoc();
-    return Doc.cat(Doc.symbol("{?"), filling, Doc.symbol("?}"));
+    return Doc.wrap("{?", "?}", sol == null ? varDoc(name) : sol.toDoc());
   }
 
   @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {
-    return Doc.angled(term.description());
+    return !term.isReallyError() ? term.description() : Doc.angled(term.description());
   }
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
