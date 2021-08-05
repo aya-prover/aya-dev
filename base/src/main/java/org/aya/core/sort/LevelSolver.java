@@ -34,10 +34,10 @@ public class LevelSolver {
     for (var nu : unfreeNodes) {
       int u = graphMap.get(nu);
       if (d[u][0] < 0) return true;
-      if (d[0][u] < LOW_BOUND) return true;
+      if (d[0][u] < LOW_BOUND / 2) return true;
       for (var nv : unfreeNodes) {
         int v = graphMap.get(nv);
-        if (u != v && d[u][v] < LOW_BOUND) return true;
+        if (u != v && d[u][v] < LOW_BOUND / 2) return true;
       }
       for (int v = 1; v <= nodeSize; v++) {
         if (d[u][v] < 0) return true;
