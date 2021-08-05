@@ -2,12 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.experiments;
 
-import kala.collection.SeqLike;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableSet;
-
-import java.util.Scanner;
+import java.util.*;
 
 
 /**
@@ -33,7 +28,7 @@ public class ZzsSolver {
   record Var(String name, boolean canBeInf, int defaultValue, boolean free) {
   }
 
-  record Max(SeqLike<Level> levels) {
+  record Max(List<Level> levels) {
   }
 
   // <=, >=, ==
@@ -48,35 +43,40 @@ public class ZzsSolver {
   int nodeSize; // the number of nodes in the graph
 
   boolean floyd(int[][] d) { // return true when it's satisfied
-    for (int k = 0; k <= nodeSize; k++)
-      for (int i = 0; i <= nodeSize; i++)
-        for (int j = 0; j <= nodeSize; j++)
+    for (int k = 0; k <= nodeSize; k++) {
+      for (int i = 0; i <= nodeSize; i++) {
+        for (int j = 0; j <= nodeSize; j++) {
           d[i][j] = Math.min(d[i][j], d[i][k] + d[k][j]);
-    for (int i = 0; i <= nodeSize; i++) if (d[i][i] < 0) return true;
-    for (var nu : unfreeNodes) {
-      int u = graphMap.get(nu);
-      if (d[u][0] < 0) return true;
-      if (d[0][u] != INF) return true;
-      for (var nv : unfreeNodes) {
-        int v = graphMap.get(nv);
-        if (u != v && d[u][v] != INF) return true;
-      }
-      for (int v = 1; v <= nodeSize; v++) {
-        if (d[u][v] < 0) return true;
+        }
       }
     }
-    return false;
+    for (int i = 0; i <= nodeSize; i++) {
+      if (d[i][i] < 0) return false;
+    }
+    for (String nu : unfreeNodes) {
+      int u = graphMap.get(nu);
+      if (d[u][0] < 0) return false;
+      if (d[0][u] < LOW_BOUND) return false;
+      for (var nv : unfreeNodes) {
+        int v = graphMap.get(nv);
+        if (u != v && d[u][v] < LOW_BOUND) return false;
+      }
+      for (int v = 1; v <= nodeSize; v++) {
+        if (d[u][v] < 0) return false;
+      }
+    }
+    return true;
   }
 
   void addEdge(int[][] g, int u, int v, int dist) {
     g[u][v] = Math.min(g[u][v], dist);
   }
 
-  MutableSet<String> unfreeNodes;
-  MutableSet<String> freeNodes;
-  MutableMap<String, Integer> graphMap;
+  HashSet<String> unfreeNodes;
+  HashSet<String> freeNodes;
+  HashMap<String, Integer> graphMap;
 
-  void genGraphNode(SeqLike<Level> l) {
+  void genGraphNode(List<Level> l) {
     for (var e : l) {
       if (e instanceof Reference th) {
         graphMap.put(th.ref().name(), ++nodeSize);
@@ -117,13 +117,14 @@ public class ZzsSolver {
     }
   }
 
-  void prepareGraphNode(int[][] g, SeqLike<Level> l) {
+  void prepareGraphNode(int[][] g, List<Level> l) {
     for (var e : l) {
       if (e instanceof Reference th) {
         int defaultValue = th.ref().defaultValue() - th.lift();
         int u = graphMap.get(th.ref().name());
         if (th.ref().free()) {
-          addEdge(g, u, 0, -defaultValue); // 认为自由变量一定大于等于其默认值
+          // addEdge(g, u, 0, -defaultValue); // 认为自由变量一定大于等于其默认值（暂时取消这种想法）
+          defaultValues.put(th.ref().name(), th.ref().defaultValue());
           freeNodes.add(th.ref().name());
           if (!th.ref().canBeInf()) {
             addEdge(g, 0, u, LOW_BOUND);
@@ -135,9 +136,9 @@ public class ZzsSolver {
     }
   }
 
-  int[][] dfs(SeqLike<Equation> l, int pos, int[][] g) throws UnsatException {
+  int[][] dfs(ArrayList<Equation> l, int pos, int[][] g) throws UnsatException {
     if (pos >= l.size()) {
-      if (floyd(g)) {
+      if (!floyd(g)) {
         throw new UnsatException();
       } else {
         return g;
@@ -158,7 +159,7 @@ public class ZzsSolver {
       } catch (UnsatException ignored) {
       }
     }
-    return null;
+    throw new UnsatException();
   }
 
   Level resolveConstantLevel(int dist) {
@@ -175,11 +176,14 @@ public class ZzsSolver {
     }
   }
 
-  MutableMap<String, Max> solve(SeqLike<Equation> equations) throws UnsatException {
+  HashMap<String, Integer> defaultValues;
+
+  Map<String, Max> solve(List<Equation> equations) throws UnsatException {
     nodeSize = 0;
-    graphMap = MutableMap.create();
-    freeNodes = MutableSet.of();
-    unfreeNodes = MutableSet.of();
+    graphMap = new HashMap<>();
+    defaultValues = new HashMap<>();
+    freeNodes = new HashSet<>();
+    unfreeNodes = new HashSet<>();
     for (var e : equations) {
       genGraphNode(e.lhs().levels());
       genGraphNode(e.rhs().levels());
@@ -195,7 +199,7 @@ public class ZzsSolver {
       prepareGraphNode(g, e.lhs().levels());
       prepareGraphNode(g, e.rhs().levels());
     }
-    var specialEq = Buffer.<Equation>of();
+    var specialEq = new ArrayList<Equation>();
     for (var e : equations) {
       var ord = e.ord();
       var lhs = e.lhs();
@@ -221,42 +225,51 @@ public class ZzsSolver {
             dealSingleLt(g, left, right);
           }
         } else {
-          specialEq.append(e);
+          specialEq.add(e);
         }
       } else {
-        specialEq.append(new Equation(Ord.Lt, rhs, lhs));
-        specialEq.append(new Equation(Ord.Lt, lhs, rhs));
+        specialEq.add(new Equation(Ord.Lt, rhs, lhs));
+        specialEq.add(new Equation(Ord.Lt, lhs, rhs));
       }
     }
-    if (floyd(g)) throw new UnsatException();
+    if (!floyd(g)) throw new UnsatException();
     var gg = dfs(specialEq, 0, g);
-    var ret = MutableMap.<String, Max>of();
+    var ret = new HashMap<String, Max>();
     for (var name : freeNodes) {
       int u = graphMap.get(name);
+      int thDefault = defaultValues.get(name);
+      int upperBound = gg[0][u];
+      if (upperBound >= thDefault) {
+        addEdge(gg, u, 0, thDefault);
+      }
       int lowerBound = -gg[u][0];
       if (lowerBound < 0) lowerBound = 0;
-      int upperBound = gg[0][u];
-      Buffer<Level> upperNodes = Buffer.create();
-      Buffer<Level> lowerNodes = Buffer.create();
+      List<Level> upperNodes = new ArrayList<>();
+      List<Level> lowerNodes = new ArrayList<>();
       for (var nu : unfreeNodes) {
         int v = graphMap.get(nu);
+        // 下面认为，非自由变量是否可以是无穷大、是否有默认值是无关紧要的
         if (gg[v][u] != INF) {
-          upperNodes.append(new Reference(new Var(nu, true, 0, false), gg[v][u]));
+          upperNodes.add(new Reference(new Var(nu, true, 0, false), gg[v][u]));
         }
-        if (gg[u][v] != INF) {
-          lowerNodes.append(new Reference(new Var(nu, true, 0, false), -gg[u][v]));
+        if (gg[u][v] < LOW_BOUND / 2) {
+          lowerNodes.add(new Reference(new Var(nu, true, 0, false), -gg[u][v]));
         }
       }
-      Buffer<Level> retList = Buffer.create();
+      List<Level> retList = new ArrayList<>();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
-        retList.append(resolveConstantLevel(lowerBound));
-        retList.appendAll(lowerNodes);
+        if (lowerBound >= LOW_BOUND) {
+          retList.add(new Infinity());
+        } else {
+          if (lowerBound != 0 || lowerNodes.isEmpty()) retList.add(resolveConstantLevel(lowerBound));
+          retList.addAll(lowerNodes);
+        }
       } else {
         int minv = upperBound;
         for (var _l : upperNodes) {
           if (_l instanceof Reference l) minv = Math.min(minv, l.lift());
         }
-        retList.append(resolveConstantLevel(minv));
+        retList.add(resolveConstantLevel(minv));
       }
       ret.put(name, new Max(retList));
     }
@@ -264,27 +277,11 @@ public class ZzsSolver {
   }
 
   public static void main(String[] args) throws UnsatException {
-    var in = new Scanner(System.in);
-    int T = in.nextInt();
-    Buffer<Equation> list = Buffer.create();
-    for (int i = 1; i <= T; i++) {
-      var x = in.next();
-      int u = in.nextInt();
-      var y = in.next();
-      int v = in.nextInt();
-      boolean freeX = true, freeY = true;
-      if (x.endsWith("_")) freeX = false;
-      if (y.endsWith("_")) freeY = false;
-      Level var_1 = new Reference(new Var(x, true, 0, freeX), u);
-      if (x.equals("0")) var_1 = new Const(u);
-      Level var_2 = new Reference(new Var(y, true, 0, freeY), v);
-      if (y.equals("0")) var_2 = new Const(v);
-      Buffer<Level> lhs = Buffer.create();
-      lhs.append(var_1);
-      Buffer<Level> rhs = Buffer.of();
-      rhs.append(var_2);
-      list.append(new Equation(Ord.Lt, new Max(lhs), new Max(rhs)));
-    }
-    System.out.println(new ZzsSolver().solve(list));
+    var res = new ZzsSolver().solve(List.of(
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("h", true, 2, false), 1))), new Max(List.of(new Reference(new Var("wow.h", true, 2, true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false, 0, false), 1))), new Max(List.of(new Reference(new Var("wow.u", false, 0, true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("h", true, 2, false), 0))), new Max(List.of(new Reference(new Var("wow.h", true, 2, true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false, 0, false), 0))), new Max(List.of(new Reference(new Var("wow.u", false, 0, true), 0))))));
+    System.out.println(res);
   }
 }
