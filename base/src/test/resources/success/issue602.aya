@@ -1,3 +1,6 @@
 open data Nat : Set | zero | suc Nat
 def wow {A : Type} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => zero
-example def test (A B : Type) (x : A) (y : B) => wow A B x x
+example def test (A B : Type) (x : A) (y : B) => wow A B x y
+
+-- example def test (A B : Type) (x : A) (y : B) => wow A B x x
+-- ^ works in Agda but not for us

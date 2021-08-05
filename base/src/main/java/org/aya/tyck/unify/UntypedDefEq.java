@@ -90,16 +90,17 @@ public record UntypedDefEq(
   }
 
   private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
-    var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
+    var argSubst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     var meta = lhs.ref().core();
     for (var arg : lhs.args().view().zip(meta.telescope)) {
       if (arg._1.term() instanceof RefTerm ref) {
-        if (subst.map().containsKey(ref.var())) return null;
-        subst.add(ref.var(), arg._2.toTerm());
+        // TODO[ice]: ^ eta var
+        if (argSubst.map().containsKey(ref.var())) return null;
+        argSubst.add(ref.var(), arg._2.toTerm());
       } else return null;
-      // TODO[ice]: ^ eta var
     }
-    subst.add(Unfolder.buildSubst(meta.contextTele, lhs.contextArgs()));
+    var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
+    subst.add(argSubst);
     defeq.varSubst.forEach(subst::add);
     return rhs.subst(subst);
   }
