@@ -43,7 +43,7 @@ public record UntypedDefEq(
   }
 
   @Override public void traceEntrance(@NotNull Term lhs, @NotNull Term rhs) {
-    defeq.traceEntrance(new Trace.UnifyT(lhs, rhs, defeq.pos));
+    defeq.traceEntrance(new Trace.UnifyT(lhs.freezeHoles(), rhs.freezeHoles(), defeq.pos));
   }
 
   @Override public void traceExit(@Nullable Term term) {

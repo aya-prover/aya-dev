@@ -42,7 +42,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   @Override public void traceEntrance(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
-    traceEntrance(new Trace.UnifyT(lhs, rhs, pos, type));
+    traceEntrance(new Trace.UnifyT(lhs.freezeHoles(), rhs.freezeHoles(), pos, type.freezeHoles()));
   }
 
   @Override public void traceExit(@NotNull Boolean result) {
