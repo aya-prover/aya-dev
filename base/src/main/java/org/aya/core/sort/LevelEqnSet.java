@@ -131,7 +131,7 @@ public record LevelEqnSet(
     }
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.sep(lhs.toDoc(), Doc.symbol(cmp.symbol), rhs.toDoc());
+      return Doc.stickySep(lhs.toDoc(), Doc.symbol(cmp.symbol), rhs.toDoc());
     }
   }
 }

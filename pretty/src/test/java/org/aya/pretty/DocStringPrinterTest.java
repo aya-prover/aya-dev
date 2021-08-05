@@ -2,8 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.pretty;
 
-import kala.collection.Seq;
-import org.aya.pretty.doc.Doc;
 import org.junit.jupiter.api.Test;
 
 import static org.aya.pretty.doc.Doc.*;
@@ -48,13 +46,13 @@ public class DocStringPrinterTest {
 
   @Test
   public void testHSep() {
-    var doc = stickySep(Seq.of(new Doc[]{plain("11"), plain("45"), plain("14")}));
+    var doc = stickySep(plain("11"), plain("45"), plain("14"));
     assertEquals("11 45 14", doc.commonRender());
   }
 
   @Test
   public void testHSepNarrow() {
-    var doc = stickySep(Seq.of(plain("boynext"), plain("next"), plain("door"), plain("doooor")));
+    var doc = stickySep(plain("boynext"), plain("next"), plain("door"), plain("doooor"));
     assertEquals("boynext next door doooor", doc.renderWithPageWidth(5, false));
   }
 

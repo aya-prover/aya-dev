@@ -494,8 +494,11 @@ public sealed interface Doc extends Docile {
    * @param docs documents to separate
    * @return separated documents
    */
-  @Contract("_ -> new")
-  static @NotNull Doc stickySep(@NotNull SeqLike<@NotNull Doc> docs) {
+  @Contract("_ -> new") static @NotNull Doc stickySep(@NotNull SeqLike<@NotNull Doc> docs) {
+    return join(ONE_WS, docs);
+  }
+
+  @Contract("_ -> new") static @NotNull Doc stickySep(Doc @NotNull ... docs) {
     return join(ONE_WS, docs);
   }
 
