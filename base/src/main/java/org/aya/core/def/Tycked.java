@@ -5,7 +5,7 @@ package org.aya.core.def;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
-import org.aya.core.visitor.CoreDistiller;
+import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;

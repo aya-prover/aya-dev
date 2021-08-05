@@ -2,16 +2,16 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
+import kala.value.Ref;
 import org.aya.api.concrete.ConcretePat;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.WithPos;
-import org.aya.concrete.visitor.ConcreteDistiller;
+import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
-import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
-import kala.value.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

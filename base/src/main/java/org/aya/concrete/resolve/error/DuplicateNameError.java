@@ -5,7 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.core.visitor.CoreDistiller;
+import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;

@@ -17,7 +17,7 @@ import org.aya.core.def.DataDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.CoreDistiller;
+import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.LocalCtx;
 import org.jetbrains.annotations.Debug;

@@ -6,7 +6,7 @@ import kala.collection.mutable.Buffer;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
-import org.aya.core.visitor.CoreDistiller;
+import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;

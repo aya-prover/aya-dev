@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.concrete.visitor;
+package org.aya.distill;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -13,7 +13,6 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
-import org.aya.core.visitor.CoreDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static org.aya.core.visitor.CoreDistiller.*;
+import static org.aya.distill.CoreDistiller.*;
 
 /**
  * @author ice1000, kiva

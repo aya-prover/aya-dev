@@ -17,6 +17,7 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.visitor.*;
+import org.aya.distill.CoreDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;

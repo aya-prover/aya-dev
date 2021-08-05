@@ -9,7 +9,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.resolve.visitor.StmtResolver;
-import org.aya.concrete.visitor.ConcreteDistiller;
+import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.Contract;

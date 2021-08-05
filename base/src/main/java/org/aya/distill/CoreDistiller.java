@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.core.visitor;
+package org.aya.distill;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -11,7 +11,6 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
-import org.aya.concrete.visitor.ConcreteDistiller;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
@@ -244,14 +243,9 @@ public final class CoreDistiller implements
     return !ex && !as ? withAs : nestedCall && !noParams ? Doc.parened(withAs) : withAs;
   }
 
-  private Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
+  public Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
     return Doc.emptyIf(patterns.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
       patterns.view().map(p -> p.accept(this, nestedCall)))));
-  }
-
-  public Doc matchy(@NotNull Matching match) {
-    var doc = visitMaybeCtorPatterns(match.patterns(), false, Doc.plain(", "));
-    return Doc.sep(doc, Doc.symbol("=>"), match.body().toDoc());
   }
 
 
@@ -293,7 +287,7 @@ public final class CoreDistiller implements
 
   private Doc visitClauses(@NotNull ImmutableSeq<Matching> clauses) {
     return Doc.vcat(clauses.view()
-      .map(this::matchy)
+      .map(Matching::toDoc)
       .map(doc -> Doc.cat(Doc.symbol("|"), doc)));
   }
 

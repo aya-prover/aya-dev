@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
+import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @param isReallyError true if this is indeed an error,
  *                      false if this is just for pretty printing placeholder
  * @author ice1000
+ * @see CoreDistiller#visitError(ErrorTerm, Boolean)
  */
 public record ErrorTerm(@NotNull Doc description, boolean isReallyError) implements Term {
   public ErrorTerm(@NotNull Doc description) {

@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.SourcePos;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.CoreDistiller;
+import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +18,7 @@ public record Matching(
   @NotNull Term body
 ) implements Docile {
   @Override public @NotNull Doc toDoc() {
-    return CoreDistiller.INSTANCE.matchy(this);
+    var doc = CoreDistiller.INSTANCE.visitMaybeCtorPatterns(this.patterns(), false, Doc.plain(", "));
+    return Doc.sep(doc, Doc.symbol("=>"), this.body().toDoc());
   }
 }

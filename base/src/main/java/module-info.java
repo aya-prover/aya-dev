@@ -9,11 +9,11 @@ module org.aya {
   requires transitive kala.collection;
 
   exports org.aya.concrete.desugar;
-  exports org.aya.concrete.stmt;
   exports org.aya.concrete.desugar.error;
   exports org.aya.concrete.parse;
   exports org.aya.concrete.resolve.context;
   exports org.aya.concrete.resolve.module;
+  exports org.aya.concrete.stmt;
   exports org.aya.concrete.visitor;
   exports org.aya.concrete;
   exports org.aya.core.def;
@@ -22,6 +22,7 @@ module org.aya {
   exports org.aya.core.term;
   exports org.aya.core.visitor;
   exports org.aya.core;
+  exports org.aya.distill;
   exports org.aya.generic;
   exports org.aya.prelude;
   exports org.aya.tyck.pat;
