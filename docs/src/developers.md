@@ -21,3 +21,5 @@ Names are listed in random order.
 + ICEY <icey@icey.tech>
 + SmallFont00 <cowertsmu@gmail.com>
 + Yu-zh <yu.zhang.yz862@yale.edu>
++ Zhongsheng Zhan <danihao123@outlook.com>
++ Shreck Ye <shreckye@gmail.com>
