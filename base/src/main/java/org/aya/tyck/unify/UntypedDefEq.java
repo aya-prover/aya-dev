@@ -99,9 +99,8 @@ public record UntypedDefEq(
       } else return null;
       // TODO[ice]: ^ eta var
     }
-    subst.add(Unfolder.buildSubst(meta.contextTele, lhs.contextArgs()));
     defeq.varSubst.forEach(subst::add);
-    return rhs.subst(subst);
+    return rhs.subst(subst).subst(Unfolder.buildSubst(meta.contextTele, lhs.contextArgs()));
   }
 
   @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs) {

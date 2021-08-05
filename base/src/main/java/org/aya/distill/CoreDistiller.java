@@ -162,7 +162,9 @@ public final class CoreDistiller implements
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
     var name = term.ref();
     var sol = name.core().body;
-    return Doc.wrap("{?", "?}", sol == null ? varDoc(name) : sol.toDoc());
+    var inner = sol == null ? varDoc(name) : sol.toDoc();
+    return Doc.wrap("{?", "?}",
+      visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), nestedCall));
   }
 
   @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {
@@ -247,7 +249,6 @@ public final class CoreDistiller implements
     return Doc.emptyIf(patterns.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
       patterns.view().map(p -> p.accept(this, nestedCall)))));
   }
-
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
     var line1 = Buffer.of(Doc.styled(KEYWORD, "def"),
