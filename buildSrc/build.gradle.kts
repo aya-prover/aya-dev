@@ -13,27 +13,31 @@ repositories { mavenCentral() }
 val rootDir = projectDir.parentFile!!
 val parserDir = rootDir.resolve("parser")
 val genDir = parserDir.resolve("src/main/java")
+
+tasks.withType<AntlrTask>().configureEach {
+  outputDirectory = genDir
+  val packageName = "org.aya.parser"
+  val libPath = genDir.resolve(packageName.replace('.', '/')).absoluteFile
+  doFirst { libPath.mkdirs() }
+  arguments.addAll(
+    listOf(
+      "-package", packageName,
+      "-no-listener",
+      "-lib", "$libPath",
+    ),
+  )
+}
+
 val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
   group = "build setup"
   from(parserDir.resolve("module-info.java"))
   into(genDir)
 }
-
-val sync = tasks.named("sync")
 tasks.withType<AntlrTask>().configureEach {
-  outputDirectory = genDir
-  sync.configure { dependsOn(this@configureEach) }
-  val packageName = "org.aya.parser"
-  val libPath = genDir.resolve(packageName.replace('.', '/')).absoluteFile
-  doFirst { libPath.mkdirs() }
-  arguments.addAll(listOf(
-    "-package", packageName,
-    "-no-listener",
-    "-lib", "$libPath",
-  ))
+  copyModuleInfo.configure { dependsOn(this@configureEach) }
 }
 
-sync.configure { dependsOn(copyModuleInfo) }
+tasks.named("sync").configure { dependsOn(copyModuleInfo) }
 tasks.named("build").configure { dependsOn(copyModuleInfo) }
 
 dependencies {
