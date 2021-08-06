@@ -15,7 +15,7 @@ import org.aya.api.util.WithPos;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.Tycked;
+import org.aya.core.def.TopLevel;
 import org.aya.lsp.actions.ComputeTerm;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.actions.SyntaxHighlight;
@@ -170,7 +170,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   public static final record AyaFile(
-    @NotNull ImmutableSeq<Tycked> core,
+    @NotNull ImmutableSeq<TopLevel> core,
     @NotNull ImmutableSeq<Stmt> concrete
   ) {
   }

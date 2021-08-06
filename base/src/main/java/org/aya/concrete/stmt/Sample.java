@@ -5,7 +5,7 @@ package org.aya.concrete.stmt;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.core.def.Tycked;
+import org.aya.core.def.TopLevel;
 import org.aya.tyck.SampleTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.trace.Trace;
@@ -16,7 +16,7 @@ public sealed interface Sample extends Stmt {
   @NotNull Stmt delegate();
 
   /** @return <code>null</code> if the delegate is a command (not a definition) */
-  default @Nullable Tycked tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+  default @Nullable TopLevel tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
     return doAccept(SampleTycker.INSTANCE, new StmtTycker(reporter, traceBuilder));
   }
 
