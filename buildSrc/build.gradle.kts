@@ -34,6 +34,7 @@ tasks.withType<AntlrTask>().configureEach {
 }
 
 sync.configure { dependsOn(copyModuleInfo) }
+tasks.named("build").configure { dependsOn(copyModuleInfo) }
 
 dependencies {
   val deps = Properties()
