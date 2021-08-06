@@ -19,8 +19,10 @@ val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
   into(genDir)
 }
 
+val sync = tasks.named("sync")
 tasks.withType<AntlrTask>().configureEach {
   outputDirectory = genDir
+  sync.configure { dependsOn(this@configureEach) }
   val packageName = "org.aya.parser"
   val libPath = genDir.resolve(packageName.replace('.', '/')).absoluteFile
   doFirst { libPath.mkdirs() }
@@ -31,9 +33,7 @@ tasks.withType<AntlrTask>().configureEach {
   ))
 }
 
-tasks.named("build").configure {
-  dependsOn(copyModuleInfo)
-}
+sync.configure { dependsOn(copyModuleInfo) }
 
 dependencies {
   val deps = Properties()
