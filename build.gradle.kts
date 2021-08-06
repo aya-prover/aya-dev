@@ -177,6 +177,10 @@ tasks.register("githubActions") {
   dependsOn(mergeJacocoReports, tasks.findByPath(":lsp:jlink"))
 }
 
+tasks.withType<Sync>().configureEach {
+  dependsOn(tasks.findByPath(":buildSrc:copyModuleInfo"))
+}
+
 fun JacocoReportsContainer.configureReports(merger: Boolean) {
   xml.required.set(true)
   csv.required.set(false)
