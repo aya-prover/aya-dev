@@ -11,6 +11,7 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 /**
  * @author ice1000, kiva
  */
-public class GotoDefinition implements SyntaxNodeAction {
+public class GotoDefinition implements StmtConsumer<XY> {
   public final @NotNull Buffer<WithPos<Var>> locations = Buffer.of();
 
   @NotNull
@@ -55,19 +56,19 @@ public class GotoDefinition implements SyntaxNodeAction {
       var pos = expr.ix().getRightValue();
       check(xy, pos.sourcePos(), expr.resolvedIx().get());
     }
-    return SyntaxNodeAction.super.visitProj(expr, xy);
+    return StmtConsumer.super.visitProj(expr, xy);
   }
 
   @Override public Unit visitBind(@NotNull Pattern.Bind bind, XY xy) {
     if (bind.resolved().value instanceof DefVar<?, ?> defVar)
       check(xy, bind.sourcePos(), defVar);
-    return SyntaxNodeAction.super.visitBind(bind, xy);
+    return StmtConsumer.super.visitBind(bind, xy);
   }
 
   @Override public Unit visitCtor(@NotNull Pattern.Ctor ctor, XY xy) {
     if (ctor.resolved().value != null)
       check(xy, ctor.name().sourcePos(), ctor.resolved().get());
-    return SyntaxNodeAction.super.visitCtor(ctor, xy);
+    return StmtConsumer.super.visitCtor(ctor, xy);
   }
 
   private void check(@NotNull XY xy, @NotNull SourcePos sourcePos, Var var) {

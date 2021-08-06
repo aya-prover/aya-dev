@@ -25,7 +25,7 @@ import java.util.EnumSet;
 import java.util.function.BiFunction;
 
 /**
- * concrete definition, corresponding to {@link Def}.
+ * Concrete definition, corresponding to {@link Def}.
  *
  * @author re-xyr
  */
