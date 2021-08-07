@@ -18,6 +18,8 @@ import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.VarConsumer;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
@@ -82,9 +84,13 @@ public record EqnSet(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull Ordering cmp, @NotNull SourcePos pos,
     @NotNull ImmutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst
-  ) {
+  ) implements Docile {
     public <P, R> Tuple2<R, R> accept(@NotNull Term.Visitor<P, R> visitor, P p) {
       return Tuple.of(lhs.accept(visitor, p), rhs.accept(visitor, p));
+    }
+
+    public @NotNull Doc toDoc() {
+      return Doc.stickySep(lhs.toDoc(), Doc.symbol(cmp.symbol), rhs.toDoc());
     }
   }
 }

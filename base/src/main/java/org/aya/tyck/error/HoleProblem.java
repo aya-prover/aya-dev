@@ -12,6 +12,7 @@ import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
+import org.aya.tyck.unify.EqnSet;
 import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */
@@ -67,6 +68,23 @@ public sealed interface HoleProblem extends Problem {
         Doc.plain("as"),
         Doc.styled(Style.code(), sol.toDoc()),
         Doc.english("which is recursive"));
+    }
+  }
+
+  record CannotFindGeneralSolution(@NotNull EqnSet.Eqn eqn) implements Problem {
+    @Override public @NotNull SourcePos sourcePos() {
+      return eqn.pos();
+    }
+
+    @Override public @NotNull Doc describe() {
+      return Doc.sep(
+        Doc.english("Solving the equation"),
+        Doc.styled(Style.code(), eqn.toDoc()),
+        Doc.english("with a solution that is not the most general one."));
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.WARN;
     }
   }
 }
