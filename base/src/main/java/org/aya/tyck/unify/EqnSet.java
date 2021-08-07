@@ -7,6 +7,7 @@ import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
@@ -17,9 +18,11 @@ import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.VarConsumer;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Currently we only deal with ambiguous equations (so no 'stuck' equations).
@@ -50,7 +53,7 @@ public record EqnSet(
   /**
    * @return true if <code>this</code> is mutated.
    */
-  public boolean simplify(@NotNull ExprTycker tycker) {
+  public boolean simplify(@NotNull Reporter reporter, @NotNull LevelEqnSet levelEqns, @Nullable Trace.Builder tracer) {
     var removingMetas = Buffer.<HoleVar<Meta>>of();
     for (var activeMeta : activeMetas) {
       var solution = activeMeta.core().body;
@@ -59,7 +62,7 @@ public record EqnSet(
           var usageCounter = new VarConsumer.UsageCounter(activeMeta);
           eqn.accept(usageCounter, Unit.unit());
           if (usageCounter.usageCount() > 0) {
-            var defEq = tycker.unifier(eqn.pos, eqn.cmp);
+            var defEq = new TypedDefEq(eqn.cmp, reporter, levelEqns, this, tracer, eqn.pos);
             defEq.varSubst.putAll(eqn.varSubst);
             defEq.termDefeq.compare(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
             return false;

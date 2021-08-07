@@ -101,7 +101,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public void solveMetas() {
     //noinspection StatementWithEmptyBody
-    while (termEqns.simplify(this)) ;
+    while (termEqns.simplify(reporter, levelEqns, traceBuilder)) ;
     levelEqns.solve();
   }
 
