@@ -4,3 +4,4 @@ example def test (A B : Type) (x : A) (y : B) => wow A B x y
 
 -- example def test (A B : Type) (x : A) (y : B) => wow A B x x
 -- ^ works in Agda but not for us
+-- ^ update: see issue608.aya test case

@@ -102,12 +102,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public void solveMetas() {
     while (termEqns.eqns().isNotEmpty()) {
       //noinspection StatementWithEmptyBody
-      while (termEqns.simplify(levelEqns, reporter, traceBuilder).isNotEmpty()) ;
+      while (termEqns.simplify(levelEqns, reporter, traceBuilder)) ;
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
       var eqns = termEqns.eqns().toImmutableSeq();
       if (eqns.isNotEmpty()) {
         for (var eqn : eqns) termEqns.solveEqn(levelEqns, reporter, traceBuilder, eqn, true);
-        reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns.first().pos(), eqns));
+        reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
       }
     }
     levelEqns.solve();

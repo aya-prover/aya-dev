@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple;
@@ -55,9 +54,9 @@ public record EqnSet(
   }
 
   /**
-   * @return non-empty if <code>this</code> is mutated.
+   * @return true if <code>this</code> is mutated.
    */
-  public Seq<WithPos<HoleVar<Meta>>> simplify(
+  public boolean simplify(
     @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter, @Nullable Trace.Builder tracer
   ) {
     var removingMetas = Buffer.<WithPos<HoleVar<Meta>>>create();
@@ -76,7 +75,7 @@ public record EqnSet(
       }
     }
     activeMetas.filterNotInPlace(removingMetas::contains);
-    return removingMetas;
+    return removingMetas.isNotEmpty();
   }
 
   public void solveEqn(
