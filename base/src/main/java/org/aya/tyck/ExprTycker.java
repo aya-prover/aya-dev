@@ -93,8 +93,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result finalize(@NotNull Result result) {
-    levelEqns.solve();
+    solveMetas();
     return new Result(result.wellTyped.zonk(this), result.type.zonk(this));
+  }
+
+  public void solveMetas() {
+    levelEqns.solve();
   }
 
   public @NotNull Result checkNoZonk(@NotNull Expr expr, @Nullable Term type) {

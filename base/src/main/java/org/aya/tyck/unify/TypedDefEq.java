@@ -31,8 +31,8 @@ import java.util.function.Supplier;
  */
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
   final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
-  private final @NotNull UntypedDefEq termDefeq;
   private final @Nullable Trace.Builder traceBuilder;
+  public final @NotNull UntypedDefEq termDefeq;
   public final @NotNull LevelEqnSet levelEqns;
   public final @NotNull Reporter reporter;
   public final @NotNull SourcePos pos;

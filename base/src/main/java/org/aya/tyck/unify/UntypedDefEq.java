@@ -49,6 +49,10 @@ public record UntypedDefEq(
     defeq.traceExit(true);
   }
 
+  private @NotNull EqnSet.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
+    return new EqnSet.Eqn(lhs, rhs, cmp, defeq.pos, defeq.varSubst.toImmutableMap());
+  }
+
   @Override public @Nullable Term visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs) {
     if (preRhs instanceof RefTerm rhs
       && defeq.varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var()) {
