@@ -75,13 +75,9 @@ public sealed interface HoleProblem extends Problem {
   }
 
   record CannotFindGeneralSolution(
-    @NotNull SeqLike<SourcePos> pos,
+    @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<EqnSet.Eqn> eqns
   ) implements Problem {
-    @Override public @NotNull SourcePos sourcePos() {
-      return pos.first();
-    }
-
     @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
       return eqns.map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc()));
     }

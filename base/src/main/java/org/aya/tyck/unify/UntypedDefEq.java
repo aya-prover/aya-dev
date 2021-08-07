@@ -125,8 +125,9 @@ public record UntypedDefEq(
       return null;
     }
     var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
-    // In this case, the solution may not be unique. See #608
-    if (subst.overlap(argSubst).anyMatch(var -> rhs.findUsages(var) > 0)) {
+    // In this case, the solution may not be unique (see #608),
+    // so we may delay its resolution to the end of the tycking when we disallow vague unification.
+    if (!defeq.allowVague && subst.overlap(argSubst).anyMatch(var -> rhs.findUsages(var) > 0)) {
       defeq.termEqns.addEqn(createEqn(lhs, rhs));
       // Skip the unification and scope check
       return meta.result;

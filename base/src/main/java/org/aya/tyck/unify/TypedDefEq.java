@@ -33,7 +33,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @Nullable Trace.Builder traceBuilder;
   public final @NotNull UntypedDefEq termDefeq;
-  private boolean allowVague;
+  boolean allowVague;
   public final @NotNull LevelEqnSet levelEqns;
   public final @NotNull EqnSet termEqns;
   public final @NotNull Reporter reporter;

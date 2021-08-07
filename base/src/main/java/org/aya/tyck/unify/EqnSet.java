@@ -55,11 +55,10 @@ public record EqnSet(
   }
 
   /**
-   * @return true if <code>this</code> is mutated.
+   * @return non-empty if <code>this</code> is mutated.
    */
   public Seq<WithPos<HoleVar<Meta>>> simplify(
-    @NotNull LevelEqnSet levelEqns, boolean allowVague,
-    @NotNull Reporter reporter, @Nullable Trace.Builder tracer
+    @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter, @Nullable Trace.Builder tracer
   ) {
     var removingMetas = Buffer.<WithPos<HoleVar<Meta>>>create();
     for (var activeMeta : activeMetas) {
@@ -69,9 +68,7 @@ public record EqnSet(
           var usageCounter = new VarConsumer.UsageCounter(activeMeta.data());
           eqn.accept(usageCounter, Unit.unit());
           if (usageCounter.usageCount() > 0) {
-            var defEq = new TypedDefEq(eqn.cmp, reporter, false, levelEqns, this, tracer, eqn.pos);
-            defEq.varSubst.putAll(eqn.varSubst);
-            defEq.termDefeq.compare(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
+            solveEqn(levelEqns, reporter, tracer, eqn, false);
             return false;
           } else return true;
         });
@@ -80,6 +77,15 @@ public record EqnSet(
     }
     activeMetas.filterNotInPlace(removingMetas::contains);
     return removingMetas;
+  }
+
+  public void solveEqn(
+    @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter,
+    Trace.@Nullable Builder tracer, @NotNull Eqn eqn, boolean allowVague
+  ) {
+    var defEq = new TypedDefEq(eqn.cmp, reporter, allowVague, levelEqns, this, tracer, eqn.pos);
+    defEq.varSubst.putAll(eqn.varSubst);
+    defEq.termDefeq.compare(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
   }
 
   public record Eqn(
