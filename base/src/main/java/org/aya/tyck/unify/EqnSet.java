@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple;
@@ -12,6 +13,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
+import org.aya.api.util.WithPos;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
@@ -33,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public record EqnSet(
   @NotNull Buffer<Eqn> eqns,
-  @NotNull Buffer<HoleVar<Meta>> activeMetas
+  @NotNull Buffer<WithPos<HoleVar<Meta>>> activeMetas
 ) {
   public EqnSet() {
     this(Buffer.create(), Buffer.create());
@@ -45,7 +47,7 @@ public record EqnSet(
     eqn.accept(new TermConsumer<>() {
       @Override public Unit visitHole(CallTerm.@NotNull Hole term, Unit unit) {
         var ref = term.ref();
-        if (ref.core().body == null) activeMetas.append(ref);
+        if (ref.core().body == null) activeMetas.append(new WithPos<>(eqn.pos, ref));
         return unit;
       }
     }, Unit.unit());
@@ -55,16 +57,16 @@ public record EqnSet(
   /**
    * @return true if <code>this</code> is mutated.
    */
-  public boolean simplify(
+  public Seq<WithPos<HoleVar<Meta>>> simplify(
     @NotNull LevelEqnSet levelEqns, boolean allowVague,
     @NotNull Reporter reporter, @Nullable Trace.Builder tracer
   ) {
-    var removingMetas = Buffer.<HoleVar<Meta>>of();
+    var removingMetas = Buffer.<WithPos<HoleVar<Meta>>>create();
     for (var activeMeta : activeMetas) {
-      var solution = activeMeta.core().body;
+      var solution = activeMeta.data().core().body;
       if (solution != null) {
         eqns.filterInPlace(eqn -> {
-          var usageCounter = new VarConsumer.UsageCounter(activeMeta);
+          var usageCounter = new VarConsumer.UsageCounter(activeMeta.data());
           eqn.accept(usageCounter, Unit.unit());
           if (usageCounter.usageCount() > 0) {
             var defEq = new TypedDefEq(eqn.cmp, reporter, false, levelEqns, this, tracer, eqn.pos);
@@ -77,7 +79,7 @@ public record EqnSet(
       }
     }
     activeMetas.filterNotInPlace(removingMetas::contains);
-    return removingMetas.isNotEmpty();
+    return removingMetas;
   }
 
   public record Eqn(

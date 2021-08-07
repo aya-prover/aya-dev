@@ -3,9 +3,12 @@
 package org.aya.tyck.error;
 
 import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.util.WithPos;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.CoreDistiller;
@@ -71,16 +74,20 @@ public sealed interface HoleProblem extends Problem {
     }
   }
 
-  record CannotFindGeneralSolution(@NotNull EqnSet.Eqn eqn) implements Problem {
+  record CannotFindGeneralSolution(
+    @NotNull SeqLike<SourcePos> pos,
+    @NotNull ImmutableSeq<EqnSet.Eqn> eqns
+  ) implements Problem {
     @Override public @NotNull SourcePos sourcePos() {
-      return eqn.pos();
+      return pos.first();
+    }
+
+    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
+      return eqns.map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc()));
     }
 
     @Override public @NotNull Doc describe() {
-      return Doc.sep(
-        Doc.english("Solving the equation"),
-        Doc.styled(Style.code(), eqn.toDoc()),
-        Doc.english("with a solution that is not the most general one."));
+      return Doc.english("Solving equation(s) with not very general solution(s).");
     }
 
     @Override public @NotNull Severity level() {

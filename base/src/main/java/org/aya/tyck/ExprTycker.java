@@ -21,6 +21,7 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.NormalizeMode;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
@@ -102,12 +103,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public void solveMetas() {
     while (true) {
       //noinspection StatementWithEmptyBody
-      while (termEqns.simplify(levelEqns, false, reporter, traceBuilder)) ;
+      while (termEqns.simplify(levelEqns, false, reporter, traceBuilder).isNotEmpty()) ;
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
-      if (termEqns.eqns().isNotEmpty()) {
+      var eqns = termEqns.eqns().toImmutableSeq();
+      if (eqns.isNotEmpty()) {
         var solved = termEqns.simplify(levelEqns, true, reporter, traceBuilder);
         // If something gets solved, we continue
-        if (!solved) break;
+        if (solved.isEmpty()) break;
+        else reporter.report(new HoleProblem.CannotFindGeneralSolution(solved.view().map(WithPos::sourcePos), eqns));
       }
     }
     levelEqns.solve();
