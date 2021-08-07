@@ -7,6 +7,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
 import org.aya.core.def.UserDef;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CounterexampleError;
 import org.aya.tyck.trace.Trace;
@@ -51,7 +52,7 @@ public sealed interface Sample extends Stmt {
 
     @Override public @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
       var stmtTycker = new StmtTycker(reporter, traceBuilder);
-      var def = delegate.accept(stmtTycker, stmtTycker.newTycker());
+      var def = delegate.accept(stmtTycker, new ExprTycker(this.reporter, stmtTycker.traceBuilder()));
       var problems = this.reporter.problems().toImmutableSeq();
       if (problems.isEmpty()) {
         stmtTycker.reporter().report(new CounterexampleError(delegate.sourcePos(), delegate.ref()));
