@@ -15,19 +15,22 @@ import org.jetbrains.annotations.NotNull;
  * @author vont
  */
 
-public final class StructDef implements Def {
+public final class StructDef extends TopLevelDef {
   public final @NotNull DefVar<StructDef, Decl.StructDecl> ref;
-  public final @NotNull ImmutableSeq<Term.Param> telescope;
   public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
-  public final @NotNull Term result;
   public final @NotNull ImmutableSeq<FieldDef> fields;
 
-  public StructDef(@NotNull DefVar<StructDef, Decl.StructDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result, @NotNull ImmutableSeq<FieldDef> fields) {
+  public StructDef(
+    @NotNull DefVar<StructDef, Decl.StructDecl> ref,
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels,
+    @NotNull Term result,
+    @NotNull ImmutableSeq<FieldDef> fields
+  ) {
+    super(telescope, result);
     ref.core = this;
     this.ref = ref;
-    this.telescope = telescope;
     this.levels = levels;
-    this.result = result;
     this.fields = fields;
   }
 
@@ -39,15 +42,7 @@ public final class StructDef implements Def {
     return ref;
   }
 
-  public @NotNull ImmutableSeq<Term.Param> telescope() {
-    return telescope;
-  }
-
   public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
     return levels;
-  }
-
-  public @NotNull Term result() {
-    return result;
   }
 }

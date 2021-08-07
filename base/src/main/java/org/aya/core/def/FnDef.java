@@ -16,19 +16,22 @@ import java.util.function.Function;
 /**
  * @author ice1000
  */
-public final class FnDef implements Def {
+public final class FnDef extends TopLevelDef {
   public final @NotNull DefVar<FnDef, Decl.FnDecl> ref;
-  public final @NotNull ImmutableSeq<Term.Param> telescope;
   public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
-  public final @NotNull Term result;
   public final @NotNull Either<Term, ImmutableSeq<Matching>> body;
 
-  public FnDef(@NotNull DefVar<FnDef, Decl.FnDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result, @NotNull Either<Term, ImmutableSeq<Matching>> body) {
+  public FnDef(
+    @NotNull DefVar<FnDef, Decl.FnDecl> ref,
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels,
+    @NotNull Term result,
+    @NotNull Either<Term, ImmutableSeq<Matching>> body
+  ) {
+    super(telescope, result);
     ref.core = this;
     this.ref = ref;
-    this.telescope = telescope;
     this.levels = levels;
-    this.result = result;
     this.body = body;
   }
 
@@ -46,15 +49,7 @@ public final class FnDef implements Def {
     return ref;
   }
 
-  public @NotNull ImmutableSeq<Term.Param> telescope() {
-    return telescope;
-  }
-
   public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
     return levels;
-  }
-
-  public @NotNull Term result() {
-    return result;
   }
 }

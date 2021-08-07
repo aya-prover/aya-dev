@@ -15,19 +15,22 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author kiva
  */
-public final class DataDef implements Def {
+public final class DataDef extends TopLevelDef {
   public final @NotNull DefVar<DataDef, Decl.DataDecl> ref;
-  public final @NotNull ImmutableSeq<Term.Param> telescope;
   public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
-  public final @NotNull Term result;
   public final @NotNull ImmutableSeq<CtorDef> body;
 
-  public DataDef(@NotNull DefVar<DataDef, Decl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result, @NotNull ImmutableSeq<CtorDef> body) {
+  public DataDef(
+    @NotNull DefVar<DataDef, Decl.DataDecl> ref,
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels,
+    @NotNull Term result,
+    @NotNull ImmutableSeq<CtorDef> body
+  ) {
+    super(telescope, result);
     ref.core = this;
     this.ref = ref;
-    this.telescope = telescope;
     this.levels = levels;
-    this.result = result;
     this.body = body;
   }
 
@@ -44,22 +47,14 @@ public final class DataDef implements Def {
     return ref;
   }
 
-  public @NotNull ImmutableSeq<Term.Param> telescope() {
-    return telescope;
-  }
-
   public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
     return levels;
-  }
-
-  public @NotNull Term result() {
-    return result;
   }
 
   /**
    * @author ice1000
    */
-  public static record CtorTelescopes(
+  public record CtorTelescopes(
     @NotNull ImmutableSeq<Term.Param> dataTele,
     @NotNull ImmutableSeq<Sort.CoreLevel> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele

@@ -17,7 +17,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
-import org.aya.core.def.TopLevel;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.tyck.trace.Trace;
@@ -43,7 +42,7 @@ public record SingleFileCompiler(
   public int compile(
     @NotNull Path sourceFile, @NotNull CompilerFlags flags,
     @NotNull Consumer<ImmutableSeq<Stmt>> onResolved,
-    @NotNull BiConsumer<ImmutableSeq<Stmt>, ImmutableSeq<TopLevel>> onTycked
+    @NotNull BiConsumer<ImmutableSeq<Stmt>, ImmutableSeq<Def>> onTycked
   ) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());

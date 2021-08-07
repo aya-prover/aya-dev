@@ -22,7 +22,7 @@ import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.TopLevel;
+import org.aya.core.def.Def;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +64,7 @@ public record FileModuleLoader(
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
     @NotNull CheckedRunnable<E> onResolved,
-    @NotNull CheckedConsumer<ImmutableSeq<TopLevel>, E> onTycked,
+    @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
     var context = new EmptyContext(reporter).derive();
@@ -77,7 +77,7 @@ public record FileModuleLoader(
     onResolved.runChecked();
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      var wellTyped = Buffer.<TopLevel>create();
+      var wellTyped = Buffer.<Def>create();
       for (var stmt : program) {
         if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder));
         else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder));
