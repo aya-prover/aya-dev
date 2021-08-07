@@ -64,7 +64,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     if (def == null) return fnCall;
     var args = fnCall.args().map(arg -> visitArg(arg, p));
     var subst = checkAndBuildSubst(def.telescope(), args);
-    var levelSubst = buildSubst(def.levels(), fnCall.sortArgs());
+      var levelSubst = buildSubst(def.levels, fnCall.sortArgs());
     var body = def.body;
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());

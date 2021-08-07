@@ -151,10 +151,6 @@ public final class PrimDef implements Def {
     for (var var : PRIMITIVES.valuesView()) var.ref.concrete = null;
   }
 
-  public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
-    return levels;
-  }
-
   public @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref() {
     return ref;
   }

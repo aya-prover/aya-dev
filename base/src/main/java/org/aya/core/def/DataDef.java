@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class DataDef extends TopLevelDef {
   public final @NotNull DefVar<DataDef, Decl.DataDecl> ref;
-  public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
   public final @NotNull ImmutableSeq<CtorDef> body;
 
   public DataDef(
@@ -27,10 +26,9 @@ public final class DataDef extends TopLevelDef {
     @NotNull Term result,
     @NotNull ImmutableSeq<CtorDef> body
   ) {
-    super(telescope, result);
+    super(telescope, result, levels);
     ref.core = this;
     this.ref = ref;
-    this.levels = levels;
     this.body = body;
   }
 
@@ -45,10 +43,6 @@ public final class DataDef extends TopLevelDef {
 
   public @NotNull DefVar<DataDef, Decl.DataDecl> ref() {
     return ref;
-  }
-
-  public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
-    return levels;
   }
 
   /**

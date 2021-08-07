@@ -18,7 +18,6 @@ import java.util.function.Function;
  */
 public final class FnDef extends TopLevelDef {
   public final @NotNull DefVar<FnDef, Decl.FnDecl> ref;
-  public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
   public final @NotNull Either<Term, ImmutableSeq<Matching>> body;
 
   public FnDef(
@@ -28,10 +27,9 @@ public final class FnDef extends TopLevelDef {
     @NotNull Term result,
     @NotNull Either<Term, ImmutableSeq<Matching>> body
   ) {
-    super(telescope, result);
+    super(telescope, result, levels);
     ref.core = this;
     this.ref = ref;
-    this.levels = levels;
     this.body = body;
   }
 
@@ -47,9 +45,5 @@ public final class FnDef extends TopLevelDef {
 
   public @NotNull DefVar<FnDef, Decl.FnDecl> ref() {
     return ref;
-  }
-
-  public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
-    return levels;
   }
 }

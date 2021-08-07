@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 public final class StructDef extends TopLevelDef {
   public final @NotNull DefVar<StructDef, Decl.StructDecl> ref;
-  public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
   public final @NotNull ImmutableSeq<FieldDef> fields;
 
   public StructDef(
@@ -27,10 +26,9 @@ public final class StructDef extends TopLevelDef {
     @NotNull Term result,
     @NotNull ImmutableSeq<FieldDef> fields
   ) {
-    super(telescope, result);
+    super(telescope, result, levels);
     ref.core = this;
     this.ref = ref;
-    this.levels = levels;
     this.fields = fields;
   }
 
@@ -40,9 +38,5 @@ public final class StructDef extends TopLevelDef {
 
   public @NotNull DefVar<StructDef, Decl.StructDecl> ref() {
     return ref;
-  }
-
-  public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
-    return levels;
   }
 }

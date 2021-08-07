@@ -4,6 +4,7 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,13 +17,23 @@ import org.jetbrains.annotations.Nullable;
 public sealed abstract class TopLevelDef implements Def permits DataDef, FnDef, StructDef {
   public final @NotNull ImmutableSeq<Term.Param> telescope;
   public final @NotNull Term result;
+  public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
 
-  /** In case of counterexamples, this field will be assigned */
+  /**
+   * In case of counterexamples, this field will be assigned.
+   *
+   * @see org.aya.tyck.SampleTycker
+   */
   public @Nullable ImmutableSeq<Problem> problems;
 
-  protected TopLevelDef(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result) {
+  protected TopLevelDef(
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull Term result,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels
+  ) {
     this.telescope = telescope;
     this.result = result;
+    this.levels = levels;
   }
 
   @Override public @NotNull ImmutableSeq<Term.Param> telescope() {

@@ -77,7 +77,7 @@ public record StmtTycker(
       var levelSubst = new LevelSubst.Simple(MutableMap.of());
       // Homotopy level goes first
       var levels = tycker.extractLevels();
-      for (var lvl : core.levels().zip(levels))
+      for (var lvl : core.levels.zip(levels))
         levelSubst.solution().put(lvl._1, new Sort.CoreLevel(new Level.Reference<>(lvl._2)));
       var target = FormTerm.Pi.make(core.telescope(), core.result())
         .subst(Substituter.TermSubst.EMPTY, levelSubst);
