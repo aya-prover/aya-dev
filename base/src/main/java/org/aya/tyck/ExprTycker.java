@@ -55,7 +55,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqnSet levelEqns;
+  public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
   public final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.of();
@@ -86,7 +86,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this.reporter = reporter;
     this.localCtx = localCtx;
     this.traceBuilder = traceBuilder;
-    levelEqns = new LevelEqnSet(reporter);
   }
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {

@@ -4,7 +4,6 @@ package org.aya.tyck.unify.level;
 
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.core.sort.LevelSubst;
@@ -23,12 +22,11 @@ import org.jetbrains.annotations.TestOnly;
  */
 public record LevelEqnSet(
   @NotNull Buffer<Sort.LvlVar> vars,
-  @NotNull Reporter reporter,
   @NotNull Buffer<@NotNull Eqn> eqns,
   @NotNull MutableMap<Sort.LvlVar, Sort.CoreLevel> solution
 ) implements LevelSubst.Default {
-  public LevelEqnSet(@NotNull Reporter reporter) {
-    this(Buffer.of(), reporter, Buffer.of(), MutableMap.of());
+  public LevelEqnSet() {
+    this(Buffer.of(), Buffer.of(), MutableMap.of());
   }
 
   public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
