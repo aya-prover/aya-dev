@@ -30,7 +30,7 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
     tele(references, fn.telescope());
     fn.result().accept(this, references);
-    if (withBody) fn.body().map(
+    if (withBody) fn.body.map(
       term -> term.accept(this, references),
       clauses -> {
         clauses.forEach(clause -> matchy(clause, references));
@@ -39,7 +39,7 @@ public record RefFinder(boolean withBody) implements
     return Unit.unit();
   }
 
-  @Override public Unit visitCtor(@NotNull DataDef.Ctor def, @NotNull Buffer<Def> references) {
+  @Override public Unit visitCtor(@NotNull CtorDef def, @NotNull Buffer<Def> references) {
     tele(references, def.conTele());
     if (withBody) for (var clause : def.clauses()) matchy(clause, references);
     return Unit.unit();
@@ -48,15 +48,15 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitStruct(@NotNull StructDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(this, references);
-    if (withBody) def.fields().forEach(t -> t.accept(this, references));
+    if (withBody) def.fields.forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 
-  @Override public Unit visitField(@NotNull StructDef.Field def, @NotNull Buffer<Def> references) {
+  @Override public Unit visitField(@NotNull FieldDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
-    def.body().forEach(t -> t.accept(this, references));
+    def.body.forEach(t -> t.accept(this, references));
     def.result().accept(this, references);
-    if (withBody) for (var clause : def.clauses()) clause.body().accept(this, references);
+    if (withBody) for (var clause : def.clauses) clause.body().accept(this, references);
     return Unit.unit();
   }
 
@@ -68,7 +68,7 @@ public record RefFinder(boolean withBody) implements
   @Override public Unit visitData(@NotNull DataDef def, @NotNull Buffer<Def> references) {
     tele(references, def.telescope());
     def.result().accept(this, references);
-    if (withBody) def.body().forEach(t -> t.accept(this, references));
+    if (withBody) def.body.forEach(t -> t.accept(this, references));
     return Unit.unit();
   }
 

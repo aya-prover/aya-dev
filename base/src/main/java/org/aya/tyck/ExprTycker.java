@@ -201,20 +201,20 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return defCall(pos, (DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {
       return defCall(pos, (DefVar<StructDef, Decl.StructDecl>) var, CallTerm.Struct::new);
-    } else if (var.core instanceof DataDef.Ctor || var.concrete instanceof Decl.DataDecl.DataCtor) {
-      var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) var;
+    } else if (var.core instanceof CtorDef || var.concrete instanceof Decl.DataDecl.DataCtor) {
+      var conVar = (DefVar<CtorDef, Decl.DataDecl.DataCtor>) var;
       var level = levelStuffs(pos, conVar);
-      var telescopes = DataDef.Ctor.telescopes(conVar, level._2);
+      var telescopes = CtorDef.telescopes(conVar, level._2);
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
       var body = telescopes.toConCall(conVar);
       return new Result(IntroTerm.Lambda.make(tele, body), type);
-    } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
+    } else if (var.core instanceof FieldDef || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
-      var field = (DefVar<StructDef.Field, Decl.StructField>) var;
+      var field = (DefVar<FieldDef, Decl.StructField>) var;
       var ty = Def.defResult(field);
       var fieldPos = field.concrete.sourcePos();
       var refExpr = new Expr.RefExpr(fieldPos, field, field.concrete.ref.name());
@@ -335,18 +335,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     structTele.view().zip(structCall.args())
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
-    var fields = Buffer.<Tuple2<DefVar<StructDef.Field, Decl.StructField>, Term>>of();
+    var fields = Buffer.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>of();
     var missing = Buffer.<Var>of();
     var conFields = expr.fields();
 
-    for (var defField : structRef.core.fields()) {
+    for (var defField : structRef.core.fields) {
       var conFieldOpt = conFields.find(t -> t.name().equals(defField.ref().name()));
       if (conFieldOpt.isEmpty()) {
-        if (defField.body().isEmpty())
+        if (defField.body.isEmpty())
           missing.append(defField.ref()); // no value available, skip and prepare error reporting
         else {
           // use default value from defField
-          var field = defField.body().get().subst(subst);
+          var field = defField.body.get().subst(subst);
           fields.append(Tuple.of(defField.ref(), field));
           subst.add(defField.ref(), field);
         }
@@ -356,7 +356,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       conFields = conFields.dropWhile(t -> t == conField);
       var type = Def.defResult(defField.ref()).subst(subst);
       var fieldSubst = new ExprRefSubst(reporter);
-      var telescope = defField.ref().core.fieldTele();
+      var telescope = defField.ref().core.fieldTele;
       var bindings = conField.bindings();
       if (telescope.sizeLessThan(bindings.size())) {
         // TODO[ice]: number of args don't match
@@ -411,7 +411,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
     var structCore = structCall.ref().core;
     if (structCore == null) throw new UnsupportedOperationException("TODO");
-    var projected = structCore.fields().find(field -> Objects.equals(field.ref().name(), fieldName));
+    var projected = structCore.fields.find(field -> Objects.equals(field.ref().name(), fieldName));
     if (projected.isEmpty()) {
       // TODO[ice]: field not found
       throw new TyckerException();
@@ -423,7 +423,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var levels = levelStuffs(struct.sourcePos(), fieldRef);
-    var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst, levels._1);
+    var tele = Term.Param.subst(fieldRef.core.fieldTele, structSubst, levels._1);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
       structCall.args(), tele.map(Term.Param::toArg));
     return new Result(IntroTerm.Lambda.make(tele, access),

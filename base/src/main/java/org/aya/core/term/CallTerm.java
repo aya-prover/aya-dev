@@ -88,7 +88,7 @@ public sealed interface CallTerm extends Term {
       return visitor.visitDataCall(this, p, q);
     }
 
-    public @NotNull ConHead conHead(@NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ctorRef) {
+    public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, Decl.DataCtor> ctorRef) {
       return new ConHead(ref, ctorRef, sortArgs, args);
     }
   }
@@ -113,7 +113,7 @@ public sealed interface CallTerm extends Term {
 
   record ConHead(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
+    @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs
   ) {
@@ -128,7 +128,7 @@ public sealed interface CallTerm extends Term {
   ) implements CallTerm {
     public Con(
       @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-      @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
+      @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs,
       @NotNull ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs,
       @NotNull ImmutableSeq<Arg<@NotNull Term>> conArgs
@@ -136,7 +136,7 @@ public sealed interface CallTerm extends Term {
       this(new ConHead(dataRef, ref, sortArgs, dataArgs), conArgs);
     }
 
-    @Override public @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref() {
+    @Override public @NotNull DefVar<CtorDef, Decl.DataCtor> ref() {
       return head.ref;
     }
 
@@ -192,7 +192,7 @@ public sealed interface CallTerm extends Term {
    */
   record Access(
     @NotNull Term of,
-    @NotNull DefVar<StructDef.Field, Decl.StructField> ref,
+    @NotNull DefVar<FieldDef, Decl.StructField> ref,
     @NotNull ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs

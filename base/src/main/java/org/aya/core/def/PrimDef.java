@@ -22,13 +22,7 @@ import java.util.function.Function;
 /**
  * @author ice1000
  */
-public record PrimDef(
-  @NotNull ImmutableSeq<Term.Param> telescope,
-  @NotNull ImmutableSeq<Sort.LvlVar> levels,
-  @NotNull Term result,
-  @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
-  @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
-) implements Def {
+public final class PrimDef implements Def {
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<Sort.LvlVar> levels,
@@ -109,7 +103,7 @@ public record PrimDef(
     return unfold.apply(primCall);
   }
 
-  @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
+  public @NotNull ImmutableSeq<Term.Param> telescope() {
     if (telescope.isEmpty()) return telescope;
     if (ref.concrete != null) {
       var signature = ref.concrete.signature;
@@ -118,7 +112,7 @@ public record PrimDef(
     return telescope;
   }
 
-  @Override public @NotNull Term result() {
+  public @NotNull Term result() {
     if (ref.concrete != null) {
       var signature = ref.concrete.signature;
       if (signature != null) return signature.result();
@@ -131,7 +125,37 @@ public record PrimDef(
     .map(prim -> Tuple.of(prim.ref.name(), prim))
     .toImmutableMap();
 
+  public final @NotNull ImmutableSeq<Term.Param> telescope;
+  public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
+  public final @NotNull Term result;
+  public final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold;
+  public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
+
+  /**
+   */
+  public PrimDef(
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels,
+    @NotNull Term result,
+    @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
+    @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
+  ) {
+    this.telescope = telescope;
+    this.levels = levels;
+    this.result = result;
+    this.unfold = unfold;
+    this.ref = ref;
+  }
+
   public @ApiStatus.Internal static void clearConcrete() {
     for (var var : PRIMITIVES.valuesView()) var.ref.concrete = null;
+  }
+
+  public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
+    return levels;
+  }
+
+  public @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref() {
+    return ref;
   }
 }

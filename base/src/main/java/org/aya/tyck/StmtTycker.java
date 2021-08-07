@@ -91,7 +91,7 @@ public record StmtTycker(
     return core;
   }
 
-  @Override public DataDef.Ctor visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  @Override public CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var dataRef = ctor.dataRef;
     var dataSig = dataRef.concrete.signature;
     assert dataSig != null;
@@ -116,7 +116,7 @@ public record StmtTycker(
     var elabClauses = patTycker.elabClauses(patSubst, signature, ctor.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
-    var elaborated = new DataDef.Ctor(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
+    var elaborated = new CtorDef(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
     ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false);
     return elaborated;
   }
@@ -150,7 +150,7 @@ public record StmtTycker(
     return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field -> traced(field, tycker, this::visitField)));
   }
 
-  @Override public StructDef.Field visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
+  @Override public FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
     var tele = checkTele(tycker, field.telescope, null);
     var structRef = field.structRef;
     var result = field.result.accept(tycker, null).wellTyped();
@@ -161,7 +161,7 @@ public record StmtTycker(
     var elabClauses = patTycker.elabClauses(null, field.signature, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
-    var elaborated = new StructDef.Field(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
+    var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
     ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false);
     return elaborated;
   }

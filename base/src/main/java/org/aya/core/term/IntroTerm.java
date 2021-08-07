@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.def.StructDef;
+import org.aya.core.def.FieldDef;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,7 +38,7 @@ public sealed interface IntroTerm extends Term {
    */
   record New(
     @NotNull CallTerm.Struct struct,
-    @NotNull ImmutableMap<DefVar<StructDef.Field, Decl.StructField>, Term> params
+    @NotNull ImmutableMap<DefVar<FieldDef, Decl.StructField>, Term> params
   ) implements IntroTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNew(this, p);

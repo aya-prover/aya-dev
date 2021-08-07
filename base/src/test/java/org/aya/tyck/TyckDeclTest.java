@@ -48,9 +48,9 @@ public class TyckDeclTest {
         | suc n => zero""");
     var nat = (DataDef) defs.get(0);
     var xyr = (FnDef) defs.get(1);
-    var ctors = nat.body();
+      var ctors = nat.body;
     assertEquals(2, ctors.size());
-    var clauses = xyr.body().getRightValue();
+    var clauses = xyr.body.getRightValue();
     var zeroToZero = clauses.get(0);
     var zeroCtor = ctors.get(0);
     assertEquals(0, zeroCtor.conTele().size());

@@ -5,32 +5,33 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.Matching;
-import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 /**
  * core data definition, corresponding to {@link Decl.DataDecl}
  *
  * @author kiva
  */
-public record DataDef(
-  @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-  @NotNull ImmutableSeq<Term.Param> telescope,
-  @NotNull ImmutableSeq<Sort.LvlVar> levels,
-  @NotNull Term result,
-  @NotNull ImmutableSeq<Ctor> body
-) implements Def {
-  public DataDef {
+public final class DataDef implements Def {
+  public final @NotNull DefVar<DataDef, Decl.DataDecl> ref;
+  public final @NotNull ImmutableSeq<Term.Param> telescope;
+  public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
+  public final @NotNull Term result;
+  public final @NotNull ImmutableSeq<CtorDef> body;
+
+  public DataDef(@NotNull DefVar<DataDef, Decl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result, @NotNull ImmutableSeq<CtorDef> body) {
     ref.core = this;
+    this.ref = ref;
+    this.telescope = telescope;
+    this.levels = levels;
+    this.result = result;
+    this.body = body;
   }
 
-  public static @NotNull DefVar<DataDef, Decl.DataDecl> fromCtor(@NotNull DefVar<Ctor, Decl.DataCtor> conHead) {
+  public static @NotNull DefVar<DataDef, Decl.DataDecl> fromCtor(@NotNull DefVar<CtorDef, Decl.DataCtor> conHead) {
     if (conHead.core != null) return conHead.core.dataRef();
     else return conHead.concrete.dataRef;
   }
@@ -39,61 +40,20 @@ public record DataDef(
     return visitor.visitData(this, p);
   }
 
-  /**
-   * @param ref     in case of GADT constructors, the telescope is not instantiated.
-   * @param conTele Needs to be substituted before usage.
-   * @param clauses Needs to be substituted before usage.
-   * @param result  Needs to be substituted before usage.
-   * @author ice1000, kiva
-   */
-  public static record Ctor(
-    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-    @NotNull DefVar<Ctor, Decl.DataCtor> ref,
-    @NotNull ImmutableSeq<Pat> pats,
-    @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<Term.Param> conTele,
-    @NotNull ImmutableSeq<Matching> clauses,
-    @NotNull Term result,
-    boolean coerce
-  ) implements Def {
-    public Ctor {
-      ref.core = this;
-    }
+  public @NotNull DefVar<DataDef, Decl.DataDecl> ref() {
+    return ref;
+  }
 
-    @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
-      return dataTele.concat(conTele);
-    }
+  public @NotNull ImmutableSeq<Term.Param> telescope() {
+    return telescope;
+  }
 
-    public static @NotNull ImmutableSeq<Term.Param> conTele(@NotNull DefVar<Ctor, Decl.DataCtor> conVar) {
-      if (conVar.core != null) return conVar.core.conTele;
-      else return Objects.requireNonNull(conVar.concrete.signature).param();
-    }
+  public @NotNull ImmutableSeq<Sort.LvlVar> levels() {
+    return levels;
+  }
 
-    /**
-     * @return first component: data's telescope, second component: con telescope
-     */
-    public static @NotNull CtorTelescopes
-    telescopes(@NotNull DefVar<Ctor, Decl.DataCtor> defVar, ImmutableSeq<Sort.CoreLevel> sort) {
-      var core = defVar.core;
-      if (core != null) {
-        var dataDef = core.dataRef.core;
-        var conTelescope = core.conTele;
-        if (dataDef != null)
-          return new CtorTelescopes(dataDef.telescope, sort, conTelescope);
-        var signature = core.dataRef.concrete.signature;
-        assert signature != null;
-        return new CtorTelescopes(signature.param(), sort, conTelescope);
-      }
-      var dataSignature = defVar.concrete.dataRef.concrete.signature;
-      assert dataSignature != null;
-      var conSignature = defVar.concrete.signature;
-      assert conSignature != null;
-      return new CtorTelescopes(dataSignature.param(), sort, conSignature.param());
-    }
-
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitCtor(this, p);
-    }
+  public @NotNull Term result() {
+    return result;
   }
 
   /**
@@ -104,7 +64,7 @@ public record DataDef(
     @NotNull ImmutableSeq<Sort.CoreLevel> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
-    public @NotNull CallTerm.Con toConCall(DefVar<Ctor, Decl.DataCtor> conVar) {
+    public @NotNull CallTerm.Con toConCall(DefVar<CtorDef, Decl.DataCtor> conVar) {
       return new CallTerm.Con(fromCtor(conVar), conVar,
         dataTele.map(Term.Param::toArg),
         sortTele,

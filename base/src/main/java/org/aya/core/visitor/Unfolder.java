@@ -65,7 +65,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var args = fnCall.args().map(arg -> visitArg(arg, p));
     var subst = checkAndBuildSubst(def.telescope(), args);
     var levelSubst = buildSubst(def.levels(), fnCall.sortArgs());
-    var body = def.body();
+    var body = def.body;
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
     return volynskaya != null ? volynskaya.data() : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
@@ -119,7 +119,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var fieldSubst = checkAndBuildSubst(core.telescope().view(), args);
       var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
       var dropped = args.drop(term.structArgs().size());
-      var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses());
+        var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses);
       return mischa != null ? mischa.data() : new CallTerm.Access(nevv, field,
         term.sortArgs(), term.structArgs(), dropped);
     }

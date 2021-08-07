@@ -256,7 +256,7 @@ public final class CoreDistiller implements
       visitTele(def.telescope()),
       Doc.symbol(":"),
       def.result().toDoc());
-    return def.body().fold(
+    return def.body.fold(
       term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.toDoc()),
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
   }
@@ -299,7 +299,7 @@ public final class CoreDistiller implements
       Doc.symbol(":"),
       def.result().toDoc());
     return Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, Doc.vcat(
-      def.body().view().map(ctor -> ctor.accept(this, Unit.unit())))));
+      def.body.view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
 
   public static @NotNull Doc linkDef(@NotNull Var ref, @NotNull Style color) {
@@ -314,8 +314,8 @@ public final class CoreDistiller implements
     return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
   }
 
-  @Override public Doc visitCtor(@NotNull DataDef.Ctor ctor, Unit unit) {
-    var doc = Doc.sepNonEmpty(coe(ctor.coerce()),
+  @Override public Doc visitCtor(@NotNull CtorDef ctor, Unit unit) {
+    var doc = Doc.sepNonEmpty(coe(ctor.coerce),
       linkDef(ctor.ref(), CON_CALL),
       visitTele(ctor.conTele()));
     Doc line1;
@@ -337,14 +337,14 @@ public final class CoreDistiller implements
       Doc.plain(":"),
       def.result().toDoc()
     ), Doc.nest(2, Doc.vcat(
-      def.fields().view().map(field -> field.accept(this, Unit.unit())))));
+      def.fields.view().map(field -> field.accept(this, Unit.unit())))));
   }
 
-  @Override public Doc visitField(@NotNull StructDef.Field field, Unit unit) {
+  @Override public Doc visitField(@NotNull FieldDef field, Unit unit) {
     return visitConditions(Doc.sep(Doc.symbol("|"),
-      coe(field.coerce()),
+      coe(field.coerce),
       linkDef(field.ref(), FIELD_CALL),
-      visitTele(field.fieldTele())), field.clauses());
+      visitTele(field.fieldTele)), field.clauses);
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {

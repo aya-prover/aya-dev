@@ -10,7 +10,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.def.DataDef;
+import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
@@ -246,7 +246,7 @@ public record UntypedDefEq(
     var retType = lhs.ref().core.result().subst(substMap);
     // Lossy comparison
     var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), subst)))
+    if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(CtorDef.conTele(lhs.ref()), subst)))
       return retType;
     return null;
   }

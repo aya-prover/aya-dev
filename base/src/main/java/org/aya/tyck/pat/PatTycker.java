@@ -17,6 +17,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
+import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
@@ -221,7 +222,7 @@ public record PatTycker(
       reporter.report(new NotYetTyckedError(pos.sourcePos(), dataCall.ref()));
       return null;
     }
-    for (var ctor : core.body()) {
+    for (var ctor : core.body) {
       if (name != null && !Objects.equals(ctor.ref().name(), name)) continue;
       var matchy = mischa(dataCall, core, ctor);
       if (matchy != null) return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
@@ -237,7 +238,7 @@ public record PatTycker(
     return null;
   }
 
-  private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, DataDef.Ctor ctor) {
+  private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
     if (ctor.pats().isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats(), dataCall.args());
     else return Unfolder.buildSubst(core.telescope(), dataCall.args());
   }

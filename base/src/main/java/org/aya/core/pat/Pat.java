@@ -13,7 +13,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
-import org.aya.core.def.DataDef;
+import org.aya.core.def.CtorDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
@@ -95,7 +95,7 @@ public sealed interface Pat extends CorePat {
 
   record Ctor(
     boolean explicit,
-    @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref,
+    @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> params,
     @Nullable LocalVar as,
     @NotNull CallTerm.Data type
