@@ -20,10 +20,8 @@ public final class DataDef extends UserDef {
   public final @NotNull ImmutableSeq<CtorDef> body;
 
   public DataDef(
-    @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-    @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Term result,
+    @NotNull DefVar<DataDef, Decl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result,
     @NotNull ImmutableSeq<CtorDef> body
   ) {
     super(telescope, result, levels);

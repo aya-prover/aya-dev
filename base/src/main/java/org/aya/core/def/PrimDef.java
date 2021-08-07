@@ -131,10 +131,8 @@ public final class PrimDef extends TopLevelDef {
   /**
    */
   public PrimDef(
-    @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Term result,
-    @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels,
+    @NotNull Term result, @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
     @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
   ) {
     super(telescope, result, levels);

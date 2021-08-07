@@ -21,10 +21,8 @@ public final class FnDef extends UserDef {
   public final @NotNull Either<Term, ImmutableSeq<Matching>> body;
 
   public FnDef(
-    @NotNull DefVar<FnDef, Decl.FnDecl> ref,
-    @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Term result,
+    @NotNull DefVar<FnDef, Decl.FnDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result,
     @NotNull Either<Term, ImmutableSeq<Matching>> body
   ) {
     super(telescope, result, levels);

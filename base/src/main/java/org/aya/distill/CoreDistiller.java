@@ -281,7 +281,7 @@ public final class CoreDistiller implements
   private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching> clauses) {
     if (clauses.isEmpty()) return line1;
     return Doc.vcat(
-      Doc.cat(line1, Doc.symbol(" {")),
+      Doc.sep(line1, Doc.symbol("{")),
       Doc.nest(2, visitClauses(clauses)),
       Doc.symbol("}"));
   }

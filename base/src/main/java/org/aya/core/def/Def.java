@@ -83,7 +83,7 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
     }
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.cat(Doc.join(Doc.ONE_WS, param.view().map(Term.Param::toDoc)), Doc.plain(" -> "), result.toDoc());
+      return Doc.sep(Doc.sep(param.view().map(Term.Param::toDoc)), Doc.symbol("->"), result.toDoc());
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {

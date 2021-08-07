@@ -19,8 +19,7 @@ public sealed abstract class TopLevelDef implements Def permits UserDef, PrimDef
 
   protected TopLevelDef(
     @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull Term result,
-    @NotNull ImmutableSeq<Sort.LvlVar> levels
+    @NotNull Term result, @NotNull ImmutableSeq<Sort.LvlVar> levels
   ) {
     this.telescope = telescope;
     this.result = result;

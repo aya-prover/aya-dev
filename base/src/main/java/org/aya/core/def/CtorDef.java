@@ -20,24 +20,18 @@ public final class CtorDef extends SubLevelDef {
   public final @NotNull DefVar<DataDef, Decl.DataDecl> dataRef;
   public final @NotNull DefVar<CtorDef, Decl.DataCtor> ref;
   public final @NotNull ImmutableSeq<Pat> pats;
-  public final @NotNull ImmutableSeq<Matching> clauses;
 
   public CtorDef(
-    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
-    @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
+    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef, @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> pats,
-    @NotNull ImmutableSeq<Term.Param> ownerTele,
-    @NotNull ImmutableSeq<Term.Param> selfTele,
-    @NotNull ImmutableSeq<Matching> clauses,
-    @NotNull Term result,
-    boolean coerce
+    @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
+    @NotNull ImmutableSeq<Matching> clauses, @NotNull Term result, boolean coerce
   ) {
-    super(ownerTele, selfTele, result, coerce);
+    super(ownerTele, selfTele, result, clauses, coerce);
     ref.core = this;
     this.dataRef = dataRef;
     this.ref = ref;
     this.pats = pats;
-    this.clauses = clauses;
   }
 
   public static @NotNull ImmutableSeq<Term.Param> conTele(@NotNull DefVar<CtorDef, Decl.DataCtor> conVar) {
