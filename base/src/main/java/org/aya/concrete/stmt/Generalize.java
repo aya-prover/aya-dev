@@ -13,22 +13,12 @@ public sealed interface Generalize extends Stmt {
     return Accessibility.Private;
   }
 
-  interface Visitor<P, R> {
-    R visitLevels(@NotNull Generalize.Levels levels, P p);
-  }
-
-  @Override default <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return doAccept((Visitor<? super P, ? extends R>) visitor, p);
-  }
-
-  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
   record Levels(
     @NotNull SourcePos sourcePos,
     @NotNull LevelGenVar.Kind kind,
     @NotNull ImmutableSeq<WithPos<LevelGenVar>> levels
   ) implements Generalize {
-    @Override public <P, R> R doAccept(@NotNull Generalize.Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLevels(this, p);
     }
   }

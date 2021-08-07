@@ -41,7 +41,7 @@ public sealed interface Stmt extends Docile
   /**
    * @author re-xyr
    */
-  interface Visitor<P, R> extends Decl.Visitor<P, R>, Generalize.Visitor<P, R>, Sample.Visitor<P, R> {
+  interface Visitor<P, R> extends Decl.Visitor<P, R> {
     default void visitAll(@NotNull ImmutableSeq<@NotNull Stmt> stmts, P p) {
       stmts.forEach(stmt -> stmt.accept(this, p));
       // [xyr]: Is this OK? The order of visiting must be preserved.
@@ -51,6 +51,9 @@ public sealed interface Stmt extends Docile
     R visitOpen(@NotNull Command.Open cmd, P p);
     R visitModule(@NotNull Command.Module mod, P p);
     R visitBind(@NotNull Command.Bind bind, P p);
+    R visitLevels(@NotNull Generalize.Levels levels, P p);
+    R visitExample(@NotNull Sample.Working example, P p);
+    R visitCounterexample(@NotNull Sample.Counter example, P p);
   }
 
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);

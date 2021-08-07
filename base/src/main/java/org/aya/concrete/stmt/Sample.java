@@ -20,11 +20,6 @@ public sealed interface Sample extends Stmt {
     return doAccept(SampleTycker.INSTANCE, new StmtTycker(reporter, traceBuilder));
   }
 
-  interface Visitor<P, R> {
-    R visitExample(@NotNull Working example, P p);
-    R visitCounterexample(@NotNull Counter example, P p);
-  }
-
   @Override default @NotNull SourcePos sourcePos() {
     return delegate().sourcePos();
   }
@@ -33,14 +28,8 @@ public sealed interface Sample extends Stmt {
     return Accessibility.Private;
   }
 
-  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
-  @Override default <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return doAccept((Visitor<? super P, ? extends R>) visitor, p);
-  }
-
   record Working(@NotNull Stmt delegate) implements Sample {
-    @Override public <P, R> R doAccept(Sample.@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitExample(this, p);
     }
   }
@@ -50,7 +39,7 @@ public sealed interface Sample extends Stmt {
       this(delegate, new CollectingReporter());
     }
 
-    @Override public <P, R> R doAccept(Sample.@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCounterexample(this, p);
     }
   }
