@@ -16,7 +16,7 @@ import java.util.function.Function;
 /**
  * @author ice1000
  */
-public final class FnDef extends TopLevelDef {
+public final class FnDef extends UserDef {
   public final @NotNull DefVar<FnDef, Decl.FnDecl> ref;
   public final @NotNull Either<Term, ImmutableSeq<Matching>> body;
 

@@ -22,7 +22,7 @@ import java.util.function.Function;
 /**
  * @author ice1000
  */
-public final class PrimDef implements Def {
+public final class PrimDef extends TopLevelDef {
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<Sort.LvlVar> levels,
@@ -125,9 +125,6 @@ public final class PrimDef implements Def {
     .map(prim -> Tuple.of(prim.ref.name(), prim))
     .toImmutableMap();
 
-  public final @NotNull ImmutableSeq<Term.Param> telescope;
-  public final @NotNull ImmutableSeq<Sort.LvlVar> levels;
-  public final @NotNull Term result;
   public final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold;
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
 
@@ -140,9 +137,7 @@ public final class PrimDef implements Def {
     @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
     @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
   ) {
-    this.telescope = telescope;
-    this.levels = levels;
-    this.result = result;
+    super(telescope, result, levels);
     this.unfold = unfold;
     this.ref = ref;
   }

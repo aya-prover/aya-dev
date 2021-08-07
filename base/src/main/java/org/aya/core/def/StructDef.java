@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author vont
  */
 
-public final class StructDef extends TopLevelDef {
+public final class StructDef extends UserDef {
   public final @NotNull DefVar<StructDef, Decl.StructDecl> ref;
   public final @NotNull ImmutableSeq<FieldDef> fields;
 

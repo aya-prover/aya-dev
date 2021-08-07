@@ -22,7 +22,7 @@ import java.util.Objects;
 /**
  * @author ice1000
  */
-public sealed interface Def extends CoreDef permits TopLevelDef, CtorDef, PrimDef, FieldDef {
+public sealed interface Def extends CoreDef permits TopLevelDef, CtorDef, FieldDef {
   static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
@@ -33,7 +33,6 @@ public sealed interface Def extends CoreDef permits TopLevelDef, CtorDef, PrimDe
     if (core instanceof TopLevelDef topLevel) return topLevel.levels;
     else if (core instanceof CtorDef ctor) return defLevels(ctor.dataRef);
     else if (core instanceof FieldDef field) return defLevels(field.structRef);
-    else if (core instanceof PrimDef prim) return prim.levels;
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).sortParam();
   }

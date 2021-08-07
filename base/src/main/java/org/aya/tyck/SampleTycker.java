@@ -5,7 +5,7 @@ package org.aya.tyck;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.core.def.Def;
-import org.aya.core.def.TopLevelDef;
+import org.aya.core.def.UserDef;
 import org.aya.tyck.error.CounterexampleError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +31,9 @@ public final class SampleTycker implements Sample.Visitor<StmtTycker, @Nullable 
     if (problems.isEmpty()) {
       stmtTycker.reporter().report(new CounterexampleError(delegate.sourcePos(), delegate.ref()));
     }
-    if (def instanceof TopLevelDef topLevel) {
-      topLevel.problems = problems;
-      return topLevel;
+    if (def instanceof UserDef userDef) {
+      userDef.problems = problems;
+      return userDef;
     } else {
       // TODO[ice]: a counterexample should be a function, a data, or a struct, not other stuffs!
       return null;
