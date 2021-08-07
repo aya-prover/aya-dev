@@ -129,9 +129,9 @@ public record PatClassifier(
     }
     var dataCall = hasMatch.get();
       for (var ctor : dataCall.ref().core.body) {
-      var conTele = ctor.conTele();
-      if (ctor.pats().isNotEmpty()) {
-        var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats(), dataCall.args());
+          var conTele = ctor.selfTele;
+        if (ctor.pats.isNotEmpty()) {
+          var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
         if (matchy == null) continue;
         conTele = Term.Param.subst(conTele, matchy);
       }

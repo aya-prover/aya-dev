@@ -47,7 +47,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var levelArgs = conCall.sortArgs();
     var levelSubst = buildSubst(levelParams, levelArgs);
     var dropped = args.drop(conCall.head().dataArgs().size());
-    var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses());
+      var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses);
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
   }
 

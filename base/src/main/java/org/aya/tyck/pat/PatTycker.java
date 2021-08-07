@@ -177,7 +177,7 @@ public record PatTycker(
       return new Pat.Bind(bind.explicit(), v, t);
     }
     var ctorCore = selected._3.ref().core;
-    if (ctorCore.conTele().isNotEmpty()) {
+      if (ctorCore.selfTele.isNotEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
@@ -199,8 +199,8 @@ public record PatTycker(
     ctor.resolved().value = ctorRef;
     var ctorCore = ctorRef.core;
     final var dataCall = realCtor._1;
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(),
-      Term.Param.subst(ctorCore.conTele(), realCtor._2,
+      var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(),
+      Term.Param.subst(ctorCore.selfTele, realCtor._2,
         Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs())), dataCall));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
@@ -239,7 +239,7 @@ public record PatTycker(
   }
 
   private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
-    if (ctor.pats().isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats(), dataCall.args());
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
     else return Unfolder.buildSubst(core.telescope(), dataCall.args());
   }
 }

@@ -16,34 +16,32 @@ import java.util.Objects;
 /**
  * @author ice1000, kiva
  */
-public final class CtorDef implements Def {
+public final class CtorDef extends SubLevelDef {
   public final @NotNull DefVar<DataDef, Decl.DataDecl> dataRef;
   public final @NotNull DefVar<CtorDef, Decl.DataCtor> ref;
   public final @NotNull ImmutableSeq<Pat> pats;
-  public final @NotNull ImmutableSeq<Term.Param> dataTele;
-  public final @NotNull ImmutableSeq<Term.Param> conTele;
   public final @NotNull ImmutableSeq<Matching> clauses;
-  public final @NotNull Term result;
-  public final boolean coerce;
 
-  public CtorDef(@NotNull DefVar<DataDef, Decl.DataDecl> dataRef, @NotNull DefVar<CtorDef, Decl.DataCtor> ref, @NotNull ImmutableSeq<Pat> pats, @NotNull ImmutableSeq<Term.Param> dataTele, @NotNull ImmutableSeq<Term.Param> conTele, @NotNull ImmutableSeq<Matching> clauses, @NotNull Term result, boolean coerce) {
+  public CtorDef(
+    @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
+    @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
+    @NotNull ImmutableSeq<Pat> pats,
+    @NotNull ImmutableSeq<Term.Param> ownerTele,
+    @NotNull ImmutableSeq<Term.Param> selfTele,
+    @NotNull ImmutableSeq<Matching> clauses,
+    @NotNull Term result,
+    boolean coerce
+  ) {
+    super(ownerTele, selfTele, result, coerce);
     ref.core = this;
     this.dataRef = dataRef;
     this.ref = ref;
     this.pats = pats;
-    this.dataTele = dataTele;
-    this.conTele = conTele;
     this.clauses = clauses;
-    this.result = result;
-    this.coerce = coerce;
-  }
-
-  @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
-    return dataTele.concat(conTele);
   }
 
   public static @NotNull ImmutableSeq<Term.Param> conTele(@NotNull DefVar<CtorDef, Decl.DataCtor> conVar) {
-    if (conVar.core != null) return conVar.core.conTele;
+    if (conVar.core != null) return conVar.core.selfTele;
     else return Objects.requireNonNull(conVar.concrete.signature).param();
   }
 
@@ -55,7 +53,7 @@ public final class CtorDef implements Def {
     var core = defVar.core;
     if (core != null) {
       var dataDef = core.dataRef.core;
-      var conTelescope = core.conTele;
+      var conTelescope = core.selfTele;
       if (dataDef != null)
         return new DataDef.CtorTelescopes(dataDef.telescope, sort, conTelescope);
       var signature = core.dataRef.concrete.signature;
@@ -73,31 +71,7 @@ public final class CtorDef implements Def {
     return visitor.visitCtor(this, p);
   }
 
-  public @NotNull DefVar<DataDef, Decl.DataDecl> dataRef() {
-    return dataRef;
-  }
-
   public @NotNull DefVar<CtorDef, Decl.DataCtor> ref() {
     return ref;
-  }
-
-  public @NotNull ImmutableSeq<Pat> pats() {
-    return pats;
-  }
-
-  public @NotNull ImmutableSeq<Term.Param> dataTele() {
-    return dataTele;
-  }
-
-  public @NotNull ImmutableSeq<Term.Param> conTele() {
-    return conTele;
-  }
-
-  public @NotNull ImmutableSeq<Matching> clauses() {
-    return clauses;
-  }
-
-  public @NotNull Term result() {
-    return result;
   }
 }

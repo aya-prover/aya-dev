@@ -33,7 +33,7 @@ public final class DataDef extends UserDef {
   }
 
   public static @NotNull DefVar<DataDef, Decl.DataDecl> fromCtor(@NotNull DefVar<CtorDef, Decl.DataCtor> conHead) {
-    if (conHead.core != null) return conHead.core.dataRef();
+    if (conHead.core != null) return conHead.core.dataRef;
     else return conHead.concrete.dataRef;
   }
 

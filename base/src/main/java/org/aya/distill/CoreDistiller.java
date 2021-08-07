@@ -317,13 +317,13 @@ public final class CoreDistiller implements
   @Override public Doc visitCtor(@NotNull CtorDef ctor, Unit unit) {
     var doc = Doc.sepNonEmpty(coe(ctor.coerce),
       linkDef(ctor.ref(), CON_CALL),
-      visitTele(ctor.conTele()));
+      visitTele(ctor.selfTele));
     Doc line1;
-    if (ctor.pats().isNotEmpty()) {
-      var pats = Doc.commaList(ctor.pats().view().map(Pat::toDoc));
+    if (ctor.pats.isNotEmpty()) {
+      var pats = Doc.commaList(ctor.pats.view().map(Pat::toDoc));
       line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
     } else line1 = Doc.sep(Doc.symbol("|"), doc);
-    return visitConditions(line1, ctor.clauses());
+    return visitConditions(line1, ctor.clauses);
   }
 
   public static @NotNull Doc coe(boolean coerce) {
@@ -344,7 +344,7 @@ public final class CoreDistiller implements
     return visitConditions(Doc.sep(Doc.symbol("|"),
       coe(field.coerce),
       linkDef(field.ref(), FIELD_CALL),
-      visitTele(field.fieldTele)), field.clauses);
+      visitTele(field.selfTele)), field.clauses);
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {
