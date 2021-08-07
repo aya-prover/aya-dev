@@ -74,7 +74,7 @@ public record PatTycker(
       tracing(GenericBuilder::reduce);
       return elabClause;
     });
-    exprTycker.equations.solve();
+    exprTycker.levelEqns.solve();
     return Tuple.of(signature.value.result().zonk(exprTycker), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker))));
   }
 
@@ -86,7 +86,7 @@ public record PatTycker(
       if (patSubst != null) subst.resetTo(patSubst);
       return visitMatch(c, signature);
     });
-    exprTycker.equations.solve();
+    exprTycker.levelEqns.solve();
     return checked.map(c -> c.mapTerm(e -> e.zonk(exprTycker)));
   }
 

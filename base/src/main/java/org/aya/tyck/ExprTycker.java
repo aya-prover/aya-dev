@@ -55,7 +55,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqnSet equations;
+  public final @NotNull LevelEqnSet levelEqns;
   public final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.of();
@@ -70,7 +70,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
     return Seq.of(homotopy, universe).view()
-      .filter(equations::used)
+      .filter(levelEqns::used)
       .appendedAll(levelMapping.valuesView())
       .toImmutableSeq();
   }
@@ -86,7 +86,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this.reporter = reporter;
     this.localCtx = localCtx;
     this.traceBuilder = traceBuilder;
-    equations = new LevelEqnSet(reporter);
+    levelEqns = new LevelEqnSet(reporter);
   }
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
@@ -94,7 +94,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result finalize(@NotNull Result result) {
-    equations.solve();
+    levelEqns.solve();
     return new Result(result.wellTyped.zonk(this), result.type.zonk(this));
   }
 
@@ -146,7 +146,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull Sort.CoreLevel transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
-    if (level instanceof Level.Polymorphic) return equations.markUsed(polymorphic);
+    if (level instanceof Level.Polymorphic) return levelEqns.markUsed(polymorphic);
     if (level instanceof Level.Maximum m)
       return Sort.CoreLevel.merge(m.among().map(l -> transformLevel(l, polymorphic)));
     Level<Sort.LvlVar> core;
@@ -165,7 +165,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
     var normTerm = term.normalize(NormalizeMode.WHNF);
     if (normTerm instanceof FormTerm.Univ univ) {
-      equations.add(sort.succ(1), univ.sort(), Ordering.Lt, expr.sourcePos());
+      levelEqns.add(sort.succ(1), univ.sort(), Ordering.Lt, expr.sourcePos());
       return new Result(new FormTerm.Univ(sort), univ);
     } else {
       var succ = new FormTerm.Univ(sort.succ(1));
@@ -247,7 +247,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       levelSubst.solution().put(v, new Sort.CoreLevel(new Level.Reference<>(lvlVar)));
       return lvlVar;
     });
-    equations.vars().appendAll(levelVars);
+    levelEqns.vars().appendAll(levelVars);
     return Tuple.of(levelSubst, levelVars.map(Level.Reference::new).map(Sort.CoreLevel::new));
   }
 
@@ -257,7 +257,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return new TypedDefEq(ord, this, pos);
+    return new TypedDefEq(ord, levelEqns, reporter, traceBuilder, pos);
   }
 
   /**

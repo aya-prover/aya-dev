@@ -87,7 +87,7 @@ public record StmtTycker(
       var result = decl.result.accept(tycker, null).wellTyped();
       tycker.unifyTyReported(result, core.result(), decl.result);
     } else decl.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
-    tycker.equations.solve();
+    tycker.levelEqns.solve();
     return core;
   }
 
@@ -129,7 +129,7 @@ public record StmtTycker(
     var classification = PatClassifier.classify(elabClauses, tycker.reporter, pos, coverage);
     PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
     Conquer.against(matchings, tycker, pos, signature);
-    tycker.equations.solve();
+    tycker.levelEqns.solve();
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
@@ -197,7 +197,7 @@ public record StmtTycker(
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
     });
-    exprTycker.equations.solve();
+    exprTycker.levelEqns.solve();
     return okTele.map(t -> {
       var term = t.type().zonk(exprTycker);
       exprTycker.localCtx.put(t.ref(), term);

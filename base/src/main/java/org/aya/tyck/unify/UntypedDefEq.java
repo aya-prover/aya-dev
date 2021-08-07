@@ -5,7 +5,6 @@ package org.aya.tyck.unify;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
@@ -119,19 +118,19 @@ public record UntypedDefEq(
     }
     var solved = extract(lhs, rhs);
     if (solved == null) {
-      reporter().report(new HoleProblem.BadSpineError(lhs, defeq.pos));
+      defeq.reporter.report(new HoleProblem.BadSpineError(lhs, defeq.pos));
       return null;
     }
     assert meta.body == null;
     compare(solved.computeType(), meta.result);
     var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
     if (scopeCheck.isNotEmpty()) {
-      reporter().report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
+      defeq.reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
       return null;
     }
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
-      reporter().report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
+      defeq.reporter.report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
       return new ErrorTerm(solved.toDoc());
     }
     defeq.tracing(builder -> builder.append(new Trace.LabelT(defeq().pos, "Hole solved!")));
@@ -140,10 +139,6 @@ public record UntypedDefEq(
 
   @Override public @NotNull Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {
     return ErrorTerm.typeOf(term.toDoc());
-  }
-
-  private @NotNull Reporter reporter() {
-    return defeq.tycker.reporter;
   }
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
@@ -166,7 +161,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
-    defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
+    defeq.levelEqns.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
     return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ(1));
   }
 
@@ -188,7 +183,7 @@ public record UntypedDefEq(
   ) {
     var levelSubst = new LevelSubst.Simple(MutableMap.of());
     for (var levels : l.zip(r).zip(Def.defLevels(def))) {
-      defeq.tycker.equations.add(levels._1._1, levels._1._2, cmp, defeq.pos);
+      defeq.levelEqns.add(levels._1._1, levels._1._2, cmp, defeq.pos);
       levelSubst.solution().put(levels._2, levels._1._1);
     }
     return levelSubst;

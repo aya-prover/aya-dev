@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -13,10 +14,11 @@ import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -30,11 +32,13 @@ import java.util.function.Supplier;
 public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull Term, @NotNull Boolean> {
   final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @NotNull UntypedDefEq termDefeq;
-  public final @NotNull ExprTycker tycker;
+  private final @Nullable Trace.Builder traceBuilder;
+  public final @NotNull LevelEqnSet levelEqns;
+  public final @NotNull Reporter reporter;
   public final @NotNull SourcePos pos;
 
   void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
-    if (tycker.traceBuilder != null) consumer.accept(tycker.traceBuilder);
+    if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
   void traceEntrance(@NotNull Trace trace) {
@@ -49,8 +53,13 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
     tracing(Trace.Builder::reduce);
   }
 
-  public TypedDefEq(@NotNull Ordering cmp, @NotNull ExprTycker tycker, @NotNull SourcePos pos) {
-    this.tycker = tycker;
+  public TypedDefEq(
+    @NotNull Ordering cmp, @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter,
+    @Nullable Trace.Builder traceBuilder, @NotNull SourcePos pos
+  ) {
+    this.levelEqns = levelEqns;
+    this.reporter = reporter;
+    this.traceBuilder = traceBuilder;
     this.pos = pos;
     this.termDefeq = new UntypedDefEq(this, cmp);
   }
@@ -130,9 +139,9 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
       Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
     var fieldSubst = new Substituter.TermSubst(MutableHashMap.of());
     for (var fieldSig : fieldSigs) {
-        var dummyVars = fieldSig.selfTele.map(par ->
+      var dummyVars = fieldSig.selfTele.map(par ->
         new LocalVar(par.ref().name(), par.ref().definition()));
-        var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
+      var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
         new Arg<Term>(new RefTerm(vpa._1, vpa._2.type()), vpa._2.explicit()));
       var l = new CallTerm.Access(lhs, fieldSig.ref(), type.sortArgs(), type.args(), dummy);
       var r = new CallTerm.Access(rhs, fieldSig.ref(), type.sortArgs(), type.args(), dummy);
