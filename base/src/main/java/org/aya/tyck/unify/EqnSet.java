@@ -53,7 +53,10 @@ public record EqnSet(
   /**
    * @return true if <code>this</code> is mutated.
    */
-  public boolean simplify(@NotNull Reporter reporter, @NotNull LevelEqnSet levelEqns, @Nullable Trace.Builder tracer) {
+  public boolean simplify(
+    @NotNull LevelEqnSet levelEqns, boolean allowVague,
+    @NotNull Reporter reporter, @Nullable Trace.Builder tracer
+  ) {
     var removingMetas = Buffer.<HoleVar<Meta>>of();
     for (var activeMeta : activeMetas) {
       var solution = activeMeta.core().body;
@@ -62,7 +65,7 @@ public record EqnSet(
           var usageCounter = new VarConsumer.UsageCounter(activeMeta);
           eqn.accept(usageCounter, Unit.unit());
           if (usageCounter.usageCount() > 0) {
-            var defEq = new TypedDefEq(eqn.cmp, reporter, levelEqns, this, tracer, eqn.pos);
+            var defEq = new TypedDefEq(eqn.cmp, reporter, false, levelEqns, this, tracer, eqn.pos);
             defEq.varSubst.putAll(eqn.varSubst);
             defEq.termDefeq.compare(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
             return false;

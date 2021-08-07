@@ -100,8 +100,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public void solveMetas() {
-    //noinspection StatementWithEmptyBody
-    while (termEqns.simplify(reporter, levelEqns, traceBuilder)) ;
+    do {
+      //noinspection StatementWithEmptyBody
+      while (termEqns.simplify(levelEqns, false, reporter, traceBuilder)) ;
+      // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
+    } while (!termEqns.eqns().isNotEmpty() ||
+      termEqns.simplify(levelEqns, true, reporter, traceBuilder));
     levelEqns.solve();
   }
 
@@ -264,7 +268,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return new TypedDefEq(ord, reporter, levelEqns, termEqns, traceBuilder, pos);
+    return new TypedDefEq(ord, reporter, false, levelEqns, termEqns, traceBuilder, pos);
   }
 
   /**

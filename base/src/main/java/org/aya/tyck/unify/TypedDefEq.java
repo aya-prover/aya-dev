@@ -33,6 +33,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @Nullable Trace.Builder traceBuilder;
   public final @NotNull UntypedDefEq termDefeq;
+  private boolean allowVague;
   public final @NotNull LevelEqnSet levelEqns;
   public final @NotNull EqnSet termEqns;
   public final @NotNull Reporter reporter;
@@ -55,10 +56,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   public TypedDefEq(
-    @NotNull Ordering cmp, @NotNull Reporter reporter,
+    @NotNull Ordering cmp, @NotNull Reporter reporter, boolean allowVague,
     @NotNull LevelEqnSet levelEqns, @NotNull EqnSet termEqns,
     @Nullable Trace.Builder traceBuilder, @NotNull SourcePos pos
   ) {
+    this.allowVague = allowVague;
     this.levelEqns = levelEqns;
     this.termEqns = termEqns;
     this.reporter = reporter;
