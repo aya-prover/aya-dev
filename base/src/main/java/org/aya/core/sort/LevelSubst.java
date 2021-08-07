@@ -2,10 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.sort;
 
-import org.aya.generic.Level;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
 import kala.control.Option;
+import org.aya.generic.Level;
+import org.aya.tyck.unify.level.LevelEqnSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
