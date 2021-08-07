@@ -9,6 +9,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.stmt.Decl;
+import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.sort.LevelSubst;
@@ -92,20 +93,18 @@ public record UntypedDefEq(
     return params.last().type();
   }
 
-  private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
-    var argSubst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
-    var meta = lhs.ref().core();
+  private @Nullable Substituter.TermSubst extract(
+    @NotNull CallTerm.Hole lhs, @NotNull Term rhs, @NotNull Meta meta
+  ) {
+    var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : lhs.args().view().zip(meta.telescope)) {
       if (arg._1.term() instanceof RefTerm ref) {
         // TODO[ice]: ^ eta var
-        if (argSubst.map().containsKey(ref.var())) return null;
-        argSubst.add(ref.var(), arg._2.toTerm());
+        if (subst.map().containsKey(ref.var())) return null;
+        subst.add(ref.var(), arg._2.toTerm());
       } else return null;
     }
-    var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
-    subst.add(argSubst);
-    defeq.varSubst.forEach(subst::add);
-    return rhs.subst(subst);
+    return subst;
   }
 
   @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs) {
@@ -120,11 +119,21 @@ public record UntypedDefEq(
       }
       return holeTy;
     }
-    var solved = extract(lhs, rhs);
-    if (solved == null) {
+    var argSubst = extract(lhs, rhs, meta);
+    if (argSubst == null) {
       defeq.reporter.report(new HoleProblem.BadSpineError(lhs, defeq.pos));
       return null;
     }
+    var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
+    // In this case, the solution may not be unique. See #608
+    if (subst.overlap(argSubst).anyMatch(var -> rhs.findUsages(var) > 0)) {
+      defeq.termEqns.addEqn(createEqn(lhs, rhs));
+      // Skip the unification and scope check
+      return meta.result;
+    }
+    subst.add(argSubst);
+    defeq.varSubst.forEach(subst::add);
+    var solved = rhs.subst(subst);
     assert meta.body == null;
     compare(solved.computeType(), meta.result);
     var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());

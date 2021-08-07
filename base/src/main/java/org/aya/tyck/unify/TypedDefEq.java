@@ -34,6 +34,7 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   private final @Nullable Trace.Builder traceBuilder;
   public final @NotNull UntypedDefEq termDefeq;
   public final @NotNull LevelEqnSet levelEqns;
+  public final @NotNull EqnSet termEqns;
   public final @NotNull Reporter reporter;
   public final @NotNull SourcePos pos;
 
@@ -54,10 +55,12 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
   }
 
   public TypedDefEq(
-    @NotNull Ordering cmp, @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter,
+    @NotNull Ordering cmp, @NotNull Reporter reporter,
+    @NotNull LevelEqnSet levelEqns, @NotNull EqnSet termEqns,
     @Nullable Trace.Builder traceBuilder, @NotNull SourcePos pos
   ) {
     this.levelEqns = levelEqns;
+    this.termEqns = termEqns;
     this.reporter = reporter;
     this.traceBuilder = traceBuilder;
     this.pos = pos;

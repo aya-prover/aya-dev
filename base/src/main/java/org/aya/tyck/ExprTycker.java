@@ -35,6 +35,7 @@ import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.EqnSet;
 import org.aya.tyck.unify.TypedDefEq;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Constants;
@@ -56,6 +57,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
+  public final @NotNull EqnSet termEqns = new EqnSet();
   public final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.of();
@@ -98,6 +100,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public void solveMetas() {
+    //noinspection StatementWithEmptyBody
+    while (termEqns.simplify(this)) ;
     levelEqns.solve();
   }
 
@@ -260,7 +264,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return new TypedDefEq(ord, levelEqns, reporter, traceBuilder, pos);
+    return new TypedDefEq(ord, reporter, levelEqns, termEqns, traceBuilder, pos);
   }
 
   /**

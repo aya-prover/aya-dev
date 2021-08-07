@@ -19,7 +19,6 @@ import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.Ordering;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +30,10 @@ public record EqnSet(
   @NotNull Buffer<Eqn> eqns,
   @NotNull Buffer<HoleVar<Meta>> activeMetas
 ) {
+  public EqnSet() {
+    this(Buffer.create(), Buffer.create());
+  }
+
   public void addEqn(@NotNull Eqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
@@ -47,7 +50,6 @@ public record EqnSet(
   /**
    * @return true if <code>this</code> is mutated.
    */
-  @Contract(mutates = "this")
   public boolean simplify(@NotNull ExprTycker tycker) {
     var removingMetas = Buffer.<HoleVar<Meta>>of();
     for (var activeMeta : activeMetas) {
