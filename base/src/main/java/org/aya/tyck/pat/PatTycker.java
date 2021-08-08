@@ -164,7 +164,7 @@ public record PatTycker(
 
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
     var v = bind.bind();
-    if (t instanceof CallTerm.Prim prim && prim.ref().core == PrimDef.INTERVAL)
+    if (t instanceof CallTerm.Prim prim && prim.ref().core.is(PrimDef._INTERVAL))
       for (var def : PrimDef.LEFT_RIGHT)
         if (Objects.equals(bind.bind().name(), def.ref().name())) {
           subst.bad().add(bind.bind());

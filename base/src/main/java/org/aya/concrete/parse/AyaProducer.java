@@ -53,7 +53,7 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
     var id = ctx.ID();
     var name = id.getText();
-    var core = PrimDef.PRIMITIVES.getOption(name);
+    var core = PrimDef.factory(name);
     var sourcePos = sourcePosOf(id);
     if (core.isEmpty()) {
       reporter.report(new UnknownPrimError(sourcePos, name));

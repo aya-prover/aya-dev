@@ -95,7 +95,7 @@ public record Conquer(
 
   @Override public Unit visitPrim(Pat.@NotNull Prim prim, Integer nth) {
     var core = prim.ref().core;
-    assert PrimDef.LEFT_RIGHT.contains(core);
+    assert core.leftOrRight();
     return Unit.unit();
   }
 }

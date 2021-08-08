@@ -3,7 +3,10 @@
 package org.aya.core.def;
 
 import kala.collection.Map;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LevelGenVar;
@@ -18,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author ice1000
@@ -54,8 +58,8 @@ public record PrimDef(
   private static @NotNull Term invol(@NotNull CallTerm.Prim prim) {
     var arg = prim.args().get(0).term();
     if (arg instanceof CallTerm.Prim primCall) {
-      if (primCall.ref() == LEFT.ref) return RIGHT_CALL;
-      if (primCall.ref() == RIGHT.ref) return LEFT_CALL;
+      if (primCall.ref() == LEFT.ref) return new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+      if (primCall.ref() == RIGHT.ref) return new CallTerm.Prim(LEFT.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
     }
     return prim;
   }
@@ -130,6 +134,75 @@ public record PrimDef(
     .of(INTERVAL, LEFT, RIGHT, ARCOE, INVOL).view()
     .map(prim -> Tuple.of(prim.ref.name(), prim))
     .toImmutableMap();
+
+  public static final @NotNull String _INTERVAL = "I";
+  public static final @NotNull String _LEFT = "left";
+  public static final @NotNull String _RIGHT = "right";
+  public static final @NotNull String _ARCOE = "arcoe";
+  public static final @NotNull String _INVOL = "invol";
+
+  private static final @NotNull Map<@NotNull String, @NotNull Supplier<PrimDef>> SUPPLIERS;
+
+  static {
+    Supplier<PrimDef> intervalSupplier = () -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
+      new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), prim -> prim, _INTERVAL);
+    Supplier<CallTerm.Prim> intervalCallSupplier = () -> new CallTerm.Prim(intervalSupplier.get().ref(),
+      ImmutableSeq.empty(), ImmutableSeq.empty());
+
+    SUPPLIERS = ImmutableMap.ofEntries(
+      Tuple.of(_INTERVAL, intervalSupplier),
+      Tuple.of(_LEFT,  () -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
+        intervalCallSupplier.get(), prim -> prim, _LEFT)),
+      Tuple.of(_RIGHT , () -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
+        intervalCallSupplier.get(), prim -> prim, _RIGHT )),
+      Tuple.of(_ARCOE, () -> {
+        var paramA = new LocalVar("A");
+        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCallSupplier.get(), true);
+        var paramI = new LocalVar("i");
+        var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
+        var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
+        var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
+        var paramATy = new FormTerm.Pi(paramIToATy, result);
+        var aRef = new RefTerm(paramA, paramATy);
+        var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.of(), ImmutableSeq.empty())));
+        return new PrimDef(
+          ImmutableSeq.of(
+            new Term.Param(paramA, paramATy, true),
+            new Term.Param(new LocalVar("base"), baseAtLeft, true),
+            new Term.Param(paramI, intervalCallSupplier.get(), true)
+          ),
+          ImmutableSeq.of(homotopy, universe),
+          new ElimTerm.App(aRef, Arg.explicit(new RefTerm(paramI, intervalCallSupplier.get()))),
+          PrimDef::arcoe, "arcoe");
+      }),
+      Tuple.of(_INVOL, () -> {
+        CallTerm.Prim intervalCall = new CallTerm.Prim(intervalSupplier.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+        return new PrimDef(
+          ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCallSupplier.get(), true)), ImmutableSeq.of(),
+          intervalCall, PrimDef::invol, _INVOL);
+      })
+    );
+  }
+
+  public static @NotNull Option<PrimDef> factory(@NotNull String name) {
+    return SUPPLIERS.getOption(name).map(Supplier::get);
+  }
+
+  public boolean leftOrRight() {
+    return ImmutableSeq.of("left", "right").contains(ref.name());
+  }
+
+  public boolean is(@NotNull String name) {
+    return ref.name().equals(name);
+  }
+
+  public static final @NotNull Map<@NotNull String, @NotNull Option<PrimDef>> STATUS = ImmutableMap.ofEntries(
+      Tuple.of(_INTERVAL, Option.none()),
+      Tuple.of(_LEFT, Option.none()),
+      Tuple.of(_RIGHT, Option.none()),
+      Tuple.of(_ARCOE, Option.none()),
+      Tuple.of(_INVOL, Option.none())
+    );
 
   public @ApiStatus.Internal static void clearConcrete() {
     for (var var : PRIMITIVES.valuesView()) var.ref.concrete = null;
