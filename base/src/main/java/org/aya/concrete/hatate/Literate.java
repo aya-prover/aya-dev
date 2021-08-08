@@ -14,6 +14,7 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,11 +23,13 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public sealed interface Literate {
-  void resolve(@NotNull BinOpSet opSet, @NotNull Context context);
+  default void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+  }
 
   record Raw(@NotNull Doc content) implements Literate {
-    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
-    }
+  }
+
+  record Styled(@Nullable Style style, @NotNull ImmutableSeq<Literate> content) implements Literate {
   }
 
   record Err(@NotNull Ref<Var> def, @NotNull SourcePos sourcePos) implements Literate {
