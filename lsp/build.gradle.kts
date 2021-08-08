@@ -10,7 +10,6 @@ dependencies {
   val deps: java.util.Properties by rootProject.ext
   implementation(project(":cli"))
   implementation(project(":base"))
-  implementation(project(":parser"))
   val lsp4jVersion = deps.getProperty("version.lsp4j")
   implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j", version = lsp4jVersion)
   implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc", version = lsp4jVersion)

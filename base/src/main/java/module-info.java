@@ -1,9 +1,8 @@
 module org.aya {
   requires static org.jetbrains.annotations;
-  requires static org.antlr.antlr4.runtime;
+  requires org.antlr.antlr4.runtime;
 
   requires transitive org.aya.api;
-  requires transitive org.aya.parser;
   requires transitive org.aya.pretty;
   requires transitive kala.base;
   requires transitive kala.collection;
@@ -24,6 +23,7 @@ module org.aya {
   exports org.aya.core;
   exports org.aya.distill;
   exports org.aya.generic;
+  exports org.aya.parser;
   exports org.aya.prelude;
   exports org.aya.tyck.pat;
   exports org.aya.tyck.trace;

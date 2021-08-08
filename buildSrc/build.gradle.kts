@@ -11,18 +11,10 @@ plugins {
 repositories { mavenCentral() }
 
 val rootDir = projectDir.parentFile!!
-val parserDir = rootDir.resolve("parser")
-val genDir = parserDir.resolve("src/main/java")
-
-val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
-  group = "build setup"
-  from(parserDir.resolve("module-info.java"))
-  into(genDir)
-}
+val genDir = rootDir.resolve("base/src/main/gen")
 
 tasks.withType<AntlrTask>().configureEach antlr@{
   outputDirectory = genDir
-  copyModuleInfo.get().dependsOn(this@antlr)
   val packageName = "org.aya.parser"
   val libPath = genDir.resolve(packageName.replace('.', '/')).absoluteFile
   doFirst { libPath.mkdirs() }
@@ -34,8 +26,6 @@ tasks.withType<AntlrTask>().configureEach antlr@{
     ),
   )
 }
-
-tasks.named("build").configure { dependsOn(copyModuleInfo) }
 
 dependencies {
   val deps = Properties()
