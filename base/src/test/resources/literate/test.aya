@@ -8,3 +8,4 @@ open data Nat : Set | zero | suc Nat
 def wow {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => zero
 
 --| `wow` has two implicit parameters, and note that the second one is a higher one (it is of a function type).
+--| To test the parser, here's the type of `wow`: `ty:wow`.
