@@ -11,6 +11,7 @@ dependencies {
   implementation("com.google.code.gson", "gson", version = deps.getProperty("version.gson"))
   implementation("org.ice1000.jimgui", "core", version = deps.getProperty("version.jimgui"))
   implementation(project(":base"))
+  implementation(project(":parser"))
   implementation(project(":pretty"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
