@@ -196,14 +196,6 @@ public record PrimDef(
     return ref.name().equals(name);
   }
 
-  public static final @NotNull Map<@NotNull String, @NotNull Option<PrimDef>> STATUS = ImmutableMap.ofEntries(
-      Tuple.of(_INTERVAL, Option.none()),
-      Tuple.of(_LEFT, Option.none()),
-      Tuple.of(_RIGHT, Option.none()),
-      Tuple.of(_ARCOE, Option.none()),
-      Tuple.of(_INVOL, Option.none())
-    );
-
   public @ApiStatus.Internal static void clearConcrete() {
     for (var var : PRIMITIVES.valuesView()) var.ref.concrete = null;
   }
