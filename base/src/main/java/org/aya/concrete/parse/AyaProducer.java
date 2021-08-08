@@ -25,6 +25,7 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.BinOpParser;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.concrete.stmt.*;
@@ -93,6 +94,11 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
     if (levels != null) return ImmutableSeq.of(visitLevels(levels));
     var bind = ctx.bind();
     if (bind != null) return ImmutableSeq.of(visitBind(bind));
+    var docComment = ctx.DOC_COMMENT();
+    if (docComment != null) {
+      var remark = Remark.make(docComment.getText().substring(3), sourcePosOf(docComment), this);
+      return ImmutableSeq.of(remark);
+    }
     return unreachable(ctx);
   }
 

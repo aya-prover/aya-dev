@@ -11,6 +11,7 @@ stmt : decl
      | importCmd
      | openCmd
      | module
+     | DOC_COMMENT
      | levels
      | generalize
      | bind

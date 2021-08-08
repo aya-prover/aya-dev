@@ -97,7 +97,9 @@ ID : AYA_LETTER (AYA_LETTER | [0-9'])*;
 
 // whitespaces
 WS : [ \t\r\n]+ -> channel(HIDDEN);
-LINE_COMMENT : '--' '-'* (~[~!@#$%^&*\-+=<>?/|:[\u005Da-zA-Z_0-9'\u2200-\u22FF\r\n] ~[\r\n]* | ) -> skip;
+fragment COMMENT_CONTENT : (~[~!@#$%^&*\-+=<>?/|:[\u005Da-zA-Z_0-9'\u2200-\u22FF\r\n] ~[\r\n]* | );
+DOC_COMMENT : '--|' COMMENT_CONTENT;
+LINE_COMMENT : '--' COMMENT_CONTENT -> skip;
 COMMENT : '{-' (COMMENT|.)*? '-}' -> channel(HIDDEN);
 
 // literate mode

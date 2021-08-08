@@ -1,6 +1,7 @@
 module org.aya {
   requires static org.jetbrains.annotations;
   requires static org.antlr.antlr4.runtime;
+  requires org.commonmark;
 
   requires transitive org.aya.api;
   requires transitive org.aya.parser;

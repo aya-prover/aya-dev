@@ -37,20 +37,26 @@ public final class Remark implements Stmt {
   public static @NotNull Remark make(@NotNull String raw, @NotNull SourcePos pos, @NotNull AyaProducer producer) {
     var parser = Parser.builder().build();
     var ast = parser.parse(raw);
-    return new Remark(mapAST(ast, producer), raw, pos);
+    return new Remark(mapAST(ast, pos, producer), raw, pos);
   }
 
-  public static @NotNull ImmutableSeq<Literate> mapChildren(@NotNull Node parent, @NotNull AyaProducer producer) {
+  private static @NotNull ImmutableSeq<Literate> mapChildren(
+    @NotNull Node parent, @NotNull SourcePos pos,
+    @NotNull AyaProducer producer
+  ) {
     Node next;
     var children = Buffer.<Literate>create();
     for (Node node = parent.getFirstChild(); node != null; node = next) {
       next = node.getNext();
-      children.append(mapAST(node, producer));
+      children.append(mapAST(node, pos, producer));
     }
     return children.toImmutableSeq();
   }
 
-  public static @Nullable Literate mapAST(@NotNull Node node, @NotNull AyaProducer producer) {
+  private static @Nullable Literate mapAST(
+    @NotNull Node node, @NotNull SourcePos pos,
+    @NotNull AyaProducer producer
+  ) {
     if (node instanceof Code code) {
       var text = code.getLiteral();
       boolean isType;
@@ -72,15 +78,15 @@ public final class Remark implements Stmt {
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {
-      return new Literate.Styled(Style.italic(), mapChildren(emphasis, producer));
+      return new Literate.Styled(Style.italic(), mapChildren(emphasis, pos, producer));
     } else if (node instanceof HardLineBreak) {
       return new Literate.Raw(Doc.line());
     } else if (node instanceof StrongEmphasis emphasis) {
-      return new Literate.Styled(Style.bold(), mapChildren(emphasis, producer));
+      return new Literate.Styled(Style.bold(), mapChildren(emphasis, pos, producer));
     } else if (node instanceof Paragraph paragraph) {
-      return new Literate.Par(mapChildren(paragraph, producer));
+      return new Literate.Par(mapChildren(paragraph, pos, producer));
     } else {
-      // TODO: producer.reporter().report();
+      producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
       return null;
     }
   }
