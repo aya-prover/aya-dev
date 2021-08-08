@@ -126,10 +126,12 @@ public record StmtTycker(
     ImmutableSeq<@NotNull Matching> matchings, @NotNull SourcePos pos, boolean coverage
   ) {
     if (!matchings.isNotEmpty()) return;
+    tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     var classification = PatClassifier.classify(elabClauses, tycker.reporter, pos, coverage);
     PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
     Conquer.against(matchings, tycker, pos, signature);
     tycker.solveMetas();
+    tracing(GenericBuilder::reduce);
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {

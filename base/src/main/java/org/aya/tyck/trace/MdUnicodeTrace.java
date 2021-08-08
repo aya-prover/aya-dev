@@ -64,7 +64,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   }
 
   @Override public Doc visitLabel(Trace.@NotNull LabelT t, Unit unit) {
-    return Doc.vcat(Doc.sep(plus, Doc.plain(t.label())), indentedChildren(t.children()));
+    return Doc.vcat(Doc.sep(plus, Doc.english(t.label())), indentedChildren(t.children()));
   }
 
   public @NotNull Doc docify(Trace.@NotNull Builder traceBuilder) {
