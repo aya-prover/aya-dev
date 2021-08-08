@@ -4,7 +4,6 @@ package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
-import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.desugar.BinOpSet;
@@ -62,13 +61,16 @@ public final class Remark implements Stmt {
   ) {
     if (node instanceof Code code) {
       var text = code.getLiteral();
-      boolean isType;
+      Literate.ShowCode show;
       if (text.startsWith("ty:") || text.startsWith("TY:")) {
-        isType = true;
+        show = Literate.ShowCode.Type;
         text = text.substring(3);
-      } else isType = false;
+      } else if (text.startsWith("core:") || text.startsWith("CORE:")) {
+        show = Literate.ShowCode.Core;
+        text = text.substring(5);
+      } else show = Literate.ShowCode.Concrete;
       NormalizeMode mode = null;
-      for (var value : NormalizeMode.values()) {
+      if (show != Literate.ShowCode.Concrete) for (var value : NormalizeMode.values()) {
         var prefix = value + ":";
         if (text.startsWith(prefix)) {
           mode = value;
@@ -77,7 +79,7 @@ public final class Remark implements Stmt {
         }
       }
       var expr = producer.visitExpr(AyaParsing.parser(text).expr());
-      return new Literate.Code(new Ref<>(expr), new Literate.CodeCmd(isType, mode));
+      return new Literate.Code(expr, show, mode);
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {

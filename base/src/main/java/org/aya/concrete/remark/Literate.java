@@ -19,6 +19,7 @@ import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.core.def.UserDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.tyck.ExprTycker;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,8 @@ public sealed interface Literate {
   default <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
   }
   default <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
+  }
+  default void tyck(@NotNull ExprTycker tycker) {
   }
 
   void resolve(@NotNull BinOpSet opSet, @NotNull Context context);
@@ -53,6 +56,10 @@ public sealed interface Literate {
       children.forEach(literate -> literate.visit(consumer, p));
     }
 
+    @Override public void tyck(@NotNull ExprTycker tycker) {
+      children.forEach(literate -> literate.tyck(tycker));
+    }
+
     @Override public @NotNull Doc toDoc() {
       var cat = Doc.cat(children.map(Literate::toDoc));
       return style == null ? cat : Doc.styled(style, cat);
@@ -74,21 +81,36 @@ public sealed interface Literate {
     }
   }
 
-  /**
-   * @param isType <code>true</code> if show type, otherwise show the term itself
-   * @param mode   <code>null</code> if as-is
-   */
-  record CodeCmd(boolean isType, @Nullable NormalizeMode mode) {
+  enum ShowCode {
+    Concrete, Core, Type
   }
 
-  record Code(@NotNull Ref<Expr> expr, @NotNull CodeCmd cmd) implements Literate {
+  final class Code implements Literate {
+    public @NotNull Expr expr;
+    public @Nullable ExprTycker.Result tyckResult;
+    public final @NotNull ShowCode showCode;
+    public final @Nullable NormalizeMode mode;
+
+    /**
+     * @param mode <code>null</code> if as-is
+     */
+    public Code(@NotNull Expr expr, @NotNull ShowCode showCode, @Nullable NormalizeMode mode) {
+      this.expr = expr;
+      this.showCode = showCode;
+      this.mode = mode;
+    }
+
     @Override @Contract(mutates = "this")
     public <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
-      expr.set(expr.value.accept(fixpoint, p));
+      expr = expr.accept(fixpoint, p);
     }
 
     @Override public <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
-      expr.value.accept(consumer, p);
+      expr.accept(consumer, p);
+    }
+
+    @Override public void tyck(@NotNull ExprTycker tycker) {
+      tyckResult = tycker.checkExpr(expr, null);
     }
 
     @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
@@ -97,7 +119,7 @@ public sealed interface Literate {
 
     @Override public @NotNull Doc toDoc() {
       // TODO: need term
-      return expr.value.toDoc();
+      return expr.toDoc();
     }
   }
 }
