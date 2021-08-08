@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
+import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
@@ -42,7 +43,7 @@ public final class Remark implements Stmt {
   public static @NotNull ImmutableSeq<Literate> mapChildren(@NotNull Node parent, @NotNull AyaProducer producer) {
     Node next;
     var children = Buffer.<Literate>create();
-    for(Node node = parent.getFirstChild(); node != null; node = next) {
+    for (Node node = parent.getFirstChild(); node != null; node = next) {
       next = node.getNext();
       children.append(mapAST(node, producer));
     }
@@ -51,8 +52,23 @@ public final class Remark implements Stmt {
 
   public static @Nullable Literate mapAST(@NotNull Node node, @NotNull AyaProducer producer) {
     if (node instanceof Code code) {
-      var expr = producer.visitExpr(AyaParsing.parser(code.getLiteral()).expr());
-      return new Literate.Code(new Ref<>(expr), new Literate.CodeCmd(false, null));
+      var text = code.getLiteral();
+      boolean isType;
+      if (text.startsWith("ty:") || text.startsWith("TY:")) {
+        isType = true;
+        text = text.substring(3);
+      } else isType = false;
+      NormalizeMode mode = null;
+      for (var value : NormalizeMode.values()) {
+        var prefix = value + ":";
+        if (text.startsWith(prefix)) {
+          mode = value;
+          text = text.substring(prefix.length());
+          break;
+        }
+      }
+      var expr = producer.visitExpr(AyaParsing.parser(text).expr());
+      return new Literate.Code(new Ref<>(expr), new Literate.CodeCmd(isType, mode));
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {
