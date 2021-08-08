@@ -3,6 +3,7 @@
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
@@ -28,7 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
-  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(SourceFile.NONE, ThrowingReporter.INSTANCE);
+  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(SourceFile.NONE,
+    ThrowingReporter.INSTANCE, MutableMap.create());
 
   @BeforeAll public static void enableTest() {
     Global.enterTestMode();

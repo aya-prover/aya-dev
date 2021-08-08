@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.Matching;
@@ -23,7 +24,7 @@ public class PatCCTest {
     @NotNull ImmutableSeq<Matching> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos
   ) {
-    return PatClassifier.classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, true);
+    return PatClassifier.classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, MutableMap.create(), true);
   }
 
   @Test public void addCC() {

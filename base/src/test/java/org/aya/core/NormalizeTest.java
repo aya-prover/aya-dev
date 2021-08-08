@@ -59,8 +59,4 @@ public class NormalizeTest {
     assertTrue(normalizer.apply(6) instanceof CallTerm.Con conCall
       && Objects.equals(conCall.ref().name(), "suc"));
   }
-
-  @AfterEach public void tearDown() {
-    PrimDef.clearConcrete();
-  }
 }

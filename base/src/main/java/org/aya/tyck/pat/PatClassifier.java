@@ -34,11 +34,13 @@ public record PatClassifier(
 ) {
   public static @NotNull ImmutableSeq<PatClass> classify(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos, boolean coverage
+    @NotNull Reporter reporter, @NotNull SourcePos pos,
+    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus,
+    boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), index)), coverage);
+      new SubPats(clause.patterns(), index)), primStatus, coverage);
   }
 
   public static void confluence(
@@ -75,7 +77,11 @@ public record PatClassifier(
    * @param coverage   if true, in uncovered cases an error will be reported
    * @return pattern classes
    */
-  private @NotNull ImmutableSeq<PatClass> classifySub(@NotNull ImmutableSeq<SubPats> subPatsSeq, boolean coverage) {
+  private @NotNull ImmutableSeq<PatClass> classifySub(
+    @NotNull ImmutableSeq<SubPats> subPatsSeq,
+    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus,
+    boolean coverage
+  ) {
     assert subPatsSeq.isNotEmpty();
     var pivot = subPatsSeq.first();
     // Done
@@ -90,7 +96,7 @@ public record PatClassifier(
       .toImmutableSeq();
     if (hasTuple.isNotEmpty()) {
       builder.shiftEmpty(explicit);
-      return classifySub(hasTuple, coverage);
+      return classifySub(hasTuple, primStatus, coverage);
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
@@ -99,19 +105,19 @@ public record PatClassifier(
       .firstOption();
     if (lrSplit.isDefined()) {
       if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
-      for (var def : PrimDef.LEFT_RIGHT) {
+      for (var primName : PrimDef.LEFT_RIGHT) {
         var matchy = subPatsSeq.mapIndexedNotNull((ix, subPats) -> {
           var head = subPats.head();
-          return head instanceof Pat.Prim prim && prim.ref() == def.ref()
+          return head instanceof Pat.Prim prim && primStatus.containsKey(primName) && prim.ref() == primStatus.get(primName).ref()
             || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
         });
-        builder.append(new PatTree(def.ref().name(), explicit));
+        builder.append(new PatTree(primName, explicit));
         var classes = new PatClass(matchy.view().map(SubPats::ix))
           .extract(subPatsSeq)
           .map(SubPats::drop)
           .toImmutableSeq();
         if (classes.isNotEmpty()) {
-          var rest = classifySub(classes, false);
+          var rest = classifySub(classes, primStatus, false);
           builder.unshift();
           buffer.appendAll(rest);
         } else builder.unshift();
@@ -125,7 +131,7 @@ public record PatClassifier(
     if (hasMatch.isEmpty()) {
       builder.shiftEmpty(explicit);
       builder.unshift();
-      return classifySub(subPatsSeq.map(SubPats::drop), coverage);
+      return classifySub(subPatsSeq.map(SubPats::drop), primStatus, coverage);
     }
     var dataCall = hasMatch.get();
     for (var ctor : dataCall.ref().core.body()) {
@@ -145,13 +151,13 @@ public record PatClassifier(
         builder.unshift();
         continue;
       }
-      var classified = classifySub(matches, coverage);
+      var classified = classifySub(matches, primStatus, coverage);
       builder.reduce();
       var classes = classified.map(pat -> pat
         .extract(subPatsSeq)
         .map(SubPats::drop)
         .toImmutableSeq());
-      var rest = classes.flatMap(clazz -> classifySub(clazz, coverage));
+      var rest = classes.flatMap(clazz -> classifySub(clazz, primStatus, coverage));
       builder.unshift();
       buffer.appendAll(rest);
     }

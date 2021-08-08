@@ -3,6 +3,7 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.api.concrete.ConcreteDecl;
@@ -53,8 +54,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
   protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  public @NotNull Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
-    var tycker = new StmtTycker(reporter, builder);
+  public @NotNull Def tyck(
+    @NotNull Reporter reporter,
+    Trace.@Nullable Builder builder,
+    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus
+  ) {
+    var tycker = new StmtTycker(reporter, builder, primStatus);
     return accept(tycker, tycker.newTycker());
   }
 
@@ -99,7 +104,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   /**
    * @author ice1000
    * @see PrimDef
-   * @see PrimDef#PRIMITIVES
    */
   public static final class PrimDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<? extends PrimDef, PrimDecl> ref;

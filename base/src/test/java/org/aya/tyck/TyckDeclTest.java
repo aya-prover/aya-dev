@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
@@ -34,7 +35,7 @@ public class TyckDeclTest {
     decl.resolve(opSet);
     opSet.sort();
     decl.desugar(ThrowingReporter.INSTANCE, opSet);
-    var def = decl.tyck(ThrowingReporter.INSTANCE, null);
+    var def = decl.tyck(ThrowingReporter.INSTANCE, null, MutableMap.create());
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
     return ((FnDef) def);
@@ -74,7 +75,7 @@ public class TyckDeclTest {
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
     return successDesugarDecls(text)
-      .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
+      .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null, MutableMap.create()) : null)
       .filter(Objects::nonNull);
   }
 }

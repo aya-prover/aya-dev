@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Decl;
 import org.aya.test.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public class TyckExprTest {
       def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
       def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)""");
     decls.dropLast(1).forEach(decl -> {
-      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, null);
+      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, null, MutableMap.create());
     });
     var decl = (Decl.FnDecl) decls.last();
     var expr = decl.body.getLeftValue();

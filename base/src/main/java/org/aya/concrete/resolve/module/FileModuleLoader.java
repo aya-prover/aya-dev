@@ -22,6 +22,7 @@ import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.core.def.PrimDef;
 import org.aya.core.def.TopLevel;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +46,8 @@ public record FileModuleLoader(
   load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = resolveFile(path);
     try {
-      var program = AyaParsing.program(locator, reporter, sourcePath);
-        return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports;
+      var program = AyaParsing.program(locator, reporter, sourcePath, MutableMap.create());
+        return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder, MutableMap.create()).exports;
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
       return null;
@@ -65,7 +66,8 @@ public record FileModuleLoader(
     @NotNull Reporter reporter,
     @NotNull CheckedRunnable<E> onResolved,
     @NotNull CheckedConsumer<ImmutableSeq<TopLevel>, E> onTycked,
-    Trace.@Nullable Builder builder
+    Trace.@Nullable Builder builder,
+    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus
   ) throws E {
     var context = new EmptyContext(reporter).derive();
     var shallowResolver = new StmtShallowResolver(recurseLoader);
@@ -79,7 +81,7 @@ public record FileModuleLoader(
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var wellTyped = Buffer.<TopLevel>create();
       for (var stmt : program) {
-        if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder));
+        if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder, primStatus));
         else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder));
         if (delayedReporter.problems().isNotEmpty()) break;
       }

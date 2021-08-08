@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.stmt;
 
+import kala.collection.mutable.MutableMap;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -17,7 +18,7 @@ public sealed interface Sample extends Stmt {
 
   /** @return <code>null</code> if the delegate is a command (not a definition) */
   default @Nullable TopLevel tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-    return doAccept(SampleTycker.INSTANCE, new StmtTycker(reporter, traceBuilder));
+    return doAccept(SampleTycker.INSTANCE, new StmtTycker(reporter, traceBuilder, MutableMap.create()));
   }
 
   interface Visitor<P, R> {
