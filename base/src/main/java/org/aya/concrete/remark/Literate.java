@@ -124,11 +124,11 @@ public sealed interface Literate {
 
     @Override public @NotNull Doc toDoc() {
       assert tyckResult != null;
-      return switch (showCode) {
+      return Doc.styled(Style.code(), switch (showCode) {
         case Concrete -> expr.toDoc();
         case Core -> normalize(tyckResult.wellTyped());
         case Type -> normalize(tyckResult.type());
-      };
+      });
     }
   }
 }

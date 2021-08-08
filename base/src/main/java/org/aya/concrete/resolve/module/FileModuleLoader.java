@@ -77,7 +77,6 @@ public record FileModuleLoader(
     program.forEach(s -> s.resolve(opSet));
     opSet.sort();
     program.forEach(s -> s.desugar(reporter, opSet));
-    onResolved.runChecked();
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var wellTyped = Buffer.<Def>create();
@@ -91,6 +90,8 @@ public record FileModuleLoader(
         if (delayedReporter.problems().anyMatch(Problem::isError)) break;
       }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
+    } finally {
+      onResolved.runChecked();
     }
     return context;
   }

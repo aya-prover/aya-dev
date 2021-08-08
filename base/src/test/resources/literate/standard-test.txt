@@ -1,0 +1,9 @@
+Some preload definitions:
+data Nat : Set lp
+  | zero
+  | suc (_ : Nat)
+open Nat hiding ()
+Lately, Daylily told me an interesting problem about Aya's pattern unification.
+Consider this function (some parameters renamed from the test suites):
+def wow {U : Type lp lp} {T : Pi (_ : U) -> Type lp lp} (A : U) (B : U) (x : T A) (y : T B) : Nat => zero
+`wow` has two implicit parameters, and note that the second one is a higher one (it is of a function type).
