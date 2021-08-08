@@ -256,6 +256,11 @@ public final class ConcreteDistiller implements
     );
   }
 
+  @Override public Doc visitRemark(Literate.@NotNull Remark remark, Unit unit) {
+    // TODO[remark]
+    throw new UnsupportedOperationException();
+  }
+
   @Override public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {
     var prelude = Buffer.of(
       visitAccess(decl.accessibility(), Stmt.Accessibility.Public),

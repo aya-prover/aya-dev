@@ -55,6 +55,11 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     return Unit.unit();
   }
 
+  @Override public Unit visitRemark(Literate.@NotNull Remark remark, BinOpSet binOpSet) {
+    // TODO[remark]
+    return Unit.unit();
+  }
+
   private @NotNull Tuple2<String, @NotNull OpDecl>
   resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull Either<QualifiedID, OpDecl> idOrOp) {
     if (idOrOp.isRight()) {

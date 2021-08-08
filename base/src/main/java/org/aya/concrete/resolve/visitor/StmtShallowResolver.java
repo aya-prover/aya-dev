@@ -53,6 +53,11 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
     return Unit.unit();
   }
 
+  @Override public Unit visitRemark(Literate.@NotNull Remark remark, @NotNull ModuleContext context) {
+    // There cannot be any 'definitions' in remarks
+    return Unit.unit();
+  }
+
   private void visitOperator(@NotNull ModuleContext context, @NotNull OpDecl opDecl,
                              Stmt.@NotNull Accessibility accessibility, @NotNull Var ref,
                              @NotNull SourcePos sourcePos) {
