@@ -26,17 +26,23 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public sealed interface Literate {
-  default void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
-  }
+  void resolve(@NotNull BinOpSet opSet, @NotNull Context context);
 
   @NotNull Doc toDoc();
 
   record Raw(@NotNull Doc toDoc) implements Literate {
+    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+    }
   }
 
-  record Styled(@NotNull Style style, @NotNull ImmutableSeq<Literate> content) implements Literate {
+  record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+      children.forEach(child -> child.resolve(opSet, context));
+    }
+
     @Override public @NotNull Doc toDoc() {
-      return Doc.styled(style, Doc.cat(content.map(Literate::toDoc)));
+      var cat = Doc.cat(children.map(Literate::toDoc));
+      return style == null ? cat : Doc.styled(style, cat);
     }
   }
 
@@ -75,16 +81,6 @@ public sealed interface Literate {
     @Override public @NotNull Doc toDoc() {
       // TODO: need term
       return expr.value.toDoc();
-    }
-  }
-
-  record Par(@NotNull ImmutableSeq<Literate> children) implements Literate {
-    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
-      children.forEach(child -> child.resolve(opSet, context));
-    }
-
-    @Override public @NotNull Doc toDoc() {
-      return Doc.cat(children.map(Literate::toDoc));
     }
   }
 }

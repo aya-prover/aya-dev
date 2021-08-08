@@ -46,7 +46,10 @@ public final class Remark implements Stmt {
   ) {
     Node next;
     var children = Buffer.<Literate>create();
-    for (Node node = parent.getFirstChild(); node != null; node = next) {
+    for (var node = parent.getFirstChild(); node != null; node = next) {
+      if (children.isNotEmpty() && node instanceof Paragraph) {
+        children.append(new Literate.Raw(Doc.line()));
+      }
       next = node.getNext();
       children.append(mapAST(node, pos, producer));
     }
@@ -78,17 +81,17 @@ public final class Remark implements Stmt {
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {
-      return new Literate.Styled(Style.italic(), mapChildren(emphasis, pos, producer));
+      return new Literate.Many(Style.italic(), mapChildren(emphasis, pos, producer));
     } else if (node instanceof HardLineBreak) {
       return new Literate.Raw(Doc.line());
     } else if (node instanceof StrongEmphasis emphasis) {
-      return new Literate.Styled(Style.bold(), mapChildren(emphasis, pos, producer));
+      return new Literate.Many(Style.bold(), mapChildren(emphasis, pos, producer));
     } else if (node instanceof Paragraph) {
-      return new Literate.Par(mapChildren(node, pos, producer));
+      return new Literate.Many(null, mapChildren(node, pos, producer));
     } else if (node instanceof Document) {
       var children = mapChildren(node, pos, producer);
       if (children.sizeEquals(1)) return children.first();
-      else return new Literate.Par(children);
+      else return new Literate.Many(null, children);
     } else {
       producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
       return null;
