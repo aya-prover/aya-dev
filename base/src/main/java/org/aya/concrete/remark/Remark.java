@@ -83,8 +83,12 @@ public final class Remark implements Stmt {
       return new Literate.Raw(Doc.line());
     } else if (node instanceof StrongEmphasis emphasis) {
       return new Literate.Styled(Style.bold(), mapChildren(emphasis, pos, producer));
-    } else if (node instanceof Paragraph paragraph) {
-      return new Literate.Par(mapChildren(paragraph, pos, producer));
+    } else if (node instanceof Paragraph) {
+      return new Literate.Par(mapChildren(node, pos, producer));
+    } else if (node instanceof Document) {
+      var children = mapChildren(node, pos, producer);
+      if (children.sizeEquals(1)) return children.first();
+      else return new Literate.Par(children);
     } else {
       producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
       return null;
