@@ -2,15 +2,15 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.visitor;
 
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.tuple.Tuple2;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
 import org.aya.concrete.visitor.ExprFixpoint;
-import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.tuple.Tuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author re-xyr, ice1000
  * @see StmtResolver
  */
-record ExprResolver(
+public record ExprResolver(
   boolean allowGeneralized,
   @NotNull Buffer<LevelGenVar> allowedLevels
 ) implements ExprFixpoint<Context> {

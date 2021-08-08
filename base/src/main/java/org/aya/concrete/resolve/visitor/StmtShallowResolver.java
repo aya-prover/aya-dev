@@ -55,7 +55,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   }
 
   @Override public Unit visitRemark(@NotNull Remark remark, @NotNull ModuleContext context) {
-    // There cannot be any 'definitions' in remarks
+    remark.ctx = context;
     return Unit.unit();
   }
 

@@ -57,6 +57,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   @Override public Unit visitRemark(@NotNull Remark remark, BinOpSet binOpSet) {
+    remark.doResolve(binOpSet);
     return Unit.unit();
   }
 

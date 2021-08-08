@@ -3,11 +3,17 @@
 package org.aya.concrete.hatate;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import kala.value.Ref;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
+import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.visitor.ExprFixpoint;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +22,17 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public sealed interface Literate {
-  record Raw(@NotNull String content) implements Literate {
+  void resolve(@NotNull BinOpSet opSet, @NotNull Context context);
+
+  record Raw(@NotNull Doc content) implements Literate {
+    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+    }
   }
 
-  record Err(@NotNull Ref<Var> def) implements Literate {
+  record Err(@NotNull Ref<Var> def, @NotNull SourcePos sourcePos) implements Literate {
+    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+      def.set(context.getUnqualified(def.value.name(), sourcePos));
+    }
   }
 
   /**
@@ -34,8 +47,15 @@ public sealed interface Literate {
     public <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
       expr.set(expr.value.accept(fixpoint, p));
     }
+
+    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+      modify(new ExprResolver(false, Buffer.create()), context);
+    }
   }
 
   record Par(@NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+      children.forEach(child -> child.resolve(opSet, context));
+    }
   }
 }
