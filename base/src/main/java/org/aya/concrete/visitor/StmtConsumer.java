@@ -4,7 +4,7 @@ package org.aya.concrete.visitor;
 
 import kala.tuple.Unit;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.hatate.Remark;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
 

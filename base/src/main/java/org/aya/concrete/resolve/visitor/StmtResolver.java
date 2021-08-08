@@ -11,7 +11,7 @@ import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.desugar.BinOpSet;
-import org.aya.concrete.hatate.Remark;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;

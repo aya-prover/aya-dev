@@ -8,7 +8,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.hatate.Remark;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;

@@ -8,7 +8,7 @@ import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.concrete.hatate.Remark;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.context.NoExportContext;

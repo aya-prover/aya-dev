@@ -12,7 +12,7 @@ import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.hatate.Remark;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.Level;
 import org.aya.generic.Modifier;
