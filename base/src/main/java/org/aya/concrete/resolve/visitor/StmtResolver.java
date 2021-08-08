@@ -11,6 +11,7 @@ import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.hatate.Remark;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
@@ -55,8 +56,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     return Unit.unit();
   }
 
-  @Override public Unit visitRemark(Literate.@NotNull Remark remark, BinOpSet binOpSet) {
-    // TODO[remark]
+  @Override public Unit visitRemark(@NotNull Remark remark, BinOpSet binOpSet) {
     return Unit.unit();
   }
 

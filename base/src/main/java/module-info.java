@@ -10,6 +10,7 @@ module org.aya {
 
   exports org.aya.concrete.desugar;
   exports org.aya.concrete.desugar.error;
+  exports org.aya.concrete.hatate;
   exports org.aya.concrete.parse;
   exports org.aya.concrete.resolve.context;
   exports org.aya.concrete.resolve.module;

@@ -10,6 +10,5 @@ public class CommonMark {
     var parser = Parser.builder().build();
     var node = parser.parse("hey `ast`");
     System.out.println(node);
-
   }
 }
