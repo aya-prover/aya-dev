@@ -7,18 +7,6 @@ In file $FILE:15:45 ->
 
 Error: The solution `B` is not well-scoped
        In particular, these variables are not in scope: `B`
-In file $FILE:15:45 ->
-
-  13 | 
-  14 | -- https://cstheory.stackexchange.com/a/49160/50892
-  15 | def test (a : _) (B : Set) (b : B) (p : Eq a b) : I => left
-                                                    ^^
-
-Error: Expected type: {?_?}
-       Normalized: {?_?}
-       Actual type: B
-       Normalized: B
-       They don't match, sorry
 In file $FILE:15:14 ->
 
   13 | 

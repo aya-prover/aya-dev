@@ -140,7 +140,7 @@ public record UntypedDefEq(
     var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
     if (scopeCheck.isNotEmpty()) {
       defeq.reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
-      return null;
+      return new ErrorTerm(solved.toDoc());
     }
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
