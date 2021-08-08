@@ -46,7 +46,16 @@ import java.util.stream.Stream;
 /**
  * @author ice1000, kiva
  */
-public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
+public final class AyaProducer {
+  public final @NotNull SourceFile sourceFile;
+  public final @NotNull Reporter reporter;
+  private @Nullable SourcePos overridingSourcePos;
+
+  public AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
+    this.sourceFile = sourceFile;
+    this.reporter = reporter;
+  }
+
   public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
     return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt).toImmutableSeq();
   }
@@ -96,7 +105,11 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
     if (bind != null) return ImmutableSeq.of(visitBind(bind));
     var docComment = ctx.DOC_COMMENT();
     if (docComment != null) {
-      var remark = Remark.make(docComment.getText().substring(3), sourcePosOf(docComment), this);
+      assert overridingSourcePos == null : "Doc comments shall not nest";
+      var pos = sourcePosOf(docComment);
+      overridingSourcePos = pos;
+      var remark = Remark.make(docComment.getText().substring(3), pos, this);
+      overridingSourcePos = null;
       return ImmutableSeq.of(remark);
     }
     return unreachable(ctx);
@@ -766,6 +779,7 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
+    if (overridingSourcePos != null) return overridingSourcePos;
     var start = ctx.getStart();
     var end = ctx.getStop();
     return new SourcePos(
@@ -780,6 +794,7 @@ public record AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter repo
   }
 
   private @NotNull SourcePos sourcePosOf(TerminalNode node) {
+    if (overridingSourcePos != null) return overridingSourcePos;
     var token = node.getSymbol();
     var line = token.getLine();
     return new SourcePos(

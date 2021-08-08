@@ -93,7 +93,7 @@ public final class Remark implements Stmt {
       if (children.sizeEquals(1)) return children.first();
       else return new Literate.Many(null, children);
     } else {
-      producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
+      producer.reporter.report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
       return null;
     }
   }
