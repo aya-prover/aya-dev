@@ -17,6 +17,7 @@ import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.core.def.UserDef;
+import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.ExprTycker;
@@ -117,9 +118,17 @@ public sealed interface Literate {
       modify(new ExprResolver(false, Buffer.create()), context);
     }
 
+    private @NotNull Doc normalize(@NotNull Term term) {
+      return (mode == null ? term : term.normalize(mode)).toDoc();
+    }
+
     @Override public @NotNull Doc toDoc() {
-      // TODO: need term
-      return expr.toDoc();
+      assert tyckResult != null;
+      return switch (showCode) {
+        case Concrete -> expr.toDoc();
+        case Core -> normalize(tyckResult.wellTyped());
+        case Type -> normalize(tyckResult.type());
+      };
     }
   }
 }

@@ -258,8 +258,8 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitRemark(@NotNull Remark remark, Unit unit) {
-    // TODO[remark]
-    throw new UnsupportedOperationException();
+    var literate = remark.literate;
+    return literate != null ? literate.toDoc() : Doc.plain(remark.raw);
   }
 
   @Override public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {
