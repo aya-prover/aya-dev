@@ -14,6 +14,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.visitor.ExprResolver;
+import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.core.def.UserDef;
 import org.aya.pretty.doc.Doc;
@@ -26,8 +27,12 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public sealed interface Literate {
-  void resolve(@NotNull BinOpSet opSet, @NotNull Context context);
+  default <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
+  }
+  default <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
+  }
 
+  void resolve(@NotNull BinOpSet opSet, @NotNull Context context);
   @NotNull Doc toDoc();
 
   record Raw(@NotNull Doc toDoc) implements Literate {
@@ -38,6 +43,14 @@ public sealed interface Literate {
   record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
       children.forEach(child -> child.resolve(opSet, context));
+    }
+
+    @Override public <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
+      children.forEach(literate -> literate.modify(fixpoint, p));
+    }
+
+    @Override public <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
+      children.forEach(literate -> literate.visit(consumer, p));
     }
 
     @Override public @NotNull Doc toDoc() {
@@ -69,9 +82,13 @@ public sealed interface Literate {
   }
 
   record Code(@NotNull Ref<Expr> expr, @NotNull CodeCmd cmd) implements Literate {
-    @Contract(mutates = "this")
+    @Override @Contract(mutates = "this")
     public <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
       expr.set(expr.value.accept(fixpoint, p));
+    }
+
+    @Override public <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
+      expr.value.accept(consumer, p);
     }
 
     @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {

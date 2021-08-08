@@ -17,6 +17,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   }
 
   @Override default Unit visitRemark(@NotNull Remark remark, P p) {
+    if (remark.literate != null) remark.literate.modify(this, p);
     return Unit.unit();
   }
 

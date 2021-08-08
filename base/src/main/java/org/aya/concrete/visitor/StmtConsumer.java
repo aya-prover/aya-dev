@@ -91,6 +91,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
     return Unit.unit();
   }
   @Override default Unit visitRemark(@NotNull Remark remark, P p) {
+    if (remark.literate != null) remark.literate.visit(this, p);
     return Unit.unit();
   }
 
