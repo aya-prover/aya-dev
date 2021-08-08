@@ -46,6 +46,10 @@ public interface Problem {
     return ImmutableSeq.empty();
   }
 
+  default boolean isError() {
+    return level() == Severity.ERROR;
+  }
+
   default @NotNull PrettyError toPrettyError() {
     var sourcePos = sourcePos();
     return new PrettyError(

@@ -55,7 +55,7 @@ public sealed interface PatternProblem extends Problem {
         Doc.styled(Style.code(), pattern.toDoc()),
         Doc.ONE_WS,
         Doc.english("due to a failed index unification"),
-        Doc.emptyIf(level == Severity.ERROR, () -> Doc.english(", treating as bind pattern")));
+        Doc.emptyIf(isError(), () -> Doc.english(", treating as bind pattern")));
     }
   }
 

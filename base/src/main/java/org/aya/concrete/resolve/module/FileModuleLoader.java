@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedRunnable;
 import org.aya.api.error.DelayedReporter;
+import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.ref.Var;
@@ -81,7 +82,7 @@ public record FileModuleLoader(
       for (var stmt : program) {
         if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder));
         else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder));
-        if (delayedReporter.problems().isNotEmpty()) break;
+        if (delayedReporter.problems().anyMatch(Problem::isError)) break;
       }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
     }
