@@ -1,0 +1,2 @@
+open data Nat : Set | zero | suc Nat
+--| test `suc Nat`
