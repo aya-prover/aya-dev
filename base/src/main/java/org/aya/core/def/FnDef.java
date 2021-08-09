@@ -16,16 +16,19 @@ import java.util.function.Function;
 /**
  * @author ice1000
  */
-public record FnDef(
-  @NotNull DefVar<FnDef, Decl.FnDecl> ref,
+public final class FnDef extends UserDef {
+  public final @NotNull DefVar<FnDef, Decl.FnDecl> ref;
+  public final @NotNull Either<Term, ImmutableSeq<Matching>> body;
 
-  @NotNull ImmutableSeq<Term.Param> telescope,
-  @NotNull ImmutableSeq<Sort.LvlVar> levels,
-  @NotNull Term result,
-  @NotNull Either<Term, ImmutableSeq<Matching>> body
-) implements Def {
-  public FnDef {
+  public FnDef(
+    @NotNull DefVar<FnDef, Decl.FnDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result,
+    @NotNull Either<Term, ImmutableSeq<Matching>> body
+  ) {
+    super(telescope, result, levels);
     ref.core = this;
+    this.ref = ref;
+    this.body = body;
   }
 
   public static @NotNull <T> Function<Either<Term, ImmutableSeq<Matching>>, T> factory(
@@ -36,5 +39,9 @@ public record FnDef(
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitFn(this, p);
+  }
+
+  public @NotNull DefVar<FnDef, Decl.FnDecl> ref() {
+    return ref;
   }
 }

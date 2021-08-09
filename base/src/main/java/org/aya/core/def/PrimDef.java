@@ -18,18 +18,13 @@ import org.aya.core.term.*;
 import org.aya.generic.Level;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.function.Function;
 
 /**
  * @author ice1000
  */
-public record PrimDef(
-  @NotNull ImmutableSeq<Term.Param> telescope,
-  @NotNull ImmutableSeq<Sort.LvlVar> levels,
-  @NotNull Term result,
-  @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
-  @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
-) implements Def {
+public final class PrimDef extends TopLevelDef {
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<Sort.LvlVar> levels,
@@ -76,7 +71,7 @@ public record PrimDef(
     return unfold.apply(primCall);
   }
 
-  @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
+  public @NotNull ImmutableSeq<Term.Param> telescope() {
     if (telescope.isEmpty()) return telescope;
     if (ref.concrete != null) {
       var signature = ref.concrete.signature;
@@ -85,7 +80,7 @@ public record PrimDef(
     return telescope;
   }
 
-  @Override public @NotNull Term result() {
+  public @NotNull Term result() {
     if (ref.concrete != null) {
       var signature = ref.concrete.signature;
       if (signature != null) return signature.result();
@@ -177,5 +172,24 @@ public record PrimDef(
 
   public boolean is(@NotNull String name) {
     return ref.name().equals(name);
+  }
+
+  public final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold;
+  public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
+
+  /**
+   */
+  public PrimDef(
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels,
+    @NotNull Term result, @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
+    @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
+  ) {
+    super(telescope, result, levels);
+    this.unfold = unfold;
+    this.ref = ref;
+  }
+
+  public @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref() {
+    return ref;
   }
 }

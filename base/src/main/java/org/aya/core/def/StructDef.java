@@ -3,10 +3,8 @@
 package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.Matching;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
@@ -17,42 +15,28 @@ import org.jetbrains.annotations.NotNull;
  * @author vont
  */
 
-public record StructDef(
-  @NotNull DefVar<StructDef, Decl.StructDecl> ref,
+public final class StructDef extends UserDef {
+  public final @NotNull DefVar<StructDef, Decl.StructDecl> ref;
+  public final @NotNull ImmutableSeq<FieldDef> fields;
 
-  @NotNull ImmutableSeq<Term.Param> telescope,
-  @NotNull ImmutableSeq<Sort.LvlVar> levels,
-  @NotNull Term result,
-  @NotNull ImmutableSeq<Field> fields
-) implements Def {
-  public StructDef {
+  public StructDef(
+    @NotNull DefVar<StructDef, Decl.StructDecl> ref,
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Sort.LvlVar> levels,
+    @NotNull Term result,
+    @NotNull ImmutableSeq<FieldDef> fields
+  ) {
+    super(telescope, result, levels);
     ref.core = this;
+    this.ref = ref;
+    this.fields = fields;
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitStruct(this, p);
   }
 
-  public static record Field(
-    @NotNull DefVar<StructDef, Decl.StructDecl> structRef,
-    @NotNull DefVar<Field, Decl.StructField> ref,
-    @NotNull ImmutableSeq<Term.Param> structTele,
-    @NotNull ImmutableSeq<Term.Param> fieldTele,
-    @NotNull Term result,
-    @NotNull ImmutableSeq<Matching> clauses,
-    @NotNull Option<Term> body,
-    boolean coerce
-  ) implements Def {
-    public Field {
-      ref.core = this;
-    }
-
-    @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
-      return structTele.concat(fieldTele);
-    }
-
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitField(this, p);
-    }
+  public @NotNull DefVar<StructDef, Decl.StructDecl> ref() {
+    return ref;
   }
 }

@@ -26,7 +26,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
-import org.aya.core.sort.LevelEqnSet;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
@@ -36,7 +35,9 @@ import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.EqnSet;
 import org.aya.tyck.unify.TypedDefEq;
+import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
@@ -55,7 +56,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqnSet equations;
+  public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
+  public final @NotNull EqnSet termEqns = new EqnSet();
   public final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.of();
@@ -70,7 +72,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
     return Seq.of(homotopy, universe).view()
-      .filter(equations::used)
+      .filter(levelEqns::used)
       .appendedAll(levelMapping.valuesView())
       .toImmutableSeq();
   }
@@ -86,7 +88,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this.reporter = reporter;
     this.localCtx = localCtx;
     this.traceBuilder = traceBuilder;
-    equations = new LevelEqnSet(reporter);
   }
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
@@ -94,8 +95,22 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result finalize(@NotNull Result result) {
-    equations.solve();
+    solveMetas();
     return new Result(result.wellTyped.zonk(this), result.type.zonk(this));
+  }
+
+  public void solveMetas() {
+    while (termEqns.eqns().isNotEmpty()) {
+      //noinspection StatementWithEmptyBody
+      while (termEqns.simplify(levelEqns, reporter, traceBuilder)) ;
+      // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
+      var eqns = termEqns.eqns().toImmutableSeq();
+      if (eqns.isNotEmpty()) {
+        for (var eqn : eqns) termEqns.solveEqn(levelEqns, reporter, traceBuilder, eqn, true);
+        reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
+      }
+    }
+    levelEqns.solve();
   }
 
   public @NotNull Result checkNoZonk(@NotNull Expr expr, @Nullable Term type) {
@@ -146,7 +161,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull Sort.CoreLevel transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
-    if (level instanceof Level.Polymorphic) return equations.markUsed(polymorphic);
+    if (level instanceof Level.Polymorphic) return levelEqns.markUsed(polymorphic);
     if (level instanceof Level.Maximum m)
       return Sort.CoreLevel.merge(m.among().map(l -> transformLevel(l, polymorphic)));
     Level<Sort.LvlVar> core;
@@ -165,7 +180,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
     var normTerm = term.normalize(NormalizeMode.WHNF);
     if (normTerm instanceof FormTerm.Univ univ) {
-      equations.add(sort.succ(1), univ.sort(), Ordering.Lt, expr.sourcePos());
+      levelEqns.add(sort.succ(1), univ.sort(), Ordering.Lt, expr.sourcePos());
       return new Result(new FormTerm.Univ(sort), univ);
     } else {
       var succ = new FormTerm.Univ(sort.succ(1));
@@ -201,20 +216,20 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return defCall(pos, (DefVar<DataDef, Decl.DataDecl>) var, CallTerm.Data::new);
     } else if (var.core instanceof StructDef || var.concrete instanceof Decl.StructDecl) {
       return defCall(pos, (DefVar<StructDef, Decl.StructDecl>) var, CallTerm.Struct::new);
-    } else if (var.core instanceof DataDef.Ctor || var.concrete instanceof Decl.DataDecl.DataCtor) {
-      var conVar = (DefVar<DataDef.Ctor, Decl.DataDecl.DataCtor>) var;
+    } else if (var.core instanceof CtorDef || var.concrete instanceof Decl.DataDecl.DataCtor) {
+      var conVar = (DefVar<CtorDef, Decl.DataDecl.DataCtor>) var;
       var level = levelStuffs(pos, conVar);
-      var telescopes = DataDef.Ctor.telescopes(conVar, level._2);
+      var telescopes = CtorDef.telescopes(conVar, level._2);
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
       var body = telescopes.toConCall(conVar);
       return new Result(IntroTerm.Lambda.make(tele, body), type);
-    } else if (var.core instanceof StructDef.Field || var.concrete instanceof Decl.StructField) {
+    } else if (var.core instanceof FieldDef || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
-      var field = (DefVar<StructDef.Field, Decl.StructField>) var;
+      var field = (DefVar<FieldDef, Decl.StructField>) var;
       var ty = Def.defResult(field);
       var fieldPos = field.concrete.sourcePos();
       var refExpr = new Expr.RefExpr(fieldPos, field, field.concrete.ref.name());
@@ -247,7 +262,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       levelSubst.solution().put(v, new Sort.CoreLevel(new Level.Reference<>(lvlVar)));
       return lvlVar;
     });
-    equations.vars().appendAll(levelVars);
+    levelEqns.vars().appendAll(levelVars);
     return Tuple.of(levelSubst, levelVars.map(Level.Reference::new).map(Sort.CoreLevel::new));
   }
 
@@ -257,7 +272,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return new TypedDefEq(ord, this, pos);
+    return new TypedDefEq(ord, reporter, false, levelEqns, termEqns, traceBuilder, pos);
   }
 
   /**
@@ -335,18 +350,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     structTele.view().zip(structCall.args())
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
-    var fields = Buffer.<Tuple2<DefVar<StructDef.Field, Decl.StructField>, Term>>of();
+    var fields = Buffer.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>of();
     var missing = Buffer.<Var>of();
     var conFields = expr.fields();
 
-    for (var defField : structRef.core.fields()) {
+    for (var defField : structRef.core.fields) {
       var conFieldOpt = conFields.find(t -> t.name().equals(defField.ref().name()));
       if (conFieldOpt.isEmpty()) {
-        if (defField.body().isEmpty())
+        if (defField.body.isEmpty())
           missing.append(defField.ref()); // no value available, skip and prepare error reporting
         else {
           // use default value from defField
-          var field = defField.body().get().subst(subst);
+          var field = defField.body.get().subst(subst);
           fields.append(Tuple.of(defField.ref(), field));
           subst.add(defField.ref(), field);
         }
@@ -356,7 +371,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       conFields = conFields.dropWhile(t -> t == conField);
       var type = Def.defResult(defField.ref()).subst(subst);
       var fieldSubst = new ExprRefSubst(reporter);
-      var telescope = defField.ref().core.fieldTele();
+      var telescope = defField.ref().core.selfTele;
       var bindings = conField.bindings();
       if (telescope.sizeLessThan(bindings.size())) {
         // TODO[ice]: number of args don't match
@@ -411,7 +426,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
     var structCore = structCall.ref().core;
     if (structCore == null) throw new UnsupportedOperationException("TODO");
-    var projected = structCore.fields().find(field -> Objects.equals(field.ref().name(), fieldName));
+    var projected = structCore.fields.find(field -> Objects.equals(field.ref().name(), fieldName));
     if (projected.isEmpty()) {
       // TODO[ice]: field not found
       throw new TyckerException();
@@ -423,7 +438,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
     var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
     var levels = levelStuffs(struct.sourcePos(), fieldRef);
-    var tele = Term.Param.subst(fieldRef.core.fieldTele(), structSubst, levels._1);
+    var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, levels._1);
     var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
       structCall.args(), tele.map(Term.Param::toArg));
     return new Result(IntroTerm.Lambda.make(tele, access),

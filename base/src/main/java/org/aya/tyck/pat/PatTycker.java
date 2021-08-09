@@ -18,6 +18,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.ExprRefSubst;
+import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
@@ -76,7 +77,7 @@ public record PatTycker(
       tracing(GenericBuilder::reduce);
       return elabClause;
     });
-    exprTycker.equations.solve();
+    exprTycker.solveMetas();
     return Tuple.of(signature.value.result().zonk(exprTycker), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker))));
   }
 
@@ -88,7 +89,7 @@ public record PatTycker(
       if (patSubst != null) subst.resetTo(patSubst);
       return visitMatch(c, signature);
     });
-    exprTycker.equations.solve();
+    exprTycker.solveMetas();
     return checked.map(c -> c.mapTerm(e -> e.zonk(exprTycker)));
   }
 
@@ -179,7 +180,7 @@ public record PatTycker(
       return new Pat.Bind(bind.explicit(), v, t);
     }
     var ctorCore = selected._3.ref().core;
-    if (ctorCore.conTele().isNotEmpty()) {
+      if (ctorCore.selfTele.isNotEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
@@ -201,8 +202,8 @@ public record PatTycker(
     ctor.resolved().value = ctorRef;
     var ctorCore = ctorRef.core;
     final var dataCall = realCtor._1;
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(),
-      Term.Param.subst(ctorCore.conTele(), realCtor._2,
+      var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(),
+      Term.Param.subst(ctorCore.selfTele, realCtor._2,
         Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs())), dataCall));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
@@ -224,7 +225,7 @@ public record PatTycker(
       reporter.report(new NotYetTyckedError(pos.sourcePos(), dataCall.ref()));
       return null;
     }
-    for (var ctor : core.body()) {
+    for (var ctor : core.body) {
       if (name != null && !Objects.equals(ctor.ref().name(), name)) continue;
       var matchy = mischa(dataCall, core, ctor);
       if (matchy != null) return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
@@ -240,8 +241,8 @@ public record PatTycker(
     return null;
   }
 
-  private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, DataDef.Ctor ctor) {
-    if (ctor.pats().isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats(), dataCall.args());
+  private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
     else return Unfolder.buildSubst(core.telescope(), dataCall.args());
   }
 }

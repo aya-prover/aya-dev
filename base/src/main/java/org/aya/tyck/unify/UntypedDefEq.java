@@ -5,12 +5,12 @@ package org.aya.tyck.unify;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.def.DataDef;
+import org.aya.core.Meta;
+import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
@@ -48,6 +48,10 @@ public record UntypedDefEq(
 
   @Override public void traceExit(@Nullable Term term) {
     defeq.traceExit(true);
+  }
+
+  private @NotNull EqnSet.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
+    return new EqnSet.Eqn(lhs, rhs, cmp, defeq.pos, defeq.varSubst.toImmutableMap());
   }
 
   @Override public @Nullable Term visitRef(@NotNull RefTerm lhs, @NotNull Term preRhs) {
@@ -89,20 +93,18 @@ public record UntypedDefEq(
     return params.last().type();
   }
 
-  private @Nullable Term extract(CallTerm.@NotNull Hole lhs, Term rhs) {
-    var argSubst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
-    var meta = lhs.ref().core();
+  private @Nullable Substituter.TermSubst extract(
+    @NotNull CallTerm.Hole lhs, @NotNull Term rhs, @NotNull Meta meta
+  ) {
+    var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : lhs.args().view().zip(meta.telescope)) {
       if (arg._1.term() instanceof RefTerm ref) {
         // TODO[ice]: ^ eta var
-        if (argSubst.map().containsKey(ref.var())) return null;
-        argSubst.add(ref.var(), arg._2.toTerm());
+        if (subst.map().containsKey(ref.var())) return null;
+        subst.add(ref.var(), arg._2.toTerm());
       } else return null;
     }
-    var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
-    subst.add(argSubst);
-    defeq.varSubst.forEach(subst::add);
-    return rhs.subst(subst);
+    return subst;
   }
 
   @Override public @Nullable Term visitHole(CallTerm.@NotNull Hole lhs, @NotNull Term rhs) {
@@ -117,21 +119,32 @@ public record UntypedDefEq(
       }
       return holeTy;
     }
-    var solved = extract(lhs, rhs);
-    if (solved == null) {
-      reporter().report(new HoleProblem.BadSpineError(lhs, defeq.pos));
+    var argSubst = extract(lhs, rhs, meta);
+    if (argSubst == null) {
+      defeq.reporter.report(new HoleProblem.BadSpineError(lhs, defeq.pos));
       return null;
     }
+    var subst = Unfolder.buildSubst(meta.contextTele, lhs.contextArgs());
+    // In this case, the solution may not be unique (see #608),
+    // so we may delay its resolution to the end of the tycking when we disallow vague unification.
+    if (!defeq.allowVague && subst.overlap(argSubst).anyMatch(var -> rhs.findUsages(var) > 0)) {
+      defeq.termEqns.addEqn(createEqn(lhs, rhs));
+      // Skip the unification and scope check
+      return meta.result;
+    }
+    subst.add(argSubst);
+    defeq.varSubst.forEach(subst::add);
+    var solved = rhs.subst(subst);
     assert meta.body == null;
     compare(solved.computeType(), meta.result);
     var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
     if (scopeCheck.isNotEmpty()) {
-      reporter().report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
-      return null;
+      defeq.reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
+      return new ErrorTerm(solved.toDoc());
     }
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
-      reporter().report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
+      defeq.reporter.report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
       return new ErrorTerm(solved.toDoc());
     }
     defeq.tracing(builder -> builder.append(new Trace.LabelT(defeq().pos, "Hole solved!")));
@@ -140,10 +153,6 @@ public record UntypedDefEq(
 
   @Override public @NotNull Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {
     return ErrorTerm.typeOf(term.toDoc());
-  }
-
-  private @NotNull Reporter reporter() {
-    return defeq.tycker.reporter;
   }
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
@@ -166,7 +175,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
-    defeq.tycker.equations.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
+    defeq.levelEqns.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
     return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ(1));
   }
 
@@ -188,7 +197,7 @@ public record UntypedDefEq(
   ) {
     var levelSubst = new LevelSubst.Simple(MutableMap.of());
     for (var levels : l.zip(r).zip(Def.defLevels(def))) {
-      defeq.tycker.equations.add(levels._1._1, levels._1._2, cmp, defeq.pos);
+      defeq.levelEqns.add(levels._1._1, levels._1._2, cmp, defeq.pos);
       levelSubst.solution().put(levels._2, levels._1._1);
     }
     return levelSubst;
@@ -246,7 +255,7 @@ public record UntypedDefEq(
     var retType = lhs.ref().core.result().subst(substMap);
     // Lossy comparison
     var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(DataDef.Ctor.conTele(lhs.ref()), subst)))
+    if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(CtorDef.conTele(lhs.ref()), subst)))
       return retType;
     return null;
   }

@@ -22,8 +22,7 @@ import java.util.Objects;
 /**
  * @author ice1000
  */
-public sealed interface Def extends CoreDef, TopLevel
-  permits DataDef, DataDef.Ctor, FnDef, PrimDef, StructDef, StructDef.Field {
+public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
   static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
@@ -31,12 +30,9 @@ public sealed interface Def extends CoreDef, TopLevel
   }
   static @NotNull ImmutableSeq<Sort.LvlVar> defLevels(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     var core = defVar.core;
-    if (core instanceof DataDef data) return data.levels();
-    else if (core instanceof FnDef fn) return fn.levels();
-    else if (core instanceof StructDef struct) return struct.levels();
-    else if (core instanceof DataDef.Ctor ctor) return defLevels(ctor.dataRef());
-    else if (core instanceof StructDef.Field field) return defLevels(field.structRef());
-    else if (core instanceof PrimDef prim) return prim.levels();
+    if (core instanceof TopLevelDef topLevel) return topLevel.levels;
+    else if (core instanceof CtorDef ctor) return defLevels(ctor.dataRef);
+    else if (core instanceof FieldDef field) return defLevels(field.structRef);
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).sortParam();
   }
@@ -65,9 +61,9 @@ public sealed interface Def extends CoreDef, TopLevel
   interface Visitor<P, R> {
     R visitFn(@NotNull FnDef def, P p);
     R visitData(@NotNull DataDef def, P p);
-    R visitCtor(@NotNull DataDef.Ctor def, P p);
+    R visitCtor(@NotNull CtorDef def, P p);
     R visitStruct(@NotNull StructDef def, P p);
-    R visitField(@NotNull StructDef.Field def, P p);
+    R visitField(@NotNull FieldDef def, P p);
     R visitPrim(@NotNull PrimDef def, P p);
   }
 
@@ -87,7 +83,7 @@ public sealed interface Def extends CoreDef, TopLevel
     }
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.cat(Doc.join(Doc.ONE_WS, param.view().map(Term.Param::toDoc)), Doc.plain(" -> "), result.toDoc());
+      return Doc.sep(Doc.sep(param.view().map(Term.Param::toDoc)), Doc.symbol("->"), result.toDoc());
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {

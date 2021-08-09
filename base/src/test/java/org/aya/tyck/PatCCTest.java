@@ -35,7 +35,7 @@ public class PatCCTest {
        | a, zero => a
        | suc a, b => suc (add a b)
        | a, suc b => suc (add a b)""");
-    var clauses = ((FnDef) decls.get(1)).body().getRightValue();
+      var clauses = ((FnDef) decls.get(1)).body.getRightValue();
     var classified = testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
     assertEquals(4, classified.size());
     classified.forEach(cls ->
@@ -49,7 +49,7 @@ public class PatCCTest {
        | zero, b => b
        | a, zero => a
        | suc a, suc b => suc (max a b)""");
-    var clauses = ((FnDef) decls.get(1)).body().getRightValue();
+      var clauses = ((FnDef) decls.get(1)).body.getRightValue();
     var classified = testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
@@ -64,7 +64,7 @@ public class PatCCTest {
        | (zero, b), unit x => b
        | (a, zero), y => a
        | (suc a, suc b), unit y => suc (max (a, b) (unit zero))""");
-    var clauses = ((FnDef) decls.get(2)).body().getRightValue();
+      var clauses = ((FnDef) decls.get(2)).body.getRightValue();
     var classified = testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());

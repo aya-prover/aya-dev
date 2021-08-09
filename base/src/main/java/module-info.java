@@ -27,6 +27,7 @@ module org.aya {
   exports org.aya.prelude;
   exports org.aya.tyck.pat;
   exports org.aya.tyck.trace;
+  exports org.aya.tyck.unify.level;
   exports org.aya.tyck.unify;
   exports org.aya.tyck;
   exports org.aya.util.cancel;

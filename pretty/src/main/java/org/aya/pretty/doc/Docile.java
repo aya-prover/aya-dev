@@ -6,7 +6,8 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Should be called <code>Prettiable</code>'
+ * Should be called <code>Prettiable</code>.
+ * Used for debugging purpose <strong>only</strong>.
  *
  * @author ice1000
  */

@@ -2,14 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.pat;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Unit;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Unit;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,11 +40,11 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
   @Override public Term visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
     var data = (CallTerm.Data) ctor.type();
     var core = ctor.ref().core;
-    var tele = core.conTele();
+    var tele = core.selfTele;
     var args = ctor.params().view().zip(tele.view())
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
       .collect(ImmutableSeq.factory());
-    var dataArgs = core.dataTele().map(Term.Param::toArg);
+      var dataArgs = core.ownerTele.map(Term.Param::toArg);
     return new CallTerm.Con(data.ref(), ctor.ref(), dataArgs, data.sortArgs(), args);
   }
 }

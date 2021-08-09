@@ -57,7 +57,7 @@ public record Conquer(
   @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Integer nth) {
     var params = ctor.params();
     for (var pat : params) pat.accept(this, nth);
-    var conditions = ctor.ref().core.clauses();
+      var conditions = ctor.ref().core.clauses;
     for (int i = 0, size = conditions.size(); i < size; i++) {
       var condition = conditions.get(i);
       var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));

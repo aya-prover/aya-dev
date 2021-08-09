@@ -139,7 +139,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   }
 
   public static final class DataCtor extends Signatured implements OpDecl {
-    public final @NotNull DefVar<DataDef.Ctor, Decl.DataCtor> ref;
+    public final @NotNull DefVar<CtorDef, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
@@ -163,7 +163,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.ref = DefVar.concrete(this, name);
     }
 
-    @Override public @NotNull DefVar<DataDef.Ctor, DataCtor> ref() {
+    @Override public @NotNull DefVar<CtorDef, DataCtor> ref() {
       return ref;
     }
 
@@ -260,7 +260,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   }
 
   public static final class StructField extends Signatured {
-    public final @NotNull DefVar<StructDef.Field, Decl.StructField> ref;
+    public final @NotNull DefVar<FieldDef, Decl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;

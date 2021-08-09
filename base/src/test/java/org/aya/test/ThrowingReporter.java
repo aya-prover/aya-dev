@@ -16,7 +16,7 @@ public final class ThrowingReporter implements Reporter {
   }
 
   @Override public void report(@NotNull Problem problem) {
-    if (problem.level() != Problem.Severity.ERROR) {
+    if (!problem.isError()) {
       System.err.println(problem.describe().debugRender());
       return;
     }

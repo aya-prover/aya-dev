@@ -2,16 +2,19 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core;
 
+import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
-import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author ice1000, re-xyr
+ */
 public final class Meta {
   public final @NotNull ImmutableSeq<Term.Param> contextTele;
   public final @NotNull ImmutableSeq<Term.Param> telescope;

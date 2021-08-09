@@ -5,6 +5,7 @@ dependencies {
   implementation(project(":pretty"))
   implementation(project(":parser"))
   val deps: java.util.Properties by rootProject.ext
+  implementation("org.commonmark", "commonmark", version = deps.getProperty("version.commonmark"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
   testImplementation(project(":cli"))

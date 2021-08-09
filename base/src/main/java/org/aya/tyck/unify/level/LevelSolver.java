@@ -1,15 +1,16 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.core.sort;
+package org.aya.tyck.unify.level;
 
 import kala.collection.SeqLike;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import org.aya.api.ref.LevelGenVar;
-import org.aya.core.sort.LevelEqnSet.Eqn;
+import org.aya.core.sort.Sort;
 import org.aya.core.sort.Sort.LvlVar;
 import org.aya.generic.Level;
+import org.aya.tyck.unify.level.LevelEqnSet.Eqn;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 

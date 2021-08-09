@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedRunnable;
 import org.aya.api.error.DelayedReporter;
+import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.ref.Var;
@@ -22,6 +23,7 @@ import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.def.TopLevel;
 import org.aya.tyck.trace.Trace;
@@ -65,7 +67,7 @@ public record FileModuleLoader(
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
     @NotNull CheckedRunnable<E> onResolved,
-    @NotNull CheckedConsumer<ImmutableSeq<TopLevel>, E> onTycked,
+    @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder,
     @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus
   ) throws E {
@@ -79,11 +81,11 @@ public record FileModuleLoader(
     onResolved.runChecked();
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      var wellTyped = Buffer.<TopLevel>create();
+      var wellTyped = Buffer.<Def>create();
       for (var stmt : program) {
         if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder, primStatus));
         else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder));
-        if (delayedReporter.problems().isNotEmpty()) break;
+        if (delayedReporter.problems().anyMatch(Problem::isError)) break;
       }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
     }

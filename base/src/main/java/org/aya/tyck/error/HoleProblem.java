@@ -3,15 +3,19 @@
 package org.aya.tyck.error;
 
 import kala.collection.Seq;
+import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.util.WithPos;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
+import org.aya.tyck.unify.EqnSet;
 import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */
@@ -67,6 +71,26 @@ public sealed interface HoleProblem extends Problem {
         Doc.plain("as"),
         Doc.styled(Style.code(), sol.toDoc()),
         Doc.english("which is recursive"));
+    }
+  }
+
+  record CannotFindGeneralSolution(
+    @NotNull ImmutableSeq<EqnSet.Eqn> eqns
+  ) implements Problem {
+    @Override public @NotNull SourcePos sourcePos() {
+      return eqns.last().pos();
+    }
+
+    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
+      return eqns.map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc()));
+    }
+
+    @Override public @NotNull Doc describe() {
+      return Doc.english("Solving equation(s) with not very general solution(s).");
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.WARN;
     }
   }
 }

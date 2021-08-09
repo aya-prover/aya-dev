@@ -2,13 +2,14 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.stmt;
 
-import kala.collection.mutable.MutableMap;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.core.def.TopLevel;
-import org.aya.tyck.SampleTycker;
+import org.aya.core.def.Def;
+import org.aya.core.def.UserDef;
+import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
+import org.aya.tyck.error.CounterexampleError;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,14 +18,7 @@ public sealed interface Sample extends Stmt {
   @NotNull Stmt delegate();
 
   /** @return <code>null</code> if the delegate is a command (not a definition) */
-  default @Nullable TopLevel tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-    return doAccept(SampleTycker.INSTANCE, new StmtTycker(reporter, traceBuilder, MutableMap.create()));
-  }
-
-  interface Visitor<P, R> {
-    R visitExample(@NotNull Working example, P p);
-    R visitCounterexample(@NotNull Counter example, P p);
-  }
+  @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder);
 
   @Override default @NotNull SourcePos sourcePos() {
     return delegate().sourcePos();
@@ -34,15 +28,16 @@ public sealed interface Sample extends Stmt {
     return Accessibility.Private;
   }
 
-  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
-  @Override default <P, R> R doAccept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
-    return doAccept((Visitor<? super P, ? extends R>) visitor, p);
-  }
-
   record Working(@NotNull Stmt delegate) implements Sample {
-    @Override public <P, R> R doAccept(Sample.@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitExample(this, p);
+    }
+
+    @Override public @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+      if (delegate instanceof Decl decl) {
+        var stmtTycker = new StmtTycker(reporter, traceBuilder);
+        return decl.accept(stmtTycker, stmtTycker.newTycker());
+      } else return null;
     }
   }
 
@@ -51,8 +46,24 @@ public sealed interface Sample extends Stmt {
       this(delegate, new CollectingReporter());
     }
 
-    @Override public <P, R> R doAccept(Sample.@NotNull Visitor<P, R> visitor, P p) {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCounterexample(this, p);
+    }
+
+    @Override public @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+      var stmtTycker = new StmtTycker(reporter, traceBuilder);
+      var def = delegate.accept(stmtTycker, new ExprTycker(this.reporter, stmtTycker.traceBuilder()));
+      var problems = this.reporter.problems().toImmutableSeq();
+      if (problems.isEmpty()) {
+        stmtTycker.reporter().report(new CounterexampleError(delegate.sourcePos(), delegate.ref()));
+      }
+      if (def instanceof UserDef userDef) {
+        userDef.problems = problems;
+        return userDef;
+      } else {
+        // TODO[ice]: a counterexample should be a function, a data, or a struct, not other stuffs!
+        return null;
+      }
     }
   }
 }
