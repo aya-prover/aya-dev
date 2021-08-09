@@ -1,4 +1,4 @@
-prim I
+prim I prim left
 
 open data Nat : Set 0
  | zero
