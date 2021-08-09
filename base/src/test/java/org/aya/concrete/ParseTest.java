@@ -3,7 +3,6 @@
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
@@ -16,6 +15,7 @@ import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
   public static final @NotNull AyaProducer INSTANCE = new AyaProducer(SourceFile.NONE,
-    ThrowingReporter.INSTANCE, MutableMap.create());
+    ThrowingReporter.INSTANCE, PrimDef.PrimFactory.create());
 
   @BeforeAll public static void enableTest() {
     Global.enterTestMode();

@@ -35,12 +35,12 @@ public record PatClassifier(
   public static @NotNull ImmutableSeq<PatClass> classify(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
-    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus,
+    @NotNull PrimDef.PrimFactory primFactory,
     boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), index)), primStatus, coverage);
+      new SubPats(clause.patterns(), index)), primFactory, coverage);
   }
 
   public static void confluence(
@@ -79,7 +79,7 @@ public record PatClassifier(
    */
   private @NotNull ImmutableSeq<PatClass> classifySub(
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
-    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus,
+    @NotNull PrimDef.PrimFactory primFactory,
     boolean coverage
   ) {
     assert subPatsSeq.isNotEmpty();
@@ -96,7 +96,7 @@ public record PatClassifier(
       .toImmutableSeq();
     if (hasTuple.isNotEmpty()) {
       builder.shiftEmpty(explicit);
-      return classifySub(hasTuple, primStatus, coverage);
+      return classifySub(hasTuple, primFactory, coverage);
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
@@ -105,10 +105,11 @@ public record PatClassifier(
       .firstOption();
     if (lrSplit.isDefined()) {
       if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
-      for (var primName : PrimDef.LEFT_RIGHT) {
+      for (var primName : PrimDef.PrimFactory.LEFT_RIGHT) {
         var matchy = subPatsSeq.mapIndexedNotNull((ix, subPats) -> {
           var head = subPats.head();
-          return head instanceof Pat.Prim prim && primStatus.containsKey(primName) && prim.ref() == primStatus.get(primName).ref()
+          var existedPrim = primFactory.getOption(primName);
+          return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
             || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
         });
         builder.append(new PatTree(primName, explicit));
@@ -117,7 +118,7 @@ public record PatClassifier(
           .map(SubPats::drop)
           .toImmutableSeq();
         if (classes.isNotEmpty()) {
-          var rest = classifySub(classes, primStatus, false);
+          var rest = classifySub(classes, primFactory, false);
           builder.unshift();
           buffer.appendAll(rest);
         } else builder.unshift();
@@ -131,13 +132,13 @@ public record PatClassifier(
     if (hasMatch.isEmpty()) {
       builder.shiftEmpty(explicit);
       builder.unshift();
-      return classifySub(subPatsSeq.map(SubPats::drop), primStatus, coverage);
+      return classifySub(subPatsSeq.map(SubPats::drop), primFactory, coverage);
     }
     var dataCall = hasMatch.get();
       for (var ctor : dataCall.ref().core.body) {
           var conTele = ctor.selfTele;
         if (ctor.pats.isNotEmpty()) {
-          var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
+          var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args(), primFactory);
         if (matchy == null) continue;
         conTele = Term.Param.subst(conTele, matchy);
       }
@@ -151,13 +152,13 @@ public record PatClassifier(
         builder.unshift();
         continue;
       }
-      var classified = classifySub(matches, primStatus, coverage);
+      var classified = classifySub(matches, primFactory, coverage);
       builder.reduce();
       var classes = classified.map(pat -> pat
         .extract(subPatsSeq)
         .map(SubPats::drop)
         .toImmutableSeq());
-      var rest = classes.flatMap(clazz -> classifySub(clazz, primStatus, coverage));
+      var rest = classes.flatMap(clazz -> classifySub(clazz, primFactory, coverage));
       builder.unshift();
       buffer.appendAll(rest);
     }

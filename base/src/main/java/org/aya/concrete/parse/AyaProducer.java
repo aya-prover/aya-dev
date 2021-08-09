@@ -6,7 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.LinkedBuffer;
 import kala.collection.mutable.MutableHashSet;
-import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanFunction;
@@ -49,7 +48,7 @@ import java.util.stream.Stream;
 public record AyaProducer(
   @NotNull SourceFile sourceFile,
   @NotNull Reporter reporter,
-  @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus
+  @NotNull PrimDef.PrimFactory primFactory
   ) {
   public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
     return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt).toImmutableSeq();
@@ -58,7 +57,7 @@ public record AyaProducer(
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
     var id = ctx.ID();
     var name = id.getText();
-    var core = PrimDef.factory(name, primStatus);
+    var core = primFactory.factory(name);
     var sourcePos = sourcePosOf(id);
     if (core.isEmpty()) {
       reporter.report(new UnknownPrimError(sourcePos, name));

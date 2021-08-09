@@ -15,6 +15,7 @@ import org.aya.api.util.Arg;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.core.visitor.Normalizer;
 import org.aya.generic.Level;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
@@ -35,32 +36,6 @@ public final class PrimDef extends TopLevelDef {
     //noinspection ConstantConditions
     this(telescope, levels, result, unfold, DefVar.core(null, name));
     ref.core = this;
-  }
-
-  private static @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> arcoe(@NotNull MutableMap<@NotNull String, @NotNull PrimDef> status) {
-    return (prim) -> {
-      var args = prim.args();
-      var argBase = args.get(1).term();
-      var argI = args.get(2).term();
-      if (argI instanceof CallTerm.Prim primCall && status.containsKey(_LEFT) && primCall.ref() == status.get(_LEFT).ref)
-        return argBase;
-      var argA = args.get(0).term();
-      if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0) return argBase;
-      return prim;
-    };
-  }
-
-  private static @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> invol(@NotNull MutableMap<@NotNull String, @NotNull PrimDef> status) {
-    return (prim) -> {
-      var arg = prim.args().get(0).term();
-      if (arg instanceof CallTerm.Prim primCall) {
-        if (status.containsKey(_LEFT) && primCall.ref() == status.get(_LEFT).ref)
-          return new CallTerm.Prim(status.get(_LEFT).ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-        if (status.containsKey(_RIGHT) && primCall.ref() == status.get(_RIGHT).ref)
-          return new CallTerm.Prim(status.get(_RIGHT).ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-      }
-      return prim;
-    };
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -88,91 +63,141 @@ public final class PrimDef extends TopLevelDef {
     return result;
   }
 
-  public static final @NotNull String _INTERVAL = "I";
-  public static final @NotNull String _LEFT = "left";
-  public static final @NotNull String _RIGHT = "right";
-  /** Short for <em>Arend coe</em>. */
-  public static final @NotNull String _ARCOE = "arcoe";
-  public static final @NotNull String _INVOL = "invol";
-
-  public static final @NotNull ImmutableSeq<String> LEFT_RIGHT = ImmutableSeq.of(_LEFT, _RIGHT);
-
-  private static final @NotNull Map<@NotNull String, @NotNull Function<@NotNull MutableMap<@NotNull String, @NotNull PrimDef> , @NotNull PrimDef>> SUPPLIERS;
-
-  static {
-    Function<@NotNull MutableMap<@NotNull String, @NotNull PrimDef> , @NotNull PrimDef> intervalSupplier =
-      (status) -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
-      new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), prim -> prim, _INTERVAL);
-    Function<@NotNull MutableMap<@NotNull String, @NotNull PrimDef> , CallTerm.Prim> intervalCallSupplier =
-      (status) -> new CallTerm.Prim(intervalSupplier.apply(status).ref(),
-      ImmutableSeq.empty(), ImmutableSeq.empty());
-
-    Function<@NotNull MutableMap<@NotNull String, @NotNull PrimDef> , @NotNull PrimDef> leftSupplier =
-      (status) -> new PrimDef(ImmutableSeq.empty(),
-        ImmutableSeq.empty(), intervalCallSupplier.apply(status), prim -> prim, _LEFT);
-
-    SUPPLIERS = ImmutableMap.ofEntries(
-      Tuple.of(_INTERVAL, intervalSupplier),
-      Tuple.of(_LEFT,  (status) -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
-        intervalCallSupplier.apply(status), prim -> prim, _LEFT)),
-      Tuple.of(_RIGHT , (status) -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
-        intervalCallSupplier.apply(status), prim -> prim, _RIGHT )),
-      Tuple.of(_ARCOE, (status) -> {
-        var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCallSupplier.apply(status), true);
-        var paramI = new LocalVar("i");
-        var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
-        var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
-        var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
-        var paramATy = new FormTerm.Pi(paramIToATy, result);
-        var aRef = new RefTerm(paramA, paramATy);
-        var left = status.getOption(_LEFT).getOrElse(
-          () -> PrimDef.factory(_LEFT, status).get()
-        );
-        var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(
-          new CallTerm.Prim(left.ref, ImmutableSeq.of(), ImmutableSeq.empty())));
-        return new PrimDef(
-          ImmutableSeq.of(
-            new Term.Param(paramA, paramATy, true),
-            new Term.Param(new LocalVar("base"), baseAtLeft, true),
-            new Term.Param(paramI, intervalCallSupplier.apply(status), true)
-          ),
-          ImmutableSeq.of(homotopy, universe),
-          new ElimTerm.App(aRef, Arg.explicit(new RefTerm(paramI, intervalCallSupplier.apply(status)))),
-          PrimDef.arcoe(status), "arcoe");
-      }),
-      Tuple.of(_INVOL, (status) -> {
-        CallTerm.Prim intervalCall = new CallTerm.Prim(intervalSupplier.apply(status).ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-        return new PrimDef(
-          ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCallSupplier.apply(status), true)), ImmutableSeq.of(),
-          intervalCall, PrimDef.invol(status), _INVOL);
-      })
-    );
-  }
-
-  public static @NotNull Option<PrimDef> factory(
-    @NotNull String name,
-    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> status
+  public record PrimFactory(
+    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> defs
   ) {
-    if (status.containsKey(name)) {
-      return Option.none();
+    private static @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> arcoe(@NotNull PrimDef.PrimFactory factory) {
+      return (prim) -> {
+        var args = prim.args();
+        var argBase = args.get(1).term();
+        var argI = args.get(2).term();
+        var left = factory.getOption(LEFT);
+        if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
+          return argBase;
+        var argA = args.get(0).term();
+        if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0) return argBase;
+        return prim;
+      };
     }
-    var rst = SUPPLIERS.getOption(name).map(
-      (f) -> f.apply(status)
-    );
-    if (rst.isNotEmpty()) {
-      status.set(name, rst.get());
+
+    private static @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> invol(@NotNull PrimDef.PrimFactory factory) {
+      return (prim) -> {
+        var arg = prim.args().get(0).term();
+        if (arg instanceof CallTerm.Prim primCall) {
+          var left = factory.getOption(LEFT);
+          if (left.isNotEmpty() && primCall.ref() == left.get().ref)
+            return new CallTerm.Prim(left.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+          var right = factory.getOption(RIGHT);
+          if (right.isNotEmpty() && primCall.ref() == right.get().ref)
+            return new CallTerm.Prim(right.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+        }
+        return prim;
+      };
     }
-    return rst;
+
+    private static final @NotNull Map<@NotNull String, @NotNull Function<@NotNull PrimFactory, @NotNull PrimDef>> SUPPLIERS;
+
+    static {
+      Function<@NotNull PrimFactory, CallTerm.Prim> intervalCallSupplier =
+        (factory) -> new CallTerm.Prim(factory.getOrCreate(INTERVAL).ref(),
+          ImmutableSeq.empty(), ImmutableSeq.empty());
+
+      SUPPLIERS = ImmutableMap.ofEntries(
+        Tuple.of(INTERVAL, (factory) -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
+          new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), prim -> prim, INTERVAL)),
+        Tuple.of(LEFT,  (factory) -> new PrimDef(ImmutableSeq.empty(),
+          ImmutableSeq.empty(), intervalCallSupplier.apply(factory), prim -> prim, LEFT)),
+        Tuple.of(RIGHT, (factory) -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
+          intervalCallSupplier.apply(factory), prim -> prim, RIGHT)),
+        Tuple.of(ARCOE, (factory) -> {
+          var paramA = new LocalVar("A");
+          var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCallSupplier.apply(factory), true);
+          var paramI = new LocalVar("i");
+          var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
+          var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
+          var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
+          var paramATy = new FormTerm.Pi(paramIToATy, result);
+          var aRef = new RefTerm(paramA, paramATy);
+          var left = factory.getOrCreate(LEFT);
+          var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(
+            new CallTerm.Prim(left.ref, ImmutableSeq.of(), ImmutableSeq.empty())));
+          return new PrimDef(
+            ImmutableSeq.of(
+              new Term.Param(paramA, paramATy, true),
+              new Term.Param(new LocalVar("base"), baseAtLeft, true),
+              new Term.Param(paramI, intervalCallSupplier.apply(factory), true)
+            ),
+            ImmutableSeq.of(homotopy, universe),
+            new ElimTerm.App(aRef, Arg.explicit(new RefTerm(paramI, intervalCallSupplier.apply(factory)))),
+            PrimFactory.arcoe(factory), "arcoe");
+        }),
+        Tuple.of(INVOL, (factory) -> {
+          CallTerm.Prim intervalCall = new CallTerm.Prim(factory.getOrCreate(INTERVAL).ref(), ImmutableSeq.empty(), ImmutableSeq.empty());
+          return new PrimDef(
+            ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCallSupplier.apply(factory), true)), ImmutableSeq.of(),
+            intervalCall, PrimFactory.invol(factory), INVOL);
+        })
+      );
+    }
+
+    public @NotNull Option<PrimDef> factory(
+      @NotNull String name
+    ) {
+
+      if (have(name)) {
+        return Option.none();
+      }
+      var rst = SUPPLIERS.getOption(name).map(
+        (f) -> f.apply(this)
+      );
+      if (rst.isNotEmpty()) {
+        defs.set(name, rst.get());
+        //System.out.println("Set: " + name);
+      }
+
+      return rst;
+    }
+
+    public static @NotNull PrimDef.PrimFactory create() {
+      //System.out.println("Create");
+      var rst = new PrimFactory(MutableMap.create());
+      Normalizer.INSTANCE.primFactory = rst;
+      return rst;
+    }
+
+    public @NotNull Option<PrimDef> getOption(@NotNull String name) {
+      //System.out.println("Get: " + name + " have:" + (have(name) ? "True" : "False"));
+      return defs.getOption(name);
+    }
+
+    public boolean have(@NotNull String name) {
+      //System.out.println("Have " + name + ":" + (defs.containsKey(name) ? "True" : "False"));
+      return defs.containsKey(name);
+    }
+
+    public @NotNull PrimDef getOrCreate(@NotNull String name) {
+      //System.out.println("Get or Create:" + name);
+      return getOption(name).getOrElse(() -> factory(name).get());
+    }
+
+    public static final @NotNull ImmutableSeq<String> LEFT_RIGHT = ImmutableSeq.of(LEFT, RIGHT);
+
+    public boolean leftOrRight(PrimDef core) {
+      for(var primName : LEFT_RIGHT) {
+        var cur = getOption(primName);
+        if (cur.isNotEmpty() && core == cur.get())
+          return true;
+      }
+      return false;
+    }
   }
 
-  public boolean leftOrRight() {
-    return ImmutableSeq.of("left", "right").contains(ref.name());
-  }
-
-  public boolean is(@NotNull String name) {
-    return ref.name().equals(name);
-  }
+  public static final @NotNull String INTERVAL = "I";
+  public static final @NotNull String LEFT = "left";
+  public static final @NotNull String RIGHT = "right";
+  /** Short for <em>Arend coe</em>. */
+  public static final @NotNull String ARCOE = "arcoe";
+  public static final @NotNull String INVOL = "invol";
 
   public final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold;
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;

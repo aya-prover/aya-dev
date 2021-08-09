@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
-import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Decl;
+import org.aya.core.def.PrimDef;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
@@ -35,8 +35,9 @@ public class TracingTest {
   @NotNull private Trace.Builder mkBuilder(@Language("TEXT") String code) {
     var decls = TyckDeclTest.successDesugarDecls(code);
     var builder = new Trace.Builder();
+    var primFactory = PrimDef.PrimFactory.create();
     decls.forEach(decl -> {
-      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder, MutableMap.create());
+      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder, primFactory);
     });
     return builder;
   }

@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder,
-  @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus
+  PrimDef.PrimFactory primFactory
 ) implements Decl.Visitor<ExprTycker, Def> {
   public @NotNull ExprTycker newTycker() {
     return new ExprTycker(reporter, traceBuilder);
@@ -100,7 +100,7 @@ public record StmtTycker(
     var sortParam = dataSig.sortParam();
     var dataCall = new CallTerm.Data(dataRef, sortParam.map(Level.Reference::new).map(Sort.CoreLevel::new), dataArgs);
     var sig = new Ref<>(new Def.Signature(sortParam, dataSig.param(), dataCall));
-    var patTycker = new PatTycker(tycker, primStatus);
+    var patTycker = new PatTycker(tycker, primFactory);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
       param.mapExpr(expr -> expr.accept(patTycker.subst(), Unit.unit()))), dataSig.result());
@@ -118,22 +118,22 @@ public record StmtTycker(
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
-    ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, primStatus, false);
+    ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, primFactory, false);
     return elaborated;
   }
 
   private void ensureConfluent(
     ExprTycker tycker, Def.Signature signature, ImmutableSeq<Pat.PrototypeClause> elabClauses,
     ImmutableSeq<@NotNull Matching> matchings, @NotNull SourcePos pos,
-    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus,
+    @NotNull PrimDef.PrimFactory primFactory,
     boolean coverage
   ) {
     if (!matchings.isNotEmpty()) return;
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     var classification = PatClassifier.classify(elabClauses, tycker.reporter, pos,
-      primStatus, coverage);
+      primFactory, coverage);
     PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
-    Conquer.against(matchings, tycker, pos, signature);
+    Conquer.against(matchings, tycker, pos, signature, primFactory);
     tycker.solveMetas();
     tracing(GenericBuilder::reduce);
   }
@@ -163,12 +163,12 @@ public record StmtTycker(
     var structSig = structRef.concrete.signature;
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
-    var patTycker = new PatTycker(tycker, primStatus);
+    var patTycker = new PatTycker(tycker, primFactory);
     var elabClauses = patTycker.elabClauses(null, field.signature, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> e.accept(tycker, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
-    ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, primStatus, false);
+    ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, primFactory, false);
     return elaborated;
   }
 
@@ -180,7 +180,7 @@ public record StmtTycker(
     tracing(GenericBuilder::reduce);
     var signature = new Ref<>(new Def.Signature(tycker.extractLevels(), resultTele, resultRes));
     decl.signature = signature.value;
-    var patTycker = new PatTycker(tycker, primStatus);
+    var patTycker = new PatTycker(tycker, primFactory);
     var what = FP.distR(decl.body.map(
       left -> tycker.checkExpr(left, resultRes).toTuple(),
       right -> patTycker.elabClauses(right, signature)));
@@ -191,7 +191,7 @@ public record StmtTycker(
     var elabClauses = what._2.getRightValue();
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var elaborated = factory.apply(Either.right(matchings));
-    ensureConfluent(tycker, signature.value, elabClauses, matchings, decl.sourcePos, primStatus, true);
+    ensureConfluent(tycker, signature.value, elabClauses, matchings, decl.sourcePos, primFactory, true);
     return elaborated;
   }
 

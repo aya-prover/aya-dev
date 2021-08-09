@@ -57,9 +57,9 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public @NotNull Def tyck(
     @NotNull Reporter reporter,
     Trace.@Nullable Builder builder,
-    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus
+    @NotNull PrimDef.PrimFactory primFactory
   ) {
-    var tycker = new StmtTycker(reporter, builder, primStatus);
+    var tycker = new StmtTycker(reporter, builder, primFactory);
     return accept(tycker, tycker.newTycker());
   }
 

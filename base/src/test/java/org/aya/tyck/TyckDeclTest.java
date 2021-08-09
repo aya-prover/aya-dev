@@ -3,7 +3,6 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
@@ -15,6 +14,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.RefTerm;
 import org.aya.test.ThrowingReporter;
@@ -35,7 +35,7 @@ public class TyckDeclTest {
     decl.resolve(opSet);
     opSet.sort();
     decl.desugar(ThrowingReporter.INSTANCE, opSet);
-    var def = decl.tyck(ThrowingReporter.INSTANCE, null, MutableMap.create());
+    var def = decl.tyck(ThrowingReporter.INSTANCE, null, PrimDef.PrimFactory.create());
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
     return ((FnDef) def);
@@ -74,8 +74,9 @@ public class TyckDeclTest {
   }
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
+    var primFactory = PrimDef.PrimFactory.create();
     return successDesugarDecls(text)
-      .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null, MutableMap.create()) : null)
+      .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null, primFactory) : null)
       .filter(Objects::nonNull);
   }
 }

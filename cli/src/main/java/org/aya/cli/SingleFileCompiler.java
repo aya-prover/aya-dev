@@ -4,7 +4,6 @@ package org.aya.cli;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableMap;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
@@ -47,9 +46,9 @@ public record SingleFileCompiler(
   ) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
-    MutableMap<@NotNull String, @NotNull PrimDef> primStatus = MutableMap.create();
+    var primFactory = PrimDef.PrimFactory.create();
     try {
-      var program = AyaParsing.program(locator, reporter, sourceFile, primStatus);
+      var program = AyaParsing.program(locator, reporter, sourceFile, primFactory);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, CliArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
@@ -62,7 +61,7 @@ public record SingleFileCompiler(
         defs -> {
           distill(sourceFile, distillInfo, defs, CliArgs.DistillStage.typed);
           onTycked.accept(program, defs);
-        }, builder, primStatus);
+        }, builder, primFactory);
     } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);
       reporter.reportString("Internal error");

@@ -2,8 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
-import kala.collection.mutable.MutableMap;
+
 import org.aya.concrete.stmt.Decl;
+import org.aya.core.def.PrimDef;
 import org.aya.test.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -28,8 +29,9 @@ public class TyckExprTest {
       def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
       def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
       def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)""");
+    var primFactory = PrimDef.PrimFactory.create();
     decls.dropLast(1).forEach(decl -> {
-      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, null, MutableMap.create());
+      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, null, primFactory);
     });
     var decl = (Decl.FnDecl) decls.last();
     var expr = decl.body.getLeftValue();

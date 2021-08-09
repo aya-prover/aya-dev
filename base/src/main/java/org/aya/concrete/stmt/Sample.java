@@ -6,6 +6,7 @@ import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.def.UserDef;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
@@ -18,7 +19,7 @@ public sealed interface Sample extends Stmt {
   @NotNull Stmt delegate();
 
   /** @return <code>null</code> if the delegate is a command (not a definition) */
-  @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder);
+  @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull PrimDef.PrimFactory primFactory);
 
   @Override default @NotNull SourcePos sourcePos() {
     return delegate().sourcePos();
@@ -33,9 +34,13 @@ public sealed interface Sample extends Stmt {
       return visitor.visitExample(this, p);
     }
 
-    @Override public @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+    @Override public @Nullable Def tyck(
+      @NotNull Reporter reporter,
+      Trace.@Nullable Builder traceBuilder,
+      @NotNull PrimDef.PrimFactory primFactory
+    ) {
       if (delegate instanceof Decl decl) {
-        var stmtTycker = new StmtTycker(reporter, traceBuilder);
+        var stmtTycker = new StmtTycker(reporter, traceBuilder, primFactory);
         return decl.accept(stmtTycker, stmtTycker.newTycker());
       } else return null;
     }
@@ -50,8 +55,12 @@ public sealed interface Sample extends Stmt {
       return visitor.visitCounterexample(this, p);
     }
 
-    @Override public @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-      var stmtTycker = new StmtTycker(reporter, traceBuilder);
+    @Override public @Nullable Def tyck(
+      @NotNull Reporter reporter,
+      Trace.@Nullable Builder traceBuilder,
+      @NotNull PrimDef.PrimFactory primFactory
+    ) {
+      var stmtTycker = new StmtTycker(reporter, traceBuilder, primFactory);
       var def = delegate.accept(stmtTycker, new ExprTycker(this.reporter, stmtTycker.traceBuilder()));
       var problems = this.reporter.problems().toImmutableSeq();
       if (problems.isEmpty()) {

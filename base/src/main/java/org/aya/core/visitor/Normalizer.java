@@ -3,6 +3,7 @@
 package org.aya.core.visitor;
 
 import org.aya.api.util.NormalizeMode;
+import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,12 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
   public static final @NotNull Normalizer INSTANCE = new Normalizer();
 
   @Contract(pure = true) private Normalizer() {
+  }
+  // hack
+  public PrimDef.PrimFactory primFactory = null;
+
+  @Override public @NotNull PrimDef.PrimFactory primFactory() {
+    return primFactory;
   }
 
   @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {

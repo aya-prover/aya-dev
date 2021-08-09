@@ -3,7 +3,6 @@
 package org.aya.concrete.parse;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointBuffer;
@@ -48,11 +47,11 @@ public interface AyaParsing {
   static @NotNull ImmutableSeq<Stmt> program(
     @NotNull SourceFileLocator locator,
     @NotNull Reporter reporter, @NotNull Path path,
-    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> primStatus
+    @NotNull PrimDef.PrimFactory primFactory
   ) throws IOException {
     var sourceCode = Files.readString(path);
     var sourceFile = new SourceFile(Option.some(locator.locate(path)), sourceCode);
     var parser = AyaParsing.parser(sourceFile, reporter);
-    return new AyaProducer(sourceFile, reporter, primStatus).visitProgram(parser.program());
+    return new AyaProducer(sourceFile, reporter, primFactory).visitProgram(parser.program());
   }
 }
