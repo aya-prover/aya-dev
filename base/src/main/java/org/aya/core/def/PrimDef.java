@@ -75,7 +75,8 @@ public final class PrimDef extends TopLevelDef {
         if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
           return argBase;
         var argA = args.get(0).term();
-        if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0) return argBase;
+        if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0)
+          return argBase;
         return prim;
       };
     }
@@ -86,9 +87,10 @@ public final class PrimDef extends TopLevelDef {
         if (arg instanceof CallTerm.Prim primCall) {
           var left = factory.getOption(LEFT);
           var right = factory.getOption(RIGHT);
-          if (left.isNotEmpty() && primCall.ref() == left.get().ref)
+          assert left.isNotEmpty() && right.isNotEmpty();
+          if (primCall.ref() == left.get().ref)
             return new CallTerm.Prim(right.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-          if (right.isNotEmpty() && primCall.ref() == right.get().ref)
+          if (primCall.ref() == right.get().ref)
             return new CallTerm.Prim(left.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
         }
         return prim;
@@ -105,7 +107,7 @@ public final class PrimDef extends TopLevelDef {
       SUPPLIERS = ImmutableMap.ofEntries(
         Tuple.of(INTERVAL, (factory) -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
           new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), prim -> prim, INTERVAL)),
-        Tuple.of(LEFT,  (factory) -> new PrimDef(ImmutableSeq.empty(),
+        Tuple.of(LEFT, (factory) -> new PrimDef(ImmutableSeq.empty(),
           ImmutableSeq.empty(), intervalCallSupplier.apply(factory), prim -> prim, LEFT)),
         Tuple.of(RIGHT, (factory) -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
           intervalCallSupplier.apply(factory), prim -> prim, RIGHT)),
@@ -177,7 +179,7 @@ public final class PrimDef extends TopLevelDef {
     public static final @NotNull ImmutableSeq<String> LEFT_RIGHT = ImmutableSeq.of(LEFT, RIGHT);
 
     public boolean leftOrRight(PrimDef core) {
-      for(var primName : LEFT_RIGHT) {
+      for (var primName : LEFT_RIGHT) {
         var cur = getOption(primName);
         if (cur.isNotEmpty() && core == cur.get())
           return true;
@@ -201,6 +203,7 @@ public final class PrimDef extends TopLevelDef {
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
 
   /**
+   *
    */
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels,
