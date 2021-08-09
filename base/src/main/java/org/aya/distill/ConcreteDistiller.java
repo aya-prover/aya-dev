@@ -44,10 +44,10 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
 
   @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
     var prelude = Buffer.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
-      expr.param().toDoc());
+      expr.param().toDoc(options));
     if (!(expr.body() instanceof Expr.HoleExpr)) {
       prelude.append(Doc.symbol("=>"));
-      prelude.append(expr.body().toDoc());
+      prelude.append(expr.body().accept(this, false));
     }
     return Doc.sep(prelude);
   }
@@ -55,9 +55,9 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   @Override public Doc visitPi(Expr.@NotNull PiExpr expr, Boolean nestedCall) {
     return Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      expr.param().toDoc(),
+      expr.param().toDoc(options),
       Doc.symbol("->"),
-      expr.last().toDoc());
+      expr.last().accept(this, false));
   }
 
   @Override public Doc visitSigma(Expr.@NotNull SigmaExpr expr, Boolean nestedCall) {
@@ -65,7 +65,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
       visitTele(expr.params().dropLast(1)),
       Doc.symbol("**"),
-      Objects.requireNonNull(expr.params().last().type()).toDoc());
+      Objects.requireNonNull(expr.params().last().type()).accept(this, false));
   }
 
   @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Boolean nestedCall) {
@@ -87,7 +87,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
 
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
     return visitCalls(
-      expr.function().toDoc(),
+      expr.function().accept(this, false),
       expr.arguments(),
       (nest, arg) -> arg.expr().accept(this, nest),
       nestedCall);
@@ -113,7 +113,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     if (!expr.explicit()) return Doc.symbol("_");
     var filling = expr.filling();
     if (filling == null) return Doc.symbol("{??}");
-    return Doc.sep(Doc.symbol("{?"), filling.toDoc(), Doc.symbol("?}"));
+    return Doc.sep(Doc.symbol("{?"), filling.accept(this, false), Doc.symbol("?}"));
   }
 
   @Override public Doc visitTup(Expr.@NotNull TupExpr expr, Boolean nestedCall) {
@@ -121,7 +121,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitProj(Expr.@NotNull ProjExpr expr, Boolean nestedCall) {
-    return Doc.cat(expr.tup().toDoc(), Doc.plain("."), Doc.plain(expr.ix().fold(
+    return Doc.cat(expr.tup().accept(this, false), Doc.plain("."), Doc.plain(expr.ix().fold(
       Objects::toString, WithPos::data
     )));
   }
@@ -129,13 +129,13 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   @Override public Doc visitNew(Expr.@NotNull NewExpr expr, Boolean aBoolean) {
     return Doc.sep(
       Doc.styled(KEYWORD, "new"),
-      expr.struct().toDoc(),
+      expr.struct().accept(this, false),
       Doc.symbol("{"),
       Doc.sep(expr.fields().view().map(t ->
         Doc.sep(Doc.symbol("|"), Doc.plain(t.name()),
           Doc.emptyIf(t.bindings().isEmpty(), () ->
             Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
-          Doc.plain("=>"), t.body().toDoc())
+          Doc.plain("=>"), t.body().accept(this, false))
       )),
       Doc.symbol("}")
     );
@@ -156,7 +156,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   @Override
   public Doc visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Boolean nestedCall) {
     return visitCalls(
-      binOpSeq.seq().first().expr().toDoc(),
+      binOpSeq.seq().first().expr().accept(this, false),
       binOpSeq.seq().view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
       (nest, arg) -> arg.accept(this, nest),
       nestedCall
@@ -203,7 +203,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
 
   public Doc matchy(Pattern.@NotNull Clause match) {
     var doc = visitMaybeCtorPatterns(match.patterns, false, Doc.plain(", "));
-    return match.expr.map(e -> Doc.sep(doc, Doc.plain("=>"), e.toDoc())).getOrDefault(doc);
+    return match.expr.map(e -> Doc.sep(doc, Doc.plain("=>"), e.accept(this, false))).getOrDefault(doc);
   }
 
   private Doc visitAccess(Stmt.@NotNull Accessibility accessibility, Stmt.Accessibility def) {
@@ -309,7 +309,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   private void appendResult(Buffer<Doc> prelude, Expr result) {
     if (result instanceof Expr.HoleExpr) return;
     prelude.append(Doc.plain(":"));
-    prelude.append(result.toDoc());
+    prelude.append(result.accept(this, false));
   }
 
   @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
@@ -320,7 +320,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     appendResult(doc, field.result);
     if (field.body.isDefined()) {
       doc.append(Doc.symbol("=>"));
-      doc.append(field.body.get().toDoc());
+      doc.append(field.body.get().accept(this, false));
     }
     doc.append(visitClauses(field.clauses, true));
     return Doc.sepNonEmpty(doc);
@@ -333,7 +333,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     prelude.append(visitTele(decl.telescope));
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
-      decl.body.fold(expr -> Doc.sep(Doc.symbol(" =>"), expr.toDoc()),
+      decl.body.fold(expr -> Doc.sep(Doc.symbol(" =>"), expr.accept(this, false)),
         clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
       Doc.emptyIf(decl.abuseBlock.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.styled(KEYWORD, "abusing"), Doc.ONE_WS, visitAbuse(decl.abuseBlock)))
     );

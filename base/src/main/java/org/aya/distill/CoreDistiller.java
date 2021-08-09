@@ -59,7 +59,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       Doc.styled(KEYWORD, Doc.symbol("\\")),
       term.param().toDoc(options),
       Doc.symbol("=>"),
-      term.body().toDoc(options)
+      term.body().accept(this, false)
     );
     return nestedCall ? Doc.parened(doc) : doc;
   }
@@ -69,7 +69,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
       term.param().toDoc(options),
       Doc.symbol("->"),
-      term.body().toDoc(options)
+      term.body().accept(this, false)
     );
     return nestedCall ? Doc.parened(doc) : doc;
   }
@@ -129,7 +129,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
     return Doc.parened(Doc.commaList(term.items().view()
-      .map(t -> t.toDoc(options))));
+      .map(t -> t.accept(this, false))));
   }
 
   @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Boolean aBoolean) {
@@ -139,19 +139,19 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       Doc.sep(newTerm.params().view()
         .map((k, v) -> Doc.sep(Doc.symbol("|"),
           linkRef(k, FIELD_CALL),
-          Doc.symbol("=>"), v.toDoc(options)))
+          Doc.symbol("=>"), v.accept(this, false)))
         .toImmutableSeq()),
       Doc.symbol("}")
     );
   }
 
   @Override public Doc visitProj(@NotNull ElimTerm.Proj term, Boolean nestedCall) {
-    return Doc.cat(term.of().toDoc(options), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+    return Doc.cat(term.of().accept(this, false), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
   }
 
   @Override public Doc visitAccess(CallTerm.@NotNull Access term, Boolean nestedCall) {
     var ref = term.ref();
-    var doc = Doc.cat(term.of().toDoc(options), Doc.symbol("."),
+    var doc = Doc.cat(term.of().accept(this, false), Doc.symbol("."),
       linkRef(ref, FIELD_CALL));
     return visitCalls(doc, term.fieldArgs(), (n, t) -> t.accept(this, n), nestedCall);
   }
@@ -159,7 +159,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
     var name = term.ref();
     var sol = name.core().body;
-    var inner = sol == null ? varDoc(name) : sol.toDoc(options);
+    var inner = sol == null ? varDoc(name) : sol.accept(this, false);
     return Doc.wrap("{?", "?}",
       visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), nestedCall));
   }
@@ -169,7 +169,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
-    return visitCalls(fn.toDoc(options), Seq.of(arg),
+    return visitCalls(fn.accept(this, false), Seq.of(arg),
       (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
@@ -250,9 +250,9 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       linkDef(def.ref(), FN_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().toDoc(options));
+      def.result().accept(this, false));
     return def.body.fold(
-      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.toDoc(options)),
+      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.accept(this, false)),
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
   }
 
@@ -292,7 +292,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       linkDef(def.ref(), DATA_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().toDoc(options));
+      def.result().accept(this, false));
     return Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, Doc.vcat(
       def.body.view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
@@ -315,7 +315,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       visitTele(ctor.selfTele));
     Doc line1;
     if (ctor.pats.isNotEmpty()) {
-      var pats = Doc.commaList(ctor.pats.view().map(pat -> pat.toDoc(options)));
+      var pats = Doc.commaList(ctor.pats.view().map(pat -> pat.accept(this, false)));
       line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
     } else line1 = Doc.sep(Doc.symbol("|"), doc);
     return visitConditions(line1, ctor.clauses);
@@ -330,7 +330,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       linkDef(def.ref(), STRUCT_CALL),
       visitTele(def.telescope()),
       Doc.plain(":"),
-      def.result().toDoc(options)
+      def.result().accept(this, false)
     ), Doc.nest(2, Doc.vcat(
       def.fields.view().map(field -> field.accept(this, Unit.unit())))));
   }
