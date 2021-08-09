@@ -143,7 +143,6 @@ public final class PrimDef extends TopLevelDef {
     public @NotNull Option<PrimDef> factory(
       @NotNull String name
     ) {
-
       if (have(name)) {
         return Option.none();
       }
@@ -152,31 +151,26 @@ public final class PrimDef extends TopLevelDef {
       );
       if (rst.isNotEmpty()) {
         defs.set(name, rst.get());
-        //System.out.println("Set: " + name);
       }
 
       return rst;
     }
 
     public static @NotNull PrimDef.PrimFactory create() {
-      //System.out.println("Create");
       var rst = new PrimFactory(MutableMap.create());
       Normalizer.INSTANCE.primFactory = rst;
       return rst;
     }
 
     public @NotNull Option<PrimDef> getOption(@NotNull String name) {
-      //System.out.println("Get: " + name + " have:" + (have(name) ? "True" : "False"));
       return defs.getOption(name);
     }
 
     public boolean have(@NotNull String name) {
-      //System.out.println("Have " + name + ":" + (defs.containsKey(name) ? "True" : "False"));
       return defs.containsKey(name);
     }
 
     public @NotNull PrimDef getOrCreate(@NotNull String name) {
-      //System.out.println("Get or Create:" + name);
       return getOption(name).getOrElse(() -> factory(name).get());
     }
 
@@ -189,6 +183,10 @@ public final class PrimDef extends TopLevelDef {
           return true;
       }
       return false;
+    }
+
+    public void clear() {
+      defs.clear();
     }
   }
 

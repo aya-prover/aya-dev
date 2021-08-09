@@ -22,14 +22,15 @@ public class TyckExprTest {
   }
 
   @Test public void levelEqns() {
+    var primFactory = PrimDef.PrimFactory.create();
     var decls = TyckDeclTest.successDesugarDecls("""
       ulevel uu
       hlevel hh
       def Empty : Type (lsuc hh) (lsuc uu) => Pi (A : Type hh uu) -> A
       def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
       def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
-      def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)""");
-    var primFactory = PrimDef.PrimFactory.create();
+      def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)""", primFactory);
+
     decls.dropLast(1).forEach(decl -> {
       if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, null, primFactory);
     });

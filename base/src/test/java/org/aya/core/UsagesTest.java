@@ -7,6 +7,7 @@ import kala.collection.mutable.Buffer;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.def.PrimDef;
 import org.aya.core.visitor.RefFinder;
 import org.aya.tyck.TyckDeclTest;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ public class UsagesTest {
        | pos n => n
        | neg n => n
       open data Fin (n : Nat) : Set | suc m => fzero | suc m => fsuc (Fin m)
-      """).forEach(def -> {
+      """, PrimDef.PrimFactory.create()).forEach(def -> {
       var of = Buffer.<Def>of();
       def.accept(RefFinder.HEADER_AND_BODY, of);
       assertFalse(of.isEmpty());

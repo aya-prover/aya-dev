@@ -3,9 +3,11 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.error.SourceFile;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
@@ -46,7 +48,7 @@ public class TyckDeclTest {
       data Nat : Set | zero | suc Nat
       def xyr (zero : Nat) : Nat
         | zero => zero
-        | suc n => zero""");
+        | suc n => zero""", PrimDef.PrimFactory.create());
     var nat = (DataDef) defs.get(0);
     var xyr = (FnDef) defs.get(1);
       var ctors = nat.body;
@@ -60,9 +62,9 @@ public class TyckDeclTest {
     assertEquals(zeroCtor.ref(), ((Pat.Ctor) zeroToZero.patterns().get(0)).ref());
   }
 
-  public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
-    var decls = ParseTest.INSTANCE
-      .visitProgram(AyaParsing.parser(text).program());
+  public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text, PrimDef.PrimFactory primFactory) {
+    var decls = new AyaProducer(SourceFile.NONE,
+      ThrowingReporter.INSTANCE, primFactory).visitProgram(AyaParsing.parser(text).program());
     var ssr = new StmtShallowResolver(new EmptyModuleLoader());
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
     decls.forEach(d -> d.accept(ssr, ctx));
@@ -73,9 +75,9 @@ public class TyckDeclTest {
     return decls;
   }
 
-  public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
-    var primFactory = PrimDef.PrimFactory.create();
-    return successDesugarDecls(text)
+  public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text,
+    @NotNull PrimDef.PrimFactory primFactory) {
+    return successDesugarDecls(text, primFactory)
       .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null, primFactory) : null)
       .filter(Objects::nonNull);
   }

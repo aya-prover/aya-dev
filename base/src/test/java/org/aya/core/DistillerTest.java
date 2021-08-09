@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core;
 
+import org.aya.concrete.ParseTest;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
@@ -74,10 +75,10 @@ public class DistillerTest {
   }
 
   private @NotNull Doc declDoc(@Language("TEXT") String text) {
-    return Doc.vcat(TyckDeclTest.successTyckDecls(text).map(Def::toDoc));
+    return Doc.vcat(TyckDeclTest.successTyckDecls(text, PrimDef.PrimFactory.create()).map(Def::toDoc));
   }
 
   private @NotNull Doc declCDoc(@Language("TEXT") String text) {
-    return Doc.vcat(TyckDeclTest.successDesugarDecls(text).map(Stmt::toDoc));
+    return Doc.vcat(TyckDeclTest.successDesugarDecls(text, PrimDef.PrimFactory.create()).map(Stmt::toDoc));
   }
 }
