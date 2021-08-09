@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Unit;
 import org.aya.api.core.CorePat;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -39,8 +40,8 @@ public sealed interface Pat extends CorePat {
   @Override default @NotNull Arg<Term> toArg() {
     return new Arg<>(toTerm(), explicit());
   }
-  @Override default @NotNull Doc toDoc() {
-    return accept(CoreDistiller.INSTANCE, false);
+  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return accept(new CoreDistiller(options), false);
   }
   default void storeBindings(@NotNull LocalCtx localCtx) {
     accept(new PatTyper(localCtx), Unit.unit());

@@ -7,6 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -33,11 +34,10 @@ import java.util.function.BiFunction;
  * @author ice1000, kiva
  * @see ConcreteDistiller
  */
-public final class CoreDistiller implements
+public record CoreDistiller(@NotNull DistillerOptions options) implements
   Pat.Visitor<Boolean, Doc>,
   Def.Visitor<Unit, @NotNull Doc>,
   Term.Visitor<Boolean, Doc> {
-  public static final @NotNull CoreDistiller INSTANCE = new CoreDistiller();
   public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
   public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
   public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
@@ -45,9 +45,6 @@ public final class CoreDistiller implements
   public static final @NotNull Style CON_CALL = Style.preset("aya:ConCall");
   public static final @NotNull Style FIELD_CALL = Style.preset("aya:FieldCall");
   public static final @NotNull Style GENERALIZED = Style.preset("aya:Generalized");
-
-  private CoreDistiller() {
-  }
 
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
     return varDoc(term.var());

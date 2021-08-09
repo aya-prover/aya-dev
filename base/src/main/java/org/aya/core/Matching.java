@@ -3,12 +3,13 @@
 package org.aya.core;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */
@@ -16,9 +17,9 @@ public record Matching(
   @NotNull SourcePos sourcePos,
   @NotNull ImmutableSeq<Pat> patterns,
   @NotNull Term body
-) implements Docile {
-  @Override public @NotNull Doc toDoc() {
-    var doc = CoreDistiller.INSTANCE.visitMaybeCtorPatterns(this.patterns(), false, Doc.plain(", "));
-    return Doc.sep(doc, Doc.symbol("=>"), this.body().toDoc());
+) implements AyaDocile {
+  @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    var doc = new CoreDistiller(options).visitMaybeCtorPatterns(patterns, false, Doc.plain(", "));
+    return Doc.sep(doc, Doc.symbol("=>"), body().toDoc(options));
   }
 }

@@ -9,6 +9,7 @@ import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreTerm;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -93,8 +94,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     return accept(HoleFreezer.INSTANCE, Unit.unit());
   }
 
-  @Override default @NotNull Doc toDoc() {
-    return accept(CoreDistiller.INSTANCE, false);
+  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return accept(new CoreDistiller(options), false);
   }
   default @NotNull Term computeType() {
     return accept(LittleTyper.INSTANCE, Unit.unit());

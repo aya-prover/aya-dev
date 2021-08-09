@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreDef;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.sort.Sort;
@@ -51,8 +52,8 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
   @Override @NotNull ImmutableSeq<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-  @Override default @NotNull Doc toDoc() {
-    return accept(CoreDistiller.INSTANCE, Unit.unit());
+  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return accept(new CoreDistiller(options), Unit.unit());
   }
 
   /**
