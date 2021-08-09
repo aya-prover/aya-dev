@@ -4,6 +4,8 @@ package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
@@ -12,14 +14,13 @@ import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author kiva
  */
-public sealed interface Stmt extends Docile
+public sealed interface Stmt extends AyaDocile
   permits Command, Decl, Generalize, Remark, Sample {
   @Contract(pure = true) @NotNull SourcePos sourcePos();
 
@@ -35,8 +36,8 @@ public sealed interface Stmt extends Docile
     accept(new Desugarer(reporter, opSet), Unit.unit());
   }
 
-  @Override default @NotNull Doc toDoc() {
-    return accept(ConcreteDistiller.INSTANCE, Unit.unit());
+  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return accept(new ConcreteDistiller(options), Unit.unit());
   }
 
   /**

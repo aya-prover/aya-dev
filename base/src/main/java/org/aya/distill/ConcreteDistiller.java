@@ -7,6 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
@@ -29,15 +30,10 @@ import static org.aya.distill.CoreDistiller.*;
  * @author ice1000, kiva
  * @see CoreDistiller
  */
-public final class ConcreteDistiller implements
+public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   Stmt.Visitor<Unit, Doc>,
   Pattern.Visitor<Boolean, Doc>,
   Expr.Visitor<Boolean, Doc> {
-  public static final @NotNull ConcreteDistiller INSTANCE = new ConcreteDistiller();
-
-  private ConcreteDistiller() {
-  }
-
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
     return varDoc(expr.resolvedVar());
   }

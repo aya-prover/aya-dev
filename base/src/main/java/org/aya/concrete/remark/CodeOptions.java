@@ -2,10 +2,10 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.remark;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
-import org.aya.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

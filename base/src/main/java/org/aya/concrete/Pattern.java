@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.Ref;
 import org.aya.api.concrete.ConcretePat;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -19,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
  * @author kiva, ice1000
  */
 public sealed interface Pattern extends ConcretePat {
-  @Override default @NotNull Doc toDoc() {
-    return accept(ConcreteDistiller.INSTANCE, false);
+  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return accept(new ConcreteDistiller(options), false);
   }
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

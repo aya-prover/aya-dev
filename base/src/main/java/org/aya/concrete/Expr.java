@@ -7,6 +7,7 @@ import kala.control.Either;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.concrete.ConcreteExpr;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
@@ -46,8 +47,8 @@ public sealed interface Expr extends ConcreteExpr {
     return accept(new Desugarer(reporter, new BinOpSet(reporter)), Unit.unit());
   }
 
-  @Override default @NotNull Doc toDoc() {
-    return accept(ConcreteDistiller.INSTANCE, false);
+  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return accept(new ConcreteDistiller(options), false);
   }
 
   interface Visitor<P, R> {
