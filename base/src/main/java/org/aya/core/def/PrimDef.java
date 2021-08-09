@@ -81,15 +81,15 @@ public final class PrimDef extends TopLevelDef {
     }
 
     private static @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> invol(@NotNull PrimDef.PrimFactory factory) {
-      return (prim) -> {
+      return prim -> {
         var arg = prim.args().get(0).term();
         if (arg instanceof CallTerm.Prim primCall) {
           var left = factory.getOption(LEFT);
-          if (left.isNotEmpty() && primCall.ref() == left.get().ref)
-            return new CallTerm.Prim(left.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
           var right = factory.getOption(RIGHT);
-          if (right.isNotEmpty() && primCall.ref() == right.get().ref)
+          if (left.isNotEmpty() && primCall.ref() == left.get().ref)
             return new CallTerm.Prim(right.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+          if (right.isNotEmpty() && primCall.ref() == right.get().ref)
+            return new CallTerm.Prim(left.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
         }
         return prim;
       };
