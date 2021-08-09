@@ -5,6 +5,7 @@ package org.aya.concrete.remark;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
+import org.aya.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.regex.Pattern;
  */
 public record CodeOptions(
   @Nullable NormalizeMode mode,
+  @NotNull DistillerOptions options,
   @NotNull ShowCode showCode
 ) {
   public static final @NotNull Pattern PARSER = Pattern.compile(
@@ -24,7 +26,7 @@ public record CodeOptions(
 
   public static @NotNull Literate.Code analyze(@NotNull String literal, @NotNull AyaProducer producer) {
     var showImplicits = true;
-    var showLevels = true;
+    var showLevels = false;
     var matcher = PARSER.matcher(literal);
     var found = matcher.find();
     assert found;
@@ -49,9 +51,14 @@ public record CodeOptions(
     if (open != null && close != null) {
       open = open.toUpperCase(Locale.ROOT);
       close = close.toUpperCase(Locale.ROOT);
+      // if (open.contains("I")) showImplicits = true;
+      if (close.contains("I")) showImplicits = false;
+      if (open.contains("L")) showLevels = true;
+      // if (close.contains("L")) showLevels = false;
     }
     var expr = producer.visitExpr(AyaParsing.parser(matcher.group(6)).expr());
-    var options = new CodeOptions(mode, showCode);
+    var distillOpt = new DistillerOptions(showImplicits, showLevels);
+    var options = new CodeOptions(mode, distillOpt, showCode);
     return new Literate.Code(expr, options);
   }
 
