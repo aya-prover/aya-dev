@@ -25,6 +25,7 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.BinOpParser;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.concrete.stmt.*;
@@ -45,11 +46,18 @@ import java.util.stream.Stream;
 /**
  * @author ice1000, kiva
  */
-public record AyaProducer(
-  @NotNull SourceFile sourceFile,
-  @NotNull Reporter reporter,
-  @NotNull PrimDef.PrimFactory primFactory
-  ) {
+public final class AyaProducer {
+  public final @NotNull SourceFile sourceFile;
+  public final @NotNull Reporter reporter;
+  private @Nullable SourcePos overridingSourcePos;
+  private @NotNull PrimDef.PrimFactory primFactory;
+
+  public AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter reporter, @NotNull PrimDef.PrimFactory primFactory) {
+    this.sourceFile = sourceFile;
+    this.reporter = reporter;
+    this.primFactory = primFactory;
+  }
+
   public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
     return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt).toImmutableSeq();
   }
@@ -97,7 +105,22 @@ public record AyaProducer(
     if (levels != null) return ImmutableSeq.of(visitLevels(levels));
     var bind = ctx.bind();
     if (bind != null) return ImmutableSeq.of(visitBind(bind));
+    var remark = ctx.remark();
+    if (remark != null) return ImmutableSeq.of(visitRemark(remark));
     return unreachable(ctx);
+  }
+
+  @NotNull private Remark visitRemark(AyaParser.RemarkContext remark) {
+    assert overridingSourcePos == null : "Doc comments shall not nest";
+    var pos = sourcePosOf(remark);
+    overridingSourcePos = pos;
+    var sb = new StringBuilder();
+    for (var docComment : remark.DOC_COMMENT()) {
+      sb.append(docComment.getText().substring(3)).append("\n");
+    }
+    var core = Remark.make(sb.toString(), pos, this);
+    overridingSourcePos = null;
+    return core;
   }
 
   public Generalize visitLevels(AyaParser.LevelsContext ctx) {
@@ -764,6 +787,7 @@ public record AyaProducer(
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
+    if (overridingSourcePos != null) return overridingSourcePos;
     var start = ctx.getStart();
     var end = ctx.getStop();
     return new SourcePos(
@@ -778,6 +802,7 @@ public record AyaProducer(
   }
 
   private @NotNull SourcePos sourcePosOf(TerminalNode node) {
+    if (overridingSourcePos != null) return overridingSourcePos;
     var token = node.getSymbol();
     var line = token.getLine();
     return new SourcePos(

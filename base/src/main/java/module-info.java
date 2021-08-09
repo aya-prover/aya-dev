@@ -1,6 +1,7 @@
 module org.aya {
   requires static org.jetbrains.annotations;
   requires static org.antlr.antlr4.runtime;
+  requires org.commonmark;
 
   requires transitive org.aya.api;
   requires transitive org.aya.parser;
@@ -11,6 +12,7 @@ module org.aya {
   exports org.aya.concrete.desugar;
   exports org.aya.concrete.desugar.error;
   exports org.aya.concrete.parse;
+  exports org.aya.concrete.remark;
   exports org.aya.concrete.resolve.context;
   exports org.aya.concrete.resolve.module;
   exports org.aya.concrete.stmt;

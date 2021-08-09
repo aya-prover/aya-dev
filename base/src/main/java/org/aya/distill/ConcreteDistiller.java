@@ -12,6 +12,7 @@ import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.Level;
 import org.aya.generic.Modifier;
@@ -38,7 +39,7 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
-    return Doc.plain(expr.resolvedVar().name());
+    return varDoc(expr.resolvedVar());
   }
 
   @Override public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Boolean nestedCall) {
@@ -254,6 +255,11 @@ public final class ConcreteDistiller implements
       Doc.styled(KEYWORD, bind.pred().keyword),
       Doc.plain(bind.target().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator()).name()))
     );
+  }
+
+  @Override public Doc visitRemark(@NotNull Remark remark, Unit unit) {
+    var literate = remark.literate;
+    return literate != null ? literate.toDoc() : Doc.plain(remark.raw);
   }
 
   @Override public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {

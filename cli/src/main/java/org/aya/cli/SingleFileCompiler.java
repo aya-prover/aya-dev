@@ -95,6 +95,7 @@ public record SingleFileCompiler(
     switch (flags.distillFormat()) {
       case html -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
       case latex -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, bool) -> thisDoc.renderToTeX());
+      case plain -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, bool) -> thisDoc.debugRender());
     }
   }
 

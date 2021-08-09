@@ -17,6 +17,7 @@ import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
@@ -24,6 +25,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
+import org.aya.tyck.ExprTycker;
 import org.aya.core.def.PrimDef;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
@@ -78,16 +80,21 @@ public record FileModuleLoader(
     program.forEach(s -> s.resolve(opSet));
     opSet.sort();
     program.forEach(s -> s.desugar(reporter, opSet));
-    onResolved.runChecked();
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var wellTyped = Buffer.<Def>create();
       for (var stmt : program) {
-        if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder, primFactory));
+        if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder,primFactory ));
         else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder, primFactory));
+        else if (stmt instanceof Remark remark) {
+          var literate = remark.literate;
+          if (literate != null) literate.tyck(new ExprTycker(delayedReporter, builder));
+        }
         if (delayedReporter.problems().anyMatch(Problem::isError)) break;
       }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
+    } finally {
+      onResolved.runChecked();
     }
     return context;
   }

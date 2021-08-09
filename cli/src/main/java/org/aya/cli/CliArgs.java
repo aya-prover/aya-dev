@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli;
 
-import org.aya.prelude.GeneratedVersion;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.prelude.GeneratedVersion;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -46,6 +46,7 @@ public class CliArgs {
 
   public enum DistillFormat {
     html,
+    plain,
     latex
   }
 

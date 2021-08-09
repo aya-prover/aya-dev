@@ -8,6 +8,7 @@ import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.context.NoExportContext;
@@ -50,6 +51,11 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
 
   @Override public Unit visitBind(Command.@NotNull Bind bind, @NotNull ModuleContext context) {
     bind.context().value = context;
+    return Unit.unit();
+  }
+
+  @Override public Unit visitRemark(@NotNull Remark remark, @NotNull ModuleContext context) {
+    remark.ctx = context;
     return Unit.unit();
   }
 

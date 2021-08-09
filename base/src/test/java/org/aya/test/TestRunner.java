@@ -2,12 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.test;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -23,13 +23,13 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestRunner {
-  static @NotNull SourceFileLocator LOCATOR = new SourceFileLocator() {
+  public static final @NotNull Path TEST_SOURCE_DIR = Paths.get("src", "test", "resources").toAbsolutePath();
+  public static @NotNull SourceFileLocator LOCATOR = new SourceFileLocator() {
   };
 
   @Test void runAllAyaTests() throws IOException {
-    var testSourceDir = Paths.get("src", "test", "resources").toAbsolutePath();
-    runDir(testSourceDir.resolve("success"), true);
-    runDir(testSourceDir.resolve("failure"), false);
+    runDir(TEST_SOURCE_DIR.resolve("success"), true);
+    runDir(TEST_SOURCE_DIR.resolve("failure"), false);
   }
 
   private void runDir(@NotNull Path path, boolean expectSuccess) throws IOException {

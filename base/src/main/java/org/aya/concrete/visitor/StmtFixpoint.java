@@ -4,6 +4,7 @@ package org.aya.concrete.visitor;
 
 import kala.tuple.Unit;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,11 @@ import org.jetbrains.annotations.NotNull;
 public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> {
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope = signatured.telescope.map(p -> p.mapExpr(expr -> expr.accept(this, pp)));
+  }
+
+  @Override default Unit visitRemark(@NotNull Remark remark, P p) {
+    if (remark.literate != null) remark.literate.modify(this, p);
+    return Unit.unit();
   }
 
   default void visitDecl(@NotNull Decl decl, P pp) {

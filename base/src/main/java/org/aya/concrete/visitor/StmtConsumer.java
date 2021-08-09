@@ -4,6 +4,7 @@ package org.aya.concrete.visitor;
 
 import kala.tuple.Unit;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,6 +88,10 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
   }
 
   @Override default Unit visitBind(Command.@NotNull Bind bind, P p) {
+    return Unit.unit();
+  }
+  @Override default Unit visitRemark(@NotNull Remark remark, P p) {
+    if (remark.literate != null) remark.literate.visit(this, p);
     return Unit.unit();
   }
 
