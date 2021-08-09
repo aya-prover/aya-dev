@@ -1,9 +1,9 @@
-In file $FILE:3:0 ->
+In file $FILE:2:0 ->
 
   1 | prim I
   2 | --| test `I`
-  3 | --| test `unresolved`
       ^-------------------^
+  3 | --| test `unresolved`
 
 Error: The unqualified name referred to by `unresolved` is not defined in the current
        scope
