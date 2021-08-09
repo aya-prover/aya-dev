@@ -11,7 +11,7 @@ stmt : decl
      | importCmd
      | openCmd
      | module
-     | DOC_COMMENT
+     | remark
      | levels
      | generalize
      | bind
@@ -19,6 +19,7 @@ stmt : decl
      ;
 
 sample : (EXAMPLE | COUNTEREXAMPLE) decl ;
+remark : DOC_COMMENT+;
 
 importCmd : IMPORT qualifiedId (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? qualifiedId useHide?;

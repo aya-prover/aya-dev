@@ -39,7 +39,7 @@ public final class ConcreteDistiller implements
   }
 
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
-    return Doc.plain(expr.resolvedVar().name());
+    return varDoc(expr.resolvedVar());
   }
 
   @Override public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Boolean nestedCall) {

@@ -103,16 +103,22 @@ public final class AyaProducer {
     if (levels != null) return ImmutableSeq.of(visitLevels(levels));
     var bind = ctx.bind();
     if (bind != null) return ImmutableSeq.of(visitBind(bind));
-    var docComment = ctx.DOC_COMMENT();
-    if (docComment != null) {
-      assert overridingSourcePos == null : "Doc comments shall not nest";
-      var pos = sourcePosOf(docComment);
-      overridingSourcePos = pos;
-      var remark = Remark.make(docComment.getText().substring(3), pos, this);
-      overridingSourcePos = null;
-      return ImmutableSeq.of(remark);
-    }
+    var remark = ctx.remark();
+    if (remark != null) return ImmutableSeq.of(visitRemark(remark));
     return unreachable(ctx);
+  }
+
+  @NotNull private Remark visitRemark(AyaParser.RemarkContext remark) {
+    assert overridingSourcePos == null : "Doc comments shall not nest";
+    var pos = sourcePosOf(remark);
+    overridingSourcePos = pos;
+    var sb = new StringBuilder();
+    for (var docComment : remark.DOC_COMMENT()) {
+      sb.append(docComment.getText().substring(3)).append("\n");
+    }
+    var core = Remark.make(sb.toString(), pos, this);
+    overridingSourcePos = null;
+    return core;
   }
 
   public Generalize visitLevels(AyaParser.LevelsContext ctx) {

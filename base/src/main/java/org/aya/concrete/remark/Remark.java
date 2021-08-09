@@ -84,7 +84,7 @@ public final class Remark implements Stmt {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {
       return new Literate.Many(Style.italic(), mapChildren(emphasis, pos, producer));
-    } else if (node instanceof HardLineBreak) {
+    } else if (node instanceof HardLineBreak || node instanceof SoftLineBreak) {
       return new Literate.Raw(Doc.line());
     } else if (node instanceof StrongEmphasis emphasis) {
       return new Literate.Many(Style.bold(), mapChildren(emphasis, pos, producer));

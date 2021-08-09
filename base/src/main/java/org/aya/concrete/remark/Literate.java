@@ -123,7 +123,7 @@ public sealed interface Literate {
     }
 
     @Override public @NotNull Doc toDoc() {
-      assert tyckResult != null;
+      if (tyckResult == null) return Doc.plain("Error");
       return Doc.styled(Style.code(), switch (showCode) {
         case Concrete -> expr.toDoc();
         case Core -> normalize(tyckResult.wellTyped());
