@@ -98,8 +98,9 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   public static @NotNull Doc univDoc(boolean nestedCall, String head, @NotNull AyaDocile lvl, @NotNull DistillerOptions options) {
-    return visitCalls(Doc.styled(KEYWORD, head),
-      Seq.of(new Arg<>(lvl, true)),
+    var hd = Doc.styled(KEYWORD, head);
+    if (!options.showLevels()) return hd;
+    return visitCalls(hd, Seq.of(new Arg<>(lvl, true)),
       (nc, l) -> l.toDoc(options), nestedCall);
   }
 

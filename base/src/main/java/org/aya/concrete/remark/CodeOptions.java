@@ -25,7 +25,8 @@ public record CodeOptions(
     "\\A(([\\w ]*)(\\|([\\w ]*)\\|([\\w ]*))?:)?(.*)\\z");
 
   public static @NotNull Literate.Code analyze(@NotNull String literal, @NotNull AyaProducer producer) {
-    var showImplicits = true;
+    var showImplicitArgs = true;
+    var showImplicitPats = true;
     var showLevels = false;
     var matcher = PARSER.matcher(literal);
     var found = matcher.find();
@@ -51,13 +52,15 @@ public record CodeOptions(
     if (open != null && close != null) {
       open = open.toUpperCase(Locale.ROOT);
       close = close.toUpperCase(Locale.ROOT);
-      // if (open.contains("I")) showImplicits = true;
-      if (close.contains("I")) showImplicits = false;
+      // if (open.contains("I")) showImplicitArgs = true;
+      if (close.contains("I")) showImplicitArgs = false;
       if (open.contains("L")) showLevels = true;
       // if (close.contains("L")) showLevels = false;
+      // if (open.contains("P")) showImplicitPats = true;
+      if (close.contains("P")) showImplicitPats = false;
     }
     var expr = producer.visitExpr(AyaParsing.parser(matcher.group(6)).expr());
-    var distillOpt = new DistillerOptions(showImplicits, showLevels);
+    var distillOpt = new DistillerOptions(showImplicitArgs, showImplicitPats, showLevels);
     var options = new CodeOptions(mode, distillOpt, showCode);
     return new Literate.Code(expr, options);
   }
