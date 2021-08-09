@@ -31,6 +31,6 @@ In file $FILE:5:4 ->
   9 |  | {suc a}, {suc b} => suc (add {a} {b})
          ^-----------------------------------^ substituted to `suc (add {a} {b})`
 
-Error: The 3rd and the 4th clauses are not confluent because we failed to unify `suc (add {a}
-       {suc b})` and `suc (add {a} {b})`
+Error: The 3rd and the 4th clauses are not confluent because we failed to unify `suc
+       (add {a} {suc b})` and `suc (add {a} {b})`
 What are you doing?
