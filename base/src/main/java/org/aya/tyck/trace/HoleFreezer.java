@@ -22,6 +22,6 @@ public final class HoleFreezer implements TermFixpoint<Unit> {
   @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
     var solution = term.ref().core().body;
     if (solution == null) return new ErrorTerm(Doc.plain("{??}"), false);
-    return new ErrorTerm(Doc.wrap("{?", "?}", solution.toDoc()), false);
+    return new ErrorTerm(options -> Doc.wrap("{?", "?}", solution.toDoc(options)), false);
   }
 }

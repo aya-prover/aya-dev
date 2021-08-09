@@ -27,7 +27,7 @@ public record ExprRefSubst(
     var v = expr.resolvedVar();
     if (bad.contains(v)) {
       reporter.report(new UnqualifiedNameNotFoundError(v.name(), expr.sourcePos()));
-      return new Expr.ErrorExpr(expr.sourcePos(), expr.toDoc());
+      return new Expr.ErrorExpr(expr.sourcePos(), expr);
     }
     var rv = good.getOption(v);
     if (rv.isDefined()) return new Expr.RefExpr(expr.sourcePos(), rv.get(), expr.resolvedFrom()).accept(this, unit);

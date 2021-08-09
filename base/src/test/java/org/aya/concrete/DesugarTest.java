@@ -2,8 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.concrete.desugar.BinOpSet;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
@@ -39,7 +39,7 @@ public class DesugarTest {
     var stmt = ParseTest.parseStmt(code);
     stmt.forEach(s -> s.desugar(ThrowingReporter.INSTANCE, new BinOpSet(ThrowingReporter.INSTANCE)));
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-        .map(Stmt::toDoc))
+        .map(s -> s.toDoc(DistillerOptions.DEBUG)))
       .debugRender()
       .trim());
   }

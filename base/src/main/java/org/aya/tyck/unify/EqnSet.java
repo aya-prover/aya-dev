@@ -7,6 +7,8 @@ import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
@@ -20,7 +22,6 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
@@ -91,13 +92,13 @@ public record EqnSet(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull Ordering cmp, @NotNull SourcePos pos,
     @NotNull ImmutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst
-  ) implements Docile {
+  ) implements AyaDocile {
     public <P, R> Tuple2<R, R> accept(@NotNull Term.Visitor<P, R> visitor, P p) {
       return Tuple.of(lhs.accept(visitor, p), rhs.accept(visitor, p));
     }
 
-    public @NotNull Doc toDoc() {
-      return Doc.stickySep(lhs.toDoc(), Doc.symbol(cmp.symbol), rhs.toDoc());
+    public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
     }
   }
 }

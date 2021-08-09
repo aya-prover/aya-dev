@@ -157,7 +157,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   private @NotNull Result wantButNo(@NotNull Expr expr, @NotNull Term term, String expectedText) {
     reporter.report(new BadTypeError(expr, Doc.plain(expectedText), term));
-    return new Result(new ErrorTerm(expr.toDoc()), term);
+    return new Result(new ErrorTerm(expr), term);
   }
 
   private @NotNull Sort.CoreLevel transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
@@ -299,13 +299,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var subst = new Substituter.TermSubst(MutableMap.of());
     while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var mock = mockTerm(pi.param(), loc.sourcePos());
-      term = CallTerm.make(term, Arg.implicit(mock));
+      term = CallTerm.make(term, new Arg<>(mock, false));
       subst.add(pi.param().ref(), mock);
       lower = pi.body().subst(subst);
       if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     }
     reporter.report(new UnifyError(loc, upper, lower));
-    return new Result(new ErrorTerm(term.toDoc()), upper);
+    return new Result(new ErrorTerm(term), upper);
   }
 
   @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
@@ -392,11 +392,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
     if (missing.isNotEmpty()) {
       reporter.report(new FieldProblem.MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
-      return new Result(new ErrorTerm(expr.toDoc()), structCall);
+      return new Result(new ErrorTerm(expr), structCall);
     }
     if (conFields.isNotEmpty()) {
       reporter.report(new FieldProblem.NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name).toImmutableSeq()));
-      return new Result(new ErrorTerm(expr.toDoc()), structCall);
+      return new Result(new ErrorTerm(expr), structCall);
     }
 
     if (term != null) unifyTyReported(term, structCall, expr);
@@ -454,8 +454,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var index = ix - 1;
     if (index < 0 || index >= telescope.size()) {
       reporter.report(new ProjIxError(proj, ix, telescope.size()));
-      var projDoc = proj.toDoc();
-      return new Result(new ErrorTerm(projDoc), ErrorTerm.typeOf(projDoc));
+      return new Result(new ErrorTerm(proj), ErrorTerm.typeOf(proj));
     }
     var type = telescope.get(index).type();
     var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
@@ -487,9 +486,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         if (argLicit || namedArg.name() != null) {
           // that implies paramLicit == false
           var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
-          app = CallTerm.make(app, Arg.implicit(holeApp));
+          app = CallTerm.make(app, new Arg<>(holeApp, false));
           pi = instPi(pi, subst, holeApp);
-          if (pi == null) return new Result(new ErrorTerm(expr.toDoc()), f.type);
+          if (pi == null) return new Result(new ErrorTerm(expr), f.type);
         } else {
           // TODO[ice]: no implicit argument expected, but inserted.
           throw new TyckerException();
@@ -499,7 +498,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) pi = instPi(pi, subst, elabArg);
-      if (pi == null) return new Result(new ErrorTerm(expr.toDoc()), f.type);
+      if (pi == null) return new Result(new ErrorTerm(expr), f.type);
       else subst.map().put(pi.param().ref(), elabArg);
     }
     return unifyTyMaybeInsert(term, pi.body().subst(subst), app, expr);
@@ -569,7 +568,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Override public Result catchUnhandled(@NotNull Expr expr, Term term) {
-    return new Result(ErrorTerm.unexpected(expr.toDoc()), term);
+    return new Result(ErrorTerm.unexpected(expr), term);
   }
 
   public static class TyckerException extends InternalException {

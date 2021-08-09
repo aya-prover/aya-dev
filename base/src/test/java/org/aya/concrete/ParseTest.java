@@ -7,6 +7,7 @@ import kala.control.Either;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
 import org.aya.api.Global;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpParser;
@@ -158,23 +159,23 @@ public class ParseTest {
     );
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app
       && app.seq().sizeEquals(2)
-      && !app.toDoc().debugRender().isEmpty()
+      && !app.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty()
       && app.seq().get(1).expr() instanceof Expr.TupExpr tup
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
-      && !neo.toDoc().debugRender().isEmpty());
+      && !neo.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty());
   }
 
   private void parseImport(@Language("TEXT") String code) {
-    assertTrue(parseStmt(code).first() instanceof Command.Import s && !s.toDoc().debugRender().isEmpty());
+    assertTrue(parseStmt(code).first() instanceof Command.Import s && !s.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty());
   }
 
   private void parseOpen(@Language("TEXT") String code) {
-    assertTrue(parseStmt(code).last() instanceof Command.Open s && !s.toDoc().debugRender().isEmpty());
+    assertTrue(parseStmt(code).last() instanceof Command.Open s && !s.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty());
   }
 
   private void parseFn(@Language("TEXT") String code) {
-    assertTrue(parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc().debugRender().isEmpty());
+    assertTrue(parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty());
   }
 
   private void parseData(@Language("TEXT") String code) {
@@ -337,7 +338,7 @@ public class ParseTest {
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-        .map(Stmt::toDoc))
+        .map(s -> s.toDoc(DistillerOptions.DEBUG)))
       .debugRender()
       .trim());
   }

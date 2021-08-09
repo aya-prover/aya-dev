@@ -5,6 +5,7 @@ package org.aya.tyck.error;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
@@ -22,7 +23,7 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   private static @NotNull Doc termToHint(@Nullable Term term) {
-    return term == null ? Doc.empty() : Doc.sep(Doc.plain("substituted to"), Doc.styled(Style.code(), term.toDoc()));
+    return term == null ? Doc.empty() : Doc.sep(Doc.plain("substituted to"), Doc.styled(Style.code(), term.toDoc(DistillerOptions.DEFAULT)));
   }
 
   record Conditions(
@@ -35,9 +36,9 @@ public sealed interface ClausesProblem extends Problem {
     @Override public @NotNull Doc describe() {
       var result = rhs != null ? Doc.sep(
         Doc.plain("unify"),
-        Doc.styled(Style.code(), lhs.toDoc()),
+        Doc.styled(Style.code(), lhs.toDoc(DistillerOptions.DEFAULT)),
         Doc.plain("and"),
-        Doc.styled(Style.code(), rhs.toDoc())
+        Doc.styled(Style.code(), rhs.toDoc(DistillerOptions.DEFAULT))
       ) : Doc.english("even reduce one of the clause(s) to check condition");
       return Doc.sep(
         Doc.plain("The"),
@@ -70,9 +71,9 @@ public sealed interface ClausesProblem extends Problem {
         Doc.english("and the"),
         Doc.ordinal(j),
         Doc.english("clauses are not confluent because we failed to unify"),
-        Doc.styled(Style.code(), lhs.toDoc()),
+        Doc.styled(Style.code(), lhs.toDoc(DistillerOptions.DEFAULT)),
         Doc.plain("and"),
-        Doc.styled(Style.code(), rhs.toDoc())
+        Doc.styled(Style.code(), rhs.toDoc(DistillerOptions.DEFAULT))
       );
     }
 
@@ -87,7 +88,7 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<PatTree> pats) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(PatTree::toDoc)));
+      return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(t -> t.toDoc(DistillerOptions.DEFAULT))));
     }
   }
 
@@ -95,7 +96,7 @@ public sealed interface ClausesProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(
         Doc.english("Cannot perform pattern matching"),
-        Doc.styled(Style.code(), pat.toDoc())
+        Doc.styled(Style.code(), pat.toDoc(DistillerOptions.DEFAULT))
       );
     }
   }

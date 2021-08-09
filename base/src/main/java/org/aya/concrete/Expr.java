@@ -7,6 +7,7 @@ import kala.control.Either;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.concrete.ConcreteExpr;
+import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -24,7 +25,6 @@ import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +127,11 @@ public sealed interface Expr extends ConcreteExpr {
     }
   }
 
-  record ErrorExpr(@NotNull SourcePos sourcePos, @NotNull Doc description) implements Expr {
+  record ErrorExpr(@NotNull SourcePos sourcePos, @NotNull AyaDocile description) implements Expr {
+    public ErrorExpr(@NotNull SourcePos sourcePos, @NotNull Doc description) {
+      this(sourcePos, options -> description);
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitError(this, p);
     }
@@ -165,13 +169,13 @@ public sealed interface Expr extends ConcreteExpr {
   record NamedArg(
     @Nullable String name,
     @NotNull Expr expr
-  ) implements Docile {
+  ) implements AyaDocile {
     @Override
-    public @NotNull Doc toDoc() {
+    public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       if (name != null) {
-        return Doc.braced(Doc.cat(Doc.plain(name), Doc.symbol(" => "), expr.toDoc()));
+        return Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), expr.toDoc(options)));
       }
-      return expr.toDoc();
+      return expr.toDoc(options);
     }
   }
 

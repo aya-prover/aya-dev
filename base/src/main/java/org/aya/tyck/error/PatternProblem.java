@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.Pattern;
@@ -37,9 +38,9 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(
         Doc.english("Cannot split on a non-inductive type"),
-        Doc.styled(Style.code(), type.toDoc()),
+        Doc.styled(Style.code(), type.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("with a constructor pattern"),
-        Doc.styled(Style.code(), pattern.toDoc()));
+        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT)));
     }
 
     @Override public @NotNull Severity level() {
@@ -52,7 +53,7 @@ public sealed interface PatternProblem extends Problem {
       return Doc.cat(
         Doc.english("Cannot match with"),
         Doc.ONE_WS,
-        Doc.styled(Style.code(), pattern.toDoc()),
+        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT)),
         Doc.ONE_WS,
         Doc.english("due to a failed index unification"),
         Doc.emptyIf(isError(), () -> Doc.english(", treating as bind pattern")));
@@ -63,7 +64,7 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(
         Doc.english("Unknown constructor"),
-        Doc.styled(Style.code(), pattern.toDoc())
+        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT))
       );
     }
 

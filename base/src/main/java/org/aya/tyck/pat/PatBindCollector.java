@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record PatBindCollector(@NotNull ErrorTerm error) implements Pattern.Visitor<LocalCtx, Unit> {
   public static void bindErrors(Pattern.@NotNull Ctor ctor, @NotNull LocalCtx ctx) {
-    ctor.accept(new PatBindCollector(new ErrorTerm(ctor.toDoc())), ctx);
+    ctor.accept(new PatBindCollector(new ErrorTerm(ctor)), ctx);
   }
 
   @Override public Unit visitAbsurd(Pattern.@NotNull Absurd absurd, LocalCtx pats) {

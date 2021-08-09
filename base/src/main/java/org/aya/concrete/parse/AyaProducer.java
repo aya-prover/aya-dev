@@ -15,6 +15,7 @@ import kala.value.Ref;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourcePos;
@@ -568,7 +569,7 @@ public final class AyaProducer {
     var first = atoms.first().apply(true);
     if (!(first instanceof Pattern.Bind bind)) {
       reporter.report(new ParseError(first.sourcePos(),
-        "`" + first.toDoc().debugRender() + "` is not a constructor name"));
+        "`" + first.toDoc(DistillerOptions.DEBUG).debugRender() + "` is not a constructor name"));
       throw new ParsingInterruptedException();
     }
     return (ex, as) -> new Pattern.Ctor(

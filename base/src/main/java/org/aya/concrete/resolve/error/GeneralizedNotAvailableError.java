@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
 import org.aya.pretty.doc.Doc;
@@ -12,7 +13,7 @@ public record GeneralizedNotAvailableError(@NotNull Expr expr) implements ExprPr
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("Generalized variable"),
-      Doc.styled(Style.code(), expr.toDoc()),
+      Doc.styled(Style.code(), expr.toDoc(DistillerOptions.DEFAULT)),
       Doc.english("not available here")
     );
   }

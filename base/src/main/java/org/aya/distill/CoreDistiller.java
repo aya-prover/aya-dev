@@ -7,6 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -19,7 +20,6 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,19 +88,19 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     var sort = term.sort();
     var onlyH = sort.onlyH();
     if (onlyH instanceof Level.Constant<Sort.LvlVar> t) {
-      if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel());
-      if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel());
+      if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel(), options);
+      if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel(), options);
     } else if (onlyH instanceof Level.Infinity<Sort.LvlVar> t)
-      return univDoc(nestedCall, "ooType", sort.uLevel());
+      return univDoc(nestedCall, "ooType", sort.uLevel(), options);
     return visitCalls(Doc.styled(KEYWORD, "Type"),
-      Seq.of(sort.hLevel(), sort.uLevel()).view().map(Arg::explicit),
-      (nest, t) -> t.toDoc(), nestedCall);
+      Seq.of(sort.hLevel(), sort.uLevel()).view().map(t -> new Arg<>(t, true)),
+      (nest, t) -> t.toDoc(options), nestedCall);
   }
 
-  public static @NotNull Doc univDoc(Boolean nestedCall, String head, @NotNull Docile lvl) {
+  public static @NotNull Doc univDoc(boolean nestedCall, String head, @NotNull AyaDocile lvl, @NotNull DistillerOptions options) {
     return visitCalls(Doc.styled(KEYWORD, head),
-      Seq.of(Arg.explicit(lvl)),
-      (nc, l) -> l.toDoc(), nestedCall);
+      Seq.of(new Arg<>(lvl, true)),
+      (nc, l) -> l.toDoc(options), nestedCall);
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
@@ -165,7 +165,8 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {
-    return !term.isReallyError() ? term.description() : Doc.angled(term.description());
+    var doc = term.description().toDoc(options);
+    return !term.isReallyError() ? doc : Doc.angled(doc);
   }
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
@@ -182,7 +183,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
-  public static <T extends Docile> @NotNull Doc visitCalls(
+  public static <T extends AyaDocile> @NotNull Doc visitCalls(
     @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
     @NotNull BiFunction<Boolean, T, Doc> formatter, boolean nestedCall
   ) {
@@ -207,7 +208,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
-      Doc.commaList(tuple.pats().view().map(Pat::toDoc)));
+      Doc.commaList(tuple.pats().view().map(pat -> pat.accept(this, false))));
     return tuple.as() == null ? tup
       : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
   }

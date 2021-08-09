@@ -4,6 +4,8 @@ package org.aya.cli;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
@@ -18,7 +20,6 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +84,7 @@ public record SingleFileCompiler(
   private void distill(
     @NotNull Path sourceFile,
     @Nullable CompilerFlags.DistillInfo flags,
-    ImmutableSeq<? extends Docile> doc,
+    ImmutableSeq<? extends AyaDocile> doc,
     @NotNull CliArgs.DistillStage currentStage
   ) throws IOException {
     if (flags == null || currentStage != flags.distillStage()) return;
@@ -101,20 +102,20 @@ public record SingleFileCompiler(
   }
 
   private void doWrite(
-    ImmutableSeq<? extends Docile> doc, Path distillDir,
+    ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
     String fileName, String fileExt, BiFunction<Doc, Boolean, String> toString
   ) throws IOException {
     var docs = Buffer.<Doc>of();
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
-      var thisDoc = item.toDoc();
+      var thisDoc = item.toDoc(DistillerOptions.DEFAULT);
       Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + fileExt), toString.apply(thisDoc, false));
       docs.append(thisDoc);
     }
     Files.writeString(distillDir.resolve(fileName + fileExt), toString.apply(Doc.vcat(docs), true));
   }
 
-  @NotNull private String nameOf(int i, Docile item) {
+  @NotNull private String nameOf(int i, AyaDocile item) {
     return item instanceof Def def ? def.ref().name()
       : item instanceof Decl decl ? decl.ref().name() : String.valueOf(i);
   }

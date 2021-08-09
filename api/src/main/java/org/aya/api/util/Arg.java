@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.api.util;
 
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,21 +12,13 @@ import org.jetbrains.annotations.NotNull;
  *            {@link org.aya.api.concrete.ConcreteExpr}.
  * @author ice1000
  */
-public record Arg<T extends Docile>(@NotNull T term, boolean explicit) implements Docile {
-  @Contract("_ -> new") public static <T extends Docile> @NotNull Arg<T> explicit(@NotNull T term) {
-    return new Arg<>(term, true);
-  }
-
-  @Contract("_ -> new") public static <T extends Docile> @NotNull Arg<T> implicit(@NotNull T term) {
-    return new Arg<>(term, false);
-  }
-
+public record Arg<T extends AyaDocile>(@NotNull T term, boolean explicit) implements AyaDocile {
   public @NotNull Arg<T> implicitify() {
     return new Arg<>(term, false);
   }
 
-  @Override public @NotNull Doc toDoc() {
-    var termDoc = term.toDoc();
+  @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    var termDoc = term.toDoc(options);
     return explicit() ? termDoc : Doc.braced(termDoc);
   }
 }

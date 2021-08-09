@@ -140,19 +140,19 @@ public record UntypedDefEq(
     var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
     if (scopeCheck.isNotEmpty()) {
       defeq.reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
-      return new ErrorTerm(solved.toDoc());
+      return new ErrorTerm(solved);
     }
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
       defeq.reporter.report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
-      return new ErrorTerm(solved.toDoc());
+      return new ErrorTerm(solved);
     }
     defeq.tracing(builder -> builder.append(new Trace.LabelT(defeq().pos, "Hole solved!")));
     return meta.result;
   }
 
   @Override public @NotNull Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {
-    return ErrorTerm.typeOf(term.toDoc());
+    return ErrorTerm.typeOf(term);
   }
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {

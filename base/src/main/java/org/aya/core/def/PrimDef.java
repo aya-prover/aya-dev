@@ -85,7 +85,7 @@ public final class PrimDef extends TopLevelDef {
     var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
     var paramATy = new FormTerm.Pi(paramIToATy, result);
     var aRef = new RefTerm(paramA, paramATy);
-    var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(new CallTerm.Prim(LEFT.ref, ImmutableSeq.of(), ImmutableSeq.empty())));
+    var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(LEFT.ref, ImmutableSeq.of(), ImmutableSeq.empty()), true));
     ARCOE = new PrimDef(
       ImmutableSeq.of(
         new Term.Param(paramA, paramATy, true),
@@ -93,7 +93,7 @@ public final class PrimDef extends TopLevelDef {
         new Term.Param(paramI, INTERVAL_CALL, true)
       ),
       ImmutableSeq.of(homotopy, universe),
-      new ElimTerm.App(aRef, Arg.explicit(new RefTerm(paramI, INTERVAL_CALL))),
+      new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, INTERVAL_CALL), true)),
       PrimDef::arcoe, "arcoe");
   }
 

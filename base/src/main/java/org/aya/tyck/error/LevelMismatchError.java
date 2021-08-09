@@ -4,6 +4,7 @@ package org.aya.tyck.error;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
@@ -23,7 +24,7 @@ public record LevelMismatchError(@Nullable SourcePos pos, @NotNull Seq<LevelEqnS
 
   @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
     return eqns.view().map(eqn ->
-      new WithPos<>(eqn.sourcePos(), eqn.toDoc()));
+      new WithPos<>(eqn.sourcePos(), eqn.toDoc(DistillerOptions.DEFAULT)));
   }
 
   @Override public @NotNull Severity level() {

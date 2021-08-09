@@ -5,6 +5,7 @@ package org.aya.tyck.error;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
@@ -13,7 +14,6 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.unify.EqnSet;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public sealed interface HoleProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("Can't perform pattern unification on hole with the following spine:"),
-        Doc.commaList(term.args().map(Docile::toDoc))
+        Doc.commaList(term.args().map(a -> a.toDoc(DistillerOptions.DEFAULT)))
       );
     }
   }
@@ -47,7 +47,9 @@ public sealed interface HoleProblem extends Problem {
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
-        Doc.sep(Doc.english("The solution"), Doc.styled(Style.code(), solved.toDoc()), Doc.plain("is not well-scoped")),
+        Doc.sep(Doc.english("The solution"),
+          Doc.styled(Style.code(), solved.toDoc(DistillerOptions.DEFAULT)),
+          Doc.plain("is not well-scoped")),
         Doc.cat(Doc.english("In particular, these variables are not in scope:"),
           Doc.ONE_WS,
           Doc.commaList(scopeCheck.view()
@@ -69,7 +71,7 @@ public sealed interface HoleProblem extends Problem {
         Doc.english("Trying to solve hole"),
         Doc.styled(Style.code(), CoreDistiller.linkDef(term.ref())),
         Doc.plain("as"),
-        Doc.styled(Style.code(), sol.toDoc()),
+        Doc.styled(Style.code(), sol.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("which is recursive"));
     }
   }
@@ -82,7 +84,7 @@ public sealed interface HoleProblem extends Problem {
     }
 
     @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
-      return eqns.map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc()));
+      return eqns.map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc(DistillerOptions.DEFAULT)));
     }
 
     @Override public @NotNull Doc describe() {

@@ -27,7 +27,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
     var args = dataCall.args().map(arg -> visitArg(arg, p));
     var sortArgs = dataCall.sortArgs().mapNotNull(sort -> visitLevel(sort, p));
-    if (!sortArgs.sizeEquals(dataCall.sortArgs().size())) return new ErrorTerm(dataCall.toDoc());
+    if (!sortArgs.sizeEquals(dataCall.sortArgs().size())) return new ErrorTerm(dataCall);
     if (dataCall.sortArgs().sameElements(sortArgs, true)
       && dataCall.args().sameElements(args, true)) return dataCall;
     return new CallTerm.Data(dataCall.ref(), sortArgs, args);
@@ -41,7 +41,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var dataArgs = conCall.head().dataArgs().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));
     var sortArgs = conCall.sortArgs().mapNotNull(sort -> visitLevel(sort, p));
-    if (!sortArgs.sizeEquals(conCall.sortArgs().size())) return new ErrorTerm(conCall.toDoc());
+    if (!sortArgs.sizeEquals(conCall.sortArgs().size())) return new ErrorTerm(conCall);
     if (conCall.head().dataArgs().sameElements(dataArgs, true)
       && conCall.sortArgs().sameElements(sortArgs, true)
       && conCall.conArgs().sameElements(conArgs, true)) return conCall;
@@ -53,7 +53,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
     var args = structCall.args().map(arg -> visitArg(arg, p));
     var sortArgs = structCall.sortArgs().mapNotNull(sort -> visitLevel(sort, p));
-    if (!sortArgs.sizeEquals(structCall.sortArgs().size())) return new ErrorTerm(structCall.toDoc());
+    if (!sortArgs.sizeEquals(structCall.sortArgs().size())) return new ErrorTerm(structCall);
     if (structCall.sortArgs().sameElements(sortArgs, true)
       && structCall.args().sameElements(args, true)) return structCall;
     return new CallTerm.Struct(structCall.ref(), sortArgs, args);
@@ -75,7 +75,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitUniv(@NotNull FormTerm.Univ term, P p) {
     var sort = visitSort(term.sort(), p);
-    if (sort == null) return new ErrorTerm(term.toDoc());
+    if (sort == null) return new ErrorTerm(term);
     if (sort == term.sort()) return term;
     return new FormTerm.Univ(sort);
   }
@@ -125,7 +125,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {
     var args = fnCall.args().map(arg -> visitArg(arg, p));
     var sortArgs = fnCall.sortArgs().mapNotNull(sort -> visitLevel(sort, p));
-    if (!sortArgs.sizeEquals(fnCall.sortArgs().size())) return new ErrorTerm(fnCall.toDoc());
+    if (!sortArgs.sizeEquals(fnCall.sortArgs().size())) return new ErrorTerm(fnCall);
     if (fnCall.args().sameElements(args, true)
       && fnCall.sortArgs().sameElements(sortArgs, true)
       && fnCall.args().sameElements(args, true)) return fnCall;
@@ -135,7 +135,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   @Override default @NotNull Term visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
     var args = prim.args().map(arg -> visitArg(arg, p));
     var sortArgs = prim.sortArgs().mapNotNull(sort -> visitLevel(sort, p));
-    if (!sortArgs.sizeEquals(prim.sortArgs().size())) return new ErrorTerm(prim.toDoc());
+    if (!sortArgs.sizeEquals(prim.sortArgs().size())) return new ErrorTerm(prim);
     if (prim.args().sameElements(args, true)
       && prim.sortArgs().sameElements(sortArgs, true)) return prim;
     return new CallTerm.Prim(prim.ref(), sortArgs, args);
