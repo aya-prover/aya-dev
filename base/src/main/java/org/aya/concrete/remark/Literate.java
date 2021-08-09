@@ -9,7 +9,6 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
-import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.resolve.context.Context;
@@ -82,23 +81,14 @@ public sealed interface Literate {
     }
   }
 
-  enum ShowCode {
-    Concrete, Core, Type
-  }
-
   final class Code implements Literate {
     public @NotNull Expr expr;
     public @Nullable ExprTycker.Result tyckResult;
-    public final @NotNull ShowCode showCode;
-    public final @Nullable NormalizeMode mode;
+    public final @NotNull CodeOptions options;
 
-    /**
-     * @param mode <code>null</code> if as-is
-     */
-    public Code(@NotNull Expr expr, @NotNull ShowCode showCode, @Nullable NormalizeMode mode) {
+    public Code(@NotNull Expr expr, @NotNull CodeOptions options) {
       this.expr = expr;
-      this.showCode = showCode;
-      this.mode = mode;
+      this.options = options;
     }
 
     @Override @Contract(mutates = "this")
@@ -119,12 +109,13 @@ public sealed interface Literate {
     }
 
     private @NotNull Doc normalize(@NotNull Term term) {
+      var mode = options.mode();
       return (mode == null ? term : term.normalize(mode)).toDoc();
     }
 
     @Override public @NotNull Doc toDoc() {
       if (tyckResult == null) return Doc.plain("Error");
-      return Doc.styled(Style.code(), switch (showCode) {
+      return Doc.styled(Style.code(), switch (options.showCode()) {
         case Concrete -> expr.toDoc();
         case Core -> normalize(tyckResult.wellTyped());
         case Type -> normalize(tyckResult.type());

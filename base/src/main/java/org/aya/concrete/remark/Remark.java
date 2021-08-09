@@ -5,9 +5,7 @@ package org.aya.concrete.remark;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import org.aya.api.error.SourcePos;
-import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.desugar.BinOpSet;
-import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.stmt.Stmt;
@@ -60,26 +58,7 @@ public final class Remark implements Stmt {
     @NotNull AyaProducer producer
   ) {
     if (node instanceof Code code) {
-      var text = code.getLiteral();
-      Literate.ShowCode show;
-      if (text.startsWith("ty:") || text.startsWith("TY:")) {
-        show = Literate.ShowCode.Type;
-        text = text.substring(3);
-      } else if (text.startsWith("core:") || text.startsWith("CORE:")) {
-        show = Literate.ShowCode.Core;
-        text = text.substring(5);
-      } else show = Literate.ShowCode.Concrete;
-      NormalizeMode mode = null;
-      if (show != Literate.ShowCode.Concrete) for (var value : NormalizeMode.values()) {
-        var prefix = value + ":";
-        if (text.startsWith(prefix)) {
-          mode = value;
-          text = text.substring(prefix.length());
-          break;
-        }
-      }
-      var expr = producer.visitExpr(AyaParsing.parser(text).expr());
-      return new Literate.Code(expr, show, mode);
+      return CodeOptions.analyze(code.getLiteral(), producer);
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {
