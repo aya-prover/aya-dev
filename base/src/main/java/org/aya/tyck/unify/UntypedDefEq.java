@@ -205,14 +205,21 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref()) return null;
+    return visitCall(lhs, rhs, lhs.ref());
+  }
+
+  @Nullable private Term visitCall(
+    @NotNull CallTerm lhs, @NotNull CallTerm rhs,
+    @NotNull DefVar<? extends Def, ? extends Decl> lhsRef
+  ) {
     var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
+    for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }
-    var retType = lhs.ref().core.result().subst(substMap);
+    var retType = lhsRef.core.result().subst(substMap);
     // Lossy comparison
-    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return retType;
+    var subst = levels(lhsRef, lhs.sortArgs(), rhs.sortArgs());
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhsRef), subst))) return retType;
     if (defeq.compareWHNF(lhs, rhs, retType)) return retType;
     else return null;
   }
@@ -234,16 +241,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitPrimCall(CallTerm.@NotNull Prim lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof CallTerm.Prim rhs) || lhs.ref() != rhs.ref()) return null;
-    var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
-      substMap.set(pa._2.ref(), pa._1.term());
-    }
-    var retType = lhs.ref().core.result().subst(substMap);
-    // Lossy comparison
-    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return retType;
-    if (defeq.compareWHNF(lhs, rhs, retType)) return retType;
-    else return null;
+    return visitCall(lhs, rhs, lhs.ref());
   }
 
   @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs) {
