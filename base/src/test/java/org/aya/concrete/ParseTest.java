@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
   public static final @NotNull AyaProducer INSTANCE = new AyaProducer(SourceFile.NONE,
-    ThrowingReporter.INSTANCE, PrimDef.PrimFactory.create());
+    ThrowingReporter.INSTANCE);
 
   @BeforeAll public static void enableTest() {
     Global.enterTestMode();

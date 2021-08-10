@@ -32,18 +32,16 @@ public record Conquer(
   @NotNull ImmutableSeq<Matching> matchings,
   @NotNull SourcePos sourcePos,
   @NotNull Def.Signature signature,
-  @NotNull ExprTycker tycker,
-  @NotNull PrimDef.PrimFactory primFactory
+  @NotNull ExprTycker tycker
 ) implements Pat.Visitor<Integer, Unit> {
   public static void against(
     @NotNull ImmutableSeq<Matching> matchings,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature,
-    @NotNull PrimDef.PrimFactory primFactory
+    @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
     for (int i = 0, size = matchings.size(); i < size; i++) {
       var matching = matchings.get(i);
       for (var pat : matching.patterns())
-        pat.accept(new Conquer(matchings, pos, signature, tycker, primFactory), i);
+        pat.accept(new Conquer(matchings, pos, signature, tycker), i);
     }
   }
 
@@ -62,7 +60,7 @@ public record Conquer(
       var conditions = ctor.ref().core.clauses;
     for (int i = 0, size = conditions.size(); i < size; i++) {
       var condition = conditions.get(i);
-      var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm), primFactory);
+      var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
       if (matchy != null) checkConditions(ctor, nth, i + 1, condition.body(), matchy, condition.sourcePos());
     }
     return Unit.unit();
@@ -77,7 +75,7 @@ public record Conquer(
       }
     }, Unit.unit()), pat.explicit()));
     var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
-      new Substituter.TermSubst(MutableMap.of()), LevelSubst.EMPTY, matchings, primFactory);
+      new Substituter.TermSubst(MutableMap.of()), LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));
@@ -97,7 +95,7 @@ public record Conquer(
 
   @Override public Unit visitPrim(Pat.@NotNull Prim prim, Integer nth) {
     var core = prim.ref().core;
-    assert primFactory.leftOrRight(core);
+    assert PrimDef.PrimFactory.INSTANCE.leftOrRight(core);
     return Unit.unit();
   }
 }

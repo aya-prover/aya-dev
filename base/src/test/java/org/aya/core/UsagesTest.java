@@ -25,7 +25,7 @@ public class UsagesTest {
        | pos n => n
        | neg n => n
       open data Fin (n : Nat) : Set | suc m => fzero | suc m => fsuc (Fin m)
-      """, PrimDef.PrimFactory.create()).forEach(def -> {
+      """).forEach(def -> {
       var of = Buffer.<Def>of();
       def.accept(RefFinder.HEADER_AND_BODY, of);
       assertFalse(of.isEmpty());

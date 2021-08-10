@@ -13,12 +13,6 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
 
   @Contract(pure = true) private Normalizer() {
   }
-  // hack
-  public PrimDef.PrimFactory primFactory = null;
-
-  @Override public @NotNull PrimDef.PrimFactory primFactory() {
-    return primFactory;
-  }
 
   @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {
     var fn = term.of().accept(this, mode);

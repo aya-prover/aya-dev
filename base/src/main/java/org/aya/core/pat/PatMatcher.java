@@ -19,26 +19,22 @@ import org.jetbrains.annotations.Nullable;
  * Matches a term with a pattern.
  *
  * @author ice1000
- * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(ImmutableSeq, SeqLike, org.aya.core.def.PrimDef.PrimFactory)} instead of instantiating the class directly.
+ * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(ImmutableSeq, SeqLike)} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
-public record PatMatcher(
-  @NotNull Substituter.TermSubst subst,
-  @NotNull PrimDef.PrimFactory primFactory) implements Pat.Visitor<Term, Unit> {
+public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Visitor<Term, Unit> {
   public static @Nullable Substituter.TermSubst tryBuildSubstArgs(
     @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms,
-    @NotNull PrimDef.PrimFactory primFactory
+    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms
   ) {
-    return tryBuildSubstTerms(pats, terms.view().map(Arg::term), primFactory);
+    return tryBuildSubstTerms(pats, terms.view().map(Arg::term));
   }
 
   public static @Nullable Substituter.TermSubst tryBuildSubstTerms(
     @NotNull ImmutableSeq<@NotNull Pat> pats,
-    @NotNull SeqLike<@NotNull Term> terms,
-    @NotNull PrimDef.PrimFactory primFactory
+    @NotNull SeqLike<@NotNull Term> terms
   ) {
-    var matchy = new PatMatcher(new Substituter.TermSubst(new MutableHashMap<>()), primFactory);
+    var matchy = new PatMatcher(new Substituter.TermSubst(new MutableHashMap<>()));
     try {
       for (var pat : pats.zip(terms)) pat._1.accept(matchy, pat._2);
       return matchy.subst();
@@ -58,7 +54,7 @@ public record PatMatcher(
 
   @Override public Unit visitPrim(Pat.@NotNull Prim prim, Term term) {
     var core = prim.ref().core;
-    assert primFactory.leftOrRight(core);
+    assert PrimDef.PrimFactory.INSTANCE.leftOrRight(core);
     if (term instanceof CallTerm.Prim primCall && primCall.ref() == prim.ref()) return Unit.unit();
     throw new Mismatch();
   }

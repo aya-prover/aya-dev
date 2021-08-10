@@ -33,11 +33,10 @@ public class TracingTest {
   }
 
   @NotNull private Trace.Builder mkBuilder(@Language("TEXT") String code) {
-    var primFactory = PrimDef.PrimFactory.create();
-    var decls = TyckDeclTest.successDesugarDecls(code, primFactory);
+    var decls = TyckDeclTest.successDesugarDecls(code);
     var builder = new Trace.Builder();
     decls.forEach(decl -> {
-      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder, primFactory);
+      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder);
     });
     return builder;
   }

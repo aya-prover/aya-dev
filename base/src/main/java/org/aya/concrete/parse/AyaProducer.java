@@ -50,12 +50,10 @@ public final class AyaProducer {
   public final @NotNull SourceFile sourceFile;
   public final @NotNull Reporter reporter;
   private @Nullable SourcePos overridingSourcePos;
-  private @NotNull PrimDef.PrimFactory primFactory;
 
-  public AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter reporter, @NotNull PrimDef.PrimFactory primFactory) {
+  public AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
     this.sourceFile = sourceFile;
     this.reporter = reporter;
-    this.primFactory = primFactory;
   }
 
   public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
@@ -65,7 +63,7 @@ public final class AyaProducer {
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
     var id = ctx.ID();
     var name = id.getText();
-    var core = primFactory.factory(name);
+    var core = PrimDef.PrimFactory.INSTANCE.factory(name);
     var sourcePos = sourcePosOf(id);
     if (core.isEmpty()) {
       reporter.report(new UnknownPrimError(sourcePos, name));

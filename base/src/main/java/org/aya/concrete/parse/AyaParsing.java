@@ -46,12 +46,11 @@ public interface AyaParsing {
 
   static @NotNull ImmutableSeq<Stmt> program(
     @NotNull SourceFileLocator locator,
-    @NotNull Reporter reporter, @NotNull Path path,
-    @NotNull PrimDef.PrimFactory primFactory
+    @NotNull Reporter reporter, @NotNull Path path
   ) throws IOException {
     var sourceCode = Files.readString(path);
     var sourceFile = new SourceFile(Option.some(locator.locate(path)), sourceCode);
     var parser = AyaParsing.parser(sourceFile, reporter);
-    return new AyaProducer(sourceFile, reporter, primFactory).visitProgram(parser.program());
+    return new AyaProducer(sourceFile, reporter).visitProgram(parser.program());
   }
 }

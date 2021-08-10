@@ -539,25 +539,23 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var last = dt.params().last().type();
       for (var iter = expr.items().iterator(); iter.hasNext(); ) {
         var item = iter.next();
-        if (againstTele.isEmpty()) {
+        var result = item.accept(this, againstTele.first().type());
+        items.append(result.wellTyped);
+        var ref = againstTele.first().ref();
+        resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
+        againstTele = againstTele.drop(1);
+        if (againstTele.isNotEmpty()) {
+          final var subst = new Substituter.TermSubst(ref, result.wellTyped);
+          againstTele = Term.Param.subst(againstTele, subst).view();
+          last = last.subst(subst);
+        } else {
           if (iter.hasNext()) {
             // TODO[ice]: not enough sigma elements
             throw new TyckerException();
           } else {
-            var result = item.accept(this, last);
-            items.append(result.wellTyped);
-            resultLast.value = result.type;
-          }
-        } else {
-          var result = item.accept(this, againstTele.first().type());
-          items.append(result.wellTyped);
-          var ref = againstTele.first().ref();
-          resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
-          againstTele = againstTele.drop(1);
-          if (againstTele.isNotEmpty()) {
-            final var subst = new Substituter.TermSubst(ref, result.wellTyped);
-            againstTele = Term.Param.subst(againstTele, subst).view();
-            last = last.subst(subst);
+            var lastItemResult = item.accept(this, last);
+            items.append(lastItemResult.wellTyped);
+            resultLast.value = lastItemResult.type;
           }
         }
       }

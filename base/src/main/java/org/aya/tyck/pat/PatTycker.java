@@ -45,8 +45,7 @@ import java.util.function.Consumer;
 public record PatTycker(
   @NotNull ExprTycker exprTycker,
   @NotNull ExprRefSubst subst,
-  @Nullable Trace.Builder traceBuilder,
-  @NotNull PrimDef.PrimFactory primFactory
+  @Nullable Trace.Builder traceBuilder
 ) implements Pattern.Visitor<Term, Pat> {
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -60,9 +59,8 @@ public record PatTycker(
     tracing(GenericBuilder::reduce);
   }
 
-  public PatTycker(@NotNull ExprTycker exprTycker,
-    @NotNull PrimDef.PrimFactory primFactory) {
-    this(exprTycker, new ExprRefSubst(exprTycker.reporter), exprTycker.traceBuilder, primFactory);
+  public PatTycker(@NotNull ExprTycker exprTycker) {
+    this(exprTycker, new ExprRefSubst(exprTycker.reporter), exprTycker.traceBuilder);
   }
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClauses(
@@ -167,13 +165,13 @@ public record PatTycker(
 
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
     var v = bind.bind();
-    var interval = primFactory.getOption(PrimDef.INTERVAL);
+    var interval = PrimDef.PrimFactory.INSTANCE.getOption(PrimDef.INTERVAL);
     if (t instanceof CallTerm.Prim prim && interval.isNotEmpty() &&
       prim.ref() == interval.get().ref())
       for (var primName : PrimDef.PrimFactory.LEFT_RIGHT)
         if (Objects.equals(bind.bind().name(), primName)) {
           subst.bad().add(bind.bind());
-          return new Pat.Prim(bind.explicit(), primFactory.getOption(primName).get().ref(), t);
+          return new Pat.Prim(bind.explicit(), PrimDef.PrimFactory.INSTANCE.getOption(primName).get().ref(), t);
         }
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
     if (selected == null) {
@@ -243,7 +241,7 @@ public record PatTycker(
   }
 
   private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args(), primFactory);
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
     else return Unfolder.buildSubst(core.telescope(), dataCall.args());
   }
 }

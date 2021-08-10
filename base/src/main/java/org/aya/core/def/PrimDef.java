@@ -15,7 +15,6 @@ import org.aya.api.util.Arg;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
-import org.aya.core.visitor.Normalizer;
 import org.aya.generic.Level;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
@@ -63,14 +62,19 @@ public final class PrimDef extends TopLevelDef {
     return result;
   }
 
-  public record PrimFactory(
-    @NotNull MutableMap<@NotNull String, @NotNull PrimDef> defs
-  ) {
+  public static class PrimFactory {
+    private final @NotNull MutableMap<@NotNull String, @NotNull PrimDef> defs;
+    public static final @NotNull PrimFactory INSTANCE = new PrimFactory();
+
+    private PrimFactory () {
+      this.defs = MutableMap.create();
+    }
+
     private static @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> arcoe(@NotNull PrimDef.PrimFactory factory) {
       return (prim) -> {
         var args = prim.args();
         var argBase = args.get(1).term();
-        var argI = args.get(2).term();
+        var argI  = args.get(2).term();
         var left = factory.getOption(LEFT);
         if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
           return argBase;
@@ -153,18 +157,14 @@ public final class PrimDef extends TopLevelDef {
       );
       if (rst.isNotEmpty()) {
         defs.set(name, rst.get());
+        System.out.println("Set:" + name);
       }
 
       return rst;
     }
 
-    public static @NotNull PrimDef.PrimFactory create() {
-      var rst = new PrimFactory(MutableMap.create());
-      Normalizer.INSTANCE.primFactory = rst;
-      return rst;
-    }
-
     public @NotNull Option<PrimDef> getOption(@NotNull String name) {
+      System.out.println("Get:" + name + "-" + (have(name)? "true" : "false") );
       return defs.getOption(name);
     }
 
@@ -188,7 +188,7 @@ public final class PrimDef extends TopLevelDef {
     }
 
     public void clear() {
-      defs.clear();
+      System.out.println("Clear");defs.clear();
     }
   }
 

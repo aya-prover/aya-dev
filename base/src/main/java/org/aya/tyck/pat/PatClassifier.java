@@ -35,12 +35,11 @@ public record PatClassifier(
   public static @NotNull ImmutableSeq<PatClass> classify(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
-    @NotNull PrimDef.PrimFactory primFactory,
     boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), index)), primFactory, coverage);
+      new SubPats(clause.patterns(), index)), coverage);
   }
 
   public static void confluence(
@@ -79,7 +78,6 @@ public record PatClassifier(
    */
   private @NotNull ImmutableSeq<PatClass> classifySub(
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
-    @NotNull PrimDef.PrimFactory primFactory,
     boolean coverage
   ) {
     assert subPatsSeq.isNotEmpty();
@@ -96,7 +94,7 @@ public record PatClassifier(
       .toImmutableSeq();
     if (hasTuple.isNotEmpty()) {
       builder.shiftEmpty(explicit);
-      return classifySub(hasTuple, primFactory, coverage);
+      return classifySub(hasTuple, coverage);
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>of();
@@ -108,7 +106,7 @@ public record PatClassifier(
       for (var primName : PrimDef.PrimFactory.LEFT_RIGHT) {
         var matchy = subPatsSeq.mapIndexedNotNull((ix, subPats) -> {
           var head = subPats.head();
-          var existedPrim = primFactory.getOption(primName);
+          var existedPrim = PrimDef.PrimFactory.INSTANCE.getOption(primName);
           return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
             || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
         });
@@ -118,7 +116,7 @@ public record PatClassifier(
           .map(SubPats::drop)
           .toImmutableSeq();
         if (classes.isNotEmpty()) {
-          var rest = classifySub(classes, primFactory, false);
+          var rest = classifySub(classes, false);
           builder.unshift();
           buffer.appendAll(rest);
         } else builder.unshift();
@@ -132,13 +130,13 @@ public record PatClassifier(
     if (hasMatch.isEmpty()) {
       builder.shiftEmpty(explicit);
       builder.unshift();
-      return classifySub(subPatsSeq.map(SubPats::drop), primFactory, coverage);
+      return classifySub(subPatsSeq.map(SubPats::drop), coverage);
     }
     var dataCall = hasMatch.get();
       for (var ctor : dataCall.ref().core.body) {
           var conTele = ctor.selfTele;
         if (ctor.pats.isNotEmpty()) {
-          var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args(), primFactory);
+          var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
         if (matchy == null) continue;
         conTele = Term.Param.subst(conTele, matchy);
       }
@@ -152,13 +150,13 @@ public record PatClassifier(
         builder.unshift();
         continue;
       }
-      var classified = classifySub(matches, primFactory, coverage);
+      var classified = classifySub(matches, coverage);
       builder.reduce();
       var classes = classified.map(pat -> pat
         .extract(subPatsSeq)
         .map(SubPats::drop)
         .toImmutableSeq());
-      var rest = classes.flatMap(clazz -> classifySub(clazz, primFactory, coverage));
+      var rest = classes.flatMap(clazz -> classifySub(clazz, coverage));
       builder.unshift();
       buffer.appendAll(rest);
     }

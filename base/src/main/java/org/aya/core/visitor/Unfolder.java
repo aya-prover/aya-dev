@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public interface Unfolder<P> extends TermFixpoint<P> {
-  @NotNull PrimDef.PrimFactory primFactory();
-
   @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
     @NotNull SeqLike<Term.@NotNull Param> self,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
@@ -50,7 +48,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var levelArgs = conCall.sortArgs();
     var levelSubst = buildSubst(levelParams, levelArgs);
     var dropped = args.drop(conCall.head().dataArgs().size());
-      var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses, primFactory());
+      var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses);
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped.toImmutableSeq());
   }
 
@@ -70,7 +68,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var levelSubst = buildSubst(def.levels, fnCall.sortArgs());
     var body = def.body;
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
-    var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue(), primFactory());
+    var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
     return volynskaya != null ? volynskaya.data() : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
@@ -99,11 +97,10 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   default @Nullable WithPos<Term> tryUnfoldClauses(
     P p, SeqLike<Arg<Term>> args,
     Substituter.@NotNull TermSubst subst, LevelSubst levelSubst,
-    @NotNull ImmutableSeq<Matching> clauses,
-    @NotNull PrimDef.PrimFactory primFactory
+    @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
-      var termSubst = PatMatcher.tryBuildSubstArgs(matchy.patterns(), args, primFactory);
+      var termSubst = PatMatcher.tryBuildSubstArgs(matchy.patterns(), args);
       if (termSubst != null) {
         subst.add(termSubst);
         var newBody = matchy.body().subst(subst, levelSubst).accept(this, p);
@@ -123,7 +120,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var fieldSubst = checkAndBuildSubst(core.telescope().view(), args);
       var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
       var dropped = args.drop(term.structArgs().size());
-        var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses, primFactory());
+        var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses);
       return mischa != null ? mischa.data() : new CallTerm.Access(nevv, field,
         term.sortArgs(), term.structArgs(), dropped);
     }
@@ -141,9 +138,6 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     @NotNull MutableSet<@NotNull Var> unfolded,
     @NotNull PrimDef.PrimFactory primFactory
   ) implements Unfolder<Unit> {
-    @Override public @NotNull PrimDef.PrimFactory primFactory() {
-      return primFactory;
-    }
     @Override public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit unit) {
       if (!unfolding.contains(fnCall.ref())) return fnCall;
       unfolded.add(fnCall.ref());

@@ -26,7 +26,6 @@ import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
-import org.aya.core.def.PrimDef;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,10 +47,9 @@ public record FileModuleLoader(
   @Override public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>>
   load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = resolveFile(path);
-    var primFactory = PrimDef.PrimFactory.create();
     try {
-      var program = AyaParsing.program(locator, reporter, sourcePath, primFactory);
-        return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder, primFactory).exports;
+      var program = AyaParsing.program(locator, reporter, sourcePath);
+        return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports;
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
       return null;
@@ -70,8 +68,7 @@ public record FileModuleLoader(
     @NotNull Reporter reporter,
     @NotNull CheckedRunnable<E> onResolved,
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
-    Trace.@Nullable Builder builder,
-    PrimDef.PrimFactory primFactory
+    Trace.@Nullable Builder builder
   ) throws E {
     var context = new EmptyContext(reporter).derive();
     var shallowResolver = new StmtShallowResolver(recurseLoader);
@@ -84,8 +81,8 @@ public record FileModuleLoader(
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var wellTyped = Buffer.<Def>create();
       for (var stmt : program) {
-        if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder,primFactory ));
-        else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder, primFactory));
+        if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder));
+        else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder));
         else if (stmt instanceof Remark remark) {
           var literate = remark.literate;
           if (literate != null) literate.tyck(new ExprTycker(delayedReporter, builder));

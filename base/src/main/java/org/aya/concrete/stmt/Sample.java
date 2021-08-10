@@ -19,7 +19,7 @@ public sealed interface Sample extends Stmt {
   @NotNull Stmt delegate();
 
   /** @return <code>null</code> if the delegate is a command (not a definition) */
-  @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull PrimDef.PrimFactory primFactory);
+  @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder);
 
   @Override default @NotNull SourcePos sourcePos() {
     return delegate().sourcePos();
@@ -36,11 +36,10 @@ public sealed interface Sample extends Stmt {
 
     @Override public @Nullable Def tyck(
       @NotNull Reporter reporter,
-      Trace.@Nullable Builder traceBuilder,
-      @NotNull PrimDef.PrimFactory primFactory
+      Trace.@Nullable Builder traceBuilder
     ) {
       if (delegate instanceof Decl decl) {
-        var stmtTycker = new StmtTycker(reporter, traceBuilder, primFactory);
+        var stmtTycker = new StmtTycker(reporter, traceBuilder);
         return decl.accept(stmtTycker, stmtTycker.newTycker());
       } else return null;
     }
@@ -57,10 +56,9 @@ public sealed interface Sample extends Stmt {
 
     @Override public @Nullable Def tyck(
       @NotNull Reporter reporter,
-      Trace.@Nullable Builder traceBuilder,
-      @NotNull PrimDef.PrimFactory primFactory
+      Trace.@Nullable Builder traceBuilder
     ) {
-      var stmtTycker = new StmtTycker(reporter, traceBuilder, primFactory);
+      var stmtTycker = new StmtTycker(reporter, traceBuilder);
       var def = delegate.accept(stmtTycker, new ExprTycker(this.reporter, stmtTycker.traceBuilder()));
       var problems = this.reporter.problems().toImmutableSeq();
       if (problems.isEmpty()) {

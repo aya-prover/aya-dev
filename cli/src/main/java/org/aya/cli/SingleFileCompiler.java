@@ -46,9 +46,8 @@ public record SingleFileCompiler(
   ) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
-    var primFactory = PrimDef.PrimFactory.create();
     try {
-      var program = AyaParsing.program(locator, reporter, sourceFile, primFactory);
+      var program = AyaParsing.program(locator, reporter, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, CliArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
@@ -61,7 +60,7 @@ public record SingleFileCompiler(
         defs -> {
           distill(sourceFile, distillInfo, defs, CliArgs.DistillStage.typed);
           onTycked.accept(program, defs);
-        }, builder, primFactory);
+        }, builder);
     } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);
       reporter.reportString("Internal error");
@@ -69,6 +68,8 @@ public record SingleFileCompiler(
     } catch (InterruptException e) {
       reporter.reportString(e.stage().name() + " interrupted due to error(s).");
       if (flags.interruptedTrace()) e.printStackTrace();
+    } finally {
+      PrimDef.PrimFactory.INSTANCE.clear();
     }
     if (reporter.isEmpty()) {
       reporter.reportString(flags.message().successNotion());

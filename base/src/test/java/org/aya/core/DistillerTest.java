@@ -71,14 +71,15 @@ public class DistillerTest {
         => new Path A (p left) (p right) { | at i => p i }
       """;
     assertFalse(declDoc(code).renderToTeX().isEmpty());
+    PrimDef.PrimFactory.INSTANCE.clear();
     assertFalse(declCDoc(code).renderToTeX().isEmpty());
   }
 
   private @NotNull Doc declDoc(@Language("TEXT") String text) {
-    return Doc.vcat(TyckDeclTest.successTyckDecls(text, PrimDef.PrimFactory.create()).map(Def::toDoc));
+    return Doc.vcat(TyckDeclTest.successTyckDecls(text).map(Def::toDoc));
   }
 
   private @NotNull Doc declCDoc(@Language("TEXT") String text) {
-    return Doc.vcat(TyckDeclTest.successDesugarDecls(text, PrimDef.PrimFactory.create()).map(Stmt::toDoc));
+    return Doc.vcat(TyckDeclTest.successDesugarDecls(text).map(Stmt::toDoc));
   }
 }

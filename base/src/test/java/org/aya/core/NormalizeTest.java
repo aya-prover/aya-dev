@@ -29,7 +29,7 @@ public class NormalizeTest {
       def xyr : Nat => tracy zero (suc zero)
       def kiva : Nat => tracy (suc zero) zero
       def overlap (a : Nat) : Nat => tracy a zero
-      def overlap2 (a : Nat) : Nat => tracy zero a""", PrimDef.PrimFactory.create());
+      def overlap2 (a : Nat) : Nat => tracy zero a""");
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(NormalizeMode.NF);
     assertTrue(normalizer.apply(2) instanceof CallTerm.Con conCall
       && Objects.equals(conCall.ref().name(), "suc"));
@@ -49,7 +49,7 @@ public class NormalizeTest {
       prim right
       prim arcoe
       def xyr : Nat => arcoe (\\ i => Nat) Nat::zero left
-      def kiva : Nat => arcoe (\\ i => Nat) (Nat::suc Nat::zero) right""", PrimDef.PrimFactory.create());
+      def kiva : Nat => arcoe (\\ i => Nat) (Nat::suc Nat::zero) right""");
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(NormalizeMode.NF);
     assertTrue(normalizer.apply(5) instanceof CallTerm.Con conCall
       && Objects.equals(conCall.ref().name(), "zero")
