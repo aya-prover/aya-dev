@@ -149,22 +149,18 @@ public final class PrimDef extends TopLevelDef {
     public @NotNull Option<PrimDef> factory(
       @NotNull String name
     ) {
-      if (have(name)) {
-        return Option.none();
-      }
+      assert !have(name);
       var rst = SUPPLIERS.getOption(name).map(
         (f) -> f.apply(this)
       );
       if (rst.isNotEmpty()) {
         defs.set(name, rst.get());
-        System.out.println("Set:" + name);
       }
 
       return rst;
     }
 
     public @NotNull Option<PrimDef> getOption(@NotNull String name) {
-      System.out.println("Get:" + name + "-" + (have(name)? "true" : "false") );
       return defs.getOption(name);
     }
 
@@ -188,7 +184,7 @@ public final class PrimDef extends TopLevelDef {
     }
 
     public void clear() {
-      System.out.println("Clear");defs.clear();
+      defs.clear();
     }
   }
 

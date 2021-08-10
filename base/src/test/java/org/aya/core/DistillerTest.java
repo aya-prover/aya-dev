@@ -71,8 +71,12 @@ public class DistillerTest {
         => new Path A (p left) (p right) { | at i => p i }
       """;
     assertFalse(declDoc(code).renderToTeX().isEmpty());
-    PrimDef.PrimFactory.INSTANCE.clear();
+    tearDown();
     assertFalse(declCDoc(code).renderToTeX().isEmpty());
+  }
+
+  @AfterEach public void tearDown() {
+    PrimDef.PrimFactory.INSTANCE.clear();
   }
 
   private @NotNull Doc declDoc(@Language("TEXT") String text) {

@@ -63,18 +63,18 @@ public final class AyaProducer {
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
     var id = ctx.ID();
     var name = id.getText();
-    var core = PrimDef.PrimFactory.INSTANCE.factory(name);
     var sourcePos = sourcePosOf(id);
+    if (PrimDef.PrimFactory.INSTANCE.have(name)) {
+      reporter.report(new RedefinitionError(RedefinitionError.Kind.Prim, name, sourcePos));
+      throw new ParsingInterruptedException();
+    }
+    var core = PrimDef.PrimFactory.INSTANCE.factory(name);
     if (core.isEmpty()) {
       reporter.report(new UnknownPrimError(sourcePos, name));
       throw new ParsingInterruptedException();
     }
     var type = ctx.type();
     var ref = core.get().ref();
-    if (ref.concrete != null) {
-      reporter.report(new RedefinitionError(RedefinitionError.Kind.Prim, name, sourcePos));
-      throw new ParsingInterruptedException();
-    }
     return new Decl.PrimDecl(
       sourcePos,
       sourcePosOf(ctx),
