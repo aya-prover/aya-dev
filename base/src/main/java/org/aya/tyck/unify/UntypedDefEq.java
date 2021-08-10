@@ -212,16 +212,20 @@ public record UntypedDefEq(
     @NotNull CallTerm lhs, @NotNull CallTerm rhs,
     @NotNull DefVar<? extends Def, ? extends Decl> lhsRef
   ) {
-    var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
-      substMap.set(pa._2.ref(), pa._1.term());
-    }
-    var retType = lhsRef.core.result().subst(substMap);
+    var retType = getType(lhs, lhsRef);
     // Lossy comparison
     var subst = levels(lhsRef, lhs.sortArgs(), rhs.sortArgs());
     if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhsRef), subst))) return retType;
     if (defeq.compareWHNF(lhs, rhs, retType)) return retType;
     else return null;
+  }
+
+  @NotNull private Term getType(@NotNull CallTerm lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
+    var substMap = MutableMap.<Var, Term>of();
+    for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
+      substMap.set(pa._2.ref(), pa._1.term());
+    }
+    return lhsRef.core.result().subst(substMap);
   }
 
   @Override public @Nullable Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
@@ -246,11 +250,7 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) return null;
-    var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
-      substMap.set(pa._2.ref(), pa._1.term());
-    }
-    var retType = lhs.ref().core.result().subst(substMap);
+    var retType = getType(lhs, lhs.ref());
     // Lossy comparison
     var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
     if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(CtorDef.conTele(lhs.ref()), subst)))
