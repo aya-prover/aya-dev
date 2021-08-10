@@ -1,0 +1,9 @@
+In file $FILE:1:5 ->
+
+  1 | prim left
+           ^--^
+  2 | prim right
+
+Error: Prim `left` depends on Prim `I`, but it is not declared.
+Parsing interrupted due to error(s).
+What are you doing?

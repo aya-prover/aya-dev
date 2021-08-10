@@ -26,6 +26,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.resolve.error.PrimDependencyError;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.concrete.stmt.*;
@@ -64,7 +65,11 @@ public final class AyaProducer {
     var id = ctx.ID();
     var name = id.getText();
     var sourcePos = sourcePosOf(id);
-    if (PrimDef.PrimFactory.INSTANCE.have(name)) {
+    var lack = PrimDef.PrimFactory.INSTANCE.checkDependency(name);
+    if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
+      reporter.report(new PrimDependencyError(name, lack.get(), sourcePos));
+      throw new ParsingInterruptedException();
+    } else if (PrimDef.PrimFactory.INSTANCE.have(name)) {
       reporter.report(new RedefinitionError(RedefinitionError.Kind.Prim, name, sourcePos));
       throw new ParsingInterruptedException();
     }
