@@ -52,11 +52,8 @@ public record CodeOptions(
     if (open != null && close != null) {
       open = open.toUpperCase(Locale.ROOT);
       close = close.toUpperCase(Locale.ROOT);
-      // if (open.contains("I")) showImplicitArgs = true;
       if (close.contains("I")) showImplicitArgs = false;
       if (open.contains("L")) showLevels = true;
-      // if (close.contains("L")) showLevels = false;
-      // if (open.contains("P")) showImplicitPats = true;
       if (close.contains("P")) showImplicitPats = false;
     }
     var expr = producer.visitExpr(AyaParsing.parser(matcher.group(6)).expr());
