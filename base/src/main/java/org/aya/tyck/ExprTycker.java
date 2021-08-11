@@ -566,7 +566,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Override public Result catchUnhandled(@NotNull Expr expr, Term term) {
-    return new Result(ErrorTerm.unexpected(expr), term);
+    return new Result(ErrorTerm.unexpected(expr),
+      new ErrorTerm(term != null ? term.freezeHoles() : $ -> Doc.symbol("?"), false));
   }
 
   public static class TyckerException extends InternalException {
