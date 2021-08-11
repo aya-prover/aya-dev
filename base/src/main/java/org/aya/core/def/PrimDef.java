@@ -17,6 +17,7 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
 import org.aya.util.Constants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -122,8 +123,7 @@ public final class PrimDef extends TopLevelDef {
           var paramATy = new FormTerm.Pi(paramIToATy, result);
           var aRef = new RefTerm(paramA, paramATy);
           var left = INSTANCE.getOrCreate(LEFT);
-          var baseAtLeft = new ElimTerm.App(aRef, Arg.explicit(
-            new CallTerm.Prim(left.ref, ImmutableSeq.of(), ImmutableSeq.empty())));
+          var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.of(), ImmutableSeq.empty()), true));
           return new PrimDef(
             ImmutableSeq.of(
               new Term.Param(paramA, paramATy, true),
@@ -131,7 +131,7 @@ public final class PrimDef extends TopLevelDef {
               new Term.Param(paramI, intervalCallSupplier.get(), true)
             ),
             ImmutableSeq.of(homotopy, universe),
-            new ElimTerm.App(aRef, Arg.explicit(new RefTerm(paramI, intervalCallSupplier.get()))),
+            new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, intervalCallSupplier.get()), true)),
             PrimFactory::arcoe, "arcoe");
         }),
         Tuple.of(INVOL, () -> {
@@ -209,7 +209,6 @@ public final class PrimDef extends TopLevelDef {
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
 
   /**
-   *
    */
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels,

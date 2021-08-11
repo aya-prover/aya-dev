@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
@@ -50,7 +51,7 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
     var ix = term.ix();
     if (!(tup instanceof IntroTerm.Tuple t)) return tup == term.of() ? term : new ElimTerm.Proj(tup, ix);
     // should not fail due to tycking
-    assert ix <= t.items().size() && ix > 0 : term.toDoc().debugRender();
+    assert ix <= t.items().size() && ix > 0 : term.toDoc(DistillerOptions.DEBUG).debugRender();
     return t.items().get(ix - 1).accept(this, mode);
   }
 }

@@ -6,6 +6,8 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreDef;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.sort.Sort;
@@ -13,7 +15,6 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,8 +52,8 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
   @Override @NotNull ImmutableSeq<Term.Param> telescope();
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
-  @Override default @NotNull Doc toDoc() {
-    return accept(CoreDistiller.INSTANCE, Unit.unit());
+  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return accept(new CoreDistiller(options), Unit.unit());
   }
 
   /**
@@ -76,14 +77,14 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
     @NotNull ImmutableSeq<Sort.@NotNull LvlVar> sortParam,
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
-  ) implements Docile {
+  ) implements AyaDocile {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
       var subst = new Substituter.TermSubst(param.first().ref(), term);
       return new Signature(sortParam, substParams(param, subst), result.subst(subst));
     }
 
-    @Override public @NotNull Doc toDoc() {
-      return Doc.sep(Doc.sep(param.view().map(Term.Param::toDoc)), Doc.symbol("->"), result.toDoc());
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      return Doc.sep(Doc.sep(param.view().map(p -> p.toDoc(options))), Doc.symbol("->"), result.toDoc(options));
     }
 
     @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {

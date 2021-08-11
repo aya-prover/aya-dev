@@ -25,7 +25,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       try {
         return desugarUniv(expr, univ);
       } catch (DesugarInterruption e) {
-        return new Expr.ErrorExpr(univ.sourcePos(), univ.toDoc());
+        return new Expr.ErrorExpr(univ.sourcePos(), univ);
       }
     }
     return StmtFixpoint.super.visitApp(expr, unit);
@@ -35,7 +35,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     try {
       return desugarUniv(new Expr.AppExpr(expr.sourcePos(), expr, ImmutableSeq.empty()), expr);
     } catch (DesugarInterruption e) {
-      return new Expr.ErrorExpr(expr.sourcePos(), expr.toDoc());
+      return new Expr.ErrorExpr(expr.sourcePos(), expr);
     }
   }
 

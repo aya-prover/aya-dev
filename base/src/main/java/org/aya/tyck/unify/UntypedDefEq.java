@@ -140,19 +140,19 @@ public record UntypedDefEq(
     var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
     if (scopeCheck.isNotEmpty()) {
       defeq.reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
-      return new ErrorTerm(solved.toDoc());
+      return new ErrorTerm(solved);
     }
     var success = meta.solve(lhs.ref(), solved);
     if (!success) {
       defeq.reporter.report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
-      return new ErrorTerm(solved.toDoc());
+      return new ErrorTerm(solved);
     }
     defeq.tracing(builder -> builder.append(new Trace.LabelT(defeq().pos, "Hole solved!")));
     return meta.result;
   }
 
   @Override public @NotNull Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {
-    return ErrorTerm.typeOf(term.toDoc());
+    return ErrorTerm.typeOf(term);
   }
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {
@@ -205,16 +205,27 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref()) return null;
-    var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
-      substMap.set(pa._2.ref(), pa._1.term());
-    }
-    var retType = lhs.ref().core.result().subst(substMap);
+    return visitCall(lhs, rhs, lhs.ref());
+  }
+
+  @Nullable private Term visitCall(
+    @NotNull CallTerm lhs, @NotNull CallTerm rhs,
+    @NotNull DefVar<? extends Def, ? extends Decl> lhsRef
+  ) {
+    var retType = getType(lhs, lhsRef);
     // Lossy comparison
-    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return retType;
+    var subst = levels(lhsRef, lhs.sortArgs(), rhs.sortArgs());
+    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhsRef), subst))) return retType;
     if (defeq.compareWHNF(lhs, rhs, retType)) return retType;
     else return null;
+  }
+
+  @NotNull private Term getType(@NotNull CallTerm lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
+    var substMap = MutableMap.<Var, Term>of();
+    for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
+      substMap.set(pa._2.ref(), pa._1.term());
+    }
+    return lhsRef.core.result().subst(substMap);
   }
 
   @Override public @Nullable Term visitDataCall(@NotNull CallTerm.Data lhs, @NotNull Term preRhs) {
@@ -234,25 +245,12 @@ public record UntypedDefEq(
 
   @Override public @Nullable Term visitPrimCall(CallTerm.@NotNull Prim lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof CallTerm.Prim rhs) || lhs.ref() != rhs.ref()) return null;
-    var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
-      substMap.set(pa._2.ref(), pa._1.term());
-    }
-    var retType = lhs.ref().core.result().subst(substMap);
-    // Lossy comparison
-    var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
-    if (defeq.visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst))) return retType;
-    if (defeq.compareWHNF(lhs, rhs, retType)) return retType;
-    else return null;
+    return visitCall(lhs, rhs, lhs.ref());
   }
 
   @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) return null;
-    var substMap = MutableMap.<Var, Term>of();
-    for (var pa : lhs.args().view().zip(lhs.ref().core.telescope().view())) {
-      substMap.set(pa._2.ref(), pa._1.term());
-    }
-    var retType = lhs.ref().core.result().subst(substMap);
+    var retType = getType(lhs, lhs.ref());
     // Lossy comparison
     var subst = levels(lhs.head().dataRef(), lhs.sortArgs(), rhs.sortArgs());
     if (defeq.visitArgs(lhs.conArgs(), rhs.conArgs(), Term.Param.subst(CtorDef.conTele(lhs.ref()), subst)))

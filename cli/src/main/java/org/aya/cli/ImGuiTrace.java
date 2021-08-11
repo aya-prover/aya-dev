@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.tyck.trace.Trace;
 import org.ice1000.jimgui.*;
@@ -34,9 +35,11 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
 
   private final ImmutableSeq<Integer> sourceCode;
   private @NotNull SourcePos pos;
+  private final @NotNull DistillerOptions options;
 
-  public ImGuiTrace(@NotNull String sourceCode) {
+  public ImGuiTrace(@NotNull String sourceCode, @NotNull DistillerOptions options) {
     this.sourceCode = sourceCode.codePoints().boxed().collect(ImmutableSeq.factory());
+    this.options = options;
     pos = SourcePos.NONE;
   }
 
@@ -95,8 +98,8 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
 
   @Override public Unit visitExpr(Trace.@NotNull ExprT t, JImGui imGui) {
     var term = t.term();
-    var s = new StringBuilder().append(t.expr().toDoc().debugRender());
-    if (term != null) s.append(" : ").append(term.toDoc().debugRender());
+    var s = new StringBuilder().append(t.expr().toDoc(options).debugRender());
+    if (term != null) s.append(" : ").append(term.toDoc(options).debugRender());
     var color = term == null ? Color.CYAN : Color.YELLOW;
     visitSub(s.toString(), color, imGui, t.children(), () -> pos = t.expr().sourcePos(), Objects.hashCode(t));
     return Unit.unit();
@@ -121,9 +124,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   }
 
   @Override public Unit visitUnify(Trace.@NotNull UnifyT t, JImGui imGui) {
-    var s = new StringBuilder().append(t.lhs().toDoc().debugRender())
-      .append(" = ").append(t.rhs().toDoc().debugRender());
-    if (t.type() != null) s.append(" : ").append(t.type().toDoc().debugRender());
+    var s = new StringBuilder().append(t.lhs().toDoc(options).debugRender())
+      .append(" = ").append(t.rhs().toDoc(options).debugRender());
+    if (t.type() != null) s.append(" : ").append(t.type().toDoc(options).debugRender());
     visitSub(s.toString(), Color.WHITE, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
@@ -136,9 +139,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   @Override public Unit visitTyck(Trace.@NotNull TyckT t, JImGui imGui) {
     var term = t.term();
     var type = t.type();
-    var s = term.toDoc().debugRender() +
+    var s = term.toDoc(options).debugRender() +
       " : " +
-      type.toDoc().debugRender();
+      type.toDoc(options).debugRender();
     imGui.text("-".repeat(s.length() + 4));
     visitSub(s, Color.YELLOW, imGui, Buffer.of(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
@@ -152,9 +155,9 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   @Override public Unit visitPat(Trace.@NotNull PatT t, JImGui imGui) {
     var type = t.term();
     var pat = t.pat();
-    var s = pat.toDoc().debugRender() +
+    var s = pat.toDoc(options).debugRender() +
       " : " +
-      type.toDoc().debugRender();
+      type.toDoc(options).debugRender();
     visitSub(s, Color.PINK, imGui, t.children(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }

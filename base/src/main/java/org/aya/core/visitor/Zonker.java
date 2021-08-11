@@ -47,7 +47,7 @@ public final class Zonker implements TermFixpoint<Unit> {
     var sol = term.ref().core();
     if (sol.body == null) {
       tycker.reporter.report(new UnsolvedMeta(sol.sourcePos));
-      return new ErrorTerm(term.toDoc());
+      return new ErrorTerm(term);
     }
     return sol.body.accept(this, Unit.unit());
   }
@@ -72,7 +72,7 @@ public final class Zonker implements TermFixpoint<Unit> {
     var sourcePos = sort.unsolvedPos();
     if (sourcePos != null) {
       reportLevelSolverError(sourcePos);
-      return new ErrorTerm(term.toDoc());
+      return new ErrorTerm(term);
     }
     if (sort == term.sort()) return term;
     return new FormTerm.Univ(sort);

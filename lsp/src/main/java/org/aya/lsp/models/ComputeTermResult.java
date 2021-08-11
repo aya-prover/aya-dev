@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.lsp.models;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.WithPos;
 import org.aya.core.term.Term;
 import org.aya.lsp.utils.LspRange;
@@ -21,7 +22,7 @@ public record ComputeTermResult(@NotNull String uri, @NotNull String computed, @
   }
 
   public static ComputeTermResult good(@NotNull Params params, @NotNull WithPos<Term> type) {
-    return new ComputeTermResult(params.uri, type.data().toDoc().debugRender(),
+    return new ComputeTermResult(params.uri, type.data().toDoc(DistillerOptions.DEFAULT).debugRender(),
       LspRange.toRange(type.sourcePos()));
   }
 }

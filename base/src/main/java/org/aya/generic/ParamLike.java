@@ -2,10 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.generic;
 
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,20 +15,20 @@ import org.jetbrains.annotations.Nullable;
  *               {@link org.aya.core.term.Term} or {@link org.aya.concrete.Expr}.
  * @author ice1000
  */
-public interface ParamLike<Expr extends Docile> extends Docile {
+public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
   boolean explicit();
   @NotNull Var ref();
   @Nullable Expr type();
-  @Override default @NotNull Doc toDoc() {
-    return toDoc(nameDoc());
+  @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return toDoc(nameDoc(), options);
   }
   default @NotNull Doc nameDoc() {
     return CoreDistiller.linkDef(ref());
   }
-  default @NotNull Doc toDoc(@NotNull Doc names) {
+  default @NotNull Doc toDoc(@NotNull Doc names, @NotNull DistillerOptions options) {
     var explicit = explicit();
     var type = type();
-    Doc @NotNull [] docs = new Doc[]{Doc.plain(explicit ? "(" : "{"), names, type == null ? Doc.empty() : Doc.cat(Doc.plain(" : "), type.toDoc()), Doc.plain(explicit ? ")" : "}")};
-    return Doc.cat(docs);
+    return Doc.wrap(explicit ? "(" : "{", explicit ? ")" : "}",
+      Doc.cat(names, type == null ? Doc.empty() : Doc.cat(Doc.symbol(" : "), type.toDoc(options))));
   }
 }

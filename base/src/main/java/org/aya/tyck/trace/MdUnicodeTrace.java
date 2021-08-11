@@ -4,6 +4,7 @@ package org.aya.tyck.trace;
 
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -11,15 +12,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   public final int indent;
+  public final @NotNull DistillerOptions options;
   public static final @NotNull Doc plus = Doc.symbol("+");
   public static final @NotNull Doc colon = Doc.symbol(":");
 
-  public MdUnicodeTrace(int indent) {
+  public MdUnicodeTrace(int indent, @NotNull DistillerOptions options) {
     this.indent = indent;
+    this.options = options;
   }
 
   public MdUnicodeTrace() {
-    this(2);
+    this(2, DistillerOptions.DEFAULT);
   }
 
   @Override public Doc visitDecl(Trace.@NotNull DeclT t, Unit unit) {
@@ -32,19 +35,23 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   }
 
   @Override public Doc visitExpr(Trace.@NotNull ExprT t, Unit unit) {
-    var buf = Buffer.of(plus, Doc.symbol("\u22A2"), Doc.styled(Style.code(), t.expr().toDoc()));
+    var buf = Buffer.of(plus, Doc.symbol("\u22A2"), Doc.styled(Style.code(), t.expr().toDoc(options)));
     if (t.term() != null) {
       buf.append(colon);
-      buf.append(t.term().toDoc());
+      buf.append(t.term().toDoc(options));
     }
     return Doc.vcat(Doc.sep(buf), indentedChildren(t.children()));
   }
 
   @Override public Doc visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
-    var buf = Buffer.of(plus, Doc.symbol("\u22A2"), t.lhs().toDoc(), Doc.symbol("\u2261"), t.rhs().toDoc());
+    var buf = Buffer.of(plus,
+      Doc.symbol("\u22A2"),
+      t.lhs().toDoc(options),
+      Doc.symbol("\u2261"),
+      t.rhs().toDoc(options));
     if (t.type() != null) {
       buf.append(colon);
-      buf.append(t.type().toDoc());
+      buf.append(t.type().toDoc(options));
     }
     return Doc.vcat(Doc.sep(buf), indentedChildren(t.children()));
   }
@@ -52,14 +59,14 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   @Override public Doc visitTyck(Trace.@NotNull TyckT t, Unit unit) {
     assert t.children().isEmpty();
     return Doc.sep(plus, Doc.plain("result"), Doc.symbol("\u22A2"),
-      Doc.styled(Style.code(), t.term().toDoc()), Doc.symbol("\u2191"),
-      t.type().toDoc());
+      Doc.styled(Style.code(), t.term().toDoc(options)), Doc.symbol("\u2191"),
+      t.type().toDoc(options));
   }
 
   @Override public Doc visitPat(Trace.@NotNull PatT t, Unit unit) {
     return Doc.vcat(Doc.sep(plus, Doc.plain("pat"), Doc.symbol("\u22A2"),
-        Doc.styled(Style.code(), t.pat().toDoc()), colon,
-        t.term().toDoc()),
+        Doc.styled(Style.code(), t.pat().toDoc(options)), colon,
+        t.term().toDoc(options)),
       indentedChildren(t.children()));
   }
 

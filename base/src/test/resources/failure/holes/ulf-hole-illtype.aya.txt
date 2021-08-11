@@ -5,8 +5,8 @@ In file $FILE:6:29 ->
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                    ^^
 
-Error: Expected type: Set Neg.u
-       Normalized: Set Neg.u
+Error: Expected type: Set
+       Normalized: Set
        Actual type: F {?_?}
        Normalized: F {?_?}
        They don't match, sorry
@@ -25,8 +25,8 @@ In file $FILE:6:44 ->
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                                   ^--^
 
-Error: Expected type: F <{?_?}>
-       Normalized: F <{?_?}>
+Error: Expected type: F <{??}>
+       Normalized: F <{??}>
        Actual type: Nat
        Normalized: Nat
        They don't match, sorry

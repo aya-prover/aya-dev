@@ -3,11 +3,12 @@
 package org.aya.generic;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @see org.aya.concrete.Expr.UnivExpr
  * @see org.aya.core.sort.Sort
  */
-public sealed interface Level<V extends Var> extends Docile {
+public sealed interface Level<V extends Var> extends AyaDocile {
   @NotNull Level<V> lift(int n);
 
   /**
@@ -30,7 +31,7 @@ public sealed interface Level<V extends Var> extends Docile {
       return new Polymorphic(lift + n);
     }
 
-    @Override public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return levelDoc(lift, "lp");
     }
   }
@@ -40,8 +41,8 @@ public sealed interface Level<V extends Var> extends Docile {
       return new Maximum(among.map(l -> l.lift(n)));
     }
 
-    @Override public @NotNull Doc toDoc() {
-      return Doc.parened(Doc.sep(among.map(Docile::toDoc)
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      return Doc.parened(Doc.sep(among.map(l -> l.toDoc(options))
         .prepended(Doc.styled(CoreDistiller.KEYWORD, "max"))));
     }
   }
@@ -55,7 +56,7 @@ public sealed interface Level<V extends Var> extends Docile {
       return this;
     }
 
-    @Override public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.plain("w");
     }
   }
@@ -65,7 +66,7 @@ public sealed interface Level<V extends Var> extends Docile {
       return new Constant<>(value + n);
     }
 
-    @Override public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.plain(String.valueOf(value));
     }
   }
@@ -79,7 +80,7 @@ public sealed interface Level<V extends Var> extends Docile {
       return new Reference<>(ref, lift + n);
     }
 
-    @Override public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return levelDoc(lift, ref.name());
     }
   }

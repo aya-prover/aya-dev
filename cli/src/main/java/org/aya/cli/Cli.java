@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
 import org.ice1000.jimgui.util.JniLoader;
@@ -34,7 +35,7 @@ public class Cli extends CliArgs implements Callable<Integer> {
     if (traceBuilder != null) switch (traceFormat) {
       case imgui -> {
         JniLoader.load();
-        new ImGuiTrace(sourceCode).mainLoop(traceBuilder.root());
+        new ImGuiTrace(sourceCode, DistillerOptions.DEFAULT).mainLoop(traceBuilder.root());
       }
       case markdown -> System.err.println(new MdUnicodeTrace().docify(traceBuilder).debugRender());
     }

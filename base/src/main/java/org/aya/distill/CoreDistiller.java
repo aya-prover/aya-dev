@@ -7,6 +7,8 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -18,7 +20,6 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +34,10 @@ import java.util.function.BiFunction;
  * @author ice1000, kiva
  * @see ConcreteDistiller
  */
-public final class CoreDistiller implements
+public record CoreDistiller(@NotNull DistillerOptions options) implements
   Pat.Visitor<Boolean, Doc>,
   Def.Visitor<Unit, @NotNull Doc>,
   Term.Visitor<Boolean, Doc> {
-  public static final @NotNull CoreDistiller INSTANCE = new CoreDistiller();
   public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
   public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
   public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
@@ -45,9 +45,6 @@ public final class CoreDistiller implements
   public static final @NotNull Style CON_CALL = Style.preset("aya:ConCall");
   public static final @NotNull Style FIELD_CALL = Style.preset("aya:FieldCall");
   public static final @NotNull Style GENERALIZED = Style.preset("aya:Generalized");
-
-  private CoreDistiller() {
-  }
 
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
     return varDoc(term.var());
@@ -60,9 +57,9 @@ public final class CoreDistiller implements
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("\\")),
-      term.param().toDoc(),
+      term.param().toDoc(options),
       Doc.symbol("=>"),
-      term.body().toDoc()
+      term.body().accept(this, false)
     );
     return nestedCall ? Doc.parened(doc) : doc;
   }
@@ -70,9 +67,9 @@ public final class CoreDistiller implements
   @Override public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      term.param().toDoc(),
+      term.param().toDoc(options),
       Doc.symbol("->"),
-      term.body().toDoc()
+      term.body().accept(this, false)
     );
     return nestedCall ? Doc.parened(doc) : doc;
   }
@@ -82,7 +79,7 @@ public final class CoreDistiller implements
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
       visitTele(term.params().view().dropLast(1)),
       Doc.symbol("**"),
-      term.params().last().toDoc()
+      term.params().last().toDoc(options)
     );
     return nestedCall ? Doc.parened(doc) : doc;
   }
@@ -91,19 +88,20 @@ public final class CoreDistiller implements
     var sort = term.sort();
     var onlyH = sort.onlyH();
     if (onlyH instanceof Level.Constant<Sort.LvlVar> t) {
-      if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel());
-      if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel());
+      if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel(), options);
+      if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel(), options);
     } else if (onlyH instanceof Level.Infinity<Sort.LvlVar> t)
-      return univDoc(nestedCall, "ooType", sort.uLevel());
+      return univDoc(nestedCall, "ooType", sort.uLevel(), options);
     return visitCalls(Doc.styled(KEYWORD, "Type"),
-      Seq.of(sort.hLevel(), sort.uLevel()).view().map(Arg::explicit),
-      (nest, t) -> t.toDoc(), nestedCall);
+      Seq.of(sort.hLevel(), sort.uLevel()).view().map(t -> new Arg<>(t, true)),
+      (nest, t) -> t.toDoc(options), nestedCall);
   }
 
-  public static @NotNull Doc univDoc(Boolean nestedCall, String head, @NotNull Docile lvl) {
-    return visitCalls(Doc.styled(KEYWORD, head),
-      Seq.of(Arg.explicit(lvl)),
-      (nc, l) -> l.toDoc(), nestedCall);
+  public static @NotNull Doc univDoc(boolean nestedCall, String head, @NotNull AyaDocile lvl, @NotNull DistillerOptions options) {
+    var hd = Doc.styled(KEYWORD, head);
+    if (!options.showLevels()) return hd;
+    return visitCalls(hd, Seq.of(new Arg<>(lvl, true)),
+      (nc, l) -> l.toDoc(options), nestedCall);
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
@@ -132,29 +130,29 @@ public final class CoreDistiller implements
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
     return Doc.parened(Doc.commaList(term.items().view()
-      .map(Term::toDoc)));
+      .map(t -> t.accept(this, false))));
   }
 
   @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Boolean aBoolean) {
-    return Doc.cat(
+    return Doc.sep(
       Doc.styled(KEYWORD, "new"),
-      Doc.symbol(" { "),
+      Doc.symbol("{"),
       Doc.sep(newTerm.params().view()
         .map((k, v) -> Doc.sep(Doc.symbol("|"),
           linkRef(k, FIELD_CALL),
-          Doc.symbol("=>"), v.toDoc()))
+          Doc.symbol("=>"), v.accept(this, false)))
         .toImmutableSeq()),
-      Doc.symbol(" }")
+      Doc.symbol("}")
     );
   }
 
   @Override public Doc visitProj(@NotNull ElimTerm.Proj term, Boolean nestedCall) {
-    return Doc.cat(term.of().toDoc(), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+    return Doc.cat(term.of().accept(this, false), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
   }
 
   @Override public Doc visitAccess(CallTerm.@NotNull Access term, Boolean nestedCall) {
     var ref = term.ref();
-    var doc = Doc.cat(term.of().toDoc(), Doc.symbol("."),
+    var doc = Doc.cat(term.of().accept(this, false), Doc.symbol("."),
       linkRef(ref, FIELD_CALL));
     return visitCalls(doc, term.fieldArgs(), (n, t) -> t.accept(this, n), nestedCall);
   }
@@ -162,17 +160,18 @@ public final class CoreDistiller implements
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
     var name = term.ref();
     var sol = name.core().body;
-    var inner = sol == null ? varDoc(name) : sol.toDoc();
+    var inner = sol == null ? varDoc(name) : sol.accept(this, false);
     return Doc.wrap("{?", "?}",
       visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), nestedCall));
   }
 
   @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {
-    return !term.isReallyError() ? term.description() : Doc.angled(term.description());
+    var doc = term.description().toDoc(options);
+    return !term.isReallyError() ? doc : Doc.angled(doc);
   }
 
   private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
-    return visitCalls(fn.toDoc(), Seq.of(arg),
+    return visitCalls(fn.accept(this, false), Seq.of(arg),
       (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
@@ -185,15 +184,13 @@ public final class CoreDistiller implements
     return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
-  public static <T extends Docile> @NotNull Doc visitCalls(
+  public static <T extends AyaDocile> @NotNull Doc visitCalls(
     @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
     @NotNull BiFunction<Boolean, T, Doc> formatter, boolean nestedCall
   ) {
     if (args.isEmpty()) return fn;
-    var call = Doc.cat(
-      fn,
-      Doc.ONE_WS,
-      Doc.sep(args.view().map(arg -> {
+    var call = Doc.sep(
+      fn, Doc.sep(args.view().map(arg -> {
         // Do not use `arg.term().toDoc()` because we want to
         // wrap args in parens if we are inside a nested call
         // such as `suc (suc (suc n))`
@@ -206,13 +203,13 @@ public final class CoreDistiller implements
   }
 
   private Doc visitTele(@NotNull SeqLike<Term.Param> telescope) {
-    return Doc.sep(telescope.view().map(Term.Param::toDoc));
+    return Doc.sep(telescope.view().map(param -> param.toDoc(options)));
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
     boolean ex = tuple.explicit();
     var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
-      Doc.commaList(tuple.pats().view().map(Pat::toDoc)));
+      Doc.commaList(tuple.pats().view().map(pat -> pat.accept(this, false))));
     return tuple.as() == null ? tup
       : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
   }
@@ -255,9 +252,9 @@ public final class CoreDistiller implements
       linkDef(def.ref(), FN_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().toDoc());
+      def.result().accept(this, false));
     return def.body.fold(
-      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.toDoc()),
+      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.accept(this, false)),
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
   }
 
@@ -268,13 +265,13 @@ public final class CoreDistiller implements
     var names = Buffer.of(last.nameDoc());
     for (var param : telescope.view().drop(1)) {
       if (!Objects.equals(param.type(), last.type())) {
-        buf.append(last.toDoc(Doc.sep(names)));
+        buf.append(last.toDoc(Doc.sep(names), options));
         names.clear();
         last = param;
       }
       names.append(param.nameDoc());
     }
-    buf.append(last.toDoc(Doc.sep(names)));
+    buf.append(last.toDoc(Doc.sep(names), options));
     return Doc.sep(buf);
   }
 
@@ -288,7 +285,7 @@ public final class CoreDistiller implements
 
   private Doc visitClauses(@NotNull ImmutableSeq<Matching> clauses) {
     return Doc.vcat(clauses.view()
-      .map(Matching::toDoc)
+      .map(matching -> matching.toDoc(options))
       .map(doc -> Doc.cat(Doc.symbol("|"), doc)));
   }
 
@@ -297,7 +294,7 @@ public final class CoreDistiller implements
       linkDef(def.ref(), DATA_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().toDoc());
+      def.result().accept(this, false));
     return Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, Doc.vcat(
       def.body.view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
@@ -320,7 +317,7 @@ public final class CoreDistiller implements
       visitTele(ctor.selfTele));
     Doc line1;
     if (ctor.pats.isNotEmpty()) {
-      var pats = Doc.commaList(ctor.pats.view().map(Pat::toDoc));
+      var pats = Doc.commaList(ctor.pats.view().map(pat -> pat.accept(this, false)));
       line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
     } else line1 = Doc.sep(Doc.symbol("|"), doc);
     return visitConditions(line1, ctor.clauses);
@@ -335,7 +332,7 @@ public final class CoreDistiller implements
       linkDef(def.ref(), STRUCT_CALL),
       visitTele(def.telescope()),
       Doc.plain(":"),
-      def.result().toDoc()
+      def.result().accept(this, false)
     ), Doc.nest(2, Doc.vcat(
       def.fields.view().map(field -> field.accept(this, Unit.unit())))));
   }

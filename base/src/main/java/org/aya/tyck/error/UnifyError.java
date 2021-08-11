@@ -3,6 +3,7 @@
 package org.aya.tyck.error;
 
 import kala.tuple.Unit;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
 import org.aya.api.error.Problem;
 import org.aya.api.util.NormalizeMode;
@@ -19,10 +20,10 @@ public record UnifyError(
 ) implements ExprProblem, Problem {
   @Override public @NotNull Doc describe() {
     return Doc.vcat(
-      Doc.cat(Doc.plain("Expected type: "), expected.accept(Zonker.NO_REPORT, Unit.unit()).toDoc()),
-      Doc.cat(Doc.plain("Normalized: "), expected.normalize(NormalizeMode.NF).toDoc()),
-      Doc.cat(Doc.plain("Actual type: "), actual.accept(Zonker.NO_REPORT, Unit.unit()).toDoc()),
-      Doc.cat(Doc.plain("Normalized: "), actual.normalize(NormalizeMode.NF).toDoc()),
+      Doc.sep(Doc.plain("Expected type:"), expected.accept(Zonker.NO_REPORT, Unit.unit()).toDoc(DistillerOptions.DEFAULT)),
+      Doc.sep(Doc.plain("Normalized:"), expected.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)),
+      Doc.sep(Doc.plain("Actual type:"), actual.accept(Zonker.NO_REPORT, Unit.unit()).toDoc(DistillerOptions.DEFAULT)),
+      Doc.sep(Doc.plain("Normalized:"), actual.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)),
       Doc.english("They don't match, sorry")
     );
   }

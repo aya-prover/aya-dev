@@ -3,13 +3,14 @@
 package org.aya.core.sort;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +96,7 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
    */
   public static record CoreLevel(
     @NotNull ImmutableSeq<Level<LvlVar>> levels
-  ) implements Docile {
+  ) implements AyaDocile {
     public CoreLevel(@NotNull Level<LvlVar> level) {
       this(ImmutableSeq.of(level));
     }
@@ -109,10 +110,10 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
       return new CoreLevel(levels.map(l -> l.lift(n)));
     }
 
-    @Override public @NotNull Doc toDoc() {
-      return levels.sizeEquals(1) ? levels.first().toDoc() : Doc.sep(
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      return levels.sizeEquals(1) ? levels.first().toDoc(options) : Doc.sep(
         Doc.styled(CoreDistiller.KEYWORD, "lmax"),
-        Doc.sep(levels.map(Docile::toDoc))
+        Doc.sep(levels.map(l -> l.toDoc(options)))
       );
     }
   }

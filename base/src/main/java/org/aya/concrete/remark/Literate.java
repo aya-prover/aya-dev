@@ -18,6 +18,7 @@ import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.ExprTycker;
 import org.jetbrains.annotations.Contract;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ice1000
  */
-public sealed interface Literate {
+public sealed interface Literate extends Docile {
   default <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
   }
   default <P> void visit(@NotNull ExprConsumer<P> consumer, P p) {
@@ -36,7 +37,6 @@ public sealed interface Literate {
   }
 
   void resolve(@NotNull BinOpSet opSet, @NotNull Context context);
-  @NotNull Doc toDoc();
 
   record Raw(@NotNull Doc toDoc) implements Literate {
     @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
@@ -110,13 +110,13 @@ public sealed interface Literate {
 
     private @NotNull Doc normalize(@NotNull Term term) {
       var mode = options.mode();
-      return (mode == null ? term : term.normalize(mode)).toDoc();
+      return (mode == null ? term : term.normalize(mode)).toDoc(options.options());
     }
 
     @Override public @NotNull Doc toDoc() {
       if (tyckResult == null) return Doc.plain("Error");
       return Doc.styled(Style.code(), switch (options.showCode()) {
-        case Concrete -> expr.toDoc();
+        case Concrete -> expr.toDoc(options.options());
         case Core -> normalize(tyckResult.wellTyped());
         case Type -> normalize(tyckResult.type());
       });

@@ -4,13 +4,14 @@ package org.aya.tyck.pat;
 
 import kala.collection.mutable.Buffer;
 import kala.value.Ref;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Pattern;
 import org.aya.generic.GenericBuilder;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,7 +21,7 @@ public record PatTree(
   @NotNull String s,
   boolean explicit,
   @NotNull Buffer<PatTree> children
-) implements GenericBuilder.Tree<PatTree>, Docile {
+) implements GenericBuilder.Tree<PatTree>, AyaDocile {
   public PatTree(@NotNull String s, boolean explicit) {
     this(s, explicit, Buffer.create());
   }
@@ -30,8 +31,8 @@ public record PatTree(
     return new Pattern.Ctor(SourcePos.NONE, explicit, new WithPos<>(SourcePos.NONE, s), children.view().map(PatTree::toPatternForPretty).toImmutableSeq(), null, new Ref<>(null));
   }
 
-  @Override public @NotNull Doc toDoc() {
-    return toPatternForPretty().toDoc();
+  @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return toPatternForPretty().toDoc(options);
   }
 
   public final static class Builder extends GenericBuilder<PatTree> {

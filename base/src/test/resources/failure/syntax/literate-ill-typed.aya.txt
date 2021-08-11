@@ -6,7 +6,7 @@ In file $FILE:2:0 ->
 
 Error: Expected type: Nat
        Normalized: Nat
-       Actual type: Set Nat.u
-       Normalized: Set Nat.u
+       Actual type: Set
+       Normalized: Set
        They don't match, sorry
 What are you doing?

@@ -5,6 +5,7 @@ package org.aya.core.pat;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
@@ -48,7 +49,7 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
   }
 
   private <T> T reportError(@NotNull Pat lhs, @NotNull Pat pat) {
-    var doc = Doc.sep(lhs.toTerm().toDoc(), Doc.plain("and"), pat.toTerm().toDoc());
+    var doc = Doc.sep(lhs.toTerm().toDoc(DistillerOptions.DEBUG), Doc.plain("and"), pat.toTerm().toDoc(DistillerOptions.DEBUG));
     throw new IllegalArgumentException(doc.debugRender() + " are patterns of different types!");
   }
 

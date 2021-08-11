@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.term;
 
+import org.aya.api.distill.AyaDocile;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -13,9 +14,17 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @see CoreDistiller#visitError(ErrorTerm, Boolean)
  */
-public record ErrorTerm(@NotNull Doc description, boolean isReallyError) implements Term {
-  public ErrorTerm(@NotNull Doc description) {
+public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) implements Term {
+  public ErrorTerm(@NotNull Term description) {
+    this((AyaDocile) description.freezeHoles());
+  }
+
+  public ErrorTerm(@NotNull AyaDocile description) {
     this(description, true);
+  }
+
+  public ErrorTerm(@NotNull Doc description, boolean isReallyError) {
+    this(options -> description, isReallyError);
   }
 
   @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
@@ -26,15 +35,23 @@ public record ErrorTerm(@NotNull Doc description, boolean isReallyError) impleme
     return visitor.visitError(this, p, q);
   }
 
-  public static @NotNull ErrorTerm typeOf(@NotNull Doc origin) {
-    return new ErrorTerm(Doc.sep(
-      Doc.plain("type of"),
-      Doc.styled(Style.code(), origin)));
+  public static @NotNull ErrorTerm typeOf(@NotNull Term origin) {
+    return typeOf((AyaDocile) origin.freezeHoles());
   }
 
-  public static @NotNull ErrorTerm unexpected(@NotNull Doc origin) {
-    return new ErrorTerm(Doc.sep(
+  public static @NotNull ErrorTerm typeOf(@NotNull AyaDocile origin) {
+    return new ErrorTerm(options -> Doc.sep(
+      Doc.plain("type of"),
+      Doc.styled(Style.code(), origin.toDoc(options))));
+  }
+
+  public static @NotNull ErrorTerm unexpected(@NotNull Term origin) {
+    return unexpected((AyaDocile) origin.freezeHoles());
+  }
+
+  public static @NotNull ErrorTerm unexpected(@NotNull AyaDocile origin) {
+    return new ErrorTerm(options -> Doc.sep(
       Doc.plain("unexpected"),
-      Doc.styled(Style.code(), origin)));
+      Doc.styled(Style.code(), origin.toDoc(options))));
   }
 }
