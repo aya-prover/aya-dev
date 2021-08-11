@@ -12,7 +12,6 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.PrimDef;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
 import org.jetbrains.annotations.Contract;

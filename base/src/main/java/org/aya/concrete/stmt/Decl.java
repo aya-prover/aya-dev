@@ -3,7 +3,6 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.api.concrete.ConcreteDecl;

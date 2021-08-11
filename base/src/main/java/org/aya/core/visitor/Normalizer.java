@@ -4,7 +4,6 @@ package org.aya.core.visitor;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
-import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

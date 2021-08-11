@@ -2,13 +2,13 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.visitor;
 
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
-import kala.value.Ref;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

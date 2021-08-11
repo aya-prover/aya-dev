@@ -2,11 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.order;
 
-import org.aya.core.def.Def;
-import org.aya.core.visitor.RefFinder;
 import kala.collection.Seq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableSet;
+import org.aya.core.def.Def;
+import org.aya.core.visitor.RefFinder;
 import org.jetbrains.annotations.NotNull;
 
 /**

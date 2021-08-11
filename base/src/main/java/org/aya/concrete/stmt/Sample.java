@@ -6,7 +6,6 @@ import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
-import org.aya.core.def.PrimDef;
 import org.aya.core.def.UserDef;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;

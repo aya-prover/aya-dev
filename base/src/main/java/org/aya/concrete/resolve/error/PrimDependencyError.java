@@ -5,7 +5,6 @@ package org.aya.concrete.resolve.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
-import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;

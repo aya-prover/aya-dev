@@ -2,6 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple2;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
@@ -10,11 +15,6 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.util.Constants;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableHashMap;
-import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple2;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
