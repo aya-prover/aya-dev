@@ -8,7 +8,9 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
+import org.aya.core.def.PrimDef;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -26,6 +28,10 @@ public class TestRunner {
   public static final @NotNull Path TEST_SOURCE_DIR = Paths.get("src", "test", "resources").toAbsolutePath();
   public static @NotNull SourceFileLocator LOCATOR = new SourceFileLocator() {
   };
+
+  @BeforeAll public static void startDash() {
+    PrimDef.PrimFactory.INSTANCE.clear();
+  }
 
   @Test void runAllAyaTests() throws IOException {
     runDir(TEST_SOURCE_DIR.resolve("success"), true);
