@@ -21,7 +21,7 @@ public record PrimDependencyError(
     assert lack.size() > 0;
     return Doc.sep(
       Doc.plain("Prim"), Doc.styled(Style.code(), Doc.plain(name)),
-      Doc.plain("depends on undeclared prims:"),
+      Doc.english("depends on undeclared prims:"),
       Doc.commaList(lack.map(name -> Doc.styled(Style.code(), Doc.plain(name)))));
   }
 
