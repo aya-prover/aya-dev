@@ -33,7 +33,8 @@ import static org.aya.distill.CoreDistiller.*;
 public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   Stmt.Visitor<Unit, Doc>,
   Pattern.Visitor<Boolean, Doc>,
-  Expr.Visitor<Boolean, Doc> {
+  Expr.Visitor<Boolean, Doc>,
+  BaseDistiller {
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
     return varDoc(expr.resolvedVar());
   }
@@ -74,10 +75,10 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
     if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
-      if (t.value() == 1) return univDoc(nestedCall, "Prop", expr.uLevel(), options);
-      if (t.value() == 2) return univDoc(nestedCall, "Set", expr.uLevel(), options);
+      if (t.value() == 1) return univDoc(nestedCall, "Prop", expr.uLevel());
+      if (t.value() == 2) return univDoc(nestedCall, "Set", expr.uLevel());
     } else if (expr.hLevel() instanceof Level.Infinity<LevelGenVar> t) {
-      return univDoc(nestedCall, "ooType", expr.uLevel(), options);
+      return univDoc(nestedCall, "ooType", expr.uLevel());
     }
     return visitCalls(
       Doc.styled(KEYWORD, "Type"),

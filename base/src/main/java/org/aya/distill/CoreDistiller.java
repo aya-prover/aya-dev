@@ -7,7 +7,6 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
-import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -24,7 +23,6 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 /**
  * It's called distiller, and it serves as the pretty printer.
@@ -37,15 +35,8 @@ import java.util.function.BiFunction;
 public record CoreDistiller(@NotNull DistillerOptions options) implements
   Pat.Visitor<Boolean, Doc>,
   Def.Visitor<Unit, @NotNull Doc>,
-  Term.Visitor<Boolean, Doc> {
-  public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
-  public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
-  public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
-  public static final @NotNull Style STRUCT_CALL = Style.preset("aya:StructCall");
-  public static final @NotNull Style CON_CALL = Style.preset("aya:ConCall");
-  public static final @NotNull Style FIELD_CALL = Style.preset("aya:FieldCall");
-  public static final @NotNull Style GENERALIZED = Style.preset("aya:Generalized");
-
+  Term.Visitor<Boolean, Doc>,
+  BaseDistiller {
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
     return varDoc(term.var());
   }
@@ -88,20 +79,13 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     var sort = term.sort();
     var onlyH = sort.onlyH();
     if (onlyH instanceof Level.Constant<Sort.LvlVar> t) {
-      if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel(), options);
-      if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel(), options);
+      if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel());
+      if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel());
     } else if (onlyH instanceof Level.Infinity<Sort.LvlVar> t)
-      return univDoc(nestedCall, "ooType", sort.uLevel(), options);
+      return univDoc(nestedCall, "ooType", sort.uLevel());
     return visitCalls(Doc.styled(KEYWORD, "Type"),
       Seq.of(sort.hLevel(), sort.uLevel()).view().map(t -> new Arg<>(t, true)),
       (nest, t) -> t.toDoc(options), nestedCall);
-  }
-
-  public static @NotNull Doc univDoc(boolean nestedCall, String head, @NotNull AyaDocile lvl, @NotNull DistillerOptions options) {
-    var hd = Doc.styled(KEYWORD, head);
-    if (!options.showLevels()) return hd;
-    return visitCalls(hd, Seq.of(new Arg<>(lvl, true)),
-      (nc, l) -> l.toDoc(options), nestedCall);
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
@@ -182,24 +166,6 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   ) {
     var hyperLink = linkRef(fn, style);
     return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
-  }
-
-  public static <T extends AyaDocile> @NotNull Doc visitCalls(
-    @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
-    @NotNull BiFunction<Boolean, T, Doc> formatter, boolean nestedCall
-  ) {
-    if (args.isEmpty()) return fn;
-    var call = Doc.sep(
-      fn, Doc.sep(args.view().map(arg -> {
-        // Do not use `arg.term().toDoc()` because we want to
-        // wrap args in parens if we are inside a nested call
-        // such as `suc (suc (suc n))`
-        return arg.explicit()
-          ? formatter.apply(true, arg.term())
-          : Doc.braced(formatter.apply(false, arg.term()));
-      }))
-    );
-    return nestedCall ? Doc.parened(call) : call;
   }
 
   private Doc visitTele(@NotNull SeqLike<Term.Param> telescope) {
