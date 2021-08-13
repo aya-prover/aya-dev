@@ -9,8 +9,6 @@ import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
-import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
@@ -23,6 +21,8 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+
+import static org.aya.distill.BaseDistiller.*;
 
 /**
  * It's called distiller, and it serves as the pretty printer.
@@ -39,10 +39,6 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   BaseDistiller {
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
     return varDoc(term.var());
-  }
-
-  public static @NotNull Doc varDoc(@NotNull Var ref) {
-    return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
   }
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
@@ -200,14 +196,6 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
   }
 
-  public static @NotNull Doc ctorDoc(boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
-    boolean as = ctorAs != null;
-    var withEx = ex ? ctorDoc : Doc.braced(ctorDoc);
-    var withAs = !as ? withEx :
-      Doc.sep(Doc.parened(withEx), Doc.plain("as"), linkDef(ctorAs));
-    return !ex && !as ? withAs : nestedCall && !noParams ? Doc.parened(withAs) : withAs;
-  }
-
   public Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
     return Doc.emptyIf(patterns.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
       patterns.view().map(p -> p.accept(this, nestedCall)))));
@@ -265,18 +253,6 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       def.body.view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
 
-  public static @NotNull Doc linkDef(@NotNull Var ref, @NotNull Style color) {
-    return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
-  }
-
-  public static @NotNull Doc linkRef(@NotNull Var ref, @NotNull Style color) {
-    return Doc.linkRef(Doc.styled(color, ref.name()), ref.hashCode());
-  }
-
-  public static @NotNull Doc linkDef(@NotNull Var ref) {
-    return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
-  }
-
   @Override public Doc visitCtor(@NotNull CtorDef ctor, Unit unit) {
     var doc = Doc.sepNonEmpty(coe(ctor.coerce),
       linkDef(ctor.ref(), CON_CALL),
@@ -287,10 +263,6 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
     } else line1 = Doc.sep(Doc.symbol("|"), doc);
     return visitConditions(line1, ctor.clauses);
-  }
-
-  public static @NotNull Doc coe(boolean coerce) {
-    return coerce ? Doc.styled(KEYWORD, "coerce") : Doc.empty();
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
@@ -312,9 +284,5 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {
     return primDoc(def.ref());
-  }
-
-  public static @NotNull Doc primDoc(Var ref) {
-    return Doc.sep(Doc.styled(KEYWORD, "prim"), linkDef(ref, FN_CALL));
   }
 }

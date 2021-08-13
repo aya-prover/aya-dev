@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static org.aya.distill.CoreDistiller.*;
+import static org.aya.distill.BaseDistiller.*;
 
 /**
  * @author ice1000, kiva
