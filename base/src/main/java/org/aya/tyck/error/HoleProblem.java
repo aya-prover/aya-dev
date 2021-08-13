@@ -12,7 +12,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.WithPos;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.distill.CoreDistiller;
+import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.unify.EqnSet;
@@ -53,7 +53,7 @@ public sealed interface HoleProblem extends Problem {
         Doc.cat(Doc.english("In particular, these variables are not in scope:"),
           Doc.ONE_WS,
           Doc.commaList(scopeCheck.view()
-            .map(CoreDistiller::varDoc)
+            .map(BaseDistiller::varDoc)
             .map(doc -> Doc.styled(Style.code(), doc)))));
     }
   }
@@ -69,7 +69,7 @@ public sealed interface HoleProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(
         Doc.english("Trying to solve hole"),
-        Doc.styled(Style.code(), CoreDistiller.linkDef(term.ref())),
+        Doc.styled(Style.code(), BaseDistiller.linkDef(term.ref())),
         Doc.plain("as"),
         Doc.styled(Style.code(), sol.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("which is recursive"));

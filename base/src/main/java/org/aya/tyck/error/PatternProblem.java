@@ -8,7 +8,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.distill.CoreDistiller;
+import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(
         Doc.english("Absurd pattern does not fit here because"),
-        Doc.styled(Style.code(), CoreDistiller.varDoc(available.ref())),
+        Doc.styled(Style.code(), BaseDistiller.varDoc(available.ref())),
         Doc.english("is still available")
       );
     }

@@ -5,7 +5,7 @@ package org.aya.concrete.resolve.error;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
-import org.aya.distill.CoreDistiller;
+import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ public record DuplicateNameError(
     return Doc.sep(
       Doc.english("The name being added"),
       Doc.plain(name),
-      Doc.parened(Doc.styled(Style.code(), CoreDistiller.varDoc(ref))),
+      Doc.parened(Doc.styled(Style.code(), BaseDistiller.varDoc(ref))),
       Doc.english("is already defined elsewhere")
     );
   }

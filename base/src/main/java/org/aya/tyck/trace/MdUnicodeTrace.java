@@ -5,7 +5,7 @@ package org.aya.tyck.trace;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.distill.CoreDistiller;
+import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   }
 
   @Override public Doc visitDecl(Trace.@NotNull DeclT t, Unit unit) {
-    return Doc.vcat(Doc.sep(plus, CoreDistiller.varDoc(t.var())),
+    return Doc.vcat(Doc.sep(plus, BaseDistiller.varDoc(t.var())),
       indentedChildren(t.children()));
   }
 

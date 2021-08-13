@@ -5,7 +5,7 @@ package org.aya.generic;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.Var;
-import org.aya.distill.CoreDistiller;
+import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
     return toDoc(nameDoc(), options);
   }
   default @NotNull Doc nameDoc() {
-    return CoreDistiller.linkDef(ref());
+    return BaseDistiller.linkDef(ref());
   }
   default @NotNull Doc toDoc(@NotNull Doc names, @NotNull DistillerOptions options) {
     var explicit = explicit();
