@@ -199,6 +199,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, boolean nestedCall, @NotNull Doc delim) {
+    patterns = options.showImplicitPats() ? patterns : patterns.view().filter(Pattern::explicit);
     return Doc.join(delim, patterns.view().map(p -> p.accept(this, nestedCall)));
   }
 

@@ -197,8 +197,9 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   public Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
-    return Doc.emptyIf(patterns.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
-      patterns.view().map(p -> p.accept(this, nestedCall)))));
+    var pats = options.showImplicitPats() ? patterns : patterns.view().filter(Pat::explicit);
+    return Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
+      pats.view().map(p -> p.accept(this, nestedCall)))));
   }
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {

@@ -19,7 +19,8 @@ public record Matching(
   @NotNull Term body
 ) implements AyaDocile {
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    var doc = new CoreDistiller(options).visitMaybeCtorPatterns(patterns, false, Doc.plain(", "));
+    var doc = new CoreDistiller(options).visitMaybeCtorPatterns(
+      patterns, false, Doc.cat(Doc.plain(","), Doc.ONE_WS));
     return Doc.sep(doc, Doc.symbol("=>"), body().toDoc(options));
   }
 }
