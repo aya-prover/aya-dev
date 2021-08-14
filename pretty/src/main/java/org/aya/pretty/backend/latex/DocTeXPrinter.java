@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    cursor.invisibleContent("\\begin{tabular}{ll}\n&");
+    cursor.invisibleContent("\\begin{tabular}{ll}\n");
   }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
@@ -51,8 +51,8 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override public @NotNull String makeIndent(int indent) {
-    if (indent == 0) return "&";
-    return "&\\hspace*{" + indent * 0.5 + "em}";
+    if (indent == 0) return "";
+    return "\\hspace*{" + indent * 0.5 + "em}";
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {

@@ -15,7 +15,7 @@ public class Reproduction {
     assertEquals("  `hey'", doc.renderToString(StringPrinterConfig.unixTerminal()));
     assertEquals("""
       \\begin{tabular}{ll}
-      &\\hspace*{1.0em}\\fbox{hey}
+      \\hspace*{1.0em}\\fbox{hey}
       \\end{tabular}""", doc.renderToTeX());
   }
 }

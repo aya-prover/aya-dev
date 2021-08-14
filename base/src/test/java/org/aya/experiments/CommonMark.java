@@ -6,14 +6,14 @@ import org.aya.concrete.remark.CodeOptions;
 import org.commonmark.parser.Parser;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CommonMark {
   @Test public void backend() {
     var parser = Parser.builder().build();
     var node = parser.parse("hey `ast`");
-    System.out.println(node);
+    assertNotNull(node);
+    // System.out.println(node);
   }
 
   @Test public void regexCodeOptions() {
