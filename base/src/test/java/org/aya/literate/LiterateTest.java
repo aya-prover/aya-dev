@@ -29,8 +29,15 @@ public class LiterateTest {
       .filter(path -> !strings.contains(path.getFileName().toString()))
       .forEachChecked(Files::delete);
     var actual = literate.resolve("test.txt");
-    var readString = Files.readAllLines(actual);
+    var readString = Files.readAllLines(actual)
+      .stream()
+      .map(s -> s + "\n")
+      .toList();
     Files.delete(actual);
-    assertEquals(Files.readAllLines(literate.resolve("standard-test.txt")), readString);
+    assertEquals(Files.readAllLines(literate.resolve("standard-test.txt"))
+      .stream()
+      .map(s -> s + "\n")
+      .toList()
+      , readString);
   }
 }

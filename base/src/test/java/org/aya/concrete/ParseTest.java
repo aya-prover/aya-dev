@@ -16,7 +16,6 @@ import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
@@ -257,7 +256,7 @@ public class ParseTest {
           | y : B zero
         """,
       """
-        struct With-Tele (B : Pi (_ : Nat) -> Type) : Type
+        struct With-Tele (B : Nat -> Type) : Type
           | x {X : Type} : Nat
           | y : B zero
         """
@@ -274,7 +273,7 @@ public class ParseTest {
          }
         """,
       """
-        struct Path (A : Pi (_ : I) -> Type) (a : A left) (b : A right) : Type
+        struct Path (A : I -> Type) (a : A left) (b : A right) : Type
           | at (i : I) : A i {| left => a
           | right => b}
         """
