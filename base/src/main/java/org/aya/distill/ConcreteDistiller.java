@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
@@ -36,7 +37,21 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   Expr.Visitor<Boolean, Doc>,
   BaseDistiller {
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
-    return varDoc(expr.resolvedVar());
+    var ref = expr.resolvedVar();
+    if (ref instanceof DefVar<?, ?> defVar) return visitDefVar(defVar, defVar.concrete);
+    else if (ref instanceof LevelGenVar levelVar) return linkRef(levelVar, GENERALIZED);
+    else return varDoc(ref);
+  }
+
+  @NotNull private Doc visitDefVar(DefVar<?, ?> ref, Object concrete) {
+    if (concrete instanceof Decl.FnDecl) return linkRef(ref, FN_CALL);
+    else if (concrete instanceof Decl.DataDecl) return linkRef(ref, DATA_CALL);
+    else if (concrete instanceof Decl.DataCtor) return linkRef(ref, CON_CALL);
+    else if (concrete instanceof Decl.StructDecl) return linkRef(ref, STRUCT_CALL);
+    else if (concrete instanceof Decl.StructField) return linkRef(ref, FIELD_CALL);
+    else if (concrete instanceof Decl.PrimDecl) return linkRef(ref, FN_CALL);
+    else if (concrete instanceof Sample sample) return visitDefVar(ref, sample.delegate());
+    else return varDoc(ref);
   }
 
   @Override public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Boolean nestedCall) {
