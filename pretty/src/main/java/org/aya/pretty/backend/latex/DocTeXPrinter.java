@@ -51,12 +51,8 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override public @NotNull String makeIndent(int indent) {
-    if (indent == 0) return "";
-    return "\\hspace*{" + indent * 0.5 + "em}";
-  }
-
-  @Override protected void renderLineStart(@NotNull Cursor cursor) {
-    cursor.invisibleContent("&");
+    if (indent == 0) return "&";
+    return "&\\hspace*{" + indent * 0.5 + "em}";
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor) {

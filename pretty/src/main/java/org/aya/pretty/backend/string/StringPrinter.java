@@ -93,7 +93,6 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
       renderStyled(cursor, styled);
     } else if (doc instanceof Doc.Line) {
       renderHardLineBreak(cursor);
-      renderLineStart(cursor);
     } else if (doc instanceof Doc.FlatAlt alt) {
       renderFlatAlt(cursor, alt);
     } else if (doc instanceof Doc.Cat cat) {
@@ -152,9 +151,6 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
     cursor.visibleContent(content);
-  }
-
-  protected void renderLineStart(@NotNull Cursor cursor) {
   }
 
   protected void renderHardLineBreak(@NotNull Cursor cursor) {
