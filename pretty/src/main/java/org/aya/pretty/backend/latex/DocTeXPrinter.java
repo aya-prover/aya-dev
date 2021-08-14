@@ -41,9 +41,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text) {
     for (var k : commandMapping.keysView()) {
       if (text.contains(k)) {
-        cursor.invisibleContent(" $");
+        cursor.invisibleContent("$");
         cursor.visibleContent(commandMapping.get(k));
-        cursor.invisibleContent("$ ");
+        cursor.invisibleContent("$");
         return;
       }
     }
