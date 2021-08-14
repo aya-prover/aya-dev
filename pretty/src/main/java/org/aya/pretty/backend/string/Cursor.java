@@ -5,6 +5,7 @@ package org.aya.pretty.backend.string;
 import org.jetbrains.annotations.NotNull;
 
 public class Cursor {
+  @FunctionalInterface
   public interface CursorAPI {
     @NotNull String makeIndent(int indent);
   }
@@ -42,8 +43,7 @@ public class Cursor {
   }
 
   public void visibleContent(@NotNull CharSequence content) {
-    checkLineStart();
-    builder.append(content);
+    invisibleContent(content);
     moveForward(content.length());
   }
 
