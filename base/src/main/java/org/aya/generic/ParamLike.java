@@ -26,9 +26,7 @@ public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
     return BaseDistiller.linkDef(ref());
   }
   default @NotNull Doc toDoc(@NotNull Doc names, @NotNull DistillerOptions options) {
-    var explicit = explicit();
     var type = type();
-    return Doc.wrap(explicit ? "(" : "{", explicit ? ")" : "}",
-      Doc.cat(names, type == null ? Doc.empty() : Doc.cat(Doc.symbol(" : "), type.toDoc(options))));
+    return Doc.licit(explicit(), Doc.cat(names, type == null ? Doc.empty() : Doc.cat(Doc.symbol(" : "), type.toDoc(options))));
   }
 }

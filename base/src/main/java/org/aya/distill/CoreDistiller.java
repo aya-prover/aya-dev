@@ -175,8 +175,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
-    boolean ex = tuple.explicit();
-    var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
+    var tup = Doc.licit(tuple.explicit(),
       Doc.commaList(tuple.pats().view().map(pat -> pat.accept(this, false))));
     return tuple.as() == null ? tup
       : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));

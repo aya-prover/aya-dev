@@ -218,6 +218,10 @@ public sealed interface Doc extends Docile {
     return new Doc.Styled(builder.styles, Doc.plain(plain));
   }
 
+  static @NotNull Doc licit(boolean explicit, Doc doc) {
+    return wrap(explicit ? "(" : "{", explicit ? ")" : "}", doc);
+  }
+
   static @NotNull Doc wrap(String leftSymbol, String rightSymbol, Doc doc) {
     return Doc.cat(Doc.symbol(leftSymbol), doc, Doc.symbol(rightSymbol));
   }

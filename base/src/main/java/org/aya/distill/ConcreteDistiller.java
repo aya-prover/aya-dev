@@ -16,6 +16,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
+import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.generic.Level;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
@@ -72,6 +73,25 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitPi(Expr.@NotNull PiExpr expr, Boolean nestedCall) {
+    var data = new boolean[]{false, false};
+    expr.last().accept(new ExprConsumer<>() {
+      @Override public Unit visitRef(@NotNull Expr.RefExpr ref, Unit unit) {
+        if (ref.resolvedVar() == expr.param().ref()) data[0] = true;
+        return unit;
+      }
+
+      @Override public Unit visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Unit unit) {
+        data[1] = true;
+        return unit;
+      }
+    }, Unit.unit());
+    if (!data[0] && !data[1]) {
+      var type = expr.param().type();
+      var tyDoc = type != null ? type.toDoc(options) : Doc.symbol("?");
+      return Doc.sep(expr.param().explicit() ? tyDoc : Doc.wrap("{", "}", tyDoc),
+        Doc.symbol("->"),
+        expr.last().accept(this, false));
+    }
     return Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
       expr.param().toDoc(options),
@@ -183,8 +203,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitTuple(Pattern.@NotNull Tuple tuple, Boolean nestedCall) {
-    boolean ex = tuple.explicit();
-    var tup = Doc.wrap(ex ? "(" : "{", ex ? ")" : "}",
+    var tup = Doc.licit(tuple.explicit(),
       Doc.commaList(tuple.patterns().view().map(p -> p.accept(this, false))));
     return tuple.as() == null ? tup
       : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
@@ -353,7 +372,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     prelude.append(visitTele(decl.telescope));
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
-      decl.body.fold(expr -> Doc.sep(Doc.symbol(" =>"), expr.accept(this, false)),
+      decl.body.fold(expr -> Doc.cat(Doc.ONE_WS, Doc.symbol("=>"), Doc.ONE_WS, expr.accept(this, false)),
         clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
       Doc.emptyIf(decl.abuseBlock.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.styled(KEYWORD, "abusing"), Doc.ONE_WS, visitAbuse(decl.abuseBlock)))
     );
