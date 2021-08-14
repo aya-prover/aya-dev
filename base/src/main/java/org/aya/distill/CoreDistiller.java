@@ -42,6 +42,9 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
+    if (!options.showImplicitPats() && !term.param().explicit()) {
+      return term.body().accept(this, nestedCall);
+    }
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("\\")),
       term.param().toDoc(options),

@@ -44,6 +44,9 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Boolean nestedCall) {
+    if (!options.showImplicitPats() && !expr.param().explicit()) {
+      return expr.body().accept(this, nestedCall);
+    }
     var prelude = Buffer.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
       expr.param().toDoc(options));
     if (!(expr.body() instanceof Expr.HoleExpr)) {
