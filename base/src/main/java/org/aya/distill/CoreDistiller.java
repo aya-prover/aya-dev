@@ -85,7 +85,9 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel());
     } else if (onlyH instanceof Level.Infinity<Sort.LvlVar> t)
       return univDoc(nestedCall, "ooType", sort.uLevel());
-    return visitCalls(Doc.styled(KEYWORD, "Type"),
+    var fn = Doc.styled(KEYWORD, "Type");
+    if (!options.showLevels()) return fn;
+    return visitCalls(fn,
       Seq.of(sort.hLevel(), sort.uLevel()).view().map(t -> new Arg<>(t, true)),
       (nest, t) -> t.toDoc(options), nestedCall);
   }

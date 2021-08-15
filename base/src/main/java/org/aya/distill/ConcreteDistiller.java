@@ -118,8 +118,9 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     } else if (expr.hLevel() instanceof Level.Infinity<LevelGenVar> t) {
       return univDoc(nestedCall, "ooType", expr.uLevel());
     }
-    return visitCalls(
-      Doc.styled(KEYWORD, "Type"),
+    var fn = Doc.styled(KEYWORD, "Type");
+    if (!options.showLevels()) return fn;
+    return visitCalls(fn,
       Seq.of(expr.hLevel(), expr.uLevel()).view().map(t -> new Arg<>(t, true)),
       (nc, l) -> l.toDoc(options), nestedCall);
   }
