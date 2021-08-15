@@ -6,5 +6,5 @@ In file $FILE:1:19 ->
 Error: Expected type: Type
        Normalized: Type
        Want: pi type
-       Because we want to type a term such as: λ (x : _) ⇒ x
+       Because we want to type a term such as: λ x ⇒ x
 What are you doing?

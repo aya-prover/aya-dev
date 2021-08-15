@@ -16,5 +16,5 @@ public record DistillerOptions(
   public static final @NotNull DistillerOptions DEBUG =
     new DistillerOptions(true, true, true, true);
   public static final @NotNull DistillerOptions DEFAULT =
-    new DistillerOptions(true, false, true, false);
+    new DistillerOptions(true, true, false, false);
 }
