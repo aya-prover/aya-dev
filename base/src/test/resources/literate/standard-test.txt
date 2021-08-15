@@ -3,9 +3,25 @@ data Nat : Set
   | zero
   | suc (_ : Nat)
 open Nat hiding ()
+data Unit : Set
+  | unit
+open Unit hiding ()
 Lately, Daylily told me an interesting problem about Aya's pattern unification.
 Consider this function (some parameters renamed from the test suites):
-def wow {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => zero
-`wow` has two implicit parameters, and note that the second one is a higher one (it is of a function type).
-To test the parser, here's the type of `wow`: `Pi {U : Set} -> Pi {T : Pi (_ : U) -> Set} -> Pi (A : U) -> Pi (B : U) -> Pi (x : T A) -> Pi (y : T B) -> Nat`,
-and here's the core term of `wow`: `\ {U} => \ {T} => \ A => \ B => \ x => \ y => wow {U} {T} A B x y`.
+def wow-fun {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => zero
+In order to make it irreducible, we make it a constructor of an inductive type:
+data Wow : Set
+  | wow {U : Set} {T : U -> Set} (A B : U) (x : T A) (y : T B)
+open Wow hiding ()
+Here, `wow` has two implicit parameters,
+and note that the second one is a higher one (it is of a function type).
+Consider the following example:
+def test1 {A B : Type} {a : A} {b : B} => wow A B a b
+Observe the elaborated term of `test1`: `wow {Set} {\ _ => _} A B a b`
+Consider another example:
+def test2 {A B : Type} {a : A} {b : B} => wow A B a a
+Observe the elaborated term of `test2`: `wow {Set} {\ _ => A} A B a a`
+Showing the lambda types: `wow {Set} {\ (_ : Set) => A} A B a a`
+Showing the universe levels: `wow {Set 0} {\ _ => A} A B a a`
+Showing the implicit arguments: `\ {A} => \ {B} => \ {a} => \ {b} => wow A B a a`
+Default: `\ {A} => \ {B} => \ {a} => \ {b} => wow {Set} {\ _ => A} A B a a`

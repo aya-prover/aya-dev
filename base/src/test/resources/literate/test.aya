@@ -1,12 +1,31 @@
 --| Some preload definitions:
 
 open data Nat : Set | zero | suc Nat
+open data Unit : Set | unit
 
 --| Lately, **Daylily** told me an interesting problem about Aya's _pattern unification_.
 --| Consider this function (some parameters renamed from the test suites):
 
-def wow {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => zero
+def wow-fun {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => zero
 
---| `wow` has two implicit parameters, and note that the second one is a higher one (it is of a function type).
---| To test the parser, here's the type of `wow`: `ty:wow`,
---| and here's the core term of `wow`: `core:wow`.
+--| In order to make it irreducible, we make it a constructor of an inductive type:
+
+open data Wow : Type 2 2
+  | wow {U : Set 0} {T : U -> Set 0} (A B : U) (x : T A) (y : T B)
+
+--| Here, `wow` has two implicit parameters,
+--| and note that the second one is a higher one (it is of a function type).\
+--| Consider the following example:
+
+def test1 {A B : Type} {a : A} {b : B} => wow A B a b
+
+--| Observe the elaborated term of `test1`: `CN||P:test1`\
+--| Consider another example:
+
+def test2 {A B : Type} {a : A} {b : B} => wow A B a a
+
+--| Observe the elaborated term of `test2`: `CN||P:test2`\
+--| Showing the lambda types: `CN|L|P:test2`
+--| Showing the universe levels: `CN|U|P:test2`
+--| Showing the implicit arguments: `CN||I:test2`
+--| Default: `CN:test2`
