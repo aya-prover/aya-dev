@@ -264,23 +264,27 @@ public final class AyaProducer {
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx, boolean isLamTele) {
     var literal = ctx.literal();
-    if (literal != null) return ImmutableSeq.of(isLamTele
-      ? new Expr.Param(sourcePosOf(ctx), visitParamLiteral(literal), type(null, sourcePosOf(ctx)), true)
-      : new Expr.Param(sourcePosOf(ctx), Constants.anonymous(), visitLiteral(literal), true)
-    );
+    if (literal != null) {
+      var pos = sourcePosOf(ctx);
+      return ImmutableSeq.of(isLamTele
+        ? new Expr.Param(pos, visitParamLiteral(literal), type(null, pos), true)
+        : new Expr.Param(pos, Constants.randomlyNamed(pos), visitLiteral(literal), true)
+      );
+    }
     var teleBinder = ctx.teleBinder();
     var teleMaybeTypedExpr = ctx.teleMaybeTypedExpr();
     if (teleBinder != null) {
       var type = teleBinder.expr();
-      if (type != null)
-        return ImmutableSeq.of(new Expr.Param(sourcePosOf(ctx), Constants.anonymous(), visitExpr(type), true));
+      if (type != null) {
+        var pos = sourcePosOf(ctx);
+        return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(type), true));
+      }
       teleMaybeTypedExpr = teleBinder.teleMaybeTypedExpr();
     }
     if (ctx.LPAREN() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(true);
     if (ctx.LBRACE() != null) return visitTeleMaybeTypedExpr(teleMaybeTypedExpr).apply(false);
     return unreachable(ctx);
   }
-
 
   public @NotNull
   Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(AyaParser.TeleMaybeTypedExprContext ctx) {
@@ -327,12 +331,12 @@ public final class AyaProducer {
   public @NotNull Expr visitArr(AyaParser.ArrContext ctx) {
     var from = visitExpr(ctx.expr(0));
     var to = visitExpr(ctx.expr(1));
+    var pos = sourcePosOf(ctx.expr(0));
     return new Expr.PiExpr(
       sourcePosOf(ctx),
       false,
-      new Expr.Param(sourcePosOf(ctx.expr(0)), Constants.anonymous(), from, true),
-      to
-    );
+      new Expr.Param(pos, Constants.randomlyNamed(pos), from, true),
+      to);
   }
 
   public @NotNull Expr visitApp(AyaParser.AppContext ctx) {

@@ -15,4 +15,10 @@ public interface Constants {
   static @NotNull LocalVar anonymous() {
     return new LocalVar(ANONYMOUS_PREFIX, SourcePos.NONE);
   }
+  static @NotNull LocalVar randomlyNamed(@NotNull SourcePos pos) {
+    return new LocalVar(randomName(pos), pos);
+  }
+  static @NotNull String randomName(@NotNull Object pos) {
+    return "x" + Math.abs(pos.hashCode()) % 10;
+  }
 }
