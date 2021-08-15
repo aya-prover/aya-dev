@@ -64,17 +64,16 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public static class PrimFactory {
-    private final @NotNull MutableMap<@NotNull String, @NotNull PrimDef> defs;
+    private final @NotNull MutableMap<@NotNull String, @NotNull PrimDef> defs = MutableMap.create();
     public static final @NotNull PrimFactory INSTANCE = new PrimFactory();
 
-    private PrimFactory () {
-      this.defs = MutableMap.create();
+    private PrimFactory() {
     }
 
     private static @NotNull Term arcoe(CallTerm.@NotNull Prim prim) {
       var args = prim.args();
       var argBase = args.get(1).term();
-      var argI  = args.get(2).term();
+      var argI = args.get(2).term();
       var left = INSTANCE.getOption(LEFT);
       if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
         return argBase;
@@ -208,6 +207,7 @@ public final class PrimDef extends TopLevelDef {
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
 
   /**
+   *
    */
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels,
