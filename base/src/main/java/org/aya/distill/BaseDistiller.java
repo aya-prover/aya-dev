@@ -4,17 +4,20 @@ package org.aya.distill;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.mutable.Buffer;
 import kala.control.Option;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 public interface BaseDistiller {
@@ -58,6 +61,23 @@ public interface BaseDistiller {
     var withAs = !as ? withEx :
       Doc.sep(Doc.parened(withEx), Doc.plain("as"), linkDef(ctorAs));
     return !ex && !as ? withAs : nestedCall && !noParams ? Doc.parened(withAs) : withAs;
+  }
+
+  default Doc visitTele(@NotNull SeqLike<? extends ParamLike<?>> telescope) {
+    if (telescope.isEmpty()) return Doc.empty();
+    var last = telescope.first();
+    var buf = Buffer.<Doc>of();
+    var names = Buffer.of(last.nameDoc());
+    for (var param : telescope.view().drop(1)) {
+      if (!Objects.equals(param.type(), last.type())) {
+        buf.append(last.toDoc(Doc.sep(names), options()));
+        names.clear();
+        last = param;
+      }
+      names.append(param.nameDoc());
+    }
+    buf.append(last.toDoc(Doc.sep(names), options()));
+    return Doc.sep(buf);
   }
 
   static @NotNull Doc varDoc(@NotNull Var ref) {

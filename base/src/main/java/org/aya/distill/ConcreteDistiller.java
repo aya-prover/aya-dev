@@ -390,10 +390,6 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     });
   }
 
-  /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Expr.Param> telescope) {
-    return Doc.sep(telescope.map(param -> param.toDoc(options)));
-  }
-
   private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
     return Doc.vcat(block.view().map(stmt -> stmt.accept(this, Unit.unit())));
   }

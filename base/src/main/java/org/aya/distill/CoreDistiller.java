@@ -20,8 +20,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 import static org.aya.distill.BaseDistiller.*;
 
 /**
@@ -172,10 +170,6 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
-  private Doc visitTele(@NotNull SeqLike<Term.Param> telescope) {
-    return Doc.sep(telescope.view().map(param -> param.toDoc(options)));
-  }
-
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
     var tup = Doc.licit(tuple.explicit(),
       Doc.commaList(tuple.pats().view().map(pat -> pat.accept(this, false))));
@@ -218,23 +212,6 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     return def.body.fold(
       term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.accept(this, false)),
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
-  }
-
-  /*package-private*/ Doc visitTele(@NotNull ImmutableSeq<Term.Param> telescope) {
-    if (telescope.isEmpty()) return Doc.empty();
-    var last = telescope.first();
-    var buf = Buffer.<Doc>of();
-    var names = Buffer.of(last.nameDoc());
-    for (var param : telescope.view().drop(1)) {
-      if (!Objects.equals(param.type(), last.type())) {
-        buf.append(last.toDoc(Doc.sep(names), options));
-        names.clear();
-        last = param;
-      }
-      names.append(param.nameDoc());
-    }
-    buf.append(last.toDoc(Doc.sep(names), options));
-    return Doc.sep(buf);
   }
 
   private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching> clauses) {
