@@ -9,7 +9,7 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.TyckDeclTest;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
@@ -18,6 +18,10 @@ import java.util.function.IntFunction;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NormalizeTest {
+  @BeforeAll public static void enter() {
+    PrimDef.PrimFactory.INSTANCE.clear();
+  }
+
   @Test public void unfoldPatterns() {
     var defs = TyckDeclTest.successTyckDecls("""
       open data Nat : Set | zero | suc Nat
