@@ -10,10 +10,11 @@ import org.jetbrains.annotations.NotNull;
 public record DistillerOptions(
   boolean showImplicitArgs,
   boolean showImplicitPats,
+  boolean showLambdaTypes,
   boolean showLevels
 ) {
   public static final @NotNull DistillerOptions DEBUG =
-    new DistillerOptions(true, true, true);
+    new DistillerOptions(true, true, true, true);
   public static final @NotNull DistillerOptions DEFAULT =
-    new DistillerOptions(true, true, false);
+    new DistillerOptions(true, false, true, false);
 }

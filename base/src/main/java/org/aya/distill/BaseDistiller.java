@@ -80,6 +80,10 @@ public interface BaseDistiller {
     return Doc.sep(buf);
   }
 
+  default @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
+    return options().showLambdaTypes() ? param.toDoc(options()) : param.nameDoc();
+  }
+
   static @NotNull Doc varDoc(@NotNull Var ref) {
     return Doc.linkRef(Doc.plain(ref.name()), ref.hashCode());
   }

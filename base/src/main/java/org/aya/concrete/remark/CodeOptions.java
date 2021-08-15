@@ -27,6 +27,7 @@ public record CodeOptions(
   public static @NotNull Literate.Code analyze(@NotNull String literal, @NotNull AyaProducer producer) {
     var showImplicitArgs = true;
     var showImplicitPats = true;
+    var showLambdaTypes = false;
     var showLevels = false;
     var matcher = PARSER.matcher(literal);
     var found = matcher.find();
@@ -53,11 +54,16 @@ public record CodeOptions(
       open = open.toUpperCase(Locale.ROOT);
       close = close.toUpperCase(Locale.ROOT);
       if (close.contains("I")) showImplicitArgs = false;
-      if (open.contains("L")) showLevels = true;
+      if (open.contains("U")) showLevels = true;
+      if (open.contains("L")) showLambdaTypes = true;
       if (close.contains("P")) showImplicitPats = false;
     }
     var expr = producer.visitExpr(AyaParsing.parser(matcher.group(6)).expr());
-    var distillOpt = new DistillerOptions(showImplicitArgs, showImplicitPats, showLevels);
+    var distillOpt = new DistillerOptions(
+      showImplicitArgs,
+      showLambdaTypes,
+      showImplicitPats,
+      showLevels);
     var options = new CodeOptions(mode, distillOpt, showCode);
     return new Literate.Code(expr, options);
   }

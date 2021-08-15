@@ -45,7 +45,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     }
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("\\")),
-      term.param().toDoc(options),
+      lambdaParam(term.param()),
       Doc.symbol("=>"),
       term.body().accept(this, false)
     );

@@ -64,7 +64,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
       return expr.body().accept(this, nestedCall);
     }
     var prelude = Buffer.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
-      expr.param().toDoc(options));
+      lambdaParam(expr.param()));
     if (!(expr.body() instanceof Expr.HoleExpr)) {
       prelude.append(Doc.symbol("=>"));
       prelude.append(expr.body().accept(this, false));
