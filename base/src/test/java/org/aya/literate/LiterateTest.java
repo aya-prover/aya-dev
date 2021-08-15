@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LiterateTest {
   @BeforeAll public static void enter() {
-    Global.enterTestMode();
+    Global.UNITE_SOURCE_POS = false;
   }
 
   @Test public void literate() throws IOException {

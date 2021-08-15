@@ -33,7 +33,8 @@ public class ParseTest {
     ThrowingReporter.INSTANCE);
 
   @BeforeAll public static void enableTest() {
-    Global.enterTestMode();
+    Global.NO_RANDOM_NAME = true;
+    Global.UNITE_SOURCE_POS = true;
   }
 
   private static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {

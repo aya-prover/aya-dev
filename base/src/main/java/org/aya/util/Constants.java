@@ -20,7 +20,7 @@ public interface Constants {
     return new LocalVar(randomName(pos), pos);
   }
   static @NotNull String randomName(@NotNull Object pos) {
-    if (Global.isTest()) return ANONYMOUS_PREFIX;
+    if (Global.NO_RANDOM_NAME) return ANONYMOUS_PREFIX;
     return "x" + Math.abs(pos.hashCode()) % 10;
   }
 }

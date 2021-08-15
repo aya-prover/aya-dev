@@ -32,7 +32,8 @@ public class TestRunner {
 
   @BeforeAll public static void startDash() {
     PrimDef.PrimFactory.INSTANCE.clear();
-    Global.enterTestMode();
+    Global.NO_RANDOM_NAME = true;
+    Global.UNITE_SOURCE_POS = false;
   }
 
   @Test void runAllAyaTests() throws IOException {

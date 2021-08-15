@@ -76,7 +76,7 @@ public record SourcePos(
     // we return true when in tests because we
     // don't want to check source pos manually
     // as it is guaranteed to be correct by antlr.
-    if (Global.isTest() || this == o) return true;
+    if (Global.UNITE_SOURCE_POS || this == o) return true;
     if (!(o instanceof SourcePos sourcePos)) return false;
     return tokenStartIndex == sourcePos.tokenStartIndex &&
       tokenEndIndex == sourcePos.tokenEndIndex &&
@@ -107,7 +107,7 @@ public record SourcePos(
   public int hashCode() {
     // the equals() returns true in tests, so hashCode() should
     // be a constant according to JLS
-    if (Global.isTest()) return 0;
+    if (Global.UNITE_SOURCE_POS) return 0;
     return Objects.hash(tokenStartIndex, tokenEndIndex, startLine, startColumn, endLine, endColumn);
   }
 

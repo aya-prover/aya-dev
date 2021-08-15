@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DesugarTest {
   @BeforeAll public static void enter() {
-    Global.enterTestMode();
+    Global.NO_RANDOM_NAME = true;
   }
 
   @Test public void simpleUniv() {
