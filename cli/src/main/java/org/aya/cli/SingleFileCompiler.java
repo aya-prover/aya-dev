@@ -19,6 +19,7 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
@@ -96,8 +97,9 @@ public record SingleFileCompiler(
       .substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length());
     switch (flags.distillFormat()) {
       case html -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
-      case latex -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, bool) -> thisDoc.renderToTeX());
-      case plain -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, bool) -> thisDoc.debugRender());
+      case latex -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, $) -> thisDoc.renderToTeX());
+      case plain -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.debugRender());
+      case unix -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.renderToString(StringPrinterConfig.unixTerminal()));
     }
   }
 

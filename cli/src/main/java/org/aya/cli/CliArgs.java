@@ -41,17 +41,18 @@ public class CliArgs {
   public enum DistillStage {
     raw,
     scoped,
-    typed
+    typed,
   }
 
   public enum DistillFormat {
     html,
     plain,
-    latex
+    latex,
+    unix,
   }
 
   public enum TraceFormat {
     imgui,
-    markdown
+    markdown,
   }
 }
