@@ -3,8 +3,8 @@ In file $FILE:1:19 ->
   1 | def test : Type => \ x => x
                          ^------^
 
-Error: Expected type: Type h u
-       Normalized: Type h u
+Error: Expected type: Type
+       Normalized: Type
        Want: pi type
        Because we want to type a term such as: λ (x : _) ⇒ x
 What are you doing?
