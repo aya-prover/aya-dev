@@ -5,7 +5,7 @@ data Nat : Set
 open Nat hiding ()
 Lately, Daylily told me an interesting problem about Aya's pattern unification.
 Consider this function (some parameters renamed from the test suites):
-def wow {U : Type} {T : U -> Type} (A : U) (B : U) (x : T A) (y : T B) : Nat => zero
+def wow {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => zero
 `wow` has two implicit parameters, and note that the second one is a higher one (it is of a function type).
 To test the parser, here's the type of `wow`: `Pi {U : Set} -> Pi {T : Pi (_ : U) -> Set} -> Pi (A : U) -> Pi (B : U) -> Pi (x : T A) -> Pi (y : T B) -> Nat`,
 and here's the core term of `wow`: `\ {U : Set} => \ {T : Pi (_ : U) -> Set} => \ (A : U) => \ (B : U) => \ (x : T A) => \ (y : T B) => wow {U} {T} A B x y`.

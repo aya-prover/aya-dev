@@ -3,6 +3,7 @@
 package org.aya.test;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.Global;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.StreamReporter;
@@ -31,6 +32,7 @@ public class TestRunner {
 
   @BeforeAll public static void startDash() {
     PrimDef.PrimFactory.INSTANCE.clear();
+    Global.enterTestMode();
   }
 
   @Test void runAllAyaTests() throws IOException {

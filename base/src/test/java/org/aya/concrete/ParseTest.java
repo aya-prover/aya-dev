@@ -101,7 +101,7 @@ public class ParseTest {
         def id {A : Type} (a : A) : A => a
       """);
     parseAndPretty("def xx {A B : Type} (a : A) : A => a", """
-        def xx {A : Type} {B : Type} (a : A) : A => a
+        def xx {A B : Type} (a : A) : A => a
       """);
   }
 

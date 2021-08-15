@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete;
 
+import org.aya.api.Global;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.pretty.doc.Doc;
@@ -9,11 +10,16 @@ import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DesugarTest {
+  @BeforeAll public static void enter() {
+    Global.enterTestMode();
+  }
+
   @Test public void simpleUniv() {
     desugarAndPretty("def test => Type", "def test => Type lp lp");
     desugarAndPretty("def test => Set", "def test => Set lp");

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.util;
 
+import org.aya.api.Global;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.jetbrains.annotations.NonNls;
@@ -19,6 +20,7 @@ public interface Constants {
     return new LocalVar(randomName(pos), pos);
   }
   static @NotNull String randomName(@NotNull Object pos) {
+    if (Global.isTest()) return ANONYMOUS_PREFIX;
     return "x" + Math.abs(pos.hashCode()) % 10;
   }
 }

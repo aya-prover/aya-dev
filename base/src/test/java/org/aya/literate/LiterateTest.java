@@ -4,11 +4,13 @@ package org.aya.literate;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.Global;
 import org.aya.cli.CliArgs;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.test.TestRunner;
 import org.aya.test.ThrowingReporter;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -18,6 +20,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LiterateTest {
+  @BeforeAll public static void enter() {
+    Global.enterTestMode();
+  }
+
   @Test public void literate() throws IOException {
     var literate = TestRunner.TEST_SOURCE_DIR.resolve("literate");
     var distillInfo = new CompilerFlags.DistillInfo(CliArgs.DistillStage.scoped, CliArgs.DistillFormat.plain, literate);
@@ -35,9 +41,9 @@ public class LiterateTest {
       .toList();
     Files.delete(actual);
     assertEquals(Files.readAllLines(literate.resolve("standard-test.txt"))
-      .stream()
-      .map(s -> s + "\n")
-      .toList()
+        .stream()
+        .map(s -> s + "\n")
+        .toList()
       , readString);
   }
 }
