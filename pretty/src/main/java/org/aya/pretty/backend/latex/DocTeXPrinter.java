@@ -13,14 +13,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
-  @Override protected void renderHeader(@NotNull Cursor cursor) {
-    cursor.invisibleContent("\\begin{tabular}{ll}\n");
-  }
-
-  @Override protected void renderFooter(@NotNull Cursor cursor) {
-    cursor.invisibleContent("\n\\end{tabular}");
-  }
-
   @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
     super.renderPlainText(cursor, content
       .replace("\\", "")
