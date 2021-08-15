@@ -10,6 +10,7 @@ import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class DesugarTest {
   @BeforeAll public static void enter() {
     Global.NO_RANDOM_NAME = true;
+  }
+
+  @AfterAll public static void exit() {
+    Global.reset();
   }
 
   @Test public void simpleUniv() {

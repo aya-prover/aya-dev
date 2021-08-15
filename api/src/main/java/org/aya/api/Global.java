@@ -15,4 +15,9 @@ import org.jetbrains.annotations.VisibleForTesting;
 public final class Global {
   public static boolean UNITE_SOURCE_POS = false;
   public static boolean NO_RANDOM_NAME = false;
+
+  public static void reset() {
+    UNITE_SOURCE_POS = false;
+    NO_RANDOM_NAME = false;
+  }
 }

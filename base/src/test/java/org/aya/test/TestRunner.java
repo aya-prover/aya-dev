@@ -11,6 +11,7 @@ import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +34,10 @@ public class TestRunner {
   @BeforeAll public static void startDash() {
     PrimDef.PrimFactory.INSTANCE.clear();
     Global.NO_RANDOM_NAME = true;
-    Global.UNITE_SOURCE_POS = false;
+  }
+
+  @AfterAll public static void exit() {
+    Global.reset();
   }
 
   @Test void runAllAyaTests() throws IOException {

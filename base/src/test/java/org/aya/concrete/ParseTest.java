@@ -21,6 +21,7 @@ import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,10 @@ public class ParseTest {
   @BeforeAll public static void enableTest() {
     Global.NO_RANDOM_NAME = true;
     Global.UNITE_SOURCE_POS = true;
+  }
+
+  @AfterAll public static void exit() {
+    Global.reset();
   }
 
   private static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
@@ -108,10 +113,10 @@ public class ParseTest {
 
   @Test public void nat() {
     parseAndPretty("data Nat | Z | S Nat", """
-     data Nat
-       | Z
-       | S (_ : Nat)
-     """);
+      data Nat
+        | Z
+        | S (_ : Nat)
+      """);
   }
 
   @Test public void successExpr() {
