@@ -61,8 +61,8 @@ public record CodeOptions(
     var expr = producer.visitExpr(AyaParsing.parser(matcher.group(6)).expr());
     var distillOpt = new DistillerOptions(
       showImplicitArgs,
-      showLambdaTypes,
       showImplicitPats,
+      showLambdaTypes,
       showLevels);
     var options = new CodeOptions(mode, distillOpt, showCode);
     return new Literate.Code(expr, options);

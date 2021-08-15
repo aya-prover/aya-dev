@@ -81,7 +81,8 @@ public interface BaseDistiller {
   }
 
   default @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
-    return options().showLambdaTypes() ? param.toDoc(options()) : param.nameDoc();
+    return options().showLambdaTypes() ? param.toDoc(options())
+      : param.explicit() ? param.nameDoc() : Doc.braced(param.nameDoc());
   }
 
   static @NotNull Doc varDoc(@NotNull Var ref) {

@@ -13,9 +13,6 @@ public class Reproduction {
   @Test public void mock() {
     var doc = Doc.nest(2, Doc.styled(Style.code(), Doc.plain("hey")));
     assertEquals("  `hey'", doc.renderToString(StringPrinterConfig.unixTerminal()));
-    assertEquals("""
-      \\begin{tabular}{ll}
-      \\hspace*{1.0em}\\fbox{hey}
-      \\end{tabular}""", doc.renderToTeX());
+    assertEquals("\\hspace*{1.0em}\\fbox{hey}", doc.renderToTeX());
   }
 }

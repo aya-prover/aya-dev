@@ -88,7 +88,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     if (!data[0] && !data[1]) {
       var type = expr.param().type();
       var tyDoc = type != null ? type.toDoc(options) : Doc.symbol("?");
-      return Doc.sep(expr.param().explicit() ? tyDoc : Doc.wrap("{", "}", tyDoc),
+      return Doc.sep(expr.param().explicit() ? tyDoc : Doc.braced(tyDoc),
         Doc.symbol("->"),
         expr.last().accept(this, false));
     }
