@@ -149,10 +149,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {
-    var sourcePos = expr.param().sourcePos();
-    var domain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
+    var param = expr.param();
+    var sourcePos = param.sourcePos();
+    var domain = localCtx.freshHole(FormTerm.Univ.OMEGA,
+      param.ref().name() + Constants.GENERATED_POSTFIX, sourcePos)._2;
     var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
-    return new FormTerm.Pi(Term.Param.mock(domain, expr.param().explicit()), codomain);
+    return new FormTerm.Pi(Term.Param.mock(domain, param), codomain);
   }
 
   private @NotNull Result wantButNo(@NotNull Expr expr, @NotNull Term term, String expectedText) {
@@ -463,7 +465,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
     // TODO[ice]: deal with unit type
-    var name = Constants.ANONYMOUS_PREFIX;
+    var name = "x" + expr.hashCode() % 10;
     if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name, expr.sourcePos())._2;
     var freshHole = localCtx.freshHole(term, name, expr.sourcePos());
     if (expr.explicit()) reporter.report(new Goal(expr, freshHole._1));

@@ -15,6 +15,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
+import org.aya.concrete.Expr;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.visitor.*;
@@ -213,8 +214,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
       return new Param(ref, type.subst(subst, levelSubst), explicit);
     }
 
-    public static @NotNull Term.Param mock(@NotNull Term hole, boolean explicit) {
-      return new Param(Constants.anonymous(), hole, explicit);
+    public static @NotNull Param mock(@NotNull Term hole, Expr.@NotNull Param param) {
+      return new Param(new LocalVar(param.ref().name() + Constants.GENERATED_POSTFIX), hole, param.explicit());
     }
 
     @TestOnly @Contract(pure = true)
