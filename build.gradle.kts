@@ -1,5 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
+import org.apache.tools.ant.taskdefs.condition.Os
 import java.util.*
 
 plugins {
@@ -170,6 +171,11 @@ val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
   }
 
   reports { configureReports(true) }
+  doLast {
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) exec {
+      commandLine("explorer.exe", ".\\build\\reports\\jacoco\\mergeJacocoReports\\html\\index.html")
+    }
+  }
 }
 
 tasks.register("githubActions") {
