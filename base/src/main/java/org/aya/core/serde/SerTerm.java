@@ -5,11 +5,9 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.util.Arg;
 import org.aya.core.sort.Sort;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,6 +55,38 @@ public sealed interface SerTerm extends Serializable {
   record Ref(int var, @NotNull SerTerm type) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new RefTerm(state.var(var), type.de(state));
+    }
+  }
+
+  record Lam(@NotNull SerParam param, @NotNull SerTerm body) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new IntroTerm.Lambda(param.de(state), body.de(state));
+    }
+  }
+
+  // TODO
+  record New(@NotNull StructCall call) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      throw new UnsupportedOperationException("TODO");
+    }
+  }
+
+  record Proj(@NotNull SerTerm of, int ix) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new ElimTerm.Proj(of.de(state), ix);
+    }
+  }
+
+  record App(@NotNull SerTerm of, @NotNull SerTerm arg, boolean explicit) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new ElimTerm.App(of.de(state), new Arg<>(arg.de(state), explicit));
+    }
+  }
+
+  // TODO
+  record StructCall() implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      throw new UnsupportedOperationException();
     }
   }
 
