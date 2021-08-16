@@ -2,10 +2,15 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.serde;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableTreeMap;
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
+import org.aya.concrete.stmt.Decl;
+import org.aya.core.def.Def;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.util.Constants;
@@ -18,11 +23,17 @@ import java.io.Serializable;
  */
 public sealed interface SerTerm extends Serializable {
   record DeState(
+    @NotNull MutableMap<Seq<String>, MutableMap<String, DefVar<?, ?>>> defCache,
     @NotNull MutableMap<Integer, Sort.LvlVar> levelCache,
     @NotNull MutableMap<Integer, LocalVar> localCache
   ) {
     public @NotNull LocalVar var(int var) {
       return localCache.getOrPut(var, () -> new LocalVar(Constants.ANONYMOUS_PREFIX));
+    }
+
+    public @NotNull DefVar<?, ?> def(@NotNull ImmutableSeq<String> mod, @NotNull String name) {
+      return defCache.getOrPut(mod, MutableTreeMap::new).getOrPut(name,
+        () -> DefVar.<Def, Decl>core(null, name));
     }
   }
 
