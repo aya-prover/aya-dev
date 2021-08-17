@@ -202,7 +202,16 @@ public final class TermSerializer implements
   }
 
   @Override public SerPat visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return new SerPat.Ctor(
+      ctor.explicit(),
+      state.def(ctor.ref()),
+      ctor.params().map(this::serialize),
+      state.localMaybe(ctor.as()),
+      new SerTerm.DataCall(
+        state.def(ctor.type().ref()),
+        serializeCallData(ctor.type().sortArgs(), ctor.type().args())
+      )
+    );
   }
 
   @Override public SerPat visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
@@ -210,6 +219,10 @@ public final class TermSerializer implements
   }
 
   @Override public SerPat visitPrim(Pat.@NotNull Prim prim, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return new SerPat.Prim(
+      prim.explicit(),
+      state.def(prim.ref()),
+      serialize(prim.type())
+    );
   }
 }
