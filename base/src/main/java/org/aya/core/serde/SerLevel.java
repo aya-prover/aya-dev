@@ -25,10 +25,15 @@ public sealed interface SerLevel extends Serializable {
     }
   }
 
-  record Ref(int id, @NotNull LevelGenVar.Kind kind, int lift) implements SerLevel {
+  record LvlVar(int id, @NotNull LevelGenVar.Kind kind) implements Serializable {
+    public @NotNull Sort.LvlVar de(@NotNull MutableMap<Integer, Sort.LvlVar> cache) {
+      return cache.getOrPut(id, () -> new Sort.LvlVar(Constants.ANONYMOUS_PREFIX, kind, null));
+    }
+  }
+
+  record Ref(@NotNull LvlVar var, int lift) implements SerLevel {
     @Override public @NotNull Level<Sort.LvlVar> de(@NotNull MutableMap<Integer, Sort.LvlVar> cache) {
-      return new Level.Reference<>(cache.getOrPut(id, () ->
-        new Sort.LvlVar(Constants.ANONYMOUS_PREFIX, kind, null)));
+      return new Level.Reference<>(var.de(cache), lift);
     }
   }
 
@@ -46,7 +51,7 @@ public sealed interface SerLevel extends Serializable {
     if (level instanceof Level.Constant<Sort.LvlVar> constant) return new Const(constant.value());
     else if (level instanceof Level.Infinity<Sort.LvlVar>) return new Const(-1);
     else if (level instanceof Level.Reference<Sort.LvlVar> ref)
-      return new Ref(cache.getOrPut(ref.ref(), cache::size), ref.ref().kind(), ref.lift());
+      return new Ref(new LvlVar(cache.getOrPut(ref.ref(), cache::size), ref.ref().kind()), ref.lift());
     else throw new IllegalStateException(level.toString());
   }
 }

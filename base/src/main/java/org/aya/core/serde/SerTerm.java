@@ -130,7 +130,7 @@ public sealed interface SerTerm extends Serializable {
   }
 
   record DataCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
-    @Override public @NotNull Term de(@NotNull DeState state) {
+    @Override public @NotNull CallTerm.Data de(@NotNull DeState state) {
       return new CallTerm.Data(state.def(name), data.de(state.levelCache), data.de(state));
     }
   }
