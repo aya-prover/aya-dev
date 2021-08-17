@@ -8,9 +8,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,12 +47,36 @@ public final class TermSerializer implements
     }
   }
 
+  private SerTerm.SerParam serializeParam(Term.Param param) {
+    return new SerTerm.SerParam(
+      param.explicit(),
+      state.local(param.ref()),
+      serialize(param.type())
+    );
+  }
+
   @Override public SerTerm visitError(@NotNull ErrorTerm term, Unit unit) {
     throw new AssertionError("Shall not have error term serialized.");
   }
 
   @Override public SerTerm visitHole(CallTerm.@NotNull Hole term, Unit unit) {
     throw new AssertionError("Shall not have holes serialized.");
+  }
+
+  @Override public SerTerm visitRef(@NotNull RefTerm term, Unit unit) {
+    return new SerTerm.Ref(state.local(term.var()), serialize(term.type()));
+  }
+
+  @Override public SerTerm visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
+    return new SerTerm.Lam(serializeParam(term.param()), serialize(term.body()));
+  }
+
+  @Override public SerTerm visitPi(FormTerm.@NotNull Pi term, Unit unit) {
+    return new SerTerm.Pi(serializeParam(term.param()), serialize(term.body()));
+  }
+
+  @Override public SerTerm visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
+    return new SerTerm.Sigma(term.params().map(this::serializeParam));
   }
 
   @Override public SerPat visitBind(Pat.@NotNull Bind bind, Unit unit) {
