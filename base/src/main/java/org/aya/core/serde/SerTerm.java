@@ -4,8 +4,8 @@ package org.aya.core.serde;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableTreeMap;
 import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
@@ -17,13 +17,14 @@ import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author ice1000
  */
 public sealed interface SerTerm extends Serializable {
   record DeState(
-    @NotNull MutableMap<Seq<String>, MutableMap<String, DefVar<?, ?>>> defCache,
+    @NotNull MutableMap<Seq<String>, MutableMap<Integer, DefVar<?, ?>>> defCache,
     @NotNull MutableMap<Integer, Sort.LvlVar> levelCache,
     @NotNull MutableMap<Integer, LocalVar> localCache
   ) {
@@ -35,9 +36,11 @@ public sealed interface SerTerm extends Serializable {
     public <Core extends CoreDef, Concrete extends ConcreteDecl>
     @NotNull DefVar<Core, Concrete> def(@NotNull SerDef.QName name) {
       // We assume this cast to be safe
-      return (DefVar<Core, Concrete>) defCache
-        .getOrPut(name.mod(), MutableTreeMap::new)
-        .getOrPut(name.name(), () -> DefVar.<Core, Concrete>core(null, name.name()));
+      var dv = (DefVar<Core, Concrete>) defCache
+        .getOrPut(name.mod(), MutableHashMap::new)
+        .getOrPut(name.id(), () -> DefVar.core(null, name.name()));
+      assert Objects.equals(name.name(), dv.name());
+      return dv;
     }
   }
 

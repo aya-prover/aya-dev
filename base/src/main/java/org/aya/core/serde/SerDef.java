@@ -16,7 +16,7 @@ import java.io.Serializable;
 public sealed interface SerDef extends Serializable {
   @NotNull Def de(@NotNull SerTerm.DeState state);
 
-  record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name) implements Serializable {
+  record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name, int id) implements Serializable {
   }
 
   record Fn(
