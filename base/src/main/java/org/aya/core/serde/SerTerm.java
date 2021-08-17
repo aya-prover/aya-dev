@@ -141,6 +141,18 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
+  record ConCall(
+    @NotNull SerDef.QName dataRef, @NotNull SerDef.QName selfRef,
+    @NotNull CallData dataArgs, @NotNull ImmutableSeq<SerArg> args
+  ) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new CallTerm.Con(
+        state.def(dataRef), state.def(selfRef),
+        dataArgs.de(state), dataArgs.de(state.levelCache),
+        args.map(arg -> arg.de(state)));
+    }
+  }
+
   record Tup(@NotNull ImmutableSeq<SerTerm> components) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new IntroTerm.Tuple(components.map(t -> t.de(state)));
