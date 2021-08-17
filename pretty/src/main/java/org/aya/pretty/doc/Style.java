@@ -5,12 +5,14 @@ package org.aya.pretty.doc;
 import org.aya.pretty.printer.ColorScheme;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * Text styles. Inspired by terminal-colors.d(5)
  *
  * @author kiva
  */
-public sealed interface Style {
+public sealed interface Style extends Serializable {
   default Styles and() {
     return new Styles(this);
   }

@@ -4,8 +4,10 @@ package org.aya.pretty.backend.string;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * @author imkiva
  */
-public record LinkId(@NotNull String id) {
+public record LinkId(@NotNull String id) implements Serializable {
 }

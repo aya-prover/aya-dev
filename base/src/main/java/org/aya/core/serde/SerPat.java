@@ -28,13 +28,13 @@ public sealed interface SerPat extends Serializable {
     }
   }
 
-  record Tuple(boolean explicit, @NotNull ImmutableSeq<SerPat> pats, int as, @NotNull SerTerm ty) implements SerPat {
+  record Tuple(boolean explicit, @NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm.SimpVar as, @NotNull SerTerm ty) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Tuple(explicit, pats.map(pat -> pat.de(state)), as < 0 ? null : state.var(as), ty.de(state));
+      return new Pat.Tuple(explicit, pats.map(pat -> pat.de(state)), as.var() < 0 ? null : state.var(as), ty.de(state));
     }
   }
 
-  record Bind(boolean explicit, int var, @NotNull SerTerm ty) implements SerPat {
+  record Bind(boolean explicit, @NotNull SerTerm.SimpVar var, @NotNull SerTerm ty) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
       return new Pat.Bind(explicit, state.var(var), ty.de(state));
     }
@@ -48,13 +48,13 @@ public sealed interface SerPat extends Serializable {
 
   record Ctor(
     boolean explicit,
-    @NotNull SerDef.QName name, @NotNull ImmutableSeq<SerPat> params, int as,
+    @NotNull SerDef.QName name, @NotNull ImmutableSeq<SerPat> params, @NotNull SerTerm.SimpVar as,
     @NotNull SerTerm.DataCall ty
   ) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
       return new Pat.Ctor(
         explicit, state.def(name), params.map(param -> param.de(state)),
-        as < 0 ? null : state.var(as), ty.de(state));
+        as.var() < 0 ? null : state.var(as), ty.de(state));
     }
   }
 }

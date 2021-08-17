@@ -13,7 +13,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -28,8 +27,8 @@ public sealed interface SerTerm extends Serializable {
     @NotNull MutableMap<Integer, Sort.LvlVar> levelCache,
     @NotNull MutableMap<Integer, LocalVar> localCache
   ) {
-    public @NotNull LocalVar var(int var) {
-      return localCache.getOrPut(var, () -> new LocalVar(Constants.ANONYMOUS_PREFIX));
+    public @NotNull LocalVar var(@NotNull SimpVar var) {
+      return localCache.getOrPut(var.var, () -> new LocalVar(var.name));
     }
 
     @SuppressWarnings("unchecked")
@@ -44,9 +43,12 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
+  record SimpVar(int var, @NotNull String name) implements Serializable {
+  }
+
   @NotNull Term de(@NotNull DeState state);
 
-  record SerParam(boolean explicit, int var, @NotNull SerTerm term) implements Serializable {
+  record SerParam(boolean explicit, @NotNull SimpVar var, @NotNull SerTerm term) implements Serializable {
     public @NotNull Term.Param de(@NotNull DeState state) {
       return new Term.Param(state.var(var), term.de(state), explicit);
     }
@@ -70,7 +72,7 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Ref(int var, @NotNull SerTerm type) implements SerTerm {
+  record Ref(@NotNull SimpVar var, @NotNull SerTerm type) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new RefTerm(state.var(var), type.de(state));
     }
