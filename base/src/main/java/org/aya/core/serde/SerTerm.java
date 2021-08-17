@@ -6,11 +6,11 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
+import org.aya.api.concrete.ConcreteDecl;
+import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
-import org.aya.concrete.stmt.Decl;
-import org.aya.core.def.Def;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.util.Constants;
@@ -31,9 +31,13 @@ public sealed interface SerTerm extends Serializable {
       return localCache.getOrPut(var, () -> new LocalVar(Constants.ANONYMOUS_PREFIX));
     }
 
-    public @NotNull DefVar<?, ?> def(@NotNull ImmutableSeq<String> mod, @NotNull String name) {
-      return defCache.getOrPut(mod, MutableTreeMap::new).getOrPut(name,
-        () -> DefVar.<Def, Decl>core(null, name));
+    @SuppressWarnings("unchecked")
+    public <Core extends CoreDef, Concrete extends ConcreteDecl>
+    @NotNull DefVar<Core, Concrete> def(@NotNull SerDef.QName name) {
+      // We assume this cast to be safe
+      return (DefVar<Core, Concrete>) defCache
+        .getOrPut(name.mod(), MutableTreeMap::new)
+        .getOrPut(name.name(), () -> DefVar.<Core, Concrete>core(null, name.name()));
     }
   }
 
@@ -88,16 +92,52 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record App(@NotNull SerTerm of, @NotNull SerTerm arg, boolean explicit) implements SerTerm {
-    @Override public @NotNull Term de(@NotNull DeState state) {
-      return new ElimTerm.App(of.de(state), new Arg<>(arg.de(state), explicit));
+  record SerArg(@NotNull SerTerm arg, boolean explicit) implements Serializable {
+    public @NotNull Arg<Term> de(@NotNull DeState state) {
+      return new Arg<>(arg.de(state), explicit);
     }
   }
 
-  // TODO
-  record StructCall() implements SerTerm {
+  record App(@NotNull SerTerm of, @NotNull SerArg arg) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      throw new UnsupportedOperationException();
+      return new ElimTerm.App(of.de(state), arg.de(state));
+    }
+  }
+
+  record CallData(
+    @NotNull ImmutableSeq<SerLevel.Max> sortArgs,
+    @NotNull ImmutableSeq<SerArg> args
+  ) implements Serializable {
+    public @NotNull ImmutableSeq<Sort.CoreLevel> de(@NotNull MutableMap<Integer, Sort.LvlVar> levelCache) {
+      return sortArgs.map(max -> max.de(levelCache));
+    }
+
+    public @NotNull ImmutableSeq<Arg<Term>> de(@NotNull DeState state) {
+      return args.map(arg -> arg.de(state));
+    }
+  }
+
+  record StructCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new CallTerm.Struct(state.def(name), data.de(state.levelCache), data.de(state));
+    }
+  }
+
+  record FnCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new CallTerm.Fn(state.def(name), data.de(state.levelCache), data.de(state));
+    }
+  }
+
+  record DataCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new CallTerm.Data(state.def(name), data.de(state.levelCache), data.de(state));
+    }
+  }
+
+  record PrimCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+    @Override public @NotNull Term de(@NotNull DeState state) {
+      return new CallTerm.Prim(state.def(name), data.de(state.levelCache), data.de(state));
     }
   }
 
