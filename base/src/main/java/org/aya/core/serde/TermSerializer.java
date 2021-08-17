@@ -34,6 +34,13 @@ public final class TermSerializer implements
     return pat.accept(this, Unit.unit());
   }
 
+  private SerTerm.SerArg serializeArg(@NotNull Arg<@NotNull Term> termArg) {
+    return new SerTerm.SerArg(
+      serialize(termArg.term()),
+      termArg.explicit()
+    );
+  }
+
   public static record SerState(
     @NotNull MutableMap<Sort.LvlVar, Integer> levelCache,
     @NotNull MutableMap<LocalVar, Integer> localCache,
@@ -98,10 +105,7 @@ public final class TermSerializer implements
   }
 
   @Override public SerTerm visitApp(ElimTerm.@NotNull App term, Unit unit) {
-    return new SerTerm.App(
-      serialize(term.of()),
-      new SerTerm.SerArg(serialize(term.arg().term()), term.arg().explicit())
-    );
+    return new SerTerm.App(serialize(term.of()), serializeArg(term.arg()));
   }
 
   private @NotNull SerTerm.CallData serializeCallData(
@@ -109,11 +113,7 @@ public final class TermSerializer implements
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
     return new SerTerm.CallData(
       sortArgs.map(coreLevel -> SerLevel.ser(coreLevel, state.levelCache())),
-      args.map(termArg -> new SerTerm.SerArg(
-        serialize(termArg.term()),
-        termArg.explicit()
-      ))
-    );
+      args.map(this::serializeArg));
   }
 
   @Override public SerTerm visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
@@ -180,15 +180,9 @@ public final class TermSerializer implements
     return new SerTerm.Access(
       serialize(term.of()),
       state.def(term.ref()),
-      term.sortArgs().map(coreLevel -> SerLevel.ser( coreLevel, state.levelCache())),
-      term.structArgs().map(termArg -> new SerTerm.SerArg(
-        serialize(termArg.term()),
-        termArg.explicit()
-      )),
-      term.fieldArgs().map(termArg -> new SerTerm.SerArg(
-        serialize(termArg.term()),
-        termArg.explicit()
-      ))
+      term.sortArgs().map(coreLevel -> SerLevel.ser(coreLevel, state.levelCache())),
+      term.structArgs().map(this::serializeArg),
+      term.fieldArgs().map(this::serializeArg)
     );
   }
 
