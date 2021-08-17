@@ -6,20 +6,32 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
  */
-public final class TermSerializer implements Term.Visitor<Unit, SerTerm> {
+public final class TermSerializer implements
+  Term.Visitor<Unit, SerTerm>,
+  Pat.Visitor<Unit, SerPat> {
   public final @NotNull SerState state;
 
   public TermSerializer(@NotNull SerState state) {
     this.state = state;
+  }
+
+  public @NotNull SerTerm serialize(@NotNull Term term) {
+    return term.accept(this, Unit.unit());
+  }
+
+  public @NotNull SerPat serialize(@NotNull Pat pat) {
+    return pat.accept(this, Unit.unit());
   }
 
   public static record SerState(
@@ -27,6 +39,14 @@ public final class TermSerializer implements Term.Visitor<Unit, SerTerm> {
     @NotNull MutableMap<LocalVar, Integer> localCache,
     @NotNull MutableMap<DefVar<?, ?>, Integer> defCache
   ) {
+    public @NotNull SerTerm.SimpVar local(@NotNull LocalVar var) {
+      return new SerTerm.SimpVar(localCache.getOrPut(var, localCache::size), var.name());
+    }
+
+    public @NotNull SerTerm.SimpVar localMaybe(@Nullable LocalVar var) {
+      if (var == null) return new SerTerm.SimpVar(-1, "");
+      else return local(var);
+    }
   }
 
   @Override public SerTerm visitError(@NotNull ErrorTerm term, Unit unit) {
@@ -35,5 +55,26 @@ public final class TermSerializer implements Term.Visitor<Unit, SerTerm> {
 
   @Override public SerTerm visitHole(CallTerm.@NotNull Hole term, Unit unit) {
     throw new AssertionError("Shall not have holes serialized.");
+  }
+
+  @Override public SerPat visitBind(Pat.@NotNull Bind bind, Unit unit) {
+    return new SerPat.Bind(bind.explicit(), state.local(bind.as()), serialize(bind.type()));
+  }
+
+  @Override public SerPat visitTuple(Pat.@NotNull Tuple tuple, Unit unit) {
+    return new SerPat.Tuple(tuple.explicit(),
+      tuple.pats().map(this::serialize), state.localMaybe(tuple.as()), serialize(tuple.type()));
+  }
+
+  @Override public SerPat visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override public SerPat visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
+    return new SerPat.Absurd(absurd.explicit(), serialize(absurd.type()));
+  }
+
+  @Override public SerPat visitPrim(Pat.@NotNull Prim prim, Unit unit) {
+    throw new UnsupportedOperationException("TODO");
   }
 }
