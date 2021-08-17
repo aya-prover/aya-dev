@@ -2,10 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.serde;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.util.Arg;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
@@ -45,6 +47,15 @@ public final class TermSerializer implements
       if (var == null) return new SerTerm.SimpVar(-1, "");
       else return local(var);
     }
+
+    public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {
+      // todo: mod
+      return new SerDef.QName(
+        ImmutableSeq.empty(), // fixme
+        var.name(),
+        defCache.getOrPut(var, localCache::size)
+      );
+    }
   }
 
   private SerTerm.SerParam serializeParam(Term.Param param) {
@@ -77,6 +88,108 @@ public final class TermSerializer implements
 
   @Override public SerTerm visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
     return new SerTerm.Sigma(term.params().map(this::serializeParam));
+  }
+
+  @Override public SerTerm visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
+    return new SerTerm.Univ(
+      SerLevel.ser(term.sort().uLevel(), state.levelCache()),
+      SerLevel.ser(term.sort().hLevel(), state.levelCache())
+    );
+  }
+
+  @Override public SerTerm visitApp(ElimTerm.@NotNull App term, Unit unit) {
+    return new SerTerm.App(
+      serialize(term.of()),
+      new SerTerm.SerArg(serialize(term.arg().term()), term.arg().explicit())
+    );
+  }
+
+  private @NotNull SerTerm.CallData serializeCallData(
+    @NotNull ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs,
+    @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
+    return new SerTerm.CallData(
+      sortArgs.map(coreLevel -> SerLevel.ser(coreLevel, state.levelCache())),
+      args.map(termArg -> new SerTerm.SerArg(
+        serialize(termArg.term()),
+        termArg.explicit()
+      ))
+    );
+  }
+
+  @Override public SerTerm visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
+    return new SerTerm.FnCall(
+      state.def(fnCall.ref()),
+      serializeCallData(fnCall.sortArgs(), fnCall.args())
+    );
+  }
+
+  @Override public SerTerm visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {
+    return new SerTerm.DataCall(
+      state.def(dataCall.ref()),
+      serializeCallData(dataCall.sortArgs(), dataCall.args())
+    );
+  }
+
+  @Override public SerTerm visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
+    return new SerTerm.ConCall(
+      state.def(conCall.head().dataRef()),
+      state.def(conCall.head().ref()),
+      serializeCallData(conCall.head().sortArgs(), conCall.head().dataArgs()),
+      conCall.args().map(termArg -> new SerTerm.SerArg(
+        serialize(termArg.term()),
+        termArg.explicit()
+      ))
+    );
+  }
+
+  @Override public SerTerm visitStructCall(@NotNull CallTerm.Struct structCall, Unit unit) {
+    return new SerTerm.StructCall(
+      state.def(structCall.ref()),
+      serializeCallData(structCall.sortArgs(), structCall.args())
+    );
+  }
+
+  @Override public SerTerm visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
+    return new SerTerm.PrimCall(
+      state.def(prim.ref()),
+      serializeCallData(prim.sortArgs(), prim.args())
+    );
+  }
+
+  @Override public SerTerm visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {
+    return new SerTerm.Tup(
+      term.items().map(this::serialize)
+    );
+  }
+
+  @Override public SerTerm visitNew(IntroTerm.@NotNull New newTerm, Unit unit) {
+    return new SerTerm.New(new SerTerm.StructCall(
+      state.def(newTerm.struct().ref()),
+      serializeCallData(newTerm.struct().sortArgs(), newTerm.struct().args())
+    ));
+  }
+
+  @Override public SerTerm visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
+    return new SerTerm.Proj(
+      serialize(term.of()),
+      term.ix()
+    );
+  }
+
+  @Override public SerTerm visitAccess(CallTerm.@NotNull Access term, Unit unit) {
+    return new SerTerm.Access(
+      serialize(term.of()),
+      state.def(term.ref()),
+      term.sortArgs().map(coreLevel -> SerLevel.ser( coreLevel, state.levelCache())),
+      term.structArgs().map(termArg -> new SerTerm.SerArg(
+        serialize(termArg.term()),
+        termArg.explicit()
+      )),
+      term.fieldArgs().map(termArg -> new SerTerm.SerArg(
+        serialize(termArg.term()),
+        termArg.explicit()
+      ))
+    );
   }
 
   @Override public SerPat visitBind(Pat.@NotNull Bind bind, Unit unit) {
