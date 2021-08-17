@@ -17,15 +17,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ice1000
  */
-public final class TermSerializer implements
+public record TermSerializer(@NotNull TermSerializer.SerState state) implements
   Term.Visitor<Unit, SerTerm>,
   Pat.Visitor<Unit, SerPat> {
-  public final @NotNull SerState state;
-
-  public TermSerializer(@NotNull SerState state) {
-    this.state = state;
-  }
-
   public @NotNull SerTerm serialize(@NotNull Term term) {
     return term.accept(this, Unit.unit());
   }
