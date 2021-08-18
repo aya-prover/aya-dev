@@ -166,13 +166,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (level instanceof Level.Polymorphic) return levelEqns.markUsed(polymorphic);
     if (level instanceof Level.Maximum m)
       return Sort.CoreLevel.merge(m.among().map(l -> transformLevel(l, polymorphic)));
-    Level<Sort.LvlVar> core;
-    if (level instanceof Level.Reference<LevelGenVar> v)
-      core = new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), v.ref().kind(), null)), v.lift());
-    else if (level instanceof Level.Infinity<LevelGenVar>) core = new Level.Infinity<>();
-    else if (level instanceof Level.Constant<LevelGenVar> c) core = new Level.Constant<>(c.value());
-    else throw new IllegalArgumentException(level.toString());
-    return new Sort.CoreLevel(core);
+    return new Sort.CoreLevel(switch (level) {
+      case Level.Reference<LevelGenVar> v -> new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), v.ref().kind(), null)), v.lift());
+      case Level.Infinity<LevelGenVar> l -> new Level.Infinity<>();
+      case Level.Constant<LevelGenVar> c -> new Level.Constant<>(c.value());
+      default -> throw new IllegalArgumentException(level.toString());
+    });
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
