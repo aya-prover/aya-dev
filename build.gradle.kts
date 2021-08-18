@@ -172,7 +172,7 @@ val mergeJacocoReports = tasks.register<JacocoReport>("mergeJacocoReports") {
 
   reports { configureReports(true) }
   doLast {
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) exec {
+    if (Os.isFamily(Os.FAMILY_WINDOWS) && System.getenv("CI") != "true") exec {
       commandLine("explorer.exe", ".\\build\\reports\\jacoco\\mergeJacocoReports\\html\\index.html")
     }
   }

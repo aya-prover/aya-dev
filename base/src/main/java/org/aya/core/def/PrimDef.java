@@ -33,8 +33,7 @@ public final class PrimDef extends TopLevelDef {
     @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
     @NotNull String name
   ) {
-    //noinspection ConstantConditions
-    this(telescope, levels, result, unfold, DefVar.core(null, name));
+    this(telescope, levels, result, unfold, DefVar.empty(name));
     ref.core = this;
   }
 

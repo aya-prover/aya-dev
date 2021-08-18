@@ -37,7 +37,7 @@ public sealed interface SerTerm extends Serializable {
       // We assume this cast to be safe
       var dv = (DefVar<Core, Concrete>) defCache
         .getOrPut(name.mod(), MutableHashMap::new)
-        .getOrPut(name.id(), () -> DefVar.core(null, name.name()));
+        .getOrPut(name.id(), () -> DefVar.empty(name.name()));
       assert Objects.equals(name.name(), dv.name());
       return dv;
     }

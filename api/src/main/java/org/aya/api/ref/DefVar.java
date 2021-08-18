@@ -12,7 +12,9 @@ import org.jetbrains.annotations.UnknownNullability;
  * @author ice1000
  */
 public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> implements Var {
+  /** Initialized in parsing, so it might be null for deserialized user definitions. */
   public @UnknownNullability Concrete concrete;
+  /** Initialized in type checking or core deserialization, so it might be null for unchecked user definitions. */
   public @UnknownNullability Core core;
   private final @NotNull String name;
 
@@ -26,12 +28,16 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
     this.name = name;
   }
 
-  public static <Core extends CoreDef, Concrete extends ConcreteDecl> @NotNull DefVar<Core, Concrete> concrete(@NotNull Concrete concrete, @NotNull String name) {
+  /** Used in user definitions. */
+  public static <Core extends CoreDef, Concrete extends ConcreteDecl>
+  @NotNull DefVar<Core, Concrete> concrete(@NotNull Concrete concrete, @NotNull String name) {
     return new DefVar<>(concrete, null, name);
   }
 
-  public static <Core extends CoreDef, Concrete extends ConcreteDecl> @NotNull DefVar<Core, Concrete> core(Core core, @NotNull String name) {
-    return new DefVar<>(null, core, name);
+  /** Used in the serialization of core and primitive definitions. */
+  public static <Core extends CoreDef, Concrete extends ConcreteDecl>
+  @NotNull DefVar<Core, Concrete> empty(@NotNull String name) {
+    return new DefVar<>(null, null, name);
   }
 
   @Override public boolean equals(Object o) {

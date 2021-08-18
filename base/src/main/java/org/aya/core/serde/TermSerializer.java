@@ -117,7 +117,7 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
     );
   }
 
-  @Override public SerTerm visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {
+  @Override public SerTerm.DataCall visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {
     return new SerTerm.DataCall(
       state.def(dataCall.ref()),
       serializeCallData(dataCall.sortArgs(), dataCall.args())
@@ -129,10 +129,7 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
       state.def(conCall.head().dataRef()),
       state.def(conCall.head().ref()),
       serializeCallData(conCall.head().sortArgs(), conCall.head().dataArgs()),
-      conCall.args().map(termArg -> new SerTerm.SerArg(
-        serialize(termArg.term()),
-        termArg.explicit()
-      ))
+      conCall.args().map(this::serializeArg)
     );
   }
 
@@ -151,9 +148,7 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
   }
 
   @Override public SerTerm visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {
-    return new SerTerm.Tup(
-      term.items().map(this::serialize)
-    );
+    return new SerTerm.Tup(term.items().map(this::serialize));
   }
 
   @Override public SerTerm visitNew(IntroTerm.@NotNull New newTerm, Unit unit) {
@@ -164,10 +159,7 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
   }
 
   @Override public SerTerm visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
-    return new SerTerm.Proj(
-      serialize(term.of()),
-      term.ix()
-    );
+    return new SerTerm.Proj(serialize(term.of()), term.ix());
   }
 
   @Override public SerTerm visitAccess(CallTerm.@NotNull Access term, Unit unit) {
@@ -195,11 +187,7 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
       state.def(ctor.ref()),
       ctor.params().map(this::serialize),
       state.localMaybe(ctor.as()),
-      new SerTerm.DataCall(
-        state.def(ctor.type().ref()),
-        serializeCallData(ctor.type().sortArgs(), ctor.type().args())
-      )
-    );
+      visitDataCall(ctor.type(), unit));
   }
 
   @Override public SerPat visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
