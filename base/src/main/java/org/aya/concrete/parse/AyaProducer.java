@@ -295,18 +295,20 @@ public final class AyaProducer {
   }
 
   public @NotNull Expr visitExpr(AyaParser.ExprContext ctx) {
-    if (ctx instanceof AyaParser.SingleContext sin) return visitAtom(sin.atom());
-    if (ctx instanceof AyaParser.AppContext app) return visitApp(app);
-    if (ctx instanceof AyaParser.ProjContext proj) return visitProj(proj);
-    if (ctx instanceof AyaParser.PiContext pi) return visitPi(pi);
-    if (ctx instanceof AyaParser.SigmaContext sig) return visitSigma(sig);
-    if (ctx instanceof AyaParser.LamContext lam) return visitLam(lam);
-    if (ctx instanceof AyaParser.ArrContext arr) return visitArr(arr);
-    if (ctx instanceof AyaParser.NewContext n) return visitNew(n);
-    if (ctx instanceof AyaParser.LsucContext lsuc) return visitLsuc(lsuc);
-    if (ctx instanceof AyaParser.LmaxContext lmax) return visitLmax(lmax);
-    // TODO: match
-    throw new UnsupportedOperationException("TODO: " + ctx.getClass());
+    return switch (ctx) {
+      case AyaParser.SingleContext sin -> visitAtom(sin.atom());
+      case AyaParser.AppContext app -> visitApp(app);
+      case AyaParser.ProjContext proj -> visitProj(proj);
+      case AyaParser.PiContext pi -> visitPi(pi);
+      case AyaParser.SigmaContext sig -> visitSigma(sig);
+      case AyaParser.LamContext lam -> visitLam(lam);
+      case AyaParser.ArrContext arr -> visitArr(arr);
+      case AyaParser.NewContext n -> visitNew(n);
+      case AyaParser.LsucContext lsuc -> visitLsuc(lsuc);
+      case AyaParser.LmaxContext lmax -> visitLmax(lmax);
+      // TODO: match
+      default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
+    };
   }
 
   public @NotNull Expr visitLsuc(AyaParser.LsucContext ctx) {

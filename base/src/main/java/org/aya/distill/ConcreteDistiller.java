@@ -45,14 +45,16 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @NotNull private Doc visitDefVar(DefVar<?, ?> ref, Object concrete) {
-    if (concrete instanceof Decl.FnDecl) return linkRef(ref, FN_CALL);
-    else if (concrete instanceof Decl.DataDecl) return linkRef(ref, DATA_CALL);
-    else if (concrete instanceof Decl.DataCtor) return linkRef(ref, CON_CALL);
-    else if (concrete instanceof Decl.StructDecl) return linkRef(ref, STRUCT_CALL);
-    else if (concrete instanceof Decl.StructField) return linkRef(ref, FIELD_CALL);
-    else if (concrete instanceof Decl.PrimDecl) return linkRef(ref, FN_CALL);
-    else if (concrete instanceof Sample sample) return visitDefVar(ref, sample.delegate());
-    else return varDoc(ref);
+    return switch (concrete) {
+      case Decl.FnDecl d -> linkRef(ref, FN_CALL);
+      case Decl.DataDecl d -> linkRef(ref, DATA_CALL);
+      case Decl.DataCtor d -> linkRef(ref, CON_CALL);
+      case Decl.StructDecl d -> linkRef(ref, STRUCT_CALL);
+      case Decl.StructField d -> linkRef(ref, FIELD_CALL);
+      case Decl.PrimDecl d -> linkRef(ref, FN_CALL);
+      case Sample sample -> visitDefVar(ref, sample.delegate());
+      case null, default -> varDoc(ref);
+    };
   }
 
   @Override public Doc visitUnresolved(Expr.@NotNull UnresolvedExpr expr, Boolean nestedCall) {

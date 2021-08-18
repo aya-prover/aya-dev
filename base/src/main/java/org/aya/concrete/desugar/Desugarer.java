@@ -109,20 +109,21 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   }
 
   private @NotNull Level<LevelGenVar> levelVar(LevelGenVar.Kind kind, @NotNull Expr expr) throws DesugarInterruption {
-    if (expr instanceof Expr.LitIntExpr uLit) {
-      return new Level.Constant<>(uLit.integer());
-    } else if (expr instanceof Expr.LSucExpr uSuc) {
-      return levelVar(kind, uSuc.expr()).lift(1);
-    } else if (expr instanceof Expr.LMaxExpr uMax) {
-      return new Level.Maximum(uMax.levels().mapChecked(x -> levelVar(kind, x)));
-    } else if (expr instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof LevelGenVar lv) {
-      if (lv.kind() != kind) {
-        reporter.report(new LevelProblem.BadLevelKind(ref, lv.kind()));
-        throw new DesugarInterruption();
-      } else return new Level.Reference<>(lv);
-    } else {
-      reporter.report(new LevelProblem.BadLevelExpr(expr));
-      throw new ExprTycker.TyckerException();
+    switch (expr) {
+      case Expr.LitIntExpr uLit:
+        return new Level.Constant<>(uLit.integer());
+      case Expr.LSucExpr uSuc:
+        return levelVar(kind, uSuc.expr()).lift(1);
+      case Expr.LMaxExpr uMax:
+        return new Level.Maximum(uMax.levels().mapChecked(x -> levelVar(kind, x)));
+      case Expr.RefExpr ref && ref.resolvedVar() instanceof LevelGenVar lv:
+        if (lv.kind() != kind) {
+          reporter.report(new LevelProblem.BadLevelKind(ref, lv.kind()));
+          throw new DesugarInterruption();
+        } else return new Level.Reference<>(lv);
+      default:
+        reporter.report(new LevelProblem.BadLevelExpr(expr));
+        throw new ExprTycker.TyckerException();
     }
   }
 

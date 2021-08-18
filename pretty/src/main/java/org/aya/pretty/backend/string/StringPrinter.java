@@ -38,34 +38,21 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   }
 
   protected int predictWidth(@NotNull Cursor cursor, @NotNull Doc doc) {
-    if (doc instanceof Doc.Empty) {
-      return 0;
-    } else if (doc instanceof Doc.PlainText text) {
-      return text.text().length();
-    } else if (doc instanceof Doc.SpecialSymbol symbol) {
-      return symbol.text().length();
-    } else if (doc instanceof Doc.HyperLinked text) {
-      return predictWidth(cursor, text.doc());
-    } else if (doc instanceof Doc.Styled styled) {
-      return predictWidth(cursor, styled.doc());
-    } else if (doc instanceof Doc.Line) {
-      return 0;
-    } else if (doc instanceof Doc.FlatAlt alt) {
-      return predictWidth(cursor, alt.defaultDoc());
-    } else if (doc instanceof Doc.Cat cat) {
-      return cat.inner().view().map(inner -> predictWidth(cursor, inner)).reduce(Integer::sum);
-    } else if (doc instanceof Doc.Nest nest) {
-      return predictWidth(cursor, nest.doc()) + nest.indent();
-    } else if (doc instanceof Doc.Union union) {
-      return predictWidth(cursor, union.longerOne());
-    } else if (doc instanceof Doc.Column column) {
-      return predictWidth(cursor, column.docBuilder().apply(cursor.getCursor()));
-    } else if (doc instanceof Doc.Nesting nesting) {
-      return predictWidth(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
-    } else if (doc instanceof Doc.PageWidth pageWidth) {
-      return predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
-    }
-    throw new IllegalStateException("unreachable");
+    return switch (doc) {
+      case Doc.Empty d -> 0;
+      case Doc.PlainText text -> text.text().length();
+      case Doc.SpecialSymbol symbol -> symbol.text().length();
+      case Doc.HyperLinked text -> predictWidth(cursor, text.doc());
+      case Doc.Styled styled -> predictWidth(cursor, styled.doc());
+      case Doc.Line d -> 0;
+      case Doc.FlatAlt alt -> predictWidth(cursor, alt.defaultDoc());
+      case Doc.Cat cat -> cat.inner().view().map(inner -> predictWidth(cursor, inner)).reduce(Integer::sum);
+      case Doc.Nest nest -> predictWidth(cursor, nest.doc()) + nest.indent();
+      case Doc.Union union -> predictWidth(cursor, union.longerOne());
+      case Doc.Column column -> predictWidth(cursor, column.docBuilder().apply(cursor.getCursor()));
+      case Doc.Nesting nesting -> predictWidth(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
+      case Doc.PageWidth pageWidth -> predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
+    };
   }
 
   protected @NotNull Doc fitsBetter(@NotNull Cursor cursor, @NotNull Doc a, @NotNull Doc b) {
@@ -83,30 +70,21 @@ public class StringPrinter<StringConfig extends StringPrinterConfig>
   }
 
   protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc) {
-    if (doc instanceof Doc.PlainText text) {
-      renderPlainText(cursor, text.text());
-    } else if (doc instanceof Doc.SpecialSymbol symbol) {
-      renderSpecialSymbol(cursor, symbol.text());
-    } else if (doc instanceof Doc.HyperLinked text) {
-      renderHyperLinked(cursor, text);
-    } else if (doc instanceof Doc.Styled styled) {
-      renderStyled(cursor, styled);
-    } else if (doc instanceof Doc.Line) {
-      renderHardLineBreak(cursor);
-    } else if (doc instanceof Doc.FlatAlt alt) {
-      renderFlatAlt(cursor, alt);
-    } else if (doc instanceof Doc.Cat cat) {
-      cat.inner().forEach(inner -> renderDoc(cursor, inner));
-    } else if (doc instanceof Doc.Nest nest) {
-      renderNest(cursor, nest);
-    } else if (doc instanceof Doc.Union union) {
-      renderUnionDoc(cursor, union);
-    } else if (doc instanceof Doc.Column column) {
-      renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()));
-    } else if (doc instanceof Doc.Nesting nesting) {
-      renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
-    } else if (doc instanceof Doc.PageWidth pageWidth) {
-      renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
+    switch (doc) {
+      case Doc.PlainText text -> renderPlainText(cursor, text.text());
+      case Doc.SpecialSymbol symbol -> renderSpecialSymbol(cursor, symbol.text());
+      case Doc.HyperLinked text -> renderHyperLinked(cursor, text);
+      case Doc.Styled styled -> renderStyled(cursor, styled);
+      case Doc.Line d -> renderHardLineBreak(cursor);
+      case Doc.FlatAlt alt -> renderFlatAlt(cursor, alt);
+      case Doc.Cat cat -> cat.inner().forEach(inner -> renderDoc(cursor, inner));
+      case Doc.Nest nest -> renderNest(cursor, nest);
+      case Doc.Union union -> renderUnionDoc(cursor, union);
+      case Doc.Column column -> renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()));
+      case Doc.Nesting nesting -> renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()));
+      case Doc.PageWidth pageWidth -> renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
+      default -> {
+      }
     }
   }
 
