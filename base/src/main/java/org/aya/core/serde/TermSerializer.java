@@ -40,6 +40,10 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
     @NotNull MutableMap<LocalVar, Integer> localCache,
     @NotNull MutableMap<DefVar<?, ?>, Integer> defCache
   ) {
+    public SerState() {
+      this(MutableMap.create(), MutableMap.create(), MutableMap.create());
+    }
+
     public @NotNull SerTerm.SimpVar local(@NotNull LocalVar var) {
       return new SerTerm.SimpVar(localCache.getOrPut(var, localCache::size), var.name());
     }
@@ -54,7 +58,7 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
       return new SerDef.QName(
         ImmutableSeq.empty(), // fixme
         var.name(),
-        defCache.getOrPut(var, localCache::size)
+        defCache.getOrPut(var, defCache::size)
       );
     }
   }

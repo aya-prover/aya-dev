@@ -4,7 +4,6 @@ package org.aya.tyck;
 
 
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.def.PrimDef;
 import org.aya.test.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
  * @author ice1000
  */
 public class TyckExprTest {
-  private static @NotNull ExprTycker tycker() {
+  public static @NotNull ExprTycker tycker() {
     return new ExprTycker(ThrowingReporter.INSTANCE, null);
   }
 

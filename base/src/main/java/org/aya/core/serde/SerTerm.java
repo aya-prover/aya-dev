@@ -27,6 +27,10 @@ public sealed interface SerTerm extends Serializable {
     @NotNull MutableMap<Integer, Sort.LvlVar> levelCache,
     @NotNull MutableMap<Integer, LocalVar> localCache
   ) {
+    public DeState() {
+      this(MutableMap.create(), MutableMap.create(), MutableMap.create());
+    }
+
     public @NotNull LocalVar var(@NotNull SimpVar var) {
       return localCache.getOrPut(var.var, () -> new LocalVar(var.name));
     }
