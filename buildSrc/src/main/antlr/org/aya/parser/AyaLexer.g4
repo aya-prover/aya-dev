@@ -3,7 +3,7 @@ lexer grammar AyaLexer;
 INFIX : '`' ID '`';
 POSTFIX : '`' ID;
 
-// bind
+// operator precedence
 TIGHTER : 'tighter';
 LOOSER : 'looser';
 OP_APP : 'application';

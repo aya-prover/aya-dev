@@ -58,7 +58,7 @@ subprojects {
     options.apply {
       encoding = "UTF-8"
       isDeprecation = true
-      release.set(16)
+      release.set(17)
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
     }
   }
@@ -66,7 +66,7 @@ subprojects {
   tasks.withType<Javadoc>().configureEach {
     val options = options as StandardJavadocDocletOptions
     options.addBooleanOption("-enable-preview", true)
-    options.addStringOption("-source", "16")
+    options.addStringOption("-source", "17")
     options.encoding("UTF-8")
     options.tags(
       "apiNote:a:API Note:",
