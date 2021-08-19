@@ -49,7 +49,7 @@ public record FileModuleLoader(
     var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
-        return tyckModule(recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports;
+        return tyckModule(path.toImmutableSeq(), recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports;
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
       return null;
@@ -63,6 +63,7 @@ public record FileModuleLoader(
   }
 
   public static <E extends Exception> @NotNull PhysicalModuleContext tyckModule(
+    @NotNull ImmutableSeq<@NotNull String> path,
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
@@ -70,7 +71,7 @@ public record FileModuleLoader(
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
-    var context = new EmptyContext(reporter).derive();
+    var context = new EmptyContext(reporter).derive(path.toImmutableSeq());
     var shallowResolver = new StmtShallowResolver(recurseLoader);
     program.forEach(s -> s.accept(shallowResolver, context));
     var opSet = new BinOpSet(reporter);

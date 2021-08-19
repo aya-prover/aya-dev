@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.context;
 
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.SourcePos;
@@ -21,10 +22,18 @@ public final class PhysicalModuleContext implements ModuleContext {
   public final @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
   public final @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
 
+  private final @NotNull ImmutableSeq<String> moduleName;
+
+  @Override
+  public @NotNull ImmutableSeq<String> moduleName() {
+    return moduleName;
+  }
+
   private @Nullable NoExportContext exampleContext;
 
-  public PhysicalModuleContext(@NotNull Context parent) {
+  public PhysicalModuleContext(@NotNull Context parent, @NotNull ImmutableSeq<String> moduleName) {
     this.parent = parent;
+    this.moduleName = moduleName;
   }
 
   @Override public void importModule(

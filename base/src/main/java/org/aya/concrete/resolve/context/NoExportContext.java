@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.context;
 
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.ref.Var;
@@ -17,6 +18,11 @@ public record NoExportContext(
   @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions,
   @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules
 ) implements ModuleContext {
+  @Override
+  public @NotNull ImmutableSeq<String> moduleName() {
+    return parent.moduleName().appended(":NoExport");
+  }
+
   public NoExportContext(@NotNull PhysicalModuleContext parent) {
     this(parent, MutableMap.create(),
       MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of()));

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import org.aya.api.distill.AyaDocile;
@@ -54,7 +55,7 @@ public record SingleFileCompiler(
       distill(sourceFile, distillInfo, program, CliArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
-      FileModuleLoader.tyckModule(loader, program, reporter,
+      FileModuleLoader.tyckModule(ImmutableSeq.of("Mian"), loader, program, reporter,
         () -> {
           distill(sourceFile, distillInfo, program, CliArgs.DistillStage.scoped);
           onResolved.accept(program);

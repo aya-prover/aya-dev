@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   @Override public Unit visitModule(Command.@NotNull Module mod, @NotNull ModuleContext context) {
-    var newCtx = context.derive();
+    var newCtx = context.derive(mod.name());
     visitAll(mod.contents(), newCtx);
     context.importModules(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports, mod.sourcePos());
     return Unit.unit();
@@ -73,6 +73,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   }
 
   private Unit visitDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
+    decl.ref().module = context.moduleName();
     context.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
     if (decl instanceof OpDecl opDecl) {
       visitOperator(context, opDecl, decl.accessibility, decl.ref(), decl.sourcePos);
@@ -91,7 +92,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
 
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
-    var dataInnerCtx = context.derive();
+    var dataInnerCtx = context.derive(decl.ref().name());
     var ctorSymbols = decl.body.toImmutableSeq()
       .map(ctor -> {
         dataInnerCtx.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
@@ -113,7 +114,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
-    var structInnerCtx = context.derive();
+    var structInnerCtx = context.derive(decl.ref().name());
     decl.fields.forEach(field -> structInnerCtx
       .addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos));
     decl.ctx = structInnerCtx;
@@ -136,7 +137,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   }
 
   @Override public Unit visitCounterexample(Sample.@NotNull Counter example, @NotNull ModuleContext context) {
-    var childCtx = exampleContext(context).derive();
+    var childCtx = exampleContext(context).derive("counter");
     var delegate = example.delegate();
     delegate.ctx = childCtx;
     childCtx.addGlobalSimple(Stmt.Accessibility.Private, delegate.ref(), delegate.sourcePos);

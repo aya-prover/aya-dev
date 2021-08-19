@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TyckDeclTest {
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = ParseTest.parseDecl(code)._1;
-    decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
+    decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
     var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
     decl.resolve(opSet);
     opSet.sort();
@@ -66,7 +66,7 @@ public class TyckDeclTest {
     var decls = new AyaProducer(SourceFile.NONE,
       ThrowingReporter.INSTANCE).visitProgram(AyaParsing.parser(text).program());
     var ssr = new StmtShallowResolver(new EmptyModuleLoader());
-    var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive();
+    var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
     decls.forEach(d -> d.accept(ssr, ctx));
     var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
     decls.forEach(s -> s.resolve(opSet));

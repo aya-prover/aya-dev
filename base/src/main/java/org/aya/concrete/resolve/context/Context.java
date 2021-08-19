@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.context;
 
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -30,6 +31,12 @@ public interface Context {
   @Nullable Context parent();
 
   @NotNull Reporter reporter();
+
+  default @NotNull ImmutableSeq<String> moduleName() {
+    var p = parent();
+    if (p == null) return ImmutableSeq.of();
+    else return p.moduleName();
+  }
 
   @Contract("_->fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
     reporter().report(problem);
@@ -117,8 +124,12 @@ public interface Context {
     return new BindContext(this, name, ref);
   }
 
-  default @NotNull PhysicalModuleContext derive() {
-    return new PhysicalModuleContext(this);
+  default @NotNull PhysicalModuleContext derive(@NotNull String extraName) {
+    return new PhysicalModuleContext(this, this.moduleName().appended(extraName));
+  }
+
+  default @NotNull PhysicalModuleContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
+    return new PhysicalModuleContext(this, this.moduleName().concat(extraName));
   }
 
   class ResolvingInterruptedException extends InterruptException {
