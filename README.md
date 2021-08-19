@@ -5,8 +5,9 @@
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
 [![tokei]](https://github.com/XAMPPRocky/tokei)
 
-You need Java SE 16 to set this project up. This also means if your choice of IDE is IntelliJ IDEA, you need version
-2021.1 or higher. If you have problems downloading dependencies (like you are in China), check out [how to][proxy] let
+You need Java SE 17 (release-candidates available at <https://jdk.java.net/17/>) to set this project up.
+This also means if your choice of IDE is IntelliJ IDEA, you need version 2021.2 or higher.
+If you have problems downloading dependencies (like you are in China), check out [how to][proxy] let
 gradle use proxies.
 
 ```bash
@@ -27,12 +28,14 @@ gradle use proxies.
 ```
 
 + Ask [@ice1000] to get access to the development repository.
-  + Do not create pull requests directly. Ask before doing anything.
-+ Questions opened as issues will be answered.
-+ Aya is under active development. Nothing guaranteed, but we can share something here:
+  + If you want to contribute, ask before doing anything.
+    We will tell you about our plans.
++ Questions or concerns are welcomed in the discussion area. 
+  We will try our best to answer your questions, but please be nice.
++ Aya is under active development. Nothing guaranteed! However, we can share some cool stuffs here:
   + Dependent types, including pi-types, sigma types, etc. You could write a [type-safe interpreter][gadt].
-  + Overlapping patterns. Very [useful][oop] in theorem proving.
   + Arend-ish interval type which is used to define the HoTT [path type][path].
+  + Overlapping patterns. Very [useful][oop] in theorem proving.
 
 [@ice1000]: https://github.com/ice1000
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
