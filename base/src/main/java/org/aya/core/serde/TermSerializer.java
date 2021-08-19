@@ -54,9 +54,9 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
     }
 
     public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {
-      // todo: mod
+      assert var.module != null;
       return new SerDef.QName(
-        ImmutableSeq.empty(), // fixme
+        var.module,
         var.name(),
         defCache.getOrPut(var, defCache::size)
       );
