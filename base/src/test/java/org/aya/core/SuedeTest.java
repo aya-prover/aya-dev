@@ -5,7 +5,7 @@ package org.aya.core;
 import kala.tuple.Unit;
 import org.aya.core.def.FnDef;
 import org.aya.core.serde.SerTerm;
-import org.aya.core.serde.TermSerializer;
+import org.aya.core.serde.Serializer;
 import org.aya.tyck.TyckDeclTest;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public class SuedeTest {
   private void suedeLastTerm(@Language("TEXT") @NotNull String code) {
     var defs = TyckDeclTest.successTyckDecls(code);
     var lastTerm = ((FnDef) defs.last()).body.getLeftValue();
-    var ser = lastTerm.accept(new TermSerializer(new TermSerializer.SerState()), Unit.unit());
+    var ser = lastTerm.accept(new Serializer(new Serializer.State()), Unit.unit());
     assertNotNull(ser);
     assertNotNull(ser.de(new SerTerm.DeState()));
   }

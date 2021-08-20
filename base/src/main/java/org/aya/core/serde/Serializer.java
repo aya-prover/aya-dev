@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ice1000
  */
-public record TermSerializer(@NotNull TermSerializer.SerState state) implements
+public record Serializer(@NotNull Serializer.State state) implements
   Term.Visitor<Unit, SerTerm>,
   Pat.Visitor<Unit, SerPat> {
   public @NotNull SerTerm serialize(@NotNull Term term) {
@@ -35,12 +35,12 @@ public record TermSerializer(@NotNull TermSerializer.SerState state) implements
     );
   }
 
-  public static record SerState(
+  public static record State(
     @NotNull MutableMap<Sort.LvlVar, Integer> levelCache,
     @NotNull MutableMap<LocalVar, Integer> localCache,
     @NotNull MutableMap<DefVar<?, ?>, Integer> defCache
   ) {
-    public SerState() {
+    public State() {
       this(MutableMap.create(), MutableMap.create(), MutableMap.create());
     }
 

@@ -71,7 +71,7 @@ public record FileModuleLoader(
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
-    var context = new EmptyContext(reporter).derive(path.toImmutableSeq());
+    var context = new EmptyContext(reporter).derive(path);
     var shallowResolver = new StmtShallowResolver(recurseLoader);
     program.forEach(s -> s.accept(shallowResolver, context));
     var opSet = new BinOpSet(reporter);
