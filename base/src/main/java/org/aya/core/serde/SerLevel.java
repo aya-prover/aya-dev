@@ -51,8 +51,12 @@ public sealed interface SerLevel extends Serializable {
     return switch (level) {
       case Level.Constant<Sort.LvlVar> constant -> new Const(constant.value());
       case Level.Infinity<Sort.LvlVar> l -> new Const(-1);
-      case Level.Reference<Sort.LvlVar> ref -> new Ref(new LvlVar(cache.getOrPut(ref.ref(), cache::size), ref.ref().kind()), ref.lift());
+      case Level.Reference<Sort.LvlVar> ref -> new Ref(ser(ref.ref(), cache), ref.lift());
       default -> throw new IllegalStateException(level.toString());
     };
+  }
+
+  static LvlVar ser(Sort.@NotNull LvlVar ref, @NotNull MutableMap<Sort.LvlVar, Integer> cache) {
+    return new LvlVar(cache.getOrPut(ref, cache::size), ref.kind());
   }
 }

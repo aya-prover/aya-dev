@@ -8,6 +8,7 @@ import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
+import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
@@ -27,8 +28,12 @@ public record Serializer(@NotNull Serializer.State state) implements
     return term.accept(this, Unit.unit());
   }
 
-  public @NotNull SerPat serialize(@NotNull Pat pat) {
+  private @NotNull SerPat serialize(@NotNull Pat pat) {
     return pat.accept(this, Unit.unit());
+  }
+
+  private @NotNull SerPat.Matchy serialize(@NotNull Matching matchy) {
+    return new SerPat.Matchy(serializePats(matchy.patterns()), serialize(matchy.body()));
   }
 
   private SerTerm.SerArg serialize(@NotNull Arg<@NotNull Term> termArg) {
@@ -107,6 +112,10 @@ public record Serializer(@NotNull Serializer.State state) implements
     return sortArgs.map(this::serialize);
   }
 
+  private @NotNull ImmutableSeq<SerPat> serializePats(@NotNull ImmutableSeq<Pat> pats) {
+    return pats.map(this::serialize);
+  }
+
   @Override public SerTerm visitApp(ElimTerm.@NotNull App term, Unit unit) {
     return new SerTerm.App(serialize(term.of()), serialize(term.arg()));
   }
@@ -177,14 +186,14 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   @Override public SerPat visitTuple(Pat.@NotNull Tuple tuple, Unit unit) {
     return new SerPat.Tuple(tuple.explicit(),
-      tuple.pats().map(this::serialize), state.localMaybe(tuple.as()), serialize(tuple.type()));
+      serializePats(tuple.pats()), state.localMaybe(tuple.as()), serialize(tuple.type()));
   }
 
   @Override public SerPat visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
     return new SerPat.Ctor(
       ctor.explicit(),
       state.def(ctor.ref()),
-      ctor.params().map(this::serialize),
+      serializePats(ctor.params()),
       state.localMaybe(ctor.as()),
       visitDataCall(ctor.type(), unit));
   }
@@ -198,7 +207,10 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerDef visitFn(@NotNull FnDef def, Unit unit) {
-    throw new UnsupportedOperationException();
+    return new SerDef.Fn(state.def(def.ref), serializeParams(def.telescope),
+      def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
+      def.body.map(this::serialize, matchings -> matchings.map(this::serialize)),
+      serialize(def.result));
   }
 
   @Override public SerDef visitData(@NotNull DataDef def, Unit unit) {
