@@ -15,18 +15,19 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class SuedeTest {
   @Test public void simpleExpr() {
-    suedeLastTerm("""
+    @Language("TEXT") var natPlus = """
       open data Nat : Set | zero | suc Nat
       def add (a b : Nat) : Nat
        | zero, a => a
-       | suc a, b => suc (add a b)
-      def test (a : Nat) => \\x => add a (add x zero)""");
-    suedeLastTerm("def test => Pi (x : Set (lsuc 1)) -> Sig x ** x");
+       | suc a, b => suc (add a b)""";
+    suedeLastDef(natPlus);
+    suedeLastDef(natPlus + "\n def test (a : Nat) => \\x => add a (add x zero)");
+    suedeLastDef("def test (y : Set) => Pi (x : Set -> Set (lsuc 1)) -> Sig (x y) ** x y");
   }
 
-  private void suedeLastTerm(@Language("TEXT") @NotNull String code) {
+  private void suedeLastDef(@Language("TEXT") @NotNull String code) {
     var defs = TyckDeclTest.successTyckDecls(code);
-    var lastTerm = ((FnDef) defs.last()).body.getLeftValue();
+    var lastTerm = (FnDef) defs.last();
     var ser = lastTerm.accept(new Serializer(new Serializer.State()), Unit.unit());
     assertNotNull(ser);
     assertNotNull(ser.de(new SerTerm.DeState()));
