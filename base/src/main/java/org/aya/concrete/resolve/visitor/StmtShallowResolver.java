@@ -95,8 +95,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
     var dataInnerCtx = context.derive(decl.ref().name());
     var ctorSymbols = decl.body.toImmutableSeq()
       .map(ctor -> {
-        dataInnerCtx.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
-        visitOperator(context, ctor, Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
+        visitCtor(ctor, dataInnerCtx);
         return Tuple2.of(ctor.ref.name(), ctor.ref);
       });
 
@@ -115,8 +114,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     var structInnerCtx = context.derive(decl.ref().name());
-    decl.fields.forEach(field -> structInnerCtx
-      .addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos));
+    decl.fields.forEach(field -> visitField(field, structInnerCtx));
     decl.ctx = structInnerCtx;
     return Unit.unit();
   }
@@ -151,10 +149,15 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   }
 
   @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
-    throw new UnsupportedOperationException();
+    ctor.ref().module = context.moduleName();
+    context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
+    visitOperator(context, ctor, Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
+    return Unit.unit();
   }
 
   @Override public Unit visitField(@NotNull Decl.StructField field, @NotNull ModuleContext context) {
-    throw new UnsupportedOperationException();
+    field.ref().module = context.moduleName();
+    context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
+    return Unit.unit();
   }
 }
