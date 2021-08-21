@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestRunner {
   public static final @NotNull Path TEST_SOURCE_DIR = Paths.get("src", "test", "resources").toAbsolutePath();
-  public static @NotNull SourceFileLocator LOCATOR = new SourceFileLocator() {
+  public static final @NotNull SourceFileLocator LOCATOR = new SourceFileLocator() {
   };
 
   @BeforeAll public static void startDash() {

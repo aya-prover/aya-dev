@@ -7,7 +7,7 @@ import org.aya.pretty.printer.PrinterConfig;
 import org.jetbrains.annotations.NotNull;
 
 public class StringPrinterConfig extends PrinterConfig.Basic {
-  public @NotNull StringStylist formatter;
+  public final @NotNull StringStylist formatter;
   public final boolean unicode;
 
   public StringPrinterConfig(@NotNull StringStylist formatter, int pageWidth, boolean unicode) {

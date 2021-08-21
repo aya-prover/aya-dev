@@ -5,9 +5,12 @@ package org.aya.pretty.printer;
 import org.aya.pretty.style.AyaStyleFamily;
 import org.aya.pretty.style.EmacsColorScheme;
 
+/**
+ * @author kiva
+ */
 public abstract class Stylist {
-  protected ColorScheme colorScheme;
-  protected StyleFamily styleFamily;
+  protected final ColorScheme colorScheme;
+  protected final StyleFamily styleFamily;
 
   public Stylist() {
     this(EmacsColorScheme.INSTANCE, AyaStyleFamily.INSTANCE);

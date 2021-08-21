@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core;
 
-import org.aya.concrete.ParseTest;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;

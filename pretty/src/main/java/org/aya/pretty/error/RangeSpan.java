@@ -14,7 +14,6 @@ public record RangeSpan(
 ) implements Span {
   public static @NotNull RangeSpan from(@NotNull String input, int start, int end) {
     if (start < 0 || end < 0
-      || start >= input.length()
       || end >= input.length()
       || end < start) {
       throw new IndexOutOfBoundsException();

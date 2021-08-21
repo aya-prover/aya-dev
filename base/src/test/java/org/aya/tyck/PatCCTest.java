@@ -7,7 +7,6 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.Matching;
 import org.aya.core.def.FnDef;
-import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.pat.PatClassifier;

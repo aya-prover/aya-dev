@@ -7,7 +7,6 @@ import kala.collection.mutable.Buffer;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
-import org.aya.core.def.PrimDef;
 import org.aya.core.visitor.RefFinder;
 import org.aya.tyck.TyckDeclTest;
 import org.junit.jupiter.api.Test;

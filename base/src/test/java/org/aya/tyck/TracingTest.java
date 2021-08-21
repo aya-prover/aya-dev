@@ -3,7 +3,6 @@
 package org.aya.tyck;
 
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.def.PrimDef;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
