@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record CollectingReporter(@NotNull Buffer<@NotNull Problem> problems) implements Reporter {
   public CollectingReporter() {
-    this(Buffer.of());
+    this(Buffer.create());
   }
 
   @Override public void report(@NotNull Problem problem) {

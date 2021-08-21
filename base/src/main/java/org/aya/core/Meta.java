@@ -48,7 +48,7 @@ public final class Meta {
     @NotNull Term result, @NotNull SourcePos sourcePos
   ) {
     if (result instanceof FormTerm.Pi pi) {
-      var buf = Buffer.<Term.Param>of();
+      var buf = Buffer.<Term.Param>create();
       var r = pi.parameters(buf);
       return new Meta(contextTele, buf.toImmutableSeq(), r, sourcePos);
     } else return new Meta(contextTele, ImmutableSeq.empty(), result, sourcePos);

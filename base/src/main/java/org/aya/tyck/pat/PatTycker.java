@@ -110,7 +110,7 @@ public record PatTycker(
   }
 
   public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
-    var results = Buffer.<Pat>of();
+    var results = Buffer.<Pat>create();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
         // TODO[ice]: report error
@@ -155,7 +155,7 @@ public record PatTycker(
     }
     // sig.result is a dummy term
     var sig = new Def.Signature(
-      ImmutableSeq.of(),
+      ImmutableSeq.empty(),
       sigma.params(),
       FormTerm.Univ.OMEGA);
     if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), sigma);
@@ -186,7 +186,7 @@ public record PatTycker(
     var value = bind.resolved().value;
     if (value != null) subst.good().putIfAbsent(v, value);
     else subst.bad().add(v);
-    return new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.of(), null, selected._1);
+    return new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.empty(), null, selected._1);
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
@@ -201,7 +201,7 @@ public record PatTycker(
     ctor.resolved().value = ctorRef;
     var ctorCore = ctorRef.core;
     final var dataCall = realCtor._1;
-      var sig = new Ref<>(new Def.Signature(ImmutableSeq.of(),
+      var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(),
       Term.Param.subst(ctorCore.selfTele, realCtor._2,
         Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs())), dataCall));
     var patterns = visitPatterns(sig, ctor.params());

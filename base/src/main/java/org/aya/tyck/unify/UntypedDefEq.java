@@ -195,7 +195,7 @@ public record UntypedDefEq(
     @NotNull DefVar<? extends Def, ? extends Decl> def,
     ImmutableSeq<Sort.@NotNull CoreLevel> l, ImmutableSeq<Sort.@NotNull CoreLevel> r
   ) {
-    var levelSubst = new LevelSubst.Simple(MutableMap.of());
+    var levelSubst = new LevelSubst.Simple(MutableMap.create());
     for (var levels : l.zip(r).zip(Def.defLevels(def))) {
       defeq.levelEqns.add(levels._1._1, levels._1._2, cmp, defeq.pos);
       levelSubst.solution().put(levels._2, levels._1._1);
@@ -221,7 +221,7 @@ public record UntypedDefEq(
   }
 
   @NotNull private Term getType(@NotNull CallTerm lhs, @NotNull DefVar<? extends Def, ?> lhsRef) {
-    var substMap = MutableMap.<Var, Term>of();
+    var substMap = MutableMap.<Var, Term>create();
     for (var pa : lhs.args().view().zip(lhsRef.core.telescope().view())) {
       substMap.set(pa._2.ref(), pa._1.term());
     }

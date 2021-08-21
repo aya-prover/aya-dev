@@ -10,7 +10,7 @@ public record DelayedReporter(
   @NotNull Buffer<Problem> problems
 ) implements Reporter, AutoCloseable {
   public DelayedReporter(@NotNull Reporter delegated) {
-    this(delegated, Buffer.of());
+    this(delegated, Buffer.create());
   }
 
   @Override public void report(@NotNull Problem problem) {

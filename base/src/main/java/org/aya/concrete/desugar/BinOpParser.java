@@ -48,7 +48,7 @@ public final class BinOpParser {
     }
 
     // insert \app operator between elems
-    var seqWithApp = Buffer.<BinOpParser.Elem>of();
+    var seqWithApp = Buffer.<BinOpParser.Elem>create();
     boolean lastIsUsedAsOp = false;
     for (var expr : seq) {
       if (expr.isNotUsedAsOp(opSet)) {

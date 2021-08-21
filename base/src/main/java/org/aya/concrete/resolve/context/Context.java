@@ -34,7 +34,7 @@ public interface Context {
 
   default @NotNull ImmutableSeq<String> moduleName() {
     var p = parent();
-    if (p == null) return ImmutableSeq.of();
+    if (p == null) return ImmutableSeq.empty();
     else return p.moduleName();
   }
 

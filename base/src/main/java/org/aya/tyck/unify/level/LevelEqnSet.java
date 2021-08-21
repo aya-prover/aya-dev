@@ -27,7 +27,7 @@ public record LevelEqnSet(
   @NotNull MutableMap<Sort.LvlVar, Sort.CoreLevel> solution
 ) implements LevelSubst.Default {
   public LevelEqnSet() {
-    this(Buffer.of(), Buffer.of(), MutableMap.of());
+    this(Buffer.create(), Buffer.create(), MutableMap.create());
   }
 
   public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
@@ -111,14 +111,16 @@ public record LevelEqnSet(
     }
 
     @TestOnly public @NotNull String forZZS(@NotNull Level<Sort.LvlVar> level) {
-      if (level instanceof Level.Reference<Sort.LvlVar> reference) {
-        var r = reference.ref();
-        return "new Reference(new Var(\"" + r.name() + "\", " + (r.kind() == LevelGenVar.Kind.Homotopy) + ", " + r.kind().defaultValue + ", " + r.free() + "), " + reference.lift() + ")";
-      } else if (level instanceof Level.Constant<Sort.LvlVar> constant) {
-        return "new Const(" + constant.value() + ")";
-      } else if (level instanceof Level.Infinity<Sort.LvlVar>) {
-        return "new Infinity()";
-      } else return "";
+      return switch (level) {
+        case Level.Reference<Sort.LvlVar> ref -> {
+          var r = ref.ref();
+          yield "new Reference(new Var(\"" + r.name() + "\", " + (r.kind() == LevelGenVar.Kind.Homotopy) +
+            ", " + r.kind().defaultValue + ", " + r.free() + "), " + ref.lift() + ")";
+        }
+        case Level.Constant<Sort.LvlVar> constant -> "new Const(" + constant.value() + ")";
+        case Level.Infinity<Sort.LvlVar> l -> "new Infinity()";
+        default -> "";
+      };
     }
 
     @TestOnly public void forZZS(@NotNull StringBuilder builder) {

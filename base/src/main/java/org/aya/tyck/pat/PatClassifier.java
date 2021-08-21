@@ -57,8 +57,8 @@ public record PatClassifier(
         var rhsInfo = contents.get(i);
         var lhs = lhsInfo._2;
         var rhs = rhsInfo._2;
-        var lhsSubst = new Substituter.TermSubst(MutableMap.of());
-        var rhsSubst = new Substituter.TermSubst(MutableMap.of());
+        var lhsSubst = new Substituter.TermSubst(MutableMap.create());
+        var rhsSubst = new Substituter.TermSubst(MutableMap.create());
         PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
         var lhsTerm = lhs.body().subst(lhsSubst);
         var rhsTerm = rhs.body().subst(rhsSubst);
@@ -97,7 +97,7 @@ public record PatClassifier(
       return classifySub(hasTuple, coverage);
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
-    var buffer = Buffer.<PatClass>of();
+    var buffer = Buffer.<PatClass>create();
     var lrSplit = subPatsSeq.view()
       .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
       .firstOption();

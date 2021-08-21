@@ -31,11 +31,13 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
   }
   static @NotNull ImmutableSeq<Sort.LvlVar> defLevels(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     var core = defVar.core;
-    if (core instanceof TopLevelDef topLevel) return topLevel.levels;
-    else if (core instanceof CtorDef ctor) return defLevels(ctor.dataRef);
-    else if (core instanceof FieldDef field) return defLevels(field.structRef);
+    return switch (core) {
+      case TopLevelDef topLevel -> topLevel.levels;
+      case CtorDef ctor -> defLevels(ctor.dataRef);
+      case FieldDef field -> defLevels(field.structRef);
       // guaranteed as this is already a core term
-    else return Objects.requireNonNull(defVar.concrete.signature).sortParam();
+      case null, default -> Objects.requireNonNull(defVar.concrete.signature).sortParam();
+    };
   }
   static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.result();

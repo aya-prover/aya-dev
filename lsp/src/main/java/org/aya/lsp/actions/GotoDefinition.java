@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * @author ice1000, kiva
  */
 public class GotoDefinition implements StmtConsumer<XY> {
-  public final @NotNull Buffer<WithPos<Var>> locations = Buffer.of();
+  public final @NotNull Buffer<WithPos<Var>> locations = Buffer.create();
 
   @NotNull
   public static List<LocationLink> invoke(@NotNull DefinitionParams params, @NotNull AyaService.AyaFile loadedFile) {

@@ -36,7 +36,7 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
     if (result == null) return null;
     else if (result.size() == 1) return result.iterator().next().getValue();
     else {
-      var disamb = Buffer.<Seq<String>>of();
+      var disamb = Buffer.<Seq<String>>create();
       result.forEach((k, v) -> disamb.append(k));
       return reportAndThrow(new AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
     }

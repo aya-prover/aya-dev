@@ -25,7 +25,7 @@ public class UsagesTest {
        | neg n => n
       open data Fin (n : Nat) : Set | suc m => fzero | suc m => fsuc (Fin m)
       """).forEach(def -> {
-      var of = Buffer.<Def>of();
+      var of = Buffer.<Def>create();
       def.accept(RefFinder.HEADER_AND_BODY, of);
       assertFalse(of.isEmpty());
       of.clear();

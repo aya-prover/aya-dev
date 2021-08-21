@@ -86,7 +86,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, BinOpSet opSet) {
-    var signatureResolver = new ExprResolver(true, Buffer.of());
+    var signatureResolver = new ExprResolver(true, Buffer.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
@@ -102,7 +102,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, BinOpSet opSet) {
-    var signatureResolver = new ExprResolver(true, Buffer.of());
+    var signatureResolver = new ExprResolver(true, Buffer.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
@@ -121,7 +121,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, BinOpSet opSet) {
-    var signatureResolver = new ExprResolver(true, Buffer.of());
+    var signatureResolver = new ExprResolver(true, Buffer.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);

@@ -63,7 +63,7 @@ public class TestRunner {
 
       System.out.print(file.getFileName() + " ---> ");
       new SingleFileCompiler(reporter, LOCATOR, null)
-        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
+        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.empty()));
 
       postRun(file, expectSuccess, hookOut.toString(StandardCharsets.UTF_8), reporter);
     } catch (IOException e) {

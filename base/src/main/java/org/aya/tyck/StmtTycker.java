@@ -74,7 +74,7 @@ public record StmtTycker(
         throw new ExprTycker.TyckerException();
       }
       var result = decl.result.accept(tycker, null).wellTyped();
-      var levelSubst = new LevelSubst.Simple(MutableMap.of());
+      var levelSubst = new LevelSubst.Simple(MutableMap.create());
       // Homotopy level goes first
       var levels = tycker.extractLevels();
       for (var lvl : core.levels.zip(levels))

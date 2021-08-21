@@ -128,11 +128,13 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
   }
 
   private HighlightResult.Symbol.@NotNull Kind kindOf(@NotNull OpDecl opDecl) {
-    if (opDecl instanceof Decl.FnDecl) return HighlightResult.Symbol.Kind.FnCall;
-    else if (opDecl instanceof Decl.StructDecl) return HighlightResult.Symbol.Kind.StructCall;
-    else if (opDecl instanceof Decl.PrimDecl) return HighlightResult.Symbol.Kind.PrimCall;
-    else if (opDecl instanceof Decl.DataCtor) return HighlightResult.Symbol.Kind.ConCall;
-    else throw new IllegalArgumentException("Unsupported operator: " + opDecl.getClass().getName());
+    return switch (opDecl) {
+      case Decl.FnDecl d -> HighlightResult.Symbol.Kind.FnCall;
+      case Decl.StructDecl d -> HighlightResult.Symbol.Kind.StructCall;
+      case Decl.PrimDecl d -> HighlightResult.Symbol.Kind.PrimCall;
+      case Decl.DataCtor d -> HighlightResult.Symbol.Kind.ConCall;
+      default -> throw new IllegalArgumentException("Unsupported operator: " + opDecl.getClass().getName());
+    };
   }
 
   private void visitOperator(@NotNull Buffer<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @NotNull Ref<@Nullable OpDecl> ref) {

@@ -23,7 +23,7 @@ public sealed interface ElimTerm extends Term {
     public static @NotNull Substituter.TermSubst
     projSubst(@NotNull Term term, int index, ImmutableSeq<Param> telescope) {
       // instantiate the type
-      var subst = new Substituter.TermSubst(MutableMap.of());
+      var subst = new Substituter.TermSubst(MutableMap.create());
       telescope.view().take(index).reversed().forEachIndexed((i, param) ->
         subst.add(param.ref(), new Proj(term, i + 1)));
       return subst;

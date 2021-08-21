@@ -42,7 +42,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
     public LabelT(@NotNull SourcePos pos, @NotNull String label) {
-      this(pos, label, Buffer.of());
+      this(pos, label, Buffer.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -55,7 +55,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
     public DeclT(@NotNull DefVar<?, ?> var, @NotNull SourcePos pos) {
-      this(var, pos, Buffer.of());
+      this(var, pos, Buffer.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -65,7 +65,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
 
   record ExprT(@NotNull Expr expr, @Nullable Term term, @NotNull Buffer<@NotNull Trace> children) implements Trace {
     public ExprT(@NotNull Expr expr, @Nullable Term term) {
-      this(expr, term, Buffer.of());
+      this(expr, term, Buffer.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -83,7 +83,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     }
 
     public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos, @Nullable Term type) {
-      this(lhs, rhs, pos, type, Buffer.of());
+      this(lhs, rhs, pos, type, Buffer.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -97,7 +97,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
     public TyckT(@NotNull Term term, @NotNull Term type, @NotNull SourcePos pos) {
-      this(term, type, pos, Buffer.of());
+      this(term, type, pos, Buffer.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -111,7 +111,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     @NotNull Buffer<@NotNull Trace> children
   ) implements Trace {
     public PatT(@NotNull Term term, @NotNull Pattern pat, @NotNull SourcePos pos) {
-      this(term, pat, pos, Buffer.of());
+      this(term, pat, pos, Buffer.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

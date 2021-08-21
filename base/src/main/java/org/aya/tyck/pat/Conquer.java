@@ -75,7 +75,7 @@ public record Conquer(
       }
     }, Unit.unit()), pat.explicit()));
     var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
-      new Substituter.TermSubst(MutableMap.of()), LevelSubst.EMPTY, matchings);
+      new Substituter.TermSubst(MutableMap.create()), LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));

@@ -21,7 +21,7 @@ public final class HeaderOrder {
     visited.add(def);
     inStack.add(def);
     order.append(def);
-    var references = Buffer.<Def>of();
+    var references = Buffer.<Def>create();
     def.accept(RefFinder.HEADER_ONLY, references);
     for (var nextDef : references) {
       if (visited.contains(nextDef)) continue;
@@ -33,7 +33,7 @@ public final class HeaderOrder {
   public static @NotNull Buffer<Def> genHeaderOrder(@NotNull Seq<Def> defs) {
     var visited = MutableSet.<Def>of();
     var inStack = MutableSet.<Def>of();
-    var order = Buffer.<Def>of();
+    var order = Buffer.<Def>create();
     for (var def : defs) {
       if (visited.contains(def)) continue;
       visit(def, visited, inStack, order);

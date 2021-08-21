@@ -143,7 +143,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
       " : " +
       type.toDoc(options).debugRender();
     imGui.text("-".repeat(s.length() + 4));
-    visitSub(s, Color.YELLOW, imGui, Buffer.of(), () -> pos = t.pos(), Objects.hashCode(t));
+    visitSub(s, Color.YELLOW, imGui, Buffer.create(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
 

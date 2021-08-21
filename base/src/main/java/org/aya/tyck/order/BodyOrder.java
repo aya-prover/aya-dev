@@ -30,7 +30,7 @@ public final class BodyOrder {
     low.put(def, n);
     inStack.add(def);
     stack.prepend(def);
-    var references = Buffer.<Def>of();
+    var references = Buffer.<Def>create();
     def.accept(RefFinder.HEADER_AND_BODY, references);
     for (var ref : references) {
       if (inStack.contains(ref)) {
@@ -41,7 +41,7 @@ public final class BodyOrder {
       }
     }
     if (low.get(def).equals(dfn.get(def))) {
-      var scc = Buffer.<Def>of();
+      var scc = Buffer.<Def>create();
       while (stack.first() != def) {
         scc.append(stack.first());
         stack.dropInPlace(1);
@@ -53,10 +53,10 @@ public final class BodyOrder {
   public static @NotNull Buffer<Buffer<Def>> genBodyOrder(@NotNull Seq<Def> defs) {
     var visited = MutableSet.<Def>of();
     var inStack = MutableSet.<Def>of();
-    var stack = Buffer.<Def>of();
+    var stack = Buffer.<Def>create();
     var dfn = new MutableHashMap<Def, Integer>();
     var low = new MutableHashMap<Def, Integer>();
-    var order = Buffer.<Buffer<Def>>of();
+    var order = Buffer.<Buffer<Def>>create();
     for (var def : defs) {
       if (visited.contains(def)) continue;
       visit(def, visited, inStack, stack, dfn, low, 0, order);

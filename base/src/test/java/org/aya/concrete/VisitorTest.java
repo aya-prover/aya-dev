@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VisitorTest {
   @Test public void stmt() {
-    var exprs = Buffer.<Expr>of();
+    var exprs = Buffer.<Expr>create();
     var visitor = new StmtConsumer<Unit>() {
       @Override public Unit visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Unit unit) {
         exprs.append(expr);

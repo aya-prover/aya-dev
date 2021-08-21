@@ -27,7 +27,7 @@ public record ExprResolver(
   boolean allowGeneralized,
   @NotNull Buffer<LevelGenVar> allowedLevels
 ) implements ExprFixpoint<Context> {
-  static final @NotNull ExprResolver NO_GENERALIZED = new ExprResolver(false, Buffer.of());
+  static final @NotNull ExprResolver NO_GENERALIZED = new ExprResolver(false, Buffer.create());
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
@@ -56,7 +56,7 @@ public record ExprResolver(
   @Contract(pure = true)
   public @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context>
   resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
-    if (params.isEmpty()) return Tuple2.of(ImmutableSeq.of(), ctx);
+    if (params.isEmpty()) return Tuple2.of(ImmutableSeq.empty(), ctx);
     var first = params.first();
     var type = first.type();
     type = type == null ? null : type.accept(this, ctx);

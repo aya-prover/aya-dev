@@ -25,7 +25,7 @@ public abstract class GenericBuilder<T extends GenericBuilder.Tree<T>> {
   }
 
   {
-    tops.addLast(Buffer.of());
+    tops.addLast(Buffer.create());
   }
 
   public void append(@NotNull T trace) {

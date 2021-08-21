@@ -66,7 +66,7 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
   }
 
   public @NotNull ImmutableSeq<Term.Param> extract() {
-    var ctx = Buffer.<Term.Param>of();
+    var ctx = Buffer.<Term.Param>create();
     var map = this;
     while (map != null) {
       map.localMap.mapTo(ctx, (k, v) -> new Term.Param(k, v, false));

@@ -110,7 +110,7 @@ public record BinOpSet(
     }
 
     if (count != tighterGraph.size()) {
-      var circle = Buffer.<Elem>of();
+      var circle = Buffer.<Elem>create();
       ind.forEach((e, i) -> {
         if (i.value > 0) circle.append(e);
       });

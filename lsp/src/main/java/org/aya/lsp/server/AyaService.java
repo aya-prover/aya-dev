@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
-  private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of(), Buffer.of());
+  private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of(), Buffer.create());
   private Set<Path> lastErrorReportedFiles = Collections.emptySet();
 
   public void registerLibrary(@NotNull Path path) {
@@ -61,7 +61,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       CompilerFlags.Message.EMOJI, false, null,
       libraryManager.modulePath.view());
 
-    var symbols = Buffer.<HighlightResult.Symbol>of();
+    var symbols = Buffer.<HighlightResult.Symbol>create();
     try {
       compiler.compile(filePath, compilerFlags,
         stmts -> stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols)),

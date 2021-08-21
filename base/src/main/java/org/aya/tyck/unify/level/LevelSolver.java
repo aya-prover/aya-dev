@@ -171,7 +171,7 @@ public class LevelSolver {
       prepareGraphNode(g, e.lhs().levels());
       prepareGraphNode(g, e.rhs().levels());
     }
-    var specialEq = Buffer.<Eqn>of();
+    var specialEq = Buffer.<Eqn>create();
     var hasError = equations.view()
       // Do NOT make this lazy -- the `populate` function has side effects
       // We need to run populate on all equations

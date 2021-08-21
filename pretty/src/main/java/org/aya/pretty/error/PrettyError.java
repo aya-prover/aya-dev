@@ -65,7 +65,7 @@ public record PrettyError(
       .collect(Buffer.factory());
 
     int lineNo = Math.max(startLine - showMore, 1);
-    var docs = Buffer.<Doc>of();
+    var docs = Buffer.<Doc>create();
 
     for (var line : lines) {
       docs.append(renderLine(line, lineNo, linenoWidth));

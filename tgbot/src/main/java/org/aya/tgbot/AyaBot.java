@@ -6,10 +6,10 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.StreamReporter;
 import org.aya.cli.CompilerFlags;
 import org.aya.cli.SingleFileCompiler;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -51,7 +51,7 @@ public record AyaBot(@NotNull TelegramBot bot) implements UpdatesListener {
       var hookOut = new ByteArrayOutputStream();
       var reporter = new StreamReporter(new PrintStream(hookOut));
       var e = new SingleFileCompiler(reporter, null, null)
-        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.of()));
+        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.empty()));
       return hookOut.toString(CHARSET) + "\n\n Exited with " + e;
     } catch (IOException e) {
       return "error reading file " + file.toAbsolutePath();

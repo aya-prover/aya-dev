@@ -107,7 +107,7 @@ public record SingleFileCompiler(
     ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
     String fileName, String fileExt, BiFunction<Doc, Boolean, String> toString
   ) throws IOException {
-    var docs = Buffer.<Doc>of();
+    var docs = Buffer.<Doc>create();
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
       var thisDoc = item.toDoc(DistillerOptions.DEFAULT);

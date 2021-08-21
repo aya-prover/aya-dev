@@ -167,7 +167,7 @@ public sealed interface CallTerm extends Term {
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
   ) implements CallTerm {
     public Hole(@NotNull HoleVar<Meta> var, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs) {
-      this(var, contextArgs, ImmutableSeq.of());
+      this(var, contextArgs, ImmutableSeq.empty());
     }
 
     public @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {
@@ -183,7 +183,7 @@ public sealed interface CallTerm extends Term {
     }
 
     @Override public @NotNull ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs() {
-      return ImmutableSeq.of();
+      return ImmutableSeq.empty();
     }
   }
 
