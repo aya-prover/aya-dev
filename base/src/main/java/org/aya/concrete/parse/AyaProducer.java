@@ -59,7 +59,7 @@ public final class AyaProducer {
   }
 
   public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
-    return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt).toImmutableSeq();
+    return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
   }
 
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
@@ -165,13 +165,13 @@ public final class AyaProducer {
   public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> visitDecl(AyaParser.DeclContext ctx) {
     var accessibility = ctx.PRIVATE() == null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var fnDecl = ctx.fnDecl();
-    if (fnDecl != null) return Tuple.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.of());
+    if (fnDecl != null) return Tuple.of(visitFnDecl(fnDecl, accessibility), ImmutableSeq.empty());
     var dataDecl = ctx.dataDecl();
     if (dataDecl != null) return visitDataDecl(dataDecl, accessibility);
     var structDecl = ctx.structDecl();
-    if (structDecl != null) return Tuple.of(visitStructDecl(structDecl, accessibility), ImmutableSeq.of());
+    if (structDecl != null) return Tuple.of(visitStructDecl(structDecl, accessibility), ImmutableSeq.empty());
     var primDecl = ctx.primDecl();
-    if (primDecl != null) return Tuple.of(visitPrimDecl(primDecl), ImmutableSeq.of());
+    if (primDecl != null) return Tuple.of(visitPrimDecl(primDecl), ImmutableSeq.empty());
     return unreachable(ctx);
   }
 
@@ -193,7 +193,7 @@ public final class AyaProducer {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
-      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
+      abuseCtx == null ? ImmutableSeq.empty() : visitAbuse(abuseCtx)
     );
   }
 
@@ -516,9 +516,9 @@ public final class AyaProducer {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       body,
-      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
+      abuseCtx == null ? ImmutableSeq.empty() : visitAbuse(abuseCtx)
     );
-    return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.of() : ImmutableSeq.of(
+    return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
         sourcePosOf(ctx.ID()),
         openAccessibility,
@@ -659,7 +659,7 @@ public final class AyaProducer {
       type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
       fields,
-      abuseCtx == null ? ImmutableSeq.of() : visitAbuse(abuseCtx)
+      abuseCtx == null ? ImmutableSeq.empty() : visitAbuse(abuseCtx)
     );
   }
 

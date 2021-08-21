@@ -120,7 +120,7 @@ public final class PrimDef extends TopLevelDef {
           var paramATy = new FormTerm.Pi(paramIToATy, result);
           var aRef = new RefTerm(paramA, paramATy);
           var left = INSTANCE.getOrCreate(LEFT);
-          var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.of(), ImmutableSeq.empty()), true));
+          var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
           return new PrimDef(
             ImmutableSeq.of(
               new Term.Param(paramA, paramATy, true),
@@ -134,7 +134,7 @@ public final class PrimDef extends TopLevelDef {
         Tuple.of(INVOL, () -> {
           CallTerm.Prim intervalCall = new CallTerm.Prim(INSTANCE.getOrCreate(INTERVAL).ref(), ImmutableSeq.empty(), ImmutableSeq.empty());
           return new PrimDef(
-            ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCallSupplier.get(), true)), ImmutableSeq.of(),
+            ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCallSupplier.get(), true)), ImmutableSeq.empty(),
             intervalCall, PrimFactory::invol, INVOL);
         })
       );
@@ -154,11 +154,11 @@ public final class PrimDef extends TopLevelDef {
     }
 
     private static final @NotNull Map<@NotNull String, @NotNull ImmutableSeq<@NotNull String>> DEPENDENCY = ImmutableMap.ofEntries(
-      Tuple.of(INTERVAL, ImmutableSeq.of()),
+      Tuple.of(INTERVAL, ImmutableSeq.empty()),
       Tuple.of(LEFT, ImmutableSeq.of(INTERVAL)),
       Tuple.of(RIGHT, ImmutableSeq.of(INTERVAL)),
-      Tuple.of(ARCOE, ImmutableSeq.of()),
-      Tuple.of(INVOL, ImmutableSeq.of())
+      Tuple.of(ARCOE, ImmutableSeq.empty()),
+      Tuple.of(INVOL, ImmutableSeq.empty())
     );
 
     public @NotNull Option<PrimDef> getOption(@NotNull String name) {
@@ -174,9 +174,7 @@ public final class PrimDef extends TopLevelDef {
     }
 
     public @NotNull Option<ImmutableSeq<@NotNull String>> checkDependency(@NotNull String name) {
-      return DEPENDENCY.getOption(name).map(
-        (d) -> d.filterNot(this::have).toImmutableSeq()
-      );
+      return DEPENDENCY.getOption(name).map(d -> d.filterNot(this::have));
     }
 
     public static final @NotNull ImmutableSeq<String> LEFT_RIGHT = ImmutableSeq.of(LEFT, RIGHT);

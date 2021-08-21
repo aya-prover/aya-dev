@@ -60,7 +60,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @NotNull EqnSet termEqns = new EqnSet();
   public final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
-  public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.of();
+  public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.create();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -257,7 +257,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort.CoreLevel>>
   levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
-    var levelSubst = new LevelSubst.Simple(MutableMap.of());
+    var levelSubst = new LevelSubst.Simple(MutableMap.create());
     var levelVars = Def.defLevels(defVar).map(v -> {
       var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), v.kind(), pos);
       levelSubst.solution().put(v, new Sort.CoreLevel(new Level.Reference<>(lvlVar)));
@@ -297,7 +297,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   private Result unifyTyMaybeInsert(@Nullable Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
     if (upper == null) return new Result(term, lower);
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    var subst = new Substituter.TermSubst(MutableMap.of());
+    var subst = new Substituter.TermSubst(MutableMap.create());
     while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var mock = mockTerm(pi.param(), loc.sourcePos());
       term = CallTerm.make(term, new Arg<>(mock, false));
@@ -325,7 +325,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Synth @Override public Result visitSigma(Expr.@NotNull SigmaExpr expr, @Nullable Term term) {
     final var against = term != null ? term : new FormTerm.Univ(Sort.OMEGA);
-    var resultTele = Buffer.<Tuple3<LocalVar, Boolean, Term>>of();
+    var resultTele = Buffer.<Tuple3<LocalVar, Boolean, Term>>create();
     expr.params().forEach(tuple -> {
       final var type = tuple.type();
       if (type == null) {
@@ -346,13 +346,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return wantButNo(expr.struct(), struct, "struct type");
     var structRef = structCall.ref();
 
-    var subst = new Substituter.TermSubst(MutableMap.of());
+    var subst = new Substituter.TermSubst(MutableMap.create());
     var structTele = Def.defTele(structRef);
     structTele.view().zip(structCall.args())
       .forEach(t -> subst.add(t._1.ref(), t._2.term()));
 
-    var fields = Buffer.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>of();
-    var missing = Buffer.<Var>of();
+    var fields = Buffer.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>create();
+    var missing = Buffer.<Var>create();
     var conFields = expr.fields();
 
     for (var defField : structRef.core.fields) {
@@ -396,7 +396,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return new Result(new ErrorTerm(expr), structCall);
     }
     if (conFields.isNotEmpty()) {
-      reporter.report(new FieldProblem.NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name).toImmutableSeq()));
+      reporter.report(new FieldProblem.NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name)));
       return new Result(new ErrorTerm(expr), structCall);
     }
 
@@ -477,7 +477,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
       return wantButNo(expr, f.type, "pi type");
     var pi = piTerm;
-    var subst = new Substituter.TermSubst(MutableMap.of());
+    var subst = new Substituter.TermSubst(MutableMap.create());
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
       var arg = iter.next();
       var argLicit = arg.explicit();
@@ -519,9 +519,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Check(partialSynth = true)
   @Override public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
-    var items = Buffer.<Term>of();
+    var items = Buffer.<Term>create();
     final var resultLast = new Ref<Term>();
-    final var resultTele = Buffer.<Term.@NotNull Param>of();
+    final var resultTele = Buffer.<Term.@NotNull Param>create();
     if (term == null || term instanceof CallTerm.Hole) {
       // `expr.items()` is larger than 1 due to parser
       expr.items()

@@ -93,11 +93,10 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader) implements Stmt.
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     var dataInnerCtx = context.derive(decl.ref().name());
-    var ctorSymbols = decl.body.toImmutableSeq()
-      .map(ctor -> {
-        visitCtor(ctor, dataInnerCtx);
-        return Tuple2.of(ctor.ref.name(), ctor.ref);
-      });
+    var ctorSymbols = decl.body.map(ctor -> {
+      visitCtor(ctor, dataInnerCtx);
+      return Tuple2.of(ctor.ref.name(), ctor.ref);
+    });
 
     context.importModules(
       ImmutableSeq.of(decl.ref().name()),

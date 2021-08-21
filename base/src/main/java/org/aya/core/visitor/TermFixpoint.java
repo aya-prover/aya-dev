@@ -21,7 +21,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var args = term.args().map(arg -> visitArg(arg, p));
     if (term.contextArgs().sameElements(contextArgs, true)
       && term.args().sameElements(args, true)) return term;
-    return new CallTerm.Hole(term.ref(), contextArgs, args.toImmutableSeq());
+    return new CallTerm.Hole(term.ref(), contextArgs, args);
   }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
