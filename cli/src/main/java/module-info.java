@@ -7,4 +7,6 @@ module org.aya.cli {
 
   exports org.aya.cli;
   exports org.aya.cli.library to com.google.gson;
+  exports org.aya.cli.single;
+  exports org.aya.cli.utils;
 }

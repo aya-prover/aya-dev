@@ -1,8 +1,9 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.cli;
+package org.aya.cli.single;
 
 import kala.collection.SeqLike;
+import org.aya.cli.CliArgs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

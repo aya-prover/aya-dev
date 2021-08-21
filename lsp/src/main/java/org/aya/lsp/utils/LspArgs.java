@@ -6,7 +6,7 @@ import org.aya.prelude.GeneratedVersion;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import static org.aya.cli.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
+import static org.aya.cli.utils.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
 
 @Command(name = "aya-lsp",
   mixinStandardHelpOptions = true,

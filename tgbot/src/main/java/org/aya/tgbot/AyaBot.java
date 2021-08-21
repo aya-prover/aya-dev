@@ -8,8 +8,8 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.StreamReporter;
-import org.aya.cli.CompilerFlags;
-import org.aya.cli.SingleFileCompiler;
+import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.single.SingleFileCompiler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;

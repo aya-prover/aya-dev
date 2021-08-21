@@ -10,7 +10,7 @@ import picocli.CommandLine.Parameters;
 
 import java.util.List;
 
-import static org.aya.cli.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
+import static org.aya.cli.utils.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
 
 @Command(name = "aya",
   mixinStandardHelpOptions = true,
