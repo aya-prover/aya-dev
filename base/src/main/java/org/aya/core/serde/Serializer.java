@@ -8,6 +8,7 @@ import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
+import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public record Serializer(@NotNull Serializer.State state) implements
   Term.Visitor<Unit, SerTerm>,
+  Def.Visitor<Unit, SerDef>,
   Pat.Visitor<Unit, SerPat> {
   public @NotNull SerTerm serialize(@NotNull Term term) {
     return term.accept(this, Unit.unit());
@@ -29,7 +31,7 @@ public record Serializer(@NotNull Serializer.State state) implements
     return pat.accept(this, Unit.unit());
   }
 
-  private SerTerm.SerArg serializeArg(@NotNull Arg<@NotNull Term> termArg) {
+  private SerTerm.SerArg serialize(@NotNull Arg<@NotNull Term> termArg) {
     return new SerTerm.SerArg(serialize(termArg.term()), termArg.explicit());
   }
 
@@ -57,12 +59,12 @@ public record Serializer(@NotNull Serializer.State state) implements
     }
   }
 
-  @Contract("_ -> new") private SerTerm.SerParam serializeParam(Term.@NotNull Param param) {
+  @Contract("_ -> new") private SerTerm.SerParam serialize(Term.@NotNull Param param) {
     return new SerTerm.SerParam(param.explicit(), state.local(param.ref()), serialize(param.type()));
   }
 
   private @NotNull ImmutableSeq<SerTerm.SerParam> serializeParams(ImmutableSeq<Term.@NotNull Param> params) {
-    return params.map(this::serializeParam);
+    return params.map(this::serialize);
   }
 
   @Override public SerTerm visitError(@NotNull ErrorTerm term, Unit unit) {
@@ -78,11 +80,11 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
-    return new SerTerm.Lam(serializeParam(term.param()), serialize(term.body()));
+    return new SerTerm.Lam(serialize(term.param()), serialize(term.body()));
   }
 
   @Override public SerTerm visitPi(FormTerm.@NotNull Pi term, Unit unit) {
-    return new SerTerm.Pi(serializeParam(term.param()), serialize(term.body()));
+    return new SerTerm.Pi(serialize(term.param()), serialize(term.body()));
   }
 
   @Override public SerTerm visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
@@ -90,52 +92,59 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    return new SerTerm.Univ(
-      SerLevel.ser(term.sort().uLevel(), state.levelCache()),
-      SerLevel.ser(term.sort().hLevel(), state.levelCache())
-    );
+    return new SerTerm.Univ(serialize(term.sort().uLevel()), serialize(term.sort().hLevel()));
+  }
+
+  private @NotNull ImmutableSeq<SerTerm.SerArg> serializeArgs(@NotNull ImmutableSeq<Arg<Term>> args) {
+    return args.map(this::serialize);
+  }
+
+  private SerLevel.@NotNull Max serialize(@NotNull Sort.CoreLevel level) {
+    return SerLevel.ser(level, state.levelCache());
+  }
+
+  private @NotNull ImmutableSeq<SerLevel.Max> serializeLevels(@NotNull ImmutableSeq<Sort.CoreLevel> sortArgs) {
+    return sortArgs.map(this::serialize);
   }
 
   @Override public SerTerm visitApp(ElimTerm.@NotNull App term, Unit unit) {
-    return new SerTerm.App(serialize(term.of()), serializeArg(term.arg()));
+    return new SerTerm.App(serialize(term.of()), serialize(term.arg()));
   }
 
-  private @NotNull SerTerm.CallData serializeCallData(
+  private @NotNull SerTerm.CallData serializeCall(
     @NotNull ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
-    return new SerTerm.CallData(
-      sortArgs.map(coreLevel -> SerLevel.ser(coreLevel, state.levelCache())),
-      args.map(this::serializeArg));
+    return new SerTerm.CallData(serializeLevels(sortArgs), serializeArgs(args));
   }
 
   @Override public SerTerm visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
-    return new SerTerm.FnCall(state.def(fnCall.ref()), serializeCallData(fnCall.sortArgs(), fnCall.args()));
+    return new SerTerm.FnCall(state.def(fnCall.ref()), serializeCall(fnCall.sortArgs(), fnCall.args()));
   }
 
   @Override public SerTerm.DataCall visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {
     return new SerTerm.DataCall(
       state.def(dataCall.ref()),
-      serializeCallData(dataCall.sortArgs(), dataCall.args())
+      serializeCall(dataCall.sortArgs(), dataCall.args())
     );
   }
 
   @Override public SerTerm visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
     return new SerTerm.ConCall(
       state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
-      serializeCallData(conCall.head().sortArgs(), conCall.head().dataArgs()),
-      conCall.args().map(this::serializeArg)
+      serializeCall(conCall.head().sortArgs(), conCall.head().dataArgs()),
+      serializeArgs(conCall.args())
     );
   }
 
   @Override public SerTerm visitStructCall(@NotNull CallTerm.Struct structCall, Unit unit) {
     return new SerTerm.StructCall(
       state.def(structCall.ref()),
-      serializeCallData(structCall.sortArgs(), structCall.args())
+      serializeCall(structCall.sortArgs(), structCall.args())
     );
   }
 
   @Override public SerTerm visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
-    return new SerTerm.PrimCall(state.def(prim.ref()), serializeCallData(prim.sortArgs(), prim.args()));
+    return new SerTerm.PrimCall(state.def(prim.ref()), serializeCall(prim.sortArgs(), prim.args()));
   }
 
   @Override public SerTerm visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {
@@ -145,7 +154,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   @Override public SerTerm visitNew(IntroTerm.@NotNull New newTerm, Unit unit) {
     return new SerTerm.New(new SerTerm.StructCall(
       state.def(newTerm.struct().ref()),
-      serializeCallData(newTerm.struct().sortArgs(), newTerm.struct().args())
+      serializeCall(newTerm.struct().sortArgs(), newTerm.struct().args())
     ));
   }
 
@@ -156,9 +165,9 @@ public record Serializer(@NotNull Serializer.State state) implements
   @Override public SerTerm visitAccess(CallTerm.@NotNull Access term, Unit unit) {
     return new SerTerm.Access(
       serialize(term.of()), state.def(term.ref()),
-      term.sortArgs().map(coreLevel -> SerLevel.ser(coreLevel, state.levelCache())),
-      term.structArgs().map(this::serializeArg),
-      term.fieldArgs().map(this::serializeArg)
+      serializeLevels(term.sortArgs()),
+      serializeArgs(term.structArgs()),
+      serializeArgs(term.fieldArgs())
     );
   }
 
@@ -186,5 +195,29 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   @Override public SerPat visitPrim(Pat.@NotNull Prim prim, Unit unit) {
     return new SerPat.Prim(prim.explicit(), state.def(prim.ref()), serialize(prim.type()));
+  }
+
+  @Override public SerDef visitFn(@NotNull FnDef def, Unit unit) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public SerDef visitData(@NotNull DataDef def, Unit unit) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override public SerDef visitCtor(@NotNull CtorDef def, Unit unit) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override public SerDef visitStruct(@NotNull StructDef def, Unit unit) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override public SerDef visitField(@NotNull FieldDef def, Unit unit) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override public SerDef visitPrim(@NotNull PrimDef def, Unit unit) {
+    throw new UnsupportedOperationException("TODO");
   }
 }
