@@ -7,6 +7,7 @@ import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.ImGuiTrace;
+import org.aya.cli.utils.MainArgs;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
 import org.ice1000.jimgui.util.JniLoader;
@@ -19,7 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class Main extends CliArgs implements Callable<Integer> {
+public class Main extends MainArgs implements Callable<Integer> {
   public static void main(String... args) {
     int exitCode = new CommandLine(new Main()).execute(args);
     System.exit(exitCode);

@@ -5,9 +5,9 @@ package org.aya.literate;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.Global;
-import org.aya.cli.CliArgs;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.cli.utils.MainArgs;
 import org.aya.test.TestRunner;
 import org.aya.test.ThrowingReporter;
 import org.junit.jupiter.api.AfterAll;
@@ -31,7 +31,7 @@ public class LiterateTest {
 
   @Test public void literate() throws IOException {
     var literate = TestRunner.TEST_SOURCE_DIR.resolve("literate");
-    var distillInfo = new CompilerFlags.DistillInfo(CliArgs.DistillStage.scoped, CliArgs.DistillFormat.plain, literate);
+    var distillInfo = new CompilerFlags.DistillInfo(MainArgs.DistillStage.scoped, MainArgs.DistillFormat.plain, literate);
     var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, distillInfo, ImmutableSeq.empty());
     var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, TestRunner.LOCATOR, null);
     compiler.compile(literate.resolve("test.aya"), flags);

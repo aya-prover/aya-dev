@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.cli;
+package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.prelude.GeneratedVersion;
@@ -16,7 +16,7 @@ import static org.aya.cli.utils.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
   mixinStandardHelpOptions = true,
   version = "Aya v" + GeneratedVersion.VERSION_STRING,
   showDefaultValues = true)
-public class CliArgs {
+public class MainArgs {
   @Option(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace;
   @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage." + CANDIDATES_ON_A_NEW_LINE)

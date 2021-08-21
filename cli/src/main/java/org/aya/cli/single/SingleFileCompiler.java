@@ -11,7 +11,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
-import org.aya.cli.CliArgs;
+import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
@@ -52,16 +52,16 @@ public record SingleFileCompiler(
     try {
       var program = AyaParsing.program(locator, reporter, sourceFile);
       var distillInfo = flags.distillInfo();
-      distill(sourceFile, distillInfo, program, CliArgs.DistillStage.raw);
+      distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
       FileModuleLoader.tyckModule(ImmutableSeq.of("Mian"), loader, program, reporter,
         () -> {
-          distill(sourceFile, distillInfo, program, CliArgs.DistillStage.scoped);
+          distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
           onResolved.accept(program);
         },
         defs -> {
-          distill(sourceFile, distillInfo, defs, CliArgs.DistillStage.typed);
+          distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
           onTycked.accept(program, defs);
         }, builder);
     } catch (InternalException e) {
@@ -87,7 +87,7 @@ public record SingleFileCompiler(
     @NotNull Path sourceFile,
     @Nullable CompilerFlags.DistillInfo flags,
     ImmutableSeq<? extends AyaDocile> doc,
-    @NotNull CliArgs.DistillStage currentStage
+    @NotNull MainArgs.DistillStage currentStage
   ) throws IOException {
     if (flags == null || currentStage != flags.distillStage()) return;
     var ayaFileName = sourceFile.getFileName().toString();
