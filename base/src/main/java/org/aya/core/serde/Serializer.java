@@ -11,6 +11,7 @@ import org.aya.api.util.Arg;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +30,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   private SerTerm.SerArg serializeArg(@NotNull Arg<@NotNull Term> termArg) {
-    return new SerTerm.SerArg(
-      serialize(termArg.term()),
-      termArg.explicit()
-    );
+    return new SerTerm.SerArg(serialize(termArg.term()), termArg.explicit());
   }
 
   public static record State(
@@ -55,20 +53,16 @@ public record Serializer(@NotNull Serializer.State state) implements
 
     public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {
       assert var.module != null;
-      return new SerDef.QName(
-        var.module,
-        var.name(),
-        defCache.getOrPut(var, defCache::size)
-      );
+      return new SerDef.QName(var.module, var.name(), defCache.getOrPut(var, defCache::size));
     }
   }
 
-  private SerTerm.SerParam serializeParam(Term.Param param) {
-    return new SerTerm.SerParam(
-      param.explicit(),
-      state.local(param.ref()),
-      serialize(param.type())
-    );
+  @Contract("_ -> new") private SerTerm.SerParam serializeParam(Term.@NotNull Param param) {
+    return new SerTerm.SerParam(param.explicit(), state.local(param.ref()), serialize(param.type()));
+  }
+
+  private @NotNull ImmutableSeq<SerTerm.SerParam> serializeParams(ImmutableSeq<Term.@NotNull Param> params) {
+    return params.map(this::serializeParam);
   }
 
   @Override public SerTerm visitError(@NotNull ErrorTerm term, Unit unit) {
@@ -92,7 +86,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
-    return new SerTerm.Sigma(term.params().map(this::serializeParam));
+    return new SerTerm.Sigma(serializeParams(term.params()));
   }
 
   @Override public SerTerm visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
@@ -115,10 +109,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
-    return new SerTerm.FnCall(
-      state.def(fnCall.ref()),
-      serializeCallData(fnCall.sortArgs(), fnCall.args())
-    );
+    return new SerTerm.FnCall(state.def(fnCall.ref()), serializeCallData(fnCall.sortArgs(), fnCall.args()));
   }
 
   @Override public SerTerm.DataCall visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {
@@ -130,8 +121,7 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   @Override public SerTerm visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
     return new SerTerm.ConCall(
-      state.def(conCall.head().dataRef()),
-      state.def(conCall.head().ref()),
+      state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
       serializeCallData(conCall.head().sortArgs(), conCall.head().dataArgs()),
       conCall.args().map(this::serializeArg)
     );
@@ -145,10 +135,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
-    return new SerTerm.PrimCall(
-      state.def(prim.ref()),
-      serializeCallData(prim.sortArgs(), prim.args())
-    );
+    return new SerTerm.PrimCall(state.def(prim.ref()), serializeCallData(prim.sortArgs(), prim.args()));
   }
 
   @Override public SerTerm visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {
@@ -168,8 +155,7 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   @Override public SerTerm visitAccess(CallTerm.@NotNull Access term, Unit unit) {
     return new SerTerm.Access(
-      serialize(term.of()),
-      state.def(term.ref()),
+      serialize(term.of()), state.def(term.ref()),
       term.sortArgs().map(coreLevel -> SerLevel.ser(coreLevel, state.levelCache())),
       term.structArgs().map(this::serializeArg),
       term.fieldArgs().map(this::serializeArg)
@@ -199,10 +185,6 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerPat visitPrim(Pat.@NotNull Prim prim, Unit unit) {
-    return new SerPat.Prim(
-      prim.explicit(),
-      state.def(prim.ref()),
-      serialize(prim.type())
-    );
+    return new SerPat.Prim(prim.explicit(), state.def(prim.ref()), serialize(prim.type()));
   }
 }
