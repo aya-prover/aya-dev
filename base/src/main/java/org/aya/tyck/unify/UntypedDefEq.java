@@ -87,7 +87,8 @@ public record UntypedDefEq(
     for (int i = 1; i < lhs.ix(); i++) {
       var l = new ElimTerm.Proj(lhs, i);
       var currentParam = params.first();
-      params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
+      params = params.view().drop(1)
+        .map(x -> x.subst(currentParam.ref(), l)).toImmutableSeq();
     }
     if (params.isNotEmpty()) return params.first().type();
     return params.last().type();

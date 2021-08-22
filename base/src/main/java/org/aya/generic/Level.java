@@ -42,8 +42,10 @@ public sealed interface Level<V extends Var> extends AyaDocile {
     }
 
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      return Doc.parened(Doc.sep(among.map(l -> l.toDoc(options))
-        .prepended(Doc.styled(CoreDistiller.KEYWORD, "max"))));
+      return Doc.parened(Doc.sep(among.view()
+        .map(l -> l.toDoc(options))
+        .prepended(Doc.styled(CoreDistiller.KEYWORD, "max"))
+        .toImmutableSeq()));
     }
   }
 

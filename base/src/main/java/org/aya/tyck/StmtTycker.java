@@ -97,7 +97,10 @@ public record StmtTycker(
     assert dataSig != null;
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var sortParam = dataSig.sortParam();
-    var dataCall = new CallTerm.Data(dataRef, sortParam.map(Level.Reference::new).map(Sort.CoreLevel::new), dataArgs);
+    var dataCall = new CallTerm.Data(dataRef, sortParam.view()
+      .map(Level.Reference::new)
+      .map(Sort.CoreLevel::new)
+      .toImmutableSeq(), dataArgs);
     var sig = new Ref<>(new Def.Signature(sortParam, dataSig.param(), dataCall));
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
