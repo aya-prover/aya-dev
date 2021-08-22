@@ -98,18 +98,36 @@ public final class PrimDef extends TopLevelDef {
 
     private static final @NotNull Map<@NotNull String, @NotNull Supplier<@NotNull PrimDef>> SUPPLIERS;
 
+    public static final @NotNull Map<@NotNull String, @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term>> UNFOLD
+      = ImmutableMap.ofEntries(
+        Tuple.of(INTERVAL, prim -> prim),
+        Tuple.of(LEFT, prim -> prim),
+        Tuple.of(RIGHT, prim -> prim),
+        Tuple.of(ARCOE, PrimFactory::arcoe),
+        Tuple.of(INVOL, PrimFactory::invol)
+      );
+
+    private static final @NotNull Map<@NotNull String, @NotNull ImmutableSeq<@NotNull String>> DEPENDENCY = ImmutableMap.ofEntries(
+      Tuple.of(INTERVAL, ImmutableSeq.empty()),
+      Tuple.of(LEFT, ImmutableSeq.of(INTERVAL)),
+      Tuple.of(RIGHT, ImmutableSeq.of(INTERVAL)),
+      Tuple.of(ARCOE, ImmutableSeq.empty()),
+      Tuple.of(INVOL, ImmutableSeq.empty())
+    );
+
     static {
       Supplier<CallTerm.Prim> intervalCallSupplier =
         () -> new CallTerm.Prim(INSTANCE.getOrCreate(INTERVAL).ref(),
           ImmutableSeq.empty(), ImmutableSeq.empty());
 
+
       SUPPLIERS = ImmutableMap.ofEntries(
         Tuple.of(INTERVAL, () -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
-          new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), prim -> prim, INTERVAL)),
+          new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), UNFOLD.get(INTERVAL), INTERVAL)),
         Tuple.of(LEFT, () -> new PrimDef(ImmutableSeq.empty(),
-          ImmutableSeq.empty(), intervalCallSupplier.get(), prim -> prim, LEFT)),
+          ImmutableSeq.empty(), intervalCallSupplier.get(), UNFOLD.get(LEFT), LEFT)),
         Tuple.of(RIGHT, () -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
-          intervalCallSupplier.get(), prim -> prim, RIGHT)),
+          intervalCallSupplier.get(), UNFOLD.get(RIGHT), RIGHT)),
         Tuple.of(ARCOE, () -> {
           var paramA = new LocalVar("A");
           var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCallSupplier.get(), true);
@@ -129,13 +147,13 @@ public final class PrimDef extends TopLevelDef {
             ),
             ImmutableSeq.of(homotopy, universe),
             new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, intervalCallSupplier.get()), true)),
-            PrimFactory::arcoe, "arcoe");
+            UNFOLD.get(ARCOE), "arcoe");
         }),
         Tuple.of(INVOL, () -> {
           CallTerm.Prim intervalCall = new CallTerm.Prim(INSTANCE.getOrCreate(INTERVAL).ref(), ImmutableSeq.empty(), ImmutableSeq.empty());
           return new PrimDef(
             ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCallSupplier.get(), true)), ImmutableSeq.empty(),
-            intervalCall, PrimFactory::invol, INVOL);
+            intervalCall, UNFOLD.get(INVOL), INVOL);
         })
       );
     }
@@ -152,14 +170,6 @@ public final class PrimDef extends TopLevelDef {
 
       return rst;
     }
-
-    private static final @NotNull Map<@NotNull String, @NotNull ImmutableSeq<@NotNull String>> DEPENDENCY = ImmutableMap.ofEntries(
-      Tuple.of(INTERVAL, ImmutableSeq.empty()),
-      Tuple.of(LEFT, ImmutableSeq.of(INTERVAL)),
-      Tuple.of(RIGHT, ImmutableSeq.of(INTERVAL)),
-      Tuple.of(ARCOE, ImmutableSeq.empty()),
-      Tuple.of(INVOL, ImmutableSeq.empty())
-    );
 
     public @NotNull Option<PrimDef> getOption(@NotNull String name) {
       return defs.getOption(name);

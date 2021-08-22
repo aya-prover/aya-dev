@@ -32,10 +32,6 @@ public record Serializer(@NotNull Serializer.State state) implements
     return pat.accept(this, Unit.unit());
   }
 
-  private @NotNull SerDef serialize(@NotNull Def def) {
-    return def.accept(this, Unit.unit());
-  }
-
   private @NotNull SerPat.Matchy serialize(@NotNull Matching matchy) {
     return new SerPat.Matchy(serializePats(matchy.patterns()), serialize(matchy.body()));
   }
@@ -264,6 +260,11 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerDef visitPrim(@NotNull PrimDef def, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return new SerDef.Prim(
+      serializeParams(def.telescope),
+      def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
+      serialize(def.result),
+      def.ref.name()
+    );
   }
 }

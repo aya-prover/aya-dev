@@ -110,4 +110,22 @@ public sealed interface SerDef extends Serializable {
       );
     }
   }
+
+  record Prim(
+    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
+    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
+    @NotNull SerTerm result,
+    String name
+  ) implements SerDef {
+    @Override
+    public @NotNull Def de(SerTerm.@NotNull DeState state) {
+      return new PrimDef(
+        telescope.map(tele -> tele.de(state)),
+        levels.map(level -> level.de(state.levelCache())),
+        result.de(state),
+        PrimDef.PrimFactory.UNFOLD.get(name),
+        name
+      );
+    }
+  }
 }
