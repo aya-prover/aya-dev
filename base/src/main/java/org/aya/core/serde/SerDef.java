@@ -79,7 +79,7 @@ public sealed interface SerDef extends Serializable {
     boolean coerce
     ) implements SerDef {
     @Override
-    public @NotNull Def de(SerTerm.@NotNull DeState state) {
+    public @NotNull FieldDef de(SerTerm.@NotNull DeState state) {
       return new FieldDef(
         state.def(struct),
         state.def(self),
@@ -100,8 +100,7 @@ public sealed interface SerDef extends Serializable {
     @NotNull SerTerm result,
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
-    @Override
-    public @NotNull Def de(SerTerm.@NotNull DeState state) {
+    @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new StructDef(
         state.def(name),
         telescope.map(tele -> tele.de(state)),
