@@ -87,6 +87,6 @@ public record ExprResolver(
 
   @Override public @NotNull Expr visitSigma(@NotNull Expr.SigmaExpr expr, Context ctx) {
     var params = resolveParams(expr.params(), ctx);
-    return new Expr.SigmaExpr(expr.sourcePos(), expr.co(), params._1.collect(ImmutableSeq.factory()));
+    return new Expr.SigmaExpr(expr.sourcePos(), expr.co(), params._1);
   }
 }

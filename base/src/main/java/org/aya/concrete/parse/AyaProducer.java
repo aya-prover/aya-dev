@@ -587,7 +587,7 @@ public final class AyaProducer {
       sourcePosOf(ctx),
       ex,
       new WithPos<>(bind.sourcePos(), bind.bind().name()),
-      atoms.view().drop(1).map(p -> p.apply(true)).collect(ImmutableSeq.factory()),
+      atoms.view().drop(1).map(p -> p.apply(true)).toImmutableSeq(),
       as,
       new Ref<>(null)
     );

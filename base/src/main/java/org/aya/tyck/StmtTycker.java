@@ -143,8 +143,7 @@ public record StmtTycker(
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
     var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
-    var collectedBody = body.collect(ImmutableSeq.factory());
-    return new DataDef(decl.ref, tele, decl.signature.sortParam(), result, collectedBody);
+    return new DataDef(decl.ref, tele, decl.signature.sortParam(), result, body);
   }
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
