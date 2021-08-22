@@ -46,7 +46,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     ) : null;
     var status = compiler.compile(filePath, new CompilerFlags(
       message, interruptedTrace, distillation,
-      modulePaths().view().map(Paths::get)));
+      modulePaths().view().map(Paths::get)), null);
     if (traceBuilder != null) switch (traceFormat) {
       case imgui -> {
         JniLoader.load();

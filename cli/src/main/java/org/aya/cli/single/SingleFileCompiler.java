@@ -17,7 +17,6 @@ import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.backend.string.StringPrinterConfig;
@@ -29,23 +28,17 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 public record SingleFileCompiler(
   @NotNull Reporter reporter,
   @Nullable SourceFileLocator locator,
   Trace.@Nullable Builder builder
 ) {
-  public int compile(@NotNull Path sourceFile, @NotNull CompilerFlags flags) throws IOException {
-    return compile(sourceFile, flags, stmts -> {}, (stmts, defs) -> {});
-  }
-
   public int compile(
-    @NotNull Path sourceFile, @NotNull CompilerFlags flags,
-    @NotNull Consumer<ImmutableSeq<Stmt>> onResolved,
-    @NotNull BiConsumer<ImmutableSeq<Stmt>, ImmutableSeq<Def>> onTycked
+    @NotNull Path sourceFile,
+    @NotNull CompilerFlags flags,
+    @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
   ) throws IOException {
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
@@ -54,15 +47,15 @@ public record SingleFileCompiler(
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
-        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
+        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, builder))).toImmutableSeq());
       FileModuleLoader.tyckModule(ImmutableSeq.of("Mian"), loader, program, reporter,
-        () -> {
+        stmts -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
-          onResolved.accept(program);
+          if (moduleCallback != null) moduleCallback.onResolved(sourceFile, program);
         },
         defs -> {
           distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
-          onTycked.accept(program, defs);
+          if (moduleCallback != null) moduleCallback.onTycked(sourceFile, program, defs);
         }, builder);
     } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);

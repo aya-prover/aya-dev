@@ -14,6 +14,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.lsp.actions.ComputeTerm;
@@ -63,12 +64,18 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
     var symbols = Buffer.<HighlightResult.Symbol>create();
     try {
-      compiler.compile(filePath, compilerFlags,
-        stmts -> stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols)),
-        (stmts, defs) -> {
+      compiler.compile(filePath, compilerFlags, new FileModuleLoader.FileModuleLoaderCallback() {
+        @Override
+        public void onResolved(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts) {
+          stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
+        }
+
+        @Override
+        public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
           libraryManager.loadedFiles.put(filePath, new AyaFile(defs, stmts));
           stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
-        });
+        }
+      });
     } catch (IOException e) {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());
     }

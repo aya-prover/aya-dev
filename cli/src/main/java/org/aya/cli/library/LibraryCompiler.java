@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli.library;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
@@ -9,6 +10,8 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.concrete.resolve.module.FileModuleLoader;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.serde.Serializer;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +21,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Collectors;
 
 /**
  * @author kiva
@@ -57,9 +59,9 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     var srcRoot = config.librarySrcRoot();
     var outRoot = config.libraryOutRoot();
     compiledModulePath.prepend(Files.createDirectories(outRoot));
+    compiledModulePath.append(srcRoot);
     modulePath.prepend(srcRoot);
 
-    // TODO[kiva]: build order?
     Files.walk(srcRoot).filter(Files::isRegularFile)
       .forEach(file -> callSingleFileCompiler(file, compiledModulePath, modulePath, outRoot));
   }
@@ -77,30 +79,45 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     try {
       int status = compiler.compile(file, new CompilerFlags(
         CompilerFlags.Message.EMOJI, false, null, compiledModulePath
-      ), stmt -> {}, ((stmts, defs) -> saveCompiledCore(outRoot, displayName, defs)));
+      ), new CoreSaver(locator, outRoot));
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  private void saveCompiledCore(@NotNull Path outRoot, Path displayName, ImmutableSeq<Def> defs) {
-    try (var outputStream = new ObjectOutputStream(openCompiledCore(outRoot, displayName))) {
-      var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()))
-        .collect(Collectors.toList());
-      outputStream.writeObject(serDefs);
-    } catch (IOException e) {
-      e.printStackTrace();
+  record CoreSaver(
+    @NotNull SourceFileLocator locator,
+    @NotNull Path outRoot
+  ) implements FileModuleLoader.FileModuleLoaderCallback {
+    @Override
+    public void onResolved(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts) {
     }
-  }
 
-  private @NotNull OutputStream openCompiledCore(@NotNull Path outRoot, @NotNull Path displayName) throws IOException {
-    return Files.newOutputStream(buildOutputName(outRoot, displayName));
-  }
+    @Override
+    public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
+      var displayName = locator.displayName(sourcePath);
+      saveCompiledCore(outRoot, displayName, defs);
+    }
 
-  private @NotNull Path buildOutputName(@NotNull Path outRoot, @NotNull Path displayName) throws IOException {
-    var raw = outRoot.resolve(displayName);
-    var fixed = raw.resolveSibling(raw.getFileName().toString().replace(".aya", ".ayac"));
-    Files.createDirectories(fixed.getParent());
-    return fixed;
+    private void saveCompiledCore(@NotNull Path outRoot, Path displayName, ImmutableSeq<Def> defs) {
+      try (var outputStream = new ObjectOutputStream(openCompiledCore(outRoot, displayName))) {
+        var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()))
+          .collect(Seq.factory());
+        outputStream.writeObject(serDefs);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    private @NotNull OutputStream openCompiledCore(@NotNull Path outRoot, @NotNull Path displayName) throws IOException {
+      return Files.newOutputStream(buildOutputName(outRoot, displayName));
+    }
+
+    private @NotNull Path buildOutputName(@NotNull Path outRoot, @NotNull Path displayName) throws IOException {
+      var raw = outRoot.resolve(displayName);
+      var fixed = raw.resolveSibling(raw.getFileName().toString().replace(".aya", ".ayac"));
+      Files.createDirectories(fixed.getParent());
+      return fixed;
+    }
   }
 }

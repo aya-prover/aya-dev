@@ -34,7 +34,7 @@ public class LiterateTest {
     var distillInfo = new CompilerFlags.DistillInfo(MainArgs.DistillStage.scoped, MainArgs.DistillFormat.plain, literate);
     var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, distillInfo, ImmutableSeq.empty());
     var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, TestRunner.LOCATOR, null);
-    compiler.compile(literate.resolve("test.aya"), flags);
+    compiler.compile(literate.resolve("test.aya"), flags, null);
     var strings = List.of("test.txt", "test.aya", "standard-test.txt");
     Seq.from(Files.list(literate).toList()).view()
       .filter(path -> !strings.contains(path.getFileName().toString()))

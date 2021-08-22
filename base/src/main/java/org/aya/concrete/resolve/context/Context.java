@@ -128,7 +128,7 @@ public interface Context {
     return new PhysicalModuleContext(this, this.moduleName().appended(extraName));
   }
 
-  default @NotNull PhysicalModuleContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
+  default @NotNull PhysicalModuleContext derive(@NotNull Seq<@NotNull String> extraName) {
     return new PhysicalModuleContext(this, this.moduleName().concat(extraName));
   }
 

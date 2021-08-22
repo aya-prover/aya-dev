@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
-import kala.function.CheckedRunnable;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -37,8 +36,16 @@ public record FileModuleLoader(
   @NotNull SourceFileLocator locator,
   @NotNull Path basePath,
   @NotNull Reporter reporter,
+  @Nullable FileModuleLoaderCallback callback,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
+  public interface FileModuleLoaderCallback {
+    void onResolved(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts);
+    void onTycked(@NotNull Path sourcePath,
+                  @NotNull ImmutableSeq<Stmt> stmts,
+                  @NotNull ImmutableSeq<Def> defs);
+  }
+
   private @NotNull Path resolveFile(@NotNull Seq<@NotNull String> path) {
     var withoutExt = path.foldLeft(basePath, Path::resolve);
     return withoutExt.resolveSibling(withoutExt.getFileName() + ".aya");
@@ -49,7 +56,14 @@ public record FileModuleLoader(
     var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
-        return tyckModule(path.toImmutableSeq(), recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports;
+      return tyckModule(path, recurseLoader, program, reporter,
+        stmts -> {
+          if (callback != null) callback.onResolved(sourcePath, stmts);
+        },
+        defs -> {
+          if (callback != null) callback.onTycked(sourcePath, program, defs);
+        },
+        builder).exports;
     } catch (IOException e) {
       return null;
     } catch (InternalException e) {
@@ -62,11 +76,11 @@ public record FileModuleLoader(
   }
 
   public static <E extends Exception> @NotNull PhysicalModuleContext tyckModule(
-    @NotNull ImmutableSeq<@NotNull String> path,
+    @NotNull Seq<@NotNull String> path,
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
-    @NotNull CheckedRunnable<E> onResolved,
+    @NotNull CheckedConsumer<ImmutableSeq<Stmt>, E> onResolved,
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
@@ -91,7 +105,7 @@ public record FileModuleLoader(
       }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
     } finally {
-      onResolved.runChecked();
+      onResolved.acceptChecked(program);
     }
     return context;
   }
