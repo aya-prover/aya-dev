@@ -43,8 +43,8 @@ public class PatToTerm implements Pat.Visitor<Unit, Term> {
     var tele = core.selfTele;
     var args = ctor.params().view().zip(tele.view())
       .map(p -> new Arg<>(p._1.accept(this, Unit.unit()), p._2.explicit()))
-      .collect(ImmutableSeq.factory());
-      var dataArgs = core.ownerTele.map(Term.Param::toArg);
+      .toImmutableSeq();
+    var dataArgs = core.ownerTele.map(Term.Param::toArg);
     return new CallTerm.Con(data.ref(), ctor.ref(), dataArgs, data.sortArgs(), args);
   }
 }
