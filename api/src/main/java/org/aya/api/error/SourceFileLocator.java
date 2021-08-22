@@ -17,12 +17,12 @@ public interface SourceFileLocator {
    * @param path Path to source file
    * @return relativized file path if it belongs to a module, otherwise the original path is returned
    */
-  default @NotNull Path locate(@NotNull Path path) {
+  default @NotNull Path displayName(@NotNull Path path) {
     return path;
   }
 
   record Module(@NotNull SeqLike<Path> modulePath) implements SourceFileLocator {
-    @Override public @NotNull Path locate(@NotNull Path path) {
+    @Override public @NotNull Path displayName(@NotNull Path path) {
       var normalized = path.toAbsolutePath().normalize();
       var found = modulePath.find(m -> normalized.startsWith(m.toAbsolutePath()));
       if (found.isDefined()) return found.get().toAbsolutePath().normalize().relativize(normalized);

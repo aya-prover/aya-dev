@@ -179,7 +179,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     @NotNull MutableHashMap<@NotNull Path, AyaFile> loadedFiles,
     @NotNull Buffer<Path> modulePath
   ) implements SourceFileLocator {
-    @Override public @NotNull Path locate(@NotNull Path path) {
+    @Override public @NotNull Path displayName(@NotNull Path path) {
       // vscode needs absolute path
       return path.toAbsolutePath();
     }

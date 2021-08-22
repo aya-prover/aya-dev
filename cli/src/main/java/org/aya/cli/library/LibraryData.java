@@ -5,47 +5,52 @@ package org.aya.cli.library;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import org.aya.util.Version;
-import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.Field;
-import java.nio.file.Paths;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
- * @author ice1000
+ * The library description file (aya.json) with user definable settings.
+ *
+ * @author ice1000, kiva
  * @apiNote for GSON.
- * @see LibraryData#as()
+ * @see LibraryData#asConfig(Path)
  * @see LibraryConfig
  */
 public final class LibraryData {
   public String ayaVersion;
-  public String outDir;
-  public List<String> srcDirs;
-  public List<String> libraryPaths;
+  public String name;
 
-  public void checkDeserialization() throws JsonParseException {
-    //noinspection CatchMayIgnoreException
+  private void checkDeserialization() throws JsonParseException {
     try {
-      for (Field f : getClass().getDeclaredFields())
+      for (var f : getClass().getDeclaredFields())
         if (f.get(this) == null) throw new JsonParseException("Field " + f.getName() + " was not initialized.");
-    } catch (IllegalAccessException impossible) {
+    } catch (IllegalAccessException ignored) {
     }
   }
 
-  public @NotNull LibraryConfig as() throws JsonParseException {
+
+  private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot) throws JsonParseException {
     checkDeserialization();
-    return new LibraryConfig(Version.create(ayaVersion), Paths.get(outDir),
-      ImmutableSeq.from(srcDirs).map(Paths::get),
-      ImmutableSeq.from(libraryPaths).map(Paths::get));
+    return new LibraryConfig(
+      Version.create(ayaVersion),
+      name,
+      libraryRoot,
+      libraryRoot.resolve("src"),
+      libraryRoot.resolve("build")
+    );
   }
 
-  public static @NotNull LibraryConfig fromJson(@NotNull String jsonCode) throws JsonParseException {
-    return new Gson().fromJson(jsonCode, LibraryData.class).as();
+  private static @NotNull LibraryData fromJson(@NotNull Reader jsonReader) throws JsonParseException {
+    return new Gson().fromJson(jsonReader, LibraryData.class);
   }
 
-  public static @NotNull LibraryConfig fromJson(@NotNull Reader jsonReader) throws JsonParseException {
-    return new Gson().fromJson(jsonReader, LibraryData.class).as();
+  public static @NotNull LibraryConfig fromLibraryRoot(@NotNull Path libraryRoot) throws IOException, JsonParseException {
+    var descriptionFile = libraryRoot.resolve("aya.json");
+    var data = fromJson(Files.newBufferedReader(descriptionFile));
+    return data.asConfig(libraryRoot);
   }
 }

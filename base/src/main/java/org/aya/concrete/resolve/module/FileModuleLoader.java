@@ -51,7 +51,6 @@ public record FileModuleLoader(
       var program = AyaParsing.program(locator, reporter, sourcePath);
         return tyckModule(path.toImmutableSeq(), recurseLoader, program, reporter, () -> {}, defs -> {}, builder).exports;
     } catch (IOException e) {
-      reporter.reportString(e.getMessage());
       return null;
     } catch (InternalException e) {
       handleInternalError(e);

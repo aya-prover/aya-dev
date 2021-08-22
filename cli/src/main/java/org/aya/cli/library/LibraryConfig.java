@@ -3,22 +3,27 @@
 package org.aya.cli.library;
 
 import org.aya.util.Version;
-import kala.collection.immutable.ImmutableSeq;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * @param ayaVersion   version used to compile this library
- * @param outDir       output dir of this library
- * @param srcDirs      src dirs of this library (correspond to SourceFileLocator)
- * @param libraryPaths search libraries from these dirs when compiling this library
- * @author re-xyr
+ * The compiler aspect of library description file, with generated settings.
+ *
+ * @param ayaVersion version used to compile this library
+ * @author re-xyr, kiva
  * @implNote <a href="https://github.com/ice1000/aya-prover/issues/491">issue #491</a>
  */
 public record LibraryConfig(
-  Version ayaVersion,
-  Path outDir,
-  ImmutableSeq<Path> srcDirs,
-  ImmutableSeq<Path> libraryPaths
+  @NotNull Version ayaVersion,
+  @NotNull String name,
+  @NotNull Path libraryRoot,
+  @NotNull Path librarySrcRoot,
+  @NotNull Path libraryBuildRoot
 ) {
+  public @NotNull Path depBuildRoot(@NotNull String depName) throws IOException {
+    return Files.createDirectories(libraryBuildRoot.resolve("deps").resolve(depName));
+  }
 }

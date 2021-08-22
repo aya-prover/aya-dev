@@ -48,7 +48,7 @@ public interface AyaParsing {
     @NotNull Reporter reporter, @NotNull Path path
   ) throws IOException {
     var sourceCode = Files.readString(path);
-    var sourceFile = new SourceFile(Option.some(locator.locate(path)), sourceCode);
+    var sourceFile = new SourceFile(Option.some(locator.displayName(path)), sourceCode);
     var parser = AyaParsing.parser(sourceFile, reporter);
     return new AyaProducer(sourceFile, reporter).visitProgram(parser.program());
   }
