@@ -221,11 +221,11 @@ public record Serializer(@NotNull Serializer.State state) implements
       serializeParams(def.telescope),
       def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
       serialize(def.result),
-      def.body.map(this::serialize)
+      def.body.map(ctor -> visitCtor(ctor, Unit.unit()))
     );
   }
 
-  @Override public SerDef visitCtor(@NotNull CtorDef def, Unit unit) {
+  @Override public SerDef.Ctor visitCtor(@NotNull CtorDef def, Unit unit) {
     return new SerDef.Ctor(
       state.def(def.dataRef),
       state.def(def.ref),
@@ -244,11 +244,11 @@ public record Serializer(@NotNull Serializer.State state) implements
       serializeParams(def.telescope),
       def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
       serialize(def.result),
-      def.fields.map(this::serialize)
+      def.fields.map(field -> visitField(field, Unit.unit()))
     );
   }
 
-  @Override public SerDef visitField(@NotNull FieldDef def, Unit unit) {
+  @Override public SerDef.Field visitField(@NotNull FieldDef def, Unit unit) {
     return new SerDef.Field(
       state.def(def.structRef),
       state.def(def.ref),
