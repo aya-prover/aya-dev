@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli.library;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
@@ -19,6 +18,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 
 /**
  * @author kiva
@@ -86,7 +86,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
   private void saveCompiledCore(@NotNull Path outRoot, Path displayName, ImmutableSeq<Def> defs) {
     try (var outputStream = new ObjectOutputStream(openCompiledCore(outRoot, displayName))) {
       var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()))
-        .collect(Seq.factory());
+        .collect(Collectors.toList());
       outputStream.writeObject(serDefs);
     } catch (IOException e) {
       e.printStackTrace();
@@ -99,7 +99,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
   private @NotNull Path buildOutputName(@NotNull Path outRoot, @NotNull Path displayName) throws IOException {
     var raw = outRoot.resolve(displayName);
-    var fixed = raw.resolveSibling(raw.getFileName() + ".ayac");
+    var fixed = raw.resolveSibling(raw.getFileName().toString().replace(".aya", ".ayac"));
     Files.createDirectories(fixed.getParent());
     return fixed;
   }
