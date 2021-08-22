@@ -264,7 +264,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return lvlVar;
     });
     levelEqns.vars().appendAll(levelVars);
-    return Tuple.of(levelSubst, levelVars.map(Level.Reference::new).map(Sort.CoreLevel::new));
+    return Tuple.of(levelSubst, levelVars.view()
+      .map(Level.Reference::new)
+      .map(Sort.CoreLevel::new)
+      .toImmutableSeq());
   }
 
   private boolean unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
