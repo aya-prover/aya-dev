@@ -214,19 +214,49 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerDef visitData(@NotNull DataDef def, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return new SerDef.Data(
+      state.def(def.ref),
+      serializeParams(def.telescope),
+      def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
+      serialize(def.result),
+      def.body.map(this::serialize)
+    );
   }
 
   @Override public SerDef visitCtor(@NotNull CtorDef def, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return new SerDef.Ctor(
+      state.def(def.dataRef),
+      state.def(def.ref),
+      serializePats(def.pats),
+      serializeParams(def.ownerTele),
+      serializeParams(def.selfTele),
+      def.clauses.map(this::serialize),
+      serialize(def.result),
+      def.coerce
+    );
   }
 
   @Override public SerDef visitStruct(@NotNull StructDef def, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return new SerDef.Struct(
+      state.def(def.ref()),
+      serializeParams(def.telescope),
+      def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
+      serialize(def.result),
+      def.fields.map(this::serialize)
+    );
   }
 
   @Override public SerDef visitField(@NotNull FieldDef def, Unit unit) {
-    throw new UnsupportedOperationException("TODO");
+    return new SerDef.Field(
+      state.def(def.structRef),
+      state.def(def.ref),
+      serializeParams(def.ownerTele),
+      serializeParams(def.selfTele),
+      serialize(def.result),
+      def.clauses.map(this::serialize),
+      def.body.map(this::serialize),
+      def.coerce
+    );
   }
 
   @Override public SerDef visitPrim(@NotNull PrimDef def, Unit unit) {

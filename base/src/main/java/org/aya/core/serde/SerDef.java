@@ -4,10 +4,8 @@ package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.core.def.CtorDef;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
-import org.aya.core.def.FnDef;
+import kala.control.Option;
+import org.aya.core.def.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -67,6 +65,50 @@ public sealed interface SerDef extends Serializable {
         levels.map(level -> level.de(state.levelCache())),
         result.de(state),
         bodies.map(body -> body.de(state)));
+    }
+  }
+
+  record Field(
+    @NotNull QName struct,
+    @NotNull QName self,
+    @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
+    @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
+    @NotNull SerTerm result,
+    @NotNull ImmutableSeq<SerPat.Matchy> clauses,
+    @NotNull Option<SerTerm> body,
+    boolean coerce
+    ) implements SerDef {
+    @Override
+    public @NotNull Def de(SerTerm.@NotNull DeState state) {
+      return new FieldDef(
+        state.def(struct),
+        state.def(self),
+        ownerTele.map(tele -> tele.de(state)),
+        selfTele.map(tele -> tele.de(state)),
+        result.de(state),
+        clauses.map(matching -> matching.de(state)),
+        body.map(serTerm -> serTerm.de(state)),
+        coerce
+      );
+    }
+  }
+
+  record Struct(
+    @NotNull QName name,
+    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
+    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
+    @NotNull SerTerm result,
+    @NotNull ImmutableSeq<Field> fields
+  ) implements SerDef {
+    @Override
+    public @NotNull Def de(SerTerm.@NotNull DeState state) {
+      return new StructDef(
+        state.def(name),
+        telescope.map(tele -> tele.de(state)),
+        levels.map(level -> level.de(state.levelCache())),
+        result.de(state),
+        fields.map(field -> field.de(state))
+      );
     }
   }
 }
