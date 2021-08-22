@@ -31,6 +31,8 @@ public class MainArgs {
   public boolean asciiOnly;
   @Option(names = {"--module-path"}, description = "Search for module under this path.")
   public List<String> modulePaths;
+  @Option(names = {"--make"}, description = "Compile a library")
+  public boolean isLibrary;
   @Parameters(paramLabel = "<input-file>")
   public String inputFile;
 

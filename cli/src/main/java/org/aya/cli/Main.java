@@ -3,6 +3,7 @@
 package org.aya.cli;
 
 import org.aya.api.distill.DistillerOptions;
+import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
@@ -32,7 +33,10 @@ public class Main extends MainArgs implements Callable<Integer> {
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
     var filePath = Paths.get(inputFile);
-    var sourceCode = checkAndRead(filePath, inputFile);
+    if (isLibrary) {
+      // TODO: move to a new tool
+      return LibraryCompiler.compile(filePath);
+    }
     var traceBuilder = traceFormat != null ? new Trace.Builder() : null;
     var compiler = new SingleFileCompiler(CliReporter.INSTANCE, null, traceBuilder);
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
@@ -46,6 +50,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     if (traceBuilder != null) switch (traceFormat) {
       case imgui -> {
         JniLoader.load();
+        var sourceCode = checkAndRead(filePath, inputFile);
         new ImGuiTrace(sourceCode, DistillerOptions.DEFAULT).mainLoop(traceBuilder.root());
       }
       case markdown -> System.err.println(new MdUnicodeTrace().docify(traceBuilder).debugRender());

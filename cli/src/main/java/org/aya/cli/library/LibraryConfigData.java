@@ -38,12 +38,18 @@ public final class LibraryConfigData {
 
   private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot) throws JsonParseException {
     checkDeserialization();
+    var buildDir = libraryRoot.resolve("build");
+    return asConfig(libraryRoot, buildDir);
+  }
+
+  private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot, @NotNull Path buildRoot) {
     return new LibraryConfig(
       Version.create(ayaVersion),
       name,
       libraryRoot,
       libraryRoot.resolve("src"),
-      libraryRoot.resolve("build"),
+      buildRoot,
+      buildRoot.resolve("out"),
       dependency.entrySet().stream().map(e -> e.getValue().as(e.getKey()))
         .collect(ImmutableSeq.factory())
     );
@@ -53,9 +59,16 @@ public final class LibraryConfigData {
     return new Gson().fromJson(jsonReader, LibraryConfigData.class);
   }
 
+  private static @NotNull LibraryConfigData of(@NotNull Path root) throws IOException {
+    var descriptionFile = root.resolve("aya.json");
+    return fromJson(Files.newBufferedReader(descriptionFile));
+  }
+
   public static @NotNull LibraryConfig fromLibraryRoot(@NotNull Path libraryRoot) throws IOException, JsonParseException {
-    var descriptionFile = libraryRoot.resolve("aya.json");
-    var data = fromJson(Files.newBufferedReader(descriptionFile));
-    return data.asConfig(libraryRoot);
+    return of(libraryRoot).asConfig(libraryRoot.normalize());
+  }
+
+  public static @NotNull LibraryConfig fromDependencyRoot(@NotNull Path dependencyRoot, @NotNull Path buildRoot) throws IOException, JsonParseException {
+    return of(dependencyRoot).asConfig(dependencyRoot.normalize(), buildRoot);
   }
 }

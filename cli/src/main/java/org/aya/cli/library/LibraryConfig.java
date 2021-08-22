@@ -6,8 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.util.Version;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -22,9 +20,7 @@ public record LibraryConfig(
   @NotNull Path libraryRoot,
   @NotNull Path librarySrcRoot,
   @NotNull Path libraryBuildRoot,
+  @NotNull Path libraryOutRoot,
   @NotNull ImmutableSeq<LibraryDependency> deps
 ) {
-  public @NotNull Path depBuildRoot(@NotNull String depName) throws IOException {
-    return Files.createDirectories(libraryBuildRoot.resolve("deps").resolve(depName));
-  }
 }
