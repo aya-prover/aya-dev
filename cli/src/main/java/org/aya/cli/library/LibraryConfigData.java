@@ -4,6 +4,7 @@ package org.aya.cli.library;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.util.Version;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,18 +12,20 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * The library description file (aya.json) with user definable settings.
  *
  * @author ice1000, kiva
  * @apiNote for GSON.
- * @see LibraryData#asConfig(Path)
+ * @see LibraryConfigData#asConfig(Path)
  * @see LibraryConfig
  */
-public final class LibraryData {
+public final class LibraryConfigData {
   public String ayaVersion;
   public String name;
+  public Map<String, LibraryDependencyData> dependency;
 
   private void checkDeserialization() throws JsonParseException {
     try {
@@ -40,12 +43,14 @@ public final class LibraryData {
       name,
       libraryRoot,
       libraryRoot.resolve("src"),
-      libraryRoot.resolve("build")
+      libraryRoot.resolve("build"),
+      dependency.entrySet().stream().map(e -> e.getValue().as(e.getKey()))
+        .collect(ImmutableSeq.factory())
     );
   }
 
-  private static @NotNull LibraryData fromJson(@NotNull Reader jsonReader) throws JsonParseException {
-    return new Gson().fromJson(jsonReader, LibraryData.class);
+  private static @NotNull LibraryConfigData fromJson(@NotNull Reader jsonReader) throws JsonParseException {
+    return new Gson().fromJson(jsonReader, LibraryConfigData.class);
   }
 
   public static @NotNull LibraryConfig fromLibraryRoot(@NotNull Path libraryRoot) throws IOException, JsonParseException {
