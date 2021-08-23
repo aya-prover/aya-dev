@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -89,13 +88,11 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     }
   }
 
-  private static @NotNull Path compiledCoreExt(@NotNull Path raw) {
-    return raw.resolveSibling(raw.getFileName().toString().replace(".aya", ".ayac"));
-  }
-
-  private static @NotNull Path compiledCoreFile(@NotNull SourceFileLocator locator,
-                                                @NotNull Path file, @NotNull Path outRoot) throws IOException {
-    var core = compiledCoreExt(outRoot.resolve(locator.displayName(file)));
+  private static @NotNull Path coreFile(
+    @NotNull SourceFileLocator locator, @NotNull Path file, @NotNull Path outRoot
+  ) throws IOException {
+    var raw = outRoot.resolve(locator.displayName(file));
+    var core = raw.resolveSibling(raw.getFileName().toString().replace(".aya", ".ayac"));
     Files.createDirectories(core.getParent());
     return core;
   }
@@ -104,7 +101,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     public boolean needRecompile(@NotNull Path file) {
       // TODO[kiva]: build file dependency and trigger recompile
       try {
-        var core = compiledCoreFile(locator, file, outRoot);
+        var core = coreFile(locator, file, outRoot);
         if (!Files.exists(core)) return true;
         return Files.getLastModifiedTime(file)
           .compareTo(Files.getLastModifiedTime(core)) > 0;
@@ -115,7 +112,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
     public void update(@NotNull Path file) {
       try {
-        var core = compiledCoreFile(locator, file, outRoot);
+        var core = coreFile(locator, file, outRoot);
         Files.setLastModifiedTime(core, Files.getLastModifiedTime(file));
       } catch (IOException ignore) {
       }
@@ -133,13 +130,12 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
     @Override
     public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
-      var relativeToLibRoot = locator.displayName(sourcePath);
-      saveCompiledCore(outRoot, relativeToLibRoot, defs);
+      saveCompiledCore(sourcePath, defs);
       timestamp.update(sourcePath);
     }
 
-    private void saveCompiledCore(@NotNull Path outRoot, Path relativeToLibRoot, ImmutableSeq<Def> defs) {
-      try (var outputStream = new ObjectOutputStream(openCompiledCore(outRoot, relativeToLibRoot))) {
+    private void saveCompiledCore(@NotNull Path sourcePath, ImmutableSeq<Def> defs) {
+      try (var outputStream = openCompiledCore(sourcePath)) {
         var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()))
           .collect(Seq.factory());
         outputStream.writeObject(serDefs);
@@ -148,14 +144,9 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
       }
     }
 
-    private @NotNull OutputStream openCompiledCore(@NotNull Path outRoot, @NotNull Path relativeToLibRoot) throws IOException {
-      return Files.newOutputStream(buildOutputName(outRoot, relativeToLibRoot));
-    }
-
-    private @NotNull Path buildOutputName(@NotNull Path outRoot, @NotNull Path relativeToLibRoot) throws IOException {
-      var fixed = compiledCoreExt(outRoot.resolve(relativeToLibRoot));
-      Files.createDirectories(fixed.getParent());
-      return fixed;
+    private @NotNull ObjectOutputStream openCompiledCore(@NotNull Path sourcePath) throws IOException {
+      return new ObjectOutputStream(Files.newOutputStream(
+        coreFile(locator, sourcePath, outRoot)));
     }
   }
 }
