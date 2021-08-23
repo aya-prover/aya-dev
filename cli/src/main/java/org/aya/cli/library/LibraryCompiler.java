@@ -75,7 +75,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     var relativeToLibRoot = locator.displayName(file);
     var timestamp = new Timestamp(locator, outRoot);
     System.out.print(" -- " + relativeToLibRoot + " : ");
-    if (!timestamp.isModified(file)) {
+    if (!timestamp.needRecompile(file)) {
       System.out.println("UP-TO-DATE");
       return;
     }
@@ -101,7 +101,8 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
   }
 
   record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoot) {
-    public boolean isModified(@NotNull Path file) {
+    public boolean needRecompile(@NotNull Path file) {
+      // TODO[kiva]: build file dependency and trigger recompile
       try {
         var core = compiledCoreFile(locator, file, outRoot);
         if (!Files.exists(core)) return true;
