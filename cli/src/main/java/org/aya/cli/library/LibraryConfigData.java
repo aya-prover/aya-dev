@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * The library description file (aya.json) with user definable settings.
@@ -25,6 +26,7 @@ import java.util.Map;
 public final class LibraryConfigData {
   public String ayaVersion;
   public String name;
+  public String version;
   public Map<String, LibraryDependencyData> dependency;
 
   private void checkDeserialization() throws JsonParseException {
@@ -38,14 +40,15 @@ public final class LibraryConfigData {
 
   private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot) throws JsonParseException {
     checkDeserialization();
-    var buildDir = libraryRoot.resolve("build");
-    return asConfig(libraryRoot, buildDir);
+    return asConfig(libraryRoot, config -> libraryRoot.resolve("build"));
   }
 
-  private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot, @NotNull Path buildRoot) {
+  private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot, @NotNull Function<String, Path> buildRootGen) {
+    var buildRoot = buildRootGen.apply(version);
     return new LibraryConfig(
       Version.create(ayaVersion),
       name,
+      version,
       libraryRoot,
       libraryRoot.resolve("src"),
       buildRoot,
@@ -68,7 +71,7 @@ public final class LibraryConfigData {
     return of(libraryRoot).asConfig(libraryRoot.normalize());
   }
 
-  public static @NotNull LibraryConfig fromDependencyRoot(@NotNull Path dependencyRoot, @NotNull Path buildRoot) throws IOException, JsonParseException {
+  public static @NotNull LibraryConfig fromDependencyRoot(@NotNull Path dependencyRoot, @NotNull Function<String, Path> buildRoot) throws IOException, JsonParseException {
     return of(dependencyRoot).asConfig(dependencyRoot.normalize(), buildRoot);
   }
 }

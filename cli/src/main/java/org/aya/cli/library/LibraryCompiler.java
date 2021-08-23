@@ -35,12 +35,12 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
   private @Nullable LibraryConfig depConfig(@NotNull LibraryDependency dep) throws IOException {
     // TODO: test only: dependency resolving should be done in package manager
     if (dep instanceof LibraryDependency.DepFile file)
-      return LibraryConfigData.fromDependencyRoot(file.depRoot(), depBuildRoot(dep.depName()));
+      return LibraryConfigData.fromDependencyRoot(file.depRoot(), version -> depBuildRoot(dep.depName(), version));
     return null;
   }
 
-  private @NotNull Path depBuildRoot(@NotNull String depName) throws IOException {
-    return Files.createDirectories(buildRoot.resolve("deps").resolve(depName));
+  private @NotNull Path depBuildRoot(@NotNull String depName, @NotNull String version) {
+    return buildRoot.resolve("deps").resolve(depName + "_" + version);
   }
 
   private void make(@NotNull LibraryConfig config) throws IOException {

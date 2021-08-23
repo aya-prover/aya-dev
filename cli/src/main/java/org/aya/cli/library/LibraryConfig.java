@@ -17,6 +17,7 @@ import java.nio.file.Path;
 public record LibraryConfig(
   @NotNull Version ayaVersion,
   @NotNull String name,
+  @NotNull String version,
   @NotNull Path libraryRoot,
   @NotNull Path librarySrcRoot,
   @NotNull Path libraryBuildRoot,
