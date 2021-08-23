@@ -89,31 +89,24 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     }
   }
 
-  private static @NotNull Path replaceExt(@NotNull Path raw, @NotNull String replacement) {
-    return raw.resolveSibling(raw.getFileName().toString().replace(".aya", replacement));
-  }
-
   private static @NotNull Path compiledCoreExt(@NotNull Path raw) {
-    return replaceExt(raw, ".ayac");
+    return raw.resolveSibling(raw.getFileName().toString().replace(".aya", ".ayac"));
   }
 
-  private static @NotNull Path timestampExt(@NotNull Path raw) {
-    return replaceExt(raw, ".timestamp");
+  private static @NotNull Path compiledCoreFile(@NotNull SourceFileLocator locator,
+                                                @NotNull Path file, @NotNull Path outRoot) throws IOException {
+    var core = compiledCoreExt(outRoot.resolve(locator.displayName(file)));
+    Files.createDirectories(core.getParent());
+    return core;
   }
 
   record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoot) {
-    private @NotNull Path timestampFile(@NotNull Path file) throws IOException {
-      var timestamp = timestampExt(outRoot.resolve(locator.displayName(file)));
-      Files.createDirectories(timestamp.getParent());
-      return timestamp;
-    }
-
     public boolean isModified(@NotNull Path file) {
       try {
-        var tm = timestampFile(file);
-        if (!Files.exists(tm)) return true;
+        var core = compiledCoreFile(locator, file, outRoot);
+        if (!Files.exists(core)) return true;
         return Files.getLastModifiedTime(file)
-          .compareTo(Files.getLastModifiedTime(tm)) > 0;
+          .compareTo(Files.getLastModifiedTime(core)) > 0;
       } catch (IOException ignore) {
         return true;
       }
@@ -121,9 +114,8 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
     public void update(@NotNull Path file) {
       try {
-        var tm = timestampFile(file);
-        if (!Files.exists(tm)) Files.createFile(tm);
-        Files.setLastModifiedTime(tm, Files.getLastModifiedTime(file));
+        var core = compiledCoreFile(locator, file, outRoot);
+        Files.setLastModifiedTime(core, Files.getLastModifiedTime(file));
       } catch (IOException ignore) {
       }
     }
