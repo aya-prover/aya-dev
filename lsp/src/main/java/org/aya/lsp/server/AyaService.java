@@ -67,13 +67,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       compiler.compile(filePath, compilerFlags, new FileModuleLoader.FileModuleLoaderCallback() {
         @Override
         public void onResolved(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts) {
-          stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
+          // only build highlight for current file
+          if (sourcePath.equals(filePath)) stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
         }
 
         @Override
         public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
-          libraryManager.loadedFiles.put(filePath, new AyaFile(defs, stmts));
-          stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
+          // but store all compiled source
+          libraryManager.loadedFiles.put(sourcePath, new AyaFile(defs, stmts));
+          if (sourcePath.equals(filePath)) stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
         }
       });
     } catch (IOException e) {

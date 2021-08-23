@@ -95,8 +95,8 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
     @Override
     public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
-      var displayName = locator.displayName(sourcePath);
-      saveCompiledCore(outRoot, displayName, defs);
+      var relativeToLibraryRoot = locator.displayName(sourcePath);
+      saveCompiledCore(outRoot, relativeToLibraryRoot, defs);
     }
 
     private void saveCompiledCore(@NotNull Path outRoot, Path displayName, ImmutableSeq<Def> defs) {
