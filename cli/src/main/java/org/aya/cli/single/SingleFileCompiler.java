@@ -49,7 +49,7 @@ public record SingleFileCompiler(
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, builder))).toImmutableSeq());
       FileModuleLoader.tyckModule(ImmutableSeq.of("Mian"), loader, program, reporter,
-        stmts -> {
+        () -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
           if (moduleCallback != null) moduleCallback.onResolved(sourceFile, program);
         },

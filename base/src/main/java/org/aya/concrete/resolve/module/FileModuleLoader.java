@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
+import kala.function.CheckedRunnable;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -57,8 +58,8 @@ public record FileModuleLoader(
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       return tyckModule(path, recurseLoader, program, reporter,
-        stmts -> {
-          if (callback != null) callback.onResolved(sourcePath, stmts);
+        () -> {
+          if (callback != null) callback.onResolved(sourcePath, program);
         },
         defs -> {
           if (callback != null) callback.onTycked(sourcePath, program, defs);
@@ -80,7 +81,7 @@ public record FileModuleLoader(
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
-    @NotNull CheckedConsumer<ImmutableSeq<Stmt>, E> onResolved,
+    @NotNull CheckedRunnable<E> onResolved,
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
@@ -105,7 +106,7 @@ public record FileModuleLoader(
       }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
     } finally {
-      onResolved.acceptChecked(program);
+      onResolved.runChecked();
     }
     return context;
   }
