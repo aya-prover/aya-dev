@@ -15,6 +15,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.serde.Serializer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -31,10 +32,11 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     return 0;
   }
 
-  private @NotNull LibraryConfig depConfig(@NotNull LibraryDependency dep) throws IOException {
-    if (!(dep instanceof LibraryDependency.DepFile file))
-      throw new UnsupportedOperationException("WIP");
-    return LibraryConfigData.fromDependencyRoot(file.depRoot(), depBuildRoot(dep.depName()));
+  private @Nullable LibraryConfig depConfig(@NotNull LibraryDependency dep) throws IOException {
+    // TODO: test only: dependency resolving should be done in package manager
+    if (dep instanceof LibraryDependency.DepFile file)
+      return LibraryConfigData.fromDependencyRoot(file.depRoot(), depBuildRoot(dep.depName()));
+    return null;
   }
 
   private @NotNull Path depBuildRoot(@NotNull String depName) throws IOException {
@@ -47,6 +49,10 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     var modulePath = Buffer.<Path>of();
     for (var dep : config.deps()) {
       var depConfig = depConfig(dep);
+      if (depConfig == null) {
+        System.out.println("Skipping " + dep.depName());
+        continue;
+      }
       make(depConfig);
       compiledModulePath.append(depConfig.libraryOutRoot());
       modulePath.append(depConfig.librarySrcRoot());
@@ -80,7 +86,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     }
     var compiler = new SingleFileCompiler(CliReporter.INSTANCE, locator, null);
     try {
-      int status = compiler.compile(file, new CompilerFlags(
+      compiler.compile(file, new CompilerFlags(
         CompilerFlags.Message.EMOJI, false, null, compiledModulePath
       ), new CoreSaver(locator, outRoot, timestamp));
     } catch (IOException e) {
