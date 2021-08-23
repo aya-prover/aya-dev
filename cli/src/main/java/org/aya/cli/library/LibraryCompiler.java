@@ -53,7 +53,6 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
       modulePath.append(depConfig.librarySrcRoot());
     }
 
-    // TODO[kiva]: be incremental
     System.out.println("Compiling " + config.name());
 
     var srcRoot = config.librarySrcRoot();
@@ -73,21 +72,67 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     @NotNull Path outRoot
   ) {
     var locator = new SourceFileLocator.Module(modulePath.view());
-    var displayName = locator.displayName(file);
-    System.out.println(" -- " + displayName);
+    var relativeToLibRoot = locator.displayName(file);
+    var timestamp = new Timestamp(locator, outRoot);
+    System.out.print(" -- " + relativeToLibRoot + " : ");
+    if (!timestamp.isModified(file)) {
+      System.out.println("UP-TO-DATE");
+      return;
+    }
     var compiler = new SingleFileCompiler(CliReporter.INSTANCE, locator, null);
     try {
       int status = compiler.compile(file, new CompilerFlags(
         CompilerFlags.Message.EMOJI, false, null, compiledModulePath
-      ), new CoreSaver(locator, outRoot));
+      ), new CoreSaver(locator, outRoot, timestamp));
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
+  private static @NotNull Path replaceExt(@NotNull Path raw, @NotNull String replacement) {
+    return raw.resolveSibling(raw.getFileName().toString().replace(".aya", replacement));
+  }
+
+  private static @NotNull Path compiledCoreExt(@NotNull Path raw) {
+    return replaceExt(raw, ".ayac");
+  }
+
+  private static @NotNull Path timestampExt(@NotNull Path raw) {
+    return replaceExt(raw, ".timestamp");
+  }
+
+  record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoot) {
+    private @NotNull Path timestampFile(@NotNull Path file) throws IOException {
+      var timestamp = timestampExt(outRoot.resolve(locator.displayName(file)));
+      Files.createDirectories(timestamp.getParent());
+      return timestamp;
+    }
+
+    public boolean isModified(@NotNull Path file) {
+      try {
+        var tm = timestampFile(file);
+        if (!Files.exists(tm)) return true;
+        return Files.getLastModifiedTime(file)
+          .compareTo(Files.getLastModifiedTime(tm)) > 0;
+      } catch (IOException ignore) {
+        return true;
+      }
+    }
+
+    public void update(@NotNull Path file) {
+      try {
+        var tm = timestampFile(file);
+        if (!Files.exists(tm)) Files.createFile(tm);
+        Files.setLastModifiedTime(tm, Files.getLastModifiedTime(file));
+      } catch (IOException ignore) {
+      }
+    }
+  }
+
   record CoreSaver(
     @NotNull SourceFileLocator locator,
-    @NotNull Path outRoot
+    @NotNull Path outRoot,
+    @NotNull Timestamp timestamp
   ) implements FileModuleLoader.FileModuleLoaderCallback {
     @Override
     public void onResolved(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts) {
@@ -95,12 +140,13 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
     @Override
     public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
-      var relativeToLibraryRoot = locator.displayName(sourcePath);
-      saveCompiledCore(outRoot, relativeToLibraryRoot, defs);
+      var relativeToLibRoot = locator.displayName(sourcePath);
+      saveCompiledCore(outRoot, relativeToLibRoot, defs);
+      timestamp.update(sourcePath);
     }
 
-    private void saveCompiledCore(@NotNull Path outRoot, Path displayName, ImmutableSeq<Def> defs) {
-      try (var outputStream = new ObjectOutputStream(openCompiledCore(outRoot, displayName))) {
+    private void saveCompiledCore(@NotNull Path outRoot, Path relativeToLibRoot, ImmutableSeq<Def> defs) {
+      try (var outputStream = new ObjectOutputStream(openCompiledCore(outRoot, relativeToLibRoot))) {
         var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()))
           .collect(Seq.factory());
         outputStream.writeObject(serDefs);
@@ -109,13 +155,12 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
       }
     }
 
-    private @NotNull OutputStream openCompiledCore(@NotNull Path outRoot, @NotNull Path displayName) throws IOException {
-      return Files.newOutputStream(buildOutputName(outRoot, displayName));
+    private @NotNull OutputStream openCompiledCore(@NotNull Path outRoot, @NotNull Path relativeToLibRoot) throws IOException {
+      return Files.newOutputStream(buildOutputName(outRoot, relativeToLibRoot));
     }
 
-    private @NotNull Path buildOutputName(@NotNull Path outRoot, @NotNull Path displayName) throws IOException {
-      var raw = outRoot.resolve(displayName);
-      var fixed = raw.resolveSibling(raw.getFileName().toString().replace(".aya", ".ayac"));
+    private @NotNull Path buildOutputName(@NotNull Path outRoot, @NotNull Path relativeToLibRoot) throws IOException {
+      var fixed = compiledCoreExt(outRoot.resolve(relativeToLibRoot));
       Files.createDirectories(fixed.getParent());
       return fixed;
     }
