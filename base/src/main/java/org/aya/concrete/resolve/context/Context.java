@@ -26,7 +26,7 @@ import java.util.function.Predicate;
  * @author re-xyr
  */
 public interface Context {
-  Seq<String> TOP_LEVEL_MOD_NAME = Seq.of();
+  ImmutableSeq<String> TOP_LEVEL_MOD_NAME = ImmutableSeq.empty();
 
   @Nullable Context parent();
 
@@ -65,8 +65,8 @@ public interface Context {
     return result;
   }
 
-  @Nullable Var getQualifiedLocalMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos);
-  default @Nullable Var getQualifiedMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+  @Nullable Var getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos);
+  default @Nullable Var getQualifiedMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var ref = getQualifiedLocalMaybe(modName, name, sourcePos);
     if (ref == null) {
       var p = parent();
@@ -74,7 +74,7 @@ public interface Context {
       else return p.getQualifiedMaybe(modName, name, sourcePos);
     } else return ref;
   }
-  default @NotNull Var getQualified(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+  default @NotNull Var getQualified(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getQualifiedMaybe(modName, name, sourcePos);
     if (result == null) reportAndThrow(new QualifiedNameNotFoundError(modName, name, sourcePos));
     return result;
@@ -83,12 +83,12 @@ public interface Context {
   default @NotNull Var getQualified(@NotNull QualifiedID qualifiedID, @NotNull SourcePos sourcePos) {
     var view = qualifiedID.ids().view();
     var name = view.last();
-    var modName = view.dropLast(1).toSeq();
+    var modName = view.dropLast(1).toImmutableSeq();
     return getQualified(modName, name, sourcePos);
   }
 
-  @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos);
-  default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
+  @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName, @NotNull SourcePos sourcePos);
+  default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull ImmutableSeq<String> modName, @NotNull SourcePos sourcePos) {
     var ref = getModuleLocalMaybe(modName, sourcePos);
     if (ref == null) {
       var p = parent();

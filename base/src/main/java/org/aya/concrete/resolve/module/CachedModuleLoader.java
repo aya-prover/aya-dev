@@ -2,7 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.module;
 
-import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.ref.Var;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public final class CachedModuleLoader implements ModuleLoader {
-  final @NotNull MutableMap<@NotNull String, MutableMap<Seq<String>, MutableMap<String, Var>>> cache = new MutableHashMap<>();
+  final @NotNull MutableMap<@NotNull String, MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>> cache = new MutableHashMap<>();
   final @NotNull ModuleLoader loader;
 
   public CachedModuleLoader(@NotNull ModuleLoader loader) {
@@ -22,7 +22,8 @@ public final class CachedModuleLoader implements ModuleLoader {
   }
 
   @Override
-  public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<String> path, @NotNull ModuleLoader recurseLoader) {
+  public @Nullable MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>
+  load(@NotNull ImmutableSeq<String> path, @NotNull ModuleLoader recurseLoader) {
     var stringifiedPath = QualifiedID.join(path);
     return cache.getOrElse(stringifiedPath, () -> {
       var ctx = loader.load(path, recurseLoader);

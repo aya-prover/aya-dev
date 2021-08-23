@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 public final class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
   public final @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions = MutableHashMap.of();
-  public final @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
-  public final @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
+  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
+  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
 
   private final @NotNull ImmutableSeq<String> moduleName;
 
@@ -39,7 +39,7 @@ public final class PhysicalModuleContext implements ModuleContext {
   @Override public void importModule(
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
-    Seq<String> componentName,
+    ImmutableSeq<String> componentName,
     MutableMap<String, Var> mod
   ) {
     ModuleContext.super.importModule(accessibility, sourcePos, componentName, mod);
@@ -47,7 +47,7 @@ public final class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override public void addGlobal(
-    @NotNull Seq<String> modName,
+    @NotNull ImmutableSeq<String> modName,
     @NotNull String name,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull Var ref,
@@ -74,7 +74,7 @@ public final class PhysicalModuleContext implements ModuleContext {
     return definitions;
   }
 
-  @Override public @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules() {
+  @Override public @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules() {
     return modules;
   }
 }

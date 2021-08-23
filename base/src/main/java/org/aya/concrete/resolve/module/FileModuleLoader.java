@@ -52,8 +52,8 @@ public record FileModuleLoader(
     return withoutExt.resolveSibling(withoutExt.getFileName() + ".aya");
   }
 
-  @Override public @Nullable MutableMap<Seq<String>, MutableMap<String, Var>>
-  load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  @Override public @Nullable MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>
+  load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
@@ -77,7 +77,7 @@ public record FileModuleLoader(
   }
 
   public static <E extends Exception> @NotNull PhysicalModuleContext tyckModule(
-    @NotNull Seq<@NotNull String> path,
+    @NotNull ImmutableSeq<@NotNull String> path,
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,

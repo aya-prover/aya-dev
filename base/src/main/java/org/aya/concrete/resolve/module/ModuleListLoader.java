@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.module;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.ref.Var;
@@ -18,9 +17,9 @@ public record ModuleListLoader(
     this.loaders = loaders;
   }
 
-  @Override
-  public @Nullable
-  MutableMap<Seq<String>, MutableMap<String, Var>> load(@NotNull Seq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  @Override public
+  @Nullable MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>
+  load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     for (var loader : loaders) {
       var mod = loader.load(path, recurseLoader);
       if (mod != null) return mod;

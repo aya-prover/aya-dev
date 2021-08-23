@@ -29,7 +29,7 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
   }
 
   @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions();
-  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules();
+  @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules();
 
   @Override default @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = definitions().getOrNull(name);
@@ -43,7 +43,7 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
   }
 
   @Override default @Nullable Var
-  getQualifiedLocalMaybe(@NotNull Seq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+  getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var mod = modules().getOrNull(modName);
     if (mod == null) return null;
     var ref = mod.getOrNull(name);
@@ -52,14 +52,14 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
   }
 
   @Override default @Nullable MutableMap<String, Var>
-  getModuleLocalMaybe(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) {
+  getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName, @NotNull SourcePos sourcePos) {
     return modules().getOrNull(modName);
   }
 
   default void importModules(
     @NotNull ImmutableSeq<String> modName,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> module,
+    @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> module,
     @NotNull SourcePos sourcePos
   ) {
     module.forEach((name, mod) -> importModule(accessibility, sourcePos, modName.concat(name), mod));
@@ -68,7 +68,7 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
   default void importModule(
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
-    Seq<String> componentName,
+    ImmutableSeq<String> componentName,
     MutableMap<String, Var> mod
   ) {
     var modules = modules();
@@ -82,7 +82,7 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
   }
 
   default void openModule(
-    @NotNull Seq<String> modName,
+    @NotNull ImmutableSeq<String> modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull Function<String, Boolean> using,
     @NotNull Map<String, String> rename,
@@ -103,7 +103,7 @@ public sealed interface ModuleContext extends Context permits PhysicalModuleCont
   }
 
   default void addGlobal(
-    @NotNull Seq<String> modName,
+    @NotNull ImmutableSeq<String> modName,
     @NotNull String name,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull Var ref,

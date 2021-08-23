@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public record NoExportContext(
   @NotNull PhysicalModuleContext parent,
   @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions,
-  @NotNull MutableMap<Seq<String>, MutableMap<String, Var>> modules
+  @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules
 ) implements ModuleContext {
   @Override
   public @NotNull ImmutableSeq<String> moduleName() {
