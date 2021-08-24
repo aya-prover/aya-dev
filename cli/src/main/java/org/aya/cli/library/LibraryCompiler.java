@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.cli.library;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
@@ -45,8 +44,8 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
   private void make(@NotNull LibraryConfig config) throws IOException {
     // TODO[kiva]: move to package manager
-    var compiledModulePath = Buffer.<Path>of();
-    var modulePath = Buffer.<Path>of();
+    var compiledModulePath = Buffer.<Path>create();
+    var modulePath = Buffer.<Path>create();
     for (var dep : config.deps()) {
       var depConfig = depConfig(dep);
       if (depConfig == null) {
@@ -142,8 +141,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
     private void saveCompiledCore(@NotNull Path sourcePath, ImmutableSeq<Def> defs) {
       try (var outputStream = openCompiledCore(sourcePath)) {
-        var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()))
-          .collect(Seq.factory());
+        var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
         outputStream.writeObject(serDefs);
       } catch (IOException e) {
         e.printStackTrace();
