@@ -6,7 +6,9 @@ module org.aya.cli {
   requires transitive org.aya;
 
   exports org.aya.cli;
-  exports org.aya.cli.library to com.google.gson;
   exports org.aya.cli.single;
   exports org.aya.cli.utils;
+  exports org.aya.cli.library to com.google.gson;
+  exports org.aya.cli.library.json to com.google.gson;
+  exports org.aya.cli.library.binary to com.google.gson;
 }

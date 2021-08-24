@@ -115,7 +115,7 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
     @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
     @NotNull SerTerm result,
-    String name
+    @NotNull String name
   ) implements SerDef {
     @Override
     public @NotNull Def de(SerTerm.@NotNull DeState state) {

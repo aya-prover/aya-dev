@@ -24,7 +24,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   Term.Visitor<Unit, SerTerm>,
   Def.Visitor<Unit, SerDef>,
   Pat.Visitor<Unit, SerPat> {
-  public @NotNull SerTerm serialize(@NotNull Term term) {
+  private @NotNull SerTerm serialize(@NotNull Term term) {
     return term.accept(this, Unit.unit());
   }
 

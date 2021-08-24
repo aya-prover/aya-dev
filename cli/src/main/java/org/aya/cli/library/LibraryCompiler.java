@@ -6,6 +6,10 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
 import org.aya.api.error.SourceFileLocator;
+import org.aya.cli.library.binary.CompiledAya;
+import org.aya.cli.library.json.LibraryConfig;
+import org.aya.cli.library.json.LibraryConfigData;
+import org.aya.cli.library.json.LibraryDependency;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
@@ -130,7 +134,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     @NotNull Timestamp timestamp
   ) implements FileModuleLoader.FileModuleLoaderCallback {
     @Override
-    public void onResolved(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts) {
+    public void onResolved(@NotNull Path sourcePath, @NotNull FileModuleLoader.FileModuleResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
     }
 
     @Override
@@ -142,7 +146,8 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     private void saveCompiledCore(@NotNull Path sourcePath, ImmutableSeq<Def> defs) {
       try (var outputStream = openCompiledCore(sourcePath)) {
         var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
-        outputStream.writeObject(serDefs);
+        var compiled = CompiledAya.from(serDefs);
+        outputStream.writeObject(compiled);
       } catch (IOException e) {
         e.printStackTrace();
       }

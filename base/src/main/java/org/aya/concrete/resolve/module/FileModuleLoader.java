@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
-import kala.function.CheckedRunnable;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -41,7 +40,7 @@ public record FileModuleLoader(
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
   public interface FileModuleLoaderCallback {
-    void onResolved(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts);
+    void onResolved(@NotNull Path sourcePath, @NotNull FileModuleResolveInfo moduleInfo, @NotNull ImmutableSeq<Stmt> stmts);
     void onTycked(@NotNull Path sourcePath,
                   @NotNull ImmutableSeq<Stmt> stmts,
                   @NotNull ImmutableSeq<Def> defs);
@@ -58,8 +57,8 @@ public record FileModuleLoader(
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       return tyckModule(path, recurseLoader, program, reporter,
-        () -> {
-          if (callback != null) callback.onResolved(sourcePath, program);
+        resolveInfo -> {
+          if (callback != null) callback.onResolved(sourcePath, resolveInfo, program);
         },
         defs -> {
           if (callback != null) callback.onTycked(sourcePath, program, defs);
@@ -81,12 +80,13 @@ public record FileModuleLoader(
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
-    @NotNull CheckedRunnable<E> onResolved,
+    @NotNull CheckedConsumer<FileModuleResolveInfo, E> onResolved,
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
     var context = new EmptyContext(reporter).derive(path);
-    var shallowResolver = new StmtShallowResolver(recurseLoader);
+    var resolveInfo = new FileModuleResolveInfo(Buffer.create());
+    var shallowResolver = new StmtShallowResolver(recurseLoader, resolveInfo);
     program.forEach(s -> s.accept(shallowResolver, context));
     var opSet = new BinOpSet(reporter);
     program.forEach(s -> s.resolve(opSet));
@@ -106,7 +106,7 @@ public record FileModuleLoader(
       }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
     } finally {
-      onResolved.runChecked();
+      onResolved.acceptChecked(resolveInfo);
     }
     return context;
   }
@@ -117,5 +117,10 @@ public record FileModuleLoader(
     System.err.println("""
       Please report the stacktrace to the developers so a better error handling could be made.
       Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
+  }
+
+  public static record FileModuleResolveInfo(
+    @NotNull Buffer<ImmutableSeq<String>> imports
+  ) {
   }
 }
