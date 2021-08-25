@@ -31,6 +31,19 @@ public class SuedeTest {
     suedeAll("def test (y : Set) => Pi (x : Set -> Set (lsuc 1)) -> Sig (x y) ** x y");
   }
 
+  @Test public void adjunction() {
+    suedeAll("""
+      def curry (A B C : Set)
+                 (f : (Sig A ** B) -> C)
+                 (a : A) (b : B) : C
+        => f (a, b)
+      def uncurry (A : Set) (B : Set) (C : Set)
+                   (f : Pi A B -> C)
+                   (p : Sig A ** B) : C
+        => f (p.1) (p.2)
+      """);
+  }
+
   @Test public void path() {
     suedeAll("""
       prim I prim left prim right
