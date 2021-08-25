@@ -18,6 +18,7 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * simply adds all top-level names to the context
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author re-xyr
  */
 public record StmtShallowResolver(@NotNull ModuleLoader loader,
-                                  @NotNull FileModuleLoader.FileModuleResolveInfo resolveInfo) implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
+                                  @Nullable FileModuleLoader.FileResolveInfo resolveInfo) implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   @Override public Unit visitModule(Command.@NotNull Module mod, @NotNull ModuleContext context) {
     var newCtx = context.derive(mod.name());
     visitAll(mod.contents(), newCtx);
@@ -35,7 +36,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader,
 
   @Override public Unit visitImport(Command.@NotNull Import cmd, @NotNull ModuleContext context) {
     var ids = cmd.path().ids();
-    resolveInfo.imports().append(ids);
+    if (resolveInfo != null) resolveInfo.imports().append(ids);
     var success = loader.load(ids);
     if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
     context.importModules(cmd.path().ids(), Stmt.Accessibility.Private, success, cmd.sourcePos());

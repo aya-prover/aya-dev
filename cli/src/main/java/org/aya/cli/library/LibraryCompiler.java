@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
 import org.aya.api.error.SourceFileLocator;
-import org.aya.cli.library.binary.CompiledAya;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
@@ -16,6 +15,7 @@ import org.aya.cli.single.SingleFileCompiler;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
+import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +134,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     @NotNull Timestamp timestamp
   ) implements FileModuleLoader.FileModuleLoaderCallback {
     @Override
-    public void onResolved(@NotNull Path sourcePath, @NotNull FileModuleLoader.FileModuleResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
+    public void onResolved(@NotNull Path sourcePath, @NotNull FileModuleLoader.FileResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
     }
 
     @Override

@@ -64,7 +64,7 @@ public class TyckDeclTest {
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
     var decls = new AyaProducer(SourceFile.NONE,
       ThrowingReporter.INSTANCE).visitProgram(AyaParsing.parser(text).program());
-    var ssr = new StmtShallowResolver(new EmptyModuleLoader());
+    var ssr = new StmtShallowResolver(new EmptyModuleLoader(), null);
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
     decls.forEach(d -> d.accept(ssr, ctx));
     var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
@@ -75,8 +75,8 @@ public class TyckDeclTest {
   }
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
-    return successDesugarDecls(text)
+    return successDesugarDecls(text).view()
       .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
-      .filter(Objects::nonNull);
+      .filter(Objects::nonNull).toImmutableSeq();
   }
 }
