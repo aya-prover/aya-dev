@@ -335,8 +335,13 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         throw new TyckerException();
       }
       var result = type.accept(this, against);
-      resultTele.append(Tuple.of(tuple.ref(), tuple.explicit(), result.wellTyped));
+      var ref = tuple.ref();
+      localCtx.put(ref, result.wellTyped);
+      resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
     });
+    expr.params().view()
+      .map(Expr.Param::ref)
+      .forEach(localCtx.localMap()::remove);
     return new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), against);
   }
 
