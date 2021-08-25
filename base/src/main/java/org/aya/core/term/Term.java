@@ -178,31 +178,31 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
       return new RefTerm(ref, type);
     }
 
-    public @NotNull Term.Param subst(@NotNull Var var, @NotNull Term term) {
+    public @NotNull Param subst(@NotNull Var var, @NotNull Term term) {
       return subst(new Substituter.TermSubst(var, term));
     }
 
-    public @NotNull Term.Param subst(@NotNull Substituter.TermSubst subst) {
+    public @NotNull Param subst(@NotNull Substituter.TermSubst subst) {
       return subst(subst, LevelSubst.EMPTY);
     }
 
-    public static @NotNull ImmutableSeq<Term.Param> subst(
-      @NotNull ImmutableSeq<Term.@NotNull Param> params,
+    public static @NotNull ImmutableSeq<Param> subst(
+      @NotNull ImmutableSeq<@NotNull Param> params,
       @NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst
     ) {
       return params.map(param -> param.subst(subst, levelSubst));
     }
 
-    public static @NotNull ImmutableSeq<Term.Param>
-    subst(@NotNull ImmutableSeq<Term.@NotNull Param> params, @NotNull LevelSubst levelSubst) {
+    public static @NotNull ImmutableSeq<Param>
+    subst(@NotNull ImmutableSeq<@NotNull Param> params, @NotNull LevelSubst levelSubst) {
       return params.map(param -> param.subst(Substituter.TermSubst.EMPTY, levelSubst));
     }
 
-    public @NotNull Term.Param subst(@NotNull LevelSubst levelSubst) {
+    public @NotNull Param subst(@NotNull LevelSubst levelSubst) {
       return subst(Substituter.TermSubst.EMPTY, levelSubst);
     }
 
-    public @NotNull Term.Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
+    public @NotNull Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
       return new Param(ref, type.subst(subst, levelSubst), explicit);
     }
 
