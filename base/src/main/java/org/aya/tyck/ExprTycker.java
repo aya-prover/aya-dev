@@ -247,7 +247,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var level = levelStuffs(pos, defVar);
     var tele = Term.Param.subst(Def.defTele(defVar), level._1);
     // unbound these abstracted variables
-    // ice: should we rename the vars in this telescope? Probably not.
     var body = function.make(defVar,
       level._2,
       tele.map(Term.Param::toArg));
@@ -549,7 +548,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         againstTele = againstTele.drop(1);
         if (againstTele.isNotEmpty()) {
           final var subst = new Substituter.TermSubst(ref, result.wellTyped);
-          againstTele = Term.Param.subst(againstTele, subst).view();
+          againstTele = againstTele.view().map(param -> param.subst(subst)).toSeq().view();
           last = last.subst(subst);
         } else {
           if (iter.hasNext()) {

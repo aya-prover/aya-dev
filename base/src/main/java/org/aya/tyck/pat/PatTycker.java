@@ -201,9 +201,9 @@ public record PatTycker(
     ctor.resolved().value = ctorRef;
     var ctorCore = ctorRef.core;
     final var dataCall = realCtor._1;
-      var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(),
-      Term.Param.subst(ctorCore.selfTele, realCtor._2,
-        Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs())), dataCall));
+    var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
+    var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(),
+      Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall));
     var patterns = visitPatterns(sig, ctor.params());
     return new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
   }

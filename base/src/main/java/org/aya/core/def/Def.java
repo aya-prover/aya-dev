@@ -46,7 +46,7 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
   }
   static @NotNull ImmutableSeq<Term.Param>
   substParams(@NotNull SeqLike<Term.@NotNull Param> param, Substituter.@NotNull TermSubst subst) {
-    return Term.Param.subst(param.view().drop(1), subst);
+    return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
   }
 
   @Override @NotNull Term result();
@@ -94,7 +94,7 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
     }
 
     public @NotNull Signature subst(@NotNull Substituter.TermSubst subst) {
-      return new Signature(sortParam, Term.Param.subst(param, subst), result.subst(subst));
+      return new Signature(sortParam, param.map(p -> p.subst(subst)), result.subst(subst));
     }
   }
 }

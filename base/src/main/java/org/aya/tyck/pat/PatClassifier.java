@@ -133,12 +133,12 @@ public record PatClassifier(
       return classifySub(subPatsSeq.map(SubPats::drop), coverage);
     }
     var dataCall = hasMatch.get();
-      for (var ctor : dataCall.ref().core.body) {
-          var conTele = ctor.selfTele;
-        if (ctor.pats.isNotEmpty()) {
-          var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
+    for (var ctor : dataCall.ref().core.body) {
+      var conTele = ctor.selfTele;
+      if (ctor.pats.isNotEmpty()) {
+        var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
         if (matchy == null) continue;
-        conTele = Term.Param.subst(conTele, matchy);
+        conTele = conTele.map(param -> param.subst(matchy));
       }
       var conTeleCapture = conTele;
       var matches = subPatsSeq.mapIndexedNotNull((ix, subPats) ->
