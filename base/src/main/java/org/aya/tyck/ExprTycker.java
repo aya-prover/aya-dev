@@ -246,12 +246,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   defCall(@NotNull SourcePos pos, DefVar<D, S> defVar, CallTerm.Factory<D, S> function) {
     var level = levelStuffs(pos, defVar);
     var tele = Term.Param.subst(Def.defTele(defVar), level._1);
+    var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables
-    var body = function.make(defVar,
-      level._2,
-      tele.map(Term.Param::toArg));
+    var body = function.make(defVar, level._2, teleRenamed.map(Term.Param::toArg));
     var type = FormTerm.Pi.make(tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
-    return new Result(IntroTerm.Lambda.make(tele, body), type);
+    return new Result(IntroTerm.Lambda.make(teleRenamed, body), type);
   }
 
   private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort.CoreLevel>>
