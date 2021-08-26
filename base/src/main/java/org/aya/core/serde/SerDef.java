@@ -123,7 +123,7 @@ public sealed interface SerDef extends Serializable {
         telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
         result.de(state),
-        PrimDef.PrimFactory.UNFOLD.get(name),
+        PrimDef.PrimFactory.INSTANCE.getUnfold(name).get(),
         name
       );
     }
