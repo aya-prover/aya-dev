@@ -129,6 +129,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return wantButNo(expr, term, "pi type");
     }
     var param = expr.param();
+    if (param.explicit() != dt.param().explicit()) {
+      reporter.report(new LicitMismatchError(expr, dt));
+      return new Result(new ErrorTerm(expr), dt);
+    }
     var var = param.ref();
     var lamParam = param.type();
     var type = dt.param().type();

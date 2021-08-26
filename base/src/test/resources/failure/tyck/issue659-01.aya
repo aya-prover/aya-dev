@@ -1,0 +1,1 @@
+def why {A : Set} : A -> A => \ {x} => x

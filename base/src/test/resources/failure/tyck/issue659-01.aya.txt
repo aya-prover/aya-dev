@@ -1,0 +1,9 @@
+In file $FILE:1:30 ->
+
+  1 | def why {A : Set} : A -> A => \ {x} => x
+                                    ^--------^
+
+Error: Cannot check `λ {x} ⇒ x`
+       against Pi type `Π (_ : A) → A`
+       because explicitnesses do not match
+What are you doing?
