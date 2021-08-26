@@ -7,9 +7,7 @@ import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,13 +77,29 @@ public interface VarConsumer<P> extends TermConsumer<P> {
   final class ScopeChecker implements VarConsumer<Unit> {
     public final @NotNull ImmutableSeq<LocalVar> allowed;
     public final @NotNull Buffer<LocalVar> invalidVars = Buffer.create();
+    private final @NotNull Buffer<LocalVar> bound = Buffer.create();
 
     @Contract(pure = true) public ScopeChecker(@NotNull ImmutableSeq<LocalVar> allowed) {
       this.allowed = allowed;
     }
 
+    @Override public Unit visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
+      bound.append(term.param().ref());
+      VarConsumer.super.visitLam(term, unit);
+      bound.removeAt(bound.size() - 1);
+      return unit;
+    }
+
+    @Override public Unit visitPi(FormTerm.@NotNull Pi term, Unit unit) {
+      bound.append(term.param().ref());
+      VarConsumer.super.visitPi(term, unit);
+      bound.removeAt(bound.size() - 1);
+      return unit;
+    }
+
     @Contract(mutates = "this") @Override public void visitVar(Var v, Unit unit) {
-      if (v instanceof LocalVar local && !allowed.contains(local)) invalidVars.append(local);
+      if (v instanceof LocalVar local && !(allowed.contains(local) || bound.contains(local)))
+        invalidVars.append(local);
     }
   }
 }

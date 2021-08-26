@@ -1,0 +1,2 @@
+def id {A : Type} (x : A) : A => x
+def idId : Pi {A : Type} (x : A) -> A => (id id)
