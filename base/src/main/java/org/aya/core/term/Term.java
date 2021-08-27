@@ -160,7 +160,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     boolean explicit
   ) implements Bind, ParamLike<Term> {
     public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(Buffer<Tuple3<LocalVar, Boolean, Term>> buf) {
-      return buf.toImmutableSeq().map(tup -> new Param(tup._1, tup._3, tup._2));
+      return buf.view().map(tup -> new Param(tup._1, tup._3, tup._2)).toImmutableSeq();
     }
 
     @Contract(" -> new") public @NotNull Param implicitify() {

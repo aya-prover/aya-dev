@@ -225,7 +225,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var conVar = (DefVar<CtorDef, Decl.DataDecl.DataCtor>) var;
       var level = levelStuffs(pos, conVar);
       var telescopes = CtorDef.telescopes(conVar, level._2);
-      var tele = Term.Param.subst(Def.defTele(conVar), level._1).toImmutableSeq();
+      var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
       var body = telescopes.toConCall(conVar);
       return new Result(IntroTerm.Lambda.make(tele, body), type);
@@ -556,7 +556,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         againstTele = againstTele.drop(1);
         if (againstTele.isNotEmpty()) {
           final var subst = new Substituter.TermSubst(ref, result.wellTyped);
-          againstTele = againstTele.view().map(param -> param.subst(subst)).toSeq().view();
+          againstTele = againstTele.map(param -> param.subst(subst)).toSeq().view();
           last = last.subst(subst);
         } else {
           if (iter.hasNext()) {

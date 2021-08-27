@@ -65,7 +65,7 @@ public class SuedeTest {
   private void suedeAll(@Language("TEXT") @NotNull String code) {
     var state = new SerTerm.DeState();
     var serializer = new Serializer(new Serializer.State());
-    TyckDeclTest.successTyckDecls(code)
+    TyckDeclTest.successTyckDecls(code).view()
       .map(def -> def.accept(serializer, Unit.unit()))
       .map(ser -> ser.de(state))
       .forEach(Assertions::assertNotNull);
