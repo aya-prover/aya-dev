@@ -25,8 +25,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author re-xyr
  */
-public record StmtShallowResolver(@NotNull ModuleLoader loader,
-                                  @Nullable FileModuleLoader.FileResolveInfo resolveInfo) implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
+public record StmtShallowResolver(
+  @NotNull ModuleLoader loader,
+  @Nullable FileModuleLoader.FileResolveInfo resolveInfo
+) implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   @Override public Unit visitModule(Command.@NotNull Module mod, @NotNull ModuleContext context) {
     var newCtx = context.derive(mod.name());
     visitAll(mod.contents(), newCtx);

@@ -37,7 +37,6 @@ public final class LibraryConfigData {
     }
   }
 
-
   private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot) throws JsonParseException {
     checkDeserialization();
     return asConfig(libraryRoot, config -> libraryRoot.resolve("build"));
@@ -53,8 +52,9 @@ public final class LibraryConfigData {
       libraryRoot.resolve("src"),
       buildRoot,
       buildRoot.resolve("out"),
-      dependency.entrySet().stream().map(e -> e.getValue().as(e.getKey()))
-        .collect(ImmutableSeq.factory())
+      ImmutableSeq.from(dependency.entrySet()).view()
+        .map(e -> e.getValue().as(e.getKey()))
+        .toImmutableSeq()
     );
   }
 

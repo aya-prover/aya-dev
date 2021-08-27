@@ -101,7 +101,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
     @NotNull SourceFileLocator locator, @NotNull Path file, @NotNull Path outRoot
   ) throws IOException {
     var raw = outRoot.resolve(locator.displayName(file));
-    var core = raw.resolveSibling(raw.getFileName().toString().replace(".aya", ".ayac"));
+    var core = raw.resolveSibling(raw.getFileName().toString() + "c");
     Files.createDirectories(core.getParent());
     return core;
   }
