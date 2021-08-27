@@ -47,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static org.aya.util.Constants.ANONYMOUS_PREFIX;
+
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl}.
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl}
@@ -137,7 +139,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var lamParam = param.type();
     var type = dt.param().type();
     if (lamParam != null) {
-      var result = lamParam.accept(this, FormTerm.Univ.OMEGA);
+      var result = checkNoZonk(lamParam, FormTerm.Univ.OMEGA);
       var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
       if (!comparison) {
         // TODO[ice]: expected type mismatch lambda type annotation
@@ -147,7 +149,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var resultParam = new Term.Param(var, type, param.explicit());
     return localCtx.with(resultParam, () -> {
       var body = dt.substBody(resultParam.toTerm());
-      var rec = expr.body().accept(this, body);
+      var rec = checkNoZonk(expr.body(), body);
       return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
     });
   }
@@ -320,10 +322,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     final var var = param.ref();
     var type = param.type();
     if (type == null) type = new Expr.HoleExpr(param.sourcePos(), false, null);
-    var result = type.accept(this, against);
+    var result = checkNoZonk(type, against);
     var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
     return localCtx.with(resultParam, () -> {
-      var last = expr.last().accept(this, against);
+      var last = checkNoZonk(expr.last(), against);
       return new Result(new FormTerm.Pi(resultParam, last.wellTyped), against);
     });
   }
@@ -338,7 +340,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         //  I guess probably report error for now.
         throw new TyckerException();
       }
-      var result = type.accept(this, against);
+      var result = checkNoZonk(type, against);
       var ref = tuple.ref();
       localCtx.put(ref, result.wellTyped);
       resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
@@ -351,7 +353,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Rule.Check(partialSynth = true)
   @Override public Result visitNew(Expr.@NotNull NewExpr expr, @Nullable Term term) {
-    var struct = expr.struct().accept(this, null).wellTyped;
+    var struct = checkNoZonk(expr.struct(), null).wellTyped;
     if (!(struct instanceof CallTerm.Struct structCall))
       return wantButNo(expr.struct(), struct, "struct type");
     var structRef = structCall.ref();
@@ -394,9 +396,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
         teleView = teleView.drop(1);
       }
       final var teleViewFinal = teleView;
-      var field = localCtx.with(telescope, () -> conField.body()
-        .accept(fieldSubst, Unit.unit())
-        .accept(this, FormTerm.Pi.make(teleViewFinal, type)).wellTyped);
+      var field = localCtx.with(telescope, () -> checkNoZonk(
+        conField.body()
+          .accept(fieldSubst, Unit.unit()),
+        FormTerm.Pi.make(teleViewFinal, type)).wellTyped);
       fields.append(Tuple.of(defField.ref(), field));
       subst.add(defField.ref(), field);
     }
@@ -430,7 +433,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private Result visitAccess(Expr struct, String fieldName, Expr.@NotNull ProjExpr expr) {
-    var projectee = struct.accept(this, null);
+    var projectee = checkNoZonk(struct, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof CallTerm.Struct structCall))
       return wantButNo(struct, whnf, "struct type");
@@ -457,7 +460,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private @NotNull Result visitProj(@NotNull Expr tuple, int ix, Expr.@NotNull ProjExpr proj) {
-    var projectee = tuple.accept(this, null);
+    var projectee = checkNoZonk(tuple, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof FormTerm.Sigma sigma))
       return wantButNo(tuple, whnf, "sigma type");
@@ -482,7 +485,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
-    var f = expr.function().accept(this, null);
+    var f = checkNoZonk(expr.function(), null);
     var app = f.wellTyped;
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
       return wantButNo(expr, f.type, "pi type");
@@ -505,7 +508,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           throw new TyckerException();
         }
       }
-      var elabArg = namedArg.expr().accept(this, pi.param().type()).wellTyped;
+      var elabArg = checkNoZonk(namedArg.expr(), pi.param().type()).wellTyped;
       app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) pi = instPi(pi, subst, elabArg);
@@ -535,7 +538,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null || term instanceof CallTerm.Hole) {
       // `expr.items()` is larger than 1 due to parser
       expr.items()
-        .map(item -> item.accept(this, null))
+        .map(item -> checkNoZonk(item, null))
         .forEach(result -> {
           items.append(result.wellTyped);
           if (resultLast.value != null) resultTele.append(
@@ -549,7 +552,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var last = dt.params().last().type();
       for (var iter = expr.items().iterator(); iter.hasNext(); ) {
         var item = iter.next();
-        var result = item.accept(this, againstTele.first().type());
+        var result = checkNoZonk(item, againstTele.first().type());
         items.append(result.wellTyped);
         var ref = againstTele.first().ref();
         resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
@@ -563,7 +566,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
             // TODO[ice]: not enough sigma elements
             throw new TyckerException();
           } else {
-            var lastItemResult = item.accept(this, last);
+            var lastItemResult = checkNoZonk(item, last);
             items.append(lastItemResult.wellTyped);
             resultLast.value = lastItemResult.type;
           }
