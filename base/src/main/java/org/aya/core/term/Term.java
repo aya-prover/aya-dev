@@ -84,6 +84,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   @Override default @NotNull Buffer<LocalVar> scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
     var checker = new VarConsumer.ScopeChecker(allowed);
     accept(checker, Unit.unit());
+    assert checker.isCleared() : "The scope checker is not properly cleared up";
     return checker.invalidVars;
   }
 

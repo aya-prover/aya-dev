@@ -10,6 +10,8 @@ import org.aya.api.ref.Var;
 import org.aya.core.term.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * @author ice1000
@@ -83,6 +85,10 @@ public interface VarConsumer<P> extends TermConsumer<P> {
       this.allowed = allowed;
     }
 
+    @TestOnly @VisibleForTesting public boolean isCleared() {
+      return bound.isEmpty();
+    }
+
     @Override public Unit visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
       bound.append(term.param().ref());
       VarConsumer.super.visitLam(term, unit);
@@ -94,6 +100,16 @@ public interface VarConsumer<P> extends TermConsumer<P> {
       bound.append(term.param().ref());
       VarConsumer.super.visitPi(term, unit);
       bound.removeAt(bound.size() - 1);
+      return unit;
+    }
+
+    @Override public Unit visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
+      var start = bound.size();
+      term.params().forEach(param -> {
+        bound.append(param.ref());
+        param.type().accept(this, Unit.unit());
+      });
+      bound.removeAt(start, term.params().size());
       return unit;
     }
 
