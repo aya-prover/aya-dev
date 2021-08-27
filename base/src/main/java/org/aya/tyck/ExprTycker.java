@@ -116,7 +116,19 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result checkNoZonk(@NotNull Expr expr, @Nullable Term type) {
-    return expr.accept(this, type);
+    if (type == null) return expr.accept(this, null);
+    else if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
+      var implicitParam = new Term.Param(new LocalVar(ANONYMOUS_PREFIX), pi.param().type(), false);
+      var body = localCtx.with(implicitParam, () ->
+        checkNoZonk(expr, pi.substBody(implicitParam.toTerm()))).wellTyped;
+      return new Result(new IntroTerm.Lambda(implicitParam, body), pi);
+    } else return expr.accept(this, type);
+  }
+
+  private static boolean needImplicitParamIns(@NotNull Expr expr, @NotNull FormTerm.Pi type) {
+    return !type.param().explicit()
+      && (expr instanceof Expr.LamExpr ex && ex.param().explicit()
+      || !(expr instanceof Expr.LamExpr));
   }
 
   public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
