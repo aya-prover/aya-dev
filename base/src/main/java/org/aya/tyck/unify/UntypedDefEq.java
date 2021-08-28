@@ -42,6 +42,22 @@ public record UntypedDefEq(
     return x != null ? x.normalize(NormalizeMode.WHNF) : null;
   }
 
+  @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs) {
+    switch (preLhs) {
+      case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs -> {
+        if (lhs.ref() != rhs.ref()) return null;
+        return visitCall(lhs, rhs, lhs.ref());
+      }
+      case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs -> {
+        if (lhs.ref() != rhs.ref()) return null;
+        return visitCall(lhs, rhs, lhs.ref());
+      }
+      default -> {
+        return null;
+      }
+    }
+  }
+
   @Override public void traceEntrance(@NotNull Term lhs, @NotNull Term rhs) {
     defeq.traceEntrance(new Trace.UnifyT(lhs.freezeHoles(), rhs.freezeHoles(), defeq.pos));
   }
@@ -205,11 +221,10 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitFnCall(@NotNull CallTerm.Fn lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof CallTerm.Fn rhs) || lhs.ref() != rhs.ref()) return null;
-    return visitCall(lhs, rhs, lhs.ref());
+    return null;
   }
 
-  @Nullable private Term visitCall(
+  @Nullable public Term visitCall(
     @NotNull CallTerm lhs, @NotNull CallTerm rhs,
     @NotNull DefVar<? extends Def, ? extends Decl> lhsRef
   ) {
@@ -245,8 +260,7 @@ public record UntypedDefEq(
   }
 
   @Override public @Nullable Term visitPrimCall(CallTerm.@NotNull Prim lhs, @NotNull Term preRhs) {
-    if (!(preRhs instanceof CallTerm.Prim rhs) || lhs.ref() != rhs.ref()) return null;
-    return visitCall(lhs, rhs, lhs.ref());
+    return null;
   }
 
   @Override public @Nullable Term visitConCall(@NotNull CallTerm.Con lhs, @NotNull Term preRhs) {

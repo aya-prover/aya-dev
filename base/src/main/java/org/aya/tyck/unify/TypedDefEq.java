@@ -71,12 +71,11 @@ public final class TypedDefEq implements Term.BiVisitor<@NotNull Term, @NotNull 
 
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     if (lhs == rhs) return true;
+    if (termDefeq.compareApprox(lhs, rhs) != null) return true;
     type = type.normalize(NormalizeMode.WHNF);
-    // at least one of them is not an FnCall
-    if (!isCall(lhs) || !isCall(rhs)) {
-      lhs = lhs.normalize(NormalizeMode.WHNF);
-      rhs = rhs.normalize(NormalizeMode.WHNF);
-    }
+    lhs = lhs.normalize(NormalizeMode.WHNF);
+    rhs = rhs.normalize(NormalizeMode.WHNF);
+    if (termDefeq.compareApprox(lhs, rhs) != null) return true;
     if (rhs instanceof CallTerm.Hole) return type.accept(this, rhs, lhs);
     return type.accept(this, lhs, rhs);
   }
