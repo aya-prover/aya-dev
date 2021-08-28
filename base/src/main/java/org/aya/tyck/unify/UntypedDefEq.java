@@ -43,19 +43,14 @@ public record UntypedDefEq(
   }
 
   @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs) {
-    switch (preLhs) {
-      case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs -> {
-        if (lhs.ref() != rhs.ref()) return null;
-        return visitCall(lhs, rhs, lhs.ref());
-      }
-      case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs -> {
-        if (lhs.ref() != rhs.ref()) return null;
-        return visitCall(lhs, rhs, lhs.ref());
-      }
-      default -> {
-        return null;
-      }
-    }
+    //noinspection ConstantConditions
+    return switch (preLhs) {
+      case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs ->
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
+      case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
+      default -> null;
+    };
   }
 
   @Override public void traceEntrance(@NotNull Term lhs, @NotNull Term rhs) {
