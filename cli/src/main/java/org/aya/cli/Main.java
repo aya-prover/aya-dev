@@ -51,7 +51,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       case imgui -> {
         JniLoader.load();
         var sourceCode = checkAndRead(filePath, inputFile);
-        new ImGuiTrace(sourceCode, DistillerOptions.DEFAULT).mainLoop(traceBuilder.root());
+        new ImGuiTrace(sourceCode, DistillerOptions.DEBUG).mainLoop(traceBuilder.root());
       }
       case markdown -> System.err.println(new MdUnicodeTrace().docify(traceBuilder).debugRender());
     }

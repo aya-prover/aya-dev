@@ -54,7 +54,8 @@ public record UntypedDefEq(
   }
 
   @Override public void traceEntrance(@NotNull Term lhs, @NotNull Term rhs) {
-    defeq.traceEntrance(new Trace.UnifyT(lhs.freezeHoles(), rhs.freezeHoles(), defeq.pos));
+    defeq.traceEntrance(new Trace.UnifyT(lhs.freezeHoles(defeq.levelEqns),
+      rhs.freezeHoles(defeq.levelEqns), defeq.pos));
   }
 
   @Override public void traceExit(@Nullable Term term) {
@@ -164,7 +165,7 @@ public record UntypedDefEq(
   }
 
   @Override public @NotNull Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {
-    return ErrorTerm.typeOf(term);
+    return ErrorTerm.typeOf(term.freezeHoles(defeq.levelEqns));
   }
 
   @Override public @Nullable Term visitPi(@NotNull FormTerm.Pi lhs, @NotNull Term preRhs) {

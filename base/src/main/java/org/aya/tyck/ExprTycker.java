@@ -69,7 +69,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Override public void traceEntrance(@NotNull Expr expr, Term term) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, term == null ? null : term.freezeHoles())));
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, term == null ? null : term.freezeHoles(levelEqns))));
   }
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
@@ -81,7 +81,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
     tracing(builder -> {
-      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(), result.type.freezeHoles(), expr.sourcePos()));
+      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(levelEqns), result.type.freezeHoles(levelEqns), expr.sourcePos()));
       builder.reduce();
     });
   }
@@ -320,7 +320,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       } else break;
     }
     reporter.report(new UnifyError(loc, upper, lower));
-    return new Result(new ErrorTerm(term), upper);
+    return new Result(new ErrorTerm(term.freezeHoles(levelEqns)), upper);
   }
 
   @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
@@ -588,7 +588,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
 
   @Override public Result catchUnhandled(@NotNull Expr expr, Term term) {
     return new Result(ErrorTerm.unexpected(expr),
-      new ErrorTerm(term != null ? term.freezeHoles() : $ -> Doc.symbol("?"), false));
+      new ErrorTerm(term != null ? term.freezeHoles(levelEqns) : $ -> Doc.symbol("?"), false));
   }
 
   public static class TyckerException extends InternalException {

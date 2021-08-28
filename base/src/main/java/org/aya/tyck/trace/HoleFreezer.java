@@ -3,20 +3,22 @@
 package org.aya.tyck.trace;
 
 import kala.tuple.Unit;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.TermFixpoint;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.unify.level.LevelEqnSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
  */
-public final class HoleFreezer implements TermFixpoint<Unit> {
-  public static final @NotNull HoleFreezer INSTANCE = new HoleFreezer();
-
-  private HoleFreezer() {
+public record HoleFreezer(@Nullable LevelEqnSet eqnSet) implements TermFixpoint<Unit> {
+  @Override public Sort.@NotNull CoreLevel visitLevel(Sort.@NotNull CoreLevel sort, Unit unit) {
+    return eqnSet != null ? eqnSet.applyTo(sort) : sort;
   }
 
   @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {

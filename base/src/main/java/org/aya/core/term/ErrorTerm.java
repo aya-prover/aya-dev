@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) implements Term {
   public ErrorTerm(@NotNull Term description) {
-    this((AyaDocile) description.freezeHoles());
+    this((AyaDocile) description.freezeHoles(null));
   }
 
   public ErrorTerm(@NotNull AyaDocile description) {
@@ -36,17 +36,13 @@ public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) i
   }
 
   public static @NotNull ErrorTerm typeOf(@NotNull Term origin) {
-    return typeOf((AyaDocile) origin.freezeHoles());
+    return typeOf((AyaDocile) origin.freezeHoles(null));
   }
 
   public static @NotNull ErrorTerm typeOf(@NotNull AyaDocile origin) {
     return new ErrorTerm(options -> Doc.sep(
       Doc.plain("type of"),
       Doc.styled(Style.code(), origin.toDoc(options))));
-  }
-
-  public static @NotNull ErrorTerm unexpected(@NotNull Term origin) {
-    return unexpected((AyaDocile) origin.freezeHoles());
   }
 
   public static @NotNull ErrorTerm unexpected(@NotNull AyaDocile origin) {
