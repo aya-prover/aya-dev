@@ -150,8 +150,10 @@ public record PatTycker(
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
     if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), t);
     if (!(t instanceof FormTerm.Sigma sigma)) {
-      // TODO[ice]: requires pretty printing patterns
-      throw new ExprTycker.TyckerException();
+      exprTycker.reporter.report(new PatternProblem.TupleNonSig(tuple, t));
+      // In case something's wrong, produce a random pattern
+      PatBindCollector.bindErrors(tuple, exprTycker.localCtx);
+      return new Pat.Bind(tuple.explicit(), new LocalVar("?"), t);
     }
     // sig.result is a dummy term
     var sig = new Def.Signature(

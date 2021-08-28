@@ -1,0 +1,13 @@
+-- #6 in public repo
+
+open data Bool : Set | true | false
+
+struct BoolPair : Set
+  | fst : Bool
+  | snd : Bool
+
+open data U2 (x : BoolPair) : Set
+  | (false, false) => zero
+  | (false, true) => one
+  | (true, false) => two
+  | (true, true) => three

@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  * @apiNote do not instantiate directly, use the provided static APIs
- * @see PatBindCollector#bindErrors(Pattern.Ctor, LocalCtx)
+ * @see PatBindCollector#bindErrors(Pattern, LocalCtx)
  */
 public record PatBindCollector(@NotNull ErrorTerm error) implements Pattern.Visitor<LocalCtx, Unit> {
-  public static void bindErrors(Pattern.@NotNull Ctor ctor, @NotNull LocalCtx ctx) {
+  public static void bindErrors(@NotNull Pattern ctor, @NotNull LocalCtx ctx) {
     ctor.accept(new PatBindCollector(new ErrorTerm(ctor)), ctx);
   }
 

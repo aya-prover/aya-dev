@@ -72,4 +72,19 @@ public sealed interface PatternProblem extends Problem {
       return Severity.ERROR;
     }
   }
+
+  record TupleNonSig(@NotNull Pattern.Tuple pattern, @NotNull Term type) implements PatternProblem {
+    @Override public @NotNull Doc describe() {
+      return Doc.sep(
+        Doc.english("The tuple pattern"),
+        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT)),
+        Doc.english("splits only sigma types, while the actual type"),
+        Doc.styled(Style.code(), type.freezeHoles(null).toDoc(DistillerOptions.DEFAULT)),
+        Doc.english("does not look like one"));
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
+  }
 }
