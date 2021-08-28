@@ -116,19 +116,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result checkNoZonk(@NotNull Expr expr, @Nullable Term type) {
-    if (type == null) return expr.accept(this, null);
-    else if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
-      var implicitParam = new Term.Param(new LocalVar(ANONYMOUS_PREFIX), pi.param().type(), false);
-      var body = localCtx.with(implicitParam, () ->
-        checkNoZonk(expr, pi.substBody(implicitParam.toTerm()))).wellTyped;
-      return new Result(new IntroTerm.Lambda(implicitParam, body), pi);
-    } else return expr.accept(this, type);
-  }
-
-  private static boolean needImplicitParamIns(@NotNull Expr expr, @NotNull FormTerm.Pi type) {
-    return !type.param().explicit()
-      && (expr instanceof Expr.LamExpr ex && ex.param().explicit()
-      || !(expr instanceof Expr.LamExpr));
+    return expr.accept(this, type);
   }
 
   public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
@@ -143,7 +131,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       return wantButNo(expr, term, "pi type");
     }
     var param = expr.param();
-    if (param.explicit() != dt.param().explicit()) {
+    if (param.explicit() && !dt.param().explicit()) {
+      var tempResult = checkNoZonk(expr, null);
+      return unifyTyMaybeInsert(dt, tempResult.type(), tempResult.wellTyped(), expr);
+    } else if (!param.explicit() && dt.param().explicit()) {
       reporter.report(new LicitMismatchError(expr, dt));
       return new Result(new ErrorTerm(expr), dt);
     }
@@ -315,14 +306,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    */
   private Result unifyTyMaybeInsert(@Nullable Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
     if (upper == null) return new Result(term, lower);
-    if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    var subst = new Substituter.TermSubst(MutableMap.create());
-    while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
-      var mock = mockTerm(pi.param(), loc.sourcePos());
-      term = CallTerm.make(term, new Arg<>(mock, false));
-      subst.add(pi.param().ref(), mock);
-      lower = pi.body().subst(subst);
+    while (true) {
       if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
+      if (upper.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
+        var implicitParam = new Term.Param(new LocalVar(ANONYMOUS_PREFIX), pi.param().type(), false);
+        var body = localCtx.with(implicitParam, () ->
+          checkNoZonk(loc, pi.substBody(implicitParam.toTerm()))).wellTyped;
+        return new Result(new IntroTerm.Lambda(implicitParam, body), pi);
+      } else if (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
+        var mock = mockTerm(pi.param(), loc.sourcePos());
+        term = CallTerm.make(term, new Arg<>(mock, false));
+        lower = pi.substBody(mock);
+      } else break;
     }
     reporter.report(new UnifyError(loc, upper, lower));
     return new Result(new ErrorTerm(term), upper);
