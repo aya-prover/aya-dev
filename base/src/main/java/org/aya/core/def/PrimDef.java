@@ -61,214 +61,128 @@ public final class PrimDef extends TopLevelDef {
     return result;
   }
 
-  abstract static sealed class PrimSeed {
-    public abstract @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold();
+  record PrimSeed(
+    @NotNull String name,
+    @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
+    @NotNull Supplier<@NotNull PrimDef> supplier,
+    @NotNull ImmutableSeq<@NotNull String> dependency
+  ) {
+    // Interval
+    static final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> INTERVAL_UNFOLD = prim -> prim;
+    public static Supplier<CallTerm.Prim> INTERVAL_CALL_TERM_SUPPLIER =
+      () -> new CallTerm.Prim(PrimFactory.INSTANCE.getOrCreate(PrimDef.INTERVAL).ref(),
+        ImmutableSeq.empty(), ImmutableSeq.empty());
+    public static final @NotNull PrimSeed INTERVAL = new PrimSeed(
+      PrimDef.INTERVAL,
+      INTERVAL_UNFOLD,
+      () -> new PrimDef(
+        ImmutableSeq.empty(),
+        ImmutableSeq.empty(),
+        new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)),
+        INTERVAL_UNFOLD,
+        PrimDef.INTERVAL
+      ),
+      ImmutableSeq.empty()
+    );
+    // Left
+    static final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> LEFT_UNFOLD = prim -> prim;
+    public static final @NotNull PrimDef.PrimSeed LEFT = new PrimSeed(
+      PrimDef.LEFT,
+      LEFT_UNFOLD,
+      () -> new PrimDef(
+        ImmutableSeq.empty(),
+        ImmutableSeq.empty(),
+        INTERVAL_CALL_TERM_SUPPLIER.get(),
+        LEFT_UNFOLD,
+        PrimDef.LEFT
+      ),
+      ImmutableSeq.of(PrimDef.INTERVAL)
+    );
+    // Right
+    static final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> RIGHT_UNFOLD = prim -> prim;
+    public static final @NotNull PrimDef.PrimSeed RIGHT = new PrimSeed(
+      PrimDef.RIGHT,
+      LEFT_UNFOLD,
+      () -> new PrimDef(
+        ImmutableSeq.empty(),
+        ImmutableSeq.empty(),
+        INTERVAL_CALL_TERM_SUPPLIER.get(),
+        RIGHT_UNFOLD,
+        PrimDef.RIGHT
+      ),
+      ImmutableSeq.of(PrimDef.INTERVAL)
+    );
 
-    public abstract @NotNull Supplier<@NotNull PrimDef> supplier();
+    // Arcoe
+    private static @NotNull Term arcoe(CallTerm.@NotNull Prim prim) {
+      var args = prim.args();
+      var argBase = args.get(1).term();
+      var argI = args.get(2).term();
+      var left = PrimFactory.INSTANCE.getOption(PrimDef.LEFT);
+      if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
+        return argBase;
+      var argA = args.get(0).term();
+      if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0)
+        return argBase;
+      return prim;
+    }
 
-    public abstract @NotNull ImmutableSeq<@NotNull String> dependency();
-
-    public abstract @NotNull String name();
-
-    static final class Interval extends PrimSeed {
-      public static final @NotNull Interval INSTANCE = new Interval();
-
-      public static Supplier<CallTerm.Prim> CALL_TERM_SUPPLIER =
-        () -> new CallTerm.Prim(PrimFactory.INSTANCE.getOrCreate(INSTANCE.name()).ref(),
-          ImmutableSeq.empty(), ImmutableSeq.empty());
-
-      private Interval() {
-      }
-
-      @Override public @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold() {
-        return prim -> prim;
-      }
-
-      @Override public @NotNull Supplier<@NotNull PrimDef> supplier() {
-        return () -> new PrimDef(
-          ImmutableSeq.empty(),
-          ImmutableSeq.empty(),
-          new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)),
-          unfold(),
-          name()
+    public static final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(
+      PrimDef.ARCOE,
+      PrimSeed::arcoe,
+      () -> {
+        var paramA = new LocalVar("A");
+        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), INTERVAL_CALL_TERM_SUPPLIER.get(), true);
+        var paramI = new LocalVar("i");
+        var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
+        var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
+        var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
+        var paramATy = new FormTerm.Pi(paramIToATy, result);
+        var aRef = new RefTerm(paramA, paramATy);
+        var left = PrimFactory.INSTANCE.getOrCreate(PrimDef.LEFT);
+        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
+        return new PrimDef(
+          ImmutableSeq.of(
+            new Term.Param(paramA, paramATy, true),
+            new Term.Param(new LocalVar("base"), baseAtLeft, true),
+            new Term.Param(paramI, INTERVAL_CALL_TERM_SUPPLIER.get(), true)
+          ),
+          ImmutableSeq.of(homotopy, universe),
+          new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, INTERVAL_CALL_TERM_SUPPLIER.get()), true)),
+          PrimSeed::arcoe,
+          PrimDef.ARCOE
         );
-      }
+      },
+      ImmutableSeq.empty()
+    );
 
-      @Override public @NotNull ImmutableSeq<@NotNull String> dependency() {
-        return ImmutableSeq.empty();
+    // Invol
+    private static @NotNull Term invol(CallTerm.@NotNull Prim prim) {
+      var arg = prim.args().get(0).term();
+      if (arg instanceof CallTerm.Prim primCall) {
+        var left = PrimFactory.INSTANCE.getOption(PrimDef.LEFT);
+        var right = PrimFactory.INSTANCE.getOption(PrimDef.RIGHT);
+        assert left.isNotEmpty() && right.isNotEmpty();
+        if (primCall.ref() == left.get().ref)
+          return new CallTerm.Prim(right.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+        if (primCall.ref() == right.get().ref)
+          return new CallTerm.Prim(left.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
       }
-
-      @Override public @NotNull String name() {
-        return "I";
-      }
+      return prim;
     }
 
-    static final class Left extends PrimSeed {
-      public static final @NotNull Left INSTANCE = new Left();
-
-      private Left() {
-      }
-
-      @Override
-      public @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold() {
-        return prim -> prim;
-      }
-
-      @Override
-      public @NotNull Supplier<@NotNull PrimDef> supplier() {
-        return () -> new PrimDef(
-          ImmutableSeq.empty(),
-          ImmutableSeq.empty(),
-          Interval.CALL_TERM_SUPPLIER.get(),
-          unfold(),
-          name()
-        );
-      }
-
-      @Override
-      public @NotNull ImmutableSeq<@NotNull String> dependency() {
-        return ImmutableSeq.of(Interval.INSTANCE.name());
-      }
-
-      @Override
-      public @NotNull String name() {
-        return "left";
-      }
-    }
-
-    static final class Right extends PrimSeed {
-      public static final @NotNull Right INSTANCE = new Right();
-
-      private Right() {
-      }
-
-      @Override
-      public @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold() {
-        return prim -> prim;
-      }
-
-      @Override
-      public @NotNull Supplier<@NotNull PrimDef> supplier() {
-        return () -> new PrimDef(
-          ImmutableSeq.empty(),
-          ImmutableSeq.empty(),
-          Interval.CALL_TERM_SUPPLIER.get(),
-          unfold(),
-          name()
-        );
-      }
-
-      @Override
-      public @NotNull ImmutableSeq<@NotNull String> dependency() {
-        return ImmutableSeq.of(Interval.INSTANCE.name());
-      }
-
-      @Override
-      public @NotNull String name() {
-        return "right";
-      }
-    }
-
-    static final class Arcoe extends PrimSeed {
-      public static final @NotNull Arcoe INSTANCE = new Arcoe();
-
-      private Arcoe() {
-      }
-
-      private static @NotNull Term arcoe(CallTerm.@NotNull Prim prim) {
-        var args = prim.args();
-        var argBase = args.get(1).term();
-        var argI = args.get(2).term();
-        var left = PrimFactory.INSTANCE.getOption(LEFT);
-        if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
-          return argBase;
-        var argA = args.get(0).term();
-        if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0)
-          return argBase;
-        return prim;
-      }
-
-      @Override public @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold() {
-        return Arcoe::arcoe;
-      }
-
-      @Override public @NotNull Supplier<@NotNull PrimDef> supplier() {
-        return () -> {
-          var paramA = new LocalVar("A");
-          var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), Interval.CALL_TERM_SUPPLIER.get(), true);
-          var paramI = new LocalVar("i");
-          var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
-          var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
-          var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
-          var paramATy = new FormTerm.Pi(paramIToATy, result);
-          var aRef = new RefTerm(paramA, paramATy);
-          var left = PrimFactory.INSTANCE.getOrCreate(LEFT);
-          var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
-          return new PrimDef(
-            ImmutableSeq.of(
-              new Term.Param(paramA, paramATy, true),
-              new Term.Param(new LocalVar("base"), baseAtLeft, true),
-              new Term.Param(paramI, Interval.CALL_TERM_SUPPLIER.get(), true)
-            ),
-            ImmutableSeq.of(homotopy, universe),
-            new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, Interval.CALL_TERM_SUPPLIER.get()), true)),
-            unfold(),
-            name()
-          );
-        };
-      }
-
-      @Override public @NotNull ImmutableSeq<@NotNull String> dependency() {
-        return ImmutableSeq.empty();
-      }
-
-      @Override public @NotNull String name() {
-        return "arcoe";
-      }
-    }
-
-    static final class Invol extends PrimSeed {
-      public static final @NotNull Invol INSTANCE = new Invol();
-
-      private Invol() {
-      }
-
-      private static @NotNull Term invol(CallTerm.@NotNull Prim prim) {
-        var arg = prim.args().get(0).term();
-        if (arg instanceof CallTerm.Prim primCall) {
-          var left = PrimFactory.INSTANCE.getOption(LEFT);
-          var right = PrimFactory.INSTANCE.getOption(RIGHT);
-          assert left.isNotEmpty() && right.isNotEmpty();
-          if (primCall.ref() == left.get().ref)
-            return new CallTerm.Prim(right.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-          if (primCall.ref() == right.get().ref)
-            return new CallTerm.Prim(left.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-        }
-        return prim;
-      }
-
-      @Override public @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold() {
-        return Invol::invol;
-      }
-
-      @Override public @NotNull Supplier<@NotNull PrimDef> supplier() {
-        return () -> new PrimDef(
-          ImmutableSeq.of(new Term.Param(new LocalVar("i"), Interval.CALL_TERM_SUPPLIER.get(), true)),
-          ImmutableSeq.empty(),
-          Interval.CALL_TERM_SUPPLIER.get(),
-          unfold(),
-          name()
-        );
-      }
-
-      @Override public @NotNull ImmutableSeq<@NotNull String> dependency() {
-        return ImmutableSeq.of(Interval.INSTANCE.name());
-      }
-
-      @Override public @NotNull String name() {
-        return "invol";
-      }
-    }
+    public static final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(
+      PrimDef.INVOL,
+      PrimSeed::invol,
+      () -> new PrimDef(
+        ImmutableSeq.of(new Term.Param(new LocalVar("i"), INTERVAL_CALL_TERM_SUPPLIER.get(), true)),
+        ImmutableSeq.empty(),
+        INTERVAL_CALL_TERM_SUPPLIER.get(),
+        PrimSeed::invol,
+        PrimDef.INVOL
+      ),
+      ImmutableSeq.empty()
+    );
   }
 
   public static class PrimFactory {
@@ -279,11 +193,11 @@ public final class PrimDef extends TopLevelDef {
     }
 
     private static final @NotNull Map<@NotNull String, @NotNull PrimSeed> SEEDS = ImmutableSeq.of(
-        PrimSeed.Interval.INSTANCE,
-        PrimSeed.Left.INSTANCE,
-        PrimSeed.Right.INSTANCE,
-        PrimSeed.Arcoe.INSTANCE,
-        PrimSeed.Invol.INSTANCE
+        PrimSeed.INTERVAL,
+        PrimSeed.LEFT,
+        PrimSeed.RIGHT,
+        PrimSeed.ARCOE,
+        PrimSeed.INVOL
       ).map(seed -> Tuple.of(seed.name(), seed))
       .toImmutableMap();
 
@@ -317,7 +231,7 @@ public final class PrimDef extends TopLevelDef {
     }
 
     public @NotNull Option<Function<CallTerm.@NotNull Prim, @NotNull Term>> getUnfold(@NotNull String name) {
-      return SEEDS.getOption(name).map(PrimSeed::unfold);
+      return SEEDS.getOption(name).map(seed -> seed.unfold);
     }
 
     public static final @NotNull ImmutableSeq<String> LEFT_RIGHT = ImmutableSeq.of(LEFT, RIGHT);
@@ -336,12 +250,12 @@ public final class PrimDef extends TopLevelDef {
     }
   }
 
-  public static final @NotNull String INTERVAL = PrimSeed.Interval.INSTANCE.name();
-  public static final @NotNull String LEFT = PrimSeed.Left.INSTANCE.name();
-  public static final @NotNull String RIGHT = PrimSeed.Right.INSTANCE.name();
+  public static final @NotNull String INTERVAL = "I";
+  public static final @NotNull String LEFT = "left";
+  public static final @NotNull String RIGHT = "right";
   /** Short for <em>Arend coe</em>. */
-  public static final @NotNull String ARCOE = PrimSeed.Arcoe.INSTANCE.name();
-  public static final @NotNull String INVOL = PrimSeed.Invol.INSTANCE.name();
+  public static final @NotNull String ARCOE = "arcoe";
+  public static final @NotNull String INVOL = "invol";
 
   public final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold;
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
