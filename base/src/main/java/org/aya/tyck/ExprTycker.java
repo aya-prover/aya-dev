@@ -315,15 +315,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    */
   private Result unifyTyMaybeInsert(@Nullable Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
     if (upper == null) return new Result(term, lower);
-    if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    var subst = new Substituter.TermSubst(MutableMap.create());
     while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var mock = mockTerm(pi.param(), loc.sourcePos());
       term = CallTerm.make(term, new Arg<>(mock, false));
-      subst.add(pi.param().ref(), mock);
-      lower = pi.body().subst(subst);
-      if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
+      lower = pi.substBody(mock);
     }
+    if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     reporter.report(new UnifyError(loc, upper, lower));
     return new Result(new ErrorTerm(term.freezeHoles(levelEqns)), upper);
   }
