@@ -24,6 +24,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
@@ -113,8 +114,9 @@ public record PatTycker(
     var results = Buffer.<Pat>create();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
-        // TODO[ice]: report error
-        throw new ExprTycker.TyckerException();
+        withError(new PatternProblem.TooManyPattern(pat, sig.value.result()),
+          pat, "?", ErrorTerm.typeOf(pat));
+        return;
       }
       var param = sig.value.param().first();
       while (param.explicit() != pat.explicit()) if (pat.explicit()) {
