@@ -149,12 +149,8 @@ public record PatTycker(
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
     if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), t);
-    if (!(t instanceof FormTerm.Sigma sigma)) {
-      exprTycker.reporter.report(new PatternProblem.TupleNonSig(tuple, t));
-      // In case something's wrong, produce a random pattern
-      PatBindCollector.bindErrors(tuple, exprTycker.localCtx);
-      return new Pat.Bind(tuple.explicit(), new LocalVar("?"), t);
-    }
+    if (!(t instanceof FormTerm.Sigma sigma))
+      return withError(new PatternProblem.TupleNonSig(tuple, t), tuple, "?", t);
     // sig.result is a dummy term
     var sig = new Def.Signature(
       ImmutableSeq.empty(),
@@ -181,7 +177,7 @@ public record PatTycker(
       return new Pat.Bind(bind.explicit(), v, t);
     }
     var ctorCore = selected._3.ref().core;
-      if (ctorCore.selfTele.isNotEmpty()) {
+    if (ctorCore.selfTele.isNotEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
@@ -191,14 +187,16 @@ public record PatTycker(
     return new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.empty(), null, selected._1);
   }
 
+  private @NotNull Pat withError(Problem problem, Pattern pattern, String name, Term param) {
+    exprTycker.reporter.report(problem);
+    // In case something's wrong, produce a random pattern
+    PatBindCollector.bindErrors(pattern, exprTycker.localCtx);
+    return new Pat.Bind(pattern.explicit(), new LocalVar(name), param);
+  }
+
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name().data(), subst.reporter(), ctor);
-    if (realCtor == null) {
-      subst.reporter().report(new PatternProblem.UnknownCtor(ctor));
-      // In case something's wrong, produce a random pattern
-      PatBindCollector.bindErrors(ctor, exprTycker.localCtx);
-      return new Pat.Bind(ctor.explicit(), new LocalVar(ctor.name().data()), param);
-    }
+    if (realCtor == null) return withError(new PatternProblem.UnknownCtor(ctor), ctor, ctor.name().data(), param);
     var ctorRef = realCtor._3.ref();
     ctor.resolved().value = ctorRef;
     var ctorCore = ctorRef.core;
