@@ -12,6 +12,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
+import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
@@ -77,7 +78,9 @@ public final class PrimDef extends TopLevelDef {
       if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
         return argBase;
       var argA = args.get(0).term();
-      if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0)
+      if (argA instanceof IntroTerm.Lambda lambda && lambda.body()
+        .normalize(NormalizeMode.NF)
+        .findUsages(lambda.param().ref()) == 0)
         return argBase;
       return prim;
     }
