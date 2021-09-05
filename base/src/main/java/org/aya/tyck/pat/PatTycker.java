@@ -85,10 +85,10 @@ public record PatTycker(
   ) {
     var checked = clauses.map(c -> {
       if (patSubst != null) subst.resetTo(patSubst);
-      return visitMatch(c, signature);
+      return Tuple.of(visitMatch(c, signature), c.sourcePos);
     });
     exprTycker.solveMetas();
-    return checked.map(c -> c.mapTerm(e -> e.zonk(exprTycker, null)));
+    return checked.map(c -> c._1.mapTerm(e -> e.zonk(exprTycker, c._2)));
   }
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
