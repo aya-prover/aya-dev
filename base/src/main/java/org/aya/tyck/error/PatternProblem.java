@@ -96,7 +96,7 @@ public sealed interface PatternProblem extends Problem {
         Doc.english("There is no parameter for the pattern"),
         Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("to match against (FYI the return type is"),
-        Doc.styled(Style.code(), retTy.accept(Zonker.NO_REPORT, Unit.unit()).toDoc(DistillerOptions.DEFAULT)),
+        Doc.styled(Style.code(), retTy.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("and in case it's a function type, you may want to move its parameters before the"),
         Doc.styled(Style.code(), ":"),
         Doc.english("in the signature)"));

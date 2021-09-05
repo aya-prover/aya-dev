@@ -18,13 +18,13 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
+import org.aya.core.sort.Sort;
 import org.aya.core.visitor.*;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
-import org.aya.tyck.trace.HoleFreezer;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.Contract;
@@ -94,7 +94,11 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   }
 
   default @NotNull Term freezeHoles(@Nullable LevelEqnSet eqnSet) {
-    return accept(new HoleFreezer(eqnSet), Unit.unit());
+    return accept(new TermFixpoint<>() {
+      @Override public Sort.@NotNull CoreLevel visitLevel(Sort.@NotNull CoreLevel sort, Unit unit) {
+        return eqnSet != null ? eqnSet.applyTo(sort) : sort;
+      }
+    }, Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

@@ -27,20 +27,12 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public final class Zonker implements TermFixpoint<Unit> {
-  public static final @NotNull TermFixpoint<Unit> NO_REPORT = new NoReport();
   public final @NotNull ExprTycker tycker;
   private boolean reported = false;
 
   /** @param tycker which stores level equation */
   public Zonker(@NotNull ExprTycker tycker) {
     this.tycker = tycker;
-  }
-
-  private static class NoReport implements TermFixpoint<Unit> {
-    @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-      var sol = term.ref().core();
-      return sol.body != null ? sol.body.accept(this, Unit.unit()) : term;
-    }
   }
 
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
