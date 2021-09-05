@@ -152,13 +152,18 @@ public record StmtTycker(
     // var levelSubst = tycker.equations.solve();
     var levels = tycker.extractLevels();
     decl.signature = new Def.Signature(levels, tele, result);
-    return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field -> traced(field, tycker, this::visitField)));
+    return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field ->
+      traced(field, tycker, (f, tyck) -> visitField(f, tyck, result))));
   }
 
   @Override public FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
-    var tele = checkTele(tycker, field.telescope, null);
+    throw new IllegalStateException("This method shouldn't be invoked");
+  }
+
+  private FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {
+    var tele = checkTele(tycker, field.telescope, structResult);
     var structRef = field.structRef;
-    var result = tycker.checkNoZonk(field.result, null).wellTyped();
+    var result = tycker.checkExpr(field.result, structResult).wellTyped();
     var structSig = structRef.concrete.signature;
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
