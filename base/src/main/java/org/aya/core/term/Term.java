@@ -25,6 +25,7 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
+import org.aya.tyck.error.LevelMismatchError;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.Contract;
@@ -73,7 +74,14 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   }
 
   default @NotNull Term zonk(@NotNull ExprTycker tycker) {
-    return accept(new Zonker(tycker), Unit.unit());
+    var zonker = new Zonker(tycker);
+    var term = accept(zonker, Unit.unit());
+    var eqns = tycker.levelEqns.eqns();
+    if (eqns.isNotEmpty() && !zonker.isReported()) {
+      // There are level errors, but not reported since all levels are solved
+      tycker.reporter.report(new LevelMismatchError(null, eqns.toImmutableSeq()));
+    }
+    return term;
   }
 
   @Override default int findUsages(@NotNull Var var) {

@@ -35,6 +35,10 @@ public final class Zonker implements TermFixpoint<Unit> {
     this.tycker = tycker;
   }
 
+  public boolean isReported() {
+    return reported;
+  }
+
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
     var sol = term.ref().core();
     if (sol.body == null) {
