@@ -16,12 +16,11 @@ public final class ThrowingReporter implements Reporter {
   }
 
   @Override public void report(@NotNull Problem problem) {
+    var render = problem.computeFullErrorMessage();
     if (!problem.isError()) {
-      System.err.println(problem.describe().debugRender());
+      System.err.println(render);
       return;
     }
-    Assertions.fail("Failed with `" + problem.getClass() + "`: " + problem
-      .describe()
-      .debugRender() + "\nat " + problem.sourcePos());
+    Assertions.fail("Failed with `" + problem.getClass() + "`: " + render + "\nat " + problem.sourcePos());
   }
 }

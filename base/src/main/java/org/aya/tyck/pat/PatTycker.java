@@ -76,7 +76,7 @@ public record PatTycker(
       return elabClause;
     });
     exprTycker.solveMetas();
-    return Tuple.of(signature.value.result().zonk(exprTycker), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker))));
+    return Tuple.of(signature.value.result().zonk(exprTycker, null), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker, null))));
   }
 
   @NotNull public ImmutableSeq<Pat.PrototypeClause> elabClauses(
@@ -88,7 +88,7 @@ public record PatTycker(
       return visitMatch(c, signature);
     });
     exprTycker.solveMetas();
-    return checked.map(c -> c.mapTerm(e -> e.zonk(exprTycker)));
+    return checked.map(c -> c.mapTerm(e -> e.zonk(exprTycker, null)));
   }
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {

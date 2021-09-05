@@ -1,9 +1,0 @@
-In file $FILE:6:31 ->
-
-  4 | def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
-  5 | def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
-  6 | def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)
-                                  ^-----^ P.hh + 1 <= h + 1, P.uu + 1 <= u + 1
-  
-Error: Cannot solve some level equation(s)
-What are you doing?

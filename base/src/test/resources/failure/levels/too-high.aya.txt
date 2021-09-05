@@ -1,9 +1,17 @@
-In file $FILE:3:11 ->
+In file $FILE:3:8 ->
 
   1 | data List (A : uType 1) : uType 0
   2 |  | nil
   3 |  | cons A (List A)
               ^^ 1 <= 0
+
+Error: Cannot solve some level equation(s)
+In file $FILE:3:11 ->
+
+  1 | data List (A : uType 1) : uType 0
+  2 |  | nil
+  3 |  | cons A (List A)
+                 ^--^
 
 Error: Cannot solve some level equation(s)
 What are you doing?

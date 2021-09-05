@@ -242,6 +242,10 @@ public class LevelSolver {
     }
     if (rhs.levels().size() == 1) {
       var right = rhs.levels().get(0);
+      if (right instanceof Level.Infinity<LvlVar>) {
+        avoidableEqns.append(e);
+        return false;
+      }
       return lhsLevels.anyMatch(left -> dealSingleLt(g, left, right));
     } else specialEq.append(e);
     return false;

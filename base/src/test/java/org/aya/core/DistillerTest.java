@@ -60,7 +60,7 @@ public class DistillerTest {
   @Test public void path() {
     @Language("TEXT") var code = """
       prim I prim left prim right
-      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
+      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : ooType
        | at (i : I) : A i {
          | left => a
          | right => b

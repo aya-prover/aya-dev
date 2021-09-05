@@ -96,11 +96,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this(reporter, new LocalCtx(), traceBuilder);
   }
 
-  public @NotNull Result finalize(@NotNull Result result) {
-    solveMetas();
-    return new Result(result.wellTyped.zonk(this), result.type.zonk(this));
-  }
-
   public void solveMetas() {
     while (termEqns.eqns().isNotEmpty()) {
       //noinspection StatementWithEmptyBody
@@ -131,7 +126,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
-    return finalize(checkNoZonk(expr, type));
+    var result = checkNoZonk(expr, type);
+    solveMetas();
+    var pos = expr.sourcePos();
+    return new Result(result.wellTyped.zonk(this, pos), result.type.zonk(this, pos));
   }
 
   @Rule.Check(partialSynth = true)

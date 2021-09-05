@@ -3,14 +3,14 @@ prim I
 prim left
 prim right
 prim arcoe
-struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+struct Path (A : I -> Type) (a : A left) (b : A right) : ooType
  | at (i : I) : A i {
    | left => a
    | right => b
  }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def `=` Eq {A : Type} (a b : A) : ooType => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
 bind application tighter =

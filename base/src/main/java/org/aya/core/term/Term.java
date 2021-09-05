@@ -10,6 +10,7 @@ import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreTerm;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -73,13 +74,14 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     return accept(new Substituter(subst, levelSubst), Unit.unit());
   }
 
-  default @NotNull Term zonk(@NotNull ExprTycker tycker) {
+  default @NotNull Term zonk(@NotNull ExprTycker tycker, @Nullable SourcePos pos) {
     var zonker = new Zonker(tycker);
     var term = accept(zonker, Unit.unit());
     var eqns = tycker.levelEqns.eqns();
     if (eqns.isNotEmpty() && !zonker.isReported()) {
       // There are level errors, but not reported since all levels are solved
-      tycker.reporter.report(new LevelMismatchError(null, eqns.toImmutableSeq()));
+      tycker.reporter.report(new LevelMismatchError(pos, eqns.toImmutableSeq()));
+      eqns.clear();
     }
     return term;
   }

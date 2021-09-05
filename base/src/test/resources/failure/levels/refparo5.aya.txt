@@ -1,0 +1,9 @@
+In file $FILE:4:11 ->
+
+  2 | 
+  3 | struct TypeStruct : Set
+  4 |   | type : Set
+                 ^-^ u + 1 <= u
+
+Error: Cannot solve some level equation(s)
+What are you doing?

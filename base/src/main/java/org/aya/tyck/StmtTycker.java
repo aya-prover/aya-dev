@@ -5,6 +5,7 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
+import kala.tuple.Tuple;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
@@ -205,11 +206,12 @@ public record StmtTycker(
       assert param.type() != null; // guaranteed by AyaProducer
       var paramRes = exprTycker.checkNoZonk(param.type(), univ);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
-      return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
+      return Tuple.of(new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit()), param.sourcePos());
     });
     exprTycker.solveMetas();
-    return okTele.map(t -> {
-      var term = t.type().zonk(exprTycker);
+    return okTele.map(tt -> {
+      var t = tt._1;
+      var term = t.type().zonk(exprTycker, tt._2);
       exprTycker.localCtx.put(t.ref(), term);
       return new Term.Param(t.ref(), term, t.explicit());
     });

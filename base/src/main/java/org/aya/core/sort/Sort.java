@@ -62,8 +62,11 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
     return new CoreLevel(lhs.levels().appendedAll(rhs.levels()));
   }
 
+  /**
+   * Lift the predicative universe level.
+   */
   @Contract("_-> new") public @NotNull Sort succ(int n) {
-    return new Sort(uLevel.lift(n), hLevel.lift(n));
+    return new Sort(uLevel.lift(n), hLevel);
   }
 
   /**

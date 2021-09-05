@@ -28,7 +28,7 @@ public class SuedeTest {
   }
 
   @Test public void piSig() {
-    suedeAll("def test (y : Set) => Pi (x : Set -> Set (lsuc 1)) -> Sig (x y) ** x y");
+    suedeAll("def test (y : Set 0) : Set 3 => Pi (x : Set 0 -> Set (lsuc 1)) -> Sig (x y) ** x y");
   }
 
   @Test public void adjunction() {
@@ -47,12 +47,12 @@ public class SuedeTest {
   @Test public void path() {
     suedeAll("""
       prim I prim left prim right
-      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
+      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : ooType
        | at (i : I) : A i {
          | left => a
          | right => b
        }
-      def `=` Eq {A : Type} (a b : A) : Type => Path (\\ i => A) a b
+      def `=` Eq {A : Type} (a b : A) : ooType => Path (\\ i => A) a b
       bind = looser application
       prim arcoe
       def hfill2d {A : Type} {a b c d : A}

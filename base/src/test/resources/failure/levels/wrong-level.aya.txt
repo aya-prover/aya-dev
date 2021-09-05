@@ -6,4 +6,12 @@ In file $FILE:4:18 ->
                         ^^
 
 Error: I don't want a ulevel here, please use the other one
+In file $FILE:4:51 ->
+
+  2 | ulevel u
+  3 | hlevel h
+  4 | def neg (A : Type u u) : Type (lsuc h) (lsuc u) => A -> Empty
+                                                              ^---^ h <= h + 1, u + 1 <= u + 1
+
+Error: Cannot solve some level equation(s)
 What are you doing?
