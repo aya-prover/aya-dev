@@ -23,7 +23,8 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   private static @NotNull Doc termToHint(@Nullable Term term) {
-    return term == null ? Doc.empty() : Doc.sep(Doc.plain("substituted to"), Doc.styled(Style.code(), term.toDoc(DistillerOptions.DEFAULT)));
+    return term == null ? Doc.empty() : Doc.sep(Doc.english("substituted to"),
+      Doc.styled(Style.code(), term.toDoc(DistillerOptions.DEFAULT)));
   }
 
   record Conditions(

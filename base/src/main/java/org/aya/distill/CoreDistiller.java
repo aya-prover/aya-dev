@@ -81,7 +81,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     if (onlyH instanceof Level.Constant<Sort.LvlVar> t) {
       if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel());
       if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel());
-    } else if (onlyH instanceof Level.Infinity<Sort.LvlVar> t)
+    } else if (onlyH instanceof Level.Infinity<Sort.LvlVar>)
       return univDoc(nestedCall, "ooType", sort.uLevel());
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
@@ -147,8 +147,10 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     var name = term.ref();
     var sol = name.core().body;
     var inner = sol == null ? varDoc(name) : sol.accept(this, false);
+    if (options.inlineMetas())
+      return visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), nestedCall);
     return Doc.wrap("{?", "?}",
-      visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), nestedCall));
+      visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), false));
   }
 
   @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {

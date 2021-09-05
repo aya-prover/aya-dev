@@ -60,6 +60,7 @@ public record CodeOptions(
     }
     var expr = producer.visitExpr(AyaParsing.parser(matcher.group(6)).expr());
     var distillOpt = new DistillerOptions(
+      true,
       showImplicitArgs,
       showImplicitPats,
       showLambdaTypes,

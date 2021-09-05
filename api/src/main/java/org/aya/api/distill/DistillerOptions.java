@@ -8,13 +8,14 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record DistillerOptions(
+  boolean inlineMetas,
   boolean showImplicitArgs,
   boolean showImplicitPats,
   boolean showLambdaTypes,
   boolean showLevels
 ) {
   public static final @NotNull DistillerOptions DEBUG =
-    new DistillerOptions(true, true, true, true);
+    new DistillerOptions(false, true, true, true, true);
   public static final @NotNull DistillerOptions DEFAULT =
-    new DistillerOptions(true, true, false, false);
+    new DistillerOptions(true, true, true, false, false);
 }
