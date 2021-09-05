@@ -35,8 +35,15 @@ public final class Zonker implements TermFixpoint<Unit> {
     this.tycker = tycker;
   }
 
-  public boolean isReported() {
-    return reported;
+  public @NotNull Term zonk(@NotNull Term term, @Nullable SourcePos pos) {
+    term = term.accept(this, Unit.unit());
+    var eqns = tycker.levelEqns.eqns();
+    if (eqns.isNotEmpty() && !reported) {
+      // There are level errors, but not reported since all levels are solved
+      tycker.reporter.report(new LevelMismatchError(pos, eqns.toImmutableSeq()));
+      eqns.clear();
+    }
+    return term;
   }
 
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
