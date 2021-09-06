@@ -69,7 +69,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var body = def.body;
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
-    return volynskaya != null ? volynskaya.data() : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
+    return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
   checkAndBuildSubst(SeqLike<Term.Param> telescope, SeqLike<Arg<Term>> args) {

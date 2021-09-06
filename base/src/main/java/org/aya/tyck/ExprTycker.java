@@ -551,7 +551,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
             new Term.Param(Constants.anonymous(), resultLast.value, true));
           resultLast.value = result.type;
         });
-    } else if (!(term instanceof FormTerm.Sigma dt)) {
+    } else if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Sigma dt)) {
       return wantButNo(expr, term, "sigma type");
     } else {
       var againstTele = dt.params().view();

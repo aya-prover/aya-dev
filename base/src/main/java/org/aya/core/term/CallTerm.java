@@ -40,6 +40,10 @@ public sealed interface CallTerm extends Term {
         return new Hole(hole.ref, hole.contextArgs, hole.args.appended(arg));
     }
     if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, arg);
+    return make(lam, arg);
+  }
+
+  static @NotNull Term make(IntroTerm.Lambda lam, @NotNull Arg<Term> arg) {
     var param = lam.param();
     assert arg.explicit() == param.explicit();
     return lam.body().subst(param.ref(), arg.term());
