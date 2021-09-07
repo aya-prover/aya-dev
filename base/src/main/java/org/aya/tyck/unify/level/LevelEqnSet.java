@@ -7,7 +7,6 @@ import kala.collection.mutable.MutableMap;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.generic.Level;
@@ -55,7 +54,7 @@ public record LevelEqnSet(
       solver.solve(this);
       for (var lvlVar : vars)
         if (!solution.containsKey(lvlVar)) {
-          solution.put(lvlVar, new Sort.CoreLevel(new Level.Constant<>(lvlVar.kind().defaultValue)));
+          solution.put(lvlVar, new Sort.CoreLevel(new Level.Constant<>(0)));
         }
       eqns.clear();
     } catch (LevelSolver.UnsatException ignored) {
@@ -68,7 +67,7 @@ public record LevelEqnSet(
   }
 
   /**
-   * For {@link org.aya.tyck.ExprTycker#universe} and {@link org.aya.tyck.ExprTycker#homotopy}
+   * For {@link org.aya.tyck.ExprTycker#universe}
    */
   public boolean used(@NotNull Sort.LvlVar var) {
     return eqns.anyMatch(eqn -> eqn.used(var)) ||
@@ -113,8 +112,8 @@ public record LevelEqnSet(
       return switch (level) {
         case Level.Reference<Sort.LvlVar> ref -> {
           var r = ref.ref();
-          yield "new Reference(new Var(\"" + r.name() + "\", " + (r.kind() == LevelGenVar.Kind.Homotopy) +
-            ", " + r.kind().defaultValue + ", " + r.free() + "), " + ref.lift() + ")";
+          yield "new Reference(new Var(\"" + r.name() + "\", " +
+            ", 0, " + r.free() + "), " + ref.lift() + ")";
         }
         case Level.Constant<Sort.LvlVar> constant -> "new Const(" + constant.value() + ")";
         case Level.Infinity<Sort.LvlVar> l -> "new Infinity()";

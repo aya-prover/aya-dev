@@ -390,9 +390,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
 
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
     var vars = levels.levels().map(t -> linkDef(t.data(), GENERALIZED));
-    return Doc.sep(
-      Doc.styled(KEYWORD, levels.kind().keyword),
-      Doc.sep(vars));
+    return Doc.sep(Doc.styled(KEYWORD, "universe"), Doc.sep(vars));
   }
 
   @Override public Doc visitExample(Sample.@NotNull Working example, Unit unit) {

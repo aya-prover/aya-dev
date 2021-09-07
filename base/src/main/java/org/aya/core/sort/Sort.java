@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Level;
@@ -68,11 +67,7 @@ public record Sort(@NotNull CoreLevel uLevel) {
    *            In well-typed terms it should always be <code>null</code>.
    * @author ice1000
    */
-  public static record LvlVar(
-    @NotNull String name,
-    @NotNull LevelGenVar.Kind kind,
-    @Nullable SourcePos pos
-  ) implements Var {
+  public static record LvlVar(@NotNull String name, @Nullable SourcePos pos) implements Var {
     @Override public boolean equals(@Nullable Object o) {
       return this == o;
     }

@@ -128,9 +128,8 @@ public final class AyaProducer {
   }
 
   public Generalize visitLevels(AyaParser.LevelsContext ctx) {
-    var kind = ctx.HLEVEL() != null ? LevelGenVar.Kind.Homotopy : LevelGenVar.Kind.Universe;
-    return new Generalize.Levels(sourcePosOf(ctx), kind, visitIds(ctx.ids())
-      .map(t -> t.map(data -> new LevelGenVar(kind, data)))
+    return new Generalize.Levels(sourcePosOf(ctx), visitIds(ctx.ids())
+      .map(t -> t.map(LevelGenVar::new))
       .collect(ImmutableSeq.factory()));
   }
 

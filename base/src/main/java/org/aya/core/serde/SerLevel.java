@@ -4,7 +4,6 @@ package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.core.sort.Sort;
 import org.aya.generic.Level;
 import org.aya.util.Constants;
@@ -25,9 +24,9 @@ public sealed interface SerLevel extends Serializable {
     }
   }
 
-  record LvlVar(int id, @NotNull LevelGenVar.Kind kind) implements Serializable {
+  record LvlVar(int id) implements Serializable {
     public @NotNull Sort.LvlVar de(@NotNull MutableMap<Integer, Sort.LvlVar> cache) {
-      return cache.getOrPut(id, () -> new Sort.LvlVar(Constants.ANONYMOUS_PREFIX, kind, null));
+      return cache.getOrPut(id, () -> new Sort.LvlVar(Constants.ANONYMOUS_PREFIX, null));
     }
   }
 
@@ -57,6 +56,6 @@ public sealed interface SerLevel extends Serializable {
   }
 
   static LvlVar ser(Sort.@NotNull LvlVar ref, @NotNull MutableMap<Sort.LvlVar, Integer> cache) {
-    return new LvlVar(cache.getOrPut(ref, cache::size), ref.kind());
+    return new LvlVar(cache.getOrPut(ref, cache::size));
   }
 }

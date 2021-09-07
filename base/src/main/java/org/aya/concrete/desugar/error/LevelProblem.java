@@ -4,7 +4,6 @@ package org.aya.concrete.desugar.error;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.concrete.Expr;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
@@ -27,14 +26,6 @@ public sealed interface LevelProblem extends ExprProblem {
   record BadLevelExpr(@NotNull Expr expr) implements LevelProblem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(Doc.english("Expected level expression, got:"), expr.toDoc(DistillerOptions.DEFAULT));
-    }
-  }
-
-  record BadLevelKind(
-    @NotNull Expr expr, @NotNull LevelGenVar.Kind kind
-  ) implements LevelProblem {
-    @Override public @NotNull Doc describe() {
-      return Doc.english("I don't want a " + kind.keyword + " here, please use the other one");
     }
   }
 }

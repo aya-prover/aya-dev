@@ -60,8 +60,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
   public final @NotNull EqnSet termEqns = new EqnSet();
-  public final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
-  public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
+  public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.create();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -73,7 +72,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
-    return Seq.of(homotopy, universe).view()
+    return Seq.of(universe).view()
       .filter(levelEqns::used)
       .appendedAll(levelMapping.valuesView())
       .toImmutableSeq();
@@ -182,7 +181,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (level instanceof Level.Maximum m)
       return Sort.CoreLevel.merge(m.among().map(l -> transformLevel(l, polymorphic)));
     return new Sort.CoreLevel(switch (level) {
-      case Level.Reference<LevelGenVar> v -> new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), v.ref().kind(), null)), v.lift());
+      case Level.Reference<LevelGenVar> v -> new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), null)), v.lift());
       case Level.Infinity<LevelGenVar> l -> new Level.Infinity<>();
       case Level.Constant<LevelGenVar> c -> new Level.Constant<>(c.value());
       default -> throw new IllegalArgumentException(level.toString());
@@ -270,7 +269,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     var levelVars = Def.defLevels(defVar).map(v -> {
-      var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), v.kind(), pos);
+      var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), pos);
       levelSubst.solution().put(v, new Sort.CoreLevel(new Level.Reference<>(lvlVar)));
       return lvlVar;
     });
