@@ -43,7 +43,7 @@ public final class CtorDef extends SubLevelDef {
    * @return first component: data's telescope, second component: con telescope
    */
   public static @NotNull DataDef.CtorTelescopes
-  telescopes(@NotNull DefVar<CtorDef, Decl.DataCtor> defVar, ImmutableSeq<Sort.CoreLevel> sort) {
+  telescopes(@NotNull DefVar<CtorDef, Decl.DataCtor> defVar, ImmutableSeq<Sort> sort) {
     var core = defVar.core;
     if (core != null) {
       var dataDef = core.dataRef.core;

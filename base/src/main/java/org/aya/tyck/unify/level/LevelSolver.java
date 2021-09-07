@@ -212,7 +212,7 @@ public class LevelSolver {
         }
         retList.append(resolveConstantLevel(minv));
       }
-      eqns.solution().put(name, new Sort.CoreLevel(retList.toImmutableSeq()));
+      eqns.solution().put(name, new Sort(retList.toImmutableSeq()));
     }
   }
 
@@ -232,7 +232,7 @@ public class LevelSolver {
   }
 
   /** @return true if fail */
-  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort.CoreLevel lhs, Sort.CoreLevel rhs) {
+  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs) {
     var lhsLevels = lhs.levels();
     if (lhsLevels.allMatch(v -> rhs.levels().contains(v))) {
       avoidableEqns.append(e);

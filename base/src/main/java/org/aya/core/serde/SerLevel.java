@@ -37,12 +37,12 @@ public sealed interface SerLevel extends Serializable {
   }
 
   record Max(@NotNull ImmutableSeq<SerLevel> levels) implements Serializable {
-    public @NotNull Sort.CoreLevel de(@NotNull MutableMap<Integer, Sort.LvlVar> cache) {
-      return new Sort.CoreLevel(levels.map(l -> l.de(cache)));
+    public @NotNull Sort de(@NotNull MutableMap<Integer, Sort.LvlVar> cache) {
+      return new Sort(levels.map(l -> l.de(cache)));
     }
   }
 
-  static @NotNull Max ser(@NotNull Sort.CoreLevel level, @NotNull MutableMap<Sort.LvlVar, Integer> cache) {
+  static @NotNull Max ser(@NotNull Sort level, @NotNull MutableMap<Sort.LvlVar, Integer> cache) {
     return new Max(level.levels().map(l -> ser(l, cache)));
   }
 

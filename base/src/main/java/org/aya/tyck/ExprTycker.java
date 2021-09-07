@@ -176,11 +176,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new ErrorTerm(expr), term);
   }
 
-  private @NotNull Sort.CoreLevel transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
+  private @NotNull Sort transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
     if (level instanceof Level.Polymorphic) return levelEqns.markUsed(polymorphic);
     if (level instanceof Level.Maximum m)
-      return Sort.CoreLevel.merge(m.among().map(l -> transformLevel(l, polymorphic)));
-    return new Sort.CoreLevel(switch (level) {
+      return Sort.merge(m.among().map(l -> transformLevel(l, polymorphic)));
+    return new Sort(switch (level) {
       case Level.Reference<LevelGenVar> v -> new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), null)), v.lift());
       case Level.Infinity<LevelGenVar> l -> new Level.Infinity<>();
       case Level.Constant<LevelGenVar> c -> new Level.Constant<>(c.value());
@@ -189,7 +189,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    var sort = new Sort(transformLevel(expr.level(), universe));
+    var sort = transformLevel(expr.level(), universe);
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
     var normTerm = term.normalize(NormalizeMode.WHNF);
     if (normTerm instanceof FormTerm.Univ univ) {
@@ -265,18 +265,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(IntroTerm.Lambda.make(teleRenamed, body), type);
   }
 
-  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort.CoreLevel>>
+  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort>>
   levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     var levelVars = Def.defLevels(defVar).map(v -> {
       var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), pos);
-      levelSubst.solution().put(v, new Sort.CoreLevel(new Level.Reference<>(lvlVar)));
+      levelSubst.solution().put(v, new Sort(new Level.Reference<>(lvlVar)));
       return lvlVar;
     });
     levelEqns.vars().appendAll(levelVars);
     return Tuple.of(levelSubst, levelVars.view()
       .map(Level.Reference::new)
-      .map(Sort.CoreLevel::new)
+      .map(Sort::new)
       .toImmutableSeq());
   }
 

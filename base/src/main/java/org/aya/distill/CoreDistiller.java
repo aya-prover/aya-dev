@@ -74,10 +74,9 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
-    var sort = term.sort();
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
-    return visitCalls(fn, Seq.of(sort.uLevel()).view().map(t -> new Arg<>(t, true)),
+    return visitCalls(fn, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true)),
       (nest, t) -> t.toDoc(options), nestedCall);
   }
 

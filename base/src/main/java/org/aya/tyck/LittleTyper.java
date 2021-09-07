@@ -38,7 +38,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
     var paramTyRaw = term.param().type().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
     var retTyRaw = term.body().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
     if (paramTyRaw instanceof FormTerm.Univ paramTy && retTyRaw instanceof FormTerm.Univ retTy)
-      return new FormTerm.Univ(paramTy.sort().max(retTy.sort()));
+      return new FormTerm.Univ(Sort.max(paramTy.sort(), retTy.sort()));
     else return ErrorTerm.typeOf(term);
   }
 
@@ -83,7 +83,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @NotNull
-  private Term defCall(DefVar<? extends Def, ? extends Decl> ref, ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs) {
+  private Term defCall(DefVar<? extends Def, ? extends Decl> ref, ImmutableSeq<@NotNull Sort> sortArgs) {
     var levels = Def.defLevels(ref);
     return Def.defResult(ref).subst(Substituter.TermSubst.EMPTY, Unfolder.buildSubst(levels, sortArgs));
   }

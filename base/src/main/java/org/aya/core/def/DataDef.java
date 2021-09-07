@@ -48,7 +48,7 @@ public final class DataDef extends UserDef {
    */
   public record CtorTelescopes(
     @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<Sort.CoreLevel> sortTele,
+    @NotNull ImmutableSeq<Sort> sortTele,
     @NotNull ImmutableSeq<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<CtorDef, Decl.DataCtor> conVar) {

@@ -21,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public record Sort(@NotNull CoreLevel uLevel) {
-  public Sort(@NotNull Level<LvlVar> uLevel) {
-    this(new CoreLevel(uLevel));
+public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDocile {
+  public Sort(@NotNull Level<LvlVar> level) {
+    this(ImmutableSeq.of(level));
   }
 
   public static final @NotNull Level<LvlVar> INF_LVL = new Level.Infinity<>();
@@ -33,32 +33,43 @@ public record Sort(@NotNull CoreLevel uLevel) {
     return lvl instanceof Level.Reference<LvlVar> ref ? ref.ref().pos : null;
   }
 
-  public static @Nullable SourcePos unsolvedPos(@NotNull CoreLevel lvl) {
+  public static @Nullable SourcePos unsolvedPos(@NotNull Sort lvl) {
     return lvl.levels().view().mapNotNull(Sort::unsolvedPos).firstOrNull();
   }
 
   public @Nullable SourcePos unsolvedPos() {
-    return unsolvedPos(uLevel);
+    return unsolvedPos(this);
   }
 
   public @NotNull Sort subst(@NotNull LevelSubst subst) {
-    var u = subst.applyTo(uLevel);
-    return u == uLevel ? this : new Sort(u);
+    return subst.applyTo(this);
   }
 
-  public @NotNull Sort max(@NotNull Sort other) {
-    return new Sort(max(uLevel, other.uLevel));
+  public static @NotNull Sort max(@NotNull Sort lhs, @NotNull Sort rhs) {
+    return new Sort(lhs.levels().appendedAll(rhs.levels()));
   }
 
-  public static @NotNull CoreLevel max(@NotNull CoreLevel lhs, @NotNull CoreLevel rhs) {
-    return new CoreLevel(lhs.levels().appendedAll(rhs.levels()));
+  public static @NotNull Sort merge(@NotNull ImmutableSeq<Sort> levels) {
+    if (levels.sizeEquals(1)) return levels.first();
+    return new Sort(levels.flatMap(Sort::levels));
+  }
+
+  public @NotNull Sort lift(int n) {
+    return new Sort(levels.map(l -> l.lift(n)));
+  }
+
+  @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return levels.sizeEquals(1) ? levels.first().toDoc(options) : Doc.sep(
+      Doc.styled(CoreDistiller.KEYWORD, "lmax"),
+      Doc.sep(levels.map(l -> l.toDoc(options)))
+    );
   }
 
   /**
    * Lift the predicative universe level.
    */
   @Contract("_-> new") public @NotNull Sort succ(int n) {
-    return new Sort(uLevel.lift(n));
+    return lift(n);
   }
 
   /**
@@ -78,34 +89,6 @@ public record Sort(@NotNull CoreLevel uLevel) {
 
     public boolean free() {
       return pos != null;
-    }
-  }
-
-  /**
-   * @param levels nonempty
-   * @author ice1000
-   */
-  public static record CoreLevel(
-    @NotNull ImmutableSeq<Level<LvlVar>> levels
-  ) implements AyaDocile {
-    public CoreLevel(@NotNull Level<LvlVar> level) {
-      this(ImmutableSeq.of(level));
-    }
-
-    public static @NotNull CoreLevel merge(@NotNull ImmutableSeq<CoreLevel> levels) {
-      if (levels.sizeEquals(1)) return levels.first();
-      return new CoreLevel(levels.flatMap(CoreLevel::levels));
-    }
-
-    public @NotNull CoreLevel lift(int n) {
-      return new CoreLevel(levels.map(l -> l.lift(n)));
-    }
-
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      return levels.sizeEquals(1) ? levels.first().toDoc(options) : Doc.sep(
-        Doc.styled(CoreDistiller.KEYWORD, "lmax"),
-        Doc.sep(levels.map(l -> l.toDoc(options)))
-      );
     }
   }
 }

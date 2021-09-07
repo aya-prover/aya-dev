@@ -52,7 +52,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped);
   }
 
-  static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<Sort.@NotNull CoreLevel> levelArgs) {
+  static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<@NotNull Sort> levelArgs) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     assert levelParams.sizeEquals(levelArgs);
     for (var app : levelArgs.zip(levelParams)) levelSubst.solution().put(app._2, app._1);

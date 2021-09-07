@@ -79,7 +79,7 @@ public record StmtTycker(
       // Homotopy level goes first
       var levels = tycker.extractLevels();
       for (var lvl : core.levels.zip(levels))
-        levelSubst.solution().put(lvl._1, new Sort.CoreLevel(new Level.Reference<>(lvl._2)));
+        levelSubst.solution().put(lvl._1, new Sort(new Level.Reference<>(lvl._2)));
       var target = FormTerm.Pi.make(core.telescope(), core.result())
         .subst(Substituter.TermSubst.EMPTY, levelSubst);
       tycker.unifyTyReported(FormTerm.Pi.make(tele, result), target, decl.result);
@@ -100,7 +100,7 @@ public record StmtTycker(
     var sortParam = dataSig.sortParam();
     var dataCall = new CallTerm.Data(dataRef, sortParam.view()
       .map(Level.Reference::new)
-      .map(Sort.CoreLevel::new)
+      .map(Sort::new)
       .toImmutableSeq(), dataArgs);
     var sig = new Ref<>(new Def.Signature(sortParam, dataSig.param(), dataCall));
     var patTycker = new PatTycker(tycker);

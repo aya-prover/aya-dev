@@ -17,20 +17,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface LevelSubst {
   boolean isEmpty();
-  @NotNull Option<Sort.CoreLevel> get(@NotNull Sort.LvlVar var);
+  @NotNull Option<Sort> get(@NotNull Sort.LvlVar var);
   @NotNull LevelSubst subst(@NotNull LevelSubst subst);
   @NotNull LevelSubst EMPTY = new Simple(MutableTreeMap.of((o1, o2) -> {
     throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
   }));
 
-  default @NotNull Sort.CoreLevel applyTo(@NotNull Level<Sort.LvlVar> lvl) {
+  default @NotNull Sort applyTo(@NotNull Level<Sort.LvlVar> lvl) {
     if (lvl instanceof Level.Reference<Sort.LvlVar> ref)
-      return get(ref.ref()).map(n -> n.lift(ref.lift())).getOrDefault(new Sort.CoreLevel(ref));
-    else return new Sort.CoreLevel(lvl);
+      return get(ref.ref()).map(n -> n.lift(ref.lift())).getOrDefault(new Sort(ref));
+    else return new Sort(lvl);
   }
 
-  default @NotNull Sort.CoreLevel applyTo(@NotNull Sort.CoreLevel lvl) {
-    return Sort.CoreLevel.merge(lvl.levels().map(this::applyTo));
+  default @NotNull Sort applyTo(@NotNull Sort lvl) {
+    return Sort.merge(lvl.levels().map(this::applyTo));
   }
 
   default @NotNull LevelEqnSet.Eqn applyTo(@NotNull LevelEqnSet.Eqn eqn) {
@@ -39,17 +39,17 @@ public interface LevelSubst {
     return lhs == eqn.lhs() && rhs == eqn.rhs() ? eqn : new LevelEqnSet.Eqn(lhs, rhs, eqn.cmp(), eqn.sourcePos());
   }
 
-  record Simple(@NotNull MutableMap<Sort.@NotNull LvlVar, Sort.@NotNull CoreLevel> solution) implements Default {
+  record Simple(@NotNull MutableMap<Sort.@NotNull LvlVar, @NotNull Sort> solution) implements Default {
   }
 
   interface Default extends LevelSubst {
-    @NotNull MutableMap<Sort.@NotNull LvlVar, Sort.@NotNull CoreLevel> solution();
+    @NotNull MutableMap<Sort.@NotNull LvlVar, @NotNull Sort> solution();
 
     @Override default boolean isEmpty() {
       return solution().isEmpty();
     }
 
-    @Override default @NotNull Option<Sort.CoreLevel> get(@NotNull Sort.LvlVar var) {
+    @Override default @NotNull Option<@NotNull Sort> get(@NotNull Sort.LvlVar var) {
       return solution().getOption(var);
     }
 

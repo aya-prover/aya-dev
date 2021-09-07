@@ -96,7 +96,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
 
   default @NotNull Term freezeHoles(@Nullable LevelEqnSet eqnSet) {
     return accept(new TermFixpoint<>() {
-      @Override public Sort.@NotNull CoreLevel visitLevel(Sort.@NotNull CoreLevel sort, Unit unit) {
+      @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
         return eqnSet != null ? eqnSet.applyTo(sort) : sort;
       }
     }, Unit.unit());

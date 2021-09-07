@@ -23,25 +23,21 @@ import org.jetbrains.annotations.TestOnly;
 public record LevelEqnSet(
   @NotNull Buffer<Sort.LvlVar> vars,
   @NotNull Buffer<@NotNull Eqn> eqns,
-  @NotNull MutableMap<Sort.LvlVar, Sort.CoreLevel> solution
+  @NotNull MutableMap<Sort.LvlVar, @NotNull Sort> solution
 ) implements LevelSubst.Default {
   public LevelEqnSet() {
     this(Buffer.create(), Buffer.create(), MutableMap.create());
   }
 
   public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
-    add(lhs.uLevel(), rhs.uLevel(), cmp, loc);
+    insertEqn(new Eqn(lhs, rhs, cmp, loc));
   }
 
   public void add(
     @NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs,
     @NotNull Ordering cmp, @NotNull SourcePos loc
   ) {
-    add(new Sort.CoreLevel(lhs), new Sort.CoreLevel(rhs), cmp, loc);
-  }
-
-  public void add(@NotNull Sort.CoreLevel lhs, @NotNull Sort.CoreLevel rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
-    insertEqn(new Eqn(lhs, rhs, cmp, loc));
+    add(new Sort(lhs), new Sort(rhs), cmp, loc);
   }
 
   private void insertEqn(Eqn h) {
@@ -54,7 +50,7 @@ public record LevelEqnSet(
       solver.solve(this);
       for (var lvlVar : vars)
         if (!solution.containsKey(lvlVar)) {
-          solution.put(lvlVar, new Sort.CoreLevel(new Level.Constant<>(0)));
+          solution.put(lvlVar, new Sort(new Level.Constant<>(0)));
         }
       eqns.clear();
     } catch (LevelSolver.UnsatException ignored) {
@@ -74,8 +70,8 @@ public record LevelEqnSet(
       solution.valuesView().anyMatch(level -> Eqn.used(var, level));
   }
 
-  public Sort.CoreLevel markUsed(@NotNull Sort.LvlVar universe) {
-    return solution.getOrPut(universe, () -> new Sort.CoreLevel(new Level.Reference<>(universe)));
+  public Sort markUsed(@NotNull Sort.LvlVar universe) {
+    return solution.getOrPut(universe, () -> new Sort(new Level.Reference<>(universe)));
   }
 
   @TestOnly public @NotNull String forZZS() {
@@ -93,7 +89,7 @@ public record LevelEqnSet(
    * @author ice1000
    */
   public static record Eqn(
-    @NotNull Sort.CoreLevel lhs, @NotNull Sort.CoreLevel rhs,
+    @NotNull Sort lhs, @NotNull Sort rhs,
     @NotNull Ordering cmp, @NotNull SourcePos sourcePos
   ) implements AyaDocile {
     public boolean used(@NotNull Sort.LvlVar var) {
@@ -104,7 +100,7 @@ public record LevelEqnSet(
       return lvl instanceof Level.Reference<Sort.LvlVar> l && l.ref() == var;
     }
 
-    public static boolean used(Sort.@NotNull LvlVar var, @NotNull Sort.CoreLevel lvl) {
+    public static boolean used(Sort.@NotNull LvlVar var, @NotNull Sort lvl) {
       return lvl.levels().anyMatch(level -> used(var, level));
     }
 

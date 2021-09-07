@@ -206,7 +206,7 @@ public record UntypedDefEq(
 
   @NotNull LevelSubst levels(
     @NotNull DefVar<? extends Def, ? extends Decl> def,
-    ImmutableSeq<Sort.@NotNull CoreLevel> l, ImmutableSeq<Sort.@NotNull CoreLevel> r
+    ImmutableSeq<@NotNull Sort> l, ImmutableSeq<@NotNull Sort> r
   ) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     for (var levels : l.zip(r).zip(Def.defLevels(def))) {
