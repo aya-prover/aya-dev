@@ -50,10 +50,10 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDo
   }
 
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return levels.sizeEquals(1) ? levels.first().toDoc(options) : Doc.sep(
+    return levels.sizeEquals(1) ? levels.first().toDoc(options) : Doc.parened(Doc.sep(
       Doc.styled(CoreDistiller.KEYWORD, "lmax"),
       Doc.sep(levels.map(l -> l.toDoc(options)))
-    );
+    ));
   }
 
   /**
