@@ -17,7 +17,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.ExprConsumer;
-import org.aya.generic.Level;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
@@ -114,16 +113,9 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
-    if (expr.hLevel() instanceof Level.Constant<LevelGenVar> t) {
-      if (t.value() == 1) return univDoc(nestedCall, "Prop", expr.uLevel());
-      if (t.value() == 2) return univDoc(nestedCall, "Set", expr.uLevel());
-    } else if (expr.hLevel() instanceof Level.Infinity<LevelGenVar> t) {
-      return univDoc(nestedCall, "ooType", expr.uLevel());
-    }
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
-    return visitCalls(fn,
-      Seq.of(expr.hLevel(), expr.uLevel()).view().map(t -> new Arg<>(t, true)),
+    return visitCalls(fn, Seq.of(expr.level()).view().map(t -> new Arg<>(t, true)),
       (nc, l) -> l.toDoc(options), nestedCall);
   }
 
