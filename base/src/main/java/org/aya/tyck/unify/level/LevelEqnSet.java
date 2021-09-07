@@ -31,7 +31,6 @@ public record LevelEqnSet(
   }
 
   public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
-    add(lhs.hLevel(), rhs.hLevel(), cmp, loc);
     add(lhs.uLevel(), rhs.uLevel(), cmp, loc);
   }
 

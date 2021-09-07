@@ -70,9 +70,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Univ(@NotNull SerLevel.Max u, @NotNull SerLevel.Max h) implements SerTerm {
+  record Univ(@NotNull SerLevel.Max u) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Univ(new Sort(u.de(state.levelCache), h.de(state.levelCache)));
+      return new FormTerm.Univ(new Sort(u.de(state.levelCache)));
     }
   }
 

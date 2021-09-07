@@ -104,11 +104,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   default @Nullable Sort visitSort(@NotNull Sort sort, P p) {
-    var h = visitLevel(sort.hLevel(), p);
     var u = visitLevel(sort.uLevel(), p);
-    if (h == null || u == null) return null;
-    if (h == sort.hLevel() && u == sort.uLevel()) return sort;
-    else return new Sort(u, h);
+    if (u == null) return null;
+    if (u == sort.uLevel()) return sort;
+    else return new Sort(u);
   }
 
   default @Nullable Sort.CoreLevel visitLevel(@NotNull Sort.CoreLevel sort, P p) {

@@ -97,7 +97,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    return new SerTerm.Univ(serialize(term.sort().uLevel()), serialize(term.sort().hLevel()));
+    return new SerTerm.Univ(serialize(term.sort().uLevel()));
   }
 
   private @NotNull ImmutableSeq<SerTerm.SerArg> serializeArgs(@NotNull ImmutableSeq<Arg<Term>> args) {

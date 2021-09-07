@@ -22,18 +22,13 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
-  public Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel) {
-    this(new CoreLevel(uLevel), new CoreLevel(hLevel));
+public record Sort(@NotNull CoreLevel uLevel) {
+  public Sort(@NotNull Level<LvlVar> uLevel) {
+    this(new CoreLevel(uLevel));
   }
 
   public static final @NotNull Level<LvlVar> INF_LVL = new Level.Infinity<>();
-  public static final @NotNull Sort OMEGA = new Sort(INF_LVL, INF_LVL);
-
-  public @Nullable Level<LvlVar> onlyH() {
-    if (hLevel.levels.sizeEquals(1)) return hLevel.levels.first();
-    else return null;
-  }
+  public static final @NotNull Sort OMEGA = new Sort(INF_LVL);
 
   private static @Nullable SourcePos unsolvedPos(@NotNull Level<LvlVar> lvl) {
     return lvl instanceof Level.Reference<LvlVar> ref ? ref.ref().pos : null;
@@ -44,18 +39,16 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
   }
 
   public @Nullable SourcePos unsolvedPos() {
-    var pos = unsolvedPos(uLevel);
-    return pos != null ? pos : unsolvedPos(hLevel);
+    return unsolvedPos(uLevel);
   }
 
   public @NotNull Sort subst(@NotNull LevelSubst subst) {
     var u = subst.applyTo(uLevel);
-    var h = subst.applyTo(hLevel);
-    return u == uLevel && h == hLevel ? this : new Sort(u, h);
+    return u == uLevel ? this : new Sort(u);
   }
 
   public @NotNull Sort max(@NotNull Sort other) {
-    return new Sort(max(uLevel, other.uLevel), max(hLevel, other.hLevel));
+    return new Sort(max(uLevel, other.uLevel));
   }
 
   public static @NotNull CoreLevel max(@NotNull CoreLevel lhs, @NotNull CoreLevel rhs) {
@@ -66,7 +59,7 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
    * Lift the predicative universe level.
    */
   @Contract("_-> new") public @NotNull Sort succ(int n) {
-    return new Sort(uLevel.lift(n), hLevel);
+    return new Sort(uLevel.lift(n));
   }
 
   /**

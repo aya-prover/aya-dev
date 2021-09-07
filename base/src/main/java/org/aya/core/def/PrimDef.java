@@ -103,12 +103,12 @@ public final class PrimDef extends TopLevelDef {
 
     public static final @NotNull Map<@NotNull String, @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term>> UNFOLD
       = ImmutableMap.ofEntries(
-        Tuple.of(INTERVAL, prim -> prim),
-        Tuple.of(LEFT, prim -> prim),
-        Tuple.of(RIGHT, prim -> prim),
-        Tuple.of(ARCOE, PrimFactory::arcoe),
-        Tuple.of(INVOL, PrimFactory::invol)
-      );
+      Tuple.of(INTERVAL, prim -> prim),
+      Tuple.of(LEFT, prim -> prim),
+      Tuple.of(RIGHT, prim -> prim),
+      Tuple.of(ARCOE, PrimFactory::arcoe),
+      Tuple.of(INVOL, PrimFactory::invol)
+    );
 
     private static final @NotNull Map<@NotNull String, @NotNull ImmutableSeq<@NotNull String>> DEPENDENCY = ImmutableMap.ofEntries(
       Tuple.of(INTERVAL, ImmutableSeq.empty()),
@@ -126,7 +126,7 @@ public final class PrimDef extends TopLevelDef {
 
       SUPPLIERS = ImmutableMap.ofEntries(
         Tuple.of(INTERVAL, () -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
-          new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)), UNFOLD.get(INTERVAL), INTERVAL)),
+          new FormTerm.Univ(new Sort(new Level.Constant<>(0))), UNFOLD.get(INTERVAL), INTERVAL)),
         Tuple.of(LEFT, () -> new PrimDef(ImmutableSeq.empty(),
           ImmutableSeq.empty(), intervalCallSupplier.get(), UNFOLD.get(LEFT), LEFT)),
         Tuple.of(RIGHT, () -> new PrimDef(ImmutableSeq.empty(), ImmutableSeq.empty(),
@@ -135,9 +135,8 @@ public final class PrimDef extends TopLevelDef {
           var paramA = new LocalVar("A");
           var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCallSupplier.get(), true);
           var paramI = new LocalVar("i");
-          var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
           var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
-          var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
+          var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
           var paramATy = new FormTerm.Pi(paramIToATy, result);
           var aRef = new RefTerm(paramA, paramATy);
           var left = INSTANCE.getOrCreate(LEFT);
@@ -148,7 +147,7 @@ public final class PrimDef extends TopLevelDef {
               new Term.Param(new LocalVar("base"), baseAtLeft, true),
               new Term.Param(paramI, intervalCallSupplier.get(), true)
             ),
-            ImmutableSeq.of(homotopy, universe),
+            ImmutableSeq.of(universe),
             new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, intervalCallSupplier.get()), true)),
             UNFOLD.get(ARCOE), "arcoe");
         }),

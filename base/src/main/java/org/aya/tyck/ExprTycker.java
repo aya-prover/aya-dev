@@ -190,8 +190,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    var u = transformLevel(expr.level(), universe);
-    var sort = new Sort(u, u);
+    var sort = new Sort(transformLevel(expr.level(), universe));
     if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
     var normTerm = term.normalize(NormalizeMode.WHNF);
     if (normTerm instanceof FormTerm.Univ univ) {

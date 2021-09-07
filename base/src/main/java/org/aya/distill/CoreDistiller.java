@@ -13,9 +13,7 @@ import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
-import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
-import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
@@ -77,16 +75,9 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
     var sort = term.sort();
-    var onlyH = sort.onlyH();
-    if (onlyH instanceof Level.Constant<Sort.LvlVar> t) {
-      if (t.value() == 1) return univDoc(nestedCall, "Prop", sort.uLevel());
-      if (t.value() == 2) return univDoc(nestedCall, "Set", sort.uLevel());
-    } else if (onlyH instanceof Level.Infinity<Sort.LvlVar>)
-      return univDoc(nestedCall, "ooType", sort.uLevel());
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
-    return visitCalls(fn,
-      Seq.of(sort.hLevel(), sort.uLevel()).view().map(t -> new Arg<>(t, true)),
+    return visitCalls(fn, Seq.of(sort.uLevel()).view().map(t -> new Arg<>(t, true)),
       (nest, t) -> t.toDoc(options), nestedCall);
   }
 
