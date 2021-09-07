@@ -155,8 +155,7 @@ public record UntypedDefEq(
       defeq.reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, defeq.pos));
       return new ErrorTerm(solved);
     }
-    var success = meta.solve(lhs.ref(), solved);
-    if (!success) {
+    if (!meta.solve(lhs.ref(), solved)) {
       defeq.reporter.report(new HoleProblem.RecursionError(lhs, solved, defeq.pos));
       return new ErrorTerm(solved);
     }
@@ -189,8 +188,7 @@ public record UntypedDefEq(
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
     defeq.levelEqns.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
-    Sort sort = (cmp == Ordering.Lt ? lhs.sort() : rhs.sort());
-    return new FormTerm.Univ(sort.lift(1));
+    return new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).sort().lift(1));
   }
 
   private static Term unreachable() {
