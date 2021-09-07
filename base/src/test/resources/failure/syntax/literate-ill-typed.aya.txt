@@ -1,12 +1,12 @@
 In file $FILE:2:0 ->
 
-  1 | open data Nat : Set | zero | suc Nat
+  1 | open data Nat : Type | zero | suc Nat
   2 | --| test `suc Nat`
       ^----------------^
 
 Error: Expected type: Nat
        Normalized: Nat
-       Actual type: Set
-       Normalized: Set
+       Actual type: Type
+       Normalized: Type
        They don't match, sorry
 What are you doing?

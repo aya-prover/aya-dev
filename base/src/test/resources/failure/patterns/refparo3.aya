@@ -1,12 +1,12 @@
 -- #6 in public repo
 
-open data Bool : Set | true | false
+open data Bool : Type | true | false
 
-struct BoolPair : Set
+struct BoolPair : Type
   | fst : Bool
   | snd : Bool
 
-open data U2 (x : BoolPair) : Set
+open data U2 (x : BoolPair) : Type
   | (false, false) => zero
   | (false, true) => one
   | (true, false) => two

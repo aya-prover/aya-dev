@@ -1,17 +1,11 @@
-In file $FILE:3:8 ->
+In file $FILE:1:15 ->
 
   1 | data List (A : uType 1) : uType 0
+                     ^---^
   2 |  | nil
   3 |  | cons A (List A)
-              ^^ 1 <= 0
 
-Error: Cannot solve some level equation(s)
-In file $FILE:3:11 ->
-
-  1 | data List (A : uType 1) : uType 0
-  2 |  | nil
-  3 |  | cons A (List A)
-                 ^--^
-
-Error: Cannot solve some level equation(s)
+Error: The unqualified name referred to by `uType` is not defined in the current
+       scope
+Resolving interrupted due to error(s).
 What are you doing?

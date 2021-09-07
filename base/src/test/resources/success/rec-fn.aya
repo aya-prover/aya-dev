@@ -1,2 +1,2 @@
-def boom : ooType => boom
-def boomTIZ (a : Set) : ooType => boomTIZ a
+def boom : Type => boom
+def boomTIZ (a : Type) : Type => boomTIZ a

@@ -1,14 +1,14 @@
 prim I
 prim left
 prim right
-struct Path (A : I -> Type) (a : A left) (b : A right) : ooType
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
  | at (i : I) : A i {
    | left => a
    | right => b
  }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def Eq {A : Type} (a b : A) : ooType => Path (\ i => A) a b
+def Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : Eq a a => path (\ i => a)
 
 prim arcoe
@@ -26,14 +26,14 @@ def hcomp2d {A : Type}
   (r : Eq a c) : Eq c d
   => path (hfill2d p q r right)
 
-def sym {A : Set} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) (idp a) p
-def trans {A : Set} {a b c : A} (p : Eq a b) (q : Eq b c) : Eq a c =>
+def sym {A : Type} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) (idp a) p
+def trans {A : Type} {a b c : A} (p : Eq a b) (q : Eq b c) : Eq a c =>
   hcomp2d p q (idp a)
-def pmap {A B : Set} (f : A -> B) {a b : A} (p : Eq a b)
+def pmap {A B : Type} (f : A -> B) {a b : A} (p : Eq a b)
   : Eq (f a) (f b) => path (\ i => f (p.at i))
 
-open data Nat : Set | zero | suc Nat
-open data Int : Set
+open data Nat : Type | zero | suc Nat
+open data Int : Type
 | pos Nat
 | neg Nat { | zero => pos zero }
 

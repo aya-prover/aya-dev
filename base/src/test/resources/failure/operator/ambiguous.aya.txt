@@ -1,6 +1,6 @@
 In file $FILE:4:13 ->
 
-  2 | def `=` test3 : Set => test3
+  2 | def `=` test3 : Type => test3
   3 | 
   4 | def fail : 1 + 1 = 2 => fail
                    ^^

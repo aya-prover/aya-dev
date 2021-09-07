@@ -1,6 +1,6 @@
 In file $FILE:6:3 ->
 
-  4 | open data Int : Set
+  4 | open data Int : Type
   5 |  | pos Nat
   6 |  | neg Nat {
   7 |    | suc a => pos (suc a)

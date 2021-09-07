@@ -1,7 +1,7 @@
 -- #4 in public repo
 
-struct TypeStruct : Set
-  | type : Set
+struct TypeStruct : Type
+  | type : Type
 
-def setType (type' : Set) (ts : TypeStruct) : TypeStruct
+def setType (type' : Type) (ts : TypeStruct) : TypeStruct
   => new TypeStruct { | type => type' }

@@ -1,1 +1,1 @@
-def why {A : Set} : A -> A => \ {x} => x
+def why {A : Type} : A -> A => \ {x} => x

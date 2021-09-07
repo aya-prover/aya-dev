@@ -1,79 +1,79 @@
 -- https://github.com/aya-prover/aya-dev/issues/8
 prim I prim left prim right prim arcoe
-struct Path (A : I -> Type) (a : A left) (b : A right) : ooType
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
  | at (i : I) : A i {
    | left => a
    | right => b
  }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `=` Eq {A : Type} (a b : A) : ooType => Path (\ i => A) a b
+def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 def coe {a b : Type} (eq : a = b) (x : a) (i : I) : eq.at i
   => arcoe eq.at x i
 
 bind = looser application
 
-open data Unit : Set 0 | unit
+open data Unit : Type 0 | unit
 
-open data Entity : Set 0
+open data Entity : Type 0
   | john
 
-struct EventT : Set 1
-  | agentT : Set 0
+struct EventT : Type 1
+  | agentT : Type 0
 
-def getAgentT (t : EventT) : Set 0 => t.agentT
-def setAgentT (x : Set 0) (t : EventT) : EventT
+def getAgentT (t : EventT) : Type 0 => t.agentT
+def setAgentT (x : Type 0) (t : EventT) : EventT
   => new EventT { | agentT => x }
-def agentT-inv {t : EventT} {u : Set 0} : (setAgentT u t).agentT = u
+def agentT-inv {t : EventT} {u : Type 0} : (setAgentT u t).agentT = u
   => idp u
 
-struct Event (t : EventT) : Set 2
+struct Event (t : EventT) : Type 2
   | agent : t.agentT
 
 def getAgent (t : EventT) (e : Event t) : t.agentT => e.agent
 
-open data RunImpl (ag : Entity) : Set 0
+open data RunImpl (ag : Entity) : Type 0
   | john => run1
 
-def Run (e : Event (new EventT { | agentT => Entity })) : Set 3
+def Run (e : Event (new EventT { | agentT => Entity })) : Type 3
   => RunImpl e.agent
 
-def mkVerb {t : EventT} (p : Event t -> Set 3) : (Event t -> Set 3) -> Set 3
+def mkVerb {t : EventT} (p : Event t -> Type 3) : (Event t -> Type 3) -> Type 3
   => \f => Sig (e : Event t) ** (Sig (p e) ** (f e))
 
-def run : (Event (new EventT { | agentT => Entity }) -> Set 3) -> Set 3
+def run : (Event (new EventT { | agentT => Entity }) -> Type 3) -> Type 3
   => mkVerb {new EventT { | agentT => Entity }} Run
 
 def mkTheta
-  (getT : EventT -> Set 0)
+  (getT : EventT -> Type 0)
   (get : Pi (t : EventT) -> Event t -> getT t)
-  (setT : Set 0 -> EventT -> EventT)
-  (invariant : Pi {t : EventT} {u : Set 0} -> u = getT (setT u t))
-  : Pi {u : Set 0} {t : EventT}
-  -> ((u -> ooType 3) -> ooType 3)
-  -> ((Event (setT u t) -> ooType 3) -> ooType 3)
-  -> (Event (setT u t) -> ooType 3) -> ooType 3
+  (setT : Type 0 -> EventT -> EventT)
+  (invariant : Pi {t : EventT} {u : Type 0} -> u = getT (setT u t))
+  : Pi {u : Type 0} {t : EventT}
+  -> ((u -> Type 3) -> Type 3)
+  -> ((Event (setT u t) -> Type 3) -> Type 3)
+  -> (Event (setT u t) -> Type 3) -> Type 3
   => \{u} {t} => \q p => \f =>
     q (\x => p (\e => Sig (get (setT u t) e = coe invariant x right) ** (f e)))
 
 def agent' :
-  Pi {u : Set 0} {t : EventT}
-  -> ((u -> ooType 3) -> ooType 3)
-  -> ((Event (setAgentT u t) -> ooType 3) -> ooType 3)
-  -> (Event (setAgentT u t) -> ooType 3) -> ooType 3
+  Pi {u : Type 0} {t : EventT}
+  -> ((u -> Type 3) -> Type 3)
+  -> ((Event (setAgentT u t) -> Type 3) -> Type 3)
+  -> (Event (setAgentT u t) -> Type 3) -> Type 3
   => \{u} {t} => mkTheta getAgentT getAgent setAgentT (\{t'} {u'} => agentT-inv {t'} {u'}) {u} {t}
 
-def mkConst {t : Set} (x : t) : (t -> ooType 3) -> ooType 3
+def mkConst {t : Type} (x : t) : (t -> Type 3) -> Type 3
   => \f => f x
 
-def john' : (Entity -> ooType 3) -> ooType 3
+def john' : (Entity -> Type 3) -> Type 3
   => mkConst john
 
-def mkSentence {t : EventT} (p : (Event t -> ooType 3) -> ooType 3) : ooType 3
+def mkSentence {t : EventT} (p : (Event t -> Type 3) -> Type 3) : Type 3
   => p (\x => Unit)
 
-def john-runs : ooType 3 =>
+def john-runs : Type 3 =>
   mkSentence {new EventT { | agentT => Entity }}
     (agent' {Entity} {new EventT { | agentT => Unit }} john' run)
 

@@ -1,6 +1,6 @@
 In file $FILE:15:4 ->
 
-  11 | open data Int : Set
+  11 | open data Int : Type
   12 |  | pos Nat
   13 |  | neg Nat { | n => pos (addN n n) }
                       ^-----------------^ relevant condition

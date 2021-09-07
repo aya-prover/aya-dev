@@ -1,4 +1,4 @@
-open data Nat : Set | zero | suc Nat
+open data Nat : Type | zero | suc Nat
 def wow {A : Type} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => zero
 example def test1 (A B : Type) (x : A) (y : B) => wow A B x y
 example def test2 (A B : Type) (x : A) (y : B) => wow A B x x

@@ -1,8 +1,8 @@
-open data Nat : Set
+open data Nat : Type
  | zero
  | suc Nat
 
-open data Int : Set
+open data Int : Type
  | pos Nat
  | neg Nat { | zero => pos zero }
 
@@ -12,7 +12,7 @@ def addN (a b : Nat) : Nat
  | suc a, b => suc (addN a b)
  | a, suc b => suc (addN a b)
 
-def randomTest (a b : Nat) : Set
+def randomTest (a b : Nat) : Type
  | zero, a => Nat -> Nat
  | a, zero => Nat -> Nat
  | suc a, suc b => Sig Nat ** Nat

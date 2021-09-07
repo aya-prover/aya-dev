@@ -1,14 +1,14 @@
-data Bool : Set
+data Bool : Type
  | true
  | false
 
-data Maybe (A : Set) : Set
+data Maybe (A : Type) : Type
  | just A
  | nothing
 
-data Either (A B : Set) : Set
+data Either (A B : Type) : Type
  | left A
  | right B
 
-data Both (A B : Set) : Set
+data Both (A B : Type) : Type
  | pair A B

@@ -1,6 +1,6 @@
-open data List (A : Set) : Set
+open data List (A : Type) : Type
  | nil | cons A (List A)
 
-def foo {A : Set} (xs: List A) : List A
+def foo {A : Type} (xs: List A) : List A
  | nil => nil
  | cons x xs => cons x xs

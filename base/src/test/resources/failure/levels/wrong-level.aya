@@ -1,4 +1,0 @@
-def Empty => Pi (A : Type) -> A
-ulevel u
-hlevel h
-def neg (A : Type u u) : Type (lsuc h) (lsuc u) => A -> Empty

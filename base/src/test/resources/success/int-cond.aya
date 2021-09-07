@@ -1,11 +1,11 @@
-open data Nat : Set 0
+open data Nat : Type 0
  | zero
  | suc Nat
 
-open data Int : Set 0
+open data Int : Type 0
  | pos Nat
  | neg Nat { | zero => pos zero }
 
-open data Test : Set
+open data Test : Type
  | abel Int
  | cain Int { | pos zero => abel (neg (suc zero)) }

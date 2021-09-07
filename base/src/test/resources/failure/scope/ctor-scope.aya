@@ -1,4 +1,4 @@
-data Nat : Set
+data Nat : Type
  | zero | suc Nat
 def f (n : Nat) : Nat
  | zero => zero

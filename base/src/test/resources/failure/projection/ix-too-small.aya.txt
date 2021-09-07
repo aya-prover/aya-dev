@@ -1,7 +1,7 @@
-In file $FILE:1:41 ->
+In file $FILE:1:42 ->
 
-  1 | def test (A B : Set) (p : Sig A ** B) => p.0
-                                               ^-^
+  1 | def test (A B : Type) (p : Sig A ** B) => p.0
+                                                ^-^
 
 Error: Wrong projection index. It should be in range [1, 2] while you wanted the
        0th one.

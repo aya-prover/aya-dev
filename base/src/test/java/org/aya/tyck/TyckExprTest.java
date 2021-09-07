@@ -22,11 +22,10 @@ public class TyckExprTest {
 
   @Test public void levelEqns() {
     var decls = TyckDeclTest.successDesugarDecls("""
-      ulevel uu
-      hlevel hh
-      def Empty : Type (lsuc hh) (lsuc uu) => Pi (A : Type hh uu) -> A
-      def neg (A : Type hh uu) : Type (lsuc (lsuc hh)) (lsuc (lsuc uu)) => A -> Empty
-      def P (A : Type hh uu) : Type (lsuc hh) (lsuc uu) => A -> Type hh uu
+      universe uu
+      def Empty : Type (lsuc uu) => Pi (A : Type uu) -> A
+      def neg (A : Type uu) : Type (lsuc (lsuc uu)) => A -> Empty
+      def P (A : Type uu) : Type (lsuc uu) => A -> Type uu
       def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)""");
 
     decls.dropLast(1).forEach(decl -> {

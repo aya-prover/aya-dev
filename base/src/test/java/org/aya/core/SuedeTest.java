@@ -20,7 +20,7 @@ public class SuedeTest {
 
   @Test public void nat() {
     suedeAll("""
-      open data Nat : Set | zero | suc Nat
+      open data Nat : Type | zero | suc Nat
       def add (a b : Nat) : Nat
        | zero, a => a
        | suc a, b => suc (add a b)
@@ -28,16 +28,16 @@ public class SuedeTest {
   }
 
   @Test public void piSig() {
-    suedeAll("def test (y : Set 0) : Set 3 => Pi (x : Set 0 -> Set (lsuc 1)) -> Sig (x y) ** x y");
+    suedeAll("def test (y : Type 0) : Type 3 => Pi (x : Type 0 -> Type (lsuc 1)) -> Sig (x y) ** x y");
   }
 
   @Test public void adjunction() {
     suedeAll("""
-      def curry (A B C : Set)
+      def curry (A B C : Type)
                  (f : (Sig A ** B) -> C)
                  (a : A) (b : B) : C
         => f (a, b)
-      def uncurry (A : Set) (B : Set) (C : Set)
+      def uncurry (A : Type) (B : Type) (C : Type)
                    (f : Pi A B -> C)
                    (p : Sig A ** B) : C
         => f (p.1) (p.2)
@@ -47,12 +47,12 @@ public class SuedeTest {
   @Test public void path() {
     suedeAll("""
       prim I prim left prim right
-      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : ooType
+      struct Path (A : Pi I -> Type) (a : A left) (b : A right) : Type
        | at (i : I) : A i {
          | left => a
          | right => b
        }
-      def `=` Eq {A : Type} (a b : A) : ooType => Path (\\ i => A) a b
+      def `=` Eq {A : Type} (a b : A) : Type => Path (\\ i => A) a b
       bind = looser application
       prim arcoe
       def hfill2d {A : Type} {a b c d : A}
