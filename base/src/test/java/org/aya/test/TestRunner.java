@@ -100,7 +100,7 @@ public class TestRunner {
 
   private void generateWorkflow(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
     hookOut = instantiateHoles(testFile, hookOut);
-    var workflowFile = testFile.resolveSibling(testFile.getFileName() + ".txt");
+    var workflowFile = testFile.resolveSibling(testFile.getFileName() + ".txt.todo");
     try {
       Files.writeString(workflowFile, hookOut, StandardCharsets.UTF_8);
     } catch (IOException e) {
