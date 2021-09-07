@@ -189,7 +189,8 @@ public record UntypedDefEq(
   @Override public @Nullable Term visitUniv(@NotNull FormTerm.Univ lhs, @NotNull Term preRhs) {
     if (!(preRhs instanceof FormTerm.Univ rhs)) return null;
     defeq.levelEqns.add(lhs.sort(), rhs.sort(), cmp, defeq.pos);
-    return new FormTerm.Univ((cmp == Ordering.Lt ? lhs.sort() : rhs.sort()).succ(1));
+    Sort sort = (cmp == Ordering.Lt ? lhs.sort() : rhs.sort());
+    return new FormTerm.Univ(sort.lift(1));
   }
 
   private static Term unreachable() {

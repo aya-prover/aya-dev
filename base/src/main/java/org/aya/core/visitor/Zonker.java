@@ -57,7 +57,7 @@ public final class Zonker implements TermFixpoint<Unit> {
 
   @Override public @Nullable Sort visitSort(@NotNull Sort sort, Unit unit) {
     sort = tycker.levelEqns.applyTo(sort);
-    var sourcePos = Sort.unsolvedPos(sort);
+    var sourcePos = sort.unsolvedPos();
     if (sourcePos != null) {
       reportLevelSolverError(sourcePos);
       return null;
@@ -71,7 +71,7 @@ public final class Zonker implements TermFixpoint<Unit> {
   }
 
   @Override public @NotNull Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    var sort = term.sort().subst(tycker.levelEqns);
+    var sort = tycker.levelEqns.applyTo(term.sort());
     var sourcePos = sort.unsolvedPos();
     if (sourcePos != null) {
       reportLevelSolverError(sourcePos);

@@ -58,7 +58,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    return new FormTerm.Univ(term.sort().succ(1));
+    return new FormTerm.Univ(term.sort().lift(1));
   }
 
   @Override public Term visitApp(ElimTerm.@NotNull App term, Unit unit) {

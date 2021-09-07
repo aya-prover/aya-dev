@@ -10,7 +10,6 @@ import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,16 +32,8 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDo
     return lvl instanceof Level.Reference<LvlVar> ref ? ref.ref().pos : null;
   }
 
-  public static @Nullable SourcePos unsolvedPos(@NotNull Sort lvl) {
-    return lvl.levels().view().mapNotNull(Sort::unsolvedPos).firstOrNull();
-  }
-
   public @Nullable SourcePos unsolvedPos() {
-    return unsolvedPos(this);
-  }
-
-  public @NotNull Sort subst(@NotNull LevelSubst subst) {
-    return subst.applyTo(this);
+    return this.levels().view().mapNotNull(Sort::unsolvedPos).firstOrNull();
   }
 
   public static @NotNull Sort max(@NotNull Sort lhs, @NotNull Sort rhs) {
@@ -63,13 +54,6 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDo
       Doc.styled(CoreDistiller.KEYWORD, "lmax"),
       Doc.sep(levels.map(l -> l.toDoc(options)))
     );
-  }
-
-  /**
-   * Lift the predicative universe level.
-   */
-  @Contract("_-> new") public @NotNull Sort succ(int n) {
-    return lift(n);
   }
 
   /**
