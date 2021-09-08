@@ -34,10 +34,8 @@ public final class PrimDef extends TopLevelDef {
     ref.core = this;
   }
 
-  public PrimDef(
-    @NotNull Term result, @NotNull String name
-  ) {
-    this(ImmutableSeq.empty(), ImmutableSeq.empty(), result, DefVar.empty(name));
+  public PrimDef(@NotNull Term result, @NotNull String name) {
+    this(ImmutableSeq.empty(), ImmutableSeq.empty(), result, name);
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
