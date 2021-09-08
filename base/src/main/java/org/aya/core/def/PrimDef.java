@@ -46,7 +46,7 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public @NotNull Term unfold(@NotNull CallTerm.Prim primCall) {
-    return Factory.INSTANCE.getUnfold(Objects.requireNonNull(ID.find(ref.name()))).apply(primCall);
+    return Factory.INSTANCE.unfold(Objects.requireNonNull(ID.find(ref.name())), primCall);
   }
 
   public @NotNull ImmutableSeq<Term.Param> telescope() {
@@ -203,8 +203,8 @@ public final class PrimDef extends TopLevelDef {
       return SEEDS.getOption(name).map(seed -> seed.dependency().filterNot(this::have));
     }
 
-    public @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> getUnfold(@NotNull ID name) {
-      return SEEDS.get(name).unfold;
+    public @NotNull Term unfold(@NotNull ID name, @NotNull CallTerm.Prim primCall) {
+      return SEEDS.get(name).unfold.apply(primCall);
     }
 
     public static final @NotNull ImmutableSeq<ID> LEFT_RIGHT = ImmutableSeq.of(ID.LEFT, ID.RIGHT);
