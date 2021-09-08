@@ -84,19 +84,13 @@ public final class PrimDef extends TopLevelDef {
     public static final @NotNull PrimSeed INTERVAL = new PrimSeed(
       PrimDef.INTERVAL,
       prim -> prim,
-      () -> new PrimDef(
-        new FormTerm.Univ(new Sort(new Level.Constant<>(0))),
-        PrimDef.INTERVAL
-      ),
+      () -> new PrimDef(FormTerm.Univ.ZERO, PrimDef.INTERVAL),
       ImmutableSeq.empty()
     );
     public static final @NotNull PrimDef.PrimSeed LEFT = new PrimSeed(
       PrimDef.LEFT,
       prim -> prim,
-      () -> new PrimDef(
-        intervalCall(),
-        PrimDef.LEFT
-      ),
+      () -> new PrimDef(intervalCall(), PrimDef.LEFT),
       ImmutableSeq.of(PrimDef.INTERVAL)
     );
 
@@ -104,10 +98,7 @@ public final class PrimDef extends TopLevelDef {
     public static final @NotNull PrimDef.PrimSeed RIGHT = new PrimSeed(
       PrimDef.RIGHT,
       prim -> prim,
-      () -> new PrimDef(
-        intervalCall(),
-        PrimDef.RIGHT
-      ),
+      () -> new PrimDef(intervalCall(), PrimDef.RIGHT),
       ImmutableSeq.of(PrimDef.INTERVAL)
     );
 
@@ -127,32 +118,27 @@ public final class PrimDef extends TopLevelDef {
       return prim;
     }
 
-    public static final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(
-      PrimDef.ARCOE,
-      PrimSeed::arcoe,
-      () -> {
-        var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCall(), true);
-        var paramI = new LocalVar("i");
-        var universe = new Sort.LvlVar("u", null);
-        var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
-        var paramATy = new FormTerm.Pi(paramIToATy, result);
-        var aRef = new RefTerm(paramA, paramATy);
-        var left = Factory.INSTANCE.getOrCreate(PrimDef.LEFT);
-        var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
-        return new PrimDef(
-          ImmutableSeq.of(
-            new Term.Param(paramA, paramATy, true),
-            new Term.Param(new LocalVar("base"), baseAtLeft, true),
-            new Term.Param(paramI, intervalCall(), true)
-          ),
-          ImmutableSeq.of(universe),
-          new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, intervalCall()), true)),
-          PrimDef.ARCOE
-        );
-      },
-      ImmutableSeq.empty()
-    );
+    public static final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(PrimDef.ARCOE, PrimSeed::arcoe, () -> {
+      var paramA = new LocalVar("A");
+      var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCall(), true);
+      var paramI = new LocalVar("i");
+      var universe = new Sort.LvlVar("u", null);
+      var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
+      var paramATy = new FormTerm.Pi(paramIToATy, result);
+      var aRef = new RefTerm(paramA, paramATy);
+      var left = Factory.INSTANCE.getOrCreate(PrimDef.LEFT);
+      var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
+      return new PrimDef(
+        ImmutableSeq.of(
+          new Term.Param(paramA, paramATy, true),
+          new Term.Param(new LocalVar("base"), baseAtLeft, true),
+          new Term.Param(paramI, intervalCall(), true)
+        ),
+        ImmutableSeq.of(universe),
+        new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, intervalCall()), true)),
+        PrimDef.ARCOE
+      );
+    }, ImmutableSeq.empty());
 
     // Invol
     private static @NotNull Term invol(CallTerm.@NotNull Prim prim) {
@@ -169,17 +155,12 @@ public final class PrimDef extends TopLevelDef {
       return prim;
     }
 
-    public static final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(
-      PrimDef.INVOL,
-      PrimSeed::invol,
-      () -> new PrimDef(
-        ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCall(), true)),
-        ImmutableSeq.empty(),
-        intervalCall(),
-        PrimDef.INVOL
-      ),
-      ImmutableSeq.empty()
-    );
+    public static final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(PrimDef.INVOL, PrimSeed::invol, () -> new PrimDef(
+      ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCall(), true)),
+      ImmutableSeq.empty(),
+      intervalCall(),
+      PrimDef.INVOL
+    ), ImmutableSeq.empty());
   }
 
   public static class Factory {

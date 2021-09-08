@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import org.aya.core.sort.Sort;
+import org.aya.generic.Level;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -63,6 +64,7 @@ public sealed interface FormTerm extends Term {
    */
   record Univ(@NotNull Sort sort) implements FormTerm {
     public static final @NotNull FormTerm.Univ OMEGA = new Univ(Sort.OMEGA);
+    public static final @NotNull FormTerm.Univ ZERO = new Univ(new Sort(new Level.Constant<>(0)));
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
