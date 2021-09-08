@@ -76,9 +76,11 @@ public final class PrimDef extends TopLevelDef {
     }
 
     // Interval
-    public static Supplier<CallTerm.Prim> INTERVAL_CALL_TERM_SUPPLIER =
-      () -> new CallTerm.Prim(Factory.INSTANCE.getOrCreate(PrimDef.INTERVAL).ref(),
+    public static CallTerm.Prim intervalCall() {
+      return new CallTerm.Prim(Factory.INSTANCE.getOrCreate(PrimDef.INTERVAL).ref(),
         ImmutableSeq.empty(), ImmutableSeq.empty());
+    }
+
     public static final @NotNull PrimSeed INTERVAL = new PrimSeed(
       PrimDef.INTERVAL,
       prim -> prim,
@@ -92,7 +94,7 @@ public final class PrimDef extends TopLevelDef {
       PrimDef.LEFT,
       prim -> prim,
       () -> new PrimDef(
-        INTERVAL_CALL_TERM_SUPPLIER.get(),
+        intervalCall(),
         PrimDef.LEFT
       ),
       ImmutableSeq.of(PrimDef.INTERVAL)
@@ -103,7 +105,7 @@ public final class PrimDef extends TopLevelDef {
       PrimDef.RIGHT,
       prim -> prim,
       () -> new PrimDef(
-        INTERVAL_CALL_TERM_SUPPLIER.get(),
+        intervalCall(),
         PrimDef.RIGHT
       ),
       ImmutableSeq.of(PrimDef.INTERVAL)
@@ -130,7 +132,7 @@ public final class PrimDef extends TopLevelDef {
       PrimSeed::arcoe,
       () -> {
         var paramA = new LocalVar("A");
-        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), INTERVAL_CALL_TERM_SUPPLIER.get(), true);
+        var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCall(), true);
         var paramI = new LocalVar("i");
         var universe = new Sort.LvlVar("u", null);
         var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
@@ -142,10 +144,10 @@ public final class PrimDef extends TopLevelDef {
           ImmutableSeq.of(
             new Term.Param(paramA, paramATy, true),
             new Term.Param(new LocalVar("base"), baseAtLeft, true),
-            new Term.Param(paramI, INTERVAL_CALL_TERM_SUPPLIER.get(), true)
+            new Term.Param(paramI, intervalCall(), true)
           ),
           ImmutableSeq.of(universe),
-          new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, INTERVAL_CALL_TERM_SUPPLIER.get()), true)),
+          new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, intervalCall()), true)),
           PrimDef.ARCOE
         );
       },
@@ -171,9 +173,9 @@ public final class PrimDef extends TopLevelDef {
       PrimDef.INVOL,
       PrimSeed::invol,
       () -> new PrimDef(
-        ImmutableSeq.of(new Term.Param(new LocalVar("i"), INTERVAL_CALL_TERM_SUPPLIER.get(), true)),
+        ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCall(), true)),
         ImmutableSeq.empty(),
-        INTERVAL_CALL_TERM_SUPPLIER.get(),
+        intervalCall(),
         PrimDef.INVOL
       ),
       ImmutableSeq.empty()
