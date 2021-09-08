@@ -28,12 +28,16 @@ public final class PrimDef extends TopLevelDef {
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Term result,
-    @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
-    @NotNull String name
+    @NotNull Term result, @NotNull String name
   ) {
-    this(telescope, levels, result, unfold, DefVar.empty(name));
+    this(telescope, levels, result, DefVar.empty(name));
     ref.core = this;
+  }
+
+  public PrimDef(
+    @NotNull Term result, @NotNull String name
+  ) {
+    this(ImmutableSeq.empty(), ImmutableSeq.empty(), result, DefVar.empty(name));
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -41,7 +45,7 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public @NotNull Term unfold(@NotNull CallTerm.Prim primCall) {
-    return unfold.apply(primCall);
+    return Factory.INSTANCE.getUnfold(ref.name()).get().apply(primCall);
   }
 
   public @NotNull ImmutableSeq<Term.Param> telescope() {
@@ -67,6 +71,10 @@ public final class PrimDef extends TopLevelDef {
     @NotNull Supplier<@NotNull PrimDef> supplier,
     @NotNull ImmutableSeq<@NotNull String> dependency
   ) {
+    public @NotNull PrimDef supply() {
+      return supplier.get();
+    }
+
     // Interval
     public static Supplier<CallTerm.Prim> INTERVAL_CALL_TERM_SUPPLIER =
       () -> new CallTerm.Prim(Factory.INSTANCE.getOrCreate(PrimDef.INTERVAL).ref(),
@@ -75,38 +83,27 @@ public final class PrimDef extends TopLevelDef {
       PrimDef.INTERVAL,
       prim -> prim,
       () -> new PrimDef(
-        ImmutableSeq.empty(),
-        ImmutableSeq.empty(),
         new FormTerm.Univ(new Sort(new Level.Constant<>(0))),
-        prim -> prim,
         PrimDef.INTERVAL
       ),
       ImmutableSeq.empty()
     );
-    // Left
-    static final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> LEFT_UNFOLD = prim -> prim;
     public static final @NotNull PrimDef.PrimSeed LEFT = new PrimSeed(
       PrimDef.LEFT,
-      LEFT_UNFOLD,
+      prim -> prim,
       () -> new PrimDef(
-        ImmutableSeq.empty(),
-        ImmutableSeq.empty(),
         INTERVAL_CALL_TERM_SUPPLIER.get(),
-        LEFT_UNFOLD,
         PrimDef.LEFT
       ),
       ImmutableSeq.of(PrimDef.INTERVAL)
     );
+
     // Right
-    static final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> RIGHT_UNFOLD = prim -> prim;
     public static final @NotNull PrimDef.PrimSeed RIGHT = new PrimSeed(
       PrimDef.RIGHT,
-      LEFT_UNFOLD,
+      prim -> prim,
       () -> new PrimDef(
-        ImmutableSeq.empty(),
-        ImmutableSeq.empty(),
         INTERVAL_CALL_TERM_SUPPLIER.get(),
-        RIGHT_UNFOLD,
         PrimDef.RIGHT
       ),
       ImmutableSeq.of(PrimDef.INTERVAL)
@@ -149,7 +146,6 @@ public final class PrimDef extends TopLevelDef {
           ),
           ImmutableSeq.of(universe),
           new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, INTERVAL_CALL_TERM_SUPPLIER.get()), true)),
-          PrimSeed::arcoe,
           PrimDef.ARCOE
         );
       },
@@ -178,7 +174,6 @@ public final class PrimDef extends TopLevelDef {
         ImmutableSeq.of(new Term.Param(new LocalVar("i"), INTERVAL_CALL_TERM_SUPPLIER.get(), true)),
         ImmutableSeq.empty(),
         INTERVAL_CALL_TERM_SUPPLIER.get(),
-        PrimSeed::invol,
         PrimDef.INVOL
       ),
       ImmutableSeq.empty()
@@ -203,7 +198,7 @@ public final class PrimDef extends TopLevelDef {
 
     public @NotNull Option<PrimDef> factory(@NotNull String name) {
       assert !have(name);
-      var rst = SEEDS.getOption(name).map(PrimSeed::supplier).map(Supplier::get);
+      var rst = SEEDS.getOption(name).map(PrimSeed::supply);
       if (rst.isNotEmpty()) defs.set(name, rst.get());
       return rst;
     }
@@ -251,19 +246,13 @@ public final class PrimDef extends TopLevelDef {
   public static final @NotNull String ARCOE = "arcoe";
   public static final @NotNull String INVOL = "invol";
 
-  public final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold;
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
 
-  /**
-   *
-   */
-  public PrimDef(
+  private PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Term result, @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
-    @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
+    @NotNull Term result, @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
   ) {
     super(telescope, result, levels);
-    this.unfold = unfold;
     this.ref = ref;
   }
 
