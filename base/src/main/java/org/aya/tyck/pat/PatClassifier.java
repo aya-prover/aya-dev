@@ -110,7 +110,7 @@ public record PatClassifier(
           return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
             || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
         });
-        builder.append(new PatTree(primName, explicit));
+        builder.append(new PatTree(primName.id, explicit));
         var classes = new PatClass(matchy.view().map(SubPats::ix))
           .extract(subPatsSeq)
           .map(SubPats::drop)

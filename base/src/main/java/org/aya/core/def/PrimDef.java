@@ -16,8 +16,11 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.generic.Level;
 import org.aya.util.Constants;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -28,13 +31,13 @@ public final class PrimDef extends TopLevelDef {
   public PrimDef(
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Term result, @NotNull String name
+    @NotNull Term result, @NotNull ID name
   ) {
-    this(telescope, levels, result, DefVar.empty(name));
+    this(telescope, levels, result, DefVar.empty(name.id));
     ref.core = this;
   }
 
-  public PrimDef(@NotNull Term result, @NotNull String name) {
+  public PrimDef(@NotNull Term result, @NotNull ID name) {
     this(ImmutableSeq.empty(), ImmutableSeq.empty(), result, name);
   }
 
@@ -43,7 +46,7 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public @NotNull Term unfold(@NotNull CallTerm.Prim primCall) {
-    return Factory.INSTANCE.getUnfold(ref.name()).get().apply(primCall);
+    return Factory.INSTANCE.getUnfold(Objects.requireNonNull(ID.find(ref.name()))).apply(primCall);
   }
 
   public @NotNull ImmutableSeq<Term.Param> telescope() {
@@ -64,10 +67,10 @@ public final class PrimDef extends TopLevelDef {
   }
 
   record PrimSeed(
-    @NotNull String name,
+    @NotNull ID name,
     @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> unfold,
     @NotNull Supplier<@NotNull PrimDef> supplier,
-    @NotNull ImmutableSeq<@NotNull String> dependency
+    @NotNull ImmutableSeq<@NotNull ID> dependency
   ) {
     public @NotNull PrimDef supply() {
       return supplier.get();
@@ -75,29 +78,29 @@ public final class PrimDef extends TopLevelDef {
 
     // Interval
     public static CallTerm.Prim intervalCall() {
-      return new CallTerm.Prim(Factory.INSTANCE.getOrCreate(PrimDef.INTERVAL).ref(),
+      return new CallTerm.Prim(Factory.INSTANCE.getOrCreate(ID.INTERVAL).ref(),
         ImmutableSeq.empty(), ImmutableSeq.empty());
     }
 
     public static final @NotNull PrimSeed INTERVAL = new PrimSeed(
-      PrimDef.INTERVAL,
+      ID.INTERVAL,
       prim -> prim,
-      () -> new PrimDef(FormTerm.Univ.ZERO, PrimDef.INTERVAL),
+      () -> new PrimDef(FormTerm.Univ.ZERO, ID.INTERVAL),
       ImmutableSeq.empty()
     );
     public static final @NotNull PrimDef.PrimSeed LEFT = new PrimSeed(
-      PrimDef.LEFT,
+      ID.LEFT,
       prim -> prim,
-      () -> new PrimDef(intervalCall(), PrimDef.LEFT),
-      ImmutableSeq.of(PrimDef.INTERVAL)
+      () -> new PrimDef(intervalCall(), ID.LEFT),
+      ImmutableSeq.of(ID.INTERVAL)
     );
 
     // Right
     public static final @NotNull PrimDef.PrimSeed RIGHT = new PrimSeed(
-      PrimDef.RIGHT,
+      ID.RIGHT,
       prim -> prim,
-      () -> new PrimDef(intervalCall(), PrimDef.RIGHT),
-      ImmutableSeq.of(PrimDef.INTERVAL)
+      () -> new PrimDef(intervalCall(), ID.RIGHT),
+      ImmutableSeq.of(ID.INTERVAL)
     );
 
     // Arcoe
@@ -105,7 +108,7 @@ public final class PrimDef extends TopLevelDef {
       var args = prim.args();
       var argBase = args.get(1).term();
       var argI = args.get(2).term();
-      var left = Factory.INSTANCE.getOption(PrimDef.LEFT);
+      var left = Factory.INSTANCE.getOption(ID.LEFT);
       if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
         return argBase;
       var argA = args.get(0).term();
@@ -116,7 +119,7 @@ public final class PrimDef extends TopLevelDef {
       return prim;
     }
 
-    public static final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(PrimDef.ARCOE, PrimSeed::arcoe, () -> {
+    public static final @NotNull PrimDef.PrimSeed ARCOE = new PrimSeed(ID.ARCOE, PrimSeed::arcoe, () -> {
       var paramA = new LocalVar("A");
       var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), intervalCall(), true);
       var paramI = new LocalVar("i");
@@ -124,7 +127,7 @@ public final class PrimDef extends TopLevelDef {
       var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
       var paramATy = new FormTerm.Pi(paramIToATy, result);
       var aRef = new RefTerm(paramA, paramATy);
-      var left = Factory.INSTANCE.getOrCreate(PrimDef.LEFT);
+      var left = Factory.INSTANCE.getOrCreate(ID.LEFT);
       var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
       return new PrimDef(
         ImmutableSeq.of(
@@ -134,7 +137,7 @@ public final class PrimDef extends TopLevelDef {
         ),
         ImmutableSeq.of(universe),
         new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, intervalCall()), true)),
-        PrimDef.ARCOE
+        ID.ARCOE
       );
     }, ImmutableSeq.empty());
 
@@ -142,8 +145,8 @@ public final class PrimDef extends TopLevelDef {
     private static @NotNull Term invol(CallTerm.@NotNull Prim prim) {
       var arg = prim.args().get(0).term();
       if (arg instanceof CallTerm.Prim primCall) {
-        var left = Factory.INSTANCE.getOption(PrimDef.LEFT);
-        var right = Factory.INSTANCE.getOption(PrimDef.RIGHT);
+        var left = Factory.INSTANCE.getOption(ID.LEFT);
+        var right = Factory.INSTANCE.getOption(ID.RIGHT);
         assert left.isNotEmpty() && right.isNotEmpty();
         if (primCall.ref() == left.get().ref)
           return new CallTerm.Prim(right.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
@@ -153,58 +156,58 @@ public final class PrimDef extends TopLevelDef {
       return prim;
     }
 
-    public static final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(PrimDef.INVOL, PrimSeed::invol, () -> new PrimDef(
+    public static final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(ID.INVOL, PrimSeed::invol, () -> new PrimDef(
       ImmutableSeq.of(new Term.Param(new LocalVar("i"), intervalCall(), true)),
       ImmutableSeq.empty(),
       intervalCall(),
-      PrimDef.INVOL
+      ID.INVOL
     ), ImmutableSeq.empty());
   }
 
   public static class Factory {
-    private final @NotNull MutableMap<@NotNull String, @NotNull PrimDef> defs = MutableMap.create();
+    private final @NotNull MutableMap<@NotNull ID, @NotNull PrimDef> defs = MutableMap.create();
     public static final @NotNull PrimDef.Factory INSTANCE = new Factory();
 
     private Factory() {
     }
 
-    private static final @NotNull Map<@NotNull String, @NotNull PrimSeed> SEEDS = ImmutableSeq.of(
+    private static final @NotNull Map<@NotNull ID, @NotNull PrimSeed> SEEDS = ImmutableSeq.of(
         PrimSeed.INTERVAL,
         PrimSeed.LEFT,
         PrimSeed.RIGHT,
         PrimSeed.ARCOE,
         PrimSeed.INVOL
-      ).map(seed -> Tuple.of(seed.name(), seed))
+      ).map(seed -> Tuple.of(seed.name, seed))
       .toImmutableMap();
 
-    public @NotNull Option<PrimDef> factory(@NotNull String name) {
+    public @NotNull PrimDef factory(@NotNull ID name) {
       assert !have(name);
-      var rst = SEEDS.getOption(name).map(PrimSeed::supply);
-      if (rst.isNotEmpty()) defs.set(name, rst.get());
+      var rst = SEEDS.get(name).supply();
+      defs.set(name, rst);
       return rst;
     }
 
-    public @NotNull Option<PrimDef> getOption(@NotNull String name) {
+    public @NotNull Option<PrimDef> getOption(@NotNull ID name) {
       return defs.getOption(name);
     }
 
-    public boolean have(@NotNull String name) {
+    public boolean have(@NotNull ID name) {
       return defs.containsKey(name);
     }
 
-    public @NotNull PrimDef getOrCreate(@NotNull String name) {
-      return getOption(name).getOrElse(() -> factory(name).get());
+    public @NotNull PrimDef getOrCreate(@NotNull ID name) {
+      return getOption(name).getOrElse(() -> factory(name));
     }
 
-    public @NotNull Option<ImmutableSeq<@NotNull String>> checkDependency(@NotNull String name) {
+    public @NotNull Option<ImmutableSeq<@NotNull ID>> checkDependency(@NotNull ID name) {
       return SEEDS.getOption(name).map(seed -> seed.dependency().filterNot(this::have));
     }
 
-    public @NotNull Option<Function<CallTerm.@NotNull Prim, @NotNull Term>> getUnfold(@NotNull String name) {
-      return SEEDS.getOption(name).map(PrimSeed::unfold);
+    public @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> getUnfold(@NotNull ID name) {
+      return SEEDS.get(name).unfold;
     }
 
-    public static final @NotNull ImmutableSeq<String> LEFT_RIGHT = ImmutableSeq.of(LEFT, RIGHT);
+    public static final @NotNull ImmutableSeq<ID> LEFT_RIGHT = ImmutableSeq.of(ID.LEFT, ID.RIGHT);
 
     public boolean leftOrRight(PrimDef core) {
       for (var primName : LEFT_RIGHT) {
@@ -220,12 +223,23 @@ public final class PrimDef extends TopLevelDef {
     }
   }
 
-  public static final @NotNull String INTERVAL = "I";
-  public static final @NotNull String LEFT = "left";
-  public static final @NotNull String RIGHT = "right";
-  /** Short for <em>Arend coe</em>. */
-  public static final @NotNull String ARCOE = "arcoe";
-  public static final @NotNull String INVOL = "invol";
+  public enum ID {
+    INTERVAL("I"), LEFT("left"), RIGHT("right"),
+    /** Short for <em>Arend coe</em>. */
+    ARCOE("arcoe"),
+    INVOL("invol");
+    public final @NotNull @NonNls String id;
+
+    public static @Nullable ID find(@NotNull String id) {
+      for (var value : PrimDef.ID.values())
+        if (Objects.equals(value.id, id)) return value;
+      return null;
+    }
+
+    ID(@NotNull String id) {
+      this.id = id;
+    }
+  }
 
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
 

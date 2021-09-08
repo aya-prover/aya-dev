@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
+import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record PrimDependencyError(
   @NotNull String name,
-  @NotNull ImmutableSeq<String> lack,
+  @NotNull ImmutableSeq<PrimDef.ID> lack,
   @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
@@ -22,7 +23,7 @@ public record PrimDependencyError(
     return Doc.sep(
       Doc.plain("Prim"), Doc.styled(Style.code(), Doc.plain(name)),
       Doc.english("depends on undeclared prims:"),
-      Doc.commaList(lack.map(name -> Doc.styled(Style.code(), Doc.plain(name)))));
+      Doc.commaList(lack.map(name -> Doc.styled(Style.code(), Doc.plain(name.id)))));
   }
 
   @Override public @NotNull Severity level() {

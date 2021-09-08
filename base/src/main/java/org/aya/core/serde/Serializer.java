@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author ice1000
  */
@@ -264,7 +266,7 @@ public record Serializer(@NotNull Serializer.State state) implements
       serializeParams(def.telescope),
       def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
       serialize(def.result),
-      def.ref.name()
+      Objects.requireNonNull(PrimDef.ID.find(def.ref.name()))
     );
   }
 }

@@ -66,26 +66,26 @@ public final class AyaProducer {
     var id = ctx.ID();
     var name = id.getText();
     var sourcePos = sourcePosOf(id);
-    var lack = PrimDef.Factory.INSTANCE.checkDependency(name);
-    if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
-      reporter.report(new PrimDependencyError(name, lack.get(), sourcePos));
-      throw new ParsingInterruptedException();
-    } else if (PrimDef.Factory.INSTANCE.have(name)) {
-      reporter.report(new RedefinitionError(RedefinitionError.Kind.Prim, name, sourcePos));
-      throw new ParsingInterruptedException();
-    }
-    var core = PrimDef.Factory.INSTANCE.factory(name);
-    if (core.isEmpty()) {
+    var primID = PrimDef.ID.find(name);
+    if (primID == null) {
       reporter.report(new UnknownPrimError(sourcePos, name));
       throw new ParsingInterruptedException();
     }
+    var lack = PrimDef.Factory.INSTANCE.checkDependency(primID);
+    if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
+      reporter.report(new PrimDependencyError(name, lack.get(), sourcePos));
+      throw new ParsingInterruptedException();
+    } else if (PrimDef.Factory.INSTANCE.have(primID)) {
+      reporter.report(new RedefinitionError(RedefinitionError.Kind.Prim, name, sourcePos));
+      throw new ParsingInterruptedException();
+    }
+    var core = PrimDef.Factory.INSTANCE.factory(primID);
     var type = ctx.type();
-    var ref = core.get().ref();
     return new Decl.PrimDecl(
       sourcePos,
       sourcePosOf(ctx),
       visitAssoc(ctx.assoc()),
-      ref,
+      core.ref(),
       visitTelescope(ctx.tele()),
       type == null ? null : visitType(type)
     );
