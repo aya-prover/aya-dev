@@ -136,7 +136,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   record Tracked(
     @NotNull Set<@NotNull Var> unfolding,
     @NotNull MutableSet<@NotNull Var> unfolded,
-    @NotNull PrimDef.PrimFactory primFactory
+    @NotNull PrimDef.Factory factory
   ) implements Unfolder<Unit> {
     @Override public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit unit) {
       if (!unfolding.contains(fnCall.ref())) return fnCall;

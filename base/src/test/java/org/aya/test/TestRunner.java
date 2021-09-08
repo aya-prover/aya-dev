@@ -32,7 +32,7 @@ public class TestRunner {
   };
 
   @BeforeAll public static void startDash() {
-    PrimDef.PrimFactory.INSTANCE.clear();
+    PrimDef.Factory.INSTANCE.clear();
     Global.NO_RANDOM_NAME = true;
   }
 

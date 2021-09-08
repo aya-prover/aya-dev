@@ -68,18 +68,17 @@ public final class PrimDef extends TopLevelDef {
     @NotNull ImmutableSeq<@NotNull String> dependency
   ) {
     // Interval
-    static final @NotNull Function<CallTerm.@NotNull Prim, @NotNull Term> INTERVAL_UNFOLD = prim -> prim;
     public static Supplier<CallTerm.Prim> INTERVAL_CALL_TERM_SUPPLIER =
-      () -> new CallTerm.Prim(PrimFactory.INSTANCE.getOrCreate(PrimDef.INTERVAL).ref(),
+      () -> new CallTerm.Prim(Factory.INSTANCE.getOrCreate(PrimDef.INTERVAL).ref(),
         ImmutableSeq.empty(), ImmutableSeq.empty());
     public static final @NotNull PrimSeed INTERVAL = new PrimSeed(
       PrimDef.INTERVAL,
-      INTERVAL_UNFOLD,
+      prim -> prim,
       () -> new PrimDef(
         ImmutableSeq.empty(),
         ImmutableSeq.empty(),
         new FormTerm.Univ(new Sort(new Level.Constant<>(0))),
-        INTERVAL_UNFOLD,
+        prim -> prim,
         PrimDef.INTERVAL
       ),
       ImmutableSeq.empty()
@@ -118,7 +117,7 @@ public final class PrimDef extends TopLevelDef {
       var args = prim.args();
       var argBase = args.get(1).term();
       var argI = args.get(2).term();
-      var left = PrimFactory.INSTANCE.getOption(PrimDef.LEFT);
+      var left = Factory.INSTANCE.getOption(PrimDef.LEFT);
       if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
         return argBase;
       var argA = args.get(0).term();
@@ -140,7 +139,7 @@ public final class PrimDef extends TopLevelDef {
         var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA, paramATy);
-        var left = PrimFactory.INSTANCE.getOrCreate(PrimDef.LEFT);
+        var left = Factory.INSTANCE.getOrCreate(PrimDef.LEFT);
         var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
         return new PrimDef(
           ImmutableSeq.of(
@@ -161,8 +160,8 @@ public final class PrimDef extends TopLevelDef {
     private static @NotNull Term invol(CallTerm.@NotNull Prim prim) {
       var arg = prim.args().get(0).term();
       if (arg instanceof CallTerm.Prim primCall) {
-        var left = PrimFactory.INSTANCE.getOption(PrimDef.LEFT);
-        var right = PrimFactory.INSTANCE.getOption(PrimDef.RIGHT);
+        var left = Factory.INSTANCE.getOption(PrimDef.LEFT);
+        var right = Factory.INSTANCE.getOption(PrimDef.RIGHT);
         assert left.isNotEmpty() && right.isNotEmpty();
         if (primCall.ref() == left.get().ref)
           return new CallTerm.Prim(right.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
@@ -186,11 +185,11 @@ public final class PrimDef extends TopLevelDef {
     );
   }
 
-  public static class PrimFactory {
+  public static class Factory {
     private final @NotNull MutableMap<@NotNull String, @NotNull PrimDef> defs = MutableMap.create();
-    public static final @NotNull PrimFactory INSTANCE = new PrimFactory();
+    public static final @NotNull PrimDef.Factory INSTANCE = new Factory();
 
-    private PrimFactory() {
+    private Factory() {
     }
 
     private static final @NotNull Map<@NotNull String, @NotNull PrimSeed> SEEDS = ImmutableSeq.of(
@@ -202,16 +201,10 @@ public final class PrimDef extends TopLevelDef {
       ).map(seed -> Tuple.of(seed.name(), seed))
       .toImmutableMap();
 
-    public @NotNull Option<PrimDef> factory(
-      @NotNull String name
-    ) {
+    public @NotNull Option<PrimDef> factory(@NotNull String name) {
       assert !have(name);
-      var rst = SEEDS.getOption(name).map(seed -> seed.supplier().get());
-
-      if (rst.isNotEmpty()) {
-        defs.set(name, rst.get());
-      }
-
+      var rst = SEEDS.getOption(name).map(PrimSeed::supplier).map(Supplier::get);
+      if (rst.isNotEmpty()) defs.set(name, rst.get());
       return rst;
     }
 
@@ -232,7 +225,7 @@ public final class PrimDef extends TopLevelDef {
     }
 
     public @NotNull Option<Function<CallTerm.@NotNull Prim, @NotNull Term>> getUnfold(@NotNull String name) {
-      return SEEDS.getOption(name).map(seed -> seed.unfold);
+      return SEEDS.getOption(name).map(PrimSeed::unfold);
     }
 
     public static final @NotNull ImmutableSeq<String> LEFT_RIGHT = ImmutableSeq.of(LEFT, RIGHT);

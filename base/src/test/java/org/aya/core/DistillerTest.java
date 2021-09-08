@@ -74,7 +74,7 @@ public class DistillerTest {
   }
 
   @AfterEach public void tearDown() {
-    PrimDef.PrimFactory.INSTANCE.clear();
+    PrimDef.Factory.INSTANCE.clear();
   }
 
   private @NotNull Doc declDoc(@Language("TEXT") String text) {

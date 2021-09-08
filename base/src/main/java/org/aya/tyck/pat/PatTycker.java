@@ -165,13 +165,13 @@ public record PatTycker(
 
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
     var v = bind.bind();
-    var interval = PrimDef.PrimFactory.INSTANCE.getOption(PrimDef.INTERVAL);
+    var interval = PrimDef.Factory.INSTANCE.getOption(PrimDef.INTERVAL);
     if (t instanceof CallTerm.Prim prim && interval.isNotEmpty() &&
       prim.ref() == interval.get().ref())
-      for (var primName : PrimDef.PrimFactory.LEFT_RIGHT)
+      for (var primName : PrimDef.Factory.LEFT_RIGHT)
         if (Objects.equals(bind.bind().name(), primName)) {
           subst.bad().add(bind.bind());
-          return new Pat.Prim(bind.explicit(), PrimDef.PrimFactory.INSTANCE.getOption(primName).get().ref(), t);
+          return new Pat.Prim(bind.explicit(), PrimDef.Factory.INSTANCE.getOption(primName).get().ref(), t);
         }
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
     if (selected == null) {

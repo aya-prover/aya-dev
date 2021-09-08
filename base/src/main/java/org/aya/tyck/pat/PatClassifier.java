@@ -103,10 +103,10 @@ public record PatClassifier(
       .firstOption();
     if (lrSplit.isDefined()) {
       if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
-      for (var primName : PrimDef.PrimFactory.LEFT_RIGHT) {
+      for (var primName : PrimDef.Factory.LEFT_RIGHT) {
         var matchy = subPatsSeq.mapIndexedNotNull((ix, subPats) -> {
           var head = subPats.head();
-          var existedPrim = PrimDef.PrimFactory.INSTANCE.getOption(primName);
+          var existedPrim = PrimDef.Factory.INSTANCE.getOption(primName);
           return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
             || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
         });

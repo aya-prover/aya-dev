@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NormalizeTest {
   @BeforeAll public static void enter() {
-    PrimDef.PrimFactory.INSTANCE.clear();
+    PrimDef.Factory.INSTANCE.clear();
   }
 
   @Test public void unfoldPatterns() {

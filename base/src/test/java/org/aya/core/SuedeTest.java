@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 public class SuedeTest {
   @BeforeEach public void cleanup() {
-    PrimDef.PrimFactory.INSTANCE.clear();
+    PrimDef.Factory.INSTANCE.clear();
   }
 
   @Test public void nat() {

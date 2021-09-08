@@ -65,7 +65,7 @@ public record SingleFileCompiler(
       reporter.reportString(e.stage().name() + " interrupted due to error(s).");
       if (flags.interruptedTrace()) e.printStackTrace();
     } finally {
-      PrimDef.PrimFactory.INSTANCE.clear();
+      PrimDef.Factory.INSTANCE.clear();
     }
     if (reporter.isEmpty()) {
       reporter.reportString(flags.message().successNotion());
