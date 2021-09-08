@@ -23,7 +23,7 @@ public record BadTypeError(
 
   @Override public @NotNull Doc describe() {
     return Doc.vcat(
-      Doc.sep(Doc.plain("Expected type:"), actualType.accept(Zonker.NO_REPORT, Unit.unit()).toDoc(DistillerOptions.DEFAULT)),
+      Doc.sep(Doc.plain("Expected type:"), actualType.toDoc(DistillerOptions.DEFAULT)),
       Doc.sep(Doc.plain("Normalized:"), actualType.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)),
       Doc.sep(Doc.plain("Want:"), expectedType),
       Doc.sep(Doc.english("Because we want to type a term such as:"), expr.toDoc(DistillerOptions.DEFAULT))

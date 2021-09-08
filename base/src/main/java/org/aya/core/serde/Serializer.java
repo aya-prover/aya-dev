@@ -97,18 +97,18 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    return new SerTerm.Univ(serialize(term.sort().uLevel()), serialize(term.sort().hLevel()));
+    return new SerTerm.Univ(serialize(term.sort()));
   }
 
   private @NotNull ImmutableSeq<SerTerm.SerArg> serializeArgs(@NotNull ImmutableSeq<Arg<Term>> args) {
     return args.map(this::serialize);
   }
 
-  private SerLevel.@NotNull Max serialize(@NotNull Sort.CoreLevel level) {
+  private SerLevel.@NotNull Max serialize(@NotNull Sort level) {
     return SerLevel.ser(level, state.levelCache());
   }
 
-  private @NotNull ImmutableSeq<SerLevel.Max> serializeLevels(@NotNull ImmutableSeq<Sort.CoreLevel> sortArgs) {
+  private @NotNull ImmutableSeq<SerLevel.Max> serializeLevels(@NotNull ImmutableSeq<Sort> sortArgs) {
     return sortArgs.map(this::serialize);
   }
 
@@ -121,7 +121,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   private @NotNull SerTerm.CallData serializeCall(
-    @NotNull ImmutableSeq<Sort.@NotNull CoreLevel> sortArgs,
+    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
     return new SerTerm.CallData(serializeLevels(sortArgs), serializeArgs(args));
   }

@@ -1,7 +1,7 @@
-In file $FILE:1:30 ->
+In file $FILE:1:31 ->
 
-  1 | def why {A : Set} : A -> A => \ {x} => x
-                                    ^--------^
+  1 | def why {A : Type} : A -> A => \ {x} => x
+                                     ^--------^
 
 Error: Cannot check `λ {x} ⇒ x`
        against Pi type `Π (_ : A) → A`

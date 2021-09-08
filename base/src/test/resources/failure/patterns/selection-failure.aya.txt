@@ -1,7 +1,7 @@
 In file $FILE:8:6 ->
 
   6 |  | A, suc m => vcons A (Vect A m)
-  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
   8 |  | f, vnil => vnil
             ^--^
 
@@ -10,7 +10,7 @@ Warning: Cannot match with `vnil` due to a failed index unification, treating as
 In file $FILE:8:14 ->
 
   6 |  | A, suc m => vcons A (Vect A m)
-  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
   8 |  | f, vnil => vnil
                     ^--^
 
@@ -21,7 +21,7 @@ Error: Expected type: Vect B n
        They don't match, sorry
 In file $FILE:9:6 ->
 
-  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
   8 |  | f, vnil => vnil
   9 |  | f, vcons x xs => _
             ^--------^
@@ -29,7 +29,7 @@ In file $FILE:9:6 ->
 Error: Cannot match with `vcons x xs` due to a failed index unification
 In file $FILE:9:6 ->
 
-  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
   8 |  | f, vnil => vnil
   9 |  | f, vcons x xs => _
             ^--------^
@@ -37,7 +37,7 @@ In file $FILE:9:6 ->
 Error: Unknown constructor `vcons x xs`
 In file $FILE:9:20 ->
 
-  7 | def mapImpl {A B : Set} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
   8 |  | f, vnil => vnil
   9 |  | f, vcons x xs => _
                           ^^

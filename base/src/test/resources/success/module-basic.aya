@@ -1,5 +1,5 @@
 module Nat {
-  data N : Set | zero | suc N
+  data N : Type | zero | suc N
 }
 module Int {
   def bN => Nat::N

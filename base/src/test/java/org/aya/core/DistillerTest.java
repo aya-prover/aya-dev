@@ -15,14 +15,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class DistillerTest {
   @Test public void fn() {
-    var doc1 = declDoc("def id {A : Set} (a : A) : A => a");
-    var doc2 = declDoc("def id {A : Set} (a : A) => a");
+    var doc1 = declDoc("def id {A : Type} (a : A) : A => a");
+    var doc2 = declDoc("def id {A : Type} (a : A) => a");
     var doc3 = declDoc("""
-      def curry3 (A  B  C  D : Set)
+      def curry3 (A  B  C  D : Type)
                   (f : Pi (x : Sig A B ** C) -> D)
                   (a : A) (b : B) (c : C) : D
         => f (a, b, c)
-      def uncurry3 (A : Set) (B : Set) (C : Set) (D : Set)
+      def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
                     (f : Pi A B C -> D)
                     (p : Sig A B ** C) : D
         => f (p.1) (p.2) (p.3)""");
@@ -31,9 +31,9 @@ public class DistillerTest {
 
   @Test public void data() {
     @Language("TEXT") var code = """
-      open data Nat : Set | zero | suc Nat
-      open data Int : Set | pos Nat | neg Nat { | zero => pos zero }
-      open data Fin (n : Nat) : Set | suc m => fzero | suc m => fsuc (Fin m)
+      open data Nat : Type | zero | suc Nat
+      open data Int : Type | pos Nat | neg Nat { | zero => pos zero }
+      open data Fin (n : Nat) : Type | suc m => fzero | suc m => fsuc (Fin m)
       """;
     assertFalse(declDoc(code).renderToHtml().isEmpty());
     assertFalse(declCDoc(code).renderToHtml().isEmpty());
@@ -52,7 +52,7 @@ public class DistillerTest {
       def test-nat-pair : Pair I I =>
         new Pair I I { | fst => left | snd => left }
 
-      def make-pair (A B : Set) (a : A) (b : B) : Pair A B =>
+      def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
         new Pair A B { | fst => a | snd => b }
       """).renderToHtml().isEmpty());
   }

@@ -52,7 +52,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped);
   }
 
-  static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<Sort.@NotNull CoreLevel> levelArgs) {
+  static @NotNull LevelSubst buildSubst(ImmutableSeq<LvlVar> levelParams, ImmutableSeq<@NotNull Sort> levelArgs) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     assert levelParams.sizeEquals(levelArgs);
     for (var app : levelArgs.zip(levelParams)) levelSubst.solution().put(app._2, app._1);
@@ -69,7 +69,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var body = def.body;
     if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
     var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
-    return volynskaya != null ? volynskaya.data() : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
+    return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
   checkAndBuildSubst(SeqLike<Term.Param> telescope, SeqLike<Arg<Term>> args) {

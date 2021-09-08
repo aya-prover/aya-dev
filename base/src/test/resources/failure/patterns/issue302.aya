@@ -1,4 +1,4 @@
-open data Nat : Set
+open data Nat : Type
  | zero
  | suc Nat
 def addN (a b : Nat) : Nat

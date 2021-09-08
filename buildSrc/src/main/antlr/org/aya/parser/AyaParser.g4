@@ -127,17 +127,12 @@ atomPattern : LPAREN patterns RPAREN (AS ID)?
             ;
 
 literal : qualifiedId
-        | PROP
         | CALM_FACE
         | idFix
         | LGOAL expr? RGOAL
         | NUMBER
         | STRING
-        | HTYPE
-        | UTYPE
         | TYPE
-        | INF_TYPE
-        | SET_UNIV
         ;
 
 tele : literal

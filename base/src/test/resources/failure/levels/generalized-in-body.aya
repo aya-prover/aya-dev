@@ -1,2 +1,2 @@
-ulevel u
-def test => Set u
+universe u
+def test => Type u

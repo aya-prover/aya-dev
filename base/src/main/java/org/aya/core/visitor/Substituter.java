@@ -29,7 +29,7 @@ public record Substituter(
     this(termSubst.map, levelSubst);
   }
 
-  @Override public @NotNull Sort.CoreLevel visitLevel(@NotNull Sort.CoreLevel sort, Unit unit) {
+  @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
     return levelSubst.applyTo(sort);
   }
 

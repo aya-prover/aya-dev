@@ -60,8 +60,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
   public final @NotNull EqnSet termEqns = new EqnSet();
-  public final @NotNull Sort.LvlVar homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
-  public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
+  public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.create();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -73,7 +72,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
-    return Seq.of(homotopy, universe).view()
+    return Seq.of(universe).view()
       .filter(levelEqns::used)
       .appendedAll(levelMapping.valuesView())
       .toImmutableSeq();
@@ -96,11 +95,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     this(reporter, new LocalCtx(), traceBuilder);
   }
 
-  public @NotNull Result finalize(@NotNull Result result) {
-    solveMetas();
-    return new Result(result.wellTyped.zonk(this), result.type.zonk(this));
-  }
-
   public void solveMetas() {
     while (termEqns.eqns().isNotEmpty()) {
       //noinspection StatementWithEmptyBody
@@ -116,8 +110,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result checkNoZonk(@NotNull Expr expr, @Nullable Term type) {
-    if (type == null) return expr.accept(this, null);
-    else if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
+    if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
       var implicitParam = new Term.Param(new LocalVar(ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () ->
         checkNoZonk(expr, pi.substBody(implicitParam.toTerm()))).wellTyped;
@@ -132,7 +125,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
-    return finalize(checkNoZonk(expr, type));
+    var result = checkNoZonk(expr, type);
+    solveMetas();
+    var pos = expr.sourcePos();
+    return new Result(result.wellTyped.zonk(this, pos), result.type.zonk(this, pos));
   }
 
   @Rule.Check(partialSynth = true)
@@ -180,12 +176,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new ErrorTerm(expr), term);
   }
 
-  private @NotNull Sort.CoreLevel transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
+  private @NotNull Sort transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
     if (level instanceof Level.Polymorphic) return levelEqns.markUsed(polymorphic);
     if (level instanceof Level.Maximum m)
-      return Sort.CoreLevel.merge(m.among().map(l -> transformLevel(l, polymorphic)));
-    return new Sort.CoreLevel(switch (level) {
-      case Level.Reference<LevelGenVar> v -> new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), v.ref().kind(), null)), v.lift());
+      return Sort.merge(m.among().map(l -> transformLevel(l, polymorphic)));
+    return new Sort(switch (level) {
+      case Level.Reference<LevelGenVar> v -> new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), null)), v.lift());
       case Level.Infinity<LevelGenVar> l -> new Level.Infinity<>();
       case Level.Constant<LevelGenVar> c -> new Level.Constant<>(c.value());
       default -> throw new IllegalArgumentException(level.toString());
@@ -193,16 +189,14 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    var u = transformLevel(expr.uLevel(), universe);
-    var h = transformLevel(expr.hLevel(), homotopy);
-    var sort = new Sort(u, h);
-    if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.succ(1)));
+    var sort = transformLevel(expr.level(), universe);
+    if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.lift(1)));
     var normTerm = term.normalize(NormalizeMode.WHNF);
     if (normTerm instanceof FormTerm.Univ univ) {
-      levelEqns.add(sort.succ(1), univ.sort(), Ordering.Lt, expr.sourcePos());
+      levelEqns.add(sort.lift(1), univ.sort(), Ordering.Lt, expr.sourcePos());
       return new Result(new FormTerm.Univ(sort), univ);
     } else {
-      var succ = new FormTerm.Univ(sort.succ(1));
+      var succ = new FormTerm.Univ(sort.lift(1));
       unifyTyReported(normTerm, succ, expr);
       return new Result(new FormTerm.Univ(sort), succ);
     }
@@ -271,18 +265,18 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(IntroTerm.Lambda.make(teleRenamed, body), type);
   }
 
-  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort.CoreLevel>>
+  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort>>
   levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     var levelVars = Def.defLevels(defVar).map(v -> {
-      var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), v.kind(), pos);
-      levelSubst.solution().put(v, new Sort.CoreLevel(new Level.Reference<>(lvlVar)));
+      var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), pos);
+      levelSubst.solution().put(v, new Sort(new Level.Reference<>(lvlVar)));
       return lvlVar;
     });
     levelEqns.vars().appendAll(levelVars);
     return Tuple.of(levelSubst, levelVars.view()
       .map(Level.Reference::new)
-      .map(Sort.CoreLevel::new)
+      .map(Sort::new)
       .toImmutableSeq());
   }
 
@@ -315,15 +309,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
    */
   private Result unifyTyMaybeInsert(@Nullable Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
     if (upper == null) return new Result(term, lower);
-    if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    var subst = new Substituter.TermSubst(MutableMap.create());
     while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var mock = mockTerm(pi.param(), loc.sourcePos());
       term = CallTerm.make(term, new Arg<>(mock, false));
-      subst.add(pi.param().ref(), mock);
-      lower = pi.body().subst(subst);
-      if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
+      lower = pi.substBody(mock);
     }
+    if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     reporter.report(new UnifyError(loc, upper, lower));
     return new Result(new ErrorTerm(term.freezeHoles(levelEqns)), upper);
   }
@@ -557,7 +548,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
             new Term.Param(Constants.anonymous(), resultLast.value, true));
           resultLast.value = result.type;
         });
-    } else if (!(term instanceof FormTerm.Sigma dt)) {
+    } else if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Sigma dt)) {
       return wantButNo(expr, term, "sigma type");
     } else {
       var againstTele = dt.params().view();

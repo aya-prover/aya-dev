@@ -24,7 +24,7 @@ public class NormalizeTest {
 
   @Test public void unfoldPatterns() {
     var defs = TyckDeclTest.successTyckDecls("""
-      open data Nat : Set | zero | suc Nat
+      open data Nat : Type | zero | suc Nat
       def tracy (a b : Nat) : Nat
        | zero, a => a
        | a, zero => a
@@ -47,7 +47,7 @@ public class NormalizeTest {
 
   @Test public void unfoldPrim() {
     var defs = TyckDeclTest.successTyckDecls("""
-      data Nat : Set 0 | zero | suc Nat
+      data Nat : Type 0 | zero | suc Nat
       prim I
       prim left
       prim right

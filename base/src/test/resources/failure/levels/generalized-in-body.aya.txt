@@ -1,8 +1,8 @@
-In file $FILE:2:16 ->
+In file $FILE:2:17 ->
 
-  1 | ulevel u
-  2 | def test => Set u
-                      ^^
+  1 | universe u
+  2 | def test => Type u
+                       ^^
 
 Error: Generalized variable `u` not available here
 Resolving interrupted due to error(s).

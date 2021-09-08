@@ -5,6 +5,7 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
+import kala.tuple.Tuple;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
@@ -78,7 +79,7 @@ public record StmtTycker(
       // Homotopy level goes first
       var levels = tycker.extractLevels();
       for (var lvl : core.levels.zip(levels))
-        levelSubst.solution().put(lvl._1, new Sort.CoreLevel(new Level.Reference<>(lvl._2)));
+        levelSubst.solution().put(lvl._1, new Sort(new Level.Reference<>(lvl._2)));
       var target = FormTerm.Pi.make(core.telescope(), core.result())
         .subst(Substituter.TermSubst.EMPTY, levelSubst);
       tycker.unifyTyReported(FormTerm.Pi.make(tele, result), target, decl.result);
@@ -99,7 +100,7 @@ public record StmtTycker(
     var sortParam = dataSig.sortParam();
     var dataCall = new CallTerm.Data(dataRef, sortParam.view()
       .map(Level.Reference::new)
-      .map(Sort.CoreLevel::new)
+      .map(Sort::new)
       .toImmutableSeq(), dataArgs);
     var sig = new Ref<>(new Def.Signature(sortParam, dataSig.param(), dataCall));
     var patTycker = new PatTycker(tycker);
@@ -152,13 +153,18 @@ public record StmtTycker(
     // var levelSubst = tycker.equations.solve();
     var levels = tycker.extractLevels();
     decl.signature = new Def.Signature(levels, tele, result);
-    return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field -> traced(field, tycker, this::visitField)));
+    return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field ->
+      traced(field, tycker, (f, tyck) -> visitField(f, tyck, result))));
   }
 
   @Override public FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
-    var tele = checkTele(tycker, field.telescope, null);
+    throw new IllegalStateException("This method shouldn't be invoked");
+  }
+
+  private FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {
+    var tele = checkTele(tycker, field.telescope, structResult);
     var structRef = field.structRef;
-    var result = tycker.checkNoZonk(field.result, null).wellTyped();
+    var result = tycker.checkExpr(field.result, structResult).wellTyped();
     var structSig = structRef.concrete.signature;
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
@@ -200,11 +206,12 @@ public record StmtTycker(
       assert param.type() != null; // guaranteed by AyaProducer
       var paramRes = exprTycker.checkNoZonk(param.type(), univ);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
-      return new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit());
+      return Tuple.of(new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit()), param.sourcePos());
     });
     exprTycker.solveMetas();
-    return okTele.map(t -> {
-      var term = t.type().zonk(exprTycker);
+    return okTele.map(tt -> {
+      var t = tt._1;
+      var term = t.type().zonk(exprTycker, tt._2);
       exprTycker.localCtx.put(t.ref(), term);
       return new Term.Param(t.ref(), term, t.explicit());
     });

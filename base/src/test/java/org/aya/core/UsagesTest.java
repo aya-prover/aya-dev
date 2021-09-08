@@ -17,13 +17,13 @@ public class UsagesTest {
   @Test public void refFinder() {
     assertTrue(RefFinder.HEADER_AND_BODY.withBody());
     TyckDeclTest.successTyckDecls("""
-      open data Nat : Set 0 | zero | suc Nat
+      open data Nat : Type 0 | zero | suc Nat
       def one : Nat => suc zero
-      open data Int : Set 0 | pos Nat | neg Nat { | zero => pos zero }
+      open data Int : Type 0 | pos Nat | neg Nat { | zero => pos zero }
       def abs (a : Int) : Nat
        | pos n => n
        | neg n => n
-      open data Fin (n : Nat) : Set | suc m => fzero | suc m => fsuc (Fin m)
+      open data Fin (n : Nat) : Type | suc m => fzero | suc m => fsuc (Fin m)
       """).forEach(def -> {
       var of = Buffer.<Def>create();
       def.accept(RefFinder.HEADER_AND_BODY, of);

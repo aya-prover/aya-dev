@@ -8,9 +8,9 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
+import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
@@ -78,7 +78,7 @@ public final class PrimDef extends TopLevelDef {
       () -> new PrimDef(
         ImmutableSeq.empty(),
         ImmutableSeq.empty(),
-        new FormTerm.Univ(new Sort(new Level.Constant<>(0), Sort.INF_LVL)),
+        new FormTerm.Univ(new Sort(new Level.Constant<>(0))),
         INTERVAL_UNFOLD,
         PrimDef.INTERVAL
       ),
@@ -122,7 +122,9 @@ public final class PrimDef extends TopLevelDef {
       if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
         return argBase;
       var argA = args.get(0).term();
-      if (argA instanceof IntroTerm.Lambda lambda && lambda.body().findUsages(lambda.param().ref()) == 0)
+      if (argA instanceof IntroTerm.Lambda lambda && lambda.body()
+        .normalize(NormalizeMode.NF)
+        .findUsages(lambda.param().ref()) == 0)
         return argBase;
       return prim;
     }
@@ -134,9 +136,8 @@ public final class PrimDef extends TopLevelDef {
         var paramA = new LocalVar("A");
         var paramIToATy = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), INTERVAL_CALL_TERM_SUPPLIER.get(), true);
         var paramI = new LocalVar("i");
-        var homotopy = new Sort.LvlVar("h", LevelGenVar.Kind.Homotopy, null);
-        var universe = new Sort.LvlVar("u", LevelGenVar.Kind.Universe, null);
-        var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe), new Level.Reference<>(homotopy)));
+        var universe = new Sort.LvlVar("u", null);
+        var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
         var paramATy = new FormTerm.Pi(paramIToATy, result);
         var aRef = new RefTerm(paramA, paramATy);
         var left = PrimFactory.INSTANCE.getOrCreate(PrimDef.LEFT);
@@ -147,7 +148,7 @@ public final class PrimDef extends TopLevelDef {
             new Term.Param(new LocalVar("base"), baseAtLeft, true),
             new Term.Param(paramI, INTERVAL_CALL_TERM_SUPPLIER.get(), true)
           ),
-          ImmutableSeq.of(homotopy, universe),
+          ImmutableSeq.of(universe),
           new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, INTERVAL_CALL_TERM_SUPPLIER.get()), true)),
           PrimSeed::arcoe,
           PrimDef.ARCOE

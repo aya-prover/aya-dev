@@ -1,11 +1,11 @@
-open data Nat : Set 0
+open data Nat : Type 0
  | zero
  | suc Nat
 
-struct Pos1 (A : Set) : Set
+struct Pos1 (A : Type) : Type
   | x : A
   | y : Nat
 
-struct Pos2 (B : Nat -> Set) : Set
+struct Pos2 (B : Nat -> Type) : Type
   | x : Nat
   | y : B zero

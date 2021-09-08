@@ -1,1 +1,1 @@
-def x : Set => \ 1 => x
+def x : Type => \ 1 => x

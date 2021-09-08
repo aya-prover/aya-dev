@@ -20,7 +20,7 @@ public class SuedeTest {
 
   @Test public void nat() {
     suedeAll("""
-      open data Nat : Set | zero | suc Nat
+      open data Nat : Type | zero | suc Nat
       def add (a b : Nat) : Nat
        | zero, a => a
        | suc a, b => suc (add a b)
@@ -28,16 +28,16 @@ public class SuedeTest {
   }
 
   @Test public void piSig() {
-    suedeAll("def test (y : Set) => Pi (x : Set -> Set (lsuc 1)) -> Sig (x y) ** x y");
+    suedeAll("def test (y : Type 0) : Type 3 => Pi (x : Type 0 -> Type (lsuc 1)) -> Sig (x y) ** x y");
   }
 
   @Test public void adjunction() {
     suedeAll("""
-      def curry (A B C : Set)
+      def curry (A B C : Type)
                  (f : (Sig A ** B) -> C)
                  (a : A) (b : B) : C
         => f (a, b)
-      def uncurry (A : Set) (B : Set) (C : Set)
+      def uncurry (A : Type) (B : Type) (C : Type)
                    (f : Pi A B -> C)
                    (p : Sig A ** B) : C
         => f (p.1) (p.2)

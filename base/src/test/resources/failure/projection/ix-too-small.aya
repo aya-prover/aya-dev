@@ -1,1 +1,1 @@
-def test (A B : Set) (p : Sig A ** B) => p.0
+def test (A B : Type) (p : Sig A ** B) => p.0

@@ -6,12 +6,10 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,48 +20,40 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
-  public Sort(@NotNull Level<LvlVar> uLevel, @NotNull Level<LvlVar> hLevel) {
-    this(new CoreLevel(uLevel), new CoreLevel(hLevel));
+public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDocile {
+  public Sort(@NotNull Level<LvlVar> level) {
+    this(ImmutableSeq.of(level));
   }
 
   public static final @NotNull Level<LvlVar> INF_LVL = new Level.Infinity<>();
-  public static final @NotNull Sort OMEGA = new Sort(INF_LVL, INF_LVL);
-
-  public @Nullable Level<LvlVar> onlyH() {
-    if (hLevel.levels.sizeEquals(1)) return hLevel.levels.first();
-    else return null;
-  }
+  public static final @NotNull Sort OMEGA = new Sort(INF_LVL);
 
   private static @Nullable SourcePos unsolvedPos(@NotNull Level<LvlVar> lvl) {
     return lvl instanceof Level.Reference<LvlVar> ref ? ref.ref().pos : null;
   }
 
-  public static @Nullable SourcePos unsolvedPos(@NotNull CoreLevel lvl) {
-    return lvl.levels().view().mapNotNull(Sort::unsolvedPos).firstOrNull();
-  }
-
   public @Nullable SourcePos unsolvedPos() {
-    var pos = unsolvedPos(uLevel);
-    return pos != null ? pos : unsolvedPos(hLevel);
+    return this.levels().view().mapNotNull(Sort::unsolvedPos).firstOrNull();
   }
 
-  public @NotNull Sort subst(@NotNull LevelSubst subst) {
-    var u = subst.applyTo(uLevel);
-    var h = subst.applyTo(hLevel);
-    return u == uLevel && h == hLevel ? this : new Sort(u, h);
+  public static @NotNull Sort max(@NotNull Sort lhs, @NotNull Sort rhs) {
+    return new Sort(lhs.levels().appendedAll(rhs.levels()));
   }
 
-  public @NotNull Sort max(@NotNull Sort other) {
-    return new Sort(max(uLevel, other.uLevel), max(hLevel, other.hLevel));
+  public static @NotNull Sort merge(@NotNull ImmutableSeq<Sort> levels) {
+    if (levels.sizeEquals(1)) return levels.first();
+    return new Sort(levels.flatMap(Sort::levels));
   }
 
-  public static @NotNull CoreLevel max(@NotNull CoreLevel lhs, @NotNull CoreLevel rhs) {
-    return new CoreLevel(lhs.levels().appendedAll(rhs.levels()));
+  public @NotNull Sort lift(int n) {
+    return new Sort(levels.map(l -> l.lift(n)));
   }
 
-  @Contract("_-> new") public @NotNull Sort succ(int n) {
-    return new Sort(uLevel.lift(n), hLevel.lift(n));
+  @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    return levels.sizeEquals(1) ? levels.first().toDoc(options) : Doc.parened(Doc.sep(
+      Doc.styled(CoreDistiller.KEYWORD, "lmax"),
+      Doc.sep(levels.map(l -> l.toDoc(options)))
+    ));
   }
 
   /**
@@ -72,11 +62,7 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
    *            In well-typed terms it should always be <code>null</code>.
    * @author ice1000
    */
-  public static record LvlVar(
-    @NotNull String name,
-    @NotNull LevelGenVar.Kind kind,
-    @Nullable SourcePos pos
-  ) implements Var {
+  public static record LvlVar(@NotNull String name, @Nullable SourcePos pos) implements Var {
     @Override public boolean equals(@Nullable Object o) {
       return this == o;
     }
@@ -87,34 +73,6 @@ public record Sort(@NotNull CoreLevel uLevel, @NotNull CoreLevel hLevel) {
 
     public boolean free() {
       return pos != null;
-    }
-  }
-
-  /**
-   * @param levels nonempty
-   * @author ice1000
-   */
-  public static record CoreLevel(
-    @NotNull ImmutableSeq<Level<LvlVar>> levels
-  ) implements AyaDocile {
-    public CoreLevel(@NotNull Level<LvlVar> level) {
-      this(ImmutableSeq.of(level));
-    }
-
-    public static @NotNull CoreLevel merge(@NotNull ImmutableSeq<CoreLevel> levels) {
-      if (levels.sizeEquals(1)) return levels.first();
-      return new CoreLevel(levels.flatMap(CoreLevel::levels));
-    }
-
-    public @NotNull CoreLevel lift(int n) {
-      return new CoreLevel(levels.map(l -> l.lift(n)));
-    }
-
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      return levels.sizeEquals(1) ? levels.first().toDoc(options) : Doc.sep(
-        Doc.styled(CoreDistiller.KEYWORD, "lmax"),
-        Doc.sep(levels.map(l -> l.toDoc(options)))
-      );
     }
   }
 }

@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class TracingTest {
   @Language("TEXT")
   public static final String CODE = """
-    open data Nat : Set | zero | suc Nat
+    open data Nat : Type | zero | suc Nat
     def max (a b : Nat) : Nat
      | zero, b => b
      | a, zero => a
@@ -46,7 +46,7 @@ public class TracingTest {
 
   @Test public void traceHole() {
     assertFalse(new MdUnicodeTrace().docify(Objects.requireNonNull(mkBuilder("""
-      open data Nat : Set | zero | suc Nat
+      open data Nat : Type | zero | suc Nat
       def wow {A : Type} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => zero
       example def test (A B : Type) (x : A) (y : B) => wow A B x y
       """))).debugRender().isEmpty());

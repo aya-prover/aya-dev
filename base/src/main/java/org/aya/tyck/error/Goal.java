@@ -18,7 +18,7 @@ public record Goal(
 ) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     var doc = Doc.vcat(
-      Doc.sep(Doc.plain("Expected type:"), meta.result.accept(Zonker.NO_REPORT, Unit.unit()).toDoc(DistillerOptions.DEFAULT)),
+      Doc.sep(Doc.plain("Expected type:"), meta.result.toDoc(DistillerOptions.DEFAULT)),
       Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)),
       Doc.plain("Context:"),
       Doc.vcat(meta.fullTelescope().map(param -> param.toDoc(DistillerOptions.DEFAULT)))

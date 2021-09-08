@@ -20,13 +20,13 @@ public class VisitorTest {
       }
     };
     for (var stmt : ParseTest.parseManyStmt("""
-      open data Nat : Set | zero | suc Nat
+      open data Nat : Type | zero | suc Nat
       def add (a b : Nat) : Nat
         | zero, zero => {??}
       prim I prim left : I prim right
       struct Path (A : I -> hType (lsuc l)) (a : A left) (b : A right) : hType l
         | at (i : I) : A i { | left => a | right => b }
-      open data Int : Set
+      open data Int : Type
         | pos Nat
         | neg Nat { | zero => pos zero }
       def sig : Sig Nat ** Nat => (zero, suc zero)

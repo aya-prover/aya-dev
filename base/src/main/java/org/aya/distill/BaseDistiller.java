@@ -20,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
+/**
+ * @author ice1000
+ */
 public interface BaseDistiller {
   @NotNull Style KEYWORD = Style.preset("aya:Keyword");
   @NotNull Style FN_CALL = Style.preset("aya:FnCall");

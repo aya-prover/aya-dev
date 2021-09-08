@@ -24,6 +24,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
@@ -75,7 +76,7 @@ public record PatTycker(
       return elabClause;
     });
     exprTycker.solveMetas();
-    return Tuple.of(signature.value.result().zonk(exprTycker), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker))));
+    return Tuple.of(signature.value.result().zonk(exprTycker, null), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker, null))));
   }
 
   @NotNull public ImmutableSeq<Pat.PrototypeClause> elabClauses(
@@ -84,10 +85,10 @@ public record PatTycker(
   ) {
     var checked = clauses.map(c -> {
       if (patSubst != null) subst.resetTo(patSubst);
-      return visitMatch(c, signature);
+      return Tuple.of(visitMatch(c, signature), c.sourcePos);
     });
     exprTycker.solveMetas();
-    return checked.map(c -> c.mapTerm(e -> e.zonk(exprTycker)));
+    return checked.map(c -> c._1.mapTerm(e -> e.zonk(exprTycker, c._2)));
   }
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
@@ -113,8 +114,9 @@ public record PatTycker(
     var results = Buffer.<Pat>create();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
-        // TODO[ice]: report error
-        throw new ExprTycker.TyckerException();
+        withError(new PatternProblem.TooManyPattern(pat, sig.value.result()),
+          pat, "?", ErrorTerm.typeOf(pat));
+        return;
       }
       var param = sig.value.param().first();
       while (param.explicit() != pat.explicit()) if (pat.explicit()) {
@@ -149,12 +151,8 @@ public record PatTycker(
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
     if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), t);
-    if (!(t instanceof FormTerm.Sigma sigma)) {
-      exprTycker.reporter.report(new PatternProblem.TupleNonSig(tuple, t));
-      // In case something's wrong, produce a random pattern
-      PatBindCollector.bindErrors(tuple, exprTycker.localCtx);
-      return new Pat.Bind(tuple.explicit(), new LocalVar("?"), t);
-    }
+    if (!(t instanceof FormTerm.Sigma sigma))
+      return withError(new PatternProblem.TupleNonSig(tuple, t), tuple, "?", t);
     // sig.result is a dummy term
     var sig = new Def.Signature(
       ImmutableSeq.empty(),
@@ -181,7 +179,7 @@ public record PatTycker(
       return new Pat.Bind(bind.explicit(), v, t);
     }
     var ctorCore = selected._3.ref().core;
-      if (ctorCore.selfTele.isNotEmpty()) {
+    if (ctorCore.selfTele.isNotEmpty()) {
       // TODO: error report: not enough parameters bind
       throw new ExprTycker.TyckerException();
     }
@@ -191,14 +189,16 @@ public record PatTycker(
     return new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.empty(), null, selected._1);
   }
 
+  private @NotNull Pat withError(Problem problem, Pattern pattern, String name, Term param) {
+    exprTycker.reporter.report(problem);
+    // In case something's wrong, produce a random pattern
+    PatBindCollector.bindErrors(pattern, exprTycker.localCtx);
+    return new Pat.Bind(pattern.explicit(), new LocalVar(name), param);
+  }
+
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
     var realCtor = selectCtor(param, ctor.name().data(), subst.reporter(), ctor);
-    if (realCtor == null) {
-      subst.reporter().report(new PatternProblem.UnknownCtor(ctor));
-      // In case something's wrong, produce a random pattern
-      PatBindCollector.bindErrors(ctor, exprTycker.localCtx);
-      return new Pat.Bind(ctor.explicit(), new LocalVar(ctor.name().data()), param);
-    }
+    if (realCtor == null) return withError(new PatternProblem.UnknownCtor(ctor), ctor, ctor.name().data(), param);
     var ctorRef = realCtor._3.ref();
     ctor.resolved().value = ctorRef;
     var ctorCore = ctorRef.core;

@@ -80,12 +80,7 @@ public class ParseTest {
 
   @Test public void successLiteral() {
     assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
-    parseUniv("Prop");
-    parseUniv("Set");
     parseUniv("Type");
-    parseUniv("hType");
-    parseUniv("uType");
-    parseUniv("ooType");
   }
 
   @Test
@@ -95,7 +90,7 @@ public class ParseTest {
     parseFn("def a (f : Pi a b c d -> a) => b");
     parseFn("def a (t : Sig a b ** s) => b");
     parseFn("""
-      def uncurry (A : Set) (B : Set) (C : Set)
+      def uncurry (A : Type) (B : Type) (C : Type)
                    (f : Pi A B -> C)
                    (p : Sig A ** B) : C
         => f (p.1) (p.2)""");
@@ -248,7 +243,7 @@ public class ParseTest {
       "def final : Nat\n  | (suc {m} {suc x} a, fuck, {114514}) as Outer => a"
     );
     parseAndPretty(
-      "struct Very-Simple (A : Set) : Set | x : A | y : Nat",
+      "struct Very-Simple (A : Type) : Type | x : A | y : Nat",
       """
         struct Very-Simple (A : Type) : Type
           | x : A
@@ -257,8 +252,8 @@ public class ParseTest {
     );
     parseAndPretty(
       """
-        struct With-Tele (B : Nat -> Set) : Set
-          | x { X : Set } : Nat
+        struct With-Tele (B : Nat -> Type) : Type
+          | x { X : Type } : Nat
           | y : B zero
         """,
       """
@@ -285,7 +280,7 @@ public class ParseTest {
         """
     );
     parseAndPretty(
-      "struct Very-Simple (A : Set) : Set | x : A => zero",
+      "struct Very-Simple (A : Type) : Type | x : A => zero",
       """
         struct Very-Simple (A : Type) : Type
           | x : A => zero
@@ -296,7 +291,7 @@ public class ParseTest {
   @Test public void modules() {
     parseAndPretty("""
       module Nat {
-       open data ℕ : Set | zero | suc ℕ
+       open data ℕ : Type | zero | suc ℕ
       }
       """, """
       module Nat {
@@ -310,7 +305,7 @@ public class ParseTest {
   @Test public void globalStmt() {
     parseAndPretty("bind + tighter =", "bind + tighter =");
     parseAndPretty("bind + tighter application", "bind + tighter application");
-    parseAndPretty("ulevel uu", "ulevel uu");
+    parseAndPretty("universe uu", "universe uu");
   }
 
   @Test public void patterns() {
@@ -329,13 +324,13 @@ public class ParseTest {
 
   @Test public void issue350() {
     parseAndPretty("""
-        def l : Set => \\ i => Nat
+        def l : Type => \\ i => Nat
         """,
       """
         def l : Type => \\ (i : _) => Nat
         """);
     parseAndPretty("""
-        def l : Set => \\ (i : I) => Nat
+        def l : Type => \\ (i : I) => Nat
         """,
       """
         def l : Type => \\ (i : I) => Nat

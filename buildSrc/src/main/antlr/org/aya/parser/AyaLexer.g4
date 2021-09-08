@@ -22,14 +22,8 @@ FIXR : 'fixr';
 TWIN : 'twin';
 
 // universe
-HTYPE : 'hType';
-UTYPE : 'uType';
-ULEVEL : 'ulevel';
-HLEVEL : 'hlevel';
+ULEVEL : 'universe';
 TYPE : 'Type';
-INF_TYPE : 'ooType';
-SET_UNIV : 'Set';
-PROP : 'Prop';
 
 // other keywords
 AS : 'as';

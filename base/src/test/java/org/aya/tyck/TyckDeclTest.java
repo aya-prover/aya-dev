@@ -44,7 +44,7 @@ public class TyckDeclTest {
 
   @Test public void ctorPatScoping() {
     var defs = successTyckDecls("""
-      data Nat : Set | zero | suc Nat
+      data Nat : Type | zero | suc Nat
       def xyr (zero : Nat) : Nat
         | zero => zero
         | suc n => zero""");

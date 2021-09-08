@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public final class Zonker implements TermFixpoint<Unit> {
-  public static final @NotNull TermFixpoint<Unit> NO_REPORT = new NoReport();
   public final @NotNull ExprTycker tycker;
   private boolean reported = false;
 
@@ -36,11 +35,15 @@ public final class Zonker implements TermFixpoint<Unit> {
     this.tycker = tycker;
   }
 
-  private static class NoReport implements TermFixpoint<Unit> {
-    @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-      var sol = term.ref().core();
-      return sol.body != null ? sol.body.accept(this, Unit.unit()) : term;
+  public @NotNull Term zonk(@NotNull Term term, @Nullable SourcePos pos) {
+    term = term.accept(this, Unit.unit());
+    var eqns = tycker.levelEqns.eqns();
+    if (eqns.isNotEmpty() && !reported) {
+      // There are level errors, but not reported since all levels are solved
+      tycker.reporter.report(new LevelMismatchError(pos, eqns.toImmutableSeq()));
+      eqns.clear();
     }
+    return term;
   }
 
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
@@ -52,9 +55,9 @@ public final class Zonker implements TermFixpoint<Unit> {
     return sol.body.accept(this, Unit.unit());
   }
 
-  @Override public @Nullable Sort.CoreLevel visitLevel(@NotNull Sort.CoreLevel sort, Unit unit) {
+  @Override public @Nullable Sort visitSort(@NotNull Sort sort, Unit unit) {
     sort = tycker.levelEqns.applyTo(sort);
-    var sourcePos = Sort.unsolvedPos(sort);
+    var sourcePos = sort.unsolvedPos();
     if (sourcePos != null) {
       reportLevelSolverError(sourcePos);
       return null;
@@ -68,7 +71,7 @@ public final class Zonker implements TermFixpoint<Unit> {
   }
 
   @Override public @NotNull Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    var sort = term.sort().subst(tycker.levelEqns);
+    var sort = tycker.levelEqns.applyTo(term.sort());
     var sourcePos = sort.unsolvedPos();
     if (sourcePos != null) {
       reportLevelSolverError(sourcePos);

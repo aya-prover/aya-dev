@@ -1,8 +1,8 @@
-open data Nat : Set
+open data Nat : Type
   | zero
   | suc Nat
 
-open data Bool : Set
+open data Bool : Type
   | true
   | false
 

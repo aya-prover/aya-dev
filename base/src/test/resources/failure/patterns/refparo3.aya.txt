@@ -1,7 +1,7 @@
 In file $FILE:10:4 ->
 
    8 | 
-   9 | open data U2 (x : BoolPair) : Set
+   9 | open data U2 (x : BoolPair) : Type
   10 |   | (false, false) => zero
            ^------------^
 
@@ -9,7 +9,7 @@ Error: The tuple pattern `(false, false)` splits only sigma types, while the act
        type `BoolPair` does not look like one
 In file $FILE:11:4 ->
 
-   9 | open data U2 (x : BoolPair) : Set
+   9 | open data U2 (x : BoolPair) : Type
   10 |   | (false, false) => zero
   11 |   | (false, true) => one
            ^-----------^

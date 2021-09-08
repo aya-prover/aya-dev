@@ -20,9 +20,9 @@ public record UnifyError(
 ) implements ExprProblem, Problem {
   @Override public @NotNull Doc describe() {
     return Doc.vcat(
-      Doc.sep(Doc.plain("Expected type:"), expected.accept(Zonker.NO_REPORT, Unit.unit()).toDoc(DistillerOptions.DEFAULT)),
+      Doc.sep(Doc.plain("Expected type:"), expected.toDoc(DistillerOptions.DEFAULT)),
       Doc.sep(Doc.plain("Normalized:"), expected.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)),
-      Doc.sep(Doc.plain("Actual type:"), actual.accept(Zonker.NO_REPORT, Unit.unit()).toDoc(DistillerOptions.DEFAULT)),
+      Doc.sep(Doc.plain("Actual type:"), actual.toDoc(DistillerOptions.DEFAULT)),
       Doc.sep(Doc.plain("Normalized:"), actual.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)),
       Doc.english("They don't match, sorry")
     );

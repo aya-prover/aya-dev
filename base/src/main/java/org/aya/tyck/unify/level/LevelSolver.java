@@ -6,7 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.core.sort.Sort;
 import org.aya.core.sort.Sort.LvlVar;
 import org.aya.generic.Level;
@@ -101,16 +100,15 @@ public class LevelSolver {
   void prepareGraphNode(int[][] g, SeqLike<Level<LvlVar>> l) {
     for (var e : l) {
       if (e instanceof Level.Reference<LvlVar> th) {
-        int defaultValue = th.ref().kind().defaultValue - th.lift();
+        int defaultValue = -th.lift();
         int u = graphMap.get(th.ref());
         if (th.ref().free()) {
           // addEdge(g, u, 0, -defaultValue);
-          defaultValues.put(th.ref(), th.ref().kind().defaultValue);
+          defaultValues.put(th.ref(), 0);
           freeNodes.add(th.ref());
           // Universe level can't be inf, homotopy can
-          if (th.ref().kind() == LevelGenVar.Kind.Universe) {
-            addEdge(g, 0, u, LOW_BOUND);
-          }
+          // Now there are no homotopy level
+          addEdge(g, 0, u, LOW_BOUND);
         } else {
           unfreeNodes.add(th.ref());
         }
@@ -214,7 +212,7 @@ public class LevelSolver {
         }
         retList.append(resolveConstantLevel(minv));
       }
-      eqns.solution().put(name, new Sort.CoreLevel(retList.toImmutableSeq()));
+      eqns.solution().put(name, new Sort(retList.toImmutableSeq()));
     }
   }
 
@@ -234,7 +232,7 @@ public class LevelSolver {
   }
 
   /** @return true if fail */
-  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort.CoreLevel lhs, Sort.CoreLevel rhs) {
+  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs) {
     var lhsLevels = lhs.levels();
     if (lhsLevels.allMatch(v -> rhs.levels().contains(v))) {
       avoidableEqns.append(e);
@@ -242,6 +240,10 @@ public class LevelSolver {
     }
     if (rhs.levels().size() == 1) {
       var right = rhs.levels().get(0);
+      if (right instanceof Level.Infinity<LvlVar>) {
+        avoidableEqns.append(e);
+        return false;
+      }
       return lhsLevels.anyMatch(left -> dealSingleLt(g, left, right));
     } else specialEq.append(e);
     return false;

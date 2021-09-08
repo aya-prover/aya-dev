@@ -1,15 +1,15 @@
 prim I
 prim left
 prim right
-struct Path (A : I -> Type) (a : A left) (b : A right) : Set
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
  | at (i : I) : A i {
    | left => a
    | right => b
  }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def Eq {A : Type} (a b : A) : Set => Path (\ i => A) a b
+def Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} {a : A} : Eq a a => path (\ i => a)
 
 -- https://cstheory.stackexchange.com/a/49160/50892
-def test (a : _) (B : Set) (b : B) (p : Eq a b) : I => left
+def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left

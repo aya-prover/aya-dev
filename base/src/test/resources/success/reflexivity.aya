@@ -1,12 +1,12 @@
 prim I
 prim left
 prim right
-struct Path (A : I -> Set) (a : A left) (b : A right) : Set
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
  | at (i : I) : A i {
    | left => a
    | right => b
  }
-def path {A : I -> Set} (p : Pi (i : I) -> A i)
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def Eq {A : Set} (a b : A) : Set => Path (\ i => A) a b
-def idp {A : Set} (a : A) : Eq a a => path (\ i => a)
+def Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def idp {A : Type} (a : A) : Eq a a => path (\ i => a)

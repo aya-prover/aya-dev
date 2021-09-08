@@ -1,4 +1,4 @@
-open data ℕ : Set
+open data ℕ : Type
   | zero
   | suc ℕ
 

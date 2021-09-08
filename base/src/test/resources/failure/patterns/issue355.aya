@@ -1,6 +1,6 @@
 prim I prim left
 
-open data Nat : Set 0
+open data Nat : Type 0
  | zero
  | suc Nat
 

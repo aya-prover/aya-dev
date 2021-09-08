@@ -10,6 +10,7 @@ import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreTerm;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -18,13 +19,13 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
+import org.aya.core.sort.Sort;
 import org.aya.core.visitor.*;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
-import org.aya.tyck.trace.HoleFreezer;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.Contract;
@@ -72,8 +73,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     return accept(new Substituter(subst, levelSubst), Unit.unit());
   }
 
-  default @NotNull Term zonk(@NotNull ExprTycker tycker) {
-    return accept(new Zonker(tycker), Unit.unit());
+  default @NotNull Term zonk(@NotNull ExprTycker tycker, @Nullable SourcePos pos) {
+    return new Zonker(tycker).zonk(this, pos);
   }
 
   @Override default int findUsages(@NotNull Var var) {
@@ -94,7 +95,11 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
   }
 
   default @NotNull Term freezeHoles(@Nullable LevelEqnSet eqnSet) {
-    return accept(new HoleFreezer(eqnSet), Unit.unit());
+    return accept(new TermFixpoint<>() {
+      @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
+        return eqnSet != null ? eqnSet.applyTo(sort) : sort;
+      }
+    }, Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

@@ -26,20 +26,17 @@ public class DesugarTest {
   }
 
   @Test public void simpleUniv() {
-    desugarAndPretty("def test => Type", "def test => Type lp lp");
-    desugarAndPretty("def test => Set", "def test => Set lp");
-    desugarAndPretty("def test => Prop", "def test => Prop 0");
-    desugarAndPretty("def test => ooType", "def test => ooType lp");
+    desugarAndPretty("def test => Type", "def test => Type lp");
   }
 
   @Test public void modules() {
     desugarAndPretty("""
       module Nat {
-       open data ℕ : Set | zero | suc ℕ
+       open data ℕ : Type | zero | suc ℕ
       }
       """, """
       module Nat {
-        data ℕ : Set lp
+        data ℕ : Type lp
           | zero
           | suc (_ : ℕ)
         open ℕ hiding ()

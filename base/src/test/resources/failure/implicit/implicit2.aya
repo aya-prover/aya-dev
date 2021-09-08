@@ -1,4 +1,4 @@
-open data Unit : Set | unit
+open data Unit : Type | unit
 
 def y : Pi {a : Unit} -> Unit => \{a} => a
 def x : Pi {a : Unit} -> Unit => y

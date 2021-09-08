@@ -70,9 +70,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Univ(@NotNull SerLevel.Max u, @NotNull SerLevel.Max h) implements SerTerm {
+  record Univ(@NotNull SerLevel.Max u) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new FormTerm.Univ(new Sort(u.de(state.levelCache), h.de(state.levelCache)));
+      return new FormTerm.Univ(u.de(state.levelCache));
     }
   }
 
@@ -117,7 +117,7 @@ public sealed interface SerTerm extends Serializable {
     @NotNull ImmutableSeq<SerLevel.Max> sortArgs,
     @NotNull ImmutableSeq<SerArg> args
   ) implements Serializable {
-    public @NotNull ImmutableSeq<Sort.CoreLevel> de(@NotNull MutableMap<Integer, Sort.LvlVar> levelCache) {
+    public @NotNull ImmutableSeq<Sort> de(@NotNull MutableMap<Integer, Sort.LvlVar> levelCache) {
       return sortArgs.map(max -> max.de(levelCache));
     }
 

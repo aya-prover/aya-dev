@@ -1,0 +1,110 @@
+In file $FILE:32:4 ->
+
+  30 | 
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+           ^--^
+
+Error: There is no parameter for the pattern `zero` to match against (FYI the return
+       type is `Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y
+       z)) (add (add x y) z)` and in case it's a function type, you may want to move
+       its parameters before the `:` in the signature)
+In file $FILE:32:10 ->
+
+  30 | 
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+                 ^^
+
+Error: There is no parameter for the pattern `y` to match against (FYI the return type
+       is `Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
+       (add x y) z)` and in case it's a function type, you may want to move its parameters
+       before the `:` in the signature)
+In file $FILE:32:13 ->
+
+  30 | 
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+                    ^^
+
+Error: There is no parameter for the pattern `z` to match against (FYI the return type
+       is `Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
+       (add x y) z)` and in case it's a function type, you may want to move its parameters
+       before the `:` in the signature)
+In file $FILE:32:18 ->
+
+  30 | 
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+                         ^-^
+
+Error: Expected type: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add
+       y z)) (add (add x y) z)
+       Normalized: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Path (λ i ⇒ Nat) (add
+       x (add y z)) (add (add x y) z)
+       Actual type: Π (a : Nat) → Path (λ _ ⇒ Nat) a a
+       Normalized: Π (a : Nat) → Path (λ _ ⇒ Nat) a a
+       They don't match, sorry
+In file $FILE:33:4 ->
+
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+           ^---^
+
+Error: There is no parameter for the pattern `suc x` to match against (FYI the return
+       type is `Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y
+       z)) (add (add x y) z)` and in case it's a function type, you may want to move
+       its parameters before the `:` in the signature)
+In file $FILE:33:11 ->
+
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+                  ^^
+
+Error: There is no parameter for the pattern `y` to match against (FYI the return type
+       is `Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
+       (add x y) z)` and in case it's a function type, you may want to move its parameters
+       before the `:` in the signature)
+In file $FILE:33:14 ->
+
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+                     ^^
+
+Error: There is no parameter for the pattern `z` to match against (FYI the return type
+       is `Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
+       (add x y) z)` and in case it's a function type, you may want to move its parameters
+       before the `:` in the signature)
+In file $FILE:33:19 ->
+
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+                          ^---------------------^
+
+Error: Expected type: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add
+       y z)) (add (add x y) z)
+       Normalized: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Path (λ i ⇒ Nat) (add
+       x (add y z)) (add (add x y) z)
+       Actual type: Path (λ _ ⇒ Nat) (suc (+-assoc x y z.at left)) (suc (+-assoc
+       x y z.at right))
+       Normalized: Path (λ _ ⇒ Nat) (suc (add x (add y z))) (suc (add (add x y) z))
+       They don't match, sorry
+In file $FILE:31:4 ->
+
+  29 | bind + tighter =
+  30 | 
+  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  32 |   | zero, y, z => idp
+           ^---------------^ substituted to `<λ a ⇒ idp {Nat} a>`
+  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+           ^-------------------------------------^ substituted to `<pmap {Nat} {Nat}
+  (λ _ ⇒ suc _) {add x (add y z)} {add (add x y) z} (+-assoc x y z)>`
+
+Error: The 1st and the 2nd clauses are not confluent because we failed to unify `<λ
+       a ⇒ idp {Nat} a>` and `<pmap {Nat} {Nat} (λ _ ⇒ suc _) {add x (add y z)} {add
+       (add x y) z} (+-assoc x y z)>`
+What are you doing?

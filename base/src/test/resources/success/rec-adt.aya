@@ -1,12 +1,12 @@
-data Nat : Set
+data Nat : Type
  | zero
  | suc Nat
 
-data Int : Set
+data Int : Type
  | negs Nat
  | poss Nat
  | zro
 
-data List (A : Set) : Set
+data List (A : Type) : Type
  | nil
  | cons A (List A)
