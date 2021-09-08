@@ -57,11 +57,6 @@ public sealed interface CallTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFnCall(this, p);
     }
-
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitFnCall(this, p, q);
-    }
-
   }
 
   record Prim(
@@ -72,11 +67,6 @@ public sealed interface CallTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPrimCall(this, p);
     }
-
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitPrimCall(this, p, q);
-    }
-
   }
 
   record Data(
@@ -86,10 +76,6 @@ public sealed interface CallTerm extends Term {
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitDataCall(this, p);
-    }
-
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitDataCall(this, p, q);
     }
 
     public @NotNull ConHead conHead(@NotNull DefVar<CtorDef, Decl.DataCtor> ctorRef) {
@@ -108,11 +94,6 @@ public sealed interface CallTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitStructCall(this, p);
     }
-
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitStructCall(this, p, q);
-    }
-
   }
 
   record ConHead(
@@ -152,14 +133,9 @@ public sealed interface CallTerm extends Term {
       return visitor.visitConCall(this, p);
     }
 
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitConCall(this, p, q);
-    }
-
     @Override public @NotNull ImmutableSeq<Arg<@NotNull Term>> args() {
       return head.dataArgs.view().concat(conArgs).toImmutableSeq();
     }
-
   }
 
   /**
@@ -182,10 +158,6 @@ public sealed interface CallTerm extends Term {
       return visitor.visitHole(this, p);
     }
 
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitHole(this, p, q);
-    }
-
     @Override public @NotNull ImmutableSeq<@NotNull Sort> sortArgs() {
       return ImmutableSeq.empty();
     }
@@ -205,13 +177,8 @@ public sealed interface CallTerm extends Term {
       return visitor.visitAccess(this, p);
     }
 
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitAccess(this, p, q);
-    }
-
     @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> args() {
       return structArgs.concat(fieldArgs);
     }
-
   }
 }

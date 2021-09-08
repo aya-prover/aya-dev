@@ -24,10 +24,6 @@ public sealed interface IntroTerm extends Term {
       return visitor.visitLam(this, p);
     }
 
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitLam(this, p, q);
-    }
-
     public static @NotNull Term make(@NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
       return telescope.view().foldRight(body, Lambda::new);
     }
@@ -43,10 +39,6 @@ public sealed interface IntroTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitNew(this, p);
     }
-
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitNew(this, p, q);
-    }
   }
 
   /**
@@ -56,10 +48,5 @@ public sealed interface IntroTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTup(this, p);
     }
-
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitTup(this, p, q);
-    }
   }
-
 }

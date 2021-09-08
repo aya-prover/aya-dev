@@ -31,10 +31,6 @@ public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) i
     return visitor.visitError(this, p);
   }
 
-  @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-    return visitor.visitError(this, p, q);
-  }
-
   public static @NotNull ErrorTerm typeOf(@NotNull Term origin) {
     return typeOf((AyaDocile) origin.freezeHoles(null));
   }

@@ -23,10 +23,6 @@ public sealed interface FormTerm extends Term {
       return visitor.visitPi(this, p);
     }
 
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitPi(this, p, q);
-    }
-
     public @NotNull Term substBody(@NotNull Term term) {
       return body.subst(param.ref(), term);
     }
@@ -53,10 +49,6 @@ public sealed interface FormTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitSigma(this, p);
     }
-
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitSigma(this, p, q);
-    }
   }
 
   /**
@@ -70,8 +62,5 @@ public sealed interface FormTerm extends Term {
       return visitor.visitUniv(this, p);
     }
 
-    @Override public <P, Q, R> R doAccept(@NotNull BiVisitor<P, Q, R> visitor, P p, Q q) {
-      return visitor.visitUniv(this, p, q);
-    }
   }
 }
