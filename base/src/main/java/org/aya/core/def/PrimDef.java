@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
@@ -103,7 +104,7 @@ public final class PrimDef extends TopLevelDef {
       ImmutableSeq.of(ID.INTERVAL)
     );
 
-    // Arcoe
+    /** Arend's coe */
     private static @NotNull Term arcoe(CallTerm.@NotNull Prim prim) {
       var args = prim.args();
       var argBase = args.get(1).term();
@@ -141,17 +142,22 @@ public final class PrimDef extends TopLevelDef {
       );
     }, ImmutableSeq.empty());
 
-    // Invol
+    private static @NotNull Tuple2<PrimDef, PrimDef> leftRight() {
+      return Tuple.of(
+        Factory.INSTANCE.getOption(ID.LEFT).get(),
+        Factory.INSTANCE.getOption(ID.RIGHT).get());
+    }
+
+    /** Involution, ~ in Cubical Agda */
     private static @NotNull Term invol(CallTerm.@NotNull Prim prim) {
-      var arg = prim.args().get(0).term();
-      if (arg instanceof CallTerm.Prim primCall) {
-        var left = Factory.INSTANCE.getOption(ID.LEFT);
-        var right = Factory.INSTANCE.getOption(ID.RIGHT);
-        assert left.isNotEmpty() && right.isNotEmpty();
-        if (primCall.ref() == left.get().ref)
-          return new CallTerm.Prim(right.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-        if (primCall.ref() == right.get().ref)
-          return new CallTerm.Prim(left.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+      if (prim.args().get(0).term() instanceof CallTerm.Prim primCall) {
+        var lr = leftRight();
+        var left = lr._1;
+        var right = lr._2;
+        if (primCall.ref() == left.ref)
+          return new CallTerm.Prim(right.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+        if (primCall.ref() == right.ref)
+          return new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
       }
       return prim;
     }
@@ -162,6 +168,34 @@ public final class PrimDef extends TopLevelDef {
       intervalCall(),
       ID.INVOL
     ), ImmutableSeq.empty());
+
+    /** <code>/\</code> in CCHM, <code>I.squeeze</code> in Arend */
+    private static @NotNull Term squeezeLeft(CallTerm.@NotNull Prim prim) {
+      var lhsArg = prim.args().get(0).term();
+      var rhsArg = prim.args().get(1).term();
+      var lr = leftRight();
+      var left = lr._1;
+      var right = lr._2;
+      if (lhsArg instanceof CallTerm.Prim lhs) {
+        if (lhs.ref() == left.ref) return lhs;
+        if (lhs.ref() == right.ref) return rhsArg;
+      } else if (rhsArg instanceof CallTerm.Prim rhs) {
+        if (rhs.ref() == left.ref) return rhs;
+        if (rhs.ref() == right.ref) return lhsArg;
+      }
+      return prim;
+    }
+
+
+    public static final @NotNull PrimDef.PrimSeed SQUEEZE_LEFT =
+      new PrimSeed(ID.SQUEEZE_LEFT, PrimSeed::squeezeLeft, () -> new PrimDef(
+        ImmutableSeq.of(
+          new Term.Param(new LocalVar("i"), intervalCall(), true),
+          new Term.Param(new LocalVar("j"), intervalCall(), true)),
+        ImmutableSeq.empty(),
+        intervalCall(),
+        ID.SQUEEZE_LEFT
+      ), ImmutableSeq.empty());
   }
 
   public static class Factory {
@@ -176,6 +210,7 @@ public final class PrimDef extends TopLevelDef {
         PrimSeed.LEFT,
         PrimSeed.RIGHT,
         PrimSeed.ARCOE,
+        PrimSeed.SQUEEZE_LEFT,
         PrimSeed.INVOL
       ).map(seed -> Tuple.of(seed.name, seed))
       .toImmutableMap();
@@ -227,6 +262,7 @@ public final class PrimDef extends TopLevelDef {
     INTERVAL("I"), LEFT("left"), RIGHT("right"),
     /** Short for <em>Arend coe</em>. */
     ARCOE("arcoe"),
+    SQUEEZE_LEFT("squeezeL"),
     INVOL("invol");
     public final @NotNull @NonNls String id;
 
