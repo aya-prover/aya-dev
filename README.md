@@ -34,8 +34,11 @@ gradle use proxies.
   We will try our best to answer your questions, but please be nice.
 + Aya is under active development. Nothing guaranteed! However, we can share some cool stuffs here:
   + Dependent types, including pi-types, sigma types, etc. You could write a [type-safe interpreter][gadt].
-  + Arend-ish interval type which is used to define the HoTT [path type][path].
+  + Arend-ish interval type which is used to define the HoTT [path type][path]
+    and prove [regularity by computation][regularity] thanks to Arend's type theory.
   + Overlapping patterns. Very [useful][oop] in theorem proving.
+  + A literate programming mode with inline code fragment support.
+    We already have a prototype, but we plan to revise it before sharing demos.
 
 [@ice1000]: https://github.com/ice1000
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
@@ -48,3 +51,4 @@ gradle use proxies.
 [path]: base/src/test/resources/success/cong-sym-trans.aya
 [proxy]: https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
 [gadt]: base/src/test/resources/success/type-safe-norm.aya
+[regularity]: base/src/test/resources/success/regularity.aya
