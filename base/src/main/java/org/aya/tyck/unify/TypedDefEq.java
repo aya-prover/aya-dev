@@ -47,7 +47,7 @@ public final class TypedDefEq {
     tracing(builder -> builder.shift(trace));
   }
 
-  boolean accept(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
+  private boolean accept(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(levelEqns), rhs.freezeHoles(levelEqns),
       pos, type.freezeHoles(levelEqns)));
     var ret = visit(type, lhs, rhs);
@@ -116,35 +116,18 @@ public final class TypedDefEq {
       checkParams(l.view().drop(1), r.view().drop(1), fail, success));
   }
 
-  public boolean visit(@NotNull Object o, @NotNull Term lhs, @NotNull Term rhs) {
-    switch (o) {
-      case RefTerm type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
-      case FormTerm.Univ type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
-      case ElimTerm.App type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
-      case CallTerm.Fn type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
-      case CallTerm.Data type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
-      case CallTerm.@NotNull Prim type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
-      case ElimTerm.Proj type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
-      case CallTerm.Access type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
-      case CallTerm.@NotNull Hole type -> {
-        return termDefeq.compare(lhs, rhs) != null;
-      }
+  @SuppressWarnings("DuplicateBranchesInSwitch")
+  private boolean visit(@NotNull Term preTy, @NotNull Term lhs, @NotNull Term rhs) {
+    return switch (preTy) {
+      case RefTerm type -> termDefeq.compare(lhs, rhs) != null;
+      case FormTerm.Univ type -> termDefeq.compare(lhs, rhs) != null;
+      case ElimTerm.App type -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Fn type -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Data type -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Prim type -> termDefeq.compare(lhs, rhs) != null;
+      case ElimTerm.Proj type -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Access type -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Hole type -> termDefeq.compare(lhs, rhs) != null;
       case CallTerm.Struct type -> {
         var fieldSigs = type.ref().core.fields;
         var paramSubst = type.ref().core.telescope().view().zip(type.args().view()).map(x ->
@@ -158,40 +141,33 @@ public final class TypedDefEq {
           var l = new CallTerm.Access(lhs, fieldSig.ref(), type.sortArgs(), type.args(), dummy);
           var r = new CallTerm.Access(rhs, fieldSig.ref(), type.sortArgs(), type.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);
-          if (!compare(l, r, fieldSig.result().subst(paramSubst).subst(fieldSubst))) return false;
+          if (!compare(l, r, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
         }
-        return true;
+        yield true;
       }
-      case IntroTerm.Lambda type ->
-        throw new IllegalStateException("LamTerm can never be a type of any term");
-      case CallTerm.Con type ->
-        throw new IllegalStateException("ConCall can never be a type of any term");
-      case IntroTerm.Tuple type ->
-        throw new IllegalStateException("TupTerm can never be a type of any term");
-      case IntroTerm.New newTerm ->
-        throw new IllegalStateException("NewTerm can never be a type of any term");
-      case ErrorTerm term -> {
-        return true;
-      }
+      case IntroTerm.Lambda type -> throw new IllegalStateException("LamTerm is never type");
+      case CallTerm.Con type -> throw new IllegalStateException("ConCall is never type");
+      case IntroTerm.Tuple type -> throw new IllegalStateException("TupTerm is never type");
+      case IntroTerm.New newTerm -> throw new IllegalStateException("NewTerm is never type");
+      case ErrorTerm term -> true;
       case FormTerm.Sigma type -> {
         var params = type.params().view();
         for (int i = 1, size = type.params().size(); i <= size; i++) {
           var l = new ElimTerm.Proj(lhs, i);
           var currentParam = params.first();
-          if (!compare(l, new ElimTerm.Proj(rhs, i), currentParam.type())) return false;
+          if (!compare(l, new ElimTerm.Proj(rhs, i), currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
-        return true;
+        yield true;
       }
       case FormTerm.Pi type -> {
         var dummyVar = new LocalVar("dummy");
         var ty = type.param().type();
         var dummy = new RefTerm(dummyVar, ty);
         var dummyArg = new Arg<Term>(dummy, type.param().explicit());
-        return compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.substBody(dummy));
+        yield compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.substBody(dummy));
       }
-      default -> throw new IllegalStateException("Pattern mismatch in TypedDefEq");
-    }
+    };
   }
 
   /**
