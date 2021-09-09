@@ -59,7 +59,7 @@ public record UntypedDefEq(
   }
 
   @Override public void traceExit(@Nullable Term term) {
-    defeq.traceExit(true);
+    defeq.traceExit();
   }
 
   private @NotNull EqnSet.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {

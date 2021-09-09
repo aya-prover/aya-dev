@@ -50,12 +50,61 @@ public final class TypedDefEq {
   private boolean accept(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(levelEqns), rhs.freezeHoles(levelEqns),
       pos, type.freezeHoles(levelEqns)));
-    var ret = visit(type, lhs, rhs);
-    traceExit(ret);
+    var ret = switch (type) {
+      case RefTerm type1 -> termDefeq.compare(lhs, rhs) != null;
+      case FormTerm.Univ type1 -> termDefeq.compare(lhs, rhs) != null;
+      case ElimTerm.App type1 -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Fn type1 -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Data type1 -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Prim type1 -> termDefeq.compare(lhs, rhs) != null;
+      case ElimTerm.Proj type1 -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Access type1 -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Hole type1 -> termDefeq.compare(lhs, rhs) != null;
+      case CallTerm.Struct type1 -> {
+        var fieldSigs = type1.ref().core.fields;
+        var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
+          Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
+        var fieldSubst = new Substituter.TermSubst(MutableHashMap.of());
+        for (var fieldSig : fieldSigs) {
+          var dummyVars = fieldSig.selfTele.map(par ->
+            new LocalVar(par.ref().name(), par.ref().definition()));
+          var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
+            new Arg<Term>(new RefTerm(vpa._1, vpa._2.type()), vpa._2.explicit()));
+          var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.sortArgs(), type1.args(), dummy);
+          var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.sortArgs(), type1.args(), dummy);
+          fieldSubst.add(fieldSig.ref(), l);
+          if (!compare(l, r, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
+        }
+        yield true;
+      }
+      case IntroTerm.Lambda type1 -> throw new IllegalStateException("LamTerm is never type");
+      case CallTerm.Con type1 -> throw new IllegalStateException("ConCall is never type");
+      case IntroTerm.Tuple type1 -> throw new IllegalStateException("TupTerm is never type");
+      case IntroTerm.New newTerm -> throw new IllegalStateException("NewTerm is never type");
+      case ErrorTerm term -> true;
+      case FormTerm.Sigma type1 -> {
+        var params = type1.params().view();
+        for (int i = 1, size = type1.params().size(); i <= size; i++) {
+          var l = new ElimTerm.Proj(lhs, i);
+          var currentParam = params.first();
+          if (!compare(l, new ElimTerm.Proj(rhs, i), currentParam.type())) yield false;
+          params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
+        }
+        yield true;
+      }
+      case FormTerm.Pi type1 -> {
+        var dummyVar = new LocalVar("dummy");
+        var ty = type1.param().type();
+        var dummy = new RefTerm(dummyVar, ty);
+        var dummyArg = new Arg<Term>(dummy, type1.param().explicit());
+        yield compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type1.substBody(dummy));
+      }
+    };
+    traceExit();
     return ret;
   }
 
-  public void traceExit(boolean result) {
+  public void traceExit() {
     tracing(Trace.Builder::reduce);
   }
 
@@ -114,60 +163,6 @@ public final class TypedDefEq {
     if (l.isEmpty()) return success.get();
     return checkParam(l.first(), r.first(), FormTerm.Univ.OMEGA, fail, () ->
       checkParams(l.view().drop(1), r.view().drop(1), fail, success));
-  }
-
-  @SuppressWarnings("DuplicateBranchesInSwitch")
-  private boolean visit(@NotNull Term preTy, @NotNull Term lhs, @NotNull Term rhs) {
-    return switch (preTy) {
-      case RefTerm type -> termDefeq.compare(lhs, rhs) != null;
-      case FormTerm.Univ type -> termDefeq.compare(lhs, rhs) != null;
-      case ElimTerm.App type -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Fn type -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Data type -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Prim type -> termDefeq.compare(lhs, rhs) != null;
-      case ElimTerm.Proj type -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Access type -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Hole type -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Struct type -> {
-        var fieldSigs = type.ref().core.fields;
-        var paramSubst = type.ref().core.telescope().view().zip(type.args().view()).map(x ->
-          Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
-        var fieldSubst = new Substituter.TermSubst(MutableHashMap.of());
-        for (var fieldSig : fieldSigs) {
-          var dummyVars = fieldSig.selfTele.map(par ->
-            new LocalVar(par.ref().name(), par.ref().definition()));
-          var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
-            new Arg<Term>(new RefTerm(vpa._1, vpa._2.type()), vpa._2.explicit()));
-          var l = new CallTerm.Access(lhs, fieldSig.ref(), type.sortArgs(), type.args(), dummy);
-          var r = new CallTerm.Access(rhs, fieldSig.ref(), type.sortArgs(), type.args(), dummy);
-          fieldSubst.add(fieldSig.ref(), l);
-          if (!compare(l, r, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
-        }
-        yield true;
-      }
-      case IntroTerm.Lambda type -> throw new IllegalStateException("LamTerm is never type");
-      case CallTerm.Con type -> throw new IllegalStateException("ConCall is never type");
-      case IntroTerm.Tuple type -> throw new IllegalStateException("TupTerm is never type");
-      case IntroTerm.New newTerm -> throw new IllegalStateException("NewTerm is never type");
-      case ErrorTerm term -> true;
-      case FormTerm.Sigma type -> {
-        var params = type.params().view();
-        for (int i = 1, size = type.params().size(); i <= size; i++) {
-          var l = new ElimTerm.Proj(lhs, i);
-          var currentParam = params.first();
-          if (!compare(l, new ElimTerm.Proj(rhs, i), currentParam.type())) yield false;
-          params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
-        }
-        yield true;
-      }
-      case FormTerm.Pi type -> {
-        var dummyVar = new LocalVar("dummy");
-        var ty = type.param().type();
-        var dummy = new RefTerm(dummyVar, ty);
-        var dummyArg = new Arg<Term>(dummy, type.param().explicit());
-        yield compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type.substBody(dummy));
-      }
-    };
   }
 
   /**
