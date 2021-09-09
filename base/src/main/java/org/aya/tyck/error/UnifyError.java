@@ -2,14 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
-import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
 import org.aya.api.error.Problem;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Zonker;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
