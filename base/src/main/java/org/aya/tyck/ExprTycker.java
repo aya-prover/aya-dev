@@ -139,7 +139,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) term = generatePi(expr);
     if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(expr), expr.sourcePos());
     if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
-      return fail(expr, term, new BadTypeError.Pi(expr, term));
+      return fail(expr, term, BadTypeError.pi(expr, term));
     }
     var param = expr.param();
     if (param.explicit() != dt.param().explicit()) {
@@ -361,7 +361,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitNew(Expr.@NotNull NewExpr expr, @Nullable Term term) {
     var struct = checkNoZonk(expr.struct(), null).wellTyped;
     if (!(struct instanceof CallTerm.Struct structCall))
-      return fail(expr.struct(), struct, new BadTypeError.StructCon(expr, struct));
+      return fail(expr.struct(), struct, BadTypeError.structCon(expr, struct));
     var structRef = structCall.ref();
 
     var subst = new Substituter.TermSubst(MutableMap.create());
@@ -440,7 +440,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var projectee = checkNoZonk(struct, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof CallTerm.Struct structCall))
-      return fail(struct, whnf, new BadTypeError.StructAcc(struct, fieldName, whnf));
+      return fail(struct, whnf, BadTypeError.structAcc(struct, fieldName, whnf));
 
     var structCore = structCall.ref().core;
     if (structCore == null) throw new UnsupportedOperationException("TODO");
@@ -467,7 +467,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var projectee = checkNoZonk(tuple, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof FormTerm.Sigma sigma))
-      return fail(tuple, whnf, new BadTypeError.SigmaAcc(tuple, ix, whnf));
+      return fail(tuple, whnf, BadTypeError.sigmaAcc(tuple, ix, whnf));
     var telescope = sigma.params();
     var index = ix - 1;
     if (index < 0 || index >= telescope.size()) {
@@ -491,7 +491,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var f = checkNoZonk(expr.function(), null);
     var app = f.wellTyped;
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
-      return fail(expr, f.type, new BadTypeError.Pi(expr, f.type));
+      return fail(expr, f.type, BadTypeError.pi(expr, f.type));
     var pi = piTerm;
     var subst = new Substituter.TermSubst(MutableMap.create());
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
@@ -506,7 +506,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           app = CallTerm.make(app, new Arg<>(holeApp, false));
           var newPi = instPi(pi, subst, holeApp);
           if (newPi.isLeft()) pi = newPi.getLeftValue();
-          else return fail(expr, newPi.getRightValue(), new BadTypeError.Pi(expr, newPi.getRightValue()));
+          else return fail(expr, newPi.getRightValue(), BadTypeError.pi(expr, newPi.getRightValue()));
         } else {
           // TODO[ice]: no implicit argument expected, but inserted.
           throw new TyckerException();
@@ -518,7 +518,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       if (iter.hasNext()) {
         var newPi = instPi(pi, subst, elabArg);
         if (newPi.isLeft()) pi = newPi.getLeftValue();
-        else return fail(expr, newPi.getRightValue(), new BadTypeError.Pi(expr, newPi.getRightValue()));
+        else return fail(expr, newPi.getRightValue(), BadTypeError.pi(expr, newPi.getRightValue()));
       }
       subst.map().put(pi.param().ref(), elabArg);
     }
@@ -555,7 +555,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           resultLast.value = result.type;
         });
     } else if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Sigma dt)) {
-      return fail(expr, term, new BadTypeError.SigmaCon(expr, term));
+      return fail(expr, term, BadTypeError.sigmaCon(expr, term));
     } else {
       var againstTele = dt.params().view();
       var last = dt.params().last().type();
