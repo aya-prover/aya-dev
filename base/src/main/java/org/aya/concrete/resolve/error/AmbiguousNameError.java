@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public record AmbiguousNameError(
   @NotNull String name,
   @NotNull ImmutableSeq<Seq<String>> disambiguation,
-  @NotNull SourcePos sourcePos
+  @Override @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Severity level() {
     return Severity.ERROR;

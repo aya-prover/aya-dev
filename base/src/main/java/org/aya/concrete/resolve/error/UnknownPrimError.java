@@ -9,7 +9,7 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record UnknownPrimError(
-  @NotNull SourcePos sourcePos,
+  @Override @NotNull SourcePos sourcePos,
   @NotNull String name
 ) implements Problem {
   @Override public @NotNull Doc describe() {

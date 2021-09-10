@@ -9,10 +9,7 @@ import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record LicitMismatchError(
-  @NotNull Expr expr,
-  @NotNull Term type
-) implements ExprProblem {
+public record LicitMismatchError(@Override @NotNull Expr expr, @NotNull Term type) implements ExprProblem {
   @Override
   public @NotNull Severity level() {
     return Severity.ERROR;

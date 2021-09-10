@@ -33,7 +33,7 @@ public sealed interface Command extends Stmt {
    * @author kiva
    */
   record Bind(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull Either<QualifiedID, OpDecl> op,
     @NotNull BindPred pred,
     @NotNull Either<QualifiedID, OpDecl> target,
@@ -54,7 +54,7 @@ public sealed interface Command extends Stmt {
    * @author re-xyr
    */
   record Import(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull QualifiedID path,
     @Nullable String asName
   ) implements Command {
@@ -72,7 +72,7 @@ public sealed interface Command extends Stmt {
    * @author re-xyr
    */
   record Open(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
     @NotNull QualifiedID path,
     @NotNull UseHide useHide
@@ -108,7 +108,7 @@ public sealed interface Command extends Stmt {
    * @author re-xyr
    */
   record Module(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull String name,
     @NotNull ImmutableSeq<@NotNull Stmt> contents
   ) implements Command {

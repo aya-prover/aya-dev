@@ -14,7 +14,7 @@ public sealed interface Generalize extends Stmt {
   }
 
   record Levels(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<WithPos<LevelGenVar>> levels
   ) implements Generalize {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

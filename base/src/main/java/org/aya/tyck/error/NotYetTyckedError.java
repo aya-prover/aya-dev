@@ -10,10 +10,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
-public record NotYetTyckedError(
-  @NotNull SourcePos sourcePos,
-  @NotNull Var var
-) implements Problem {
+public record NotYetTyckedError(@Override @NotNull SourcePos sourcePos, @NotNull Var var) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.cat(Doc.english("Attempting to use a definition"),
       Doc.styled(Style.code(), BaseDistiller.varDoc(var)),

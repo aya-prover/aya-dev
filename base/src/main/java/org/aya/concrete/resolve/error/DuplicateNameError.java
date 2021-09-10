@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record DuplicateNameError(
   @NotNull String name, @NotNull Var ref,
-  @NotNull SourcePos sourcePos
+  @Override @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(

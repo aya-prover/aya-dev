@@ -28,7 +28,7 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   record Conditions(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     int i, int j,
     @NotNull Term lhs, @Nullable Term rhs,
     @NotNull SourcePos conditionPos,
@@ -60,7 +60,7 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   record Confluence(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     int i, int j,
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
@@ -88,13 +88,16 @@ public sealed interface ClausesProblem extends Problem {
   /**
    * @author ice1000
    */
-  record MissingCase(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<PatTree> pats) implements ClausesProblem {
+  record MissingCase(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<PatTree> pats
+  ) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(t -> t.toDoc(DistillerOptions.DEFAULT))));
     }
   }
 
-  record SplitInterval(@NotNull SourcePos sourcePos, @NotNull Pat pat) implements ClausesProblem {
+  record SplitInterval(@Override @NotNull SourcePos sourcePos, @NotNull Pat pat) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(
         Doc.english("Cannot perform pattern matching"),

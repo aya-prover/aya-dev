@@ -9,7 +9,7 @@ import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 public record QualifiedID(
-  @NotNull SourcePos sourcePos,
+  @Override @NotNull SourcePos sourcePos,
   @NotNull ImmutableSeq<@NotNull String> ids
 ) {
   public QualifiedID(@NotNull SourcePos sourcePos, @NotNull String id) {

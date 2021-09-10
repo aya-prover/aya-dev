@@ -11,7 +11,7 @@ import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record Goal(
-  @NotNull Expr.HoleExpr expr,
+  @Override @NotNull Expr.HoleExpr expr,
   @NotNull Meta meta
 ) implements ExprProblem {
   @Override public @NotNull Doc describe() {

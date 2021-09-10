@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface FieldProblem extends Problem {
   record MissingFieldError(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Var> missing
   ) implements FieldProblem {
     @Override public @NotNull Doc describe() {

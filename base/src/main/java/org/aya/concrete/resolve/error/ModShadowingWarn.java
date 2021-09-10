@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record ModShadowingWarn(
   @NotNull Seq<String> modName,
-  @NotNull SourcePos sourcePos
+  @Override @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Severity level() {
     return Severity.WARN;

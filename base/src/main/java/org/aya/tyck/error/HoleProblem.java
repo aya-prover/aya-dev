@@ -28,8 +28,8 @@ public sealed interface HoleProblem extends Problem {
 
   /** @author ice1000 */
   record BadSpineError(
-    @NotNull CallTerm.Hole term,
-    @NotNull SourcePos sourcePos
+    @Override @NotNull CallTerm.Hole term,
+    @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
@@ -40,10 +40,10 @@ public sealed interface HoleProblem extends Problem {
   }
 
   record BadlyScopedError(
-    @NotNull CallTerm.Hole term,
+    @Override @NotNull CallTerm.Hole term,
     @NotNull Term solved,
     @NotNull Seq<LocalVar> scopeCheck,
-    @NotNull SourcePos sourcePos
+    @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
@@ -62,9 +62,9 @@ public sealed interface HoleProblem extends Problem {
    * @author ice1000
    */
   record RecursionError(
-    @NotNull CallTerm.Hole term,
+    @Override @NotNull CallTerm.Hole term,
     @NotNull Term sol,
-    @NotNull SourcePos sourcePos
+    @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(

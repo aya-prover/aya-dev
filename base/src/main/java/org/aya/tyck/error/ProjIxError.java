@@ -7,7 +7,7 @@ import org.aya.concrete.Expr;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record ProjIxError(@NotNull Expr.ProjExpr expr, int actual, int expectedBound) implements ExprProblem {
+public record ProjIxError(@Override @NotNull Expr.ProjExpr expr, int actual, int expectedBound) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("Cannot project the"),

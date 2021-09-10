@@ -4,7 +4,6 @@ package org.aya.tyck.error;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
-import org.aya.api.error.Problem;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
@@ -12,10 +11,10 @@ import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record UnifyError(
-  @NotNull Expr expr,
+  @Override @NotNull Expr expr,
   @NotNull Term expected,
   @NotNull Term actual
-) implements ExprProblem, Problem {
+) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     return Doc.vcat(
       Doc.english("Cannot check the expression of type"),

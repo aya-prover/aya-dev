@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public record QualifiedNameNotFoundError(
   @NotNull Seq<String> modName,
   @NotNull String name,
-  @NotNull SourcePos sourcePos
+  @Override @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(

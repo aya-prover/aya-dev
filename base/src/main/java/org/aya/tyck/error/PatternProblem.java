@@ -20,7 +20,10 @@ public sealed interface PatternProblem extends Problem {
     return pattern().sourcePos();
   }
 
-  record PossiblePat(@NotNull Pattern pattern, @NotNull CallTerm.ConHead available) implements PatternProblem {
+  record PossiblePat(
+    @Override @NotNull Pattern pattern,
+    @NotNull CallTerm.ConHead available
+  ) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(
         Doc.english("Absurd pattern does not fit here because"),
@@ -34,7 +37,7 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record SplittingOnNonData(@NotNull Pattern pattern, @NotNull Term type) implements PatternProblem {
+  record SplittingOnNonData(@Override @NotNull Pattern pattern, @NotNull Term type) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("Cannot split on a non-inductive type"),
@@ -48,7 +51,7 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record UnavailableCtor(@NotNull Pattern pattern, @NotNull Severity level) implements PatternProblem {
+  record UnavailableCtor(@Override @NotNull Pattern pattern, @NotNull Severity level) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("Cannot match with"),
@@ -59,7 +62,7 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record UnknownCtor(@NotNull Pattern pattern) implements PatternProblem {
+  record UnknownCtor(@Override @NotNull Pattern pattern) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("Unknown constructor"),
@@ -72,7 +75,7 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record TupleNonSig(@NotNull Pattern.Tuple pattern, @NotNull Term type) implements PatternProblem {
+  record TupleNonSig(@Override @NotNull Pattern.Tuple pattern, @NotNull Term type) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("The tuple pattern"),
@@ -87,7 +90,7 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record TooManyPattern(@NotNull Pattern pattern, @NotNull Term retTy) implements PatternProblem {
+  record TooManyPattern(@Override @NotNull Pattern pattern, @NotNull Term retTy) implements PatternProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("There is no parameter for the pattern"),

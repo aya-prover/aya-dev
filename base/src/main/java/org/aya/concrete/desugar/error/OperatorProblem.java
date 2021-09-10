@@ -17,7 +17,7 @@ public final class OperatorProblem {
   public record AmbiguousPredError(
     @NotNull String op1,
     @NotNull String op2,
-    @NotNull SourcePos sourcePos
+    @Override @NotNull SourcePos sourcePos
   ) implements Problem {
     @Override public @NotNull Severity level() {
       return Severity.ERROR;
@@ -39,9 +39,7 @@ public final class OperatorProblem {
     }
   }
 
-  public record BindSelfError(
-    @NotNull SourcePos sourcePos
-  ) implements Problem {
+  public record BindSelfError(@Override @NotNull SourcePos sourcePos) implements Problem {
     @Override public @NotNull Severity level() {
       return Severity.ERROR;
     }

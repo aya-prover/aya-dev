@@ -9,7 +9,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
-public record GeneralizedNotAvailableError(@NotNull Expr expr) implements ExprProblem {
+public record GeneralizedNotAvailableError(@Override @NotNull Expr expr) implements ExprProblem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("The generalized variable"),

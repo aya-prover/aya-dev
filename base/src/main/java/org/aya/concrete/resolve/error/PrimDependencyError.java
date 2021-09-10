@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public record PrimDependencyError(
   @NotNull String name,
   @NotNull ImmutableSeq<PrimDef.ID> lack,
-  @NotNull SourcePos sourcePos
+  @Override @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     assert lack.size() > 0;

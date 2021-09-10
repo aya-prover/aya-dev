@@ -16,14 +16,14 @@ public sealed interface LevelProblem extends ExprProblem {
     return Severity.ERROR;
   }
 
-  record BadTypeExpr(@NotNull Expr.AppExpr expr, int expected)
+  record BadTypeExpr(@Override @NotNull Expr.AppExpr expr, int expected)
     implements LevelProblem {
     @Override public @NotNull Doc describe() {
       return Doc.english("Expected " + expected + " level(s)");
     }
   }
 
-  record BadLevelExpr(@NotNull Expr expr) implements LevelProblem {
+  record BadLevelExpr(@Override @NotNull Expr expr) implements LevelProblem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(Doc.english("Expected level expression, got:"), expr.toDoc(DistillerOptions.DEFAULT));
     }

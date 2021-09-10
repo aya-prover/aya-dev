@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record UnsupportedMarkdown(
-  @NotNull SourcePos sourcePos,
+  @Override @NotNull SourcePos sourcePos,
   @NotNull String nodeName
 ) implements Problem {
   @Override public @NotNull Severity level() {

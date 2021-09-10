@@ -66,7 +66,7 @@ public sealed interface Literate extends Docile {
     }
   }
 
-  record Err(@NotNull Ref<Var> def, @NotNull SourcePos sourcePos) implements Literate {
+  record Err(@NotNull Ref<Var> def, @Override @NotNull SourcePos sourcePos) implements Literate {
     @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
       def.set(context.getUnqualified(def.value.name(), sourcePos));
     }

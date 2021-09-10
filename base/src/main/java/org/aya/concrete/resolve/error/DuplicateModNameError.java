@@ -10,7 +10,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
-public record DuplicateModNameError(@NotNull Seq<String> modName, @NotNull SourcePos sourcePos) implements Problem {
+public record DuplicateModNameError(@NotNull Seq<String> modName, @Override @NotNull SourcePos sourcePos) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("The module name"),

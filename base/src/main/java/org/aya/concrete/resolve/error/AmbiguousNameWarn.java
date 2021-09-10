@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record AmbiguousNameWarn(
   @NotNull String name,
-  @NotNull SourcePos sourcePos
+  @Override @NotNull SourcePos sourcePos
 ) implements Problem {
   @Override public @NotNull Severity level() {
     return Severity.WARN;

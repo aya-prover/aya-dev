@@ -9,7 +9,7 @@ import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record CounterexampleError(@NotNull SourcePos sourcePos, @NotNull Var var) implements Problem {
+public record CounterexampleError(@Override @NotNull SourcePos sourcePos, @NotNull Var var) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("The counterexample"),

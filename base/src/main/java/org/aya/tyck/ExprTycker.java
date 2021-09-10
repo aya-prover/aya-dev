@@ -318,8 +318,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     return fail(term.freezeHoles(levelEqns), upper, new UnifyError(loc, upper, lower));
-    // reporter.report(new UnifyError(loc, upper, lower));
-    // return new Result(new ErrorTerm(term.freezeHoles(levelEqns)), upper);
   }
 
   @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
