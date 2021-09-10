@@ -358,6 +358,19 @@ public sealed interface Doc extends Docile {
     return align(nest(deltaNest, doc));
   }
 
+  /**
+   * indents {@param doc} by {@param indent} columns, starting from the current
+   * cursor position.
+   *
+   * @param indent the indented nesting level
+   * @param doc    document to indent
+   * @return indented document
+   */
+  @Contract("_, _ -> new")
+  static @NotNull Doc indent(int indent, @NotNull Doc doc) {
+    return nest(indent, Doc.cat(Doc.plain(" ".repeat(indent)), doc));
+  }
+
   @Contract("_ -> new")
   static @NotNull Doc ordinal(int n) {
     var m = n % 100;
