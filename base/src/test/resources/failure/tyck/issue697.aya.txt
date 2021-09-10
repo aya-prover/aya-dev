@@ -1,0 +1,12 @@
+In file $FILE:30:63 ->
+
+  28 |   => path (hfill2d p q r right)
+  29 | 
+  30 | def sym {A : Type} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) idp p
+                                                                      ^---^
+
+Error: Want: function type
+       Got: Path (λ _ ⇒ A$) a$ a$
+       Normalized: Path (λ _ ⇒ A$) a$ a$
+       Because we want to type a term such as: idp a
+What are you doing?

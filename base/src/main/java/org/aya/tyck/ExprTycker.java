@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
+import kala.control.Either;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -504,8 +505,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           // that implies paramLicit == false
           var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
           app = CallTerm.make(app, new Arg<>(holeApp, false));
-          pi = instPi(pi, subst, holeApp);
-          if (pi == null) return new Result(new ErrorTerm(expr), f.type);
+          var newPi = instPi(pi, subst, holeApp);
+          if (newPi.isLeft()) pi = newPi.getLeftValue();
+          else return wantButNo(expr, newPi.getRightValue(), "function type");
         } else {
           // TODO[ice]: no implicit argument expected, but inserted.
           throw new TyckerException();
@@ -514,9 +516,12 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var elabArg = checkNoZonk(namedArg.expr(), pi.param().type()).wellTyped;
       app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
       // so, in the end, the pi term is not updated, its body would be the eliminated type
-      if (iter.hasNext()) pi = instPi(pi, subst, elabArg);
-      if (pi == null) return new Result(new ErrorTerm(expr), f.type);
-      else subst.map().put(pi.param().ref(), elabArg);
+      if (iter.hasNext()) {
+        var newPi = instPi(pi, subst, elabArg);
+        if (newPi.isLeft()) pi = newPi.getLeftValue();
+        else return wantButNo(expr, newPi.getRightValue(), "function type");
+      }
+      subst.map().put(pi.param().ref(), elabArg);
     }
     return unifyTyMaybeInsert(term, pi.body().subst(subst), app, expr);
   }
@@ -528,9 +533,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return localCtx.freshHole(param.type(), genName, pos)._2;
   }
 
-  private FormTerm.@Nullable Pi instPi(@NotNull FormTerm.Pi pi, Substituter.TermSubst subst, @NotNull Term arg) {
+  private Either<FormTerm.Pi, Term>
+  instPi(@NotNull FormTerm.Pi pi, Substituter.TermSubst subst, @NotNull Term arg) {
     subst.add(pi.param().ref(), arg);
-    return pi.body().subst(subst).normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi newPi ? newPi : null;
+    var term = pi.body().subst(subst).normalize(NormalizeMode.WHNF);
+    return term instanceof FormTerm.Pi pai ? Either.left(pai) : Either.right(term);
   }
 
   @Rule.Check(partialSynth = true)
