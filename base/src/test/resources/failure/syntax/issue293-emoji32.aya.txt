@@ -5,9 +5,10 @@ In file $FILE:13:14 ->
   13 | def u : 😊 => 🐒
                      ^^
 
-Error: Expected type: 😊
-       Normalized: 😊
-       Actual type: 😂
-       Normalized: 😂
-       They don't match, sorry
+Error: Cannot check the expression of type
+         😂
+         (Normalized: 😂)
+       against the type
+         😊
+         (Normalized: 😊)
 What are you doing?

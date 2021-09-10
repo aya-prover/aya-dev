@@ -5,8 +5,9 @@ In file $FILE:8:6 ->
   8 |  | f, vnil => vnil
             ^--^
 
-Warning: Cannot match with `vnil` due to a failed index unification, treating as
-         bind pattern
+Warning: Cannot match with
+           vnil
+         due to a failed index unification, treating as bind pattern
 In file $FILE:8:14 ->
 
   6 |  | A, suc m => vcons A (Vect A m)
@@ -14,11 +15,12 @@ In file $FILE:8:14 ->
   8 |  | f, vnil => vnil
                     ^--^
 
-Error: Expected type: Vect B n
-       Normalized: Vect B n
-       Actual type: Vect A n
-       Normalized: Vect A n
-       They don't match, sorry
+Error: Cannot check the expression of type
+         Vect A n
+         (Normalized: Vect A n)
+       against the type
+         Vect B n
+         (Normalized: Vect B n)
 In file $FILE:9:6 ->
 
   7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
@@ -26,7 +28,9 @@ In file $FILE:9:6 ->
   9 |  | f, vcons x xs => _
             ^--------^
 
-Error: Cannot match with `vcons x xs` due to a failed index unification
+Error: Cannot match with
+         vcons x xs
+       due to a failed index unification
 In file $FILE:9:6 ->
 
   7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
@@ -34,7 +38,8 @@ In file $FILE:9:6 ->
   9 |  | f, vcons x xs => _
             ^--------^
 
-Error: Unknown constructor `vcons x xs`
+Error: Unknown constructor
+         vcons x xs
 In file $FILE:9:20 ->
 
   7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n

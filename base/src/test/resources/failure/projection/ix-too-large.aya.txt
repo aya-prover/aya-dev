@@ -3,6 +3,5 @@ In file $FILE:1:42 ->
   1 | def test (A B : Type) (p : Sig A ** B) => p.3
                                                 ^-^
 
-Error: Wrong projection index. It should be in range [1, 2] while you wanted the
-       3rd one.
+Error: Cannot project the 3rd element because the type has index range [1, 2]
 What are you doing?

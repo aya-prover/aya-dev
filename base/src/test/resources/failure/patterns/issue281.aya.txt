@@ -17,8 +17,10 @@ In file $FILE:5:4 ->
   8 |  | {suc a}, {b} => suc (add {a} {b})
          ^-------------------------------^ substituted to `suc (add {a} {zero})`
 
-Error: The 2nd and the 3rd clauses are not confluent because we failed to unify `a`
-       and `suc (add {a} {zero})`
+Error: The 2nd and the 3rd clauses are not confluent because we failed to unify
+         a
+       and
+         suc (add {a} {zero})
 In file $FILE:5:4 ->
 
   3 |  | suc Nat
@@ -31,6 +33,8 @@ In file $FILE:5:4 ->
   9 |  | {suc a}, {suc b} => suc (add {a} {b})
          ^-----------------------------------^ substituted to `suc (add {a} {b})`
 
-Error: The 3rd and the 4th clauses are not confluent because we failed to unify `suc
-       (add {a} {suc b})` and `suc (add {a} {b})`
+Error: The 3rd and the 4th clauses are not confluent because we failed to unify
+         suc (add {a} {suc b})
+       and
+         suc (add {a} {b})
 What are you doing?

@@ -5,9 +5,10 @@ In file $FILE:6:35 ->
   6 |   | (suc a, suc b), unit y => suc (max (a, b))
                                          ^--------^
 
-Error: Expected type: Nat
-       Normalized: Nat
-       Actual type: Π (b : Unit) → Nat
-       Normalized: Π (b : Unit) → Nat
-       They don't match, sorry
+Error: Cannot check the expression of type
+         Π (b : Unit) → Nat
+         (Normalized: Π (b : Unit) → Nat)
+       against the type
+         Nat
+         (Normalized: Nat)
 What are you doing?

@@ -5,9 +5,10 @@ In file $FILE:9:15 ->
   9 | def u : Nat => true
                      ^--^
 
-Error: Expected type: Nat
-       Normalized: Nat
-       Actual type: Bool
-       Normalized: Bool
-       They don't match, sorry
+Error: Cannot check the expression of type
+         Bool
+         (Normalized: Bool)
+       against the type
+         Nat
+         (Normalized: Nat)
 What are you doing?

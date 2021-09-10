@@ -5,9 +5,10 @@ In file $FILE:10:28 ->
   10 | def u : ❤️守❤️护❤️最❤️好❤️的❤️ => 🀎
                                    ^^
 
-Error: Expected type: ❤️守❤️护❤️最❤️好❤️的❤️
-       Normalized: ❤️守❤️护❤️最❤️好❤️的❤️
-       Actual type: ❤️
-       Normalized: ❤️
-       They don't match, sorry
+Error: Cannot check the expression of type
+         ❤️
+         (Normalized: ❤️)
+       against the type
+         ❤️守❤️护❤️最❤️好❤️的❤️
+         (Normalized: ❤️守❤️护❤️最❤️好❤️的❤️)
 What are you doing?

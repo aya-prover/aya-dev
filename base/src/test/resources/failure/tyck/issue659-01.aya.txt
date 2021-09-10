@@ -3,7 +3,9 @@ In file $FILE:1:31 ->
   1 | def why {A : Type} : A -> A => \ {x} => x
                                      ^--------^
 
-Error: Cannot check `λ {x} ⇒ x`
-       against Pi type `Π (_ : A) → A`
+Error: Cannot check
+         λ {x} ⇒ x
+       against the Pi type
+         Π (_ : A) → A
        because explicitnesses do not match
 What are you doing?

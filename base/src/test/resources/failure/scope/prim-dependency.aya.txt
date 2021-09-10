@@ -4,6 +4,6 @@ In file $FILE:1:5 ->
            ^--^
   2 | prim right
 
-Error: Prim `left` depends on undeclared prims: `I`
+Error: The prim `left` depends on undeclared prims: `I`
 Parsing interrupted due to error(s).
 What are you doing?

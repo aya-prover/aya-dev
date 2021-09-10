@@ -5,6 +5,6 @@ In file $FILE:2:17 ->
                        ^--^
   3 |  | value : A
 
-Error: The unqualified name referred to by `Prop` is not defined in the current scope
+Error: The name `Prop` is not defined in the current scope
 Resolving interrupted due to error(s).
 What are you doing?

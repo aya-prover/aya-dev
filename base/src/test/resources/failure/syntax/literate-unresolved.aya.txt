@@ -5,7 +5,6 @@ In file $FILE:2:0 ->
       ^-------------------^
   3 | --| test `unresolved`
 
-Error: The unqualified name referred to by `unresolved` is not defined in the current
-       scope
+Error: The name `unresolved` is not defined in the current scope
 Resolving interrupted due to error(s).
 What are you doing?

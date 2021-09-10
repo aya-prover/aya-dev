@@ -5,9 +5,10 @@ In file $FILE:14:30 ->
   14 |   new Pair Nat Nat { | fst => make-pair Nat Nat zero zero | snd => suc zero }
                                      ^-------------------------^
 
-Error: Expected type: Nat
-       Normalized: Nat
-       Actual type: Pair Nat Nat
-       Normalized: Pair Nat Nat
-       They don't match, sorry
+Error: Cannot check the expression of type
+         Pair Nat Nat
+         (Normalized: Pair Nat Nat)
+       against the type
+         Nat
+         (Normalized: Nat)
 What are you doing?

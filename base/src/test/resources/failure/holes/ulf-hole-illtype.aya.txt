@@ -5,11 +5,12 @@ In file $FILE:6:29 ->
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                    ^^
 
-Error: Expected type: Type
-       Normalized: Type
-       Actual type: F _
-       Normalized: F _
-       They don't match, sorry
+Error: Cannot check the expression of type
+         F _
+         (Normalized: F _)
+       against the type
+         Type
+         (Normalized: Type)
 In file $FILE:6:16 ->
 
   4 | def test
@@ -25,11 +26,12 @@ In file $FILE:6:44 ->
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                                   ^--^
 
-Error: Expected type: F <_>
-       Normalized: F <_>
-       Actual type: Nat
-       Normalized: Nat
-       They don't match, sorry
+Error: Cannot check the expression of type
+         Nat
+         (Normalized: Nat)
+       against the type
+         F <_>
+         (Normalized: F <_>)
 In file $FILE:6:42 ->
 
   4 | def test
@@ -37,9 +39,10 @@ In file $FILE:6:42 ->
   6 |  (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
                                                 ^----^
 
-Error: Expected type: Nat
-       Normalized: Nat
-       Actual type: F (Neg <X>)
-       Normalized: F (Π (_ : <X>) → Empty)
-       They don't match, sorry
+Error: Cannot check the expression of type
+         F (Neg <X>)
+         (Normalized: F (Π (_ : <X>) → Empty))
+       against the type
+         Nat
+         (Normalized: Nat)
 What are you doing?

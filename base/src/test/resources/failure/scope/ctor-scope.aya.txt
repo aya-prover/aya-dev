@@ -5,5 +5,5 @@ In file $FILE:4:11 ->
   4 |  | zero => zero
                  ^--^
 
-Error: The unqualified name referred to by `zero` is not defined in the current scope
+Error: The name `zero` is not defined in the current scope
 What are you doing?

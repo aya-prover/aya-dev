@@ -5,9 +5,11 @@ In file $FILE:41:56 ->
   41 | def addN-identity (a : Nat) : Eq (addN a zero) a => idp {? ?}
                                                                ^---^
 
-Goal: Candidate: a
-      Expected type: Nat
-      Normalized: Nat
+Goal: Candidate exists:
+        a
+      Goal of type
+        Nat
+        (Normalized: Nat)
       Context:
       {a : Nat}
 That looks right!

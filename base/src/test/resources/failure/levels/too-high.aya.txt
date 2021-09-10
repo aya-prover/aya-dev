@@ -5,7 +5,6 @@ In file $FILE:1:15 ->
   2 |  | nil
   3 |  | cons A (List A)
 
-Error: The unqualified name referred to by `uType` is not defined in the current
-       scope
+Error: The name `uType` is not defined in the current scope
 Resolving interrupted due to error(s).
 What are you doing?

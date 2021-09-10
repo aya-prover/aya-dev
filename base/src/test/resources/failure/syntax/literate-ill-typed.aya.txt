@@ -4,9 +4,10 @@ In file $FILE:2:0 ->
   2 | --| test `suc Nat`
       ^----------------^
 
-Error: Expected type: Nat
-       Normalized: Nat
-       Actual type: Type
-       Normalized: Type
-       They don't match, sorry
+Error: Cannot check the expression of type
+         Type
+         (Normalized: Type)
+       against the type
+         Nat
+         (Normalized: Nat)
 What are you doing?
