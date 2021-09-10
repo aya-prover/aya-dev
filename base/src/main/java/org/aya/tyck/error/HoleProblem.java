@@ -47,9 +47,9 @@ public sealed interface HoleProblem extends Problem {
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
-        Doc.sep(Doc.english("The solution"),
-          Doc.styled(Style.code(), solved.toDoc(DistillerOptions.DEFAULT)),
-          Doc.plain("is not well-scoped")),
+        Doc.english("The solution"),
+        Doc.indent(1, solved.toDoc(DistillerOptions.DEFAULT)),
+        Doc.plain("is not well-scoped"),
         Doc.cat(Doc.english("In particular, these variables are not in scope:"),
           Doc.ONE_WS,
           Doc.commaList(scopeCheck.view()
@@ -67,11 +67,12 @@ public sealed interface HoleProblem extends Problem {
     @NotNull SourcePos sourcePos
   ) implements HoleProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(
-        Doc.english("Trying to solve hole"),
-        Doc.styled(Style.code(), BaseDistiller.linkDef(term.ref())),
-        Doc.plain("as"),
-        Doc.styled(Style.code(), sol.toDoc(DistillerOptions.DEFAULT)),
+      return Doc.vcat(
+        Doc.sep(
+          Doc.english("Trying to solve hole"),
+          Doc.styled(Style.code(), BaseDistiller.linkDef(term.ref())),
+          Doc.plain("as")),
+        Doc.indent(1, sol.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("which is recursive"));
     }
   }
@@ -88,7 +89,7 @@ public sealed interface HoleProblem extends Problem {
     }
 
     @Override public @NotNull Doc describe() {
-      return Doc.english("Solving equation(s) with not very general solution(s).");
+      return Doc.english("Solving equation(s) with not very general solution(s)");
     }
 
     @Override public @NotNull Severity level() {

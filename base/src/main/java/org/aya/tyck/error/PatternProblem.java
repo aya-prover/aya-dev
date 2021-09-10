@@ -2,14 +2,12 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
-import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
-import org.aya.core.visitor.Zonker;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -38,11 +36,11 @@ public sealed interface PatternProblem extends Problem {
 
   record SplittingOnNonData(@NotNull Pattern pattern, @NotNull Term type) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(
+      return Doc.vcat(
         Doc.english("Cannot split on a non-inductive type"),
-        Doc.styled(Style.code(), type.toDoc(DistillerOptions.DEFAULT)),
+        Doc.indent(1, type.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("with a constructor pattern"),
-        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT)));
+        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT)));
     }
 
     @Override public @NotNull Severity level() {
@@ -52,21 +50,20 @@ public sealed interface PatternProblem extends Problem {
 
   record UnavailableCtor(@NotNull Pattern pattern, @NotNull Severity level) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.cat(
+      return Doc.vcat(
         Doc.english("Cannot match with"),
-        Doc.ONE_WS,
-        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT)),
-        Doc.ONE_WS,
-        Doc.english("due to a failed index unification"),
-        Doc.emptyIf(isError(), () -> Doc.english(", treating as bind pattern")));
+        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT)),
+        Doc.cat(
+          Doc.english("due to a failed index unification"),
+          Doc.emptyIf(isError(), () -> Doc.english(", treating as bind pattern"))));
     }
   }
 
   record UnknownCtor(@NotNull Pattern pattern) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(
+      return Doc.vcat(
         Doc.english("Unknown constructor"),
-        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT))
+        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT))
       );
     }
 
@@ -77,11 +74,11 @@ public sealed interface PatternProblem extends Problem {
 
   record TupleNonSig(@NotNull Pattern.Tuple pattern, @NotNull Term type) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(
+      return Doc.vcat(
         Doc.english("The tuple pattern"),
-        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT)),
-        Doc.english("splits only sigma types, while the actual type"),
-        Doc.styled(Style.code(), type.freezeHoles(null).toDoc(DistillerOptions.DEFAULT)),
+        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT)),
+        Doc.english("splits only on sigma types, while the actual type"),
+        Doc.indent(1, type.freezeHoles(null).toDoc(DistillerOptions.DEFAULT)),
         Doc.english("does not look like one"));
     }
 
@@ -92,14 +89,15 @@ public sealed interface PatternProblem extends Problem {
 
   record TooManyPattern(@NotNull Pattern pattern, @NotNull Term retTy) implements PatternProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(
+      return Doc.vcat(
         Doc.english("There is no parameter for the pattern"),
-        Doc.styled(Style.code(), pattern.toDoc(DistillerOptions.DEFAULT)),
-        Doc.english("to match against (FYI the return type is"),
-        Doc.styled(Style.code(), retTy.toDoc(DistillerOptions.DEFAULT)),
-        Doc.english("and in case it's a function type, you may want to move its parameters before the"),
-        Doc.styled(Style.code(), ":"),
-        Doc.english("in the signature)"));
+        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT)),
+        Doc.english("to match against, given the return type"),
+        Doc.indent(1, retTy.toDoc(DistillerOptions.DEFAULT)),
+        Doc.parened(Doc.sep(
+          Doc.english("and in case it's a function type, you may want to move its parameters before the"),
+          Doc.styled(Style.code(), ":"),
+          Doc.english("in the signature"))));
     }
 
     @Override public @NotNull Severity level() {

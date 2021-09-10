@@ -14,7 +14,7 @@ public record CounterexampleError(@NotNull SourcePos sourcePos, @NotNull Var var
     return Doc.sep(
       Doc.english("The counterexample"),
       BaseDistiller.varDoc(var),
-      Doc.english("does not raise any type error."));
+      Doc.english("does not raise any type error"));
   }
 
   @Override public @NotNull Severity level() {

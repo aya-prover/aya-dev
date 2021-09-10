@@ -16,7 +16,7 @@ public record ModNameNotFoundError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
-      Doc.english("The module name referred to by"),
+      Doc.english("The module name"),
       Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),
       Doc.english("is not defined in the current scope")
     );

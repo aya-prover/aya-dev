@@ -17,10 +17,10 @@ public record AmbiguousNameWarn(
   }
 
   @Override public @NotNull Doc describe() {
-    return Doc.vcat(Doc.sep(Doc.english("The name being defined"),
+    return Doc.vcat(Doc.sep(
+      Doc.english("The name"),
       Doc.styled(Style.code(), Doc.plain(name)),
-      Doc.english("introduces ambiguity.")),
-      Doc.english("It can only be accessed through a qualified name."));
+      Doc.english("introduces ambiguity and can only be accessed through a qualified name")));
   }
 
   @Override public @NotNull Stage stage() {

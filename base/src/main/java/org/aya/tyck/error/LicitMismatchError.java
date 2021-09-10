@@ -7,7 +7,6 @@ import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record LicitMismatchError(
@@ -22,8 +21,10 @@ public record LicitMismatchError(
   @Override
   public @NotNull Doc describe() {
     return Doc.vcat(
-      Doc.sep(Doc.english("Cannot check"), Doc.styled(Style.code(), expr.toDoc(DistillerOptions.DEFAULT))),
-      Doc.sep(Doc.english("against Pi type"), Doc.styled(Style.code(), type.toDoc(DistillerOptions.DEFAULT))),
+      Doc.english("Cannot check"),
+      Doc.indent(1, expr.toDoc(DistillerOptions.DEFAULT)),
+      Doc.english("against the Pi type"),
+      Doc.indent(1, type.toDoc(DistillerOptions.DEFAULT)),
       Doc.english("because explicitnesses do not match")
     );
   }

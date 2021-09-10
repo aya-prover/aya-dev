@@ -13,6 +13,8 @@ import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import kala.value.Ref;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
@@ -137,12 +139,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (term == null) term = generatePi(expr);
     if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(expr), expr.sourcePos());
     if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
-      return wantButNo(expr, term, "pi type");
+      return fail(expr, term, new BadTypeError.Pi(expr, term));
     }
     var param = expr.param();
     if (param.explicit() != dt.param().explicit()) {
-      reporter.report(new LicitMismatchError(expr, dt));
-      return new Result(new ErrorTerm(expr), dt);
+      return fail(expr, dt, new LicitMismatchError(expr, dt));
     }
     var var = param.ref();
     var lamParam = param.type();
@@ -172,8 +173,8 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new FormTerm.Pi(Term.Param.mock(domain, param), codomain);
   }
 
-  private @NotNull Result wantButNo(@NotNull Expr expr, @NotNull Term term, String expectedText) {
-    reporter.report(new BadTypeError(expr, Doc.plain(expectedText), term));
+  private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
+    reporter.report(prob);
     return new Result(new ErrorTerm(expr), term);
   }
 
@@ -316,8 +317,9 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       lower = pi.substBody(mock);
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    reporter.report(new UnifyError(loc, upper, lower));
-    return new Result(new ErrorTerm(term.freezeHoles(levelEqns)), upper);
+    return fail(term.freezeHoles(levelEqns), upper, new UnifyError(loc, upper, lower));
+    // reporter.report(new UnifyError(loc, upper, lower));
+    // return new Result(new ErrorTerm(term.freezeHoles(levelEqns)), upper);
   }
 
   @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
@@ -359,7 +361,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   @Override public Result visitNew(Expr.@NotNull NewExpr expr, @Nullable Term term) {
     var struct = checkNoZonk(expr.struct(), null).wellTyped;
     if (!(struct instanceof CallTerm.Struct structCall))
-      return wantButNo(expr.struct(), struct, "struct type");
+      return fail(expr.struct(), struct, new BadTypeError.StructCon(expr, struct));
     var structRef = structCall.ref();
 
     var subst = new Substituter.TermSubst(MutableMap.create());
@@ -409,12 +411,10 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
 
     if (missing.isNotEmpty()) {
-      reporter.report(new FieldProblem.MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
-      return new Result(new ErrorTerm(expr), structCall);
+      return fail(expr, structCall, new FieldProblem.MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
     }
     if (conFields.isNotEmpty()) {
-      reporter.report(new FieldProblem.NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name)));
-      return new Result(new ErrorTerm(expr), structCall);
+      return fail(expr, structCall, new FieldProblem.NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name)));
     }
 
     if (term != null) unifyTyReported(term, structCall, expr);
@@ -440,7 +440,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var projectee = checkNoZonk(struct, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof CallTerm.Struct structCall))
-      return wantButNo(struct, whnf, "struct type");
+      return fail(struct, whnf, new BadTypeError.StructAcc(struct, fieldName, whnf));
 
     var structCore = structCall.ref().core;
     if (structCore == null) throw new UnsupportedOperationException("TODO");
@@ -467,12 +467,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var projectee = checkNoZonk(tuple, null);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof FormTerm.Sigma sigma))
-      return wantButNo(tuple, whnf, "sigma type");
+      return fail(tuple, whnf, new BadTypeError.SigmaAcc(tuple, ix, whnf));
     var telescope = sigma.params();
     var index = ix - 1;
     if (index < 0 || index >= telescope.size()) {
-      reporter.report(new ProjIxError(proj, ix, telescope.size()));
-      return new Result(new ErrorTerm(proj), ErrorTerm.typeOf(proj));
+      return fail(proj, ErrorTerm.typeOf(proj), new ProjIxError(proj, ix, telescope.size()));
     }
     var type = telescope.get(index).type();
     var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
@@ -492,7 +491,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     var f = checkNoZonk(expr.function(), null);
     var app = f.wellTyped;
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
-      return wantButNo(expr, f.type, "pi type");
+      return fail(expr, f.type, new BadTypeError.Pi(expr, f.type));
     var pi = piTerm;
     var subst = new Substituter.TermSubst(MutableMap.create());
     for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
@@ -507,7 +506,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           app = CallTerm.make(app, new Arg<>(holeApp, false));
           var newPi = instPi(pi, subst, holeApp);
           if (newPi.isLeft()) pi = newPi.getLeftValue();
-          else return wantButNo(expr, newPi.getRightValue(), "function type");
+          else return fail(expr, newPi.getRightValue(), new BadTypeError.Pi(expr, newPi.getRightValue()));
         } else {
           // TODO[ice]: no implicit argument expected, but inserted.
           throw new TyckerException();
@@ -519,7 +518,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       if (iter.hasNext()) {
         var newPi = instPi(pi, subst, elabArg);
         if (newPi.isLeft()) pi = newPi.getLeftValue();
-        else return wantButNo(expr, newPi.getRightValue(), "function type");
+        else return fail(expr, newPi.getRightValue(), new BadTypeError.Pi(expr, newPi.getRightValue()));
       }
       subst.map().put(pi.param().ref(), elabArg);
     }
@@ -556,7 +555,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
           resultLast.value = result.type;
         });
     } else if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Sigma dt)) {
-      return wantButNo(expr, term, "sigma type");
+      return fail(expr, term, new BadTypeError.SigmaCon(expr, term));
     } else {
       var againstTele = dt.params().view();
       var last = dt.params().last().type();

@@ -17,7 +17,7 @@ public record NotYetTyckedError(
   @Override public @NotNull Doc describe() {
     return Doc.cat(Doc.english("Attempting to use a definition"),
       Doc.styled(Style.code(), BaseDistiller.varDoc(var)),
-      Doc.english("which is not yet type checked"));
+      Doc.english("which is not yet typechecked"));
   }
 
   @Override public @NotNull Severity level() {

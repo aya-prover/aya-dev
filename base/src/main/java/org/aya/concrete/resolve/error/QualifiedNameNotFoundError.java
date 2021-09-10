@@ -18,7 +18,7 @@ public record QualifiedNameNotFoundError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
-      Doc.english("The qualified name referred to by"),
+      Doc.english("The qualified name"),
       Doc.styled(Style.code(),
         Doc.cat(Doc.plain(QualifiedID.join(modName)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
       Doc.english("is not defined in the current scope")

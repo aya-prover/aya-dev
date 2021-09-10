@@ -20,7 +20,7 @@ public record ModShadowingWarn(
 
   @Override public @NotNull Doc describe() {
     return Doc.sep(
-      Doc.english("The newly created module name"),
+      Doc.english("The module name"),
       Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),
       Doc.english("shadows a previous definition from outer scope")
     );

@@ -66,15 +66,16 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
-      return Doc.sep(
-        Doc.plain("The"),
-        Doc.ordinal(i),
-        Doc.english("and the"),
-        Doc.ordinal(j),
-        Doc.english("clauses are not confluent because we failed to unify"),
-        Doc.styled(Style.code(), lhs.toDoc(DistillerOptions.DEFAULT)),
+      return Doc.vcat(
+        Doc.sep(
+          Doc.plain("The"),
+          Doc.ordinal(i),
+          Doc.english("and the"),
+          Doc.ordinal(j),
+          Doc.english("clauses are not confluent because we failed to unify")),
+        Doc.indent(1, lhs.toDoc(DistillerOptions.DEFAULT)),
         Doc.plain("and"),
-        Doc.styled(Style.code(), rhs.toDoc(DistillerOptions.DEFAULT))
+        Doc.indent(1, rhs.toDoc(DistillerOptions.DEFAULT))
       );
     }
 

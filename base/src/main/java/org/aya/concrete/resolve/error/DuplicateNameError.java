@@ -16,7 +16,7 @@ public record DuplicateNameError(
 ) implements Problem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
-      Doc.english("The name being added"),
+      Doc.english("The name"),
       Doc.plain(name),
       Doc.parened(Doc.styled(Style.code(), BaseDistiller.varDoc(ref))),
       Doc.english("is already defined elsewhere")
