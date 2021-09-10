@@ -18,9 +18,9 @@ public interface BadTypeError extends ExprProblem {
 
   private static @NotNull Doc genDescribe(@NotNull Expr expr, @NotNull Term actualType, @NotNull Doc action, @NotNull Doc thing, @NotNull Doc desired) {
     return Doc.vcat(
-      Doc.sep(Doc.plain("Unable to"), action, Doc.plain("the expression")),
+      Doc.sep(Doc.english("Unable to"), action, Doc.english("the expression")),
       Doc.par(1, expr.toDoc(DistillerOptions.DEFAULT)),
-      Doc.sep(Doc.plain("because the type"), thing, Doc.plain("is not a"), Doc.cat(desired, Doc.plain(",")), Doc.plain("but instead:")),
+      Doc.sep(Doc.english("because the type"), thing, Doc.english("is not a"), Doc.cat(desired, Doc.plain(",")), Doc.english("but instead:")),
       Doc.par(1, actualType.toDoc(DistillerOptions.DEFAULT)),
       Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualType.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT))))
     );
@@ -31,7 +31,8 @@ public interface BadTypeError extends ExprProblem {
     @NotNull Term actualType
   ) implements BadTypeError {
     @Override public @NotNull Doc describe() {
-      return genDescribe(expr, actualType, Doc.plain("apply"), Doc.plain("of what you applied"), Doc.plain("Pi type"));
+      return genDescribe(expr, actualType, Doc.plain("apply"),
+        Doc.english("of what you applied"), Doc.english("Pi type"));
     }
   }
 
@@ -42,9 +43,9 @@ public interface BadTypeError extends ExprProblem {
   ) implements BadTypeError {
     @Override public @NotNull Doc describe() {
       return genDescribe(expr, actualType,
-        Doc.sep(Doc.plain("project the"), Doc.ordinal(ix), Doc.plain("element of")),
-        Doc.plain("of what you projected on"),
-        Doc.plain("Sigma type"));
+        Doc.sep(Doc.english("project the"), Doc.ordinal(ix), Doc.english("element of")),
+        Doc.english("of what you projected on"),
+        Doc.english("Sigma type"));
     }
   }
 
@@ -55,8 +56,8 @@ public interface BadTypeError extends ExprProblem {
     @Override public @NotNull Doc describe() {
       return genDescribe(expr, actualType,
         Doc.sep(Doc.plain("construct")),
-        Doc.plain("you checks it against"),
-        Doc.plain("Sigma type"));
+        Doc.english("you checks it against"),
+        Doc.english("Sigma type"));
     }
   }
 
@@ -67,9 +68,9 @@ public interface BadTypeError extends ExprProblem {
   ) implements BadTypeError {
     @Override public @NotNull Doc describe() {
       return genDescribe(expr, actualType,
-        Doc.sep(Doc.plain("access field"), Doc.styled(Style.code(), Doc.plain(fieldName)), Doc.plain("of")),
-        Doc.plain("of what you accessed"),
-        Doc.plain("struct type"));
+        Doc.sep(Doc.english("access field"), Doc.styled(Style.code(), Doc.plain(fieldName)), Doc.plain("of")),
+        Doc.english("of what you accessed"),
+        Doc.english("struct type"));
     }
   }
 
@@ -80,8 +81,8 @@ public interface BadTypeError extends ExprProblem {
     @Override public @NotNull Doc describe() {
       return genDescribe(expr, actualType,
         Doc.sep(Doc.plain("construct")),
-        Doc.plain("you gave"),
-        Doc.plain("struct type"));
+        Doc.english("you gave"),
+        Doc.english("struct type"));
     }
   }
 }
