@@ -199,23 +199,23 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc hyperLink(@NotNull String plain, @NotNull LinkId link) {
-    return hyperLink(Doc.plain(plain), link);
+    return hyperLink(plain(plain), link);
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {
-    return new Doc.Styled(Seq.of(style), doc);
+    return new Styled(Seq.of(style), doc);
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull String plain) {
-    return new Doc.Styled(Seq.of(style), Doc.plain(plain));
+    return new Styled(Seq.of(style), plain(plain));
   }
 
   static @NotNull Doc styled(@NotNull Styles builder, @NotNull Doc doc) {
-    return new Doc.Styled(builder.styles, doc);
+    return new Styled(builder.styles, doc);
   }
 
   static @NotNull Doc styled(@NotNull Styles builder, @NotNull String plain) {
-    return new Doc.Styled(builder.styles, Doc.plain(plain));
+    return new Styled(builder.styles, plain(plain));
   }
 
   static @NotNull Doc licit(boolean explicit, Doc doc) {
@@ -223,7 +223,7 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc wrap(String leftSymbol, String rightSymbol, Doc doc) {
-    return Doc.cat(Doc.symbol(leftSymbol), doc, Doc.symbol(rightSymbol));
+    return cat(symbol(leftSymbol), doc, symbol(rightSymbol));
   }
 
   static @NotNull Doc braced(Doc doc) {
@@ -359,23 +359,23 @@ public sealed interface Doc extends Docile {
   }
 
   /**
-   * indents {@param doc} by {@param indent} columns, starting from the current
-   * cursor position.
+   * Indents {@param doc} by {@param indent} columns, and then indent the first line again
+   * by {@param indent} columns.
    *
    * @param indent the indented nesting level
    * @param doc    document to indent
    * @return indented document
    */
   @Contract("_, _ -> new")
-  static @NotNull Doc indent(int indent, @NotNull Doc doc) {
-    return nest(indent, Doc.cat(Doc.plain(" ".repeat(indent)), doc));
+  static @NotNull Doc par(int indent, @NotNull Doc doc) {
+    return nest(indent, cat(plain(" ".repeat(indent)), doc));
   }
 
   @Contract("_ -> new")
   static @NotNull Doc ordinal(int n) {
     var m = n % 100;
-    if (m >= 4 && m <= 20) return Doc.plain(n + "th");
-    return Doc.plain(n + switch (n % 10) {
+    if (m >= 4 && m <= 20) return plain(n + "th");
+    return plain(n + switch (n % 10) {
       case 1 -> "st";
       case 2 -> "nd";
       case 3 -> "rd";
@@ -479,7 +479,7 @@ public sealed interface Doc extends Docile {
   }
 
   @Contract("_ -> new") static @NotNull Doc commaList(@NotNull SeqLike<Doc> docs) {
-    return join(new Cat(ImmutableSeq.of(Doc.plain(","), ALT_WS)), docs);
+    return join(cat(plain(","), ALT_WS), docs);
   }
 
   @Contract("_, _ -> new") static @NotNull Doc join(@NotNull Doc delim, Doc @NotNull ... docs) {
@@ -488,7 +488,7 @@ public sealed interface Doc extends Docile {
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
-    if (docs.size() == 0) return Doc.empty();
+    if (docs.size() == 0) return empty();
     var first = docs.first();
     if (docs.size() == 1) return first;
     return simpleCat(docs.view().drop(1).foldLeft(Buffer.of(first), (l, r) -> {

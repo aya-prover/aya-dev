@@ -73,9 +73,9 @@ public sealed interface ClausesProblem extends Problem {
           Doc.english("and the"),
           Doc.ordinal(j),
           Doc.english("clauses are not confluent because we failed to unify")),
-        Doc.indent(1, lhs.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, lhs.toDoc(DistillerOptions.DEFAULT)),
         Doc.plain("and"),
-        Doc.indent(1, rhs.toDoc(DistillerOptions.DEFAULT))
+        Doc.par(1, rhs.toDoc(DistillerOptions.DEFAULT))
       );
     }
 

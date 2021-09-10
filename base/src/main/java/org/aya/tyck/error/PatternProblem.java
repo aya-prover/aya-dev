@@ -38,9 +38,9 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("Cannot split on a non-inductive type"),
-        Doc.indent(1, type.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, type.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("with a constructor pattern"),
-        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT)));
+        Doc.par(1, pattern.toDoc(DistillerOptions.DEFAULT)));
     }
 
     @Override public @NotNull Severity level() {
@@ -52,7 +52,7 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("Cannot match with"),
-        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, pattern.toDoc(DistillerOptions.DEFAULT)),
         Doc.cat(
           Doc.english("due to a failed index unification"),
           Doc.emptyIf(isError(), () -> Doc.english(", treating as bind pattern"))));
@@ -63,7 +63,7 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("Unknown constructor"),
-        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT))
+        Doc.par(1, pattern.toDoc(DistillerOptions.DEFAULT))
       );
     }
 
@@ -76,9 +76,9 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("The tuple pattern"),
-        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, pattern.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("splits only on sigma types, while the actual type"),
-        Doc.indent(1, type.freezeHoles(null).toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, type.freezeHoles(null).toDoc(DistillerOptions.DEFAULT)),
         Doc.english("does not look like one"));
     }
 
@@ -91,9 +91,9 @@ public sealed interface PatternProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("There is no parameter for the pattern"),
-        Doc.indent(1, pattern.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, pattern.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("to match against, given the return type"),
-        Doc.indent(1, retTy.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, retTy.toDoc(DistillerOptions.DEFAULT)),
         Doc.parened(Doc.sep(
           Doc.english("and in case it's a function type, you may want to move its parameters before the"),
           Doc.styled(Style.code(), ":"),

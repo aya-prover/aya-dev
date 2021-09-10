@@ -22,9 +22,9 @@ public record LicitMismatchError(
   public @NotNull Doc describe() {
     return Doc.vcat(
       Doc.english("Cannot check"),
-      Doc.indent(1, expr.toDoc(DistillerOptions.DEFAULT)),
+      Doc.par(1, expr.toDoc(DistillerOptions.DEFAULT)),
       Doc.english("against the Pi type"),
-      Doc.indent(1, type.toDoc(DistillerOptions.DEFAULT)),
+      Doc.par(1, type.toDoc(DistillerOptions.DEFAULT)),
       Doc.english("because explicitnesses do not match")
     );
   }

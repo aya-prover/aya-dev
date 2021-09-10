@@ -19,11 +19,11 @@ public record UnifyError(
   @Override public @NotNull Doc describe() {
     return Doc.vcat(
       Doc.english("Cannot check the expression of type"),
-      Doc.indent(1, actual.toDoc(DistillerOptions.DEFAULT)),
-      Doc.indent(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actual.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)))),
+      Doc.par(1, actual.toDoc(DistillerOptions.DEFAULT)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actual.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)))),
       Doc.english("against the type"),
-      Doc.indent(1, expected.toDoc(DistillerOptions.DEFAULT)),
-      Doc.indent(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expected.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT))))
+      Doc.par(1, expected.toDoc(DistillerOptions.DEFAULT)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expected.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT))))
     );
   }
 

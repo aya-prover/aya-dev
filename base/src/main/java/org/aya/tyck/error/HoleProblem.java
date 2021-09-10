@@ -48,7 +48,7 @@ public sealed interface HoleProblem extends Problem {
     @Override public @NotNull Doc describe() {
       return Doc.vcat(
         Doc.english("The solution"),
-        Doc.indent(1, solved.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, solved.toDoc(DistillerOptions.DEFAULT)),
         Doc.plain("is not well-scoped"),
         Doc.cat(Doc.english("In particular, these variables are not in scope:"),
           Doc.ONE_WS,
@@ -72,7 +72,7 @@ public sealed interface HoleProblem extends Problem {
           Doc.english("Trying to solve hole"),
           Doc.styled(Style.code(), BaseDistiller.linkDef(term.ref())),
           Doc.plain("as")),
-        Doc.indent(1, sol.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, sol.toDoc(DistillerOptions.DEFAULT)),
         Doc.english("which is recursive"));
     }
   }

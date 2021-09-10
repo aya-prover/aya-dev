@@ -19,10 +19,10 @@ public interface BadTypeError extends ExprProblem {
   private static @NotNull Doc genDescribe(@NotNull Expr expr, @NotNull Term actualType, @NotNull Doc action, @NotNull Doc thing, @NotNull Doc desired) {
     return Doc.vcat(
       Doc.sep(Doc.plain("Unable to"), action, Doc.plain("the expression")),
-      Doc.indent(1, expr.toDoc(DistillerOptions.DEFAULT)),
+      Doc.par(1, expr.toDoc(DistillerOptions.DEFAULT)),
       Doc.sep(Doc.plain("because the type"), thing, Doc.plain("is not a"), Doc.cat(desired, Doc.plain(",")), Doc.plain("but instead:")),
-      Doc.indent(1, actualType.toDoc(DistillerOptions.DEFAULT)),
-      Doc.indent(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualType.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT))))
+      Doc.par(1, actualType.toDoc(DistillerOptions.DEFAULT)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actualType.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT))))
     );
   }
 

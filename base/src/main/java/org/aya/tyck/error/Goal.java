@@ -17,13 +17,13 @@ public record Goal(
   @Override public @NotNull Doc describe() {
     var doc = Doc.vcat(
       Doc.english("Goal of type"),
-      Doc.indent(1, meta.result.toDoc(DistillerOptions.DEFAULT)),
-      Doc.indent(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)))),
+      Doc.par(1, meta.result.toDoc(DistillerOptions.DEFAULT)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)))),
       Doc.plain("Context:"),
       Doc.vcat(meta.fullTelescope().map(param -> param.toDoc(DistillerOptions.DEFAULT)))
     );
     return meta.body == null ? doc :
-      Doc.vcat(Doc.plain("Candidate exists:"), Doc.indent(1, meta.body.toDoc(DistillerOptions.DEFAULT)), doc);
+      Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, meta.body.toDoc(DistillerOptions.DEFAULT)), doc);
   }
 
   @Override public @NotNull Severity level() {
