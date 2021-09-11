@@ -132,7 +132,7 @@ public class ZzsSolver {
 
   int[][] dfs(ArrayList<Equation> l, int pos, int[][] g) throws UnsatException {
     if (pos >= l.size()) {
-      if (!floyd(g)) {
+      if (floyd(g)) {
         throw new UnsatException();
       } else {
         return g;
@@ -259,28 +259,19 @@ public class ZzsSolver {
   }
 
   public static void main(String[] args) throws UnsatException {
-    var res = new ZzsSolver().solve(List.of(
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("zero.u", true), 0))), new Max(List.of(new Reference(new Var("Monoid.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("zero.u", true), 0))), new Max(List.of(new Reference(new Var("Monoid.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(10000))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
+    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
       new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Monoid.u", true), 0))), new Max(List.of(new Reference(new Var("Monoid.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("zero.u", true), 0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("zero.u", true), 0))), new Max(List.of(new Reference(new Var("zero.u", true), 0)))))
-    );
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Semigroup.u", true), 0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0))))));
     System.out.println(res);
   }
 }
