@@ -57,7 +57,7 @@ import static org.aya.util.Constants.ANONYMOUS_PREFIX;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl}s.
  */
-public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
+public class ExprTycker {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx;
   public final @Nullable Trace.Builder traceBuilder;
@@ -70,8 +70,200 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override public void traceEntrance(@NotNull Expr expr, Term term) {
+  public void traceEntrance(@NotNull Expr expr, Term term) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, term == null ? null : term.freezeHoles(levelEqns))));
+  }
+
+  public @NotNull Result synthesize(@NotNull Expr expr) {
+    return switch (expr) {
+      case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
+      case Expr.UnivExpr univ -> {
+        var sort = transformLevel(univ.level(), universe);
+        yield new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.lift(1)));
+      }
+      case Expr.RefExpr ref -> {
+        var result = doVisitRef(ref, null);
+        ref.theCore().set(result.wellTyped);
+        yield result;
+      }
+      case Expr.PiExpr pi -> inherit(pi, FormTerm.Univ.OMEGA);
+      case Expr.SigmaExpr sigma -> inherit(sigma, FormTerm.Univ.OMEGA);
+      case Expr.NewExpr newExpr -> {
+        var struct = synthesize(newExpr.struct()).wellTyped;
+        if (!(struct instanceof CallTerm.Struct structCall))
+          yield fail(newExpr.struct(), struct, BadTypeError.structCon(newExpr, struct));
+        var structRef = structCall.ref();
+
+        var subst = new Substituter.TermSubst(MutableMap.create());
+        var structTele = Def.defTele(structRef);
+        structTele.view().zip(structCall.args())
+          .forEach(t -> subst.add(t._1.ref(), t._2.term()));
+
+        var fields = Buffer.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>create();
+        var missing = Buffer.<Var>create();
+        var conFields = newExpr.fields();
+
+        for (var defField : structRef.core.fields) {
+          var conFieldOpt = conFields.find(t -> t.name().equals(defField.ref().name()));
+          if (conFieldOpt.isEmpty()) {
+            if (defField.body.isEmpty())
+              missing.append(defField.ref()); // no value available, skip and prepare error reporting
+            else {
+              // use default value from defField
+              var field = defField.body.get().subst(subst);
+              fields.append(Tuple.of(defField.ref(), field));
+              subst.add(defField.ref(), field);
+            }
+            continue;
+          }
+          var conField = conFieldOpt.get();
+          conFields = conFields.dropWhile(t -> t == conField);
+          var type = Def.defResult(defField.ref()).subst(subst);
+          var fieldSubst = new ExprRefSubst(reporter);
+          var telescope = defField.ref().core.selfTele;
+          var bindings = conField.bindings();
+          if (telescope.sizeLessThan(bindings.size())) {
+            // TODO[ice]: number of args don't match
+            throw new TyckerException();
+          }
+          var teleView = telescope.view();
+          for (int i = 0; i < bindings.size(); i++) {
+            fieldSubst.good().put(bindings.get(i).data(), teleView.first().ref());
+            teleView = teleView.drop(1);
+          }
+          final var teleViewFinal = teleView;
+          var field = localCtx.with(telescope, () -> checkNoZonk(
+            conField.body()
+              .accept(fieldSubst, Unit.unit()),
+            FormTerm.Pi.make(teleViewFinal, type)).wellTyped);
+          fields.append(Tuple.of(defField.ref(), field));
+          subst.add(defField.ref(), field);
+        }
+
+        if (missing.isNotEmpty())
+          yield fail(newExpr, structCall, new FieldProblem.MissingFieldError(newExpr.sourcePos(), missing.toImmutableSeq()));
+        if (conFields.isNotEmpty())
+          yield fail(newExpr, structCall, new FieldProblem.NoSuchFieldError(newExpr.sourcePos(), conFields.map(Expr.Field::name)));
+        yield new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
+      }
+      case Expr.ProjExpr proj -> {
+        var result = doVisitProj(proj, null);
+        proj.theCore().set(result.wellTyped);
+        yield result;
+      }
+      case Expr.TupExpr tuple -> visitTup(tuple, null);
+      case Expr.AppExpr app -> visitApp(app, null);
+      case Expr.HoleExpr hole -> visitHole(hole, null);
+      case Expr.UnresolvedExpr e -> catchUnhandled(e, null);
+      case Expr.RawUnivExpr e -> catchUnhandled(e, null);
+      case Expr.LitIntExpr e -> catchUnhandled(e, null);
+      case Expr.LSucExpr e -> catchUnhandled(e, null);
+      case Expr.LMaxExpr e -> catchUnhandled(e, null);
+      case Expr.LitStringExpr e -> catchUnhandled(e, null);
+      case Expr.BinOpSeq e -> catchUnhandled(e, null);
+      case Expr.ErrorExpr e -> catchUnhandled(e, null);
+    };
+  }
+
+  public @NotNull Result inherit(@NotNull Expr expr, @NotNull Term term) {
+    return switch (expr) {
+      case Expr.TupExpr tuple -> visitTup(tuple, term);
+      case Expr.HoleExpr hole -> visitHole(hole, term);
+      case Expr.AppExpr app -> visitApp(app, term);
+      case Expr.UnresolvedExpr e -> catchUnhandled(e, null);
+      case Expr.RawUnivExpr e -> catchUnhandled(e, null);
+      case Expr.LitIntExpr e -> catchUnhandled(e, null);
+      case Expr.LSucExpr e -> catchUnhandled(e, null);
+      case Expr.LMaxExpr e -> catchUnhandled(e, null);
+      case Expr.LitStringExpr e -> catchUnhandled(e, null);
+      case Expr.BinOpSeq e -> catchUnhandled(e, null);
+      case Expr.ErrorExpr e -> catchUnhandled(e, null);
+      case Expr.UnivExpr univExpr -> {
+        var sort = transformLevel(univExpr.level(), universe);
+        var normTerm = term.normalize(NormalizeMode.WHNF);
+        if (normTerm instanceof FormTerm.Univ univ) {
+          levelEqns.add(sort.lift(1), univ.sort(), Ordering.Lt, univExpr.sourcePos());
+          yield new Result(new FormTerm.Univ(sort), univ);
+        } else {
+          var succ = new FormTerm.Univ(sort.lift(1));
+          unifyTyReported(normTerm, succ, univExpr);
+        }
+        yield new Result(new FormTerm.Univ(sort), term);
+      }
+      case Expr.RefExpr ref -> {
+        var result = doVisitRef(ref, term);
+        ref.theCore().set(result.wellTyped);
+        yield result;
+      }
+      case Expr.LamExpr lam -> {
+        if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
+        if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
+          yield fail(lam, term, BadTypeError.pi(lam, term));
+        }
+        var param = lam.param();
+        if (param.explicit() != dt.param().explicit()) {
+          yield fail(lam, dt, new LicitMismatchError(lam, dt));
+        }
+        var var = param.ref();
+        var lamParam = param.type();
+        var type = dt.param().type();
+        if (lamParam != null) {
+          var result = checkNoZonk(lamParam, FormTerm.Univ.OMEGA);
+          var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
+          if (!comparison) {
+            // TODO[ice]: expected type mismatch lambda type annotation
+            throw new TyckerException();
+          } else type = result.wellTyped;
+        }
+        var resultParam = new Term.Param(var, type, param.explicit());
+        yield localCtx.with(resultParam, () -> {
+          var body = dt.substBody(resultParam.toTerm());
+          var rec = checkNoZonk(lam.body(), body);
+          return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
+        });
+      }
+      case Expr.PiExpr pi -> {
+        var param = pi.param();
+        final var var = param.ref();
+        var type = param.type();
+        if (type == null) type = new Expr.HoleExpr(param.sourcePos(), false, null);
+        var result = checkNoZonk(type, term);
+        var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
+        yield localCtx.with(resultParam, () -> {
+          var last = checkNoZonk(pi.last(), term);
+          return new Result(new FormTerm.Pi(resultParam, last.wellTyped), term);
+        });
+      }
+      case Expr.SigmaExpr sigma -> {
+        var resultTele = Buffer.<Tuple3<LocalVar, Boolean, Term>>create();
+        sigma.params().forEach(tuple -> {
+          final var type = tuple.type();
+          if (type == null) {
+            // TODO[ice]: report error or generate meta?
+            //  I guess probably report error for now.
+            throw new TyckerException();
+          }
+          var result = checkNoZonk(type, term);
+          var ref = tuple.ref();
+          localCtx.put(ref, result.wellTyped);
+          resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
+        });
+        sigma.params().view()
+          .map(Expr.Param::ref)
+          .forEach(localCtx.localMap()::remove);
+        yield new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), term);
+      }
+      case Expr.NewExpr newExpr -> {
+        var result = synthesize(newExpr);
+        if (term != null) unifyTyReported(term, result.type, newExpr);
+        yield result;
+      }
+      case Expr.ProjExpr proj -> {
+        var result = doVisitProj(proj, term);
+        proj.theCore().set(result.wellTyped);
+        yield result;
+      }
+    };
   }
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
@@ -81,7 +273,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       .toImmutableSeq();
   }
 
-  @Override public void traceExit(Result result, @NotNull Expr expr, Term p) {
+  public void traceExit(Result result, @NotNull Expr expr, Term p) {
     tracing(builder -> {
       builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(levelEqns), result.type.freezeHoles(levelEqns), expr.sourcePos()));
       builder.reduce();
@@ -118,7 +310,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       var body = localCtx.with(implicitParam, () ->
         checkNoZonk(expr, pi.substBody(implicitParam.toTerm()))).wellTyped;
       return new Result(new IntroTerm.Lambda(implicitParam, body), pi);
-    } else return expr.accept(this, type);
+    } else return type == null ? synthesize(expr) : inherit(expr, type);
   }
 
   private static boolean needImplicitParamIns(@NotNull Expr expr, @NotNull FormTerm.Pi type) {
@@ -132,36 +324,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     solveMetas();
     var pos = expr.sourcePos();
     return new Result(result.wellTyped.zonk(this, pos), result.type.zonk(this, pos));
-  }
-
-  @Rule.Check(partialSynth = true)
-  @Override public Result visitLam(Expr.@NotNull LamExpr expr, @Nullable Term term) {
-    if (term == null) term = generatePi(expr);
-    if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(expr), expr.sourcePos());
-    if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
-      return fail(expr, term, BadTypeError.pi(expr, term));
-    }
-    var param = expr.param();
-    if (param.explicit() != dt.param().explicit()) {
-      return fail(expr, dt, new LicitMismatchError(expr, dt));
-    }
-    var var = param.ref();
-    var lamParam = param.type();
-    var type = dt.param().type();
-    if (lamParam != null) {
-      var result = checkNoZonk(lamParam, FormTerm.Univ.OMEGA);
-      var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
-      if (!comparison) {
-        // TODO[ice]: expected type mismatch lambda type annotation
-        throw new TyckerException();
-      } else type = result.wellTyped;
-    }
-    var resultParam = new Term.Param(var, type, param.explicit());
-    return localCtx.with(resultParam, () -> {
-      var body = dt.substBody(resultParam.toTerm());
-      var rec = checkNoZonk(expr.body(), body);
-      return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
-    });
   }
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {
@@ -188,26 +350,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
       case Level.Constant<LevelGenVar> c -> new Level.Constant<>(c.value());
       default -> throw new IllegalArgumentException(level.toString());
     });
-  }
-
-  @Rule.Synth @Override public Result visitUniv(Expr.@NotNull UnivExpr expr, @Nullable Term term) {
-    var sort = transformLevel(expr.level(), universe);
-    if (term == null) return new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.lift(1)));
-    var normTerm = term.normalize(NormalizeMode.WHNF);
-    if (normTerm instanceof FormTerm.Univ univ) {
-      levelEqns.add(sort.lift(1), univ.sort(), Ordering.Lt, expr.sourcePos());
-      return new Result(new FormTerm.Univ(sort), univ);
-    } else {
-      var succ = new FormTerm.Univ(sort.lift(1));
-      unifyTyReported(normTerm, succ, expr);
-      return new Result(new FormTerm.Univ(sort), succ);
-    }
-  }
-
-  @Rule.Synth @Override public Result visitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
-    var result = doVisitRef(expr, term);
-    expr.theCore().set(result.wellTyped);
-    return result;
   }
 
   @NotNull private Result doVisitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
@@ -320,111 +462,6 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return fail(term.freezeHoles(levelEqns), upper, new UnifyError(loc, upper, lower));
   }
 
-  @Rule.Synth @Override public Result visitPi(Expr.@NotNull PiExpr expr, @Nullable Term term) {
-    final var against = term != null ? term : new FormTerm.Univ(Sort.OMEGA);
-    var param = expr.param();
-    final var var = param.ref();
-    var type = param.type();
-    if (type == null) type = new Expr.HoleExpr(param.sourcePos(), false, null);
-    var result = checkNoZonk(type, against);
-    var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
-    return localCtx.with(resultParam, () -> {
-      var last = checkNoZonk(expr.last(), against);
-      return new Result(new FormTerm.Pi(resultParam, last.wellTyped), against);
-    });
-  }
-
-  @Rule.Synth @Override public Result visitSigma(Expr.@NotNull SigmaExpr expr, @Nullable Term term) {
-    final var against = term != null ? term : new FormTerm.Univ(Sort.OMEGA);
-    var resultTele = Buffer.<Tuple3<LocalVar, Boolean, Term>>create();
-    expr.params().forEach(tuple -> {
-      final var type = tuple.type();
-      if (type == null) {
-        // TODO[ice]: report error or generate meta?
-        //  I guess probably report error for now.
-        throw new TyckerException();
-      }
-      var result = checkNoZonk(type, against);
-      var ref = tuple.ref();
-      localCtx.put(ref, result.wellTyped);
-      resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
-    });
-    expr.params().view()
-      .map(Expr.Param::ref)
-      .forEach(localCtx.localMap()::remove);
-    return new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), against);
-  }
-
-  @Rule.Check(partialSynth = true)
-  @Override public Result visitNew(Expr.@NotNull NewExpr expr, @Nullable Term term) {
-    var struct = checkNoZonk(expr.struct(), null).wellTyped;
-    if (!(struct instanceof CallTerm.Struct structCall))
-      return fail(expr.struct(), struct, BadTypeError.structCon(expr, struct));
-    var structRef = structCall.ref();
-
-    var subst = new Substituter.TermSubst(MutableMap.create());
-    var structTele = Def.defTele(structRef);
-    structTele.view().zip(structCall.args())
-      .forEach(t -> subst.add(t._1.ref(), t._2.term()));
-
-    var fields = Buffer.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>create();
-    var missing = Buffer.<Var>create();
-    var conFields = expr.fields();
-
-    for (var defField : structRef.core.fields) {
-      var conFieldOpt = conFields.find(t -> t.name().equals(defField.ref().name()));
-      if (conFieldOpt.isEmpty()) {
-        if (defField.body.isEmpty())
-          missing.append(defField.ref()); // no value available, skip and prepare error reporting
-        else {
-          // use default value from defField
-          var field = defField.body.get().subst(subst);
-          fields.append(Tuple.of(defField.ref(), field));
-          subst.add(defField.ref(), field);
-        }
-        continue;
-      }
-      var conField = conFieldOpt.get();
-      conFields = conFields.dropWhile(t -> t == conField);
-      var type = Def.defResult(defField.ref()).subst(subst);
-      var fieldSubst = new ExprRefSubst(reporter);
-      var telescope = defField.ref().core.selfTele;
-      var bindings = conField.bindings();
-      if (telescope.sizeLessThan(bindings.size())) {
-        // TODO[ice]: number of args don't match
-        throw new TyckerException();
-      }
-      var teleView = telescope.view();
-      for (int i = 0; i < bindings.size(); i++) {
-        fieldSubst.good().put(bindings.get(i).data(), teleView.first().ref());
-        teleView = teleView.drop(1);
-      }
-      final var teleViewFinal = teleView;
-      var field = localCtx.with(telescope, () -> checkNoZonk(
-        conField.body()
-          .accept(fieldSubst, Unit.unit()),
-        FormTerm.Pi.make(teleViewFinal, type)).wellTyped);
-      fields.append(Tuple.of(defField.ref(), field));
-      subst.add(defField.ref(), field);
-    }
-
-    if (missing.isNotEmpty()) {
-      return fail(expr, structCall, new FieldProblem.MissingFieldError(expr.sourcePos(), missing.toImmutableSeq()));
-    }
-    if (conFields.isNotEmpty()) {
-      return fail(expr, structCall, new FieldProblem.NoSuchFieldError(expr.sourcePos(), conFields.map(Expr.Field::name)));
-    }
-
-    if (term != null) unifyTyReported(term, structCall, expr);
-    return new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
-  }
-
-  @Rule.Synth @Override public Result visitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
-    var result = doVisitProj(expr, term);
-    expr.theCore().set(result.wellTyped);
-    return result;
-  }
-
   @NotNull private Result doVisitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
     var from = expr.tup();
     var result = expr.ix().fold(
@@ -435,7 +472,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   private Result visitAccess(Expr struct, String fieldName, Expr.@NotNull ProjExpr expr) {
-    var projectee = checkNoZonk(struct, null);
+    var projectee = synthesize(struct);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof CallTerm.Struct structCall))
       return fail(struct, whnf, BadTypeError.structAcc(struct, fieldName, whnf));
@@ -476,7 +513,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
   }
 
-  @Override public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
+  public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
     // TODO[ice]: deal with unit type
     var name = Constants.randomName(expr);
     if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name, expr.sourcePos())._2;
@@ -485,7 +522,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     return new Result(freshHole._2, term);
   }
 
-  @Rule.Synth @Override public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
+  @Rule.Synth public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
     var f = checkNoZonk(expr.function(), null);
     var app = f.wellTyped;
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
@@ -538,7 +575,7 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
   }
 
   @Rule.Check(partialSynth = true)
-  @Override public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
+  public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
     var items = Buffer.<Term>create();
     final var resultLast = new Ref<Term>();
     final var resultTele = Buffer.<Term.@NotNull Param>create();
@@ -582,11 +619,11 @@ public class ExprTycker implements Expr.BaseVisitor<Term, ExprTycker.Result> {
     }
     resultTele.append(new Term.Param(Constants.anonymous(), resultLast.value, true));
     var resultType = new FormTerm.Sigma(resultTele.toImmutableSeq());
-    if (term instanceof CallTerm.Hole) unifyTy(term, resultType, expr.sourcePos());
+    if (term != null) unifyTy(term, resultType, expr.sourcePos());
     return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
   }
 
-  @Override public Result catchUnhandled(@NotNull Expr expr, Term term) {
+  public Result catchUnhandled(@NotNull Expr expr, Term term) {
     return new Result(ErrorTerm.unexpected(expr),
       new ErrorTerm(term != null ? term.freezeHoles(levelEqns) : $ -> Doc.symbol("?"), false));
   }

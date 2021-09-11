@@ -76,34 +76,6 @@ public sealed interface Expr extends ConcreteExpr {
     R visitError(@NotNull ErrorExpr error, P p);
   }
 
-  interface BaseVisitor<P, R> extends Visitor<P, R> {
-    R catchUnhandled(@NotNull Expr expr, P p);
-    @Override default R visitUnresolved(@NotNull UnresolvedExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitRawUniv(@NotNull Expr.RawUnivExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitLitInt(@NotNull LitIntExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitLsuc(@NotNull LSucExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitLmax(@NotNull LMaxExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitLitString(@NotNull LitStringExpr expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitBinOpSeq(@NotNull BinOpSeq expr, P p) {
-      return catchUnhandled(expr, p);
-    }
-    @Override default R visitError(@NotNull ErrorExpr error, P p) {
-      return catchUnhandled(error, p);
-    }
-  }
-
   sealed interface WithTerm extends Expr {
     @NotNull Ref<Term> theCore();
     default @Nullable Term core() {
