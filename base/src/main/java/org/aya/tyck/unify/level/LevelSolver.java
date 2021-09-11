@@ -238,7 +238,16 @@ public class LevelSolver {
       avoidableEqns.append(e);
       return false;
     }
-    if (rhs.levels().size() == 1) {
+    if (lhs.levels().sizeEquals(1)) {
+      var left = lhs.levels().get(0);
+      if (left instanceof Level.Constant<LvlVar> constant) {
+        if (constant.value() == 0) {
+          avoidableEqns.append(e);
+          return false;
+        }
+      }
+    }
+    if (rhs.levels().sizeEquals(1)) {
       var right = rhs.levels().get(0);
       if (right instanceof Level.Infinity<LvlVar>) {
         avoidableEqns.append(e);
