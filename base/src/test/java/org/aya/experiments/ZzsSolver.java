@@ -38,7 +38,6 @@ public class ZzsSolver {
   }
 
   static final int INF = 100000000;
-  static final int INF_SMALL = INF;
   static final int LOW_BOUND = INF;
   int nodeSize; // the number of nodes in the graph
 
@@ -82,10 +81,6 @@ public class ZzsSolver {
   }
 
   private boolean dealSingleLt(int[][] g, Level a, Level b) {
-    if (b instanceof Infinity) return false;
-    if (a instanceof Infinity) {
-      a = new Const(INF_SMALL);
-    }
     if (a instanceof Const ca) {
       if (b instanceof Const cb) {
         return ca.constant > cb.constant;
@@ -156,15 +151,6 @@ public class ZzsSolver {
     throw new UnsatException();
   }
 
-  Level resolveConstantLevel(int dist) {
-    int retU = dist > LOW_BOUND ? INF : dist;
-    if (retU >= INF) {
-      return new Infinity();
-    } else {
-      return new Const(retU);
-    }
-  }
-
   Map<String, Max> solve(List<Equation> equations) throws UnsatException {
     nodeSize = 0;
     for (var e : equations) {
@@ -223,18 +209,14 @@ public class ZzsSolver {
       }
       List<Level> retList = new ArrayList<>();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
-        if (lowerBound >= LOW_BOUND) {
-          retList.add(new Infinity());
-        } else {
-          if (lowerBound != 0 || lowerNodes.isEmpty()) retList.add(resolveConstantLevel(lowerBound));
-          retList.addAll(lowerNodes);
-        }
+        if (lowerBound != 0 || lowerNodes.isEmpty()) retList.add(new Const(lowerBound));
+        retList.addAll(lowerNodes);
       } else {
         int minv = upperBound;
         for (var _l : upperNodes) {
           if (_l instanceof Reference l) minv = Math.min(minv, l.lift());
         }
-        retList.add(resolveConstantLevel(minv));
+        retList.add(new Const(minv));
       }
       ret.put(name, new Max(retList));
     }

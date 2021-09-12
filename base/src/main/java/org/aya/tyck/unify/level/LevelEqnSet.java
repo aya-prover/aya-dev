@@ -111,8 +111,7 @@ public record LevelEqnSet(
           yield "new Reference(new Var(\"" + r.name() + "\", " + r.free() + "), " + ref.lift() + ")";
         }
         case Level.Constant<Sort.LvlVar> constant -> "new Const(" + constant.value() + ")";
-        case Level.Infinity<Sort.LvlVar> l -> "new Infinity()";
-        default -> "";
+        default -> throw new IllegalArgumentException(level.toString());
       };
     }
 

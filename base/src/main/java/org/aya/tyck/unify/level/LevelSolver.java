@@ -21,7 +21,6 @@ public class LevelSolver {
   }
 
   static final int INF = 100000000;
-  static final int INF_SMALL = INF;
   static final int LOW_BOUND = INF;
   int nodeSize; // the number of nodes in the graph
 
@@ -66,10 +65,6 @@ public class LevelSolver {
 
   /** @return true if fail */
   private boolean dealSingleLt(int[][] g, Level<LvlVar> a, Level<LvlVar> b) {
-    if (b instanceof Level.Infinity) return false;
-    if (a instanceof Level.Infinity) {
-      a = new Level.Constant<>(INF_SMALL);
-    }
     if (a instanceof Level.Constant<LvlVar> ca) {
       if (b instanceof Level.Constant<LvlVar> cb) {
         return ca.value() > cb.value();
@@ -142,15 +137,6 @@ public class LevelSolver {
     throw new UnsatException();
   }
 
-  private Level<LvlVar> resolveConstantLevel(int dist) {
-    int retU = dist > LOW_BOUND ? INF : dist;
-    if (retU >= INF) {
-      return new Level.Infinity<>();
-    } else {
-      return new Level.Constant<>(retU);
-    }
-  }
-
   public void solve(@NotNull LevelEqnSet eqns) throws UnsatException {
     var equations = eqns.eqns();
     nodeSize = 0;
@@ -199,18 +185,14 @@ public class LevelSolver {
       }
       Buffer<Level<LvlVar>> retList = Buffer.create();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
-        if (lowerBound >= LOW_BOUND) {
-          retList.append(new Level.Infinity<>());
-        } else {
-          if (lowerBound != 0 || lowerNodes.isEmpty()) retList.append(resolveConstantLevel(lowerBound));
-          retList.appendAll(lowerNodes);
-        }
+        if (lowerBound != 0 || lowerNodes.isEmpty()) retList.append(new Level.Constant<>(lowerBound));
+        retList.appendAll(lowerNodes);
       } else {
         int minv = upperBound;
         for (var _l : upperNodes) {
           if (_l instanceof Level.Reference<LvlVar> l) minv = Math.min(minv, l.lift());
         }
-        retList.append(resolveConstantLevel(minv));
+        retList.append(new Level.Constant<>(minv));
       }
       eqns.solution().put(name, new Sort(retList.toImmutableSeq()));
     }
