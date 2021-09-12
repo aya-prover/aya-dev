@@ -74,7 +74,7 @@ public record StmtTycker(
         // TODO[ice]: Expect type and term
         throw new ExprTycker.TyckerException();
       }
-      var result = tycker.checkNoZonk(decl.result, null).wellTyped();
+      var result = tycker.synthesize(decl.result).wellTyped();
       var levelSubst = new LevelSubst.Simple(MutableMap.create());
       // Homotopy level goes first
       var levels = tycker.extractLevels();
@@ -85,7 +85,7 @@ public record StmtTycker(
       tycker.unifyTyReported(FormTerm.Pi.make(tele, result), target, decl.result);
       decl.signature = new Def.Signature(levels, tele, result);
     } else if (decl.result != null) {
-      var result = tycker.checkNoZonk(decl.result, null).wellTyped();
+      var result = tycker.synthesize(decl.result).wellTyped();
       tycker.unifyTyReported(result, core.result(), decl.result);
     } else decl.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
     tycker.solveMetas();
@@ -171,7 +171,7 @@ public record StmtTycker(
     var patTycker = new PatTycker(tycker);
     var elabClauses = patTycker.elabClauses(null, field.signature, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
-    var body = field.body.map(e -> tycker.checkNoZonk(e, result).wellTyped());
+    var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
     ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false);
     return elaborated;
@@ -181,7 +181,7 @@ public record StmtTycker(
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     var resultTele = checkTele(tycker, decl.telescope, null);
     // It might contain unsolved holes, but that's acceptable.
-    var resultRes = tycker.checkNoZonk(decl.result, null).wellTyped();
+    var resultRes = tycker.synthesize(decl.result).wellTyped();
     tracing(GenericBuilder::reduce);
     var signature = new Ref<>(new Def.Signature(tycker.extractLevels(), resultTele, resultRes));
     decl.signature = signature.value;
@@ -204,7 +204,7 @@ public record StmtTycker(
   checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable Term univ) {
     var okTele = tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
-      var paramRes = exprTycker.checkNoZonk(param.type(), univ);
+      var paramRes = exprTycker.whatever(param.type(), univ);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return Tuple.of(new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit()), param.sourcePos());
     });

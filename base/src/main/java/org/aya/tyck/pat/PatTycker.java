@@ -103,7 +103,7 @@ public record PatTycker(
     var patterns = visitPatterns(sig, match.patterns);
     var type = sig.value.result();
     match.expr = match.expr.map(e -> e.accept(subst, Unit.unit()));
-    var result = match.expr.map(e -> exprTycker.checkNoZonk(e, type).wellTyped());
+    var result = match.expr.map(e -> exprTycker.inherit(e, type).wellTyped());
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;

@@ -34,7 +34,7 @@ public class TyckExprTest {
     var decl = (Decl.FnDecl) decls.last();
     var expr = decl.body.getLeftValue();
     var tycker = tycker();
-    tycker.checkNoZonk(expr, null);
+    tycker.inherit(expr, null);
     assertFalse(tycker.levelEqns.forZZS().isEmpty());
   }
 }

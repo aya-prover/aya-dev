@@ -70,11 +70,14 @@ public class ExprTycker {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  public void traceEntrance(@NotNull Expr expr, Term term) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, term == null ? null : term.freezeHoles(levelEqns))));
+  public @NotNull Result synthesize(@NotNull Expr expr) {
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
+    var res = doSynthesize(expr);
+    traceExit(res, expr);
+    return res;
   }
 
-  public @NotNull Result synthesize(@NotNull Expr expr) {
+  private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> {
@@ -132,7 +135,7 @@ public class ExprTycker {
             teleView = teleView.drop(1);
           }
           final var teleViewFinal = teleView;
-          var field = localCtx.with(telescope, () -> checkNoZonk(
+          var field = localCtx.with(telescope, () -> inherit(
             conField.body()
               .accept(fieldSubst, Unit.unit()),
             FormTerm.Pi.make(teleViewFinal, type)).wellTyped);
@@ -165,7 +168,7 @@ public class ExprTycker {
     };
   }
 
-  public @NotNull Result inherit(@NotNull Expr expr, @NotNull Term term) {
+  private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
       case Expr.TupExpr tuple -> visitTup(tuple, term);
       case Expr.HoleExpr hole -> visitHole(hole, term);
@@ -208,7 +211,7 @@ public class ExprTycker {
         var lamParam = param.type();
         var type = dt.param().type();
         if (lamParam != null) {
-          var result = checkNoZonk(lamParam, FormTerm.Univ.OMEGA);
+          var result = inherit(lamParam, FormTerm.Univ.OMEGA);
           var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
           if (!comparison) {
             // TODO[ice]: expected type mismatch lambda type annotation
@@ -218,7 +221,7 @@ public class ExprTycker {
         var resultParam = new Term.Param(var, type, param.explicit());
         yield localCtx.with(resultParam, () -> {
           var body = dt.substBody(resultParam.toTerm());
-          var rec = checkNoZonk(lam.body(), body);
+          var rec = inherit(lam.body(), body);
           return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
         });
       }
@@ -227,10 +230,10 @@ public class ExprTycker {
         final var var = param.ref();
         var type = param.type();
         if (type == null) type = new Expr.HoleExpr(param.sourcePos(), false, null);
-        var result = checkNoZonk(type, term);
+        var result = inherit(type, term);
         var resultParam = new Term.Param(var, result.wellTyped, param.explicit());
         yield localCtx.with(resultParam, () -> {
-          var last = checkNoZonk(pi.last(), term);
+          var last = inherit(pi.last(), term);
           return new Result(new FormTerm.Pi(resultParam, last.wellTyped), term);
         });
       }
@@ -243,7 +246,7 @@ public class ExprTycker {
             //  I guess probably report error for now.
             throw new TyckerException();
           }
-          var result = checkNoZonk(type, term);
+          var result = inherit(type, term);
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped);
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
@@ -273,7 +276,7 @@ public class ExprTycker {
       .toImmutableSeq();
   }
 
-  public void traceExit(Result result, @NotNull Expr expr, Term p) {
+  private void traceExit(Result result, @NotNull Expr expr) {
     tracing(builder -> {
       builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(levelEqns), result.type.freezeHoles(levelEqns), expr.sourcePos()));
       builder.reduce();
@@ -304,13 +307,17 @@ public class ExprTycker {
     levelEqns.solve();
   }
 
-  public @NotNull Result checkNoZonk(@NotNull Expr expr, @Nullable Term type) {
+  public @NotNull Result inherit(@NotNull Expr expr, @NotNull Term type) {
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(levelEqns))));
+    Result result;
     if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
       var implicitParam = new Term.Param(new LocalVar(ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () ->
-        checkNoZonk(expr, pi.substBody(implicitParam.toTerm()))).wellTyped;
-      return new Result(new IntroTerm.Lambda(implicitParam, body), pi);
-    } else return type == null ? synthesize(expr) : inherit(expr, type);
+        inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped;
+      result = new Result(new IntroTerm.Lambda(implicitParam, body), pi);
+    } else result = doInherit(expr, type);
+    traceExit(result, expr);
+    return result;
   }
 
   private static boolean needImplicitParamIns(@NotNull Expr expr, @NotNull FormTerm.Pi type) {
@@ -320,10 +327,14 @@ public class ExprTycker {
   }
 
   public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
-    var result = checkNoZonk(expr, type);
+    var result = whatever(expr, type);
     solveMetas();
     var pos = expr.sourcePos();
     return new Result(result.wellTyped.zonk(this, pos), result.type.zonk(this, pos));
+  }
+
+  public @NotNull Result whatever(@NotNull Expr expr, @Nullable Term type) {
+    return type != null ? inherit(expr, type) : synthesize(expr);
   }
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {
@@ -499,7 +510,7 @@ public class ExprTycker {
   }
 
   private @NotNull Result visitProj(@NotNull Expr tuple, int ix, Expr.@NotNull ProjExpr proj) {
-    var projectee = checkNoZonk(tuple, null);
+    var projectee = synthesize(tuple);
     var whnf = projectee.type.normalize(NormalizeMode.WHNF);
     if (!(whnf instanceof FormTerm.Sigma sigma))
       return fail(tuple, whnf, BadTypeError.sigmaAcc(tuple, ix, whnf));
@@ -523,7 +534,7 @@ public class ExprTycker {
   }
 
   @Rule.Synth public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
-    var f = checkNoZonk(expr.function(), null);
+    var f = synthesize(expr.function());
     var app = f.wellTyped;
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
       return fail(expr, f.type, BadTypeError.pi(expr, f.type));
@@ -547,7 +558,7 @@ public class ExprTycker {
           throw new TyckerException();
         }
       }
-      var elabArg = checkNoZonk(namedArg.expr(), pi.param().type()).wellTyped;
+      var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
       app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
       // so, in the end, the pi term is not updated, its body would be the eliminated type
       if (iter.hasNext()) {
@@ -582,7 +593,7 @@ public class ExprTycker {
     if (term == null || term instanceof CallTerm.Hole) {
       // `expr.items()` is larger than 1 due to parser
       expr.items()
-        .map(item -> checkNoZonk(item, null))
+        .map(this::synthesize)
         .forEach(result -> {
           items.append(result.wellTyped);
           if (resultLast.value != null) resultTele.append(
@@ -596,7 +607,7 @@ public class ExprTycker {
       var last = dt.params().last().type();
       for (var iter = expr.items().iterator(); iter.hasNext(); ) {
         var item = iter.next();
-        var result = checkNoZonk(item, againstTele.first().type());
+        var result = inherit(item, againstTele.first().type());
         items.append(result.wellTyped);
         var ref = againstTele.first().ref();
         resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
@@ -610,7 +621,7 @@ public class ExprTycker {
             // TODO[ice]: not enough sigma elements
             throw new TyckerException();
           } else {
-            var lastItemResult = checkNoZonk(item, last);
+            var lastItemResult = inherit(item, last);
             items.append(lastItemResult.wellTyped);
             resultLast.value = lastItemResult.type;
           }
