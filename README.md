@@ -36,6 +36,7 @@ gradle use proxies.
   + Dependent types, including pi-types, sigma types, etc. You could write a [type-safe interpreter][gadt].
   + Arend-ish interval type which is used to define the HoTT [path type][path]
     and prove [regularity by computation][regularity] thanks to Arend's type theory.
+    We also have the classic cubical-flavored [funExt].
   + Overlapping patterns. Very [useful][oop] in theorem proving.
   + A literate programming mode with inline code fragment support.
     We already have a prototype, but we plan to revise it before sharing demos.
@@ -52,3 +53,4 @@ gradle use proxies.
 [proxy]: https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
 [gadt]: base/src/test/resources/success/type-safe-norm.aya
 [regularity]: base/src/test/resources/success/regularity.aya
+[funExt]: base/src/test/resources/success/funExt.aya

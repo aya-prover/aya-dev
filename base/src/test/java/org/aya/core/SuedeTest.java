@@ -41,6 +41,8 @@ public class SuedeTest {
                    (f : Pi A B -> C)
                    (p : Sig A ** B) : C
         => f (p.1) (p.2)
+      def fst {A B : Type} (t : Sig A ** B) : A
+        | (a, b) => a
       """);
   }
 
