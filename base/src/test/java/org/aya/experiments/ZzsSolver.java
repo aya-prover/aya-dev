@@ -38,8 +38,8 @@ public class ZzsSolver {
   }
 
   static final int INF = 100000000;
-  static final int INF_SMALL = INF / 10;
-  static final int LOW_BOUND = 10000;
+  static final int INF_SMALL = INF;
+  static final int LOW_BOUND = INF;
   int nodeSize; // the number of nodes in the graph
 
   boolean floyd(int[][] d) { // return true when it's satisfied
@@ -260,18 +260,9 @@ public class ZzsSolver {
 
   public static void main(String[] args) throws UnsatException {
     var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
+      // new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
       new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Semigroup.u", true), 0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Const(0))))));
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Semigroup.u", true), 0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0))))));
     System.out.println(res);
   }
 }

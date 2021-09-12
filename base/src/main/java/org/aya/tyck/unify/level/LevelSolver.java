@@ -21,8 +21,8 @@ public class LevelSolver {
   }
 
   static final int INF = 100000000;
-  static final int INF_SMALL = INF / 10;
-  static final int LOW_BOUND = 10000;
+  static final int INF_SMALL = INF;
+  static final int LOW_BOUND = INF;
   int nodeSize; // the number of nodes in the graph
 
   boolean floyd(int[][] d) { // return true when it's satisfied
