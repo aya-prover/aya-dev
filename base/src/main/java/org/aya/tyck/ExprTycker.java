@@ -154,17 +154,17 @@ public class ExprTycker {
         sp -> visitAccess(proj.tup(), sp.data(), proj)
       );
       case Expr.TupExpr tuple -> visitTup(tuple, null);
-      case Expr.AppExpr app -> visitApp(app, null);
+      case Expr.AppExpr app -> visitApp(app);
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
         FormTerm.Univ.OMEGA, Constants.randomName(hole), expr.sourcePos())._2);
-      case Expr.UnresolvedExpr e -> catchUnhandled(e, null);
-      case Expr.RawUnivExpr e -> catchUnhandled(e, null);
-      case Expr.LitIntExpr e -> catchUnhandled(e, null);
-      case Expr.LSucExpr e -> catchUnhandled(e, null);
-      case Expr.LMaxExpr e -> catchUnhandled(e, null);
-      case Expr.LitStringExpr e -> catchUnhandled(e, null);
-      case Expr.BinOpSeq e -> catchUnhandled(e, null);
-      case Expr.ErrorExpr e -> catchUnhandled(e, null);
+      case Expr.UnresolvedExpr e -> catchUnhandled(e);
+      case Expr.RawUnivExpr e -> catchUnhandled(e);
+      case Expr.LitIntExpr e -> catchUnhandled(e);
+      case Expr.LSucExpr e -> catchUnhandled(e);
+      case Expr.LMaxExpr e -> catchUnhandled(e);
+      case Expr.LitStringExpr e -> catchUnhandled(e);
+      case Expr.BinOpSeq e -> catchUnhandled(e);
+      case Expr.ErrorExpr e -> catchUnhandled(e);
     };
   }
 
@@ -177,18 +177,6 @@ public class ExprTycker {
         if (hole.explicit()) reporter.report(new Goal(hole, freshHole._1));
         yield new Result(freshHole._2, term);
       }
-      case Expr.AppExpr app -> {
-        var result = synthesize(app);
-        yield unifyTyMaybeInsert(term, result.type, result.wellTyped, app);
-      }
-      case Expr.UnresolvedExpr e -> catchUnhandled(e, null);
-      case Expr.RawUnivExpr e -> catchUnhandled(e, null);
-      case Expr.LitIntExpr e -> catchUnhandled(e, null);
-      case Expr.LSucExpr e -> catchUnhandled(e, null);
-      case Expr.LMaxExpr e -> catchUnhandled(e, null);
-      case Expr.LitStringExpr e -> catchUnhandled(e, null);
-      case Expr.BinOpSeq e -> catchUnhandled(e, null);
-      case Expr.ErrorExpr e -> catchUnhandled(e, null);
       case Expr.UnivExpr univExpr -> {
         var sort = transformLevel(univExpr.level(), universe);
         var normTerm = term.normalize(NormalizeMode.WHNF);
@@ -200,10 +188,6 @@ public class ExprTycker {
           unifyTyReported(normTerm, succ, univExpr);
         }
         yield new Result(new FormTerm.Univ(sort), term);
-      }
-      case Expr.RefExpr ref -> {
-        var result = synthesize(ref);
-        yield unifyTyMaybeInsert(term, result.type, result.wellTyped, ref);
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
@@ -263,14 +247,9 @@ public class ExprTycker {
           .forEach(localCtx.localMap()::remove);
         yield new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), term);
       }
-      case Expr.NewExpr newExpr -> {
-        var result = synthesize(newExpr);
-        if (term != null) unifyTyReported(term, result.type, newExpr);
-        yield result;
-      }
-      case Expr.ProjExpr proj -> {
-        var result1 = synthesize(proj);
-        yield unifyTyMaybeInsert(term, result1.type, result1.wellTyped, proj);
+      default -> {
+        var result = synthesize(expr);
+        yield unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
       }
     };
   }
@@ -518,7 +497,7 @@ public class ExprTycker {
     return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
   }
 
-  @Rule.Synth public Result visitApp(Expr.@NotNull AppExpr expr, @NotNull Term term) {
+  @Rule.Synth public Result visitApp(Expr.@NotNull AppExpr expr) {
     var f = synthesize(expr.function());
     var app = f.wellTyped;
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
@@ -619,9 +598,8 @@ public class ExprTycker {
     return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
   }
 
-  public Result catchUnhandled(@NotNull Expr expr, Term term) {
-    return new Result(ErrorTerm.unexpected(expr),
-      new ErrorTerm(term != null ? term.freezeHoles(levelEqns) : $ -> Doc.symbol("?"), false));
+  public Result catchUnhandled(@NotNull Expr expr) {
+    return new Result(ErrorTerm.unexpected(expr), new ErrorTerm($ -> Doc.symbol("?"), false));
   }
 
   public static class TyckerException extends InternalException {
