@@ -45,10 +45,8 @@ public record UntypedDefEq(
   @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs) {
     //noinspection ConstantConditions
     return switch (preLhs) {
-      case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
-      case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs ->
-        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
+      case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
+      case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
       default -> null;
     };
   }

@@ -51,17 +51,10 @@ public final class TypedDefEq {
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(levelEqns), rhs.freezeHoles(levelEqns),
       pos, type.freezeHoles(levelEqns)));
     var ret = switch (type) {
-      case RefTerm type1 -> termDefeq.compare(lhs, rhs) != null;
-      case FormTerm.Univ type1 -> termDefeq.compare(lhs, rhs) != null;
-      case ElimTerm.App type1 -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Fn type1 -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Data type1 -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Prim type1 -> termDefeq.compare(lhs, rhs) != null;
-      case ElimTerm.Proj type1 -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Access type1 -> termDefeq.compare(lhs, rhs) != null;
-      case CallTerm.Hole type1 -> termDefeq.compare(lhs, rhs) != null;
+      default -> termDefeq.compare(lhs, rhs) != null;
       case CallTerm.Struct type1 -> {
         var fieldSigs = type1.ref().core.fields;
+        if (fieldSigs.isEmpty()) yield termDefeq.compare(lhs, rhs) != null;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
           Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
         var fieldSubst = new Substituter.TermSubst(MutableHashMap.of());
@@ -77,11 +70,11 @@ public final class TypedDefEq {
         }
         yield true;
       }
-      case IntroTerm.Lambda type1 -> throw new IllegalStateException("LamTerm is never type");
-      case CallTerm.Con type1 -> throw new IllegalStateException("ConCall is never type");
-      case IntroTerm.Tuple type1 -> throw new IllegalStateException("TupTerm is never type");
-      case IntroTerm.New newTerm -> throw new IllegalStateException("NewTerm is never type");
-      case ErrorTerm term -> true;
+      case IntroTerm.Lambda $ -> throw new IllegalStateException("LamTerm is never type");
+      case CallTerm.Con $ -> throw new IllegalStateException("ConCall is never type");
+      case IntroTerm.Tuple $ -> throw new IllegalStateException("TupTerm is never type");
+      case IntroTerm.New $ -> throw new IllegalStateException("NewTerm is never type");
+      case ErrorTerm $ -> true;
       case FormTerm.Sigma type1 -> {
         var params = type1.params().view();
         for (int i = 1, size = type1.params().size(); i <= size; i++) {

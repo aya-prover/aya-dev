@@ -70,13 +70,6 @@ public final class ExprTycker {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  public @NotNull Result synthesize(@NotNull Expr expr) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
-    var res = doSynthesize(expr);
-    traceExit(res, expr);
-    return res;
-  }
-
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
@@ -364,6 +357,13 @@ public final class ExprTycker {
     } else result = doInherit(expr, type);
     traceExit(result, expr);
     return result;
+  }
+
+  public @NotNull Result synthesize(@NotNull Expr expr) {
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, null)));
+    var res = doSynthesize(expr);
+    traceExit(res, expr);
+    return res;
   }
 
   private static boolean needImplicitParamIns(@NotNull Expr expr, @NotNull FormTerm.Pi type) {
