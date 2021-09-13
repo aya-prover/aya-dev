@@ -368,8 +368,7 @@ public class ExprTycker {
       || !(expr instanceof Expr.LamExpr));
   }
 
-  public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
-    var result = type != null ? inherit(expr, type) : synthesize(expr);
+  public @NotNull Result zonk(@NotNull Expr expr, @NotNull Result result) {
     solveMetas();
     var pos = expr.sourcePos();
     return new Result(result.wellTyped.zonk(this, pos), result.type.zonk(this, pos));

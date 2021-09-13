@@ -101,7 +101,7 @@ public sealed interface Literate extends Docile {
     }
 
     @Override public void tyck(@NotNull ExprTycker tycker) {
-      tyckResult = tycker.checkExpr(expr, null);
+      tyckResult = tycker.zonk(expr, tycker.synthesize(expr));
     }
 
     @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {

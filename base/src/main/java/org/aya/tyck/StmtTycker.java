@@ -141,7 +141,7 @@ public record StmtTycker(
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
     var tele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
-    final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
+    final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.Univ.OMEGA)).wellTyped();
     decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
     var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
     return new DataDef(decl.ref, tele, decl.signature.sortParam(), result, body);
@@ -149,7 +149,7 @@ public record StmtTycker(
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
     var tele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
-    final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
+    final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.Univ.OMEGA)).wellTyped();
     // var levelSubst = tycker.equations.solve();
     var levels = tycker.extractLevels();
     decl.signature = new Def.Signature(levels, tele, result);
@@ -164,7 +164,7 @@ public record StmtTycker(
   private FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {
     var tele = checkTele(tycker, field.telescope, structResult);
     var structRef = field.structRef;
-    var result = tycker.checkExpr(field.result, structResult).wellTyped();
+    var result = tycker.zonk(field.result, tycker.inherit(field.result, structResult)).wellTyped();
     var structSig = structRef.concrete.signature;
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
@@ -187,7 +187,7 @@ public record StmtTycker(
     decl.signature = signature.value;
     var patTycker = new PatTycker(tycker);
     var what = FP.distR(decl.body.map(
-      left -> tycker.checkExpr(left, resultRes).toTuple(),
+      left -> tycker.zonk(left, tycker.inherit(left, resultRes)).toTuple(),
       right -> patTycker.elabClauses(right, signature)));
     var resultTy = what._1;
     var factory = FnDef.factory(body ->
