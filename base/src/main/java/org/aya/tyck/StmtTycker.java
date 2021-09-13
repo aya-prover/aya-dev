@@ -204,9 +204,9 @@ public record StmtTycker(
   checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @NotNull Term univ) {
     var okTele = tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
-      var paramRes = exprTycker.inherit(param.type(), univ);
-      exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
-      return Tuple.of(new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit()), param.sourcePos());
+      var paramTyped = exprTycker.inherit(param.type(), univ).wellTyped();
+      exprTycker.localCtx.put(param.ref(), paramTyped);
+      return Tuple.of(new Term.Param(param.ref(), paramTyped, param.explicit()), param.sourcePos());
     });
     exprTycker.solveMetas();
     return okTele.map(tt -> {

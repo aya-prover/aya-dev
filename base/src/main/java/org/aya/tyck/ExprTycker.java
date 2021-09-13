@@ -149,10 +149,46 @@ public class ExprTycker {
           yield fail(newExpr, structCall, new FieldProblem.NoSuchFieldError(newExpr.sourcePos(), conFields.map(Expr.Field::name)));
         yield new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
       }
-      case Expr.ProjExpr proj -> proj.ix().fold(
-        ix -> visitProj(proj.tup(), ix, proj),
-        sp -> visitAccess(proj.tup(), sp.data(), proj)
-      );
+      case Expr.ProjExpr proj -> {
+        var struct = proj.tup();
+        var projectee = synthesize(struct);
+        var whnf = projectee.type.normalize(NormalizeMode.WHNF);
+        yield proj.ix().fold(ix -> {
+            if (!(whnf instanceof FormTerm.Sigma sigma))
+              return fail(struct, whnf, BadTypeError.sigmaAcc(struct, ix, whnf));
+            var telescope = sigma.params();
+            var index = ix - 1;
+            if (index < 0 || index >= telescope.size())
+              return fail(proj, ErrorTerm.typeOf(proj), new ProjIxError(proj, ix, telescope.size()));
+            var type = telescope.get(index).type();
+            var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
+            return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
+          }, sp -> {
+            var fieldName = sp.data();
+            if (!(whnf instanceof CallTerm.Struct structCall))
+              return fail(struct, whnf, BadTypeError.structAcc(struct, fieldName, whnf));
+            var structCore = structCall.ref().core;
+            if (structCore == null) throw new UnsupportedOperationException("TODO");
+            var projected = structCore.fields.find(field -> Objects.equals(field.ref().name(), fieldName));
+            if (projected.isEmpty()) {
+              // TODO[ice]: field not found
+              throw new TyckerException();
+            }
+            // TODO[ice]: instantiate the type
+            var field = projected.get();
+            var fieldRef = field.ref();
+            proj.resolvedIx().value = fieldRef;
+
+            var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
+            var levels = levelStuffs(struct.sourcePos(), fieldRef);
+            var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, levels._1);
+            var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
+              structCall.args(), tele.map(Term.Param::toArg));
+            return new Result(IntroTerm.Lambda.make(tele, access),
+              FormTerm.Pi.make(tele, field.result().subst(structSubst, levels._1)));
+          }
+        );
+      }
       case Expr.TupExpr tuple -> visitTup(tuple, null);
       case Expr.AppExpr appE -> {
         var f = synthesize(appE.function());
@@ -472,48 +508,6 @@ public class ExprTycker {
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     return fail(term.freezeHoles(levelEqns), upper, new UnifyError(loc, upper, lower));
-  }
-
-  private Result visitAccess(Expr struct, String fieldName, Expr.@NotNull ProjExpr expr) {
-    var projectee = synthesize(struct);
-    var whnf = projectee.type.normalize(NormalizeMode.WHNF);
-    if (!(whnf instanceof CallTerm.Struct structCall))
-      return fail(struct, whnf, BadTypeError.structAcc(struct, fieldName, whnf));
-
-    var structCore = structCall.ref().core;
-    if (structCore == null) throw new UnsupportedOperationException("TODO");
-    var projected = structCore.fields.find(field -> Objects.equals(field.ref().name(), fieldName));
-    if (projected.isEmpty()) {
-      // TODO[ice]: field not found
-      throw new TyckerException();
-    }
-    // TODO[ice]: instantiate the type
-    var field = projected.get();
-    var fieldRef = field.ref();
-    expr.resolvedIx().value = fieldRef;
-
-    var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
-    var levels = levelStuffs(struct.sourcePos(), fieldRef);
-    var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, levels._1);
-    var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
-      structCall.args(), tele.map(Term.Param::toArg));
-    return new Result(IntroTerm.Lambda.make(tele, access),
-      FormTerm.Pi.make(tele, field.result().subst(structSubst, levels._1)));
-  }
-
-  private @NotNull Result visitProj(@NotNull Expr tuple, int ix, Expr.@NotNull ProjExpr proj) {
-    var projectee = synthesize(tuple);
-    var whnf = projectee.type.normalize(NormalizeMode.WHNF);
-    if (!(whnf instanceof FormTerm.Sigma sigma))
-      return fail(tuple, whnf, BadTypeError.sigmaAcc(tuple, ix, whnf));
-    var telescope = sigma.params();
-    var index = ix - 1;
-    if (index < 0 || index >= telescope.size()) {
-      return fail(proj, ErrorTerm.typeOf(proj), new ProjIxError(proj, ix, telescope.size()));
-    }
-    var type = telescope.get(index).type();
-    var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
-    return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
