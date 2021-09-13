@@ -32,9 +32,8 @@ public class TyckExprTest {
       if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, null);
     });
     var decl = (Decl.FnDecl) decls.last();
-    var expr = decl.body.getLeftValue();
     var tycker = tycker();
-    tycker.inherit(expr, null);
+    tycker.synthesize(decl.body.getLeftValue());
     assertFalse(tycker.levelEqns.forZZS().isEmpty());
   }
 }

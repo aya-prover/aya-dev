@@ -156,7 +156,8 @@ public class ExprTycker {
       }
       case Expr.TupExpr tuple -> visitTup(tuple, null);
       case Expr.AppExpr app -> visitApp(app, null);
-      case Expr.HoleExpr hole -> visitHole(hole, null);
+      case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
+        FormTerm.Univ.OMEGA, Constants.randomName(hole), expr.sourcePos())._2);
       case Expr.UnresolvedExpr e -> catchUnhandled(e, null);
       case Expr.RawUnivExpr e -> catchUnhandled(e, null);
       case Expr.LitIntExpr e -> catchUnhandled(e, null);
@@ -171,7 +172,12 @@ public class ExprTycker {
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
       case Expr.TupExpr tuple -> visitTup(tuple, term);
-      case Expr.HoleExpr hole -> visitHole(hole, term);
+      case Expr.HoleExpr hole -> {
+        // TODO[ice]: deal with unit type
+        var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
+        if (hole.explicit()) reporter.report(new Goal(hole, freshHole._1));
+        yield new Result(freshHole._2, term);
+      }
       case Expr.AppExpr app -> visitApp(app, term);
       case Expr.UnresolvedExpr e -> catchUnhandled(e, null);
       case Expr.RawUnivExpr e -> catchUnhandled(e, null);
@@ -522,15 +528,6 @@ public class ExprTycker {
     var type = telescope.get(index).type();
     var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
     return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
-  }
-
-  public Result visitHole(Expr.@NotNull HoleExpr expr, Term term) {
-    // TODO[ice]: deal with unit type
-    var name = Constants.randomName(expr);
-    if (term == null) term = localCtx.freshHole(FormTerm.Univ.OMEGA, name, expr.sourcePos())._2;
-    var freshHole = localCtx.freshHole(term, name, expr.sourcePos());
-    if (expr.explicit()) reporter.report(new Goal(expr, freshHole._1));
-    return new Result(freshHole._2, term);
   }
 
   @Rule.Synth public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
