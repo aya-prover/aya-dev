@@ -8,6 +8,6 @@ In file $FILE:30:63 ->
 Error: Unable to apply the expression
          idp a
        because the type of what you applied is not a Pi type, but instead:
-         Path (λ _ ⇒ A$) a$ a$
-         (Normalized: Path (λ _ ⇒ A$) a$ a$)
+         Path (λ _ ⇒ A) a a
+         (Normalized: Path (λ _ ⇒ A) a a)
 What are you doing?

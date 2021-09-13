@@ -85,7 +85,7 @@ public class ExprTycker {
         yield new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.lift(1)));
       }
       case Expr.RefExpr ref -> {
-        var result = doVisitRef(ref, null);
+        var result = doVisitRef(ref);
         ref.theCore().set(result.wellTyped);
         yield result;
       }
@@ -149,11 +149,10 @@ public class ExprTycker {
           yield fail(newExpr, structCall, new FieldProblem.NoSuchFieldError(newExpr.sourcePos(), conFields.map(Expr.Field::name)));
         yield new Result(new IntroTerm.New(structCall, ImmutableMap.from(fields)), structCall);
       }
-      case Expr.ProjExpr proj -> {
-        var result = doVisitProj(proj, null);
-        proj.theCore().set(result.wellTyped);
-        yield result;
-      }
+      case Expr.ProjExpr proj -> proj.ix().fold(
+        ix -> visitProj(proj.tup(), ix, proj),
+        sp -> visitAccess(proj.tup(), sp.data(), proj)
+      );
       case Expr.TupExpr tuple -> visitTup(tuple, null);
       case Expr.AppExpr app -> visitApp(app, null);
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
@@ -178,7 +177,10 @@ public class ExprTycker {
         if (hole.explicit()) reporter.report(new Goal(hole, freshHole._1));
         yield new Result(freshHole._2, term);
       }
-      case Expr.AppExpr app -> visitApp(app, term);
+      case Expr.AppExpr app -> {
+        var result = synthesize(app);
+        yield unifyTyMaybeInsert(term, result.type, result.wellTyped, app);
+      }
       case Expr.UnresolvedExpr e -> catchUnhandled(e, null);
       case Expr.RawUnivExpr e -> catchUnhandled(e, null);
       case Expr.LitIntExpr e -> catchUnhandled(e, null);
@@ -200,9 +202,8 @@ public class ExprTycker {
         yield new Result(new FormTerm.Univ(sort), term);
       }
       case Expr.RefExpr ref -> {
-        var result = doVisitRef(ref, term);
-        ref.theCore().set(result.wellTyped);
-        yield result;
+        var result = synthesize(ref);
+        yield unifyTyMaybeInsert(term, result.type, result.wellTyped, ref);
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
@@ -268,9 +269,8 @@ public class ExprTycker {
         yield result;
       }
       case Expr.ProjExpr proj -> {
-        var result = doVisitProj(proj, term);
-        proj.theCore().set(result.wellTyped);
-        yield result;
+        var result1 = synthesize(proj);
+        yield unifyTyMaybeInsert(term, result1.type, result1.wellTyped, proj);
       }
     };
   }
@@ -369,19 +369,18 @@ public class ExprTycker {
     });
   }
 
-  @NotNull private Result doVisitRef(Expr.@NotNull RefExpr expr, @Nullable Term term) {
+  @NotNull private Result doVisitRef(Expr.@NotNull RefExpr expr) {
     var var = expr.resolvedVar();
     if (var instanceof LocalVar loc) {
       var ty = localCtx.get(loc);
-      return unifyTyMaybeInsert(term, ty, new RefTerm(loc, ty), expr);
+      return new Result(new RefTerm(loc, ty), ty);
     } else if (var instanceof DefVar<?, ?> defVar) {
-      var result = inferRef(expr.sourcePos(), defVar, term);
-      return unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
+      return inferRef(expr.sourcePos(), defVar);
     } else throw new IllegalStateException("Unknown var: " + var.getClass());
   }
 
   @SuppressWarnings("unchecked")
-  public @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var, Term expected) {
+  public @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var) {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall(pos, (DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
@@ -406,9 +405,8 @@ public class ExprTycker {
       var field = (DefVar<FieldDef, Decl.StructField>) var;
       var ty = Def.defResult(field);
       var fieldPos = field.concrete.sourcePos();
-      var refExpr = new Expr.RefExpr(fieldPos, field, field.concrete.ref.name());
       // TODO[ice]: correct this RefTerm
-      return unifyTyMaybeInsert(expected, ty, new RefTerm(new LocalVar(field.name(), fieldPos), ty), refExpr);
+      return new Result(new RefTerm(new LocalVar(field.name(), fieldPos), ty), ty);
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);
@@ -468,8 +466,7 @@ public class ExprTycker {
    * @return the term and type after insertion
    * @see ExprTycker#unifyTyReported(Term, Term, Expr)
    */
-  private Result unifyTyMaybeInsert(@Nullable Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
-    if (upper == null) return new Result(term, lower);
+  private Result unifyTyMaybeInsert(@NotNull Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
     while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var mock = mockTerm(pi.param(), loc.sourcePos());
       term = CallTerm.make(term, new Arg<>(mock, false));
@@ -477,15 +474,6 @@ public class ExprTycker {
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     return fail(term.freezeHoles(levelEqns), upper, new UnifyError(loc, upper, lower));
-  }
-
-  @NotNull private Result doVisitProj(Expr.@NotNull ProjExpr expr, @Nullable Term term) {
-    var from = expr.tup();
-    var result = expr.ix().fold(
-      ix -> visitProj(from, ix, expr),
-      sp -> visitAccess(from, sp.data(), expr)
-    );
-    return unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
   }
 
   private Result visitAccess(Expr struct, String fieldName, Expr.@NotNull ProjExpr expr) {
@@ -530,7 +518,7 @@ public class ExprTycker {
     return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
   }
 
-  @Rule.Synth public Result visitApp(Expr.@NotNull AppExpr expr, @Nullable Term term) {
+  @Rule.Synth public Result visitApp(Expr.@NotNull AppExpr expr, @NotNull Term term) {
     var f = synthesize(expr.function());
     var app = f.wellTyped;
     if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
@@ -565,7 +553,7 @@ public class ExprTycker {
       }
       subst.map().put(pi.param().ref(), elabArg);
     }
-    return unifyTyMaybeInsert(term, pi.body().subst(subst), app, expr);
+    return new Result(app, pi.body().subst(subst));
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
