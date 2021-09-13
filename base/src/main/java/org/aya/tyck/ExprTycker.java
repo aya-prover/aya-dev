@@ -247,10 +247,7 @@ public class ExprTycker {
           .forEach(localCtx.localMap()::remove);
         yield new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), term);
       }
-      default -> {
-        var result = synthesize(expr);
-        yield unifyTyMaybeInsert(term, result.type, result.wellTyped, expr);
-      }
+      default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
     };
   }
 
@@ -431,7 +428,7 @@ public class ExprTycker {
    * Check if <code>lower</code> is a subtype of <code>upper</code>,
    * and report a type error if it's not the case.
    *
-   * @see ExprTycker#unifyTyMaybeInsert(Term, Term, Term, Expr)
+   * @see ExprTycker#unifyTyMaybeInsert(Term, Result, Expr)
    */
   void unifyTyReported(@NotNull Term upper, @NotNull Term lower, Expr loc) {
     var unification = unifyTy(upper, lower, loc.sourcePos());
@@ -445,7 +442,9 @@ public class ExprTycker {
    * @return the term and type after insertion
    * @see ExprTycker#unifyTyReported(Term, Term, Expr)
    */
-  private Result unifyTyMaybeInsert(@NotNull Term upper, @NotNull Term lower, @NotNull Term term, Expr loc) {
+  private Result unifyTyMaybeInsert(@NotNull Term upper, @NotNull Result result, Expr loc) {
+    var lower = result.type;
+    var term = result.wellTyped;
     while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var mock = mockTerm(pi.param(), loc.sourcePos());
       term = CallTerm.make(term, new Arg<>(mock, false));
