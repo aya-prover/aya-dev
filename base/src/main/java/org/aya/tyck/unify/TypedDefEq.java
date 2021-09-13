@@ -54,7 +54,6 @@ public final class TypedDefEq {
       default -> termDefeq.compare(lhs, rhs) != null;
       case CallTerm.Struct type1 -> {
         var fieldSigs = type1.ref().core.fields;
-        if (fieldSigs.isEmpty()) yield termDefeq.compare(lhs, rhs) != null;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
           Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
         var fieldSubst = new Substituter.TermSubst(MutableHashMap.of());
@@ -118,12 +117,12 @@ public final class TypedDefEq {
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     if (lhs == rhs) return true;
     if (termDefeq.compareApprox(lhs, rhs) != null) return true;
-    type = type.normalize(NormalizeMode.WHNF);
     lhs = lhs.normalize(NormalizeMode.WHNF);
     rhs = rhs.normalize(NormalizeMode.WHNF);
     if (termDefeq.compareApprox(lhs, rhs) != null) return true;
-    if (rhs instanceof CallTerm.Hole) return accept(type, rhs, lhs);
-    return accept(type, lhs, rhs);
+    if (rhs instanceof CallTerm.Hole) return termDefeq.compare(rhs, lhs) != null;
+    if (lhs instanceof CallTerm.Hole) return termDefeq.compare(lhs, rhs) != null;
+    return accept(type.normalize(NormalizeMode.WHNF), lhs, rhs);
   }
 
   public static boolean isCall(@NotNull Term term) {
