@@ -154,17 +154,46 @@ public class ExprTycker {
         sp -> visitAccess(proj.tup(), sp.data(), proj)
       );
       case Expr.TupExpr tuple -> visitTup(tuple, null);
-      case Expr.AppExpr app -> visitApp(app);
+      case Expr.AppExpr appE -> {
+        var f = synthesize(appE.function());
+        var app = f.wellTyped;
+        if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
+          yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
+        var pi = piTerm;
+        var subst = new Substituter.TermSubst(MutableMap.create());
+        for (var iter = appE.arguments().iterator(); iter.hasNext(); ) {
+          var arg = iter.next();
+          var argLicit = arg.explicit();
+          var namedArg = arg.term();
+          while (pi.param().explicit() != argLicit ||
+            namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
+            if (argLicit || namedArg.name() != null) {
+              // that implies paramLicit == false
+              var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
+              app = CallTerm.make(app, new Arg<>(holeApp, false));
+              var newPi = instPi(pi, subst, holeApp);
+              if (newPi.isLeft()) pi = newPi.getLeftValue();
+              else yield fail(appE, newPi.getRightValue(), BadTypeError.pi(appE, newPi.getRightValue()));
+            } else {
+              // TODO[ice]: no implicit argument expected, but inserted.
+              throw new TyckerException();
+            }
+          }
+          var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
+          app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
+          // so, in the end, the pi term is not updated, its body would be the eliminated type
+          if (iter.hasNext()) {
+            var newPi = instPi(pi, subst, elabArg);
+            if (newPi.isLeft()) pi = newPi.getLeftValue();
+            else yield fail(appE, newPi.getRightValue(), BadTypeError.pi(appE, newPi.getRightValue()));
+          }
+          subst.map().put(pi.param().ref(), elabArg);
+        }
+        yield new Result(app, pi.body().subst(subst));
+      }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
         FormTerm.Univ.OMEGA, Constants.randomName(hole), expr.sourcePos())._2);
-      case Expr.UnresolvedExpr e -> catchUnhandled(e);
-      case Expr.RawUnivExpr e -> catchUnhandled(e);
-      case Expr.LitIntExpr e -> catchUnhandled(e);
-      case Expr.LSucExpr e -> catchUnhandled(e);
-      case Expr.LMaxExpr e -> catchUnhandled(e);
-      case Expr.LitStringExpr e -> catchUnhandled(e);
-      case Expr.BinOpSeq e -> catchUnhandled(e);
-      case Expr.ErrorExpr e -> catchUnhandled(e);
+      default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm($ -> Doc.english("no rule"), false));
     };
   }
 
@@ -487,44 +516,6 @@ public class ExprTycker {
     return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
   }
 
-  @Rule.Synth public Result visitApp(Expr.@NotNull AppExpr expr) {
-    var f = synthesize(expr.function());
-    var app = f.wellTyped;
-    if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
-      return fail(expr, f.type, BadTypeError.pi(expr, f.type));
-    var pi = piTerm;
-    var subst = new Substituter.TermSubst(MutableMap.create());
-    for (var iter = expr.arguments().iterator(); iter.hasNext(); ) {
-      var arg = iter.next();
-      var argLicit = arg.explicit();
-      var namedArg = arg.term();
-      while (pi.param().explicit() != argLicit ||
-        namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
-        if (argLicit || namedArg.name() != null) {
-          // that implies paramLicit == false
-          var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
-          app = CallTerm.make(app, new Arg<>(holeApp, false));
-          var newPi = instPi(pi, subst, holeApp);
-          if (newPi.isLeft()) pi = newPi.getLeftValue();
-          else return fail(expr, newPi.getRightValue(), BadTypeError.pi(expr, newPi.getRightValue()));
-        } else {
-          // TODO[ice]: no implicit argument expected, but inserted.
-          throw new TyckerException();
-        }
-      }
-      var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
-      app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
-      // so, in the end, the pi term is not updated, its body would be the eliminated type
-      if (iter.hasNext()) {
-        var newPi = instPi(pi, subst, elabArg);
-        if (newPi.isLeft()) pi = newPi.getLeftValue();
-        else return fail(expr, newPi.getRightValue(), BadTypeError.pi(expr, newPi.getRightValue()));
-      }
-      subst.map().put(pi.param().ref(), elabArg);
-    }
-    return new Result(app, pi.body().subst(subst));
-  }
-
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
     // TODO: maybe we should create a concrete hole and check it against the type
     //  in case we can synthesize this term via its type only
@@ -586,10 +577,6 @@ public class ExprTycker {
     var resultType = new FormTerm.Sigma(resultTele.toImmutableSeq());
     if (term != null) unifyTy(term, resultType, expr.sourcePos());
     return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
-  }
-
-  public Result catchUnhandled(@NotNull Expr expr) {
-    return new Result(ErrorTerm.unexpected(expr), new ErrorTerm($ -> Doc.symbol("?"), false));
   }
 
   public static class TyckerException extends InternalException {
