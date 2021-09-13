@@ -59,7 +59,7 @@ import static org.aya.util.Constants.ANONYMOUS_PREFIX;
  */
 public class ExprTycker {
   public final @NotNull Reporter reporter;
-  public @NotNull LocalCtx localCtx;
+  public @NotNull LocalCtx localCtx = new LocalCtx();
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
   public final @NotNull EqnSet termEqns = new EqnSet();
@@ -265,14 +265,9 @@ public class ExprTycker {
     });
   }
 
-  public ExprTycker(@NotNull Reporter reporter, @NotNull LocalCtx localCtx, Trace.@Nullable Builder traceBuilder) {
-    this.reporter = reporter;
-    this.localCtx = localCtx;
-    this.traceBuilder = traceBuilder;
-  }
-
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
-    this(reporter, new LocalCtx(), traceBuilder);
+    this.reporter = reporter;
+    this.traceBuilder = traceBuilder;
   }
 
   public void solveMetas() {
@@ -309,14 +304,10 @@ public class ExprTycker {
   }
 
   public @NotNull Result checkExpr(@NotNull Expr expr, @Nullable Term type) {
-    var result = whatever(expr, type);
+    var result = type != null ? inherit(expr, type) : synthesize(expr);
     solveMetas();
     var pos = expr.sourcePos();
     return new Result(result.wellTyped.zonk(this, pos), result.type.zonk(this, pos));
-  }
-
-  public @NotNull Result whatever(@NotNull Expr expr, @Nullable Term type) {
-    return type != null ? inherit(expr, type) : synthesize(expr);
   }
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {

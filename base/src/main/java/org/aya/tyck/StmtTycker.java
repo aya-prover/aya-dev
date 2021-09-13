@@ -68,7 +68,7 @@ public record StmtTycker(
   @Override public PrimDef visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker tycker) {
     assert tycker.localCtx.isEmpty();
     var core = decl.ref.core;
-    var tele = checkTele(tycker, decl.telescope, null);
+    var tele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
     if (tele.isNotEmpty()) {
       if (decl.result == null) {
         // TODO[ice]: Expect type and term
@@ -140,7 +140,7 @@ public record StmtTycker(
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
-    var tele = checkTele(tycker, decl.telescope, null);
+    var tele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
     var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
@@ -148,7 +148,7 @@ public record StmtTycker(
   }
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
-    var tele = checkTele(tycker, decl.telescope, null);
+    var tele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
     final var result = tycker.checkExpr(decl.result, FormTerm.Univ.OMEGA).wellTyped();
     // var levelSubst = tycker.equations.solve();
     var levels = tycker.extractLevels();
@@ -179,7 +179,7 @@ public record StmtTycker(
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
-    var resultTele = checkTele(tycker, decl.telescope, null);
+    var resultTele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = tycker.synthesize(decl.result).wellTyped();
     tracing(GenericBuilder::reduce);
@@ -201,10 +201,10 @@ public record StmtTycker(
   }
 
   private @NotNull ImmutableSeq<Term.Param>
-  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @Nullable Term univ) {
+  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @NotNull Term univ) {
     var okTele = tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
-      var paramRes = exprTycker.whatever(param.type(), univ);
+      var paramRes = exprTycker.inherit(param.type(), univ);
       exprTycker.localCtx.put(param.ref(), paramRes.wellTyped());
       return Tuple.of(new Term.Param(param.ref(), paramRes.wellTyped(), param.explicit()), param.sourcePos());
     });
