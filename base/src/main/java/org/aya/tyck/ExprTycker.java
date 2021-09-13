@@ -560,7 +560,6 @@ public final class ExprTycker {
         }
       }
     }
-    resultTele.append(new Term.Param(Constants.anonymous(), resultLast.value, true));
     var resultType = new FormTerm.Sigma(resultTele.toImmutableSeq());
     if (term != null) unifyTy(term, resultType, expr.sourcePos());
     return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
