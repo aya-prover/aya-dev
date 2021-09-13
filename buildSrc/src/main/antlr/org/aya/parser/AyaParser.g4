@@ -33,7 +33,7 @@ use : USING useHideList;
 hide : HIDING useHideList;
 useHideList : LPAREN idsComma RPAREN;
 
-levels : (ULEVEL | HLEVEL) ids ;
+levels : ULEVEL ids ;
 generalize : VARIABLE ids type ;
 
 // declarations
