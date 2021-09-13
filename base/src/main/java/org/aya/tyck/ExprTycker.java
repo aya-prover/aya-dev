@@ -206,10 +206,8 @@ public final class ExprTycker {
               var newPi = instPi(pi, subst, holeApp);
               if (newPi.isLeft()) pi = newPi.getLeftValue();
               else yield fail(appE, newPi.getRightValue(), BadTypeError.pi(appE, newPi.getRightValue()));
-            } else {
-              // TODO[ice]: no implicit argument expected, but inserted.
-              throw new TyckerException();
-            }
+            } else yield fail(appE, new ErrorTerm(pi.body()),
+              new LicitProblem.UnexpectedImplicitArgError(arg));
           }
           var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
           app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
@@ -257,7 +255,7 @@ public final class ExprTycker {
         }
         var param = lam.param();
         if (param.explicit() != dt.param().explicit()) {
-          yield fail(lam, dt, new LicitMismatchError(lam, dt));
+          yield fail(lam, dt, new LicitProblem.LicitMismatchError(lam, dt));
         }
         var var = param.ref();
         var lamParam = param.type();

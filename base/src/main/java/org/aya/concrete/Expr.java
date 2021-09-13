@@ -144,10 +144,8 @@ public sealed interface Expr extends ConcreteExpr {
   ) implements AyaDocile {
     @Override
     public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      if (name != null) {
-        return Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), expr.toDoc(options)));
-      }
-      return expr.toDoc(options);
+      return name == null ? expr.toDoc(options) :
+        Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), expr.toDoc(options)));
     }
   }
 

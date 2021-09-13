@@ -11,7 +11,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
-public interface FieldProblem extends Problem {
+public sealed interface FieldProblem extends Problem {
   record MissingFieldError(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Var> missing
