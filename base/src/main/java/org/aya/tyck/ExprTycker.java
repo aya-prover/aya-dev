@@ -84,11 +84,14 @@ public class ExprTycker {
         var sort = transformLevel(univ.level(), universe);
         yield new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.lift(1)));
       }
-      case Expr.RefExpr ref -> {
-        var result = doVisitRef(ref);
-        ref.theCore().set(result.wellTyped);
-        yield result;
-      }
+      case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
+        case LocalVar loc -> {
+          var ty = localCtx.get(loc);
+          yield new Result(new RefTerm(loc, ty), ty);
+        }
+        case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
+        default -> throw new IllegalStateException("Unknown var: " + ref.resolvedVar().getClass());
+      };
       case Expr.PiExpr pi -> inherit(pi, FormTerm.Univ.OMEGA);
       case Expr.SigmaExpr sigma -> inherit(sigma, FormTerm.Univ.OMEGA);
       case Expr.NewExpr newExpr -> {
@@ -328,6 +331,7 @@ public class ExprTycker {
       builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(levelEqns), result.type.freezeHoles(levelEqns), expr.sourcePos()));
       builder.reduce();
     });
+    if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(result.wellTyped);
   }
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
@@ -398,16 +402,6 @@ public class ExprTycker {
       case Level.Constant<LevelGenVar> c -> new Level.Constant<>(c.value());
       default -> throw new IllegalArgumentException(level.toString());
     });
-  }
-
-  @NotNull private Result doVisitRef(Expr.@NotNull RefExpr expr) {
-    var var = expr.resolvedVar();
-    if (var instanceof LocalVar loc) {
-      var ty = localCtx.get(loc);
-      return new Result(new RefTerm(loc, ty), ty);
-    } else if (var instanceof DefVar<?, ?> defVar) {
-      return inferRef(expr.sourcePos(), defVar);
-    } else throw new IllegalStateException("Unknown var: " + var.getClass());
   }
 
   @SuppressWarnings("unchecked")
