@@ -57,7 +57,7 @@ import static org.aya.util.Constants.ANONYMOUS_PREFIX;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl}s.
  */
-public class ExprTycker {
+public final class ExprTycker {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx = new LocalCtx();
   public final @Nullable Trace.Builder traceBuilder;
@@ -405,7 +405,7 @@ public class ExprTycker {
   }
 
   @SuppressWarnings("unchecked")
-  public @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var) {
+  private @NotNull Result inferRef(@NotNull SourcePos pos, @NotNull DefVar<?, ?> var) {
     if (var.core instanceof FnDef || var.concrete instanceof Decl.FnDecl) {
       return defCall(pos, (DefVar<FnDef, Decl.FnDecl>) var, CallTerm.Fn::new);
     } else if (var.core instanceof PrimDef) {
