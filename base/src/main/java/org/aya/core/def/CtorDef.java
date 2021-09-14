@@ -70,6 +70,6 @@ public final class CtorDef extends SubLevelDef {
   }
 
   @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
-    return fullTelescope();
+    return fullTelescope().toImmutableSeq();
   }
 }

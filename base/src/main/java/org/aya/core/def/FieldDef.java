@@ -31,6 +31,10 @@ public final class FieldDef extends SubLevelDef {
     return visitor.visitField(this, p);
   }
 
+  @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
+    return selfTele;
+  }
+
   public @NotNull DefVar<FieldDef, Decl.StructField> ref() {
     return ref;
   }

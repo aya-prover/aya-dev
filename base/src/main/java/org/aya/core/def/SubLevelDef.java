@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.def;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.Matching;
 import org.aya.core.term.Term;
@@ -30,8 +31,8 @@ public sealed abstract class SubLevelDef implements Def permits CtorDef, FieldDe
     this.coerce = coerce;
   }
 
-  public @NotNull ImmutableSeq<Term.Param> fullTelescope() {
-    return ownerTele.concat(selfTele);
+  public @NotNull SeqView<Term.Param> fullTelescope() {
+    return ownerTele.view().concat(selfTele);
   }
 
   @Override public @NotNull Term result() {

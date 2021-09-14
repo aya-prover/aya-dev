@@ -117,7 +117,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var core = field.core;
     if (!(nevv instanceof IntroTerm.New n)) {
       var args = term.args().map(arg -> visitArg(arg, p));
-      var fieldSubst = checkAndBuildSubst(core.fullTelescope().view(), args);
+      var fieldSubst = checkAndBuildSubst(core.fullTelescope(), args);
       var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
       var dropped = args.drop(term.structArgs().size());
       var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses);
