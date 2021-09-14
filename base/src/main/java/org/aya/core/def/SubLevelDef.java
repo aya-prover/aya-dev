@@ -30,7 +30,7 @@ public sealed abstract class SubLevelDef implements Def permits CtorDef, FieldDe
     this.coerce = coerce;
   }
 
-  @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
+  public @NotNull ImmutableSeq<Term.Param> fullTelescope() {
     return ownerTele.concat(selfTele);
   }
 

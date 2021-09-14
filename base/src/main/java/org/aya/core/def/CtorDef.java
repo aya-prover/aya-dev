@@ -68,4 +68,8 @@ public final class CtorDef extends SubLevelDef {
   public @NotNull DefVar<CtorDef, Decl.DataCtor> ref() {
     return ref;
   }
+
+  @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
+    return fullTelescope();
+  }
 }
