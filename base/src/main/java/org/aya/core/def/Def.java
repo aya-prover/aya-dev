@@ -36,7 +36,7 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
       case CtorDef ctor -> defLevels(ctor.dataRef);
       case FieldDef field -> defLevels(field.structRef);
       // guaranteed as this is already a core term
-      case null, default -> Objects.requireNonNull(defVar.concrete.signature).sortParam();
+      case null -> Objects.requireNonNull(defVar.concrete.signature).sortParam();
     };
   }
   static @NotNull Term defResult(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
