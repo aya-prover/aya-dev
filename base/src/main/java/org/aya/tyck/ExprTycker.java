@@ -12,7 +12,6 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
-import kala.value.Ref;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -162,7 +161,7 @@ public final class ExprTycker {
           }, sp -> {
             var fieldName = sp.data();
             if (!(whnf instanceof CallTerm.Struct structCall))
-              return fail(struct, whnf, BadTypeError.structAcc(struct, fieldName, whnf));
+              return fail(struct, ErrorTerm.unexpected(whnf), BadTypeError.structAcc(struct, fieldName, whnf));
             var structCore = structCall.ref().core;
             if (structCore == null) throw new UnsupportedOperationException("TODO");
             var projected = structCore.fields.find(field -> Objects.equals(field.ref().name(), fieldName));
@@ -185,7 +184,11 @@ public final class ExprTycker {
           }
         );
       }
-      case Expr.TupExpr tuple -> visitTup(tuple, null);
+      case Expr.TupExpr tuple -> {
+        var items = tuple.items().map(this::synthesize);
+        yield new Result(new IntroTerm.Tuple(items.map(Result::wellTyped)),
+          new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type, true))));
+      }
       case Expr.AppExpr appE -> {
         var f = synthesize(appE.function());
         var app = f.wellTyped;
@@ -229,7 +232,36 @@ public final class ExprTycker {
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
     return switch (expr) {
-      case Expr.TupExpr tuple -> visitTup(tuple, term);
+      case Expr.TupExpr tuple -> {
+        var items = Buffer.<Term>create();
+        var resultTele = Buffer.<Term.@NotNull Param>create();
+        var typeWHNF = term.normalize(NormalizeMode.WHNF);
+        if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(tuple), tuple);
+        if (!(typeWHNF instanceof FormTerm.Sigma dt))
+          yield fail(tuple, term, BadTypeError.sigmaCon(tuple, term));
+        var againstTele = dt.params().view();
+        var last = dt.params().last().type();
+        for (var iter = tuple.items().iterator(); iter.hasNext(); ) {
+          var item = iter.next();
+          var result = inherit(item, againstTele.first().type());
+          items.append(result.wellTyped);
+          var ref = againstTele.first().ref();
+          resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
+          againstTele = againstTele.drop(1);
+          if (againstTele.isNotEmpty()) {
+            var subst = new Substituter.TermSubst(ref, result.wellTyped);
+            againstTele = againstTele.map(param -> param.subst(subst)).toSeq().view();
+            last = last.subst(subst);
+          } else {
+            if (iter.hasNext()) {
+              // TODO[ice]: too few tuple elements
+              throw new TyckerException();
+            } else items.append(inherit(item, last).wellTyped);
+          }
+        }
+        var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
+        yield new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resTy);
+      }
       case Expr.HoleExpr hole -> {
         // TODO[ice]: deal with unit type
         var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
@@ -513,54 +545,6 @@ public final class ExprTycker {
     subst.add(pi.param().ref(), arg);
     var term = pi.body().subst(subst).normalize(NormalizeMode.WHNF);
     return term instanceof FormTerm.Pi pai ? Either.left(pai) : Either.right(term);
-  }
-
-  @Rule.Check(partialSynth = true)
-  public Result visitTup(Expr.@NotNull TupExpr expr, @Nullable Term term) {
-    var items = Buffer.<Term>create();
-    final var resultLast = new Ref<Term>();
-    final var resultTele = Buffer.<Term.@NotNull Param>create();
-    if (term == null || term instanceof CallTerm.Hole) {
-      // `expr.items()` is larger than 1 due to parser
-      expr.items()
-        .map(this::synthesize)
-        .forEach(result -> {
-          items.append(result.wellTyped);
-          if (resultLast.value != null) resultTele.append(
-            new Term.Param(Constants.anonymous(), resultLast.value, true));
-          resultLast.value = result.type;
-        });
-    } else if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Sigma dt)) {
-      return fail(expr, term, BadTypeError.sigmaCon(expr, term));
-    } else {
-      var againstTele = dt.params().view();
-      var last = dt.params().last().type();
-      for (var iter = expr.items().iterator(); iter.hasNext(); ) {
-        var item = iter.next();
-        var result = inherit(item, againstTele.first().type());
-        items.append(result.wellTyped);
-        var ref = againstTele.first().ref();
-        resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
-        againstTele = againstTele.drop(1);
-        if (againstTele.isNotEmpty()) {
-          final var subst = new Substituter.TermSubst(ref, result.wellTyped);
-          againstTele = againstTele.map(param -> param.subst(subst)).toSeq().view();
-          last = last.subst(subst);
-        } else {
-          if (iter.hasNext()) {
-            // TODO[ice]: not enough sigma elements
-            throw new TyckerException();
-          } else {
-            var lastItemResult = inherit(item, last);
-            items.append(lastItemResult.wellTyped);
-            resultLast.value = lastItemResult.type;
-          }
-        }
-      }
-    }
-    var resultType = new FormTerm.Sigma(resultTele.toImmutableSeq());
-    if (term != null) unifyTy(term, resultType, expr.sourcePos());
-    return new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resultType);
   }
 
   public static class TyckerException extends InternalException {
