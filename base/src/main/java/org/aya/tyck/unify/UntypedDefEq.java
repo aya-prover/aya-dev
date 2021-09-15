@@ -19,6 +19,7 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.EtaConversion;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +110,7 @@ public record UntypedDefEq(
   ) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : lhs.args().view().zip(meta.telescope)) {
-      Term etaTerm = RefTerm.simpleEta(arg._1.term());
+      Term etaTerm = EtaConversion.simpleEtaReduction(arg._1.term());
       if (etaTerm instanceof RefTerm ref) {
         if (subst.map().containsKey(ref.var())) return null;
         subst.add(ref.var(), arg._2.toTerm());
