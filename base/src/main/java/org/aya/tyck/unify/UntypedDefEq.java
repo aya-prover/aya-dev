@@ -109,8 +109,8 @@ public record UntypedDefEq(
   ) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : lhs.args().view().zip(meta.telescope)) {
-      if (arg._1.term() instanceof RefTerm ref) {
-        // TODO[ice]: ^ eta var
+      Term etaTerm = RefTerm.simpleEta(arg._1.term());
+      if (etaTerm instanceof RefTerm ref) {
         if (subst.map().containsKey(ref.var())) return null;
         subst.add(ref.var(), arg._2.toTerm());
       } else return null;
