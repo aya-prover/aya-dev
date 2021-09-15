@@ -1,20 +1,17 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
-package org.aya.util;
+package org.aya.core;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
-import org.aya.core.term.ElimTerm;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.ops.Eta;
+import org.aya.core.term.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class EtaConversionTest {
+public class EtaTest {
   // \ x -> f x
   @Test public void oneLambdaSimpleEta() {
     var xParamTerm = new Term.Param(new LocalVar("x"), FormTerm.Univ.ZERO, false);
@@ -28,8 +25,8 @@ public class EtaConversionTest {
       // Body
       new ElimTerm.App(fRefTerm, new Arg<>(xRefTerm, false))
     );
-    Term res = EtaConversion.simpleEtaReduction(lambda);
-    assertTrue(EtaConversion.compareRefTerm(fRefTerm, res));
+    var res = Eta.uneta(lambda);
+    assertTrue(Eta.compareRefTerm(fRefTerm, res));
   }
 
   // \ x y -> f y x
@@ -47,8 +44,8 @@ public class EtaConversionTest {
         new ElimTerm.App(fRefTerm, new Arg<>(yRefTerm, false)),
         new Arg<>(xRefTerm, false))
     );
-    Term res = EtaConversion.simpleEtaReduction(lambda);
-    assertTrue(EtaConversion.compareRefTerm(fRefTerm, res));
+    var res = Eta.uneta(lambda);
+    assertTrue(Eta.compareRefTerm(fRefTerm, res));
   }
 
   // (x.1, x.2)
@@ -60,8 +57,8 @@ public class EtaConversionTest {
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
-    Term res = EtaConversion.simpleEtaReduction(tuple);
-    assertTrue(EtaConversion.compareRefTerm(xRefTerm, res));
+    var res = Eta.uneta(tuple);
+    assertTrue(Eta.compareRefTerm(xRefTerm, res));
   }
 
   // (x.1, (x.1, x.2).2)
@@ -74,8 +71,8 @@ public class EtaConversionTest {
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
     var finalTuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, new ElimTerm.Proj(tuple, 2)));
-    Term res = EtaConversion.simpleEtaReduction(finalTuple);
-    assertTrue(EtaConversion.compareRefTerm(xRefTerm, res));
+    var res = Eta.uneta(finalTuple);
+    assertTrue(Eta.compareRefTerm(xRefTerm, res));
   }
 
   // \x -> f (x.1, x.2)
@@ -97,7 +94,7 @@ public class EtaConversionTest {
       new ElimTerm.App(fRefTerm, new Arg<>(tuple, false))
     );
 
-    Term res = EtaConversion.simpleEtaReduction(lambda);
-    assertTrue(EtaConversion.compareRefTerm(fRefTerm, res));
+    var res = Eta.uneta(lambda);
+    assertTrue(Eta.compareRefTerm(fRefTerm, res));
   }
 }

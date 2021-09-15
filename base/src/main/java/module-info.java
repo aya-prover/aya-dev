@@ -10,6 +10,7 @@ module org.aya {
   requires transitive kala.collection;
 
   exports org.aya.concrete.desugar;
+  exports org.aya.core.ops;
   exports org.aya.concrete.desugar.error;
   exports org.aya.concrete.parse;
   exports org.aya.concrete.remark;
