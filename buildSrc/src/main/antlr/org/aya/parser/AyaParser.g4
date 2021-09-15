@@ -89,8 +89,8 @@ expr : atom                            # single
      | NEW_KW expr LBRACE newArg* RBRACE # new
      | <assoc=right> expr TO expr      # arr
      | expr projFix                    # proj
-     | LSUC_KW expr                    # lsuc
-     | LMAX_KW expr+                   # lmax
+     | LSUC_KW atom                    # lsuc
+     | LMAX_KW atom+                   # lmax
      | PI tele+ TO expr                # pi
      | SIGMA tele+ SUCHTHAT expr       # sigma
      | LAMBDA tele+ (IMPLIES expr?)?   # lam

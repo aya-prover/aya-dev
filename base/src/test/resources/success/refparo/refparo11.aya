@@ -1,0 +1,3 @@
+-- https://github.com/aya-prover/aya-dev/issues/15
+universe u v
+def test (A : Type u) (B : Type v) : Type (lmax u v) => A

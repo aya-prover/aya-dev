@@ -304,11 +304,11 @@ public final class AyaProducer {
   }
 
   public @NotNull Expr visitLsuc(AyaParser.LsucContext ctx) {
-    return new Expr.LSucExpr(sourcePosOf(ctx), visitExpr(ctx.expr()));
+    return new Expr.LSucExpr(sourcePosOf(ctx), visitAtom(ctx.atom()));
   }
 
   public @NotNull Expr visitLmax(AyaParser.LmaxContext ctx) {
-    return new Expr.LMaxExpr(sourcePosOf(ctx), ImmutableSeq.from(ctx.expr()).map(this::visitExpr));
+    return new Expr.LMaxExpr(sourcePosOf(ctx), ImmutableSeq.from(ctx.atom()).map(this::visitAtom));
   }
 
   public @NotNull Expr visitNew(AyaParser.NewContext ctx) {
