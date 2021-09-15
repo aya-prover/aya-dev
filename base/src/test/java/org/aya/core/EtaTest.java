@@ -25,8 +25,7 @@ public class EtaTest {
       // Body
       new ElimTerm.App(fRefTerm, new Arg<>(xRefTerm, false))
     );
-    var res = Eta.uneta(lambda);
-    assertTrue(Eta.compareRefTerm(fRefTerm, res));
+    assertTrue(Eta.compareRefTerm(fRefTerm, Eta.uneta(lambda)));
   }
 
   // \ x y -> f y x
@@ -44,8 +43,7 @@ public class EtaTest {
         new ElimTerm.App(fRefTerm, new Arg<>(yRefTerm, false)),
         new Arg<>(xRefTerm, false))
     );
-    var res = Eta.uneta(lambda);
-    assertTrue(Eta.compareRefTerm(fRefTerm, res));
+    assertTrue(Eta.compareRefTerm(fRefTerm, Eta.uneta(lambda)));
   }
 
   // (x.1, x.2)
@@ -57,8 +55,7 @@ public class EtaTest {
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
-    var res = Eta.uneta(tuple);
-    assertTrue(Eta.compareRefTerm(xRefTerm, res));
+    assertTrue(Eta.compareRefTerm(xRefTerm, Eta.uneta(tuple)));
   }
 
   // (x.1, (x.1, x.2).2)
@@ -71,8 +68,7 @@ public class EtaTest {
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
     var finalTuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, new ElimTerm.Proj(tuple, 2)));
-    var res = Eta.uneta(finalTuple);
-    assertTrue(Eta.compareRefTerm(xRefTerm, res));
+    assertTrue(Eta.compareRefTerm(xRefTerm, Eta.uneta(finalTuple)));
   }
 
   // \x -> f (x.1, x.2)
@@ -93,8 +89,6 @@ public class EtaTest {
       // Body
       new ElimTerm.App(fRefTerm, new Arg<>(tuple, false))
     );
-
-    var res = Eta.uneta(lambda);
-    assertTrue(Eta.compareRefTerm(fRefTerm, res));
+    assertTrue(Eta.compareRefTerm(fRefTerm, Eta.uneta(lambda)));
   }
 }
