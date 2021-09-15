@@ -5,8 +5,8 @@
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
 [![tokei]](https://github.com/XAMPPRocky/tokei)
 
-You need Java SE 17 (release-candidates available at <https://jdk.java.net/17/>) to set this project up.
-This also means if your choice of IDE is IntelliJ IDEA, you need version 2021.2 or higher.
+You need Java SE 17 (available at <https://jdk.java.net/17/>) to set this project up.
+This also means if your choice of IDE is IntelliJ IDEA, you need version 2021.2.1 or higher.
 If you have problems downloading dependencies (like you are in China), check out [how to][proxy] let
 gradle use proxies.
 
