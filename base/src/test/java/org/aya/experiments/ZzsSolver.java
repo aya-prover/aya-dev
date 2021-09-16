@@ -138,8 +138,8 @@ public class ZzsSolver {
     }
     var th = l.get(pos);
     var lhsVar = th.lhs().levels();
-    if (lhsVar.isEmpty()) return dfs(l, pos + 1, g);
     var rhsVar = th.rhs().levels();
+    if (lhsVar.isEmpty() || rhsVar.isEmpty()) return dfs(l, pos + 1, g);
     for (Level max : rhsVar) {
       var gg = new int[nodeSize + 1][nodeSize + 1];
       for (int i = 0; i <= nodeSize; i++) {
@@ -243,7 +243,7 @@ public class ZzsSolver {
           }
         }
       }
-      if (toInsert) lhsLevels.add((vr));
+      if (toInsert) lhsLevels.add(vr);
     }
     for (var vr : rhs.levels()) {
       boolean toInsert = true;
@@ -270,7 +270,9 @@ public class ZzsSolver {
         return;
       }
       lhsLevels.forEach(left -> dealSingleLt(g, left, right));
-    } else specialEq.add(new Equation(Ord.Lt, new Max(lhsLevels), new Max(rhsLevels)));
+      return;
+    }
+    specialEq.add(new Equation(Ord.Lt, new Max(lhsLevels), new Max(rhsLevels)));
   }
 
   public static void main(String[] args) throws UnsatException {
@@ -278,10 +280,11 @@ public class ZzsSolver {
     var a = new Reference(new Var("a", true), 0);
     var b = new Reference(new Var("b", true), 0);
     var v = new Reference(new Var("u", false), 0);
-    var res = new ZzsSolver().solve(List.of(
-      new Equation(Ord.Lt, new Max(u), new Max(a, b)),
-      new Equation(Ord.Lt, new Max(a), new Max(u, v))
-    ));
+    var data1 = List.of(
+      new Equation(Ord.Lt, new Max(Collections.singletonList(u)), new Max(List.of(a, b))),
+      new Equation(Ord.Lt, new Max(List.of(a)), new Max(List.of(u, v)))
+    );
+    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("u", false), 0), new Reference(new Var("v", false), 0))))));
     System.out.println(res);
   }
 }

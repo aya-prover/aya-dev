@@ -1,3 +1,5 @@
 -- https://github.com/aya-prover/aya-dev/issues/15
-universe u v
+-- https://github.com/aya-prover/aya-dev/issues/16
+universe l m u v
 def test (A : Type u) (B : Type v) : Type (lmax u v) => A
+def Foo (A : Type l) : Type (lsuc (lmax l m)) => (A -> Type m) -> Type m

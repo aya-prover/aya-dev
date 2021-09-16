@@ -121,8 +121,8 @@ public class LevelSolver {
     }
     var th = l.get(pos);
     var lhsVar = th.lhs().levels();
-    if (lhsVar.isEmpty()) return dfs(l, pos + 1, g);
     var rhsVar = th.rhs().levels();
+    if (lhsVar.isEmpty() || rhsVar.isEmpty()) return dfs(l, pos + 1, g);
     for (var max : rhsVar) {
       var gg = new int[nodeSize + 1][nodeSize + 1];
       for (int i = 0; i <= nodeSize; i++) {
@@ -216,8 +216,30 @@ public class LevelSolver {
 
   /** @return true if fail */
   private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs) {
-    var lhsLevels = lhs.levels();
-    var rhsLevels = rhs.levels();
+    var lhsLevels = lhs.levels().filter(vr -> {
+      if (vr instanceof Level.Reference<LvlVar> ref) {
+        var th = ref.ref();
+        for (var vp : rhs.levels()) {
+          if (vp instanceof Level.Reference<LvlVar> __r) {
+            var tp = __r.ref();
+            if (th == tp && ref.lift() <= __r.lift()) return false;
+          }
+        }
+      }
+      return true;
+    });
+    var rhsLevels = Buffer.<Level<LvlVar>>create();
+    for (var vr : rhs.levels()) {
+      var insert = true;
+      if (vr instanceof Level.Reference<LvlVar> ref) {
+        var th = ref.ref();
+        if (!th.free()) {
+          insert = false;
+          lhsLevels.forEach(left -> dealSingleLt(g, left, vr));
+        }
+      }
+      if (insert) rhsLevels.append(vr);
+    }
     if (lhsLevels.sizeEquals(1)) {
       var left = lhsLevels.get(0);
       if (left instanceof Level.Constant<LvlVar> constant && constant.value() == 0) {
@@ -234,7 +256,7 @@ public class LevelSolver {
       }
       return lhsLevels.anyMatch(left -> dealSingleLt(g, left, right));
     }
-    specialEq.append(e);
+    specialEq.append(new Eqn(new Sort(lhsLevels), new Sort(rhsLevels.toImmutableSeq()), Ordering.Lt, e.sourcePos()));
     return false;
   }
 }
