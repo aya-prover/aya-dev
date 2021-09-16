@@ -135,6 +135,7 @@ public class ZzsSolver {
     }
     var th = l.get(pos);
     var lhsVar = th.lhs().levels();
+    if (lhsVar.isEmpty()) return dfs(l, pos + 1, g);
     var rhsVar = th.rhs().levels();
     for (Level max : rhsVar) {
       var gg = new int[nodeSize + 1][nodeSize + 1];
@@ -224,29 +225,53 @@ public class ZzsSolver {
   }
 
   private void populateLT(int[][] g, ArrayList<Equation> specialEq, Equation e, Max lhs, Max rhs) {
-    var lhsLevels = lhs.levels();
-    var rhsLevels = rhs.levels();
+    var lhsLevels = new ArrayList<Level>();
+    var rhsLevels = new ArrayList<Level>();
+    for (var vr : lhs.levels()) {
+      boolean toInsert = true;
+      if (vr instanceof Reference ref) {
+        var th = ref.ref();
+        for (var vp : rhs.levels()) {
+          if (vp instanceof Reference __r) {
+            var tp = __r.ref();
+            if (th.name().equals(tp.name()) && ref.lift() <= __r.lift()) {
+              toInsert = false;
+            }
+          }
+        }
+      }
+      if (toInsert) lhsLevels.add((vr));
+    }
+    for (var vr : rhs.levels()) {
+      boolean toInsert = true;
+      if (vr instanceof Reference ref) {
+        var th = ref.ref();
+        if (!th.free()) {
+          toInsert = false;
+          lhsLevels.forEach(left -> dealSingleLt(g, left, vr));
+        }
+      }
+      if (toInsert) rhsLevels.add(vr);
+    }
     if (lhsLevels.size() == 1) {
       var left = lhsLevels.get(0);
       if (left instanceof Const constant && constant.constant == 0) {
         avoidableEqns.add(e);
         return;
       }
-      rhsLevels.forEach(right -> dealSingleLt(g, left, right));
-    } else if (rhsLevels.size() == 1) {
+    }
+    if (rhsLevels.size() == 1) {
       var right = rhsLevels.get(0);
       if (right instanceof Infinity) {
         avoidableEqns.add(e);
         return;
       }
       lhsLevels.forEach(left -> dealSingleLt(g, left, right));
-    } else specialEq.add(e);
+    } else specialEq.add(new Equation(Ord.Lt, new Max(lhsLevels), new Max(rhsLevels)));
   }
 
   public static void main(String[] args) throws UnsatException {
-    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("l", false), 0))), new Max(List.of(new Reference(new Var("l", false), 1), new Reference(new Var("m", false), 1)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("m", false), 1))), new Max(List.of(new Reference(new Var("l", false), 1), new Reference(new Var("m", false), 1)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("m", false), 1))), new Max(List.of(new Reference(new Var("l", false), 1), new Reference(new Var("m", false), 1))))));
+    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("u", false), 0), new Reference(new Var("v", false), 0))))));
     System.out.println(res);
   }
 }

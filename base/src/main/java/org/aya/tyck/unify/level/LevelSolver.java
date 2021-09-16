@@ -121,6 +121,7 @@ public class LevelSolver {
     }
     var th = l.get(pos);
     var lhsVar = th.lhs().levels();
+    if (lhsVar.isEmpty()) return dfs(l, pos + 1, g);
     var rhsVar = th.rhs().levels();
     for (var max : rhsVar) {
       var gg = new int[nodeSize + 1][nodeSize + 1];
