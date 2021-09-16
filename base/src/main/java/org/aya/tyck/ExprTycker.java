@@ -459,9 +459,7 @@ public final class ExprTycker {
       //  - check the definition's correctness: happens here
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
       var field = (DefVar<FieldDef, Decl.StructField>) var;
-      var ty = FormTerm.Pi.make(Def.defTele(field), Def.defResult(field));
-
-      return new Result(new Term.FieldRefTerm(field, ty), ty);
+      return new Result(new RefTerm.Field(field), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);

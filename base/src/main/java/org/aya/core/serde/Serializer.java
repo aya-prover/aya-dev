@@ -83,8 +83,8 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override
-  public SerTerm visitFieldRef(Term.@NotNull FieldRefTerm term, Unit unit) {
-    return new SerTerm.FieldRef(state.def(term.ref()), serialize(term.type()));
+  public SerTerm visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
+    return new SerTerm.FieldRef(state.def(term.ref()));
   }
 
   @Override public SerTerm visitRef(@NotNull RefTerm term, Unit unit) {

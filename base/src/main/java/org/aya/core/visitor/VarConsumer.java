@@ -22,7 +22,7 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     return Unit.unit();
   }
 
-  @Override default Unit visitFieldRef(@NotNull Term.FieldRefTerm term, P p) {
+  @Override default Unit visitFieldRef(@NotNull RefTerm.Field term, P p) {
     visitVar(term.ref(), p);
     return Unit.unit();
   }

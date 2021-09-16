@@ -83,7 +83,7 @@ public final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
   }
 
   @Override
-  public @Nullable Pat visitFieldRef(Term.@NotNull FieldRefTerm term, Unit unit) {
+  public @Nullable Pat visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
     return null;
   }
 

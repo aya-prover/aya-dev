@@ -25,10 +25,8 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
   @Override
   @NotNull
-  default Term visitFieldRef(Term.@NotNull FieldRefTerm term, P p) {
-    var ty = term.type().accept(this, p);
-    if (ty == term.type()) return term;
-    return new Term.FieldRefTerm(term.ref(), ty);
+  default Term visitFieldRef(@NotNull RefTerm.Field term, P p) {
+    return term;
   }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {

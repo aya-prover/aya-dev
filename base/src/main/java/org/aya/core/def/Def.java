@@ -11,6 +11,7 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.sort.Sort;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.distill.CoreDistiller;
@@ -24,6 +25,10 @@ import java.util.Objects;
  * @author ice1000
  */
 public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
+  static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
+    return FormTerm.Pi.make(defTele(defVar), defResult(defVar));
+  }
+
   static @NotNull ImmutableSeq<Term.Param> defTele(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term

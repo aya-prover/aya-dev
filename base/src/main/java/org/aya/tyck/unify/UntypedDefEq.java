@@ -162,12 +162,9 @@ public record UntypedDefEq(
   }
 
   @Override
-  public @Nullable Term visitFieldRef(Term.@NotNull FieldRefTerm lhs, @NotNull Term preRhs) {
-    if (preRhs instanceof Term.FieldRefTerm rhs
-      && rhs.ref().name().equals(lhs.ref().name())) {
-      return rhs.type();
-    }
-    return null;
+  public @Nullable Term visitFieldRef(@NotNull RefTerm.Field lhs, @NotNull Term preRhs) {
+    if (preRhs instanceof RefTerm.Field rhs && rhs.ref() == lhs.ref()) return Def.defType(rhs.ref());
+    else return null;
   }
 
   @Override public @NotNull Term visitError(@NotNull ErrorTerm term, @NotNull Term term2) {

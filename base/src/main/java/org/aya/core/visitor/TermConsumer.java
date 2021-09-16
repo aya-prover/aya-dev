@@ -18,8 +18,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override
-  default Unit visitFieldRef(Term.@NotNull FieldRefTerm term, P p) {
-    term.type().accept(this, p);
+  default Unit visitFieldRef(@NotNull RefTerm.Field term, P p) {
     return Unit.unit();
   }
 

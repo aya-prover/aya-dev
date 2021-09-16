@@ -34,7 +34,7 @@ public record Substituter(
   }
 
   @Override
-  public @NotNull Term visitFieldRef(@NotNull Term.FieldRefTerm term, Unit unit) {
+  public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
     return termSubst.getOrDefault(term.ref(), term);
   }
 

@@ -28,7 +28,7 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
   }
 
   @Override
-  public @NotNull Term visitFieldRef(@NotNull Term.FieldRefTerm term, NormalizeMode normalizeMode) {
+  public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, NormalizeMode normalizeMode) {
     return term;
   }
 

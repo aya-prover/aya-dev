@@ -184,9 +184,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record FieldRef(@NotNull SerDef.QName name, @NotNull SerTerm type) implements SerTerm {
+  record FieldRef(@NotNull SerDef.QName name) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new Term.FieldRefTerm(state.def(name), type.de(state));
+      return new RefTerm.Field(state.def(name));
     }
   }
 }

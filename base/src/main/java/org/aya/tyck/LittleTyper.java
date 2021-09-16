@@ -124,7 +124,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override
-  public Term visitFieldRef(Term.@NotNull FieldRefTerm term, Unit unit) {
-    return term.type();
+  public Term visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
+    return Def.defType(term.ref());
   }
 }

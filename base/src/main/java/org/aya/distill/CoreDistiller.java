@@ -144,7 +144,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override
-  public Doc visitFieldRef(Term.@NotNull FieldRefTerm term, Boolean aBoolean) {
+  public Doc visitFieldRef(@NotNull RefTerm.Field term, Boolean aBoolean) {
     return varDoc(term.ref());
   }
 
