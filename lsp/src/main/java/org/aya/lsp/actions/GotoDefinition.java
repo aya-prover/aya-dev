@@ -34,12 +34,12 @@ public class GotoDefinition implements StmtConsumer<XY> {
     var locator = new GotoDefinition();
     locator.visitAll(loadedFile.concrete(), new XY(params.getPosition()));
     return locator.locations.view().mapNotNull(pos -> {
-      SourcePos target;
-      if (pos.data() instanceof DefVar<?, ?> defVar) {
-        target = defVar.concrete.sourcePos();
-      } else if (pos.data() instanceof LocalVar localVar) {
-        target = localVar.definition();
-      } else return null;
+      var target = switch (pos.data()) {
+        case DefVar<?, ?> defVar -> defVar.concrete.sourcePos();
+        case LocalVar localVar -> localVar.definition();
+        case default -> null;
+      };
+      if (target == null) return null;
       var res = LspRange.toLoc(pos.sourcePos(), target);
       if (res != null) Log.d("Resolved: %s in %s", target, res.getTargetUri());
       return res;
