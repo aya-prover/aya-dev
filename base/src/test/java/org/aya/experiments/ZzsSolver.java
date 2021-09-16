@@ -224,19 +224,22 @@ public class ZzsSolver {
   }
 
   private void populateLT(int[][] g, ArrayList<Equation> specialEq, Equation e, Max lhs, Max rhs) {
-    for (var v : lhs.levels()) {
-      if (!rhs.levels().contains(v)) {
+    var lhsLevels = lhs.levels();
+    var rhsLevels = rhs.levels();
+    if (lhsLevels.size() == 1) {
+      var left = lhsLevels.get(0);
+      if (left instanceof Const constant && constant.constant == 0) {
         avoidableEqns.add(e);
-        break;
+        return;
       }
-    }
-    if (rhs.levels().size() == 1) {
-      var right = rhs.levels().get(0);
+      rhsLevels.forEach(right -> dealSingleLt(g, left, right));
+    } else if (rhsLevels.size() == 1) {
+      var right = rhsLevels.get(0);
       if (right instanceof Infinity) {
         avoidableEqns.add(e);
         return;
       }
-      for (var left : lhs.levels()) dealSingleLt(g, left, right);
+      lhsLevels.forEach(left -> dealSingleLt(g, left, right));
     } else specialEq.add(e);
   }
 

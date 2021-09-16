@@ -216,15 +216,17 @@ public class LevelSolver {
   /** @return true if fail */
   private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs) {
     var lhsLevels = lhs.levels();
-    if (lhs.levels().sizeEquals(1)) {
-      var left = lhs.levels().get(0);
+    var rhsLevels = rhs.levels();
+    if (lhsLevels.sizeEquals(1)) {
+      var left = lhsLevels.get(0);
       if (left instanceof Level.Constant<LvlVar> constant && constant.value() == 0) {
         avoidableEqns.append(e);
         return false;
       }
+      return rhsLevels.anyMatch(right -> dealSingleLt(g, left, right));
     }
-    if (rhs.levels().sizeEquals(1)) {
-      var right = rhs.levels().get(0);
+    if (rhsLevels.sizeEquals(1)) {
+      var right = rhsLevels.get(0);
       if (right instanceof Level.Infinity<LvlVar>) {
         avoidableEqns.append(e);
         return false;
