@@ -64,7 +64,6 @@ public final class ExprTycker {
   public final @NotNull EqnSet termEqns = new EqnSet();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.create();
-  private Term struct;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
