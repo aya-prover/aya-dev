@@ -235,7 +235,8 @@ public class LevelSolver {
         var th = ref.ref();
         if (!th.free()) {
           insert = false;
-          lhsLevels.forEach(left -> dealSingleLt(g, left, vr));
+          if (lhsLevels.anyMatch(left -> dealSingleLt(g, left, vr)))
+            return true;
         }
       }
       if (insert) rhsLevels.append(vr);
