@@ -20,10 +20,14 @@ open data Nat : Type
  | zero
  | suc Nat
 
-struct Monoid { A : Type } ( op : A -> A -> A ) ( id : A ) : Type
+open data Unit : Type
+  | unit
+
+struct Monoid { A : Type } ( op : A -> A -> A ): Type
+  | id ( x : Unit ) : A
   | assoc (a b c : A) : op (op a b) c = op a (op b c)
-  | id_r (a: A) : op a id = a
-  | id_l (a: A) : op id a = a
+  | id_r (a: A) : op a (id unit) = a
+  | id_l (a: A) : op (id unit) a = a
 
 def `+` addN ( a b : Nat ) : Nat
  | zero, a => a
@@ -33,15 +37,13 @@ def `+` addN ( a b : Nat ) : Nat
 
 bind + tighter =
 
-def +-id_r ( a : Nat ) : a + zero = a => idp a
-def +-id_l ( a : Nat ) : zero + a = a => idp a
-
 def +-assoc ( a b c : Nat ) : (a + b) + c = a + (b + c)
   | zero  , b , c => idp (b + c)
   | suc a , b , c => pmap suc (+-assoc a b c)
 
-def +-monoid => new Monoid addN zero {
+def +-monoid => new Monoid addN {
+  | id x => zero
   | assoc a b c => +-assoc a b c
-  | id_r a => +-id_r a
-  | id_l a => +-id_l a
+  | id_r a => idp a
+  | id_l a => idp a
 }
