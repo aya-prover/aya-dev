@@ -140,7 +140,7 @@ public class ZzsSolver {
     var lhsVar = th.lhs().levels();
     var rhsVar = th.rhs().levels();
     if (lhsVar.isEmpty() || rhsVar.isEmpty()) return dfs(l, pos + 1, g);
-    for (Level max : rhsVar) {
+    for (var max : rhsVar) {
       var gg = new int[nodeSize + 1][nodeSize + 1];
       for (int i = 0; i <= nodeSize; i++) {
         if (nodeSize + 1 >= 0) System.arraycopy(g[i], 0, gg[i], 0, nodeSize + 1);
@@ -284,7 +284,14 @@ public class ZzsSolver {
       new Equation(Ord.Lt, new Max(Collections.singletonList(u)), new Max(List.of(a, b))),
       new Equation(Ord.Lt, new Max(List.of(a)), new Max(List.of(u, v)))
     );
-    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("u", false), 0), new Reference(new Var("v", false), 0))))));
+    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Isomorphism.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Isomorphism.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("ident.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("ident'.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("idp.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("idp.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("idp'.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("idp'.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0))))));
     System.out.println(res);
   }
 }

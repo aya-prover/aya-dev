@@ -157,14 +157,13 @@ public class LevelSolver {
       prepareGraphNode(g, e.rhs().levels());
     }
     var specialEq = Buffer.<Eqn>create();
-    var hasError = equations.view()
+    var hasError = equations.toImmutableSeq()
       // Do NOT make this lazy -- the `populate` function has side effects
       // We need to run populate on all equations
       .map(e -> populate(g, specialEq, e))
-      .toImmutableSeq()
       .anyMatch(b -> b);
-    if (hasError) throw new UnsatException();
-    if (floyd(g)) throw new UnsatException();
+    if (hasError || floyd(g))
+      throw new UnsatException();
     var gg = dfs(specialEq, 0, g);
     for (var name : freeNodes) {
       int u = graphMap.get(name);
