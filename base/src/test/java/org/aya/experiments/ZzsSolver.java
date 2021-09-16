@@ -29,6 +29,9 @@ public class ZzsSolver {
   }
 
   record Max(List<Level> levels) {
+    public Max(Level... levels) {
+      this(Arrays.asList(levels));
+    }
   }
 
   // <=, >=, ==
@@ -271,7 +274,14 @@ public class ZzsSolver {
   }
 
   public static void main(String[] args) throws UnsatException {
-    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("u", false), 0), new Reference(new Var("v", false), 0))))));
+    var u = new Reference(new Var("u", false), 0);
+    var a = new Reference(new Var("a", true), 0);
+    var b = new Reference(new Var("b", true), 0);
+    var v = new Reference(new Var("u", false), 0);
+    var res = new ZzsSolver().solve(List.of(
+      new Equation(Ord.Lt, new Max(u), new Max(a, b)),
+      new Equation(Ord.Lt, new Max(a), new Max(u, v))
+    ));
     System.out.println(res);
   }
 }
