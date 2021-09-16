@@ -22,6 +22,11 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     return Unit.unit();
   }
 
+  @Override default Unit visitFieldRef(@NotNull Term.FieldRefTerm term, P p) {
+    visitVar(term.ref(), p);
+    return Unit.unit();
+  }
+
   @Override default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
     visitVar(term.ref(), p);
     return TermConsumer.super.visitHole(term, p);

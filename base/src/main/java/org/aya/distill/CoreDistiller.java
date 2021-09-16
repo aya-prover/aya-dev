@@ -143,6 +143,11 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), false));
   }
 
+  @Override
+  public Doc visitFieldRef(Term.@NotNull FieldRefTerm term, Boolean aBoolean) {
+    return varDoc(term.ref());
+  }
+
   @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {
     var doc = term.description().toDoc(options);
     return !term.isReallyError() ? doc : Doc.angled(doc);

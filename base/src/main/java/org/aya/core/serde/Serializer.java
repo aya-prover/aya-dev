@@ -82,6 +82,11 @@ public record Serializer(@NotNull Serializer.State state) implements
     throw new AssertionError("Shall not have holes serialized.");
   }
 
+  @Override
+  public SerTerm visitFieldRef(Term.@NotNull FieldRefTerm term, Unit unit) {
+    return new SerTerm.FieldRef(state.def(term.ref()), serialize(term.type()));
+  }
+
   @Override public SerTerm visitRef(@NotNull RefTerm term, Unit unit) {
     return new SerTerm.Ref(state.local(term.var()), serialize(term.type()));
   }

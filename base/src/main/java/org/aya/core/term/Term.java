@@ -12,11 +12,15 @@ import org.aya.api.core.CoreTerm;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Bind;
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
+import org.aya.concrete.stmt.Decl;
+import org.aya.core.def.FieldDef;
+import org.aya.core.def.StructDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
@@ -38,7 +42,7 @@ import org.jetbrains.annotations.TestOnly;
  *
  * @author ice1000
  */
-public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTerm, IntroTerm, RefTerm, ErrorTerm {
+public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorTerm, FormTerm, IntroTerm, RefTerm, Term.FieldRefTerm {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -125,6 +129,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
     R visitProj(@NotNull ElimTerm.Proj term, P p);
     R visitAccess(@NotNull CallTerm.Access term, P p);
     R visitHole(@NotNull CallTerm.Hole term, P p);
+    R visitFieldRef(@NotNull FieldRefTerm term, P p);
     R visitError(@NotNull ErrorTerm term, P p);
   }
 
@@ -195,6 +200,15 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, FormTe
       };
       params.forEachIndexed((i, param) -> obj.ok = obj.ok && param.explicit() == args.get(i).explicit());
       return obj.ok;
+    }
+  }
+
+  record FieldRefTerm(
+    @NotNull DefVar<FieldDef, Decl.StructField> ref,
+    @NotNull Term type
+  ) implements Term {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitFieldRef(this, p);
     }
   }
 }

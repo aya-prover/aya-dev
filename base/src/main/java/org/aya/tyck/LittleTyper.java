@@ -122,4 +122,9 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   @Override public Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
     return term.ref().core().result;
   }
+
+  @Override
+  public Term visitFieldRef(Term.@NotNull FieldRefTerm term, Unit unit) {
+    return term.type();
+  }
 }

@@ -23,6 +23,13 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
       && term.args().sameElements(args, true)) return term;
     return new CallTerm.Hole(term.ref(), contextArgs, args);
   }
+  @Override
+  @NotNull
+  default Term visitFieldRef(Term.@NotNull FieldRefTerm term, P p) {
+    var ty = term.type().accept(this, p);
+    if (ty == term.type()) return term;
+    return new Term.FieldRefTerm(term.ref(), ty);
+  }
 
   @Override default @NotNull Term visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
     var args = dataCall.args().map(arg -> visitArg(arg, p));
@@ -118,8 +125,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     var args = fnCall.args().map(arg -> visitArg(arg, p));
     var sortArgs = fnCall.sortArgs().mapNotNull(sort -> visitSort(sort, p));
     if (!sortArgs.sizeEquals(fnCall.sortArgs().size())) return new ErrorTerm(fnCall);
-    if (fnCall.args().sameElements(args, true)
-      && fnCall.sortArgs().sameElements(sortArgs, true)
+    if (fnCall.sortArgs().sameElements(sortArgs, true)
       && fnCall.args().sameElements(args, true)) return fnCall;
     return new CallTerm.Fn(fnCall.ref(), sortArgs, args);
   }

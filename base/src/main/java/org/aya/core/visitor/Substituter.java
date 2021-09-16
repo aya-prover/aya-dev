@@ -33,6 +33,11 @@ public record Substituter(
     return levelSubst.applyTo(sort);
   }
 
+  @Override
+  public @NotNull Term visitFieldRef(@NotNull Term.FieldRefTerm term, Unit unit) {
+    return termSubst.getOrDefault(term.ref(), term);
+  }
+
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
     return termSubst.getOrDefault(term.var(), term);
   }

@@ -64,6 +64,7 @@ public final class ExprTycker {
   public final @NotNull EqnSet termEqns = new EqnSet();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
   public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.create();
+  private Term struct;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -135,7 +136,7 @@ public final class ExprTycker {
               .accept(fieldSubst, Unit.unit()),
             FormTerm.Pi.make(teleViewFinal, type)).wellTyped);
           fields.append(Tuple.of(defField.ref(), field));
-          subst.add(defField.ref(), field);
+          subst.add(defField.ref(), IntroTerm.Lambda.make(Def.defTele(defField.ref()), field));
         }
 
         if (missing.isNotEmpty())
@@ -459,8 +460,8 @@ public final class ExprTycker {
       //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
       var field = (DefVar<FieldDef, Decl.StructField>) var;
       var ty = FormTerm.Pi.make(Def.defTele(field), Def.defResult(field));
-      var fieldPos = field.concrete.sourcePos();
-      return new Result(new RefTerm(new LocalVar(field.name(), fieldPos), ty), ty);
+
+      return new Result(new Term.FieldRefTerm(field, ty), ty);
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new IllegalStateException(msg);

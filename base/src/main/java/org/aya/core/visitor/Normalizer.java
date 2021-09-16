@@ -27,6 +27,11 @@ public final class Normalizer implements Unfolder<NormalizeMode> {
     return term;
   }
 
+  @Override
+  public @NotNull Term visitFieldRef(@NotNull Term.FieldRefTerm term, NormalizeMode normalizeMode) {
+    return term;
+  }
+
   @Override public @NotNull Term visitLam(@NotNull IntroTerm.Lambda term, NormalizeMode mode) {
     if (mode != NormalizeMode.NF) return term;
     else return Unfolder.super.visitLam(term, mode);
