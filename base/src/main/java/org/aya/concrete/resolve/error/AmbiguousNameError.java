@@ -27,7 +27,6 @@ public record AmbiguousNameError(
       Doc.english("Use one of the following module names to qualify the name to disambiguate:"),
       Doc.styled(Style.code(), Doc.nest(1, Doc.vcat(disambiguation.view()
         .map(QualifiedID::join)
-        .map(Doc::plain)
-        .toImmutableSeq()))));
+        .map(Doc::plain)))));
   }
 }

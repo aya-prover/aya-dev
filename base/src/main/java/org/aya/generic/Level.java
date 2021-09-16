@@ -50,7 +50,8 @@ public sealed interface Level<V extends Var> extends AyaDocile {
   }
 
   static @NotNull Doc levelDoc(int lift, String name) {
-    return Doc.plain(name + (lift > 0 ? " + " + lift : ""));
+    if (lift > 0) return Doc.parened(Doc.plain(name + " + " + lift));
+    return Doc.plain(name);
   }
 
   record Infinity<V extends Var>() implements Level<V> {

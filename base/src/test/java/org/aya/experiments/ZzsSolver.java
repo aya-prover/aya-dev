@@ -241,10 +241,9 @@ public class ZzsSolver {
   }
 
   public static void main(String[] args) throws UnsatException {
-    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
-      // new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Const(0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Semigroup.u", true), 0))), new Max(List.of(new Reference(new Var("Semigroup.u", true), 0))))));
+    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("l", false), 0))), new Max(List.of(new Reference(new Var("l", false), 1), new Reference(new Var("m", false), 1)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("m", false), 1))), new Max(List.of(new Reference(new Var("l", false), 1), new Reference(new Var("m", false), 1)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("m", false), 1))), new Max(List.of(new Reference(new Var("l", false), 1), new Reference(new Var("m", false), 1))))));
     System.out.println(res);
   }
 }

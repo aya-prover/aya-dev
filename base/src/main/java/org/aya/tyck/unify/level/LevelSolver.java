@@ -183,7 +183,7 @@ public class LevelSolver {
         if (gg[v][u] != INF) upperNodes.append(new Level.Reference<>(nu, gg[v][u]));
         if (gg[u][v] < LOW_BOUND / 2) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
       }
-      Buffer<Level<LvlVar>> retList = Buffer.create();
+      var retList = Buffer.<Level<LvlVar>>create();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
         if (lowerBound != 0 || lowerNodes.isEmpty()) retList.append(new Level.Constant<>(lowerBound));
         retList.appendAll(lowerNodes);
@@ -216,17 +216,11 @@ public class LevelSolver {
   /** @return true if fail */
   private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs) {
     var lhsLevels = lhs.levels();
-    if (lhsLevels.allMatch(v -> rhs.levels().contains(v))) {
-      avoidableEqns.append(e);
-      return false;
-    }
     if (lhs.levels().sizeEquals(1)) {
       var left = lhs.levels().get(0);
-      if (left instanceof Level.Constant<LvlVar> constant) {
-        if (constant.value() == 0) {
-          avoidableEqns.append(e);
-          return false;
-        }
+      if (left instanceof Level.Constant<LvlVar> constant && constant.value() == 0) {
+        avoidableEqns.append(e);
+        return false;
       }
     }
     if (rhs.levels().sizeEquals(1)) {
@@ -236,7 +230,8 @@ public class LevelSolver {
         return false;
       }
       return lhsLevels.anyMatch(left -> dealSingleLt(g, left, right));
-    } else specialEq.append(e);
+    }
+    specialEq.append(e);
     return false;
   }
 }
