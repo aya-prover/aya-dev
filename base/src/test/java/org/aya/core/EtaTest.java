@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EtaTest {
   // \ x -> f x
-  @Test public void oneLambdaSimpleEta() {
+  @Test public void oneLambdaUneta() {
     var xParamTerm = new Term.Param(new LocalVar("x"), FormTerm.Univ.ZERO, false);
     var xRefTerm = new RefTerm(new LocalVar("x"), FormTerm.Univ.ZERO);
     // It's rather tedious to construct a Fn here
@@ -29,7 +29,7 @@ public class EtaTest {
   }
 
   // \ x y -> f y x
-  @Test public void twoLambdaSimpleEta() {
+  @Test public void twoLambdaUneta() {
     var xParamTerm = new Term.Param(new LocalVar("x"), FormTerm.Univ.ZERO, false);
     var yParamTerm = new Term.Param(new LocalVar("y"), FormTerm.Univ.ZERO, false);
     var xRefTerm = new RefTerm(new LocalVar("x"), FormTerm.Univ.ZERO);
@@ -47,7 +47,7 @@ public class EtaTest {
   }
 
   // (x.1, x.2)
-  @Test public void tupleSimpleEta() {
+  @Test public void tupleUneta() {
     var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false)));
@@ -59,7 +59,7 @@ public class EtaTest {
   }
 
   // (x.1, (x.1, x.2).2)
-  @Test public void nestTupleSimpleEta() {
+  @Test public void nestTupleUneta() {
     var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false)));
@@ -72,7 +72,7 @@ public class EtaTest {
   }
 
   // \x -> f (x.1, x.2)
-  @Test public void tupleAndLambdaSimpleEta() {
+  @Test public void tupleAndLambdaUneta() {
     var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
       new Term.Param(new LocalVar("B"), FormTerm.Univ.ZERO, false)));
