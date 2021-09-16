@@ -251,17 +251,19 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     return Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
       linkDef(def.ref(), STRUCT_CALL),
       visitTele(def.telescope()),
-      Doc.plain(":"),
+      Doc.symbol(":"),
       def.result().accept(this, false)
     ), Doc.nest(2, Doc.vcat(
       def.fields.view().map(field -> field.accept(this, Unit.unit())))));
   }
 
   @Override public Doc visitField(@NotNull FieldDef field, Unit unit) {
-    return visitConditions(Doc.sep(Doc.symbol("|"),
+    return visitConditions(Doc.sepNonEmpty(Doc.symbol("|"),
       coe(field.coerce),
       linkDef(field.ref(), FIELD_CALL),
-      visitTele(field.selfTele)), field.clauses);
+      visitTele(field.selfTele),
+      Doc.symbol(":"),
+      field.result.accept(this, false)), field.clauses);
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {

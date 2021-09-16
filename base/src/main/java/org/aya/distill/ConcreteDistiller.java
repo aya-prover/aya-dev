@@ -342,7 +342,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
 
   private void appendResult(Buffer<Doc> prelude, Expr result) {
     if (result instanceof Expr.HoleExpr) return;
-    prelude.append(Doc.plain(":"));
+    prelude.append(Doc.symbol(":"));
     prelude.append(result.accept(this, false));
   }
 
