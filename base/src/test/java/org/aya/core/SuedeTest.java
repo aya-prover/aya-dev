@@ -61,6 +61,11 @@ public class SuedeTest {
         (p : a = b) (q : b = d) (r : a = c)
         (i j : I) : A
         => (arcoe (\\ k => (r.at k) = (q.at k)) p i).at j
+      struct Monoid {A : Type} (op : A -> A -> A): Type
+        | id : A
+        | assoc (a b c : A) : op (op a b) c = op a (op b c)
+        | id_r (a: A) : op a id = a
+        | id_l (a: A) : op id a = a
       """);
   }
 

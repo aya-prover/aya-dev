@@ -54,6 +54,8 @@ public class DistillerTest {
 
       def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
         new Pair A B { | fst => a | snd => b }
+      def sigPat (A B : Type) (x : Sig A ** B) : Sig B ** A
+        | A, B, (a, b) => (b, a)
       """).renderToHtml().isEmpty());
   }
 
@@ -67,6 +69,13 @@ public class DistillerTest {
        }
       def path {A : Pi I -> Type} (p : Pi (i : I) -> A i)
         => new Path A (p left) (p right) { | at i => p i }
+      def `=` Eq {A : Type} (a b : A) : Type => Path (\\ i => A) a b
+      bind = looser application
+      struct Monoid {A : Type} (op : A -> A -> A): Type
+        | id : A
+        | assoc (a b c : A) : op (op a b) c = op a (op b c)
+        | id_r (a: A) : op a id = a
+        | id_l (a: A) : op id a = a
       """;
     assertFalse(declDoc(code).renderToTeX().isEmpty());
     tearDown();
