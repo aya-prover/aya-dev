@@ -4,7 +4,6 @@ package org.aya.concrete.resolve.error;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
@@ -15,14 +14,13 @@ public record AmbiguousNameError(
   @NotNull String name,
   @NotNull ImmutableSeq<Seq<String>> disambiguation,
   @Override @NotNull SourcePos sourcePos
-) implements Problem {
+) implements ResolveProblem {
   @Override public @NotNull Severity level() {
     return Severity.ERROR;
   }
 
   @Override public @NotNull Doc describe() {
-    return Doc.vcat(
-      Doc.cat(
+    return Doc.vcat(Doc.cat(
         Doc.english("The unqualified name"),
         Doc.styled(Style.code(), Doc.plain(name)),
         Doc.english("is ambiguous")),
@@ -31,9 +29,5 @@ public record AmbiguousNameError(
         .map(QualifiedID::join)
         .map(Doc::plain)
         .toImmutableSeq()))));
-  }
-
-  @Override public @NotNull Stage stage() {
-    return Stage.RESOLVE;
   }
 }

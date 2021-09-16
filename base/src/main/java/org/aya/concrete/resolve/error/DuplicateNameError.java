@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.error;
 
-import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.distill.BaseDistiller;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public record DuplicateNameError(
   @NotNull String name, @NotNull Var ref,
   @Override @NotNull SourcePos sourcePos
-) implements Problem {
+) implements ResolveProblem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("The name"),
@@ -21,10 +20,6 @@ public record DuplicateNameError(
       Doc.parened(Doc.styled(Style.code(), BaseDistiller.varDoc(ref))),
       Doc.english("is already defined elsewhere")
     );
-  }
-
-  @Override public @NotNull Stage stage() {
-    return Stage.RESOLVE;
   }
 
   @Override public @NotNull Severity level() {

@@ -18,6 +18,10 @@ public record UnknownPrimError(
       Doc.styled(Style.code(), Doc.plain(name)));
   }
 
+  @Override public @NotNull Stage stage() {
+    return Stage.PARSE;
+  }
+
   @Override public @NotNull Severity level() {
     return Severity.ERROR;
   }

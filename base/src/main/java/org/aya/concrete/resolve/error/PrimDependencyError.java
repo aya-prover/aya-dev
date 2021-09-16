@@ -3,7 +3,6 @@
 package org.aya.concrete.resolve.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
@@ -17,7 +16,7 @@ public record PrimDependencyError(
   @NotNull String name,
   @NotNull ImmutableSeq<PrimDef.ID> lack,
   @Override @NotNull SourcePos sourcePos
-) implements Problem {
+) implements ResolveProblem {
   @Override public @NotNull Doc describe() {
     assert lack.size() > 0;
     return Doc.sep(

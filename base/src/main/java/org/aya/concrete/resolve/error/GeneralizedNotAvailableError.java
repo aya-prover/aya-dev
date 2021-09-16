@@ -9,17 +9,13 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
-public record GeneralizedNotAvailableError(@Override @NotNull Expr expr) implements ExprProblem {
+public record GeneralizedNotAvailableError(@Override @NotNull Expr expr) implements ExprProblem, ResolveProblem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("The generalized variable"),
       Doc.styled(Style.code(), expr.toDoc(DistillerOptions.DEFAULT)),
       Doc.english("is not available here")
     );
-  }
-
-  @Override public @NotNull Stage stage() {
-    return Stage.RESOLVE;
   }
 
   @Override public @NotNull Severity level() {

@@ -3,7 +3,6 @@
 package org.aya.concrete.resolve.error;
 
 import kala.collection.Seq;
-import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
@@ -15,7 +14,7 @@ public record QualifiedNameNotFoundError(
   @NotNull Seq<String> modName,
   @NotNull String name,
   @Override @NotNull SourcePos sourcePos
-) implements Problem {
+) implements ResolveProblem {
   @Override public @NotNull Doc describe() {
     return Doc.sep(
       Doc.english("The qualified name"),
@@ -23,10 +22,6 @@ public record QualifiedNameNotFoundError(
         Doc.cat(Doc.plain(QualifiedID.join(modName)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
       Doc.english("is not defined in the current scope")
     );
-  }
-
-  @Override public @NotNull Stage stage() {
-    return Stage.RESOLVE;
   }
 
   @Override public @NotNull Severity level() {

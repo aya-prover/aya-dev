@@ -22,6 +22,10 @@ public record RedefinitionError(
     return Severity.ERROR;
   }
 
+  @Override public @NotNull Stage stage() {
+    return Stage.PARSE;
+  }
+
   public enum Kind {
     Prim("primitive"),
     Ctor("constructor"),

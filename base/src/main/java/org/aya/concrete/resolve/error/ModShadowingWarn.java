@@ -3,7 +3,6 @@
 package org.aya.concrete.resolve.error;
 
 import kala.collection.Seq;
-import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public record ModShadowingWarn(
   @NotNull Seq<String> modName,
   @Override @NotNull SourcePos sourcePos
-) implements Problem {
+) implements ResolveProblem {
   @Override public @NotNull Severity level() {
     return Severity.WARN;
   }
@@ -24,9 +23,5 @@ public record ModShadowingWarn(
       Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),
       Doc.english("shadows a previous definition from outer scope")
     );
-  }
-
-  @Override public @NotNull Stage stage() {
-    return Stage.RESOLVE;
   }
 }

@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.resolve.error;
 
-import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public record ShadowingWarn(
   @NotNull String name,
   @Override @NotNull SourcePos sourcePos
-) implements Problem {
+) implements ResolveProblem {
   @Override public @NotNull Severity level() {
     return Severity.WARN;
   }
@@ -21,9 +20,5 @@ public record ShadowingWarn(
       Doc.styled(Style.code(), Doc.plain(name)),
       Doc.english("shadows a previous local definition from outer scope")
     );
-  }
-
-  @Override public @NotNull Stage stage() {
-    return Stage.RESOLVE;
   }
 }
