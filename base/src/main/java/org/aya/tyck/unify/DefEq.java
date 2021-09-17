@@ -252,21 +252,21 @@ public final class DefEq {
       preRhs.freezeHoles(levelEqns), this.pos));
     var ret = switch(type) {
       default -> throw new IllegalStateException();
-      case @NotNull RefTerm lhs -> {
+      case RefTerm lhs -> {
         if (preRhs instanceof RefTerm rhs
           && varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var()) {
           yield rhs.type();
         }
         yield null;
       }
-      case @NotNull ElimTerm.App lhs -> {
+      case ElimTerm.App lhs -> {
         if (!(preRhs instanceof ElimTerm.App rhs)) yield null;
         var preFnType = compareUnTyped(lhs.of(), rhs.of());
         if (!(preFnType instanceof FormTerm.Pi fnType)) yield null;
         if (!compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) yield null;
         yield fnType.substBody(lhs.arg().term());
       }
-      case @NotNull ElimTerm.Proj lhs -> {
+      case ElimTerm.Proj lhs -> {
         if (!(preRhs instanceof ElimTerm.Proj rhs)) yield null;
         var preTupType = compareUnTyped(lhs.of(), rhs.of());
         if (!(preTupType instanceof FormTerm.Sigma tupType)) yield null;
@@ -281,8 +281,8 @@ public final class DefEq {
         if (params.isNotEmpty()) yield params.first().type();
         yield params.last().type();
       }
-      case @NotNull ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(levelEqns));
-      case @NotNull FormTerm.Pi lhs -> {
+      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(levelEqns));
+      case FormTerm.Pi lhs -> {
         if (!(preRhs instanceof FormTerm.Pi rhs)) yield null;
         yield checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> null, () -> {
           var bodyIsOk = compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA);
@@ -290,7 +290,7 @@ public final class DefEq {
           return FormTerm.Univ.OMEGA;
         });
       }
-      case @NotNull FormTerm.Sigma lhs -> {
+      case FormTerm.Sigma lhs -> {
         if (!(preRhs instanceof FormTerm.Sigma rhs)) yield null;
         yield checkParams(lhs.params(), rhs.params(), () -> null, () -> {
           var bodyIsOk = compare(lhs.params().last().type(), rhs.params().last().type(), FormTerm.Univ.OMEGA);
@@ -298,26 +298,26 @@ public final class DefEq {
           return FormTerm.Univ.OMEGA;
         });
       }
-      case @NotNull FormTerm.Univ lhs -> {
+      case FormTerm.Univ lhs -> {
         if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
         levelEqns.add(lhs.sort(), rhs.sort(), cmp, this.pos);
         yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).sort().lift(1));
       }
-      case @NotNull CallTerm.Fn lhs -> null;
-      case @NotNull CallTerm.Data lhs -> {
+      case CallTerm.Fn lhs -> null;
+      case CallTerm.Data lhs -> {
         if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) yield null;
         var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
         var args = visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
         // Do not need to be computed precisely because unification won't need this info
         yield args ? FormTerm.Univ.OMEGA : null;
       }
-      case @NotNull CallTerm.Struct lhs -> {
+      case CallTerm.Struct lhs -> {
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
         var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
         var args = visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
         yield args ? FormTerm.Univ.OMEGA : null;
       }
-      case @NotNull CallTerm.Con lhs -> {
+      case CallTerm.Con lhs -> {
         if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) yield null;
         var retType = getType(lhs, lhs.ref());
         // Lossy comparison
@@ -326,15 +326,15 @@ public final class DefEq {
           yield retType;
         yield null;
       }
-      case CallTerm.@NotNull Prim lhs -> null;
-      case CallTerm.@NotNull Access lhs -> {
+      case CallTerm.Prim lhs -> null;
+      case CallTerm.Access lhs -> {
         if (!(preRhs instanceof CallTerm.Access rhs)) yield null;
         var preStructType = compareUnTyped(lhs.of(), rhs.of());
         if (!(preStructType instanceof CallTerm.Struct structType)) yield null;
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }
-      case CallTerm.@NotNull Hole lhs -> {
+      case CallTerm.Hole lhs -> {
         var meta = lhs.ref().core();
         if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
           var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
@@ -380,5 +380,4 @@ public final class DefEq {
     traceExit();
     return ret;
   }
-
 }
