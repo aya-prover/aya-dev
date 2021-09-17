@@ -39,9 +39,9 @@ public final class DefEq {
   final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @Nullable Trace.Builder traceBuilder;
   boolean allowVague;
-  public final @NotNull LevelEqnSet levelEqns;
-  public final @NotNull EqnSet termEqns;
-  public final @NotNull Reporter reporter;
+  private final @NotNull LevelEqnSet levelEqns;
+  private final @NotNull EqnSet termEqns;
+  private final @NotNull Reporter reporter;
   private final @NotNull SourcePos pos;
   private final @NotNull Ordering cmp;
 
