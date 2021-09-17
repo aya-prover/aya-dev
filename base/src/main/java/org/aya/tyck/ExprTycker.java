@@ -92,10 +92,11 @@ public final class ExprTycker {
           yield fail(newExpr.struct(), struct, BadTypeError.structCon(newExpr, struct));
         var structRef = structCall.ref();
 
-        var subst = new Substituter.TermSubst(MutableMap.create());
-        var structTele = Def.defTele(structRef);
-        structTele.view().zip(structCall.args())
-          .forEach(t -> subst.add(t._1.ref(), t._2.term()));
+        var subst = new Substituter.TermSubst(MutableMap.from(
+          Def.defTele(structRef).view().zip(structCall.args())
+            .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
+        var levelSubst = new LevelSubst.Simple(MutableMap.from(
+          Def.defLevels(structRef).view().zip(structCall.sortArgs())));
 
         var fields = Buffer.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>create();
         var missing = Buffer.<Var>create();
@@ -108,7 +109,7 @@ public final class ExprTycker {
               missing.append(defField.ref()); // no value available, skip and prepare error reporting
             else {
               // use default value from defField
-              var field = defField.body.get().subst(subst);
+              var field = defField.body.get().subst(subst, levelSubst);
               fields.append(Tuple.of(defField.ref(), field));
               subst.add(defField.ref(), field);
             }
@@ -116,9 +117,9 @@ public final class ExprTycker {
           }
           var conField = conFieldOpt.get();
           conFields = conFields.dropWhile(t -> t == conField);
-          var type = Def.defResult(defField.ref()).subst(subst);
+          var type = Def.defResult(defField.ref()).subst(subst, levelSubst);
           var fieldSubst = new ExprRefSubst(reporter);
-          var telescope = defField.ref().core.selfTele.map(term -> term.subst(subst));
+          var telescope = defField.ref().core.selfTele.map(term -> term.subst(subst, levelSubst));
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO[ice]: number of args don't match
