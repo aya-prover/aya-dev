@@ -38,7 +38,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.EqnSet;
-import org.aya.tyck.unify.TypedDefEq;
+import org.aya.tyck.unify.DefEq;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
@@ -497,8 +497,8 @@ public final class ExprTycker {
     return unifier(pos, Ordering.Lt).compare(lower, upper, FormTerm.Univ.OMEGA);
   }
 
-  public @NotNull TypedDefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return new TypedDefEq(ord, reporter, false, levelEqns, termEqns, traceBuilder, pos);
+  public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
+    return new DefEq(ord, reporter, false, levelEqns, termEqns, traceBuilder, pos);
   }
 
   /**

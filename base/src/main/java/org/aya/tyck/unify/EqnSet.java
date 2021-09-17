@@ -83,9 +83,9 @@ public record EqnSet(
     @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter,
     Trace.@Nullable Builder tracer, @NotNull Eqn eqn, boolean allowVague
   ) {
-    var defEq = new TypedDefEq(eqn.cmp, reporter, allowVague, levelEqns, this, tracer, eqn.pos);
+    var defEq = new DefEq(eqn.cmp, reporter, allowVague, levelEqns, this, tracer, eqn.pos);
     defEq.varSubst.putAll(eqn.varSubst);
-    defEq.termDefeq.compare(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
+    defEq.compareUnTyped(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
   }
 
   public record Eqn(
