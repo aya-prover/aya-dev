@@ -85,7 +85,7 @@ public record EqnSet(
   ) {
     var defEq = new DefEq(eqn.cmp, reporter, allowVague, levelEqns, this, tracer, eqn.pos);
     defEq.varSubst.putAll(eqn.varSubst);
-    defEq.compareUnTyped(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
+    defEq.compareUntyped(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
   }
 
   public record Eqn(

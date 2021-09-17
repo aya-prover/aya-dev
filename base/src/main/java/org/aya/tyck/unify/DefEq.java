@@ -77,12 +77,12 @@ public final class DefEq {
     lhs = lhs.normalize(NormalizeMode.WHNF);
     rhs = rhs.normalize(NormalizeMode.WHNF);
     if (compareApprox(lhs, rhs) != null) return true;
-    if (rhs instanceof CallTerm.Hole) return compareUnTyped(rhs, lhs) != null;
-    if (lhs instanceof CallTerm.Hole) return compareUnTyped(lhs, rhs) != null;
+    if (rhs instanceof CallTerm.Hole) return compareUntyped(rhs, lhs) != null;
+    if (lhs instanceof CallTerm.Hole) return compareUntyped(lhs, rhs) != null;
     return doCompareTyped(type.normalize(NormalizeMode.WHNF), lhs, rhs);
   }
 
-  public @Nullable Term compareUnTyped(@NotNull Term lhs, @NotNull Term rhs) {
+  public @Nullable Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs) {
     // lhs & rhs will both be WHNF if either is not a potentially reducible call
     if (isCall(lhs) || isCall(rhs)) {
       final var ty = doCompareUntyped(lhs, rhs);
@@ -202,7 +202,7 @@ public final class DefEq {
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(levelEqns), rhs.freezeHoles(levelEqns),
       pos, type.freezeHoles(levelEqns)));
     var ret = switch (type) {
-      default -> compareUnTyped(lhs, rhs) != null;
+      default -> compareUntyped(lhs, rhs) != null;
       case CallTerm.Struct type1 -> {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
@@ -250,7 +250,7 @@ public final class DefEq {
   private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs) {
     traceEntrance(new Trace.UnifyT(type.freezeHoles(levelEqns),
       preRhs.freezeHoles(levelEqns), this.pos));
-    var ret = switch(type) {
+    var ret = switch (type) {
       default -> throw new IllegalStateException();
       case RefTerm lhs -> {
         if (preRhs instanceof RefTerm rhs
@@ -261,14 +261,14 @@ public final class DefEq {
       }
       case ElimTerm.App lhs -> {
         if (!(preRhs instanceof ElimTerm.App rhs)) yield null;
-        var preFnType = compareUnTyped(lhs.of(), rhs.of());
+        var preFnType = compareUntyped(lhs.of(), rhs.of());
         if (!(preFnType instanceof FormTerm.Pi fnType)) yield null;
         if (!compare(lhs.arg().term(), rhs.arg().term(), fnType.param().type())) yield null;
         yield fnType.substBody(lhs.arg().term());
       }
       case ElimTerm.Proj lhs -> {
         if (!(preRhs instanceof ElimTerm.Proj rhs)) yield null;
-        var preTupType = compareUnTyped(lhs.of(), rhs.of());
+        var preTupType = compareUntyped(lhs.of(), rhs.of());
         if (!(preTupType instanceof FormTerm.Sigma tupType)) yield null;
         if (lhs.ix() != rhs.ix()) yield null;
         var params = tupType.params();
@@ -329,7 +329,7 @@ public final class DefEq {
       case CallTerm.Prim lhs -> null;
       case CallTerm.Access lhs -> {
         if (!(preRhs instanceof CallTerm.Access rhs)) yield null;
-        var preStructType = compareUnTyped(lhs.of(), rhs.of());
+        var preStructType = compareUntyped(lhs.of(), rhs.of());
         if (!(preStructType instanceof CallTerm.Struct structType)) yield null;
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
@@ -363,7 +363,7 @@ public final class DefEq {
         varSubst.forEach(subst::add);
         var solved = preRhs.subst(subst);
         assert meta.body == null;
-        compareUnTyped(solved.computeType(), meta.result);
+        compareUntyped(solved.computeType(), meta.result);
         var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
         if (scopeCheck.isNotEmpty()) {
           reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, pos));
