@@ -17,6 +17,7 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
+import org.aya.core.ops.TermToPat;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
