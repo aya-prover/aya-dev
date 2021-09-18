@@ -3,6 +3,7 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.LevelGenVar;
@@ -25,6 +26,10 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
     return desugarUniv(new Expr.AppExpr(expr.sourcePos(), expr, ImmutableSeq.empty()), expr);
   }
 
+  @Override public @NotNull Expr visitRawUnivArgs(@NotNull Expr.RawUnivArgsExpr expr, Unit unit) {
+    return catching(expr, () -> new Expr.UnivArgsExpr(expr.sourcePos(), expr.univArgs().mapChecked(this::levelVar)));
+  }
+
   @NotNull private Expr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) {
     var pos = univ.sourcePos();
     var args = expr.arguments();
@@ -33,8 +38,12 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       reporter.report(new LevelProblem.BadTypeExpr(expr, 1));
       return new Expr.ErrorExpr(expr.sourcePos(), expr);
     }
+    return catching(expr, () -> new Expr.UnivExpr(pos, levelVar(args.get(0).term().expr())));
+  }
+
+  private @NotNull Expr catching(@NotNull Expr expr, @NotNull CheckedSupplier<@NotNull Expr, DesugarInterruption> f) {
     try {
-      return new Expr.UnivExpr(pos, levelVar(args.get(0).term().expr()));
+      return f.getChecked();
     } catch (DesugarInterruption e) {
       return new Expr.ErrorExpr(expr.sourcePos(), expr);
     }
@@ -44,20 +53,16 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   }
 
   private @NotNull Level<LevelGenVar> levelVar(@NotNull Expr expr) throws DesugarInterruption {
-    //noinspection ConstantConditions
-    var level = switch (expr) {
+    return switch (expr) {
       case Expr.LMaxExpr uMax -> new Level.Maximum(uMax.levels().mapChecked(this::levelVar));
       case Expr.LSucExpr uSuc -> levelVar(uSuc.expr()).lift(1);
-      case Expr.LitIntExpr uLit -> new Level.Constant<LevelGenVar>(uLit.integer());
+      case Expr.LitIntExpr uLit -> new Level.Constant<>(uLit.integer());
       case Expr.RefExpr ref && ref.resolvedVar() instanceof LevelGenVar lv -> new Level.Reference<>(lv);
       default -> {
         reporter.report(new LevelProblem.BadLevelExpr(expr));
-        yield null;
+        throw new DesugarInterruption();
       }
     };
-    //noinspection ConstantConditions
-    if (level == null) throw new DesugarInterruption();
-    else return level;
   }
 
   @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {

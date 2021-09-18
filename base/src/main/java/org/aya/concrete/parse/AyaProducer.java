@@ -367,15 +367,17 @@ public final class AyaProducer {
         ._2;
       return new BinOpParser.Elem(projected, true);
     }
-    if (ctx.LBRACE() != null) {
-      var items = ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
-      var id = ctx.ID();
-      var name = id != null ? id.getText() : null;
-      if (items.sizeEquals(1)) return new BinOpParser.Elem(name, items.first(), false);
-      var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
-      return new BinOpParser.Elem(tupExpr, false);
+    // assert ctx.LBRACE() != null;
+    var id = ctx.ID();
+    if (id != null) return new BinOpParser.Elem(id.getText(), visitExpr(ctx.expr()), false);
+    var items = ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
+    if (ctx.ULEVEL() != null) {
+      var univArgsExpr = new Expr.RawUnivArgsExpr(sourcePosOf(ctx), items);
+      return new BinOpParser.Elem(univArgsExpr, false);
     }
-    throw new UnsupportedOperationException(ctx.getClass().getName());
+    if (items.sizeEquals(1)) return new BinOpParser.Elem(items.first(), false);
+    var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
+    return new BinOpParser.Elem(tupExpr, false);
   }
 
   public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {

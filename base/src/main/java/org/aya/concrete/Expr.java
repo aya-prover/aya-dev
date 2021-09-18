@@ -69,6 +69,8 @@ public sealed interface Expr extends ConcreteExpr {
     R visitProj(@NotNull ProjExpr expr, P p);
     R visitNew(@NotNull NewExpr expr, P p);
     R visitLitInt(@NotNull LitIntExpr expr, P p);
+    R visitRawUnivArgs(@NotNull RawUnivArgsExpr expr, P p);
+    R visitUnivArgs(@NotNull UnivArgsExpr expr, P p);
     R visitLsuc(@NotNull LSucExpr expr, P p);
     R visitLmax(@NotNull LMaxExpr expr, P p);
     R visitLitString(@NotNull LitStringExpr expr, P p);
@@ -227,6 +229,18 @@ public sealed interface Expr extends ConcreteExpr {
   record UnivExpr(@NotNull SourcePos sourcePos, @NotNull Level<LevelGenVar> level) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
+    }
+  }
+
+  record RawUnivArgsExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Expr> univArgs) implements Expr {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitRawUnivArgs(this, p);
+    }
+  }
+
+  record UnivArgsExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Level<LevelGenVar>> univArgs) implements Expr {
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitUnivArgs(this, p);
     }
   }
 

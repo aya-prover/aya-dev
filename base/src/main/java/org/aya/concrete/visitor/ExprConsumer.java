@@ -45,6 +45,15 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
+  @Override default Unit visitRawUnivArgs(Expr.@NotNull RawUnivArgsExpr expr, P p) {
+    expr.univArgs().forEach(e -> e.accept(this, p));
+    return Unit.unit();
+  }
+
+  @Override default Unit visitUnivArgs(Expr.@NotNull UnivArgsExpr expr, P p) {
+    return Unit.unit();
+  }
+
   private void visitArg(@NotNull Arg<Expr.NamedArg> arg, P p) {
     arg.term().expr().accept(this, p);
   }

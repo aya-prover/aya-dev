@@ -197,10 +197,25 @@ public final class ExprTycker {
           yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
         var pi = piTerm;
         var subst = new Substituter.TermSubst(MutableMap.create());
+        var haveUniverseArgs = false;
         for (var iter = appE.arguments().iterator(); iter.hasNext(); ) {
           var arg = iter.next();
           var argLicit = arg.explicit();
           var namedArg = arg.term();
+          if (namedArg.expr() instanceof Expr.UnivArgsExpr univArgs) {
+            if (haveUniverseArgs) {
+              // TODO[ice]: too many universe arguments
+              // reporter.report();
+              continue;
+            }
+            haveUniverseArgs = true;
+            if (f.wellTyped instanceof CallTerm call) {
+              // TODO[ice]: generate level constraints by univArgs
+            } else {
+              // TODO[ice]: misplaced universe arguments
+            }
+            continue;
+          }
           while (pi.param().explicit() != argLicit ||
             namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
             if (argLicit || namedArg.name() != null) {

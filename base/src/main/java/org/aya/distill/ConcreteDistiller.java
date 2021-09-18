@@ -112,6 +112,16 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     return Doc.styled(KEYWORD, "Type");
   }
 
+  @Override public Doc visitRawUnivArgs(Expr.@NotNull RawUnivArgsExpr expr, Boolean aBoolean) {
+    return Doc.braced(Doc.sep(Doc.styled(KEYWORD, "universe"),
+      Doc.commaList(expr.univArgs().view().map(e -> e.accept(this, false)))));
+  }
+
+  @Override public Doc visitUnivArgs(Expr.@NotNull UnivArgsExpr expr, Boolean aBoolean) {
+    return Doc.braced(Doc.sep(Doc.styled(KEYWORD, "universe"),
+      Doc.commaList(expr.univArgs().view().map(e -> e.toDoc(options)))));
+  }
+
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
