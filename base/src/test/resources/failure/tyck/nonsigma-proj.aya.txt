@@ -1,0 +1,11 @@
+In file $FILE:1:23 ->
+
+  1 | def test (A : Type) => A.11
+                             ^^
+
+Error: Unable to project the 11th element of the expression
+         A
+       because the type of what you projected on is not a Sigma type, but instead:
+         Type
+         (Normalized: Type)
+What are you doing?

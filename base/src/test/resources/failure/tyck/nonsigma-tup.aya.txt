@@ -1,0 +1,11 @@
+In file $FILE:1:19 ->
+
+  1 | def test : Type => (Type, Type)
+                         ^----------^
+
+Error: Unable to construct the expression
+         (Type, Type)
+       because the type you checks it against is not a Sigma type, but instead:
+         Type
+         (Normalized: Type)
+What are you doing?

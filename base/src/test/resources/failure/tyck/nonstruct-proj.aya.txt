@@ -1,0 +1,11 @@
+In file $FILE:1:23 ->
+
+  1 | def test (A : Type) => A.deep-dark-fantasy
+                             ^^
+
+Error: Unable to access field `deep-dark-fantasy` of the expression
+         A
+       because the type of what you accessed is not a struct type, but instead:
+         Type
+         (Normalized: Type)
+What are you doing?

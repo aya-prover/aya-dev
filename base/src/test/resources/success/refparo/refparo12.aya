@@ -13,5 +13,5 @@ struct Event (T : EventT {universe u}) : Type (lsuc (lsuc u))
 def Quantifier (A : Type u) : Type (lmax u (lsuc v)) => (A -> Type v) -> Type v
 
 def mkVerb {T : EventT {universe u}} (p : Event {universe u} T -> Type v)
-   : Quantifier {universe v, u} (Event {universe u} T)
-  => \f => Sig (e : Event {universe u} T) (s : p e) ** (f e)
+   : Quantifier {universe v, u} (Event T)
+  => \f => Sig (e : Event T) (s : p e) ** (f e)
