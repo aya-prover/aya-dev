@@ -84,14 +84,15 @@ fragment HEX_DIGIT : [0-9a-fA-F];
 fragment OCT_DIGIT : [0-8];
 
 // identifier
-fragment AYA_SIMPLE_LETTER : [~!@#$%^&*\-+=<>?/|[\u005Da-zA-Z_\u2200-\u22FF];
+fragment AYA_SIMPLE_LETTER : [~!@#$%^&*+=<>?/|[\u005Da-zA-Z_\u2200-\u22FF];
 fragment AYA_UNICODE : [\u0080-\uFEFE] | [\uFF00-\u{10FFFF}]; // exclude U+FEFF which is a truly invisible char
 fragment AYA_LETTER : AYA_SIMPLE_LETTER | AYA_UNICODE;
-ID : AYA_LETTER (AYA_LETTER | [0-9'])*;
+fragment AYA_LETTER_FOLLOW : AYA_LETTER | [0-9'-];
+ID : AYA_LETTER AYA_LETTER_FOLLOW* | '-' AYA_LETTER AYA_LETTER_FOLLOW*;
 
 // whitespaces
 WS : [ \t\r\n]+ -> channel(HIDDEN);
-fragment COMMENT_CONTENT : (~[~!@#$%^&*\-+=<>?/|:[\u005Da-zA-Z_0-9'\u2200-\u22FF\r\n] ~[\r\n]* | );
+fragment COMMENT_CONTENT : ~[\r\n]*;
 DOC_COMMENT : '--|' COMMENT_CONTENT;
 LINE_COMMENT : '--' COMMENT_CONTENT -> skip;
 COMMENT : '{-' (COMMENT|.)*? '-}' -> channel(HIDDEN);
