@@ -32,6 +32,7 @@ import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.TermFixpoint;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
@@ -45,6 +46,7 @@ import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -193,7 +195,8 @@ public final class ExprTycker {
       case Expr.AppExpr appE -> {
         var f = synthesize(appE.function());
         var app = f.wellTyped;
-        if (appE.arguments().sizeEquals(1) && appE.arguments().first().term().expr() instanceof Expr.UnivArgsExpr univArgs) {
+        var arguments = appE.arguments();
+        if (arguments.sizeEquals(1) && arguments.first().term().expr() instanceof Expr.UnivArgsExpr univArgs) {
           univArgs(app, univArgs);
           yield f;
         }
@@ -201,17 +204,11 @@ public final class ExprTycker {
           yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
         var pi = piTerm;
         var subst = new Substituter.TermSubst(MutableMap.create());
-        var haveUniverseArgs = false;
-        for (var iter = appE.arguments().iterator(); iter.hasNext(); ) {
+        for (var iter = arguments.iterator(); iter.hasNext(); ) {
           var arg = iter.next();
           var argLicit = arg.explicit();
           var namedArg = arg.term();
           if (namedArg.expr() instanceof Expr.UnivArgsExpr univArgs) {
-            if (haveUniverseArgs) {
-              reporter.report(new UnivArgsError.Duplicated(univArgs));
-              continue;
-            }
-            haveUniverseArgs = true;
             univArgs(app, univArgs);
             continue;
           }
@@ -383,7 +380,25 @@ public final class ExprTycker {
       builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(levelEqns), result.type.freezeHoles(levelEqns), expr.sourcePos()));
       builder.reduce();
     });
+    assert validate(result.wellTyped);
+    assert validate(result.type);
     if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(result.wellTyped);
+  }
+
+  @TestOnly @Contract(pure = true) private boolean validate(Term wellTyped) {
+    var visitor = new TermFixpoint<Unit>() {
+      boolean ok = true;
+
+      @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
+        for (var level : sort.levels())
+          if (level instanceof Level.Reference<Sort.LvlVar> r)
+            if (!r.ref().free() && !levelMapping.valuesView().contains(r.ref()))
+              ok = false;
+        return sort;
+      }
+    };
+    wellTyped.accept(visitor, Unit.unit());
+    return visitor.ok;
   }
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {

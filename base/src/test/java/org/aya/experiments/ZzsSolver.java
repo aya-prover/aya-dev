@@ -3,6 +3,7 @@
 package org.aya.experiments;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -16,21 +17,38 @@ public class ZzsSolver {
   }
 
   record Const(int constant) implements Level {
+    @Override public String toString() {
+      return String.valueOf(constant);
+    }
   }
 
   record Infinity() implements Level {
+    @Override public String toString() {
+      return "inf";
+    }
   }
 
   record Reference(Var ref, int lift) implements Level {
+    @Override public String toString() {
+      return lift == 0 ? ref.toString() : "(" + ref + " + " + lift + ")";
+    }
   }
 
   // free means need to be 'solved'
   record Var(String name, boolean free) {
+    @Override public String toString() {
+      return (free ? "_" : "") + name;
+    }
   }
 
   record Max(List<Level> levels) {
     public Max(Level... levels) {
       this(Arrays.asList(levels));
+    }
+
+    @Override public String toString() {
+      return levels.size() == 1 ? levels.get(0).toString()
+        : "max " + levels.stream().map(Object::toString).collect(Collectors.joining(" "));
     }
   }
 
@@ -38,6 +56,13 @@ public class ZzsSolver {
   enum Ord {Lt, Gt, Eq}
 
   record Equation(Ord ord, Max lhs, Max rhs) {
+    @Override public String toString() {
+      return lhs + switch (ord) {
+        case Lt -> " <= ";
+        case Gt -> " >= ";
+        case Eq -> " == ";
+      } + rhs;
+    }
   }
 
   static final int INF = 100000000;
@@ -156,6 +181,8 @@ public class ZzsSolver {
   }
 
   Map<String, Max> solve(List<Equation> equations) throws UnsatException {
+    System.out.println("Equations:");
+    for (var equation : equations) System.out.println(equation);
     nodeSize = 0;
     for (var e : equations) {
       genGraphNode(e.lhs().levels());
@@ -185,6 +212,8 @@ public class ZzsSolver {
         }
       }
     }
+    if (!avoidableEqns.isEmpty()) System.out.println("Avoided:");
+    for (var equation : avoidableEqns) System.out.println(equation);
     if (floyd(g)) throw new UnsatException();
     var gg = dfs(specialEq, 0, g);
     var ret = new HashMap<String, Max>();

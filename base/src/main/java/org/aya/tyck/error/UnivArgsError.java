@@ -12,12 +12,6 @@ public sealed interface UnivArgsError extends ExprProblem {
     return Severity.ERROR;
   }
 
-  record Duplicated(@NotNull Expr.UnivArgsExpr expr) implements UnivArgsError {
-    @Override public @NotNull Doc describe() {
-      return Doc.english("Too many universe arguments");
-    }
-  }
-
   record SizeMismatch(@NotNull Expr.UnivArgsExpr expr, int expected) implements UnivArgsError {
     @Override public @NotNull Doc describe() {
       return Doc.sep(Doc.plain("Expected"), Doc.plain(String.valueOf(expected)),
