@@ -29,5 +29,5 @@ public interface CoreTerm extends AyaDocile {
    */
   @NotNull Buffer<LocalVar> scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed);
   @NotNull CoreTerm normalize(@NotNull NormalizeMode mode);
-  @Nullable CorePat toPat();
+  @Nullable CorePat toPat(boolean explicit);
 }

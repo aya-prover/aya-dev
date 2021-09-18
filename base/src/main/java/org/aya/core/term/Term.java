@@ -48,8 +48,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     return ret;
   }
 
-  @Override default @Nullable Pat toPat() {
-    return TermToPat.toPat(this);
+  @Override default @Nullable Pat toPat(boolean explicit) {
+    return TermToPat.toPat(this, explicit);
   }
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {

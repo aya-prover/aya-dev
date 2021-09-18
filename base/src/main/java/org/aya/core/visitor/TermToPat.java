@@ -14,24 +14,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public interface TermToPat {
-  static @Nullable Pat toPat(@NotNull Term term) {
+  static @Nullable Pat toPat(@NotNull Term term, boolean explicit) {
     //noinspection ConstantConditions
     return switch (term) {
       default -> null;
-      case RefTerm ref -> new Pat.Bind(true, ref.var(), ref.type());
-      case CallTerm.Con conCall -> new Pat.Ctor(true, conCall.ref(),
-        conCall.args().map(at -> toPat(at.term())), null,
+      case RefTerm ref -> new Pat.Bind(explicit, ref.var(), ref.type());
+      case CallTerm.Con conCall -> new Pat.Ctor(explicit, conCall.ref(),
+        conCall.args().map(at -> toPat(at.term(), at.explicit())), null,
         conCall.head().underlyingDataCall());
       case CallTerm.Prim prim -> {
         // TODO[ice]: add id to primcall and replace this test
         if (Objects.equals(prim.ref().name(), PrimDef.ID.LEFT.id))
-          yield new Pat.Prim(true, prim.ref(), prim.computeType());
+          yield new Pat.Prim(explicit, prim.ref(), prim.computeType());
         if (Objects.equals(prim.ref().name(), PrimDef.ID.RIGHT.id))
-          yield new Pat.Prim(true, prim.ref(), prim.computeType());
+          yield new Pat.Prim(explicit, prim.ref(), prim.computeType());
         yield null;
       }
-      case IntroTerm.Tuple tuple -> new Pat.Tuple(true,
-        tuple.items().map(TermToPat::toPat), null, term);
+      case IntroTerm.Tuple tuple -> new Pat.Tuple(explicit,
+        tuple.items().map(item -> toPat(item, true)), null, term);
     };
   }
 }
