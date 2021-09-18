@@ -204,16 +204,18 @@ public final class ExprTycker {
           var namedArg = arg.term();
           if (namedArg.expr() instanceof Expr.UnivArgsExpr univArgs) {
             if (haveUniverseArgs) {
-              // TODO[ice]: too many universe arguments
-              // reporter.report();
+              reporter.report(new UnivArgsError.Duplicated(univArgs));
               continue;
             }
             haveUniverseArgs = true;
             if (f.wellTyped instanceof CallTerm call) {
-              // TODO[ice]: generate level constraints by univArgs
-            } else {
-              // TODO[ice]: misplaced universe arguments
-            }
+              var sortArgs = call.sortArgs();
+              var levels = univArgs.univArgs();
+              if (sortArgs.sizeEquals(levels)) sortArgs.zipView(levels).forEach(t ->
+                levelEqns.add(t._1, transformLevel(t._2, universe), Ordering.Eq, univArgs.sourcePos()));
+              else reporter.report(new UnivArgsError.SizeMismatch(univArgs, sortArgs.size()));
+            } else
+              reporter.report(new UnivArgsError.Misplaced(univArgs));
             continue;
           }
           while (pi.param().explicit() != argLicit ||
