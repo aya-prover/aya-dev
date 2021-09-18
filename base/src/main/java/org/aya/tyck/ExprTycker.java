@@ -391,9 +391,9 @@ public final class ExprTycker {
 
       @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
         for (var level : sort.levels())
-          if (level instanceof Level.Reference<Sort.LvlVar> r)
-            if (!r.ref().free() && !levelMapping.valuesView().contains(r.ref()))
-              ok = false;
+          if (level instanceof Level.Reference<Sort.LvlVar> r && !r.ref().free() &&
+            !(r.ref() == universe || levelMapping.valuesView().contains(r.ref())))
+            ok = false;
         return sort;
       }
     };

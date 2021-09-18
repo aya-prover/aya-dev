@@ -39,7 +39,8 @@ public record Substituter(
   }
 
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
-    return termSubst.getOrDefault(term.var(), term);
+    return termSubst.getOrElse(term.var(), () ->
+      TermFixpoint.super.visitRef(term, Unit.unit()));
   }
 
   /**
