@@ -94,18 +94,20 @@ expr : atom                            # single
      | PI tele+ TO expr                # pi
      | SIGMA tele+ SUCHTHAT expr       # sigma
      | LAMBDA tele+ (IMPLIES expr?)?   # lam
-     | MATCH expr (COMMA expr)* clauses  # match
+     | MATCH exprList clauses          # match
      ;
 
 newArg : BAR ID ids IMPLIES expr;
 
+exprList : (expr COMMA)* expr?;
 atom : literal
-     | LPAREN (expr COMMA)* expr? RPAREN
+     | LPAREN exprList RPAREN
      ;
 
 argument : atom projFix*
-         | LBRACE (expr COMMA)* expr? RBRACE
+         | LBRACE exprList RBRACE
          | LBRACE ID IMPLIES expr? RBRACE
+         | LBRACE ULEVEL exprList RBRACE
          ;
 
 projFix : DOT (NUMBER | ID);

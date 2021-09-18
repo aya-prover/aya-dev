@@ -346,7 +346,7 @@ public final class AyaProducer {
     var literal = ctx.literal();
     if (literal != null) return visitLiteral(literal);
 
-    final var expr = ctx.expr();
+    final var expr = ctx.exprList().expr();
     if (expr.size() == 1) return visitExpr(expr.get(0));
     return new Expr.TupExpr(
       sourcePosOf(ctx),
@@ -368,9 +368,7 @@ public final class AyaProducer {
       return new BinOpParser.Elem(projected, true);
     }
     if (ctx.LBRACE() != null) {
-      var items = ctx.expr().stream()
-        .map(this::visitExpr)
-        .collect(ImmutableSeq.factory());
+      var items = ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
       var id = ctx.ID();
       var name = id != null ? id.getText() : null;
       if (items.sizeEquals(1)) return new BinOpParser.Elem(name, items.first(), false);
