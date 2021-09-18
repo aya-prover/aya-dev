@@ -36,6 +36,7 @@ public final class PrimDef extends TopLevelDef {
   ) {
     super(telescope, result, levels);
     this.ref = DefVar.empty(name.id);
+    this.id = name;
     ref.core = this;
   }
 
@@ -279,6 +280,7 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
+  public final @NotNull ID id;
 
   public @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref() {
     return ref;
