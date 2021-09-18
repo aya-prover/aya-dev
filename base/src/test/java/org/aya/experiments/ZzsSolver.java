@@ -284,14 +284,14 @@ public class ZzsSolver {
       new Equation(Ord.Lt, new Max(Collections.singletonList(u)), new Max(List.of(a, b))),
       new Equation(Ord.Lt, new Max(List.of(a)), new Max(List.of(u, v)))
     );
-    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Isomorphism.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Isomorphism.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("ident.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("ident'.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("idp.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("idp.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("idp'.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("idp'.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0))))));
+    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))), new Max(List.of(new Reference(new Var("v", false), 0)))),
+      new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.u", true), 0))), new Max(List.of(new Reference(new Var("_2", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 2))), new Max(List.of(new Reference(new Var("Quantifier.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 2))), new Max(List.of(new Reference(new Var("Quantifier.v", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Const(0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("v", false), 0))), new Max(List.of(new Reference(new Var("Quantifier.v", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("Event.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))), new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))))));
     System.out.println(res);
   }
 }

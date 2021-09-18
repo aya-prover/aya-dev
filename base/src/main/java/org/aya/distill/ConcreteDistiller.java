@@ -9,7 +9,7 @@ import kala.collection.mutable.Buffer;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LevelGenVar;
+import org.aya.api.ref.PreLevelVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
@@ -39,7 +39,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
     var ref = expr.resolvedVar();
     if (ref instanceof DefVar<?, ?> defVar) return visitDefVar(defVar, defVar.concrete);
-    else if (ref instanceof LevelGenVar levelVar) return linkRef(levelVar, GENERALIZED);
+    else if (ref instanceof PreLevelVar levelVar) return linkRef(levelVar, GENERALIZED);
     else return varDoc(ref);
   }
 
@@ -113,13 +113,13 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitRawUnivArgs(Expr.@NotNull RawUnivArgsExpr expr, Boolean aBoolean) {
-    return Doc.braced(Doc.sep(Doc.styled(KEYWORD, "universe"),
-      Doc.commaList(expr.univArgs().view().map(e -> e.accept(this, false)))));
+    return Doc.sep(Doc.styled(KEYWORD, "universe"),
+      Doc.commaList(expr.univArgs().view().map(e -> e.accept(this, false))));
   }
 
   @Override public Doc visitUnivArgs(Expr.@NotNull UnivArgsExpr expr, Boolean aBoolean) {
-    return Doc.braced(Doc.sep(Doc.styled(KEYWORD, "universe"),
-      Doc.commaList(expr.univArgs().view().map(e -> e.toDoc(options)))));
+    return Doc.sep(Doc.styled(KEYWORD, "universe"),
+      Doc.commaList(expr.univArgs().view().map(e -> e.toDoc(options))));
   }
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Boolean nestedCall) {

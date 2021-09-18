@@ -19,8 +19,8 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.ref.PreLevelVar;
 import org.aya.api.util.Assoc;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
@@ -129,7 +129,7 @@ public final class AyaProducer {
 
   public Generalize visitLevels(AyaParser.LevelsContext ctx) {
     return new Generalize.Levels(sourcePosOf(ctx), visitIds(ctx.ids())
-      .map(t -> t.map(LevelGenVar::new))
+      .map(t -> t.map(PreLevelVar::new))
       .collect(ImmutableSeq.factory()));
   }
 

@@ -6,11 +6,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
 import org.aya.api.error.Reporter;
-import org.aya.api.ref.LevelGenVar;
+import org.aya.api.ref.PreLevelVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.generic.Level;
+import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,12 +53,13 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   public static class DesugarInterruption extends Exception {
   }
 
-  private @NotNull Level<LevelGenVar> levelVar(@NotNull Expr expr) throws DesugarInterruption {
+  private @NotNull Level<PreLevelVar> levelVar(@NotNull Expr expr) throws DesugarInterruption {
     return switch (expr) {
       case Expr.LMaxExpr uMax -> new Level.Maximum(uMax.levels().mapChecked(this::levelVar));
       case Expr.LSucExpr uSuc -> levelVar(uSuc.expr()).lift(1);
       case Expr.LitIntExpr uLit -> new Level.Constant<>(uLit.integer());
-      case Expr.RefExpr ref && ref.resolvedVar() instanceof LevelGenVar lv -> new Level.Reference<>(lv);
+      case Expr.RefExpr ref && ref.resolvedVar() instanceof PreLevelVar lv -> new Level.Reference<>(lv);
+      case Expr.HoleExpr hole -> new Level.Reference<>(new PreLevelVar(Constants.randomName(hole), hole.sourcePos()));
       default -> {
         reporter.report(new LevelProblem.BadLevelExpr(expr));
         throw new DesugarInterruption();

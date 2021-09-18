@@ -4,7 +4,7 @@ package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelGenVar;
+import org.aya.api.ref.PreLevelVar;
 import org.aya.api.util.WithPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +15,7 @@ public sealed interface Generalize extends Stmt {
 
   record Levels(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<WithPos<LevelGenVar>> levels
+    @NotNull ImmutableSeq<WithPos<PreLevelVar>> levels
   ) implements Generalize {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLevels(this, p);

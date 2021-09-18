@@ -5,14 +5,14 @@ package org.aya.generic;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.LevelGenVar;
+import org.aya.api.ref.PreLevelVar;
 import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @param <V> either {@link org.aya.api.ref.LevelGenVar} (which means level vars in concrete)
+ * @param <V> either {@link PreLevelVar} (which means level vars in concrete)
  *            or {@link org.aya.core.sort.Sort.LvlVar} (which means levels in core).
  *            Used only in {@link Reference}.
  * @author ice1000
@@ -26,7 +26,7 @@ public sealed interface Level<V extends Var> extends AyaDocile {
    * Unlike {@link Reference}, this one is the implicit polymorphic level.
    * It is related to the underlying definition and are eliminated during tycking (becomes {@link Reference}).
    */
-  record Polymorphic(int lift) implements Level<LevelGenVar> {
+  record Polymorphic(int lift) implements Level<PreLevelVar> {
     @Override public @NotNull Polymorphic lift(int n) {
       return new Polymorphic(lift + n);
     }
@@ -36,7 +36,7 @@ public sealed interface Level<V extends Var> extends AyaDocile {
     }
   }
 
-  record Maximum(ImmutableSeq<Level<LevelGenVar>> among) implements Level<LevelGenVar> {
+  record Maximum(ImmutableSeq<Level<PreLevelVar>> among) implements Level<PreLevelVar> {
     @Override public @NotNull Maximum lift(int n) {
       return new Maximum(among.map(l -> l.lift(n)));
     }

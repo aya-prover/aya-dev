@@ -17,8 +17,8 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.ref.PreLevelVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.InternalException;
@@ -63,7 +63,7 @@ public final class ExprTycker {
   public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
   public final @NotNull EqnSet termEqns = new EqnSet();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
-  public final @NotNull MutableMap<LevelGenVar, Sort.LvlVar> levelMapping = MutableMap.create();
+  public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableMap.create();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -73,7 +73,7 @@ public final class ExprTycker {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> {
-        var sort = transformLevel(univ.level(), universe);
+        var sort = transformLevel(univ.level());
         yield new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.lift(1)));
       }
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
@@ -193,6 +193,10 @@ public final class ExprTycker {
       case Expr.AppExpr appE -> {
         var f = synthesize(appE.function());
         var app = f.wellTyped;
+        if (appE.arguments().sizeEquals(1) && appE.arguments().first().term().expr() instanceof Expr.UnivArgsExpr univArgs) {
+          univArgs(app, univArgs);
+          yield f;
+        }
         if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
           yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
         var pi = piTerm;
@@ -208,14 +212,7 @@ public final class ExprTycker {
               continue;
             }
             haveUniverseArgs = true;
-            if (f.wellTyped instanceof CallTerm call) {
-              var sortArgs = call.sortArgs();
-              var levels = univArgs.univArgs();
-              if (sortArgs.sizeEquals(levels)) sortArgs.zipView(levels).forEach(t ->
-                levelEqns.add(t._1, transformLevel(t._2, universe), Ordering.Eq, univArgs.sourcePos()));
-              else reporter.report(new UnivArgsError.SizeMismatch(univArgs, sortArgs.size()));
-            } else
-              reporter.report(new UnivArgsError.Misplaced(univArgs));
+            univArgs(app, univArgs);
             continue;
           }
           while (pi.param().explicit() != argLicit ||
@@ -240,12 +237,26 @@ public final class ExprTycker {
           }
           subst.map().put(pi.param().ref(), elabArg);
         }
-        yield new Result(app, pi.body().subst(subst));
+        yield new Result(app, subst.isEmpty() ? pi : pi.body().subst(subst));
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
         FormTerm.Univ.OMEGA, Constants.randomName(hole), expr.sourcePos())._2);
       default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm($ -> Doc.english("no rule"), false));
     };
+  }
+
+  private void univArgs(Term app, Expr.UnivArgsExpr univArgs) {
+    if (unwrapLambda(app) instanceof CallTerm call) {
+      var sortArgs = call.sortArgs();
+      var levels = univArgs.univArgs();
+      if (sortArgs.sizeEquals(levels)) sortArgs.zipView(levels).forEach(t ->
+        levelEqns.add(t._1, transformLevel(t._2), Ordering.Eq, univArgs.sourcePos()));
+      else reporter.report(new UnivArgsError.SizeMismatch(univArgs, sortArgs.size()));
+    } else reporter.report(new UnivArgsError.Misplaced(univArgs));
+  }
+
+  private @NotNull Term unwrapLambda(@NotNull Term term) {
+    return term instanceof IntroTerm.Lambda lambda ? unwrapLambda(lambda.body()) : term;
   }
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
@@ -287,7 +298,7 @@ public final class ExprTycker {
         yield new Result(freshHole._2, term);
       }
       case Expr.UnivExpr univExpr -> {
-        var sort = transformLevel(univExpr.level(), universe);
+        var sort = transformLevel(univExpr.level());
         var normTerm = term.normalize(NormalizeMode.WHNF);
         if (normTerm instanceof FormTerm.Univ univ) {
           levelEqns.add(sort.lift(1), univ.sort(), Ordering.Lt, univExpr.sourcePos());
@@ -440,14 +451,19 @@ public final class ExprTycker {
     return new Result(new ErrorTerm(expr), term);
   }
 
-  private @NotNull Sort transformLevel(@NotNull Level<LevelGenVar> level, Sort.LvlVar polymorphic) {
-    if (level instanceof Level.Polymorphic) return levelEqns.markUsed(polymorphic);
+  private @NotNull Sort transformLevel(@NotNull Level<PreLevelVar> level) {
+    if (level instanceof Level.Polymorphic) return levelEqns.markUsed(universe);
     if (level instanceof Level.Maximum m)
-      return Sort.merge(m.among().map(l -> transformLevel(l, polymorphic)));
+      return Sort.merge(m.among().map(this::transformLevel));
     return new Sort(switch (level) {
-      case Level.Reference<LevelGenVar> v -> new Level.Reference<>(levelMapping.getOrPut(v.ref(), () -> new Sort.LvlVar(v.ref().name(), null)), v.lift());
-      case Level.Infinity<LevelGenVar> l -> new Level.Infinity<>();
-      case Level.Constant<LevelGenVar> c -> new Level.Constant<>(c.value());
+      case Level.Reference<PreLevelVar> v -> {
+        var ref = v.ref();
+        var lvlVar = ref.sourcePos() != null ? new Sort.LvlVar(ref.name(), ref.sourcePos())
+          : levelMapping.getOrPut(ref, () -> new Sort.LvlVar(ref.name(), null));
+        yield new Level.Reference<>(lvlVar, v.lift());
+      }
+      case Level.Infinity<PreLevelVar> l -> new Level.Infinity<>();
+      case Level.Constant<PreLevelVar> c -> new Level.Constant<>(c.value());
       default -> throw new IllegalArgumentException(level.toString());
     });
   }

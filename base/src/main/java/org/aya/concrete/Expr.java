@@ -11,8 +11,8 @@ import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.LevelGenVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.ref.PreLevelVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.WithPos;
@@ -226,7 +226,7 @@ public sealed interface Expr extends ConcreteExpr {
     }
   }
 
-  record UnivExpr(@NotNull SourcePos sourcePos, @NotNull Level<LevelGenVar> level) implements Expr {
+  record UnivExpr(@NotNull SourcePos sourcePos, @NotNull Level<PreLevelVar> level) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUniv(this, p);
     }
@@ -238,7 +238,7 @@ public sealed interface Expr extends ConcreteExpr {
     }
   }
 
-  record UnivArgsExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Level<LevelGenVar>> univArgs) implements Expr {
+  record UnivArgsExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Level<PreLevelVar>> univArgs) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnivArgs(this, p);
     }

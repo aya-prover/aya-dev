@@ -6,7 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple2;
-import org.aya.api.ref.LevelGenVar;
+import org.aya.api.ref.PreLevelVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ExprResolver(
   boolean allowGeneralized,
-  @NotNull Buffer<LevelGenVar> allowedLevels
+  @NotNull Buffer<PreLevelVar> allowedLevels
 ) implements ExprFixpoint<Context> {
   static final @NotNull ExprResolver NO_GENERALIZED = new ExprResolver(false, Buffer.create());
 
@@ -34,7 +34,7 @@ public record ExprResolver(
     var name = expr.name();
     var resolved = ctx.get(name);
     var refExpr = new Expr.RefExpr(sourcePos, resolved, name.justName());
-    if (resolved instanceof LevelGenVar levelVar) {
+    if (resolved instanceof PreLevelVar levelVar) {
       if (allowGeneralized) allowedLevels.append(levelVar);
       else if (!allowedLevels.contains(levelVar)) {
         ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
