@@ -32,7 +32,7 @@ import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
-import org.aya.core.visitor.TermFixpoint;
+import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
@@ -385,19 +385,18 @@ public final class ExprTycker {
     if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(result.wellTyped);
   }
 
-  @TestOnly @Contract(pure = true) private boolean validate(Term wellTyped) {
-    var visitor = new TermFixpoint<Unit>() {
+  @TestOnly @Contract(pure = true) private boolean validate(Term term) {
+    var visitor = new TermConsumer<Unit>() {
       boolean ok = true;
 
-      @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
+      @Override public void visitSort(@NotNull Sort sort, Unit unit) {
         for (var level : sort.levels())
           if (level instanceof Level.Reference<Sort.LvlVar> r && !r.ref().free() &&
             !(r.ref() == universe || levelMapping.valuesView().contains(r.ref())))
             ok = false;
-        return sort;
       }
     };
-    wellTyped.accept(visitor, Unit.unit());
+    term.accept(visitor, Unit.unit());
     return visitor.ok;
   }
 
@@ -499,7 +498,7 @@ public final class ExprTycker {
       var telescopes = CtorDef.telescopes(conVar, level._2);
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
-      var body = telescopes.toConCall(conVar);
+      var body = telescopes.toConCall(conVar).subst(Substituter.TermSubst.EMPTY, level._1);
       return new Result(IntroTerm.Lambda.make(tele, body), type);
     } else if (var.core instanceof FieldDef || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl

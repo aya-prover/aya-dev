@@ -205,11 +205,7 @@ public class LevelSolver {
     return switch (e.cmp()) {
       case Gt -> populateLt(g, specialEq, e, rhs, lhs);
       case Lt -> populateLt(g, specialEq, e, lhs, rhs);
-      case Eq -> {
-        specialEq.append(new Eqn(lhs, rhs, Ordering.Lt, e.sourcePos()));
-        specialEq.append(new Eqn(rhs, lhs, Ordering.Lt, e.sourcePos()));
-        yield false;
-      }
+      case Eq -> populateLt(g, specialEq, e, rhs, lhs) && populateLt(g, specialEq, e, lhs, rhs);
     };
   }
 
@@ -240,7 +236,7 @@ public class LevelSolver {
       }
       if (insert) rhsLevels.append(vr);
     }
-    if (lhsLevels.sizeEquals(1)) {
+    if (lhsLevels.sizeEquals(1) && rhsLevels.sizeGreaterThan(1)) {
       var left = lhsLevels.get(0);
       if (left instanceof Level.Constant<LvlVar> constant && constant.value() == 0) {
         avoidableEqns.append(e);

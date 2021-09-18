@@ -5,6 +5,7 @@ package org.aya.core.visitor;
 import kala.collection.SeqLike;
 import kala.tuple.Unit;
 import org.aya.api.util.Arg;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,13 +13,16 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   @Override default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
     visitArgs(p, term.args());
     visitArgs(p, term.contextArgs());
+    for (var sortArg : term.sortArgs()) visitSort(sortArg, p);
     var body = term.ref().core().body;
     if (body != null) body.accept(this, p);
     return Unit.unit();
   }
 
-  @Override
-  default Unit visitFieldRef(@NotNull RefTerm.Field term, P p) {
+  default void visitSort(@NotNull Sort sort, P p) {
+  }
+
+  @Override default Unit visitFieldRef(@NotNull RefTerm.Field term, P p) {
     return Unit.unit();
   }
 
@@ -28,6 +32,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
   }
 
   @Override default Unit visitUniv(@NotNull FormTerm.Univ term, P p) {
+    visitSort(term.sort(), p);
     return Unit.unit();
   }
 
@@ -57,28 +62,33 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override default Unit visitFnCall(@NotNull CallTerm.Fn fnCall, P p) {
     visitArgs(p, fnCall.args());
+    for (var sortArg : fnCall.sortArgs()) visitSort(sortArg, p);
     return Unit.unit();
   }
 
   @Override default Unit visitPrimCall(CallTerm.@NotNull Prim prim, P p) {
     visitArgs(p, prim.args());
+    for (var sortArg : prim.sortArgs()) visitSort(sortArg, p);
     return Unit.unit();
   }
 
 
   @Override default Unit visitDataCall(@NotNull CallTerm.Data dataCall, P p) {
     visitArgs(p, dataCall.args());
+    for (var sortArg : dataCall.sortArgs()) visitSort(sortArg, p);
     return Unit.unit();
   }
 
   @Override default Unit visitConCall(@NotNull CallTerm.Con conCall, P p) {
     visitArgs(p, conCall.head().dataArgs());
     visitArgs(p, conCall.conArgs());
+    for (var sortArg : conCall.sortArgs()) visitSort(sortArg, p);
     return Unit.unit();
   }
 
   @Override default Unit visitStructCall(@NotNull CallTerm.Struct structCall, P p) {
     visitArgs(p, structCall.args());
+    for (var sortArg : structCall.sortArgs()) visitSort(sortArg, p);
     return Unit.unit();
   }
 
@@ -107,6 +117,7 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
 
   @Override default Unit visitAccess(@NotNull CallTerm.Access term, P p) {
     visitArgs(p, term.fieldArgs());
+    for (var sortArg : term.sortArgs()) visitSort(sortArg, p);
     return term.of().accept(this, p);
   }
 }
