@@ -1,0 +1,8 @@
+In file $FILE:2:33 ->
+
+  1 | open data Unit : Type 0 | unit
+  2 | def test2 => (\ (x : Unit) => x) {universe 1, 2} unit
+                                       ^-------------^
+
+Error: Universe argument should not be placed here
+What are you doing?
