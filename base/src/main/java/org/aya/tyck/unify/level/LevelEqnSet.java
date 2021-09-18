@@ -33,13 +33,6 @@ public record LevelEqnSet(
     insertEqn(new Eqn(lhs, rhs, cmp, loc));
   }
 
-  public void add(
-    @NotNull Level<Sort.LvlVar> lhs, @NotNull Level<Sort.LvlVar> rhs,
-    @NotNull Ordering cmp, @NotNull SourcePos loc
-  ) {
-    add(new Sort(lhs), new Sort(rhs), cmp, loc);
-  }
-
   private void insertEqn(Eqn h) {
     eqns.append(h);
   }

@@ -1,0 +1,17 @@
+-- https://github.com/aya-prover/aya-dev/issues/17
+universe u v
+
+open data EventT : Type (lsuc u)
+  | CarrierT (A : Type u)
+
+def GetAgentT (T : EventT {universe u}) : Type u
+  | CarrierT A => A
+
+struct Event (T : EventT {universe u}) : Type (lsuc (lsuc u))
+  | agent : GetAgentT {universe u} T
+
+def Quantifier (A : Type u) : Type (lmax u (lsuc v)) => (A -> Type v) -> Type v
+
+def mkVerb {T : EventT {universe u}} (p : Event {universe u} T -> Type v)
+   : Quantifier {universe v, u} (Event {universe u} T)
+  => \f => Sig (e : Event {universe u} T) (s : p e) ** (f e)
