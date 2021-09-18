@@ -49,7 +49,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
   }
 
   @Override default @Nullable Pat toPat() {
-    return accept(TermToPat.INSTANCE, Unit.unit());
+    return TermToPat.toPat(this);
   }
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {

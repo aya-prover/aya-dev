@@ -34,7 +34,8 @@ public final class PrimDef extends TopLevelDef {
     @NotNull ImmutableSeq<Sort.LvlVar> levels,
     @NotNull Term result, @NotNull ID name
   ) {
-    this(telescope, levels, result, DefVar.empty(name.id));
+    super(telescope, result, levels);
+    this.ref = DefVar.empty(name.id);
     ref.core = this;
   }
 
@@ -278,14 +279,6 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public final @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref;
-
-  private PrimDef(
-    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<Sort.LvlVar> levels,
-    @NotNull Term result, @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref
-  ) {
-    super(telescope, result, levels);
-    this.ref = ref;
-  }
 
   public @NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref() {
     return ref;

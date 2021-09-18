@@ -2,92 +2,36 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
-import kala.tuple.Unit;
+import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.*;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.IntroTerm;
+import org.aya.core.term.RefTerm;
+import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class TermToPat implements Term.Visitor<Unit, @Nullable Pat> {
-  public static final @NotNull TermToPat INSTANCE = new TermToPat();
+import java.util.Objects;
 
-  private TermToPat() {
-  }
-
-  @Override public Pat visitRef(@NotNull RefTerm term, Unit unit) {
-    return new Pat.Bind(true, term.var(), term);
-  }
-
-  @Override public Pat visitLam(@NotNull IntroTerm.Lambda term, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitPi(@NotNull FormTerm.Pi term, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitSigma(@NotNull FormTerm.Sigma term, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitUniv(@NotNull FormTerm.Univ term, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitApp(@NotNull ElimTerm.App term, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitFnCall(@NotNull CallTerm.Fn fnCall, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitDataCall(@NotNull CallTerm.Data dataCall, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitConCall(@NotNull CallTerm.Con conCall, Unit unit) {
-    return new Pat.Ctor(true, conCall.ref(),
-      conCall.args().map(at -> at.term().accept(this, unit)), null,
-      conCall.head().underlyingDataCall()
-    );
-  }
-
-  @Override public Pat visitStructCall(@NotNull CallTerm.Struct structCall, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitTup(@NotNull IntroTerm.Tuple term, Unit unit) {
-    return new Pat.Tuple(true,
-      term.items().map(t -> t.accept(this, unit)), null, term);
-  }
-
-  @Override public Pat visitNew(@NotNull IntroTerm.New newTerm, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitProj(@NotNull ElimTerm.Proj term, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitAccess(@NotNull CallTerm.Access term, Unit unit) {
-    return null;
-  }
-
-  @Override public Pat visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-    return null;
-  }
-
-  @Override
-  public @Nullable Pat visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
-    return null;
-  }
-
-  @Override public @Nullable Pat visitError(@NotNull ErrorTerm term, Unit unit) {
-    return null;
+public interface TermToPat {
+  static @Nullable Pat toPat(@NotNull Term term) {
+    //noinspection ConstantConditions
+    return switch (term) {
+      default -> null;
+      case RefTerm ref -> new Pat.Bind(true, ref.var(), ref.type());
+      case CallTerm.Con conCall -> new Pat.Ctor(true, conCall.ref(),
+        conCall.args().map(at -> toPat(at.term())), null,
+        conCall.head().underlyingDataCall());
+      case CallTerm.Prim prim -> {
+        // TODO[ice]: add id to primcall and replace this test
+        if (Objects.equals(prim.ref().name(), PrimDef.ID.LEFT.id))
+          yield new Pat.Prim(true, prim.ref(), prim.computeType());
+        if (Objects.equals(prim.ref().name(), PrimDef.ID.RIGHT.id))
+          yield new Pat.Prim(true, prim.ref(), prim.computeType());
+        yield null;
+      }
+      case IntroTerm.Tuple tuple -> new Pat.Tuple(true,
+        tuple.items().map(TermToPat::toPat), null, term);
+    };
   }
 }
