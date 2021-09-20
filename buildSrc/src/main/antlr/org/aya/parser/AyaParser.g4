@@ -59,7 +59,7 @@ abuse : ABUSING (LBRACE stmt* RBRACE | stmt);
 fnDecl : DEF fnModifiers* assoc? ID tele* type? fnBody abuse?;
 
 fnBody : IMPLIES expr
-       | (BAR clause)+ ;
+       | (BAR clause)* ;
 
 fnModifiers : ERASE
             | INLINE
