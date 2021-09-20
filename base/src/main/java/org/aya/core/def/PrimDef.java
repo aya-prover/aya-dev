@@ -228,10 +228,6 @@ public final class PrimDef extends TopLevelDef {
       return defs.getOption(name);
     }
 
-    public @NotNull Option<DefVar<PrimDef, Decl.PrimDecl>> getRefOpt(@NotNull ID name) {
-      return getOption(name).map(PrimDef::ref);
-    }
-
     public boolean have(@NotNull ID name) {
       return defs.containsKey(name);
     }
