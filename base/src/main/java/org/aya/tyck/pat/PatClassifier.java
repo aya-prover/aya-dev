@@ -34,11 +34,12 @@ public record PatClassifier(
 ) {
   public static @NotNull ImmutableSeq<PatClass> classify(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
+    @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
-    return classifier.classifySub(clauses.mapIndexed((index, clause) ->
+    return classifier.classifySub(telescope, clauses.mapIndexed((index, clause) ->
       new SubPats(clause.patterns(), index)), coverage);
   }
 
@@ -77,16 +78,17 @@ public record PatClassifier(
    * @return pattern classes
    */
   private @NotNull ImmutableSeq<PatClass> classifySub(
+    @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
     boolean coverage
   ) {
-    assert subPatsSeq.isNotEmpty();
-    var pivot = subPatsSeq.first();
     // Done
-    if (pivot.pats.isEmpty()) {
+    if (telescope.isEmpty()) {
       var oneClass = subPatsSeq.map(SubPats::ix);
       return ImmutableSeq.of(new PatClass(oneClass));
     }
+    assert subPatsSeq.isNotEmpty();
+    var pivot = subPatsSeq.first();
     var explicit = pivot.head().explicit();
     var hasTuple = subPatsSeq.view()
       .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
@@ -94,7 +96,7 @@ public record PatClassifier(
       .toImmutableSeq();
     if (hasTuple.isNotEmpty()) {
       builder.shiftEmpty(explicit);
-      return classifySub(hasTuple, coverage);
+      return classifySub(telescope, hasTuple, coverage);
     }
     // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
     var buffer = Buffer.<PatClass>create();
@@ -116,7 +118,7 @@ public record PatClassifier(
           .map(SubPats::drop)
           .toImmutableSeq();
         if (classes.isNotEmpty()) {
-          var rest = classifySub(classes, false);
+          var rest = classifySub(telescope, classes, false);
           builder.unshift();
           buffer.appendAll(rest);
         } else builder.unshift();
@@ -130,7 +132,7 @@ public record PatClassifier(
     if (hasMatch.isEmpty()) {
       builder.shiftEmpty(explicit);
       builder.unshift();
-      return classifySub(subPatsSeq.map(SubPats::drop), coverage);
+      return classifySub(telescope, subPatsSeq.map(SubPats::drop), coverage);
     }
     var dataCall = hasMatch.get();
     for (var ctor : dataCall.ref().core.body) {
@@ -150,13 +152,13 @@ public record PatClassifier(
         builder.unshift();
         continue;
       }
-      var classified = classifySub(matches, coverage);
+      var classified = classifySub(telescope, matches, coverage);
       builder.reduce();
       var classes = classified.map(pat -> pat
         .extract(subPatsSeq)
         .map(SubPats::drop)
         .toImmutableSeq());
-      var rest = classes.flatMap(clazz -> classifySub(clazz, coverage));
+      var rest = classes.flatMap(clazz -> classifySub(telescope, clazz, coverage));
       builder.unshift();
       buffer.appendAll(rest);
     }

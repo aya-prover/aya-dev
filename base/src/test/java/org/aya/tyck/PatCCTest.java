@@ -3,9 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.core.Matching;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.test.ThrowingReporter;
@@ -19,11 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * CC = coverage and confluence
  */
 public class PatCCTest {
-  public static @NotNull ImmutableSeq<PatClassifier.PatClass> testClassify(
-    @NotNull ImmutableSeq<Matching> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos
-  ) {
-    return PatClassifier.classify(clauses.map(Pat.PrototypeClause::prototypify), reporter, pos, true);
+  public static @NotNull ImmutableSeq<PatClassifier.PatClass> testClassify(@NotNull FnDef fnDef) {
+    var clauses = fnDef.body.getRightValue().map(Pat.PrototypeClause::prototypify);
+    return PatClassifier.classify(clauses, fnDef.telescope, ThrowingReporter.INSTANCE, SourcePos.NONE, true);
   }
 
   @Test public void addCC() {
@@ -34,8 +30,7 @@ public class PatCCTest {
        | a, zero => a
        | suc a, b => suc (add a b)
        | a, suc b => suc (add a b)""");
-      var clauses = ((FnDef) decls.get(1)).body.getRightValue();
-    var classified = testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
+    var classified = testClassify((FnDef) decls.get(1));
     assertEquals(4, classified.size());
     classified.forEach(cls ->
       assertEquals(2, cls.contents().size()));
@@ -48,8 +43,7 @@ public class PatCCTest {
        | zero, b => b
        | a, zero => a
        | suc a, suc b => suc (max a b)""");
-      var clauses = ((FnDef) decls.get(1)).body.getRightValue();
-    var classified = testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
+    var classified = testClassify((FnDef) decls.get(1));
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
     assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
@@ -63,8 +57,7 @@ public class PatCCTest {
        | (zero, b), unit x => b
        | (a, zero), y => a
        | (suc a, suc b), unit y => suc (max (a, b) (unit zero))""");
-      var clauses = ((FnDef) decls.get(2)).body.getRightValue();
-    var classified = testClassify(clauses, ThrowingReporter.INSTANCE, SourcePos.NONE);
+    var classified = testClassify((FnDef) decls.get(2));
     assertEquals(4, classified.size());
     assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
     assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());

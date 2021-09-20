@@ -132,7 +132,7 @@ public record StmtTycker(
   ) {
     if (!matchings.isNotEmpty()) return;
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
-    var classification = PatClassifier.classify(elabClauses, tycker.reporter, pos, coverage);
+    var classification = PatClassifier.classify(elabClauses, signature.param(), tycker.reporter, pos, coverage);
     PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
     Conquer.against(matchings, tycker, pos, signature);
     tycker.solveMetas();
