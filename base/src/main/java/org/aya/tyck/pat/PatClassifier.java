@@ -195,9 +195,19 @@ public record PatClassifier(
             .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
           // Push this constructor to the error message builder
           builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
+          // In case we're the last pattern in the list, and no pattern matches this constructor,
           if (telescope.sizeEquals(1) && matches.isEmpty()) {
-            if (coverage) buffer.append(new PatClass.Err(ImmutableSeq.empty(),
-              builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
+            // for non-coverage case, we don't bother
+            if (coverage) {
+              // Actually, if we step further, we may realize that this pattern may actually be impossible
+              // since its arguments constitute an impossible pattern matching,
+              // but if *is possible*, then this recursion will run infinitely.
+              // We may add some checks (e.g. if the type changes then go ahead, but if unchanged then you're guilty),
+              // but be careful of inductive-inductive definitions where type recursion can be indirect!
+              // I decide to keep things simple for now.
+              buffer.append(new PatClass.Err(ImmutableSeq.empty(),
+                builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
+            }
             builder.reduce();
             builder.unshift();
             continue;
