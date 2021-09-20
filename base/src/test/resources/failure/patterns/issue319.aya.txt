@@ -1,1 +1,9 @@
-That looks right!
+In file $FILE:5:4 ->
+
+  3 |  | suc Nat
+  4 | 
+  5 | def cov (a b c d : Nat) : Nat
+          ^-^
+
+Error: Unhandled case: suc _, suc _, suc _, zero
+What are you doing?

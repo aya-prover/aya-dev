@@ -11,6 +11,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
+import org.aya.concrete.Pattern;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
@@ -41,8 +42,16 @@ public record PatClassifier(
     boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
-    return classifier.classifySub(telescope, clauses
-      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), true, coverage);
+    var classification = classifier.classifySub(telescope, clauses
+      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), coverage);
+    for (var pats : classification) {
+      if (pats.contents.isEmpty()) {
+        assert pats.errorMessage != null;
+        reporter.report(new ClausesProblem.MissingCase(pos, pats.errorMessage));
+        return ImmutableSeq.empty();
+      }
+    }
+    return classification;
   }
 
   public static void confluence(
@@ -79,8 +88,9 @@ public record PatClassifier(
    * @return pattern classes
    */
   private @NotNull ImmutableSeq<PatClass> classifySub(
-    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<SubPats> subPatsSeq,
-    boolean root, boolean coverage
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<SubPats> subPatsSeq,
+    boolean coverage
   ) {
     // Done
     if (telescope.isEmpty()) {
@@ -99,7 +109,7 @@ public record PatClassifier(
         if (hasTuple.isNotEmpty()) {
           builder.shiftEmpty(explicit);
           // TODO[ice]: I think this is broken.
-          return classifySub(sigma.params(), hasTuple, root, coverage);
+          return classifySub(sigma.params(), hasTuple, coverage);
         }
       }
       case CallTerm.Prim primCall -> {
@@ -127,7 +137,7 @@ public record PatClassifier(
                 .drop(1)
                 .map(param -> param.subst(target.ref(), lrCall))
                 .toImmutableSeq();
-              var rest = classifySub(newTele, classes, root, false);
+              var rest = classifySub(newTele, classes, false);
               builder.unshift();
               buffer.appendAll(rest);
             } else builder.unshift();
@@ -152,23 +162,23 @@ public record PatClassifier(
             .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
           builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           if (telescope.sizeEquals(1) && matches.isEmpty()) {
-            if (coverage && root) reporter.report(new ClausesProblem.MissingCase(pos,
-              builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
+            if (coverage) buffer.append(new PatClass(ImmutableSeq.empty(), builder
+              .root().view().map(PatTree::toPattern).toImmutableSeq()));
             builder.reduce();
             builder.unshift();
             continue;
           }
-          var classified = classifySub(conTele, matches, false, coverage);
+          var classified = classifySub(conTele, matches, coverage);
           builder.reduce();
-          var classes = classified.map(pat -> pat
-            .extract(subPatsSeq)
-            .map(SubPats::drop));
           var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTeleCapture.map(Term.Param::toArg));
           var newTele = telescope.view()
             .drop(1)
             .map(param -> param.subst(target.ref(), conCall))
             .toImmutableSeq();
-          var rest = classes.flatMap(clazz -> classifySub(newTele, clazz, root, coverage));
+          var rest = classified.flatMap(pat ->
+            classifySub(newTele, pat.extract(subPatsSeq).map(SubPats::drop), coverage)
+              .map(newClz -> newClz.errorMessage != null ? newClz
+                : new PatClass(newClz.contents, pat.errorMessage)));
           builder.unshift();
           buffer.appendAll(rest);
         }
@@ -178,7 +188,7 @@ public record PatClassifier(
     // Progress without pattern matching
     builder.shiftEmpty(explicit);
     builder.unshift();
-    return classifySub(telescope.drop(1), subPatsSeq.map(SubPats::drop), false, coverage);
+    return classifySub(telescope.drop(1), subPatsSeq.map(SubPats::drop), coverage);
   }
 
   private static @Nullable SubPats matches(SubPats subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {
@@ -193,7 +203,11 @@ public record PatClassifier(
   /**
    * @author ice1000
    */
-  public static record PatClass(@NotNull ImmutableSeq<Integer> contents) {
+  public static record PatClass(@NotNull ImmutableSeq<Integer> contents, @Nullable ImmutableSeq<Pattern> errorMessage) {
+    public PatClass(@NotNull ImmutableSeq<Integer> contents) {
+      this(contents, null);
+    }
+
     private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
       return contents.map(subPatsSeq::get);
     }
