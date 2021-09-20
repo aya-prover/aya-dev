@@ -137,8 +137,9 @@ public record PatClassifier(
         }
       }
       case CallTerm.Data dataCall -> {
-        if (subPatsSeq.noneMatch(subPats -> subPats.pats.isEmpty() || subPats.head() instanceof Pat.Ctor))
-          break;
+        if (subPatsSeq.anyMatch(subPats -> subPats.pats.isNotEmpty()) &&
+          subPatsSeq.noneMatch(subPats -> subPats.head() instanceof Pat.Ctor)
+        ) break;
         var buffer = Buffer.<PatClass>create();
         for (var ctor : dataCall.ref().core.body) {
           var conTele = ctor.selfTele;
@@ -152,7 +153,8 @@ public record PatClassifier(
             .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
           builder.shift(new PatTree(ctor.ref().name(), explicit));
           if (telescope.sizeEquals(1) && matches.isEmpty()) {
-            if (coverage) reporter.report(new ClausesProblem.MissingCase(pos, builder.root().toImmutableSeq()));
+            if (coverage) reporter.report(new ClausesProblem.MissingCase(pos,
+              builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
             builder.reduce();
             builder.unshift();
             continue;

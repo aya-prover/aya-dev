@@ -9,11 +9,11 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
+import org.aya.concrete.Pattern;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.tyck.pat.PatTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +90,7 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<PatTree> pats
+    @NotNull ImmutableSeq<Pattern> pats
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe() {
       return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(t -> t.toDoc(DistillerOptions.DEFAULT))));

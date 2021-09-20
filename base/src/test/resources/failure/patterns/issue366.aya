@@ -2,5 +2,4 @@ open data Nat : Type 0 | zero | suc Nat
 open data Ray (a : Nat) : Type | zero => eldath
 def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
  | zero, eldath => suc zero
- | suc n, impossible
  | zero, eldath => zero
