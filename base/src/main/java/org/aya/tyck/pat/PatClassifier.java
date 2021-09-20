@@ -18,6 +18,7 @@ import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatUnify;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
+import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
@@ -45,9 +46,8 @@ public record PatClassifier(
     var classification = classifier.classifySub(telescope, clauses
       .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), coverage);
     for (var pats : classification) {
-      if (pats.contents.isEmpty()) {
-        assert pats.errorMessage != null;
-        reporter.report(new ClausesProblem.MissingCase(pos, pats.errorMessage));
+      if (pats instanceof PatClass.Err err) {
+        reporter.report(new ClausesProblem.MissingCase(pos, err.errorMessage));
         return ImmutableSeq.empty();
       }
     }
@@ -60,7 +60,7 @@ public record PatClassifier(
     @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
   ) {
     for (var results : classification) {
-      var contents = results.contents
+      var contents = results.contents()
         .flatMap(i -> Pat.PrototypeClause.deprototypify(clauses.get(i))
           .map(matching -> IntObjTuple2.of(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++) {
@@ -95,7 +95,7 @@ public record PatClassifier(
     // Done
     if (telescope.isEmpty()) {
       var oneClass = subPatsSeq.map(SubPats::ix);
-      return ImmutableSeq.of(new PatClass(oneClass));
+      return ImmutableSeq.of(new PatClass.Ok(oneClass));
     }
     var target = telescope.first();
     var explicit = target.explicit();
@@ -108,8 +108,13 @@ public record PatClassifier(
             ? new SubPats(tuple.pats().view(), index) : null);
         if (hasTuple.isNotEmpty()) {
           builder.shiftEmpty(explicit);
-          // TODO[ice]: I think this is broken.
-          return classifySub(sigma.params(), hasTuple, coverage);
+          var newTele = telescope.view()
+            .drop(1)
+            .map(param -> param.subst(target.ref(), new IntroTerm.Tuple(sigma.params().map(Term.Param::toTerm))))
+            .toImmutableSeq();
+          return classifySub(sigma.params(), hasTuple, coverage)
+            .flatMap(pat -> mapClass(pat,
+              classifySub(newTele, PatClass.extract(pat, subPatsSeq).map(SubPats::drop), coverage)));
         }
       }
       case CallTerm.Prim primCall -> {
@@ -117,20 +122,19 @@ public record PatClassifier(
         var lrSplit = subPatsSeq
           .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
           .firstOption();
-        var buffer = Buffer.<PatClass>create();
         if (lrSplit.isDefined()) {
+          var buffer = Buffer.<PatClass>create();
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
           for (var primName : PrimDef.Factory.LEFT_RIGHT) {
             builder.append(new PatTree(primName.id, explicit, 0));
-            var classes = new PatClass(subPatsSeq.view()
+            var patClass = new PatClass.Ok(subPatsSeq.view()
               .mapIndexedNotNull((ix, subPats) -> {
                 var head = subPats.head();
                 var existedPrim = PrimDef.Factory.INSTANCE.getOption(primName);
                 return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
                   || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
-              }).map(SubPats::ix).toImmutableSeq())
-              .extract(subPatsSeq)
-              .map(SubPats::drop);
+              }).map(SubPats::ix).toImmutableSeq());
+            var classes = PatClass.extract(patClass, subPatsSeq).map(SubPats::drop);
             if (classes.isNotEmpty()) {
               var lrCall = new CallTerm.Prim(PrimDef.Factory.INSTANCE.getRefOpt(primName).get(), ImmutableSeq.empty(), ImmutableSeq.empty());
               var newTele = telescope.view()
@@ -162,8 +166,8 @@ public record PatClassifier(
             .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
           builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           if (telescope.sizeEquals(1) && matches.isEmpty()) {
-            if (coverage) buffer.append(new PatClass(ImmutableSeq.empty(), builder
-              .root().view().map(PatTree::toPattern).toImmutableSeq()));
+            if (coverage) buffer.append(new PatClass.Err(ImmutableSeq.empty(),
+              builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
             builder.reduce();
             builder.unshift();
             continue;
@@ -176,9 +180,7 @@ public record PatClassifier(
             .map(param -> param.subst(target.ref(), conCall))
             .toImmutableSeq();
           var rest = classified.flatMap(pat ->
-            classifySub(newTele, pat.extract(subPatsSeq).map(SubPats::drop), coverage)
-              .map(newClz -> newClz.errorMessage != null ? newClz
-                : new PatClass(newClz.contents, pat.errorMessage)));
+            mapClass(pat, classifySub(newTele, PatClass.extract(pat, subPatsSeq).map(SubPats::drop), coverage)));
           builder.unshift();
           buffer.appendAll(rest);
         }
@@ -189,6 +191,13 @@ public record PatClassifier(
     builder.shiftEmpty(explicit);
     builder.unshift();
     return classifySub(telescope.drop(1), subPatsSeq.map(SubPats::drop), coverage);
+  }
+
+  private ImmutableSeq<PatClass> mapClass(@NotNull PatClass pat, @NotNull ImmutableSeq<PatClass> classes) {
+    return switch (pat) {
+      case PatClass.Ok ok -> classes;
+      case PatClass.Err err -> classes.map(newClz -> new PatClass.Err(newClz.contents(), err.errorMessage));
+    };
   }
 
   private static @Nullable SubPats matches(SubPats subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {
@@ -203,13 +212,19 @@ public record PatClassifier(
   /**
    * @author ice1000
    */
-  public static record PatClass(@NotNull ImmutableSeq<Integer> contents, @Nullable ImmutableSeq<Pattern> errorMessage) {
-    public PatClass(@NotNull ImmutableSeq<Integer> contents) {
-      this(contents, null);
+  public sealed interface PatClass {
+    @NotNull ImmutableSeq<Integer> contents();
+    record Ok(@NotNull ImmutableSeq<Integer> contents) implements PatClass {
     }
 
-    private @NotNull ImmutableSeq<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
-      return contents.map(subPatsSeq::get);
+    record Err(
+      @NotNull ImmutableSeq<Integer> contents,
+      @NotNull ImmutableSeq<Pattern> errorMessage
+    ) implements PatClass {
+    }
+
+    private @NotNull static ImmutableSeq<SubPats> extract(PatClass pats, @NotNull ImmutableSeq<SubPats> subPatsSeq) {
+      return pats.contents().map(subPatsSeq::get);
     }
   }
 

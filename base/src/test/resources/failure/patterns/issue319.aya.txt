@@ -5,5 +5,5 @@ In file $FILE:5:4 ->
   5 | def cov (a b c d : Nat) : Nat
           ^-^
 
-Error: Unhandled case: suc _, suc _, suc _, zero
+Error: Unhandled case: suc _, suc _, suc zero
 What are you doing?
