@@ -30,7 +30,7 @@ import java.util.function.Function;
 /**
  * @author kiva, ice1000
  */
-@Debug.Renderer(text = "toTerm().toDoc().debugRender()")
+@Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
 public sealed interface Pat extends CorePat {
   @Override @NotNull Term type();
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
