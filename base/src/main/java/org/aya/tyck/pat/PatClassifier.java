@@ -42,7 +42,7 @@ public record PatClassifier(
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
     return classifier.classifySub(telescope, clauses
-      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), coverage);
+      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), true, coverage);
   }
 
   public static void confluence(
@@ -79,9 +79,8 @@ public record PatClassifier(
    * @return pattern classes
    */
   private @NotNull ImmutableSeq<PatClass> classifySub(
-    @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<SubPats> subPatsSeq,
-    boolean coverage
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ImmutableSeq<SubPats> subPatsSeq,
+    boolean root, boolean coverage
   ) {
     // Done
     if (telescope.isEmpty()) {
@@ -100,7 +99,7 @@ public record PatClassifier(
         if (hasTuple.isNotEmpty()) {
           builder.shiftEmpty(explicit);
           // TODO[ice]: I think this is broken.
-          return classifySub(sigma.params(), hasTuple, coverage);
+          return classifySub(sigma.params(), hasTuple, root, coverage);
         }
       }
       case CallTerm.Prim primCall -> {
@@ -112,7 +111,7 @@ public record PatClassifier(
         if (lrSplit.isDefined()) {
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
           for (var primName : PrimDef.Factory.LEFT_RIGHT) {
-            builder.append(new PatTree(primName.id, explicit));
+            builder.append(new PatTree(primName.id, explicit, 0));
             var classes = new PatClass(subPatsSeq.view()
               .mapIndexedNotNull((ix, subPats) -> {
                 var head = subPats.head();
@@ -128,7 +127,7 @@ public record PatClassifier(
                 .drop(1)
                 .map(param -> param.subst(target.ref(), lrCall))
                 .toImmutableSeq();
-              var rest = classifySub(newTele, classes, false);
+              var rest = classifySub(newTele, classes, root, false);
               builder.unshift();
               buffer.appendAll(rest);
             } else builder.unshift();
@@ -151,15 +150,15 @@ public record PatClassifier(
           var conTeleCapture = conTele;
           var matches = subPatsSeq
             .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
-          builder.shift(new PatTree(ctor.ref().name(), explicit));
+          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           if (telescope.sizeEquals(1) && matches.isEmpty()) {
-            if (coverage) reporter.report(new ClausesProblem.MissingCase(pos,
+            if (coverage && root) reporter.report(new ClausesProblem.MissingCase(pos,
               builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
             builder.reduce();
             builder.unshift();
             continue;
           }
-          var classified = classifySub(conTele, matches, coverage);
+          var classified = classifySub(conTele, matches, false, coverage);
           builder.reduce();
           var classes = classified.map(pat -> pat
             .extract(subPatsSeq)
@@ -169,7 +168,7 @@ public record PatClassifier(
             .drop(1)
             .map(param -> param.subst(target.ref(), conCall))
             .toImmutableSeq();
-          var rest = classes.flatMap(clazz -> classifySub(newTele, clazz, coverage));
+          var rest = classes.flatMap(clazz -> classifySub(newTele, clazz, root, coverage));
           builder.unshift();
           buffer.appendAll(rest);
         }
@@ -179,7 +178,7 @@ public record PatClassifier(
     // Progress without pattern matching
     builder.shiftEmpty(explicit);
     builder.unshift();
-    return classifySub(telescope.drop(1), subPatsSeq.map(SubPats::drop), coverage);
+    return classifySub(telescope.drop(1), subPatsSeq.map(SubPats::drop), false, coverage);
   }
 
   private static @Nullable SubPats matches(SubPats subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {

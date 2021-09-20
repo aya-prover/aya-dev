@@ -5,7 +5,7 @@ In file $FILE:5:4 ->
   5 | def add {a b : Nat} : Nat
           ^-^
 
-Error: Unhandled case: {zero}, {suc}
+Error: Unhandled case: {zero}, {suc _}
 In file $FILE:5:4 ->
 
   3 |  | suc Nat
