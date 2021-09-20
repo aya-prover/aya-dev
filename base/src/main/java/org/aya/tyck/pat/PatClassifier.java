@@ -108,9 +108,10 @@ public record PatClassifier(
             ? new SubPats(tuple.pats().view(), index) : null);
         if (hasTuple.isNotEmpty()) {
           builder.shiftEmpty(explicit);
+          var thatTuple = new IntroTerm.Tuple(sigma.params().map(Term.Param::toTerm));
           var newTele = telescope.view()
             .drop(1)
-            .map(param -> param.subst(target.ref(), new IntroTerm.Tuple(sigma.params().map(Term.Param::toTerm))))
+            .map(param -> param.subst(target.ref(), thatTuple))
             .toImmutableSeq();
           return classifySub(sigma.params(), hasTuple, coverage)
             .flatMap(pat -> mapClass(pat,
