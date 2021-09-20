@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
@@ -11,10 +10,13 @@ import kala.tuple.primitive.IntObjTuple2;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatUnify;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
@@ -39,8 +41,9 @@ public record PatClassifier(
     boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
-    return classifier.classifySub(telescope, clauses.mapIndexed((index, clause) ->
-      new SubPats(clause.patterns(), index)), coverage);
+    return classifier.classifySub(telescope.view(), clauses
+      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index))
+      .view(), coverage);
   }
 
   public static void confluence(
@@ -49,7 +52,7 @@ public record PatClassifier(
     @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
   ) {
     for (var results : classification) {
-      var contents = results.contents.view()
+      var contents = results.contents
         .flatMap(i -> Pat.PrototypeClause.deprototypify(clauses.get(i))
           .map(matching -> IntObjTuple2.of(i, matching)))
         .toImmutableSeq();
@@ -78,8 +81,8 @@ public record PatClassifier(
    * @return pattern classes
    */
   private @NotNull ImmutableSeq<PatClass> classifySub(
-    @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<SubPats> subPatsSeq,
+    @NotNull SeqView<Term.Param> telescope,
+    @NotNull SeqView<SubPats> subPatsSeq,
     boolean coverage
   ) {
     // Done
@@ -88,111 +91,115 @@ public record PatClassifier(
       return ImmutableSeq.of(new PatClass(oneClass));
     }
     assert subPatsSeq.isNotEmpty();
-    var pivot = subPatsSeq.first();
-    var explicit = pivot.head().explicit();
-    var hasTuple = subPatsSeq.view()
-      .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
-        ? new SubPats(tuple.pats(), index) : null)
-      .toImmutableSeq();
-    if (hasTuple.isNotEmpty()) {
-      builder.shiftEmpty(explicit);
-      return classifySub(telescope, hasTuple, coverage);
-    }
-    // Here we have _some_ ctor patterns, therefore cannot be any tuple patterns.
-    var buffer = Buffer.<PatClass>create();
-    var lrSplit = subPatsSeq.view()
-      .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
-      .firstOption();
-    if (lrSplit.isDefined()) {
-      if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
-      for (var primName : PrimDef.Factory.LEFT_RIGHT) {
-        var matchy = subPatsSeq.mapIndexedNotNull((ix, subPats) -> {
-          var head = subPats.head();
-          var existedPrim = PrimDef.Factory.INSTANCE.getOption(primName);
-          return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
-            || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
-        });
-        builder.append(new PatTree(primName.id, explicit));
-        var classes = new PatClass(matchy.view().map(SubPats::ix))
-          .extract(subPatsSeq)
-          .map(SubPats::drop)
+    var target = telescope.first();
+    var explicit = target.explicit();
+    switch (target.type().normalize(NormalizeMode.WHNF)) {
+      default -> {
+      }
+      case FormTerm.Sigma sigma -> {
+        var hasTuple = subPatsSeq
+          .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
+            ? new SubPats(tuple.pats().view(), index) : null)
           .toImmutableSeq();
-        if (classes.isNotEmpty()) {
-          var rest = classifySub(telescope, classes, false);
+        if (hasTuple.isNotEmpty()) {
+          builder.shiftEmpty(explicit);
+          // TODO[ice]: I think this is broken.
+          return classifySub(sigma.params().view(), hasTuple.view(), coverage);
+        }
+      }
+      case CallTerm.Prim primCall && primCall.ref().core.id == PrimDef.ID.INTERVAL -> {
+        var lrSplit = subPatsSeq
+          .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
+          .firstOption();
+        var buffer = Buffer.<PatClass>create();
+        var droppedTele = telescope.drop(1);
+        if (lrSplit.isDefined()) {
+          if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
+          for (var primName : PrimDef.Factory.LEFT_RIGHT) {
+            builder.append(new PatTree(primName.id, explicit));
+            var classes = new PatClass(subPatsSeq
+              .mapIndexedNotNull((ix, subPats) -> {
+                var head = subPats.head();
+                var existedPrim = PrimDef.Factory.INSTANCE.getOption(primName);
+                return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
+                  || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
+              }).map(SubPats::ix).toImmutableSeq().view())
+              .extract(subPatsSeq)
+              .map(SubPats::drop);
+            if (classes.isNotEmpty()) {
+              var rest = classifySub(droppedTele, classes, false);
+              builder.unshift();
+              buffer.appendAll(rest);
+            } else builder.unshift();
+          }
+          return buffer.toImmutableSeq();
+        }
+      }
+      case CallTerm.Data dataCall -> {
+        if (subPatsSeq.noneMatch(subPats -> subPats.pats.isEmpty() || subPats.head() instanceof Pat.Ctor))
+          break;
+        var buffer = Buffer.<PatClass>create();
+        var droppedTele = telescope.drop(1);
+        for (var ctor : dataCall.ref().core.body) {
+          var conTele = ctor.selfTele;
+          if (ctor.pats.isNotEmpty()) {
+            var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
+            if (matchy == null) continue;
+            conTele = conTele.map(param -> param.subst(matchy));
+          }
+          var conTeleCapture = conTele;
+          var matches = subPatsSeq.toImmutableSeq()
+            .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
+          builder.shift(new PatTree(ctor.ref().name(), explicit));
+          if (matches.isEmpty()) {
+            if (coverage) reporter.report(new ClausesProblem.MissingCase(pos, builder.root().toImmutableSeq()));
+            builder.reduce();
+            builder.unshift();
+            continue;
+          }
+          var classified = classifySub(conTele.view(), matches.view(), coverage);
+          builder.reduce();
+          var classes = classified.map(pat -> pat
+            .extract(subPatsSeq)
+            .map(SubPats::drop));
+          var rest = classes.flatMap(clazz -> classifySub(droppedTele, clazz, coverage));
           builder.unshift();
           buffer.appendAll(rest);
-        } else builder.unshift();
+        }
+        return buffer.toImmutableSeq();
       }
-      return buffer.toImmutableSeq();
     }
-    var hasMatch = subPatsSeq.view()
-      .mapNotNull(subPats -> subPats.head() instanceof Pat.Ctor ctor ? ctor.type() : null)
-      .firstOption();
-    // Progress
-    if (hasMatch.isEmpty()) {
-      builder.shiftEmpty(explicit);
-      builder.unshift();
-      return classifySub(telescope, subPatsSeq.map(SubPats::drop), coverage);
-    }
-    var dataCall = hasMatch.get();
-    for (var ctor : dataCall.ref().core.body) {
-      var conTele = ctor.selfTele;
-      if (ctor.pats.isNotEmpty()) {
-        var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
-        if (matchy == null) continue;
-        conTele = conTele.map(param -> param.subst(matchy));
-      }
-      var conTeleCapture = conTele;
-      var matches = subPatsSeq.mapIndexedNotNull((ix, subPats) ->
-        matches(subPats, ix, conTeleCapture, ctor.ref()));
-      builder.shift(new PatTree(ctor.ref().name(), explicit));
-      if (matches.isEmpty()) {
-        if (coverage) reporter.report(new ClausesProblem.MissingCase(pos, builder.root().toImmutableSeq()));
-        builder.reduce();
-        builder.unshift();
-        continue;
-      }
-      var classified = classifySub(telescope, matches, coverage);
-      builder.reduce();
-      var classes = classified.map(pat -> pat
-        .extract(subPatsSeq)
-        .map(SubPats::drop)
-        .toImmutableSeq());
-      var rest = classes.flatMap(clazz -> classifySub(telescope, clazz, coverage));
-      builder.unshift();
-      buffer.appendAll(rest);
-    }
-    return buffer.toImmutableSeq();
+    // Progress without pattern matching
+    builder.shiftEmpty(explicit);
+    builder.unshift();
+    return classifySub(telescope.drop(1), subPatsSeq.map(SubPats::drop), coverage);
   }
 
   private static @Nullable SubPats matches(SubPats subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {
     var head = subPats.head();
     if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
-      return new SubPats(ctorPat.params(), ix);
+      return new SubPats(ctorPat.params().view(), ix);
     if (head instanceof Pat.Bind)
-      return new SubPats(conTele.map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
+      return new SubPats(conTele.view().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
     return null;
   }
 
   /**
    * @author ice1000
    */
-  public static record PatClass(@NotNull SeqLike<Integer> contents) {
-    private @NotNull SeqView<SubPats> extract(@NotNull ImmutableSeq<SubPats> subPatsSeq) {
-      return contents.view().map(subPatsSeq::get);
+  public static record PatClass(@NotNull SeqView<Integer> contents) {
+    private @NotNull SeqView<SubPats> extract(@NotNull SeqView<SubPats> subPatsSeq) {
+      return contents.map(subPatsSeq::get);
     }
   }
 
-  record SubPats(
-    @NotNull SeqLike<Pat> pats,
-    int ix
-  ) {
+  record SubPats(@NotNull SeqView<Pat> pats, int ix) {
     @Contract(pure = true) public @NotNull Pat head() {
       return pats.first();
     }
 
     @Contract(pure = true) public @NotNull SubPats drop() {
-      return new SubPats(pats.view().drop(1), ix);
+      return new SubPats(pats.drop(1), ix);
     }
   }
 }
