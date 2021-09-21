@@ -32,7 +32,7 @@ public record BindContext(
     return parent.reporter();
   }
 
-  @Override public Buffer<LocalVar> collect(Buffer<LocalVar> container) {
+  @Override public Buffer<LocalVar> collect(@NotNull Buffer<LocalVar> container) {
     if (container.noneMatch(v -> Objects.equals(v.name(), ref.name()))) container.append(ref);
     return parent.collect(container);
   }

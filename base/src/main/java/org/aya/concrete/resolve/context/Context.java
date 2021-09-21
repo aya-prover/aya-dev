@@ -51,7 +51,7 @@ public interface Context {
       : getQualified(name, name.sourcePos());
   }
 
-  default Buffer<LocalVar> collect(Buffer<LocalVar> container) {
+  default Buffer<LocalVar> collect(@NotNull Buffer<LocalVar> container) {
     return container;
   }
 
