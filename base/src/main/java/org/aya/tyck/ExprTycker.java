@@ -32,7 +32,6 @@ import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
-import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
@@ -46,7 +45,6 @@ import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -380,11 +378,12 @@ public final class ExprTycker {
       builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(levelEqns), result.type.freezeHoles(levelEqns), expr.sourcePos()));
       builder.reduce();
     });
-    assert validate(result.wellTyped);
-    assert validate(result.type);
+    // assert validate(result.wellTyped);
+    // assert validate(result.type);
     if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(result.wellTyped);
   }
 
+  /*
   @TestOnly @Contract(pure = true) private boolean validate(Term term) {
     var visitor = new TermConsumer<Unit>() {
       boolean ok = true;
@@ -399,6 +398,7 @@ public final class ExprTycker {
     term.accept(visitor, Unit.unit());
     return visitor.ok;
   }
+  */
 
   public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
     this.reporter = reporter;

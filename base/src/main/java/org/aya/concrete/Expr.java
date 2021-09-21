@@ -243,8 +243,10 @@ public sealed interface Expr extends ConcreteExpr {
     }
   }
 
-  record UnivArgsExpr(@NotNull SourcePos sourcePos,
-                      @NotNull ImmutableSeq<Level<PreLevelVar>> univArgs) implements Expr {
+  record UnivArgsExpr(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<Level<PreLevelVar>> univArgs
+  ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnivArgs(this, p);
     }
@@ -254,7 +256,7 @@ public sealed interface Expr extends ConcreteExpr {
    * @author re-xyr
    */
   record TupExpr(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<@NotNull Expr> items
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
