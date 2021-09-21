@@ -113,20 +113,4 @@ Error: Cannot check the expression of type
         (add x y) z)
          (Normalized: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Path (λ i ⇒ Nat)
         (add x (add y z)) (add (add x y) z))
-In file $FILE:31:4 ->
-
-  29 | bind + tighter =
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-           ^---------------^ substituted to `<λ a ⇒ idp {Nat} a>`
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
-           ^-------------------------------------^ substituted to `<pmap {Nat} {Nat}
-  (λ _ ⇒ suc _) {add x (add y z)} {add (add x y) z} (+-assoc x y z)>`
-
-Error: The 1st and the 2nd clauses are not confluent because we failed to unify
-         <λ a ⇒ idp {Nat} a>
-       and
-         <pmap {Nat} {Nat} (λ _ ⇒ suc _) {add x (add y z)} {add (add x y) z} (+-assoc
-        x y z)>
 What are you doing?

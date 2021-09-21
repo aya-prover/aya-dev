@@ -79,6 +79,7 @@ public final class DefEq {
     if (compareApprox(lhs, rhs) != null) return true;
     if (rhs instanceof CallTerm.Hole) return compareUntyped(rhs, lhs) != null;
     if (lhs instanceof CallTerm.Hole) return compareUntyped(lhs, rhs) != null;
+    if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
     return doCompareTyped(type.normalize(NormalizeMode.WHNF), lhs, rhs);
   }
 
