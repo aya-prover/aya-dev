@@ -89,4 +89,9 @@ public record ExprResolver(
     var params = resolveParams(expr.params(), ctx);
     return new Expr.SigmaExpr(expr.sourcePos(), expr.co(), params._1);
   }
+
+  @Override public @NotNull Expr visitHole(@NotNull Expr.HoleExpr expr, Context context) {
+    expr.accessibleLocal().set(context.collect(Buffer.create()).toImmutableSeq());
+    return ExprFixpoint.super.visitHole(expr, context);
+  }
 }

@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -10,6 +11,8 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Introduces a locally bound variable to the context.
@@ -27,6 +30,11 @@ public record BindContext(
 
   @Override public @NotNull Reporter reporter() {
     return parent.reporter();
+  }
+
+  @Override public Buffer<LocalVar> collect(Buffer<LocalVar> container) {
+    if (container.noneMatch(v -> Objects.equals(v.name(), ref.name()))) container.append(ref);
+    return parent.collect(container);
   }
 
   @Override public @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {

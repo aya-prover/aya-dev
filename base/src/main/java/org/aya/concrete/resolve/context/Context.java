@@ -4,6 +4,7 @@ package org.aya.concrete.resolve.context;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -48,6 +49,10 @@ public interface Context {
     return isUnqualified
       ? getUnqualified(name.justName(), name.sourcePos())
       : getQualified(name, name.sourcePos());
+  }
+
+  default Buffer<LocalVar> collect(Buffer<LocalVar> container) {
+    return container;
   }
 
   @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);

@@ -15,12 +15,17 @@ public record Goal(
   @NotNull Meta meta
 ) implements ExprProblem {
   @Override public @NotNull Doc describe() {
+    var scope = expr.accessibleLocal().value;
+    assert scope != null;
     var doc = Doc.vcat(
       Doc.english("Goal of type"),
       Doc.par(1, meta.result.toDoc(DistillerOptions.DEFAULT)),
       Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)))),
       Doc.plain("Context:"),
-      Doc.vcat(meta.fullTelescope().map(param -> param.toDoc(DistillerOptions.DEFAULT)))
+      Doc.vcat(meta.fullTelescope().map(param -> {
+        var paramDoc = param.toDoc(DistillerOptions.DEFAULT);
+        return scope.contains(param.ref()) ? paramDoc : Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope")));
+      }))
     );
     return meta.body == null ? doc :
       Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, meta.body.toDoc(DistillerOptions.DEFAULT)), doc);

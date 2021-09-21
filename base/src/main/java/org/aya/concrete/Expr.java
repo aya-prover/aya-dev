@@ -115,10 +115,15 @@ public sealed interface Expr extends ConcreteExpr {
    * @author ice1000
    */
   record HoleExpr(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     boolean explicit,
-    @Nullable Expr filling
+    @Nullable Expr filling,
+    Ref<ImmutableSeq<LocalVar>> accessibleLocal
   ) implements Expr {
+    public HoleExpr(@NotNull SourcePos sourcePos, boolean explicit, @Nullable Expr filling) {
+      this(sourcePos, explicit, filling, new Ref<>());
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitHole(this, p);
     }
@@ -238,7 +243,8 @@ public sealed interface Expr extends ConcreteExpr {
     }
   }
 
-  record UnivArgsExpr(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Level<PreLevelVar>> univArgs) implements Expr {
+  record UnivArgsExpr(@NotNull SourcePos sourcePos,
+                      @NotNull ImmutableSeq<Level<PreLevelVar>> univArgs) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitUnivArgs(this, p);
     }
