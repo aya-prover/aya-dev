@@ -88,9 +88,9 @@ public final class ExprTycker {
       case Expr.SigmaExpr sigma -> inherit(sigma, FormTerm.Univ.OMEGA);
       case Expr.NewExpr newExpr -> {
         var struct = synthesize(newExpr.struct()).wellTyped;
-        while(struct instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
+        while(struct.normalize(NormalizeMode.WHNF) instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
           var holeApp = mockTerm(intro.param(), newExpr.struct().sourcePos());
-          struct = CallTerm.make(struct, new Arg<>(holeApp, false));
+          struct = CallTerm.make(intro, new Arg<>(holeApp, false));
         }
         if (!(struct instanceof CallTerm.Struct structCall))
           yield fail(newExpr.struct(), struct, BadTypeError.structCon(newExpr, struct));
