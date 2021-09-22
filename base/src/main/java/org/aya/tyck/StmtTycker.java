@@ -106,8 +106,8 @@ public record StmtTycker(
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
-      param.mapExpr(expr -> expr.accept(patTycker.subst(), Unit.unit()))), dataSig.result());
-    var patSubst = patTycker.subst().clone();
+      param.mapExpr(expr -> expr.accept(patTycker.refSubst(), Unit.unit()))), dataSig.result());
+    var patSubst = patTycker.refSubst().clone();
     var dataParamView = dataSig.param().view();
     if (pat.isNotEmpty()) {
       var subst = dataParamView.map(Term.Param::ref)

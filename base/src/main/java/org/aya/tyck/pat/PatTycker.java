@@ -2,9 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.pat;
 
-import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -45,7 +45,8 @@ import java.util.function.Consumer;
  */
 public record PatTycker(
   @NotNull ExprTycker exprTycker,
-  @NotNull ExprRefSubst subst,
+  @NotNull ExprRefSubst refSubst,
+  @NotNull Substituter.TermSubst termSubst,
   @Nullable Trace.Builder traceBuilder
 ) implements Pattern.Visitor<Term, Pat> {
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -61,7 +62,8 @@ public record PatTycker(
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new ExprRefSubst(exprTycker.reporter), exprTycker.traceBuilder);
+    this(exprTycker, new ExprRefSubst(exprTycker.reporter),
+      new Substituter.TermSubst(MutableMap.create()), exprTycker.traceBuilder);
   }
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClauses(
@@ -70,7 +72,7 @@ public record PatTycker(
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
-      subst.clear();
+      refSubst.clear();
       var elabClause = visitMatch(clause, signature.value);
       tracing(GenericBuilder::reduce);
       return elabClause;
@@ -84,7 +86,7 @@ public record PatTycker(
     @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) {
     var checked = clauses.map(c -> {
-      if (patSubst != null) subst.resetTo(patSubst);
+      if (patSubst != null) refSubst.resetTo(patSubst);
       return Tuple.of(visitMatch(c, signature), c.sourcePos);
     });
     exprTycker.solveMetas();
@@ -92,8 +94,8 @@ public record PatTycker(
   }
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
-    var selection = selectCtor(term, null, subst.reporter(), absurd);
-    if (selection != null) subst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
+    var selection = selectCtor(term, null, refSubst.reporter(), absurd);
+    if (selection != null) refSubst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
     return new Pat.Absurd(absurd.explicit(), term);
   }
 
@@ -102,15 +104,16 @@ public record PatTycker(
     exprTycker.localCtx = exprTycker.localCtx.derive();
     var patterns = visitPatterns(sig, match.patterns);
     var type = sig.value.result();
-    match.expr = match.expr.map(e -> e.accept(subst, Unit.unit()));
-    var result = match.expr.map(e -> exprTycker.inherit(e, type).wellTyped());
+    match.expr = match.expr.map(e -> e.accept(refSubst, Unit.unit()));
+    var result = match.expr.map(e -> exprTycker.inherit(e, type).wellTyped().subst(termSubst));
+    termSubst.clear();
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
     return new Pat.PrototypeClause(match.sourcePos, patterns, result);
   }
 
-  public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, SeqLike<Pattern> stream) {
+  public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, ImmutableSeq<Pattern> stream) {
     var results = Buffer.<Pat>create();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
@@ -135,6 +138,7 @@ public record PatTycker(
         throw new ExprTycker.TyckerException();
       }
       var res = pat.accept(this, param.type());
+      termSubst.add(param.ref(), res.toTerm());
       sig.value = sig.value.inst(res.toTerm());
       results.append(res);
     });
@@ -150,7 +154,6 @@ public record PatTycker(
   }
 
   @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
-    if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), t);
     if (!(t instanceof FormTerm.Sigma sigma))
       return withError(new PatternProblem.TupleNonSig(tuple, t), tuple, "?", t);
     // sig.result is a dummy term
@@ -158,9 +161,10 @@ public record PatTycker(
       ImmutableSeq.empty(),
       sigma.params(),
       FormTerm.Univ.OMEGA);
-    if (tuple.as() != null) exprTycker.localCtx.put(tuple.as(), sigma);
+    var as = tuple.as();
+    if (as != null) exprTycker.localCtx.put(as, sigma);
     return new Pat.Tuple(tuple.explicit(),
-      visitPatterns(new Ref<>(sig), tuple.patterns()), tuple.as(), sigma);
+      visitPatterns(new Ref<>(sig), tuple.patterns()), as, sigma);
   }
 
   @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
@@ -170,7 +174,7 @@ public record PatTycker(
       prim.ref() == interval.get().ref())
       for (var primName : PrimDef.Factory.LEFT_RIGHT)
         if (Objects.equals(bind.bind().name(), primName.id)) {
-          subst.bad().add(bind.bind());
+          refSubst.bad().add(bind.bind());
           return new Pat.Prim(bind.explicit(), PrimDef.Factory.INSTANCE.getOption(primName).get().ref(), t);
         }
     var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
@@ -184,8 +188,8 @@ public record PatTycker(
       throw new ExprTycker.TyckerException();
     }
     var value = bind.resolved().value;
-    if (value != null) subst.good().putIfAbsent(v, value);
-    else subst.bad().add(v);
+    if (value != null) refSubst.good().putIfAbsent(v, value);
+    else refSubst.bad().add(v);
     return new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.empty(), null, selected._1);
   }
 
@@ -197,7 +201,7 @@ public record PatTycker(
   }
 
   @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
-    var realCtor = selectCtor(param, ctor.name().data(), subst.reporter(), ctor);
+    var realCtor = selectCtor(param, ctor.name().data(), refSubst.reporter(), ctor);
     if (realCtor == null) return withError(new PatternProblem.UnknownCtor(ctor), ctor, ctor.name().data(), param);
     var ctorRef = realCtor._3.ref();
     ctor.resolved().value = ctorRef;
@@ -236,7 +240,7 @@ public record PatTycker(
       // if the name-matching constructor mismatches the type,
       // we get an error.
       var severity = reporter == IgnoringReporter.INSTANCE ? Problem.Severity.WARN : Problem.Severity.ERROR;
-      subst.reporter().report(new PatternProblem.UnavailableCtor(pos, severity));
+      refSubst.reporter().report(new PatternProblem.UnavailableCtor(pos, severity));
       return null;
     }
     return null;
