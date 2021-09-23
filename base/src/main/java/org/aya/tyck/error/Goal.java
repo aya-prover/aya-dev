@@ -2,19 +2,19 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.error;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.CallTerm;
-import org.aya.core.term.RefTerm;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record Goal(@NotNull CallTerm.Hole hole) implements Problem {
+public record Goal(@NotNull CallTerm.Hole hole, ImmutableSeq<LocalVar> scope) implements Problem {
   @Override public @NotNull Doc describe() {
     var meta = hole.ref().core();
-    var scope = hole.contextArgs().view().map(arg -> ((RefTerm) arg.term()).var()).toImmutableSeq();
     var doc = Doc.vcat(
       Doc.english("Goal of type"),
       Doc.par(1, meta.result.toDoc(DistillerOptions.DEFAULT)),
