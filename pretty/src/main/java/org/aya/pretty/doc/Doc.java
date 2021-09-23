@@ -433,6 +433,14 @@ public sealed interface Doc extends Docile {
     return join(line(), docs);
   }
 
+  @Contract("_ -> new") static @NotNull Doc vcatNonEmpty(Doc @NotNull ... docs) {
+    return vcatNonEmpty(Seq.of(docs));
+  }
+
+  @Contract("_ -> new") static @NotNull Doc vcatNonEmpty(@NotNull SeqLike<Doc> docs) {
+    return vcat(docs.view().filterNot(Doc::nonEmpty));
+  }
+
   /**
    * stickySep concatenates all documents {@param docs} horizontally with a space,
    * i.e. it puts a space between all entries.

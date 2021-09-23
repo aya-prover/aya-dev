@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public record Goal(@NotNull CallTerm.Hole hole, ImmutableSeq<LocalVar> scope) implements Problem {
   @Override public @NotNull Doc describe() {
     var meta = hole.ref().core();
-    var doc = Doc.vcat(
+    var doc = Doc.vcatNonEmpty(
       Doc.english("Goal of type"),
       Doc.par(1, meta.result.toDoc(DistillerOptions.DEFAULT)),
       Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)))),
@@ -24,13 +24,16 @@ public record Goal(@NotNull CallTerm.Hole hole, ImmutableSeq<LocalVar> scope) im
         var paramDoc = param.toDoc(DistillerOptions.DEFAULT);
         return Doc.par(1, scope.contains(param.ref()) ? paramDoc : Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope"))));
       })),
-      Doc.plain("To ensure confluence:"),
-      Doc.vcat(hole.conditions().value.map(tup -> Doc.par(1, Doc.cat(
-        Doc.plain("Given "),
-        Doc.parened(tup._1.toDoc(DistillerOptions.DEFAULT)),
-        Doc.plain(", we should have: "),
-        tup._2.toDoc(DistillerOptions.DEFAULT)
-      ))))
+      hole.conditions().value.isNotEmpty() ?
+        Doc.vcat(
+          ImmutableSeq.of(Doc.plain("To ensure confluence:"))
+            .concat(hole.conditions().value.map(tup -> Doc.par(1, Doc.cat(
+              Doc.plain("Given "),
+              Doc.parened(tup._1.toDoc(DistillerOptions.DEFAULT)),
+              Doc.plain(", we should have: "),
+              tup._2.toDoc(DistillerOptions.DEFAULT)
+            )))))
+        : Doc.empty()
     );
     return meta.body == null ? doc :
       Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, meta.body.toDoc(DistillerOptions.DEFAULT)), doc);

@@ -9,8 +9,10 @@ Goal: Goal of type
         Nat
         (Normalized: Nat)
       Context:
-      {a : Nat}
-      {a : Int} (not in scope)
+        {a : Nat}
+        {a : Int} (not in scope)
+      To ensure confluence:
+        Given (a ⇒ zero), we should have: zero
 In file $FILE:6:13 ->
 
   4 | def abs (a : Int) : Nat
