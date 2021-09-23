@@ -16,8 +16,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
-import org.aya.core.pat.Pat;
-import org.aya.core.term.RefTerm;
+import org.aya.core.term.CallTerm;
 import org.aya.test.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -48,17 +47,16 @@ public class TyckDeclTest {
       def xyr (zero : Nat) : Nat
         | zero => zero
         | suc n => zero""");
+    // ^ the latter `zero` refers to the `zero` parameter, and will be substituted as `suc n`
     var nat = (DataDef) defs.get(0);
     var xyr = (FnDef) defs.get(1);
-      var ctors = nat.body;
+    var ctors = nat.body;
     assertEquals(2, ctors.size());
     var clauses = xyr.body.getRightValue();
-    var zeroToZero = clauses.get(0);
-    var zeroCtor = ctors.get(0);
-    assertEquals(0, zeroCtor.selfTele.size());
-    var zeroParam = xyr.telescope().get(0);
-    assertEquals(((RefTerm) zeroToZero.body()).var(), zeroParam.ref());
-    assertEquals(zeroCtor.ref(), ((Pat.Ctor) zeroToZero.patterns().get(0)).ref());
+    var sucToZero = clauses.get(1);
+    var sucCtor = ctors.get(1);
+    assertEquals(1, sucCtor.selfTele.size());
+    assertEquals(((CallTerm.Con) sucToZero.body()).ref(), sucCtor.ref);
   }
 
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {

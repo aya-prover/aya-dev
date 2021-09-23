@@ -499,11 +499,11 @@ public final class ExprTycker {
     } else if (var.core instanceof CtorDef || var.concrete instanceof Decl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, Decl.DataDecl.DataCtor>) var;
       var level = levelStuffs(pos, conVar);
-      var telescopes = CtorDef.telescopes(conVar, level._2);
       var tele = Term.Param.subst(Def.defTele(conVar), level._1);
       var type = FormTerm.Pi.make(tele, Def.defResult(conVar).subst(Substituter.TermSubst.EMPTY, level._1));
+      var telescopes = CtorDef.telescopes(conVar, level._2).rename();
       var body = telescopes.toConCall(conVar).subst(Substituter.TermSubst.EMPTY, level._1);
-      return new Result(IntroTerm.Lambda.make(tele, body), type);
+      return new Result(IntroTerm.Lambda.make(telescopes.params(), body), type);
     } else if (var.core instanceof FieldDef || var.concrete instanceof Decl.StructField) {
       // the code runs to here because we are tycking a StructField in a StructDecl
       // there should be two-stage check for this case:
