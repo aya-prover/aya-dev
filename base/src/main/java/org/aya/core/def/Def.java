@@ -85,8 +85,7 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
     @NotNull ImmutableSeq<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements AyaDocile {
-    @Contract("_ -> new") public @NotNull Signature inst(@NotNull Term term) {
-      var subst = new Substituter.TermSubst(param.first().ref(), term);
+    @Contract("_ -> new") public @NotNull Signature inst(@NotNull Substituter.TermSubst subst) {
       return new Signature(sortParam, substParams(param, subst), result.subst(subst));
     }
 

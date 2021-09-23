@@ -127,7 +127,8 @@ public record PatTycker(
         var bind = new Pat.Bind(false, new LocalVar(param.ref().name(), param.ref().definition()), param.type());
         results.append(bind);
         exprTycker.localCtx.put(bind.as(), param.type());
-        sig.value = sig.value.inst(bind.toTerm());
+        termSubst.add(param.ref(), bind.toTerm());
+        sig.value = sig.value.inst(termSubst);
         if (sig.value.param().isEmpty()) {
           // TODO[ice]: report error
           throw new ExprTycker.TyckerException();
@@ -139,7 +140,7 @@ public record PatTycker(
       }
       var res = pat.accept(this, param.type());
       termSubst.add(param.ref(), res.toTerm());
-      sig.value = sig.value.inst(res.toTerm());
+      sig.value = sig.value.inst(termSubst);
       results.append(res);
     });
     return results.toImmutableSeq();
