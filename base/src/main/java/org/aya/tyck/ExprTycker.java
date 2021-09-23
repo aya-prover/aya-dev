@@ -280,7 +280,7 @@ public final class ExprTycker {
       case Expr.HoleExpr hole -> {
         // TODO[ice]: deal with unit type
         var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
-        if (hole.explicit()) reporter.report(new Goal(hole, freshHole._1));
+        if (hole.explicit()) reporter.report(new Goal(freshHole._1));
         yield new Result(freshHole._2, term);
       }
       case Expr.UnivExpr univExpr -> {

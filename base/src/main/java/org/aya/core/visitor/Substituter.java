@@ -8,11 +8,15 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
 import kala.tuple.Unit;
+import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.Var;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.aya.distill.BaseDistiller;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +53,7 @@ public record Substituter(
   @Debug.Renderer(text = "map.toString()",
     childrenArray = "map.asJava().entrySet().toArray()",
     hasChildren = "map.isNotEmpty()")
-  public static record TermSubst(@NotNull MutableMap<@NotNull Var, @NotNull Term> map) {
+  public static record TermSubst(@NotNull MutableMap<@NotNull Var, @NotNull Term> map) implements AyaDocile {
     public static final @NotNull TermSubst EMPTY = new TermSubst(MutableTreeMap.of((o1, o2) -> {
       throw new UnsupportedOperationException("Shall not modify LevelSubst.EMPTY");
     }));
@@ -87,6 +91,18 @@ public record Substituter(
 
     public boolean isEmpty() {
       return map.isEmpty();
+    }
+
+    @Override
+    public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      return Doc.join(
+        Doc.cat(Doc.plain(","), Doc.ONE_WS),
+        map.view().map((var, term) -> Doc.sep(
+          BaseDistiller.varDoc(var),
+          Doc.symbol("=>"),
+          term.toDoc(options)
+        )).toImmutableSeq()
+      );
     }
   }
 }

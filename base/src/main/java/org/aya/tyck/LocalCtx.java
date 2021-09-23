@@ -31,16 +31,16 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     this(MutableHashMap.of(), null);
   }
 
-  public @NotNull Tuple2<Meta, Term> freshHole(@NotNull Term type, @NotNull SourcePos sourcePos) {
+  public @NotNull Tuple2<CallTerm.Hole, Term> freshHole(@NotNull Term type, @NotNull SourcePos sourcePos) {
     return freshHole(type, Constants.ANONYMOUS_PREFIX, sourcePos);
   }
 
-  public @NotNull Tuple2<Meta, Term> freshHole(@NotNull Term type, @NotNull String name, @NotNull SourcePos sourcePos) {
+  public @NotNull Tuple2<CallTerm.Hole, Term> freshHole(@NotNull Term type, @NotNull String name, @NotNull SourcePos sourcePos) {
     var ctxTele = extract();
     var meta = Meta.from(ctxTele, type, sourcePos);
     var ref = new HoleVar<>(name, meta);
     var hole = new CallTerm.Hole(ref, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
-    return Tuple2.of(meta, IntroTerm.Lambda.make(meta.telescope, hole));
+    return Tuple2.of(hole, IntroTerm.Lambda.make(meta.telescope, hole));
   }
 
   public <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {

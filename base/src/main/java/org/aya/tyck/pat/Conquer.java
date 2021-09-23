@@ -3,6 +3,7 @@
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Tuple;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Arg;
@@ -14,6 +15,8 @@ import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatToTerm;
 import org.aya.core.sort.LevelSubst;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
@@ -79,6 +82,9 @@ public record Conquer(
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));
       return;
+    }
+    if (newBody instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+      hole.conditions().set(hole.conditions().value.appended(Tuple.of(matchy, volynskaya.data())));
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq)
       .compare(newBody, volynskaya.data(), signature.result().subst(matchy));

@@ -3,20 +3,18 @@
 package org.aya.tyck.error;
 
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.ExprProblem;
+import org.aya.api.error.Problem;
+import org.aya.api.error.SourcePos;
 import org.aya.api.util.NormalizeMode;
-import org.aya.concrete.Expr;
-import org.aya.core.Meta;
+import org.aya.core.term.CallTerm;
+import org.aya.core.term.RefTerm;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public record Goal(
-  @Override @NotNull Expr.HoleExpr expr,
-  @NotNull Meta meta
-) implements ExprProblem {
+public record Goal(@NotNull CallTerm.Hole hole) implements Problem {
   @Override public @NotNull Doc describe() {
-    var scope = expr.accessibleLocal().value;
-    assert scope != null;
+    var meta = hole.ref().core();
+    var scope = hole.contextArgs().view().map(arg -> ((RefTerm) arg.term()).var()).toImmutableSeq();
     var doc = Doc.vcat(
       Doc.english("Goal of type"),
       Doc.par(1, meta.result.toDoc(DistillerOptions.DEFAULT)),
@@ -24,11 +22,22 @@ public record Goal(
       Doc.plain("Context:"),
       Doc.vcat(meta.fullTelescope().map(param -> {
         var paramDoc = param.toDoc(DistillerOptions.DEFAULT);
-        return scope.contains(param.ref()) ? paramDoc : Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope")));
-      }))
+        return Doc.par(1, scope.contains(param.ref()) ? paramDoc : Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope"))));
+      })),
+      Doc.plain("To ensure confluence:"),
+      Doc.vcat(hole.conditions().value.map(tup -> Doc.par(1, Doc.cat(
+        Doc.plain("Given "),
+        Doc.parened(tup._1.toDoc(DistillerOptions.DEFAULT)),
+        Doc.plain(", we should have: "),
+        tup._2.toDoc(DistillerOptions.DEFAULT)
+      ))))
     );
     return meta.body == null ? doc :
       Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, meta.body.toDoc(DistillerOptions.DEFAULT)), doc);
+  }
+
+  @Override public @NotNull SourcePos sourcePos() {
+    return hole.ref().core().sourcePos;
   }
 
   @Override public @NotNull Severity level() {

@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
+import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -17,10 +18,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.pat.PatUnify;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.IntroTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
@@ -74,6 +72,12 @@ public record PatClassifier(
         PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
         var lhsTerm = lhs.body().subst(lhsSubst);
         var rhsTerm = rhs.body().subst(rhsSubst);
+        // TODO: Currently all holes at this point is in an ErrorTerm
+        if (lhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+          hole.conditions().set(hole.conditions().value.appended(Tuple.of(lhsSubst, rhsTerm)));
+        } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
+          hole.conditions().set(hole.conditions().value.appended(Tuple.of(rhsSubst, lhsTerm)));
+        }
         var unification = tycker.unifier(pos, Ordering.Eq).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
           tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
