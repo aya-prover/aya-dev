@@ -5,8 +5,6 @@ package org.aya.core.term;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableVector;
-import kala.collection.mutable.MutableArray;
-import kala.collection.mutable.MutableSeq;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
 import org.aya.api.ref.DefVar;

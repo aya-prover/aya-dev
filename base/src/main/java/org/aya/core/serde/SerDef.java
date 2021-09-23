@@ -77,7 +77,7 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerPat.Matchy> clauses,
     @NotNull Option<SerTerm> body,
     boolean coerce
-    ) implements SerDef {
+  ) implements SerDef {
     @Override
     public @NotNull FieldDef de(SerTerm.@NotNull DeState state) {
       return new FieldDef(

@@ -40,7 +40,7 @@ public record RefFinder(boolean withBody) implements
   }
 
   @Override public Unit visitCtor(@NotNull CtorDef def, @NotNull Buffer<Def> references) {
-      tele(references, def.selfTele);
+    tele(references, def.selfTele);
     if (withBody) for (var clause : def.clauses) matchy(clause, references);
     return Unit.unit();
   }
