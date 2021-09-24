@@ -59,7 +59,10 @@ public final class DataDef extends UserDef {
     }
 
     public @NotNull CtorTelescopes rename() {
-      return new CtorTelescopes(dataTele.map(Term.Param::rename), sortTele, conTele.map(Term.Param::rename));
+      return new CtorTelescopes(dataTele.view()
+        .map(Term.Param::implicitify)
+        .map(Term.Param::rename)
+        .toImmutableSeq(), sortTele, conTele.map(Term.Param::rename));
     }
 
     public @NotNull ImmutableSeq<Term.Param> params() {
