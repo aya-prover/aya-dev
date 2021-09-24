@@ -488,6 +488,7 @@ public sealed interface Doc extends Docile {
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
+    // See https://github.com/ice1000/aya-prover/issues/753
     var cache = docs.toImmutableSeq();
     if (cache.isEmpty()) return empty();
     var first = cache.first();

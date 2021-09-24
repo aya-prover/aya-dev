@@ -6,9 +6,16 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.def.FnDef;
 import org.aya.tyck.TyckDeclTest;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class NormalizeHugeChurch {
-  public static void main(String[] args) {
+  public static void println(@NotNull String s) {
+    // System.out.println(s);
+  }
+
+  @Test @Timeout(value = 5000) public void ppBench() {
     var startup = System.currentTimeMillis();
     var decls = TyckDeclTest.successTyckDecls("""
       def Num => Pi (x : Type 0) -> (x -> x) -> (x -> x)
@@ -19,20 +26,19 @@ public class NormalizeHugeChurch {
       def #2 : Num => suc (suc zero)
       def #4 : Num => mul #2 #2
       def #16 : Num => mul #4 #4
-      def #256 : Num => mul #16 #16
-      def #1024 : Num => mul #4 #256
+      def #256 : Num => add #16 #16
       """);
     var last = ((FnDef) decls.last()).body.getLeftValue();
-    System.out.println("Tyck: " + (System.currentTimeMillis() - startup));
+    println("Tyck: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var nf = last.normalize(NormalizeMode.NF);
-    System.out.println("Normalize: " + (System.currentTimeMillis() - startup));
+    println("Normalize: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var doc = nf.toDoc(DistillerOptions.DEFAULT);
-    System.out.println("Docify: " + (System.currentTimeMillis() - startup));
+    println("Docify: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var text = doc.debugRender();
-    System.out.println("Stringify: " + (System.currentTimeMillis() - startup));
-    System.out.println(text);
+    println("Stringify: " + (System.currentTimeMillis() - startup));
+    println(text);
   }
 }
