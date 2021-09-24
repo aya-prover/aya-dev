@@ -488,10 +488,11 @@ public sealed interface Doc extends Docile {
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
-    if (docs.size() == 0) return empty();
-    var first = docs.first();
-    if (docs.size() == 1) return first;
-    return simpleCat(docs.view().drop(1).foldLeft(Buffer.of(first), (l, r) -> {
+    var cache = docs.toImmutableSeq();
+    if (cache.isEmpty()) return empty();
+    var first = cache.first();
+    if (cache.size() == 1) return first;
+    return simpleCat(cache.view().drop(1).foldLeft(Buffer.of(first), (l, r) -> {
       l.append(delim);
       l.append(r);
       return l;
