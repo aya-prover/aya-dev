@@ -3,7 +3,6 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.DoubleLinkedBuffer;
 import kala.collection.mutable.LinkedBuffer;
@@ -22,8 +21,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
 
 public final class BinOpParser {
   private final @NotNull BinOpSet opSet;

@@ -2,13 +2,11 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.PreLevelVar;
-import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
