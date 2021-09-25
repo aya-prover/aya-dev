@@ -18,7 +18,7 @@ public record PrimDependencyError(
   @Override @NotNull SourcePos sourcePos
 ) implements ResolveProblem {
   @Override public @NotNull Doc describe() {
-    assert lack.size() > 0;
+    assert lack.isNotEmpty();
     return Doc.sep(
       Doc.plain("The prim"), Doc.styled(Style.code(), Doc.plain(name)),
       Doc.english("depends on undeclared prims:"),

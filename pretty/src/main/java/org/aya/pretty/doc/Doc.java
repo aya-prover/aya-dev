@@ -500,7 +500,7 @@ public sealed interface Doc extends Docile {
     var cache = docs.toImmutableSeq();
     if (cache.isEmpty()) return empty();
     var first = cache.first();
-    if (cache.size() == 1) return first;
+    if (cache.sizeEquals(1)) return first;
     return simpleCat(cache.view().drop(1).foldLeft(Buffer.of(first), (l, r) -> {
       l.append(delim);
       l.append(r);

@@ -67,7 +67,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   }
 
   private Unit visitList(ImmutableSeq<Pat> lpats, SeqLike<Term> terms) {
-    assert lpats.sizeEquals(terms.size());
+    assert lpats.sizeEquals(terms);
     lpats.zip(terms).forEach(pp -> pp._1.accept(this, pp._2));
     return Unit.unit();
   }

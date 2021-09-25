@@ -598,7 +598,7 @@ public final class ExprTycker {
    *
    * @author ice1000
    */
-  public static record Result(@NotNull Term wellTyped, @NotNull Term type) {
+  public record Result(@NotNull Term wellTyped, @NotNull Term type) {
     @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
       return Tuple.of(type, wellTyped);
     }

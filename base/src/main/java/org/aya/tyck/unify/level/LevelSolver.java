@@ -112,7 +112,7 @@ public class LevelSolver {
   }
 
   private int[][] dfs(SeqLike<Eqn> l, int pos, int[][] g) throws UnsatException {
-    if (pos >= l.size()) {
+    if (l.sizeLessThanOrEquals(pos)) {
       if (floyd(g)) {
         throw new UnsatException();
       } else {

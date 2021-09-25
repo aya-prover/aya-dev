@@ -51,7 +51,7 @@ public record EqnSet(
         return unit;
       }
     }, Unit.unit());
-    assert activeMetas.size() > currentActiveMetas : "Adding a bad equation";
+    assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 
   /**

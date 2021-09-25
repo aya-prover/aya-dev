@@ -137,10 +137,12 @@ public final class DefEq {
     if (!l.sizeEquals(r)) return false;
     if (!r.sizeEquals(types)) return false;
     var typesSubst = types.view();
-    for (int i = 0; i < l.size(); i++) {
-      var li = l.get(i);
+    var lu = l.toImmutableSeq();
+    var ru = r.toImmutableSeq();
+    for (int i = 0; i < lu.size(); i++) {
+      var li = lu.get(i);
       var head = typesSubst.first();
-      if (!compare(li, r.get(i), head.type())) return false;
+      if (!compare(li, ru.get(i), head.type())) return false;
       typesSubst = typesSubst.drop(1).map(type -> type.subst(head.ref(), li));
     }
     return true;

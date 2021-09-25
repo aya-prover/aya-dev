@@ -62,7 +62,7 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDo
    *            In well-typed terms it should always be <code>null</code>.
    * @author ice1000
    */
-  public static record LvlVar(@NotNull String name, @Nullable SourcePos pos) implements Var {
+  public record LvlVar(@NotNull String name, @Nullable SourcePos pos) implements Var {
     @Override public boolean equals(@Nullable Object o) {
       return this == o;
     }

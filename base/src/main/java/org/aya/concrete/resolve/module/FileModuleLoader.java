@@ -119,7 +119,7 @@ public record FileModuleLoader(
       Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
   }
 
-  public static record FileResolveInfo(
+  public record FileResolveInfo(
     @NotNull Buffer<ImmutableSeq<String>> imports
   ) {
   }

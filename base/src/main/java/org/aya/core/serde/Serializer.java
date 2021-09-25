@@ -42,7 +42,7 @@ public record Serializer(@NotNull Serializer.State state) implements
     return new SerTerm.SerArg(serialize(termArg.term()), termArg.explicit());
   }
 
-  public static record State(
+  public record State(
     @NotNull MutableMap<Sort.LvlVar, Integer> levelCache,
     @NotNull MutableMap<LocalVar, Integer> localCache,
     @NotNull MutableMap<DefVar<?, ?>, Integer> defCache

@@ -81,7 +81,7 @@ public record LevelEqnSet(
   /**
    * @author ice1000
    */
-  public static record Eqn(
+  public record Eqn(
     @NotNull Sort lhs, @NotNull Sort rhs,
     @NotNull Ordering cmp, @NotNull SourcePos sourcePos
   ) implements AyaDocile {

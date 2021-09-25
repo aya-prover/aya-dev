@@ -178,13 +178,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return new ComputeTerm(loadedFile, type).invoke(input);
   }
 
-  public static final record AyaFile(
+  public record AyaFile(
     @NotNull ImmutableSeq<Def> core,
     @NotNull ImmutableSeq<Stmt> concrete
   ) {
   }
 
-  public static final record LspLibraryManager(
+  public record LspLibraryManager(
     @NotNull MutableHashMap<@NotNull Path, AyaFile> loadedFiles,
     @NotNull Buffer<Path> modulePath
   ) implements SourceFileLocator {

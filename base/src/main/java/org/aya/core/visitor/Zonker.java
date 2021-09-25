@@ -81,7 +81,7 @@ public final class Zonker implements TermFixpoint<Unit> {
     return new FormTerm.Univ(sort);
   }
 
-  public static record UnsolvedMeta(@Override @NotNull SourcePos sourcePos) implements Problem {
+  public record UnsolvedMeta(@Override @NotNull SourcePos sourcePos) implements Problem {
     @Override public @NotNull Doc describe() {
       return Doc.plain("Unsolved meta");
     }

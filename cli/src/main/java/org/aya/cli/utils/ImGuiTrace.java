@@ -20,7 +20,7 @@ import java.util.Objects;
 public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   public static final float SCALE_FACTOR = 1.6f;
 
-  private static record Color(int red, int green, int blue, @NotNull MutableJImVec4 vec4) {
+  private record Color(int red, int green, int blue, @NotNull MutableJImVec4 vec4) {
     public Color(int red, int green, int blue) {
       this(red, green, blue,
         new MutableJImVec4(red / 256f, green / 256f, blue / 256f, 1));
@@ -75,7 +75,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   private void sourceCode(JImGui imGui, JImVec4 highlight) {
     var buffer = new StringBuilder();
     var previousContains = false;
-    for (var i = 0; i < sourceCode.size(); i++) {
+    for (var i = 0; sourceCode.sizeGreaterThan(i); i++) {
       var c = sourceCode.get(i);
       buffer.appendCodePoint(c);
       var isEOL = c == '\n';

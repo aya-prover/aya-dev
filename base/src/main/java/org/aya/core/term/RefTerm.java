@@ -16,7 +16,7 @@ public record RefTerm(@NotNull LocalVar var, @NotNull Term type) implements Term
     return visitor.visitRef(this, p);
   }
 
-  public static record Field(@NotNull DefVar<FieldDef, Decl.StructField> ref) implements Term {
+  public record Field(@NotNull DefVar<FieldDef, Decl.StructField> ref) implements Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFieldRef(this, p);
     }

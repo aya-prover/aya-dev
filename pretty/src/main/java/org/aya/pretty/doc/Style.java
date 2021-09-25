@@ -25,13 +25,13 @@ public sealed interface Style extends Serializable {
     Underline,
   }
 
-  final record ColorName(@NotNull String colorName, boolean background) implements Style {
+  record ColorName(@NotNull String colorName, boolean background) implements Style {
   }
 
-  final record ColorHex(int color, boolean background) implements Style {
+  record ColorHex(int color, boolean background) implements Style {
   }
 
-  final record Preset(@NotNull String styleName) implements Style {
+  record Preset(@NotNull String styleName) implements Style {
   }
 
   /**

@@ -93,7 +93,7 @@ public class LspMain extends LspArgs implements Callable<Integer> {
     }
   }
 
-  private static record Startup(
+  private record Startup(
     @NotNull InputStream in,
     @NotNull OutputStream out
   ) {

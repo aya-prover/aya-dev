@@ -11,7 +11,7 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ClosingStylist extends StringStylist {
-  public static record StyleToken(@NotNull String start, @NotNull String end, boolean visible) {
+  public record StyleToken(@NotNull String start, @NotNull String end, boolean visible) {
     public static final @NotNull StyleToken NULL = new StyleToken("", "", false);
   }
 

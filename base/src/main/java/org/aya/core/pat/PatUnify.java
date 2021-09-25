@@ -86,7 +86,7 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
     @NotNull TermSubst lhsSubst,
     @NotNull TermSubst rhsSubst
   ) {
-    assert rpats.sizeEquals(lpats.size());
+    assert rpats.sizeEquals(lpats);
     lpats.view().zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst));
   }
 }

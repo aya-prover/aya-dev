@@ -17,7 +17,7 @@ public record HighlightResult(
     this(uri, symbols.collect(Collectors.toList()));
   }
 
-  public static record Symbol(
+  public record Symbol(
     @NotNull Range range,
     @NotNull HighlightResult.Symbol.Kind kind
   ) {
