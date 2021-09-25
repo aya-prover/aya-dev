@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.DoubleLinkedBuffer;
 import kala.collection.mutable.LinkedBuffer;
-import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;

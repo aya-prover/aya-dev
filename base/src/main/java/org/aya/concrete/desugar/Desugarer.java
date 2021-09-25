@@ -2,7 +2,6 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.concrete.desugar;
 
-import kala.control.Option;
 import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
 import org.aya.api.error.Reporter;
