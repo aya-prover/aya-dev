@@ -136,7 +136,7 @@ public sealed interface Expr extends ConcreteExpr {
   record AppExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr function,
-    @NotNull Option<@NotNull Arg<NamedArg>> argument
+    @NotNull Arg<NamedArg> argument
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);

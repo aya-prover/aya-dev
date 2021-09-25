@@ -24,7 +24,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   }
 
   @Override public @NotNull Expr visitRawUniv(@NotNull Expr.RawUnivExpr expr, Unit unit) {
-    return return new Expr.UnivExpr(pos, new Level.Polymorphic(0));;
+    return new Expr.UnivExpr(expr.sourcePos(), new Level.Polymorphic(0));
   }
 
   @Override public @NotNull Expr visitRawUnivArgs(@NotNull Expr.RawUnivArgsExpr expr, Unit unit) {
@@ -32,10 +32,8 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   }
 
   @NotNull private Expr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) {
-    var pos = univ.sourcePos();
-    var arg = expr.argument();
-    if (arg.isEmpty()) return new Expr.UnivExpr(pos, new Level.Polymorphic(0));
-    return catching(expr, () -> new Expr.UnivExpr(pos, levelVar(arg.get().term().expr())));
+    return catching(expr, () -> new Expr.UnivExpr(univ.sourcePos(),
+      levelVar(expr.argument().term().expr())));
   }
 
   private @NotNull Expr catching(@NotNull Expr expr, @NotNull CheckedSupplier<@NotNull Expr, DesugarInterruption> f) {

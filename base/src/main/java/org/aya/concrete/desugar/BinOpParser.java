@@ -96,7 +96,7 @@ public final class BinOpParser {
     return new Expr.AppExpr(
       sourcePos,
       prefixes.first().expr,
-      Option.of(prefixes.view().get(1).toNamedArg())
+      prefixes.view().get(1).toNamedArg()
     );
   }
 
@@ -107,13 +107,13 @@ public final class BinOpParser {
       return new Expr.AppExpr(
         union(lhs, rhs),
         lhs.expr,
-        Option.of(rhs.toNamedArg())
+        rhs.toNamedArg()
       );
     }
     return new Expr.AppExpr(
       computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
-      new Expr.AppExpr(union(op, lhs), op.expr, Option.of(lhs.toNamedArg())),
-      Option.of(rhs.toNamedArg())
+      new Expr.AppExpr(union(op, lhs), op.expr, lhs.toNamedArg()),
+      rhs.toNamedArg()
     );
   }
 

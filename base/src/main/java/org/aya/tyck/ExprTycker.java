@@ -198,7 +198,7 @@ public final class ExprTycker {
         var f = synthesize(appE.function());
         var app = f.wellTyped;
         var argument = appE.argument();
-        if (argument.isDefined() && argument.get().term().expr() instanceof Expr.UnivArgsExpr univArgs) {
+        if (argument.term().expr() instanceof Expr.UnivArgsExpr univArgs) {
           univArgs(app, univArgs);
           yield f;
         }
@@ -206,10 +206,8 @@ public final class ExprTycker {
           yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
         var pi = piTerm;
         var subst = new Substituter.TermSubst(MutableMap.create());
-        if (argument.isEmpty()) yield new Result(app, subst.isEmpty() ? pi : pi.body().subst(subst));
-        var arg = argument.get();
-        var argLicit = arg.explicit();
-        var namedArg = arg.term();
+        var argLicit = argument.explicit();
+        var namedArg = argument.term();
         if (namedArg.expr() instanceof Expr.UnivArgsExpr univArgs) {
           univArgs(app, univArgs);
         }
@@ -223,7 +221,7 @@ public final class ExprTycker {
             if (newPi.isLeft()) pi = newPi.getLeftValue();
             else yield fail(appE, newPi.getRightValue(), BadTypeError.pi(appE, newPi.getRightValue()));
           } else yield fail(appE, new ErrorTerm(pi.body()),
-            new LicitProblem.UnexpectedImplicitArgError(arg));
+            new LicitProblem.UnexpectedImplicitArgError(argument));
         }
         var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
         app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
