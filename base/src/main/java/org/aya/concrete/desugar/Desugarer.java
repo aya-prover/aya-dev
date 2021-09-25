@@ -24,7 +24,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   }
 
   @Override public @NotNull Expr visitRawUniv(@NotNull Expr.RawUnivExpr expr, Unit unit) {
-    return desugarUniv(new Expr.AppExpr(expr.sourcePos(), expr, Option.none()), expr);
+    return return new Expr.UnivExpr(pos, new Level.Polymorphic(0));;
   }
 
   @Override public @NotNull Expr visitRawUnivArgs(@NotNull Expr.RawUnivArgsExpr expr, Unit unit) {
