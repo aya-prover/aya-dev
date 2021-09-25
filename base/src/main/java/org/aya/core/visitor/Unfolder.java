@@ -76,7 +76,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   checkAndBuildSubst(SeqLike<Term.Param> telescope, SeqLike<Arg<Term>> args) {
     // This shouldn't fail
     // Assertions are enabled optionally, so we could perform some somehow-expensive operations
-    assert args.sizeEquals(telescope.size());
+    assert args.sizeEquals(telescope);
     assert Term.Param.checkSubst(telescope, args);
     return buildSubst(telescope, args);
   }
@@ -132,7 +132,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       return mischa != null ? mischa.data() : new CallTerm.Access(nevv, field,
         term.sortArgs(), term.structArgs(), dropped);
     }
-    var arguments = Unfolder.buildSubst(core.telescope(), term.args());
+    var arguments = buildSubst(core.fullTelescope(), term.args());
     return n.params().get(field).subst(arguments).accept(this, p);
   }
 
