@@ -43,12 +43,11 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return conCall;
     var args = conCall.args().map(arg -> visitArg(arg, p));
-    var subst = checkAndBuildSubst(def.telescope(), args);
     var levelParams = Def.defLevels(def.ref());
     var levelArgs = conCall.sortArgs();
     var levelSubst = buildSubst(levelParams, levelArgs);
     var dropped = args.drop(conCall.head().dataArgs().size());
-    var volynskaya = tryUnfoldClauses(p, dropped, subst, levelSubst, def.clauses);
+    var volynskaya = tryUnfoldClauses(p, dropped, levelSubst, def.clauses);
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped);
   }
 
@@ -64,11 +63,13 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return fnCall;
     var args = fnCall.args().map(arg -> visitArg(arg, p));
-    var subst = checkAndBuildSubst(def.telescope(), args);
     var levelSubst = buildSubst(def.levels, fnCall.sortArgs());
     var body = def.body;
-    if (body.isLeft()) return body.getLeftValue().subst(subst, levelSubst).accept(this, p);
-    var volynskaya = tryUnfoldClauses(p, args, subst, levelSubst, body.getRightValue());
+    if (body.isLeft()) {
+      var termSubst = checkAndBuildSubst(def.telescope(), args);
+      return body.getLeftValue().subst(termSubst, levelSubst).accept(this, p);
+    }
+    var volynskaya = tryUnfoldClauses(p, args, levelSubst, body.getRightValue());
     return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
@@ -92,6 +93,13 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var body = def.body;
     if (body == null) return hole;
     return body.subst(subst).accept(this, p);
+  }
+
+  default @Nullable WithPos<Term> tryUnfoldClauses(
+    P p, SeqLike<Arg<Term>> args, LevelSubst levelSubst,
+    @NotNull ImmutableSeq<Matching> clauses
+  ) {
+    return tryUnfoldClauses(p, args, new Substituter.TermSubst(MutableMap.create()), levelSubst, clauses);
   }
 
   default @Nullable WithPos<Term> tryUnfoldClauses(

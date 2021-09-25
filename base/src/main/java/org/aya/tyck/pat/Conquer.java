@@ -3,7 +3,6 @@
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Arg;
@@ -74,8 +73,8 @@ public record Conquer(
         return newCtor == ctor ? condition : super.visitCtor(newCtor, unit);
       }
     }, Unit.unit()), pat.explicit()));
-    var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(NormalizeMode.WHNF, newArgs,
-      new Substituter.TermSubst(MutableMap.create()), LevelSubst.EMPTY, matchings);
+    var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(
+      NormalizeMode.WHNF, newArgs, LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));
