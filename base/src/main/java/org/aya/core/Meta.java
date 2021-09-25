@@ -4,11 +4,15 @@ package org.aya.core;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableVector;
 import kala.collection.mutable.Buffer;
+import kala.tuple.Tuple2;
+import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.HoleVar;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Substituter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +25,7 @@ public final class Meta {
   public final @NotNull Term result;
   public final @NotNull SourcePos sourcePos;
   public @Nullable Term body;
+  public final @NotNull Ref<ImmutableSeq<Tuple2<Substituter.TermSubst, Term>>> conditions;
 
   public SeqView<Term.Param> fullTelescope() {
     return contextTele.view().concat(telescope);
@@ -41,6 +46,7 @@ public final class Meta {
     this.telescope = telescope;
     this.result = result;
     this.sourcePos = sourcePos;
+    this.conditions = new Ref<>(ImmutableVector.empty());
   }
 
   public static @NotNull Meta from(

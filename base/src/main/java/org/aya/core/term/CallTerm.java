@@ -4,9 +4,6 @@ package org.aya.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.ImmutableVector;
-import kala.tuple.Tuple2;
-import kala.value.Ref;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.Var;
@@ -16,7 +13,6 @@ import org.aya.concrete.stmt.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.*;
 import org.aya.core.sort.Sort;
-import org.aya.core.visitor.Substituter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -148,12 +144,8 @@ public sealed interface CallTerm extends Term {
   record Hole(
     @NotNull HoleVar<Meta> ref,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args,
-    @NotNull Ref<ImmutableSeq<Tuple2<Substituter.TermSubst, Term>>> conditions
+    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
   ) implements CallTerm {
-    public Hole(@NotNull HoleVar<Meta> var, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs, @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args) {
-      this(var, contextArgs, args, new Ref<>(ImmutableVector.empty()));
-    }
 
     public @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {
       return contextArgs.view().concat(args);

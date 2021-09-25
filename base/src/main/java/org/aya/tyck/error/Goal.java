@@ -24,10 +24,10 @@ public record Goal(@NotNull CallTerm.Hole hole, ImmutableSeq<LocalVar> scope) im
         var paramDoc = param.toDoc(DistillerOptions.DEFAULT);
         return Doc.par(1, scope.contains(param.ref()) ? paramDoc : Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope"))));
       })),
-      hole.conditions().value.isNotEmpty() ?
+      meta.conditions.value.isNotEmpty() ?
         Doc.vcat(
           ImmutableSeq.of(Doc.plain("To ensure confluence:"))
-            .concat(hole.conditions().value.map(tup -> Doc.par(1, Doc.cat(
+            .concat(meta.conditions.value.map(tup -> Doc.par(1, Doc.cat(
               Doc.plain("Given "),
               Doc.parened(tup._1.toDoc(DistillerOptions.DEFAULT)),
               Doc.plain(", we should have: "),

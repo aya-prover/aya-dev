@@ -74,9 +74,9 @@ public record PatClassifier(
         var rhsTerm = rhs.body().subst(rhsSubst);
         // TODO: Currently all holes at this point is in an ErrorTerm
         if (lhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
-          hole.conditions().set(hole.conditions().value.appended(Tuple.of(lhsSubst, rhsTerm)));
+          hole.ref().core().conditions.set(hole.ref().core().conditions.value.appended(Tuple.of(lhsSubst, rhsTerm)));
         } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
-          hole.conditions().set(hole.conditions().value.appended(Tuple.of(rhsSubst, lhsTerm)));
+          hole.ref().core().conditions.set(hole.ref().core().conditions.value.appended(Tuple.of(rhsSubst, lhsTerm)));
         }
         var unification = tycker.unifier(pos, Ordering.Eq).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
