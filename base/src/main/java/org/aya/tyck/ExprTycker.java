@@ -198,7 +198,8 @@ public final class ExprTycker {
         var f = synthesize(appE.function());
         var app = f.wellTyped;
         var argument = appE.argument();
-        if (argument.term().expr() instanceof Expr.UnivArgsExpr univArgs) {
+        var namedArg = argument.term();
+        if (namedArg.expr() instanceof Expr.UnivArgsExpr univArgs) {
           univArgs(app, univArgs);
           yield f;
         }
@@ -207,10 +208,6 @@ public final class ExprTycker {
         var pi = piTerm;
         var subst = new Substituter.TermSubst(MutableMap.create());
         var argLicit = argument.explicit();
-        var namedArg = argument.term();
-        if (namedArg.expr() instanceof Expr.UnivArgsExpr univArgs) {
-          univArgs(app, univArgs);
-        }
         while (pi.param().explicit() != argLicit ||
           namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
           if (argLicit || namedArg.name() != null) {
