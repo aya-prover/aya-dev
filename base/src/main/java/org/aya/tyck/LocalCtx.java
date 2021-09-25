@@ -4,7 +4,6 @@ package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
-import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import org.aya.api.error.SourcePos;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -28,7 +28,8 @@ import java.util.function.Supplier;
 @Debug.Renderer(hasChildren = "true", childrenArray = "extract().toArray()")
 public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable LocalCtx parent) {
   public LocalCtx() {
-    this(MutableHashMap.of(), null);
+    // See https://github.com/Glavo/kala-common/issues/41
+    this(MutableMap.wrapJava(new LinkedHashMap<>()), null);
   }
 
   public @NotNull Tuple2<CallTerm.Hole, Term> freshHole(@NotNull Term type, @NotNull SourcePos sourcePos) {
