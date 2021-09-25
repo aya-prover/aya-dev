@@ -83,8 +83,8 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
-    var arg = expr.arguments().map(x -> visitArg(x, p));
-    if (function == expr.function() && arg.sameElements(expr.arguments(), true)) return expr;
+    var arg = expr.argument().map(x -> visitArg(x, p));
+    if (function == expr.function() && arg.sameElements(expr.argument(), true)) return expr;
     return new Expr.AppExpr(expr.sourcePos(), function, arg);
   }
 

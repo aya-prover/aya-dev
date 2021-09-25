@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.DoubleLinkedBuffer;
 import kala.collection.mutable.LinkedBuffer;
+import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -21,6 +22,8 @@ import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 public final class BinOpParser {
   private final @NotNull BinOpSet opSet;
@@ -92,12 +95,11 @@ public final class BinOpParser {
     assert prefixes.isNotEmpty();
     if (prefixes.sizeEquals(1)) return prefixes.first().expr;
 
+    // TODO: If this path can't be reached, delete it.
     return new Expr.AppExpr(
       sourcePos,
       prefixes.first().expr,
-      prefixes.view().drop(1)
-        .map(Elem::toNamedArg)
-        .toImmutableSeq()
+      Option.of(prefixes.view().get(1).toNamedArg())
     );
   }
 
@@ -105,21 +107,16 @@ public final class BinOpParser {
     var rhs = prefixes.dequeue();
     var lhs = prefixes.dequeue();
     if (op == Elem.OP_APP) {
-      if (lhs.expr instanceof Expr.AppExpr app && app.function() instanceof Expr.RawUnivExpr univ)
-        return new Expr.AppExpr(
-          union(lhs, rhs),
-          univ,
-          app.arguments().appended(rhs.toNamedArg())
-        );
-      else return new Expr.AppExpr(
+      return new Expr.AppExpr(
         union(lhs, rhs),
         lhs.expr,
-        ImmutableSeq.of(rhs.toNamedArg())
+        Option.of(rhs.toNamedArg())
       );
-    } else return new Expr.AppExpr(
+    }
+    return new Expr.AppExpr(
       computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
-      op.expr,
-      ImmutableSeq.of(lhs.toNamedArg(), rhs.toNamedArg())
+      new Expr.AppExpr(union(op, lhs), op.expr, Option.of(lhs.toNamedArg())),
+      Option.of(rhs.toNamedArg())
     );
   }
 

@@ -59,7 +59,7 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
   }
 
   @Override default Unit visitApp(Expr.@NotNull AppExpr expr, P p) {
-    expr.arguments().forEach(arg -> visitArg(arg, p));
+    expr.argument().forEach(arg -> visitArg(arg, p));
     return expr.function().accept(this, p);
   }
 

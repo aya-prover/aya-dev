@@ -3,10 +3,12 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
 import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.PreLevelVar;
+import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
@@ -24,7 +26,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
   }
 
   @Override public @NotNull Expr visitRawUniv(@NotNull Expr.RawUnivExpr expr, Unit unit) {
-    return desugarUniv(new Expr.AppExpr(expr.sourcePos(), expr, ImmutableSeq.empty()), expr);
+    return desugarUniv(new Expr.AppExpr(expr.sourcePos(), expr, Option.none()), expr);
   }
 
   @Override public @NotNull Expr visitRawUnivArgs(@NotNull Expr.RawUnivArgsExpr expr, Unit unit) {
@@ -33,13 +35,9 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
 
   @NotNull private Expr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) {
     var pos = univ.sourcePos();
-    var args = expr.arguments();
-    if (args.isEmpty()) return new Expr.UnivExpr(pos, new Level.Polymorphic(0));
-    if (!args.sizeEquals(1)) {
-      reporter.report(new LevelProblem.BadTypeExpr(expr, 1));
-      return new Expr.ErrorExpr(expr.sourcePos(), expr);
-    }
-    return catching(expr, () -> new Expr.UnivExpr(pos, levelVar(args.get(0).term().expr())));
+    var arg = expr.argument();
+    if (arg.isEmpty()) return new Expr.UnivExpr(pos, new Level.Polymorphic(0));
+    return catching(expr, () -> new Expr.UnivExpr(pos, levelVar(arg.get().term().expr())));
   }
 
   private @NotNull Expr catching(@NotNull Expr expr, @NotNull CheckedSupplier<@NotNull Expr, DesugarInterruption> f) {

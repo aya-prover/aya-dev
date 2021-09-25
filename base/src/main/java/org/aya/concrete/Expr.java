@@ -4,6 +4,7 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.control.Option;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.concrete.ConcreteExpr;
@@ -135,7 +136,7 @@ public sealed interface Expr extends ConcreteExpr {
   record AppExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr function,
-    @NotNull ImmutableSeq<@NotNull Arg<NamedArg>> arguments
+    @NotNull Option<@NotNull Arg<NamedArg>> argument
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);

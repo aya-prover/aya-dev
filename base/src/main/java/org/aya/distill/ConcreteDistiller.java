@@ -132,7 +132,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Boolean nestedCall) {
     return visitCalls(
       expr.function().accept(this, false),
-      expr.arguments(),
+      expr.argument().isDefined() ? Seq.of(expr.argument().get()) : Seq.of(),
       (nest, arg) -> arg.expr().accept(this, nest),
       nestedCall);
   }
