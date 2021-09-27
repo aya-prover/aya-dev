@@ -109,16 +109,19 @@ public final class PrimDef extends TopLevelDef {
     /** Arend's coe */
     private static @NotNull Term arcoe(CallTerm.@NotNull Prim prim) {
       var args = prim.args();
-      var argBase = args.get(1).term();
-      var argI = args.get(2).term();
+      var argBase = args.get(1);
+      var argI = args.get(2);
       var left = Factory.INSTANCE.getOption(ID.LEFT);
-      if (argI instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
-        return argBase;
+      if (argI.term() instanceof CallTerm.Prim primCall && left.isNotEmpty() && primCall.ref() == left.get().ref)
+        return argBase.term();
       var argA = args.get(0).term();
-      if (argA instanceof IntroTerm.Lambda lambda && lambda.body()
-        .normalize(NormalizeMode.NF)
-        .findUsages(lambda.param().ref()) == 0)
-        return argBase;
+
+      if (argA instanceof IntroTerm.Lambda lambda) {
+        var normalize = lambda.body().normalize(NormalizeMode.NF);
+        if (normalize.findUsages(lambda.param().ref()) == 0) return argBase.term();
+        else return new CallTerm.Prim(prim.ref(), prim.sortArgs(), ImmutableSeq.of(
+          new Arg<>(new IntroTerm.Lambda(lambda.param(), normalize), true),argBase, argI));
+      }
       return prim;
     }
 

@@ -182,9 +182,10 @@ public final class ExprTycker {
             var structSubst = Unfolder.buildSubst(structCore.telescope(), structCall.args());
             var levels = levelStuffs(struct.sourcePos(), fieldRef);
             var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, levels._1);
+            var teleRenamed = tele.map(Term.Param::rename);
             var access = new CallTerm.Access(projectee.wellTyped, fieldRef, levels._2,
-              structCall.args(), tele.map(Term.Param::toArg));
-            return new Result(IntroTerm.Lambda.make(tele, access),
+              structCall.args(), teleRenamed.map(Term.Param::toArg));
+            return new Result(IntroTerm.Lambda.make(teleRenamed, access),
               FormTerm.Pi.make(tele, field.result().subst(structSubst, levels._1)));
           }
         );
