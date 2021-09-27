@@ -68,17 +68,17 @@ public record PatTycker(
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClauses(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    Ref<Def.@NotNull Signature> signature
+    Def.@NotNull Signature signature
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
       refSubst.clear();
-      var elabClause = visitMatch(clause, signature.value);
+      var elabClause = visitMatch(clause, signature);
       tracing(GenericBuilder::reduce);
       return elabClause;
     });
     exprTycker.solveMetas();
-    return Tuple.of(signature.value.result().zonk(exprTycker, null), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker, null))));
+    return Tuple.of(signature.result().zonk(exprTycker, null), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker, null))));
   }
 
   @NotNull public ImmutableSeq<Pat.PrototypeClause> elabClauses(

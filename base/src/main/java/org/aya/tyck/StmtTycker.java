@@ -29,7 +29,6 @@ import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.FP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,21 +182,20 @@ public record StmtTycker(
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = tycker.synthesize(decl.result).wellTyped();
     tracing(GenericBuilder::reduce);
-    var signature = new Ref<>(new Def.Signature(tycker.extractLevels(), resultTele, resultRes));
-    decl.signature = signature.value;
-    var patTycker = new PatTycker(tycker);
-    var what = FP.distR(decl.body.map(
-      left -> tycker.zonk(left, tycker.inherit(left, resultRes)).toTuple(),
-      right -> patTycker.elabClauses(right, signature)));
-    var resultTy = what._1;
-    var factory = FnDef.factory(body ->
-      new FnDef(decl.ref, resultTele, signature.value.sortParam(), resultTy, body));
-    if (what._2.isLeft()) return factory.apply(Either.left(what._2.getLeftValue()));
-    var elabClauses = what._2.getRightValue();
-    var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
-    var elaborated = factory.apply(Either.right(matchings));
-    ensureConfluent(tycker, signature.value, elabClauses, matchings, decl.sourcePos, true);
-    return elaborated;
+    decl.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
+    return decl.body.fold(
+      body -> {
+        var result = tycker.zonk(body, tycker.inherit(body, resultRes));
+        return new FnDef(decl.ref, resultTele, decl.signature.sortParam(), result.type(), Either.left(result.wellTyped()));
+      },
+      clauses -> {
+        var result = new PatTycker(tycker).elabClauses(clauses, decl.signature);
+        var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
+        var def = new FnDef(decl.ref, resultTele, decl.signature.sortParam(), result._1, Either.right(matchings));
+        ensureConfluent(tycker, decl.signature, result._2, matchings, decl.sourcePos, true);
+        return def;
+      }
+    );
   }
 
   private @NotNull ImmutableSeq<Term.Param>
