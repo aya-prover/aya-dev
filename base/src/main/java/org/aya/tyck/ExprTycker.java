@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -61,7 +62,7 @@ public final class ExprTycker {
   public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
   public final @NotNull EqnSet termEqns = new EqnSet();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
-  public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableMap.create();
+  public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableMap.wrapJava(new LinkedHashMap<>());
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -351,7 +352,7 @@ public final class ExprTycker {
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
     return Seq.of(universe).view()
       .filter(levelEqns::used)
-      .appendedAll(levelMapping.valuesView())
+      .appendedAll(levelMapping.valuesView().toImmutableSeq().view().reversed())
       .toImmutableSeq();
   }
 
