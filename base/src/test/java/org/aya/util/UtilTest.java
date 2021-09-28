@@ -2,16 +2,20 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.util;
 
-import org.aya.util.StringEscapeUtil;
-import org.aya.util.Version;
 import kala.collection.Seq;
+import org.aya.tyck.unify.level.LevelSolver;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UtilTest {
-  @Test
-  public void stringEscape() {
+  @Test public void markdownify() {
+    assertNotNull(LevelSolver.markdownify(new int[][]{
+      new int[]{1, 1, 4, 5, 1, 4}
+    }));
+  }
+
+  @Test public void stringEscape() {
     assertEquals("", StringEscapeUtil.escapeStringCharacters(""));
     assertEquals("", StringEscapeUtil.unescapeStringCharacters(""));
     assertEquals("123", StringEscapeUtil.unescapeStringCharacters("123"));

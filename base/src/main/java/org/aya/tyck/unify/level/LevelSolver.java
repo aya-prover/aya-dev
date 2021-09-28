@@ -223,8 +223,9 @@ public class LevelSolver {
     return switch (e.cmp()) {
       case Gt -> populateLt(g, specialEq, e, rhs, lhs, complex);
       case Lt -> populateLt(g, specialEq, e, lhs, rhs, complex);
-      case Eq -> populateLt(g, specialEq, e, rhs, lhs, complex)
-        && populateLt(g, specialEq, e, lhs, rhs, complex);
+      case Eq -> Boolean.logicalAnd(
+        populateLt(g, specialEq, e, rhs, lhs, complex),
+        populateLt(g, specialEq, e, lhs, rhs, complex));
     };
   }
 
