@@ -1,0 +1,2 @@
+def imConst {A : Type} (a : A) : Pi {ignoreMe ignoreThis : A} -> A => a
+def imId {A : Type} : Pi {ignoreMe : A} -> A -> Pi {ignoreThis : A} -> A => \ a => a

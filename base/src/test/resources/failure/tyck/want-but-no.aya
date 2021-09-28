@@ -1,0 +1,1 @@
+def test : Type => \ x => x

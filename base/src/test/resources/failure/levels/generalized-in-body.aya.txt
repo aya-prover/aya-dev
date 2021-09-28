@@ -1,0 +1,9 @@
+In file $FILE:2:17 ->
+
+  1 | universe u
+  2 | def test => Type u
+                       ^^
+
+Error: The generalized variable `u` is not available here
+Resolving interrupted due to error(s).
+What are you doing?

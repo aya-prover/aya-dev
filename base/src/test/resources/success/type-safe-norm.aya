@@ -1,0 +1,24 @@
+open data Nat : Type 0 | zero | suc Nat
+open data Bool : Type 0 | true | false
+def not (b : Bool) : Bool
+ | true => false
+ | false => true
+def ifElse (A : Type) (b : Bool) (x y : A) : A
+ | A, true, x, y => x
+ | A, false, x, y => y
+open data TermTy : Type 0 | natT | boolT
+def termTy (t : TermTy) : Type 0
+ | natT => Nat
+ | boolT => Bool
+open data Term (n : TermTy) : Type 0
+ | natT => nat Nat
+ | natT => succ (Term natT)
+ | boolT => bool Bool
+ | boolT => inv (Term boolT)
+ | A => case (Term boolT) (Term A) (Term A)
+def normalize (t : TermTy) (x : Term t) : termTy t
+ | natT, nat n => n
+ | natT, succ n => suc (normalize natT n)
+ | boolT, bool b => b
+ | boolT, inv b => not (normalize boolT b)
+ | t, case b x y => ifElse (termTy t) (normalize boolT b) (normalize t x) (normalize t y)

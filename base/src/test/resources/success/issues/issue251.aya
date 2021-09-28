@@ -1,0 +1,7 @@
+open data Nat : Type
+ | zero
+ | suc Nat
+
+data Fin (n : Nat) : Type
+ | fzero
+ | suc m => fsuc (Fin m)

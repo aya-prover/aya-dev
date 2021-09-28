@@ -1,0 +1,3 @@
+data ℕ : Type
+  | zero
+  | suc ℕ

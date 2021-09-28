@@ -1,0 +1,6 @@
+open data Nat : Type | zero | suc Nat
+data Empty : Type
+def Neg (T : Type) => T -> Empty
+def test
+ (F : Type -> Type)
+ (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero

@@ -1,0 +1,6 @@
+prim I
+prim left
+prim right : I
+def testLeft : I => left
+def testRight : I => right
+prim arcoe (A : I -> Type) (A left) (i : I) : A i

@@ -1,0 +1,12 @@
+data Nat : Type
+ | zero
+ | suc Nat
+
+data Int : Type
+ | negs Nat
+ | poss Nat
+ | zro
+
+data List (A : Type) : Type
+ | nil
+ | cons A (List A)

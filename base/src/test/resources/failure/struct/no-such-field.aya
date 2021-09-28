@@ -1,0 +1,6 @@
+struct Vec2 (X : Type) (Y : Type) : Type
+  | x : X
+  | y : Y
+
+def make-vec2 (A B : Type) (a : A) (b : B) : Vec2 A B =>
+  new Vec2 A B { | x => a | y => b | z => a }

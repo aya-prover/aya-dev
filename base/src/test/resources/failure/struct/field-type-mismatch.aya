@@ -1,0 +1,14 @@
+open data Nat : Type
+  | zero
+  | suc Nat
+
+struct Pair (A : Type) (B : Type) : Type
+  | fst : A
+  | snd : B
+  | we-are-together : Sig A ** B => (fst, snd)
+
+def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
+  new Pair A B { | fst => a | snd => b }
+
+def test-nat-pair : Pair Nat Nat =>
+  new Pair Nat Nat { | fst => make-pair Nat Nat zero zero | snd => suc zero }

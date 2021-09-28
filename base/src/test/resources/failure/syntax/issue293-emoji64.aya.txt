@@ -1,0 +1,14 @@
+In file $FILE:10:28 ->
+
+   8 |   | 🀎
+   9 | 
+  10 | def u : ❤️守❤️护❤️最❤️好❤️的❤️ => 🀎
+                                   ^^
+
+Error: Cannot check the expression of type
+         ❤️
+         (Normalized: ❤️)
+       against the type
+         ❤️守❤️护❤️最❤️好❤️的❤️
+         (Normalized: ❤️守❤️护❤️最❤️好❤️的❤️)
+What are you doing?

@@ -1,0 +1,28 @@
+-- See https://twitter.com/OwoTizusa/status/1435398076626358272
+prim I
+prim left
+prim right
+prim arcoe
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+  | at (i : I) : A i {
+    | left => a
+    | right => b
+  }
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
+bind = looser application
+def idp {A : Type} {a : A} : a = a => path (\ i => a)
+
+-- New shits
+prim squeezeL
+def psqueeze {A : Type} {a b : A} (p : a = b) (i : I)
+ : a = p.at i => path (\j => p.at (squeezeL i j))
+
+def J {A : Type} {a : A} (B : Pi (b : A) -> a = b -> Type)
+      (r : B a idp) {b : A} (p : a = b) : B b p =>
+      arcoe (\ i => B (p.at i) (psqueeze p i)) r right
+
+def Jβ {A : Type} {a : A} (B : Pi (b : A) -> a = b -> Type)
+        (r : B a idp) : J B r idp = r =>
+        idp

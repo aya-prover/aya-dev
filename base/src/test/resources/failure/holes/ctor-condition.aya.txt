@@ -1,0 +1,24 @@
+In file $FILE:12:13 ->
+
+  10 | 
+  11 | def abs (a : Int) : Nat
+  12 |   | pos a => {??}
+                    ^--^
+
+Goal: Goal of type
+        Nat
+        (Normalized: Nat)
+      Context:
+        {a : Nat}
+        {a : Int} (not in scope)
+      To ensure confluence:
+        Given (a ⇒ zero), we should have: zero
+In file $FILE:12:13 ->
+
+  10 | 
+  11 | def abs (a : Int) : Nat
+  12 |   | pos a => {??}
+                    ^--^
+
+Error: Unsolved meta
+What are you doing?

@@ -1,0 +1,8 @@
+In file $FILE:2:15 ->
+
+  1 | def id {A : Type} (a : A) => a
+  2 | def test => id {universe 1, 2} Type
+                     ^-------------^
+
+Error: Expected 1 universe arguments, but 2 are provided
+What are you doing?

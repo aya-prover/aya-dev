@@ -1,0 +1,9 @@
+open data Nat : Type
+ | zero
+ | suc Nat
+open data Vect (A : Type) (n : Nat) : Type
+ | A, zero => vnil
+ | A, suc m => vcons A (Vect A m)
+def map {A B : Type} (n : Nat) (f : Pi A -> B) (xs : Vect A n) : Vect B n
+ | zero, f, vnil => vnil {_}
+ | suc n, f, vcons x xs => vcons (f x) (map n f xs)

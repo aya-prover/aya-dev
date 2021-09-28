@@ -1,0 +1,2 @@
+def id (A : Type) (a : A) : A => a
+def id2 (B : Type) (b : B) : B => id B b

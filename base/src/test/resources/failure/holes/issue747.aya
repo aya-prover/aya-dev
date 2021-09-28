@@ -1,0 +1,6 @@
+open data Nat : Type | zero | suc Nat
+open data Int : Type | pos Nat | neg Nat { | zero => pos zero }
+
+def abs (a : Int) : Nat
+  | pos a => a
+  | neg a => {??}

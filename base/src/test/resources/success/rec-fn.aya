@@ -1,0 +1,2 @@
+def boom : Type => boom
+def boomTIZ (a : Type) : Type => boomTIZ a

@@ -1,0 +1,3 @@
+universe u
+struct Lift (A : Prop u) : Prop (lsuc u)
+ | value : A

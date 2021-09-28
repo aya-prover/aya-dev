@@ -1,0 +1,9 @@
+def curry (A B C : Type)
+           (f : (Sig A ** B) -> C)
+           (a : A) (b : B) : C
+  => f (a, b)
+
+def curry3 (A B C D : Type)
+            (f : (Sig A B ** C) -> D)
+            (a : A) (b : B) (c : C) : D
+  => f (a, b, c)

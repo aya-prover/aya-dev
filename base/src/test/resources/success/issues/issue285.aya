@@ -1,0 +1,7 @@
+open data Nat : Type
+  | zero
+  | suc Nat
+
+data Int : Type
+ | pos Nat
+ | neg Nat { | zero => pos zero }

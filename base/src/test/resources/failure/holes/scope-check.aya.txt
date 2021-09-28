@@ -1,0 +1,36 @@
+In file $FILE:15:46 ->
+
+  13 | 
+  14 | -- https://cstheory.stackexchange.com/a/49160/50892
+  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
+                                                     ^^
+
+Error: The solution
+         B
+       is not well-scoped
+       In particular, these variables are not in scope: `B`
+In file $FILE:15:14 ->
+
+  13 | 
+  14 | -- https://cstheory.stackexchange.com/a/49160/50892
+  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
+                     ^^
+
+Error: Unsolved meta
+In file $FILE:15:14 ->
+
+  13 | 
+  14 | -- https://cstheory.stackexchange.com/a/49160/50892
+  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
+                     ^^
+
+Error: Unsolved meta
+In file $FILE:15:14 ->
+
+  13 | 
+  14 | -- https://cstheory.stackexchange.com/a/49160/50892
+  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
+                     ^^
+
+Error: Unsolved meta
+What are you doing?

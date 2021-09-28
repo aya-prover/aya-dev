@@ -1,0 +1,13 @@
+open data Nat : Type | zero | suc Nat
+open data Bool : Type | true | false
+open data TermTy : Type | natT | boolT
+def termTy (t : TermTy) : Type
+ | natT => Nat
+ | boolT => Bool
+open data Term (n : TermTy) : Type
+ | natT => nat Nat
+ | natT => succ (Term natT)
+ | boolT => bool Bool
+ | boolT => inv (Term boolT)
+ | A => case (Term boolT) (Term A) (Term A)
+def Normalize => Pi (t : TermTy) (x : Term t) -> termTy t

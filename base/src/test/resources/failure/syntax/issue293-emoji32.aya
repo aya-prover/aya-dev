@@ -1,0 +1,14 @@
+open data 😊 : Type
+  | 🐎
+  | 🐴
+
+open data 😭 : Type
+  | 🐰
+  | 🐇
+
+open data 😂 : Type
+  | 🐒
+  | 🐵
+
+def u : 😊 => 🐒
+

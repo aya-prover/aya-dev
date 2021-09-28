@@ -1,0 +1,10 @@
+In file $FILE:4:13 ->
+
+  2 | def `=` test3 : Type => test3
+  3 | 
+  4 | def fail : 1 + 1 = 2 => fail
+                   ^^
+
+Error: Ambiguous operator precedence detected between `=` and `+`
+note: Use `bind` statement or insert parentheses to make it clear.
+What are you doing?

@@ -1,0 +1,11 @@
+In file $FILE:1:19 ->
+
+  1 | def test : Type => \ x => x
+                         ^------^
+
+Error: Unable to apply the expression
+         λ x ⇒ x
+       because the type of what you applied is not a Pi type, but instead:
+         Type
+         (Normalized: Type)
+What are you doing?

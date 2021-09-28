@@ -1,0 +1,13 @@
+In file $FILE:30:63 ->
+
+  28 |   => path (hfill2d p q r right)
+  29 | 
+  30 | def sym {A : Type} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) idp p
+                                                                      ^---^
+
+Error: Unable to apply the expression
+         idp a
+       because the type of what you applied is not a Pi type, but instead:
+         Path (λ _ ⇒ A) a a
+         (Normalized: Path (λ _ ⇒ A) a a)
+What are you doing?

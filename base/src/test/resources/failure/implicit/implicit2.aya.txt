@@ -1,0 +1,9 @@
+In file $FILE:4:33 ->
+
+  2 | 
+  3 | def y : Pi {a : Unit} -> Unit => \{a} => a
+  4 | def x : Pi {a : Unit} -> Unit => y
+                                       ^^
+
+Error: Unsolved meta
+What are you doing?

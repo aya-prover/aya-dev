@@ -1,0 +1,49 @@
+prim I
+prim left
+prim right
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+ | at (i : I) : A i {
+   | left => a
+   | right => b
+ }
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def idp {A : Type} (a : A) : a = a => path (\ i => a)
+
+def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
+  : f a = f b => path (\ i => f (p.at i))
+
+bind = looser application
+
+open data Nat : Type
+ | zero
+ | suc Nat
+
+open data Unit : Type
+  | unit
+
+struct Monoid { A : Type } ( op : A -> A -> A ): Type
+  | id ( x : Unit ) : A
+  | assoc (a b c : A) : op (op a b) c = op a (op b c)
+  | id_r (a: A) : op a (id unit) = a
+  | id_l (a: A) : op (id unit) a = a
+
+def `+` addN ( a b : Nat ) : Nat
+ | zero, a => a
+ | a, zero => a
+ | suc a, b => suc (a + b)
+ | a, suc b => suc (a + b)
+
+bind + tighter =
+
+def +-assoc ( a b c : Nat ) : (a + b) + c = a + (b + c)
+  | zero  , b , c => idp (b + c)
+  | suc a , b , c => pmap suc (+-assoc a b c)
+
+def +-monoid => new Monoid addN {
+  | id x => zero
+  | assoc a b c => +-assoc a b c
+  | id_r a => idp a
+  | id_l a => idp a
+}

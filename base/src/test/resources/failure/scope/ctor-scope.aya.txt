@@ -1,0 +1,9 @@
+In file $FILE:4:11 ->
+
+  2 |  | zero | suc Nat
+  3 | def f (n : Nat) : Nat
+  4 |  | zero => zero
+                 ^--^
+
+Error: The name `zero` is not defined in the current scope
+What are you doing?
