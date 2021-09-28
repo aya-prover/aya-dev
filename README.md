@@ -1,5 +1,4 @@
 [![actions]](https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml)
-[![jitpack]](https://jitpack.io/#aya-prover/aya-dev)
 [![maven]](https://repo1.maven.org/maven2/org/aya-prover)
 [![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
@@ -53,3 +52,21 @@ gradle use proxies.
 [gadt]: base/src/test/resources/success/type-safe-norm.aya
 [regularity]: base/src/test/resources/success/regularity.aya
 [funExt]: base/src/test/resources/success/funExt.aya
+
+## Use as a library
+
+It's indexed on [mvnrepository](https://mvnrepository.com/artifact/org.aya-prover),
+and here are some example build configurations:
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>org.aya-prover</groupId>
+    <artifactId>pretty</artifactId>
+    <version>[latest version]</version>
+</dependency>
+```
+
+```groovy
+implementation group: 'org.aya-prover', name: 'pretty', version: '[latest version]'
+```
