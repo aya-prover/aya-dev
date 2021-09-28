@@ -204,11 +204,25 @@ public class ZzsSolver {
       var lhs = e.lhs();
       var rhs = e.rhs();
       switch (e.ord()) {
-        case Lt -> populateLT(g, specialEq, e, lhs, rhs);
-        case Gt -> populateLT(g, specialEq, e, rhs, lhs);
+        case Lt -> populateLT(g, specialEq, e, lhs, rhs, true);
+        case Gt -> populateLT(g, specialEq, e, rhs, lhs, true);
         case Eq -> {
-          populateLT(g, specialEq, e, rhs, lhs);
-          populateLT(g, specialEq, e, lhs, rhs);
+          populateLT(g, specialEq, e, lhs, rhs, true);
+          populateLT(g, specialEq, e, rhs, lhs, true);
+        }
+      }
+    }
+    if (floyd(g)) throw new UnsatException();
+
+    for (var e : equations) {
+      var lhs = e.lhs();
+      var rhs = e.rhs();
+      switch (e.ord()) {
+        case Lt -> populateLT(g, specialEq, e, lhs, rhs, false);
+        case Gt -> populateLT(g, specialEq, e, rhs, lhs, false);
+        case Eq -> {
+          populateLT(g, specialEq, e, lhs, rhs, false);
+          populateLT(g, specialEq, e, rhs, lhs, false);
         }
       }
     }
@@ -256,9 +270,10 @@ public class ZzsSolver {
     return ret;
   }
 
-  private void populateLT(int[][] g, ArrayList<Equation> specialEq, Equation e, Max lhs, Max rhs) {
+  private void populateLT(int[][] g, ArrayList<Equation> specialEq, Equation e, Max lhs, Max rhs, boolean complex) {
     var lhsLevels = new ArrayList<Level>();
     var rhsLevels = new ArrayList<Level>();
+    if (complex && rhs.levels.size() > 1) return;
     for (var vr : lhs.levels()) {
       boolean toInsert = true;
       if (vr instanceof Reference ref) {
@@ -266,7 +281,7 @@ public class ZzsSolver {
         for (var vp : rhs.levels()) {
           if (vp instanceof Reference __r) {
             var tp = __r.ref();
-            if (th.name().equals(tp.name()) && ref.lift() <= __r.lift()) {
+            if (g[graphMap.get(tp.name())][graphMap.get(th.name())] + ref.lift() - __r.lift() <= 0) {
               toInsert = false;
             }
           }
@@ -285,6 +300,7 @@ public class ZzsSolver {
       }
       if (toInsert) rhsLevels.add(vr);
     }
+    if (lhsLevels.isEmpty() || rhsLevels.isEmpty()) return;
     if (lhsLevels.size() == 1) {
       var left = lhsLevels.get(0);
       if (left instanceof Const constant && constant.constant == 0) {
@@ -305,12 +321,13 @@ public class ZzsSolver {
   }
 
   public static void main(String[] args) throws UnsatException {
-    var v = new Reference(new Var("v", false), 1);
     var u = new Reference(new Var("u", false), 0);
-    var o = new Reference(new Var("o", true), 0);
+    var a = new Reference(new Var("a", true), 0);
+    var b = new Reference(new Var("b", true), 0);
+    var v = new Reference(new Var("u", false), 0);
     var res = new ZzsSolver().solve(List.of(
-      new Equation(Ord.Eq, new Max(o), new Max(u)),
-      new Equation(Ord.Lt, new Max(o, v), new Max(u, v))));
-    System.out.println(res);
+      new Equation(Ord.Lt, new Max(u), new Max(a, b)),
+      new Equation(Ord.Lt, new Max(a), new Max(u, v))
+    ));
   }
 }
