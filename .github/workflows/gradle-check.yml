@@ -1,11 +1,9 @@
 name : test
 on:
   push:
-    branches:
-      - main
+    branches: [main, staging, trying]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 jobs:
   gradle-check:
     runs-on: ubuntu-latest
@@ -18,21 +16,18 @@ jobs:
         with:
           dependencies-cache-enabled: true
           arguments: check --info --no-daemon --stacktrace --warning-mode all
-          # arguments: jar --info --no-daemon --stacktrace --warning-mode all
       - uses: eskatos/gradle-command-action@v1
-        if: github.repository == 'aya-prover/aya-dev'
+        if: github.base_ref == null
         with:
           dependencies-cache-enabled: true
           arguments: githubActions --info --no-daemon --stacktrace --warning-mode all
-          # arguments: :lsp:jlink --info --no-daemon --stacktrace --warning-mode all
       - uses: actions/upload-artifact@master
-        if: github.repository == 'aya-prover/aya-dev'
+        if: github.base_ref == null
         with:
           name: nightly-build
           path : ./lsp/build/image
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
-        if: github.repository == 'aya-prover/aya-dev'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./build/reports/
