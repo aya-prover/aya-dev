@@ -186,10 +186,8 @@ public class LevelSolver {
       var lowerNodes = Buffer.<Level<LvlVar>>create();
       for (var nu : unfreeNodes) {
         int v = graphMap.get(nu);
-        if (gg[v][u] != INF)
-          upperNodes.append(new Level.Reference<>(new LvlVar(nu.name(), null), gg[v][u]));
-        if (gg[u][v] < LOW_BOUND / 2)
-          lowerNodes.append(new Level.Reference<>(new LvlVar(nu.name(), null), -gg[u][v]));
+        if (gg[v][u] != INF) upperNodes.append(new Level.Reference<>(nu, gg[v][u]));
+        if (gg[u][v] < LOW_BOUND / 2) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
       }
       var retList = Buffer.<Level<LvlVar>>create();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {

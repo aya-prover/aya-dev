@@ -200,32 +200,10 @@ public class ZzsSolver {
       prepareGraphNode(g, e.rhs().levels());
     }
     var specialEq = new ArrayList<Equation>();
-    for (var e : equations) {
-      var lhs = e.lhs();
-      var rhs = e.rhs();
-      switch (e.ord()) {
-        case Lt -> populateLT(g, specialEq, e, lhs, rhs, true);
-        case Gt -> populateLT(g, specialEq, e, rhs, lhs, true);
-        case Eq -> {
-          populateLT(g, specialEq, e, lhs, rhs, true);
-          populateLT(g, specialEq, e, rhs, lhs, true);
-        }
-      }
-    }
+    populate(equations, g, specialEq, true);
     if (floyd(g)) throw new UnsatException();
 
-    for (var e : equations) {
-      var lhs = e.lhs();
-      var rhs = e.rhs();
-      switch (e.ord()) {
-        case Lt -> populateLT(g, specialEq, e, lhs, rhs, false);
-        case Gt -> populateLT(g, specialEq, e, rhs, lhs, false);
-        case Eq -> {
-          populateLT(g, specialEq, e, lhs, rhs, false);
-          populateLT(g, specialEq, e, rhs, lhs, false);
-        }
-      }
-    }
+    populate(equations, g, specialEq, false);
     if (!avoidableEqns.isEmpty()) System.out.println("Avoided:");
     for (var equation : avoidableEqns) System.out.println(equation);
     if (floyd(g)) throw new UnsatException();
@@ -248,10 +226,10 @@ public class ZzsSolver {
         int v = graphMap.get(nu);
         // 下面认为，非自由变量是否可以是无穷大、是否有默认值是无关紧要的
         if (gg[v][u] != INF) {
-          upperNodes.add(new Reference(new Var(nu.name, false), gg[v][u]));
+          upperNodes.add(new Reference(nu, gg[v][u]));
         }
         if (gg[u][v] < LOW_BOUND / 2) {
-          lowerNodes.add(new Reference(new Var(nu.name, false), -gg[u][v]));
+          lowerNodes.add(new Reference(nu, -gg[u][v]));
         }
       }
       List<Level> retList = new ArrayList<>();
@@ -268,6 +246,21 @@ public class ZzsSolver {
       ret.put(name.name, new Max(retList));
     }
     return ret;
+  }
+
+  private void populate(List<Equation> equations, int[][] g, ArrayList<Equation> specialEq, boolean complex) {
+    for (var e : equations) {
+      var lhs = e.lhs();
+      var rhs = e.rhs();
+      switch (e.ord()) {
+        case Lt -> populateLT(g, specialEq, e, lhs, rhs, complex);
+        case Gt -> populateLT(g, specialEq, e, rhs, lhs, complex);
+        case Eq -> {
+          populateLT(g, specialEq, e, lhs, rhs, complex);
+          populateLT(g, specialEq, e, rhs, lhs, complex);
+        }
+      }
+    }
   }
 
   private void populateLT(int[][] g, ArrayList<Equation> specialEq, Equation e, Max lhs, Max rhs, boolean complex) {
