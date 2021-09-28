@@ -305,12 +305,12 @@ public class ZzsSolver {
   }
 
   public static void main(String[] args) throws UnsatException {
-    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))), new Max(List.of(new Reference(new Var("v", false), 0)))),
-      new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Event.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("Quantifier.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Quantifier.u", true), 0), new Reference(new Var("Quantifier.v", true), 1))), new Max(List.of(new Reference(new Var("u", false), 0), new Reference(new Var("v", false), 1))))));
+    var v = new Reference(new Var("v", false), 1);
+    var u = new Reference(new Var("u", false), 0);
+    var o = new Reference(new Var("o", true), 0);
+    var res = new ZzsSolver().solve(List.of(
+      new Equation(Ord.Eq, new Max(o), new Max(u)),
+      new Equation(Ord.Lt, new Max(o, v), new Max(u, v))));
     System.out.println(res);
   }
 }
