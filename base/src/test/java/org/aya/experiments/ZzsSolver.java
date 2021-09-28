@@ -94,16 +94,16 @@ public class ZzsSolver {
     g[u][v] = Math.min(g[u][v], dist);
   }
 
-  private final HashSet<String> unfreeNodes = new HashSet<>();
-  private final HashSet<String> freeNodes = new HashSet<>();
-  private final HashMap<String, Integer> graphMap = new HashMap<>();
-  private final HashMap<String, Integer> defaultValues = new HashMap<>();
+  private final HashSet<Var> unfreeNodes = new HashSet<>();
+  private final HashSet<Var> freeNodes = new HashSet<>();
+  private final HashMap<Var, Integer> graphMap = new HashMap<>();
+  private final HashMap<Var, Integer> defaultValues = new HashMap<>();
   public final List<Equation> avoidableEqns = new ArrayList<>();
 
   void genGraphNode(List<Level> l) {
     for (var e : l) {
       if (e instanceof Reference th) {
-        graphMap.put(th.ref().name(), ++nodeSize);
+        graphMap.put(th.ref(), ++nodeSize);
       }
     }
   }
@@ -116,19 +116,19 @@ public class ZzsSolver {
         // if(!rb.ref().free()) return;
         int u = ca.constant;
         int v = rb.lift();
-        int x = graphMap.get(rb.ref().name);
+        int x = graphMap.get(rb.ref());
         addEdge(g, x, 0, v - u);
       }
     } else if (a instanceof Reference ra) {
       // if(!ra.ref().free()) return;
-      int x = graphMap.get(ra.ref().name);
+      int x = graphMap.get(ra.ref());
       int u = ra.lift();
       if (b instanceof Const cb) {
         int v = cb.constant;
         addEdge(g, 0, x, v - u);
       } else if (b instanceof Reference rb) {
         // if(!rb.ref().free()) return;
-        int y = graphMap.get(rb.ref().name());
+        int y = graphMap.get(rb.ref());
         int v = rb.lift();
         addEdge(g, y, x, v - u);
       }
@@ -140,14 +140,14 @@ public class ZzsSolver {
     for (var e : l) {
       if (e instanceof Reference th) {
         int defaultValue = -th.lift();
-        int u = graphMap.get(th.ref().name());
+        int u = graphMap.get(th.ref());
         if (th.ref().free()) {
           // addEdge(g, u, 0, -defaultValue); // 认为自由变量一定大于等于其默认值（暂时取消这种想法）
-          defaultValues.put(th.ref().name(), 0);
-          freeNodes.add(th.ref().name());
+          defaultValues.put(th.ref(), 0);
+          freeNodes.add(th.ref());
           addEdge(g, 0, u, LOW_BOUND);
         } else {
-          unfreeNodes.add(th.ref().name());
+          unfreeNodes.add(th.ref());
         }
       }
     }
@@ -248,10 +248,10 @@ public class ZzsSolver {
         int v = graphMap.get(nu);
         // 下面认为，非自由变量是否可以是无穷大、是否有默认值是无关紧要的
         if (gg[v][u] != INF) {
-          upperNodes.add(new Reference(new Var(nu, false), gg[v][u]));
+          upperNodes.add(new Reference(new Var(nu.name, false), gg[v][u]));
         }
         if (gg[u][v] < LOW_BOUND / 2) {
-          lowerNodes.add(new Reference(new Var(nu, false), -gg[u][v]));
+          lowerNodes.add(new Reference(new Var(nu.name, false), -gg[u][v]));
         }
       }
       List<Level> retList = new ArrayList<>();
@@ -265,7 +265,7 @@ public class ZzsSolver {
         }
         retList.add(new Const(minv));
       }
-      ret.put(name, new Max(retList));
+      ret.put(name.name, new Max(retList));
     }
     return ret;
   }
@@ -281,7 +281,7 @@ public class ZzsSolver {
         for (var vp : rhs.levels()) {
           if (vp instanceof Reference __r) {
             var tp = __r.ref();
-            if (g[graphMap.get(tp.name())][graphMap.get(th.name())] + ref.lift() - __r.lift() <= 0) {
+            if (g[graphMap.get(tp)][graphMap.get(th)] + ref.lift() - __r.lift() <= 0) {
               toInsert = false;
             }
           }

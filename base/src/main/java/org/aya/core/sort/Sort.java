@@ -10,6 +10,7 @@ import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,7 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDo
       return System.identityHashCode(this);
     }
 
-    public boolean free() {
+    @Contract(pure = true) public boolean free() {
       return pos != null;
     }
   }
