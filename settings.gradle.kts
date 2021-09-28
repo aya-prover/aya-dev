@@ -13,7 +13,6 @@ dependencyResolutionManagement {
 
 include(
   "api",
-  "docs",
   "cli",
   "parser",
   "base",
