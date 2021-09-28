@@ -157,10 +157,15 @@ public class LevelSolver {
       prepareGraphNode(g, e.rhs().levels());
     }
     var specialEq = Buffer.<Eqn>create();
-    var hasError = equations.toImmutableSeq()
+    var equationsImm = equations.toImmutableSeq();
+    var hasError = equationsImm
       // Do NOT make this lazy -- the `populate` function has side effects
       // We need to run populate on all equations
-      .map(e -> populate(g, specialEq, e))
+      .map(e -> populate(g, specialEq, e, true))
+      .anyMatch(b -> b);
+    if (hasError || floyd(g)) throw new UnsatException();
+    hasError = equationsImm
+      .map(e -> populate(g, specialEq, e, false))
       .anyMatch(b -> b);
     if (hasError || floyd(g))
       throw new UnsatException();
@@ -199,25 +204,28 @@ public class LevelSolver {
   }
 
   /** @return true if fail */
-  private boolean populate(int[][] g, Buffer<Eqn> specialEq, Eqn e) {
+  private boolean populate(int[][] g, Buffer<Eqn> specialEq, Eqn e, boolean complex) {
     var lhs = e.lhs();
     var rhs = e.rhs();
     return switch (e.cmp()) {
-      case Gt -> populateLt(g, specialEq, e, rhs, lhs);
-      case Lt -> populateLt(g, specialEq, e, lhs, rhs);
-      case Eq -> populateLt(g, specialEq, e, rhs, lhs) && populateLt(g, specialEq, e, lhs, rhs);
+      case Gt -> populateLt(g, specialEq, e, rhs, lhs, complex);
+      case Lt -> populateLt(g, specialEq, e, lhs, rhs, complex);
+      case Eq -> populateLt(g, specialEq, e, rhs, lhs, complex)
+        && populateLt(g, specialEq, e, lhs, rhs, complex);
     };
   }
 
   /** @return true if fail */
-  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs) {
+  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs, boolean complex) {
+    if (complex && rhs.levels().sizeGreaterThan(1)) return false;
     var lhsLevels = lhs.levels().filter(vr -> {
       if (vr instanceof Level.Reference<LvlVar> ref) {
         var th = ref.ref();
         for (var vp : rhs.levels()) {
           if (vp instanceof Level.Reference<LvlVar> __r) {
             var tp = __r.ref();
-            if (th == tp && ref.lift() <= __r.lift()) return false;
+            if (g[graphMap.get(tp)][graphMap.get(th)] + ref.lift() - __r.lift() <= 0)
+              return false;
           }
         }
       }
@@ -236,6 +244,7 @@ public class LevelSolver {
       }
       if (insert) rhsLevels.append(vr);
     }
+    if (lhsLevels.isEmpty() || rhsLevels.isEmpty()) return false;
     if (lhsLevels.sizeEquals(1) && rhsLevels.sizeGreaterThan(1)) {
       var left = lhsLevels.get(0);
       if (left instanceof Level.Constant<LvlVar> constant && constant.value() == 0) {

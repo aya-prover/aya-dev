@@ -271,9 +271,9 @@ public class ZzsSolver {
   }
 
   private void populateLT(int[][] g, ArrayList<Equation> specialEq, Equation e, Max lhs, Max rhs, boolean complex) {
+    if (complex && rhs.levels.size() > 1) return;
     var lhsLevels = new ArrayList<Level>();
     var rhsLevels = new ArrayList<Level>();
-    if (complex && rhs.levels.size() > 1) return;
     for (var vr : lhs.levels()) {
       boolean toInsert = true;
       if (vr instanceof Reference ref) {
@@ -301,7 +301,7 @@ public class ZzsSolver {
       if (toInsert) rhsLevels.add(vr);
     }
     if (lhsLevels.isEmpty() || rhsLevels.isEmpty()) return;
-    if (lhsLevels.size() == 1) {
+    if (lhsLevels.size() == 1 && rhsLevels.size() > 1) {
       var left = lhsLevels.get(0);
       if (left instanceof Const constant && constant.constant == 0) {
         avoidableEqns.add(e);
@@ -321,13 +321,12 @@ public class ZzsSolver {
   }
 
   public static void main(String[] args) throws UnsatException {
-    var u = new Reference(new Var("u", false), 0);
-    var a = new Reference(new Var("a", true), 0);
-    var b = new Reference(new Var("b", true), 0);
-    var v = new Reference(new Var("u", false), 0);
-    var res = new ZzsSolver().solve(List.of(
-      new Equation(Ord.Lt, new Max(u), new Max(a, b)),
-      new Equation(Ord.Lt, new Max(a), new Max(u, v))
-    ));
+    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
+      new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))), new Max(List.of(new Reference(new Var("v", false), 0)))),
+      new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Event.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("Quantifier.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Quantifier.u", true), 0), new Reference(new Var("Quantifier.v", true), 1))), new Max(List.of(new Reference(new Var("u", false), 0), new Reference(new Var("v", false), 1))))));
+    System.out.println(res);
   }
 }
