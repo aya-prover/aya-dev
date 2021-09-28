@@ -24,7 +24,6 @@ allprojects {
 }
 
 subprojects {
-  if (name in listOf("docs")) return@subprojects
   val useJacoco = name in listOf("base", "pretty")
 
   apply {
