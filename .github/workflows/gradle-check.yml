@@ -1,11 +1,9 @@
 name : test
 on:
   push:
-    branches:
-      - main
+    branches: [main, staging, trying]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 jobs:
   gradle-check:
     runs-on: ubuntu-latest
