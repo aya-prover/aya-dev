@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify.level;
 
+import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
@@ -13,11 +14,22 @@ import org.aya.tyck.unify.level.LevelEqnSet.Eqn;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 /**
  * @author danihao123, ice1000
  */
 public class LevelSolver {
   public static class UnsatException extends Exception {
+  }
+
+  public static String markdownify(int[][] g) {
+    return Seq.from(g).view()
+      .map(ints -> Arrays.stream(ints).mapToObj(Objects::toString).collect(
+        Collectors.joining("|", "|", "|")))
+      .joinToString("\n");
   }
 
   static final int INF = 100000000;
