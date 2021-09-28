@@ -11,7 +11,6 @@ import kala.control.Either;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
-import kala.tuple.Unit;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -26,7 +25,6 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
-import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.*;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
@@ -121,26 +119,18 @@ public final class ExprTycker {
           }
           var conField = conFieldOpt.get();
           conFields = conFields.dropWhile(t -> t == conField);
-          var type = Def.defResult(defField.ref()).subst(subst, levelSubst);
-          var fieldSubst = new ExprRefSubst(reporter);
+          var type = Def.defType(defField.ref()).subst(subst, levelSubst);
           var telescope = defField.ref().core.selfTele.map(term -> term.subst(subst, levelSubst));
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO[ice]: number of args don't match
             throw new TyckerException();
           }
-          var teleView = telescope.view();
-          for (int i = 0; i < bindings.size(); i++) {
-            fieldSubst.good().put(bindings.get(i).data(), teleView.first().ref());
-            teleView = teleView.drop(1);
-          }
-          final var teleViewFinal = teleView;
-          var field = localCtx.with(telescope, () -> inherit(
-            conField.body()
-              .accept(fieldSubst, Unit.unit()),
-            FormTerm.Pi.make(teleViewFinal, type)).wellTyped);
+          var fieldExpr = bindings.zip(telescope).foldRight(conField.body(), (pair, lamExpr) ->
+            new Expr.LamExpr(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
+          var field = inherit(fieldExpr, type).wellTyped;
           fields.append(Tuple.of(defField.ref(), field));
-          subst.add(defField.ref(), IntroTerm.Lambda.make(Def.defTele(defField.ref()), field));
+          subst.add(defField.ref(), field);
         }
 
         if (missing.isNotEmpty())

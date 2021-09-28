@@ -132,8 +132,9 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       return mischa != null ? mischa.data() : new CallTerm.Access(nevv, field,
         term.sortArgs(), term.structArgs(), dropped);
     }
-    var arguments = buildSubst(core.fullTelescope(), term.args());
-    return n.params().get(field).subst(arguments).accept(this, p);
+    var arguments = buildSubst(core.ownerTele, term.structArgs());
+    var fieldBody = term.fieldArgs().foldLeft(n.params().get(field), CallTerm::make);
+    return fieldBody.subst(arguments).accept(this, p);
   }
 
   /**
