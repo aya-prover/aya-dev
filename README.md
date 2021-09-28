@@ -3,6 +3,7 @@
 [![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
 [![tokei]](https://github.com/XAMPPRocky/tokei)
+[![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
 
 You need Java SE 17 (available at <https://jdk.java.net/17/>) to set this project up.
 This also means if your choice of IDE is IntelliJ IDEA, you need version 2021.2.1 or higher.
