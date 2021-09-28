@@ -32,9 +32,8 @@ public class LevelSolver {
       .joinToString("\n");
   }
 
-  static final int INF = 100000000;
-  static final int LOW_BOUND = INF;
-  int nodeSize; // the number of nodes in the graph
+  public static final int INF = 100000000;
+  private int nodeSize; // the number of nodes in the graph
 
   boolean floyd(int[][] d) { // return true when it's satisfied
     for (int k = 0; k <= nodeSize; k++)
@@ -45,10 +44,10 @@ public class LevelSolver {
     for (var nu : unfreeNodes) {
       int u = graphMap.get(nu);
       if (d[u][0] < 0) return true;
-      if (d[0][u] < LOW_BOUND / 2) return true;
+      if (d[0][u] < INF / 2) return true;
       for (var nv : unfreeNodes) {
         int v = graphMap.get(nv);
-        if (u != v && d[u][v] < LOW_BOUND / 2) return true;
+        if (u != v && d[u][v] < INF / 2) return true;
       }
       for (int v = 1; v <= nodeSize; v++) {
         if (d[u][v] < 0) return true;
@@ -70,7 +69,7 @@ public class LevelSolver {
   private void genGraphNode(SeqLike<Level<LvlVar>> l) {
     for (var e : l) {
       if (e instanceof Level.Reference<LvlVar> th) {
-        graphMap.put(th.ref(), ++nodeSize);
+        if (!graphMap.containsKey(th.ref())) graphMap.put(th.ref(), ++nodeSize);
       }
     }
   }
@@ -115,7 +114,7 @@ public class LevelSolver {
           freeNodes.add(th.ref());
           // Universe level can't be inf, homotopy can
           // Now there are no homotopy level
-          addEdge(g, 0, u, LOW_BOUND);
+          addEdge(g, 0, u, INF);
         } else {
           unfreeNodes.add(th.ref());
         }
@@ -153,6 +152,7 @@ public class LevelSolver {
   public void solve(@NotNull LevelEqnSet eqns) throws UnsatException {
     var equations = eqns.eqns();
     nodeSize = 0;
+    graphMap.clear();
     for (var e : equations) {
       genGraphNode(e.lhs().levels());
       genGraphNode(e.rhs().levels());
@@ -199,7 +199,7 @@ public class LevelSolver {
       for (var nu : unfreeNodes) {
         int v = graphMap.get(nu);
         if (gg[v][u] != INF) upperNodes.append(new Level.Reference<>(nu, gg[v][u]));
-        if (gg[u][v] < LOW_BOUND / 2) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
+        if (gg[u][v] < INF / 2) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
       }
       var retList = Buffer.<Level<LvlVar>>create();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
