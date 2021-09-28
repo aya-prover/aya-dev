@@ -11,7 +11,7 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * @author ice1000
@@ -31,9 +31,8 @@ public final class FnDef extends UserDef {
     this.body = body;
   }
 
-  public static @NotNull <T> Function<Either<Term, ImmutableSeq<Matching>>, T> factory(
-    Function<Either<Term, ImmutableSeq<Matching>>, T> function
-  ) {
+  public static <T> BiFunction<Term, Either<Term, ImmutableSeq<Matching>>, T>
+  factory(BiFunction<Term, Either<Term, ImmutableSeq<Matching>>, T> function) {
     return function;
   }
 

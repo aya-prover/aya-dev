@@ -183,15 +183,17 @@ public record StmtTycker(
     var resultRes = tycker.synthesize(decl.result).wellTyped();
     tracing(GenericBuilder::reduce);
     decl.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
+    var factory = FnDef.factory((resultTy, body) ->
+      new FnDef(decl.ref, resultTele, decl.signature.sortParam(), resultTy, body));
     return decl.body.fold(
       body -> {
         var result = tycker.zonk(body, tycker.inherit(body, resultRes));
-        return new FnDef(decl.ref, resultTele, decl.signature.sortParam(), result.type(), Either.left(result.wellTyped()));
+        return factory.apply(result.type(), Either.left(result.wellTyped()));
       },
       clauses -> {
         var result = new PatTycker(tycker).elabClauses(clauses, decl.signature);
         var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
-        var def = new FnDef(decl.ref, resultTele, decl.signature.sortParam(), result._1, Either.right(matchings));
+        var def = factory.apply(result._1, Either.right(matchings));
         ensureConfluent(tycker, decl.signature, result._2, matchings, decl.sourcePos, true);
         return def;
       }
