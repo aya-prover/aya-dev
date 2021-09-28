@@ -352,7 +352,7 @@ public final class ExprTycker {
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
     return Seq.of(universe).view()
       .filter(levelEqns::used)
-      .appendedAll(levelMapping.valuesView().toImmutableSeq().view().reversed())
+      .appendedAll(levelMapping.valuesView())
       .toImmutableSeq();
   }
 
