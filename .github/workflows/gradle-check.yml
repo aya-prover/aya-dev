@@ -27,6 +27,7 @@ jobs:
           name: nightly-build
           path : ./lsp/build/image
       - name: Upload coverage to Codecov
+        if: github.base_ref != null
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
