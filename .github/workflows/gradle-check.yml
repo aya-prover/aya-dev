@@ -15,18 +15,19 @@ jobs:
       - uses: eskatos/gradle-command-action@v1
         with:
           dependencies-cache-enabled: true
-          arguments: check --info --no-daemon --stacktrace --warning-mode all
+          arguments: mergeJacocoReports --info --no-daemon --stacktrace --warning-mode all
       - uses: eskatos/gradle-command-action@v1
         if: github.base_ref == null && github.ref == 'refs/heads/main'
         with:
           dependencies-cache-enabled: true
-          arguments: githubActions --info --no-daemon --stacktrace --warning-mode all
+          arguments: jlink --info --no-daemon --stacktrace --warning-mode all
       - uses: actions/upload-artifact@master
         if: github.base_ref == null && github.ref == 'refs/heads/main'
         with:
           name: nightly-build
           path : ./lsp/build/image
       - name: Upload coverage to Codecov
+        if: github.base_ref != null
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

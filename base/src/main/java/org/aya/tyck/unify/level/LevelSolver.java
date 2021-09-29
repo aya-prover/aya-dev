@@ -2,6 +2,7 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.tyck.unify.level;
 
+import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
@@ -13,6 +14,10 @@ import org.aya.tyck.unify.level.LevelEqnSet.Eqn;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 /**
  * @author danihao123, ice1000
  */
@@ -20,9 +25,15 @@ public class LevelSolver {
   public static class UnsatException extends Exception {
   }
 
-  static final int INF = 100000000;
-  static final int LOW_BOUND = INF;
-  int nodeSize; // the number of nodes in the graph
+  public static String markdownify(int[][] g) {
+    return Seq.from(g).view()
+      .map(ints -> Arrays.stream(ints).mapToObj(Objects::toString).collect(
+        Collectors.joining("|", "|", "|")))
+      .joinToString("\n");
+  }
+
+  public static final int INF = 100000000;
+  private int nodeSize; // the number of nodes in the graph
 
   boolean floyd(int[][] d) { // return true when it's satisfied
     for (int k = 0; k <= nodeSize; k++)
@@ -33,10 +44,10 @@ public class LevelSolver {
     for (var nu : unfreeNodes) {
       int u = graphMap.get(nu);
       if (d[u][0] < 0) return true;
-      if (d[0][u] < LOW_BOUND / 2) return true;
+      if (d[0][u] < INF / 2) return true;
       for (var nv : unfreeNodes) {
         int v = graphMap.get(nv);
-        if (u != v && d[u][v] < LOW_BOUND / 2) return true;
+        if (u != v && d[u][v] < INF / 2) return true;
       }
       for (int v = 1; v <= nodeSize; v++) {
         if (d[u][v] < 0) return true;
@@ -58,7 +69,7 @@ public class LevelSolver {
   private void genGraphNode(SeqLike<Level<LvlVar>> l) {
     for (var e : l) {
       if (e instanceof Level.Reference<LvlVar> th) {
-        graphMap.put(th.ref(), ++nodeSize);
+        if (!graphMap.containsKey(th.ref())) graphMap.put(th.ref(), ++nodeSize);
       }
     }
   }
@@ -103,7 +114,7 @@ public class LevelSolver {
           freeNodes.add(th.ref());
           // Universe level can't be inf, homotopy can
           // Now there are no homotopy level
-          addEdge(g, 0, u, LOW_BOUND);
+          addEdge(g, 0, u, INF);
         } else {
           unfreeNodes.add(th.ref());
         }
@@ -141,6 +152,7 @@ public class LevelSolver {
   public void solve(@NotNull LevelEqnSet eqns) throws UnsatException {
     var equations = eqns.eqns();
     nodeSize = 0;
+    graphMap.clear();
     for (var e : equations) {
       genGraphNode(e.lhs().levels());
       genGraphNode(e.rhs().levels());
@@ -157,10 +169,16 @@ public class LevelSolver {
       prepareGraphNode(g, e.rhs().levels());
     }
     var specialEq = Buffer.<Eqn>create();
-    var hasError = equations.toImmutableSeq()
+    var equationsImm = equations.toImmutableSeq();
+    var hasError = equationsImm
       // Do NOT make this lazy -- the `populate` function has side effects
       // We need to run populate on all equations
-      .map(e -> populate(g, specialEq, e))
+      .map(e -> populate(g, specialEq, e, true))
+      .anyMatch(b -> b);
+    if (hasError || floyd(g))
+      throw new UnsatException();
+    hasError = equationsImm
+      .map(e -> populate(g, specialEq, e, false))
       .anyMatch(b -> b);
     if (hasError || floyd(g))
       throw new UnsatException();
@@ -181,7 +199,7 @@ public class LevelSolver {
       for (var nu : unfreeNodes) {
         int v = graphMap.get(nu);
         if (gg[v][u] != INF) upperNodes.append(new Level.Reference<>(nu, gg[v][u]));
-        if (gg[u][v] < LOW_BOUND / 2) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
+        if (gg[u][v] < INF / 2) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
       }
       var retList = Buffer.<Level<LvlVar>>create();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
@@ -199,25 +217,29 @@ public class LevelSolver {
   }
 
   /** @return true if fail */
-  private boolean populate(int[][] g, Buffer<Eqn> specialEq, Eqn e) {
+  private boolean populate(int[][] g, Buffer<Eqn> specialEq, Eqn e, boolean complex) {
     var lhs = e.lhs();
     var rhs = e.rhs();
     return switch (e.cmp()) {
-      case Gt -> populateLt(g, specialEq, e, rhs, lhs);
-      case Lt -> populateLt(g, specialEq, e, lhs, rhs);
-      case Eq -> populateLt(g, specialEq, e, rhs, lhs) && populateLt(g, specialEq, e, lhs, rhs);
+      case Gt -> populateLt(g, specialEq, e, rhs, lhs, complex);
+      case Lt -> populateLt(g, specialEq, e, lhs, rhs, complex);
+      case Eq -> Boolean.logicalAnd(
+        populateLt(g, specialEq, e, rhs, lhs, complex),
+        populateLt(g, specialEq, e, lhs, rhs, complex));
     };
   }
 
   /** @return true if fail */
-  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs) {
+  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs, boolean complex) {
+    if (complex && rhs.levels().sizeGreaterThan(1)) return false;
     var lhsLevels = lhs.levels().filter(vr -> {
       if (vr instanceof Level.Reference<LvlVar> ref) {
         var th = ref.ref();
         for (var vp : rhs.levels()) {
           if (vp instanceof Level.Reference<LvlVar> __r) {
             var tp = __r.ref();
-            if (th == tp && ref.lift() <= __r.lift()) return false;
+            if (g[graphMap.get(tp)][graphMap.get(th)] + ref.lift() - __r.lift() <= 0)
+              return false;
           }
         }
       }
@@ -236,6 +258,7 @@ public class LevelSolver {
       }
       if (insert) rhsLevels.append(vr);
     }
+    if (lhsLevels.isEmpty() || rhsLevels.isEmpty()) return false;
     if (lhsLevels.sizeEquals(1) && rhsLevels.sizeGreaterThan(1)) {
       var left = lhsLevels.get(0);
       if (left instanceof Level.Constant<LvlVar> constant && constant.value() == 0) {

@@ -2,6 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.experiments;
 
+import org.aya.tyck.unify.level.LevelSolver;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,9 +67,8 @@ public class ZzsSolver {
     }
   }
 
-  static final int INF = 100000000;
-  static final int LOW_BOUND = INF;
-  int nodeSize; // the number of nodes in the graph
+  static final int INF = LevelSolver.INF;
+  private int nodeSize; // the number of nodes in the graph
 
   boolean floyd(int[][] d) { // return true when it's satisfied
     for (int k = 0; k <= nodeSize; k++)
@@ -78,10 +79,10 @@ public class ZzsSolver {
     for (var nu : unfreeNodes) {
       int u = graphMap.get(nu);
       if (d[u][0] < 0) return true;
-      if (d[0][u] < LOW_BOUND / 2) return true;
+      if (d[0][u] < INF / 2) return true;
       for (var nv : unfreeNodes) {
         int v = graphMap.get(nv);
-        if (u != v && d[u][v] < LOW_BOUND / 2) return true;
+        if (u != v && d[u][v] < INF / 2) return true;
       }
       for (int v = 1; v <= nodeSize; v++) {
         if (d[u][v] < 0) return true;
@@ -94,16 +95,16 @@ public class ZzsSolver {
     g[u][v] = Math.min(g[u][v], dist);
   }
 
-  private final HashSet<String> unfreeNodes = new HashSet<>();
-  private final HashSet<String> freeNodes = new HashSet<>();
-  private final HashMap<String, Integer> graphMap = new HashMap<>();
-  private final HashMap<String, Integer> defaultValues = new HashMap<>();
+  private final HashSet<Var> unfreeNodes = new HashSet<>();
+  private final HashSet<Var> freeNodes = new HashSet<>();
+  private final HashMap<Var, Integer> graphMap = new HashMap<>();
+  private final HashMap<Var, Integer> defaultValues = new HashMap<>();
   public final List<Equation> avoidableEqns = new ArrayList<>();
 
   void genGraphNode(List<Level> l) {
     for (var e : l) {
       if (e instanceof Reference th) {
-        graphMap.put(th.ref().name(), ++nodeSize);
+        if (!graphMap.containsKey(th.ref)) graphMap.put(th.ref(), ++nodeSize);
       }
     }
   }
@@ -116,19 +117,19 @@ public class ZzsSolver {
         // if(!rb.ref().free()) return;
         int u = ca.constant;
         int v = rb.lift();
-        int x = graphMap.get(rb.ref().name);
+        int x = graphMap.get(rb.ref());
         addEdge(g, x, 0, v - u);
       }
     } else if (a instanceof Reference ra) {
       // if(!ra.ref().free()) return;
-      int x = graphMap.get(ra.ref().name);
+      int x = graphMap.get(ra.ref());
       int u = ra.lift();
       if (b instanceof Const cb) {
         int v = cb.constant;
         addEdge(g, 0, x, v - u);
       } else if (b instanceof Reference rb) {
         // if(!rb.ref().free()) return;
-        int y = graphMap.get(rb.ref().name());
+        int y = graphMap.get(rb.ref());
         int v = rb.lift();
         addEdge(g, y, x, v - u);
       }
@@ -140,14 +141,14 @@ public class ZzsSolver {
     for (var e : l) {
       if (e instanceof Reference th) {
         int defaultValue = -th.lift();
-        int u = graphMap.get(th.ref().name());
+        int u = graphMap.get(th.ref());
         if (th.ref().free()) {
           // addEdge(g, u, 0, -defaultValue); // 认为自由变量一定大于等于其默认值（暂时取消这种想法）
-          defaultValues.put(th.ref().name(), 0);
-          freeNodes.add(th.ref().name());
-          addEdge(g, 0, u, LOW_BOUND);
+          defaultValues.put(th.ref(), 0);
+          freeNodes.add(th.ref());
+          addEdge(g, 0, u, INF);
         } else {
-          unfreeNodes.add(th.ref().name());
+          unfreeNodes.add(th.ref());
         }
       }
     }
@@ -200,18 +201,10 @@ public class ZzsSolver {
       prepareGraphNode(g, e.rhs().levels());
     }
     var specialEq = new ArrayList<Equation>();
-    for (var e : equations) {
-      var lhs = e.lhs();
-      var rhs = e.rhs();
-      switch (e.ord()) {
-        case Lt -> populateLT(g, specialEq, e, lhs, rhs);
-        case Gt -> populateLT(g, specialEq, e, rhs, lhs);
-        case Eq -> {
-          populateLT(g, specialEq, e, rhs, lhs);
-          populateLT(g, specialEq, e, lhs, rhs);
-        }
-      }
-    }
+    populate(equations, g, specialEq, true);
+    if (floyd(g)) throw new UnsatException();
+
+    populate(equations, g, specialEq, false);
     if (!avoidableEqns.isEmpty()) System.out.println("Avoided:");
     for (var equation : avoidableEqns) System.out.println(equation);
     if (floyd(g)) throw new UnsatException();
@@ -234,10 +227,10 @@ public class ZzsSolver {
         int v = graphMap.get(nu);
         // 下面认为，非自由变量是否可以是无穷大、是否有默认值是无关紧要的
         if (gg[v][u] != INF) {
-          upperNodes.add(new Reference(new Var(nu, false), gg[v][u]));
+          upperNodes.add(new Reference(nu, gg[v][u]));
         }
-        if (gg[u][v] < LOW_BOUND / 2) {
-          lowerNodes.add(new Reference(new Var(nu, false), -gg[u][v]));
+        if (gg[u][v] < INF / 2) {
+          lowerNodes.add(new Reference(nu, -gg[u][v]));
         }
       }
       List<Level> retList = new ArrayList<>();
@@ -251,12 +244,28 @@ public class ZzsSolver {
         }
         retList.add(new Const(minv));
       }
-      ret.put(name, new Max(retList));
+      ret.put(name.name, new Max(retList));
     }
     return ret;
   }
 
-  private void populateLT(int[][] g, ArrayList<Equation> specialEq, Equation e, Max lhs, Max rhs) {
+  private void populate(List<Equation> equations, int[][] g, ArrayList<Equation> specialEq, boolean complex) {
+    for (var e : equations) {
+      var lhs = e.lhs();
+      var rhs = e.rhs();
+      switch (e.ord()) {
+        case Lt -> populateLT(g, specialEq, e, lhs, rhs, complex);
+        case Gt -> populateLT(g, specialEq, e, rhs, lhs, complex);
+        case Eq -> {
+          populateLT(g, specialEq, e, lhs, rhs, complex);
+          populateLT(g, specialEq, e, rhs, lhs, complex);
+        }
+      }
+    }
+  }
+
+  private void populateLT(int[][] g, ArrayList<Equation> specialEq, Equation e, Max lhs, Max rhs, boolean complex) {
+    if (complex && rhs.levels.size() > 1) return;
     var lhsLevels = new ArrayList<Level>();
     var rhsLevels = new ArrayList<Level>();
     for (var vr : lhs.levels()) {
@@ -266,7 +275,7 @@ public class ZzsSolver {
         for (var vp : rhs.levels()) {
           if (vp instanceof Reference __r) {
             var tp = __r.ref();
-            if (th.name().equals(tp.name()) && ref.lift() <= __r.lift()) {
+            if (g[graphMap.get(tp)][graphMap.get(th)] + ref.lift() - __r.lift() <= 0) {
               toInsert = false;
             }
           }
@@ -285,12 +294,15 @@ public class ZzsSolver {
       }
       if (toInsert) rhsLevels.add(vr);
     }
-    if (lhsLevels.size() == 1) {
+    if (lhsLevels.isEmpty() || rhsLevels.isEmpty()) return;
+    if (lhsLevels.size() == 1 && rhsLevels.size() > 1) {
       var left = lhsLevels.get(0);
       if (left instanceof Const constant && constant.constant == 0) {
         avoidableEqns.add(e);
         return;
       }
+      rhsLevels.forEach(right -> dealSingleLt(g, left, right));
+      return;
     }
     if (rhsLevels.size() == 1) {
       var right = rhsLevels.get(0);
@@ -305,12 +317,17 @@ public class ZzsSolver {
   }
 
   public static void main(String[] args) throws UnsatException {
-    var v = new Reference(new Var("v", false), 1);
-    var u = new Reference(new Var("u", false), 0);
-    var o = new Reference(new Var("o", true), 0);
-    var res = new ZzsSolver().solve(List.of(
-      new Equation(Ord.Eq, new Max(o), new Max(u)),
-      new Equation(Ord.Lt, new Max(o, v), new Max(u, v))));
+    var res = new ZzsSolver().solve(List.of(new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
+      new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))), new Max(List.of(new Reference(new Var("v", false), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Event.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("Quantifier.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0), new Reference(new Var("Quantifier.v", true), 1))), new Max(List.of(new Infinity()))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Event.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("Quantifier.v", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("v", false), 0))), new Max(List.of(new Reference(new Var("Quantifier.v", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("Event.u", true), 0)))),
+      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))), new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))))));
     System.out.println(res);
   }
 }
