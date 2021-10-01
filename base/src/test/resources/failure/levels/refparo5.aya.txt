@@ -5,5 +5,6 @@ In file $FILE:4:11 ->
   4 |   | type : Type
                  ^--^ (u + 1) <= u
 
-Error: Cannot solve some level equation(s)
+Error: Cannot solve the following level equation(s):
+         (u + 1) <= u
 What are you doing?
