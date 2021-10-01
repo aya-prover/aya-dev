@@ -27,19 +27,28 @@ gradle use proxies.
 ./gradlew githubActions
 ```
 
-+ Ask [@ice1000] to get access to the development repository.
+Aya is under active development. Nothing guaranteed! However, we can share some cool stuffs here:
+
++ Dependent types, including pi-types, sigma types, etc. You could write a [type-safe interpreter][gadt].
++ Arend-ish interval type which is used to define the HoTT [path type][oop]
+  and prove [regularity by computation][regularity] thanks to Arend's type theory.
+  We also have the classic cubical-flavored [funExt].
++ Overlapping patterns. Very [useful][oop] in theorem proving.
++ A literate programming mode with inline code fragment support.
+  We already have a prototype, but we plan to revise it before sharing demos.
+
+## Contributing to Aya
+
++ Questions or concerns are welcomed in the discussion area.
+  We will try our best to answer your questions, but please be nice.
++ Before contributing in any form, please read
+  [the contribution guideline](https://github.com/aya-prover/aya-dev/blob/master/.github/CONTRIBUTING.md) thoroughly
+  and make sure you understand your responsibilities.
++ Please follow [the Code of Conduct](https://github.com/aya-prover/aya-dev/blob/master/.github/CODE_OF_CONDUCT.md) to
+  ensure an inclusive and welcoming community atmosphere.
++ Ask [@ice1000] to become an organization member.
   + If you want to contribute, ask before doing anything.
     We will tell you about our plans.
-+ Questions or concerns are welcomed in the discussion area. 
-  We will try our best to answer your questions, but please be nice.
-+ Aya is under active development. Nothing guaranteed! However, we can share some cool stuffs here:
-  + Dependent types, including pi-types, sigma types, etc. You could write a [type-safe interpreter][gadt].
-  + Arend-ish interval type which is used to define the HoTT [path type][oop]
-    and prove [regularity by computation][regularity] thanks to Arend's type theory.
-    We also have the classic cubical-flavored [funExt].
-  + Overlapping patterns. Very [useful][oop] in theorem proving.
-  + A literate programming mode with inline code fragment support.
-    We already have a prototype, but we plan to revise it before sharing demos.
 
 [@ice1000]: https://github.com/ice1000
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
