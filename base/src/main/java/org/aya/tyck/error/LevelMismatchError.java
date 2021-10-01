@@ -13,10 +13,14 @@ import org.aya.tyck.unify.level.LevelEqnSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record LevelMismatchError(@Nullable SourcePos pos,
-                                 @NotNull ImmutableSeq<LevelEqnSet.Eqn> eqns) implements Problem {
+public record LevelMismatchError(
+  @Nullable SourcePos pos,
+  @NotNull ImmutableSeq<LevelEqnSet.Eqn> eqns
+) implements Problem {
   @Override public @NotNull Doc describe() {
-    return Doc.english("Cannot solve some level equation(s)");
+    return Doc.vcat(Doc.english("Cannot solve the following level equation(s):"),
+      Doc.nest(2, Doc.vcat(
+        eqns.map(eqn -> eqn.toDoc(DistillerOptions.DEFAULT)))));
   }
 
   @Override public @NotNull SourcePos sourcePos() {
