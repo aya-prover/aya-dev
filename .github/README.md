@@ -1,5 +1,5 @@
 [![actions]](https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml)
-[![maven]](https://repo1.maven.org/maven2/org/aya-prover)
+[![maven]][maven-repo]
 [![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
 [![tokei]](https://github.com/XAMPPRocky/tokei)
@@ -62,21 +62,28 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
 [gadt]: base/src/test/resources/success/type-safe-norm.aya
 [regularity]: base/src/test/resources/success/regularity.aya
 [funExt]: base/src/test/resources/success/funExt.aya
+[maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 
 ## Use as a library
 
 It's indexed on [mvnrepository](https://mvnrepository.com/artifact/org.aya-prover),
-and here are some example build configurations:
+and here are some example build configurations (maybe you need to add the <https://jitpack.io>
+repository as we are using an upstream dependency from there):
 
 ```xml
 <!-- Maven -->
 <dependency>
     <groupId>org.aya-prover</groupId>
-    <artifactId>pretty</artifactId>
+    <artifactId>[project name]</artifactId>
     <version>[latest version]</version>
 </dependency>
 ```
 
 ```groovy
-implementation group: 'org.aya-prover', name: 'pretty', version: '[latest version]'
+// Gradle
+implementation group: 'org.aya-prover', name: '[project name]', version: '[latest version]'
 ```
+
++ `[project name]` specifies the subproject of Aya you want to use, and the options are `pretty`, `base`, `cli`, `parser`, etc.
+  The type checker lives in `base` and `parser` and the pretty printing framework resides in `pretty`.
++ `[latest version]` is what you see on this badge ![maven] .
