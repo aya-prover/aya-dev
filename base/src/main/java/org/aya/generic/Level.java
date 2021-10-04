@@ -54,16 +54,6 @@ public sealed interface Level<V extends Var> extends AyaDocile {
     return Doc.plain(name);
   }
 
-  record Infinity<V extends Var>() implements Level<V> {
-    @Override public @NotNull Level<V> lift(int n) {
-      return this;
-    }
-
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      return Doc.plain("w");
-    }
-  }
-
   record Constant<V extends Var>(int value) implements Level<V> {
     @Override public @NotNull Level<V> lift(int n) {
       return new Constant<>(value + n);

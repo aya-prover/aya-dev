@@ -269,10 +269,6 @@ public class LevelSolver {
     }
     if (rhsLevels.sizeEquals(1)) {
       var right = rhsLevels.get(0);
-      if (right instanceof Level.Infinity<LvlVar>) {
-        avoidableEqns.append(e);
-        return false;
-      }
       return lhsLevels.anyMatch(left -> dealSingleLt(g, left, right));
     }
     specialEq.append(new Eqn(new Sort(lhsLevels), new Sort(rhsLevels.toImmutableSeq()), Ordering.Lt, e.sourcePos()));

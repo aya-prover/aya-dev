@@ -459,7 +459,6 @@ public final class ExprTycker {
           : levelMapping.getOrPut(ref, () -> new Sort.LvlVar(ref.name(), null));
         yield new Level.Reference<>(lvlVar, v.lift());
       }
-      case Level.Infinity<PreLevelVar> l -> new Level.Infinity<>();
       case Level.Constant<PreLevelVar> c -> new Level.Constant<>(c.value());
       default -> throw new IllegalArgumentException(level.toString());
     });

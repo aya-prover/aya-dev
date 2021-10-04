@@ -17,10 +17,9 @@ import java.io.Serializable;
 public sealed interface SerLevel extends Serializable {
   @NotNull Level<Sort.LvlVar> de(@NotNull MutableMap<Integer, Sort.LvlVar> cache);
 
-  /** @param num -1 means infinity */
   record Const(int num) implements SerLevel {
     @Override public @NotNull Level<Sort.LvlVar> de(@NotNull MutableMap<Integer, Sort.LvlVar> cache) {
-      return num >= 0 ? new Level.Constant<>(num) : new Level.Infinity<>();
+      return new Level.Constant<>(num);
     }
   }
 
@@ -49,7 +48,6 @@ public sealed interface SerLevel extends Serializable {
   static @NotNull SerLevel ser(@NotNull Level<Sort.LvlVar> level, @NotNull MutableMap<Sort.LvlVar, Integer> cache) {
     return switch (level) {
       case Level.Constant<Sort.LvlVar> constant -> new Const(constant.value());
-      case Level.Infinity<Sort.LvlVar> l -> new Const(-1);
       case Level.Reference<Sort.LvlVar> ref -> new Ref(ser(ref.ref(), cache), ref.lift());
       default -> throw new IllegalStateException(level.toString());
     };
