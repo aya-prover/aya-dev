@@ -26,26 +26,24 @@ public record Renamer(@NotNull Substituter.TermSubst subst) implements TermFixpo
   }
 
   @Override public @NotNull Term visitLam(IntroTerm.@NotNull Lambda lambda, Unit unit) {
-    var param = lambda.param();
-    var renamed = param.rename();
-    subst.addDirectly(param.ref(), renamed.toTerm());
-    return new IntroTerm.Lambda(renamed, lambda.body().accept(this, unit));
+    var param = handleBinder(lambda.param());
+    return new IntroTerm.Lambda(param, lambda.body().accept(this, unit));
   }
 
   @Override public @NotNull Term visitPi(FormTerm.@NotNull Pi pi, Unit unit) {
-    var param = pi.param();
-    var renamed = param.rename();
-    subst.addDirectly(param.ref(), renamed.toTerm());
-    return new FormTerm.Pi(renamed, pi.body().accept(this, unit));
+    var param = handleBinder(pi.param());
+    return new FormTerm.Pi(param, pi.body().accept(this, unit));
+  }
+
+  private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {
+    var v = param.renameVar();
+    var type = param.type().accept(this, Unit.unit());
+    subst.addDirectly(param.ref(), new RefTerm(v, type));
+    return new Term.Param(v, type, param.explicit());
   }
 
   @Override public @NotNull Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
-    var renamedParams = term.params().map(param -> {
-      var renamedVar = param.renameVar();
-      var type = param.type().accept(this, Unit.unit());
-      subst.addDirectly(param.ref(), new RefTerm(renamedVar, type));
-      return new Term.Param(renamedVar, type, param.explicit());
-    });
+    var renamedParams = term.params().map(this::handleBinder);
     return new FormTerm.Sigma(renamedParams);
   }
 }

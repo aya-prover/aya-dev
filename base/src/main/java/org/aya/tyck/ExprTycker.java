@@ -308,8 +308,8 @@ public final class ExprTycker {
           } else type = result.wellTyped;
         }
         var resultParam = new Term.Param(var, type, param.explicit());
+        var body = dt.substBody(resultParam.toTerm());
         yield localCtx.with(resultParam, () -> {
-          var body = dt.substBody(resultParam.toTerm());
           var rec = inherit(lam.body(), body);
           return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
         });
