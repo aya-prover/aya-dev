@@ -2,10 +2,8 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
-import kala.collection.Map;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
-import org.aya.api.ref.Var;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.RefTerm;
@@ -13,9 +11,18 @@ import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 /** IntelliJ Renamer, LOL */
-public record Renamer(@NotNull Substituter.TermSubst subst) implements TermSubstituter {
+public record Renamer(@NotNull Substituter.TermSubst subst) implements TermFixpoint<Unit> {
   public Renamer() {
     this(new Substituter.TermSubst(MutableMap.create()));
+  }
+
+  @Override public @NotNull Term visitFieldRef(@NotNull RefTerm.Field field, Unit unit) {
+    return subst.map().getOrDefault(field.ref(), field);
+  }
+
+  @Override public @NotNull Term visitRef(@NotNull RefTerm ref, Unit unused) {
+    return subst.map().getOrElse(ref.var(), () ->
+      TermFixpoint.super.visitRef(ref, Unit.unit()));
   }
 
   @Override public @NotNull Term visitLam(IntroTerm.@NotNull Lambda lambda, Unit unit) {
@@ -40,9 +47,5 @@ public record Renamer(@NotNull Substituter.TermSubst subst) implements TermSubst
       return new Term.Param(renamedVar, type, param.explicit());
     });
     return new FormTerm.Sigma(renamedParams);
-  }
-
-  @Override public Map<Var, Term> termSubst() {
-    return subst.map();
   }
 }

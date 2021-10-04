@@ -73,6 +73,10 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     return new Zonker(tycker).zonk(this, pos);
   }
 
+  @Override default @NotNull Term rename() {
+    return accept(new Renamer(), Unit.unit());
+  }
+
   @Override default int findUsages(@NotNull Var var) {
     var counter = new VarConsumer.UsageCounter(var);
     accept(counter, Unit.unit());

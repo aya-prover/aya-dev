@@ -13,6 +13,7 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.Var;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
+import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
@@ -20,21 +21,29 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class adds level substitution to {@link TermSubstituter}.
+ * This doesn't substitute references underlying function calls.
  *
  * @author ice1000
- * @see TermSubstituter for term substitution
  */
 public record Substituter(
-  @Override @NotNull Map<Var, Term> termSubst,
+  @NotNull Map<Var, Term> termSubst,
   @NotNull LevelSubst levelSubst
-) implements TermSubstituter {
+) implements TermFixpoint<Unit> {
   public Substituter(@NotNull TermSubst termSubst, @NotNull LevelSubst levelSubst) {
     this(termSubst.map, levelSubst);
   }
 
   @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
     return levelSubst.applyTo(sort);
+  }
+
+  @Override public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
+    return termSubst.getOption(term.ref()).map(Term::rename).getOrDefault(term);
+  }
+
+  @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
+    return termSubst.getOption(term.var()).map(Term::rename).getOrElse(() ->
+      TermFixpoint.super.visitRef(term, Unit.unit()));
   }
 
   /**
