@@ -24,12 +24,6 @@ public class ZzsSolver {
     }
   }
 
-  record Infinity() implements Level {
-    @Override public String toString() {
-      return "inf";
-    }
-  }
-
   record Reference(Var ref, int lift) implements Level {
     @Override public String toString() {
       return lift == 0 ? ref.toString() : "(" + ref + " + " + lift + ")";
@@ -306,10 +300,6 @@ public class ZzsSolver {
     }
     if (rhsLevels.size() == 1) {
       var right = rhsLevels.get(0);
-      if (right instanceof Infinity) {
-        avoidableEqns.add(e);
-        return;
-      }
       lhsLevels.forEach(left -> dealSingleLt(g, left, right));
       return;
     }
@@ -321,7 +311,6 @@ public class ZzsSolver {
       new Equation(Ord.Eq, new Max(List.of(new Reference(new Var("Quantifier.v", true), 0))), new Max(List.of(new Reference(new Var("v", false), 0)))),
       new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Event.u", true), 0)))),
       new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("Quantifier.u", true), 0)))),
-      new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0), new Reference(new Var("Quantifier.v", true), 1))), new Max(List.of(new Infinity()))),
       new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("u", false), 0))), new Max(List.of(new Reference(new Var("Event.u", true), 0)))),
       new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("Quantifier.v", true), 0)))),
       new Equation(Ord.Lt, new Max(List.of(new Reference(new Var("Event.u", true), 0))), new Max(List.of(new Reference(new Var("u", false), 0)))),

@@ -83,8 +83,8 @@ public final class ExprTycker {
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new IllegalStateException("Unknown var: " + ref.resolvedVar().getClass());
       };
-      case Expr.PiExpr pi -> inherit(pi, FormTerm.Univ.OMEGA);
-      case Expr.SigmaExpr sigma -> inherit(sigma, FormTerm.Univ.OMEGA);
+      case Expr.PiExpr pi -> inherit(pi, FormTerm.freshUniv(pi.sourcePos()));
+      case Expr.SigmaExpr sigma -> inherit(sigma, FormTerm.freshUniv(sigma.sourcePos()));
       case Expr.NewExpr newExpr -> {
         var struct = synthesize(newExpr.struct()).wellTyped;
         while (struct.normalize(NormalizeMode.WHNF) instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
@@ -218,8 +218,8 @@ public final class ExprTycker {
         yield new Result(app, subst.isEmpty() ? pi : pi.body().subst(subst));
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
-        FormTerm.Univ.OMEGA, Constants.randomName(hole), expr.sourcePos())._2);
-      default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm($ -> Doc.english("no rule"), false));
+        FormTerm.freshUniv(hole.sourcePos()), Constants.randomName(hole), hole.sourcePos())._2);
+      default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm(Doc.english("no rule"), false));
     };
   }
 
@@ -300,7 +300,7 @@ public final class ExprTycker {
         var lamParam = param.type();
         var type = dt.param().type();
         if (lamParam != null) {
-          var result = inherit(lamParam, FormTerm.Univ.OMEGA);
+          var result = inherit(lamParam, FormTerm.freshUniv(lamParam.sourcePos()));
           var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
           if (!comparison) {
             // TODO[ice]: expected type mismatch lambda type annotation
@@ -436,10 +436,10 @@ public final class ExprTycker {
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {
     var param = expr.param();
-    var sourcePos = param.sourcePos();
-    var domain = localCtx.freshHole(FormTerm.Univ.OMEGA,
-      param.ref().name() + Constants.GENERATED_POSTFIX, sourcePos)._2;
-    var codomain = localCtx.freshHole(FormTerm.Univ.OMEGA, sourcePos)._2;
+    var pos = param.sourcePos();
+    var domain = localCtx.freshHole(FormTerm.freshUniv(pos),
+      param.ref().name() + Constants.GENERATED_POSTFIX, pos)._2;
+    var codomain = localCtx.freshHole(FormTerm.freshUniv(pos), pos)._2;
     return new FormTerm.Pi(Term.Param.mock(domain, param), codomain);
   }
 
@@ -459,7 +459,6 @@ public final class ExprTycker {
           : levelMapping.getOrPut(ref, () -> new Sort.LvlVar(ref.name(), null));
         yield new Level.Reference<>(lvlVar, v.lift());
       }
-      case Level.Infinity<PreLevelVar> l -> new Level.Infinity<>();
       case Level.Constant<PreLevelVar> c -> new Level.Constant<>(c.value());
       default -> throw new IllegalArgumentException(level.toString());
     });
@@ -524,7 +523,7 @@ public final class ExprTycker {
 
   private boolean unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {
     tracing(builder -> builder.append(new Trace.UnifyT(lower, upper, pos)));
-    return unifier(pos, Ordering.Lt).compare(lower, upper, FormTerm.Univ.OMEGA);
+    return unifier(pos, Ordering.Lt).compare(lower, upper, FormTerm.freshUniv(pos));
   }
 
   public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {

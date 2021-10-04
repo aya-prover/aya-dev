@@ -26,9 +26,6 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDo
     this(ImmutableSeq.of(level));
   }
 
-  public static final @NotNull Level<LvlVar> INF_LVL = new Level.Infinity<>();
-  public static final @NotNull Sort OMEGA = new Sort(INF_LVL);
-
   private static @Nullable SourcePos unsolvedPos(@NotNull Level<LvlVar> lvl) {
     return lvl instanceof Level.Reference<LvlVar> ref ? ref.ref().pos : null;
   }

@@ -5,8 +5,10 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
+import org.aya.api.error.SourcePos;
 import org.aya.core.sort.Sort;
 import org.aya.generic.Level;
+import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -51,11 +53,14 @@ public sealed interface FormTerm extends Term {
     }
   }
 
+  static @NotNull Univ freshUniv(@NotNull SourcePos pos) {
+    return new Univ(new Sort(new Level.Reference<>(new Sort.LvlVar(Constants.randomName(pos), pos))));
+  }
+
   /**
    * @author ice1000
    */
   record Univ(@NotNull Sort sort) implements FormTerm {
-    public static final @NotNull FormTerm.Univ OMEGA = new Univ(Sort.OMEGA);
     public static final @NotNull FormTerm.Univ ZERO = new Univ(new Sort(new Level.Constant<>(0)));
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

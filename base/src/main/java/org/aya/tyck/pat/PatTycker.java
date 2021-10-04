@@ -30,6 +30,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.GenericBuilder;
+import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.error.PatternProblem;
@@ -161,7 +162,7 @@ public record PatTycker(
     var sig = new Def.Signature(
       ImmutableSeq.empty(),
       sigma.params(),
-      FormTerm.Univ.OMEGA);
+      new ErrorTerm(Doc.plain("Rua"), false));
     var as = tuple.as();
     if (as != null) exprTycker.localCtx.put(as, sigma);
     return new Pat.Tuple(tuple.explicit(),
