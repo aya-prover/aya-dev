@@ -10,11 +10,13 @@ import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-/** IntelliJ Renamer, LOL */
-public record Renamer(@NotNull Substituter.TermSubst subst) implements TermFixpoint<Unit> {
-  public Renamer() {
-    this(new Substituter.TermSubst(MutableMap.create()));
-  }
+/**
+ * IntelliJ Renamer, LOL
+ *
+ * @author ice1000
+ */
+public final class Renamer implements TermFixpoint<Unit> {
+  private final Substituter.TermSubst subst = new Substituter.TermSubst(MutableMap.create());
 
   @Override public @NotNull Term visitFieldRef(@NotNull RefTerm.Field field, Unit unit) {
     return subst.map().getOrDefault(field.ref(), field);
@@ -43,7 +45,6 @@ public record Renamer(@NotNull Substituter.TermSubst subst) implements TermFixpo
   }
 
   @Override public @NotNull Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
-    var renamedParams = term.params().map(this::handleBinder);
-    return new FormTerm.Sigma(renamedParams);
+    return new FormTerm.Sigma(term.params().map(this::handleBinder));
   }
 }
