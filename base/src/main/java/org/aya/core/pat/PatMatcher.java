@@ -44,7 +44,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   }
 
   @Override public Unit visitBind(Pat.@NotNull Bind bind, Term term) {
-    subst.map().put(bind.as(), term);
+    subst.addDirectly(bind.as(), term);
     return Unit.unit();
   }
 
@@ -62,7 +62,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Term term) {
     if (!(term instanceof IntroTerm.Tuple tup)) throw new Mismatch();
     var as = tuple.as();
-    if (as != null) subst.map().put(as, tup);
+    if (as != null) subst.addDirectly(as, tup);
     return visitList(tuple.pats(), tup.items());
   }
 
@@ -75,7 +75,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) implements Pat.Vi
   @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Term term) {
     if (!(term instanceof CallTerm.Con conCall)) throw new Mismatch();
     var as = ctor.as();
-    if (as != null) subst.map().put(as, conCall);
+    if (as != null) subst.addDirectly(as, conCall);
     if (ctor.ref() != conCall.ref()) throw new Mismatch();
     return visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
   }

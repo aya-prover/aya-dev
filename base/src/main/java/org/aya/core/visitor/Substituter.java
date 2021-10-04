@@ -13,7 +13,6 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.Var;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
-import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
@@ -21,30 +20,21 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This doesn't substitute references underlying function calls.
+ * This class adds level substitution to {@link TermSubstituter}.
  *
  * @author ice1000
+ * @see TermSubstituter for term substitution
  */
 public record Substituter(
-  @NotNull Map<Var, Term> termSubst,
+  @Override @NotNull Map<Var, Term> termSubst,
   @NotNull LevelSubst levelSubst
-) implements TermFixpoint<Unit> {
+) implements TermSubstituter {
   public Substituter(@NotNull TermSubst termSubst, @NotNull LevelSubst levelSubst) {
     this(termSubst.map, levelSubst);
   }
 
   @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
     return levelSubst.applyTo(sort);
-  }
-
-  @Override
-  public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
-    return termSubst.getOrDefault(term.ref(), term);
-  }
-
-  @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
-    return termSubst.getOrElse(term.var(), () ->
-      TermFixpoint.super.visitRef(term, Unit.unit()));
   }
 
   /**
@@ -72,10 +62,14 @@ public record Substituter(
       return map.keysView().filter(subst.map::containsKey).toImmutableSeq();
     }
 
-    public @NotNull TermSubst add(@NotNull Var var, @NotNull Term term) {
-      subst(new TermSubst(var, term));
+    public @NotNull TermSubst addDirectly(@NotNull Var var, @NotNull Term term) {
       map.put(var, term);
       return this;
+    }
+
+    public @NotNull TermSubst add(@NotNull Var var, @NotNull Term term) {
+      subst(new TermSubst(var, term));
+      return addDirectly(var, term);
     }
 
     public @NotNull TermSubst add(@NotNull TermSubst subst) {

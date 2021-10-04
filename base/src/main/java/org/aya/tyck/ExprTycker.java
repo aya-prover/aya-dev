@@ -214,7 +214,7 @@ public final class ExprTycker {
         }
         var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
         app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
-        subst.map().put(pi.param().ref(), elabArg);
+        subst.addDirectly(pi.param().ref(), elabArg);
         yield new Result(app, subst.isEmpty() ? pi : pi.body().subst(subst));
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
