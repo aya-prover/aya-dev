@@ -67,7 +67,7 @@ public record StmtTycker(
   @Override public PrimDef visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker tycker) {
     assert tycker.localCtx.isEmpty();
     var core = decl.ref.core;
-    var tele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
+    var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(decl.sourcePos));
     if (tele.isNotEmpty()) {
       if (decl.result == null) {
         // TODO[ice]: Expect type and term
@@ -139,16 +139,18 @@ public record StmtTycker(
   }
 
   @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
-    var tele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
-    final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.Univ.OMEGA)).wellTyped();
+    var pos = decl.sourcePos;
+    var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(pos));
+    final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.freshUniv(pos))).wellTyped();
     decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
     var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
     return new DataDef(decl.ref, tele, decl.signature.sortParam(), result, body);
   }
 
   @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
-    var tele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
-    final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.Univ.OMEGA)).wellTyped();
+    var pos = decl.sourcePos;
+    var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(pos));
+    final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.freshUniv(pos))).wellTyped();
     // var levelSubst = tycker.equations.solve();
     var levels = tycker.extractLevels();
     decl.signature = new Def.Signature(levels, tele, result);
@@ -178,7 +180,7 @@ public record StmtTycker(
 
   @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
-    var resultTele = checkTele(tycker, decl.telescope, FormTerm.Univ.OMEGA);
+    var resultTele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(decl.sourcePos));
     // It might contain unsolved holes, but that's acceptable.
     var resultRes = tycker.synthesize(decl.result).wellTyped();
     tracing(GenericBuilder::reduce);

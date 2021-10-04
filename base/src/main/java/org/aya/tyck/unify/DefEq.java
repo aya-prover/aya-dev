@@ -28,6 +28,7 @@ import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,8 +126,14 @@ public final class DefEq {
   private <T> T checkParams(SeqLike<Term.@NotNull Param> l, SeqLike<Term.@NotNull Param> r, Supplier<T> fail, Supplier<T> success) {
     if (!l.sizeEquals(r)) return fail.get();
     if (l.isEmpty()) return success.get();
-    return checkParam(l.first(), r.first(), FormTerm.Univ.OMEGA, fail, () ->
+    return checkParam(l.first(), r.first(), freshUniv(), fail, () ->
       checkParams(l.view().drop(1), r.view().drop(1), fail, success));
+  }
+
+  private @Contract("->new") @NotNull FormTerm.Univ freshUniv() {
+    // [ice]: the generated univ var may not be used since in most cases we just return `freshUniv()`
+    // and we test if it's non-null. So the level variable won't even present in the level equations.
+    return FormTerm.freshUniv(pos);
   }
 
   private boolean visitArgs(SeqLike<Arg<Term>> l, SeqLike<Arg<Term>> r, SeqLike<Term.Param> params) {
@@ -287,18 +294,18 @@ public final class DefEq {
       case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(levelEqns));
       case FormTerm.Pi lhs -> {
         if (!(preRhs instanceof FormTerm.Pi rhs)) yield null;
-        yield checkParam(lhs.param(), rhs.param(), FormTerm.Univ.OMEGA, () -> null, () -> {
-          var bodyIsOk = compare(lhs.body(), rhs.body(), FormTerm.Univ.OMEGA);
+        yield checkParam(lhs.param(), rhs.param(), freshUniv(), () -> null, () -> {
+          var bodyIsOk = compare(lhs.body(), rhs.body(), freshUniv());
           if (!bodyIsOk) return null;
-          return FormTerm.Univ.OMEGA;
+          return freshUniv();
         });
       }
       case FormTerm.Sigma lhs -> {
         if (!(preRhs instanceof FormTerm.Sigma rhs)) yield null;
         yield checkParams(lhs.params(), rhs.params(), () -> null, () -> {
-          var bodyIsOk = compare(lhs.params().last().type(), rhs.params().last().type(), FormTerm.Univ.OMEGA);
+          var bodyIsOk = compare(lhs.params().last().type(), rhs.params().last().type(), freshUniv());
           if (!bodyIsOk) return null;
-          return FormTerm.Univ.OMEGA;
+          return freshUniv();
         });
       }
       case FormTerm.Univ lhs -> {
@@ -312,13 +319,13 @@ public final class DefEq {
         var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
         var args = visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
         // Do not need to be computed precisely because unification won't need this info
-        yield args ? FormTerm.Univ.OMEGA : null;
+        yield args ? freshUniv() : null;
       }
       case CallTerm.Struct lhs -> {
         if (!(preRhs instanceof CallTerm.Struct rhs) || lhs.ref() != rhs.ref()) yield null;
         var subst = levels(lhs.ref(), lhs.sortArgs(), rhs.sortArgs());
         var args = visitArgs(lhs.args(), rhs.args(), Term.Param.subst(Def.defTele(lhs.ref()), subst));
-        yield args ? FormTerm.Univ.OMEGA : null;
+        yield args ? freshUniv() : null;
       }
       case CallTerm.Con lhs -> {
         if (!(preRhs instanceof CallTerm.Con rhs) || lhs.ref() != rhs.ref()) yield null;
