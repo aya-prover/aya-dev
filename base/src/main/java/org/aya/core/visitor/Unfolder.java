@@ -67,7 +67,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var body = def.body;
     if (body.isLeft()) {
       var termSubst = checkAndBuildSubst(def.telescope(), args);
-      return body.getLeftValue().subst(termSubst, levelSubst).accept(this, p);
+      return body.getLeftValue().subst(termSubst, levelSubst).accept(this, p).rename();
     }
     var volynskaya = tryUnfoldClauses(p, args, levelSubst, body.getRightValue());
     return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
@@ -111,7 +111,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var termSubst = PatMatcher.tryBuildSubstArgs(matchy.patterns(), args);
       if (termSubst != null) {
         subst.add(termSubst);
-        var newBody = matchy.body().subst(subst, levelSubst).accept(this, p);
+        var newBody = matchy.body().subst(subst, levelSubst).accept(this, p).rename();
         return new WithPos<>(matchy.sourcePos(), newBody);
       }
     }

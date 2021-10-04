@@ -214,7 +214,7 @@ public final class ExprTycker {
         }
         var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
         app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
-        subst.map().put(pi.param().ref(), elabArg);
+        subst.addDirectly(pi.param().ref(), elabArg);
         yield new Result(app, subst.isEmpty() ? pi : pi.body().subst(subst));
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
@@ -308,8 +308,8 @@ public final class ExprTycker {
           } else type = result.wellTyped;
         }
         var resultParam = new Term.Param(var, type, param.explicit());
+        var body = dt.substBody(resultParam.toTerm());
         yield localCtx.with(resultParam, () -> {
-          var body = dt.substBody(resultParam.toTerm());
           var rec = inherit(lam.body(), body);
           return new Result(new IntroTerm.Lambda(resultParam, rec.wellTyped), dt);
         });

@@ -73,6 +73,10 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     return new Zonker(tycker).zonk(this, pos);
   }
 
+  @Override default @NotNull Term rename() {
+    return accept(new Renamer(), Unit.unit());
+  }
+
   @Override default int findUsages(@NotNull Var var) {
     var counter = new VarConsumer.UsageCounter(var);
     accept(counter, Unit.unit());
@@ -110,24 +114,24 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     }
     default void traceExit(R r) {
     }
-    R visitRef(@NotNull RefTerm term, P p);
-    R visitLam(@NotNull IntroTerm.Lambda term, P p);
-    R visitPi(@NotNull FormTerm.Pi term, P p);
-    R visitSigma(@NotNull FormTerm.Sigma term, P p);
-    R visitUniv(@NotNull FormTerm.Univ term, P p);
-    R visitApp(@NotNull ElimTerm.App term, P p);
+    R visitRef(@NotNull RefTerm ref, P p);
+    R visitLam(@NotNull IntroTerm.Lambda lambda, P p);
+    R visitPi(@NotNull FormTerm.Pi pi, P p);
+    R visitSigma(@NotNull FormTerm.Sigma sigma, P p);
+    R visitUniv(@NotNull FormTerm.Univ univ, P p);
+    R visitApp(@NotNull ElimTerm.App app, P p);
     R visitFnCall(CallTerm.@NotNull Fn fnCall, P p);
     R visitDataCall(CallTerm.@NotNull Data dataCall, P p);
     R visitConCall(CallTerm.@NotNull Con conCall, P p);
     R visitStructCall(CallTerm.@NotNull Struct structCall, P p);
     R visitPrimCall(@NotNull CallTerm.Prim prim, P p);
-    R visitTup(@NotNull IntroTerm.Tuple term, P p);
+    R visitTup(@NotNull IntroTerm.Tuple tuple, P p);
     R visitNew(@NotNull IntroTerm.New newTerm, P p);
-    R visitProj(@NotNull ElimTerm.Proj term, P p);
-    R visitAccess(@NotNull CallTerm.Access term, P p);
-    R visitHole(@NotNull CallTerm.Hole term, P p);
-    R visitFieldRef(@NotNull RefTerm.Field term, P p);
-    R visitError(@NotNull ErrorTerm term, P p);
+    R visitProj(@NotNull ElimTerm.Proj proj, P p);
+    R visitAccess(@NotNull CallTerm.Access access, P p);
+    R visitHole(@NotNull CallTerm.Hole hole, P p);
+    R visitFieldRef(@NotNull RefTerm.Field field, P p);
+    R visitError(@NotNull ErrorTerm error, P p);
   }
 
   /**
@@ -147,7 +151,11 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     }
 
     @Contract(" -> new") public @NotNull Param rename() {
-      return new Param(new LocalVar(ref.name(), ref.definition()), type, explicit);
+      return new Param(renameVar(), type, explicit);
+    }
+
+    @Contract(" -> new") public @NotNull LocalVar renameVar() {
+      return new LocalVar(ref.name(), ref.definition());
     }
 
     @Override @Contract(" -> new") public @NotNull Arg<@NotNull Term> toArg() {

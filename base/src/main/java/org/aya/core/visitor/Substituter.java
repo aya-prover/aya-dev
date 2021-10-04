@@ -37,13 +37,12 @@ public record Substituter(
     return levelSubst.applyTo(sort);
   }
 
-  @Override
-  public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
-    return termSubst.getOrDefault(term.ref(), term);
+  @Override public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, Unit unit) {
+    return termSubst.getOption(term.ref()).map(Term::rename).getOrDefault(term);
   }
 
   @Override public @NotNull Term visitRef(@NotNull RefTerm term, Unit unused) {
-    return termSubst.getOrElse(term.var(), () ->
+    return termSubst.getOption(term.var()).map(Term::rename).getOrElse(() ->
       TermFixpoint.super.visitRef(term, Unit.unit()));
   }
 
@@ -72,10 +71,14 @@ public record Substituter(
       return map.keysView().filter(subst.map::containsKey).toImmutableSeq();
     }
 
-    public @NotNull TermSubst add(@NotNull Var var, @NotNull Term term) {
-      subst(new TermSubst(var, term));
+    public @NotNull TermSubst addDirectly(@NotNull Var var, @NotNull Term term) {
       map.put(var, term);
       return this;
+    }
+
+    public @NotNull TermSubst add(@NotNull Var var, @NotNull Term term) {
+      subst(new TermSubst(var, term));
+      return addDirectly(var, term);
     }
 
     public @NotNull TermSubst add(@NotNull TermSubst subst) {
