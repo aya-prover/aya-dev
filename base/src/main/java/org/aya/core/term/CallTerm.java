@@ -146,6 +146,9 @@ public sealed interface CallTerm extends Term {
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
   ) implements CallTerm {
+    public @NotNull FormTerm.Pi asPi(boolean explicit) {
+      return ref.core().asPi(ref.name() + "dom", ref.name() + "cod", explicit, contextArgs);
+    }
 
     public @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {
       return contextArgs.view().concat(args);

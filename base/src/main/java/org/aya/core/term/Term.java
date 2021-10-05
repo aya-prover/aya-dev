@@ -16,7 +16,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
-import org.aya.concrete.Expr;
 import org.aya.core.ops.TermToPat;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
@@ -28,7 +27,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.unify.level.LevelEqnSet;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,10 +190,6 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
 
     public @NotNull Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
       return new Param(ref, type.subst(subst, levelSubst), explicit);
-    }
-
-    public static @NotNull Param mock(@NotNull Term hole, Expr.@NotNull Param param) {
-      return new Param(new LocalVar(param.ref().name() + Constants.GENERATED_POSTFIX), hole, param.explicit());
     }
 
     @TestOnly @Contract(pure = true)
