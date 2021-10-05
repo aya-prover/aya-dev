@@ -195,11 +195,17 @@ public final class ExprTycker {
           univArgs(app, univArgs);
           yield f;
         }
-        if (!(f.type.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi piTerm))
+        var fTy = f.type.normalize(NormalizeMode.WHNF);
+        var argLicit = argument.explicit();
+        if (fTy instanceof CallTerm.Hole) {
+          var pi = generatePi(appE.sourcePos(), Constants.randomName(appE), argLicit);
+          unifier(appE.sourcePos(), Ordering.Eq).compareUntyped(fTy, pi);
+          fTy = fTy.normalize(NormalizeMode.WHNF);
+        }
+        if (!(fTy instanceof FormTerm.Pi piTerm))
           yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
         var pi = piTerm;
         var subst = new Substituter.TermSubst(MutableMap.create());
-        var argLicit = argument.explicit();
         while (pi.param().explicit() != argLicit ||
           namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
           if (argLicit || namedArg.name() != null) {
@@ -436,11 +442,14 @@ public final class ExprTycker {
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {
     var param = expr.param();
-    var pos = param.sourcePos();
-    var domain = localCtx.freshHole(FormTerm.freshUniv(pos),
-      param.ref().name() + Constants.GENERATED_POSTFIX, pos)._2;
+    return generatePi(expr.sourcePos(), param.ref().name(), param.explicit());
+  }
+
+  private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name, boolean explicit) {
+    var genName = name + Constants.GENERATED_POSTFIX;
+    var domain = localCtx.freshHole(FormTerm.freshUniv(pos), genName + "ty", pos)._2;
     var codomain = localCtx.freshHole(FormTerm.freshUniv(pos), pos)._2;
-    return new FormTerm.Pi(Term.Param.mock(domain, param), codomain);
+    return new FormTerm.Pi(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
   }
 
   private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {
