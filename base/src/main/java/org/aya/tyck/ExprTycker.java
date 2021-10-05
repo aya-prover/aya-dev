@@ -48,8 +48,6 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static org.aya.util.Constants.ANONYMOUS_PREFIX;
-
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl}.
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl}
@@ -197,8 +195,10 @@ public final class ExprTycker {
         }
         var fTy = f.type.normalize(NormalizeMode.WHNF);
         var argLicit = argument.explicit();
-        if (fTy instanceof CallTerm.Hole) {
-          var pi = generatePi(appE.sourcePos(), Constants.randomName(appE), argLicit);
+        if (fTy instanceof CallTerm.Hole fTyHole) {
+          // [ice] Cannot 'generatePi' because 'generatePi' takes the current contextTele,
+          // but it may contain variables absent from the 'contextTele' of 'fTyHole.ref.core'
+          var pi = fTyHole.asPi(argLicit);
           unifier(appE.sourcePos(), Ordering.Eq).compareUntyped(fTy, pi);
           fTy = fTy.normalize(NormalizeMode.WHNF);
         }
@@ -412,7 +412,7 @@ public final class ExprTycker {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(levelEqns))));
     Result result;
     if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
-      var implicitParam = new Term.Param(new LocalVar(ANONYMOUS_PREFIX), pi.param().type(), false);
+      var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () ->
         inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped;
       result = new Result(new IntroTerm.Lambda(implicitParam, body), pi);
