@@ -57,11 +57,11 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
 [jitpack]: https://img.shields.io/jitpack/v/github/aya-prover/aya-dev?logo=github
 [tokei]: https://img.shields.io/tokei/lines/github/aya-prover/aya-dev?logo=java
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
-[oop]: base/src/test/resources/success/add-comm.aya
+[oop]: ../base/src/test/resources/success/add-comm.aya
 [proxy]: https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
-[gadt]: base/src/test/resources/success/type-safe-norm.aya
-[regularity]: base/src/test/resources/success/regularity.aya
-[funExt]: base/src/test/resources/success/funExt.aya
+[gadt]: ../base/src/test/resources/success/type-safe-norm.aya
+[regularity]: ../base/src/test/resources/success/regularity.aya
+[funExt]: ../base/src/test/resources/success/funExt.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 
 ## Use as a library
