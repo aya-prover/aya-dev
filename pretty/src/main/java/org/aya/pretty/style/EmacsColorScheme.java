@@ -1,10 +1,10 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.style;
 
-import org.aya.pretty.printer.ColorScheme;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import org.aya.pretty.printer.ColorScheme;
 import org.jetbrains.annotations.NotNull;
 
 /**
