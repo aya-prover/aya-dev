@@ -55,6 +55,7 @@ LMAX_KW : 'lmax';
 SIGMA : 'Sig' | '\u03A3';
 LAMBDA : '\\' | '\u03BB';
 PI : 'Pi' | '\u03A0';
+FORALL : 'forall' | '\u2200';
 TO : '->' | '\u2192';
 IMPLIES : '=>' | '\u21D2';
 SUCHTHAT : '**';

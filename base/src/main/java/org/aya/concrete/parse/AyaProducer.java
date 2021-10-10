@@ -204,6 +204,10 @@ public final class AyaProducer {
     return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, true));
   }
 
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitForallTelescope(List<AyaParser.TeleContext> telescope) {
+    return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, true));
+  }
+
   public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(AyaParser.AbuseContext ctx) {
     return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
   }
@@ -254,11 +258,11 @@ public final class AyaProducer {
     return new LocalVar(id.justName(), sourcePosOf(idCtx));
   }
 
-  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx, boolean isLamTele) {
+  public @NotNull ImmutableSeq<Expr.@NotNull Param> visitTele(AyaParser.TeleContext ctx, boolean isParamLiteral) {
     var literal = ctx.literal();
     if (literal != null) {
       var pos = sourcePosOf(ctx);
-      return ImmutableSeq.of(isLamTele
+      return ImmutableSeq.of(isParamLiteral
         ? new Expr.Param(pos, visitParamLiteral(literal), type(null, pos), true)
         : new Expr.Param(pos, Constants.randomlyNamed(pos), visitLiteral(literal), true)
       );
@@ -298,6 +302,7 @@ public final class AyaProducer {
       case AyaParser.NewContext n -> visitNew(n);
       case AyaParser.LsucContext lsuc -> visitLsuc(lsuc);
       case AyaParser.LmaxContext lmax -> visitLmax(lmax);
+      case AyaParser.ForallContext forall -> visitForall(forall);
       // TODO: match
       default -> throw new UnsupportedOperationException("TODO: " + ctx.getClass());
     };
@@ -433,6 +438,15 @@ public final class AyaProducer {
       sourcePosOf(ctx),
       false,
       visitTelescope(ctx.tele()).view(),
+      visitExpr(ctx.expr())
+    );
+  }
+
+  public Expr.@NotNull PiExpr visitForall(AyaParser.ForallContext ctx) {
+    return (Expr.PiExpr) buildPi(
+      sourcePosOf(ctx),
+      false,
+      visitForallTelescope(ctx.tele()).view(),
       visitExpr(ctx.expr())
     );
   }
