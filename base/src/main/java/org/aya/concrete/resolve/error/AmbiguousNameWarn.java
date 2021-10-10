@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.resolve.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -15,7 +16,7 @@ public record AmbiguousNameWarn(
     return Severity.WARN;
   }
 
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.vcat(Doc.sep(
       Doc.english("The name"),
       Doc.styled(Style.code(), Doc.plain(name)),

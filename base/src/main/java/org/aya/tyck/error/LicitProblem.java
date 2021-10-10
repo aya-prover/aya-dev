@@ -19,12 +19,12 @@ public sealed interface LicitProblem extends Problem {
   }
 
   record LicitMismatchError(@Override @NotNull Expr expr, @NotNull Term type) implements LicitProblem, ExprProblem {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Cannot check"),
-        Doc.par(1, expr.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, expr.toDoc(options)),
         Doc.english("against the Pi type"),
-        Doc.par(1, type.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, type.toDoc(options)),
         Doc.english("because explicitness do not match"));
     }
   }
@@ -34,9 +34,9 @@ public sealed interface LicitProblem extends Problem {
       return expr.term().expr().sourcePos();
     }
 
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Unexpected implicit argument"),
-        Doc.styled(Style.code(), expr.toDoc(DistillerOptions.DEFAULT)));
+        Doc.styled(Style.code(), expr.toDoc(options)));
     }
   }
 }

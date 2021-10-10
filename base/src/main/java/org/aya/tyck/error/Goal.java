@@ -13,15 +13,15 @@ import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record Goal(@NotNull CallTerm.Hole hole, ImmutableSeq<LocalVar> scope) implements Problem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     var meta = hole.ref().core();
     var doc = Doc.vcatNonEmpty(
       Doc.english("Goal of type"),
-      Doc.par(1, meta.result.toDoc(DistillerOptions.DEFAULT)),
-      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)))),
+      Doc.par(1, meta.result.toDoc(options)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(NormalizeMode.NF).toDoc(options)))),
       Doc.plain("Context:"),
       Doc.vcat(meta.fullTelescope().map(param -> {
-        var paramDoc = param.toDoc(DistillerOptions.DEFAULT);
+        var paramDoc = param.toDoc(options);
         return Doc.par(1, scope.contains(param.ref()) ? paramDoc : Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope"))));
       })),
       meta.conditions.value.isNotEmpty() ?
@@ -29,14 +29,14 @@ public record Goal(@NotNull CallTerm.Hole hole, ImmutableSeq<LocalVar> scope) im
           ImmutableSeq.of(Doc.plain("To ensure confluence:"))
             .concat(meta.conditions.value.map(tup -> Doc.par(1, Doc.cat(
               Doc.plain("Given "),
-              Doc.parened(tup._1.toDoc(DistillerOptions.DEFAULT)),
+              Doc.parened(tup._1.toDoc(options)),
               Doc.plain(", we should have: "),
-              tup._2.toDoc(DistillerOptions.DEFAULT)
+              tup._2.toDoc(options)
             )))))
         : Doc.empty()
     );
     return meta.body == null ? doc :
-      Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, meta.body.toDoc(DistillerOptions.DEFAULT)), doc);
+      Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, meta.body.toDoc(options)), doc);
   }
 
   @Override public @NotNull SourcePos sourcePos() {

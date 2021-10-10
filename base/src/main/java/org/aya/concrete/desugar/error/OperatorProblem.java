@@ -3,6 +3,7 @@
 package org.aya.concrete.desugar.error;
 
 import kala.collection.mutable.Buffer;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
@@ -23,7 +24,7 @@ public final class OperatorProblem {
       return Severity.ERROR;
     }
 
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Ambiguous operator precedence detected between"),
         Doc.styled(Style.code(), Doc.plain(op1)),
@@ -44,7 +45,7 @@ public final class OperatorProblem {
       return Severity.ERROR;
     }
 
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.english("Self bind is not allowed");
     }
   }
@@ -57,11 +58,11 @@ public final class OperatorProblem {
         .max(Comparator.comparingInt(SourcePos::endLine));
     }
 
-    @Override public @NotNull Doc describe() {
-      return Doc.cat(
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(
         Doc.english("Precedence circle found between"),
-        Doc.ONE_WS,
-        Doc.plain(items.view().map(BinOpSet.Elem::name).sorted().joinToString(", "))
+        Doc.commaList(items.view().map(BinOpSet.Elem::name).toImmutableSeq()
+          .sorted().view().map(Doc::plain))
       );
     }
 

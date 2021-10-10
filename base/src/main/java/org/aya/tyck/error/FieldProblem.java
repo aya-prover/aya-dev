@@ -3,6 +3,7 @@
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
@@ -16,7 +17,7 @@ public sealed interface FieldProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Var> missing
   ) implements FieldProblem {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Missing field(s):"), Doc.commaList(missing.view()
         .map(BaseDistiller::varDoc)
         .map(m -> Doc.styled(Style.code(), m))));
@@ -30,7 +31,7 @@ public sealed interface FieldProblem extends Problem {
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<String> notFound
   ) implements FieldProblem {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("No such field(s):"),
         Doc.commaList(notFound.view()
           .map(m -> Doc.styled(Style.code(), Doc.plain(m))))

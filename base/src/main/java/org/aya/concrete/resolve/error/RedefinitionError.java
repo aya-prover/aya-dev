@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.resolve.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
@@ -13,7 +14,7 @@ public record RedefinitionError(
   @NotNull String name,
   @Override @NotNull SourcePos sourcePos
 ) implements Problem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(Doc.plain("Redefinition of"), Doc.plain(kind.prettyName),
       Doc.styled(Style.code(), Doc.plain(name)));
   }

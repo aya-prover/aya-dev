@@ -3,6 +3,7 @@
 package org.aya.core.visitor;
 
 import kala.tuple.Unit;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.core.sort.Sort;
@@ -82,7 +83,7 @@ public final class Zonker implements TermFixpoint<Unit> {
   }
 
   public record UnsolvedMeta(@Override @NotNull SourcePos sourcePos) implements Problem {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.plain("Unsolved meta");
     }
 

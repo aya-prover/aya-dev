@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.error;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
@@ -17,7 +18,7 @@ public record PrimDependencyError(
   @NotNull ImmutableSeq<PrimDef.ID> lack,
   @Override @NotNull SourcePos sourcePos
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     assert lack.isNotEmpty();
     return Doc.sep(
       Doc.plain("The prim"), Doc.styled(Style.code(), Doc.plain(name)),

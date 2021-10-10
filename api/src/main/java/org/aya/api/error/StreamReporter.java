@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.api.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
@@ -11,6 +12,6 @@ import java.io.PrintStream;
  */
 public record StreamReporter(@NotNull PrintStream stream) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
-    stream.println(problem.computeFullErrorMessage());
+    stream.println(problem.computeFullErrorMessage(DistillerOptions.DEFAULT));
   }
 }

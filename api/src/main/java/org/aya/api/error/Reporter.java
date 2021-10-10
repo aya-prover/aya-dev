@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.api.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public interface Reporter {
         return Severity.INFO;
       }
 
-      @Override public @NotNull Doc describe() {
+      @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
         return Doc.plain(s);
       }
     });

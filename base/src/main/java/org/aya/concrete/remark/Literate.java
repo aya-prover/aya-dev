@@ -5,7 +5,7 @@ package org.aya.concrete.remark;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.value.Ref;
-import org.aya.api.error.Problem;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
@@ -75,7 +75,7 @@ public sealed interface Literate extends Docile {
       if (def.value instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef userDef) {
         var problems = userDef.problems;
         if (problems == null) return Doc.styled(Style.bold(), Doc.english("No error message."));
-        return Doc.vcat(problems.map(Problem::brief));
+        return Doc.vcat(problems.map(problem -> problem.brief(DistillerOptions.DEFAULT)));
       }
       return Doc.styled(Style.bold(), Doc.english("Not a definition that can obtain error message."));
     }

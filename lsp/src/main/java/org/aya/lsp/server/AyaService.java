@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourceFileLocator;
@@ -81,17 +82,17 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     } catch (IOException e) {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());
     }
-    reportErrors(reporter);
+    reportErrors(reporter, DistillerOptions.DEFAULT);
     return new HighlightResult(uri, symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
-  public void reportErrors(@NotNull CollectingReporter reporter) {
+  public void reportErrors(@NotNull CollectingReporter reporter, @NotNull DistillerOptions options) {
     lastErrorReportedFiles.forEach(f ->
       Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
-      .peek(p -> Log.d(p.describe().debugRender()))
-      .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints().stream().map(t -> new InlineHintProblem(p, t))))
+      .peek(p -> Log.d(p.describe(options).debugRender()))
+      .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints(options).stream().map(t -> new InlineHintProblem(p, t))))
       .flatMap(p -> p.sourcePos().file().path().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
         t -> t._1,
@@ -104,7 +105,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var problems = diag.getValue()
         .collect(Collectors.groupingBy(Problem::sourcePos, Seq.factory()))
         .entrySet().stream()
-        .map(kv -> toDiagnostic(kv.getKey(), kv.getValue()))
+        .map(kv -> toDiagnostic(kv.getKey(), kv.getValue(), options))
         .collect(Collectors.toList());
       Log.publishProblems(new PublishDiagnosticsParams(
         filePath.toUri().toString(),
@@ -114,11 +115,11 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     lastErrorReportedFiles = diags.keySet();
   }
 
-  private @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems) {
+  private @NotNull Diagnostic toDiagnostic(@NotNull SourcePos sourcePos, @NotNull Seq<Problem> problems, @NotNull DistillerOptions options) {
     var msgBuilder = new StringBuilder();
     var severity = DiagnosticSeverity.Hint;
     for (var p : problems) {
-      msgBuilder.append(p.computeBriefErrorMessage()).append('\n');
+      msgBuilder.append(p.computeBriefErrorMessage(options)).append('\n');
       var ps = severityOf(p);
       if (ps.getValue() < severity.getValue()) severity = ps;
     }
@@ -199,7 +200,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       return docWithPos.sourcePos();
     }
 
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return docWithPos.data();
     }
 
@@ -207,8 +208,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       return owner.level();
     }
 
-    @Override public @NotNull Doc brief() {
-      return describe();
+    @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {
+      return describe(DistillerOptions.DEFAULT);
     }
   }
 }
