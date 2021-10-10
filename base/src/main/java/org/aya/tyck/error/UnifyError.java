@@ -15,14 +15,14 @@ public record UnifyError(
   @NotNull Term expected,
   @NotNull Term actual
 ) implements ExprProblem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.vcat(
       Doc.english("Cannot check the expression of type"),
-      Doc.par(1, actual.toDoc(DistillerOptions.DEFAULT)),
-      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actual.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT)))),
+      Doc.par(1, actual.toDoc(options)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actual.normalize(NormalizeMode.NF).toDoc(options)))),
       Doc.english("against the type"),
-      Doc.par(1, expected.toDoc(DistillerOptions.DEFAULT)),
-      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expected.normalize(NormalizeMode.NF).toDoc(DistillerOptions.DEFAULT))))
+      Doc.par(1, expected.toDoc(options)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expected.normalize(NormalizeMode.NF).toDoc(options))))
     );
   }
 

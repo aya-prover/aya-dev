@@ -2,13 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record ProjIxError(@Override @NotNull Expr.ProjExpr expr, int actual, int expectedBound) implements ExprProblem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.sep(
       Doc.english("Cannot project the"),
       Doc.ordinal(actual),

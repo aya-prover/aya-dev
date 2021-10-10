@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.error;
 
 import kala.collection.Seq;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
@@ -13,7 +14,7 @@ public record ModNotFoundError(
   @NotNull Seq<String> modName,
   @Override @NotNull SourcePos sourcePos
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.sep(
       Doc.english("The module name"),
       Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),

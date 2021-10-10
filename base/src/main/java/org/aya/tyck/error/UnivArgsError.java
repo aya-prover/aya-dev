@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
 import org.aya.concrete.Expr;
 import org.aya.pretty.doc.Doc;
@@ -13,7 +14,7 @@ public sealed interface UnivArgsError extends ExprProblem {
   }
 
   record SizeMismatch(@NotNull Expr.UnivArgsExpr expr, int expected) implements UnivArgsError {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(DistillerOptions options) {
       return Doc.sep(Doc.plain("Expected"), Doc.plain(String.valueOf(expected)),
         Doc.english("universe arguments, but"),
         Doc.plain(String.valueOf(expr.univArgs().size())),
@@ -22,7 +23,7 @@ public sealed interface UnivArgsError extends ExprProblem {
   }
 
   record Misplaced(@NotNull Expr.UnivArgsExpr expr) implements UnivArgsError {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(DistillerOptions options) {
       return Doc.english("Universe argument should not be placed here");
     }
   }

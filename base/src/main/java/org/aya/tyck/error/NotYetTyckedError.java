@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
@@ -11,7 +12,7 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record NotYetTyckedError(@Override @NotNull SourcePos sourcePos, @NotNull Var var) implements Problem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.cat(Doc.english("Attempting to use a definition"),
       Doc.styled(Style.code(), BaseDistiller.varDoc(var)),
       Doc.english("which is not yet typechecked"));

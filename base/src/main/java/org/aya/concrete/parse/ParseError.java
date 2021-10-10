@@ -2,13 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.parse;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record ParseError(@Override @NotNull SourcePos sourcePos, @NotNull String message) implements Problem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.plain("Parser error: " + message);
   }
 

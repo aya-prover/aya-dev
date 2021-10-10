@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourceFileLocator;
@@ -90,7 +91,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
     var diags = reporter.problems().stream()
       .filter(p -> p.sourcePos().belongsToSomeFile())
-      .peek(p -> Log.d(p.describe().debugRender()))
+      .peek(p -> Log.d(p.describe(DistillerOptions.DEFAULT).debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints().stream().map(t -> new InlineHintProblem(p, t))))
       .flatMap(p -> p.sourcePos().file().path().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
@@ -199,7 +200,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       return docWithPos.sourcePos();
     }
 
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(DistillerOptions options) {
       return docWithPos.data();
     }
 
@@ -208,7 +209,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     }
 
     @Override public @NotNull Doc brief() {
-      return describe();
+      return describe(DistillerOptions.DEFAULT);
     }
   }
 }

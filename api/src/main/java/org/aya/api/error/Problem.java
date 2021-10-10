@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.WithPos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
@@ -34,7 +35,7 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  @NotNull Doc describe();
+  @NotNull Doc describe(DistillerOptions options);
   @NotNull Severity level();
   default @NotNull Stage stage() {
     return Stage.OTHER;
@@ -74,7 +75,7 @@ public interface Problem {
       case INFO -> Doc.plain("Info:");
       case ERROR -> Doc.plain("Error:");
     };
-    var doc = Doc.sep(tag, Doc.align(describe()));
+    var doc = Doc.sep(tag, Doc.align(describe(DistillerOptions.DEFAULT)));
     var hint = hint();
     return hint instanceof Doc.Empty ? doc : Doc.vcat(
       doc,
@@ -83,7 +84,7 @@ public interface Problem {
   }
 
   default @NotNull String computeFullErrorMessage() {
-    if (sourcePos() == SourcePos.NONE) return describe().commonRender();
+    if (sourcePos() == SourcePos.NONE) return describe(DistillerOptions.DEFAULT).commonRender();
     return toPrettyError().toDoc().commonRender();
   }
 

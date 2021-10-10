@@ -3,6 +3,7 @@
 package org.aya.concrete.resolve.error;
 
 import kala.collection.Seq;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
@@ -15,7 +16,7 @@ public record QualifiedNameNotFoundError(
   @NotNull String name,
   @Override @NotNull SourcePos sourcePos
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.sep(
       Doc.english("The qualified name"),
       Doc.styled(Style.code(),

@@ -4,6 +4,7 @@ package org.aya.concrete.resolve.error;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.pretty.doc.Doc;
@@ -19,7 +20,7 @@ public record AmbiguousNameError(
     return Severity.ERROR;
   }
 
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.vcat(Doc.cat(
         Doc.english("The unqualified name"),
         Doc.styled(Style.code(), Doc.plain(name)),

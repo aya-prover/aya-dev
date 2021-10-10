@@ -10,10 +10,10 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record GeneralizedNotAvailableError(@Override @NotNull Expr expr) implements ExprProblem, ResolveProblem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.sep(
       Doc.english("The generalized variable"),
-      Doc.styled(Style.code(), expr.toDoc(DistillerOptions.DEFAULT)),
+      Doc.styled(Style.code(), expr.toDoc(options)),
       Doc.english("is not available here")
     );
   }

@@ -34,12 +34,12 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull SourcePos conditionPos,
     @NotNull SourcePos iPos, @Nullable SourcePos jPos
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(DistillerOptions options) {
       var result = rhs != null ? Doc.sep(
         Doc.plain("unify"),
-        Doc.styled(Style.code(), lhs.toDoc(DistillerOptions.DEFAULT)),
+        Doc.styled(Style.code(), lhs.toDoc(options)),
         Doc.plain("and"),
-        Doc.styled(Style.code(), rhs.toDoc(DistillerOptions.DEFAULT))
+        Doc.styled(Style.code(), rhs.toDoc(options))
       ) : Doc.english("even reduce one of the clause(s) to check condition");
       return Doc.sep(
         Doc.plain("The"),
@@ -65,7 +65,7 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(DistillerOptions options) {
       return Doc.vcat(
         Doc.sep(
           Doc.plain("The"),
@@ -73,9 +73,9 @@ public sealed interface ClausesProblem extends Problem {
           Doc.english("and the"),
           Doc.ordinal(j),
           Doc.english("clauses are not confluent because we failed to unify")),
-        Doc.par(1, lhs.toDoc(DistillerOptions.DEFAULT)),
+        Doc.par(1, lhs.toDoc(options)),
         Doc.plain("and"),
-        Doc.par(1, rhs.toDoc(DistillerOptions.DEFAULT))
+        Doc.par(1, rhs.toDoc(options))
       );
     }
 
@@ -92,16 +92,16 @@ public sealed interface ClausesProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pattern> pats
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe() {
-      return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(t -> t.toDoc(DistillerOptions.DEFAULT))));
+    @Override public @NotNull Doc describe(DistillerOptions options) {
+      return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(t -> t.toDoc(options))));
     }
   }
 
   record SplitInterval(@Override @NotNull SourcePos sourcePos, @NotNull Pat pat) implements ClausesProblem {
-    @Override public @NotNull Doc describe() {
+    @Override public @NotNull Doc describe(DistillerOptions options) {
       return Doc.sep(
         Doc.english("Cannot perform pattern matching"),
-        Doc.styled(Style.code(), pat.toDoc(DistillerOptions.DEFAULT))
+        Doc.styled(Style.code(), pat.toDoc(options))
       );
     }
   }

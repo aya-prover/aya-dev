@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.resolve.error;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -11,7 +12,7 @@ public record UnknownOperatorError(
   @Override @NotNull SourcePos sourcePos,
   @NotNull String name
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe() {
+  @Override public @NotNull Doc describe(DistillerOptions options) {
     return Doc.sep(
       Doc.english("Unknown operator"),
       Doc.styled(Style.code(), Doc.plain(name)),
