@@ -16,7 +16,7 @@ public record ShadowingWarn(
     return Severity.WARN;
   }
 
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(Doc.english("The name"),
       Doc.styled(Style.code(), Doc.plain(name)),
       Doc.english("shadows a previous local definition from outer scope")

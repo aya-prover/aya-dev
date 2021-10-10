@@ -31,7 +31,7 @@ public sealed interface HoleProblem extends Problem {
     @Override @NotNull CallTerm.Hole term,
     @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Can't perform pattern unification on hole with the following spine:"),
         Doc.commaList(term.args().map(a -> a.toDoc(options)))
@@ -45,7 +45,7 @@ public sealed interface HoleProblem extends Problem {
     @NotNull Seq<LocalVar> scopeCheck,
     @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("The solution"),
         Doc.par(1, solved.toDoc(options)),
@@ -66,7 +66,7 @@ public sealed interface HoleProblem extends Problem {
     @NotNull Term sol,
     @Override @NotNull SourcePos sourcePos
   ) implements HoleProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.sep(
           Doc.english("Trying to solve hole"),
@@ -84,11 +84,11 @@ public sealed interface HoleProblem extends Problem {
       return eqns.last().pos();
     }
 
-    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
+    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
       return eqns.map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc(options)));
     }
 
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.english("Solving equation(s) with not very general solution(s)");
     }
 

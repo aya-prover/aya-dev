@@ -17,7 +17,7 @@ public record LevelMismatchError(
   @Nullable SourcePos pos,
   @NotNull ImmutableSeq<LevelEqnSet.Eqn> eqns
 ) implements Problem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.vcat(Doc.english("Cannot solve the following level equation(s):"),
       Doc.nest(2, Doc.vcat(
         eqns.map(eqn -> eqn.toDoc(options)))));
@@ -27,7 +27,7 @@ public record LevelMismatchError(
     return pos != null ? pos : eqns.first().sourcePos();
   }
 
-  @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
+  @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
     return eqns.view().map(eqn ->
       new WithPos<>(eqn.sourcePos(), eqn.toDoc(options)));
   }

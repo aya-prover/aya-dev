@@ -22,9 +22,9 @@ public sealed interface ClausesProblem extends Problem {
     return Severity.ERROR;
   }
 
-  private static @NotNull Doc termToHint(@Nullable Term term) {
+  private static @NotNull Doc termToHint(@Nullable Term term, @NotNull DistillerOptions options) {
     return term == null ? Doc.empty() : Doc.sep(Doc.english("substituted to"),
-      Doc.styled(Style.code(), term.toDoc(DistillerOptions.DEFAULT)));
+      Doc.styled(Style.code(), term.toDoc(options)));
   }
 
   record Conditions(
@@ -34,7 +34,7 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull SourcePos conditionPos,
     @NotNull SourcePos iPos, @Nullable SourcePos jPos
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       var result = rhs != null ? Doc.sep(
         Doc.plain("unify"),
         Doc.styled(Style.code(), lhs.toDoc(options)),
@@ -51,11 +51,11 @@ public sealed interface ClausesProblem extends Problem {
       );
     }
 
-    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints() {
+    @Override public @NotNull SeqLike<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
       var view = Seq.of(
         new WithPos<>(conditionPos, Doc.plain("relevant condition")),
-        new WithPos<>(iPos, termToHint(lhs))).view();
-      return rhs == null || jPos == null ? view : view.concat(Seq.of(new WithPos<>(jPos, termToHint(rhs))));
+        new WithPos<>(iPos, termToHint(lhs, options))).view();
+      return rhs == null || jPos == null ? view : view.concat(Seq.of(new WithPos<>(jPos, termToHint(rhs, options))));
     }
   }
 
@@ -65,7 +65,7 @@ public sealed interface ClausesProblem extends Problem {
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull SourcePos iPos, @NotNull SourcePos jPos
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.sep(
           Doc.plain("The"),
@@ -79,9 +79,9 @@ public sealed interface ClausesProblem extends Problem {
       );
     }
 
-    @Override public @NotNull Seq<WithPos<Doc>> inlineHints() {
-      return Seq.of(new WithPos<>(iPos, termToHint(lhs)),
-        new WithPos<>(jPos, termToHint(rhs)));
+    @Override public @NotNull Seq<WithPos<Doc>> inlineHints(@NotNull DistillerOptions options) {
+      return Seq.of(new WithPos<>(iPos, termToHint(lhs, options)),
+        new WithPos<>(jPos, termToHint(rhs, options)));
     }
   }
 
@@ -92,13 +92,13 @@ public sealed interface ClausesProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pattern> pats
   ) implements ClausesProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Unhandled case:"), Doc.commaList(pats.map(t -> t.toDoc(options))));
     }
   }
 
   record SplitInterval(@Override @NotNull SourcePos sourcePos, @NotNull Pat pat) implements ClausesProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Cannot perform pattern matching"),
         Doc.styled(Style.code(), pat.toDoc(options))

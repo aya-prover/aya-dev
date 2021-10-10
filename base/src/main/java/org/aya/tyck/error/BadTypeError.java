@@ -20,7 +20,7 @@ public record BadTypeError(
     return Severity.ERROR;
   }
 
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.vcat(
       Doc.sep(Doc.english("Unable to"), action, Doc.english("the expression")),
       Doc.par(1, expr.toDoc(options)),

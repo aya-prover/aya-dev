@@ -18,7 +18,7 @@ public record PrimDependencyError(
   @NotNull ImmutableSeq<PrimDef.ID> lack,
   @Override @NotNull SourcePos sourcePos
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     assert lack.isNotEmpty();
     return Doc.sep(
       Doc.plain("The prim"), Doc.styled(Style.code(), Doc.plain(name)),

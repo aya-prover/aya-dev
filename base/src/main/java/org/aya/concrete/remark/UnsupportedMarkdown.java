@@ -19,7 +19,7 @@ public record UnsupportedMarkdown(
     return Severity.WARN;
   }
 
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.english("Unsupported markdown syntax: " + nodeName + ".");
   }
 }

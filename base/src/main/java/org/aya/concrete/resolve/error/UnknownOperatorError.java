@@ -12,7 +12,7 @@ public record UnknownOperatorError(
   @Override @NotNull SourcePos sourcePos,
   @NotNull String name
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("Unknown operator"),
       Doc.styled(Style.code(), Doc.plain(name)),

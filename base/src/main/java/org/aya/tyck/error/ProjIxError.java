@@ -9,7 +9,7 @@ import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record ProjIxError(@Override @NotNull Expr.ProjExpr expr, int actual, int expectedBound) implements ExprProblem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("Cannot project the"),
       Doc.ordinal(actual),

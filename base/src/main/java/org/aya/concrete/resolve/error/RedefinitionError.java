@@ -14,7 +14,7 @@ public record RedefinitionError(
   @NotNull String name,
   @Override @NotNull SourcePos sourcePos
 ) implements Problem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(Doc.plain("Redefinition of"), Doc.plain(kind.prettyName),
       Doc.styled(Style.code(), Doc.plain(name)));
   }

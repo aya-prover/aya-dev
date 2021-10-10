@@ -12,7 +12,7 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public record NotYetTyckedError(@Override @NotNull SourcePos sourcePos, @NotNull Var var) implements Problem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.cat(Doc.english("Attempting to use a definition"),
       Doc.styled(Style.code(), BaseDistiller.varDoc(var)),
       Doc.english("which is not yet typechecked"));

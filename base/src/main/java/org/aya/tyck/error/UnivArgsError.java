@@ -14,7 +14,7 @@ public sealed interface UnivArgsError extends ExprProblem {
   }
 
   record SizeMismatch(@NotNull Expr.UnivArgsExpr expr, int expected) implements UnivArgsError {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.plain("Expected"), Doc.plain(String.valueOf(expected)),
         Doc.english("universe arguments, but"),
         Doc.plain(String.valueOf(expr.univArgs().size())),
@@ -23,7 +23,7 @@ public sealed interface UnivArgsError extends ExprProblem {
   }
 
   record Misplaced(@NotNull Expr.UnivArgsExpr expr) implements UnivArgsError {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.english("Universe argument should not be placed here");
     }
   }

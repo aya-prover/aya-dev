@@ -24,7 +24,7 @@ public sealed interface PatternProblem extends Problem {
     @Override @NotNull Pattern pattern,
     @NotNull CallTerm.ConHead available
   ) implements PatternProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Absurd pattern does not fit here because"),
         Doc.styled(Style.code(), BaseDistiller.varDoc(available.ref())),
@@ -38,7 +38,7 @@ public sealed interface PatternProblem extends Problem {
   }
 
   record SplittingOnNonData(@Override @NotNull Pattern pattern, @NotNull Term type) implements PatternProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Cannot split on a non-inductive type"),
         Doc.par(1, type.toDoc(options)),
@@ -52,7 +52,7 @@ public sealed interface PatternProblem extends Problem {
   }
 
   record UnavailableCtor(@Override @NotNull Pattern pattern, @NotNull Severity level) implements PatternProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Cannot match with"),
         Doc.par(1, pattern.toDoc(options)),
@@ -63,7 +63,7 @@ public sealed interface PatternProblem extends Problem {
   }
 
   record UnknownCtor(@Override @NotNull Pattern pattern) implements PatternProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Unknown constructor"),
         Doc.par(1, pattern.toDoc(options))
@@ -76,7 +76,7 @@ public sealed interface PatternProblem extends Problem {
   }
 
   record TupleNonSig(@Override @NotNull Pattern.Tuple pattern, @NotNull Term type) implements PatternProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("The tuple pattern"),
         Doc.par(1, pattern.toDoc(options)),
@@ -91,7 +91,7 @@ public sealed interface PatternProblem extends Problem {
   }
 
   record TooManyPattern(@Override @NotNull Pattern pattern, @NotNull Term retTy) implements PatternProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("There is no parameter for the pattern"),
         Doc.par(1, pattern.toDoc(options)),

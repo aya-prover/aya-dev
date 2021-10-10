@@ -14,7 +14,7 @@ public record DuplicateNameError(
   @NotNull String name, @NotNull Var ref,
   @Override @NotNull SourcePos sourcePos
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The name"),
       Doc.plain(name),

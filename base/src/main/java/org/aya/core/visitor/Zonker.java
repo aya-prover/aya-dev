@@ -83,7 +83,7 @@ public final class Zonker implements TermFixpoint<Unit> {
   }
 
   public record UnsolvedMeta(@Override @NotNull SourcePos sourcePos) implements Problem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.plain("Unsolved meta");
     }
 

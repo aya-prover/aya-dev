@@ -14,7 +14,7 @@ public record DuplicateModNameError(
   @NotNull Seq<String> modName,
   @Override @NotNull SourcePos sourcePos
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The module name"),
       Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),

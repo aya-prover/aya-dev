@@ -13,7 +13,7 @@ public record UnknownPrimError(
   @Override @NotNull SourcePos sourcePos,
   @NotNull String name
 ) implements Problem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.plain("Unknown primitive"),
       Doc.styled(Style.code(), Doc.plain(name)));

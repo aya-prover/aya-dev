@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ public final class ThrowingReporter implements Reporter {
   }
 
   @Override public void report(@NotNull Problem problem) {
-    var render = problem.computeFullErrorMessage();
+    var render = problem.computeFullErrorMessage(DistillerOptions.DEFAULT);
     if (!problem.isError()) {
       System.err.println(render);
       return;

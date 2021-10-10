@@ -29,7 +29,7 @@ public interface Reporter {
         return Severity.INFO;
       }
 
-      @Override public @NotNull Doc describe(DistillerOptions options) {
+      @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
         return Doc.plain(s);
       }
     });

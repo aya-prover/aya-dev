@@ -17,7 +17,7 @@ public sealed interface FieldProblem extends Problem {
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Var> missing
   ) implements FieldProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Missing field(s):"), Doc.commaList(missing.view()
         .map(BaseDistiller::varDoc)
         .map(m -> Doc.styled(Style.code(), m))));
@@ -31,7 +31,7 @@ public sealed interface FieldProblem extends Problem {
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<String> notFound
   ) implements FieldProblem {
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("No such field(s):"),
         Doc.commaList(notFound.view()
           .map(m -> Doc.styled(Style.code(), Doc.plain(m))))

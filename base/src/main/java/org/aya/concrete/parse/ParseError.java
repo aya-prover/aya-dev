@@ -9,7 +9,7 @@ import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record ParseError(@Override @NotNull SourcePos sourcePos, @NotNull String message) implements Problem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.plain("Parser error: " + message);
   }
 

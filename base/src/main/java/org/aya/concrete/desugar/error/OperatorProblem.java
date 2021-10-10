@@ -24,7 +24,7 @@ public final class OperatorProblem {
       return Severity.ERROR;
     }
 
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Ambiguous operator precedence detected between"),
         Doc.styled(Style.code(), Doc.plain(op1)),
@@ -45,7 +45,7 @@ public final class OperatorProblem {
       return Severity.ERROR;
     }
 
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.english("Self bind is not allowed");
     }
   }
@@ -58,7 +58,7 @@ public final class OperatorProblem {
         .max(Comparator.comparingInt(SourcePos::endLine));
     }
 
-    @Override public @NotNull Doc describe(DistillerOptions options) {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Precedence circle found between"),
         Doc.commaList(items.view().map(BinOpSet.Elem::name).map(Doc::plain).sorted())

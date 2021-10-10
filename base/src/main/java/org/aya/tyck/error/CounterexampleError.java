@@ -11,7 +11,7 @@ import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public record CounterexampleError(@Override @NotNull SourcePos sourcePos, @NotNull Var var) implements Problem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The counterexample"),
       BaseDistiller.varDoc(var),

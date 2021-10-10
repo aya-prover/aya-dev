@@ -16,7 +16,7 @@ public record AmbiguousNameWarn(
     return Severity.WARN;
   }
 
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.vcat(Doc.sep(
       Doc.english("The name"),
       Doc.styled(Style.code(), Doc.plain(name)),

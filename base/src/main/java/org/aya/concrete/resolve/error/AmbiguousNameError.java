@@ -20,7 +20,7 @@ public record AmbiguousNameError(
     return Severity.ERROR;
   }
 
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.vcat(Doc.cat(
         Doc.english("The unqualified name"),
         Doc.styled(Style.code(), Doc.plain(name)),

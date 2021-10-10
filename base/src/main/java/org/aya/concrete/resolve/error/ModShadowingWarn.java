@@ -18,7 +18,7 @@ public record ModShadowingWarn(
     return Severity.WARN;
   }
 
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The module name"),
       Doc.styled(Style.code(), Doc.plain(QualifiedID.join(modName))),

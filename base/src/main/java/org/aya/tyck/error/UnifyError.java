@@ -15,7 +15,7 @@ public record UnifyError(
   @NotNull Term expected,
   @NotNull Term actual
 ) implements ExprProblem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.vcat(
       Doc.english("Cannot check the expression of type"),
       Doc.par(1, actual.toDoc(options)),

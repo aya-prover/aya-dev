@@ -12,7 +12,7 @@ public record UnqualifiedNameNotFoundError(
   @NotNull String name,
   @Override @NotNull SourcePos sourcePos
 ) implements ResolveProblem {
-  @Override public @NotNull Doc describe(DistillerOptions options) {
+  @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The name"),
       Doc.styled(Style.code(), Doc.plain(name)),
