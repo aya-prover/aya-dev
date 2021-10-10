@@ -61,7 +61,8 @@ public final class OperatorProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Precedence circle found between"),
-        Doc.commaList(items.view().map(BinOpSet.Elem::name).map(Doc::plain).sorted())
+        Doc.commaList(items.view().map(BinOpSet.Elem::name).toImmutableSeq()
+          .sorted().view().map(Doc::plain))
       );
     }
 
