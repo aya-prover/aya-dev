@@ -92,6 +92,7 @@ expr : atom                            # single
      | LSUC_KW atom                    # lsuc
      | LMAX_KW atom+                   # lmax
      | PI tele+ TO expr                # pi
+     | FORALL tele+ TO expr            # forall
      | SIGMA tele+ SUCHTHAT expr       # sigma
      | LAMBDA tele+ (IMPLIES expr?)?   # lam
      | MATCH exprList clauses          # match
