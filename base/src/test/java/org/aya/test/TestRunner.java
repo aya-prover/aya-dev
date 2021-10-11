@@ -22,12 +22,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestRunner {
-  public static final @NotNull Path TEST_SOURCE_DIR = Paths.get("src", "test", "resources").toAbsolutePath();
+  public static final @NotNull Path DEFAULT_TEST_DIR = Paths.get("src", "test", "resources").toAbsolutePath();
   public static final @NotNull SourceFileLocator LOCATOR = new SourceFileLocator() {
   };
 
@@ -40,19 +41,38 @@ public class TestRunner {
     Global.reset();
   }
 
-  @Test void runAllAyaTests() throws IOException {
-    runDir(TEST_SOURCE_DIR.resolve("success"), true);
-    runDir(TEST_SOURCE_DIR.resolve("failure"), false);
+  /**
+   * Run all tests under DEFAULT_TEST_DIR, using JUnit.
+   * For running single test, use the main() function below.
+   */
+  @Test void runAllAyaTests() {
+    runDir(DEFAULT_TEST_DIR.resolve("success"), true);
+    runDir(DEFAULT_TEST_DIR.resolve("failure"), false);
   }
 
-  private void runDir(@NotNull Path path, boolean expectSuccess) throws IOException {
+  public static void main(String[] args) {
+    TestRunner.startDash();
+    var runner = new TestRunner();
+    Arrays.stream(args).map(Paths::get).forEach(path -> {
+      if (Files.isRegularFile(path)) runner.runFile(path, true);
+      else if (Files.isDirectory(path)) runner.runDir(path, true);
+      else fail("Unsupported test target: " + path.toAbsolutePath());
+    });
+    TestRunner.exit();
+  }
+
+  private void runDir(@NotNull Path path, boolean expectSuccess) {
     System.out.println(":: Running tests under " + path.toAbsolutePath());
     assertTrue(path.toFile().isDirectory(), "should be a directory");
 
-    Files.walk(path)
-      .filter(Files::isRegularFile)
-      .filter(f -> f.getFileName().toString().endsWith(".aya"))
-      .forEach(file -> runFile(file, expectSuccess));
+    try {
+      Files.walk(path)
+        .filter(Files::isRegularFile)
+        .filter(f -> f.getFileName().toString().endsWith(".aya"))
+        .forEach(file -> runFile(file, expectSuccess));
+    } catch (IOException e) {
+      fail("error reading directory " + path.toAbsolutePath());
+    }
   }
 
   private void runFile(@NotNull Path file, boolean expectSuccess) {
