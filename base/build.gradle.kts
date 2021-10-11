@@ -37,3 +37,9 @@ tasks.named<Test>("test") {
   testLogging.showCauses = true
   inputs.dir(projectDir.resolve("src/test/resources"))
 }
+
+tasks.register<JavaExec>("runCustomTest") {
+  group = "Execition"
+  classpath = sourceSets.test.get().runtimeClasspath
+  main = "org.aya.test.TestRunner"
+}

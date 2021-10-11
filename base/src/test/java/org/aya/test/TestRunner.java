@@ -56,6 +56,7 @@ public class TestRunner {
     Arrays.stream(args).map(Paths::get).forEach(path -> {
       if (Files.isRegularFile(path)) runner.runFile(path, true);
       else if (Files.isDirectory(path)) runner.runDir(path, true);
+      else if (Files.notExists(path)) fail("Test target not found: " + path.toAbsolutePath());
       else fail("Unsupported test target: " + path.toAbsolutePath());
     });
     TestRunner.exit();
