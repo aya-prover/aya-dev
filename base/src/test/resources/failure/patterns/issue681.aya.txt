@@ -1,8 +1,8 @@
-In file $FILE:32:4 ->
+In file $FILE:30:4 ->
 
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
+  28 | 
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
            ^--^
 
 Error: There is no parameter for the pattern
@@ -12,11 +12,11 @@ Error: There is no parameter for the pattern
         (add x y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:32:10 ->
+In file $FILE:30:10 ->
 
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
+  28 | 
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
                  ^^
 
 Error: There is no parameter for the pattern
@@ -26,11 +26,11 @@ Error: There is no parameter for the pattern
         (add x y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:32:13 ->
+In file $FILE:30:13 ->
 
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
+  28 | 
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
                     ^^
 
 Error: There is no parameter for the pattern
@@ -40,11 +40,11 @@ Error: There is no parameter for the pattern
         (add x y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:32:18 ->
+In file $FILE:30:18 ->
 
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
+  28 | 
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
                          ^-^
 
 Error: Cannot check the expression of type
@@ -55,11 +55,11 @@ Error: Cannot check the expression of type
         (add x y) z)
          (Normalized: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Path (λ i ⇒ Nat)
         (add x (add y z)) (add (add x y) z))
-In file $FILE:33:4 ->
+In file $FILE:31:4 ->
 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
+  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
            ^---^
 
 Error: There is no parameter for the pattern
@@ -69,11 +69,11 @@ Error: There is no parameter for the pattern
         (add x y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:33:11 ->
+In file $FILE:31:11 ->
 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
+  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
                   ^^
 
 Error: There is no parameter for the pattern
@@ -83,11 +83,11 @@ Error: There is no parameter for the pattern
         (add x y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:33:14 ->
+In file $FILE:31:14 ->
 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
+  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
                      ^^
 
 Error: There is no parameter for the pattern
@@ -97,11 +97,11 @@ Error: There is no parameter for the pattern
         (add x y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:33:19 ->
+In file $FILE:31:19 ->
 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
+  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
                           ^---------------------^
 
 Error: Cannot check the expression of type

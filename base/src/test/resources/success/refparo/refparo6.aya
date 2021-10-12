@@ -12,8 +12,6 @@ def idp {A : Type} (a : A) : a = a => path (\ i => a)
 def coe {a b : Type} (eq : a = b) (x : a) (i : I) : eq.at i
   => arcoe eq.at x i
 
-bind = looser application
-
 open data Unit : Type 0 | unit
 open data Entity : Type 0 | john
 struct EventT : Type 1 | agentT : Type 0

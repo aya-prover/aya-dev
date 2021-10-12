@@ -1,8 +1,8 @@
-In file $FILE:30:63 ->
+In file $FILE:29:63 ->
 
-  28 |   => path (hfill2d p q r right)
-  29 | 
-  30 | def sym {A : Type} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) idp p
+  27 |   => path (hfill2d p q r right)
+  28 | 
+  29 | def sym {A : Type} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) idp p
                                                                       ^---^
 
 Error: Unable to apply the expression

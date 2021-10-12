@@ -13,8 +13,6 @@ def path {A : I -> Type} (p : Pi (i : I) -> A i)
 def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
-bind application tighter =
-
 open data Unit : Type | unit
 
 struct Struct : Type

@@ -11,8 +11,6 @@ def path {A : I -> Type} (p : Pi (i : I) -> A i)
 def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
-bind = looser application
-
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 

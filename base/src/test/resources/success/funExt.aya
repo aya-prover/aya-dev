@@ -10,8 +10,6 @@ def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
 def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
 
-bind = looser application
-
 def funExt {A B : Type} (f g : A -> B) (p : Pi (a : A) -> f a = g a) : f = g
   => path (\ i x => (p x).at i)
 

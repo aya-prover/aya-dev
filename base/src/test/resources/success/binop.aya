@@ -2,6 +2,5 @@ open data Nat : Type | zero | suc Nat
 def `+` add (a b : Nat) : Nat
  | zero, b => b
  | suc a, b => suc (a + b)
-bind + looser application
 example def test => (+ zero) zero
 example def test2 => + zero

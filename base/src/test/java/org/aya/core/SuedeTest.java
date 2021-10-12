@@ -55,7 +55,6 @@ public class SuedeTest {
          | right => b
        }
       def `=` Eq {A : Type} (a b : A) : Type => Path (\\ i => A) a b
-      bind = looser application
       prim arcoe
       def hfill2d {A : Type} {a b c d : A}
         (p : a = b) (q : b = d) (r : a = c)

@@ -14,8 +14,6 @@ def idp {A : Type} (a : A) : a = a => path (\ i => a)
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
-bind = looser application
-
 def `∘` comp { A B C : Type } ( g : B -> C ) ( f : A -> B ) : A -> C
  => \ x => g (f x)
 
