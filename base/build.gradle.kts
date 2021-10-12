@@ -39,7 +39,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.register<JavaExec>("runCustomTest") {
-  group = "Execition"
+  group = "Execution"
   classpath = sourceSets.test.get().runtimeClasspath
   main = "org.aya.test.TestRunner"
 }

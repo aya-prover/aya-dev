@@ -34,9 +34,9 @@ public sealed interface Command extends Stmt {
    */
   record Bind(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull Either<QualifiedID, OpDecl> op,
+    @NotNull QualifiedID op,
     @NotNull BindPred pred,
-    @NotNull Either<QualifiedID, OpDecl> target,
+    @NotNull QualifiedID target,
     @NotNull Ref<@Nullable Context> context,
     @NotNull Ref<@Nullable OpDecl> resolvedOp,
     @NotNull Ref<@Nullable OpDecl> resolvedTarget

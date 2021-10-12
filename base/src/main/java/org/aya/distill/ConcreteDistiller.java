@@ -291,9 +291,9 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   @Override public Doc visitBind(Command.@NotNull Bind bind, Unit unit) {
     return Doc.sep(
       Doc.styled(KEYWORD, "bind"),
-      Doc.plain(bind.op().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator()).name())),
+      Doc.plain(bind.op().join()),
       Doc.styled(KEYWORD, bind.pred().keyword),
-      Doc.plain(bind.target().fold(QualifiedID::join, op -> Objects.requireNonNull(op.asOperator()).name()))
+      Doc.plain(bind.target().join())
     );
   }
 

@@ -24,8 +24,7 @@ remark : DOC_COMMENT+;
 importCmd : IMPORT qualifiedId (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? qualifiedId useHide?;
 module : MODULE_KW ID LBRACE stmt* RBRACE;
-bind : BIND_KW bindOp (TIGHTER | LOOSER) bindOp;
-bindOp : qualifiedId | OP_APP;
+bind : BIND_KW qualifiedId (TIGHTER | LOOSER) qualifiedId;
 
 useHide : use+
         | hide+;

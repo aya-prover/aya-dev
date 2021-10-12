@@ -6,7 +6,6 @@ POSTFIX : '`' ID;
 // operator precedence
 TIGHTER : 'tighter';
 LOOSER : 'looser';
-OP_APP : 'application';
 
 // samples
 EXAMPLE : 'example';

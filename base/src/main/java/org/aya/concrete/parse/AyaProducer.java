@@ -134,21 +134,16 @@ public final class AyaProducer {
   }
 
   public Command.@NotNull Bind visitBind(AyaParser.BindContext ctx) {
-    var bindOp = ctx.bindOp();
+    var bindOp = ctx.qualifiedId();
     return new Command.Bind(
       sourcePosOf(ctx),
-      visitBindOp(bindOp.get(0)),
+      visitQualifiedId(bindOp.get(0)),
       ctx.TIGHTER() != null ? Command.BindPred.Tighter : Command.BindPred.Looser,
-      visitBindOp(bindOp.get(1)),
+      visitQualifiedId(bindOp.get(1)),
       new Ref<>(null),
       new Ref<>(null),
       new Ref<>(null)
     );
-  }
-
-  public Either<QualifiedID, OpDecl> visitBindOp(AyaParser.BindOpContext ctx) {
-    if (ctx.OP_APP() != null) return Either.right(OpDecl.APP);
-    else return Either.left(visitQualifiedId(ctx.qualifiedId()));
   }
 
   public @NotNull Sample visitSample(AyaParser.SampleContext ctx) {

@@ -62,12 +62,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   private @NotNull Tuple2<String, @NotNull OpDecl>
-  resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull Either<QualifiedID, OpDecl> idOrOp) {
-    if (idOrOp.isRight()) {
-      var builtin = idOrOp.getRightValue();
-      return Tuple.of(Objects.requireNonNull(builtin.asOperator()).name(), builtin);
-    }
-    var id = idOrOp.getLeftValue();
+  resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull QualifiedID id) {
     var var = ctx.get(id);
     if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
       return Tuple.of(defVar.name(), op);

@@ -21,8 +21,11 @@ public record BinOpSet(
   @NotNull MutableSet<Elem> ops,
   @NotNull MutableHashMap<Elem, MutableHashSet<Elem>> tighterGraph
 ) {
+  static final @NotNull Elem APP_ELEM = Elem.from("application",
+    () -> new OpDecl.Operator("application", Assoc.Infix), SourcePos.NONE);
+
   public BinOpSet(@NotNull Reporter reporter) {
-    this(reporter, MutableSet.of(), MutableHashMap.of());
+    this(reporter, MutableSet.of(APP_ELEM), MutableHashMap.of());
   }
 
   public void bind(@NotNull Tuple2<String, @NotNull OpDecl> op,
@@ -42,6 +45,9 @@ public record BinOpSet(
   }
 
   public PredCmp compare(@NotNull Elem lhs, @NotNull Elem rhs) {
+    // BinOp all have lower priority than application
+    if (lhs == APP_ELEM) return PredCmp.Tighter;
+    if (rhs == APP_ELEM) return PredCmp.Looser;
     if (lhs == rhs) return PredCmp.Equal;
     if (hasPath(MutableSet.of(), lhs, rhs)) return PredCmp.Tighter;
     if (hasPath(MutableSet.of(), rhs, lhs)) return PredCmp.Looser;
@@ -59,11 +65,11 @@ public record BinOpSet(
   }
 
   public Assoc assocOf(@Nullable Tuple3<String, @NotNull OpDecl, String> opDecl) {
-    if (isNotUsedAsOperator(opDecl)) return Assoc.NoFix;
+    if (isOperand(opDecl)) return Assoc.NoFix;
     return ensureHasElem(opDecl._1, opDecl._2).assoc;
   }
 
-  public boolean isNotUsedAsOperator(@Nullable Tuple3<String, @NotNull OpDecl, String> opDecl) {
+  public boolean isOperand(@Nullable Tuple3<String, @NotNull OpDecl, String> opDecl) {
     return opDecl == null || opDecl._1.equals(opDecl._3);
   }
 

@@ -50,7 +50,7 @@ public final class BinOpParser {
     var seqWithApp = Buffer.<BinOpParser.Elem>create();
     boolean lastIsUsedAsOp = false;
     for (var expr : seq) {
-      if (expr.isNotUsedAsOp(opSet)) {
+      if (expr.isOperand(opSet)) {
         if (!lastIsUsedAsOp && seqWithApp.isNotEmpty()) seqWithApp.append(Elem.OP_APP);
         lastIsUsedAsOp = false;
       } else {
@@ -61,7 +61,7 @@ public final class BinOpParser {
 
     // convert infix to prefix
     for (var expr : seqWithApp) {
-      if (expr.isNotUsedAsOp(opSet)) prefixes.append(expr);
+      if (expr.isOperand(opSet)) prefixes.append(expr);
       else {
         var currentOp = expr.toSetElem(opSet);
         while (opStack.isNotEmpty()) {
@@ -130,14 +130,10 @@ public final class BinOpParser {
    */
   public record Elem(@Nullable String name, @NotNull Expr expr, boolean explicit) {
     private static final Elem OP_APP = new Elem(
-      OpDecl.APP_NAME,
+      BinOpSet.APP_ELEM.name(),
       new Expr.ErrorExpr(SourcePos.NONE, Doc.english("fakeApp escaped from BinOpParser")),
       true
     );
-
-    private boolean isBuiltinOp() {
-      return this == OP_APP;
-    }
 
     public Elem(@NotNull Expr expr, boolean explicit) {
       this(null, expr, explicit);
@@ -152,17 +148,14 @@ public final class BinOpParser {
       return null;
     }
 
-    public boolean isNotUsedAsOp(@NotNull BinOpSet opSet) {
-      if (isBuiltinOp()) return false;
+    public boolean isOperand(@NotNull BinOpSet opSet) {
+      if (this == OP_APP) return false;
       var tryOp = asOpDecl();
-      return opSet.isNotUsedAsOperator(tryOp);
+      return opSet.isOperand(tryOp);
     }
 
     public BinOpSet.@NotNull Elem toSetElem(@NotNull BinOpSet opSet) {
-      if (isBuiltinOp()) {
-        if (this == OP_APP) return opSet.ensureHasElem(OpDecl.APP_NAME, OpDecl.APP);
-        else throw new IllegalStateException("unreachable");
-      }
+      if (this == OP_APP) return BinOpSet.APP_ELEM;
       var tryOp = asOpDecl();
       assert tryOp != null; // should never fail
       return opSet.ensureHasElem(tryOp._1, tryOp._2);
