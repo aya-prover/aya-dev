@@ -32,8 +32,8 @@ public class UsagesTest {
       def.accept(RefFinder.HEADER_ONLY, of);
       if (Seq.of("Nat", "Int").contains(def.ref().name())) assertTrue(of.isEmpty());
       else assertFalse(of.isEmpty());
-        if (def instanceof FnDef fn && fn.body.isLeft())
-            assertEquals(0, fn.body.getLeftValue().findUsages(new LocalVar("233")));
+      if (def instanceof FnDef fn && fn.body.isLeft())
+        assertEquals(0, fn.body.getLeftValue().findUsages(new LocalVar("233")));
     });
   }
 }

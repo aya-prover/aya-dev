@@ -120,7 +120,7 @@ public final class PrimDef extends TopLevelDef {
         var normalize = lambda.body().normalize(NormalizeMode.NF);
         if (normalize.findUsages(lambda.param().ref()) == 0) return argBase.term();
         else return new CallTerm.Prim(prim.ref(), prim.sortArgs(), ImmutableSeq.of(
-          new Arg<>(new IntroTerm.Lambda(lambda.param(), normalize), true),argBase, argI));
+          new Arg<>(new IntroTerm.Lambda(lambda.param(), normalize), true), argBase, argI));
       }
       return prim;
     }

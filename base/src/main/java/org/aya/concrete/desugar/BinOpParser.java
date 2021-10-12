@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
+import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.DoubleLinkedBuffer;
@@ -35,32 +36,22 @@ public final class BinOpParser {
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
     var first = seq.first();
+    // check for BinOP section
     if (opSet.assocOf(first.asOpDecl()).infix) {
-      // + f a b c d
-      // \lam _ => _ + f a b c d
+      // case 1: `+ f` becomes `\lam _ => _ + f`
       var lhs = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE);
       var lhsElem = new Elem(new Expr.RefExpr(SourcePos.NONE, lhs, "_"), true);
       var lamSeq = seq.prepended(lhsElem);
       return new Expr.LamExpr(sourcePos,
         new Expr.Param(SourcePos.NONE, lhs, true),
         new BinOpParser(opSet, lamSeq).build(sourcePos));
+      // TODO: case 2: `f +` becomes `\lam _ => f + _`
     }
+    return convertToPrefix(sourcePos);
+  }
 
-    // insert \app operator between elems
-    var seqWithApp = Buffer.<BinOpParser.Elem>create();
-    boolean lastIsUsedAsOp = false;
-    for (var expr : seq) {
-      if (expr.isOperand(opSet)) {
-        if (!lastIsUsedAsOp && seqWithApp.isNotEmpty()) seqWithApp.append(Elem.OP_APP);
-        lastIsUsedAsOp = false;
-      } else {
-        lastIsUsedAsOp = true;
-      }
-      seqWithApp.append(expr);
-    }
-
-    // convert infix to prefix
-    for (var expr : seqWithApp) {
+  private @NotNull Expr convertToPrefix(@NotNull SourcePos sourcePos) {
+    for (var expr : insertApplication(seq)) {
       if (expr.isOperand(opSet)) prefixes.append(expr);
       else {
         var currentOp = expr.toSetElem(opSet);
@@ -88,36 +79,39 @@ public final class BinOpParser {
       prefixes.append(new Elem(app, op._1.explicit));
     }
 
-    assert prefixes.isNotEmpty();
-    if (prefixes.sizeEquals(1)) return prefixes.first().expr;
+    assert prefixes.sizeEquals(1);
+    return prefixes.first().expr;
+  }
 
-    // TODO: If this path can't be reached, delete it.
-    return new Expr.AppExpr(
-      sourcePos,
-      prefixes.first().expr,
-      prefixes.view().get(1).toNamedArg()
-    );
+  private @NotNull SeqLike<Elem> insertApplication(@NotNull SeqView<@NotNull Elem> seq) {
+    var seqWithApp = Buffer.<Elem>create();
+    var lastIsOperand = true;
+    for (var expr : seq) {
+      var isOperand = expr.isOperand(opSet);
+      if (isOperand && lastIsOperand && seqWithApp.isNotEmpty()) seqWithApp.append(Elem.OP_APP);
+      lastIsOperand = isOperand;
+      seqWithApp.append(expr);
+    }
+    return seqWithApp;
   }
 
   private Expr.@NotNull AppExpr makeBinApp(@NotNull Elem op) {
     var rhs = prefixes.dequeue();
     var lhs = prefixes.dequeue();
-    if (op == Elem.OP_APP) {
-      return new Expr.AppExpr(
-        union(lhs, rhs),
-        lhs.expr,
-        rhs.toNamedArg()
-      );
-    }
+    if (op == Elem.OP_APP) return new Expr.AppExpr(
+      union(lhs, rhs),
+      lhs.expr,
+      rhs.toNamedArg()
+    );
     return new Expr.AppExpr(
-      computeSourcePos(op.expr.sourcePos(), lhs.expr.sourcePos(), rhs.expr.sourcePos()),
+      union(op, lhs, rhs),
       new Expr.AppExpr(union(op, lhs), op.expr, lhs.toNamedArg()),
       rhs.toNamedArg()
     );
   }
 
-  private @NotNull SourcePos computeSourcePos(@NotNull SourcePos a, @NotNull SourcePos b, @NotNull SourcePos c) {
-    return a.union(b).union(c);
+  private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b, @NotNull Elem c) {
+    return union(a, b).union(c.expr.sourcePos());
   }
 
   private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b) {

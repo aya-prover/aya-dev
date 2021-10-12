@@ -3,7 +3,6 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.resolve.context.Context;

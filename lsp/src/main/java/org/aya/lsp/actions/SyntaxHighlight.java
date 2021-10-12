@@ -129,10 +129,10 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
 
   private HighlightResult.Symbol.@NotNull Kind kindOf(@NotNull OpDecl opDecl) {
     return switch (opDecl) {
-      case Decl.FnDecl d -> HighlightResult.Symbol.Kind.FnCall;
-      case Decl.StructDecl d -> HighlightResult.Symbol.Kind.StructCall;
-      case Decl.PrimDecl d -> HighlightResult.Symbol.Kind.PrimCall;
-      case Decl.DataCtor d -> HighlightResult.Symbol.Kind.ConCall;
+      case Decl.FnDecl ignored -> HighlightResult.Symbol.Kind.FnCall;
+      case Decl.StructDecl ignored -> HighlightResult.Symbol.Kind.StructCall;
+      case Decl.PrimDecl ignored -> HighlightResult.Symbol.Kind.PrimCall;
+      case Decl.DataCtor ignored -> HighlightResult.Symbol.Kind.ConCall;
       default -> throw new IllegalArgumentException("Unsupported operator: " + opDecl.getClass().getName());
     };
   }

@@ -3,7 +3,6 @@
 package org.aya.concrete.resolve.visitor;
 
 import kala.collection.mutable.Buffer;
-import kala.control.Either;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
@@ -16,8 +15,6 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 /**
  * Resolves expressions inside stmts, after {@link StmtShallowResolver}
