@@ -81,14 +81,19 @@ public final class AyaProducer {
     }
     var core = PrimDef.Factory.INSTANCE.factory(primID);
     var type = ctx.type();
+    var infix = ctx.INFIX();
     return new Decl.PrimDecl(
       sourcePos,
       sourcePosOf(ctx),
-      visitAssoc(ctx.assoc()),
+      infix == null ? null : makeInfix(infix),
       core.ref(),
       visitTelescope(ctx.tele()),
       type == null ? null : visitType(type)
     );
+  }
+
+  private @NotNull OpDecl.Operator makeInfix(@NotNull TerminalNode infixNode) {
+    return new OpDecl.Operator(infixNode.getText().replace("`", ""), Assoc.Infix);
   }
 
   public @NotNull SeqLike<Stmt> visitStmt(AyaParser.StmtContext ctx) {
@@ -169,21 +174,27 @@ public final class AyaProducer {
     return unreachable(ctx);
   }
 
+  public Tuple2<@NotNull String, OpDecl.@Nullable Operator> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx) {
+    if (ctx.ID() != null) return Tuple.of(ctx.ID().getText(), null);
+    var infix = makeInfix(ctx.INFIX());
+    return Tuple.of(infix.name(), infix);
+  }
+
   public Decl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
     var modifiers = ctx.fnModifiers().stream()
       .map(this::visitFnModifiers)
       .distinct()
       .collect(Collectors.toCollection(() -> EnumSet.noneOf(Modifier.class)));
-    var assocCtx = ctx.assoc();
     var abuseCtx = ctx.abuse();
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
 
     return new Decl.FnDecl(
-      sourcePosOf(ctx.ID()),
+      sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
       accessibility,
       modifiers,
-      visitAssoc(assocCtx),
-      ctx.ID().getText(),
+      nameOrInfix._2,
+      nameOrInfix._1,
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
@@ -508,12 +519,13 @@ public final class AyaProducer {
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
     checkRedefinition(RedefinitionError.Kind.Ctor,
       body.view().map(ctor -> new WithPos<>(ctor.sourcePos, ctor.ref.name())));
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
     var data = new Decl.DataDecl(
-      sourcePosOf(ctx.ID()),
+      sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
       accessibility,
-      visitAssoc(ctx.assoc()),
-      ctx.ID().getText(),
+      nameOrInfix._2,
+      nameOrInfix._1,
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       body,
@@ -521,9 +533,9 @@ public final class AyaProducer {
     );
     return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
-        sourcePosOf(ctx.ID()),
+        sourcePosOf(ctx.declNameOrInfix()),
         openAccessibility,
-        new QualifiedID(sourcePosOf(ctx), ctx.ID().getText()),
+        new QualifiedID(sourcePosOf(ctx), nameOrInfix._1),
         Command.Open.UseHide.EMPTY
       )
     ));
@@ -543,13 +555,13 @@ public final class AyaProducer {
 
   public Decl.DataCtor visitDataCtor(@NotNull ImmutableSeq<Pattern> patterns, AyaParser.DataCtorContext ctx) {
     var telescope = visitTelescope(ctx.tele());
-    var id = ctx.ID();
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
 
     return new Decl.DataCtor(
-      sourcePosOf(id),
+      sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
-      visitAssoc(ctx.assoc()),
-      id.getText(),
+      nameOrInfix._2,
+      nameOrInfix._1,
       telescope,
       visitClauses(ctx.clauses()),
       patterns,
@@ -646,16 +658,16 @@ public final class AyaProducer {
 
   public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
     var abuseCtx = ctx.abuse();
-    var id = ctx.ID();
     var fields = visitFields(ctx.field());
     checkRedefinition(RedefinitionError.Kind.Field,
       fields.view().map(field -> new WithPos<>(field.sourcePos, field.ref.name())));
+    var nameOrIndex = visitDeclNameOrInfix(ctx.declNameOrInfix());
     return new Decl.StructDecl(
-      sourcePosOf(id),
+      sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
       accessibility,
-      visitAssoc(ctx.assoc()),
-      id.getText(),
+      nameOrIndex._2,
+      nameOrIndex._1,
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
@@ -776,19 +788,6 @@ public final class AyaProducer {
 
   public @NotNull Stream<String> visitIdsComma(AyaParser.IdsCommaContext ctx) {
     return ctx.ID().stream().map(ParseTree::getText);
-  }
-
-  public @Nullable OpDecl.Operator visitAssoc(@Nullable AyaParser.AssocContext ctx) {
-    if (ctx == null) return null;
-    if (ctx.FIX() != null) return new OpDecl.Operator(null, Assoc.Fix);
-    if (ctx.FIXL() != null) return new OpDecl.Operator(null, Assoc.FixL);
-    if (ctx.FIXR() != null) return new OpDecl.Operator(null, Assoc.FixR);
-    var infix = ctx.INFIX();
-    if (infix != null) return new OpDecl.Operator(infix.getText().replace("`", ""), Assoc.Infix);
-    if (ctx.INFIXL() != null) return new OpDecl.Operator(null, Assoc.InfixL);
-    if (ctx.INFIXR() != null) return new OpDecl.Operator(null, Assoc.InfixR);
-    if (ctx.TWIN() != null) return new OpDecl.Operator(null, Assoc.Twin);
-    return unreachable(ctx);
   }
 
   public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {

@@ -201,20 +201,15 @@ public sealed interface Expr extends ConcreteExpr {
    * def `+` add (a b : Nat) => ...
    * def test => zero + zero
    * </pre>
-   *
-   * @param resolvedFrom who refers to resolvedVar? For example, in test,
-   *                     <code>resolvedVar</code> refers to `DefVar of add` while
-   *                     <code>resolvedFrom</code> stores the raw name used in user code.
    * @author ice1000
    */
   record RefExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Var resolvedVar,
-    @NotNull String resolvedFrom,
     @NotNull Ref<Term> theCore
   ) implements Expr, WithTerm {
-    public RefExpr(@NotNull SourcePos sourcePos, @NotNull Var resolvedVar, @NotNull String resolvedFrom) {
-      this(sourcePos, resolvedVar, resolvedFrom, new Ref<>());
+    public RefExpr(@NotNull SourcePos sourcePos, @NotNull Var resolvedVar) {
+      this(sourcePos, resolvedVar, new Ref<>());
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

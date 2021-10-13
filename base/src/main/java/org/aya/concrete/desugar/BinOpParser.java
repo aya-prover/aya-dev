@@ -9,7 +9,6 @@ import kala.collection.mutable.DoubleLinkedBuffer;
 import kala.collection.mutable.LinkedBuffer;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import kala.tuple.Tuple3;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
@@ -57,7 +56,7 @@ public final class BinOpParser {
   public Expr.@NotNull LamExpr makeSectionApp(@NotNull SourcePos sourcePos, @NotNull SeqView<Elem> seq, @NotNull Elem op,
                                               @NotNull BiFunction<SeqView<Elem>, Elem, SeqView<Elem>> insertParam) {
     var missing = Constants.randomlyNamed(op.expr.sourcePos());
-    var missingElem = new Elem(new Expr.RefExpr(SourcePos.NONE, missing, "_"), true);
+    var missingElem = new Elem(new Expr.RefExpr(SourcePos.NONE, missing), true);
     var completeSeq = insertParam.apply(seq, missingElem);
     return new Expr.LamExpr(sourcePos,
       new Expr.Param(missing.definition(), missing, true),
@@ -147,11 +146,11 @@ public final class BinOpParser {
       this(null, expr, explicit);
     }
 
-    private @Nullable Tuple3<String, @NotNull OpDecl, String> asOpDecl() {
+    private @Nullable OpDecl asOpDecl() {
       if (expr instanceof Expr.RefExpr ref
         && ref.resolvedVar() instanceof DefVar<?, ?> defVar
         && defVar.concrete instanceof OpDecl opDecl) {
-        return Tuple.of(defVar.name(), opDecl, ref.resolvedFrom());
+        return opDecl;
       }
       return null;
     }
@@ -166,7 +165,7 @@ public final class BinOpParser {
       if (this == OP_APP) return BinOpSet.APP_ELEM;
       var tryOp = asOpDecl();
       assert tryOp != null; // should never fail
-      return opSet.ensureHasElem(tryOp._1, tryOp._2);
+      return opSet.ensureHasElem(tryOp);
     }
 
     public @NotNull Arg<Expr.NamedArg> toNamedArg() {

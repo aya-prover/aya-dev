@@ -33,7 +33,7 @@ public record ExprResolver(
     var sourcePos = expr.sourcePos();
     var name = expr.name();
     var resolved = ctx.get(name);
-    var refExpr = new Expr.RefExpr(sourcePos, resolved, name.justName());
+    var refExpr = new Expr.RefExpr(sourcePos, resolved);
     if (resolved instanceof PreLevelVar levelVar) {
       if (allowGeneralized) allowedLevels.append(levelVar);
       else if (!allowedLevels.contains(levelVar)) {

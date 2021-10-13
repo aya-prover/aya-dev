@@ -6,8 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
-import org.aya.api.error.SourcePos;
-import org.aya.api.ref.Var;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
@@ -66,25 +64,9 @@ public record StmtShallowResolver(
     return Unit.unit();
   }
 
-  private void visitOperator(@NotNull ModuleContext context, @NotNull OpDecl opDecl,
-                             Stmt.@NotNull Accessibility accessibility, @NotNull Var ref,
-                             @NotNull SourcePos sourcePos) {
-    var op = opDecl.asOperator();
-    if (op != null && op.name() != null) context.addGlobal(
-      Context.TOP_LEVEL_MOD_NAME,
-      op.name(),
-      accessibility,
-      ref,
-      sourcePos
-    );
-  }
-
   private Unit visitDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
     decl.ref().module = context.moduleName();
     context.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
-    if (decl instanceof OpDecl opDecl) {
-      visitOperator(context, opDecl, decl.accessibility, decl.ref(), decl.sourcePos);
-    }
     decl.ctx = context;
     return Unit.unit();
   }
@@ -157,7 +139,6 @@ public record StmtShallowResolver(
   @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
     ctor.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
-    visitOperator(context, ctor, Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
     return Unit.unit();
   }
 

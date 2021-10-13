@@ -30,7 +30,7 @@ public record ExprRefSubst(
       return new Expr.ErrorExpr(expr.sourcePos(), expr);
     }
     var rv = good.getOption(v);
-    if (rv.isDefined()) return new Expr.RefExpr(expr.sourcePos(), rv.get(), expr.resolvedFrom()).accept(this, unit);
+    if (rv.isDefined()) return new Expr.RefExpr(expr.sourcePos(), rv.get()).accept(this, unit);
     else return expr;
   }
 
