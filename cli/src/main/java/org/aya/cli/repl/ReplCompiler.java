@@ -54,7 +54,7 @@ public class ReplCompiler {
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
 
     try {
-      var programOrExpr = AyaParsing.tryProgramOrExpr(reporter, text);
+      var programOrExpr = AyaParsing.repl(reporter, text);
       if (programOrExpr == null) return null;
 
       var loader = new ModuleListLoader(modulePaths.view().map(path ->
