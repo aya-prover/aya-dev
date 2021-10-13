@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
-import kala.collection.SeqLike;
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.DoubleLinkedBuffer;
@@ -12,7 +12,6 @@ import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.OperatorProblem;
@@ -21,6 +20,8 @@ import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.BiFunction;
 
 public final class BinOpParser {
   private final @NotNull BinOpSet opSet;
@@ -35,19 +36,32 @@ public final class BinOpParser {
   private final DoubleLinkedBuffer<Elem> prefixes = DoubleLinkedBuffer.of();
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
-    var first = seq.first();
     // check for BinOP section
-    if (opSet.assocOf(first.asOpDecl()).infix) {
-      // case 1: `+ f` becomes `\lam _ => _ + f`
-      var lhs = new LocalVar(Constants.ANONYMOUS_PREFIX, SourcePos.NONE);
-      var lhsElem = new Elem(new Expr.RefExpr(SourcePos.NONE, lhs, "_"), true);
-      var lamSeq = seq.prepended(lhsElem);
-      return new Expr.LamExpr(sourcePos,
-        new Expr.Param(SourcePos.NONE, lhs, true),
-        new BinOpParser(opSet, lamSeq).build(sourcePos));
-      // TODO: case 2: `f +` becomes `\lam _ => f + _`
+    if (seq.sizeEquals(2)) {
+      var first = seq.get(0);
+      var second = seq.get(1);
+      var lam = tryParseSection(sourcePos, first, second);
+      if (lam != null) return lam;
     }
     return convertToPrefix(sourcePos);
+  }
+
+  public Expr.@Nullable LamExpr tryParseSection(@NotNull SourcePos sourcePos, @NotNull Elem first, @NotNull Elem second) {
+    // case 1: `+ f` becomes `\lam _ => _ + f`
+    if (opSet.assocOf(first.asOpDecl()).infix) return makeSectionApp(sourcePos, seq, first, SeqView::prepended);
+    // case 2: `f +` becomes `\lam _ => f + _`
+    if (opSet.assocOf(second.asOpDecl()).infix) return makeSectionApp(sourcePos, seq, second, SeqView::appended);
+    return null;
+  }
+
+  public Expr.@NotNull LamExpr makeSectionApp(@NotNull SourcePos sourcePos, @NotNull SeqView<Elem> seq, @NotNull Elem op,
+                                              @NotNull BiFunction<SeqView<Elem>, Elem, SeqView<Elem>> insertParam) {
+    var missing = Constants.randomlyNamed(op.expr.sourcePos());
+    var missingElem = new Elem(new Expr.RefExpr(SourcePos.NONE, missing, "_"), true);
+    var completeSeq = insertParam.apply(seq, missingElem);
+    return new Expr.LamExpr(sourcePos,
+      new Expr.Param(missing.definition(), missing, true),
+      new BinOpParser(opSet, completeSeq).build(sourcePos));
   }
 
   private @NotNull Expr convertToPrefix(@NotNull SourcePos sourcePos) {
@@ -83,7 +97,7 @@ public final class BinOpParser {
     return prefixes.first().expr;
   }
 
-  private @NotNull SeqLike<Elem> insertApplication(@NotNull SeqView<@NotNull Elem> seq) {
+  private @NotNull Seq<Elem> insertApplication(@NotNull SeqView<@NotNull Elem> seq) {
     var seqWithApp = Buffer.<Elem>create();
     var lastIsOperand = true;
     for (var expr : seq) {
