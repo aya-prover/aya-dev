@@ -17,6 +17,10 @@ public record DelayedReporter(
     problems.append(problem);
   }
 
+  public boolean anyProblem() {
+    return problems.isNotEmpty();
+  }
+
   public void reportNow() {
     problems.forEach(this.delegated::report);
     problems.clear();

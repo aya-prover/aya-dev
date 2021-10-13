@@ -33,7 +33,11 @@ public class MainArgs {
   public List<String> modulePaths;
   @Option(names = {"--make"}, description = "Compile a library")
   public boolean isLibrary;
-  @Parameters(paramLabel = "<input-file>")
+  @Option(names = {"--repl", "--interactive", "-i"}, description = "Start an interactive REPL.")
+  public boolean repl;
+  @Option(names = {"--repl-type", "--interactive-type"}, description = "Specify the type of the interactive REPL." + CANDIDATES_ON_A_NEW_LINE, defaultValue = "jline")
+  public ReplType replType;
+  @Parameters(paramLabel = "<input-file>", arity = "0..1")
   public String inputFile;
 
   public ImmutableSeq<String> modulePaths() {
@@ -56,5 +60,10 @@ public class MainArgs {
   public enum TraceFormat {
     imgui,
     markdown,
+  }
+
+  public enum ReplType {
+    plain,
+    jline
   }
 }

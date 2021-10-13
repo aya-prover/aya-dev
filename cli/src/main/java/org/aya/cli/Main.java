@@ -4,6 +4,7 @@ package org.aya.cli;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.repl.Repl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
@@ -29,9 +30,17 @@ public class Main extends MainArgs implements Callable<Integer> {
 
   @Override
   public Integer call() throws Exception {
+    if (repl) {
+      Repl.run(replType);
+      return 0;
+    }
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
+    if (inputFile == null) {
+      System.err.println("Missing '<input-file>'");
+      return -1;
+    }
     var filePath = Paths.get(inputFile);
     if (isLibrary) {
       // TODO: move to a new tool

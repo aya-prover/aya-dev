@@ -2,6 +2,9 @@ module org.aya.cli {
   requires info.picocli;
   requires com.google.gson;
   requires org.jetbrains.annotations;
+  requires org.jline.terminal;
+  requires org.jline.terminal.jansi;
+  requires org.jline.reader;
   requires static ice1000.jimgui;
   requires transitive org.aya;
 

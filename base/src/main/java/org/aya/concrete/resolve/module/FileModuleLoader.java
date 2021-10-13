@@ -14,6 +14,7 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.api.ref.Var;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
+import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.remark.Remark;
@@ -75,8 +76,8 @@ public record FileModuleLoader(
     }
   }
 
-  public static <E extends Exception> @NotNull PhysicalModuleContext tyckModule(
-    @NotNull ImmutableSeq<@NotNull String> path,
+  public static <E extends Exception> void tyckModule(
+    @NotNull PhysicalModuleContext context,
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
@@ -84,7 +85,6 @@ public record FileModuleLoader(
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
-    var context = new EmptyContext(reporter).derive(path);
     var resolveInfo = new FileResolveInfo(Buffer.create());
     var shallowResolver = new StmtShallowResolver(recurseLoader, resolveInfo);
     program.forEach(s -> s.accept(shallowResolver, context));
@@ -108,7 +108,39 @@ public record FileModuleLoader(
     } finally {
       onResolved.acceptChecked(resolveInfo);
     }
+  }
+
+  public static <E extends Exception> @NotNull PhysicalModuleContext tyckModule(
+    @NotNull ImmutableSeq<@NotNull String> path,
+    @NotNull ModuleLoader recurseLoader,
+    @NotNull ImmutableSeq<Stmt> program,
+    @NotNull Reporter reporter,
+    @NotNull CheckedConsumer<FileResolveInfo, E> onResolved,
+    @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
+    Trace.@Nullable Builder builder
+  ) throws E {
+    var context = new EmptyContext(reporter).derive(path);
+    tyckModule(context, recurseLoader, program, reporter, onResolved, onTycked, builder);
     return context;
+  }
+
+  /**
+   * Copied and adapted.
+   *
+   * @see #tyckModule
+   */
+  public static ExprTycker.@NotNull Result tyckExpr(
+    @NotNull PhysicalModuleContext context,
+    @NotNull Expr expr,
+    @NotNull Reporter reporter,
+    Trace.@Nullable Builder builder
+  ) {
+    var resolvedExpr = expr.resolve(context);
+    resolvedExpr.desugar(reporter);
+    // in case we have un-messaged TyckException
+    try (var delayedReporter = new DelayedReporter(reporter)) {
+      return resolvedExpr.tyck(delayedReporter, builder);
+    }
   }
 
   public static void handleInternalError(@NotNull InternalException e) {

@@ -3,6 +3,7 @@
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import kala.control.Either;
 import kala.tuple.Unit;
 import kala.value.Ref;
@@ -19,12 +20,17 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
+import org.aya.concrete.resolve.context.ModuleContext;
+import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.term.Term;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.ExprTycker;
+import org.aya.tyck.trace.Trace;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +47,31 @@ public sealed interface Expr extends ConcreteExpr {
     var ret = doAccept(visitor, p);
     visitor.traceExit(ret, this, p);
     return ret;
+  }
+
+  /**
+   * @see org.aya.concrete.stmt.Stmt#resolve
+   * @see org.aya.concrete.resolve.visitor.StmtShallowResolver
+   */
+  @Contract(mutates = "this")
+  default Expr resolve(@NotNull ModuleContext context) {
+    var exprResolver = new ExprResolver(false, Buffer.create());
+    return accept(exprResolver, context);
+  }
+
+  /**
+   * @see org.aya.concrete.stmt.Decl#tyck
+   * @see org.aya.tyck.StmtTycker#visitFn
+   */
+  // TODO: I am not sure whether this is correct. Please review carefully.
+  default @NotNull ExprTycker.Result tyck(
+    @NotNull Reporter reporter,
+    Trace.@Nullable Builder builder
+  ) {
+    var tycker = new ExprTycker(reporter, builder);
+    var result = new Expr.HoleExpr(SourcePos.NONE, false, null);
+    var resultRes = tycker.synthesize(result).wellTyped();
+    return tycker.zonk(this, tycker.inherit(this, resultRes));
   }
 
   @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
