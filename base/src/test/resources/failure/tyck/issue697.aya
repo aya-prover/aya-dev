@@ -9,21 +9,21 @@ struct Path (A : I -> Type) (a : A left) (b : A right) : Type
   }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def `=` {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} {a : A} : a = a => path (\ i => a)
 
 def hfill2d {A : Type}
   {a b c d : A}
-  (p : Eq a b)
-  (q : Eq b d)
-  (r : Eq a c)
+  (p : a = b)
+  (q : b = d)
+  (r : a = c)
   (i j : I) : A
-  => (arcoe (\ k => Eq (r.at k) (q.at k)) p i).at j
+  => (arcoe (\ k => (r.at k) = (q.at k)) p i).at j
 def hcomp2d {A : Type}
   {a b c d : A}
-  (p : Eq a b)
-  (q : Eq b d)
-  (r : Eq a c) : Eq c d
+  (p : a = b)
+  (q : b = d)
+  (r : a = c) : c = d
   => path (hfill2d p q r right)
 
-def sym {A : Type} {a b : A} (p : Eq a b) : Eq b a => hcomp2d (idp a) idp p
+def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p

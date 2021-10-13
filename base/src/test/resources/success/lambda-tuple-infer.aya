@@ -2,7 +2,7 @@ open data ℕ : Type
   | zero
   | suc ℕ
 
-def `+` addN (a b : ℕ) : ℕ
+def `+` (a b : ℕ) : ℕ
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (a + b)

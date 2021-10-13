@@ -48,6 +48,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
 
   private @NotNull Level<PreLevelVar> levelVar(@NotNull Expr expr) throws DesugarInterruption {
     return switch (expr) {
+      case Expr.BinOpSeq binOpSeq -> levelVar(visitBinOpSeq(binOpSeq, Unit.unit()));
       case Expr.LMaxExpr uMax -> new Level.Maximum(uMax.levels().mapChecked(this::levelVar));
       case Expr.LSucExpr uSuc -> levelVar(uSuc.expr()).lift(1);
       case Expr.LitIntExpr uLit -> new Level.Constant<>(uLit.integer());

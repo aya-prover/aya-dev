@@ -10,7 +10,7 @@ struct Path (A : I -> Type) (a : A left) (b : A right) : Type
  }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def `=` {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
 open data Unit : Type | unit

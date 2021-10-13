@@ -35,6 +35,8 @@ public final class BinOpParser {
   private final DoubleLinkedBuffer<Elem> prefixes = DoubleLinkedBuffer.of();
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
+    // No need to build
+    if (seq.sizeEquals(1)) return seq.get(0).expr;
     // check for BinOP section
     if (seq.sizeEquals(2)) {
       var first = seq.get(0);

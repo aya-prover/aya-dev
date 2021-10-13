@@ -1,4 +1,4 @@
-def `+` test1 : Type => test1
-def `=` test3 : Type => test3
+def `+` : Type => +
+def `=` : Type => =
 
 def fail : 1 + 1 = 2 => fail

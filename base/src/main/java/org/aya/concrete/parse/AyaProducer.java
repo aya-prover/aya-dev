@@ -357,8 +357,9 @@ public final class AyaProducer {
     var literal = ctx.literal();
     if (literal != null) return visitLiteral(literal);
 
-    final var expr = ctx.exprList().expr();
-    if (expr.size() == 1) return visitExpr(expr.get(0));
+    var expr = ctx.exprList().expr();
+    if (expr.size() == 1) return newBinOPScope(visitExpr(expr.get(0)));
+    // if (expr.size() == 1) return visitExpr(expr.get(0));
     return new Expr.TupExpr(
       sourcePosOf(ctx),
       expr.stream()
@@ -386,9 +387,20 @@ public final class AyaProducer {
       var univArgsExpr = new Expr.RawUnivArgsExpr(sourcePosOf(ctx), items);
       return new BinOpParser.Elem(univArgsExpr, false);
     }
-    if (items.sizeEquals(1)) return new BinOpParser.Elem(items.first(), false);
+    if (items.sizeEquals(1)) return new BinOpParser.Elem(newBinOPScope(items.first()), false);
     var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
     return new BinOpParser.Elem(tupExpr, false);
+  }
+
+  /**
+   * [kiva]: make `(expr)` into a new BinOP parser scope
+   * so the `f (+)` becomes passing `+` as an argument to function `f`.
+   * this should be a workaround?
+   * see base/src/test/resources/success/binop.aya
+   */
+  public @NotNull Expr newBinOPScope(@NotNull Expr expr) {
+    return new Expr.BinOpSeq(expr.sourcePos(),
+      ImmutableSeq.of(new BinOpParser.Elem(expr, true)));
   }
 
   public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
