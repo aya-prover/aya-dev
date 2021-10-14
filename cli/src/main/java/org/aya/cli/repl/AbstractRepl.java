@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public abstract class AbstractRepl implements Closeable {
   public static final String INTRODUCTION_MESSAGE = "Aya REPL " + GeneratedVersion.VERSION_STRING;
@@ -56,8 +58,10 @@ public abstract class AbstractRepl implements Closeable {
         var result = evalWithContext(line);
         println(result);
       } catch (Exception e) {
+        var stackTrace = new StringWriter();
+        e.printStackTrace(new PrintWriter(stackTrace));
         errPrintln("Unexpected exception occurred during execution.");
-        e.printStackTrace();
+        errPrintln(stackTrace.toString());
       }
       return true;
     }
