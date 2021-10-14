@@ -21,6 +21,7 @@ module org.aya {
   exports org.aya.core.term;
   exports org.aya.core.visitor;
   exports org.aya.core;
+  exports org.aya.value;
   exports org.aya.distill;
   exports org.aya.generic.ref;
   exports org.aya.generic.util;
