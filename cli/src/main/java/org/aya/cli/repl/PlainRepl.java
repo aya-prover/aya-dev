@@ -1,29 +1,29 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Scanner;
 
 public class PlainRepl extends AbstractRepl {
-  Scanner scanner = new Scanner(System.in);
+  @NotNull Scanner scanner = new Scanner(System.in);
 
   @Override
-  String readLine(String prompt) {
+  String readLine(@NotNull String prompt) {
     System.out.print(prompt);
     System.out.flush();
     return scanner.nextLine();
   }
 
   @Override
-  void println(String x) {
+  void println(@NotNull String x) {
     System.out.println(x);
   }
 
   @Override
-  void errPrintln(String x) {
+  void errPrintln(@NotNull String x) {
     System.err.println(x);
   }
 
@@ -33,6 +33,6 @@ public class PlainRepl extends AbstractRepl {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
   }
 }

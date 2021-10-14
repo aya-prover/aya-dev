@@ -1,11 +1,12 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
 import kala.collection.ArraySeq;
 import kala.collection.Seq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.cli.single.CliReporter;
 import org.aya.prelude.GeneratedVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,19 +17,22 @@ public abstract class AbstractRepl implements Closeable {
   public static final String INTRODUCTION_MESSAGE = "Aya REPL " + GeneratedVersion.VERSION_STRING;
 
   // TODO: what locator and builder?
-  ReplCompiler replCompiler = new ReplCompiler(new ReplReporter(this), null, null);
+  @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null, null);
 
-  abstract String readLine(String prompt);
+  private @NotNull CliReporter makeReplReporter() {
+    return new CliReporter(this::println, this::errPrintln);
+  }
+
+  abstract String readLine(@NotNull String prompt);
 
   // should flush
-  abstract void println(String x);
-  abstract void errPrintln(String x);
+  abstract void println(@NotNull String x);
+  abstract void errPrintln(@NotNull String x);
 
   void run() {
     println(INTRODUCTION_MESSAGE);
     var additionalMessage = getAdditionalMessage();
-    if (additionalMessage != null)
-      println(additionalMessage);
+    if (additionalMessage != null) println(additionalMessage);
     //noinspection StatementWithEmptyBody
     while (singleLoop()) ;
   }
@@ -59,7 +63,7 @@ public abstract class AbstractRepl implements Closeable {
     }
   }
 
-  @NotNull String evalWithContext(String line) {
+  @NotNull String evalWithContext(@NotNull String line) {
     var programOrTerm = replCompiler.compileAndAddToContext(line, Seq.empty(), null);
     return programOrTerm != null ? programOrTerm.fold(
       program -> program.joinToString("\n", this::render),
@@ -71,10 +75,10 @@ public abstract class AbstractRepl implements Closeable {
     return ayaDocile.toDoc(DistillerOptions.DEFAULT).debugRender();
   }
 
-  static record CommandExecutionResult(String text, boolean continueRepl) {
+  static record CommandExecutionResult(@NotNull String text, boolean continueRepl) {
   }
 
-  CommandExecutionResult executeCommand(String line) {
+  @NotNull CommandExecutionResult executeCommand(@NotNull String line) {
     var tokens = ArraySeq.wrap(line.split(" "))
       .view()
       .filter(s -> !s.isEmpty())

@@ -31,14 +31,13 @@ public class Main extends MainArgs implements Callable<Integer> {
   @Override
   public Integer call() throws Exception {
     if (action.repl != null) {
-      Repl.run(action.repl.replType);
-      return 0;
+      return Repl.run(action.repl);
     }
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
     var inputFile = action.compile.inputFile;
-    var filePath = Paths.get(action.compile.inputFile);
+    var filePath = Paths.get(inputFile);
     if (action.compile.isLibrary) {
       // TODO: move to a new tool
       return LibraryCompiler.compile(filePath);
