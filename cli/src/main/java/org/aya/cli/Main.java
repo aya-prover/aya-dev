@@ -30,19 +30,16 @@ public class Main extends MainArgs implements Callable<Integer> {
 
   @Override
   public Integer call() throws Exception {
-    if (repl) {
-      Repl.run(replType);
+    if (action.repl != null) {
+      Repl.run(action.repl.replType);
       return 0;
     }
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
-    if (inputFile == null) {
-      System.err.println("Missing '<input-file>'");
-      return -1;
-    }
-    var filePath = Paths.get(inputFile);
-    if (isLibrary) {
+    var inputFile = action.compile.inputFile;
+    var filePath = Paths.get(action.compile.inputFile);
+    if (action.compile.isLibrary) {
       // TODO: move to a new tool
       return LibraryCompiler.compile(filePath);
     }

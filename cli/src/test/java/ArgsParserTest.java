@@ -23,7 +23,9 @@ public class ArgsParserTest {
     var commandLine = new CommandLine(cliArgs);
     var s = "boy.aya";
     commandLine.parseArgs(s);
-    assertEquals(s, cliArgs.inputFile);
+    assertNotNull(cliArgs.action.compile);
+    assertNull(cliArgs.action.repl);
+    assertEquals(s, cliArgs.action.compile.inputFile);
   }
 
   @Test
@@ -32,7 +34,19 @@ public class ArgsParserTest {
     var commandLine = new CommandLine(cliArgs);
     var s = "boy.aya";
     commandLine.parseArgs("--", s);
-    assertEquals(s, cliArgs.inputFile);
+    assertNotNull(cliArgs.action.compile);
+    assertNull(cliArgs.action.repl);
+    assertEquals(s, cliArgs.action.compile.inputFile);
+  }
+
+  @Test
+  public void interactiveSwitch() {
+    var cliArgs = new MainArgs();
+    var commandLine = new CommandLine(cliArgs);
+    commandLine.parseArgs("-i");
+    assertNotNull(cliArgs.action.repl);
+    assertNull(cliArgs.action.compile);
+    assertTrue(cliArgs.action.repl.repl);
   }
 
   @Test
