@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 public interface OpDecl {
   @Nullable Operator asOperator();
 
-  @NotNull String APP_NAME = "application";
-  @NotNull OpDecl APP = () -> new Operator(APP_NAME, Assoc.Infix);
-
-  record Operator(@Nullable String name, @NotNull Assoc assoc) {
+  record Operator(@NotNull String name, @NotNull Assoc assoc) {
   }
 }

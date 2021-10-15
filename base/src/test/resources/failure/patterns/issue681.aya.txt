@@ -1,116 +1,115 @@
-In file $FILE:32:4 ->
+In file $FILE:30:4 ->
 
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
+  28 | 
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
            ^--^
 
 Error: There is no parameter for the pattern
          zero
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
-        (add x y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
+        y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:32:10 ->
+In file $FILE:30:10 ->
 
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
+  28 | 
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
                  ^^
 
 Error: There is no parameter for the pattern
          y
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
-        (add x y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
+        y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:32:13 ->
+In file $FILE:30:13 ->
 
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
+  28 | 
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
                     ^^
 
 Error: There is no parameter for the pattern
          z
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
-        (add x y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
+        y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:32:18 ->
+In file $FILE:30:18 ->
 
-  30 | 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
+  28 | 
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
                          ^-^
 
 Error: Cannot check the expression of type
          Π (a : Nat) → Path (λ _ ⇒ Nat) a a
          (Normalized: Π (a : Nat) → Path (λ _ ⇒ Nat) a a)
        against the type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
-        (add x y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
+        y) z)
          (Normalized: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Path (λ i ⇒ Nat)
-        (add x (add y z)) (add (add x y) z))
-In file $FILE:33:4 ->
+        (+ x (+ y z)) (+ (+ x y) z))
+In file $FILE:31:4 ->
 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
+  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
            ^---^
 
 Error: There is no parameter for the pattern
          suc x
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
-        (add x y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
+        y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:33:11 ->
+In file $FILE:31:11 ->
 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
+  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
                   ^^
 
 Error: There is no parameter for the pattern
          y
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
-        (add x y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
+        y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:33:14 ->
+In file $FILE:31:14 ->
 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
+  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
                      ^^
 
 Error: There is no parameter for the pattern
          z
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
-        (add x y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
+        y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:33:19 ->
+In file $FILE:31:19 ->
 
-  31 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  32 |   | zero, y, z => idp
-  33 |   | suc x, y, z => pmap suc (+-assoc x y z)
+  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
+  30 |   | zero, y, z => idp
+  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
                           ^---------------------^
 
 Error: Cannot check the expression of type
          Path (λ _ ⇒ Nat) (suc (+-assoc x y z.at left)) (suc (+-assoc x y z.at right))
-         (Normalized: Path (λ _ ⇒ Nat) (suc (add x (add y z))) (suc (add (add x y)
-        z)))
+         (Normalized: Path (λ _ ⇒ Nat) (suc (+ x (+ y z))) (suc (+ (+ x y) z)))
        against the type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Eq {Nat} (add x (add y z)) (add
-        (add x y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
+        y) z)
          (Normalized: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Path (λ i ⇒ Nat)
-        (add x (add y z)) (add (add x y) z))
+        (+ x (+ y z)) (+ (+ x y) z))
 What are you doing?

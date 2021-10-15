@@ -24,8 +24,7 @@ remark : DOC_COMMENT+;
 importCmd : IMPORT qualifiedId (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? qualifiedId useHide?;
 module : MODULE_KW ID LBRACE stmt* RBRACE;
-bind : BIND_KW bindOp (TIGHTER | LOOSER) bindOp;
-bindOp : qualifiedId | OP_APP;
+bind : BIND_KW qualifiedId (TIGHTER | LOOSER) qualifiedId;
 
 useHide : use+
         | hide+;
@@ -45,18 +44,11 @@ decl : PRIVATE?
      | primDecl
      );
 
-assoc : INFIX
-      | INFIXL
-      | INFIXR
-      | FIX
-      | FIXL
-      | FIXR
-      | TWIN
-      ;
+declNameOrInfix : ID | INFIX;
 
 abuse : ABUSING (LBRACE stmt* RBRACE | stmt);
 
-fnDecl : DEF fnModifiers* assoc? ID tele* type? fnBody abuse?;
+fnDecl : DEF fnModifiers* declNameOrInfix tele* type? fnBody abuse?;
 
 fnBody : IMPLIES expr
        | (BAR clause)* ;
@@ -65,21 +57,21 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : STRUCT assoc? ID tele* type? (EXTENDS idsComma)? (BAR field)* abuse?;
+structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* abuse?;
 
-primDecl : PRIM assoc? ID tele* type? ;
+primDecl : PRIM INFIX? ID tele* type? ;
 
 field : COERCE? ID tele* type clauses? # fieldDecl
       | ID tele* type? IMPLIES expr    # fieldImpl
       ;
 
-dataDecl : (PUBLIC? OPEN)? DATA assoc? ID tele* type? dataBody* abuse?;
+dataDecl : (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* abuse?;
 
 dataBody : (BAR dataCtor)       # dataCtors
          | dataCtorClause       # dataClauses
          ;
 
-dataCtor : COERCE? assoc? ID tele* clauses?;
+dataCtor : COERCE? declNameOrInfix tele* clauses?;
 
 dataCtorClause : BAR patterns IMPLIES dataCtor;
 
@@ -131,7 +123,6 @@ atomPattern : LPAREN patterns RPAREN (AS ID)?
 
 literal : qualifiedId
         | CALM_FACE
-        | idFix
         | LGOAL expr? RGOAL
         | NUMBER
         | STRING
@@ -153,8 +144,5 @@ teleMaybeTypedExpr : ids type?;
 idsComma : (ID COMMA)* ID?;
 ids : ID*;
 type : COLON expr;
-
-// operators
-idFix : INFIX | POSTFIX | ID;
 
 qualifiedId : ID (COLON2 ID)*;

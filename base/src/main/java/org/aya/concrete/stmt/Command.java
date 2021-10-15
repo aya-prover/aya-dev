@@ -3,7 +3,6 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.resolve.context.Context;
@@ -34,9 +33,9 @@ public sealed interface Command extends Stmt {
    */
   record Bind(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull Either<QualifiedID, OpDecl> op,
+    @NotNull QualifiedID op,
     @NotNull BindPred pred,
-    @NotNull Either<QualifiedID, OpDecl> target,
+    @NotNull QualifiedID target,
     @NotNull Ref<@Nullable Context> context,
     @NotNull Ref<@Nullable OpDecl> resolvedOp,
     @NotNull Ref<@Nullable OpDecl> resolvedTarget

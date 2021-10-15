@@ -1,6 +1,6 @@
 In file $FILE:2:0 ->
 
-  1 | def `+` test1 : Type => test1
+  1 | def `+` : Type => +
   2 | bind + looser +
       ^-------------^
 

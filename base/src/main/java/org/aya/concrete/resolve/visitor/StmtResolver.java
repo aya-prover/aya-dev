@@ -3,9 +3,6 @@
 package org.aya.concrete.resolve.visitor;
 
 import kala.collection.mutable.Buffer;
-import kala.control.Either;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
@@ -16,8 +13,6 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 /**
  * Resolves expressions inside stmts, after {@link StmtShallowResolver}
@@ -50,8 +45,8 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     if (ctx == null) throw new IllegalStateException("no shallow resolver?");
     var op = resolveOp(opSet.reporter(), ctx, bind.op());
     var target = resolveOp(opSet.reporter(), ctx, bind.target());
-    bind.resolvedOp().value = op._2;
-    bind.resolvedTarget().value = target._2;
+    bind.resolvedOp().value = op;
+    bind.resolvedTarget().value = target;
     opSet.bind(op, bind.pred(), target, bind.sourcePos());
     return Unit.unit();
   }
@@ -61,16 +56,10 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     return Unit.unit();
   }
 
-  private @NotNull Tuple2<String, @NotNull OpDecl>
-  resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull Either<QualifiedID, OpDecl> idOrOp) {
-    if (idOrOp.isRight()) {
-      var builtin = idOrOp.getRightValue();
-      return Tuple.of(Objects.requireNonNull(builtin.asOperator()).name(), builtin);
-    }
-    var id = idOrOp.getLeftValue();
+  private @NotNull OpDecl resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull QualifiedID id) {
     var var = ctx.get(id);
     if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
-      return Tuple.of(defVar.name(), op);
+      return op;
     }
     reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
     throw new Context.ResolvingInterruptedException();

@@ -121,8 +121,12 @@ public class ParseTest {
     assertTrue(parseExpr("a.1") instanceof Expr.ProjExpr);
     assertTrue(parseExpr("a.1.2") instanceof Expr.ProjExpr);
     assertTrue(parseExpr("f (a.1) (a.2)") instanceof Expr.BinOpSeq app
-      && app.seq().get(1).expr() instanceof Expr.ProjExpr
-      && app.seq().get(2).expr() instanceof Expr.ProjExpr);
+      && app.seq().get(1).expr() instanceof Expr.BinOpSeq proj1
+      && proj1.seq().sizeEquals(1)
+      && proj1.seq().get(0).expr() instanceof Expr.ProjExpr
+      && app.seq().get(2).expr() instanceof Expr.BinOpSeq proj2
+      && proj2.seq().sizeEquals(1)
+      && proj2.seq().get(0).expr() instanceof Expr.ProjExpr);
     assertTrue(parseExpr("f a.1") instanceof Expr.BinOpSeq app
       && app.seq().get(1).expr() instanceof Expr.ProjExpr);
     assertTrue(parseExpr("(f a).1") instanceof Expr.ProjExpr proj
@@ -143,8 +147,13 @@ public class ParseTest {
       new Expr.BinOpSeq(
         SourcePos.NONE,
         ImmutableSeq.of(
-          new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-          new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
+          new BinOpParser.Elem(null, new Expr.BinOpSeq(
+            SourcePos.NONE,
+            ImmutableSeq.of(
+              new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
+              new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
+            )
+          ), true)
         )
       ),
       Either.left(1),

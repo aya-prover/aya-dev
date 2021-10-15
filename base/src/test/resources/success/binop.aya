@@ -1,7 +1,18 @@
 open data Nat : Type | zero | suc Nat
-def `+` add (a b : Nat) : Nat
- | zero, b => b
- | suc a, b => suc (a + b)
-bind + looser application
-example def test => (+ zero) zero
-example def test2 => + zero
+def `+` (a b : Nat) : Nat
+  | zero, b => b
+  | suc a, b => suc (a + b)
+
+example def test1 : Nat => (+ zero) zero
+example def test2 : Pi Nat -> Nat => + zero
+example def test3 : Nat => (zero +) zero
+example def test4 : Pi Nat -> Nat => zero +
+
+def f1 (a : Pi Nat -> Nat -> Nat) : Nat => zero
+def f2 {a : Pi Nat -> Nat -> Nat} : Nat => zero
+
+example def add => +
+example def test5 : Nat => f1 (add)
+example def test6 : Nat => f2 {add}
+example def test7 : Nat => f1 (+)
+example def test8 : Nat => f2 {+}

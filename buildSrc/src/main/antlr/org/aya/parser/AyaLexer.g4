@@ -1,25 +1,14 @@
 lexer grammar AyaLexer;
 
 INFIX : '`' ID '`';
-POSTFIX : '`' ID;
 
 // operator precedence
 TIGHTER : 'tighter';
 LOOSER : 'looser';
-OP_APP : 'application';
 
 // samples
 EXAMPLE : 'example';
 COUNTEREXAMPLE : 'counterexample';
-
-// associativities
-INFIXN : 'infix';
-INFIXL : 'infixl';
-INFIXR : 'infixr';
-FIX : 'fix';
-FIXL : 'fixl';
-FIXR : 'fixr';
-TWIN : 'twin';
 
 // universe
 ULEVEL : 'universe';

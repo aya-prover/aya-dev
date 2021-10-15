@@ -69,8 +69,7 @@ public class DistillerTest {
        }
       def path {A : Pi I -> Type} (p : Pi (i : I) -> A i)
         => new Path A (p left) (p right) { | at i => p i }
-      def `=` Eq {A : Type} (a b : A) : Type => Path (\\ i => A) a b
-      bind = looser application
+      def `=` {A : Type} (a b : A) : Type => Path (\\ i => A) a b
       struct Monoid {A : Type} (op : A -> A -> A): Type
         | id : A
         | assoc (a b c : A) : op (op a b) c = op a (op b c)

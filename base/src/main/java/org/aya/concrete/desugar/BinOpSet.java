@@ -3,8 +3,6 @@
 package org.aya.concrete.desugar;
 
 import kala.collection.mutable.*;
-import kala.tuple.Tuple2;
-import kala.tuple.Tuple3;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -21,16 +19,16 @@ public record BinOpSet(
   @NotNull MutableSet<Elem> ops,
   @NotNull MutableHashMap<Elem, MutableHashSet<Elem>> tighterGraph
 ) {
+  static final @NotNull Elem APP_ELEM = Elem.from(SourcePos.NONE,
+    () -> new OpDecl.Operator("application", Assoc.Infix));
+
   public BinOpSet(@NotNull Reporter reporter) {
-    this(reporter, MutableSet.of(), MutableHashMap.of());
+    this(reporter, MutableSet.of(APP_ELEM), MutableHashMap.of());
   }
 
-  public void bind(@NotNull Tuple2<String, @NotNull OpDecl> op,
-                   @NotNull Command.BindPred pred,
-                   @NotNull Tuple2<String, @NotNull OpDecl> target,
-                   @NotNull SourcePos sourcePos) {
-    var opElem = ensureHasElem(op._1, op._2, sourcePos);
-    var targetElem = ensureHasElem(target._1, target._2, sourcePos);
+  public void bind(@NotNull OpDecl op, @NotNull Command.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
+    var opElem = ensureHasElem(op, sourcePos);
+    var targetElem = ensureHasElem(target, sourcePos);
     if (opElem == targetElem) {
       reporter.report(new OperatorProblem.BindSelfError(sourcePos));
       throw new Context.ResolvingInterruptedException();
@@ -42,6 +40,9 @@ public record BinOpSet(
   }
 
   public PredCmp compare(@NotNull Elem lhs, @NotNull Elem rhs) {
+    // BinOp all have lower priority than application
+    if (lhs == APP_ELEM) return PredCmp.Tighter;
+    if (rhs == APP_ELEM) return PredCmp.Looser;
     if (lhs == rhs) return PredCmp.Equal;
     if (hasPath(MutableSet.of(), lhs, rhs)) return PredCmp.Tighter;
     if (hasPath(MutableSet.of(), rhs, lhs)) return PredCmp.Looser;
@@ -58,23 +59,23 @@ public record BinOpSet(
     return false;
   }
 
-  public Assoc assocOf(@Nullable Tuple3<String, @NotNull OpDecl, String> opDecl) {
-    if (isNotUsedAsOperator(opDecl)) return Assoc.NoFix;
-    return ensureHasElem(opDecl._1, opDecl._2).assoc;
+  public Assoc assocOf(@Nullable OpDecl opDecl) {
+    if (isOperand(opDecl)) return Assoc.NoFix;
+    return ensureHasElem(opDecl).assoc;
   }
 
-  public boolean isNotUsedAsOperator(@Nullable Tuple3<String, @NotNull OpDecl, String> opDecl) {
-    return opDecl == null || opDecl._1.equals(opDecl._3);
+  public boolean isOperand(@Nullable OpDecl opDecl) {
+    return opDecl == null || opDecl.asOperator() == null;
   }
 
-  public Elem ensureHasElem(@NotNull String defName, @NotNull OpDecl opDecl) {
-    return ensureHasElem(defName, opDecl, SourcePos.NONE);
+  public Elem ensureHasElem(@NotNull OpDecl opDecl) {
+    return ensureHasElem(opDecl, SourcePos.NONE);
   }
 
-  public Elem ensureHasElem(@NotNull String defName, @NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
+  public Elem ensureHasElem(@NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
     var elem = ops.find(e -> e.op == opDecl);
     if (elem.isDefined()) return elem.get();
-    var newElem = Elem.from(defName, opDecl, sourcePos);
+    var newElem = Elem.from(sourcePos, opDecl);
     ops.add(newElem);
     return newElem;
   }
@@ -125,11 +126,15 @@ public record BinOpSet(
     @NotNull String name,
     @NotNull Assoc assoc
   ) {
-    private static @NotNull Elem from(@NotNull String defName, @NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
-      var opData = opDecl.asOperator();
-      if (opData == null) opData = new OpDecl.Operator(defName, Assoc.NoFix);
-      var name = opData.name();
-      return new Elem(sourcePos, opDecl, name != null ? name : defName, opData.assoc());
+    private static @NotNull OpDecl.Operator ensureOperator(@NotNull OpDecl opDecl) {
+      var op = opDecl.asOperator();
+      if (op == null) throw new IllegalArgumentException("not an operator");
+      return op;
+    }
+
+    private static @NotNull Elem from(@NotNull SourcePos sourcePos, @NotNull OpDecl opDecl) {
+      var op = ensureOperator(opDecl);
+      return new Elem(sourcePos, opDecl, op.name(), op.assoc());
     }
   }
 

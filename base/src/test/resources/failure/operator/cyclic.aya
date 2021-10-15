@@ -1,8 +1,8 @@
-def `a` a0 => a0
-def `b` b0 => b0
-def `c` c0 => c0
-def `d` d0 => d0
-def `e` e0 => e0
+def `a` => a
+def `b` => b
+def `c` => c
+def `d` => d
+def `e` => e
 
 bind a tighter b
 bind b tighter c

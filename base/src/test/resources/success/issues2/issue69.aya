@@ -8,10 +8,8 @@ struct Path (A : I -> Type) (a : A left) (b : A right) : Type
   }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `=` Eq {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def `=` {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
-
-bind = looser application
 
 prim arcoe
 def hfill2d {A : Type}
@@ -29,7 +27,7 @@ def hcomp2d {A : Type}
   => path (hfill2d p q r right)
 
 def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) (idp a) p
-def `~` trans {A : Type} {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q (idp a)
+def `~` {A : Type} {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q (idp a)
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
@@ -40,11 +38,11 @@ open data Nat : Type
   | zero
   | suc Nat
 
-def `+` add (m n : Nat) : Nat
+def `+` (m n : Nat) : Nat
   | zero, n => n
   | n, zero => n
-  | suc m, n => suc (add m n)
-  | m, suc n => suc (add m n)
+  | suc m, n => suc (m + n)
+  | m, suc n => suc (m + n)
 
 bind + tighter =
 
@@ -56,12 +54,12 @@ def +-assoc (x y z : Nat) : x + (y + z) = (x + y) + z
   | zero, y, z => idp _
   | suc x, y, z => pmap suc (+-assoc x y z)
 
-def `*` mul (m n : Nat) : Nat
+def `*` (m n : Nat) : Nat
   | zero, n => zero
   | m, zero => zero
   | suc m, suc n => suc (m + n + m * n)
 
-def `*'` mul' (m n : Nat) : Nat
+def `*'` (m n : Nat) : Nat
   | zero, n => zero
   | m, zero => zero
   | suc m, n => n + m *' n
@@ -71,13 +69,13 @@ bind *' tighter +
 
 def *'-suc (m n : Nat) : m *' (suc n) = m + m *' n
   | zero, n => idp _
-  | suc m, n => (pmap (\ x => suc (add n x)) (*'-suc m n))
+  | suc m, n => (pmap (\ x => suc (n + x)) (*'-suc m n))
     ~ (pmap suc (+-assoc n m (m *' n)))
     ~ (pmap (\ x => suc (x + m *' n)) (+-comm n m))
     ~ (pmap suc (sym (+-assoc m n (m *' n))))
 
 def *'-suc-suc (m n : Nat) : (suc m) *' (suc n) = suc (m + n + m *' n)
-  => (pmap (add (suc n)) (*'-suc m n))
+  => (pmap ((suc n) +) (*'-suc m n))
     ~ (pmap suc (+-assoc n m (m *' n)))
     ~ (pmap (\ x => suc (x + m *' n)) (+-comm n m))
 
@@ -86,6 +84,6 @@ def *-*'-iso (m n : Nat) : m * n = m *' n
   | m, zero => idp _
   | suc m, suc n => (pmap (\ x => suc (m + n + x)) (*-*'-iso m n)) ~ (sym (*'-suc-suc m n))
 
-def *-*'-eq : mul = mul' => funext mul mul' (\ m => funext (mul m) (mul' m) (*-*'-iso m))
+def *-*'-eq : (*) = (*') => funext (*) (*') (\ m => funext (m *) (m *') (*-*'-iso m))
 
 def err_eq (m n : Nat) : m * n = m *' n => pmap (\ f => f m n) *-*'-eq
