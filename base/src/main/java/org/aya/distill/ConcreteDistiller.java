@@ -199,9 +199,11 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
 
   @Override
   public Doc visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Boolean nestedCall) {
+    var seq = binOpSeq.seq();
+    if (seq.sizeEquals(1)) return seq.first().expr().accept(this, nestedCall);
     return visitCalls(
-      binOpSeq.seq().first().expr().accept(this, false),
-      binOpSeq.seq().view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
+      seq.first().expr().accept(this, false),
+      seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
       (nest, arg) -> arg.accept(this, nest),
       nestedCall
     );
