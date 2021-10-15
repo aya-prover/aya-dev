@@ -74,10 +74,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
   private @NotNull Substituter.TermSubst
   checkAndBuildSubst(SeqLike<Term.Param> telescope, SeqLike<Arg<Term>> args) {
-    // This shouldn't fail
-    // Assertions are enabled optionally, so we could perform some somehow-expensive operations
-    assert args.sizeEquals(telescope);
-    assert Term.Param.checkSubst(telescope, args);
+    // assert args.sizeEquals(telescope);
+    // assert Term.Param.checkSubst(telescope, args);
     return buildSubst(telescope, args);
   }
 
