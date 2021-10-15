@@ -84,10 +84,6 @@ def *-*'-iso (m n : Nat) : m * n = m *' n
   | m, zero => idp _
   | suc m, suc n => (pmap (\ x => suc (m + n + x)) (*-*'-iso m n)) ~ (sym (*'-suc-suc m n))
 
--- TODO: remove
-def mul => *
-def mul' => *'
-
-def *-*'-eq : mul = mul' => funext mul mul' (\ m => funext (m *) (m *') (*-*'-iso m))
+def *-*'-eq : (*) = (*') => funext (*) (*') (\ m => funext (m *) (m *') (*-*'-iso m))
 
 def err_eq (m n : Nat) : m * n = m *' n => pmap (\ f => f m n) *-*'-eq
