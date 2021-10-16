@@ -4,6 +4,7 @@ package org.aya.cli;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.repl.Repl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
@@ -29,11 +30,15 @@ public class Main extends MainArgs implements Callable<Integer> {
 
   @Override
   public Integer call() throws Exception {
+    if (action.repl != null) {
+      return Repl.run(action.repl);
+    }
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
+    var inputFile = action.compile.inputFile;
     var filePath = Paths.get(inputFile);
-    if (isLibrary) {
+    if (action.compile.isLibrary) {
       // TODO: move to a new tool
       return LibraryCompiler.compile(filePath);
     }

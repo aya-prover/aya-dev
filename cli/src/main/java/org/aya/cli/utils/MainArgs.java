@@ -4,6 +4,7 @@ package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.prelude.GeneratedVersion;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -17,6 +18,29 @@ import static org.aya.cli.utils.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
   version = "Aya v" + GeneratedVersion.VERSION_STRING,
   showDefaultValues = true)
 public class MainArgs {
+  public static class ReplAction {
+    @Option(names = {"--repl", "--interactive", "-i"}, description = "Start an interactive REPL.", required = true)
+    public boolean repl;
+    @Option(names = {"--repl-type", "--interactive-type"}, description = "Specify the type of the interactive REPL." + CANDIDATES_ON_A_NEW_LINE, defaultValue = "jline")
+    public ReplType replType;
+  }
+
+  public static class CompileAction {
+    @Option(names = {"--make"}, description = "Treat input file as a library root")
+    public boolean isLibrary;
+    @Parameters(paramLabel = "<input-file>", description = "File to compile")
+    public String inputFile;
+  }
+
+  // only one of `repl` and `compile` is not null
+  public static class Action {
+    @CommandLine.ArgGroup(exclusive = false, heading = "REPL arguments:%n")
+    public ReplAction repl;
+
+    @CommandLine.ArgGroup(exclusive = false, heading = "Compiler arguments:%n")
+    public CompileAction compile;
+  }
+
   @Option(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace;
   @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage." + CANDIDATES_ON_A_NEW_LINE)
@@ -31,10 +55,8 @@ public class MainArgs {
   public boolean asciiOnly;
   @Option(names = {"--module-path"}, description = "Search for module under this path.")
   public List<String> modulePaths;
-  @Option(names = {"--make"}, description = "Compile a library")
-  public boolean isLibrary;
-  @Parameters(paramLabel = "<input-file>")
-  public String inputFile;
+  @CommandLine.ArgGroup
+  public Action action;
 
   public ImmutableSeq<String> modulePaths() {
     return modulePaths == null ? ImmutableSeq.empty() : ImmutableSeq.from(modulePaths);
@@ -56,5 +78,10 @@ public class MainArgs {
   public enum TraceFormat {
     imgui,
     markdown,
+  }
+
+  public enum ReplType {
+    plain,
+    jline
   }
 }

@@ -58,6 +58,12 @@ public final class AyaProducer {
     this.reporter = reporter;
   }
 
+  public Either<ImmutableSeq<Stmt>, Expr> visitRepl(AyaParser.ReplContext ctx) {
+    var expr = ctx.expr();
+    if (expr != null) return Either.right(visitExpr(expr));
+    return Either.left(ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt));
+  }
+
   public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
     return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
   }
