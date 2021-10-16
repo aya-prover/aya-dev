@@ -136,10 +136,10 @@ public record FileModuleLoader(
     Trace.@Nullable Builder builder
   ) {
     var resolvedExpr = expr.resolve(context);
-    resolvedExpr.desugar(reporter);
+    var desugaredExpr = resolvedExpr.desugar(reporter);
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      return resolvedExpr.tyck(delayedReporter, builder);
+      return desugaredExpr.tyck(delayedReporter, builder);
     }
   }
 
