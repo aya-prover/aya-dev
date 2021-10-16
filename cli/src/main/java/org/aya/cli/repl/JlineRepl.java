@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import org.aya.cli.repl.jline.AyaParser;
+import org.aya.cli.repl.jline.KwCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.LineReader;
@@ -26,7 +26,8 @@ public final class JlineRepl extends AbstractRepl {
     lineReader = LineReaderBuilder.builder()
       .appName(APP_NAME)
       .terminal(terminal)
-      .parser(new AyaParser())
+      // .parser(new AyaParser())
+      .completer(KwCompleter.INSTANCE)
       .build();
   }
 
