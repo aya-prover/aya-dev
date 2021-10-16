@@ -36,7 +36,7 @@ public final class JlineRepl extends AbstractRepl {
     lineReader = lineReaderBuilder.build();
   }
 
-  @Override String readLine(@NotNull String prompt) {
+  @Override String readLine() {
     return lineReader.readLine(prompt);
   }
 
@@ -59,6 +59,7 @@ public final class JlineRepl extends AbstractRepl {
   }
 
   @Override public void close() throws IOException {
+    super.close();
     terminal.close();
     lineReader.getHistory().save();
   }

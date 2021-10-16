@@ -13,14 +13,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public abstract class AbstractRepl implements Closeable {
   public static final @NotNull @Nls String APP_NAME = "Aya REPL";
   public static final @NotNull @Nls String HELLO = APP_NAME + "\n" +
     "Version: " + GeneratedVersion.VERSION_STRING + "\n" +
     "Commit: " + GeneratedVersion.COMMIT_HASH;
+  protected String prompt = "> ";
+
+  {
+    var root = Repl.configRoot();
+    if (root != null) try {
+      prompt = Files.readString(root.resolve("repl_prompt"), StandardCharsets.UTF_8);
+    } catch (IOException ignored) {
+    }
+  }
 
   private final @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null);
 
@@ -28,7 +40,7 @@ public abstract class AbstractRepl implements Closeable {
     return new CliReporter(this::println, this::errPrintln);
   }
 
-  abstract String readLine(@NotNull String prompt);
+  abstract String readLine();
 
   // should flush
   abstract void println(@NotNull String x);
@@ -51,7 +63,7 @@ public abstract class AbstractRepl implements Closeable {
    * <code>false</code> if it should quit.
    */
   private boolean singleLoop() {
-    var line = readLine("> ");
+    var line = readLine();
     if (line.trim().startsWith(":")) {
       var result = executeCommand(line);
       println(result.text);
@@ -91,5 +103,10 @@ public abstract class AbstractRepl implements Closeable {
       case "q", "quit", "exit" -> new CommandExecutionResult("Quitting Aya REPL...", false);
       default -> new CommandExecutionResult("Invalid command \"" + firstToken + "\"", true);
     };
+  }
+
+  @Override public void close() throws IOException {
+    var root = Repl.configRoot();
+    if (root != null) Files.writeString(root.resolve("repl_prompt"), prompt, StandardCharsets.UTF_8);
   }
 }

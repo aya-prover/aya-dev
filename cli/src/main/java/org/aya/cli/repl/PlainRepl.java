@@ -5,12 +5,13 @@ package org.aya.cli.repl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 public class PlainRepl extends AbstractRepl {
   private final @NotNull Scanner scanner = new Scanner(System.in);
 
-  @Override String readLine(@NotNull String prompt) {
+  @Override String readLine() {
     System.out.print(prompt);
     System.out.flush();
     return scanner.nextLine();
@@ -28,7 +29,8 @@ public class PlainRepl extends AbstractRepl {
     return "Note: You are using the plain REPL. Some features may not be available.";
   }
 
-  @Override public void close() {
+  @Override public void close() throws IOException {
+    super.close();
     scanner.close();
   }
 }
