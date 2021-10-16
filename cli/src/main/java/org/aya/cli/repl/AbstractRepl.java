@@ -69,8 +69,7 @@ public abstract class AbstractRepl implements Closeable {
       return result.continueRepl;
     } else {
       try {
-        var result = evalWithContext(line);
-        println(result);
+        println(evalWithContext(line));
       } catch (Exception e) {
         var stackTrace = new StringWriter();
         e.printStackTrace(new PrintWriter(stackTrace));
