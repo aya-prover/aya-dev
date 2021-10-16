@@ -4,21 +4,37 @@ package org.aya.cli.repl;
 
 import org.aya.cli.utils.MainArgs;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Repl {
+  private static Path CONFIG_ROOT;
+  static @Nullable Path configRoot() {
+    if (CONFIG_ROOT == null) {
+      CONFIG_ROOT = Paths.get(System.getProperty("user.home"), ".aya");
+    }
+    try {
+      Files.createDirectories(CONFIG_ROOT);
+    } catch (IOException ignored) {
+      CONFIG_ROOT = null;
+    }
+    return CONFIG_ROOT;
+  }
+
+  static {
+  }
+
   public static int run(MainArgs.@NotNull ReplAction replAction) throws IOException {
-    try (var repl = createRepl(replAction.replType)) {
+    try (var repl = switch (replAction.replType) {
+      case jline -> new JlineRepl();
+      case plain -> new PlainRepl();
+    }) {
       repl.run();
     }
     return 0;
-  }
-
-  private static @NotNull AbstractRepl createRepl(MainArgs.@NotNull ReplType replType) throws IOException {
-    return switch (replType) {
-      case jline -> new JlineRepl();
-      case plain -> new PlainRepl();
-    };
   }
 }

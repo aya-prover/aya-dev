@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedStringBuilder;
@@ -23,12 +24,16 @@ public final class JlineRepl extends AbstractRepl {
       .jansi(true)
       .jna(false)
       .build();
-    lineReader = LineReaderBuilder.builder()
+    var lineReaderBuilder = LineReaderBuilder.builder()
       .appName(APP_NAME)
       .terminal(terminal)
       // .parser(new AyaParser())
-      .completer(KwCompleter.INSTANCE)
-      .build();
+      .completer(KwCompleter.INSTANCE);
+    var root = Repl.configRoot();
+    if (root != null) lineReaderBuilder
+      .variable("history-file", root.resolve("history"))
+      .history(new DefaultHistory());
+    lineReader = lineReaderBuilder.build();
   }
 
   @Override String readLine(@NotNull String prompt) {
@@ -55,5 +60,6 @@ public final class JlineRepl extends AbstractRepl {
 
   @Override public void close() throws IOException {
     terminal.close();
+    lineReader.getHistory().save();
   }
 }
