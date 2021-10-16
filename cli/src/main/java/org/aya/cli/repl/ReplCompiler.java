@@ -10,6 +10,7 @@ import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
+import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
@@ -70,9 +71,8 @@ public class ReplCompiler {
         expr -> FileModuleLoader.tyckExpr(context, expr, reporter, builder).wellTyped()
           .normalize(NormalizeMode.NF)
       );
-    } catch (Exception e) {
-      // TODO: handle different exceptions
-      throw e;
+    } catch (InterruptException ignored) {
+      return Either.left(ImmutableSeq.empty());
     }
   }
 }
