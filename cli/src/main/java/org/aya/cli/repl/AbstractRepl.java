@@ -8,6 +8,7 @@ import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.cli.single.CliReporter;
 import org.aya.prelude.GeneratedVersion;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public abstract class AbstractRepl implements Closeable {
-  public static final String INTRODUCTION_MESSAGE = "Aya REPL " + GeneratedVersion.VERSION_STRING;
+  public static final @NotNull @Nls String APP_NAME = "Aya REPL";
+  public static final @NotNull @Nls String INTRODUCTION_MESSAGE = APP_NAME + " " + GeneratedVersion.VERSION_STRING;
 
   // TODO: what locator and builder?
   @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null, null);
@@ -79,7 +81,7 @@ public abstract class AbstractRepl implements Closeable {
     return ayaDocile.toDoc(DistillerOptions.DEFAULT).debugRender();
   }
 
-  static record CommandExecutionResult(@NotNull String text, boolean continueRepl) {
+  record CommandExecutionResult(@NotNull String text, boolean continueRepl) {
   }
 
   @NotNull CommandExecutionResult executeCommand(@NotNull String line) {

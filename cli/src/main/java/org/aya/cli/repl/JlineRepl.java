@@ -14,34 +14,33 @@ import org.jline.utils.AttributedStyle;
 
 import java.io.IOException;
 
-public class JlineRepl extends AbstractRepl {
-  @NotNull Terminal terminal;
-  @NotNull LineReader lineReader;
+public final class JlineRepl extends AbstractRepl {
+  private final @NotNull Terminal terminal;
+  private final @NotNull LineReader lineReader;
 
   public JlineRepl() throws IOException {
     terminal = TerminalBuilder.builder()
-      .system(true)
+      .jansi(true)
+      .jna(false)
       .build();
     lineReader = LineReaderBuilder.builder()
+      .appName(APP_NAME)
       .terminal(terminal)
       .parser(new AyaParser())
       .build();
   }
 
-  @Override
-  String readLine(@NotNull String prompt) {
+  @Override String readLine(@NotNull String prompt) {
     return lineReader.readLine(prompt);
   }
 
-  @Override
-  void println(@NotNull String x) {
+  @Override void println(@NotNull String x) {
     terminal.writer().println(x);
     terminal.flush();
   }
 
   // see `eprintln` in https://github.com/JetBrains/Arend/blob/master/cli/src/main/java/org/arend/frontend/repl/jline/JLineCliRepl.java
-  @Override
-  void errPrintln(@NotNull String x) {
+  @Override void errPrintln(@NotNull String x) {
     println(new AttributedStringBuilder()
       .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
       .append(x)
@@ -49,13 +48,11 @@ public class JlineRepl extends AbstractRepl {
       .toAnsi());
   }
 
-  @Override
-  @Nullable String getAdditionalMessage() {
+  @Override @Nullable String getAdditionalMessage() {
     return null;
   }
 
-  @Override
-  public void close() throws IOException {
+  @Override public void close() throws IOException {
     terminal.close();
   }
 }
