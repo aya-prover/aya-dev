@@ -47,6 +47,7 @@ public class ReplCompiler {
     @NotNull SeqLike<Path> modulePaths,
     @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
   ) {
+    if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
 
