@@ -99,7 +99,7 @@ public abstract class AbstractRepl implements Closeable {
     var command = split[0];
     var argument = split.length > 1 ? split[1] : "";
     return switch (command.substring(1)) {
-      case "q", "quit", "exit" -> new CommandExecutionResult("Quitting Aya REPL...", false);
+      case "q", "quit", "exit" -> new CommandExecutionResult("See you space cow woof woof :3", false);
       case "prompt" -> {
         prompt = argument;
         yield new CommandExecutionResult("Changed prompt to `" + argument + "`", true);
