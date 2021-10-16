@@ -20,22 +20,19 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
-import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
 public class ReplCompiler {
-  @NotNull Reporter reporter;
-  @Nullable SourceFileLocator locator;
-  Trace.@Nullable Builder builder;
-  @NotNull PhysicalModuleContext context;
+  private final @NotNull Reporter reporter;
+  private final @Nullable SourceFileLocator locator;
+  private final @NotNull PhysicalModuleContext context;
 
-  public ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator, Trace.@Nullable Builder builder) {
+  public ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.reporter = reporter;
     this.locator = locator;
-    this.builder = builder;
     context = new EmptyContext(reporter).derive(Seq.empty());
   }
 
@@ -58,17 +55,17 @@ public class ReplCompiler {
       if (programOrExpr == null) return null;
 
       var loader = new ModuleListLoader(modulePaths.view().map(path ->
-        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, builder))).toImmutableSeq());
+        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, null))).toImmutableSeq());
 
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
           FileModuleLoader.tyckModule(context, loader, program, reporter,
             resolveInfo -> {},
-            newDefs::set, builder);
+            newDefs::set, null);
           return newDefs.get();
         },
-        expr -> FileModuleLoader.tyckExpr(context, expr, reporter, builder).wellTyped()
+        expr -> FileModuleLoader.tyckExpr(context, expr, reporter, null).wellTyped()
           .normalize(NormalizeMode.NF)
       );
     } catch (InterruptException ignored) {
