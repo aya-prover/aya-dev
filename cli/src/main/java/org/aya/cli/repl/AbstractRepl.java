@@ -20,8 +20,7 @@ public abstract class AbstractRepl implements Closeable {
   public static final @NotNull @Nls String APP_NAME = "Aya REPL";
   public static final @NotNull @Nls String INTRODUCTION_MESSAGE = APP_NAME + " " + GeneratedVersion.VERSION_STRING;
 
-  // TODO: what locator and builder?
-  @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null, null);
+  private final @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null);
 
   private @NotNull CliReporter makeReplReporter() {
     return new CliReporter(this::println, this::errPrintln);
@@ -49,7 +48,7 @@ public abstract class AbstractRepl implements Closeable {
    * @return <code>true</code> if the REPL should continue to receive user input and execute,
    * <code>false</code> if it should quit.
    */
-  boolean singleLoop() {
+  private boolean singleLoop() {
     var line = readLine("> ");
     if (line.trim().startsWith(":")) {
       var result = executeCommand(line);
@@ -62,14 +61,13 @@ public abstract class AbstractRepl implements Closeable {
       } catch (Exception e) {
         var stackTrace = new StringWriter();
         e.printStackTrace(new PrintWriter(stackTrace));
-        errPrintln("Unexpected exception occurred during execution.");
         errPrintln(stackTrace.toString());
       }
       return true;
     }
   }
 
-  @NotNull String evalWithContext(@NotNull String line) {
+  private @NotNull String evalWithContext(@NotNull String line) {
     var programOrTerm = replCompiler.compileAndAddToContext(line, Seq.empty(), null);
     return programOrTerm != null ? programOrTerm.fold(
       program -> program.joinToString("\n", this::render),
@@ -85,10 +83,7 @@ public abstract class AbstractRepl implements Closeable {
   }
 
   @NotNull CommandExecutionResult executeCommand(@NotNull String line) {
-    var tokens = ArraySeq.wrap(line.split(" "))
-      .view()
-      .filter(s -> !s.isEmpty())
-      .toImmutableVector();
+    var tokens = ArraySeq.wrap(line.split("\\s+"));
     var firstToken = tokens.get(0);
     return switch (firstToken.substring(1)) {
       case "q", "quit", "exit" -> new CommandExecutionResult("Quitting Aya REPL...", false);
