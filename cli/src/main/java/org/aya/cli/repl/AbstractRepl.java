@@ -18,7 +18,9 @@ import java.io.StringWriter;
 
 public abstract class AbstractRepl implements Closeable {
   public static final @NotNull @Nls String APP_NAME = "Aya REPL";
-  public static final @NotNull @Nls String INTRODUCTION_MESSAGE = APP_NAME + " " + GeneratedVersion.VERSION_STRING;
+  public static final @NotNull @Nls String HELLO = APP_NAME + "\n" +
+    "Version: " + GeneratedVersion.VERSION_STRING + "\n" +
+    "Commit: " + GeneratedVersion.COMMIT_HASH;
 
   private final @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null);
 
@@ -33,7 +35,7 @@ public abstract class AbstractRepl implements Closeable {
   abstract void errPrintln(@NotNull String x);
 
   void run() {
-    println(INTRODUCTION_MESSAGE);
+    println(HELLO);
     var additionalMessage = getAdditionalMessage();
     if (additionalMessage != null) println(additionalMessage);
     //noinspection StatementWithEmptyBody
