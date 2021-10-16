@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import kala.collection.ArraySeq;
 import kala.collection.Seq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
@@ -97,11 +96,16 @@ public abstract class AbstractRepl implements Closeable {
   }
 
   @NotNull CommandExecutionResult executeCommand(@NotNull String line) {
-    var tokens = ArraySeq.wrap(line.split("\\s+"));
-    var firstToken = tokens.get(0);
-    return switch (firstToken.substring(1)) {
+    var split = line.split(" ", 2);
+    var command = split[0];
+    var argument = split.length > 1 ? split[1] : "";
+    return switch (command.substring(1)) {
       case "q", "quit", "exit" -> new CommandExecutionResult("Quitting Aya REPL...", false);
-      default -> new CommandExecutionResult("Invalid command \"" + firstToken + "\"", true);
+      case "prompt" -> {
+        prompt = argument;
+        yield new CommandExecutionResult("Changed prompt to `" + argument + "`", true);
+      }
+      default -> new CommandExecutionResult("Invalid command \"" + command + "\"", true);
     };
   }
 
