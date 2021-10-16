@@ -30,9 +30,8 @@ public class Main extends MainArgs implements Callable<Integer> {
 
   @Override
   public Integer call() throws Exception {
-    if (action.repl != null) {
-      return Repl.run(action.repl);
-    }
+    if (action == null) return 0;
+    if (action.repl != null) return Repl.run(action.repl);
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
