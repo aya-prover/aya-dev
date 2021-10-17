@@ -231,7 +231,7 @@ public final class ExprTycker {
     };
   }
 
-  private static final class NotPi extends RuntimeException {
+  private static final class NotPi extends Exception {
     private final @NotNull Term what;
 
     public NotPi(@NotNull Term what) {
@@ -239,7 +239,7 @@ public final class ExprTycker {
     }
   }
 
-  private FormTerm.@NotNull Pi ensurePiOrThrow(@NotNull Term term) {
+  private FormTerm.@NotNull Pi ensurePiOrThrow(@NotNull Term term) throws NotPi {
     if (term instanceof FormTerm.Pi pi) return pi;
     else throw new NotPi(term);
   }
