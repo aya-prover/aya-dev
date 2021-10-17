@@ -69,9 +69,7 @@ public sealed interface Expr extends ConcreteExpr {
     Trace.@Nullable Builder builder
   ) {
     var tycker = new ExprTycker(reporter, builder);
-    var result = new Expr.HoleExpr(SourcePos.NONE, false, null);
-    var resultRes = tycker.synthesize(result).wellTyped();
-    return tycker.zonk(this, tycker.inherit(this, resultRes));
+    return tycker.synthesize(this);
   }
 
   @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
@@ -232,6 +230,7 @@ public sealed interface Expr extends ConcreteExpr {
    * def `+` add (a b : Nat) => ...
    * def test => zero + zero
    * </pre>
+   *
    * @author ice1000
    */
   record RefExpr(
