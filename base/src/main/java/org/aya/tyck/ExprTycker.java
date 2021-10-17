@@ -212,7 +212,7 @@ public final class ExprTycker {
               // that implies paramLicit == false
               var holeApp = mockTerm(pi.param().subst(subst), namedArg.expr().sourcePos());
               app = CallTerm.make(app, new Arg<>(holeApp, false));
-              subst.add(pi.param().ref(), holeApp);
+              subst.addDirectly(pi.param().ref(), holeApp);
               pi = ensurePiOrThrow(pi.body());
             } else yield fail(appE, new ErrorTerm(pi.body()), new LicitProblem.UnexpectedImplicitArgError(argument));
           }
@@ -223,7 +223,7 @@ public final class ExprTycker {
         var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
         app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
         subst.addDirectly(pi.param().ref(), elabArg);
-        yield new Result(app, subst.isEmpty() ? pi : pi.body().subst(subst));
+        yield new Result(app, pi.body().subst(subst));
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
         FormTerm.freshUniv(hole.sourcePos()), Constants.randomName(hole), hole.sourcePos())._2);
