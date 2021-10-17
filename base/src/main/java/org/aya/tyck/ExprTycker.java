@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
-import kala.control.Either;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -206,27 +205,43 @@ public final class ExprTycker {
           yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
         var pi = piTerm;
         var subst = new Substituter.TermSubst(MutableMap.create());
-        while (pi.param().explicit() != argLicit ||
-          namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
-          if (argLicit || namedArg.name() != null) {
-            // that implies paramLicit == false
-            var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
-            app = CallTerm.make(app, new Arg<>(holeApp, false));
-            var newPi = instPi(pi, subst, holeApp);
-            if (newPi.isLeft()) pi = newPi.getLeftValue();
-            else yield fail(appE, newPi.getRightValue(), BadTypeError.pi(appE, newPi.getRightValue()));
-          } else yield fail(appE, new ErrorTerm(pi.body()),
-            new LicitProblem.UnexpectedImplicitArgError(argument));
+        try {
+          while (pi.param().explicit() != argLicit ||
+            namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
+            if (argLicit || namedArg.name() != null) {
+              // that implies paramLicit == false
+              var holeApp = mockTerm(pi.param().subst(subst), namedArg.expr().sourcePos());
+              app = CallTerm.make(app, new Arg<>(holeApp, false));
+              subst.addDirectly(pi.param().ref(), holeApp);
+              pi = ensurePiOrThrow(pi.body());
+            } else yield fail(appE, new ErrorTerm(pi.body()), new LicitProblem.UnexpectedImplicitArgError(argument));
+          }
+          pi = ensurePiOrThrow(pi.subst(subst).normalize(NormalizeMode.WHNF));
+        } catch (NotPi notPi) {
+          yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(expr, notPi.what));
         }
         var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
         app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
         subst.addDirectly(pi.param().ref(), elabArg);
-        yield new Result(app, subst.isEmpty() ? pi : pi.body().subst(subst));
+        yield new Result(app, pi.body().subst(subst));
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
         FormTerm.freshUniv(hole.sourcePos()), Constants.randomName(hole), hole.sourcePos())._2);
       default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm(Doc.english("no rule"), false));
     };
+  }
+
+  private static final class NotPi extends Exception {
+    private final @NotNull Term what;
+
+    public NotPi(@NotNull Term what) {
+      this.what = what;
+    }
+  }
+
+  private FormTerm.@NotNull Pi ensurePiOrThrow(@NotNull Term term) throws NotPi {
+    if (term instanceof FormTerm.Pi pi) return pi;
+    else throw new NotPi(term);
   }
 
   private void univArgs(Term app, Expr.UnivArgsExpr univArgs) {
@@ -574,13 +589,6 @@ public final class ExprTycker {
     //  in case we can synthesize this term via its type only
     var genName = param.ref().name().concat(Constants.GENERATED_POSTFIX);
     return localCtx.freshHole(param.type(), genName, pos)._2;
-  }
-
-  private Either<FormTerm.Pi, Term>
-  instPi(@NotNull FormTerm.Pi pi, Substituter.TermSubst subst, @NotNull Term arg) {
-    subst.add(pi.param().ref(), arg);
-    var term = pi.body().subst(subst).normalize(NormalizeMode.WHNF);
-    return term instanceof FormTerm.Pi pai ? Either.left(pai) : Either.right(term);
   }
 
   public static class TyckerException extends InternalException {
