@@ -210,7 +210,7 @@ public final class ExprTycker {
             namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
             if (argLicit || namedArg.name() != null) {
               // that implies paramLicit == false
-              var holeApp = mockTerm(pi.param(), namedArg.expr().sourcePos());
+              var holeApp = mockTerm(pi.param().subst(subst), namedArg.expr().sourcePos());
               app = CallTerm.make(app, new Arg<>(holeApp, false));
               subst.add(pi.param().ref(), holeApp);
               pi = ensurePiOrThrow(pi.body());
@@ -218,12 +218,12 @@ public final class ExprTycker {
           }
           pi = ensurePiOrThrow(pi.subst(subst).normalize(NormalizeMode.WHNF));
         } catch (NotPi notPi) {
-          yield fail(expr, notPi.what, BadTypeError.pi(expr, notPi.what));
+          yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(expr, notPi.what));
         }
         var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
         app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
         subst.addDirectly(pi.param().ref(), elabArg);
-        yield new Result(app.subst(subst), subst.isEmpty() ? pi : pi.body().subst(subst));
+        yield new Result(app, subst.isEmpty() ? pi : pi.body().subst(subst));
       }
       case Expr.HoleExpr hole -> inherit(hole, localCtx.freshHole(
         FormTerm.freshUniv(hole.sourcePos()), Constants.randomName(hole), hole.sourcePos())._2);
