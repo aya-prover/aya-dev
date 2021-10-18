@@ -13,9 +13,11 @@ import java.nio.file.Paths;
 
 public class Repl {
   private static Path CONFIG_ROOT;
+
   static @Nullable Path configRoot() {
     if (CONFIG_ROOT == null) {
-      CONFIG_ROOT = Paths.get(System.getProperty("user.home"), ".aya");
+      String ayaHome = System.getenv("AYA_HOME");
+      CONFIG_ROOT = ayaHome == null ? Paths.get(System.getProperty("user.home"), ".aya") : Paths.get(ayaHome);
     }
     try {
       Files.createDirectories(CONFIG_ROOT);
