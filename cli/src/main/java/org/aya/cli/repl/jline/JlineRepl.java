@@ -1,8 +1,8 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl;
+package org.aya.cli.repl.jline;
 
-import org.aya.cli.repl.jline.KwCompleter;
+import org.aya.cli.repl.AbstractRepl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.LineReader;
@@ -29,24 +29,24 @@ public final class JlineRepl extends AbstractRepl {
       .terminal(terminal)
       // .parser(new AyaParser())
       .completer(KwCompleter.INSTANCE);
-    var root = Repl.configRoot();
+    var root = configRoot();
     if (root != null) lineReaderBuilder
       .variable("history-file", root.resolve("history"))
       .history(new DefaultHistory());
     lineReader = lineReaderBuilder.build();
   }
 
-  @Override String readLine() {
+  @Override protected @NotNull String readLine() {
     return lineReader.readLine(prompt);
   }
 
-  @Override void println(@NotNull String x) {
+  @Override protected void println(@NotNull String x) {
     terminal.writer().println(x);
     terminal.flush();
   }
 
   // see `eprintln` in https://github.com/JetBrains/Arend/blob/master/cli/src/main/java/org/arend/frontend/repl/jline/JLineCliRepl.java
-  @Override void errPrintln(@NotNull String x) {
+  @Override protected void errPrintln(@NotNull String x) {
     println(new AttributedStringBuilder()
       .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
       .append(x)
@@ -54,7 +54,7 @@ public final class JlineRepl extends AbstractRepl {
       .toAnsi());
   }
 
-  @Override @Nullable String getAdditionalMessage() {
+  @Override protected @Nullable String getAdditionalMessage() {
     return null;
   }
 

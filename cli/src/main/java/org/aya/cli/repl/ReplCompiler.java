@@ -25,12 +25,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-public class ReplCompiler {
+class ReplCompiler {
   private final @NotNull Reporter reporter;
   private final @Nullable SourceFileLocator locator;
   private final @NotNull PhysicalModuleContext context;
 
-  public ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
+  ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.reporter = reporter;
     this.locator = locator;
     context = new EmptyContext(reporter).derive(Seq.empty());
