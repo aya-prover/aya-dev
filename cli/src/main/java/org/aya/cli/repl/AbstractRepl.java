@@ -17,6 +17,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public abstract class AbstractRepl implements Closeable {
   public static final @NotNull @Nls String APP_NAME = "Aya REPL";
@@ -25,8 +27,23 @@ public abstract class AbstractRepl implements Closeable {
     "Commit: " + GeneratedVersion.COMMIT_HASH;
   protected String prompt = "> ";
 
+  private static Path CONFIG_ROOT;
+
+  protected static @Nullable Path configRoot() {
+    if (CONFIG_ROOT == null) {
+      String ayaHome = System.getenv("AYA_HOME");
+      CONFIG_ROOT = ayaHome == null ? Paths.get(System.getProperty("user.home"), ".aya") : Paths.get(ayaHome);
+    }
+    try {
+      Files.createDirectories(CONFIG_ROOT);
+    } catch (IOException ignored) {
+      CONFIG_ROOT = null;
+    }
+    return CONFIG_ROOT;
+  }
+
   {
-    var root = Repl.configRoot();
+    var root = configRoot();
     if (root != null) try {
       prompt = Files.readString(root.resolve("repl_prompt"), StandardCharsets.UTF_8);
     } catch (IOException ignored) {
@@ -39,11 +56,11 @@ public abstract class AbstractRepl implements Closeable {
     return new CliReporter(this::println, this::errPrintln);
   }
 
-  abstract String readLine();
+  protected abstract @NotNull String readLine();
 
   // should flush
-  abstract void println(@NotNull String x);
-  abstract void errPrintln(@NotNull String x);
+  protected abstract void println(@NotNull String x);
+  protected abstract void errPrintln(@NotNull String x);
 
   void run() {
     println(HELLO);
@@ -53,7 +70,7 @@ public abstract class AbstractRepl implements Closeable {
     while (singleLoop()) ;
   }
 
-  @Nullable abstract String getAdditionalMessage();
+  protected abstract @Nullable String getAdditionalMessage();
 
   /**
    * Executes a single REPL loop.
@@ -87,14 +104,14 @@ public abstract class AbstractRepl implements Closeable {
     ) : "The input text is neither a program nor an expression.";
   }
 
-  @NotNull String render(@NotNull AyaDocile ayaDocile) {
+  private @NotNull String render(@NotNull AyaDocile ayaDocile) {
     return ayaDocile.toDoc(DistillerOptions.DEFAULT).debugRender();
   }
 
-  record CommandExecutionResult(@NotNull String text, boolean continueRepl) {
+  private record CommandExecutionResult(@NotNull String text, boolean continueRepl) {
   }
 
-  @NotNull CommandExecutionResult executeCommand(@NotNull String line) {
+  private @NotNull CommandExecutionResult executeCommand(@NotNull String line) {
     var split = line.split(" ", 2);
     var command = split[0];
     var argument = split.length > 1 ? split[1] : "";
@@ -109,7 +126,7 @@ public abstract class AbstractRepl implements Closeable {
   }
 
   @Override public void close() throws IOException {
-    var root = Repl.configRoot();
+    var root = configRoot();
     if (root != null) Files.writeString(root.resolve("repl_prompt"), prompt, StandardCharsets.UTF_8);
   }
 }

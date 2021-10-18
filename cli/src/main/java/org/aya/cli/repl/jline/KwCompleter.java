@@ -11,10 +11,10 @@ import org.jline.reader.ParsedLine;
 import java.util.List;
 import java.util.stream.Stream;
 
-public final class KwCompleter implements Completer {
-  public static final @NotNull KwCompleter INSTANCE = new KwCompleter();
+final class KwCompleter implements Completer {
+  static final @NotNull KwCompleter INSTANCE = new KwCompleter();
 
-  private KwCompleter() {
+  KwCompleter() {
   }
 
   // TODO: more keywords
