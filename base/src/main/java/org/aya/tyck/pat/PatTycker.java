@@ -128,6 +128,10 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var type = sig.value.result();
     match.expr = match.expr.map(e -> e.accept(refSubst, Unit.unit()));
     var result = match.hasError
+      // In case the patterns are malformed, do not check the body
+      // as we bind local variables in the pattern checker,
+      // and in case the patterns are malformed, some bindings may
+      // not be added to the localCtx of tycker, causing assertion errors
       ? match.expr.<Term>map(e -> new ErrorTerm(e, false))
       : match.expr.map(e -> exprTycker.inherit(e, type).wellTyped().subst(termSubst));
     termSubst.clear();
@@ -230,7 +234,6 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     exprTycker.reporter.report(problem);
     foundError();
     // In case something's wrong, produce a random pattern
-    PatBindCollector.bindErrors(pattern, exprTycker.localCtx);
     return new Pat.Bind(pattern.explicit(), new LocalVar(name), param);
   }
 
