@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 /**
  * @author ice1000
  */
-public final class PatTycker implements Pattern.Visitor<Term, Pat> {
+public final class PatTycker {
   private final @NotNull ExprTycker exprTycker;
   public final @NotNull ExprRefSubst refSubst;
   private final Substituter.@NotNull TermSubst termSubst;
@@ -71,22 +71,15 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override public void traceEntrance(@NotNull Pattern pat, Term term) {
-    tracing(builder -> builder.shift(new Trace.PatT(term, pat, pat.sourcePos())));
-  }
-
-  @Override public void traceExit(Pat pat, @NotNull Pattern pattern, Term term) {
-    tracing(GenericBuilder::reduce);
-  }
-
   public PatTycker(@NotNull ExprTycker exprTycker) {
     this(exprTycker, new ExprRefSubst(exprTycker.reporter),
       new Substituter.TermSubst(MutableMap.create()), exprTycker.traceBuilder);
   }
 
-  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>> elabClauses(
+  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
+  elabClauses(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    Def.@NotNull Signature signature
+    @NotNull Def.Signature signature
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
@@ -111,16 +104,72 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     return checked.map(c -> c._1.mapTerm(e -> e.zonk(exprTycker, c._2)));
   }
 
-  @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
-    var selection = selectCtor(term, null, refSubst.reporter(), absurd);
-    if (selection != null) {
-      refSubst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
-      hasError = true;
-    }
-    return new Pat.Absurd(absurd.explicit(), term);
+  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
+    return switch (pattern) {
+      case Pattern.Absurd absurd -> {
+        var selection = selectCtor(term, null, refSubst.reporter(), absurd);
+        if (selection != null) {
+          foundError();
+          refSubst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
+        }
+        yield new Pat.Absurd(absurd.explicit(), term);
+      }
+      case Pattern.Tuple tuple -> {
+        if (!(term instanceof FormTerm.Sigma sigma))
+          yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, "?", term);
+        // sig.result is a dummy term
+        var sig = new Def.Signature(
+          ImmutableSeq.empty(),
+          sigma.params(),
+          new ErrorTerm(Doc.plain("Rua"), false));
+        var as = tuple.as();
+        if (as != null) exprTycker.localCtx.put(as, sigma);
+        yield new Pat.Tuple(tuple.explicit(),
+          visitPatterns(new Ref<>(sig), tuple.patterns()), as, sigma);
+      }
+      case Pattern.Ctor ctor -> {
+        var realCtor = selectCtor(term, ctor.name().data(), refSubst.reporter(), ctor);
+        if (realCtor == null) yield withError(new PatternProblem.UnknownCtor(ctor), ctor, ctor.name().data(), term);
+        var ctorRef = realCtor._3.ref();
+        ctor.resolved().value = ctorRef;
+        var ctorCore = ctorRef.core;
+        final var dataCall = realCtor._1;
+        var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
+        var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(),
+          Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall));
+        var patterns = visitPatterns(sig, ctor.params());
+        yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
+      }
+      case Pattern.Bind bind -> {
+        var v = bind.bind();
+        var interval = PrimDef.Factory.INSTANCE.getOption(PrimDef.ID.INTERVAL);
+        if (term instanceof CallTerm.Prim prim && interval.isNotEmpty() && prim.ref() == interval.get().ref())
+          for (var primName : PrimDef.Factory.LEFT_RIGHT)
+            if (Objects.equals(bind.bind().name(), primName.id)) {
+              refSubst.bad().add(bind.bind());
+              yield new Pat.Prim(bind.explicit(), PrimDef.Factory.INSTANCE.getOption(primName).get().ref(), term);
+            }
+        var selected = selectCtor(term, v.name(), IgnoringReporter.INSTANCE, bind);
+        if (selected == null) {
+          exprTycker.localCtx.put(v, term);
+          yield new Pat.Bind(bind.explicit(), v, term);
+        }
+        var ctorCore = selected._3.ref().core;
+        if (ctorCore.selfTele.isNotEmpty()) {
+          // TODO: error report: not enough parameters bind
+          foundError();
+          throw new ExprTycker.TyckerException();
+        }
+        var value = bind.resolved().value;
+        if (value != null) refSubst.good().putIfAbsent(v, value);
+        else refSubst.bad().add(v);
+        yield new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.empty(), null, selected._1);
+      }
+      case default -> throw new UnsupportedOperationException("Number and underscore patterns are unsupported yet");
+    };
   }
 
-  public Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
+  private Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
     var sig = new Ref<>(signature);
     exprTycker.localCtx = exprTycker.localCtx.derive();
     currentClause = match;
@@ -145,8 +194,8 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var results = Buffer.<Pat>create();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
-        withError(new PatternProblem.TooManyPattern(pat, sig.value.result()),
-          pat, "?", ErrorTerm.typeOf(pat));
+        exprTycker.reporter.report(new PatternProblem.TooManyPattern(pat, sig.value.result()));
+        foundError();
         return;
       }
       var param = sig.value.param().first();
@@ -168,7 +217,10 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
         foundError();
         throw new ExprTycker.TyckerException();
       }
-      var res = pat.accept(this, param.type());
+      var type = param.type();
+      tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
+      var res = doTyck(pat, type);
+      tracing(GenericBuilder::reduce);
       termSubst.add(param.ref(), res.toTerm());
       sig.value = sig.value.inst(termSubst);
       results.append(res);
@@ -181,74 +233,11 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     if (currentClause != null) currentClause.hasError = true;
   }
 
-  @Override public Pat visitCalmFace(Pattern.@NotNull CalmFace face, Term t) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override public Pat visitNumber(Pattern.@NotNull Number number, Term t) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override public Pat visitTuple(Pattern.@NotNull Tuple tuple, Term t) {
-    if (!(t instanceof FormTerm.Sigma sigma))
-      return withError(new PatternProblem.TupleNonSig(tuple, t), tuple, "?", t);
-    // sig.result is a dummy term
-    var sig = new Def.Signature(
-      ImmutableSeq.empty(),
-      sigma.params(),
-      new ErrorTerm(Doc.plain("Rua"), false));
-    var as = tuple.as();
-    if (as != null) exprTycker.localCtx.put(as, sigma);
-    return new Pat.Tuple(tuple.explicit(),
-      visitPatterns(new Ref<>(sig), tuple.patterns()), as, sigma);
-  }
-
-  @Override public Pat visitBind(Pattern.@NotNull Bind bind, Term t) {
-    var v = bind.bind();
-    var interval = PrimDef.Factory.INSTANCE.getOption(PrimDef.ID.INTERVAL);
-    if (t instanceof CallTerm.Prim prim && interval.isNotEmpty() &&
-      prim.ref() == interval.get().ref())
-      for (var primName : PrimDef.Factory.LEFT_RIGHT)
-        if (Objects.equals(bind.bind().name(), primName.id)) {
-          refSubst.bad().add(bind.bind());
-          return new Pat.Prim(bind.explicit(), PrimDef.Factory.INSTANCE.getOption(primName).get().ref(), t);
-        }
-    var selected = selectCtor(t, v.name(), IgnoringReporter.INSTANCE, bind);
-    if (selected == null) {
-      exprTycker.localCtx.put(v, t);
-      return new Pat.Bind(bind.explicit(), v, t);
-    }
-    var ctorCore = selected._3.ref().core;
-    if (ctorCore.selfTele.isNotEmpty()) {
-      // TODO: error report: not enough parameters bind
-      foundError();
-      throw new ExprTycker.TyckerException();
-    }
-    var value = bind.resolved().value;
-    if (value != null) refSubst.good().putIfAbsent(v, value);
-    else refSubst.bad().add(v);
-    return new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.empty(), null, selected._1);
-  }
-
   private @NotNull Pat withError(Problem problem, Pattern pattern, String name, Term param) {
     exprTycker.reporter.report(problem);
     foundError();
     // In case something's wrong, produce a random pattern
     return new Pat.Bind(pattern.explicit(), new LocalVar(name), param);
-  }
-
-  @Override public Pat visitCtor(Pattern.@NotNull Ctor ctor, Term param) {
-    var realCtor = selectCtor(param, ctor.name().data(), refSubst.reporter(), ctor);
-    if (realCtor == null) return withError(new PatternProblem.UnknownCtor(ctor), ctor, ctor.name().data(), param);
-    var ctorRef = realCtor._3.ref();
-    ctor.resolved().value = ctorRef;
-    var ctorCore = ctorRef.core;
-    final var dataCall = realCtor._1;
-    var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
-    var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(),
-      Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall));
-    var patterns = visitPatterns(sig, ctor.params());
-    return new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
   }
 
   /**
