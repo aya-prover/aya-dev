@@ -56,11 +56,10 @@ public record StmtTycker(
   private <S extends Signatured, D extends Def> D
   traced(@NotNull S yeah, ExprTycker p, @NotNull BiFunction<S, ExprTycker, D> f) {
     tracing(builder -> builder.shift(new Trace.DeclT(yeah.ref(), yeah.sourcePos)));
-    p.localCtx = p.localCtx.derive();
+    var parent = p.localCtx;
+    p.localCtx = parent.derive();
     var r = f.apply(yeah, p);
     tracing(Trace.Builder::reduce);
-    var parent = p.localCtx.parent();
-    assert parent != null;
     p.localCtx = parent;
     return r;
   }
@@ -147,7 +146,7 @@ public record StmtTycker(
     };
   }
 
-  private CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var dataRef = ctor.dataRef;
     var dataSig = dataRef.concrete.signature;
     assert dataSig != null;
@@ -195,7 +194,7 @@ public record StmtTycker(
     tracing(GenericBuilder::reduce);
   }
 
-  private FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {
+  private @NotNull FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {
     var tele = checkTele(tycker, field.telescope, structResult);
     var structRef = field.structRef;
     var result = tycker.zonk(field.result, tycker.inherit(field.result, structResult)).wellTyped();
