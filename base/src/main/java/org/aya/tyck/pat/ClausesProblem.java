@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.tyck.error;
+package org.aya.tyck.pat;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -103,6 +103,22 @@ public sealed interface ClausesProblem extends Problem {
         Doc.english("Cannot perform pattern matching"),
         Doc.styled(Style.code(), pat.toDoc(options))
       );
+    }
+  }
+
+  record Domination(int dom, int sub, @Override @NotNull SourcePos sourcePos) implements ClausesProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      var subOrdinal = Doc.ordinal(sub);
+      return Doc.sep(
+        Doc.english("The"), Doc.ordinal(dom),
+        Doc.english("clause dominates the"), subOrdinal,
+        Doc.english("clause. The"), subOrdinal,
+        Doc.english("clause will be unreachable")
+      );
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.WARN;
     }
   }
 }

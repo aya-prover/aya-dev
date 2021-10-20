@@ -21,7 +21,6 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.error.ClausesProblem;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 

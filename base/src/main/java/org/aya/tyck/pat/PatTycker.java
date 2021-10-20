@@ -33,7 +33,6 @@ import org.aya.generic.GenericBuilder;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.NotYetTyckedError;
-import org.aya.tyck.error.PatternProblem;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
