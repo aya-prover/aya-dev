@@ -43,12 +43,31 @@ import java.util.function.Consumer;
 /**
  * @author ice1000
  */
-public record PatTycker(
-  @NotNull ExprTycker exprTycker,
-  @NotNull ExprRefSubst refSubst,
-  @NotNull Substituter.TermSubst termSubst,
-  @Nullable Trace.Builder traceBuilder
-) implements Pattern.Visitor<Term, Pat> {
+public final class PatTycker implements Pattern.Visitor<Term, Pat> {
+  private final @NotNull ExprTycker exprTycker;
+  public final @NotNull ExprRefSubst refSubst;
+  private final Substituter.@NotNull TermSubst termSubst;
+  private final Trace.@Nullable Builder traceBuilder;
+  private boolean hasError = false;
+
+  public boolean hasError() {
+    return hasError;
+  }
+
+  /**
+   */
+  public PatTycker(
+    @NotNull ExprTycker exprTycker,
+    @NotNull ExprRefSubst refSubst,
+    @NotNull Substituter.TermSubst termSubst,
+    @Nullable Trace.Builder traceBuilder
+  ) {
+    this.exprTycker = exprTycker;
+    this.refSubst = refSubst;
+    this.termSubst = termSubst;
+    this.traceBuilder = traceBuilder;
+  }
+
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
@@ -95,7 +114,10 @@ public record PatTycker(
 
   @Override public Pat visitAbsurd(Pattern.@NotNull Absurd absurd, Term term) {
     var selection = selectCtor(term, null, refSubst.reporter(), absurd);
-    if (selection != null) refSubst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
+    if (selection != null) {
+      refSubst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
+      hasError = true;
+    }
     return new Pat.Absurd(absurd.explicit(), term);
   }
 
@@ -131,11 +153,13 @@ public record PatTycker(
         sig.value = sig.value.inst(termSubst);
         if (sig.value.param().isEmpty()) {
           // TODO[ice]: report error
+          hasError = true;
           throw new ExprTycker.TyckerException();
         }
         param = sig.value.param().first();
       } else {
         // TODO[ice]: unexpected implicit pattern
+        hasError = true;
         throw new ExprTycker.TyckerException();
       }
       var res = pat.accept(this, param.type());
@@ -186,6 +210,7 @@ public record PatTycker(
     var ctorCore = selected._3.ref().core;
     if (ctorCore.selfTele.isNotEmpty()) {
       // TODO: error report: not enough parameters bind
+      hasError = true;
       throw new ExprTycker.TyckerException();
     }
     var value = bind.resolved().value;
@@ -196,6 +221,7 @@ public record PatTycker(
 
   private @NotNull Pat withError(Problem problem, Pattern pattern, String name, Term param) {
     exprTycker.reporter.report(problem);
+    hasError = true;
     // In case something's wrong, produce a random pattern
     PatBindCollector.bindErrors(pattern, exprTycker.localCtx);
     return new Pat.Bind(pattern.explicit(), new LocalVar(name), param);

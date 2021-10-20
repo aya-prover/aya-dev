@@ -88,7 +88,8 @@ public record PatClassifier(
   }
 
   private static void domination(Substituter.TermSubst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching matching) {
-    if (rhsSubst.isEmpty()) reporter.report(new ClausesProblem.Domination(
+    if (rhsSubst.isEmpty())
+      reporter.report(new ClausesProblem.Domination(
       lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 

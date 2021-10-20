@@ -105,8 +105,8 @@ public record StmtTycker(
     var patTycker = new PatTycker(tycker);
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
-      param.mapExpr(expr -> expr.accept(patTycker.refSubst(), Unit.unit()))), dataSig.result());
-    var patSubst = patTycker.refSubst().clone();
+      param.mapExpr(expr -> expr.accept(patTycker.refSubst, Unit.unit()))), dataSig.result());
+    var patSubst = patTycker.refSubst.clone();
     var dataParamView = dataSig.param().view();
     if (pat.isNotEmpty()) {
       var subst = dataParamView.map(Term.Param::ref)
@@ -120,7 +120,8 @@ public record StmtTycker(
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
-    ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false);
+    if (!patTycker.hasError())
+      ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false);
     return elaborated;
   }
 
@@ -174,7 +175,8 @@ public record StmtTycker(
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
-    ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false);
+    if (!patTycker.hasError())
+      ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false);
     return elaborated;
   }
 
@@ -193,10 +195,12 @@ public record StmtTycker(
         return factory.apply(result.type(), Either.left(result.wellTyped()));
       },
       clauses -> {
-        var result = new PatTycker(tycker).elabClauses(clauses, decl.signature);
+        var patTycker = new PatTycker(tycker);
+        var result = patTycker.elabClauses(clauses, decl.signature);
         var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
         var def = factory.apply(result._1, Either.right(matchings));
-        ensureConfluent(tycker, decl.signature, result._2, matchings, decl.sourcePos, true);
+        if (!patTycker.hasError())
+          ensureConfluent(tycker, decl.signature, result._2, matchings, decl.sourcePos, true);
         return def;
       }
     );
