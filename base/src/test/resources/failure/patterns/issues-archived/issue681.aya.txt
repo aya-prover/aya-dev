@@ -40,21 +40,6 @@ Error: There is no parameter for the pattern
         y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:30:18 ->
-
-  28 | 
-  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  30 |   | zero, y, z => idp
-                         ^-^
-
-Error: Cannot check the expression of type
-         Π (a : Nat) → Path (λ _ ⇒ Nat) a a
-         (Normalized: Π (a : Nat) → Path (λ _ ⇒ Nat) a a)
-       against the type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
-        y) z)
-         (Normalized: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Path (λ i ⇒ Nat)
-        (+ x (+ y z)) (+ (+ x y) z))
 In file $FILE:31:4 ->
 
   29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
@@ -97,19 +82,4 @@ Error: There is no parameter for the pattern
         y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
-In file $FILE:31:19 ->
-
-  29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
-  30 |   | zero, y, z => idp
-  31 |   | suc x, y, z => pmap suc (+-assoc x y z)
-                          ^---------------------^
-
-Error: Cannot check the expression of type
-         Path (λ _ ⇒ Nat) (suc (+-assoc x y z.at left)) (suc (+-assoc x y z.at right))
-         (Normalized: Path (λ _ ⇒ Nat) (suc (+ x (+ y z))) (suc (+ (+ x y) z)))
-       against the type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
-        y) z)
-         (Normalized: Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → Path (λ i ⇒ Nat)
-        (+ x (+ y z)) (+ (+ x y) z))
 What are you doing?
