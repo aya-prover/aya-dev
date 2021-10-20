@@ -50,12 +50,10 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   private final Trace.@Nullable Builder traceBuilder;
   private boolean hasError = false;
 
-  public boolean hasError() {
-    return hasError;
+  public boolean noError() {
+    return !hasError;
   }
 
-  /**
-   */
   public PatTycker(
     @NotNull ExprTycker exprTycker,
     @NotNull ExprRefSubst refSubst,
