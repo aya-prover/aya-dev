@@ -43,12 +43,10 @@ public sealed interface Pat extends CorePat {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return accept(new CoreDistiller(options), false);
   }
-  default void storeBindings(@NotNull LocalCtx localCtx) {
-    accept(new PatTyper(localCtx), Unit.unit());
-  }
+  void storeBindings(@NotNull LocalCtx localCtx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
     var localCtx = new LocalCtx();
-    for (var pat : pats) pat.accept(new PatTyper(localCtx), Unit.unit());
+    for (var pat : pats) pat.storeBindings(localCtx);
     return localCtx.extract();
   }
 
@@ -57,7 +55,7 @@ public sealed interface Pat extends CorePat {
     R visitTuple(@NotNull Tuple tuple, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
     R visitAbsurd(@NotNull Absurd absurd, P p);
-    R visitPrim(@NotNull Pat.Prim prim, P p);
+    R visitPrim(@NotNull Prim prim, P p);
   }
 
   record Bind(
@@ -67,6 +65,10 @@ public sealed interface Pat extends CorePat {
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitBind(this, p);
+    }
+
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      localCtx.put(as, type);
     }
   }
 
@@ -81,6 +83,10 @@ public sealed interface Pat extends CorePat {
     @Override public @Nullable LocalVar as() {
       return null;
     }
+
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      throw new IllegalStateException();
+    }
   }
 
   record Tuple(
@@ -91,6 +97,11 @@ public sealed interface Pat extends CorePat {
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTuple(this, p);
+    }
+
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      if (as != null) localCtx.put(as, type);
+      pats.forEach(pat -> pat.storeBindings(localCtx));
     }
   }
 
@@ -103,6 +114,11 @@ public sealed interface Pat extends CorePat {
   ) implements Pat {
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);
+    }
+
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      if (as != null) localCtx.put(as, type);
+      params.forEach(pat -> pat.storeBindings(localCtx));
     }
   }
 
@@ -117,6 +133,10 @@ public sealed interface Pat extends CorePat {
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPrim(this, p);
+    }
+
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      // Do nothing
     }
   }
 
