@@ -40,12 +40,4 @@ In file $FILE:9:6 ->
 
 Error: Unknown constructor
          vcons x xs
-In file $FILE:9:20 ->
-
-  7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
-  8 |  | f, vnil => vnil
-  9 |  | f, vcons x xs => _
-                          ^^
-
-Error: Unsolved meta
 What are you doing?

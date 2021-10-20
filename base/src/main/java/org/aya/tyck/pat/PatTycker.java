@@ -49,13 +49,12 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   private final Substituter.@NotNull TermSubst termSubst;
   private final Trace.@Nullable Builder traceBuilder;
   private boolean hasError = false;
+  private Pattern.Clause currentClause = null;
 
-  public boolean hasError() {
-    return hasError;
+  public boolean noError() {
+    return !hasError;
   }
 
-  /**
-   */
   public PatTycker(
     @NotNull ExprTycker exprTycker,
     @NotNull ExprRefSubst refSubst,
@@ -124,10 +123,17 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
   public Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
     var sig = new Ref<>(signature);
     exprTycker.localCtx = exprTycker.localCtx.derive();
+    currentClause = match;
     var patterns = visitPatterns(sig, match.patterns);
     var type = sig.value.result();
     match.expr = match.expr.map(e -> e.accept(refSubst, Unit.unit()));
-    var result = match.expr.map(e -> exprTycker.inherit(e, type).wellTyped().subst(termSubst));
+    var result = match.hasError
+      // In case the patterns are malformed, do not check the body
+      // as we bind local variables in the pattern checker,
+      // and in case the patterns are malformed, some bindings may
+      // not be added to the localCtx of tycker, causing assertion errors
+      ? match.expr.<Term>map(e -> new ErrorTerm(e, false))
+      : match.expr.map(e -> exprTycker.inherit(e, type).wellTyped().subst(termSubst));
     termSubst.clear();
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
@@ -153,13 +159,13 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
         sig.value = sig.value.inst(termSubst);
         if (sig.value.param().isEmpty()) {
           // TODO[ice]: report error
-          hasError = true;
+          foundError();
           throw new ExprTycker.TyckerException();
         }
         param = sig.value.param().first();
       } else {
         // TODO[ice]: unexpected implicit pattern
-        hasError = true;
+        foundError();
         throw new ExprTycker.TyckerException();
       }
       var res = pat.accept(this, param.type());
@@ -168,6 +174,11 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
       results.append(res);
     });
     return results.toImmutableSeq();
+  }
+
+  private void foundError() {
+    hasError = true;
+    if (currentClause != null) currentClause.hasError = true;
   }
 
   @Override public Pat visitCalmFace(Pattern.@NotNull CalmFace face, Term t) {
@@ -210,7 +221,7 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
     var ctorCore = selected._3.ref().core;
     if (ctorCore.selfTele.isNotEmpty()) {
       // TODO: error report: not enough parameters bind
-      hasError = true;
+      foundError();
       throw new ExprTycker.TyckerException();
     }
     var value = bind.resolved().value;
@@ -221,9 +232,8 @@ public final class PatTycker implements Pattern.Visitor<Term, Pat> {
 
   private @NotNull Pat withError(Problem problem, Pattern pattern, String name, Term param) {
     exprTycker.reporter.report(problem);
-    hasError = true;
+    foundError();
     // In case something's wrong, produce a random pattern
-    PatBindCollector.bindErrors(pattern, exprTycker.localCtx);
     return new Pat.Bind(pattern.explicit(), new LocalVar(name), param);
   }
 

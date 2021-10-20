@@ -120,7 +120,7 @@ public record StmtTycker(
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
-    if (!patTycker.hasError())
+    if (patTycker.noError())
       ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false);
     return elaborated;
   }
@@ -175,7 +175,7 @@ public record StmtTycker(
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
-    if (!patTycker.hasError())
+    if (patTycker.noError())
       ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false);
     return elaborated;
   }
@@ -199,7 +199,7 @@ public record StmtTycker(
         var result = patTycker.elabClauses(clauses, decl.signature);
         var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
         var def = factory.apply(result._1, Either.right(matchings));
-        if (!patTycker.hasError())
+        if (patTycker.noError())
           ensureConfluent(tycker, decl.signature, result._2, matchings, decl.sourcePos, true);
         return def;
       }
