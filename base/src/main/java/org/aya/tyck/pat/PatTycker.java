@@ -104,13 +104,6 @@ public final class PatTycker {
     return checked.map(c -> c._1.mapTerm(e -> e.zonk(exprTycker, c._2)));
   }
 
-  public @NotNull Pat tyck(@NotNull Pattern pattern, @NotNull Term term) {
-    tracing(builder -> builder.shift(new Trace.PatT(term, pattern, pattern.sourcePos())));
-    var r = doTyck(pattern, term);
-    tracing(GenericBuilder::reduce);
-    return r;
-  }
-
   private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
@@ -224,7 +217,10 @@ public final class PatTycker {
         foundError();
         throw new ExprTycker.TyckerException();
       }
-      var res = tyck(pat, param.type());
+      var type = param.type();
+      tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
+      var res = doTyck(pat, type);
+      tracing(GenericBuilder::reduce);
       termSubst.add(param.ref(), res.toTerm());
       sig.value = sig.value.inst(termSubst);
       results.append(res);
