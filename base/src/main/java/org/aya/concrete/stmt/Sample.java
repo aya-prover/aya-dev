@@ -37,10 +37,8 @@ public sealed interface Sample extends Stmt {
       @NotNull Reporter reporter,
       Trace.@Nullable Builder traceBuilder
     ) {
-      if (delegate instanceof Decl decl) {
-        var stmtTycker = new StmtTycker(reporter, traceBuilder);
-        return decl.accept(stmtTycker, stmtTycker.newTycker());
-      } else return null;
+      return delegate instanceof Decl decl ?
+        new StmtTycker(reporter, traceBuilder).tyck(decl) : null;
     }
   }
 
@@ -58,7 +56,7 @@ public sealed interface Sample extends Stmt {
       Trace.@Nullable Builder traceBuilder
     ) {
       var stmtTycker = new StmtTycker(reporter, traceBuilder);
-      var def = delegate.accept(stmtTycker, new ExprTycker(this.reporter, stmtTycker.traceBuilder()));
+      var def = stmtTycker.tyck(delegate, new ExprTycker(this.reporter, stmtTycker.traceBuilder()));
       var problems = this.reporter.problems().toImmutableSeq();
       if (problems.isEmpty()) {
         stmtTycker.reporter().report(new CounterexampleError(delegate.sourcePos(), delegate.ref()));
