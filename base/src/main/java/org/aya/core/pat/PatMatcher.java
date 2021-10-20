@@ -43,7 +43,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
     }
   }
 
-  public void match(@NotNull Pat pat, @NotNull Term term) {
+  private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
     switch (pat) {
       case Pat.Bind bind -> subst.addDirectly(bind.as(), term);
       case Pat.Absurd absurd -> throw new Mismatch();
@@ -68,15 +68,15 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
     }
   }
 
-  private void visitList(ImmutableSeq<Pat> lpats, SeqLike<Term> terms) {
+  private void visitList(ImmutableSeq<Pat> lpats, SeqLike<Term> terms) throws Mismatch {
     assert lpats.sizeEquals(terms);
-    lpats.view().zip(terms).forEach(this::match);
+    lpats.view().zip(terms).forEachChecked(this::match);
   }
 
-  private void match(@NotNull Tuple2<Pat, Term> pp) {
+  private void match(@NotNull Tuple2<Pat, Term> pp) throws Mismatch {
     match(pp._1, pp._2);
   }
 
-  private static final class Mismatch extends RuntimeException {
+  private static final class Mismatch extends Exception {
   }
 }
