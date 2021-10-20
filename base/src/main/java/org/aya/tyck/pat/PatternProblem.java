@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.tyck.error;
+package org.aya.tyck.pat;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;

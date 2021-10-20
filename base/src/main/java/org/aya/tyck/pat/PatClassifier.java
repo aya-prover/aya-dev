@@ -14,6 +14,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
+import org.aya.core.Matching;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
@@ -21,7 +22,6 @@ import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.error.ClausesProblem;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -65,13 +65,13 @@ public record PatClassifier(
       for (int i = 1, size = contents.size(); i < size; i++) {
         var lhsInfo = contents.get(i - 1);
         var rhsInfo = contents.get(i);
-        var lhs = lhsInfo._2;
-        var rhs = rhsInfo._2;
         var lhsSubst = new Substituter.TermSubst(MutableMap.create());
         var rhsSubst = new Substituter.TermSubst(MutableMap.create());
-        PatUnify.unifyPat(lhs.patterns(), rhs.patterns(), lhsSubst, rhsSubst);
-        var lhsTerm = lhs.body().subst(lhsSubst);
-        var rhsTerm = rhs.body().subst(rhsSubst);
+        PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(), lhsSubst, rhsSubst);
+        domination(rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
+        domination(lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
+        var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
+        var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
         // TODO: Currently all holes at this point is in an ErrorTerm
         if (lhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
           hole.ref().core().conditions.set(hole.ref().core().conditions.value.appended(Tuple.of(lhsSubst, rhsTerm)));
@@ -85,6 +85,12 @@ public record PatClassifier(
         }
       }
     }
+  }
+
+  private static void domination(Substituter.TermSubst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching matching) {
+    if (rhsSubst.isEmpty())
+      reporter.report(new ClausesProblem.Domination(
+      lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
   /**
