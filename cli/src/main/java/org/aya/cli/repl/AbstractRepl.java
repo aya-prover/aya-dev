@@ -5,6 +5,8 @@ package org.aya.cli.repl;
 import kala.collection.Seq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.cli.repl.command.CommandExecutor;
+import org.aya.cli.repl.command.DefaultCommandExecutor;
 import org.aya.cli.single.CliReporter;
 import org.aya.prelude.GeneratedVersion;
 import org.jetbrains.annotations.Nls;
@@ -25,7 +27,7 @@ public abstract class AbstractRepl implements Closeable {
   public static final @NotNull @Nls String HELLO = APP_NAME + "\n" +
     "Version: " + GeneratedVersion.VERSION_STRING + "\n" +
     "Commit: " + GeneratedVersion.COMMIT_HASH;
-  protected String prompt = "> ";
+  public String prompt = "> ";
 
   private static Path CONFIG_ROOT;
 
@@ -72,6 +74,8 @@ public abstract class AbstractRepl implements Closeable {
 
   protected abstract @Nullable String getAdditionalMessage();
 
+  CommandExecutor commandExecutor = new DefaultCommandExecutor();
+
   /**
    * Executes a single REPL loop.
    *
@@ -81,9 +85,9 @@ public abstract class AbstractRepl implements Closeable {
   private boolean singleLoop() {
     var line = readLine();
     if (line.trim().startsWith(":")) {
-      var result = executeCommand(line);
-      println(result.text);
-      return result.continueRepl;
+      var result = commandExecutor.execute(line.substring(line.indexOf(':') + 1), this);
+      println(result.text());
+      return result.continueRepl();
     } else {
       try {
         println(evalWithContext(line));
@@ -106,23 +110,6 @@ public abstract class AbstractRepl implements Closeable {
 
   private @NotNull String render(@NotNull AyaDocile ayaDocile) {
     return ayaDocile.toDoc(DistillerOptions.DEFAULT).debugRender();
-  }
-
-  private record CommandExecutionResult(@NotNull String text, boolean continueRepl) {
-  }
-
-  private @NotNull CommandExecutionResult executeCommand(@NotNull String line) {
-    var split = line.split(" ", 2);
-    var command = split[0];
-    var argument = split.length > 1 ? split[1] : "";
-    return switch (command.substring(1)) {
-      case "q", "quit", "exit" -> new CommandExecutionResult("See you space cow woof woof :3", false);
-      case "prompt" -> {
-        prompt = argument;
-        yield new CommandExecutionResult("Changed prompt to `" + argument + "`", true);
-      }
-      default -> new CommandExecutionResult("Invalid command \"" + command + "\"", true);
-    };
   }
 
   @Override public void close() throws IOException {

@@ -3,7 +3,7 @@
 package org.aya.cli.repl.jline;
 
 import org.aya.cli.repl.AbstractRepl;
-import org.aya.cli.repl.jline.completer.CommandCompleter;
+import org.aya.cli.repl.jline.completer.DefaultCommandCompleter;
 import org.aya.cli.repl.jline.completer.KeywordCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,7 @@ public final class JlineRepl extends AbstractRepl {
       // .parser(new AyaParser())
       .completer(new AggregateCompleter(
         KeywordCompleter.INSTANCE,
-        CommandCompleter.INSTANCE
+        DefaultCommandCompleter.INSTANCE
       ));
     var root = configRoot();
     if (root != null) lineReaderBuilder
