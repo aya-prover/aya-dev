@@ -32,6 +32,7 @@ import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 /**
@@ -43,7 +44,7 @@ import java.util.function.Consumer;
 public record StmtTycker(
   @NotNull Reporter reporter,
   Trace.@Nullable Builder traceBuilder
-) implements Decl.Visitor<ExprTycker, Def> {
+) {
   public @NotNull ExprTycker newTycker() {
     return new ExprTycker(reporter, traceBuilder);
   }
@@ -52,46 +53,100 @@ public record StmtTycker(
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
 
-  @Override public void traceEntrance(@NotNull Signatured sig, ExprTycker tycker) {
-    tracing(builder -> builder.shift(new Trace.DeclT(sig.ref(), sig.sourcePos)));
-    tycker.localCtx = tycker.localCtx.derive();
-  }
-
-  @Override public void traceExit(ExprTycker tycker, Def def) {
+  private <S extends Signatured, D extends Def> D
+  traced(@NotNull S yeah, ExprTycker p, @NotNull BiFunction<S, ExprTycker, D> f) {
+    tracing(builder -> builder.shift(new Trace.DeclT(yeah.ref(), yeah.sourcePos)));
+    var parent = p.localCtx;
+    p.localCtx = parent.derive();
+    var r = f.apply(yeah, p);
     tracing(Trace.Builder::reduce);
-    var parent = tycker.localCtx.parent();
-    assert parent != null;
-    tycker.localCtx = parent;
+    p.localCtx = parent;
+    return r;
   }
 
-  @Override public PrimDef visitPrim(@NotNull Decl.PrimDecl decl, ExprTycker tycker) {
-    assert tycker.localCtx.isEmpty();
-    var core = decl.ref.core;
-    var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(decl.sourcePos));
-    if (tele.isNotEmpty()) {
-      if (decl.result == null) {
-        // TODO[ice]: Expect type and term
-        throw new ExprTycker.TyckerException();
+  public Def tyck(@NotNull Decl decl) {
+    return tyck(decl, newTycker());
+  }
+
+  public Def tyck(@NotNull Decl decl, @NotNull ExprTycker tycker) {
+    return traced(decl, tycker, this::doTyck);
+  }
+
+  private Def doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
+    return switch (predecl) {
+      case Decl.FnDecl decl -> {
+        tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
+        var resultTele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(decl.sourcePos));
+        // It might contain unsolved holes, but that's acceptable.
+        var resultRes = tycker.synthesize(decl.result).wellTyped();
+        tracing(GenericBuilder::reduce);
+        decl.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
+        var factory = FnDef.factory((resultTy, body) ->
+          new FnDef(decl.ref, resultTele, decl.signature.sortParam(), resultTy, body));
+        yield decl.body.fold(
+          body -> {
+            var result = tycker.zonk(body, tycker.inherit(body, resultRes));
+            return factory.apply(result.type(), Either.left(result.wellTyped()));
+          },
+          clauses -> {
+            var patTycker = new PatTycker(tycker);
+            var result = patTycker.elabClauses(clauses, decl.signature);
+            var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
+            var def = factory.apply(result._1, Either.right(matchings));
+            if (patTycker.noError())
+              ensureConfluent(tycker, decl.signature, result._2, matchings, decl.sourcePos, true);
+            return def;
+          }
+        );
       }
-      var result = tycker.synthesize(decl.result).wellTyped();
-      var levelSubst = new LevelSubst.Simple(MutableMap.create());
-      // Homotopy level goes first
-      var levels = tycker.extractLevels();
-      for (var lvl : core.levels.zip(levels))
-        levelSubst.solution().put(lvl._1, new Sort(new Level.Reference<>(lvl._2)));
-      var target = FormTerm.Pi.make(core.telescope(), core.result())
-        .subst(Substituter.TermSubst.EMPTY, levelSubst);
-      tycker.unifyTyReported(FormTerm.Pi.make(tele, result), target, decl.result);
-      decl.signature = new Def.Signature(levels, tele, result);
-    } else if (decl.result != null) {
-      var result = tycker.synthesize(decl.result).wellTyped();
-      tycker.unifyTyReported(result, core.result(), decl.result);
-    } else decl.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
-    tycker.solveMetas();
-    return core;
+      case Decl.DataDecl decl -> {
+        var pos = decl.sourcePos;
+        var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(pos));
+        final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.freshUniv(pos))).wellTyped();
+        decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
+        var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
+        yield new DataDef(decl.ref, tele, decl.signature.sortParam(), result, body);
+      }
+      case Decl.PrimDecl decl -> {
+        assert tycker.localCtx.isEmpty();
+        var core = decl.ref.core;
+        var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(decl.sourcePos));
+        if (tele.isNotEmpty()) {
+          if (decl.result == null) {
+            // TODO[ice]: Expect type and term
+            throw new ExprTycker.TyckerException();
+          }
+          var result = tycker.synthesize(decl.result).wellTyped();
+          var levelSubst = new LevelSubst.Simple(MutableMap.create());
+          // Homotopy level goes first
+          var levels = tycker.extractLevels();
+          for (var lvl : core.levels.zip(levels))
+            levelSubst.solution().put(lvl._1, new Sort(new Level.Reference<>(lvl._2)));
+          var target = FormTerm.Pi.make(core.telescope(), core.result())
+            .subst(Substituter.TermSubst.EMPTY, levelSubst);
+          tycker.unifyTyReported(FormTerm.Pi.make(tele, result), target, decl.result);
+          decl.signature = new Def.Signature(levels, tele, result);
+        } else if (decl.result != null) {
+          var result = tycker.synthesize(decl.result).wellTyped();
+          tycker.unifyTyReported(result, core.result(), decl.result);
+        } else decl.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
+        tycker.solveMetas();
+        yield core;
+      }
+      case Decl.StructDecl decl -> {
+        var pos = decl.sourcePos;
+        var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(pos));
+        final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.freshUniv(pos))).wellTyped();
+        // var levelSubst = tycker.equations.solve();
+        var levels = tycker.extractLevels();
+        decl.signature = new Def.Signature(levels, tele, result);
+        yield new StructDef(decl.ref, tele, levels, result, decl.fields.map(field ->
+          traced(field, tycker, (f, tyck) -> visitField(f, tyck, result))));
+      }
+    };
   }
 
-  @Override public CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var dataRef = ctor.dataRef;
     var dataSig = dataRef.concrete.signature;
     assert dataSig != null;
@@ -139,31 +194,7 @@ public record StmtTycker(
     tracing(GenericBuilder::reduce);
   }
 
-  @Override public DataDef visitData(Decl.@NotNull DataDecl decl, ExprTycker tycker) {
-    var pos = decl.sourcePos;
-    var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(pos));
-    final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.freshUniv(pos))).wellTyped();
-    decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
-    var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
-    return new DataDef(decl.ref, tele, decl.signature.sortParam(), result, body);
-  }
-
-  @Override public StructDef visitStruct(Decl.@NotNull StructDecl decl, ExprTycker tycker) {
-    var pos = decl.sourcePos;
-    var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(pos));
-    final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.freshUniv(pos))).wellTyped();
-    // var levelSubst = tycker.equations.solve();
-    var levels = tycker.extractLevels();
-    decl.signature = new Def.Signature(levels, tele, result);
-    return new StructDef(decl.ref, tele, levels, result, decl.fields.map(field ->
-      traced(field, tycker, (f, tyck) -> visitField(f, tyck, result))));
-  }
-
-  @Override public FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
-    throw new IllegalStateException("This method shouldn't be invoked");
-  }
-
-  private FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {
+  private @NotNull FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {
     var tele = checkTele(tycker, field.telescope, structResult);
     var structRef = field.structRef;
     var result = tycker.zonk(field.result, tycker.inherit(field.result, structResult)).wellTyped();
@@ -178,32 +209,6 @@ public record StmtTycker(
     if (patTycker.noError())
       ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false);
     return elaborated;
-  }
-
-  @Override public FnDef visitFn(Decl.@NotNull FnDecl decl, ExprTycker tycker) {
-    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
-    var resultTele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(decl.sourcePos));
-    // It might contain unsolved holes, but that's acceptable.
-    var resultRes = tycker.synthesize(decl.result).wellTyped();
-    tracing(GenericBuilder::reduce);
-    decl.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
-    var factory = FnDef.factory((resultTy, body) ->
-      new FnDef(decl.ref, resultTele, decl.signature.sortParam(), resultTy, body));
-    return decl.body.fold(
-      body -> {
-        var result = tycker.zonk(body, tycker.inherit(body, resultRes));
-        return factory.apply(result.type(), Either.left(result.wellTyped()));
-      },
-      clauses -> {
-        var patTycker = new PatTycker(tycker);
-        var result = patTycker.elabClauses(clauses, decl.signature);
-        var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
-        var def = factory.apply(result._1, Either.right(matchings));
-        if (patTycker.noError())
-          ensureConfluent(tycker, decl.signature, result._2, matchings, decl.sourcePos, true);
-        return def;
-      }
-    );
   }
 
   private @NotNull ImmutableSeq<Term.Param>
