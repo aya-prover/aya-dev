@@ -43,9 +43,6 @@ public sealed interface Pat extends CorePat {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return accept(new CoreDistiller(options), false);
   }
-  default void storeBindings(@NotNull LocalCtx localCtx) {
-    accept(new PatTyper(localCtx), Unit.unit());
-  }
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
     var localCtx = new LocalCtx();
     for (var pat : pats) pat.accept(new PatTyper(localCtx), Unit.unit());
@@ -57,7 +54,7 @@ public sealed interface Pat extends CorePat {
     R visitTuple(@NotNull Tuple tuple, P p);
     R visitCtor(@NotNull Ctor ctor, P p);
     R visitAbsurd(@NotNull Absurd absurd, P p);
-    R visitPrim(@NotNull Pat.Prim prim, P p);
+    R visitPrim(@NotNull Prim prim, P p);
   }
 
   record Bind(
