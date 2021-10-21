@@ -1,8 +1,8 @@
-def `a` => a
-def `b` => b
-def `c` => c
-def `d` => d
-def `e` => e
+def infix a => a
+def infix b => b
+def infix c => c
+def infix d => d
+def infix e => e
 
 bind a tighter b
 bind b tighter c

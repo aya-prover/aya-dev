@@ -1,6 +1,6 @@
 open data N : Type | zero | suc N
 
-def `+` (a b : N) : N
+def infix + (a b : N) : N
   | zero, a => a
   | a, zero => a
   | suc a, b => suc (a + b)
@@ -8,7 +8,7 @@ def `+` (a b : N) : N
 
 open data Vec (A : Type) (n : N) : Type
   | A, zero => vnil
-  | A, suc m => `++` A (Vec A m)
+  | A, suc m => infix ++ A (Vec A m)
 
 def fold {A R : Type} {n : N} (f : Pi R A -> R) (init : R) (xs : Vec A n) : R
   | {A}, {R}, {zero}, f, init, vnil => init

@@ -60,7 +60,7 @@ public record BinOpSet(
   }
 
   public Assoc assocOf(@Nullable OpDecl opDecl) {
-    if (isOperand(opDecl)) return Assoc.NoFix;
+    if (isOperand(opDecl)) return Assoc.Invalid;
     return ensureHasElem(opDecl).assoc;
   }
 

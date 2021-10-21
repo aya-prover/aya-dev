@@ -87,19 +87,15 @@ public final class AyaProducer {
     }
     var core = PrimDef.Factory.INSTANCE.factory(primID);
     var type = ctx.type();
-    var infix = ctx.INFIX();
+    var assoc = ctx.assoc();
     return new Decl.PrimDecl(
       sourcePos,
       sourcePosOf(ctx),
-      infix == null ? null : makeInfix(infix),
+      assoc == null ? null : makeInfix(assoc, name),
       core.ref(),
       visitTelescope(ctx.tele()),
       type == null ? null : visitType(type)
     );
-  }
-
-  private @NotNull OpDecl.Operator makeInfix(@NotNull TerminalNode infixNode) {
-    return new OpDecl.Operator(infixNode.getText().replace("`", ""), Assoc.Infix);
   }
 
   public @NotNull SeqLike<Stmt> visitStmt(AyaParser.StmtContext ctx) {
@@ -181,9 +177,18 @@ public final class AyaProducer {
   }
 
   public Tuple2<@NotNull String, OpDecl.@Nullable Operator> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx) {
-    if (ctx.ID() != null) return Tuple.of(ctx.ID().getText(), null);
-    var infix = makeInfix(ctx.INFIX());
+    var assoc = ctx.assoc();
+    var id = ctx.ID().getText();
+    if (assoc == null) return Tuple.of(id, null);
+    var infix = makeInfix(assoc, id);
     return Tuple.of(infix.name(), infix);
+  }
+
+  private @NotNull OpDecl.Operator makeInfix(@NotNull AyaParser.AssocContext assoc, @NotNull String id) {
+    if (assoc.INFIX() != null) return new OpDecl.Operator(id, Assoc.Infix);
+    if (assoc.INFIXL() != null) return new OpDecl.Operator(id, Assoc.InfixL);
+    if (assoc.INFIXR() != null) return new OpDecl.Operator(id, Assoc.InfixR);
+    throw new IllegalArgumentException("Unknown assoc: " + assoc.getText());
   }
 
   public Decl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {

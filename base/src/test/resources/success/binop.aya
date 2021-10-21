@@ -1,5 +1,5 @@
 open data Nat : Type | zero | suc Nat
-def `+` (a b : Nat) : Nat
+def infix + (a b : Nat) : Nat
   | zero, b => b
   | suc a, b => suc (a + b)
 

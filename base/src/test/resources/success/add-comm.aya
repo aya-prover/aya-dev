@@ -8,7 +8,7 @@ struct Path (A : I -> Type) (a : A left) (b : A right) : Type
  }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `=` {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
 prim arcoe
@@ -35,7 +35,7 @@ open data ℕ : Type
   | zero
   | suc ℕ
 
-def `+` (a b : ℕ) : ℕ
+def infix + (a b : ℕ) : ℕ
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (a + b)

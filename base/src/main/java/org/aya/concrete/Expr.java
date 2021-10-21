@@ -227,7 +227,7 @@ public sealed interface Expr extends ConcreteExpr {
 
   /**
    * <pre>
-   * def `+` add (a b : Nat) => ...
+   * def infix + add (a b : Nat) => ...
    * def test => zero + zero
    * </pre>
    *

@@ -1,6 +1,9 @@
 lexer grammar AyaLexer;
 
-INFIX : '`' ID '`';
+// associativities
+INFIX  : 'infix';
+INFIXL : 'infixl';
+INFIXR : 'infixr';
 
 // operator precedence
 TIGHTER : 'tighter';
