@@ -6,5 +6,7 @@ In file $FILE:3:26 ->
                                 ^^
 
 Error: Parser error: extraneous input ')' expecting {'Type', '**', '{', '(', '{?', NUMBER, '_', STRING, ID}
-Parsing interrupted due to error(s).
+
+Parsing interrupted due to:
+1 error(s), 0 warning(s).
 What are you doing?

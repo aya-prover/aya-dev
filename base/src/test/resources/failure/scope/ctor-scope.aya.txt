@@ -6,4 +6,6 @@ In file $FILE:4:11 ->
                  ^--^
 
 Error: The name `zero` is not defined in the current scope
+
+1 error(s), 0 warning(s).
 What are you doing?

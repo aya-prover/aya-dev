@@ -12,6 +12,7 @@ Error: There is no parameter for the pattern
         y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
+
 In file $FILE:30:10 ->
 
   28 | 
@@ -26,6 +27,7 @@ Error: There is no parameter for the pattern
         y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
+
 In file $FILE:30:13 ->
 
   28 | 
@@ -40,6 +42,7 @@ Error: There is no parameter for the pattern
         y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
+
 In file $FILE:31:4 ->
 
   29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
@@ -54,6 +57,7 @@ Error: There is no parameter for the pattern
         y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
+
 In file $FILE:31:11 ->
 
   29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
@@ -68,6 +72,7 @@ Error: There is no parameter for the pattern
         y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
+
 In file $FILE:31:14 ->
 
   29 | def +-assoc : Pi (x y z : Nat) -> x + (y + z) = (x + y) + z
@@ -82,4 +87,6 @@ Error: There is no parameter for the pattern
         y) z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
+
+6 error(s), 0 warning(s).
 What are you doing?

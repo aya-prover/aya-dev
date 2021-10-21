@@ -6,4 +6,6 @@ In file $FILE:4:23 ->
                              ^--^
 
 Error: Unexpected implicit argument `{unit}`
+
+1 error(s), 0 warning(s).
 What are you doing?

@@ -3,5 +3,7 @@ In file $FILE:2:0 ->
   1 | def
 
 Error: Parser error: mismatched input '<EOF>' expecting {INFIX, 'erase', 'inline', ID}
-Parsing interrupted due to error(s).
+
+Parsing interrupted due to:
+1 error(s), 0 warning(s).
 What are you doing?

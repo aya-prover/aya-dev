@@ -4,5 +4,7 @@ In file $FILE:1:5 ->
            ^--^
 
 Error: Unknown primitive `YYUT`
-Parsing interrupted due to error(s).
+
+Parsing interrupted due to:
+1 error(s), 0 warning(s).
 What are you doing?

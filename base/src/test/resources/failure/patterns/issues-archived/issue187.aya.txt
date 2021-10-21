@@ -6,4 +6,6 @@ In file $FILE:4:4 ->
           ^-^
 
 Error: Unhandled case: {zero}, {zero}
+
+1 error(s), 0 warning(s).
 What are you doing?

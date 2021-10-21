@@ -7,4 +7,6 @@ In file $FILE:4:11 ->
 
 Error: Cannot solve the following level equation(s):
          (u + 1) <= u
+
+1 error(s), 0 warning(s).
 What are you doing?

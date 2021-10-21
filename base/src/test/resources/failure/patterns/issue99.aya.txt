@@ -6,6 +6,7 @@ In file $FILE:5:3 ->
          ^----------^
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be unreachable
+
 In file $FILE:9:3 ->
 
   7 | def test2 (a b : Unit) : Unit
@@ -14,4 +15,5 @@ In file $FILE:9:3 ->
          ^-------------^
 
 Warning: The 3rd clause dominates the 2nd clause. The 2nd clause will be unreachable
+
 That looks right!

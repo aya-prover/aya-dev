@@ -6,4 +6,6 @@ In file $FILE:19:19 ->
                           ^--^
 
 Error: The counterexample abs2 does not raise any type error
+
+1 error(s), 0 warning(s).
 What are you doing?

@@ -5,5 +5,7 @@ In file $FILE:2:5 ->
            ^^
 
 Error: Redefinition of primitive `I`
-Parsing interrupted due to error(s).
+
+Parsing interrupted due to:
+1 error(s), 0 warning(s).
 What are you doing?

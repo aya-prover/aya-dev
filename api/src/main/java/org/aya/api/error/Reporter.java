@@ -18,6 +18,10 @@ public interface Reporter {
    */
   void report(@NotNull Problem problem);
 
+  default @NotNull String countToString() {
+    return "error(s).";
+  }
+
   @ApiStatus.Internal
   default void reportString(@NotNull String s) {
     report(new Problem() {

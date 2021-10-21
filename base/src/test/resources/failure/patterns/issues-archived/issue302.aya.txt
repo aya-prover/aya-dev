@@ -14,4 +14,6 @@ Error: The 3rd and the 4th clauses are not confluent because we failed to unify
          suc (addN (suc b) a)
        and
          suc (addN (suc a) b)
+
+1 error(s), 0 warning(s).
 What are you doing?

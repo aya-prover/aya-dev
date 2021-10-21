@@ -11,6 +11,7 @@ Error: Cannot check the expression of type
        against the type
          Type
          (Normalized: Type)
+
 In file $FILE:6:16 ->
 
   4 | def test
@@ -19,6 +20,7 @@ In file $FILE:6:16 ->
                       ^^
 
 Error: Unsolved meta
+
 In file $FILE:6:44 ->
 
   4 | def test
@@ -32,6 +34,7 @@ Error: Cannot check the expression of type
        against the type
          F <_>
          (Normalized: F <_>)
+
 In file $FILE:6:42 ->
 
   4 | def test
@@ -45,4 +48,6 @@ Error: Cannot check the expression of type
        against the type
          Nat
          (Normalized: Nat)
+
+4 error(s), 0 warning(s).
 What are you doing?

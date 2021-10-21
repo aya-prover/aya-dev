@@ -13,6 +13,7 @@ Goal: Goal of type
         {a : Int} (not in scope)
       To ensure confluence:
         Given (a ⇒ zero), we should have: zero
+
 In file $FILE:6:13 ->
 
   4 | def abs (a : Int) : Nat
@@ -21,4 +22,6 @@ In file $FILE:6:13 ->
                    ^--^
 
 Error: Unsolved meta
+
+1 error(s), 0 warning(s).
 What are you doing?

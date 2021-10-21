@@ -34,7 +34,8 @@ public record PrettyError(
       Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
       Doc.empty(),
       Doc.hang(2, visualizeCode(config, range, allHints)),
-      brief
+      brief,
+      Doc.empty()
     );
   }
 

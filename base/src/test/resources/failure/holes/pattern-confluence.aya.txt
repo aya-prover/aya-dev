@@ -11,6 +11,7 @@ Error: Cannot check the expression of type
        against the type
          Type
          (Normalized: Type)
+
 In file $FILE:7:15 ->
 
   5 | def add (m n : Nat) : Type
@@ -28,6 +29,7 @@ Goal: Goal of type
       To ensure confluence:
         Given (m ⇒ zero), we should have: <n>
         Given (m ⇒ suc m), we should have: <suc <add m n>>
+
 In file $FILE:8:21 ->
 
   6 |   | zero, n => n
@@ -41,6 +43,7 @@ Error: Cannot check the expression of type
        against the type
          Nat
          (Normalized: Nat)
+
 In file $FILE:8:16 ->
 
   6 |   | zero, n => n
@@ -54,6 +57,7 @@ Error: Cannot check the expression of type
        against the type
          Type
          (Normalized: Type)
+
 In file $FILE:9:21 ->
 
   7 |   | m, zero => {??}
@@ -67,6 +71,7 @@ Error: Cannot check the expression of type
        against the type
          Nat
          (Normalized: Nat)
+
 In file $FILE:9:16 ->
 
   7 |   | m, zero => {??}
@@ -80,6 +85,7 @@ Error: Cannot check the expression of type
        against the type
          Type
          (Normalized: Type)
+
 In file $FILE:7:15 ->
 
   5 | def add (m n : Nat) : Type
@@ -88,4 +94,6 @@ In file $FILE:7:15 ->
                      ^--^
 
 Error: Unsolved meta
+
+6 error(s), 0 warning(s).
 What are you doing?
