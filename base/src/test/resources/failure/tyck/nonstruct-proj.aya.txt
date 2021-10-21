@@ -8,4 +8,6 @@ Error: Unable to access field `deep-dark-fantasy` of the expression
        because the type of what you accessed is not a struct type, but instead:
          Type
          (Normalized: Type)
+
+1 error(s), 0 warning(s).
 What are you doing?

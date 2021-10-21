@@ -8,4 +8,6 @@ Error: Unable to construct the expression
        because the type you checks it against is not a Sigma type, but instead:
          Type
          (Normalized: Type)
+
+1 error(s), 0 warning(s).
 What are you doing?

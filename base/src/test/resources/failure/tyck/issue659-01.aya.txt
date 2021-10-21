@@ -8,4 +8,6 @@ Error: Cannot check
        against the Pi type
          Π (_ : A) → A
        because explicitness do not match
+
+1 error(s), 0 warning(s).
 What are you doing?

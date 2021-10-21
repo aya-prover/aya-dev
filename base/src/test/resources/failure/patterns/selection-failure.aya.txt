@@ -8,6 +8,7 @@ In file $FILE:8:6 ->
 Warning: Cannot match with
            vnil
          due to a failed index unification, treating as bind pattern
+
 In file $FILE:8:14 ->
 
   6 |  | A, suc m => vcons A (Vect A m)
@@ -21,6 +22,7 @@ Error: Cannot check the expression of type
        against the type
          Vect B n
          (Normalized: Vect B n)
+
 In file $FILE:9:6 ->
 
   7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
@@ -31,6 +33,7 @@ In file $FILE:9:6 ->
 Error: Cannot match with
          vcons x xs
        due to a failed index unification
+
 In file $FILE:9:6 ->
 
   7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
@@ -40,4 +43,6 @@ In file $FILE:9:6 ->
 
 Error: Unknown constructor
          vcons x xs
+
+3 error(s), 1 warning(s).
 What are you doing?

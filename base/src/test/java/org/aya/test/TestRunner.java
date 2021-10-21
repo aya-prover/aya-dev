@@ -99,7 +99,7 @@ public class TestRunner {
       System.out.println("success");
     } else {
       if (expectSuccess) {
-        if (reporter.isEmpty()) {
+        if (reporter.noError()) {
           System.out.println("success");
         } else {
           System.out.println(); // add line break after `--->`

@@ -10,4 +10,6 @@ Error: Unable to apply the expression
        because the type of what you applied is not a Pi type, but instead:
          Path (λ _ ⇒ A) a a
          (Normalized: Path (λ _ ⇒ A) a a)
+
+1 error(s), 0 warning(s).
 What are you doing?

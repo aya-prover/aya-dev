@@ -6,6 +6,7 @@ In file $FILE:5:3 ->
          ^------------------^
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be unreachable
+
 In file $FILE:4:3 ->
 
   2 | open data Ray (a : Nat) : Type | zero => eldath
@@ -14,6 +15,7 @@ In file $FILE:4:3 ->
          ^----------------------^
 
 Warning: The 2nd clause dominates the 1st clause. The 1st clause will be unreachable
+
 In file $FILE:3:4 ->
 
   1 | open data Nat : Type 0 | zero | suc Nat
@@ -28,4 +30,6 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          suc zero
        and
          zero
+
+1 error(s), 2 warning(s).
 What are you doing?

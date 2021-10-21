@@ -5,4 +5,6 @@ In file $FILE:2:15 ->
                      ^-------------^
 
 Error: Expected 1 universe arguments, but 2 are provided
+
+1 error(s), 0 warning(s).
 What are you doing?

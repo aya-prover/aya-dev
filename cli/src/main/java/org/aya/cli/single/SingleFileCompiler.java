@@ -62,17 +62,18 @@ public record SingleFileCompiler(
       reporter.reportString("Internal error");
       return e.exitCode();
     } catch (InterruptException e) {
-      reporter.reportString(e.stage().name() + " interrupted due to error(s).");
+      reporter.reportString(e.stage().name() + " interrupted due to:");
       if (flags.interruptedTrace()) e.printStackTrace();
     } finally {
       PrimDef.Factory.INSTANCE.clear();
     }
-    if (reporter.isEmpty()) {
+    if (reporter.noError()) {
       reporter.reportString(flags.message().successNotion());
       return 0;
     } else {
+      reporter.reportString(reporter.countToString());
       reporter.reportString(flags.message().failNotion());
-      return -1;
+      return 1;
     }
   }
 

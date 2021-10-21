@@ -6,4 +6,6 @@ In file $FILE:13:10 ->
                  ^--------^
 
 Error: Absurd pattern does not fit here because `zero` is still available
+
+1 error(s), 0 warning(s).
 What are you doing?

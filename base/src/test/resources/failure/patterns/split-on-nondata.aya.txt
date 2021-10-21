@@ -8,6 +8,7 @@ Error: Cannot split on a non-inductive type
          Type
        with a constructor pattern
          x y
+
 In file $FILE:2:3 ->
 
   1 | def test (a : Type) : Type
@@ -16,4 +17,6 @@ In file $FILE:2:3 ->
 
 Error: Unknown constructor
          x y
+
+2 error(s), 0 warning(s).
 What are you doing?

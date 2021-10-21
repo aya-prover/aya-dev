@@ -13,7 +13,6 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.ref.Var;
 import org.aya.api.util.InternalException;
-import org.aya.api.util.InterruptException;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
@@ -66,12 +65,6 @@ public record FileModuleLoader(
         },
         builder).exports;
     } catch (IOException e) {
-      return null;
-    } catch (InternalException e) {
-      handleInternalError(e);
-      return null;
-    } catch (InterruptException e) {
-      reporter.reportString(e.stage().name() + " interrupted due to error(s).");
       return null;
     }
   }

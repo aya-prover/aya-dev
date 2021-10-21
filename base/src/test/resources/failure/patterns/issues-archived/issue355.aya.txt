@@ -6,4 +6,6 @@ In file $FILE:7:4 ->
           ^--^
 
 Error: Cannot perform pattern matching `left`
+
+1 error(s), 0 warning(s).
 What are you doing?

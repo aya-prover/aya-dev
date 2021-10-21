@@ -9,6 +9,7 @@ Error: The solution
          B
        is not well-scoped
        In particular, these variables are not in scope: `B`
+
 In file $FILE:15:14 ->
 
   13 | 
@@ -17,6 +18,7 @@ In file $FILE:15:14 ->
                      ^^
 
 Error: Unsolved meta
+
 In file $FILE:15:14 ->
 
   13 | 
@@ -25,6 +27,7 @@ In file $FILE:15:14 ->
                      ^^
 
 Error: Unsolved meta
+
 In file $FILE:15:14 ->
 
   13 | 
@@ -33,4 +36,6 @@ In file $FILE:15:14 ->
                      ^^
 
 Error: Unsolved meta
+
+4 error(s), 0 warning(s).
 What are you doing?

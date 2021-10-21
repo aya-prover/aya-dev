@@ -6,4 +6,6 @@ In file $FILE:7:2 ->
         ^--------------^
 
 Error: Missing field(s): `fst`, `snd`
+
+1 error(s), 0 warning(s).
 What are you doing?

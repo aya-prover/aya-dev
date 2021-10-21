@@ -11,4 +11,6 @@ Error: Cannot check the expression of type
        against the type
          单人代词
          (Normalized: 单人代词)
+
+1 error(s), 0 warning(s).
 What are you doing?
