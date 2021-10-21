@@ -18,7 +18,6 @@ import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.IntBuffer;
@@ -60,11 +59,19 @@ public interface AyaParsing {
     return new AyaProducer(sourceFile, reporter).visitProgram(parser.program());
   }
 
-  static @Nullable Either<ImmutableSeq<Stmt>, Expr> repl(
+  static @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(
     @NotNull Reporter reporter, @NotNull String text
   ) {
     var sourceFile = new SourceFile(Option.none(), text);
     var parser = parser(sourceFile, reporter);
     return new AyaProducer(sourceFile, reporter).visitRepl(parser.repl());
+  }
+
+  static @NotNull Expr expr(
+    @NotNull Reporter reporter, @NotNull String text
+  ) {
+    var sourceFile = new SourceFile(Option.none(), text);
+    var parser = parser(sourceFile, reporter);
+    return new AyaProducer(sourceFile, reporter).visitExpr(parser.expr());
   }
 }

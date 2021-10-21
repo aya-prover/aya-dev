@@ -5,8 +5,10 @@ package org.aya.cli.repl;
 import kala.collection.Seq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.cli.repl.command.CommandExecutor;
-import org.aya.cli.repl.command.DefaultCommandExecutor;
+import org.aya.api.util.NormalizeMode;
+import org.aya.cli.repl.command.CommandManager;
+import org.aya.cli.repl.command.DefaultCommandManager;
+import org.aya.cli.repl.config.Configs;
 import org.aya.cli.single.CliReporter;
 import org.aya.prelude.GeneratedVersion;
 import org.jetbrains.annotations.Nls;
@@ -27,9 +29,21 @@ public abstract class AbstractRepl implements Closeable {
   public static final @NotNull @Nls String HELLO = APP_NAME + "\n" +
     "Version: " + GeneratedVersion.VERSION_STRING + "\n" +
     "Commit: " + GeneratedVersion.COMMIT_HASH;
-  public String prompt = "> ";
+
+  public @NotNull String prompt = "> ";
+  public final @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null);
+  public @NotNull CommandManager commandManager = new DefaultCommandManager();
+  public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
 
   private static Path CONFIG_ROOT;
+
+  private static @NotNull String readConfig(@NotNull Path root, @NotNull String key) throws IOException {
+    return Files.readString(root.resolve(key), StandardCharsets.UTF_8);
+  }
+
+  private static void writeConfig(@NotNull Path root, @NotNull String key, @NotNull String value) throws IOException {
+    Files.writeString(root.resolve(key), value, StandardCharsets.UTF_8);
+  }
 
   protected static @Nullable Path configRoot() {
     if (CONFIG_ROOT == null) {
@@ -47,12 +61,11 @@ public abstract class AbstractRepl implements Closeable {
   {
     var root = configRoot();
     if (root != null) try {
-      prompt = Files.readString(root.resolve("repl_prompt"), StandardCharsets.UTF_8);
+      for (var configSaver : Configs.configSavers())
+        configSaver.deserializeAndSet(this, readConfig(root, configSaver.configKey()));
     } catch (IOException ignored) {
     }
   }
-
-  private final @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null);
 
   private @NotNull CliReporter makeReplReporter() {
     return new CliReporter(this::println, this::errPrintln);
@@ -74,7 +87,12 @@ public abstract class AbstractRepl implements Closeable {
 
   protected abstract @Nullable String getAdditionalMessage();
 
-  protected CommandExecutor commandExecutor = new DefaultCommandExecutor();
+  private void printResult(ExecutionResultText executionResultText) {
+    var text = executionResultText.text();
+    var errText = executionResultText.errText();
+    if (text != null) println(text);
+    if (errText != null) errPrintln(errText);
+  }
 
   /**
    * Executes a single REPL loop.
@@ -84,36 +102,37 @@ public abstract class AbstractRepl implements Closeable {
    */
   private boolean singleLoop() {
     var line = readLine();
-    if (line.trim().startsWith(":")) {
-      var result = commandExecutor.execute(line.substring(line.indexOf(':') + 1), this);
-      println(result.text());
-      return result.continueRepl();
-    } else {
-      try {
-        println(evalWithContext(line));
-      } catch (Exception e) {
-        var stackTrace = new StringWriter();
-        e.printStackTrace(new PrintWriter(stackTrace));
-        errPrintln(stackTrace.toString());
-      }
-      return true;
+    try {
+      if (line.trim().startsWith(":")) {
+        var result = commandManager.execute(line.substring(line.indexOf(':') + 1), this);
+        printResult(result.executionResultText());
+        return result.continueRepl();
+      } else
+        printResult(evalWithContext(line));
+    } catch (Exception e) {
+      var stackTrace = new StringWriter();
+      e.printStackTrace(new PrintWriter(stackTrace));
+      errPrintln(stackTrace.toString());
     }
+    return true;
   }
 
-  private @NotNull String evalWithContext(@NotNull String line) {
-    var programOrTerm = replCompiler.compileAndAddToContext(line, Seq.empty(), null);
-    return programOrTerm != null ? programOrTerm.fold(
-      program -> program.joinToString("\n", this::render),
+  private @NotNull ExecutionResultText evalWithContext(@NotNull String line) {
+    var programOrTerm = replCompiler.compileAndAddToContext(line, normalizeMode, Seq.empty(), null);
+    return programOrTerm != null ? ExecutionResultText.successful(programOrTerm.fold(
+      program -> program.isEmpty() ? null : program.joinToString("\n", this::render),
       this::render
-    ) : "The input text is neither a program nor an expression.";
+    )) : ExecutionResultText.failed("The input text is neither a program nor an expression.");
   }
 
-  private @NotNull String render(@NotNull AyaDocile ayaDocile) {
+  public @NotNull String render(@NotNull AyaDocile ayaDocile) {
     return ayaDocile.toDoc(DistillerOptions.DEFAULT).debugRender();
   }
 
   @Override public void close() throws IOException {
     var root = configRoot();
-    if (root != null) Files.writeString(root.resolve("repl_prompt"), prompt, StandardCharsets.UTF_8);
+    if (root != null)
+      for (var configSaver : Configs.configSavers())
+        writeConfig(root, configSaver.configKey(), configSaver.getAndSerialize(this));
   }
 }

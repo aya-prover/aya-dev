@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-class ReplCompiler {
+public class ReplCompiler {
   private final @NotNull Reporter reporter;
   private final @Nullable SourceFileLocator locator;
   private final @NotNull PhysicalModuleContext context;
@@ -43,7 +43,7 @@ class ReplCompiler {
    * @see org.aya.cli.single.SingleFileCompiler#compile
    */
   @Nullable Either<ImmutableSeq<Def>, Term> compileAndAddToContext(
-    @NotNull String text,
+    @NotNull String text, @NotNull NormalizeMode termNormalizeMode,
     @NotNull SeqLike<Path> modulePaths,
     @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
   ) {
@@ -53,7 +53,6 @@ class ReplCompiler {
 
     try {
       var programOrExpr = AyaParsing.repl(reporter, text);
-      if (programOrExpr == null) return null;
 
       var loader = new ModuleListLoader(modulePaths.view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, null))).toImmutableSeq());
@@ -67,10 +66,29 @@ class ReplCompiler {
           return newDefs.get();
         },
         expr -> FileModuleLoader.tyckExpr(context, expr, reporter, null).wellTyped()
-          .normalize(NormalizeMode.NF)
+          .normalize(termNormalizeMode)
       );
     } catch (InterruptException ignored) {
       return Either.left(ImmutableSeq.empty());
+    }
+  }
+
+  /**
+   * Adapted.
+   *
+   * @see #compileAndAddToContext
+   */
+  public @Nullable Term compileExprAndGetType(
+    @NotNull String text, @NotNull NormalizeMode normalizeMode
+  ) {
+    var reporter = new CountingReporter(this.reporter);
+    try {
+      var expr = AyaParsing.expr(reporter, text);
+
+      return FileModuleLoader.tyckExpr(context, expr, reporter, null)
+        .type().normalize(normalizeMode);
+    } catch (InterruptException ignored) {
+      return null;
     }
   }
 }

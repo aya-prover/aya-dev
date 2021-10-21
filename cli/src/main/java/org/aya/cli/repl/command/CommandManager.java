@@ -6,13 +6,17 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import org.aya.cli.repl.AbstractRepl;
+import org.aya.cli.repl.ExecutionResultText;
 import org.aya.cli.repl.jline.completer.CommandCompleter;
 import org.jetbrains.annotations.NotNull;
 
-public class CommandExecutor {
-  @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
+public class CommandManager {
+  private @NotNull ImmutableSeq<Command> commands;
+  private @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
 
-  public CommandExecutor(@NotNull ImmutableSeq<Command> commands) throws CommandException {
+  public CommandManager(@NotNull ImmutableSeq<Command> commands) throws CommandException {
+    this.commands = commands;
+
     var commandMap = new MutableHashMap<@NotNull String, @NotNull Command>();
     for (var command : commands) {
       if (!command.hasAtLeastOneName())
@@ -41,7 +45,11 @@ public class CommandExecutor {
     var command = commandMap.getOption(name);
     return command.isDefined() ?
       command.get().execute(argument, repl) :
-      new CommandExecutionResult("Invalid command \"" + name + "\"", true);
+      new CommandExecutionResult(ExecutionResultText.failed("Invalid command \"" + name + "\""), true);
+  }
+
+  public @NotNull ImmutableSeq<Command> commands() {
+    return commands;
   }
 
   public @NotNull CommandCompleter completer() {

@@ -4,11 +4,17 @@ package org.aya.cli.repl.command;
 
 import kala.collection.immutable.ImmutableSeq;
 
-public final class DefaultCommandUtils {
-  private DefaultCommandUtils() {
+public final class DefaultCommands {
+  private DefaultCommands() {
   }
 
   public static ImmutableSeq<Command> defaultCommands() {
-    return ImmutableSeq.of(QuitCommand.INSTANCE, PromptCommand.INSTANCE);
+    return ImmutableSeq.of(
+      QuitCommand.INSTANCE,
+      SetPromptCommand.INSTANCE,
+      SetNormalizeModeCommand.INSTANCE,
+      HelpCommand.INSTANCE,
+      ShowTypeCommand.INSTANCE
+    );
   }
 }

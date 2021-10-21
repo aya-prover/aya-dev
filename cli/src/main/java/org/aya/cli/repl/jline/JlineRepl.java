@@ -32,7 +32,7 @@ public final class JlineRepl extends AbstractRepl {
       // .parser(new AyaParser())
       .completer(new AggregateCompleter(
         KeywordCompleter.INSTANCE,
-        commandExecutor.completer()
+        commandManager.completer()
       ));
     var root = configRoot();
     if (root != null) lineReaderBuilder
