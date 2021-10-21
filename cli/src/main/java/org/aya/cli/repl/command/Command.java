@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.command;
 
+import kala.collection.View;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.AbstractRepl;
 import org.jetbrains.annotations.NotNull;
@@ -9,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 public interface Command {
   @NotNull ImmutableSeq<String> longNames();
   @NotNull ImmutableSeq<Character> shortNames();
-  default @NotNull ImmutableSeq<String> names() {
-    return longNames().concat(shortNames().map(c -> Character.toString(c)));
+  default @NotNull View<String> names() {
+    return longNames().view().concat(shortNames().view().map(c -> Character.toString(c)));
   }
 
   @NotNull String description();
