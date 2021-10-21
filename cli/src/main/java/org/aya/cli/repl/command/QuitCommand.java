@@ -28,7 +28,7 @@ public final class QuitCommand implements SingleShortNameCommand {
   }
 
   @Override
-  public CommandExecutionResult execute(@NotNull String argument, @NotNull AbstractRepl repl) {
-    return new CommandExecutionResult("See you space cow woof woof :3", false);
+  public @NotNull CommandExecutionResult execute(@NotNull String argument, @NotNull AbstractRepl repl) {
+    return CommandExecutionResult.successful("See you space cow woof woof :3", false);
   }
 }

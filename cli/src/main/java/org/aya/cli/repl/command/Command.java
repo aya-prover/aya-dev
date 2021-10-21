@@ -26,5 +26,5 @@ public interface Command {
    * @param repl     the REPL
    * @return the result
    */
-  CommandExecutionResult execute(@NotNull String argument, @NotNull AbstractRepl repl);
+  @NotNull CommandExecutionResult execute(@NotNull String argument, @NotNull AbstractRepl repl);
 }

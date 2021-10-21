@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.command;
 
-public class DefaultCommandExecutor extends CommandExecutor {
-  public DefaultCommandExecutor() throws CommandException {
-    super(DefaultCommandUtils.defaultCommands());
+public class DefaultCommandManager extends CommandManager {
+  public DefaultCommandManager() throws CommandException {
+    super(DefaultCommands.defaultCommands());
   }
 }
