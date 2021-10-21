@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import org.aya.cli.repl.AbstractRepl;
+import org.aya.cli.repl.jline.completer.CommandCompleter;
 import org.jetbrains.annotations.NotNull;
 
 public class CommandExecutor {
@@ -41,5 +42,9 @@ public class CommandExecutor {
     return command.isDefined() ?
       command.get().execute(argument, repl) :
       new CommandExecutionResult("Invalid command \"" + name + "\"", true);
+  }
+
+  public @NotNull CommandCompleter completer() {
+    return new CommandCompleter(commandMap.keysView());
   }
 }

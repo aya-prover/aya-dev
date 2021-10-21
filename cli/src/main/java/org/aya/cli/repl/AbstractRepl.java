@@ -74,7 +74,7 @@ public abstract class AbstractRepl implements Closeable {
 
   protected abstract @Nullable String getAdditionalMessage();
 
-  CommandExecutor commandExecutor = new DefaultCommandExecutor();
+  protected CommandExecutor commandExecutor = new DefaultCommandExecutor();
 
   /**
    * Executes a single REPL loop.

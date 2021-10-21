@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline.completer;
 
+import kala.collection.View;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.command.Command;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +16,12 @@ import java.util.List;
 public class CommandCompleter implements Completer {
   public final @NotNull ImmutableSeq<Candidate> candidates;
 
+  public CommandCompleter(@NotNull View<String> commandNames) {
+    candidates = commandNames.map(name -> new Candidate(":" + name)).toImmutableArray();
+  }
+
   public CommandCompleter(@NotNull ImmutableSeq<Command> commands) {
-    candidates = commands.flatMap(command -> command.names().map(name -> new Candidate(":" + name)));
+    this(commands.view().flatMap(Command::names));
   }
 
   @Override
