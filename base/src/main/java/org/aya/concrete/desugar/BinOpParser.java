@@ -12,6 +12,7 @@ import kala.tuple.Tuple2;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
+import org.aya.api.util.Assoc;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.stmt.OpDecl;
@@ -31,7 +32,7 @@ public final class BinOpParser {
     this.seq = seq;
   }
 
-  private final LinkedBuffer<Tuple2<Elem, BinOpSet.Elem>> opStack = LinkedBuffer.of();
+  private final LinkedBuffer<Tuple2<Elem, BinOpSet.BinOP>> opStack = LinkedBuffer.of();
   private final DoubleLinkedBuffer<Elem> prefixes = DoubleLinkedBuffer.of();
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
@@ -71,27 +72,35 @@ public final class BinOpParser {
       else {
         var currentOp = expr.toSetElem(opSet);
         while (opStack.isNotEmpty()) {
-          var peek = opStack.peek();
-          var cmp = opSet.compare(peek._2, currentOp);
-          if (cmp == BinOpSet.PredCmp.Undefined) {
-            opSet.reporter().report(new OperatorProblem.AmbiguousPredError(currentOp.name(),
-              peek._2.name(),
-              peek._1.expr.sourcePos()));
+          var top = opStack.peek();
+          var cmp = opSet.compare(top._2, currentOp);
+          if (cmp == BinOpSet.PredCmp.Tighter) foldTop();
+          else if (cmp == BinOpSet.PredCmp.Equal) {
+            // associativity should be specified to both left/right when their share
+            // the same precedence. Or a parse error should be reported.
+            var topAssoc = top._2.assoc();
+            var currentAssoc = currentOp.assoc();
+            if (topAssoc != currentAssoc || topAssoc == Assoc.Infix) {
+              opSet.reporter().report(new OperatorProblem.FixityError(currentOp.name(),
+                currentAssoc, top._2.name(), topAssoc, top._1.expr.sourcePos()));
+              return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
+            }
+            if (topAssoc == Assoc.InfixL) foldTop();
+            else break;
+          } else if (cmp == BinOpSet.PredCmp.Looser) {
+            break;
+          } else {
+            opSet.reporter().report(new OperatorProblem.AmbiguousPredError(
+              currentOp.name(), top._2.name(), top._1.expr.sourcePos()));
             return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
-          } else if (cmp == BinOpSet.PredCmp.Tighter || cmp == BinOpSet.PredCmp.Equal) {
-            var topOp = opStack.pop();
-            var appExpr = makeBinApp(topOp._1);
-            prefixes.append(new Elem(appExpr, topOp._1.explicit));
-          } else break;
+          }
         }
         opStack.push(Tuple.of(expr, currentOp));
       }
     }
 
     while (opStack.isNotEmpty()) {
-      var op = opStack.pop();
-      var app = makeBinApp(op._1);
-      prefixes.append(new Elem(app, op._1.explicit));
+      foldTop();
     }
 
     assert prefixes.sizeEquals(1);
@@ -108,6 +117,12 @@ public final class BinOpParser {
       seqWithApp.append(expr);
     }
     return seqWithApp;
+  }
+
+  private void foldTop() {
+    var op = opStack.pop();
+    var app = makeBinApp(op._1);
+    prefixes.append(new Elem(app, op._1.explicit));
   }
 
   private Expr.@NotNull AppExpr makeBinApp(@NotNull Elem op) {
@@ -163,7 +178,7 @@ public final class BinOpParser {
       return opSet.isOperand(tryOp);
     }
 
-    public BinOpSet.@NotNull Elem toSetElem(@NotNull BinOpSet opSet) {
+    public BinOpSet.@NotNull BinOP toSetElem(@NotNull BinOpSet opSet) {
       if (this == OP_APP) return BinOpSet.APP_ELEM;
       var tryOp = asOpDecl();
       assert tryOp != null; // should never fail
