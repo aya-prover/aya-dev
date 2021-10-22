@@ -16,6 +16,7 @@ import org.aya.api.util.Assoc;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.stmt.OpDecl;
+import org.aya.concrete.stmt.Signatured;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
@@ -126,18 +127,26 @@ public final class BinOpParser {
   }
 
   private Expr.@NotNull AppExpr makeBinApp(@NotNull Elem op) {
-    var rhs = prefixes.dequeue();
-    var lhs = prefixes.dequeue();
-    if (op == Elem.OP_APP) return new Expr.AppExpr(
-      union(lhs, rhs),
-      lhs.expr,
-      rhs.toNamedArg()
-    );
-    return new Expr.AppExpr(
-      union(op, lhs, rhs),
-      new Expr.AppExpr(union(op, lhs), op.expr, lhs.toNamedArg()),
-      rhs.toNamedArg()
-    );
+    int argc = op.argc();
+    if (argc == 1) {
+      var operand = prefixes.dequeue();
+      return new Expr.AppExpr(union(operand, op), op.expr, operand.toNamedArg());
+    } else if (argc == 2) {
+      var rhs = prefixes.dequeue();
+      var lhs = prefixes.dequeue();
+      if (op == Elem.OP_APP) return new Expr.AppExpr(
+        union(lhs, rhs),
+        lhs.expr,
+        rhs.toNamedArg()
+      );
+      return new Expr.AppExpr(
+        union(op, lhs, rhs),
+        new Expr.AppExpr(union(op, lhs), op.expr, lhs.toNamedArg()),
+        rhs.toNamedArg()
+      );
+    } else {
+      throw new UnsupportedOperationException("TODO?");
+    }
   }
 
   private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b, @NotNull Elem c) {
@@ -183,6 +192,16 @@ public final class BinOpParser {
       var tryOp = asOpDecl();
       assert tryOp != null; // should never fail
       return opSet.ensureHasElem(tryOp);
+    }
+
+    private int argc() {
+      if (this == OP_APP) return 2;
+      if (this.asOpDecl() instanceof Signatured sig) return countExplicitParam(sig.telescope);
+      throw new IllegalArgumentException("not an operator");
+    }
+
+    private int countExplicitParam(@NotNull Seq<Expr.Param> telescope) {
+      return telescope.view().count(Expr.Param::explicit);
     }
 
     public @NotNull Arg<Expr.NamedArg> toNamedArg() {

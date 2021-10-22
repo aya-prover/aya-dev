@@ -57,9 +57,12 @@ def infixr *> {A : Type} {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d 
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
-def infixr >== {A : Type} {a a' a'' : A} (p : a = a') (q : a' = a'') => p *> q
-def infix  ==< {A : Type} (a : A) {a' : A} (p : a = a') => p
+def infixr >== {A : Type} {a b c : A} (p : a = b) (q : b = c) => p *> q
+def infix  ==< {A : Type} (a : A) {b : A} (p : a = b) => p
 
+def infix qed {A : Type} (a : A) : a = a => idp a
+
+bind >== looser qed
 bind >== looser ==<
 
 -----------------------------------------
@@ -69,17 +72,20 @@ def infix + (a b : Nat) : Nat
  | a, suc b => suc (a + b)
 
 bind + tighter =
+bind + tighter ==<
+bind + tighter qed
 
 def +-comm (a b : Nat) : a + b = b + a
   | zero, zero => idp _
   | suc a, zero => pmap suc (+-comm a zero)
   | zero, suc b => pmap suc (+-comm zero b)
   | suc a, suc b => pmap suc (
-    (suc a + b)
+    suc a + b
   ==< +-comm (suc a) b >==
-    (suc (b + a))
+    suc (b + a)
   ==< pmap suc (sym (+-comm a b)) >==
-    (suc (a + b))
+    suc (a + b)
   ==< +-comm a (suc b) >==
-    (idp (suc b + a))
+    suc b + a
+  qed
   )
