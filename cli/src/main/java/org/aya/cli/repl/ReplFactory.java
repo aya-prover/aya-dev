@@ -9,7 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class ReplFactory {
+public final class ReplFactory {
+  private ReplFactory() {
+  }
+
   public static int run(MainArgs.@NotNull ReplAction replAction) throws IOException {
     try (var repl = switch (replAction.replType) {
       case jline -> new JlineRepl();

@@ -14,7 +14,9 @@ public final class DefaultCommands {
       SetPromptCommand.INSTANCE,
       SetNormalizeModeCommand.INSTANCE,
       HelpCommand.INSTANCE,
-      ShowTypeCommand.INSTANCE
+      ShowTypeCommand.INSTANCE,
+      SetPrintWidthCommand.INSTANCE,
+      EnableUnicodeCommand.INSTANCE
     );
   }
 }
