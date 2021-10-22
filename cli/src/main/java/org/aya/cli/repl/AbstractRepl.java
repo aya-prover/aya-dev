@@ -34,6 +34,8 @@ public abstract class AbstractRepl implements Closeable {
   public final @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null);
   public @NotNull CommandManager commandManager = new DefaultCommandManager();
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
+  public int prettyPrintWidth = 80;
+  public boolean enableUnicode = true;
 
   private static Path CONFIG_ROOT;
 
@@ -126,7 +128,7 @@ public abstract class AbstractRepl implements Closeable {
   }
 
   public @NotNull String render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(DistillerOptions.DEFAULT).debugRender();
+    return ayaDocile.toDoc(DistillerOptions.DEFAULT).renderWithPageWidth(prettyPrintWidth, enableUnicode);
   }
 
   @Override public void close() throws IOException {

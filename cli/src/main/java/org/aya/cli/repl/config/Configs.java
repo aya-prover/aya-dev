@@ -9,6 +9,11 @@ public final class Configs {
   }
 
   public static ImmutableSeq<ConfigSaver> configSavers() {
-    return ImmutableSeq.of(PromptConfigSaver.INSTANCE, NormalizeModeConfigSaver.INSTNACE);
+    return ImmutableSeq.of(
+      PromptConfigSaver.INSTANCE,
+      NormalizeModeConfigSaver.INSTNACE,
+      PrintWidthConfigSaver.INSTANCE,
+      EnableUnicodeConfigSaver.INSTANCE
+    );
   }
 }
