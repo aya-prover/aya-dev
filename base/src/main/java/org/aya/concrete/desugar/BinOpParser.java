@@ -51,9 +51,11 @@ public final class BinOpParser {
 
   public Expr.@Nullable LamExpr tryParseSection(@NotNull SourcePos sourcePos, @NotNull Elem first, @NotNull Elem second) {
     // case 1: `+ f` becomes `\lam _ => _ + f`
-    if (opSet.assocOf(first.asOpDecl()).infix) return makeSectionApp(sourcePos, seq, first, SeqView::prepended);
+    if (opSet.assocOf(first.asOpDecl()).infix && first.argc() == 2)
+      return makeSectionApp(sourcePos, seq, first, SeqView::prepended);
     // case 2: `f +` becomes `\lam _ => f + _`
-    if (opSet.assocOf(second.asOpDecl()).infix) return makeSectionApp(sourcePos, seq, second, SeqView::appended);
+    if (opSet.assocOf(second.asOpDecl()).infix && second.argc() == 2)
+      return makeSectionApp(sourcePos, seq, second, SeqView::appended);
     return null;
   }
 

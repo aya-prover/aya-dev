@@ -89,3 +89,14 @@ def +-comm (a b : Nat) : a + b = b + a
     suc b + a
   qed
   )
+
+-----------------------------------------
+
+def a (b : Nat) : Nat => suc b
+def infix suc' (a : Nat) : Term => Atom a
+
+def what-if-they're-prefixed : (suc' a zero) = (suc' (a zero))  => idp _
+def what-if-they're-prefixed' : (suc' a zero) = (Atom (suc zero))  => idp _
+
+def what-if-they're-xjbfixed : (suc' a zero) = (a zero suc')  => idp _
+def what-if-they're-xjbfixed' : (a zero suc') = (Atom (suc zero))  => idp _
