@@ -1,0 +1,13 @@
+In file $FILE:9:15 ->
+
+  7 | def test1 => 1 + 2 + 3
+  8 | def test2 => 1 ^ 2 ^ 3
+  9 | def test3 => 1 = 2 = 3
+                     ^^
+
+Error: Cannot figure out computation order because `=` (Infix) and `=` (Infix) share
+       the same precedence but no associativity was specified.
+note: Make them both left/right-associative to resolve this problem.
+
+1 error(s), 0 warning(s).
+What are you doing?
