@@ -1,0 +1,36 @@
+prim I
+prim left
+prim right
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+ | at (i : I) : A i {
+   | left => a
+   | right => b
+ }
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def idp {A : Type} (a : A) : a = a => path (\ i => a)
+
+-----------------------------------------
+
+open data Nat : Type | zero | suc Nat
+open data Term : Type
+  | Bin Term Term
+  | Atom Nat
+
+def _0 : Term => Atom zero
+def _1 : Term => Atom (suc zero)
+def _2 : Term => Atom (suc (suc zero))
+def _3 : Term => Atom (suc (suc (suc zero)))
+
+def infixl + (a b : Term) : Term => Bin a b
+def infixr ^ (a b : Term) : Term => Bin a b
+
+def term1 : Term => _1 + _2 + _3
+def term2 : Term => _1 ^ _2 ^ _3
+
+def term1Ast : Term => Bin (Bin _1 _2) _3
+def term2Ast : Term => Bin _1 (Bin _2 _3)
+
+def test1 : term1 = term1Ast => idp _
+def test2 : term2 = term2Ast => idp _

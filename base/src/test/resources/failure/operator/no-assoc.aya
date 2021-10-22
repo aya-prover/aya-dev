@@ -1,0 +1,9 @@
+open data Nat : Type | zero | suc Nat
+
+def infixl + (a b : Nat) : Nat => zero
+def infixr ^ (a b : Nat) : Nat => zero
+def infix  = (a b : Nat) : Nat => zero
+
+def test1 => 1 + 2 + 3
+def test2 => 1 ^ 2 ^ 3
+def test3 => 1 = 2 = 3
