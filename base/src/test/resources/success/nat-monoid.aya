@@ -8,7 +8,7 @@ struct Path (A : I -> Type) (a : A left) (b : A right) : Type
  }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `=` {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
@@ -27,7 +27,7 @@ struct Monoid { A : Type } ( op : A -> A -> A ): Type
   | id_r (a: A) : op a (id unit) = a
   | id_l (a: A) : op (id unit) a = a
 
-def `+` ( a b : Nat ) : Nat
+def infix + ( a b : Nat ) : Nat
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (a + b)

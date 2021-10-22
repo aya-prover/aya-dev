@@ -1,6 +1,6 @@
 In file $FILE:4:13 ->
 
-  2 | def `=` : Type => =
+  2 | def infix = : Type => =
   3 | 
   4 | def fail : 1 + 1 = 2 => fail
                    ^^

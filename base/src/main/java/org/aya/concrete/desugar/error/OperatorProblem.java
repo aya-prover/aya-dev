@@ -6,6 +6,7 @@ import kala.collection.mutable.Buffer;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
+import org.aya.api.util.Assoc;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
@@ -15,6 +16,41 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 public final class OperatorProblem {
+  public record FixityError(
+    @NotNull String op1, @NotNull Assoc assoc1,
+    @NotNull String op2, @NotNull Assoc assoc2,
+    @Override @NotNull SourcePos sourcePos
+  ) implements Problem {
+    @Override
+    public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(
+        Doc.english("Cannot figure out computation order because"),
+        Doc.styled(Style.code(), Doc.plain(op1)),
+        Doc.parened(Doc.plain(assoc1.name())),
+        Doc.plain("and"),
+        Doc.styled(Style.code(), Doc.plain(op2)),
+        Doc.parened(Doc.plain(assoc1.name())),
+        reason()
+      );
+    }
+
+    private @NotNull Doc reason() {
+      return assoc1 == assoc2 && assoc1 == Assoc.Infix
+        ? Doc.english("share the same precedence but no associativity was specified.")
+        : Doc.english("share the same precedence but don't share the same associativity.");
+    }
+
+    @Override
+    public @NotNull Doc hint() {
+      return Doc.english("Make them both left/right-associative to resolve this problem.");
+    }
+
+    @Override
+    public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
+  }
+
   public record AmbiguousPredError(
     @NotNull String op1,
     @NotNull String op2,
@@ -51,17 +87,17 @@ public final class OperatorProblem {
   }
 
   public record CircleError(
-    @NotNull Buffer<BinOpSet.Elem> items
+    @NotNull Buffer<BinOpSet.BinOP> items
   ) implements Problem {
     @Override public @NotNull SourcePos sourcePos() {
-      return items.view().map(BinOpSet.Elem::firstBind)
+      return items.view().map(BinOpSet.BinOP::firstBind)
         .max(Comparator.comparingInt(SourcePos::endLine));
     }
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
         Doc.english("Precedence circle found between"),
-        Doc.commaList(items.view().map(BinOpSet.Elem::name).toImmutableSeq()
+        Doc.commaList(items.view().map(BinOpSet.BinOP::name).toImmutableSeq()
           .sorted().view().map(Doc::plain))
       );
     }

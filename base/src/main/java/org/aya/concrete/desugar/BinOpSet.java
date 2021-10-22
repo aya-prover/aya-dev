@@ -16,11 +16,11 @@ import org.jetbrains.annotations.Nullable;
 
 public record BinOpSet(
   @NotNull Reporter reporter,
-  @NotNull MutableSet<Elem> ops,
-  @NotNull MutableHashMap<Elem, MutableHashSet<Elem>> tighterGraph
+  @NotNull MutableSet<BinOP> ops,
+  @NotNull MutableHashMap<BinOP, MutableHashSet<BinOP>> tighterGraph
 ) {
-  static final @NotNull Elem APP_ELEM = Elem.from(SourcePos.NONE,
-    () -> new OpDecl.Operator("application", Assoc.Infix));
+  static final @NotNull BinOpSet.BinOP APP_ELEM = BinOP.from(SourcePos.NONE,
+    () -> new OpDecl.Operator("application", Assoc.InfixL));
 
   public BinOpSet(@NotNull Reporter reporter) {
     this(reporter, MutableSet.of(APP_ELEM), MutableHashMap.of());
@@ -39,7 +39,7 @@ public record BinOpSet(
     }
   }
 
-  public PredCmp compare(@NotNull Elem lhs, @NotNull Elem rhs) {
+  public PredCmp compare(@NotNull BinOpSet.BinOP lhs, @NotNull BinOpSet.BinOP rhs) {
     // BinOp all have lower priority than application
     if (lhs == APP_ELEM) return PredCmp.Tighter;
     if (rhs == APP_ELEM) return PredCmp.Looser;
@@ -49,7 +49,7 @@ public record BinOpSet(
     return PredCmp.Undefined;
   }
 
-  private boolean hasPath(@NotNull MutableSet<Elem> book, @NotNull Elem from, @NotNull Elem to) {
+  private boolean hasPath(@NotNull MutableSet<BinOP> book, @NotNull BinOpSet.BinOP from, @NotNull BinOpSet.BinOP to) {
     if (from == to) return true;
     if (book.contains(from)) return false;
     for (var test : ensureGraphHas(from)) {
@@ -60,7 +60,7 @@ public record BinOpSet(
   }
 
   public Assoc assocOf(@Nullable OpDecl opDecl) {
-    if (isOperand(opDecl)) return Assoc.NoFix;
+    if (isOperand(opDecl)) return Assoc.Invalid;
     return ensureHasElem(opDecl).assoc;
   }
 
@@ -68,35 +68,35 @@ public record BinOpSet(
     return opDecl == null || opDecl.asOperator() == null;
   }
 
-  public Elem ensureHasElem(@NotNull OpDecl opDecl) {
+  public BinOP ensureHasElem(@NotNull OpDecl opDecl) {
     return ensureHasElem(opDecl, SourcePos.NONE);
   }
 
-  public Elem ensureHasElem(@NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
+  public BinOP ensureHasElem(@NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
     var elem = ops.find(e -> e.op == opDecl);
     if (elem.isDefined()) return elem.get();
-    var newElem = Elem.from(sourcePos, opDecl);
+    var newElem = BinOP.from(sourcePos, opDecl);
     ops.add(newElem);
     return newElem;
   }
 
-  private MutableHashSet<Elem> ensureGraphHas(@NotNull Elem elem) {
+  private MutableHashSet<BinOP> ensureGraphHas(@NotNull BinOpSet.BinOP elem) {
     return tighterGraph.getOrPut(elem, MutableHashSet::of);
   }
 
-  private void addTighter(@NotNull Elem from, @NotNull Elem to) {
+  private void addTighter(@NotNull BinOpSet.BinOP from, @NotNull BinOpSet.BinOP to) {
     ensureGraphHas(to);
     ensureGraphHas(from).add(to);
   }
 
   public void sort() {
-    var ind = MutableHashMap.<Elem, Ref<Integer>>of();
+    var ind = MutableHashMap.<BinOP, Ref<Integer>>of();
     tighterGraph.forEach((from, tos) -> {
       ind.putIfAbsent(from, new Ref<>(0));
       tos.forEach(to -> ind.getOrPut(to, () -> new Ref<>(0)).value += 1);
     });
 
-    var stack = LinkedBuffer.<Elem>of();
+    var stack = LinkedBuffer.<BinOP>of();
     ind.forEach((e, i) -> {
       if (i.value == 0) stack.push(e);
     });
@@ -111,7 +111,7 @@ public record BinOpSet(
     }
 
     if (count != tighterGraph.size()) {
-      var circle = Buffer.<Elem>create();
+      var circle = Buffer.<BinOP>create();
       ind.forEach((e, i) -> {
         if (i.value > 0) circle.append(e);
       });
@@ -120,7 +120,7 @@ public record BinOpSet(
     }
   }
 
-  public record Elem(
+  public record BinOP(
     @NotNull SourcePos firstBind,
     @NotNull OpDecl op,
     @NotNull String name,
@@ -132,9 +132,9 @@ public record BinOpSet(
       return op;
     }
 
-    private static @NotNull Elem from(@NotNull SourcePos sourcePos, @NotNull OpDecl opDecl) {
+    private static @NotNull BinOpSet.BinOP from(@NotNull SourcePos sourcePos, @NotNull OpDecl opDecl) {
       var op = ensureOperator(opDecl);
-      return new Elem(sourcePos, opDecl, op.name(), op.assoc());
+      return new BinOP(sourcePos, opDecl, op.name(), op.assoc());
     }
   }
 

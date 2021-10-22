@@ -8,7 +8,7 @@ struct Path (A : I -> Type) (a : A left) (b : A right) : Type
   }
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
-def `=` {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
 def idp {A : Type} (a : A) : a = a => path (\ i => a)
 
 prim arcoe
@@ -27,7 +27,7 @@ def hcomp2d {A : Type}
   => path (hfill2d p q r right)
 
 def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) (idp a) p
-def `~` {A : Type} {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q (idp a)
+def infixr ~ {A : Type} {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q (idp a)
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
@@ -38,7 +38,7 @@ open data Nat : Type
   | zero
   | suc Nat
 
-def `+` (m n : Nat) : Nat
+def infixl + (m n : Nat) : Nat
   | zero, n => n
   | n, zero => n
   | suc m, n => suc (m + n)
@@ -54,12 +54,12 @@ def +-assoc (x y z : Nat) : x + (y + z) = (x + y) + z
   | zero, y, z => idp _
   | suc x, y, z => pmap suc (+-assoc x y z)
 
-def `*` (m n : Nat) : Nat
+def infixl * (m n : Nat) : Nat
   | zero, n => zero
   | m, zero => zero
   | suc m, suc n => suc (m + n + m * n)
 
-def `*'` (m n : Nat) : Nat
+def infixl *' (m n : Nat) : Nat
   | zero, n => zero
   | m, zero => zero
   | suc m, n => n + m *' n

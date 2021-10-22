@@ -46,7 +46,9 @@ decl : PRIVATE?
      | primDecl
      );
 
-declNameOrInfix : ID | INFIX;
+assoc : INFIX | INFIXL | INFIXR;
+
+declNameOrInfix : ID | assoc ID;
 
 abuse : ABUSING (LBRACE stmt* RBRACE | stmt);
 
@@ -61,7 +63,7 @@ fnModifiers : ERASE
 
 structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* abuse?;
 
-primDecl : PRIM INFIX? ID tele* type? ;
+primDecl : PRIM assoc? ID tele* type? ;
 
 field : COERCE? ID tele* type clauses? # fieldDecl
       | ID tele* type? IMPLIES expr    # fieldImpl

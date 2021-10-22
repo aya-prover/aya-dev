@@ -9,14 +9,10 @@ public enum Assoc {
   /**
    * Parenthesis operator fixity.
    */
-  Twin(false),
   Infix(true),
   InfixL(true),
   InfixR(true),
-  Fix(false),
-  FixL(false),
-  FixR(false),
-  NoFix(false);
+  Invalid(false);
 
   /**
    * That this fixity is infix.

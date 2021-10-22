@@ -1,2 +1,2 @@
-def `+` : Type => +
+def infix + : Type => +
 bind + looser +
