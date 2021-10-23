@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
@@ -14,7 +13,7 @@ import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
-import org.aya.concrete.resolve.context.PhysicalModuleContext;
+import org.aya.concrete.resolve.context.ReplContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
@@ -28,12 +27,12 @@ import java.nio.file.Path;
 public class ReplCompiler {
   private final @NotNull Reporter reporter;
   private final @Nullable SourceFileLocator locator;
-  private final @NotNull PhysicalModuleContext context;
+  private final @NotNull ReplContext context;
 
   ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.reporter = reporter;
     this.locator = locator;
-    context = new EmptyContext(reporter).derive(Seq.empty());
+    context = new ReplContext(new EmptyContext(reporter));
   }
 
   /**

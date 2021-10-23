@@ -22,7 +22,7 @@ import java.util.function.Function;
 /**
  * @author re-xyr
  */
-public sealed interface ModuleContext extends Context permits PhysicalModuleContext, NoExportContext {
+public sealed interface ModuleContext extends Context permits PhysicalModuleContext, NoExportContext, ReplContext {
   @Override @NotNull Context parent();
   @Override default @NotNull Reporter reporter() {
     return parent().reporter();
