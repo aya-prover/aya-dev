@@ -14,13 +14,12 @@ public class CommandManager {
   public final @NotNull ImmutableSeq<Command> commands;
   public final @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
 
-  public CommandManager(@NotNull ImmutableSeq<Command> commands) throws CommandException {
+  public CommandManager(@NotNull ImmutableSeq<Command> commands) {
     this.commands = commands;
 
     var commandMap = new MutableHashMap<@NotNull String, @NotNull Command>();
     for (var command : commands) {
-      if (!command.hasAtLeastOneName())
-        throw new CommandException("Command " + command + " has no names");
+      assert command.names().isNotEmpty() : "Command " + command + " has no names";
 
       for (var name : command.names()) {
         var existingCommand = commandMap.putIfAbsent(name, command);

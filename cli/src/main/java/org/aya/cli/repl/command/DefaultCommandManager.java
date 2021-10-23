@@ -3,7 +3,7 @@
 package org.aya.cli.repl.command;
 
 public class DefaultCommandManager extends CommandManager {
-  public DefaultCommandManager() throws CommandException {
+  public DefaultCommandManager() {
     super(DefaultCommands.defaultCommands());
   }
 }

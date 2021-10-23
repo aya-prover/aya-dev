@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 public interface Command {
   @NotNull ImmutableSeq<String> names();
   @NotNull String description();
-  default boolean hasAtLeastOneName() {
-    return names().isNotEmpty();
-  }
 
   /**
    * Execute the command.
