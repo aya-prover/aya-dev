@@ -66,10 +66,22 @@ public record SourcePos(
       min(tokenStartIndex, other.tokenStartIndex),
       max(tokenEndIndex, other.tokenEndIndex),
       min(startLine, other.startLine),
-      max(startColumn, other.startColumn),
+      unionStartCol(other),
       max(endLine, other.endLine),
-      max(endColumn, other.endColumn)
+      unionEndCol(other)
     );
+  }
+
+  private int unionStartCol(@NotNull SourcePos other) {
+    if (startLine == other.startLine) return min(startColumn, other.startColumn);
+    if (startLine < other.startLine) return startColumn;
+    return other.startColumn;
+  }
+
+  private int unionEndCol(@NotNull SourcePos other) {
+    if (endLine == other.endLine) return max(endColumn, other.endColumn);
+    if (endLine > other.endLine) return endColumn;
+    return other.endColumn;
   }
 
   @Override public boolean equals(Object o) {
