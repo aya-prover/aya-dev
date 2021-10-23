@@ -18,6 +18,7 @@ import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.context.EmptyContext;
+import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.concrete.stmt.Decl;
@@ -70,7 +71,7 @@ public record FileModuleLoader(
   }
 
   public static <E extends Exception> void tyckModule(
-    @NotNull PhysicalModuleContext context,
+    @NotNull ModuleContext context,
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
@@ -123,7 +124,7 @@ public record FileModuleLoader(
    * @see #tyckModule
    */
   public static ExprTycker.@NotNull Result tyckExpr(
-    @NotNull PhysicalModuleContext context,
+    @NotNull ModuleContext context,
     @NotNull Expr expr,
     @NotNull Reporter reporter,
     Trace.@Nullable Builder builder
