@@ -4,9 +4,8 @@ package org.aya.concrete.desugar;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.DoubleLinkedBuffer;
-import kala.collection.mutable.LinkedBuffer;
+import kala.collection.Set;
+import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.api.error.SourcePos;
@@ -22,7 +21,7 @@ import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public final class BinOpParser {
   private final @NotNull BinOpSet opSet;
@@ -35,38 +34,32 @@ public final class BinOpParser {
 
   private final LinkedBuffer<Tuple2<Elem, BinOpSet.BinOP>> opStack = LinkedBuffer.of();
   private final DoubleLinkedBuffer<Elem> prefixes = DoubleLinkedBuffer.of();
+  private final MutableMap<Elem, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
 
   @NotNull public Expr build(@NotNull SourcePos sourcePos) {
     // No need to build
     if (seq.sizeEquals(1)) return seq.get(0).expr;
-    // check for BinOP section
+    // BinOP section fast path
     if (seq.sizeEquals(2)) {
       var first = seq.get(0);
       var second = seq.get(1);
-      var lam = tryParseSection(sourcePos, first, second);
-      if (lam != null) return lam;
+      // case 1: `+ f` becomes `\lam _ => _ + f`
+      if (opSet.assocOf(first.asOpDecl()).infix && first.argc() == 2)
+        return makeSectionApp(sourcePos, first, elem -> new BinOpParser(opSet, seq.prepended(elem)).build(sourcePos));
+      // case 2: `f +` becomes `\lam _ => f + _`
+      if (opSet.assocOf(second.asOpDecl()).infix && second.argc() == 2)
+        return makeSectionApp(sourcePos, second, elem -> new BinOpParser(opSet, seq.appended(elem)).build(sourcePos));
     }
     return convertToPrefix(sourcePos);
   }
 
-  public Expr.@Nullable LamExpr tryParseSection(@NotNull SourcePos sourcePos, @NotNull Elem first, @NotNull Elem second) {
-    // case 1: `+ f` becomes `\lam _ => _ + f`
-    if (opSet.assocOf(first.asOpDecl()).infix && first.argc() == 2)
-      return makeSectionApp(sourcePos, seq, first, SeqView::prepended);
-    // case 2: `f +` becomes `\lam _ => f + _`
-    if (opSet.assocOf(second.asOpDecl()).infix && second.argc() == 2)
-      return makeSectionApp(sourcePos, seq, second, SeqView::appended);
-    return null;
-  }
-
-  public Expr.@NotNull LamExpr makeSectionApp(@NotNull SourcePos sourcePos, @NotNull SeqView<Elem> seq, @NotNull Elem op,
-                                              @NotNull BiFunction<SeqView<Elem>, Elem, SeqView<Elem>> insertParam) {
+  public Expr.@NotNull LamExpr makeSectionApp(@NotNull SourcePos sourcePos,
+                                              @NotNull Elem op,
+                                              @NotNull Function<Elem, Expr> lamBody) {
     var missing = Constants.randomlyNamed(op.expr.sourcePos());
     var missingElem = new Elem(new Expr.RefExpr(SourcePos.NONE, missing), true);
-    var completeSeq = insertParam.apply(seq, missingElem);
-    return new Expr.LamExpr(sourcePos,
-      new Expr.Param(missing.definition(), missing, true),
-      new BinOpParser(opSet, completeSeq).build(sourcePos));
+    var missingParam = new Expr.Param(missing.definition(), missing, true);
+    return new Expr.LamExpr(sourcePos, missingParam, lamBody.apply(missingElem));
   }
 
   private @NotNull Expr convertToPrefix(@NotNull SourcePos sourcePos) {
@@ -77,7 +70,7 @@ public final class BinOpParser {
         while (opStack.isNotEmpty()) {
           var top = opStack.peek();
           var cmp = opSet.compare(top._2, currentOp);
-          if (cmp == BinOpSet.PredCmp.Tighter) foldTop();
+          if (cmp == BinOpSet.PredCmp.Tighter) foldLhsFor(expr);
           else if (cmp == BinOpSet.PredCmp.Equal) {
             // associativity should be specified to both left/right when their share
             // the same precedence. Or a parse error should be reported.
@@ -88,7 +81,7 @@ public final class BinOpParser {
                 currentAssoc, top._2.name(), topAssoc, top._1.expr.sourcePos()));
               return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
             }
-            if (topAssoc == Assoc.InfixL) foldTop();
+            if (topAssoc == Assoc.InfixL) foldLhsFor(expr);
             else break;
           } else if (cmp == BinOpSet.PredCmp.Looser) {
             break;
@@ -104,6 +97,7 @@ public final class BinOpParser {
 
     while (opStack.isNotEmpty()) {
       foldTop();
+      if (opStack.isNotEmpty()) markAppliedOperand(opStack.peek()._1, AppliedSide.Rhs);
     }
 
     assert prefixes.sizeEquals(1);
@@ -122,33 +116,61 @@ public final class BinOpParser {
     return seqWithApp;
   }
 
+  private void markAppliedOperand(@NotNull Elem elem, @NotNull BinOpParser.AppliedSide side) {
+    appliedOperands.getOrPut(elem, MutableSet::of).add(side);
+  }
+
+  private @NotNull Set<AppliedSide> getAppliedSides(@NotNull Elem elem) {
+    return appliedOperands.getOrPut(elem, MutableSet::of);
+  }
+
+  private void foldLhsFor(@NotNull Elem forOp) {
+    foldTop();
+    markAppliedOperand(forOp, AppliedSide.Lhs);
+  }
+
   private void foldTop() {
     var op = opStack.pop();
     var app = makeBinApp(op._1);
     prefixes.append(new Elem(app, op._1.explicit));
   }
 
-  private Expr.@NotNull AppExpr makeBinApp(@NotNull Elem op) {
+  private @NotNull Expr makeBinApp(@NotNull Elem op) {
     int argc = op.argc();
     if (argc == 1) {
       var operand = prefixes.dequeue();
       return new Expr.AppExpr(union(operand, op), op.expr, operand.toNamedArg());
     } else if (argc == 2) {
-      var rhs = prefixes.dequeue();
-      var lhs = prefixes.dequeue();
-      if (op == Elem.OP_APP) return new Expr.AppExpr(
-        union(lhs, rhs),
-        lhs.expr,
-        rhs.toNamedArg()
-      );
-      return new Expr.AppExpr(
-        union(op, lhs, rhs),
-        new Expr.AppExpr(union(op, lhs), op.expr, lhs.toNamedArg()),
-        rhs.toNamedArg()
-      );
-    } else {
-      throw new UnsupportedOperationException("TODO?");
+      if (prefixes.sizeGreaterThanOrEquals(2)) {
+        var rhs = prefixes.dequeue();
+        var lhs = prefixes.dequeue();
+        return makeBinApp(op, rhs, lhs);
+      } else if (prefixes.sizeEquals(1)) {
+        // BinOP section
+        var sides = getAppliedSides(op);
+        var applied = prefixes.dequeue();
+        var side = sides.elementAt(0);
+        return makeSectionApp(union(op, applied), op, elem -> switch (side) {
+          case Lhs -> makeBinApp(op, elem, applied);
+          case Rhs -> makeBinApp(op, applied, elem);
+        });
+      }
     }
+
+    throw new UnsupportedOperationException("TODO?");
+  }
+
+  private @NotNull Expr makeBinApp(@NotNull Elem op, @NotNull Elem rhs, @NotNull Elem lhs) {
+    if (op == Elem.OP_APP) return new Expr.AppExpr(
+      union(lhs, rhs),
+      lhs.expr,
+      rhs.toNamedArg()
+    );
+    return new Expr.AppExpr(
+      union(op, lhs, rhs),
+      new Expr.AppExpr(union(op, lhs), op.expr, lhs.toNamedArg()),
+      rhs.toNamedArg()
+    );
   }
 
   private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b, @NotNull Elem c) {
@@ -157,6 +179,10 @@ public final class BinOpParser {
 
   private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b) {
     return a.expr.sourcePos().union(b.expr.sourcePos());
+  }
+
+  enum AppliedSide {
+    Lhs, Rhs
   }
 
   /**
