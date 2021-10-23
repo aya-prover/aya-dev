@@ -2,29 +2,28 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.command;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple2;
 import org.aya.cli.repl.AbstractRepl;
 import org.jetbrains.annotations.NotNull;
 
-public class HelpCommand implements SingleLongNameWithFirstLetterShortNameCommand {
+public class HelpCommand implements Command {
   private HelpCommand() {
   }
 
   public static final HelpCommand INSTANCE = new HelpCommand();
 
-  @Override
-  public @NotNull String longName() {
-    return "help";
+  @Override public @NotNull ImmutableSeq<String> names() {
+    return ImmutableSeq.of("help", "h");
   }
 
-  @Override
-  public @NotNull String description() {
+  @Override public @NotNull String description() {
     return "Show command help";
   }
 
   @Override
   public @NotNull CommandExecutionResult execute(@NotNull String argument, @NotNull AbstractRepl repl) {
-    var commandTuple2s = repl.commandManager.commands()
+    var commandTuple2s = repl.commandManager.commands
       .map(command -> new Tuple2<>(
         command.names().joinToString(", ", name -> ':' + name), command.description()));
 

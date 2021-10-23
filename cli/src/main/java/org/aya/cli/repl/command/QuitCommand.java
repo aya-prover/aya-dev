@@ -6,24 +6,17 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.AbstractRepl;
 import org.jetbrains.annotations.NotNull;
 
-public final class QuitCommand implements SingleShortNameCommand {
+public final class QuitCommand implements Command {
   public static final QuitCommand INSTANCE = new QuitCommand();
 
   private QuitCommand() {
   }
 
-  @Override
-  public @NotNull ImmutableSeq<String> longNames() {
-    return ImmutableSeq.of("quit", "exit");
+  @Override public @NotNull ImmutableSeq<String> names() {
+    return ImmutableSeq.of("quit", "exit", "q");
   }
 
-  @Override
-  public char shortName() {
-    return 'q';
-  }
-
-  @Override
-  public @NotNull String description() {
+  @Override public @NotNull String description() {
     return "Quit the REPL";
   }
 

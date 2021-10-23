@@ -11,8 +11,8 @@ import org.aya.cli.repl.jline.completer.CommandCompleter;
 import org.jetbrains.annotations.NotNull;
 
 public class CommandManager {
-  private @NotNull ImmutableSeq<Command> commands;
-  private @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
+  public final @NotNull ImmutableSeq<Command> commands;
+  public final @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
 
   public CommandManager(@NotNull ImmutableSeq<Command> commands) throws CommandException {
     this.commands = commands;
@@ -20,12 +20,13 @@ public class CommandManager {
     var commandMap = new MutableHashMap<@NotNull String, @NotNull Command>();
     for (var command : commands) {
       if (!command.hasAtLeastOneName())
-        throw new NoNamesException(command);
+        throw new CommandException("Command " + command + " has no names");
 
       for (var name : command.names()) {
         var existingCommand = commandMap.putIfAbsent(name, command);
         if (existingCommand.isDefined())
-          throw new DuplicateNameException(name, existingCommand.get(), command);
+          throw new CommandException("Command " + existingCommand.get() +
+            " and command " + command + " has a duplicate name " + name);
       }
     }
 
@@ -46,10 +47,6 @@ public class CommandManager {
     return command.isDefined() ?
       command.get().execute(argument, repl) :
       new CommandExecutionResult(ExecutionResultText.failed("Invalid command \"" + name + "\""), true);
-  }
-
-  public @NotNull ImmutableSeq<Command> commands() {
-    return commands;
   }
 
   public @NotNull CommandCompleter completer() {
