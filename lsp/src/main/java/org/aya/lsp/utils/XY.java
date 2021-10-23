@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record XY(int x, int y) {
   public XY(@NotNull Position position) {
-    this(position.getLine() + 1, position.getCharacter());
+    this(position.getLine() + 1, position.getCharacter() - 1);
   }
 
   public boolean inside(@NotNull SourcePos sourcePos) {
