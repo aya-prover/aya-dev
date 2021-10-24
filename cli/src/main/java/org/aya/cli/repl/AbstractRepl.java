@@ -7,7 +7,6 @@ import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.CommandManager;
-import org.aya.cli.repl.command.DefaultCommandManager;
 import org.aya.cli.repl.config.Configs;
 import org.aya.cli.single.CliReporter;
 import org.aya.prelude.GeneratedVersion;
@@ -32,7 +31,7 @@ public abstract class AbstractRepl implements Closeable {
 
   public @NotNull String prompt = "> ";
   public final @NotNull ReplCompiler replCompiler = new ReplCompiler(makeReplReporter(), null);
-  public @NotNull CommandManager commandManager = new DefaultCommandManager();
+  public @NotNull CommandManager commandManager = CommandManager.DEFAULT;
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
   public int prettyPrintWidth = 80;
   public boolean enableUnicode = true;

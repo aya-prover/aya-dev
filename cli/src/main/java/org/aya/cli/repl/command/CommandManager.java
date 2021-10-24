@@ -14,6 +14,8 @@ public class CommandManager {
   public final @NotNull ImmutableSeq<Command> commands;
   public final @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
 
+  public static final @NotNull CommandManager DEFAULT = new CommandManager(DefaultCommands.defaultCommands());
+
   public CommandManager(@NotNull ImmutableSeq<Command> commands) {
     this.commands = commands;
 
@@ -37,7 +39,7 @@ public class CommandManager {
    * @param repl the REPL
    * @return the result
    */
-  public @NotNull CommandExecutionResult execute(@NotNull String text, @NotNull AbstractRepl repl) {
+  public @NotNull Command.Result execute(@NotNull String text, @NotNull AbstractRepl repl) {
     var split = text.split(" ", 2);
     var name = split[0];
     var argument = split.length > 1 ? split[1] : "";
@@ -45,7 +47,7 @@ public class CommandManager {
     var command = commandMap.getOption(name);
     return command.isDefined() ?
       command.get().execute(argument, repl) :
-      new CommandExecutionResult(ExecutionResultText.failed("Invalid command \"" + name + "\""), true);
+      new Command.Result(ExecutionResultText.failed("Invalid command \"" + name + "\""), true);
   }
 
   public @NotNull CommandCompleter completer() {
