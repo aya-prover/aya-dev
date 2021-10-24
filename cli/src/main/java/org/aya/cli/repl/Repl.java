@@ -48,7 +48,7 @@ public abstract class Repl implements Closeable {
 
   protected abstract void println(@NotNull String x);
   protected abstract void errPrintln(@NotNull String x);
-  protected abstract @NotNull String readLine(@NotNull String prompt) throws EOFException;
+  protected abstract @NotNull String readLine(@NotNull String prompt) throws EOFException, InterruptedException;
   protected abstract @Nullable String hintMessage();
 
   void run() {
@@ -83,6 +83,9 @@ public abstract class Repl implements Closeable {
     } catch (EOFException ignored) {
       // user send ctrl-d
       return false;
+    } catch (InterruptedException ignored) {
+      // user send ctrl-c
+      return true;
     } catch (Exception e) {
       var stackTrace = new StringWriter();
       e.printStackTrace(new PrintWriter(stackTrace));

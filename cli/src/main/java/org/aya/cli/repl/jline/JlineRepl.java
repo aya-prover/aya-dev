@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
 import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
@@ -45,11 +46,13 @@ public final class JlineRepl extends Repl {
     prettyPrintWidth = terminal.getWidth();
   }
 
-  @Override protected @NotNull String readLine(@NotNull String prompt) throws EOFException {
+  @Override protected @NotNull String readLine(@NotNull String prompt) throws EOFException, InterruptedException {
     try {
       return lineReader.readLine(prompt);
     } catch (EndOfFileException ignored) {
       throw new EOFException();
+    } catch (UserInterruptException ignored) {
+      throw new InterruptedException();
     }
   }
 
