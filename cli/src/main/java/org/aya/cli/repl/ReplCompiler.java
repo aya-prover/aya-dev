@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
@@ -14,7 +13,7 @@ import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
-import org.aya.concrete.resolve.context.PhysicalModuleContext;
+import org.aya.concrete.resolve.context.ReplContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
@@ -28,12 +27,12 @@ import java.nio.file.Path;
 public class ReplCompiler {
   private final @NotNull Reporter reporter;
   private final @Nullable SourceFileLocator locator;
-  private final @NotNull PhysicalModuleContext context;
+  private final @NotNull ReplContext context;
 
-  public ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
+  ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.reporter = reporter;
     this.locator = locator;
-    context = new EmptyContext(reporter).derive(Seq.empty());
+    context = new ReplContext(new EmptyContext(reporter));
   }
 
   /**
@@ -43,7 +42,7 @@ public class ReplCompiler {
    * @see org.aya.cli.single.SingleFileCompiler#compile
    */
   @Nullable Either<ImmutableSeq<Def>, Term> compileAndAddToContext(
-    @NotNull String text,
+    @NotNull String text, @NotNull NormalizeMode termNormalizeMode,
     @NotNull SeqLike<Path> modulePaths,
     @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
   ) {
@@ -53,7 +52,6 @@ public class ReplCompiler {
 
     try {
       var programOrExpr = AyaParsing.repl(reporter, text);
-      if (programOrExpr == null) return null;
 
       var loader = new ModuleListLoader(modulePaths.view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, null))).toImmutableSeq());
@@ -67,10 +65,29 @@ public class ReplCompiler {
           return newDefs.get();
         },
         expr -> FileModuleLoader.tyckExpr(context, expr, reporter, null).wellTyped()
-          .normalize(NormalizeMode.NF)
+          .normalize(termNormalizeMode)
       );
     } catch (InterruptException ignored) {
       return Either.left(ImmutableSeq.empty());
+    }
+  }
+
+  /**
+   * Adapted.
+   *
+   * @see #compileAndAddToContext
+   */
+  public @Nullable Term compileExprAndGetType(
+    @NotNull String text, @NotNull NormalizeMode normalizeMode
+  ) {
+    var reporter = new CountingReporter(this.reporter);
+    try {
+      var expr = AyaParsing.expr(reporter, text);
+
+      return FileModuleLoader.tyckExpr(context, expr, reporter, null)
+        .type().normalize(normalizeMode);
+    } catch (InterruptException ignored) {
+      return null;
     }
   }
 }
