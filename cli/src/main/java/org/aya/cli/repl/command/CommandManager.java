@@ -5,8 +5,7 @@ package org.aya.cli.repl.command;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
-import org.aya.cli.repl.AbstractRepl;
-import org.aya.cli.repl.ExecutionResultText;
+import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.jline.completer.CommandCompleter;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,15 +38,15 @@ public class CommandManager {
    * @param repl the REPL
    * @return the result
    */
-  public @NotNull Command.Result execute(@NotNull String text, @NotNull AbstractRepl repl) {
+  public @NotNull Command.Result execute(@NotNull String text, @NotNull Repl repl) {
     var split = text.split(" ", 2);
     var name = split[0];
     var argument = split.length > 1 ? split[1] : "";
 
     var command = commandMap.getOption(name);
-    return command.isDefined() ?
-      command.get().execute(argument, repl) :
-      new Command.Result(ExecutionResultText.failed("Invalid command \"" + name + "\""), true);
+    return command.isDefined()
+      ? command.get().execute(argument, repl)
+      : Command.Result.err("Command not found \"" + name + "\"", true);
   }
 
   public @NotNull CommandCompleter completer() {

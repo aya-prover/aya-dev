@@ -3,11 +3,13 @@
 package org.aya.cli.repl.command;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.repl.AbstractRepl;
-import org.aya.cli.repl.ExecutionResultText;
+import kala.control.Either;
+import org.aya.cli.repl.Repl;
 import org.jetbrains.annotations.NotNull;
 
 public interface Command {
+  @NotNull String PREFIX = ":";
+
   @NotNull ImmutableSeq<String> names();
   @NotNull String description();
 
@@ -18,15 +20,15 @@ public interface Command {
    * @param repl     the REPL
    * @return the result
    */
-  @NotNull Command.Result execute(@NotNull String argument, @NotNull AbstractRepl repl);
+  @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl);
 
-  record Result(@NotNull ExecutionResultText executionResultText, boolean continueRepl) {
-    public static @NotNull Command.Result successful(@NotNull String text, boolean continueRepl) {
-      return new Result(ExecutionResultText.successful(text), continueRepl);
+  record Result(@NotNull Either<String, String> resultText, boolean continueRepl) {
+    public static @NotNull Command.Result ok(@NotNull String text, boolean continueRepl) {
+      return new Result(Either.right(text), continueRepl);
     }
 
-    public static @NotNull Command.Result failed(@NotNull String errText, boolean continueRepl) {
-      return new Result(ExecutionResultText.failed(errText), continueRepl);
+    public static @NotNull Command.Result err(@NotNull String errText, boolean continueRepl) {
+      return new Result(Either.left(errText), continueRepl);
     }
   }
 }

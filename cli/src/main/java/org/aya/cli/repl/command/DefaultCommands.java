@@ -4,7 +4,7 @@ package org.aya.cli.repl.command;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.NormalizeMode;
-import org.aya.cli.repl.AbstractRepl;
+import org.aya.cli.repl.Repl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -34,9 +34,9 @@ public final class DefaultCommands {
       return "Change the REPL prompt text";
     }
 
-    @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull AbstractRepl repl) {
-      repl.prompt = argument;
-      return Result.successful("Changed prompt to `" + argument + "`", true);
+    @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+      repl.replConfig.prompt = argument;
+      return Result.ok("Changed prompt to `" + argument + "`", true);
     }
   };
 
@@ -49,10 +49,10 @@ public final class DefaultCommands {
       return "Show the type of the given expression";
     }
 
-    @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull AbstractRepl repl) {
-      var type = repl.replCompiler.compileExprAndGetType(argument, repl.normalizeMode);
-      return type != null ? Result.successful(repl.render(type), true) :
-          Result.failed("Failed to get expression type", true);
+    @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+      var type = repl.replCompiler.compileExprAndGetType(argument, repl.replConfig.normalizeMode);
+      return type != null ? Result.ok(repl.render(type), true)
+        : Result.err("Failed to get expression type", true);
     }
   };
 
@@ -66,10 +66,10 @@ public final class DefaultCommands {
     }
 
     @Override
-    public @NotNull Command.Result execute(@NotNull String argument, @NotNull AbstractRepl repl) {
+    public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
       var prettyPrintWidth = Integer.parseInt(argument.trim());
       repl.prettyPrintWidth = prettyPrintWidth;
-      return Result.successful("Printed output width set to " + prettyPrintWidth, true);
+      return Result.ok("Printed output width set to " + prettyPrintWidth, true);
     }
   };
 
@@ -83,8 +83,8 @@ public final class DefaultCommands {
     }
 
     @Override
-    public @NotNull Command.Result execute(@NotNull String argument, @NotNull AbstractRepl repl) {
-      return Result.successful("See you space cow woof woof :3", false);
+    public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+      return Result.ok("See you space cow woof woof :3", false);
     }
   };
 
@@ -98,10 +98,10 @@ public final class DefaultCommands {
     }
 
     @Override
-    public @NotNull Command.Result execute(@NotNull String argument, @NotNull AbstractRepl repl) {
+    public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
       var normalizeMode = NormalizeMode.valueOf(argument.trim());
-      repl.normalizeMode = normalizeMode;
-      return Result.successful("Normalize mode set to " + normalizeMode, true);
+      repl.replConfig.normalizeMode = normalizeMode;
+      return Result.ok("Normalize mode set to " + normalizeMode, true);
     }
   };
 
@@ -114,12 +114,12 @@ public final class DefaultCommands {
       return "Enable or disable unicode in REPL output";
     }
 
-    @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull AbstractRepl repl) {
+    @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
       var trim = argument.trim();
-      boolean enableUnicode = trim.isEmpty() ? !repl.enableUnicode
-          : Boolean.parseBoolean(trim);
-      repl.enableUnicode = enableUnicode;
-      return Result.successful("Unicode " + (enableUnicode ? "enabled" : "disabled"), true);
+      boolean enableUnicode = trim.isEmpty() ? !repl.replConfig.enableUnicode
+        : Boolean.parseBoolean(trim);
+      repl.replConfig.enableUnicode = enableUnicode;
+      return Result.ok("Unicode " + (enableUnicode ? "enabled" : "disabled"), true);
     }
   };
 }

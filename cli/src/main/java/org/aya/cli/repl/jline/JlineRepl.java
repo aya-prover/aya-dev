@@ -2,10 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
-import org.aya.cli.repl.AbstractRepl;
+import org.aya.api.util.AyaHome;
+import org.aya.cli.repl.Repl;
+import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.repl.jline.completer.KeywordCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.impl.completer.AggregateCompleter;
@@ -15,34 +18,39 @@ import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
+import java.io.EOFException;
 import java.io.IOException;
 
-public final class JlineRepl extends AbstractRepl {
+public final class JlineRepl extends Repl {
   private final @NotNull Terminal terminal;
   private final @NotNull LineReader lineReader;
 
-  public JlineRepl() throws IOException {
+  public JlineRepl(@NotNull ReplConfig config) throws IOException {
+    super(config);
     terminal = TerminalBuilder.builder()
       .jansi(true)
       .jna(false)
       .build();
-    var lineReaderBuilder = LineReaderBuilder.builder()
-      .appName(APP_NAME)
+    lineReader = LineReaderBuilder.builder()
+      .appName("Aya REPL")
       .terminal(terminal)
       // .parser(new AyaParser())
       .completer(new AggregateCompleter(
         KeywordCompleter.INSTANCE,
         commandManager.completer()
-      ));
-    var root = configRoot();
-    if (root != null) lineReaderBuilder
-      .variable("history-file", root.resolve("history"))
-      .history(new DefaultHistory());
-    lineReader = lineReaderBuilder.build();
+      ))
+      .variable("history-file", AyaHome.ayaHome().resolve("history"))
+      .history(new DefaultHistory())
+      .build();
+    prettyPrintWidth = terminal.getWidth();
   }
 
-  @Override protected @NotNull String readLine() {
-    return lineReader.readLine(prompt);
+  @Override protected @NotNull String readLine(@NotNull String prompt) throws EOFException {
+    try {
+      return lineReader.readLine(prompt);
+    } catch (EndOfFileException ignored) {
+      throw new EOFException();
+    }
   }
 
   @Override protected void println(@NotNull String x) {
@@ -59,7 +67,7 @@ public final class JlineRepl extends AbstractRepl {
       .toAnsi());
   }
 
-  @Override protected @Nullable String getAdditionalMessage() {
+  @Override protected @Nullable String hintMessage() {
     return null;
   }
 
