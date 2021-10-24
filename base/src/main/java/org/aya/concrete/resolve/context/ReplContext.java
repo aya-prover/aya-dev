@@ -22,8 +22,6 @@ public record ReplContext(
 
   @Override
   public void addGlobal(@NotNull ImmutableSeq<String> modName, @NotNull String name, Stmt.@NotNull Accessibility accessibility, @NotNull Var ref, @NotNull SourcePos sourcePos) {
-    if (!definitions.containsKey(name))
-      definitions.set(name, MutableHashMap.of());
-    definitions.get(name).set(modName, ref);
+    definitions.getOrPut(name, MutableHashMap::of).set(modName, ref);
   }
 }
