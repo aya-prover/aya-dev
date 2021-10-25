@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableHashMap;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.jline.completer.CommandCompleter;
 import org.jetbrains.annotations.NotNull;
+import org.jline.reader.Completer;
 
 public class CommandManager {
   public final @NotNull ImmutableSeq<Command> commands;
@@ -49,7 +50,7 @@ public class CommandManager {
       : Command.Result.err("Command not found \"" + name + "\"", true);
   }
 
-  public @NotNull CommandCompleter completer() {
+  public @NotNull Completer completer() {
     return new CommandCompleter(commandMap.keysView());
   }
 }

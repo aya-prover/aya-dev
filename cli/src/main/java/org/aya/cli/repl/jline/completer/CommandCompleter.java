@@ -13,15 +13,14 @@ import org.jline.reader.ParsedLine;
 import java.util.List;
 
 public class CommandCompleter implements Completer {
-  public final @NotNull ImmutableSeq<Candidate> candidates;
+  public final @NotNull ImmutableSeq<Candidate> names;
 
   public CommandCompleter(@NotNull View<String> commandNames) {
-    candidates = commandNames.map(name -> new Candidate(":" + name)).toImmutableArray();
+    names = commandNames.map(name -> new Candidate(":" + name)).toImmutableSeq();
   }
 
   @Override
   public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-    if (!line.line().startsWith(":")) return;
-    candidates.addAll(this.candidates.asJava());
+    if (!line.line().isBlank()) candidates.addAll(names.asJava());
   }
 }
