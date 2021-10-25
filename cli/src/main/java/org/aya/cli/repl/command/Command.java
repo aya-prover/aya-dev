@@ -3,8 +3,8 @@
 package org.aya.cli.repl.command;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
 import org.aya.cli.repl.Repl;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
 public interface Command {
@@ -22,13 +22,35 @@ public interface Command {
    */
   @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl);
 
-  record Result(@NotNull Either<String, String> resultText, boolean continueRepl) {
+  record Output(@NotNull Doc stdout, @NotNull Doc stderr) {
+    public static @NotNull Output stdout(@NotNull Doc doc) {
+      return new Output(doc, Doc.empty());
+    }
+
+    public static @NotNull Output stderr(@NotNull Doc doc) {
+      return new Output(Doc.empty(), doc);
+    }
+
+    public static @NotNull Output stdout(@NotNull String doc) {
+      return new Output(Doc.english(doc), Doc.empty());
+    }
+
+    public static @NotNull Output stderr(@NotNull String doc) {
+      return new Output(Doc.empty(), Doc.english(doc));
+    }
+  }
+
+  record Result(@NotNull Output output, boolean continueRepl) {
+    public static @NotNull Command.Result output(@NotNull Output output, boolean continueRepl) {
+      return new Result(output, continueRepl);
+    }
+
     public static @NotNull Command.Result ok(@NotNull String text, boolean continueRepl) {
-      return new Result(Either.right(text), continueRepl);
+      return new Result(Output.stdout(Doc.english(text)), continueRepl);
     }
 
     public static @NotNull Command.Result err(@NotNull String errText, boolean continueRepl) {
-      return new Result(Either.left(errText), continueRepl);
+      return new Result(Output.stderr(Doc.english(errText)), continueRepl);
     }
   }
 }
