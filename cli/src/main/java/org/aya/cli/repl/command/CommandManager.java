@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.control.Option;
 import org.aya.cli.repl.Repl;
-import org.aya.cli.repl.jline.completer.CommandCompleter;
+import org.aya.cli.repl.jline.completer.CmdCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Completer;
 
@@ -57,6 +57,6 @@ public class CommandManager {
   }
 
   public @NotNull Completer completer() {
-    return new CommandCompleter(commandMap.keysView());
+    return new CmdCompleter(commandMap.keysView());
   }
 }

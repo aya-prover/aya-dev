@@ -13,10 +13,10 @@ import org.jline.reader.ParsedLine;
 
 import java.util.List;
 
-public class CommandCompleter implements Completer {
+public class CmdCompleter implements Completer {
   public final @NotNull ImmutableSeq<Candidate> names;
 
-  public CommandCompleter(@NotNull View<String> commandNames) {
+  public CmdCompleter(@NotNull View<String> commandNames) {
     names = commandNames.map(name -> new Candidate(Command.PREFIX + name)).toImmutableSeq();
   }
 
