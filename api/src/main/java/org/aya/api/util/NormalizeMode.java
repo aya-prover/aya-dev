@@ -6,6 +6,16 @@ package org.aya.api.util;
  * @author kiva
  */
 public enum NormalizeMode {
+  /**
+   * Do NOT normalize.
+   */
+  NULL,
+  /**
+   * Fully normalize.
+   */
   NF,
+  /**
+   * Normalize until the head is canonical.
+   */
   WHNF,
 }

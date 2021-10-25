@@ -40,11 +40,11 @@ public abstract class Repl implements Closeable {
 
   public final @NotNull ReplCompiler replCompiler = new ReplCompiler(new CliReporter(this::println, this::errPrintln), null);
   public final @NotNull CommandManager commandManager = DefaultCommands.defaultCommandManager();
-  public final @NotNull ReplConfig replConfig;
+  public final @NotNull ReplConfig config;
   public int prettyPrintWidth = 80;
 
   public Repl(@NotNull ReplConfig config) {
-    this.replConfig = config;
+    this.config = config;
   }
 
   protected abstract void println(@NotNull String x);
@@ -73,7 +73,7 @@ public abstract class Repl implements Closeable {
    */
   private boolean singleLoop() {
     try {
-      var line = readLine(replConfig.prompt).trim();
+      var line = readLine(config.prompt).trim();
       if (line.startsWith(Command.PREFIX)) {
         var result = commandManager.parse(line.substring(1)).run(this);
         printResult(result.output());
@@ -94,7 +94,7 @@ public abstract class Repl implements Closeable {
   }
 
   private @NotNull Command.Output evalWithContext(@NotNull String line) {
-    var programOrTerm = replCompiler.compileAndAddToContext(line, replConfig.normalizeMode, Seq.empty(), null);
+    var programOrTerm = replCompiler.compileAndAddToContext(line, config.normalizeMode, Seq.empty(), null);
     return programOrTerm != null ? Command.Output.stdout(programOrTerm.fold(
       program -> render(options -> Doc.vcat(program.view().map(def -> def.toDoc(options)))),
       this::render
@@ -106,11 +106,11 @@ public abstract class Repl implements Closeable {
   }
 
   public @NotNull String renderDoc(@NotNull Doc doc) {
-    return doc.renderWithPageWidth(prettyPrintWidth, replConfig.enableUnicode);
+    return doc.renderWithPageWidth(prettyPrintWidth, config.enableUnicode);
   }
 
   @Override public void close() throws IOException {
-    replConfig.close();
+    config.close();
   }
 
   /**

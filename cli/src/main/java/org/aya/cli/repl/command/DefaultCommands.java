@@ -39,7 +39,7 @@ public interface DefaultCommands {
     }
 
     @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
-      repl.replConfig.prompt = argument;
+      repl.config.prompt = argument;
       return Result.ok("Changed prompt to `" + argument + "`", true);
     }
   };
@@ -54,7 +54,7 @@ public interface DefaultCommands {
     }
 
     @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
-      var type = repl.replCompiler.compileExprAndGetType(argument, repl.replConfig.normalizeMode);
+      var type = repl.replCompiler.compileExprAndGetType(argument, repl.config.normalizeMode);
       return type != null ? Result.ok(repl.render(type), true)
         : Result.err("Failed to get expression type", true);
     }
@@ -102,14 +102,19 @@ public interface DefaultCommands {
     }
 
     @Override public @NotNull String description() {
-      return "Set the normalize mode (candidates: " + Arrays.toString(NormalizeMode.values()) + ")";
+      return "Set or display the normalization mode (candidates: " + Arrays.toString(NormalizeMode.values()) + ")";
     }
 
     @Override
     public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
-      var normalizeMode = NormalizeMode.valueOf(argument.trim());
-      repl.replConfig.normalizeMode = normalizeMode;
-      return Result.ok("Normalize mode set to " + normalizeMode, true);
+      if (argument.isBlank()) return Result.ok("Normalization mode: " + repl.config.normalizeMode, true);
+      else try {
+        var normalizeMode = NormalizeMode.valueOf(argument);
+        repl.config.normalizeMode = normalizeMode;
+        return Result.ok("Normalization mode set to " + normalizeMode, true);
+      } catch (IllegalArgumentException ignored) {
+        return Result.err("Unknown normalization mode " + argument, true);
+      }
     }
   };
 
@@ -128,9 +133,9 @@ public interface DefaultCommands {
 
     @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
       var trim = argument.trim();
-      boolean enableUnicode = trim.isEmpty() ? !repl.replConfig.enableUnicode
+      boolean enableUnicode = trim.isEmpty() ? !repl.config.enableUnicode
         : Boolean.parseBoolean(trim);
-      repl.replConfig.enableUnicode = enableUnicode;
+      repl.config.enableUnicode = enableUnicode;
       return Result.ok("Unicode " + (enableUnicode ? "enabled" : "disabled"), true);
     }
   };
