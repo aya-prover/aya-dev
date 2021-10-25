@@ -2,6 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.command;
 
+import kala.collection.ArraySeq;
+import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.Repl;
@@ -9,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 
 import java.util.Arrays;
-import java.util.List;
 
 public interface DefaultCommands {
   static @NotNull CommandManager defaultCommandManager() {
@@ -90,13 +92,13 @@ public interface DefaultCommands {
     }
   };
 
-  @NotNull Command CHANGE_NORM_MODE = new Command() {
+  @NotNull Command CHANGE_NORM_MODE = new Command.StringCommand() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("normalize");
     }
 
-    @Override public void completion(@NotNull List<Candidate> candidates) {
-      candidates.addAll(Arrays.stream(NormalizeMode.values()).map(Enum::name).map(Candidate::new).toList());
+    @Override public SeqView<Candidate> params() {
+      return ArraySeq.of(NormalizeMode.values()).view().map(Enum::name).map(Candidate::new);
     }
 
     @Override public @NotNull String description() {
@@ -111,13 +113,17 @@ public interface DefaultCommands {
     }
   };
 
-  @NotNull Command TOGGLE_UNICODE = new Command() {
+  @NotNull Command TOGGLE_UNICODE = new Command.StringCommand() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("unicode");
     }
 
     @Override public @NotNull String description() {
       return "Enable or disable unicode in REPL output";
+    }
+
+    @Override public SeqView<Candidate> params() {
+      return Seq.of(true, false).view().map(b -> new Candidate(b.toString()));
     }
 
     @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {

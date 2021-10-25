@@ -2,20 +2,23 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.command;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.Repl;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 
-import java.util.List;
-
 public interface Command {
+  interface StringCommand extends Command {
+    SeqView<Candidate> params();
+  }
+  interface CodeCommand extends Command {
+  }
+
   @NotNull String PREFIX = ":";
 
   @NotNull ImmutableSeq<String> names();
-  default void completion(@NotNull List<Candidate> candidates) {
-  }
   @NotNull String description();
 
   /**

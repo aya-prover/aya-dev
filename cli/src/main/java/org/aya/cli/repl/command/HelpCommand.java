@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.command;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.Repl;
 import org.aya.pretty.doc.Doc;
@@ -9,9 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.Candidate;
 
-import java.util.List;
-
-public class HelpCommand implements Command {
+public class HelpCommand implements Command.StringCommand {
   public @Nullable CommandManager context;
 
   @Override public @NotNull ImmutableSeq<String> names() {
@@ -22,11 +21,9 @@ public class HelpCommand implements Command {
     return "Describe a selected command or show all commands";
   }
 
-  @Override public void completion(@NotNull List<Candidate> candidates) {
-    if (context != null) context.commands.view()
-      .flatMap(Command::names)
-      .map(Candidate::new)
-      .forEach(candidates::add);
+  @Override public SeqView<Candidate> params() {
+    if (context == null) return SeqView.empty();
+    return context.commands.view().flatMap(Command::names).map(Candidate::new);
   }
 
   @Override
