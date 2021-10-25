@@ -41,10 +41,6 @@ public interface Command {
   }
 
   record Result(@NotNull Output output, boolean continueRepl) {
-    public static @NotNull Command.Result output(@NotNull Output output, boolean continueRepl) {
-      return new Result(output, continueRepl);
-    }
-
     public static @NotNull Command.Result ok(@NotNull String text, boolean continueRepl) {
       return new Result(Output.stdout(Doc.english(text)), continueRepl);
     }

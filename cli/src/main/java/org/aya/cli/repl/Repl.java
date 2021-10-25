@@ -12,6 +12,7 @@ import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
 import org.aya.prelude.GeneratedVersion;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +97,7 @@ public abstract class Repl implements Closeable {
   private @NotNull Command.Output evalWithContext(@NotNull String line) {
     var programOrTerm = replCompiler.compileAndAddToContext(line, replConfig.normalizeMode, Seq.empty(), null);
     return programOrTerm != null ? Command.Output.stdout(programOrTerm.fold(
-      program -> program.isEmpty() ? null : program.joinToString("\n", this::render),
+      program -> render(options -> Doc.vcat(program.view().map(def -> def.toDoc(options)))),
       this::render
     )) : Command.Output.stderr("The input text is neither a program nor an expression.");
   }
