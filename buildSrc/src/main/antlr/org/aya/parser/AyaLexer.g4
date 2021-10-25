@@ -89,9 +89,3 @@ fragment COMMENT_CONTENT : ~[\r\n]*;
 DOC_COMMENT : '--|' COMMENT_CONTENT;
 LINE_COMMENT : '--' COMMENT_CONTENT -> skip;
 COMMENT : '{-' (COMMENT|.)*? '-}' -> channel(HIDDEN);
-
-// literate mode
-LITERATE_START : 'remark';
-
-mode LITERATE_MODE;
-LITERATE_END : 'finished' -> more, popMode;

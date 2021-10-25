@@ -75,7 +75,7 @@ public abstract class Repl implements Closeable {
     try {
       var line = readLine(replConfig.prompt).trim();
       if (line.startsWith(Command.PREFIX)) {
-        var result = commandManager.execute(line.substring(1), this);
+        var result = commandManager.parse(line.substring(1)).run(this);
         printResult(result.output());
         return result.continueRepl();
       } else printResult(evalWithContext(line));

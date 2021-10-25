@@ -37,7 +37,7 @@ public final class JlineRepl extends Repl {
       .terminal(terminal)
       // .parser(new AyaParser())
       .completer(new AggregateCompleter(
-        KeywordCompleter.INSTANCE,
+        new KeywordCompleter(commandManager),
         commandManager.completer()
       ))
       .variable("history-file", AyaHome.ayaHome().resolve("history"))

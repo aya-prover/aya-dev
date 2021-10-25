@@ -44,7 +44,7 @@ public interface DefaultCommands {
     }
   };
 
-  @NotNull Command SHOW_TYPE = new Command() {
+  @NotNull Command SHOW_TYPE = new Command.CodeCommand() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("t", "type");
     }
