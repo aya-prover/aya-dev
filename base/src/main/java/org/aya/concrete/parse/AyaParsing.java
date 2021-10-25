@@ -2,13 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.parse;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointBuffer;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.*;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourceFileLocator;
@@ -26,8 +24,17 @@ import java.nio.file.Path;
 
 public interface AyaParsing {
   @Contract("_ -> new") static @NotNull AyaParser parser(@NotNull String text) {
-    return new AyaParser(new CommonTokenStream(
-      new AyaLexer(CharStreams.fromString(text))));
+    return new AyaParser(tokenize(text));
+  }
+  @Contract("_ -> new") static @NotNull Seq<Token> tokens(@NotNull String text) {
+    var tokenStream = tokenize(text);
+    tokenStream.fill();
+    return Seq.wrapJava(tokenStream.getTokens());
+  }
+
+  private static @NotNull CommonTokenStream tokenize(@NotNull String text) {
+    return new CommonTokenStream(
+      new AyaLexer(CharStreams.fromString(text)));
   }
 
   @Contract("_, _ -> new") static @NotNull AyaParser parser(@NotNull String text, @NotNull Reporter reporter) {
