@@ -22,7 +22,9 @@ public class CmdCompleter implements Completer {
 
   @Override
   public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-    if ((line.wordIndex() == 1 && line.word().startsWith(Command.PREFIX))
-      || line.wordIndex() == 0) candidates.addAll(names.asJava());
+    if (line.wordIndex() == 0) {
+      var word = line.word();
+      if (word.startsWith(Command.PREFIX) || word.isEmpty()) candidates.addAll(names.asJava());
+    }
   }
 }
