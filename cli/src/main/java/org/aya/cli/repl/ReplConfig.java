@@ -32,8 +32,7 @@ public class ReplConfig implements AutoCloseable {
     return config;
   }
 
-  @Override
-  public void close() throws IOException {
+  @Override public void close() throws IOException {
     var json = new Gson().toJson(this);
     Files.writeString(configFile, json);
   }

@@ -4,7 +4,6 @@ package org.aya.cli.repl.jline.completer;
 
 import kala.collection.View;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.repl.command.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -18,10 +17,6 @@ public class CommandCompleter implements Completer {
 
   public CommandCompleter(@NotNull View<String> commandNames) {
     candidates = commandNames.map(name -> new Candidate(":" + name)).toImmutableArray();
-  }
-
-  public CommandCompleter(@NotNull ImmutableSeq<Command> commands) {
-    this(commands.view().flatMap(Command::names));
   }
 
   @Override

@@ -3,7 +3,6 @@
 package org.aya.cli.repl;
 
 import kala.collection.Seq;
-import kala.control.Either;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.AyaHome;
@@ -13,6 +12,7 @@ import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
 import org.aya.prelude.GeneratedVersion;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,9 +61,9 @@ public abstract class Repl implements Closeable {
     while (singleLoop()) ;
   }
 
-  private void printResult(@NotNull Either<String, String> text) {
-    if (text.isRight()) println(text.getRightValue());
-    else errPrintln(text.getLeftValue());
+  private void printResult(@NotNull Command.Output output) {
+    if (output.stdout().isNotEmpty()) println(output.stdout().debugRender());
+    if (output.stderr().isNotEmpty()) errPrintln(output.stderr().debugRender());
   }
 
   /**
@@ -77,7 +77,7 @@ public abstract class Repl implements Closeable {
       var line = readLine(replConfig.prompt).trim();
       if (line.startsWith(Command.PREFIX)) {
         var result = commandManager.execute(line.substring(1), this);
-        printResult(result.resultText());
+        printResult(result.output());
         return result.continueRepl();
       } else printResult(evalWithContext(line));
     } catch (EOFException ignored) {
@@ -94,12 +94,12 @@ public abstract class Repl implements Closeable {
     return true;
   }
 
-  private @NotNull Either<String, String> evalWithContext(@NotNull String line) {
+  private @NotNull Command.Output evalWithContext(@NotNull String line) {
     var programOrTerm = replCompiler.compileAndAddToContext(line, replConfig.normalizeMode, Seq.empty(), null);
-    return programOrTerm != null ? Either.right(programOrTerm.fold(
-      program -> program.isEmpty() ? null : program.joinToString("\n", this::render),
+    return programOrTerm != null ? Command.Output.stdout(programOrTerm.fold(
+      program -> render(options -> Doc.vcat(program.view().map(def -> def.toDoc(options)))),
       this::render
-    )) : Either.left("The input text is neither a program nor an expression.");
+    )) : Command.Output.stderr("The input text is neither a program nor an expression.");
   }
 
   public @NotNull String render(@NotNull AyaDocile ayaDocile) {

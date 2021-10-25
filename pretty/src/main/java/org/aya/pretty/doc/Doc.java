@@ -33,8 +33,8 @@ import static org.aya.pretty.printer.PrinterConfig.INFINITE_SIZE;
 public sealed interface Doc extends Docile {
   @NotNull Doc ONE_WS = plain(" ");
   @NotNull Doc ALT_WS = flatAlt(ONE_WS, line());
-  private static boolean nonEmpty(Doc doc) {
-    return doc instanceof Empty;
+  default boolean isNotEmpty() {
+    return !(this instanceof Empty);
   }
   @Override default @NotNull Doc toDoc() {
     return this;
@@ -438,7 +438,7 @@ public sealed interface Doc extends Docile {
   }
 
   @Contract("_ -> new") static @NotNull Doc vcatNonEmpty(@NotNull SeqLike<Doc> docs) {
-    return vcat(docs.view().filterNot(Doc::nonEmpty));
+    return vcat(docs.view().filter(Doc::isNotEmpty));
   }
 
   /**
@@ -483,7 +483,7 @@ public sealed interface Doc extends Docile {
   }
 
   @Contract("_ -> new") static @NotNull Doc sepNonEmpty(@NotNull SeqLike<Doc> docs) {
-    return sep(docs.view().filterNot(Doc::nonEmpty));
+    return sep(docs.view().filter(Doc::isNotEmpty));
   }
 
   @Contract("_ -> new") static @NotNull Doc commaList(@NotNull SeqLike<Doc> docs) {
