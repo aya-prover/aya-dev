@@ -6,26 +6,28 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.Repl;
 import org.jetbrains.annotations.NotNull;
+import org.jline.reader.Candidate;
 
 import java.util.Arrays;
+import java.util.List;
 
-public final class DefaultCommands {
-  private DefaultCommands() {
-  }
-
-  public static ImmutableSeq<Command> defaultCommands() {
-    return ImmutableSeq.of(
+public interface DefaultCommands {
+  static @NotNull CommandManager defaultCommandManager() {
+    var help = new HelpCommand();
+    var commands = ImmutableSeq.of(
       QUIT,
       CHANGE_PROMPT,
       CHANGE_NORM_MODE,
-      HelpCommand.INSTANCE,
+      help,
       SHOW_TYPE,
       CHANGE_PP_WIDTH,
       TOGGLE_UNICODE
     );
+    help.context = new CommandManager(commands);
+    return help.context;
   }
 
-  public static final @NotNull Command CHANGE_PROMPT = new Command() {
+  @NotNull Command CHANGE_PROMPT = new Command() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("prompt");
     }
@@ -40,7 +42,7 @@ public final class DefaultCommands {
     }
   };
 
-  public static final @NotNull Command SHOW_TYPE = new Command() {
+  @NotNull Command SHOW_TYPE = new Command() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("t", "type");
     }
@@ -56,7 +58,7 @@ public final class DefaultCommands {
     }
   };
 
-  public static final @NotNull Command CHANGE_PP_WIDTH = new Command() {
+  @NotNull Command CHANGE_PP_WIDTH = new Command() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("print-width");
     }
@@ -73,7 +75,7 @@ public final class DefaultCommands {
     }
   };
 
-  public static final @NotNull Command QUIT = new Command() {
+  @NotNull Command QUIT = new Command() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("quit", "exit", "q");
     }
@@ -88,9 +90,13 @@ public final class DefaultCommands {
     }
   };
 
-  public static final @NotNull Command CHANGE_NORM_MODE = new Command() {
+  @NotNull Command CHANGE_NORM_MODE = new Command() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("normalize");
+    }
+
+    @Override public void completion(@NotNull List<Candidate> candidates) {
+      candidates.addAll(Arrays.stream(NormalizeMode.values()).map(Enum::name).map(Candidate::new).toList());
     }
 
     @Override public @NotNull String description() {
@@ -105,7 +111,7 @@ public final class DefaultCommands {
     }
   };
 
-  public static final @NotNull Command TOGGLE_UNICODE = new Command() {
+  @NotNull Command TOGGLE_UNICODE = new Command() {
     @Override public @NotNull ImmutableSeq<String> names() {
       return ImmutableSeq.of("unicode");
     }

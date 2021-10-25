@@ -14,8 +14,6 @@ public class CommandManager {
   public final @NotNull ImmutableSeq<Command> commands;
   public final @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
 
-  public static final @NotNull CommandManager DEFAULT = new CommandManager(DefaultCommands.defaultCommands());
-
   public CommandManager(@NotNull ImmutableSeq<Command> commands) {
     this.commands = commands;
 
@@ -26,7 +24,7 @@ public class CommandManager {
       for (var name : command.names()) {
         var existingCommand = commandMap.putIfAbsent(name, command);
         if (existingCommand.isDefined())
-          throw new CommandException("Command " + existingCommand.get() +
+          throw new IllegalArgumentException("Command " + existingCommand.get() +
             " and command " + command + " has a duplicate name " + name);
       }
     }
@@ -47,7 +45,7 @@ public class CommandManager {
     var command = commandMap.getOption(name);
     return command.isDefined()
       ? command.get().execute(argument, repl)
-      : Command.Result.err("Command not found \"" + name + "\"", true);
+      : Command.Result.err("Command `" + name + "` not found", true);
   }
 
   public @NotNull Completer completer() {

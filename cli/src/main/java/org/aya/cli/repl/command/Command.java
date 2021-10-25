@@ -6,11 +6,16 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.Repl;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
+import org.jline.reader.Candidate;
+
+import java.util.List;
 
 public interface Command {
   @NotNull String PREFIX = ":";
 
   @NotNull ImmutableSeq<String> names();
+  default void completion(@NotNull List<Candidate> candidates) {
+  }
   @NotNull String description();
 
   /**

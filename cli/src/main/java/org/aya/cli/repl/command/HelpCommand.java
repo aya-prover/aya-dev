@@ -6,10 +6,28 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.Repl;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jline.reader.Candidate;
 
-public record HelpCommand(@NotNull ImmutableSeq<String> names, @NotNull String description) implements Command {
-  public static final HelpCommand INSTANCE = new HelpCommand(
-    ImmutableSeq.of("help", "h", "?"), "Show command help");
+import java.util.List;
+
+public class HelpCommand implements Command {
+  public @Nullable CommandManager context;
+
+  @Override public @NotNull ImmutableSeq<String> names() {
+    return ImmutableSeq.of("help", "h", "?");
+  }
+
+  @Override public @NotNull String description() {
+    return "Describe a selected command or show all commands";
+  }
+
+  @Override public void completion(@NotNull List<Candidate> candidates) {
+    if (context != null) context.commands.view()
+      .flatMap(Command::names)
+      .map(Candidate::new)
+      .forEach(candidates::add);
+  }
 
   @Override
   public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
@@ -24,7 +42,6 @@ public record HelpCommand(@NotNull ImmutableSeq<String> names, @NotNull String d
         Doc.english(command.description())
       )));
 
-    return new Result(new Output(Doc.vcat(
-      Doc.english("REPL commands:"), commands), Doc.empty()), true);
+    return new Result(new Output(commands, Doc.empty()), true);
   }
 }

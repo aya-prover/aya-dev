@@ -8,6 +8,7 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.AyaHome;
 import org.aya.cli.repl.command.Command;
 import org.aya.cli.repl.command.CommandManager;
+import org.aya.cli.repl.command.DefaultCommands;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
@@ -38,7 +39,7 @@ public abstract class Repl implements Closeable {
   }
 
   public final @NotNull ReplCompiler replCompiler = new ReplCompiler(new CliReporter(this::println, this::errPrintln), null);
-  public final @NotNull CommandManager commandManager = CommandManager.DEFAULT;
+  public final @NotNull CommandManager commandManager = DefaultCommands.defaultCommandManager();
   public final @NotNull ReplConfig replConfig;
   public int prettyPrintWidth = 80;
 
@@ -52,9 +53,7 @@ public abstract class Repl implements Closeable {
   protected abstract @Nullable String hintMessage();
 
   void run() {
-    println("Aya REPL\n"
-      + "Version: " + GeneratedVersion.VERSION_STRING + "\n"
-      + "Commit: " + GeneratedVersion.COMMIT_HASH);
+    println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH + ")");
     var hint = hintMessage();
     if (hint != null) println(hint);
     //noinspection StatementWithEmptyBody
@@ -62,8 +61,8 @@ public abstract class Repl implements Closeable {
   }
 
   private void printResult(@NotNull Command.Output output) {
-    if (output.stdout().isNotEmpty()) println(output.stdout().debugRender());
-    if (output.stderr().isNotEmpty()) errPrintln(output.stderr().debugRender());
+    if (output.stdout().isNotEmpty()) println(renderDoc(output.stdout()));
+    if (output.stderr().isNotEmpty()) errPrintln(renderDoc(output.stderr()));
   }
 
   /**
@@ -103,7 +102,11 @@ public abstract class Repl implements Closeable {
   }
 
   public @NotNull String render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(DistillerOptions.DEFAULT).renderWithPageWidth(prettyPrintWidth, replConfig.enableUnicode);
+    return renderDoc(ayaDocile.toDoc(DistillerOptions.DEFAULT));
+  }
+
+  public @NotNull String renderDoc(@NotNull Doc doc) {
+    return doc.renderWithPageWidth(prettyPrintWidth, replConfig.enableUnicode);
   }
 
   @Override public void close() throws IOException {
