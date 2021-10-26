@@ -1,6 +1,6 @@
 lexer grammar AyaLexer;
 
-REPL_COMMAND : ':' AYA_LETTER+;
+REPL_COMMAND : ':' [a-zA-Z0-9-]+;
 
 // associativities
 INFIX  : 'infix';
