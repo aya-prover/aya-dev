@@ -13,7 +13,7 @@ import org.jline.reader.SyntaxError;
 import java.util.Collections;
 import java.util.List;
 
-public class AyaParser implements Parser {
+public class AyaReplParser implements Parser {
   public record AyaParsedLine(
     int wordCursor,
     @NotNull List<@NotNull String> words,
@@ -57,7 +57,7 @@ public class AyaParser implements Parser {
   */
 
   @Override public ParsedLine parse(String line, int cursor, ParseContext context) throws SyntaxError {
-    if (line.isBlank()) return new AyaParsedLine(0, Collections.emptyList(), "", 0, line, cursor);
+    if (line.isBlank()) return simplest(line, cursor, 0, Collections.emptyList());
     // Drop the EOF
     var tokens = AyaParsing.tokens(line).view()
       .dropLast(1)
@@ -68,8 +68,10 @@ public class AyaParser implements Parser {
     );
     // In case we're in a whitespace or at the end
     if (wordOpt.isEmpty()) {
-      var token = tokens.firstOption(tok -> tok.getStartIndex() >= cursor)
-        .getOrElse(tokens::last);
+      var tokenOpt = tokens.firstOption(tok -> tok.getStartIndex() >= cursor);
+      if (tokenOpt.isEmpty())
+        return simplest(line, cursor, tokens.size(), tokens.stream().map(Token::getText).toList());
+      var token = tokenOpt.get();
       var wordCursor = cursor - token.getStartIndex();
       return new AyaParsedLine(
         Math.max(wordCursor, 0), tokens.stream().map(Token::getText).toList(),
@@ -83,5 +85,9 @@ public class AyaParser implements Parser {
       tokens.stream().map(Token::getText).toList(),
       wordText, tokens.indexOf(word), line, cursor
     );
+  }
+
+  @NotNull private AyaParsedLine simplest(String line, int cursor, int wordIndex, List<@NotNull String> tokens) {
+    return new AyaParsedLine(0, tokens, "", wordIndex, line, cursor);
   }
 }
