@@ -3,8 +3,7 @@
 package org.aya.cli.repl.jline;
 
 import kala.collection.SeqView;
-import kala.collection.Set;
-import kala.collection.mutable.MutableSet;
+import kala.collection.immutable.ImmutableSeq;
 import org.antlr.v4.runtime.Token;
 import org.aya.distill.BaseDistiller;
 import org.aya.parser.AyaLexer;
@@ -20,7 +19,7 @@ import java.util.regex.Pattern;
 
 public class AyaReplHighlighter extends DefaultHighlighter implements Highlighter {
   // TODO: generate this from the grammar
-  static Set<Integer> KEYWORDS = MutableSet.of(
+  static ImmutableSeq<Integer> KEYWORDS = ImmutableSeq.of(
     AyaLexer.INFIX,
     AyaLexer.INFIXL,
     AyaLexer.INFIXR,
@@ -73,10 +72,9 @@ public class AyaReplHighlighter extends DefaultHighlighter implements Highlighte
   }
 
   private @NotNull Doc tokensToDoc(@NotNull SeqView<Token> tokens) {
-    return Doc.cat(tokens.map(t -> {
-      if (KEYWORDS.contains(t.getType())) return Doc.styled(BaseDistiller.KEYWORD, t.getText());
-      return Doc.plain(t.getText());
-    }));
+    return Doc.cat(tokens.map(t -> KEYWORDS.contains(t.getType())
+      ? Doc.styled(BaseDistiller.KEYWORD, t.getText())
+      : Doc.plain(t.getText())));
   }
 
   @Override
