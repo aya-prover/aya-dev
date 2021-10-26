@@ -4,7 +4,6 @@ package org.aya.cli.repl.jline;
 
 import org.antlr.v4.runtime.Token;
 import org.aya.concrete.parse.AyaParsing;
-import org.aya.parser.AyaLexer;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.CompletingParsedLine;
 import org.jline.reader.ParsedLine;
@@ -62,7 +61,7 @@ public class AyaParser implements Parser {
     // Drop the EOF
     var tokens = AyaParsing.tokens(line).view()
       .dropLast(1)
-      .filter(token -> token.getChannel() != AyaLexer.HIDDEN)
+      .filter(token -> token.getChannel() != Token.HIDDEN_CHANNEL)
       .toImmutableSeq();
     var wordOpt = tokens.firstOption(token ->
       token.getStartIndex() <= cursor && token.getStopIndex() + 1 >= cursor
