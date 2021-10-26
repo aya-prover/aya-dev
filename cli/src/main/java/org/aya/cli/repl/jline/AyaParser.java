@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE file.
 package org.aya.cli.repl.jline;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.antlr.v4.runtime.Token;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.parser.AyaLexer;
@@ -12,6 +13,10 @@ import org.jline.reader.Parser;
 import org.jline.reader.SyntaxError;
 import org.jline.reader.impl.DefaultParser;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,13 +38,31 @@ public class AyaParser implements Parser {
     }
 
     @Override public int rawWordLength() {
-      return words().size();
+      return word.length();
     }
+  }
+
+  private ParsedLine debug(String line, int cursor, ImmutableSeq<Token> tokens, AyaParsedLine parsed) {
+    try {
+      var builtin = (CompletingParsedLine) new DefaultParser().parse(line, cursor, null);
+      var path = Paths.get("debug.txt").toAbsolutePath();
+      Files.writeString(path, tokens.map(Token::getStartIndex) +
+          "\nLine: [" + line + "], cur: " + cursor + "\n" +
+          "word:"          + parsed.word +            ":" + builtin.word() + "\n" +
+          "wordCursor:"    + parsed.wordCursor +      ":" + builtin.wordCursor() + "\n" +
+          "rawWordCursor:" + parsed.rawWordCursor() + ":" + builtin.rawWordCursor() + "\n" +
+          "words:"         + parsed.words +           ":" + builtin.words() + "\n" +
+          "rawWordLength:" + parsed.rawWordLength() + ":" + builtin.rawWordLength() + "\n" +
+          "wordIndex:"     + parsed.wordIndex +       ":" + builtin.wordIndex() + "\n\n",
+        StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return parsed;
   }
 
   @Override public ParsedLine parse(String line, int cursor, ParseContext context) throws SyntaxError {
     if (line.isBlank()) return new AyaParsedLine(0, Collections.emptyList(), "", 0, line, cursor);
-    var builtin = (CompletingParsedLine) new DefaultParser().parse(line, cursor, context);
     // Drop the EOF
     var tokens = AyaParsing.tokens(line).view()
       .dropLast(1)
@@ -48,10 +71,16 @@ public class AyaParser implements Parser {
     var wordOpt = tokens.firstOption(token ->
       token.getStartIndex() >= cursor && token.getStopIndex() <= cursor
     );
-    if (wordOpt.isEmpty()) return new AyaParsedLine(
-      0, tokens.stream().map(Token::getText).toList(),
-      tokens.last().getText(), tokens.size() - 1, line, cursor
-    );
+    if (wordOpt.isEmpty()) {
+      var token = tokens.last();
+      var wordCursor = cursor - token.getStartIndex();
+      var parsed = new AyaParsedLine(
+        Math.max(wordCursor, 0), tokens.stream().map(Token::getText).toList(),
+        token.getText(), tokens.size() - 1, line, cursor
+      );
+      // debug(line, cursor, tokens, parsed);
+      return parsed;
+    }
     var word = wordOpt.get();
     // ^ In case we're in a whitespace or at the end
     var wordText = word.getText();
@@ -61,6 +90,7 @@ public class AyaParser implements Parser {
       wordText, tokens.indexOf(word),
       line, cursor
     );
+    // debug(line, cursor, tokens, parsed);
     return parsed;
   }
 }
