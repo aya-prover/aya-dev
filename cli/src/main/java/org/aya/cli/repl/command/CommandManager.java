@@ -5,15 +5,15 @@ package org.aya.cli.repl.command;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
+import kala.control.Option;
 import org.aya.cli.repl.Repl;
-import org.aya.cli.repl.jline.completer.CommandCompleter;
+import org.aya.cli.repl.jline.completer.CmdCompleter;
 import org.jetbrains.annotations.NotNull;
+import org.jline.reader.Completer;
 
 public class CommandManager {
   public final @NotNull ImmutableSeq<Command> commands;
   public final @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
-
-  public static final @NotNull CommandManager DEFAULT = new CommandManager(DefaultCommands.defaultCommands());
 
   public CommandManager(@NotNull ImmutableSeq<Command> commands) {
     this.commands = commands;
@@ -25,7 +25,7 @@ public class CommandManager {
       for (var name : command.names()) {
         var existingCommand = commandMap.putIfAbsent(name, command);
         if (existingCommand.isDefined())
-          throw new CommandException("Command " + existingCommand.get() +
+          throw new IllegalArgumentException("Command " + existingCommand.get() +
             " and command " + command + " has a duplicate name " + name);
       }
     }
@@ -33,23 +33,30 @@ public class CommandManager {
     this.commandMap = commandMap.toImmutableMap();
   }
 
-  /**
-   * @param text the command text without ":"
-   * @param repl the REPL
-   * @return the result
-   */
-  public @NotNull Command.Result execute(@NotNull String text, @NotNull Repl repl) {
-    var split = text.split(" ", 2);
-    var name = split[0];
-    var argument = split.length > 1 ? split[1] : "";
-
-    var command = commandMap.getOption(name);
-    return command.isDefined()
-      ? command.get().execute(argument, repl)
-      : Command.Result.err("Command not found \"" + name + "\"", true);
+  public record Clue(
+    @NotNull String name,
+    @NotNull Option<@NotNull Command> command,
+    @NotNull String argument
+  ) {
+    public Command.Result run(@NotNull Repl repl) {
+      return command.isDefined()
+        ? command.get().execute(argument, repl)
+        : Command.Result.err("Command `" + name + "` not found", true);
+    }
   }
 
-  public @NotNull CommandCompleter completer() {
-    return new CommandCompleter(commandMap.keysView());
+  /**
+   * @param text the command text without ":"
+   * @return the execution plan
+   */
+  public @NotNull CommandManager.Clue parse(@NotNull String text) {
+    var split = text.split(" +", 2);
+    var name = split[0];
+    var argument = split.length > 1 ? split[1] : "";
+    return new Clue(name, commandMap.getOption(name), argument);
+  }
+
+  public @NotNull Completer completer() {
+    return new CmdCompleter(commandMap.keysView());
   }
 }

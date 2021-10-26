@@ -6,7 +6,7 @@ options { tokenVocab = AyaLexer; }
 
 program : stmt* EOF;
 
-repl : stmt+ | expr ;
+repl : stmt+ | REPL_COMMAND? expr ;
 
 // statements
 stmt : decl

@@ -4,6 +4,7 @@ package org.aya.cli.repl.jline.completer;
 
 import kala.collection.View;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.repl.command.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -12,16 +13,18 @@ import org.jline.reader.ParsedLine;
 
 import java.util.List;
 
-public class CommandCompleter implements Completer {
-  public final @NotNull ImmutableSeq<Candidate> candidates;
+public class CmdCompleter implements Completer {
+  public final @NotNull ImmutableSeq<Candidate> names;
 
-  public CommandCompleter(@NotNull View<String> commandNames) {
-    candidates = commandNames.map(name -> new Candidate(":" + name)).toImmutableArray();
+  public CmdCompleter(@NotNull View<String> commandNames) {
+    names = commandNames.map(name -> new Candidate(Command.PREFIX + name)).toImmutableSeq();
   }
 
   @Override
   public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-    if (!line.line().startsWith(":")) return;
-    candidates.addAll(this.candidates.asJava());
+    if (line.wordIndex() == 0) {
+      var word = line.word();
+      if (word.startsWith(Command.PREFIX) || word.isEmpty()) candidates.addAll(names.asJava());
+    }
   }
 }

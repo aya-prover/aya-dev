@@ -5,7 +5,7 @@ package org.aya.cli.repl.jline;
 import org.aya.api.util.AyaHome;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplConfig;
-import org.aya.cli.repl.jline.completer.KeywordCompleter;
+import org.aya.cli.repl.jline.completer.ArgCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.EndOfFileException;
@@ -35,9 +35,10 @@ public final class JlineRepl extends Repl {
     lineReader = LineReaderBuilder.builder()
       .appName("Aya REPL")
       .terminal(terminal)
-      // .parser(new AyaParser())
+      .parser(new AyaReplParser())
       .completer(new AggregateCompleter(
-        KeywordCompleter.INSTANCE,
+        new ArgCompleter.Keywords(commandManager),
+        new ArgCompleter.Strings(commandManager),
         commandManager.completer()
       ))
       .variable("history-file", AyaHome.ayaHome().resolve("history"))

@@ -2,13 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.parse;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
-import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointBuffer;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourceFileLocator;
@@ -26,20 +27,29 @@ import java.nio.file.Path;
 
 public interface AyaParsing {
   @Contract("_ -> new") static @NotNull AyaParser parser(@NotNull String text) {
-    return new AyaParser(new CommonTokenStream(
-      new AyaLexer(CharStreams.fromString(text))));
+    return new AyaParser(tokenize(text));
   }
 
-  @Contract("_, _ -> new") static @NotNull AyaParser parser(@NotNull String text, @NotNull Reporter reporter) {
-    return parser(new SourceFile(Option.none(), text), reporter);
+  @Contract("_ -> new") static @NotNull Seq<Token> tokens(@NotNull String text) {
+    var tokenStream = tokenize(text);
+    tokenStream.fill();
+    return Seq.wrapJava(tokenStream.getTokens());
+  }
+
+  private static @NotNull CommonTokenStream tokenize(@NotNull String text) {
+    return new CommonTokenStream(lexer(text));
+  }
+
+  private static @NotNull AyaLexer lexer(@NotNull String text) {
+    var intBuffer = IntBuffer.wrap(text.codePoints().toArray());
+    var codePointBuffer = CodePointBuffer.withInts(intBuffer);
+    var charStream = CodePointCharStream.fromBuffer(codePointBuffer);
+    return new AyaLexer(charStream);
   }
 
   @Contract("_, _ -> new")
   private static @NotNull AyaParser parser(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
-    var intBuffer = IntBuffer.wrap(sourceFile.sourceCode().codePoints().toArray());
-    var codePointBuffer = CodePointBuffer.withInts(intBuffer);
-    var charStream = CodePointCharStream.fromBuffer(codePointBuffer);
-    var lexer = new AyaLexer(charStream);
+    var lexer = lexer(sourceFile.sourceCode());
     lexer.removeErrorListeners();
     var listener = new ReporterErrorListener(sourceFile, reporter);
     lexer.addErrorListener(listener);

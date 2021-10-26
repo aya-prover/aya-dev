@@ -89,6 +89,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
   }
 
   @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
+    if (mode == NormalizeMode.NULL) return this;
     return accept(Normalizer.INSTANCE, mode);
   }
 

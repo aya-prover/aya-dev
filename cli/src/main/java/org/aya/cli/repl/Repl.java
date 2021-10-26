@@ -8,6 +8,7 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.AyaHome;
 import org.aya.cli.repl.command.Command;
 import org.aya.cli.repl.command.CommandManager;
+import org.aya.cli.repl.command.DefaultCommands;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
@@ -38,12 +39,12 @@ public abstract class Repl implements Closeable {
   }
 
   public final @NotNull ReplCompiler replCompiler = new ReplCompiler(new CliReporter(this::println, this::errPrintln), null);
-  public final @NotNull CommandManager commandManager = CommandManager.DEFAULT;
-  public final @NotNull ReplConfig replConfig;
+  public final @NotNull CommandManager commandManager = DefaultCommands.defaultCommandManager();
+  public final @NotNull ReplConfig config;
   public int prettyPrintWidth = 80;
 
   public Repl(@NotNull ReplConfig config) {
-    this.replConfig = config;
+    this.config = config;
   }
 
   protected abstract void println(@NotNull String x);
@@ -52,9 +53,7 @@ public abstract class Repl implements Closeable {
   protected abstract @Nullable String hintMessage();
 
   void run() {
-    println("Aya REPL\n"
-      + "Version: " + GeneratedVersion.VERSION_STRING + "\n"
-      + "Commit: " + GeneratedVersion.COMMIT_HASH);
+    println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH + ")");
     var hint = hintMessage();
     if (hint != null) println(hint);
     //noinspection StatementWithEmptyBody
@@ -62,8 +61,8 @@ public abstract class Repl implements Closeable {
   }
 
   private void printResult(@NotNull Command.Output output) {
-    if (output.stdout().isNotEmpty()) println(output.stdout().debugRender());
-    if (output.stderr().isNotEmpty()) errPrintln(output.stderr().debugRender());
+    if (output.stdout().isNotEmpty()) println(renderDoc(output.stdout()));
+    if (output.stderr().isNotEmpty()) errPrintln(renderDoc(output.stderr()));
   }
 
   /**
@@ -74,9 +73,9 @@ public abstract class Repl implements Closeable {
    */
   private boolean singleLoop() {
     try {
-      var line = readLine(replConfig.prompt).trim();
+      var line = readLine(config.prompt).trim();
       if (line.startsWith(Command.PREFIX)) {
-        var result = commandManager.execute(line.substring(1), this);
+        var result = commandManager.parse(line.substring(1)).run(this);
         printResult(result.output());
         return result.continueRepl();
       } else printResult(evalWithContext(line));
@@ -95,7 +94,7 @@ public abstract class Repl implements Closeable {
   }
 
   private @NotNull Command.Output evalWithContext(@NotNull String line) {
-    var programOrTerm = replCompiler.compileAndAddToContext(line, replConfig.normalizeMode, Seq.empty(), null);
+    var programOrTerm = replCompiler.compileAndAddToContext(line, config.normalizeMode, Seq.empty(), null);
     return programOrTerm != null ? Command.Output.stdout(programOrTerm.fold(
       program -> render(options -> Doc.vcat(program.view().map(def -> def.toDoc(options)))),
       this::render
@@ -103,11 +102,15 @@ public abstract class Repl implements Closeable {
   }
 
   public @NotNull String render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(DistillerOptions.DEFAULT).renderWithPageWidth(prettyPrintWidth, replConfig.enableUnicode);
+    return renderDoc(ayaDocile.toDoc(DistillerOptions.DEFAULT));
+  }
+
+  public @NotNull String renderDoc(@NotNull Doc doc) {
+    return doc.renderWithPageWidth(prettyPrintWidth, config.enableUnicode);
   }
 
   @Override public void close() throws IOException {
-    replConfig.close();
+    config.close();
   }
 
   /**

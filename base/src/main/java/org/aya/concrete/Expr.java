@@ -28,8 +28,6 @@ import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.ExprTycker;
-import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,19 +55,6 @@ public sealed interface Expr extends ConcreteExpr {
   default Expr resolve(@NotNull ModuleContext context) {
     var exprResolver = new ExprResolver(false, Buffer.create());
     return accept(exprResolver, context);
-  }
-
-  /**
-   * @see org.aya.concrete.stmt.Decl#tyck
-   * @see org.aya.tyck.StmtTycker#visitFn
-   */
-  // TODO: I am not sure whether this is correct. Please review carefully.
-  default @NotNull ExprTycker.Result tyck(
-    @NotNull Reporter reporter,
-    Trace.@Nullable Builder builder
-  ) {
-    var tycker = new ExprTycker(reporter, builder);
-    return tycker.synthesize(this);
   }
 
   @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
