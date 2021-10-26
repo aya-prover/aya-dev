@@ -18,8 +18,8 @@ import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.terminal.impl.AbstractPosixTerminal;
 import org.jline.terminal.impl.DumbTerminal;
+import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
@@ -69,13 +69,11 @@ public final class JlineRepl extends Repl {
 
   @Override
   public @NotNull String renderDoc(@NotNull Doc doc) {
-    if (terminal instanceof AbstractPosixTerminal) return doc.renderToString(
-      StringPrinterConfig.unixTerminal(prettyPrintWidth, config.enableUnicode));
-    return super.renderDoc(doc);
+    return doc.renderToString(StringPrinterConfig.unixTerminal(prettyPrintWidth, config.enableUnicode));
   }
 
   @Override protected void println(@NotNull String x) {
-    terminal.writer().println(x);
+    terminal.writer().println(AttributedString.fromAnsi(x));
     terminal.flush();
   }
 
