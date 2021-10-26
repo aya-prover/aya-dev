@@ -10,6 +10,7 @@ import org.aya.api.error.StreamReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
+import org.aya.prelude.GeneratedVersion;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,6 +47,7 @@ public class TestRunner {
    * For running single test, use the main() function below.
    */
   @Test void runAllAyaTests() {
+    System.out.println("Aya Test Runner: Running for commit " + GeneratedVersion.COMMIT_HASH);
     runDir(DEFAULT_TEST_DIR.resolve("success"), true);
     runDir(DEFAULT_TEST_DIR.resolve("failure"), false);
   }

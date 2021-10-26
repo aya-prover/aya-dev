@@ -6,7 +6,10 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
-import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.CodePointBuffer;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourceFileLocator;
@@ -26,6 +29,7 @@ public interface AyaParsing {
   @Contract("_ -> new") static @NotNull AyaParser parser(@NotNull String text) {
     return new AyaParser(tokenize(text));
   }
+
   @Contract("_ -> new") static @NotNull Seq<Token> tokens(@NotNull String text) {
     var tokenStream = tokenize(text);
     tokenStream.fill();
@@ -33,20 +37,19 @@ public interface AyaParsing {
   }
 
   private static @NotNull CommonTokenStream tokenize(@NotNull String text) {
-    return new CommonTokenStream(
-      new AyaLexer(CharStreams.fromString(text)));
+    return new CommonTokenStream(lexer(text));
   }
 
-  @Contract("_, _ -> new") static @NotNull AyaParser parser(@NotNull String text, @NotNull Reporter reporter) {
-    return parser(new SourceFile(Option.none(), text), reporter);
+  private static @NotNull AyaLexer lexer(@NotNull String text) {
+    var intBuffer = IntBuffer.wrap(text.codePoints().toArray());
+    var codePointBuffer = CodePointBuffer.withInts(intBuffer);
+    var charStream = CodePointCharStream.fromBuffer(codePointBuffer);
+    return new AyaLexer(charStream);
   }
 
   @Contract("_, _ -> new")
   private static @NotNull AyaParser parser(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
-    var intBuffer = IntBuffer.wrap(sourceFile.sourceCode().codePoints().toArray());
-    var codePointBuffer = CodePointBuffer.withInts(intBuffer);
-    var charStream = CodePointCharStream.fromBuffer(codePointBuffer);
-    var lexer = new AyaLexer(charStream);
+    var lexer = lexer(sourceFile.sourceCode());
     lexer.removeErrorListeners();
     var listener = new ReporterErrorListener(sourceFile, reporter);
     lexer.addErrorListener(listener);
