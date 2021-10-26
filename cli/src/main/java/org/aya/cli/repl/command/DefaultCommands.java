@@ -55,7 +55,7 @@ public interface DefaultCommands {
 
     @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
       var type = repl.replCompiler.compileExprAndGetType(argument, repl.config.normalizeMode);
-      return type != null ? Result.ok(repl.render(type), true)
+      return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
     }
   };

@@ -101,8 +101,8 @@ public abstract class Repl implements Closeable {
     )) : Command.Output.stderr("The input text is neither a program nor an expression.");
   }
 
-  public @NotNull String render(@NotNull AyaDocile ayaDocile) {
-    return renderDoc(ayaDocile.toDoc(DistillerOptions.DEFAULT));
+  public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
+    return ayaDocile.toDoc(DistillerOptions.DEFAULT);
   }
 
   public @NotNull String renderDoc(@NotNull Doc doc) {

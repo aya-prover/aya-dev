@@ -6,6 +6,8 @@ import org.aya.api.util.AyaHome;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.repl.jline.completer.ArgCompleter;
+import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.EndOfFileException;
@@ -16,6 +18,8 @@ import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.terminal.impl.AbstractPosixTerminal;
+import org.jline.terminal.impl.DumbTerminal;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
@@ -44,7 +48,12 @@ public final class JlineRepl extends Repl {
       .variable("history-file", AyaHome.ayaHome().resolve("history"))
       .history(new DefaultHistory())
       .build();
-    prettyPrintWidth = terminal.getWidth();
+    prettyPrintWidth = terminalWidth(terminal);
+  }
+
+  private int terminalWidth(@NotNull Terminal terminal) {
+    if (terminal instanceof DumbTerminal) return 80;
+    return terminal.getWidth();
   }
 
   @Override protected @NotNull String readLine(@NotNull String prompt) throws EOFException, InterruptedException {
@@ -55,6 +64,13 @@ public final class JlineRepl extends Repl {
     } catch (UserInterruptException ignored) {
       throw new InterruptedException();
     }
+  }
+
+  @Override
+  public @NotNull String renderDoc(@NotNull Doc doc) {
+    if (terminal instanceof AbstractPosixTerminal) return doc.renderToString(
+      StringPrinterConfig.unixTerminal(prettyPrintWidth, config.enableUnicode));
+    return super.renderDoc(doc);
   }
 
   @Override protected void println(@NotNull String x) {

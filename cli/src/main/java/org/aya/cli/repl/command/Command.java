@@ -13,6 +13,7 @@ public interface Command {
   interface StringCommand extends Command {
     SeqView<Candidate> params();
   }
+
   interface CodeCommand extends Command {
   }
 
