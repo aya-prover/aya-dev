@@ -9,31 +9,27 @@ import org.jetbrains.annotations.NotNull;
 public class UnixTermStylist extends ClosingStylist {
   public static final @NotNull UnixTermStylist INSTANCE = new UnixTermStylist();
 
-  private UnixTermStylist() {
-  }
-
-  @Override protected StyleToken formatItalic() {
+  @Override protected @NotNull StyleToken formatItalic() {
     return new StyleToken("\033[3m", "\033[23m", false);
   }
 
-  @Override protected StyleToken formatCode() {
+  @Override protected @NotNull StyleToken formatCode() {
     return new StyleToken("`", "'", true);
   }
 
-  @Override protected StyleToken formatBold() {
+  @Override protected @NotNull StyleToken formatBold() {
     return new StyleToken("\033[1m", "\033[22m", false);
   }
 
-  @Override protected StyleToken formatStrike() {
+  @Override protected @NotNull StyleToken formatStrike() {
     return new StyleToken("\033[9m", "\033[29m", false);
   }
 
-  @Override protected StyleToken formatUnderline() {
+  @Override protected @NotNull StyleToken formatUnderline() {
     return new StyleToken("\033[4m", "\033[24m", false);
   }
 
-  @Override
-  protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
+  @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {
     if (style instanceof UnixTermStyle termStyle) {
       return switch (termStyle) {
         case Dim -> new StyleToken("\033[2m", "\033[22m", false);

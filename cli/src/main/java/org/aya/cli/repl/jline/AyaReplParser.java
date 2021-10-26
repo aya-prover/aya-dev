@@ -1,7 +1,8 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE file.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
+import kala.collection.SeqView;
 import org.antlr.v4.runtime.Token;
 import org.aya.concrete.parse.AyaParsing;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +59,9 @@ public class AyaReplParser implements Parser {
 
   @Override public ParsedLine parse(String line, int cursor, ParseContext context) throws SyntaxError {
     if (line.isBlank()) return simplest(line, cursor, 0, Collections.emptyList());
-    // Drop the EOF
-    var tokens = AyaParsing.tokens(line).view()
-      .dropLast(1)
-      .filter(token -> token.getChannel() != Token.HIDDEN_CHANNEL)
-      .toImmutableSeq();
+    // Drop whitespaces
+    var tokens = tokensNoEOF(line)
+      .filter(token -> token.getChannel() != Token.HIDDEN_CHANNEL);
     var wordOpt = tokens.firstOption(token ->
       token.getStartIndex() <= cursor && token.getStopIndex() + 1 >= cursor
     );
@@ -85,6 +84,11 @@ public class AyaReplParser implements Parser {
       tokens.stream().map(Token::getText).toList(),
       wordText, tokens.indexOf(word), line, cursor
     );
+  }
+
+  static @NotNull SeqView<Token> tokensNoEOF(String line) {
+    // Drop the EOF
+    return AyaParsing.tokens(line).view().dropLast(1);
   }
 
   @NotNull private AyaParsedLine simplest(String line, int cursor, int wordIndex, List<@NotNull String> tokens) {

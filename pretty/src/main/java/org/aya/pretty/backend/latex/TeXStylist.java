@@ -7,27 +7,27 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public class TeXStylist extends ClosingStylist {
-  @Override protected StyleToken formatItalic() {
+  @Override protected @NotNull StyleToken formatItalic() {
     return new StyleToken("\\textit{", "}", false);
   }
 
-  @Override protected StyleToken formatBold() {
+  @Override protected @NotNull StyleToken formatBold() {
     return new StyleToken("\\textbf{", "}", false);
   }
 
-  @Override protected StyleToken formatStrike() {
+  @Override protected @NotNull StyleToken formatStrike() {
     return new StyleToken("\\sout{", "}", false);
   }
 
-  @Override protected StyleToken formatUnderline() {
+  @Override protected @NotNull StyleToken formatUnderline() {
     return new StyleToken("\\underline{", "}", false);
   }
 
-  @Override protected StyleToken formatCode() {
+  @Override protected @NotNull StyleToken formatCode() {
     return new StyleToken("\\fbox{", "}", false);
   }
 
-  @Override protected StyleToken formatColorHex(int rgb, boolean background) {
+  @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
     return new StyleToken("\\%s[HTML]{%06x}{".formatted(
       background ? "colorbox" : "textcolor", rgb), "}", false);
   }
