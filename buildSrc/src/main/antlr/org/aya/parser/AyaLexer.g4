@@ -1,5 +1,7 @@
 lexer grammar AyaLexer;
 
+REPL_COMMAND : ':' AYA_LETTER+;
+
 // associativities
 INFIX  : 'infix';
 INFIXL : 'infixl';

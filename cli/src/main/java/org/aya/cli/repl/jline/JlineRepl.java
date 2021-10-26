@@ -35,7 +35,7 @@ public final class JlineRepl extends Repl {
     lineReader = LineReaderBuilder.builder()
       .appName("Aya REPL")
       .terminal(terminal)
-      // .parser(new AyaParser())
+      .parser(new AyaParser())
       .completer(new AggregateCompleter(
         new ArgCompleter.Keywords(commandManager),
         new ArgCompleter.Strings(commandManager),
