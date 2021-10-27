@@ -6,12 +6,14 @@ dependencies {
 }
 
 val genDir = file("src/main/java")
+val ymlGenDir = file("src/main/yml")
 val rootDir = projectDir.parentFile!!
 val buildSrcDir = rootDir.resolve("buildSrc")
 
 val generateLexerToken = tasks.register<org.aya.gradle.GenerateLexerTokenTask>("generateLexerToken") {
   basePackage = "org.aya.parser"
   outputDir = genDir.resolve("org/aya/parser")
+  ymlOutputDir = ymlGenDir
   lexerG4 = buildSrcDir.resolve("src/main/antlr/org/aya/parser/AyaLexer.g4")
 }
 
@@ -22,5 +24,6 @@ idea.module.generatedSourceDirs.add(genDir)
 tasks.register("cleanSource") {
   group = "build"
   genDir.deleteRecursively()
+  ymlGenDir.deleteRecursively()
 }
 
