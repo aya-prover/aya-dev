@@ -4,12 +4,10 @@ package org.aya.cli.repl.jline;
 
 import kala.collection.SeqView;
 import org.antlr.v4.runtime.Token;
+import org.aya.cli.repl.command.Command;
 import org.aya.concrete.parse.AyaParsing;
 import org.jetbrains.annotations.NotNull;
-import org.jline.reader.CompletingParsedLine;
-import org.jline.reader.ParsedLine;
-import org.jline.reader.Parser;
-import org.jline.reader.SyntaxError;
+import org.jline.reader.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +57,11 @@ public class AyaReplParser implements Parser {
 
   @Override public ParsedLine parse(String line, int cursor, ParseContext context) throws SyntaxError {
     if (line.isBlank()) return simplest(line, cursor, 0, Collections.emptyList());
+    // ref: https://github.com/jline/jline3/issues/36
+    if ((ParseContext.UNSPECIFIED.equals(context) || ParseContext.ACCEPT_LINE.equals(context))
+      && line.startsWith(Command.MULTILINE_BEGIN) && !line.endsWith(Command.MULTILINE_END)) {
+      throw new EOFError(-1, cursor, "In multiline mode");
+    }
     // Drop whitespaces
     var tokens = tokensNoEOF(line)
       .filter(token -> token.getChannel() != Token.HIDDEN_CHANNEL);

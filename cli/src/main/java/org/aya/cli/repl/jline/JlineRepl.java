@@ -18,6 +18,7 @@ import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.terminal.impl.AbstractWindowsTerminal;
 import org.jline.terminal.impl.DumbTerminal;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStringBuilder;
@@ -39,6 +40,7 @@ public final class JlineRepl extends Repl {
     lineReader = LineReaderBuilder.builder()
       .appName("Aya REPL")
       .terminal(terminal)
+      .history(new DefaultHistory())
       .parser(new AyaReplParser())
       .highlighter(new AyaReplHighlighter())
       .completer(new AggregateCompleter(
@@ -46,8 +48,8 @@ public final class JlineRepl extends Repl {
         new ArgCompleter.Strings(commandManager),
         commandManager.completer()
       ))
-      .variable("history-file", AyaHome.ayaHome().resolve("history"))
-      .history(new DefaultHistory())
+      .variable(LineReader.HISTORY_FILE, AyaHome.ayaHome().resolve("history"))
+      .variable(LineReader.SECONDARY_PROMPT_PATTERN, "| ")
       .build();
     prettyPrintWidth = terminalWidth(terminal);
   }
@@ -67,13 +69,13 @@ public final class JlineRepl extends Repl {
     }
   }
 
-  @Override
-  public @NotNull String renderDoc(@NotNull Doc doc) {
+  @Override public @NotNull String renderDoc(@NotNull Doc doc) {
     return doc.renderToString(StringPrinterConfig.unixTerminal(prettyPrintWidth, config.enableUnicode));
   }
 
   @Override protected void println(@NotNull String x) {
-    terminal.writer().println(AttributedString.fromAnsi(x));
+    if (terminal instanceof AbstractWindowsTerminal) terminal.writer().println(AttributedString.fromAnsi(x));
+    else terminal.writer().println(x);
     terminal.flush();
   }
 

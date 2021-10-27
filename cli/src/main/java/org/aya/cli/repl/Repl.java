@@ -74,7 +74,10 @@ public abstract class Repl implements Closeable {
   private boolean singleLoop() {
     try {
       var line = readLine(config.prompt).trim();
-      if (line.startsWith(Command.PREFIX)) {
+      if (line.startsWith(Command.MULTILINE_BEGIN) && line.endsWith(Command.MULTILINE_END)) {
+        var code = line.substring(Command.MULTILINE_BEGIN.length(), line.length() - Command.MULTILINE_END.length());
+        printResult(evalWithContext(code));
+      } else if (line.startsWith(Command.PREFIX)) {
         var result = commandManager.parse(line.substring(1)).run(this);
         printResult(result.output());
         return result.continueRepl();

@@ -18,6 +18,8 @@ public interface Command {
   }
 
   @NotNull String PREFIX = ":";
+  @NotNull String MULTILINE_BEGIN = ":{";
+  @NotNull String MULTILINE_END = ":}";
 
   @NotNull ImmutableSeq<String> names();
   @NotNull String description();
