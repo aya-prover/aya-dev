@@ -10,9 +10,15 @@ import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 public abstract class ClosingStylist extends StringStylist {
-  public record StyleToken(@NotNull String start, @NotNull String end, boolean visible) {
+  public record StyleToken(@NotNull CharSequence start, @NotNull CharSequence end, boolean visible) {
     public static final @NotNull StyleToken NULL = new StyleToken("", "", false);
+
+    public @NotNull StyleToken map(@NotNull Function<CharSequence, CharSequence> f) {
+      return new StyleToken(f.apply(start), f.apply(end), visible);
+    }
   }
 
   @Override
@@ -79,11 +85,11 @@ public abstract class ClosingStylist extends StringStylist {
       : StyleToken.NULL;
   }
 
-  protected abstract StyleToken formatItalic();
-  protected abstract StyleToken formatCode();
-  protected abstract StyleToken formatBold();
-  protected abstract StyleToken formatStrike();
-  protected abstract StyleToken formatUnderline();
-  protected abstract StyleToken formatColorHex(int rgb, boolean background);
+  protected abstract @NotNull StyleToken formatItalic();
+  protected abstract @NotNull StyleToken formatCode();
+  protected abstract @NotNull StyleToken formatBold();
+  protected abstract @NotNull StyleToken formatStrike();
+  protected abstract @NotNull StyleToken formatUnderline();
+  protected abstract @NotNull StyleToken formatColorHex(int rgb, boolean background);
   protected abstract @NotNull StyleToken formatCustom(@NotNull Style.CustomStyle style);
 }

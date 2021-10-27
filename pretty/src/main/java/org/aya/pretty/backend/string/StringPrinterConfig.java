@@ -21,8 +21,12 @@ public class StringPrinterConfig extends PrinterConfig.Basic {
     return formatter;
   }
 
+  public static @NotNull StringPrinterConfig unixTerminal(int pageWidth, boolean unicode) {
+    return new StringPrinterConfig(UnixTermStylist.INSTANCE, pageWidth, unicode);
+  }
+
   public static @NotNull StringPrinterConfig unixTerminal(int pageWidth) {
-    return new StringPrinterConfig(UnixTermStylist.INSTANCE, pageWidth, true);
+    return unixTerminal(pageWidth, true);
   }
 
   public static @NotNull StringPrinterConfig unixTerminal() {

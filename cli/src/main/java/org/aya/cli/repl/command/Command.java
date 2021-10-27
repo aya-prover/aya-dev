@@ -13,10 +13,13 @@ public interface Command {
   interface StringCommand extends Command {
     SeqView<Candidate> params();
   }
+
   interface CodeCommand extends Command {
   }
 
   @NotNull String PREFIX = ":";
+  @NotNull String MULTILINE_BEGIN = ":{";
+  @NotNull String MULTILINE_END = ":}";
 
   @NotNull ImmutableSeq<String> names();
   @NotNull String description();

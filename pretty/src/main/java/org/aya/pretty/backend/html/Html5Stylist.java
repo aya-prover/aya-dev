@@ -7,27 +7,27 @@ import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 public class Html5Stylist extends ClosingStylist {
-  @Override protected StyleToken formatItalic() {
+  @Override protected @NotNull StyleToken formatItalic() {
     return new StyleToken("<i>", "</i>", false);
   }
 
-  @Override protected StyleToken formatBold() {
+  @Override protected @NotNull StyleToken formatBold() {
     return new StyleToken("<b>", "</b>", false);
   }
 
-  @Override protected StyleToken formatStrike() {
+  @Override protected @NotNull StyleToken formatStrike() {
     return new StyleToken("<s>", "</s>", false);
   }
 
-  @Override protected StyleToken formatCode() {
+  @Override protected @NotNull StyleToken formatCode() {
     return new StyleToken("<code>", "</code>", false);
   }
 
-  @Override protected StyleToken formatUnderline() {
+  @Override protected @NotNull StyleToken formatUnderline() {
     return new StyleToken("<u>", "</u>", false);
   }
 
-  @Override protected StyleToken formatColorHex(int rgb, boolean background) {
+  @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
     return new StyleToken(
       "<span style=\"%s:#%06x;\">".formatted(background ? "background-color" : "color", rgb),
       "</span>",
