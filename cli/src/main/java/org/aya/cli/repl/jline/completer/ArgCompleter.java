@@ -4,6 +4,7 @@ package org.aya.cli.repl.jline.completer;
 
 import org.aya.cli.repl.command.Command;
 import org.aya.cli.repl.command.CommandManager;
+import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.Candidate;
@@ -12,15 +13,11 @@ import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 public interface ArgCompleter extends Completer {
   @NotNull CommandManager manager();
-  @NotNull List<Candidate> KEYWORDS = Stream.of(
-    "open", "data", "def", "Pi", "Sig", "Type", "universe",
-    "tighter", "looser", "example", "counterexample", "lsuc", "lmax",
-    "infix", "infixl", "infixr", "impossible", "prim", "struct", "new"
-  ).map(Candidate::new).toList();
+  @NotNull List<Candidate> KEYWORDS = GeneratedLexerTokens.KEYWORDS
+    .values().stream().map(Candidate::new).toList();
 
   record Keywords(@NotNull CommandManager manager) implements ArgCompleter {
     @Override public void complete(@Nullable Command command, List<Candidate> candidates) {
