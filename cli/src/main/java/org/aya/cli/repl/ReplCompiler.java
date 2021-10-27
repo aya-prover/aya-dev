@@ -13,7 +13,6 @@ import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
-import org.aya.concrete.resolve.context.ReplContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
@@ -32,7 +31,7 @@ public class ReplCompiler {
   ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.reporter = reporter;
     this.locator = locator;
-    context = new ReplContext(new EmptyContext(reporter));
+    context = new ReplContext(new EmptyContext(reporter), ImmutableSeq.of("REPL"));
   }
 
   /**
@@ -52,10 +51,8 @@ public class ReplCompiler {
 
     try {
       var programOrExpr = AyaParsing.repl(reporter, text);
-
       var loader = new ModuleListLoader(modulePaths.view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, null))).toImmutableSeq());
-
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
@@ -82,7 +79,6 @@ public class ReplCompiler {
     var reporter = new CountingReporter(this.reporter);
     try {
       var expr = AyaParsing.expr(reporter, text);
-
       return FileModuleLoader.tyckExpr(context, expr, reporter, null)
         .type().normalize(null, normalizeMode);
     } catch (InterruptException ignored) {
