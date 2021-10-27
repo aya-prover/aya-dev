@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE file.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import java.util.*
 
 plugins {
@@ -13,6 +13,8 @@ repositories { mavenCentral() }
 val rootDir = projectDir.parentFile!!
 val parserDir = rootDir.resolve("parser")
 val genDir = parserDir.resolve("src/main/java")
+val parserPackageName = "org.aya.parser"
+val parserLibDir = genDir.resolve(parserPackageName.replace('.', '/')).absoluteFile
 
 val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
   group = "build setup"
@@ -23,19 +25,19 @@ val copyModuleInfo = tasks.register<Copy>("copyModuleInfo") {
 tasks.withType<AntlrTask>().configureEach antlr@{
   outputDirectory = genDir
   copyModuleInfo.get().dependsOn(this@antlr)
-  val packageName = "org.aya.parser"
-  val libPath = genDir.resolve(packageName.replace('.', '/')).absoluteFile
-  doFirst { libPath.mkdirs() }
+  doFirst { parserLibDir.mkdirs() }
   arguments.addAll(
     listOf(
-      "-package", packageName,
+      "-package", parserPackageName,
       "-no-listener",
-      "-lib", "$libPath",
+      "-lib", "$parserLibDir",
     ),
   )
 }
 
-tasks.named("build").configure { dependsOn(copyModuleInfo) }
+tasks.named("build").configure {
+  dependsOn(copyModuleInfo)
+}
 
 dependencies {
   val deps = Properties()

@@ -2,6 +2,11 @@ lexer grammar AyaLexer;
 
 REPL_COMMAND : ':' [a-zA-Z0-9-]+;
 
+// Do not change the line like `---- AyaLexer xxx: XXX`
+// They are used to generate `GeneratedLexerTokens` class.
+
+// ---- AyaLexer begin: Keywords
+
 // associativities
 INFIX  : 'infix';
 INFIXL : 'infixl';
@@ -50,6 +55,9 @@ SIGMA : 'Sig' | '\u03A3';
 LAMBDA : '\\' | '\u03BB';
 PI : 'Pi' | '\u03A0';
 FORALL : 'forall' | '\u2200';
+
+// ---- AyaLexer end: Keywords
+
 TO : '->' | '\u2192';
 IMPLIES : '=>' | '\u21D2';
 SUCHTHAT : '**';
