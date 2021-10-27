@@ -31,7 +31,7 @@ public class ReplCompiler {
   ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.reporter = reporter;
     this.locator = locator;
-    context = new ReplContext(new EmptyContext(reporter), ImmutableSeq.of("REPL"));
+    this.context = new ReplContext(new EmptyContext(reporter), ImmutableSeq.of("REPL"));
   }
 
   /**
@@ -84,5 +84,9 @@ public class ReplCompiler {
     } catch (InterruptException ignored) {
       return null;
     }
+  }
+
+  public @NotNull ReplContext getContext() {
+    return context;
   }
 }
