@@ -52,10 +52,11 @@ public final class JlineRepl extends Repl {
       .variable(LineReader.HISTORY_FILE, AyaHome.ayaHome().resolve("history"))
       .variable(LineReader.SECONDARY_PROMPT_PATTERN, "| ")
       .build();
-    prettyPrintWidth = terminalWidth(terminal);
+    prettyPrintWidth = widthOf(terminal);
+    terminal.handle(Terminal.Signal.WINCH, signal -> prettyPrintWidth = widthOf(terminal));
   }
 
-  private int terminalWidth(@NotNull Terminal terminal) {
+  private int widthOf(@NotNull Terminal terminal) {
     if (terminal instanceof DumbTerminal) return 80;
     return terminal.getWidth();
   }
