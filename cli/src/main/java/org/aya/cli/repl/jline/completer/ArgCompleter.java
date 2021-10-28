@@ -25,7 +25,8 @@ public interface ArgCompleter extends Completer {
 
   record Keywords(@NotNull CommandManager manager) implements ArgCompleter {
     @Override public void complete(@Nullable Command command, ParsedLine line, List<Candidate> candidates) {
-      if (command == null) candidates.addAll(KEYWORDS);
+      if (command == null || command instanceof Command.CodeCommand)
+        candidates.addAll(KEYWORDS);
     }
   }
 
