@@ -10,7 +10,6 @@ import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
-import org.aya.api.util.NormalizeMode;
 import org.aya.api.util.WithPos;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
@@ -29,10 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
- * @apiNote Beware of <code>visitHole</code>
- * @see Normalizer#visitHole(CallTerm.Hole, NormalizeMode)
  */
 public interface Unfolder<P> extends TermFixpoint<P> {
+  @Nullable TyckState state();
   @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
     @NotNull SeqLike<Term.@NotNull Param> self,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
@@ -84,12 +82,14 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
-    return prim.ref().core.unfold(prim);
+    return prim.ref().core.unfold(prim, state());
   }
 
-  default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, @NotNull TyckState state, P p) {
+  default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
     var def = hole.ref();
     // Not yet type checked
+    var state = state();
+    if (state == null) return hole;
     var metas = state.metas();
     if (!metas.containsKey(def)) return hole;
     var body = metas.get(def);
@@ -148,6 +148,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   record Tracked(
     @NotNull Set<@NotNull Var> unfolding,
     @NotNull MutableSet<@NotNull Var> unfolded,
+    @Nullable TyckState state,
     @NotNull PrimDef.Factory factory
   ) implements Unfolder<Unit> {
     @Override public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit unit) {

@@ -19,8 +19,6 @@ public interface CoreTerm extends AyaDocile {
   @NotNull CoreTerm rename();
   /** @return Number of usages of the given var. */
   int findUsages(@NotNull Var var);
-  /** @return The synthesized type of the given term. */
-  @NotNull CoreTerm computeType();
   /**
    * Perform a scope-check for a given term.
    *

@@ -10,11 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record Normalizer(@Nullable TyckState state) implements Unfolder<NormalizeMode> {
-  @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, NormalizeMode normalizeMode) {
-    if (state == null) return Unfolder.super.visitHole(term, normalizeMode);
-    return visitHole(term, state, normalizeMode);
-  }
-
   @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {
     var fn = term.of().accept(this, mode);
     if (fn instanceof IntroTerm.Lambda lambda)
