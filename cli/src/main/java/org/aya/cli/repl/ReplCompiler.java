@@ -42,7 +42,7 @@ public class ReplCompiler {
    * @see org.aya.cli.single.SingleFileCompiler#compile
    */
   @Nullable Either<ImmutableSeq<Def>, Term> compileAndAddToContext(
-    @NotNull String text, @NotNull NormalizeMode termNormalizeMode,
+    @NotNull String text, @NotNull NormalizeMode normalizeMode,
     @NotNull SeqLike<Path> modulePaths,
     @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
   ) {
@@ -60,12 +60,11 @@ public class ReplCompiler {
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
           FileModuleLoader.tyckModule(context, loader, program, reporter,
-            resolveInfo -> {},
-            newDefs::set, null);
+            resolveInfo -> {}, newDefs::set, null);
           return newDefs.get();
         },
         expr -> FileModuleLoader.tyckExpr(context, expr, reporter, null).wellTyped()
-          .normalize(termNormalizeMode)
+          .normalize(null, normalizeMode)
       );
     } catch (InterruptException ignored) {
       return Either.left(ImmutableSeq.empty());
@@ -85,7 +84,7 @@ public class ReplCompiler {
       var expr = AyaParsing.expr(reporter, text);
 
       return FileModuleLoader.tyckExpr(context, expr, reporter, null)
-        .type().normalize(normalizeMode);
+        .type().normalize(null, normalizeMode);
     } catch (InterruptException ignored) {
       return null;
     }

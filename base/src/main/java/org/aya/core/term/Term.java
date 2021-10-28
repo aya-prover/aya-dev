@@ -110,8 +110,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return accept(new CoreDistiller(options), false);
   }
-  default @NotNull Term computeType() {
-    return accept(LittleTyper.INSTANCE, Unit.unit());
+  default @NotNull Term computeType(@Nullable TyckState state) {
+    return accept(new LittleTyper(state), Unit.unit());
   }
 
   interface Visitor<P, R> {
