@@ -34,6 +34,6 @@ public class TyckExprTest {
     var decl = (Decl.FnDecl) decls.last();
     var tycker = tycker();
     tycker.synthesize(decl.body.getLeftValue());
-    assertFalse(tycker.levelEqns.forZZS().isEmpty());
+    assertFalse(tycker.state.levelEqns().forZZS().isEmpty());
   }
 }

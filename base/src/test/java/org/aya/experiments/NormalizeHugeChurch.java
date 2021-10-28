@@ -31,7 +31,7 @@ public class NormalizeHugeChurch {
     var last = ((FnDef) decls.last()).body.getLeftValue();
     println("Tyck: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
-    var nf = last.normalize(NormalizeMode.NF);
+    var nf = last.normalize(null, NormalizeMode.NF);
     println("Normalize: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var doc = nf.toDoc(DistillerOptions.DEFAULT);

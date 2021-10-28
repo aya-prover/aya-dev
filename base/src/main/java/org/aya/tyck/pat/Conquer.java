@@ -75,7 +75,7 @@ public record Conquer(
         return newCtor == ctor ? condition : super.visitCtor(newCtor, unit);
       }
     }, Unit.unit()), pat.explicit()));
-    var volynskaya = Normalizer.INSTANCE.tryUnfoldClauses(
+    var volynskaya = new Normalizer(tycker.state).tryUnfoldClauses(
       NormalizeMode.WHNF, newArgs, LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
@@ -83,9 +83,11 @@ public record Conquer(
       return;
     }
     if (newBody instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
-      hole.ref().core().conditions.set(hole.ref().core().conditions.value.appended(Tuple.of(matchy, volynskaya.data())));
+      var conditions = hole.ref().conditions;
+      conditions.set(conditions.value.appended(Tuple.of(matchy, volynskaya.data())));
     } else if (volynskaya.data() instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
-      hole.ref().core().conditions.set(hole.ref().core().conditions.value.appended(Tuple.of(matchy, newBody)));
+      var conditions = hole.ref().conditions;
+      conditions.set(conditions.value.appended(Tuple.of(matchy, newBody)));
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq)
       .compare(newBody, volynskaya.data(), signature.result().subst(matchy));

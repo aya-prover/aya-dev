@@ -1,9 +1,10 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.tyck.unify;
+package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.mutable.Buffer;
+import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
@@ -11,9 +12,7 @@ import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
-import org.aya.api.util.NormalizeMode;
 import org.aya.api.util.WithPos;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
@@ -22,7 +21,9 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
+import org.aya.tyck.unify.DefEq;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
@@ -30,45 +31,36 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Currently we only deal with ambiguous equations (so no 'stuck' equations).
- *
- * @author ice1000
  */
-public record EqnSet(
+public record TyckState(
   @NotNull Buffer<Eqn> eqns,
-  @NotNull Buffer<WithPos<HoleVar<Meta>>> activeMetas
+  @NotNull Buffer<WithPos<Meta>> activeMetas,
+  @NotNull LevelEqnSet levelEqns,
+  @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas
 ) {
-  public EqnSet() {
-    this(Buffer.create(), Buffer.create());
+  public TyckState() {
+    this(Buffer.create(), Buffer.create(), new LevelEqnSet(), MutableMap.create());
   }
 
-  public void addEqn(@NotNull Eqn eqn) {
-    eqns.append(eqn);
-    var currentActiveMetas = activeMetas.size();
-    eqn.accept(new TermConsumer<>() {
-      @Override public Unit visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-        var ref = term.ref();
-        if (ref.core().body == null) activeMetas.append(new WithPos<>(eqn.pos, ref));
-        return unit;
-      }
-    }, Unit.unit());
-    assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
-  }
-
-  /**
-   * @return true if <code>this</code> is mutated.
-   */
-  public boolean simplify(
-    @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter, @Nullable Trace.Builder tracer
+  public void solveEqn(
+    @NotNull Reporter reporter, Trace.@Nullable Builder tracer,
+    @NotNull Eqn eqn, boolean allowVague
   ) {
-    var removingMetas = Buffer.<WithPos<HoleVar<Meta>>>create();
+    new DefEq(eqn.cmp, reporter, allowVague, tracer, this, eqn.pos).checkEqn(eqn);
+  }
+
+  /** @return true if <code>this.eqns</code> and <code>this.activeMetas</code> are mutated. */
+  public boolean simplify(
+    @NotNull Reporter reporter, @Nullable Trace.Builder tracer
+  ) {
+    var removingMetas = Buffer.<WithPos<Meta>>create();
     for (var activeMeta : activeMetas) {
-      var solution = activeMeta.data().core().body;
-      if (solution != null) {
+      if (metas.containsKey(activeMeta.data())) {
         eqns.filterInPlace(eqn -> {
           var usageCounter = new VarConsumer.UsageCounter(activeMeta.data());
           eqn.accept(usageCounter, Unit.unit());
           if (usageCounter.usageCount() > 0) {
-            solveEqn(levelEqns, reporter, tracer, eqn, false);
+            solveEqn(reporter, tracer, eqn, false);
             return false;
           } else return true;
         });
@@ -79,13 +71,32 @@ public record EqnSet(
     return removingMetas.isNotEmpty();
   }
 
-  public void solveEqn(
-    @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter,
-    Trace.@Nullable Builder tracer, @NotNull Eqn eqn, boolean allowVague
-  ) {
-    var defEq = new DefEq(eqn.cmp, reporter, allowVague, levelEqns, this, tracer, eqn.pos);
-    defEq.varSubst.putAll(eqn.varSubst);
-    defEq.compareUntyped(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
+  public void solveMetas(@NotNull Reporter reporter, @Nullable Trace.Builder traceBuilder) {
+    while (eqns.isNotEmpty()) {
+      //noinspection StatementWithEmptyBody
+      while (simplify(reporter, traceBuilder)) ;
+      // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
+      var eqns = this.eqns.toImmutableSeq();
+      if (eqns.isNotEmpty()) {
+        for (var eqn : eqns) solveEqn(reporter, traceBuilder, eqn, true);
+        reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
+      }
+    }
+    levelEqns.solve();
+  }
+
+  public void addEqn(@NotNull Eqn eqn) {
+    eqns.append(eqn);
+    var currentActiveMetas = activeMetas.size();
+    eqn.accept(new TermConsumer<>() {
+      @Override public Unit visitHole(CallTerm.@NotNull Hole term, Unit unit) {
+        var ref = term.ref();
+        if (!metas.containsKey(ref))
+          activeMetas.append(new WithPos<>(eqn.pos, ref));
+        return unit;
+      }
+    }, Unit.unit());
+    assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 
   public record Eqn(

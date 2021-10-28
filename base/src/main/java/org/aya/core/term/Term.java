@@ -26,7 +26,7 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
-import org.aya.tyck.unify.level.LevelEqnSet;
+import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
   }
 
   default @NotNull Term zonk(@NotNull ExprTycker tycker, @Nullable SourcePos pos) {
-    return new Zonker(tycker).zonk(this, pos);
+    return new Zonker(tycker.state, tycker.reporter).zonk(this, pos);
   }
 
   @Override default @NotNull Term rename() {
@@ -88,15 +88,23 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     return checker.invalidVars;
   }
 
-  @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
+  default @NotNull Term normalize(@Nullable TyckState state, @NotNull NormalizeMode mode) {
     if (mode == NormalizeMode.NULL) return this;
-    return accept(Normalizer.INSTANCE, mode);
+    return accept(new Normalizer(state), mode);
   }
 
-  default @NotNull Term freezeHoles(@Nullable LevelEqnSet eqnSet) {
+  default @NotNull Term freezeHoles(@Nullable TyckState state) {
     return accept(new TermFixpoint<>() {
+      @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
+        if (state == null) return TermFixpoint.super.visitHole(term, unit);
+        var sol = term.ref();
+        var metas = state.metas();
+        if (!metas.containsKey(sol)) return TermFixpoint.super.visitHole(term, unit);
+        return metas.get(sol).accept(this, Unit.unit());
+      }
+
       @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
-        return eqnSet != null ? eqnSet.applyTo(sort) : sort;
+        return state != null ? state.levelEqns().applyTo(sort) : sort;
       }
     }, Unit.unit());
   }
@@ -104,8 +112,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return accept(new CoreDistiller(options), false);
   }
-  default @NotNull Term computeType() {
-    return accept(LittleTyper.INSTANCE, Unit.unit());
+  default @NotNull Term computeType(@Nullable TyckState state) {
+    return accept(new LittleTyper(state), Unit.unit());
   }
 
   interface Visitor<P, R> {

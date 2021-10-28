@@ -21,10 +21,10 @@ public final class ComputeTerm implements SyntaxNodeAction {
   private final @NotNull Kind kind;
 
   public enum Kind {
-    Type(Term::computeType),
+    Type(term -> term.computeType(null)),
     Id(Function.identity()),
-    Nf(term -> term.normalize(NormalizeMode.NF)),
-    Whnf(term -> term.normalize(NormalizeMode.WHNF)),
+    Nf(term -> term.normalize(null, NormalizeMode.NF)),
+    Whnf(term -> term.normalize(null, NormalizeMode.WHNF)),
     ;
     private final Function<Term, Term> map;
 

@@ -24,9 +24,9 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,26 +37,23 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class DefEq {
-  final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
+  private final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @Nullable Trace.Builder traceBuilder;
   boolean allowVague;
-  private final @NotNull LevelEqnSet levelEqns;
-  private final @NotNull EqnSet termEqns;
+  private final @NotNull TyckState state;
   private final @NotNull Reporter reporter;
   private final @NotNull SourcePos pos;
   private final @NotNull Ordering cmp;
 
   public DefEq(
     @NotNull Ordering cmp, @NotNull Reporter reporter, boolean allowVague,
-    @NotNull LevelEqnSet levelEqns, @NotNull EqnSet termEqns,
-    @Nullable Trace.Builder traceBuilder, @NotNull SourcePos pos
+    @Nullable Trace.Builder traceBuilder, @NotNull TyckState state, @NotNull SourcePos pos
   ) {
     this.cmp = cmp;
     this.allowVague = allowVague;
-    this.levelEqns = levelEqns;
-    this.termEqns = termEqns;
     this.reporter = reporter;
     this.traceBuilder = traceBuilder;
+    this.state = state;
     this.pos = pos;
   }
 
@@ -75,36 +72,35 @@ public final class DefEq {
   public boolean compare(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     if (lhs == rhs) return true;
     if (compareApprox(lhs, rhs) != null) return true;
-    lhs = lhs.normalize(NormalizeMode.WHNF);
-    rhs = rhs.normalize(NormalizeMode.WHNF);
+    lhs = lhs.normalize(state, NormalizeMode.WHNF);
+    rhs = rhs.normalize(state, NormalizeMode.WHNF);
     if (compareApprox(lhs, rhs) != null) return true;
     if (rhs instanceof CallTerm.Hole) return compareUntyped(rhs, lhs) != null;
     if (lhs instanceof CallTerm.Hole) return compareUntyped(lhs, rhs) != null;
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
-    return doCompareTyped(type.normalize(NormalizeMode.WHNF), lhs, rhs);
+    return doCompareTyped(type.normalize(state, NormalizeMode.WHNF), lhs, rhs);
   }
 
   public @Nullable Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs) {
     // lhs & rhs will both be WHNF if either is not a potentially reducible call
     if (isCall(lhs) || isCall(rhs)) {
       final var ty = doCompareUntyped(lhs, rhs);
-      if (ty != null) return ty.normalize(NormalizeMode.WHNF);
+      if (ty != null) return ty.normalize(state, NormalizeMode.WHNF);
     }
-    lhs = lhs.normalize(NormalizeMode.WHNF);
-    rhs = rhs.normalize(NormalizeMode.WHNF);
+    lhs = lhs.normalize(state, NormalizeMode.WHNF);
+    rhs = rhs.normalize(state, NormalizeMode.WHNF);
     final var x = doCompareUntyped(lhs, rhs);
-    return x != null ? x.normalize(NormalizeMode.WHNF) : null;
+    return x != null ? x.normalize(state, NormalizeMode.WHNF) : null;
   }
 
   private boolean compareWHNF(Term lhs, Term preRhs, @NotNull Term type) {
-    var whnf = lhs.normalize(NormalizeMode.WHNF);
-    var rhsWhnf = preRhs.normalize(NormalizeMode.WHNF);
+    var whnf = lhs.normalize(state, NormalizeMode.WHNF);
+    var rhsWhnf = preRhs.normalize(state, NormalizeMode.WHNF);
     if (Objects.equals(whnf, lhs) && Objects.equals(rhsWhnf, preRhs)) return false;
     return compare(whnf, rhsWhnf, type);
   }
 
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs) {
-    //noinspection ConstantConditions
     return switch (preLhs) {
       case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
       case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
@@ -173,7 +169,7 @@ public final class DefEq {
   ) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     for (var levels : l.zip(r).zip(Def.defLevels(def))) {
-      levelEqns.add(levels._1._1, levels._1._2, this.cmp, this.pos);
+      state.levelEqns().add(levels._1._1, levels._1._2, this.cmp, this.pos);
       levelSubst.solution().put(levels._2, levels._1._1);
     }
     return levelSubst;
@@ -191,8 +187,8 @@ public final class DefEq {
     return term instanceof CallTerm.Fn || term instanceof CallTerm.Con || term instanceof CallTerm.Prim;
   }
 
-  private @NotNull EqnSet.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
-    return new EqnSet.Eqn(lhs, rhs, cmp, pos, varSubst.toImmutableMap());
+  private @NotNull TyckState.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
+    return new TyckState.Eqn(lhs, rhs, cmp, pos, varSubst.toImmutableMap());
   }
 
   private @Nullable Substituter.TermSubst extract(
@@ -209,8 +205,8 @@ public final class DefEq {
   }
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
-    traceEntrance(new Trace.UnifyT(lhs.freezeHoles(levelEqns), rhs.freezeHoles(levelEqns),
-      pos, type.freezeHoles(levelEqns)));
+    traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state),
+      pos, type.freezeHoles(state)));
     var ret = switch (type) {
       default -> compareUntyped(lhs, rhs) != null;
       case CallTerm.Struct type1 -> {
@@ -258,8 +254,8 @@ public final class DefEq {
   }
 
   private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs) {
-    traceEntrance(new Trace.UnifyT(type.freezeHoles(levelEqns),
-      preRhs.freezeHoles(levelEqns), this.pos));
+    traceEntrance(new Trace.UnifyT(type.freezeHoles(state),
+      preRhs.freezeHoles(state), this.pos));
     var ret = switch (type) {
       default -> throw new IllegalStateException();
       case RefTerm lhs -> {
@@ -291,7 +287,7 @@ public final class DefEq {
         if (params.isNotEmpty()) yield params.first().type();
         yield params.last().type();
       }
-      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(levelEqns));
+      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
       case FormTerm.Pi lhs -> {
         if (!(preRhs instanceof FormTerm.Pi rhs)) yield null;
         yield checkParam(lhs.param(), rhs.param(), freshUniv(), () -> null, () -> {
@@ -310,7 +306,7 @@ public final class DefEq {
       }
       case FormTerm.Univ lhs -> {
         if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
-        levelEqns.add(lhs.sort(), rhs.sort(), cmp, this.pos);
+        state.levelEqns().add(lhs.sort(), rhs.sort(), cmp, this.pos);
         yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).sort().lift(1));
       }
       case CallTerm.Fn lhs -> null;
@@ -345,7 +341,7 @@ public final class DefEq {
         yield Def.defResult(lhs.ref());
       }
       case CallTerm.Hole lhs -> {
-        var meta = lhs.ref().core();
+        var meta = lhs.ref();
         if (preRhs instanceof CallTerm.Hole rcall && lhs.ref() == rcall.ref()) {
           var holeTy = FormTerm.Pi.make(meta.telescope, meta.result);
           for (var arg : lhs.args().view().zip(rcall.args())) {
@@ -365,21 +361,21 @@ public final class DefEq {
         // In this case, the solution may not be unique (see #608),
         // so we may delay its resolution to the end of the tycking when we disallow vague unification.
         if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {
-          termEqns.addEqn(createEqn(lhs, preRhs));
+          state.addEqn(createEqn(lhs, preRhs));
           // Skip the unification and scope check
           yield meta.result;
         }
         subst.add(argSubst);
         varSubst.forEach(subst::add);
         var solved = preRhs.subst(subst);
-        assert meta.body == null;
-        compareUntyped(solved.computeType(), meta.result);
+        assert !state.metas().containsKey(meta);
+        compareUntyped(solved.computeType(state), meta.result);
         var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
         if (scopeCheck.isNotEmpty()) {
           reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, pos));
           yield new ErrorTerm(solved);
         }
-        if (!meta.solve(lhs.ref(), solved)) {
+        if (!meta.solve(state, solved)) {
           reporter.report(new HoleProblem.RecursionError(lhs, solved, pos));
           yield new ErrorTerm(solved);
         }
@@ -389,5 +385,10 @@ public final class DefEq {
     };
     traceExit();
     return ret;
+  }
+
+  public void checkEqn(@NotNull TyckState.Eqn eqn) {
+    varSubst.putAll(eqn.varSubst());
+    compareUntyped(eqn.lhs().normalize(state, NormalizeMode.WHNF), eqn.rhs().normalize(state, NormalizeMode.WHNF));
   }
 }

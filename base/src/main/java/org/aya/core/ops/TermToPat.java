@@ -17,7 +17,6 @@ public interface TermToPat {
   }
 
   static @Nullable Pat toPat(@NotNull Term term, boolean explicit) {
-    //noinspection ConstantConditions
     return switch (term) {
       default -> null;
       case RefTerm ref -> new Pat.Bind(explicit, ref.var(), ref.type());
@@ -25,7 +24,7 @@ public interface TermToPat {
         conCall.args().map(TermToPat::toPat), null,
         conCall.head().underlyingDataCall());
       case CallTerm.Prim prim -> switch (prim.ref().core.id) {
-        case LEFT, RIGHT -> new Pat.Prim(explicit, prim.ref(), prim.computeType());
+        case LEFT, RIGHT -> new Pat.Prim(explicit, prim.ref(), prim.computeType(null));
         default -> null;
       };
       case IntroTerm.Tuple tuple -> new Pat.Tuple(explicit,

@@ -110,7 +110,7 @@ public sealed interface Literate extends Docile {
 
     private @NotNull Doc normalize(@NotNull Term term) {
       var mode = options.mode();
-      return (mode == null ? term : term.normalize(mode)).toDoc(options.options());
+      return (mode == null ? term : term.normalize(null, mode)).toDoc(options.options());
     }
 
     @Override public @NotNull Doc toDoc() {

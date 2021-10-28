@@ -14,8 +14,9 @@ public interface TermConsumer<P> extends Term.Visitor<P, Unit> {
     visitArgs(p, term.args());
     visitArgs(p, term.contextArgs());
     for (var sortArg : term.sortArgs()) visitSort(sortArg, p);
-    var body = term.ref().core().body;
-    if (body != null) body.accept(this, p);
+    // TODO[ice]: is it fine? Maybe we want to visit the solutions as well?
+    // var body = term.ref().body;
+    // if (body != null) body.accept(this, p);
     return Unit.unit();
   }
 

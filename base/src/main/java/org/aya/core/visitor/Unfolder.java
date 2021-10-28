@@ -21,6 +21,7 @@ import org.aya.core.sort.Sort.LvlVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
+import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public interface Unfolder<P> extends TermFixpoint<P> {
+  @Nullable TyckState state();
   @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
     @NotNull SeqLike<Term.@NotNull Param> self,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args
@@ -80,16 +82,19 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
-    return prim.ref().core.unfold(prim);
+    return prim.ref().core.unfold(prim, state());
   }
 
-  @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
-    var def = hole.ref().core();
+  default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
+    var def = hole.ref();
     // Not yet type checked
+    var state = state();
+    if (state == null) return hole;
+    var metas = state.metas();
+    if (!metas.containsKey(def)) return hole;
+    var body = metas.get(def);
     var args = hole.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
-    var body = def.body;
-    if (body == null) return hole;
     return body.subst(subst).accept(this, p);
   }
 
@@ -143,6 +148,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   record Tracked(
     @NotNull Set<@NotNull Var> unfolding,
     @NotNull MutableSet<@NotNull Var> unfolded,
+    @Nullable TyckState state,
     @NotNull PrimDef.Factory factory
   ) implements Unfolder<Unit> {
     @Override public @NotNull Term visitFnCall(CallTerm.@NotNull Fn fnCall, Unit unit) {

@@ -133,7 +133,7 @@ public record FileModuleLoader(
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var tycker = new ExprTycker(delayedReporter, builder);
-      return tycker.synthesize(resolvedExpr.desugar(delayedReporter));
+      return tycker.zonk(expr, tycker.synthesize(resolvedExpr.desugar(delayedReporter)));
     }
   }
 

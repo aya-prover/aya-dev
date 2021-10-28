@@ -22,6 +22,7 @@ import org.aya.core.pat.PatUnify;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.TyckState;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -33,15 +34,16 @@ import org.jetbrains.annotations.Nullable;
 public record PatClassifier(
   @NotNull Reporter reporter,
   @NotNull SourcePos pos,
+  @NotNull TyckState state,
   @NotNull PatTree.Builder builder
 ) {
   public static @NotNull ImmutableSeq<PatClass> classify(
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
-    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     boolean coverage
   ) {
-    var classifier = new PatClassifier(reporter, pos, new PatTree.Builder());
+    var classifier = new PatClassifier(reporter, pos, state, new PatTree.Builder());
     var classification = classifier.classifySub(telescope, clauses
       .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), coverage);
     for (var pats : classification) {
@@ -74,9 +76,11 @@ public record PatClassifier(
         var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
         // TODO: Currently all holes at this point is in an ErrorTerm
         if (lhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
-          hole.ref().core().conditions.set(hole.ref().core().conditions.value.appended(Tuple.of(lhsSubst, rhsTerm)));
+          var conditions = hole.ref().conditions;
+          conditions.set(conditions.value.appended(Tuple.of(lhsSubst, rhsTerm)));
         } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
-          hole.ref().core().conditions.set(hole.ref().core().conditions.value.appended(Tuple.of(rhsSubst, lhsTerm)));
+          var conditions = hole.ref().conditions;
+          conditions.set(conditions.value.appended(Tuple.of(rhsSubst, lhsTerm)));
         }
         var unification = tycker.unifier(pos, Ordering.Eq).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
@@ -111,7 +115,7 @@ public record PatClassifier(
     // We're gonna split on this type
     var target = telescope.first();
     var explicit = target.explicit();
-    switch (target.type().normalize(NormalizeMode.WHNF)) {
+    switch (target.type().normalize(state, NormalizeMode.WHNF)) {
       default -> {
       }
       // The type is sigma type, and do we have any non-catchall patterns?

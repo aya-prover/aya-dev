@@ -15,7 +15,7 @@ import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.tyck.unify.EqnSet;
+import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */
@@ -78,7 +78,7 @@ public sealed interface HoleProblem extends Problem {
   }
 
   record CannotFindGeneralSolution(
-    @NotNull ImmutableSeq<EqnSet.Eqn> eqns
+    @NotNull ImmutableSeq<TyckState.Eqn> eqns
   ) implements Problem {
     @Override public @NotNull SourcePos sourcePos() {
       return eqns.last().pos();

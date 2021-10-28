@@ -7,7 +7,6 @@ import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
@@ -38,9 +37,8 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
 
   public @NotNull Tuple2<CallTerm.Hole, Term> freshHole(@NotNull Term type, @NotNull String name, @NotNull SourcePos sourcePos) {
     var ctxTele = extract();
-    var meta = Meta.from(ctxTele, type, sourcePos);
-    var ref = new HoleVar<>(name, meta);
-    var hole = new CallTerm.Hole(ref, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
+    var meta = Meta.from(ctxTele, name, type, sourcePos);
+    var hole = new CallTerm.Hole(meta, ctxTele.map(Term.Param::toArg), meta.telescope.map(Term.Param::toArg));
     return Tuple2.of(hole, IntroTerm.Lambda.make(meta.telescope, hole));
   }
 

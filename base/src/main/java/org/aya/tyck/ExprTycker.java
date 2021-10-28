@@ -35,8 +35,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
-import org.aya.tyck.unify.EqnSet;
-import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
@@ -56,8 +54,7 @@ public final class ExprTycker {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx = new LocalCtx();
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
-  public final @NotNull EqnSet termEqns = new EqnSet();
+  public final @NotNull TyckState state = new TyckState();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
   public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableMap.wrapJava(new LinkedHashMap<>());
 
@@ -84,7 +81,7 @@ public final class ExprTycker {
       case Expr.SigmaExpr sigma -> inherit(sigma, FormTerm.freshUniv(sigma.sourcePos()));
       case Expr.NewExpr newExpr -> {
         var struct = synthesize(newExpr.struct()).wellTyped;
-        while (struct.normalize(NormalizeMode.WHNF) instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
+        while (struct.normalize(state, NormalizeMode.WHNF) instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
           var holeApp = mockTerm(intro.param(), newExpr.struct().sourcePos());
           struct = CallTerm.make(intro, new Arg<>(holeApp, false));
         }
@@ -140,7 +137,7 @@ public final class ExprTycker {
       case Expr.ProjExpr proj -> {
         var struct = proj.tup();
         var projectee = synthesize(struct);
-        var whnf = projectee.type.normalize(NormalizeMode.WHNF);
+        var whnf = projectee.type.normalize(state, NormalizeMode.WHNF);
         yield proj.ix().fold(ix -> {
             if (!(whnf instanceof FormTerm.Sigma sigma))
               return fail(struct, whnf, BadTypeError.sigmaAcc(struct, ix, whnf));
@@ -192,14 +189,14 @@ public final class ExprTycker {
           univArgs(app, univArgs);
           yield f;
         }
-        var fTy = f.type.normalize(NormalizeMode.WHNF);
+        var fTy = f.type.normalize(state, NormalizeMode.WHNF);
         var argLicit = argument.explicit();
         if (fTy instanceof CallTerm.Hole fTyHole) {
           // [ice] Cannot 'generatePi' because 'generatePi' takes the current contextTele,
           // but it may contain variables absent from the 'contextTele' of 'fTyHole.ref.core'
           var pi = fTyHole.asPi(argLicit);
           unifier(appE.sourcePos(), Ordering.Eq).compareUntyped(fTy, pi);
-          fTy = fTy.normalize(NormalizeMode.WHNF);
+          fTy = fTy.normalize(state, NormalizeMode.WHNF);
         }
         if (!(fTy instanceof FormTerm.Pi piTerm))
           yield fail(appE, f.type, BadTypeError.pi(appE, f.type));
@@ -216,7 +213,7 @@ public final class ExprTycker {
               pi = ensurePiOrThrow(pi.body());
             } else yield fail(appE, new ErrorTerm(pi.body()), new LicitProblem.UnexpectedImplicitArgError(argument));
           }
-          pi = ensurePiOrThrow(pi.subst(subst).normalize(NormalizeMode.WHNF));
+          pi = ensurePiOrThrow(pi.subst(subst).normalize(state, NormalizeMode.WHNF));
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(expr, notPi.what));
         }
@@ -249,7 +246,7 @@ public final class ExprTycker {
       var sortArgs = call.sortArgs();
       var levels = univArgs.univArgs();
       if (sortArgs.sizeEquals(levels)) sortArgs.zipView(levels).forEach(t ->
-        levelEqns.add(t._1, transformLevel(t._2), Ordering.Eq, univArgs.sourcePos()));
+        state.levelEqns().add(t._1, transformLevel(t._2), Ordering.Eq, univArgs.sourcePos()));
       else reporter.report(new UnivArgsError.SizeMismatch(univArgs, sortArgs.size()));
     } else reporter.report(new UnivArgsError.Misplaced(univArgs));
   }
@@ -263,7 +260,7 @@ public final class ExprTycker {
       case Expr.TupExpr tuple -> {
         var items = Buffer.<Term>create();
         var resultTele = Buffer.<Term.@NotNull Param>create();
-        var typeWHNF = term.normalize(NormalizeMode.WHNF);
+        var typeWHNF = term.normalize(state, NormalizeMode.WHNF);
         if (typeWHNF instanceof CallTerm.Hole hole) yield unifyTyMaybeInsert(hole, synthesize(tuple), tuple);
         if (!(typeWHNF instanceof FormTerm.Sigma dt))
           yield fail(tuple, term, BadTypeError.sigmaCon(tuple, term));
@@ -293,14 +290,14 @@ public final class ExprTycker {
       case Expr.HoleExpr hole -> {
         // TODO[ice]: deal with unit type
         var freshHole = localCtx.freshHole(term, Constants.randomName(hole), hole.sourcePos());
-        if (hole.explicit()) reporter.report(new Goal(freshHole._1, hole.accessibleLocal().value));
+        if (hole.explicit()) reporter.report(new Goal(state, freshHole._1, hole.accessibleLocal().value));
         yield new Result(freshHole._2, term);
       }
       case Expr.UnivExpr univExpr -> {
         var sort = transformLevel(univExpr.level());
-        var normTerm = term.normalize(NormalizeMode.WHNF);
+        var normTerm = term.normalize(state, NormalizeMode.WHNF);
         if (normTerm instanceof FormTerm.Univ univ) {
-          levelEqns.add(sort.lift(1), univ.sort(), Ordering.Lt, univExpr.sourcePos());
+          state.levelEqns().add(sort.lift(1), univ.sort(), Ordering.Lt, univExpr.sourcePos());
           yield new Result(new FormTerm.Univ(sort), univ);
         } else {
           var succ = new FormTerm.Univ(sort.lift(1));
@@ -310,7 +307,7 @@ public final class ExprTycker {
       }
       case Expr.LamExpr lam -> {
         if (term instanceof CallTerm.Hole) unifyTy(term, generatePi(lam), lam.sourcePos());
-        if (!(term.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
+        if (!(term.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Pi dt)) {
           yield fail(lam, term, BadTypeError.pi(lam, term));
         }
         var param = lam.param();
@@ -372,14 +369,14 @@ public final class ExprTycker {
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
     return Seq.of(universe).view()
-      .filter(levelEqns::used)
+      .filter(state.levelEqns()::used)
       .appendedAll(levelMapping.valuesView())
       .toImmutableSeq();
   }
 
   private void traceExit(Result result, @NotNull Expr expr) {
     tracing(builder -> {
-      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(levelEqns), result.type.freezeHoles(levelEqns), expr.sourcePos()));
+      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(state), result.type.freezeHoles(state), expr.sourcePos()));
       builder.reduce();
     });
     // assert validate(result.wellTyped);
@@ -410,21 +407,11 @@ public final class ExprTycker {
   }
 
   public void solveMetas() {
-    while (termEqns.eqns().isNotEmpty()) {
-      //noinspection StatementWithEmptyBody
-      while (termEqns.simplify(levelEqns, reporter, traceBuilder)) ;
-      // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
-      var eqns = termEqns.eqns().toImmutableSeq();
-      if (eqns.isNotEmpty()) {
-        for (var eqn : eqns) termEqns.solveEqn(levelEqns, reporter, traceBuilder, eqn, true);
-        reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
-      }
-    }
-    levelEqns.solve();
+    state.solveMetas(reporter, traceBuilder);
   }
 
   public @NotNull Result inherit(@NotNull Expr expr, @NotNull Term type) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(levelEqns))));
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(state))));
     Result result;
     if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
@@ -473,7 +460,7 @@ public final class ExprTycker {
   }
 
   private @NotNull Sort transformLevel(@NotNull Level<PreLevelVar> level) {
-    if (level instanceof Level.Polymorphic) return levelEqns.markUsed(universe);
+    if (level instanceof Level.Polymorphic) return state.levelEqns().markUsed(universe);
     if (level instanceof Level.Maximum m)
       return Sort.merge(m.among().map(this::transformLevel));
     return new Sort(switch (level) {
@@ -538,7 +525,7 @@ public final class ExprTycker {
       levelSubst.solution().put(v, new Sort(new Level.Reference<>(lvlVar)));
       return lvlVar;
     });
-    levelEqns.vars().appendAll(levelVars);
+    state.levelEqns().vars().appendAll(levelVars);
     return Tuple.of(levelSubst, levelVars.view()
       .map(Level.Reference::new)
       .map(Sort::new)
@@ -551,7 +538,7 @@ public final class ExprTycker {
   }
 
   public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return new DefEq(ord, reporter, false, levelEqns, termEqns, traceBuilder, pos);
+    return new DefEq(ord, reporter, false, traceBuilder, state, pos);
   }
 
   /**
@@ -575,13 +562,13 @@ public final class ExprTycker {
   private Result unifyTyMaybeInsert(@NotNull Term upper, @NotNull Result result, Expr loc) {
     var lower = result.type;
     var term = result.wellTyped;
-    while (lower.normalize(NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
+    while (lower.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
       var mock = mockTerm(pi.param(), loc.sourcePos());
       term = CallTerm.make(term, new Arg<>(mock, false));
       lower = pi.substBody(mock);
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    return fail(term.freezeHoles(levelEqns), upper, new UnifyError(loc, upper, lower));
+    return fail(term.freezeHoles(state), upper, new UnifyError(loc, upper, lower));
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {

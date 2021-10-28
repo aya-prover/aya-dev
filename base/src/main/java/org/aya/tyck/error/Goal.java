@@ -10,15 +10,21 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.CallTerm;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
 
-public record Goal(@NotNull CallTerm.Hole hole, ImmutableSeq<LocalVar> scope) implements Problem {
+public record Goal(
+  @NotNull TyckState state,
+  @NotNull CallTerm.Hole hole,
+  @NotNull ImmutableSeq<LocalVar> scope
+) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-    var meta = hole.ref().core();
+    var meta = hole.ref();
+    var result = options.inlineMetas() ? meta.result.freezeHoles(state) : meta.result;
     var doc = Doc.vcatNonEmpty(
       Doc.english("Goal of type"),
-      Doc.par(1, meta.result.toDoc(options)),
-      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(NormalizeMode.NF).toDoc(options)))),
+      Doc.par(1, result.toDoc(options)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), result.normalize(state, NormalizeMode.NF).toDoc(options)))),
       Doc.plain("Context:"),
       Doc.vcat(meta.fullTelescope().map(param -> {
         var paramDoc = param.toDoc(options);
@@ -35,12 +41,13 @@ public record Goal(@NotNull CallTerm.Hole hole, ImmutableSeq<LocalVar> scope) im
             )))))
         : Doc.empty()
     );
-    return meta.body == null ? doc :
-      Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, meta.body.toDoc(options)), doc);
+    var metas = state.metas();
+    return !metas.containsKey(meta) ? doc :
+      Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, metas.get(meta).toDoc(options)), doc);
   }
 
   @Override public @NotNull SourcePos sourcePos() {
-    return hole.ref().core().sourcePos;
+    return hole.ref().sourcePos;
   }
 
   @Override public @NotNull Severity level() {

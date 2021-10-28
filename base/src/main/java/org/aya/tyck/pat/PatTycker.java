@@ -194,7 +194,8 @@ public final class PatTycker {
     var results = Buffer.<Pat>create();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
-        exprTycker.reporter.report(new PatternProblem.TooManyPattern(pat, sig.value.result()));
+        exprTycker.reporter.report(new PatternProblem
+          .TooManyPattern(pat, sig.value.result().freezeHoles(exprTycker.state)));
         foundError();
         return;
       }
@@ -247,7 +248,7 @@ public final class PatTycker {
    */
   private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
   selectCtor(Term param, @Nullable String name, @NotNull Reporter reporter, @NotNull Pattern pos) {
-    if (!(param.normalize(NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
+    if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
       reporter.report(new PatternProblem.SplittingOnNonData(pos, param));
       return null;
     }
