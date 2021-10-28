@@ -35,8 +35,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
-import org.aya.tyck.unify.EqnSet;
-import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Constants;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
@@ -56,8 +54,6 @@ public final class ExprTycker {
   public final @NotNull Reporter reporter;
   public @NotNull LocalCtx localCtx = new LocalCtx();
   public final @Nullable Trace.Builder traceBuilder;
-  public final @NotNull LevelEqnSet levelEqns = new LevelEqnSet();
-  public final @NotNull EqnSet termEqns = new EqnSet();
   public final @NotNull TyckState state = new TyckState();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
   public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableMap.wrapJava(new LinkedHashMap<>());
@@ -250,7 +246,7 @@ public final class ExprTycker {
       var sortArgs = call.sortArgs();
       var levels = univArgs.univArgs();
       if (sortArgs.sizeEquals(levels)) sortArgs.zipView(levels).forEach(t ->
-        levelEqns.add(t._1, transformLevel(t._2), Ordering.Eq, univArgs.sourcePos()));
+        state.levelEqns().add(t._1, transformLevel(t._2), Ordering.Eq, univArgs.sourcePos()));
       else reporter.report(new UnivArgsError.SizeMismatch(univArgs, sortArgs.size()));
     } else reporter.report(new UnivArgsError.Misplaced(univArgs));
   }
@@ -301,7 +297,7 @@ public final class ExprTycker {
         var sort = transformLevel(univExpr.level());
         var normTerm = term.normalize(state, NormalizeMode.WHNF);
         if (normTerm instanceof FormTerm.Univ univ) {
-          levelEqns.add(sort.lift(1), univ.sort(), Ordering.Lt, univExpr.sourcePos());
+          state.levelEqns().add(sort.lift(1), univ.sort(), Ordering.Lt, univExpr.sourcePos());
           yield new Result(new FormTerm.Univ(sort), univ);
         } else {
           var succ = new FormTerm.Univ(sort.lift(1));
@@ -373,14 +369,14 @@ public final class ExprTycker {
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
     return Seq.of(universe).view()
-      .filter(levelEqns::used)
+      .filter(state.levelEqns()::used)
       .appendedAll(levelMapping.valuesView())
       .toImmutableSeq();
   }
 
   private void traceExit(Result result, @NotNull Expr expr) {
     tracing(builder -> {
-      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(levelEqns), result.type.freezeHoles(levelEqns), expr.sourcePos()));
+      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(state.levelEqns()), result.type.freezeHoles(state.levelEqns()), expr.sourcePos()));
       builder.reduce();
     });
     // assert validate(result.wellTyped);
@@ -411,21 +407,11 @@ public final class ExprTycker {
   }
 
   public void solveMetas() {
-    while (termEqns.eqns().isNotEmpty()) {
-      //noinspection StatementWithEmptyBody
-      while (termEqns.simplify(levelEqns, state, reporter, traceBuilder)) ;
-      // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
-      var eqns = termEqns.eqns().toImmutableSeq();
-      if (eqns.isNotEmpty()) {
-        for (var eqn : eqns) termEqns.solveEqn(levelEqns, reporter, state, traceBuilder, eqn, true);
-        reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
-      }
-    }
-    levelEqns.solve();
+    state.solveMetas(reporter, traceBuilder);
   }
 
   public @NotNull Result inherit(@NotNull Expr expr, @NotNull Term type) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(levelEqns))));
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(state.levelEqns()))));
     Result result;
     if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
@@ -474,7 +460,7 @@ public final class ExprTycker {
   }
 
   private @NotNull Sort transformLevel(@NotNull Level<PreLevelVar> level) {
-    if (level instanceof Level.Polymorphic) return levelEqns.markUsed(universe);
+    if (level instanceof Level.Polymorphic) return state.levelEqns().markUsed(universe);
     if (level instanceof Level.Maximum m)
       return Sort.merge(m.among().map(this::transformLevel));
     return new Sort(switch (level) {
@@ -539,7 +525,7 @@ public final class ExprTycker {
       levelSubst.solution().put(v, new Sort(new Level.Reference<>(lvlVar)));
       return lvlVar;
     });
-    levelEqns.vars().appendAll(levelVars);
+    state.levelEqns().vars().appendAll(levelVars);
     return Tuple.of(levelSubst, levelVars.view()
       .map(Level.Reference::new)
       .map(Sort::new)
@@ -552,7 +538,7 @@ public final class ExprTycker {
   }
 
   public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return new DefEq(ord, reporter, false, levelEqns, termEqns, traceBuilder, state, pos);
+    return new DefEq(ord, reporter, false, traceBuilder, state, pos);
   }
 
   /**
@@ -582,7 +568,7 @@ public final class ExprTycker {
       lower = pi.substBody(mock);
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    return fail(term.freezeHoles(levelEqns), upper, new UnifyError(loc, upper, lower));
+    return fail(term.freezeHoles(state.levelEqns()), upper, new UnifyError(loc, upper, lower));
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {

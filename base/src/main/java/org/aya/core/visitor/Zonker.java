@@ -5,6 +5,7 @@ package org.aya.core.visitor;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.CallTerm;
@@ -12,7 +13,7 @@ import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.ExprTycker;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.error.LevelMismatchError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -28,20 +29,21 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public final class Zonker implements TermFixpoint<Unit> {
-  public final @NotNull ExprTycker tycker;
+  public final @NotNull TyckState state;
+  public final @NotNull Reporter reporter;
   private boolean reported = false;
 
-  /** @param tycker which stores level equation */
-  public Zonker(@NotNull ExprTycker tycker) {
-    this.tycker = tycker;
+  public Zonker(@NotNull TyckState state, @NotNull Reporter reporter) {
+    this.state = state;
+    this.reporter = reporter;
   }
 
   public @NotNull Term zonk(@NotNull Term term, @Nullable SourcePos pos) {
     term = term.accept(this, Unit.unit());
-    var eqns = tycker.levelEqns.eqns();
+    var eqns = state.levelEqns().eqns();
     if (eqns.isNotEmpty() && !reported) {
       // There are level errors, but not reported since all levels are solved
-      tycker.reporter.report(new LevelMismatchError(pos, eqns.toImmutableSeq()));
+      reporter.report(new LevelMismatchError(pos, eqns.toImmutableSeq()));
       eqns.clear();
     }
     return term;
@@ -49,16 +51,16 @@ public final class Zonker implements TermFixpoint<Unit> {
 
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
     var sol = term.ref();
-    var metas = tycker.state.metas();
+    var metas = state.metas();
     if (!metas.containsKey(sol)) {
-      tycker.reporter.report(new UnsolvedMeta(sol.sourcePos));
+      reporter.report(new UnsolvedMeta(sol.sourcePos));
       return new ErrorTerm(term);
     }
     return metas.get(sol).accept(this, Unit.unit());
   }
 
   @Override public @Nullable Sort visitSort(@NotNull Sort sort, Unit unit) {
-    sort = tycker.levelEqns.applyTo(sort);
+    sort = state.levelEqns().applyTo(sort);
     var sourcePos = sort.unsolvedPos();
     if (sourcePos != null) {
       reportLevelSolverError(sourcePos);
@@ -68,12 +70,12 @@ public final class Zonker implements TermFixpoint<Unit> {
 
   private void reportLevelSolverError(@NotNull SourcePos pos) {
     if (reported) return;
-    tycker.reporter.report(new LevelMismatchError(pos, tycker.levelEqns.eqns().toImmutableSeq()));
+    reporter.report(new LevelMismatchError(pos, state.levelEqns().eqns().toImmutableSeq()));
     reported = true;
   }
 
   @Override public @NotNull Term visitUniv(FormTerm.@NotNull Univ term, Unit unit) {
-    var sort = tycker.levelEqns.applyTo(term.sort());
+    var sort = state.levelEqns().applyTo(term.sort());
     var sourcePos = sort.unsolvedPos();
     if (sourcePos != null) {
       reportLevelSolverError(sourcePos);

@@ -27,7 +27,6 @@ import org.aya.core.visitor.Unfolder;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +37,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class DefEq {
-  final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
+  public final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @Nullable Trace.Builder traceBuilder;
   boolean allowVague;
-  private final @NotNull LevelEqnSet levelEqns;
-  private final @NotNull EqnSet termEqns;
   private final @NotNull TyckState state;
   private final @NotNull Reporter reporter;
   private final @NotNull SourcePos pos;
@@ -50,13 +47,10 @@ public final class DefEq {
 
   public DefEq(
     @NotNull Ordering cmp, @NotNull Reporter reporter, boolean allowVague,
-    @NotNull LevelEqnSet levelEqns, @NotNull EqnSet termEqns,
     @Nullable Trace.Builder traceBuilder, @NotNull TyckState state, @NotNull SourcePos pos
   ) {
     this.cmp = cmp;
     this.allowVague = allowVague;
-    this.levelEqns = levelEqns;
-    this.termEqns = termEqns;
     this.reporter = reporter;
     this.traceBuilder = traceBuilder;
     this.state = state;
@@ -176,7 +170,7 @@ public final class DefEq {
   ) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     for (var levels : l.zip(r).zip(Def.defLevels(def))) {
-      levelEqns.add(levels._1._1, levels._1._2, this.cmp, this.pos);
+      state.levelEqns().add(levels._1._1, levels._1._2, this.cmp, this.pos);
       levelSubst.solution().put(levels._2, levels._1._1);
     }
     return levelSubst;
@@ -212,6 +206,7 @@ public final class DefEq {
   }
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
+    var levelEqns = state.levelEqns();
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(levelEqns), rhs.freezeHoles(levelEqns),
       pos, type.freezeHoles(levelEqns)));
     var ret = switch (type) {
@@ -261,6 +256,7 @@ public final class DefEq {
   }
 
   private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs) {
+    var levelEqns = state.levelEqns();
     traceEntrance(new Trace.UnifyT(type.freezeHoles(levelEqns),
       preRhs.freezeHoles(levelEqns), this.pos));
     var ret = switch (type) {
@@ -368,7 +364,7 @@ public final class DefEq {
         // In this case, the solution may not be unique (see #608),
         // so we may delay its resolution to the end of the tycking when we disallow vague unification.
         if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {
-          termEqns.addEqn(state, createEqn(lhs, preRhs));
+          state.termEqns().addEqn(state, createEqn(lhs, preRhs));
           // Skip the unification and scope check
           yield meta.result;
         }
@@ -376,7 +372,7 @@ public final class DefEq {
         varSubst.forEach(subst::add);
         var solved = preRhs.subst(subst);
         assert !state.metas().containsKey(meta);
-        compareUntyped(solved.computeType(), meta.result);
+        compareUntyped(solved.computeType(state), meta.result);
         var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
         if (scopeCheck.isNotEmpty()) {
           reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, pos));
@@ -392,5 +388,10 @@ public final class DefEq {
     };
     traceExit();
     return ret;
+  }
+
+  public void checkEqn(@NotNull EqnSet.Eqn eqn) {
+    varSubst.putAll(eqn.varSubst());
+    compareUntyped(eqn.lhs().normalize(state, NormalizeMode.WHNF), eqn.rhs().normalize(state, NormalizeMode.WHNF));
   }
 }

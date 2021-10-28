@@ -12,7 +12,6 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
-import org.aya.api.util.NormalizeMode;
 import org.aya.api.util.WithPos;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
@@ -23,7 +22,6 @@ import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +57,7 @@ public record EqnSet(
    * @return true if <code>this</code> is mutated.
    */
   public boolean simplify(
-    @NotNull LevelEqnSet levelEqns, @NotNull TyckState state,
+    @NotNull TyckState state,
     @NotNull Reporter reporter, @Nullable Trace.Builder tracer
   ) {
     var removingMetas = Buffer.<WithPos<Meta>>create();
@@ -69,7 +67,7 @@ public record EqnSet(
           var usageCounter = new VarConsumer.UsageCounter(activeMeta.data());
           eqn.accept(usageCounter, Unit.unit());
           if (usageCounter.usageCount() > 0) {
-            solveEqn(levelEqns, reporter, state, tracer, eqn, false);
+            state.solveEqn(reporter, tracer, eqn, false);
             return false;
           } else return true;
         });
@@ -78,15 +76,6 @@ public record EqnSet(
     }
     activeMetas.filterNotInPlace(removingMetas::contains);
     return removingMetas.isNotEmpty();
-  }
-
-  public void solveEqn(
-    @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter, @NotNull TyckState state,
-    Trace.@Nullable Builder tracer, @NotNull Eqn eqn, boolean allowVague
-  ) {
-    var defEq = new DefEq(eqn.cmp, reporter, allowVague, levelEqns, this, tracer, state, eqn.pos);
-    defEq.varSubst.putAll(eqn.varSubst);
-    defEq.compareUntyped(eqn.lhs.normalize(state, NormalizeMode.WHNF), eqn.rhs.normalize(state, NormalizeMode.WHNF));
   }
 
   public record Eqn(

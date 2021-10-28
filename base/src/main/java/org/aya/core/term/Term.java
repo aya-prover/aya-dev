@@ -69,7 +69,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
   }
 
   default @NotNull Term zonk(@NotNull ExprTycker tycker, @Nullable SourcePos pos) {
-    return new Zonker(tycker).zonk(this, pos);
+    return new Zonker(tycker.state, tycker.reporter).zonk(this, pos);
   }
 
   @Override default @NotNull Term rename() {
