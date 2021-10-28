@@ -19,10 +19,10 @@ public record UnifyError(
     return Doc.vcat(
       Doc.english("Cannot check the expression of type"),
       Doc.par(1, actual.toDoc(options)),
-      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actual.normalize(NormalizeMode.NF).toDoc(options)))),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), actual.normalize(null, NormalizeMode.NF).toDoc(options)))),
       Doc.english("against the type"),
       Doc.par(1, expected.toDoc(options)),
-      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expected.normalize(NormalizeMode.NF).toDoc(options))))
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), expected.normalize(null, NormalizeMode.NF).toDoc(options))))
     );
   }
 

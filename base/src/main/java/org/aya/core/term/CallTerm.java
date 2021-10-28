@@ -5,7 +5,6 @@ package org.aya.core.term;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.stmt.Decl;
@@ -34,9 +33,10 @@ public sealed interface CallTerm extends Term {
     );
   }
 
-  @Contract(pure = true) static @NotNull Term make(@NotNull Term f, @NotNull Arg<Term> arg) {
+  @Contract(pure = true) static @NotNull Term
+  make(@NotNull Term f, @NotNull Arg<Term> arg) {
     if (f instanceof Hole hole) {
-      if (hole.args.sizeLessThan(hole.ref.core().telescope))
+      if (hole.args.sizeLessThan(hole.ref.telescope))
         return new Hole(hole.ref, hole.contextArgs, hole.args.appended(arg));
     }
     if (!(f instanceof IntroTerm.Lambda lam)) return new ElimTerm.App(f, arg);
@@ -142,12 +142,12 @@ public sealed interface CallTerm extends Term {
    * @author ice1000
    */
   record Hole(
-    @NotNull HoleVar<Meta> ref,
+    @NotNull Meta ref,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
     @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
   ) implements CallTerm {
     public @NotNull FormTerm.Pi asPi(boolean explicit) {
-      return ref.core().asPi(ref.name() + "dom", ref.name() + "cod", explicit, contextArgs);
+      return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, contextArgs);
     }
 
     public @NotNull SeqView<@NotNull Arg<Term>> fullArgs() {

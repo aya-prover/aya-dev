@@ -35,8 +35,8 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitPi(FormTerm.@NotNull Pi term, Unit unit) {
-    var paramTyRaw = term.param().type().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
-    var retTyRaw = term.body().accept(this, Unit.unit()).normalize(NormalizeMode.WHNF);
+    var paramTyRaw = term.param().type().accept(this, Unit.unit()).normalize(null, NormalizeMode.WHNF);
+    var retTyRaw = term.body().accept(this, Unit.unit()).normalize(null, NormalizeMode.WHNF);
     if (paramTyRaw instanceof FormTerm.Univ paramTy && retTyRaw instanceof FormTerm.Univ retTy)
       return new FormTerm.Univ(Sort.max(paramTy.sort(), retTy.sort()));
     else return ErrorTerm.typeOf(term);
@@ -49,7 +49,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   @Override public Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
     var univ = term.params().view()
       .map(param -> param.type()
-        .accept(this, Unit.unit()).normalize(NormalizeMode.WHNF))
+        .accept(this, Unit.unit()).normalize(null, NormalizeMode.WHNF))
       .filterIsInstance(FormTerm.Univ.class)
       .toImmutableSeq();
     if (univ.sizeEquals(term.params().size()))
@@ -120,7 +120,7 @@ public final class LittleTyper implements Term.Visitor<Unit, Term> {
   }
 
   @Override public Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
-    return term.ref().core().result;
+    return term.ref().result;
   }
 
   @Override

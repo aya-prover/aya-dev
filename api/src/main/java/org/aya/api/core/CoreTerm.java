@@ -7,7 +7,6 @@ import kala.collection.mutable.Buffer;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
-import org.aya.api.util.NormalizeMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +28,5 @@ public interface CoreTerm extends AyaDocile {
    * @return the variables in this term that are not allowed.
    */
   @NotNull Buffer<LocalVar> scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed);
-  @NotNull CoreTerm normalize(@NotNull NormalizeMode mode);
   @Nullable CorePat toPat(boolean explicit);
 }

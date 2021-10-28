@@ -135,8 +135,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
 
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
     var name = term.ref();
-    var sol = name.core().body;
-    var inner = sol == null ? varDoc(name) : sol.accept(this, false);
+    var inner = varDoc(name);
     if (options.inlineMetas())
       return visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), nestedCall);
     return Doc.wrap("{?", "?}",

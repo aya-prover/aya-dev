@@ -11,7 +11,6 @@ import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
-import org.aya.api.ref.HoleVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.api.util.WithPos;
@@ -22,6 +21,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
@@ -35,19 +35,20 @@ import org.jetbrains.annotations.Nullable;
  */
 public record EqnSet(
   @NotNull Buffer<Eqn> eqns,
-  @NotNull Buffer<WithPos<HoleVar<Meta>>> activeMetas
+  @NotNull Buffer<WithPos<Meta>> activeMetas
 ) {
   public EqnSet() {
     this(Buffer.create(), Buffer.create());
   }
 
-  public void addEqn(@NotNull Eqn eqn) {
+  public void addEqn(@NotNull TyckState state, @NotNull Eqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
     eqn.accept(new TermConsumer<>() {
       @Override public Unit visitHole(CallTerm.@NotNull Hole term, Unit unit) {
         var ref = term.ref();
-        if (ref.core().body == null) activeMetas.append(new WithPos<>(eqn.pos, ref));
+        if (!state.metas().containsKey(ref))
+          activeMetas.append(new WithPos<>(eqn.pos, ref));
         return unit;
       }
     }, Unit.unit());
@@ -58,17 +59,17 @@ public record EqnSet(
    * @return true if <code>this</code> is mutated.
    */
   public boolean simplify(
-    @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter, @Nullable Trace.Builder tracer
+    @NotNull LevelEqnSet levelEqns, @NotNull TyckState state,
+    @NotNull Reporter reporter, @Nullable Trace.Builder tracer
   ) {
-    var removingMetas = Buffer.<WithPos<HoleVar<Meta>>>create();
+    var removingMetas = Buffer.<WithPos<Meta>>create();
     for (var activeMeta : activeMetas) {
-      var solution = activeMeta.data().core().body;
-      if (solution != null) {
+      if (state.metas().containsKey(activeMeta.data())) {
         eqns.filterInPlace(eqn -> {
           var usageCounter = new VarConsumer.UsageCounter(activeMeta.data());
           eqn.accept(usageCounter, Unit.unit());
           if (usageCounter.usageCount() > 0) {
-            solveEqn(levelEqns, reporter, tracer, eqn, false);
+            solveEqn(levelEqns, reporter, state, tracer, eqn, false);
             return false;
           } else return true;
         });
@@ -80,12 +81,12 @@ public record EqnSet(
   }
 
   public void solveEqn(
-    @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter,
+    @NotNull LevelEqnSet levelEqns, @NotNull Reporter reporter, @NotNull TyckState state,
     Trace.@Nullable Builder tracer, @NotNull Eqn eqn, boolean allowVague
   ) {
-    var defEq = new DefEq(eqn.cmp, reporter, allowVague, levelEqns, this, tracer, eqn.pos);
+    var defEq = new DefEq(eqn.cmp, reporter, allowVague, levelEqns, this, tracer, state, eqn.pos);
     defEq.varSubst.putAll(eqn.varSubst);
-    defEq.compareUntyped(eqn.lhs.normalize(NormalizeMode.WHNF), eqn.rhs.normalize(NormalizeMode.WHNF));
+    defEq.compareUntyped(eqn.lhs.normalize(state, NormalizeMode.WHNF), eqn.rhs.normalize(state, NormalizeMode.WHNF));
   }
 
   public record Eqn(

@@ -48,12 +48,13 @@ public final class Zonker implements TermFixpoint<Unit> {
   }
 
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
-    var sol = term.ref().core();
-    if (sol.body == null) {
+    var sol = term.ref();
+    var metas = tycker.state.metas();
+    if (!metas.containsKey(sol)) {
       tycker.reporter.report(new UnsolvedMeta(sol.sourcePos));
       return new ErrorTerm(term);
     }
-    return sol.body.accept(this, Unit.unit());
+    return metas.get(sol).accept(this, Unit.unit());
   }
 
   @Override public @Nullable Sort visitSort(@NotNull Sort sort, Unit unit) {

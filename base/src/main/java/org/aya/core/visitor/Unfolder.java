@@ -10,6 +10,7 @@ import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.api.util.NormalizeMode;
 import org.aya.api.util.WithPos;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
@@ -21,12 +22,15 @@ import org.aya.core.sort.Sort.LvlVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
+import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
+ * @apiNote Beware of <code>visitHole</code>
+ * @see Normalizer#visitHole(CallTerm.Hole, NormalizeMode)
  */
 public interface Unfolder<P> extends TermFixpoint<P> {
   @Contract(pure = true) static @NotNull Substituter.TermSubst buildSubst(
@@ -83,13 +87,14 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     return prim.ref().core.unfold(prim);
   }
 
-  @Override default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {
-    var def = hole.ref().core();
+  default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, @NotNull TyckState state, P p) {
+    var def = hole.ref();
     // Not yet type checked
+    var metas = state.metas();
+    if (!metas.containsKey(def)) return hole;
+    var body = metas.get(def);
     var args = hole.fullArgs().map(arg -> visitArg(arg, p)).toImmutableSeq();
     var subst = checkAndBuildSubst(def.fullTelescope(), args);
-    var body = def.body;
-    if (body == null) return hole;
     return body.subst(subst).accept(this, p);
   }
 

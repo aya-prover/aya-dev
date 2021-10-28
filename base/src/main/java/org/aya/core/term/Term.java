@@ -26,6 +26,7 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
+import org.aya.tyck.TyckState;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -88,9 +89,14 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     return checker.invalidVars;
   }
 
-  @Override default @NotNull Term normalize(@NotNull NormalizeMode mode) {
+  @Deprecated
+  default @NotNull Term normalize(@NotNull NormalizeMode mode) {
+    return normalize(null, mode);
+  }
+
+  default @NotNull Term normalize(@Nullable TyckState state, @NotNull NormalizeMode mode) {
     if (mode == NormalizeMode.NULL) return this;
-    return accept(Normalizer.INSTANCE, mode);
+    return accept(new Normalizer(state), mode);
   }
 
   default @NotNull Term freezeHoles(@Nullable LevelEqnSet eqnSet) {

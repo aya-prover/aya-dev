@@ -5,13 +5,14 @@ package org.aya.core.visitor;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.*;
-import org.jetbrains.annotations.Contract;
+import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class Normalizer implements Unfolder<NormalizeMode> {
-  public static final @NotNull Normalizer INSTANCE = new Normalizer();
-
-  @Contract(pure = true) private Normalizer() {
+public record Normalizer(@Nullable TyckState state) implements Unfolder<NormalizeMode> {
+  @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, NormalizeMode normalizeMode) {
+    if (state == null) return Unfolder.super.visitHole(term, normalizeMode);
+    return visitHole(term, state, normalizeMode);
   }
 
   @Override public @NotNull Term visitApp(@NotNull ElimTerm.App term, NormalizeMode mode) {
