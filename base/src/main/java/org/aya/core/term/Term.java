@@ -88,11 +88,6 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     return checker.invalidVars;
   }
 
-  @Deprecated
-  default @NotNull Term normalize(@NotNull NormalizeMode mode) {
-    return normalize(null, mode);
-  }
-
   default @NotNull Term normalize(@Nullable TyckState state, @NotNull NormalizeMode mode) {
     if (mode == NormalizeMode.NULL) return this;
     return accept(new Normalizer(state), mode);
