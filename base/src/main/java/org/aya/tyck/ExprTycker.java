@@ -376,7 +376,7 @@ public final class ExprTycker {
 
   private void traceExit(Result result, @NotNull Expr expr) {
     tracing(builder -> {
-      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(state.levelEqns()), result.type.freezeHoles(state.levelEqns()), expr.sourcePos()));
+      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(state), result.type.freezeHoles(state), expr.sourcePos()));
       builder.reduce();
     });
     // assert validate(result.wellTyped);
@@ -411,7 +411,7 @@ public final class ExprTycker {
   }
 
   public @NotNull Result inherit(@NotNull Expr expr, @NotNull Term type) {
-    tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(state.levelEqns()))));
+    tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(state))));
     Result result;
     if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
@@ -568,7 +568,7 @@ public final class ExprTycker {
       lower = pi.substBody(mock);
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    return fail(term.freezeHoles(state.levelEqns()), upper, new UnifyError(loc, upper, lower));
+    return fail(term.freezeHoles(state), upper, new UnifyError(loc, upper, lower));
   }
 
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {

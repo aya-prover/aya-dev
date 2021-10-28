@@ -37,7 +37,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class DefEq {
-  public final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
+  private final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @Nullable Trace.Builder traceBuilder;
   boolean allowVague;
   private final @NotNull TyckState state;
@@ -101,7 +101,6 @@ public final class DefEq {
   }
 
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs) {
-    //noinspection ConstantConditions
     return switch (preLhs) {
       case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
       case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
@@ -188,8 +187,8 @@ public final class DefEq {
     return term instanceof CallTerm.Fn || term instanceof CallTerm.Con || term instanceof CallTerm.Prim;
   }
 
-  private @NotNull EqnSet.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
-    return new EqnSet.Eqn(lhs, rhs, cmp, pos, varSubst.toImmutableMap());
+  private @NotNull TyckState.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
+    return new TyckState.Eqn(lhs, rhs, cmp, pos, varSubst.toImmutableMap());
   }
 
   private @Nullable Substituter.TermSubst extract(
@@ -206,9 +205,8 @@ public final class DefEq {
   }
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs) {
-    var levelEqns = state.levelEqns();
-    traceEntrance(new Trace.UnifyT(lhs.freezeHoles(levelEqns), rhs.freezeHoles(levelEqns),
-      pos, type.freezeHoles(levelEqns)));
+    traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state),
+      pos, type.freezeHoles(state)));
     var ret = switch (type) {
       default -> compareUntyped(lhs, rhs) != null;
       case CallTerm.Struct type1 -> {
@@ -256,9 +254,8 @@ public final class DefEq {
   }
 
   private Term doCompareUntyped(@NotNull Term type, @NotNull Term preRhs) {
-    var levelEqns = state.levelEqns();
-    traceEntrance(new Trace.UnifyT(type.freezeHoles(levelEqns),
-      preRhs.freezeHoles(levelEqns), this.pos));
+    traceEntrance(new Trace.UnifyT(type.freezeHoles(state),
+      preRhs.freezeHoles(state), this.pos));
     var ret = switch (type) {
       default -> throw new IllegalStateException();
       case RefTerm lhs -> {
@@ -290,7 +287,7 @@ public final class DefEq {
         if (params.isNotEmpty()) yield params.first().type();
         yield params.last().type();
       }
-      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(levelEqns));
+      case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
       case FormTerm.Pi lhs -> {
         if (!(preRhs instanceof FormTerm.Pi rhs)) yield null;
         yield checkParam(lhs.param(), rhs.param(), freshUniv(), () -> null, () -> {
@@ -309,7 +306,7 @@ public final class DefEq {
       }
       case FormTerm.Univ lhs -> {
         if (!(preRhs instanceof FormTerm.Univ rhs)) yield null;
-        levelEqns.add(lhs.sort(), rhs.sort(), cmp, this.pos);
+        state.levelEqns().add(lhs.sort(), rhs.sort(), cmp, this.pos);
         yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).sort().lift(1));
       }
       case CallTerm.Fn lhs -> null;
@@ -364,7 +361,7 @@ public final class DefEq {
         // In this case, the solution may not be unique (see #608),
         // so we may delay its resolution to the end of the tycking when we disallow vague unification.
         if (!allowVague && subst.overlap(argSubst).anyMatch(var -> preRhs.findUsages(var) > 0)) {
-          state.termEqns().addEqn(state, createEqn(lhs, preRhs));
+          state.addEqn(createEqn(lhs, preRhs));
           // Skip the unification and scope check
           yield meta.result;
         }
@@ -390,7 +387,7 @@ public final class DefEq {
     return ret;
   }
 
-  public void checkEqn(@NotNull EqnSet.Eqn eqn) {
+  public void checkEqn(@NotNull TyckState.Eqn eqn) {
     varSubst.putAll(eqn.varSubst());
     compareUntyped(eqn.lhs().normalize(state, NormalizeMode.WHNF), eqn.rhs().normalize(state, NormalizeMode.WHNF));
   }

@@ -27,7 +27,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.unify.level.LevelEqnSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,10 +98,18 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     return accept(new Normalizer(state), mode);
   }
 
-  default @NotNull Term freezeHoles(@Nullable LevelEqnSet eqnSet) {
+  default @NotNull Term freezeHoles(@Nullable TyckState state) {
     return accept(new TermFixpoint<>() {
+      @Override public @NotNull Term visitHole(CallTerm.@NotNull Hole term, Unit unit) {
+        if (state == null) return TermFixpoint.super.visitHole(term, unit);
+        var sol = term.ref();
+        var metas = state.metas();
+        if (!metas.containsKey(sol)) return TermFixpoint.super.visitHole(term, unit);
+        return metas.get(sol).accept(this, Unit.unit());
+      }
+
       @Override public @NotNull Sort visitSort(@NotNull Sort sort, Unit unit) {
-        return eqnSet != null ? eqnSet.applyTo(sort) : sort;
+        return state != null ? state.levelEqns().applyTo(sort) : sort;
       }
     }, Unit.unit());
   }

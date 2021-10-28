@@ -20,10 +20,11 @@ public record Goal(
 ) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     var meta = hole.ref();
+    var result = options.inlineMetas() ? meta.result.freezeHoles(state) : meta.result;
     var doc = Doc.vcatNonEmpty(
       Doc.english("Goal of type"),
-      Doc.par(1, meta.result.toDoc(options)),
-      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), meta.result.normalize(state, NormalizeMode.NF).toDoc(options)))),
+      Doc.par(1, result.toDoc(options)),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"), result.normalize(state, NormalizeMode.NF).toDoc(options)))),
       Doc.plain("Context:"),
       Doc.vcat(meta.fullTelescope().map(param -> {
         var paramDoc = param.toDoc(options);

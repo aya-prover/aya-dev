@@ -194,7 +194,8 @@ public final class PatTycker {
     var results = Buffer.<Pat>create();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
-        exprTycker.reporter.report(new PatternProblem.TooManyPattern(pat, sig.value.result()));
+        exprTycker.reporter.report(new PatternProblem
+          .TooManyPattern(pat, sig.value.result().freezeHoles(exprTycker.state)));
         foundError();
         return;
       }
