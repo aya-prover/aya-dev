@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.BiFunction;
 
 public interface AyaParsing {
   @Contract("_ -> new") static @NotNull AyaParser parser(@NotNull String text) {
@@ -69,19 +70,18 @@ public interface AyaParsing {
     return new AyaProducer(sourceFile, reporter).visitProgram(parser.program());
   }
 
-  static @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(
-    @NotNull Reporter reporter, @NotNull String text
-  ) {
-    var sourceFile = new SourceFile(Option.none(), text);
+  private static @NotNull <T> T replParser(@NotNull Reporter reporter, @NotNull String text,
+                                           @NotNull BiFunction<AyaProducer, AyaParser, T> tree) {
+    var sourceFile = new SourceFile(Option.some(Path.of("<stdin>")), text);
     var parser = parser(sourceFile, reporter);
-    return new AyaProducer(sourceFile, reporter).visitRepl(parser.repl());
+    return tree.apply(new AyaProducer(sourceFile, reporter), parser);
   }
 
-  static @NotNull Expr expr(
-    @NotNull Reporter reporter, @NotNull String text
-  ) {
-    var sourceFile = new SourceFile(Option.none(), text);
-    var parser = parser(sourceFile, reporter);
-    return new AyaProducer(sourceFile, reporter).visitExpr(parser.expr());
+  static @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull Reporter reporter, @NotNull String text) {
+    return replParser(reporter, text, (pro, par) -> pro.visitRepl(par.repl()));
+  }
+
+  static @NotNull Expr expr(@NotNull Reporter reporter, @NotNull String text) {
+    return replParser(reporter, text, (pro, par) -> pro.visitExpr(par.expr()));
   }
 }

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author re-xyr
  */
-public final class PhysicalModuleContext implements ModuleContext {
+public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
   public final @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions = MutableHashMap.of();
   public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());

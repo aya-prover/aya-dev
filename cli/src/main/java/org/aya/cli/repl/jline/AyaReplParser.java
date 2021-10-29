@@ -58,7 +58,7 @@ public class AyaReplParser implements Parser {
   @Override public ParsedLine parse(String line, int cursor, ParseContext context) throws SyntaxError {
     if (line.isBlank()) return simplest(line, cursor, 0, Collections.emptyList());
     // ref: https://github.com/jline/jline3/issues/36
-    if ((ParseContext.UNSPECIFIED.equals(context) || ParseContext.ACCEPT_LINE.equals(context))
+    if ((context == ParseContext.UNSPECIFIED || context == ParseContext.ACCEPT_LINE)
       && line.startsWith(Command.MULTILINE_BEGIN) && !line.endsWith(Command.MULTILINE_END)) {
       throw new EOFError(-1, cursor, "In multiline mode");
     }
