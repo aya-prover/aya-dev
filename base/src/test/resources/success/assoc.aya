@@ -44,7 +44,7 @@ def hfill2d {A : Type}
   (q : b = d)
   (r : a = c)
   (i j : I) : A
-  => (arcoe (\ k => (r.at k) = (q.at k)) p i).at j
+  => (arcoe (\ k => r.at k = q.at k) p i).at j
 def hcomp2d {A : Type}
   {a b c d : A}
   (p : a = b)

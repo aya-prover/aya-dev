@@ -38,6 +38,7 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
   We already have a prototype, but we plan to revise it before sharing demos.
 + Binary operators, with precedence specified by a [partial ordering][binop]
   (instead of a number, such as in Haskell or Agda)
+  which is useful for [equation reasoning][assoc]
 
 ## Contributing to Aya
 
@@ -64,12 +65,13 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
 [gadt]: ../base/src/test/resources/success/type-safe-norm.aya
 [regularity]: ../base/src/test/resources/success/regularity.aya
 [funExt]: ../base/src/test/resources/success/funExt.aya
+[assoc]: ../base/src/test/resources/success/assoc.aya
 [binop]: ../base/src/test/resources/success/issues2/issue69.aya#L47
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 
 ## Use as a library
 
-It's indexed on [mvnrepository](https://mvnrepository.com/artifact/org.aya-prover),
+It's indexed in [mvnrepository](https://mvnrepository.com/artifact/org.aya-prover),
 and here are some example build configurations (maybe you need to add the <https://jitpack.io>
 repository as we are using an upstream dependency from there):
 
