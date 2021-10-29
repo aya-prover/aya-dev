@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.Scanner;
 
-public abstract class Repl implements Closeable {
+public abstract class Repl implements Closeable, Runnable {
   public static int start(MainArgs.@NotNull ReplAction replAction) throws IOException {
     var configFile = AyaHome.ayaHome().resolve("repl_config.json");
     var replConfig = ReplConfig.loadFrom(configFile);
@@ -52,7 +52,7 @@ public abstract class Repl implements Closeable {
   protected abstract @NotNull String readLine(@NotNull String prompt) throws EOFException, InterruptedException;
   protected abstract @Nullable String hintMessage();
 
-  void run() {
+  @Override public void run() {
     println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH + ")");
     var hint = hintMessage();
     if (hint != null) println(hint);
@@ -120,20 +120,31 @@ public abstract class Repl implements Closeable {
    * Default repl when jline is unavailable
    */
   public static class PlainRepl extends Repl {
-    private final @NotNull Scanner scanner = new Scanner(System.in);
+    private final @NotNull Scanner scanner;
+    private final @NotNull PrintWriter out;
 
     public PlainRepl(@NotNull ReplConfig config) {
+      this(config, new InputStreamReader(System.in), new PrintWriter(System.out));
+    }
+
+    public PlainRepl(
+      @NotNull ReplConfig config,
+      @NotNull Readable input,
+      @NotNull Writer out
+    ) {
       super(config);
+      scanner = new Scanner(input);
+      this.out = new PrintWriter(out);
     }
 
     @Override protected @NotNull String readLine(@NotNull String prompt) {
-      System.out.print(prompt);
-      System.out.flush();
+      out.print(prompt);
+      out.flush();
       return scanner.nextLine();
     }
 
     @Override protected void println(@NotNull String x) {
-      System.out.println(x);
+      out.println(x);
     }
 
     @Override protected void errPrintln(@NotNull String x) {

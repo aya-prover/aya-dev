@@ -25,7 +25,7 @@ allprojects {
 
 @kotlin.Suppress("unsupported")
 subprojects {
-  val useJacoco = name in ["base", "pretty"]
+  val useJacoco = name in ["base", "pretty", "cli"]
 
   apply {
     plugin("java")
