@@ -69,15 +69,15 @@ bind *' tighter +
 
 def *'-suc (m n : Nat) : m *' suc n = m + m *' n
   | zero, n => idp _
-  | suc m, n => pmap (\ x => suc (n + x)) (*'-suc m n)
-    ~ pmap suc (+-assoc n m (m *' n))
-    ~ pmap (\ x => suc (x + m *' n)) (+-comm n m)
-    ~ pmap suc (sym (+-assoc m n (m *' n)))
+  | suc m, n => pmap suc (pmap (n +) (*'-suc m n)
+    ~ +-assoc n m (m *' n)
+    ~ pmap (+ m *' n) (+-comm n m)
+    ~ sym (+-assoc m n (m *' n)))
 
 def *'-suc-suc (m n : Nat) : suc m *' suc n = suc (m + n + m *' n)
-  => pmap (suc n +) (*'-suc m n)
-    ~ pmap suc (+-assoc n m (m *' n))
-    ~ pmap (\ x => suc (x + m *' n)) (+-comm n m)
+  => pmap suc (pmap (n +) (*'-suc m n)
+    ~ +-assoc n m (m *' n)
+    ~ pmap (+ m *' n) (+-comm n m))
 
 def *-*'-iso (m n : Nat) : m * n = m *' n
   | zero, n => idp _
