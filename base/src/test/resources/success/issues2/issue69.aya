@@ -18,7 +18,7 @@ def hfill2d {A : Type}
   (q : b = d)
   (r : a = c)
   (i j : I) : A
-  => (arcoe (\ k => (r.at k) = (q.at k)) p i).at j
+  => (arcoe (\ k => r.at k = q.at k) p i).at j
 def hcomp2d {A : Type}
   {a b c d : A}
   (p : a = b)
@@ -32,7 +32,7 @@ def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
 def funext {A B : Type} (f g : A -> B) (p : Pi (a : A) -> f a = g a) : f = g
-  => path (\ i => \ x => (p x).at i)
+  => path (\ i x => (p x).at i)
 
 open data Nat : Type
   | zero
@@ -67,22 +67,22 @@ def infixl *' (m n : Nat) : Nat
 bind * tighter +
 bind *' tighter +
 
-def *'-suc (m n : Nat) : m *' (suc n) = m + m *' n
+def *'-suc (m n : Nat) : m *' suc n = m + m *' n
   | zero, n => idp _
-  | suc m, n => (pmap (\ x => suc (n + x)) (*'-suc m n))
-    ~ (pmap suc (+-assoc n m (m *' n)))
-    ~ (pmap (\ x => suc (x + m *' n)) (+-comm n m))
-    ~ (pmap suc (sym (+-assoc m n (m *' n))))
+  | suc m, n => pmap (\ x => suc (n + x)) (*'-suc m n)
+    ~ pmap suc (+-assoc n m (m *' n))
+    ~ pmap (\ x => suc (x + m *' n)) (+-comm n m)
+    ~ pmap suc (sym (+-assoc m n (m *' n)))
 
-def *'-suc-suc (m n : Nat) : (suc m) *' (suc n) = suc (m + n + m *' n)
-  => (pmap ((suc n) +) (*'-suc m n))
-    ~ (pmap suc (+-assoc n m (m *' n)))
-    ~ (pmap (\ x => suc (x + m *' n)) (+-comm n m))
+def *'-suc-suc (m n : Nat) : suc m *' suc n = suc (m + n + m *' n)
+  => pmap (suc n +) (*'-suc m n)
+    ~ pmap suc (+-assoc n m (m *' n))
+    ~ pmap (\ x => suc (x + m *' n)) (+-comm n m)
 
 def *-*'-iso (m n : Nat) : m * n = m *' n
   | zero, n => idp _
   | m, zero => idp _
-  | suc m, suc n => (pmap (\ x => suc (m + n + x)) (*-*'-iso m n)) ~ (sym (*'-suc-suc m n))
+  | suc m, suc n => pmap (\ x => suc (m + n + x)) (*-*'-iso m n) ~ sym (*'-suc-suc m n)
 
 def *-*'-eq : (*) = (*') => funext (*) (*') (\ m => funext (m *) (m *') (*-*'-iso m))
 
