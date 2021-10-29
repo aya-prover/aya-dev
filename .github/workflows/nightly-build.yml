@@ -1,7 +1,7 @@
 name : nightly
 on :
   push :
-    branches : [ main ]
+    branches : [ main, auto-release ]
 jobs :
   move-tag :
     runs-on : ubuntu-latest
@@ -14,7 +14,7 @@ jobs :
             Last commit build by the CI
         env :
           GITHUB_TOKEN : ${{ secrets.GH_TOKEN }}
-        if : github.ref == 'refs/heads/main'
+        if : github.ref == 'refs/heads/main' || github.ref == 'refs/heads/auto-release'
 
   nightly-build :
     needs : [ move-tag ]
@@ -36,14 +36,28 @@ jobs :
         with :
           dependencies-cache-enabled : true
           arguments : fatjar --info --no-daemon --stacktrace --warning-mode all
-      - run : cp -a ./lsp/build/libs/lsp-*-fat.jar ./lsp-fatjar.jar
-      - run : cp -a ./cli/build/libs/lsp-*-fat.jar ./cli-fatjar.jar
+
+      - name : Copy lsp-fatjar.jar (Unix)
+        run : cp -a ./lsp/build/libs/lsp-*-fat.jar ./lsp-fatjar.jar
+        if : matrix.os != 'windows-latest'
+      - name : Copy cli-fatjar.jar (Unix)
+        run : cp -a ./cli/build/libs/cli-*-fat.jar ./cli-fatjar.jar
+        if : matrix.os != 'windows-latest'
+
+      - name : Copy lsp-fatjar.jar (Windows)
+        run : copy .\lsp\build\libs\lsp-*-fat.jar .\lsp-fatjar.jar
+        if : matrix.os == 'windows-latest'
+      - name : Copy cli-fatjar.jar (Windows)
+        run : copy .\cli\build\libs\cli-*-fat.jar .\cli-fatjar.jar
+        if : matrix.os == 'windows-latest'
+
       - name : Zip Artifacts
         uses : papeloto/action-zip@v1
         with :
           files : ./lsp/build/image
-          dest : aya-prover-jlink-${{ matrix.os }}_x86_64.zip
-        if : github.ref == 'refs/heads/main'
+          dest : aya-prover-jlink-${{ matrix.os }}_x86-64.zip
+        if : github.ref == 'refs/heads/main' || github.ref == 'refs/heads/auto-release'
+
       - name : Update the CI tag
         uses : Xotl/cool-github-releases@v1
         with :
@@ -53,8 +67,8 @@ jobs :
           release_name : "Nightly builds"
           body_mrkdwn : |
             _This is the newest build, but GitHub date can't be updated. Corresponding commit: ${{ github.sha }}_
-          assets : aya-prover-jlink-${{ matrix.os }}_x86_64.zip;./lsp-fatjar.jar;./cli-fatjar.jar
+          assets : aya-prover-jlink-${{ matrix.os }}_x86-64.zip;./lsp-fatjar.jar;./cli-fatjar.jar
           replace_assets : true
           github_token : ${{ secrets.GH_TOKEN }}
-        if : github.ref == 'refs/heads/main'
+        if : github.ref == 'refs/heads/main' || github.ref == 'refs/heads/auto-release'
 
