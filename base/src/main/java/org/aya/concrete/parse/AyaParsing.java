@@ -72,7 +72,7 @@ public interface AyaParsing {
 
   private static @NotNull <T> T replParser(@NotNull Reporter reporter, @NotNull String text,
                                            @NotNull BiFunction<AyaProducer, AyaParser, T> tree) {
-    var sourceFile = new SourceFile(Option.some(Path.of("<stdin>")), text);
+    var sourceFile = new SourceFile(Option.some(Path.of("stdin")), text);
     var parser = parser(sourceFile, reporter);
     return tree.apply(new AyaProducer(sourceFile, reporter), parser);
   }
