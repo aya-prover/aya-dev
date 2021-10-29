@@ -83,11 +83,9 @@ public record Conquer(
       return;
     }
     if (newBody instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
-      var conditions = hole.ref().conditions;
-      conditions.set(conditions.value.appended(Tuple.of(matchy, volynskaya.data())));
+      hole.ref().conditions.append(Tuple.of(matchy, volynskaya.data()));
     } else if (volynskaya.data() instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
-      var conditions = hole.ref().conditions;
-      conditions.set(conditions.value.appended(Tuple.of(matchy, newBody)));
+      hole.ref().conditions.append(Tuple.of(matchy, newBody));
     }
     var unification = tycker.unifier(sourcePos, Ordering.Eq)
       .compare(newBody, volynskaya.data(), signature.result().subst(matchy));

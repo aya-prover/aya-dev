@@ -30,10 +30,10 @@ public record Goal(
         var paramDoc = param.toDoc(options);
         return Doc.par(1, scope.contains(param.ref()) ? paramDoc : Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope"))));
       })),
-      meta.conditions.value.isNotEmpty() ?
+      meta.conditions.isNotEmpty() ?
         Doc.vcat(
           ImmutableSeq.of(Doc.plain("To ensure confluence:"))
-            .concat(meta.conditions.value.map(tup -> Doc.par(1, Doc.cat(
+            .concat(meta.conditions.toImmutableSeq().map(tup -> Doc.par(1, Doc.cat(
               Doc.plain("Given "),
               Doc.parened(tup._1.toDoc(options)),
               Doc.plain(", we should have: "),

@@ -4,10 +4,8 @@ package org.aya.core;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.ImmutableVector;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple2;
-import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
@@ -30,7 +28,7 @@ public final class Meta implements Var {
   public final @NotNull String name;
   public final @NotNull Term result;
   public final @NotNull SourcePos sourcePos;
-  public final @NotNull Ref<ImmutableSeq<Tuple2<Substituter.TermSubst, Term>>> conditions = new Ref<>(ImmutableVector.empty());
+  public final @NotNull Buffer<Tuple2<Substituter.TermSubst, Term>> conditions = Buffer.create();
 
   public SeqView<Term.Param> fullTelescope() {
     return contextTele.view().concat(telescope);
