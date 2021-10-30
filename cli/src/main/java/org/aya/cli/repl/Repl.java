@@ -2,10 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.AyaHome;
+import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.Command;
+import org.aya.cli.repl.command.CommandArg;
 import org.aya.cli.repl.command.CommandManager;
 import org.aya.cli.repl.command.DefaultCommands;
 import org.aya.cli.repl.jline.JlineRepl;
@@ -39,7 +42,27 @@ public abstract class Repl implements Closeable, Runnable {
   }
 
   public final @NotNull ReplCompiler replCompiler = new ReplCompiler(new CliReporter(this::println, this::errPrintln), null);
-  public final @NotNull CommandManager commandManager = DefaultCommands.defaultCommandManager();
+  public final @NotNull CommandManager commandManager = makeCommand();
+
+  private CommandManager makeCommand() {
+    return new CommandManager(ImmutableSeq.of(
+      CommandArg.STRING,
+      CommandArg.STRICT_BOOLEAN,
+      CommandArg.from(Path.class, this::resolveFile),
+      CommandArg.fromEnum(NormalizeMode.class)
+    ), ImmutableSeq.of(
+      DefaultCommands.QUIT,
+      DefaultCommands.CHANGE_PROMPT,
+      DefaultCommands.CHANGE_NORM_MODE,
+      DefaultCommands.SHOW_TYPE,
+      DefaultCommands.CHANGE_PP_WIDTH,
+      DefaultCommands.TOGGLE_UNICODE,
+      DefaultCommands.CHANGE_CWD,
+      DefaultCommands.PRINT_CWD,
+      DefaultCommands.LOAD_FILE
+    ));
+  }
+
   public final @NotNull ReplConfig config;
   public @NotNull Path cwd = Path.of("");
   public int prettyPrintWidth = 80;

@@ -9,6 +9,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.Repl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jline.reader.Candidate;
 
 import java.io.IOException;
@@ -17,29 +18,15 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 public interface DefaultCommands {
-  static @NotNull CommandManager defaultCommandManager() {
-    return new CommandManager(ImmutableSeq.of(
-      QUIT,
-      CHANGE_PROMPT,
-      CHANGE_NORM_MODE,
-      SHOW_TYPE,
-      CHANGE_PP_WIDTH,
-      TOGGLE_UNICODE,
-      CHANGE_CWD,
-      PRINT_CWD,
-      LOAD_FILE
-    ));
-  }
-
   @NotNull Command CHANGE_PROMPT = new Command(ImmutableSeq.of("prompt"), "Change the REPL prompt text") {
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull String argument) {
       repl.config.prompt = argument;
       return Result.ok("Changed prompt to `" + argument + "`", true);
     }
   };
 
   @NotNull Command SHOW_TYPE = new Command.CodeCommand(ImmutableSeq.of("t", "type"), "Show the type of the given expression") {
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull String argument) {
       var type = repl.replCompiler.compileExpr(argument, repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
@@ -47,9 +34,9 @@ public interface DefaultCommands {
   };
 
   @NotNull Command LOAD_FILE = new Command.FileCommand(ImmutableSeq.of("l", "load"), "Load file into REPL") {
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull Path path) {
       try {
-        repl.replCompiler.loadToContext(Path.of(argument));
+        repl.replCompiler.loadToContext(path);
       } catch (IOException e) {
         return Result.err("Unable to read file: " + e.getLocalizedMessage(), true);
       }
@@ -59,9 +46,8 @@ public interface DefaultCommands {
   };
 
   @NotNull Command CHANGE_CWD = new Command.FileCommand(ImmutableSeq.of("cd"), "Change current working directory") {
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
-      var path = repl.resolveFile(argument);
-      if (!Files.isDirectory(path)) return Result.err("cd: no such file or directory: " + argument, true);
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull Path path) {
+      if (!Files.isDirectory(path)) return Result.err("cd: no such file or directory: " + path, true);
       repl.cwd = path;
       // for jline completer to work properly, but it does not have any effect actually
       System.setProperty("user.dir", path.toAbsolutePath().toString());
@@ -70,13 +56,13 @@ public interface DefaultCommands {
   };
 
   @NotNull Command PRINT_CWD = new Command(ImmutableSeq.of("pwd"), "Print current working directory") {
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl) {
       return new Result(Output.stdout(repl.cwd.toAbsolutePath().toString()), true);
     }
   };
 
   @NotNull Command CHANGE_PP_WIDTH = new Command(ImmutableSeq.of("print-width"), "Set printed output width") {
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull String argument) {
       var prettyPrintWidth = Integer.parseInt(argument.trim());
       repl.prettyPrintWidth = prettyPrintWidth;
       return Result.ok("Printed output width set to " + prettyPrintWidth, true);
@@ -84,7 +70,7 @@ public interface DefaultCommands {
   };
 
   @NotNull Command QUIT = new Command(ImmutableSeq.of("quit", "exit", "q"), "Quit the REPL") {
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl) {
       return Result.ok("See you space cow woof woof :3", false);
     }
   };
@@ -94,14 +80,11 @@ public interface DefaultCommands {
       return ArraySeq.of(NormalizeMode.values()).view().map(Enum::name).map(Candidate::new);
     }
 
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
-      if (argument.isBlank()) return Result.ok("Normalization mode: " + repl.config.normalizeMode, true);
-      else try {
-        var normalizeMode = NormalizeMode.valueOf(argument);
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable NormalizeMode normalizeMode) {
+      if (normalizeMode == null) return Result.ok("Normalization mode: " + repl.config.normalizeMode, true);
+      else {
         repl.config.normalizeMode = normalizeMode;
         return Result.ok("Normalization mode set to " + normalizeMode, true);
-      } catch (IllegalArgumentException ignored) {
-        return Result.err("Unknown normalization mode " + argument, true);
       }
     }
   };
@@ -111,12 +94,10 @@ public interface DefaultCommands {
       return Seq.of(true, false).view().map(b -> new Candidate(b.toString()));
     }
 
-    @Entry public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
-      var trim = argument.trim();
-      boolean enableUnicode = trim.isEmpty() ? !repl.config.enableUnicode
-        : Boolean.parseBoolean(trim);
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable Boolean enable) {
+      var enableUnicode = enable != null ? enable : !repl.config.enableUnicode;
       repl.config.enableUnicode = enableUnicode;
-      return Result.ok("Unicode " + (enableUnicode ? "enabled" : "disabled"), true);
+      return Result.ok("Toggled Unicode to be " + (enableUnicode ? "enabled" : "disabled"), true);
     }
   };
 }
