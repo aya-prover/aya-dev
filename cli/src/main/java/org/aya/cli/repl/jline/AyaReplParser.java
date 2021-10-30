@@ -8,6 +8,7 @@ import org.aya.cli.repl.command.Command;
 import org.aya.concrete.parse.AyaParsing;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.*;
+import org.jline.reader.impl.DefaultParser;
 
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +63,8 @@ public class AyaReplParser implements Parser {
       && line.startsWith(Command.MULTILINE_BEGIN) && !line.endsWith(Command.MULTILINE_END)) {
       throw new EOFError(-1, cursor, "In multiline mode");
     }
+    // use a shell like parser for completion only
+    if (context == ParseContext.COMPLETE) return new DefaultParser().parse(line, cursor, context);
     // Drop whitespaces
     var tokens = tokensNoEOF(line)
       .filter(token -> token.getChannel() != Token.HIDDEN_CHANNEL);

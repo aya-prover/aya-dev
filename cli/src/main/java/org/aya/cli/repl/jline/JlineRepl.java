@@ -47,6 +47,7 @@ public final class JlineRepl extends Repl {
         new ArgCompleter.Keywords(commandManager),
         new ArgCompleter.Strings(commandManager),
         new ArgCompleter.Symbols(commandManager, replCompiler.getContext()),
+        new ArgCompleter.Files(commandManager),
         commandManager.completer()
       ))
       .variable(LineReader.HISTORY_FILE, AyaHome.ayaHome().resolve("history"))

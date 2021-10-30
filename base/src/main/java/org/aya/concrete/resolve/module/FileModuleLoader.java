@@ -19,7 +19,6 @@ import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
-import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
@@ -57,14 +56,16 @@ public record FileModuleLoader(
     var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
-      return tyckModule(path, recurseLoader, program, reporter,
+      var context = new EmptyContext(reporter).derive(path);
+      tyckModule(context, recurseLoader, program, reporter,
         resolveInfo -> {
           if (callback != null) callback.onResolved(sourcePath, resolveInfo, program);
         },
         defs -> {
           if (callback != null) callback.onTycked(sourcePath, program, defs);
         },
-        builder).exports;
+        builder);
+      return context.exports;
     } catch (IOException e) {
       return null;
     }
@@ -102,20 +103,6 @@ public record FileModuleLoader(
     } finally {
       onResolved.acceptChecked(resolveInfo);
     }
-  }
-
-  public static <E extends Exception> @NotNull PhysicalModuleContext tyckModule(
-    @NotNull ImmutableSeq<@NotNull String> path,
-    @NotNull ModuleLoader recurseLoader,
-    @NotNull ImmutableSeq<Stmt> program,
-    @NotNull Reporter reporter,
-    @NotNull CheckedConsumer<FileResolveInfo, E> onResolved,
-    @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
-    Trace.@Nullable Builder builder
-  ) throws E {
-    var context = new EmptyContext(reporter).derive(path);
-    tyckModule(context, recurseLoader, program, reporter, onResolved, onTycked, builder);
-    return context;
   }
 
   /**

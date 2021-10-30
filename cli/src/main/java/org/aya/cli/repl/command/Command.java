@@ -17,6 +17,9 @@ public interface Command {
   interface CodeCommand extends Command {
   }
 
+  interface FileCommand extends Command {
+  }
+
   @NotNull String PREFIX = ":";
   @NotNull String MULTILINE_BEGIN = ":{";
   @NotNull String MULTILINE_END = ":}";
@@ -34,6 +37,10 @@ public interface Command {
   @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl);
 
   record Output(@NotNull Doc stdout, @NotNull Doc stderr) {
+    public static @NotNull Output empty() {
+      return new Output(Doc.empty(), Doc.empty());
+    }
+
     public static @NotNull Output stdout(@NotNull Doc doc) {
       return new Output(doc, Doc.empty());
     }

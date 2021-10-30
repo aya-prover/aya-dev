@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import kala.collection.Seq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.AyaHome;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Scanner;
 
 public abstract class Repl implements Closeable, Runnable {
@@ -41,6 +41,7 @@ public abstract class Repl implements Closeable, Runnable {
   public final @NotNull ReplCompiler replCompiler = new ReplCompiler(new CliReporter(this::println, this::errPrintln), null);
   public final @NotNull CommandManager commandManager = DefaultCommands.defaultCommandManager();
   public final @NotNull ReplConfig config;
+  public @NotNull Path cwd = Path.of("");
   public int prettyPrintWidth = 80;
 
   public Repl(@NotNull ReplConfig config) {
@@ -51,6 +52,12 @@ public abstract class Repl implements Closeable, Runnable {
   protected abstract void errPrintln(@NotNull String x);
   protected abstract @NotNull String readLine(@NotNull String prompt) throws EOFException, InterruptedException;
   protected abstract @Nullable String hintMessage();
+
+  public @NotNull Path resolveFile(@NotNull String arg) {
+    var homeAware = arg.replaceFirst("^~", System.getProperty("user.home"));
+    var path = Path.of(homeAware);
+    return path.isAbsolute() ? path.normalize() : cwd.resolve(homeAware).toAbsolutePath().normalize();
+  }
 
   @Override public void run() {
     println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH + ")");
@@ -76,12 +83,12 @@ public abstract class Repl implements Closeable, Runnable {
       var line = readLine(config.prompt).trim();
       if (line.startsWith(Command.MULTILINE_BEGIN) && line.endsWith(Command.MULTILINE_END)) {
         var code = line.substring(Command.MULTILINE_BEGIN.length(), line.length() - Command.MULTILINE_END.length());
-        printResult(evalWithContext(code));
+        printResult(eval(code));
       } else if (line.startsWith(Command.PREFIX)) {
         var result = commandManager.parse(line.substring(1)).run(this);
         printResult(result.output());
         return result.continueRepl();
-      } else printResult(evalWithContext(line));
+      } else printResult(eval(line));
     } catch (EOFException ignored) {
       // user send ctrl-d
       return false;
@@ -96,12 +103,13 @@ public abstract class Repl implements Closeable, Runnable {
     return true;
   }
 
-  private @NotNull Command.Output evalWithContext(@NotNull String line) {
-    var programOrTerm = replCompiler.compileAndAddToContext(line, config.normalizeMode, Seq.empty(), null);
-    return programOrTerm != null ? Command.Output.stdout(programOrTerm.fold(
+  private @NotNull Command.Output eval(@NotNull String line) {
+    var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
+    return programOrTerm == null ? Command.Output.stderr("The input text is neither a program nor an expression.")
+      : Command.Output.stdout(programOrTerm.fold(
       program -> render(options -> Doc.vcat(program.view().map(def -> def.toDoc(options)))),
       this::render
-    )) : Command.Output.stderr("The input text is neither a program nor an expression.");
+    ));
   }
 
   public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {

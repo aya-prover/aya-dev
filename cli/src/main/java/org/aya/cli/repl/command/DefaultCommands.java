@@ -11,6 +11,9 @@ import org.aya.cli.repl.Repl;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 public interface DefaultCommands {
@@ -23,7 +26,10 @@ public interface DefaultCommands {
       help,
       SHOW_TYPE,
       CHANGE_PP_WIDTH,
-      TOGGLE_UNICODE
+      TOGGLE_UNICODE,
+      CHANGE_CWD,
+      PRINT_CWD,
+      LOAD_FILE
     );
     help.context = new CommandManager(commands);
     return help.context;
@@ -54,9 +60,63 @@ public interface DefaultCommands {
     }
 
     @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
-      var type = repl.replCompiler.compileExprAndGetType(argument, repl.config.normalizeMode);
+      var type = repl.replCompiler.compileExpr(argument, repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
+    }
+  };
+
+  @NotNull Command LOAD_FILE = new Command.FileCommand() {
+    @Override public @NotNull ImmutableSeq<String> names() {
+      return ImmutableSeq.of("l", "load");
+    }
+
+    @Override public @NotNull String description() {
+      return "Load file into REPL context";
+    }
+
+    @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+      try {
+        repl.replCompiler.loadToContext(Path.of(argument));
+      } catch (IOException e) {
+        return Result.err("Unable to read file: " + e.getLocalizedMessage(), true);
+      }
+      // SingleFileCompiler would print result to REPL.
+      return new Result(Output.empty(), true);
+    }
+  };
+
+  @NotNull Command CHANGE_CWD = new Command.FileCommand() {
+    @Override public @NotNull ImmutableSeq<String> names() {
+      return ImmutableSeq.of("cd");
+    }
+
+    @Override public @NotNull String description() {
+      return "Change current working directory";
+    }
+
+    @Override public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+      var path = repl.resolveFile(argument);
+      if (!Files.isDirectory(path)) return Result.err("cd: no such file or directory: " + argument, true);
+      repl.cwd = path;
+      // for jline completer to work properly, but it does not have any effect actually
+      System.setProperty("user.dir", path.toAbsolutePath().toString());
+      return new Result(Output.empty(), true);
+    }
+  };
+
+  @NotNull Command PRINT_CWD = new Command() {
+    @Override public @NotNull ImmutableSeq<String> names() {
+      return ImmutableSeq.of("pwd");
+    }
+
+    @Override public @NotNull String description() {
+      return "Print current working directory";
+    }
+
+    @Override
+    public @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl) {
+      return new Result(Output.stdout(repl.cwd.toAbsolutePath().toString()), true);
     }
   };
 
