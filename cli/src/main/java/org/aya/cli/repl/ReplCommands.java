@@ -1,23 +1,21 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl.command;
+package org.aya.cli.repl;
 
-import kala.collection.ArraySeq;
-import kala.collection.Seq;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.NormalizeMode;
-import org.aya.cli.repl.Repl;
+import org.aya.cli.repl.command.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jline.reader.Candidate;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 
-public interface DefaultCommands {
+public interface ReplCommands {
+  record Code(@NotNull String code) {
+  }
+
   @NotNull Command CHANGE_PROMPT = new Command(ImmutableSeq.of("prompt"), "Change the REPL prompt text") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull String argument) {
       repl.config.prompt = argument;
@@ -25,15 +23,15 @@ public interface DefaultCommands {
     }
   };
 
-  @NotNull Command SHOW_TYPE = new Command.CodeCommand(ImmutableSeq.of("t", "type"), "Show the type of the given expression") {
-    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull String argument) {
-      var type = repl.replCompiler.compileExpr(argument, repl.config.normalizeMode);
+  @NotNull Command SHOW_TYPE = new Command(ImmutableSeq.of("t", "type"), "Show the type of the given expression") {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull Code code) {
+      var type = repl.replCompiler.compileExpr(code.code(), repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
     }
   };
 
-  @NotNull Command LOAD_FILE = new Command.FileCommand(ImmutableSeq.of("l", "load"), "Load file into REPL") {
+  @NotNull Command LOAD_FILE = new Command(ImmutableSeq.of("l", "load"), "Load file into REPL") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull Path path) {
       try {
         repl.replCompiler.loadToContext(path);
@@ -45,7 +43,7 @@ public interface DefaultCommands {
     }
   };
 
-  @NotNull Command CHANGE_CWD = new Command.FileCommand(ImmutableSeq.of("cd"), "Change current working directory") {
+  @NotNull Command CHANGE_CWD = new Command(ImmutableSeq.of("cd"), "Change current working directory") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull Path path) {
       if (!Files.isDirectory(path)) return Result.err("cd: no such file or directory: " + path, true);
       repl.cwd = path;
@@ -62,10 +60,10 @@ public interface DefaultCommands {
   };
 
   @NotNull Command CHANGE_PP_WIDTH = new Command(ImmutableSeq.of("print-width"), "Set printed output width") {
-    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull String argument) {
-      var prettyPrintWidth = Integer.parseInt(argument.trim());
-      repl.prettyPrintWidth = prettyPrintWidth;
-      return Result.ok("Printed output width set to " + prettyPrintWidth, true);
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable Integer width) {
+      if (width == null) return Result.err("print-width: invalid width", true);
+      repl.prettyPrintWidth = width;
+      return Result.ok("Printed output width set to " + width, true);
     }
   };
 
@@ -75,11 +73,7 @@ public interface DefaultCommands {
     }
   };
 
-  @NotNull Command CHANGE_NORM_MODE = new Command.StringCommand(ImmutableSeq.of("normalize"), "Set or display the normalization mode (candidates: " + Arrays.toString(NormalizeMode.values()) + ")") {
-    public SeqView<Candidate> params() {
-      return ArraySeq.of(NormalizeMode.values()).view().map(Enum::name).map(Candidate::new);
-    }
-
+  @NotNull Command CHANGE_NORM_MODE = new Command(ImmutableSeq.of("normalize"), "Set or display the normalization mode") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable NormalizeMode normalizeMode) {
       if (normalizeMode == null) return Result.ok("Normalization mode: " + repl.config.normalizeMode, true);
       else {
@@ -89,11 +83,7 @@ public interface DefaultCommands {
     }
   };
 
-  @NotNull Command TOGGLE_UNICODE = new Command.StringCommand(ImmutableSeq.of("unicode"), "Enable or disable unicode in REPL output") {
-    public SeqView<Candidate> params() {
-      return Seq.of(true, false).view().map(b -> new Candidate(b.toString()));
-    }
-
+  @NotNull Command TOGGLE_UNICODE = new Command(ImmutableSeq.of("unicode"), "Enable or disable unicode in REPL output") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable Boolean enable) {
       var enableUnicode = enable != null ? enable : !repl.config.enableUnicode;
       repl.config.enableUnicode = enableUnicode;

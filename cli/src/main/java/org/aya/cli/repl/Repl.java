@@ -10,14 +10,15 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.Command;
 import org.aya.cli.repl.command.CommandArg;
 import org.aya.cli.repl.command.CommandManager;
-import org.aya.cli.repl.command.DefaultCommands;
 import org.aya.cli.repl.jline.JlineRepl;
+import org.aya.cli.repl.jline.completer.AyaCompleters;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jline.builtins.Completers;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -48,18 +49,20 @@ public abstract class Repl implements Closeable, Runnable {
     return new CommandManager(ImmutableSeq.of(
       CommandArg.STRING,
       CommandArg.STRICT_BOOLEAN,
-      CommandArg.from(Path.class, this::resolveFile),
+      CommandArg.STRICT_INT,
+      CommandArg.from(Path.class, new Completers.FileNameCompleter(), this::resolveFile),
+      CommandArg.from(ReplCommands.Code.class, new AyaCompleters.CodeCompleter(this.replCompiler.getContext()), ReplCommands.Code::new),
       CommandArg.fromEnum(NormalizeMode.class)
     ), ImmutableSeq.of(
-      DefaultCommands.QUIT,
-      DefaultCommands.CHANGE_PROMPT,
-      DefaultCommands.CHANGE_NORM_MODE,
-      DefaultCommands.SHOW_TYPE,
-      DefaultCommands.CHANGE_PP_WIDTH,
-      DefaultCommands.TOGGLE_UNICODE,
-      DefaultCommands.CHANGE_CWD,
-      DefaultCommands.PRINT_CWD,
-      DefaultCommands.LOAD_FILE
+      ReplCommands.QUIT,
+      ReplCommands.CHANGE_PROMPT,
+      ReplCommands.CHANGE_NORM_MODE,
+      ReplCommands.SHOW_TYPE,
+      ReplCommands.CHANGE_PP_WIDTH,
+      ReplCommands.TOGGLE_UNICODE,
+      ReplCommands.CHANGE_CWD,
+      ReplCommands.PRINT_CWD,
+      ReplCommands.LOAD_FILE
     ));
   }
 

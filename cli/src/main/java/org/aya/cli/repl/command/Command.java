@@ -2,11 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.command;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
-import org.jline.reader.Candidate;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -16,26 +14,6 @@ public abstract class Command {
   @Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   public @interface Entry {
-  }
-
-  public static abstract class StringCommand extends Command {
-    public StringCommand(@NotNull ImmutableSeq<String> names, @NotNull String help) {
-      super(names, help);
-    }
-
-    public abstract SeqView<Candidate> params();
-  }
-
-  public static abstract class CodeCommand extends Command {
-    public CodeCommand(@NotNull ImmutableSeq<String> names, @NotNull String help) {
-      super(names, help);
-    }
-  }
-
-  public static abstract class FileCommand extends Command {
-    public FileCommand(@NotNull ImmutableSeq<String> names, @NotNull String help) {
-      super(names, help);
-    }
   }
 
   public static final @NotNull String PREFIX = ":";

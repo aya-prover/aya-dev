@@ -8,10 +8,8 @@ import kala.control.Option;
 import kala.control.Try;
 import kala.tuple.Tuple;
 import org.aya.cli.repl.Repl;
-import org.aya.cli.repl.jline.completer.CmdCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jline.reader.Completer;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -44,18 +42,21 @@ public class CommandManager {
       .findFirst();
     if (entry.isEmpty()) throw new IllegalArgumentException("no entry found in " + c.getClass());
     try {
-      var handle = MethodHandles.lookup().unreflect(entry.get());
+      var method = entry.get();
+      method.setAccessible(true); // for anonymous class
+      var handle = MethodHandles.lookup().unreflect(method);
       var param = handle.type().parameterList();
       if (param.size() < 2)
         throw new IllegalArgumentException("entry method must at least have 1 parameters (the `REPL` instance)");
       if (param.get(1) != Repl.class)
         throw new IllegalArgumentException("entry method must have `Repl` as first parameter");
       if (param.size() == 2) return new CommandGen(c, handle, null);
+      // TODO: support more than 1 parameter
       var factory = argFactory.getOption(param.get(2));
       if (factory.isEmpty()) throw new IllegalArgumentException("no argument factory found for " + param.get(2));
       return new CommandGen(c, handle, factory.get());
     } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("unable to unreflect: ", e);
+      throw new IllegalArgumentException("unable to unreflect entry for: " + c.names(), e);
     }
   }
 
@@ -80,9 +81,5 @@ public class CommandManager {
     var name = split[0];
     var argument = split.length > 1 ? split[1] : "";
     return new Clue(name, cmd.findFirst(c -> c.owner.names().contains(name)), argument);
-  }
-
-  public @NotNull Completer completer() {
-    return new CmdCompleter(cmd.view().flatMap(c -> c.owner.names()));
   }
 }

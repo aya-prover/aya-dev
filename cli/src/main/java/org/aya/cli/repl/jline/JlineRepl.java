@@ -5,7 +5,7 @@ package org.aya.cli.repl.jline;
 import org.aya.api.util.AyaHome;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplConfig;
-import org.aya.cli.repl.jline.completer.ArgCompleter;
+import org.aya.cli.repl.jline.completer.CmdCompleter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +44,7 @@ public final class JlineRepl extends Repl {
       .parser(new AyaReplParser())
       .highlighter(new AyaReplHighlighter())
       .completer(new AggregateCompleter(
-        new ArgCompleter.Keywords(commandManager),
-        new ArgCompleter.Strings(commandManager),
-        new ArgCompleter.Symbols(commandManager, replCompiler.getContext()),
-        new ArgCompleter.Files(commandManager),
-        commandManager.completer()
+        new CmdCompleter(this, commandManager)
       ))
       .variable(LineReader.HISTORY_FILE, AyaHome.ayaHome().resolve("history"))
       .variable(LineReader.SECONDARY_PROMPT_PATTERN, "| ")
