@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.resolve.context.Context;
@@ -14,6 +15,11 @@ import org.aya.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
 
 public final class ReplContext extends PhysicalModuleContext {
+  @Override
+  public @NotNull Reporter reporter() {
+    return super.reporter();
+  }
+
   public ReplContext(@NotNull Context parent, @NotNull ImmutableSeq<String> name) {
     super(parent, name);
   }

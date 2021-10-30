@@ -25,6 +25,10 @@ public final class CountingReporter implements Reporter {
     return errorSize() == 0;
   }
 
+  public void clear() {
+    count.clear();
+  }
+
   @Override
   public @NotNull String countToString() {
     return String.format("%d error(s), %d warning(s).", errorSize(), warningSize());

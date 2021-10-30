@@ -27,21 +27,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class ReplCompiler {
-  private final @NotNull Reporter reporter;
+  private final @NotNull CountingReporter reporter;
   private final @Nullable SourceFileLocator locator;
   private final @NotNull ReplContext context;
   private final @NotNull Buffer<Path> modulePaths;
 
   ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
-    this.reporter = reporter;
+    this.reporter = new CountingReporter(reporter);
     this.locator = locator;
     this.modulePaths = Buffer.create();
-    this.context = new ReplContext(new EmptyContext(reporter), ImmutableSeq.of("REPL"));
+    this.context = new ReplContext(new EmptyContext(this.reporter), ImmutableSeq.of("REPL"));
   }
 
   public int loadToContext(@NotNull Path file) throws IOException {
+    this.reporter.clear();
     return new SingleFileCompiler(reporter, null, null)
-      .compile(file, context, new CompilerFlags(CompilerFlags.Message.EMOJI, false, null,
+      .compile(file, r -> context, new CompilerFlags(CompilerFlags.Message.EMOJI, false, null,
         modulePaths.view()), null);
   }
 
