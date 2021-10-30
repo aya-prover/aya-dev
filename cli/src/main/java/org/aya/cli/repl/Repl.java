@@ -54,6 +54,7 @@ public abstract class Repl implements Closeable, Runnable {
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.CodeCompleter(this.replCompiler.getContext()), ReplCommands.Code::new),
       CommandArg.fromEnum(NormalizeMode.class)
     ), ImmutableSeq.of(
+      ReplCommands.HELP,
       ReplCommands.QUIT,
       ReplCommands.CHANGE_PROMPT,
       ReplCommands.CHANGE_NORM_MODE,

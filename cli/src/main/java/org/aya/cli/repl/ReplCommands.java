@@ -5,6 +5,7 @@ package org.aya.cli.repl;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.Command;
+import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +89,23 @@ public interface ReplCommands {
       var enableUnicode = enable != null ? enable : !repl.config.enableUnicode;
       repl.config.enableUnicode = enableUnicode;
       return Result.ok("Toggled Unicode to be " + (enableUnicode ? "enabled" : "disabled"), true);
+    }
+  };
+
+  @NotNull Command HELP = new Command(ImmutableSeq.of("h", "help"), "Describe a selected command or show all commands") {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable String argument) {
+      if (argument != null && !argument.isEmpty()) {
+        var cmd = repl.commandManager.cmd.find(c -> c.owner().names().contains(argument));
+        if (cmd.isDefined()) return Result.ok(cmd.get().owner().help(), true);
+        else return Result.err("No such command: " + argument, true);
+      }
+      var commands = Doc.vcat(repl.commandManager.cmd.view()
+        .map(command -> Doc.sep(
+          Doc.commaList(command.owner().names().map(name -> Doc.plain(Command.PREFIX + name))),
+          Doc.plain("-"),
+          Doc.english(command.owner().help())
+        )));
+      return new Result(new Output(commands, Doc.empty()), true);
     }
   };
 }
