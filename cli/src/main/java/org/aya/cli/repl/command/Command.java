@@ -4,39 +4,61 @@ package org.aya.cli.repl.command;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.repl.Repl;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 
-public interface Command {
-  interface StringCommand extends Command {
-    SeqView<Candidate> params();
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+public abstract class Command {
+  @Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  public @interface Entry {
   }
 
-  interface CodeCommand extends Command {
+  public static abstract class StringCommand extends Command {
+    public StringCommand(@NotNull ImmutableSeq<String> names, @NotNull String help) {
+      super(names, help);
+    }
+
+    public abstract SeqView<Candidate> params();
   }
 
-  interface FileCommand extends Command {
+  public static abstract class CodeCommand extends Command {
+    public CodeCommand(@NotNull ImmutableSeq<String> names, @NotNull String help) {
+      super(names, help);
+    }
   }
 
-  @NotNull String PREFIX = ":";
-  @NotNull String MULTILINE_BEGIN = ":{";
-  @NotNull String MULTILINE_END = ":}";
+  public static abstract class FileCommand extends Command {
+    public FileCommand(@NotNull ImmutableSeq<String> names, @NotNull String help) {
+      super(names, help);
+    }
+  }
 
-  @NotNull ImmutableSeq<String> names();
-  @NotNull String description();
+  public static final @NotNull String PREFIX = ":";
+  public static final @NotNull String MULTILINE_BEGIN = ":{";
+  public static final @NotNull String MULTILINE_END = ":}";
 
-  /**
-   * Execute the command.
-   *
-   * @param argument the command content such as args and code with the command prefix removed
-   * @param repl     the REPL
-   * @return the result
-   */
-  @NotNull Command.Result execute(@NotNull String argument, @NotNull Repl repl);
+  private final @NotNull ImmutableSeq<String> names;
+  private final @NotNull String help;
 
-  record Output(@NotNull Doc stdout, @NotNull Doc stderr) {
+  public Command(@NotNull ImmutableSeq<String> names, @NotNull String help) {
+    this.names = names;
+    this.help = help;
+  }
+
+  public final @NotNull ImmutableSeq<String> names() {
+    return names;
+  }
+
+  public final @NotNull String help() {
+    return help;
+  }
+
+  public static record Output(@NotNull Doc stdout, @NotNull Doc stderr) {
     public static @NotNull Output empty() {
       return new Output(Doc.empty(), Doc.empty());
     }
@@ -58,7 +80,7 @@ public interface Command {
     }
   }
 
-  record Result(@NotNull Output output, boolean continueRepl) {
+  public static record Result(@NotNull Output output, boolean continueRepl) {
     public static @NotNull Command.Result ok(@NotNull String text, boolean continueRepl) {
       return new Result(Output.stdout(Doc.english(text)), continueRepl);
     }

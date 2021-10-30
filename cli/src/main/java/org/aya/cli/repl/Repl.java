@@ -95,7 +95,7 @@ public abstract class Repl implements Closeable, Runnable {
     } catch (InterruptedException ignored) {
       // user send ctrl-c
       return true;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       var stackTrace = new StringWriter();
       e.printStackTrace(new PrintWriter(stackTrace));
       errPrintln(stackTrace.toString());

@@ -70,7 +70,7 @@ public interface ArgCompleter extends Completer {
     var trim = line.line().trim();
     if (trim.startsWith(Command.PREFIX)) {
       var life = manager().parse(trim.substring(1)).command();
-      if (life.isDefined()) complete(life.get(), reader, line, candidates);
+      if (life.isDefined()) complete(life.get().owner(), reader, line, candidates);
     } else complete(null, reader, line, candidates);
   }
 }

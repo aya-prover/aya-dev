@@ -2,45 +2,50 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.command;
 
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.control.Option;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.jline.completer.CmdCompleter;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Completer;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
+
 public class CommandManager {
-  public final @NotNull ImmutableSeq<Command> commands;
-  public final @NotNull ImmutableMap<@NotNull String, @NotNull Command> commandMap;
+  public static record CommandGen(@NotNull Command owner, @NotNull MethodHandle entry) {
+    public Command.Result invoke(@NotNull Repl repl, @NotNull String argument) throws Throwable {
+      return (Command.Result) entry.invoke(owner, repl, argument);
+    }
+  }
+
+  public final @NotNull ImmutableSeq<@NotNull CommandGen> cmd;
 
   public CommandManager(@NotNull ImmutableSeq<Command> commands) {
-    this.commands = commands;
+    this.cmd = commands.map(this::genCommand);
+  }
 
-    var commandMap = new MutableHashMap<@NotNull String, @NotNull Command>();
-    for (var command : commands) {
-      assert command.names().isNotEmpty() : "Command " + command + " has no names";
-
-      for (var name : command.names()) {
-        var existingCommand = commandMap.putIfAbsent(name, command);
-        if (existingCommand.isDefined())
-          throw new IllegalArgumentException("Command " + existingCommand.get() +
-            " and command " + command + " has a duplicate name " + name);
-      }
+  private @NotNull CommandGen genCommand(Command c) {
+    var entry = Arrays.stream(c.getClass().getDeclaredMethods())
+      .filter(method -> method.isAnnotationPresent(Command.Entry.class))
+      .findFirst();
+    if (entry.isEmpty()) throw new IllegalArgumentException("no entry found in " + c.getClass());
+    try {
+      return new CommandGen(c, MethodHandles.lookup().unreflect(entry.get()));
+    } catch (IllegalAccessException e) {
+      throw new IllegalArgumentException("unable to unreflect: ", e);
     }
-
-    this.commandMap = commandMap.toImmutableMap();
   }
 
   public record Clue(
     @NotNull String name,
-    @NotNull Option<@NotNull Command> command,
+    @NotNull Option<@NotNull CommandGen> command,
     @NotNull String argument
   ) {
-    public Command.Result run(@NotNull Repl repl) {
+    public Command.Result run(@NotNull Repl repl) throws Throwable {
       return command.isDefined()
-        ? command.get().execute(argument, repl)
+        ? command.get().invoke(repl, argument)
         : Command.Result.err("Command `" + name + "` not found", true);
     }
   }
@@ -53,10 +58,10 @@ public class CommandManager {
     var split = text.split(" +", 2);
     var name = split[0];
     var argument = split.length > 1 ? split[1] : "";
-    return new Clue(name, commandMap.getOption(name), argument);
+    return new Clue(name, cmd.findFirst(c -> c.owner.names().contains(name)), argument);
   }
 
   public @NotNull Completer completer() {
-    return new CmdCompleter(commandMap.keysView());
+    return new CmdCompleter(cmd.view().flatMap(c -> c.owner.names()));
   }
 }
