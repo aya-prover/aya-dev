@@ -6,10 +6,22 @@ import java.util.function.Function;
 
 public sealed interface IntroValue extends Value {
   record Lambda(Param param, Function<Value, Value> func) implements IntroValue {
-
+    @Override
+    public Value apply(Arg arg) {
+      assert arg.explicit() == param.explicit();
+      return func.apply(arg.value());
+    }
   }
 
   record Pair(Value left, Value right) implements IntroValue {
+    @Override
+    public Value projL() {
+      return left;
+    }
 
+    @Override
+    public Value projR() {
+      return right;
+    }
   }
 }

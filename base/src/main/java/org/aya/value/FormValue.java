@@ -7,17 +7,15 @@ import org.aya.core.sort.Sort;
 import java.util.function.Function;
 
 public sealed interface FormValue extends Value {
-  record Unit() implements FormValue {}
+  record Unit() implements FormValue {
+  }
 
   record Pi(Param param, Function<Value, Value> func) implements FormValue {
-
   }
 
   record Sig(Param param, Function<Value, Value> func) implements FormValue {
-
   }
 
   record Univ(Sort sort) implements FormValue {
-
   }
 }
