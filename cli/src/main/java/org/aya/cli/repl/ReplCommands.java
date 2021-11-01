@@ -17,6 +17,9 @@ public interface ReplCommands {
   record Code(@NotNull String code) {
   }
 
+  record HelpItem(@NotNull String cmd) {
+  }
+
   @NotNull Command CHANGE_PROMPT = new Command(ImmutableSeq.of("prompt"), "Change the REPL prompt text") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull String argument) {
       repl.config.prompt = argument;
@@ -93,11 +96,11 @@ public interface ReplCommands {
   };
 
   @NotNull Command HELP = new Command(ImmutableSeq.of("h", "help"), "Describe a selected command or show all commands") {
-    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable String argument) {
-      if (argument != null && !argument.isEmpty()) {
-        var cmd = repl.commandManager.cmd.find(c -> c.owner().names().contains(argument));
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable ReplCommands.HelpItem argument) {
+      if (argument != null && !argument.cmd.isEmpty()) {
+        var cmd = repl.commandManager.cmd.find(c -> c.owner().names().contains(argument.cmd));
         if (cmd.isDefined()) return Result.ok(cmd.get().owner().help(), true);
-        else return Result.err("No such command: " + argument, true);
+        else return Result.err("No such command: " + argument.cmd, true);
       }
       var commands = Doc.vcat(repl.commandManager.cmd.view()
         .map(command -> Doc.sep(

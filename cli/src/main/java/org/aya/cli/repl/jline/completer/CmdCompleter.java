@@ -18,11 +18,11 @@ import java.util.List;
 public record CmdCompleter(
   @NotNull Repl repl,
   @NotNull CommandManager cmd,
-  @NotNull AyaCompleters.CodeCompleter outerMost,
+  @NotNull AyaCompleters.Code outerMost,
   @NotNull ImmutableSeq<Candidate> cmdNames
 ) implements Completer {
   public CmdCompleter(@NotNull Repl repl, @NotNull CommandManager cmd) {
-    this(repl, cmd, new AyaCompleters.CodeCompleter(repl.replCompiler.getContext()),
+    this(repl, cmd, new AyaCompleters.Code(repl.replCompiler.getContext()),
       cmd.cmd.view().flatMap(c -> c.owner().names()).map(c -> Command.PREFIX + c)
         .map(Candidate::new).toImmutableSeq());
   }

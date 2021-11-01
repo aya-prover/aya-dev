@@ -2,7 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline.completer;
 
+import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplContext;
+import org.aya.cli.repl.command.Command;
+import org.aya.cli.repl.command.CommandManager;
 import org.aya.parser.GeneratedLexerTokens;
 import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class AyaCompleters {
-  public static class BooleanCompleter implements Completer {
-    public static final BooleanCompleter INSTANCE = new BooleanCompleter();
+  public static class Bool implements Completer {
+    public static final Bool INSTANCE = new Bool();
 
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       candidates.add(new Candidate("true"));
@@ -24,8 +27,8 @@ public class AyaCompleters {
     }
   }
 
-  public static class KwCompleter implements Completer {
-    public static final KwCompleter INSTANCE = new KwCompleter();
+  public static class Kw implements Completer {
+    public static final Kw INSTANCE = new Kw();
     private static final @NotNull List<Candidate> KEYWORDS = GeneratedLexerTokens.KEYWORDS
       .values().stream().map(Candidate::new).toList();
 
@@ -40,10 +43,10 @@ public class AyaCompleters {
     }
   }
 
-  public static class ContextCompleter implements Completer {
+  public static class Context implements Completer {
     private final @NotNull ReplContext context;
 
-    public ContextCompleter(@NotNull ReplContext context) {
+    public Context(@NotNull ReplContext context) {
       this.context = context;
     }
 
@@ -61,14 +64,21 @@ public class AyaCompleters {
     }
   }
 
-  public static class CodeCompleter extends ContextCompleter {
-    public CodeCompleter(@NotNull ReplContext context) {
+  public static class Code extends Context {
+    public Code(@NotNull ReplContext context) {
       super(context);
     }
 
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-      AyaCompleters.KwCompleter.INSTANCE.complete(reader, line, candidates);
+      Kw.INSTANCE.complete(reader, line, candidates);
       super.complete(reader, line, candidates);
+    }
+  }
+
+  public static record Help(@NotNull Repl repl) implements Completer {
+    @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+      repl.commandManager.cmd.view().map(CommandManager.CommandGen::owner)
+        .flatMap(Command::names).map(Candidate::new).forEach(candidates::add);
     }
   }
 }
