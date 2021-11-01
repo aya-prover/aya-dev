@@ -22,7 +22,7 @@ public record CmdCompleter(
   @NotNull ImmutableSeq<Candidate> cmdNames
 ) implements Completer {
   public CmdCompleter(@NotNull Repl repl, @NotNull CommandManager cmd) {
-    this(repl, cmd, new AyaCompleters.Code(repl.replCompiler.getContext()),
+    this(repl, cmd, new AyaCompleters.Code(repl),
       cmd.cmd.view().flatMap(c -> c.owner().names()).map(c -> Command.PREFIX + c)
         .map(Candidate::new).toImmutableSeq());
   }

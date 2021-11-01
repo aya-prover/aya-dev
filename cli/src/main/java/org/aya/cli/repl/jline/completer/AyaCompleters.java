@@ -3,7 +3,6 @@
 package org.aya.cli.repl.jline.completer;
 
 import org.aya.cli.repl.Repl;
-import org.aya.cli.repl.ReplContext;
 import org.aya.cli.repl.command.Command;
 import org.aya.cli.repl.command.CommandManager;
 import org.aya.parser.GeneratedLexerTokens;
@@ -44,14 +43,15 @@ public class AyaCompleters {
   }
 
   public static class Context implements Completer {
-    private final @NotNull ReplContext context;
+    private final @NotNull Repl repl;
 
-    public Context(@NotNull ReplContext context) {
-      this.context = context;
+    public Context(@NotNull Repl repl) {
+      this.repl = repl;
     }
 
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       var word = line.word();
+      var context = repl.replCompiler.getContext();
       context.modules.view().forEach((mod, contents) -> {
         var modName = mod.joinToString(Constants.SCOPE_SEPARATOR) + Constants.SCOPE_SEPARATOR;
         if (!modName.startsWith(word)) return;
@@ -65,8 +65,8 @@ public class AyaCompleters {
   }
 
   public static class Code extends Context {
-    public Code(@NotNull ReplContext context) {
-      super(context);
+    public Code(@NotNull Repl repl) {
+      super(repl);
     }
 
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
