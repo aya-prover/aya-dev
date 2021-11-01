@@ -13,6 +13,8 @@ import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.concrete.resolve.context.EmptyContext;
+import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
@@ -29,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public record SingleFileCompiler(
   @NotNull Reporter reporter,
@@ -38,9 +41,19 @@ public record SingleFileCompiler(
   public int compile(
     @NotNull Path sourceFile,
     @NotNull CompilerFlags flags,
+    @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback) throws IOException {
+    return compile(sourceFile, reporter -> new EmptyContext(reporter).derive(ImmutableSeq.of("Mian")), flags, moduleCallback);
+  }
+
+  public int compile(
+    @NotNull Path sourceFile,
+    @NotNull Function<Reporter, ModuleContext> context,
+    @NotNull CompilerFlags flags,
     @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
   ) throws IOException {
-    var reporter = new CountingReporter(this.reporter);
+    var reporter = this.reporter instanceof CountingReporter countingReporter
+      ? countingReporter : new CountingReporter(this.reporter);
+    var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     try {
       var program = AyaParsing.program(locator, reporter, sourceFile);
@@ -48,7 +61,7 @@ public record SingleFileCompiler(
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, builder))).toImmutableSeq());
-      FileModuleLoader.tyckModule(ImmutableSeq.of("Mian"), loader, program, reporter,
+      FileModuleLoader.tyckModule(ctx, loader, program, reporter,
         resolveInfo -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
           if (moduleCallback != null) moduleCallback.onResolved(sourceFile, resolveInfo, program);

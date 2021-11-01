@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE file.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
 CommonTasks.fatJar(project, "org.aya.cli.Main")
@@ -14,6 +14,7 @@ dependencies {
   implementation("org.jline", "jline-terminal", version = jlineVersion)
   implementation("org.jline", "jline-terminal-jansi", version = jlineVersion)
   implementation("org.jline", "jline-reader", version = jlineVersion)
+  implementation("org.jline", "jline-builtins", version = jlineVersion)
   implementation(project(":base"))
   implementation(project(":parser"))
   implementation(project(":pretty"))
