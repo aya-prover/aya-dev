@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline.completer;
 
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.command.Command;
 import org.aya.cli.repl.command.CommandManager;
@@ -39,14 +41,23 @@ public interface AyaCompleters {
       this.repl = repl;
     }
 
+    private @NotNull Tuple2<String, Boolean> fixWord(@NotNull String word, ParsedLine line) {
+      if (word.startsWith(":") || word.startsWith(Constants.SCOPE_SEPARATOR)) {
+        var idx = line.wordIndex();
+        if (idx >= 1) return Tuple.of(line.words().get(idx - 1) + word, true);
+      }
+      return Tuple.of(word, false);
+    }
+
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       var word = line.word();
+      var fixed = fixWord(word, line);
       var context = repl.replCompiler.getContext();
       context.modules.view().forEach((mod, contents) -> {
         var modName = mod.joinToString(Constants.SCOPE_SEPARATOR) + Constants.SCOPE_SEPARATOR;
-        if (!modName.startsWith(word)) return;
+        if (!modName.startsWith(fixed._1)) return;
         contents.keysView()
-          .map(name -> modName + name)
+          .map(name -> fixed._2 ? Constants.SCOPE_SEPARATOR + name : modName + name)
           .map(Candidate::new)
           .forEach(candidates::add);
       });
