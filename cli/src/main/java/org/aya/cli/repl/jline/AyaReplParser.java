@@ -3,16 +3,20 @@
 package org.aya.cli.repl.jline;
 
 import kala.collection.SeqView;
+import kala.control.Option;
 import org.antlr.v4.runtime.Token;
 import org.aya.cli.repl.command.Command;
+import org.aya.cli.repl.command.CommandArg;
+import org.aya.cli.repl.command.CommandManager;
 import org.aya.concrete.parse.AyaParsing;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.*;
+import org.jline.reader.impl.DefaultParser;
 
 import java.util.Collections;
 import java.util.List;
 
-public class AyaReplParser implements Parser {
+public record AyaReplParser(@NotNull CommandManager cmd) implements Parser {
   public record AyaParsedLine(
     int wordCursor,
     @NotNull List<@NotNull String> words,
@@ -61,6 +65,14 @@ public class AyaReplParser implements Parser {
     if ((context == ParseContext.UNSPECIFIED || context == ParseContext.ACCEPT_LINE)
       && line.startsWith(Command.MULTILINE_BEGIN) && !line.endsWith(Command.MULTILINE_END)) {
       throw new EOFError(-1, cursor, "In multiline mode");
+    }
+    var trim = line.trim();
+    if (trim.startsWith(Command.PREFIX)) {
+      var shellLike = cmd.parse(trim.substring(1)).command()
+        .flatMap(c -> Option.of(c.argFactory()))
+        .map(CommandArg::shellLike)
+        .getOrDefault(false);
+      if (shellLike) return new DefaultParser().parse(line, cursor, context);
     }
     // Drop whitespaces
     var tokens = tokensNoEOF(line)

@@ -41,7 +41,7 @@ public final class JlineRepl extends Repl {
       .appName("Aya REPL")
       .terminal(terminal)
       .history(new DefaultHistory())
-      .parser(new AyaReplParser())
+      .parser(new AyaReplParser(commandManager))
       .highlighter(new AyaReplHighlighter())
       .completer(new AggregateCompleter(
         new CmdCompleter(this, commandManager)
