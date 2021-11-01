@@ -16,33 +16,23 @@ import org.jline.reader.ParsedLine;
 import java.util.Arrays;
 import java.util.List;
 
-public class AyaCompleters {
-  public static class Bool implements Completer {
-    public static final Bool INSTANCE = new Bool();
+public interface AyaCompleters {
+  @NotNull Completer BOOL = (reader, line, candidates) -> {
+    candidates.add(new Candidate("true"));
+    candidates.add(new Candidate("false"));
+  };
 
-    @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-      candidates.add(new Candidate("true"));
-      candidates.add(new Candidate("false"));
-    }
-  }
+  @NotNull List<Candidate> KEYWORDS = GeneratedLexerTokens.KEYWORDS
+    .values().stream().map(Candidate::new).toList();
+  @NotNull Completer KW = (reader, line, candidates) -> candidates.addAll(KEYWORDS);
 
-  public static class Kw implements Completer {
-    public static final Kw INSTANCE = new Kw();
-    private static final @NotNull List<Candidate> KEYWORDS = GeneratedLexerTokens.KEYWORDS
-      .values().stream().map(Candidate::new).toList();
-
-    @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-      candidates.addAll(KEYWORDS);
-    }
-  }
-
-  public static record EnumCompleter<T extends Enum<T>>(Class<T> enumClass) implements Completer {
+  record EnumCompleter<T extends Enum<T>>(Class<T> enumClass) implements Completer {
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       Arrays.stream(enumClass.getEnumConstants()).map(Enum::name).map(Candidate::new).forEach(candidates::add);
     }
   }
 
-  public static class Context implements Completer {
+  class Context implements Completer {
     private final @NotNull Repl repl;
 
     public Context(@NotNull Repl repl) {
@@ -64,18 +54,18 @@ public class AyaCompleters {
     }
   }
 
-  public static class Code extends Context {
+  class Code extends Context {
     public Code(@NotNull Repl repl) {
       super(repl);
     }
 
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-      Kw.INSTANCE.complete(reader, line, candidates);
+      KW.complete(reader, line, candidates);
       super.complete(reader, line, candidates);
     }
   }
 
-  public static record Help(@NotNull Repl repl) implements Completer {
+  record Help(@NotNull Repl repl) implements Completer {
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       repl.commandManager.cmd.view().map(CommandManager.CommandGen::owner)
         .flatMap(Command::names).map(Candidate::new).forEach(candidates::add);
