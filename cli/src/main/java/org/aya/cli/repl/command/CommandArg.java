@@ -38,9 +38,9 @@ public interface CommandArg {
   @NotNull CommandArg STRING = from(String.class, null, Function.identity());
   @NotNull CommandArg STRICT_INT = from(Integer.class, null, input ->
     Try.of(() -> Integer.parseInt(input)).getOrThrow(IllegalArgumentException::new));
-  @NotNull CommandArg STRICT_BOOLEAN = from(Boolean.class, AyaCompleters.Bool.INSTANCE, s -> {
-    if (s.equals("true")) return true;
-    if (s.equals("false")) return false;
+  @NotNull CommandArg STRICT_BOOLEAN = from(Boolean.class, AyaCompleters.BOOL, s -> {
+    if (s.equalsIgnoreCase("true")) return true;
+    if (s.equalsIgnoreCase("false")) return false;
     throw new IllegalArgumentException("not an boolean value");
   });
 }
