@@ -70,7 +70,7 @@ public class CommandManager {
         case 0 -> Command.Result.err("Command `" + name + "` not found", true);
         default -> Command.Result.err(command.view()
             .flatMap(s -> s.owner.names())
-            .joinToString("`, `", "Ambitious command name (`", "`), please be more accurate", s -> s),
+            .joinToString("`, `", "Ambiguous command name (`", "`), please be more accurate", s -> s),
           true);
       };
     }

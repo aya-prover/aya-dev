@@ -1,6 +1,8 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli;import org.aya.cli.repl.Repl;
+package org.aya.cli;
+
+import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
@@ -42,6 +44,10 @@ public class PlainReplTest {
 
   @Test public void typeType() {
     assertTrue(repl(":type Type").contains("Type"));
+  }
+
+  @Test public void amb() {
+    assertTrue(repl(":p").contains("Ambiguous"));
   }
 
   @Test public void type() {
