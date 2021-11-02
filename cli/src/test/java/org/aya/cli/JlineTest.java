@@ -4,14 +4,18 @@ package org.aya.cli;
 
 import org.aya.cli.repl.jline.AyaReplParser;
 import org.aya.cli.repl.jline.JlineRepl;
+import org.aya.cli.repl.jline.completer.AyaCompleters;
 import org.aya.pretty.doc.Doc;
+import org.jline.reader.Candidate;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class JlineTest {
   private static AyaReplParser parser;
@@ -36,6 +40,12 @@ public class JlineTest {
     assertEquals(List.of(":type", ".", "/"), parser.parse(":type ./", 2).words());
   }
 
+  @Test public void shellLike2() {
+    // Different lexing strategy depending on the prefix
+    assertEquals(List.of(":cd", "(Ty"), parser.parse(":cd (Ty", 2).words());
+    assertEquals(List.of(":type", "(", "Ty"), parser.parse(":type (Ty", 2).words());
+  }
+
   @Test public void sucZero() {
     assertEquals(List.of("suc", "zero"), parser.parse("suc zero", 2).words());
   }
@@ -43,6 +53,13 @@ public class JlineTest {
   @Test public void ws() {
     assertEquals("zero", parser.parse("suc     zero", 5).word());
     assertEquals("", parser.parse("suc  zero      ", 12).word());
+  }
+
+  @Test public void parenTyCode() {
+    var line = parser.parse("(Ty", 2);
+    var candidates = new ArrayList<Candidate>();
+    AyaCompleters.KW.complete(null, line, candidates);
+    assertFalse(candidates.isEmpty());
   }
 
   @Test public void sucZeroIx() {
