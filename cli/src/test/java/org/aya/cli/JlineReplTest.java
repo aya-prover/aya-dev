@@ -58,7 +58,7 @@ public class JlineReplTest {
   @Test public void parenTyCode() {
     var line = parser.parse("(Ty", 2);
     var candidates = new ArrayList<Candidate>();
-    AyaCompleters.KW.complete(null, line, candidates);
+    AyaCompleters.KW.complete(repl.lineReader, line, candidates);
     assertFalse(candidates.isEmpty());
   }
 

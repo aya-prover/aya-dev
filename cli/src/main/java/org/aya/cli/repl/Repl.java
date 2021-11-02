@@ -158,19 +158,22 @@ public abstract class Repl implements Closeable, Runnable {
   public static class PlainRepl extends Repl {
     private final @NotNull Scanner scanner;
     private final @NotNull PrintWriter out;
+    private final @NotNull PrintWriter err;
 
     public PlainRepl(@NotNull ReplConfig config) {
-      this(config, new InputStreamReader(System.in), new PrintWriter(System.out));
+      this(config, new InputStreamReader(System.in), new PrintWriter(System.out), new PrintWriter(System.err));
     }
 
     public PlainRepl(
       @NotNull ReplConfig config,
       @NotNull Readable input,
-      @NotNull Writer out
+      @NotNull Writer out,
+      @NotNull Writer err
     ) {
       super(config);
       scanner = new Scanner(input);
       this.out = new PrintWriter(out);
+      this.err = new PrintWriter(err);
     }
 
     @Override protected @NotNull String readLine(@NotNull String prompt) {
@@ -184,7 +187,7 @@ public abstract class Repl implements Closeable, Runnable {
     }
 
     @Override protected void errPrintln(@NotNull String x) {
-      System.err.println(x);
+      err.println(x);
     }
 
     @Override protected @Nullable String hintMessage() {
