@@ -30,6 +30,12 @@ public class JlineTest {
     assertEquals(List.of(":type", "Type"), parser.parse(":type Type", 2).words());
   }
 
+  @Test public void shellLike() {
+    // Different lexing strategy depending on the prefix
+    assertEquals(List.of(":cd", "../oh/my/./kiva"), parser.parse(":cd ../oh/my/./kiva", 2).words());
+    assertEquals(List.of(":type", ".", "/"), parser.parse(":type ./", 2).words());
+  }
+
   @Test public void sucZero() {
     assertEquals(List.of("suc", "zero"), parser.parse("suc zero", 2).words());
   }

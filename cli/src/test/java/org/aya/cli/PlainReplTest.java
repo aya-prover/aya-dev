@@ -44,6 +44,14 @@ public class PlainReplTest {
     assertTrue(repl(":type Type").contains("Type"));
   }
 
+  @Test public void type() {
+    assertTrue(repl("Type").contains("Type"));
+  }
+
+  @Test public void pwd() {
+    assertTrue(repl(":pwd").contains("aya"));
+  }
+
   @Test public void typeSuc() {
     var repl = repl("data Nat : Type | suc Nat | zero\n:type Nat::suc");
     assertTrue(repl.contains("Nat"));
