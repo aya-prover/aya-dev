@@ -14,25 +14,29 @@ public interface CommandArg {
   @NotNull Class<?> type();
   @NotNull Object parse(@NotNull String input) throws IllegalArgumentException;
   @Nullable Completer completer();
+  boolean shellLike();
+
+  record CommandArgImpl<R>(@NotNull Class<? extends R> type, @Nullable Completer completer, boolean shellLike,
+                           @NotNull Function<String, R> f) implements CommandArg {
+    @Override public @NotNull Object parse(@NotNull String input) throws IllegalArgumentException {
+      return f.apply(input);
+    }
+  }
+
+  private static <R> CommandArg from(@NotNull Class<? extends R> type, boolean shellLike, @Nullable Completer completer, @NotNull Function<String, R> f) {
+    return new CommandArgImpl<>(type, completer, shellLike, f);
+  }
 
   static <R> CommandArg from(@NotNull Class<? extends R> type, @Nullable Completer completer, @NotNull Function<String, R> f) {
-    return new CommandArg() {
-      @NotNull @Override public Class<?> type() {
-        return type;
-      }
+    return from(type, false, completer, f);
+  }
 
-      @Override public @NotNull Object parse(@NotNull String input) throws IllegalArgumentException {
-        return f.apply(input);
-      }
-
-      @Override public @Nullable Completer completer() {
-        return completer;
-      }
-    };
+  static <R> CommandArg shellLike(@NotNull Class<? extends R> type, @Nullable Completer completer, @NotNull Function<String, R> f) {
+    return from(type, true, completer, f);
   }
 
   static <T extends Enum<T>> CommandArg fromEnum(@NotNull Class<T> enumClass) {
-    return from(enumClass, new AyaCompleters.EnumCompleter<>(enumClass), input -> Enum.valueOf(enumClass, input));
+    return from(enumClass, false, new AyaCompleters.EnumCompleter<>(enumClass), input -> Enum.valueOf(enumClass, input));
   }
 
   @NotNull CommandArg STRING = from(String.class, null, Function.identity());

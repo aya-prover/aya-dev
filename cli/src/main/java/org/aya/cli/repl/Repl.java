@@ -50,7 +50,7 @@ public abstract class Repl implements Closeable, Runnable {
       CommandArg.STRING,
       CommandArg.STRICT_BOOLEAN,
       CommandArg.STRICT_INT,
-      CommandArg.from(Path.class, new Completers.FileNameCompleter(), this::resolveFile),
+      CommandArg.shellLike(Path.class, new Completers.FileNameCompleter(), this::resolveFile),
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.Code(this), ReplCommands.Code::new),
       CommandArg.from(ReplCommands.HelpItem.class, new AyaCompleters.Help(this), ReplCommands.HelpItem::new),
       CommandArg.fromEnum(NormalizeMode.class)
