@@ -72,7 +72,7 @@ public record AyaReplParser(@NotNull CommandManager cmd, @NotNull DefaultParser 
     }
     var trim = line.trim();
     if (trim.startsWith(Command.PREFIX)) {
-      var shellLike = cmd.parse(trim.substring(1)).command()
+      var shellLike = cmd.parse(trim.substring(1)).command().getOption()
         .flatMap(c -> Option.of(c.argFactory()))
         .map(CommandArg::shellLike).getOrDefault(false);
       if (shellLike) return shellLike().parse(line, cursor, context);

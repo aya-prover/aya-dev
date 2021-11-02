@@ -38,6 +38,7 @@ public record CmdCompleter(
     if (trim.startsWith(Command.PREFIX)) {
       // TODO: replace with Option.mapNotNull
       cmd.parse(trim.substring(1)).command()
+        .getOption()
         .flatMap(c -> Option.of(c.argFactory()))
         .flatMap(arg -> Option.of(arg.completer()))
         .forEach(completer -> completer.complete(reader, line, candidates));
