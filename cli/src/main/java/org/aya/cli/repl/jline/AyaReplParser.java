@@ -3,7 +3,6 @@
 package org.aya.cli.repl.jline;
 
 import kala.collection.SeqView;
-import kala.control.Option;
 import org.antlr.v4.runtime.Token;
 import org.aya.cli.repl.command.Command;
 import org.aya.cli.repl.command.CommandArg;
@@ -22,12 +21,12 @@ public record AyaReplParser(@NotNull CommandManager cmd, @NotNull DefaultParser 
   }
 
   public record AyaParsedLine(
-    int wordCursor,
-    @NotNull List<@NotNull String> words,
-    @NotNull String word,
-    int wordIndex,
-    @NotNull String line,
-    int cursor
+    @Override int wordCursor,
+    @Override @NotNull List<@NotNull String> words,
+    @Override @NotNull String word,
+    @Override int wordIndex,
+    @Override @NotNull String line,
+    @Override int cursor
   ) implements CompletingParsedLine {
     @Override public CharSequence escape(CharSequence charSequence, boolean b) {
       return charSequence;
@@ -72,9 +71,11 @@ public record AyaReplParser(@NotNull CommandManager cmd, @NotNull DefaultParser 
     }
     var trim = line.trim();
     if (trim.startsWith(Command.PREFIX)) {
-      var shellLike = cmd.parse(trim.substring(1)).command().getOption()
-        .flatMap(c -> Option.of(c.argFactory()))
-        .map(CommandArg::shellLike).getOrDefault(false);
+      var shellLike = cmd.parse(trim.substring(1)).command().view()
+        .mapNotNull(CommandManager.CommandGen::argFactory)
+        .map(CommandArg::shellLike)
+        .fold(false, Boolean::logicalOr);
+      // ^ if anything matches
       if (shellLike) return shellLike().parse(line, cursor, context);
     }
     // Drop whitespaces

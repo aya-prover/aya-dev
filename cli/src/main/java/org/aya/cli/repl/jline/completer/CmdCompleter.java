@@ -3,9 +3,9 @@
 package org.aya.cli.repl.jline.completer;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.command.Command;
+import org.aya.cli.repl.command.CommandArg;
 import org.aya.cli.repl.command.CommandManager;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
@@ -36,11 +36,9 @@ public record CmdCompleter(
     }
     var trim = line.line().trim();
     if (trim.startsWith(Command.PREFIX)) {
-      // TODO: replace with Option.mapNotNull
-      cmd.parse(trim.substring(1)).command()
-        .getOption()
-        .flatMap(c -> Option.of(c.argFactory()))
-        .flatMap(arg -> Option.of(arg.completer()))
+      cmd.parse(trim.substring(1)).command().view()
+        .mapNotNull(CommandManager.CommandGen::argFactory)
+        .mapNotNull(CommandArg::completer)
         .forEach(completer -> completer.complete(reader, line, candidates));
     } else outerMost.complete(reader, line, candidates);
   }

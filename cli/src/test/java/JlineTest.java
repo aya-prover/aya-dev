@@ -15,8 +15,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JlineTest {
-  public static @NotNull CommandManager EMPTY = new CommandManager(ImmutableSeq.empty(), ImmutableSeq.empty());
-  public static @NotNull AyaReplParser PARSER = new AyaReplParser(EMPTY);
+  public static @NotNull AyaReplParser PARSER = new AyaReplParser(new CommandManager(
+    ImmutableSeq.empty(),
+    ImmutableSeq.empty()
+  ));
 
   @Test public void initializeJline() throws IOException {
     new JlineRepl(PlainReplTest.config).renderDoc(Doc.empty());

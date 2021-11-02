@@ -4,7 +4,6 @@ package org.aya.cli.repl.command;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Result;
 import kala.control.Try;
 import kala.tuple.Tuple;
 import org.aya.cli.repl.Repl;
@@ -62,17 +61,16 @@ public class CommandManager {
 
   public record Clue(
     @NotNull String name,
-    @NotNull Result<@NotNull CommandGen,
-      @NotNull ImmutableSeq<String>> command,
+    @NotNull ImmutableSeq<CommandGen> command,
     @NotNull String argument
   ) {
     public Command.Result run(@NotNull Repl repl) throws Throwable {
-      if (command.isDefined()) return command.get().invoke(repl, argument);
-      var err = command.getErr();
-      if (err.isEmpty()) return Command.Result.err("Command `" + name + "` not found", true);
-      else return Command.Result.err(err.joinToString("`, `",
-        "Ambitious command name (`", "`), please be more accurate",
-        s -> s), true);
+      if (command.sizeEquals(1)) return command.first().invoke(repl, argument);
+      if (command.isEmpty()) return Command.Result.err("Command `" + name + "` not found", true);
+      return Command.Result.err(command.view()
+          .flatMap(s -> s.owner.names())
+          .joinToString("`, `", "Ambitious command name (`", "`), please be more accurate", s -> s),
+        true);
     }
   }
 
@@ -84,9 +82,6 @@ public class CommandManager {
     var split = text.split(" +", 2);
     var name = split[0];
     var argument = split.length > 1 ? split[1] : "";
-    var filter = cmd.filter(c -> c.owner.names().contains(name));
-    return new Clue(name, filter.sizeEquals(1)
-      ? Result.ok(filter.first())
-      : Result.err(filter.flatMap(c -> c.owner.names())), argument);
+    return new Clue(name, cmd.filter(c -> c.owner.names().contains(name)), argument);
   }
 }
