@@ -16,7 +16,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 
 public class CommandManager {
-  public static record CommandGen(
+  public record CommandGen(
     @NotNull Command owner,
     @NotNull MethodHandle entry,
     @Nullable CommandArg argFactory

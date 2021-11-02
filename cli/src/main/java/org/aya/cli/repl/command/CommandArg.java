@@ -16,8 +16,12 @@ public interface CommandArg {
   @Nullable Completer completer();
   boolean shellLike();
 
-  record CommandArgImpl<R>(@NotNull Class<? extends R> type, @Nullable Completer completer, boolean shellLike,
-                           @NotNull Function<String, R> f) implements CommandArg {
+  record CommandArgImpl<R>(
+    @Override @NotNull Class<? extends R> type,
+    @Override @Nullable Completer completer,
+    @Override boolean shellLike,
+    @NotNull Function<String, R> f
+  ) implements CommandArg {
     @Override public @NotNull Object parse(@NotNull String input) throws IllegalArgumentException {
       return f.apply(input);
     }
@@ -45,6 +49,8 @@ public interface CommandArg {
   @NotNull CommandArg STRICT_BOOLEAN = from(Boolean.class, AyaCompleters.BOOL, s -> {
     if (s.equalsIgnoreCase("true")) return true;
     if (s.equalsIgnoreCase("false")) return false;
+    if (s.equalsIgnoreCase("yes")) return true;
+    if (s.equalsIgnoreCase("no")) return false;
     throw new IllegalArgumentException("not an boolean value");
   });
 }

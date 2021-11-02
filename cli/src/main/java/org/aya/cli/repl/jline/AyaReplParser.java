@@ -79,7 +79,8 @@ public record AyaReplParser(@NotNull CommandManager cmd, @NotNull DefaultParser 
     }
     // Drop whitespaces
     var tokens = tokensNoEOF(line)
-      .filter(token -> token.getChannel() != Token.HIDDEN_CHANNEL);
+      .filter(token -> token.getChannel() != Token.HIDDEN_CHANNEL)
+      .toImmutableSeq();
     var wordOpt = tokens.firstOption(token ->
       token.getStartIndex() <= cursor && token.getStopIndex() + 1 >= cursor
     );
