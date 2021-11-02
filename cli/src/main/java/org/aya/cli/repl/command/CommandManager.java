@@ -65,12 +65,14 @@ public class CommandManager {
     @NotNull String argument
   ) {
     public Command.Result run(@NotNull Repl repl) throws Throwable {
-      if (command.sizeEquals(1)) return command.first().invoke(repl, argument);
-      if (command.isEmpty()) return Command.Result.err("Command `" + name + "` not found", true);
-      return Command.Result.err(command.view()
-          .flatMap(s -> s.owner.names())
-          .joinToString("`, `", "Ambitious command name (`", "`), please be more accurate", s -> s),
-        true);
+      return switch (command.size()) {
+        case 1 -> command.first().invoke(repl, argument);
+        case 0 -> Command.Result.err("Command `" + name + "` not found", true);
+        default -> Command.Result.err(command.view()
+            .flatMap(s -> s.owner.names())
+            .joinToString("`, `", "Ambitious command name (`", "`), please be more accurate", s -> s),
+          true);
+      };
     }
   }
 
@@ -82,6 +84,7 @@ public class CommandManager {
     var split = text.split(" +", 2);
     var name = split[0];
     var argument = split.length > 1 ? split[1] : "";
-    return new Clue(name, cmd.filter(c -> c.owner.names().contains(name)), argument);
+    return new Clue(name, cmd.filter(c -> c.owner.names()
+      .anyMatch(n -> n.startsWith(name))), argument);
   }
 }
