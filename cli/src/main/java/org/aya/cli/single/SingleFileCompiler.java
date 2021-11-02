@@ -41,7 +41,8 @@ public record SingleFileCompiler(
   public int compile(
     @NotNull Path sourceFile,
     @NotNull CompilerFlags flags,
-    @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback) throws IOException {
+    @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
+  ) throws IOException {
     return compile(sourceFile, reporter -> new EmptyContext(reporter).derive(ImmutableSeq.of("Mian")), flags, moduleCallback);
   }
 
@@ -93,7 +94,7 @@ public record SingleFileCompiler(
   private void distill(
     @NotNull Path sourceFile,
     @Nullable CompilerFlags.DistillInfo flags,
-    ImmutableSeq<? extends AyaDocile> doc,
+    @NotNull ImmutableSeq<? extends AyaDocile> doc,
     @NotNull MainArgs.DistillStage currentStage
   ) throws IOException {
     if (flags == null || currentStage != flags.distillStage()) return;
@@ -102,7 +103,9 @@ public record SingleFileCompiler(
     var distillDir = sourceFile.resolveSibling(flags.distillDir());
     if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
     var fileName = ayaFileName
-      .substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length());
+      .substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length())
+      // Escape file names, see https://stackoverflow.com/a/41108758/7083401
+      .replaceAll("[\\\\/:*?\"<>|]", "_");
     switch (flags.distillFormat()) {
       case html -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
       case latex -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, $) -> thisDoc.renderToTeX());

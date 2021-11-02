@@ -4,6 +4,7 @@ package org.aya.cli.repl.command;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.pretty.doc.Doc;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.ElementType;
@@ -16,9 +17,9 @@ public abstract class Command {
   public @interface Entry {
   }
 
-  public static final @NotNull String PREFIX = ":";
-  public static final @NotNull String MULTILINE_BEGIN = ":{";
-  public static final @NotNull String MULTILINE_END = ":}";
+  public static final @NonNls @NotNull String PREFIX = ":";
+  public static final @NonNls @NotNull String MULTILINE_BEGIN = ":{";
+  public static final @NonNls @NotNull String MULTILINE_END = ":}";
 
   private final @NotNull ImmutableSeq<String> names;
   private final @NotNull String help;
@@ -36,7 +37,7 @@ public abstract class Command {
     return help;
   }
 
-  public static record Output(@NotNull Doc stdout, @NotNull Doc stderr) {
+  public record Output(@NotNull Doc stdout, @NotNull Doc stderr) {
     public static @NotNull Output empty() {
       return new Output(Doc.empty(), Doc.empty());
     }
@@ -58,7 +59,7 @@ public abstract class Command {
     }
   }
 
-  public static record Result(@NotNull Output output, boolean continueRepl) {
+  public record Result(@NotNull Output output, boolean continueRepl) {
     public static @NotNull Command.Result ok(@NotNull String text, boolean continueRepl) {
       return new Result(Output.stdout(Doc.english(text)), continueRepl);
     }

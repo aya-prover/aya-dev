@@ -4,7 +4,6 @@ package org.aya.cli.repl.command;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import kala.control.Try;
 import kala.tuple.Tuple;
 import org.aya.cli.repl.Repl;
@@ -16,7 +15,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 
 public class CommandManager {
-  public static record CommandGen(
+  public record CommandGen(
     @NotNull Command owner,
     @NotNull MethodHandle entry,
     @Nullable CommandArg argFactory
@@ -62,13 +61,18 @@ public class CommandManager {
 
   public record Clue(
     @NotNull String name,
-    @NotNull Option<@NotNull CommandGen> command,
+    @NotNull ImmutableSeq<CommandGen> command,
     @NotNull String argument
   ) {
     public Command.Result run(@NotNull Repl repl) throws Throwable {
-      return command.isDefined()
-        ? command.get().invoke(repl, argument)
-        : Command.Result.err("Command `" + name + "` not found", true);
+      return switch (command.size()) {
+        case 1 -> command.first().invoke(repl, argument);
+        case 0 -> Command.Result.err("Command `" + name + "` not found", true);
+        default -> Command.Result.err(command.view()
+            .flatMap(s -> s.owner.names())
+            .joinToString("`, `", "Ambiguous command name (`", "`), please be more accurate", s -> s),
+          true);
+      };
     }
   }
 
@@ -80,6 +84,7 @@ public class CommandManager {
     var split = text.split(" +", 2);
     var name = split[0];
     var argument = split.length > 1 ? split[1] : "";
-    return new Clue(name, cmd.findFirst(c -> c.owner.names().contains(name)), argument);
+    return new Clue(name, cmd.filter(c -> c.owner.names()
+      .anyMatch(n -> n.startsWith(name))), argument);
   }
 }

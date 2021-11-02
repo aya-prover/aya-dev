@@ -27,7 +27,7 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command SHOW_TYPE = new Command(ImmutableSeq.of("t", "type"), "Show the type of the given expression") {
+  @NotNull Command SHOW_TYPE = new Command(ImmutableSeq.of("type"), "Show the type of the given expression") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull Code code) {
       var type = repl.replCompiler.compileExpr(code.code(), repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
@@ -35,7 +35,7 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command LOAD_FILE = new Command(ImmutableSeq.of("l", "load"), "Load file into REPL") {
+  @NotNull Command LOAD_FILE = new Command(ImmutableSeq.of("load"), "Load file into REPL") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @NotNull Path path) {
       try {
         repl.replCompiler.loadToContext(path);
@@ -71,7 +71,7 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command QUIT = new Command(ImmutableSeq.of("quit", "exit", "q"), "Quit the REPL") {
+  @NotNull Command QUIT = new Command(ImmutableSeq.of("quit", "exit"), "Quit the REPL") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl) {
       return Result.ok("See you space cow woof woof :3", false);
     }
@@ -95,7 +95,7 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command HELP = new Command(ImmutableSeq.of("h", "help"), "Describe a selected command or show all commands") {
+  @NotNull Command HELP = new Command(ImmutableSeq.of("?", "help"), "Describe a selected command or show all commands") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable ReplCommands.HelpItem argument) {
       if (argument != null && !argument.cmd.isEmpty()) {
         var cmd = repl.commandManager.cmd.find(c -> c.owner().names().contains(argument.cmd));

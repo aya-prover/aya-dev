@@ -1,6 +1,9 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+package org.aya.cli;
 
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplConfig;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +31,7 @@ public class PlainReplTest {
   }
 
   @Test public void help() {
-    var repl = repl(":help");
+    var repl = repl(":help")._1;
     assertTrue(repl.contains("help"));
     assertTrue(repl.contains("REPL"));
   }
@@ -42,20 +45,43 @@ public class PlainReplTest {
   }
 
   @Test public void typeType() {
-    assertTrue(repl(":type Type").contains("Type"));
+    assertTrue(repl(":type Type")._1.contains("Type"));
+  }
+
+  @Test public void amb() {
+    assertTrue(repl(":p")._2.contains("Ambiguous"));
+  }
+
+  @Test public void notFound() {
+    assertTrue(repl(":cthulhu")._2.contains("not found"));
+  }
+
+  @Test public void type() {
+    assertTrue(repl("Type")._1.contains("Type"));
+  }
+
+  @Test public void disableUnicode() {
+    assertTrue(repl(":unicode no")._1.contains("disable"));
+    assertTrue(repl(":unicode yes")._1.contains("enable"));
+    assertTrue(repl(":unicode false")._1.contains("disable"));
+  }
+
+  @Test public void pwd() {
+    assertTrue(repl(":pwd")._1.contains("aya"));
   }
 
   @Test public void typeSuc() {
-    var repl = repl("data Nat : Type | suc Nat | zero\n:type Nat::suc");
+    var repl = repl("data Nat : Type | suc Nat | zero\n:type Nat::suc")._1;
     assertTrue(repl.contains("Nat"));
     assertTrue(repl.contains("->"));
   }
 
-  private @NotNull String repl(@NotNull String input) {
-    var writer = new StringWriter();
+  private @NotNull Tuple2<String, String> repl(@NotNull String input) {
+    var out = new StringWriter();
+    var err = new StringWriter();
     var reader = new StringReader(input + "\n:exit");
-    var repl = new Repl.PlainRepl(config, reader, writer);
+    var repl = new Repl.PlainRepl(config, reader, out, err);
     repl.run();
-    return writer.toString();
+    return Tuple.of(out.toString(), err.toString());
   }
 }

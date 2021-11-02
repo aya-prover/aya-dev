@@ -10,6 +10,7 @@ import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -29,7 +30,8 @@ import java.io.IOException;
 
 public final class JlineRepl extends Repl {
   private final @NotNull Terminal terminal;
-  private final @NotNull LineReader lineReader;
+  @VisibleForTesting
+  public final @NotNull LineReader lineReader;
 
   public JlineRepl(@NotNull ReplConfig config) throws IOException {
     super(config);

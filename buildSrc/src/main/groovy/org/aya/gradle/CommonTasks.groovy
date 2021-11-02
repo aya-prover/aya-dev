@@ -28,8 +28,10 @@ final class CommonTasks {
         'Main-Class': mainClass,
         'Build': new SimpleDateFormat('yyyy/M/dd HH:mm:ss').format(new Date())
       )
+      def jar = project.tasks.jar
+      dependsOn(jar)
       //noinspection GroovyAssignabilityCheck
-      with project.tasks.jar
+      with jar
     }
   }
 
