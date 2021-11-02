@@ -54,10 +54,10 @@ public interface AyaCompleters {
       var fixed = fixWord(word, line);
       var context = repl.replCompiler.getContext();
       context.modules.view().forEach((mod, contents) -> {
-        var modName = mod.joinToString(Constants.SCOPE_SEPARATOR) + Constants.SCOPE_SEPARATOR;
+        var modName = mod.joinToString(Constants.SCOPE_SEPARATOR, "", Constants.SCOPE_SEPARATOR);
         if (!modName.startsWith(fixed._1)) return;
         contents.keysView()
-          .map(name -> fixed._2 ? Constants.SCOPE_SEPARATOR + name : modName + name)
+          .map(name -> (fixed._2 ? Constants.SCOPE_SEPARATOR : modName) + name)
           .map(Candidate::new)
           .forEach(candidates::add);
       });

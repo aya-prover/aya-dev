@@ -16,7 +16,7 @@ public interface CommandArg {
   @Nullable Completer completer();
   boolean shellLike();
 
-  record CommandArgImpl<R>(@NotNull Class<?> type, @Nullable Completer completer, boolean shellLike,
+  record CommandArgImpl<R>(@NotNull Class<? extends R> type, @Nullable Completer completer, boolean shellLike,
                            @NotNull Function<String, R> f) implements CommandArg {
     @Override public @NotNull Object parse(@NotNull String input) throws IllegalArgumentException {
       return f.apply(input);

@@ -16,7 +16,11 @@ import org.jline.reader.impl.DefaultParser;
 import java.util.Collections;
 import java.util.List;
 
-public record AyaReplParser(@NotNull CommandManager cmd) implements Parser {
+public record AyaReplParser(@NotNull CommandManager cmd, @NotNull DefaultParser shellLike) implements Parser {
+  public AyaReplParser(@NotNull CommandManager cmd) {
+    this(cmd, new DefaultParser());
+  }
+
   public record AyaParsedLine(
     int wordCursor,
     @NotNull List<@NotNull String> words,
@@ -70,9 +74,8 @@ public record AyaReplParser(@NotNull CommandManager cmd) implements Parser {
     if (trim.startsWith(Command.PREFIX)) {
       var shellLike = cmd.parse(trim.substring(1)).command()
         .flatMap(c -> Option.of(c.argFactory()))
-        .map(CommandArg::shellLike)
-        .getOrDefault(false);
-      if (shellLike) return new DefaultParser().parse(line, cursor, context);
+        .map(CommandArg::shellLike).getOrDefault(false);
+      if (shellLike) return shellLike().parse(line, cursor, context);
     }
     // Drop whitespaces
     var tokens = tokensNoEOF(line)

@@ -1,6 +1,8 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
+import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.repl.command.CommandManager;
 import org.aya.cli.repl.jline.AyaReplParser;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.pretty.doc.Doc;
@@ -13,7 +15,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JlineTest {
-  public static @NotNull AyaReplParser PARSER = new AyaReplParser();
+  public static @NotNull CommandManager EMPTY = new CommandManager(ImmutableSeq.empty(), ImmutableSeq.empty());
+  public static @NotNull AyaReplParser PARSER = new AyaReplParser(EMPTY);
 
   @Test public void initializeJline() throws IOException {
     new JlineRepl(PlainReplTest.config).renderDoc(Doc.empty());
