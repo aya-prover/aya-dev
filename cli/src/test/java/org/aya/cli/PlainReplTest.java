@@ -1,7 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
-import org.aya.cli.repl.Repl;
+package org.aya.cli;import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;

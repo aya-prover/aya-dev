@@ -45,7 +45,7 @@ public abstract class Repl implements Closeable, Runnable {
   public final @NotNull ReplCompiler replCompiler = new ReplCompiler(new CliReporter(this::println, this::errPrintln), null);
   public final @NotNull CommandManager commandManager = makeCommand();
 
-  private CommandManager makeCommand() {
+  public CommandManager makeCommand() {
     return new CommandManager(ImmutableSeq.of(
       CommandArg.STRING,
       CommandArg.STRICT_BOOLEAN,
