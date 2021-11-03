@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
-import kala.collection.mutable.*;
-import kala.value.Ref;
+import kala.collection.mutable.MutableHashMap;
+import kala.collection.mutable.MutableSet;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
@@ -11,19 +11,20 @@ import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.OpDecl;
+import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record BinOpSet(
   @NotNull Reporter reporter,
   @NotNull MutableSet<BinOP> ops,
-  @NotNull MutableHashMap<BinOP, MutableHashSet<BinOP>> tighterGraph
+  @NotNull MutableGraph<BinOP> tighterGraph
 ) {
   static final @NotNull BinOpSet.BinOP APP_ELEM = BinOP.from(SourcePos.NONE,
     () -> new OpDecl.Operator("application", Assoc.InfixL));
 
   public BinOpSet(@NotNull Reporter reporter) {
-    this(reporter, MutableSet.of(APP_ELEM), MutableHashMap.of());
+    this(reporter, MutableSet.of(APP_ELEM), new MutableGraph<>(MutableHashMap.of()));
   }
 
   public void bind(@NotNull OpDecl op, @NotNull Command.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
@@ -44,19 +45,9 @@ public record BinOpSet(
     if (lhs == APP_ELEM) return PredCmp.Tighter;
     if (rhs == APP_ELEM) return PredCmp.Looser;
     if (lhs == rhs) return PredCmp.Equal;
-    if (hasPath(MutableSet.of(), lhs, rhs)) return PredCmp.Tighter;
-    if (hasPath(MutableSet.of(), rhs, lhs)) return PredCmp.Looser;
+    if (tighterGraph.hasPath(lhs, rhs)) return PredCmp.Tighter;
+    if (tighterGraph.hasPath(rhs, lhs)) return PredCmp.Looser;
     return PredCmp.Undefined;
-  }
-
-  private boolean hasPath(@NotNull MutableSet<BinOP> book, @NotNull BinOpSet.BinOP from, @NotNull BinOpSet.BinOP to) {
-    if (from == to) return true;
-    if (book.contains(from)) return false;
-    for (var test : ensureGraphHas(from)) {
-      if (hasPath(book, test, to)) return true;
-    }
-    book.add(from);
-    return false;
   }
 
   public Assoc assocOf(@Nullable OpDecl opDecl) {
@@ -80,42 +71,15 @@ public record BinOpSet(
     return newElem;
   }
 
-  private MutableHashSet<BinOP> ensureGraphHas(@NotNull BinOpSet.BinOP elem) {
-    return tighterGraph.getOrPut(elem, MutableHashSet::of);
-  }
-
   private void addTighter(@NotNull BinOpSet.BinOP from, @NotNull BinOpSet.BinOP to) {
-    ensureGraphHas(to);
-    ensureGraphHas(from).add(to);
+    tighterGraph.suc(to);
+    tighterGraph.suc(from).add(to);
   }
 
   public void sort() {
-    var ind = MutableHashMap.<BinOP, Ref<Integer>>of();
-    tighterGraph.forEach((from, tos) -> {
-      ind.putIfAbsent(from, new Ref<>(0));
-      tos.forEach(to -> ind.getOrPut(to, () -> new Ref<>(0)).value += 1);
-    });
-
-    var stack = LinkedBuffer.<BinOP>of();
-    ind.forEach((e, i) -> {
-      if (i.value == 0) stack.push(e);
-    });
-
-    var count = 0;
-    while (stack.isNotEmpty()) {
-      var elem = stack.pop();
-      count += 1;
-      tighterGraph.get(elem).forEach(to -> {
-        if (--ind.get(to).value == 0) stack.push(to);
-      });
-    }
-
-    if (count != tighterGraph.size()) {
-      var circle = Buffer.<BinOP>create();
-      ind.forEach((e, i) -> {
-        if (i.value > 0) circle.append(e);
-      });
-      reporter.report(new OperatorProblem.CircleError(circle));
+    var cyclic = tighterGraph.findRing();
+    if (cyclic.isNotEmpty()) {
+      cyclic.forEach(c -> reporter.report(new OperatorProblem.Cyclic(c)));
       throw new Context.ResolvingInterruptedException();
     }
   }
