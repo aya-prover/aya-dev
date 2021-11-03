@@ -24,7 +24,7 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
   }
 
   public @NotNull ImmutableSeq<ImmutableSeq<T>> findRing() {
-    return topologicalOrder().filter(scc -> scc.size() > 1);
+    return topologicalOrder().filter(scc -> scc.sizeGreaterThan(1));
   }
 
   public ImmutableSeq<ImmutableSeq<T>> topologicalOrder() {
@@ -80,14 +80,13 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
         } else if (infoW.free) {
           // successor `w` is in stack and free, so it is in the current SCC.
           // If `w` is not free, then (v, w) is an edge pointing to an SCC already found,
-          // we must ignore `w` or we will get more than one `w` in topo order.
+          // we must ignore `w` or we will get more than one `w` in topological order.
           infoV.lowlink = Math.min(infoV.lowlink, infoW.index);
         }
       });
 
       // If v is a root node, pop the stack and generate an SCC
       if (infoV.lowlink == infoV.index) {
-        //  start a new strongly connected component
         var scc = Buffer.<T>create();
         T t = null;
         while (v != t) {
@@ -102,7 +101,8 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
       // view should be lazy or this code will blow up
       E.keysView().filter(v -> info(v).noIndex()).forEach(this::makeSCC);
       // tarjan order is the reverse of topological order
-      return SCCs.toImmutableSeq().reversed();
+      SCCs.reverse(); // this should be faster than `.toImmutableSeq().reversed()`
+      return SCCs.toImmutableSeq();
     }
   }
 }
