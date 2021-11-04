@@ -12,6 +12,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
 import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public record ExprResolver(
   boolean allowGeneralized,
   @NotNull Buffer<PreLevelVar> allowedLevels,
-  @NotNull Buffer<Decl> reference
+  @NotNull Buffer<Stmt> reference
 ) implements ExprFixpoint<Context> {
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
@@ -43,7 +44,14 @@ public record ExprResolver(
           throw new Context.ResolvingInterruptedException();
         }
       }
-      case DefVar<?, ?> ref && ref.concrete instanceof Decl decl -> reference.append(decl);
+      case DefVar<?, ?> ref -> {
+        switch (ref.concrete) {
+          case Decl decl -> reference.append(decl);
+          case Decl.DataCtor ctor -> reference.append(ctor.dataRef.concrete);
+          case Decl.StructField field -> reference.append(field.structRef.concrete);
+          default -> throw new IllegalStateException("unreachable");
+        }
+      }
       default -> {
       }
     }

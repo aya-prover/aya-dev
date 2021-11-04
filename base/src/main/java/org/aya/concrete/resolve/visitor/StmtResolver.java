@@ -12,6 +12,7 @@ import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
+import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
   public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
-  private static final @NotNull ExprResolver NO_GENERALIZED = new ExprResolver(false, Buffer.create(), Buffer.create());
 
   private StmtResolver() {
   }
@@ -52,11 +52,6 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     return Unit.unit();
   }
 
-  @Override public Unit visitRemark(@NotNull Remark remark, ResolveInfo binOpSet) {
-    remark.doResolve(binOpSet);
-    return Unit.unit();
-  }
-
   private @NotNull OpDecl resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull QualifiedID id) {
     var var = ctx.get(id);
     if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
@@ -66,17 +61,17 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     throw new Context.ResolvingInterruptedException();
   }
 
-  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, ResolveInfo binOpSet) {
+  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, ResolveInfo info) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Unit visitField(@NotNull Decl.StructField field, ResolveInfo binOpSet) {
+  @Override public Unit visitField(@NotNull Decl.StructField field, ResolveInfo info) {
     throw new UnsupportedOperationException();
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, ResolveInfo info) {
-    var reference = Buffer.<Decl>create();
+    var reference = Buffer.<Stmt>create();
     var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
@@ -89,12 +84,12 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
     }
-    info.deps().suc(decl).addAll(reference);
+    info.declGraph().suc(decl).addAll(reference);
     return Unit.unit();
   }
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, ResolveInfo info) {
-    var reference = Buffer.<Decl>create();
+    var reference = Buffer.<Stmt>create();
     var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
@@ -107,13 +102,13 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
       field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
     });
-    info.deps().suc(decl).addAll(reference);
+    info.declGraph().suc(decl).addAll(reference);
     return Unit.unit();
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, ResolveInfo info) {
-    var reference = Buffer.<Decl>create();
+    var reference = Buffer.<Stmt>create();
     var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
@@ -122,28 +117,43 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     decl.body = decl.body.map(
       expr -> expr.accept(bodyResolver, local._2),
       pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
-    info.deps().suc(decl).addAll(reference);
+    info.declGraph().suc(decl).addAll(reference);
     return Unit.unit();
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, ResolveInfo info) {
-    var local = NO_GENERALIZED.resolveParams(decl.telescope, decl.ctx);
+    var resolver = new ExprResolver(false, Buffer.create(), Buffer.create());
+    var local = resolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
-    if (decl.result != null) decl.result = decl.result.accept(NO_GENERALIZED, local._2);
+    if (decl.result != null) decl.result = decl.result.accept(resolver, local._2);
+    info.declGraph().suc(decl).addAll(resolver.reference());
     return Unit.unit();
   }
 
-  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, ResolveInfo binOpSet) {
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, ResolveInfo info) {
     return Unit.unit();
   }
 
-  @Override public Unit visitExample(Sample.@NotNull Working example, ResolveInfo binOpSet) {
-    example.delegate().accept(this, binOpSet);
+  @Override public Unit visitExample(Sample.@NotNull Working example, ResolveInfo info) {
+    visitSample(example, info);
     return Unit.unit();
   }
 
-  @Override public Unit visitCounterexample(Sample.@NotNull Counter example, ResolveInfo binOpSet) {
-    example.delegate().accept(this, binOpSet);
+  @Override public Unit visitCounterexample(Sample.@NotNull Counter example, ResolveInfo info) {
+    visitSample(example, info);
+    return Unit.unit();
+  }
+
+  private void visitSample(@NotNull Sample sample, ResolveInfo info) {
+    var delegate = sample.delegate();
+    var delegateInfo = new ResolveInfo(info.opSet(), MutableGraph.empty(), MutableGraph.empty());
+    delegate.accept(this, delegateInfo);
+    // little hacky: transfer dependencies from `delegate` to `sample`
+    info.sampleGraph().suc(sample).addAll(delegateInfo.declGraph().suc(delegate));
+  }
+
+  @Override public Unit visitRemark(@NotNull Remark remark, ResolveInfo info) {
+    remark.doResolve(info);
     return Unit.unit();
   }
 }

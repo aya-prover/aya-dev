@@ -28,7 +28,6 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,26 +85,60 @@ public record FileModuleLoader(
     var shallowResolveInfo = new ShallowResolveInfo(Buffer.create());
     var shallowResolver = new StmtShallowResolver(recurseLoader, shallowResolveInfo);
     program.forEach(s -> s.accept(shallowResolver, context));
-    var resolveInfo = new ResolveInfo(new BinOpSet(reporter), MutableGraph.empty());
+    var resolveInfo = new ResolveInfo(new BinOpSet(reporter));
     program.forEach(s -> s.resolve(resolveInfo));
     resolveInfo.opSet().reportIfCycles();
     program.forEach(s -> s.desugar(reporter, resolveInfo.opSet()));
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      var wellTyped = Buffer.<Def>create();
-      for (var stmt : program) {
-        if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(delayedReporter, builder));
-        else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(delayedReporter, builder));
-        else if (stmt instanceof Remark remark) {
-          var literate = remark.literate;
-          if (literate != null) literate.tyck(new ExprTycker(delayedReporter, builder));
-        }
-        if (delayedReporter.problems().anyMatch(Problem::isError)) break;
-      }
-      onTycked.acceptChecked(wellTyped.toImmutableSeq());
+      var SCCs = resolveInfo.declGraph().topologicalOrder()
+        .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder());
+      // show(SCCs);
+      var wellTyped = SCCs
+        .flatMap(scc -> tyckSCC(scc, builder, delayedReporter))
+        .toImmutableSeq();
+      onTycked.acceptChecked(wellTyped);
+    } catch (GroupTyckingFailed ignored) {
+      // stop tycking the rest of groups since some of their dependencies are failed.
+      // Random thought: we may assume their signatures are correct and try to tyck
+      // the rest of program as much as possible, which can make LSP more user-friendly?
     } finally {
       onResolved.acceptChecked(shallowResolveInfo);
     }
+  }
+
+  // private static void show(SeqView<ImmutableSeq<Stmt>> sccs) {
+  //   System.out.println("==== Tyck order ====");
+  //   sccs.forEach(scc -> {
+  //     System.out.println("  Group:");
+  //     scc.forEach(s -> {
+  //       switch (s) {
+  //         case Decl decl -> System.out.println("    Decl: " + decl.ref().name());
+  //         case Sample sam -> System.out.println((sam instanceof Sample.Working ? "    Example: " : "    CounterExample: ") + ((Decl) sam.delegate()).ref().name());
+  //         case Remark rem -> System.out.println("    Remark: " + rem);
+  //         default -> {
+  //         }
+  //       }
+  //     });
+  //   });
+  //   System.out.println("====================");
+  // }
+
+  /**
+   * Tyck a group of statements in an SCC.
+   */
+  private static @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc, Trace.@Nullable Builder builder, DelayedReporter reporter) {
+    var wellTyped = Buffer.<Def>create();
+    for (var stmt : scc) {
+      if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(reporter, builder));
+      else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(reporter, builder));
+      else if (stmt instanceof Remark remark) {
+        var literate = remark.literate;
+        if (literate != null) literate.tyck(new ExprTycker(reporter, builder));
+      }
+      if (reporter.problems().anyMatch(Problem::isError)) throw new GroupTyckingFailed();
+    }
+    return wellTyped.toImmutableSeq();
   }
 
   /**
@@ -133,5 +166,8 @@ public record FileModuleLoader(
     System.err.println("""
       Please report the stacktrace to the developers so a better error handling could be made.
       Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
+  }
+
+  private static class GroupTyckingFailed extends RuntimeException {
   }
 }

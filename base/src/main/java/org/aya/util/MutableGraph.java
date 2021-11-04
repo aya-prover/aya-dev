@@ -31,6 +31,10 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
     return topologicalOrder().filter(scc -> scc.sizeGreaterThan(1));
   }
 
+  /**
+   * Returns a topological order of the graph
+   * whose edge (v, w) means v depends on w.
+   */
   public ImmutableSeq<ImmutableSeq<T>> topologicalOrder() {
     return new Tarjan().tarjan();
   }

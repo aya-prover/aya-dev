@@ -19,7 +19,6 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.CallTerm;
 import org.aya.test.ThrowingReporter;
-import org.aya.util.MutableGraph;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +68,7 @@ public class TyckDeclTest {
   }
 
   private static void prepareForTyck(@NotNull ImmutableSeq<Stmt> decls) {
-    var resolveInfo = new ResolveInfo(new BinOpSet(ThrowingReporter.INSTANCE), MutableGraph.empty());
+    var resolveInfo = new ResolveInfo(new BinOpSet(ThrowingReporter.INSTANCE));
     decls.forEach(s -> s.resolve(resolveInfo));
     resolveInfo.opSet().reportIfCycles();
     decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE, resolveInfo.opSet()));

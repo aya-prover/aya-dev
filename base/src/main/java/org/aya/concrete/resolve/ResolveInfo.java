@@ -3,12 +3,21 @@
 package org.aya.concrete.resolve;
 
 import org.aya.concrete.desugar.BinOpSet;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @param opSet       binary operators
+ * @param declGraph   dependency graph of decls. Successors should be tycked first.
+ * @param sampleGraph dependency graph of samples.
+ */
 public record ResolveInfo(
   @NotNull BinOpSet opSet,
-  @NotNull MutableGraph<Decl> deps
+  @NotNull MutableGraph<Stmt> declGraph,
+  @NotNull MutableGraph<Stmt> sampleGraph
 ) {
+  public ResolveInfo(@NotNull BinOpSet opSet) {
+    this(opSet, MutableGraph.empty(), MutableGraph.empty());
+  }
 }
