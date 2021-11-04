@@ -34,79 +34,62 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     return body.accept(this, env);
   }
 
-  /**
-   * Attempt to match {@code value} against certain {@code pattern}
-   *
-   * @return A sequence of values that are bound by the binders in {@code pattern}.
-   * For example, if we match {@code ((1, 2), 3, 4)} against the pattern {@code ((a, b) as c, 3, d)},
-   * then the returned sequence is {@code 1, 2, (1, 2), 4}
-   */
-  private ImmutableSeq<Value> matchPat(Pat pattern, Value value) {
-    return switch (pattern) {
-      case Pat.Bind ignore -> ImmutableSeq.of(value);
-      case Pat.Tuple tuple -> {
-        var parts = Buffer.<Value>create();
-        for (var pat : tuple.pats()) {
-          if (!(value instanceof IntroValue.Pair pair)) yield null;
-          var subparts = matchPat(pat, pair.left());
-          if (subparts == null) yield null;
-          parts.appendAll(subparts);
-          value = pair.right();
-        }
-        yield parts.toImmutableSeq();
-      }
-      // TODO: Handle prim/ctor call
-      case Pat.Prim prim -> null;
-      case Pat.Ctor ctor -> null;
-      case Pat.Absurd ignore -> null;
-    };
+  private record Matchy(@NotNull Value value, @NotNull Term.Param param) {
   }
 
   /**
-   * Extract the binders in {@code pattern}
+   * Attempt to match {@code value} against certain {@code pattern}
    *
-   * @return A sequence of params representing the binders in {@code pattern}.
-   * For example, given the pattern {@code ((a, b) as c, 3, d)}, the returned sequence is {@code a, b, c, d}
+   * @return if match succeeds
    */
-  private ImmutableSeq<Term.Param> extractBinders(Pat pattern) {
+  private boolean matchPat(
+    @NotNull Pat pattern, @NotNull Value value,
+    @NotNull Buffer<Matchy> out
+  ) {
     return switch (pattern) {
-      case Pat.Bind bind -> ImmutableSeq.of(new Term.Param(bind.as(), bind.type(), bind.explicit()));
+      case Pat.Bind bind -> {
+        out.append(new Matchy(value, new Term.Param(bind.as(), bind.type(), bind.explicit())));
+        yield true;
+      }
       case Pat.Tuple tuple -> {
-        var params = Buffer.from(tuple.pats().flatMap(this::extractBinders));
-        if (tuple.as() != null) {
-          params.append(new Term.Param(tuple.as(), tuple.type(), tuple.explicit()));
+        for (var pat : tuple.pats()) {
+          if (!(value instanceof IntroValue.Pair pair)) yield false;
+          if (!matchPat(pat, pair.left(), out)) yield false;
+          value = pair.right();
         }
-        yield params.toImmutableSeq();
+        yield true;
       }
       // TODO: Handle prim/ctor call
-      case Pat.Prim prim -> null;
-      case Pat.Ctor ctor -> null;
-      case Pat.Absurd ignore -> null;
+      case Pat.Prim prim -> false;
+      case Pat.Ctor ctor -> false;
+      case Pat.Absurd ignore -> false;
     };
   }
 
   /**
    * Helper function to construct the lambda value for a function defined by pattern matching.
    */
-  private Value matchingsHelper(ImmutableSeq<Term.Param> telescope, ImmutableSeq<Matching> matchings, ImmutableSeq<Value> values, Environment env) {
+  private Value matchingsHelper(SeqView<Term.Param> telescope, SeqView<Matching> matchings, SeqView<Value> values, Environment env) {
     var param = telescope.firstOrNull();
     if (param != null) {
       var p = eval(param, env);
       return new IntroValue.Lambda(p, arg -> matchingsHelper(telescope.drop(1), matchings, values.appended(arg), env.added(p.ref(), arg)));
     }
     for (var matching : matchings) {
-      var parts = matching.patterns().zip(values)
-        .flatMap(tup -> matchPat(tup._1, tup._2));
-      if (parts == null) continue;
-      var tele = matching.patterns().flatMap(this::extractBinders);
-      ImmutableSeq<Value.Segment> spine = parts.zip(tele).map(tup -> new Value.Segment.Apply(tup._1, tup._2.explicit()));
-      return makeLam(tele.view(), matching.body(), env).elim(spine);
+      var out = Buffer.<Matchy>create();
+      var matches = matching.patterns().zip(values)
+        .allMatch(tup -> matchPat(tup._1, tup._2, out));
+      if (!matches) continue;
+      var spine = out.view()
+        .<Value.Segment>map((m) -> new Value.Segment.Apply(m.value, m.param.explicit()))
+        .toImmutableSeq();
+      return makeLam(out.view().map(Matchy::param), matching.body(), env).elim(spine);
     }
     return null;
   }
 
-  private Value makeLam(ImmutableSeq<Term.Param> telescope, ImmutableSeq<Matching> matchings, Environment env) {
-    return matchingsHelper(telescope, matchings, ImmutableSeq.empty(), env);
+  private Value makeLam(SeqView<Term.Param> telescope, SeqView<Matching> matchings, Environment env) {
+    return matchingsHelper(telescope, matchings, SeqView.empty(), env);
   }
 
   @Override
@@ -159,7 +142,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     ImmutableSeq<Value.Segment> spine = args.map(Value.Segment.Apply::new);
     return new RefValue.Flex(fnCall.ref(), spine, () -> fnDef.body.fold(
       body -> makeLam(fnDef.telescope.view(), body, env),
-      matchings -> makeLam(fnDef.telescope, matchings, env)
+      matchings -> makeLam(fnDef.telescope.view(), matchings.view(), env)
     ).elim(spine));
   }
 
