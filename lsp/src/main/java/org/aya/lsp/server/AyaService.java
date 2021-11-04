@@ -15,6 +15,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.concrete.resolve.ShallowResolveInfo;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
@@ -67,7 +68,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     try {
       compiler.compile(filePath, compilerFlags, new FileModuleLoader.FileModuleLoaderCallback() {
         @Override
-        public void onResolved(@NotNull Path sourcePath, @NotNull FileModuleLoader.FileResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
+        public void onResolved(@NotNull Path sourcePath, @NotNull ShallowResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
           // only build highlight for current file
           if (sourcePath.equals(filePath)) stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
         }

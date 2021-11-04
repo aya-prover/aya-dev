@@ -11,6 +11,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
@@ -28,8 +29,8 @@ public sealed interface Stmt extends AyaDocile
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
   @Contract(mutates = "this")
-  default void resolve(@NotNull BinOpSet opSet) {
-    accept(StmtResolver.INSTANCE, opSet);
+  default void resolve(@NotNull ResolveInfo resolveInfo) {
+    accept(StmtResolver.INSTANCE, resolveInfo);
   }
 
   default void desugar(@NotNull Reporter reporter, @NotNull BinOpSet opSet) {

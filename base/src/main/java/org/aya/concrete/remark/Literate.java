@@ -10,7 +10,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
-import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.visitor.ExprConsumer;
@@ -36,16 +36,16 @@ public sealed interface Literate extends Docile {
   default void tyck(@NotNull ExprTycker tycker) {
   }
 
-  void resolve(@NotNull BinOpSet opSet, @NotNull Context context);
+  void resolve(@NotNull ResolveInfo info, @NotNull Context context);
 
   record Raw(@NotNull Doc toDoc) implements Literate {
-    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+    @Override public void resolve(@NotNull ResolveInfo info, @NotNull Context context) {
     }
   }
 
   record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
-    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
-      children.forEach(child -> child.resolve(opSet, context));
+    @Override public void resolve(@NotNull ResolveInfo info, @NotNull Context context) {
+      children.forEach(child -> child.resolve(info, context));
     }
 
     @Override public <P> void modify(@NotNull ExprFixpoint<P> fixpoint, P p) {
@@ -67,7 +67,7 @@ public sealed interface Literate extends Docile {
   }
 
   record Err(@NotNull Ref<Var> def, @Override @NotNull SourcePos sourcePos) implements Literate {
-    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+    @Override public void resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       def.set(context.getUnqualified(def.value.name(), sourcePos));
     }
 
@@ -104,7 +104,7 @@ public sealed interface Literate extends Docile {
       tyckResult = tycker.zonk(expr, tycker.synthesize(expr));
     }
 
-    @Override public void resolve(@NotNull BinOpSet opSet, @NotNull Context context) {
+    @Override public void resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       modify(new ExprResolver(false, Buffer.create()), context);
     }
 

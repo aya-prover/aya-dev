@@ -86,7 +86,7 @@ public final class OperatorProblem {
     }
   }
 
-  public record Cyclic(
+  public record Circular(
     @NotNull ImmutableSeq<BinOpSet.BinOP> items
   ) implements Problem {
     @Override public @NotNull SourcePos sourcePos() {

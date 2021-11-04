@@ -7,12 +7,12 @@ import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.resolve.ShallowResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.context.NoExportContext;
 import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
-import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public record StmtShallowResolver(
   @NotNull ModuleLoader loader,
-  @Nullable FileModuleLoader.FileResolveInfo resolveInfo
+  @Nullable ShallowResolveInfo resolveInfo
 ) implements Stmt.Visitor<@NotNull ModuleContext, Unit> {
   @Override public Unit visitModule(Command.@NotNull Module mod, @NotNull ModuleContext context) {
     var newCtx = context.derive(mod.name());

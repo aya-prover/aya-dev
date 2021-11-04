@@ -7,6 +7,10 @@ import kala.collection.mutable.*;
 import org.jetbrains.annotations.NotNull;
 
 public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@NotNull T>> E) {
+  public static @NotNull <T> MutableGraph<T> empty() {
+    return new MutableGraph<>(MutableHashMap.of());
+  }
+
   public @NotNull MutableSet<T> suc(@NotNull T elem) {
     return E.getOrPut(elem, MutableSet::of);
   }
@@ -23,7 +27,7 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
     return false;
   }
 
-  public @NotNull ImmutableSeq<ImmutableSeq<T>> findRing() {
+  public @NotNull ImmutableSeq<ImmutableSeq<T>> findCycles() {
     return topologicalOrder().filter(scc -> scc.sizeGreaterThan(1));
   }
 

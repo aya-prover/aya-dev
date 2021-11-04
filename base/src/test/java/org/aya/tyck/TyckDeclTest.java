@@ -8,6 +8,7 @@ import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
@@ -18,6 +19,7 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.CallTerm;
 import org.aya.test.ThrowingReporter;
+import org.aya.util.MutableGraph;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +33,7 @@ public class TyckDeclTest {
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = ParseTest.parseDecl(code)._1;
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
-    var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
-    decl.resolve(opSet);
-    opSet.sort();
-    decl.desugar(ThrowingReporter.INSTANCE, opSet);
+    prepareForTyck(ImmutableSeq.of(decl));
     var def = decl.tyck(ThrowingReporter.INSTANCE, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
@@ -65,11 +64,15 @@ public class TyckDeclTest {
     var ssr = new StmtShallowResolver(new EmptyModuleLoader(), null);
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
     decls.forEach(d -> d.accept(ssr, ctx));
-    var opSet = new BinOpSet(ThrowingReporter.INSTANCE);
-    decls.forEach(s -> s.resolve(opSet));
-    opSet.sort();
-    decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE, opSet));
+    prepareForTyck(decls);
     return decls;
+  }
+
+  private static void prepareForTyck(@NotNull ImmutableSeq<Stmt> decls) {
+    var resolveInfo = new ResolveInfo(new BinOpSet(ThrowingReporter.INSTANCE), MutableGraph.empty());
+    decls.forEach(s -> s.resolve(resolveInfo));
+    resolveInfo.opSet().reportIfCycles();
+    decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE, resolveInfo.opSet()));
   }
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {

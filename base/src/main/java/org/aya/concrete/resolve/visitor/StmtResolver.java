@@ -7,8 +7,8 @@ import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
@@ -21,37 +21,37 @@ import org.jetbrains.annotations.NotNull;
  * @see StmtShallowResolver
  * @see ExprResolver
  */
-public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
+public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
   public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
 
   private StmtResolver() {
   }
 
-  @Override public Unit visitModule(Command.@NotNull Module mod, BinOpSet opSet) {
-    visitAll(mod.contents(), opSet);
+  @Override public Unit visitModule(Command.@NotNull Module mod, ResolveInfo info) {
+    visitAll(mod.contents(), info);
     return Unit.unit();
   }
 
-  @Override public Unit visitImport(Command.@NotNull Import cmd, BinOpSet opSet) {
+  @Override public Unit visitImport(Command.@NotNull Import cmd, ResolveInfo info) {
     return Unit.unit();
   }
 
-  @Override public Unit visitOpen(Command.@NotNull Open cmd, BinOpSet opSet) {
+  @Override public Unit visitOpen(Command.@NotNull Open cmd, ResolveInfo info) {
     return Unit.unit();
   }
 
-  @Override public Unit visitBind(Command.@NotNull Bind bind, BinOpSet opSet) {
+  @Override public Unit visitBind(Command.@NotNull Bind bind, ResolveInfo info) {
     var ctx = bind.context().value;
-    if (ctx == null) throw new IllegalStateException("no shallow resolver?");
-    var op = resolveOp(opSet.reporter(), ctx, bind.op());
-    var target = resolveOp(opSet.reporter(), ctx, bind.target());
+    assert ctx != null : "no shallow resolver?";
+    var op = resolveOp(info.opSet().reporter(), ctx, bind.op());
+    var target = resolveOp(info.opSet().reporter(), ctx, bind.target());
     bind.resolvedOp().value = op;
     bind.resolvedTarget().value = target;
-    opSet.bind(op, bind.pred(), target, bind.sourcePos());
+    info.opSet().bind(op, bind.pred(), target, bind.sourcePos());
     return Unit.unit();
   }
 
-  @Override public Unit visitRemark(@NotNull Remark remark, BinOpSet binOpSet) {
+  @Override public Unit visitRemark(@NotNull Remark remark, ResolveInfo binOpSet) {
     remark.doResolve(binOpSet);
     return Unit.unit();
   }
@@ -65,16 +65,16 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     throw new Context.ResolvingInterruptedException();
   }
 
-  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, BinOpSet binOpSet) {
+  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, ResolveInfo binOpSet) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public Unit visitField(@NotNull Decl.StructField field, BinOpSet binOpSet) {
+  @Override public Unit visitField(@NotNull Decl.StructField field, ResolveInfo binOpSet) {
     throw new UnsupportedOperationException();
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
-  @Override public Unit visitData(Decl.@NotNull DataDecl decl, BinOpSet opSet) {
+  @Override public Unit visitData(Decl.@NotNull DataDecl decl, ResolveInfo info) {
     var signatureResolver = new ExprResolver(true, Buffer.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
@@ -90,7 +90,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     return Unit.unit();
   }
 
-  @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, BinOpSet opSet) {
+  @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, ResolveInfo info) {
     var signatureResolver = new ExprResolver(true, Buffer.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
@@ -109,7 +109,7 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
-  @Override public Unit visitFn(Decl.@NotNull FnDecl decl, BinOpSet opSet) {
+  @Override public Unit visitFn(Decl.@NotNull FnDecl decl, ResolveInfo info) {
     var signatureResolver = new ExprResolver(true, Buffer.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
@@ -121,23 +121,23 @@ public final class StmtResolver implements Stmt.Visitor<BinOpSet, Unit> {
     return Unit.unit();
   }
 
-  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, BinOpSet opSet) {
+  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, ResolveInfo info) {
     var local = ExprResolver.NO_GENERALIZED.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     if (decl.result != null) decl.result = decl.result.accept(ExprResolver.NO_GENERALIZED, local._2);
     return Unit.unit();
   }
 
-  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, BinOpSet binOpSet) {
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, ResolveInfo binOpSet) {
     return Unit.unit();
   }
 
-  @Override public Unit visitExample(Sample.@NotNull Working example, BinOpSet binOpSet) {
+  @Override public Unit visitExample(Sample.@NotNull Working example, ResolveInfo binOpSet) {
     example.delegate().accept(this, binOpSet);
     return Unit.unit();
   }
 
-  @Override public Unit visitCounterexample(Sample.@NotNull Counter example, BinOpSet binOpSet) {
+  @Override public Unit visitCounterexample(Sample.@NotNull Counter example, ResolveInfo binOpSet) {
     example.delegate().accept(this, binOpSet);
     return Unit.unit();
   }

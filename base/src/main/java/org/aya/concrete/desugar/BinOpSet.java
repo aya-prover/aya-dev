@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
-import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableSet;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -24,7 +23,7 @@ public record BinOpSet(
     () -> new OpDecl.Operator("application", Assoc.InfixL));
 
   public BinOpSet(@NotNull Reporter reporter) {
-    this(reporter, MutableSet.of(APP_ELEM), new MutableGraph<>(MutableHashMap.of()));
+    this(reporter, MutableSet.of(APP_ELEM), MutableGraph.empty());
   }
 
   public void bind(@NotNull OpDecl op, @NotNull Command.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
@@ -76,10 +75,10 @@ public record BinOpSet(
     tighterGraph.suc(from).add(to);
   }
 
-  public void sort() {
-    var cyclic = tighterGraph.findRing();
-    if (cyclic.isNotEmpty()) {
-      cyclic.forEach(c -> reporter.report(new OperatorProblem.Cyclic(c)));
+  public void reportIfCycles() {
+    var cycles = tighterGraph.findCycles();
+    if (cycles.isNotEmpty()) {
+      cycles.forEach(c -> reporter.report(new OperatorProblem.Circular(c)));
       throw new Context.ResolvingInterruptedException();
     }
   }

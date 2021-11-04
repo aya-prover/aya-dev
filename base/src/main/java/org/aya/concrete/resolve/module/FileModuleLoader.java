@@ -17,6 +17,8 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.ShallowResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
@@ -26,6 +28,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +43,7 @@ public record FileModuleLoader(
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
   public interface FileModuleLoaderCallback {
-    void onResolved(@NotNull Path sourcePath, @NotNull FileModuleLoader.FileResolveInfo moduleInfo, @NotNull ImmutableSeq<Stmt> stmts);
+    void onResolved(@NotNull Path sourcePath, @NotNull ShallowResolveInfo moduleInfo, @NotNull ImmutableSeq<Stmt> stmts);
     void onTycked(@NotNull Path sourcePath,
                   @NotNull ImmutableSeq<Stmt> stmts,
                   @NotNull ImmutableSeq<Def> defs);
@@ -76,17 +79,17 @@ public record FileModuleLoader(
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
-    @NotNull CheckedConsumer<FileResolveInfo, E> onResolved,
+    @NotNull CheckedConsumer<ShallowResolveInfo, E> onResolved,
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
-    var resolveInfo = new FileResolveInfo(Buffer.create());
-    var shallowResolver = new StmtShallowResolver(recurseLoader, resolveInfo);
+    var shallowResolveInfo = new ShallowResolveInfo(Buffer.create());
+    var shallowResolver = new StmtShallowResolver(recurseLoader, shallowResolveInfo);
     program.forEach(s -> s.accept(shallowResolver, context));
-    var opSet = new BinOpSet(reporter);
-    program.forEach(s -> s.resolve(opSet));
-    opSet.sort();
-    program.forEach(s -> s.desugar(reporter, opSet));
+    var resolveInfo = new ResolveInfo(new BinOpSet(reporter), MutableGraph.empty());
+    program.forEach(s -> s.resolve(resolveInfo));
+    resolveInfo.opSet().reportIfCycles();
+    program.forEach(s -> s.desugar(reporter, resolveInfo.opSet()));
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var wellTyped = Buffer.<Def>create();
@@ -101,7 +104,7 @@ public record FileModuleLoader(
       }
       onTycked.acceptChecked(wellTyped.toImmutableSeq());
     } finally {
-      onResolved.acceptChecked(resolveInfo);
+      onResolved.acceptChecked(shallowResolveInfo);
     }
   }
 
@@ -130,10 +133,5 @@ public record FileModuleLoader(
     System.err.println("""
       Please report the stacktrace to the developers so a better error handling could be made.
       Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
-  }
-
-  public record FileResolveInfo(
-    @NotNull Buffer<ImmutableSeq<String>> imports
-  ) {
   }
 }
