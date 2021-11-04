@@ -8,7 +8,6 @@ import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
 import org.aya.api.error.DelayedReporter;
-import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.ref.Var;
@@ -16,17 +15,15 @@ import org.aya.api.util.InternalException;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.ShallowResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.order.SCCTycker;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,37 +88,20 @@ public record FileModuleLoader(
     program.forEach(s -> s.desugar(reporter, resolveInfo.opSet()));
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
+      var sccTycker = new SCCTycker(builder, delayedReporter);
       var SCCs = resolveInfo.declGraph().topologicalOrder()
         .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder());
       var wellTyped = SCCs
-        .flatMap(scc -> tyckSCC(scc, builder, delayedReporter))
+        .flatMap(sccTycker::tyckSCC)
         .toImmutableSeq();
       onTycked.acceptChecked(wellTyped);
-    } catch (GroupTyckingFailed ignored) {
+    } catch (SCCTycker.SCCTyckingFailed ignored) {
       // stop tycking the rest of groups since some of their dependencies are failed.
       // Random thought: we may assume their signatures are correct and try to tyck
       // the rest of program as much as possible, which can make LSP more user-friendly?
     } finally {
       onResolved.acceptChecked(shallowResolveInfo);
     }
-  }
-
-  /**
-   * Tyck a group of statements in an SCC.
-   */
-  private static @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc, Trace.@Nullable Builder builder, DelayedReporter reporter) {
-    // TODO[kiva]: check signatures first, then bodies
-    var wellTyped = Buffer.<Def>create();
-    for (var stmt : scc) {
-      if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(reporter, builder));
-      else if (stmt instanceof Sample sample) wellTyped.append(sample.tyck(reporter, builder));
-      else if (stmt instanceof Remark remark) {
-        var literate = remark.literate;
-        if (literate != null) literate.tyck(new ExprTycker(reporter, builder));
-      }
-      if (reporter.problems().anyMatch(Problem::isError)) throw new GroupTyckingFailed();
-    }
-    return wellTyped.toImmutableSeq();
   }
 
   /**
@@ -149,8 +129,5 @@ public record FileModuleLoader(
     System.err.println("""
       Please report the stacktrace to the developers so a better error handling could be made.
       Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
-  }
-
-  private static class GroupTyckingFailed extends RuntimeException {
   }
 }

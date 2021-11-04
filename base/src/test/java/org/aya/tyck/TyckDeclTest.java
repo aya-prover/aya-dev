@@ -33,7 +33,7 @@ public class TyckDeclTest {
     var decl = ParseTest.parseDecl(code)._1;
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
     prepareForTyck(ImmutableSeq.of(decl));
-    var def = decl.tyck(ThrowingReporter.INSTANCE, null);
+    var def = decl.tyck(ThrowingReporter.INSTANCE, null, false);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
     return ((FnDef) def);
@@ -76,7 +76,7 @@ public class TyckDeclTest {
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
     return successDesugarDecls(text).view()
-      .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
+      .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null, false) : null)
       .filter(Objects::nonNull).toImmutableSeq();
   }
 }

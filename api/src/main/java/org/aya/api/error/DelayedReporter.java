@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public record DelayedReporter(
   @NotNull Reporter delegated,
   @NotNull Buffer<Problem> problems
-) implements Reporter, AutoCloseable {
+) implements StoringReporter, AutoCloseable {
   public DelayedReporter(@NotNull Reporter delegated) {
     this(delegated, Buffer.create());
   }

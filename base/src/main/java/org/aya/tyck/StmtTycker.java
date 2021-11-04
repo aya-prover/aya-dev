@@ -43,7 +43,8 @@ import java.util.function.Consumer;
  */
 public record StmtTycker(
   @NotNull Reporter reporter,
-  Trace.@Nullable Builder traceBuilder
+  Trace.@Nullable Builder traceBuilder,
+  boolean headerOnly
 ) {
   public @NotNull ExprTycker newTycker() {
     return new ExprTycker(reporter, traceBuilder);

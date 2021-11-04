@@ -5,7 +5,7 @@ package org.aya.api.error;
 import kala.collection.mutable.Buffer;
 import org.jetbrains.annotations.NotNull;
 
-public record CollectingReporter(@NotNull Buffer<@NotNull Problem> problems) implements Reporter {
+public record CollectingReporter(@NotNull Buffer<@NotNull Problem> problems) implements StoringReporter {
   public CollectingReporter() {
     this(Buffer.create());
   }

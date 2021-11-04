@@ -18,7 +18,7 @@ public sealed interface Sample extends Stmt {
   @NotNull Stmt delegate();
 
   /** @return <code>null</code> if the delegate is a command (not a definition) */
-  @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder);
+  @Nullable Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, boolean headerOnly);
 
   @Override default @NotNull SourcePos sourcePos() {
     return delegate().sourcePos();
@@ -35,10 +35,11 @@ public sealed interface Sample extends Stmt {
 
     @Override public @Nullable Def tyck(
       @NotNull Reporter reporter,
-      Trace.@Nullable Builder traceBuilder
+      Trace.@Nullable Builder traceBuilder,
+      boolean headerOnly
     ) {
       return delegate instanceof Decl decl ?
-        new StmtTycker(reporter, traceBuilder).tyck(decl) : null;
+        new StmtTycker(reporter, traceBuilder, headerOnly).tyck(decl) : null;
     }
   }
 
@@ -53,9 +54,10 @@ public sealed interface Sample extends Stmt {
 
     @Override public @Nullable Def tyck(
       @NotNull Reporter reporter,
-      Trace.@Nullable Builder traceBuilder
+      Trace.@Nullable Builder traceBuilder,
+      boolean headerOnly
     ) {
-      var stmtTycker = new StmtTycker(reporter, traceBuilder);
+      var stmtTycker = new StmtTycker(reporter, traceBuilder, headerOnly);
       var def = stmtTycker.tyck(delegate, new ExprTycker(this.reporter, stmtTycker.traceBuilder()));
       var problems = this.reporter.problems().toImmutableSeq();
       if (problems.isEmpty()) {
