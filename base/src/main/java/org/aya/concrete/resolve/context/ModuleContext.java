@@ -13,7 +13,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.resolve.error.*;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.util.Constants;
+import org.aya.generic.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

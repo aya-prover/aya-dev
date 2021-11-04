@@ -3,20 +3,14 @@
 package org.aya.util;
 
 import kala.collection.Seq;
-import org.aya.tyck.unify.level.LevelSolver;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UtilTest {
-  @Test public void markdownify() {
-    assertNotNull(LevelSolver.markdownify(new int[][]{
-      new int[]{1, 1, 4, 5, 1, 4}
-    }));
-  }
-
   @Test public void stringEscape() {
-    assertEquals("", StringEscapeUtil.escapeStringCharacters(""));
+    Assertions.assertEquals("", StringEscapeUtil.escapeStringCharacters(""));
     assertEquals("", StringEscapeUtil.unescapeStringCharacters(""));
     assertEquals("123", StringEscapeUtil.unescapeStringCharacters("123"));
     assertEquals("123", StringEscapeUtil.escapeStringCharacters("123"));

@@ -9,8 +9,8 @@ import org.aya.api.ref.PreLevelVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
+import org.aya.generic.Constants;
 import org.aya.generic.Level;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 /**

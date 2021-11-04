@@ -6,6 +6,7 @@ module org.aya {
   requires transitive org.aya.api;
   requires transitive org.aya.parser;
   requires transitive org.aya.pretty;
+  requires transitive org.aya.util;
   requires transitive kala.base;
   requires transitive kala.collection;
 
@@ -34,7 +35,5 @@ module org.aya {
   exports org.aya.tyck.unify.level;
   exports org.aya.tyck.unify;
   exports org.aya.tyck;
-  exports org.aya.util.cancel;
-  exports org.aya.util;
   exports org.aya.concrete.resolve;
 }

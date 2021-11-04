@@ -7,8 +7,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import org.aya.api.error.SourcePos;
 import org.aya.core.sort.Sort;
+import org.aya.generic.Constants;
 import org.aya.generic.Level;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -13,18 +13,15 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public interface StringEscapeUtil {
-  @Contract(pure = true)
-  static boolean isHexDigit(char c) {
+  @Contract(pure = true) static boolean isHexDigit(char c) {
     return '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F';
   }
 
-  @Contract(pure = true)
-  static boolean isOctalDigit(char c) {
+  @Contract(pure = true) static boolean isOctalDigit(char c) {
     return '0' <= c && c <= '7';
   }
 
-  @Contract(pure = true)
-  static @NotNull String unescapeStringCharacters(@NotNull String s) {
+  @Contract(pure = true) static @NotNull String unescapeStringCharacters(@NotNull String s) {
     var buffer = new StringBuilder(s.length());
     unescapeStringCharacters(s.length(), s, buffer);
     return buffer.toString();
@@ -121,73 +118,38 @@ public interface StringEscapeUtil {
     if (escaped) buffer.append('\\');
   }
 
-  @Contract(pure = true)
-  static @NotNull String escapeStringCharacters(@NotNull String s) {
+  @Contract(pure = true) static @NotNull String escapeStringCharacters(@NotNull String s) {
     var buffer = new StringBuilder(s.length());
     return escapeStringCharacters(s.length(), s, "\"", buffer).toString();
   }
 
-  @Contract(pure = true)
-  static @NotNull String escapeCharCharacters(@NotNull String s) {
+  @Contract(pure = true) static @NotNull String escapeCharCharacters(@NotNull String s) {
     var buffer = new StringBuilder(s.length());
     return escapeStringCharacters(s.length(), s, "'", buffer).toString();
   }
 
   @Contract("_, _, _, _ -> param4")
-  static @NotNull StringBuilder escapeStringCharacters(
-    int length,
-    @NotNull String str,
-    @Nullable String additionalChars,
-    @NotNull StringBuilder buffer
-  ) {
+  static @NotNull StringBuilder escapeStringCharacters(int length, @NotNull String str, @Nullable String additionalChars, @NotNull StringBuilder buffer) {
     return escapeStringCharacters(length, str, additionalChars, true, buffer);
   }
 
   @Contract("_, _, _, _, _ -> param5")
-  static @NotNull StringBuilder escapeStringCharacters(
-    int length,
-    @NotNull String str,
-    @Nullable String additionalChars,
-    boolean escapeSlash,
-    @NotNull StringBuilder buffer
-  ) {
+  static @NotNull StringBuilder escapeStringCharacters(int length, @NotNull String str, @Nullable String additionalChars, boolean escapeSlash, @NotNull StringBuilder buffer) {
     return escapeStringCharacters(length, str, additionalChars, escapeSlash, true, buffer);
   }
 
   @Contract("_, _, _, _, _, _ -> param6")
-  static @NotNull StringBuilder escapeStringCharacters(
-    int length,
-    @NotNull String str,
-    @Nullable String additionalChars,
-    boolean escapeSlash,
-    boolean escapeUnicode,
-    @NotNull StringBuilder buffer
-  ) {
+  static @NotNull StringBuilder escapeStringCharacters(int length, @NotNull String str, @Nullable String additionalChars, boolean escapeSlash, boolean escapeUnicode, @NotNull StringBuilder buffer) {
     char prev = 0;
     for (int idx = 0; idx < length; idx++) {
       var ch = str.charAt(idx);
       switch (ch) {
-        case '\b':
-          buffer.append("\\b");
-          break;
-
-        case '\t':
-          buffer.append("\\t");
-          break;
-
-        case '\n':
-          buffer.append("\\n");
-          break;
-
-        case '\f':
-          buffer.append("\\f");
-          break;
-
-        case '\r':
-          buffer.append("\\r");
-          break;
-
-        default:
+        case '\b' -> buffer.append("\\b");
+        case '\t' -> buffer.append("\\t");
+        case '\n' -> buffer.append("\\n");
+        case '\f' -> buffer.append("\\f");
+        case '\r' -> buffer.append("\\r");
+        default -> {
           if (escapeSlash && ch == '\\') {
             buffer.append("\\\\");
           } else if (additionalChars != null && additionalChars.indexOf(ch) > -1 && (escapeSlash || prev != '\\')) {
@@ -203,14 +165,14 @@ public interface StringEscapeUtil {
           } else {
             buffer.append(ch);
           }
+        }
       }
       prev = ch;
     }
     return buffer;
   }
 
-  @Contract(pure = true)
-  static boolean isPrintableUnicode(char c) {
+  @Contract(pure = true) static boolean isPrintableUnicode(char c) {
     var t = Character.getType(c);
     return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
       t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
