@@ -31,22 +31,25 @@ import java.util.function.Function;
  */
 public record SCCTycker(Trace.@Nullable Builder builder, CollectingReporter reporter) {
   public @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
-    if (scc.sizeEquals(1)) return checkOne(reporter, scc.first(), false, Buffer.create()).toImmutableSeq();
+    if (scc.sizeEquals(1)) return checkOne(reporter, scc.first(), Buffer.create()).toImmutableSeq();
     var headerOrder = headerOrder(scc);
-    headerOrder.forEach(stmt -> checkOne(reporter, stmt, true, null));
+    headerOrder.forEach(stmt -> {
+      if (stmt instanceof Decl decl) decl.tyck(reporter, builder, true);
+    });
     var wellTyped = Buffer.<Def>create();
-    headerOrder.forEach(stmt -> checkOne(reporter, stmt, false, wellTyped));
+    headerOrder.forEach(stmt -> checkOne(reporter, stmt, wellTyped));
     return wellTyped.toImmutableSeq();
   }
 
-  private @Nullable Buffer<Def> checkOne(@NotNull CollectingReporter reporter,
-                                         @NotNull Stmt stmt, boolean headerOnly,
-                                         @Nullable Buffer<Def> wellTyped) {
+  private @Nullable Buffer<Def> checkOne(
+    @NotNull CollectingReporter reporter, @NotNull Stmt stmt,
+    @Nullable Buffer<Def> wellTyped
+  ) {
     try {
       var def = switch (stmt) {
-        case Decl decl -> Option.some(decl.tyck(reporter, builder, headerOnly));
-        case Sample sample -> Option.some(sample.tyck(reporter, builder, headerOnly));
-        case Remark remark && !headerOnly -> {
+        case Decl decl -> Option.some(decl.tyck(reporter, builder, false));
+        case Sample sample -> Option.some(sample.tyck(reporter, builder, false));
+        case Remark remark -> {
           var literate = remark.literate;
           if (literate != null) literate.tyck(new ExprTycker(reporter, builder));
           yield Option.<Def>none();
@@ -55,7 +58,7 @@ public record SCCTycker(Trace.@Nullable Builder builder, CollectingReporter repo
       };
       if (wellTyped != null && def.isDefined()) wellTyped.append(def.get());
     } catch (StmtTycker.HeaderOnlyException ignored) {
-      assert headerOnly : "HeaderOnlyException was wrongly thrown";
+      assert false : "HeaderOnlyException was wrongly thrown";
     }
     if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed();
     return wellTyped;
