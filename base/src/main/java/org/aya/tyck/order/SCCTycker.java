@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.control.Option;
-import kala.tuple.Tuple;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.util.InterruptException;
@@ -29,24 +28,28 @@ import java.util.function.Function;
  *
  * @author kiva
  */
-public record SCCTycker(Trace.@Nullable Builder builder, CollectingReporter reporter) {
+public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter reporter) {
+  public SCCTycker(@Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
+    this(new StmtTycker(reporter, builder), reporter);
+  }
+
   public @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
-    if (scc.sizeEquals(1))
-      return checkBody(new StmtTycker(reporter, builder), scc.first(), Buffer.create()).toImmutableSeq();
-    var headerOrder = headerOrder(scc).view()
-      .map(s -> Tuple.of(s, new StmtTycker(reporter, builder)));
-    headerOrder.forEach(tup -> checkHeader(tup._2, tup._1));
     var wellTyped = Buffer.<Def>create();
-    headerOrder.forEach(tup -> checkBody(tup._2, tup._1, wellTyped));
+    if (scc.sizeEquals(1)) checkBody(scc.first(), wellTyped);
+    else {
+      var headerOrder = headerOrder(scc);
+      headerOrder.forEach(this::checkHeader);
+      headerOrder.forEach(tup -> checkBody(tup, wellTyped));
+    }
     return wellTyped.toImmutableSeq();
   }
 
-  private void checkHeader(@NotNull StmtTycker tycker, @NotNull Stmt stmt) {
+  private void checkHeader(@NotNull Stmt stmt) {
     if (stmt instanceof Decl decl) tycker.tyckHeader(decl, tycker.newTycker());
     else if (stmt instanceof Sample sample) sample.tyckHeader(tycker);
   }
 
-  private @NotNull Buffer<Def> checkBody(@NotNull StmtTycker tycker, @NotNull Stmt stmt, @NotNull Buffer<Def> wellTyped) {
+  private void checkBody(@NotNull Stmt stmt, @NotNull Buffer<Def> wellTyped) {
     switch (stmt) {
       case Decl decl -> wellTyped.append(tycker.tyck(decl, tycker.newTycker()));
       case Sample sample -> wellTyped.append(sample.tyck(tycker));
@@ -54,7 +57,6 @@ public record SCCTycker(Trace.@Nullable Builder builder, CollectingReporter repo
       default -> {}
     }
     if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed();
-    return wellTyped;
   }
 
   /**

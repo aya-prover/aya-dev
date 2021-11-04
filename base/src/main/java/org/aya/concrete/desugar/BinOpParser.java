@@ -16,8 +16,8 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.stmt.OpDecl;
 import org.aya.concrete.stmt.Signatured;
+import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

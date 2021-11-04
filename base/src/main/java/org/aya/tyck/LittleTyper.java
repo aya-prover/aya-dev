@@ -12,7 +12,7 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
-import org.aya.util.Constants;
+import org.aya.generic.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

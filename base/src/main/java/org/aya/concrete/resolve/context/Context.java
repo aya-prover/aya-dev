@@ -16,7 +16,7 @@ import org.aya.concrete.resolve.error.QualifiedNameNotFoundError;
 import org.aya.concrete.resolve.error.ShadowingWarn;
 import org.aya.concrete.resolve.error.UnqualifiedNameNotFoundError;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.util.Constants;
+import org.aya.generic.Constants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

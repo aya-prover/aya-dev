@@ -14,6 +14,7 @@ include(
   "api",
   "cli",
   "parser",
+  "tools",
   "base",
   "pretty",
   "lsp",

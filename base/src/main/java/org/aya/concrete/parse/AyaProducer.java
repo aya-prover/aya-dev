@@ -32,9 +32,9 @@ import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
+import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaParser;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

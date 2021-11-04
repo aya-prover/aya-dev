@@ -5,8 +5,8 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.core.sort.Sort;
+import org.aya.generic.Constants;
 import org.aya.generic.Level;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;

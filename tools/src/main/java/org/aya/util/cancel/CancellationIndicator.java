@@ -4,6 +4,7 @@ package org.aya.util.cancel;
 
 public interface CancellationIndicator {
   boolean isCanceled();
+
   void cancel();
 
   default void checkCanceled() throws CancellationException {

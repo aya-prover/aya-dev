@@ -19,9 +19,11 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.term.CallTerm;
 import org.aya.test.ThrowingReporter;
+import org.aya.tyck.trace.Trace;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
@@ -29,11 +31,16 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TyckDeclTest {
+  public static Def tyck(@NotNull Decl decl, Trace.@Nullable Builder builder) {
+    var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
+    return tycker.tyck(decl, tycker.newTycker());
+  }
+
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = ParseTest.parseDecl(code)._1;
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
     prepareForTyck(ImmutableSeq.of(decl));
-    var def = decl.tyck(ThrowingReporter.INSTANCE, null);
+    var def = tyck(decl, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
     return ((FnDef) def);
@@ -76,7 +83,7 @@ public class TyckDeclTest {
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
     return successDesugarDecls(text).view()
-      .map(i -> i instanceof Decl s ? s.tyck(ThrowingReporter.INSTANCE, null) : null)
+      .map(i -> i instanceof Decl s ? tyck(s, null) : null)
       .filter(Objects::nonNull).toImmutableSeq();
   }
 }

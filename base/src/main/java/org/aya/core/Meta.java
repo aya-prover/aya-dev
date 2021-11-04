@@ -13,8 +13,8 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
+import org.aya.generic.Constants;
 import org.aya.tyck.TyckState;
-import org.aya.util.Constants;
 import org.jetbrains.annotations.NotNull;
 
 /**
