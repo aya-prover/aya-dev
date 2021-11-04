@@ -64,20 +64,17 @@ public record StmtTycker(
     return r;
   }
 
-  public Def tyck(@NotNull Decl decl) {
-    return tyck(decl, newTycker());
-  }
-
   public Def tyck(@NotNull Decl decl, @NotNull ExprTycker tycker) {
     return traced(decl, tycker, this::doTyck);
   }
 
   private Def doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
     if (predecl.signature == null) tyckHeader(predecl, tycker);
+    else predecl.signature.param().forEach(param -> tycker.localCtx.put(param.ref(), param.type()));
     var signature = predecl.signature;
-    assert signature != null;
     return switch (predecl) {
       case Decl.FnDecl decl -> {
+        assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
           new FnDef(decl.ref, signature.param(), signature.sortParam(), resultTy, body));
         yield decl.body.fold(
@@ -97,11 +94,13 @@ public record StmtTycker(
         );
       }
       case Decl.DataDecl decl -> {
+        assert signature != null;
         var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
         yield new DataDef(decl.ref, signature.param(), signature.sortParam(), signature.result(), body);
       }
       case Decl.PrimDecl decl -> decl.ref.core;
       case Decl.StructDecl decl -> {
+        assert signature != null;
         var result = signature.result();
         yield new StructDef(decl.ref, signature.param(), signature.sortParam(), result, decl.fields.map(field ->
           traced(field, tycker, (f, tyck) -> visitField(f, tyck, result))));

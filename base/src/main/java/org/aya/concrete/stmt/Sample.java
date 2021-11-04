@@ -44,7 +44,7 @@ public sealed interface Sample extends Stmt {
         stmtTycker.tyckHeader(decl, stmtTycker.newTycker());
         throw new StmtTycker.HeaderOnlyException();
       }
-      return stmtTycker.tyck(decl);
+      return stmtTycker.tyck(decl, stmtTycker.newTycker());
     }
   }
 
