@@ -4,13 +4,11 @@ package org.aya.value;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.LocalVar;
+import org.aya.value.visitor.Visitor;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface Value permits FormValue, IntroValue, RefValue {
-  default Value apply(Arg arg) {
-    // TODO: report error
-    return null;
-  }
+  <P, R> R accept(Visitor<P, R> visitor, P p);
 
   sealed interface Segment {
     record Apply(Arg arg) implements Segment {
@@ -25,14 +23,22 @@ public sealed interface Value permits FormValue, IntroValue, RefValue {
     record ProjR() implements Segment {
     }
   }
+
+  default Value apply(Arg arg) {
+    // TODO: report error
+    return null;
+  }
+
   default Value projL() {
     // TODO: report error
     return null;
   }
+
   default Value projR() {
     // TODO: report error
     return null;
   }
+
   default Value elim(@NotNull ImmutableSeq<Segment> spine) {
     return spine.foldLeft(this, (value, segment) -> switch (segment) {
       case Segment.Apply app -> this.apply(app.arg());

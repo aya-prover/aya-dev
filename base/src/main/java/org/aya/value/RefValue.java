@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
+import org.aya.value.visitor.Visitor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,11 @@ public sealed interface RefValue extends Value {
   record Neu(LocalVar var, ImmutableSeq<Segment> spine) implements RefValue {
     public Neu(LocalVar var) {
       this(var, ImmutableSeq.empty());
+    }
+
+    @Override
+    public <P, R> R accept(Visitor<P, R> visitor, P p) {
+      return visitor.visitNeu(this, p);
     }
 
     @Contract("_ -> new") @Override
@@ -36,6 +42,11 @@ public sealed interface RefValue extends Value {
   record Flex(Var var, ImmutableSeq<Segment> spine, LazyValue<Value> result) implements RefValue {
     public Flex(Var var, ImmutableSeq<Segment> spine, Supplier<Value> result) {
       this(var, spine, LazyValue.of(result));
+    }
+
+    @Override
+    public <P, R> R accept(Visitor<P, R> visitor, P p) {
+      return visitor.visitFlex(this, p);
     }
 
     @Contract("_ -> new") @Override

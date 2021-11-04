@@ -29,7 +29,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     var param = telescope.firstOrNull();
     if (param != null) {
       var p = eval(param, env);
-      return new IntroValue.Lambda(p, arg -> makeLam(telescope.drop(1), body, env.added(p.ref(), arg)));
+      return new IntroValue.Lam(p, arg -> makeLam(telescope.drop(1), body, env.added(p.ref(), arg)));
     }
     return body.accept(this, env);
   }
@@ -38,24 +38,26 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
   }
 
   /**
-   * Attempt to match {@code value} against certain {@code pattern}
+   * Attempt to match {@code value} against certain {@code pattern}.
+   * The {@code buffer} will be filled with extracted binding sites in the pattern.
    *
    * @return if match succeeds
    */
-  private boolean matchPat(
-    @NotNull Pat pattern, @NotNull Value value,
-    @NotNull Buffer<Matchy> out
-  ) {
+  private boolean matchPat(@NotNull Pat pattern, @NotNull Value value, @NotNull Buffer<Matchy> out) {
     return switch (pattern) {
       case Pat.Bind bind -> {
         out.append(new Matchy(value, new Term.Param(bind.as(), bind.type(), bind.explicit())));
         yield true;
       }
       case Pat.Tuple tuple -> {
+        var tailValue = value;
         for (var pat : tuple.pats()) {
-          if (!(value instanceof IntroValue.Pair pair)) yield false;
+          if (!(tailValue instanceof IntroValue.Pair pair)) yield false;
           if (!matchPat(pat, pair.left(), out)) yield false;
-          value = pair.right();
+          tailValue = pair.right();
+        }
+        if (tuple.as() != null) {
+          out.append(new Matchy(value, new Term.Param(tuple.as(), tuple.type(), tuple.explicit())));
         }
         yield true;
       }
@@ -73,7 +75,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     var param = telescope.firstOrNull();
     if (param != null) {
       var p = eval(param, env);
-      return new IntroValue.Lambda(p, arg -> matchingsHelper(telescope.drop(1), matchings, values.appended(arg), env.added(p.ref(), arg)));
+      return new IntroValue.Lam(p, arg -> matchingsHelper(telescope.drop(1), matchings, values.appended(arg), env.added(p.ref(), arg)));
     }
     for (var matching : matchings) {
       var out = Buffer.<Matchy>create();
@@ -100,7 +102,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
   @Override
   public Value visitLam(IntroTerm.@NotNull Lambda lambda, Environment env) {
     var param = eval(lambda.param(), env);
-    return new IntroValue.Lambda(param, x -> lambda.body().accept(this, env.added(param.ref(), x)));
+    return new IntroValue.Lam(param, x -> lambda.body().accept(this, env.added(param.ref(), x)));
   }
 
   @Override
@@ -116,12 +118,8 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
       return new FormValue.Unit();
     }
     var param = eval(params.first(), env);
-    params = params.drop(1);
-    if (params.isEmpty()) {
-      return param.type();
-    }
-    var sig = new FormTerm.Sigma(params);
-    return new FormValue.Sig(param, x -> sig.accept(this, env.added(param.ref(), x)));
+    var sig = new FormTerm.Sigma(params.drop(1));
+    return new FormValue.Sigma(param, x -> sig.accept(this, env.added(param.ref(), x)));
   }
 
   @Override
@@ -169,11 +167,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
   @Override
   public Value visitTup(IntroTerm.@NotNull Tuple tuple, Environment env) {
     var items = tuple.items().map(item -> item.accept(this, env));
-    if (items.isEmpty()) {
-      return new FormValue.Unit();
-    }
-    var first = items.first();
-    return items.drop(1).foldRight(first, IntroValue.Pair::new);
+    return items.foldRight(new IntroValue.TT(), IntroValue.Pair::new);
   }
 
   @Override

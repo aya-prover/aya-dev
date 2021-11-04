@@ -2,10 +2,17 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.value;
 
+import org.aya.value.visitor.Visitor;
+
 import java.util.function.Function;
 
 public sealed interface IntroValue extends Value {
-  record Lambda(Param param, Function<Value, Value> func) implements IntroValue {
+  record Lam(Param param, Function<Value, Value> func) implements IntroValue {
+    @Override
+    public <P, R> R accept(Visitor<P, R> visitor, P p) {
+      return visitor.visitLam(this, p);
+    }
+
     @Override
     public Value apply(Arg arg) {
       assert arg.explicit() == param.explicit();
@@ -15,6 +22,11 @@ public sealed interface IntroValue extends Value {
 
   record Pair(Value left, Value right) implements IntroValue {
     @Override
+    public <P, R> R accept(Visitor<P, R> visitor, P p) {
+      return visitor.visitPair(this, p);
+    }
+
+    @Override
     public Value projL() {
       return left;
     }
@@ -22,6 +34,13 @@ public sealed interface IntroValue extends Value {
     @Override
     public Value projR() {
       return right;
+    }
+  }
+
+  record TT() implements IntroValue {
+    @Override
+    public <P, R> R accept(Visitor<P, R> visitor, P p) {
+      return visitor.visitTT(this, p);
     }
   }
 }
