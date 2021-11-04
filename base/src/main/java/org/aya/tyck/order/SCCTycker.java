@@ -15,6 +15,7 @@ import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.MutableGraph;
@@ -41,17 +42,21 @@ public record SCCTycker(Trace.@Nullable Builder builder, StoringReporter reporte
   private @Nullable Buffer<Def> checkOne(@NotNull StoringReporter reporter,
                                          @NotNull Stmt stmt, boolean headerOnly,
                                          @Nullable Buffer<Def> wellTyped) {
-    var def = switch (stmt) {
-      case Decl decl -> Option.some(decl.tyck(reporter, builder, headerOnly));
-      case Sample sample -> Option.some(sample.tyck(reporter, builder, headerOnly));
-      case Remark remark && !headerOnly -> {
-        var literate = remark.literate;
-        if (literate != null) literate.tyck(new ExprTycker(reporter, builder));
-        yield Option.<Def>none();
-      }
-      default -> Option.<Def>none();
-    };
-    if (wellTyped != null && def.isDefined()) wellTyped.append(def.get());
+    try {
+      var def = switch (stmt) {
+        case Decl decl -> Option.some(decl.tyck(reporter, builder, headerOnly));
+        case Sample sample -> Option.some(sample.tyck(reporter, builder, headerOnly));
+        case Remark remark && !headerOnly -> {
+          var literate = remark.literate;
+          if (literate != null) literate.tyck(new ExprTycker(reporter, builder));
+          yield Option.<Def>none();
+        }
+        default -> Option.<Def>none();
+      };
+      if (wellTyped != null && def.isDefined()) wellTyped.append(def.get());
+    } catch (StmtTycker.HeaderOnlyException ignored) {
+      assert headerOnly : "HeaderOnlyException was wrongly thrown";
+    }
     if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed();
     return wellTyped;
   }

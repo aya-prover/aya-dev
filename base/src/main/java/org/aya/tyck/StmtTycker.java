@@ -36,6 +36,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 /**
+ * @param headerOnly check only signatures. If ture, {@link HeaderOnlyException} will
+ *                   be thrown when signatures are successfully tycked.
  * @author ice1000, kiva
  * @apiNote this class does not create {@link ExprTycker} instances itself,
  * but use the one passed to it. {@link StmtTycker#newTycker()} creates instances
@@ -84,6 +86,7 @@ public record StmtTycker(
         decl.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
         var factory = FnDef.factory((resultTy, body) ->
           new FnDef(decl.ref, resultTele, decl.signature.sortParam(), resultTy, body));
+        if (headerOnly) throw new HeaderOnlyException();
         yield decl.body.fold(
           body -> {
             var result = tycker.zonk(body, tycker.inherit(body, resultRes));
@@ -105,6 +108,7 @@ public record StmtTycker(
         var tele = checkTele(tycker, decl.telescope, FormTerm.freshUniv(pos));
         final var result = tycker.zonk(decl.result, tycker.inherit(decl.result, FormTerm.freshUniv(pos))).wellTyped();
         decl.signature = new Def.Signature(tycker.extractLevels(), tele, result);
+        if (headerOnly) throw new HeaderOnlyException();
         var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
         yield new DataDef(decl.ref, tele, decl.signature.sortParam(), result, body);
       }
@@ -141,6 +145,7 @@ public record StmtTycker(
         // var levelSubst = tycker.equations.solve();
         var levels = tycker.extractLevels();
         decl.signature = new Def.Signature(levels, tele, result);
+        if (headerOnly) throw new HeaderOnlyException();
         yield new StructDef(decl.ref, tele, levels, result, decl.fields.map(field ->
           traced(field, tycker, (f, tyck) -> visitField(f, tyck, result))));
       }
@@ -228,5 +233,8 @@ public record StmtTycker(
       exprTycker.localCtx.put(t.ref(), term);
       return new Term.Param(t.ref(), term, t.explicit());
     });
+  }
+
+  public static class HeaderOnlyException extends RuntimeException {
   }
 }
