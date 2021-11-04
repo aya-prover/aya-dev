@@ -4,6 +4,8 @@ package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.Arg;
+import org.aya.core.Matching;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.generic.Environment;
 import org.aya.value.FormValue;
@@ -26,9 +28,85 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     if (param != null) {
       var p = eval(param, env);
       return new IntroValue.Lambda(p, arg -> makeLam(telescope.drop(1), body, env.added(p.ref(), arg)));
-    } else {
-      return body.accept(this, env);
     }
+    return body.accept(this, env);
+  }
+
+  /**
+   * Attempt to match {@code value} against certain {@code pattern}
+   *
+   * @return A sequence of values that are bound by the binders in {@code pattern}.
+   * For example, if we match {@code ((1, 2), 3, 4)} against the pattern {@code ((a, b) as c, 3, d)},
+   * then the returned sequence is {@code 1, 2, (1, 2), 4}
+   */
+  private ImmutableSeq<Value> matchPat(Pat pattern, Value value) {
+    return switch (pattern) {
+      case Pat.Bind ignore -> ImmutableSeq.of(value);
+      case Pat.Tuple tuple -> {
+        ImmutableSeq<Value> parts = ImmutableSeq.empty();
+        for (var pat : tuple.pats()) {
+          if (!(value instanceof IntroValue.Pair pair)) yield null;
+          var subparts = matchPat(pat, pair.left());
+          if (subparts == null) yield null;
+          parts = parts.concat(subparts);
+          value = pair.right();
+        }
+        yield parts;
+      }
+      // TODO: Handle prim/ctor call
+      case Pat.Prim prim -> null;
+      case Pat.Ctor ctor -> null;
+      case Pat.Absurd ignore -> null;
+    };
+  }
+
+  /**
+   * Extract the binders in {@code pattern}
+   *
+   * @return A sequence of params representing the binders in {@code pattern}.
+   * For example, given the pattern {@code ((a, b) as c, 3, d)}, the returned sequence is {@code a, b, c, d}
+   */
+  private ImmutableSeq<Term.Param> extractBinders(Pat pattern) {
+    return switch (pattern) {
+      case Pat.Bind bind -> ImmutableSeq.of(new Term.Param(bind.as(), bind.type(), bind.explicit()));
+      case Pat.Tuple tuple -> {
+        var params = tuple.pats().map(this::extractBinders)
+          .fold(ImmutableSeq.empty(), ImmutableSeq::concat);
+        if (tuple.as() != null) {
+          params = params.appended(new Term.Param(tuple.as(), tuple.type(), tuple.explicit()));
+        }
+        yield params;
+      }
+      // TODO: Handle prim/ctor call
+      case Pat.Prim prim -> null;
+      case Pat.Ctor ctor -> null;
+      case Pat.Absurd ignore -> null;
+    };
+  }
+
+  /**
+   * Helper function to construct the lambda value for a function defined by pattern matching.
+   */
+  private Value matchingsHelper(ImmutableSeq<Term.Param> telescope, ImmutableSeq<Matching> matchings, ImmutableSeq<Value> values, Environment env) {
+    var param = telescope.firstOrNull();
+    if (param != null) {
+      var p = eval(param, env);
+      return new IntroValue.Lambda(p, arg -> matchingsHelper(telescope.drop(1), matchings, values.appended(arg), env.added(p.ref(), arg)));
+    }
+    for (var matching : matchings) {
+      var parts = matching.patterns().zip(values)
+        .map(tup -> matchPat(tup._1, tup._2))
+        .fold(ImmutableSeq.empty(), ImmutableSeq::concat);
+      if (parts == null) continue;
+      var tele = matching.patterns().map(this::extractBinders).fold(ImmutableSeq.empty(), ImmutableSeq::concat);
+      ImmutableSeq<Value.Segment> spine = parts.zip(tele).map(tup -> new Value.Segment.Apply(tup._1, tup._2.explicit()));
+      return makeLam(tele, matching.body(), env).elim(spine);
+    }
+    return null;
+  }
+
+  private Value makeLam(ImmutableSeq<Term.Param> telescope, ImmutableSeq<Matching> matchings, Environment env) {
+    return matchingsHelper(telescope, matchings, ImmutableSeq.empty(), env);
   }
 
   @Override
@@ -81,7 +159,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     ImmutableSeq<Value.Segment> spine = args.map(Value.Segment.Apply::new);
     return new RefValue.Flex(fnCall.ref(), spine, () -> fnDef.body.fold(
       body -> makeLam(fnDef.telescope, body, env),
-      matchings -> null
+      matchings -> makeLam(fnDef.telescope, matchings, env)
     ).elim(spine));
   }
 

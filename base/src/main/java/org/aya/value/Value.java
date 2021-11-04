@@ -12,7 +12,18 @@ public sealed interface Value permits FormValue, IntroValue, RefValue {
     return null;
   }
 
-  record Param(@NotNull LocalVar ref, @NotNull Value type, boolean explicit) {
+  sealed interface Segment {
+    record Apply(Arg arg) implements Segment {
+      public Apply(Value value, boolean explicit) {
+        this(new Arg(value, explicit));
+      }
+    }
+
+    record ProjL() implements Segment {
+    }
+
+    record ProjR() implements Segment {
+    }
   }
   default Value projL() {
     // TODO: report error
@@ -30,14 +41,9 @@ public sealed interface Value permits FormValue, IntroValue, RefValue {
     });
   }
 
-  sealed interface Segment {
-    record Apply(Arg arg) implements Segment {
-    }
-
-    record ProjL() implements Segment {
-    }
-
-    record ProjR() implements Segment {
+  record Param(@NotNull LocalVar ref, @NotNull Value type, boolean explicit) {
+    public Param(@NotNull LocalVar ref, @NotNull Value type) {
+      this(ref, type, true);
     }
   }
 
