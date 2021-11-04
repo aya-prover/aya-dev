@@ -182,6 +182,7 @@ public final class ExprTycker {
       }
       case Expr.AppExpr appE -> {
         var f = synthesize(appE.function());
+        if (f.wellTyped instanceof ErrorTerm || f.type instanceof ErrorTerm) yield f;
         var app = f.wellTyped;
         var argument = appE.argument();
         var namedArg = argument.term();

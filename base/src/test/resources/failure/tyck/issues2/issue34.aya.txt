@@ -1,0 +1,29 @@
+In file $FILE:13:90 ->
+
+  11 | def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
+  12 | 
+  13 | def psqueeze {A : Type} {a a' : A} (p : a = a') (i : I) : a = p.at i => path (\j => p.at (I.squeeze i j))
+                                                                                                 ^^
+
+Error: Unable to access field `squeeze` of the expression
+         I
+       because the type of what you accessed is not a struct type, but instead:
+         Type
+         (Normalized: Type)
+
+In file $FILE:13:72 ->
+
+  11 | def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
+  12 | 
+  13 | def psqueeze {A : Type} {a a' : A} (p : a = a') (i : I) : a = p.at i => path (\j => p.at (I.squeeze i j))
+                                                                               ^------------------------------^
+
+Error: Cannot check the expression of type
+         Path (λ _ ⇒ A$ _) (p.at <I>) (p.at <I>)
+         (Normalized: Path (λ _ ⇒ A$ _) (p.at <I>) (p.at <I>))
+       against the type
+         = {A$} a (p.at i)
+         (Normalized: Path (λ i ⇒ A$) a (p.at i))
+
+2 error(s), 0 warning(s).
+What are you doing?
