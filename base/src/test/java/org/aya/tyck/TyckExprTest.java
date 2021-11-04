@@ -29,7 +29,7 @@ public class TyckExprTest {
       def U => Pi (X : Type) (f : P (P X) -> X) -> P (P X)""");
 
     decls.dropLast(1).forEach(decl -> {
-      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, null, false);
+      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, null);
     });
     var decl = (Decl.FnDecl) decls.last();
     var tycker = tycker();

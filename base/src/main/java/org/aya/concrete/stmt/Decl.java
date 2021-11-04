@@ -53,12 +53,9 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
   protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
-  public @NotNull Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder, boolean headerOnly) {
+  public @NotNull Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
     var tycker = new StmtTycker(reporter, builder);
-    if (headerOnly) {
-      tycker.tyckHeader(this, tycker.newTycker());
-      throw new StmtTycker.HeaderOnlyException();
-    } else return tycker.tyck(this, tycker.newTycker());
+    return tycker.tyck(this, tycker.newTycker());
   }
 
   @Override public final <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {

@@ -241,7 +241,4 @@ public record StmtTycker(
       return new Term.Param(t.ref(), term, t.explicit());
     });
   }
-
-  public static class HeaderOnlyException extends RuntimeException {
-  }
 }

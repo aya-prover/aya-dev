@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.control.Option;
+import kala.tuple.Tuple;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.util.InterruptException;
@@ -14,7 +15,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
@@ -31,34 +31,27 @@ import java.util.function.Function;
  */
 public record SCCTycker(Trace.@Nullable Builder builder, CollectingReporter reporter) {
   public @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
-    if (scc.sizeEquals(1)) return checkOne(reporter, scc.first(), Buffer.create()).toImmutableSeq();
-    var headerOrder = headerOrder(scc);
-    headerOrder.forEach(stmt -> {
-      if (stmt instanceof Decl decl) decl.tyck(reporter, builder, true);
-    });
+    if (scc.sizeEquals(1))
+      return checkBody(new StmtTycker(reporter, builder), scc.first(), Buffer.create()).toImmutableSeq();
+    var headerOrder = headerOrder(scc).view()
+      .map(s -> Tuple.of(s, new StmtTycker(reporter, builder)));
+    headerOrder.forEach(tup -> checkHeader(tup._2, tup._1));
     var wellTyped = Buffer.<Def>create();
-    headerOrder.forEach(stmt -> checkOne(reporter, stmt, wellTyped));
+    headerOrder.forEach(tup -> checkBody(tup._2, tup._1, wellTyped));
     return wellTyped.toImmutableSeq();
   }
 
-  private @Nullable Buffer<Def> checkOne(
-    @NotNull CollectingReporter reporter, @NotNull Stmt stmt,
-    @Nullable Buffer<Def> wellTyped
-  ) {
-    try {
-      var def = switch (stmt) {
-        case Decl decl -> Option.some(decl.tyck(reporter, builder, false));
-        case Sample sample -> Option.some(sample.tyck(reporter, builder, false));
-        case Remark remark -> {
-          var literate = remark.literate;
-          if (literate != null) literate.tyck(new ExprTycker(reporter, builder));
-          yield Option.<Def>none();
-        }
-        default -> Option.<Def>none();
-      };
-      if (wellTyped != null && def.isDefined()) wellTyped.append(def.get());
-    } catch (StmtTycker.HeaderOnlyException ignored) {
-      assert false : "HeaderOnlyException was wrongly thrown";
+  private void checkHeader(@NotNull StmtTycker tycker, @NotNull Stmt stmt) {
+    if (stmt instanceof Decl decl) tycker.tyckHeader(decl, tycker.newTycker());
+    else if (stmt instanceof Sample sample) sample.tyckHeader(tycker);
+  }
+
+  private @NotNull Buffer<Def> checkBody(@NotNull StmtTycker tycker, @NotNull Stmt stmt, @NotNull Buffer<Def> wellTyped) {
+    switch (stmt) {
+      case Decl decl -> wellTyped.append(tycker.tyck(decl, tycker.newTycker()));
+      case Sample sample -> wellTyped.append(sample.tyck(tycker));
+      case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
+      default -> {}
     }
     if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed();
     return wellTyped;

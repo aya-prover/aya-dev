@@ -35,7 +35,7 @@ public class TracingTest {
     var decls = TyckDeclTest.successDesugarDecls(code);
     var builder = new Trace.Builder();
     decls.forEach(decl -> {
-      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder, false);
+      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder);
     });
     return builder;
   }
