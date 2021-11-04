@@ -6,8 +6,8 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.control.Option;
+import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Problem;
-import org.aya.api.error.StoringReporter;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
@@ -29,7 +29,7 @@ import java.util.function.Function;
  *
  * @author kiva
  */
-public record SCCTycker(Trace.@Nullable Builder builder, StoringReporter reporter) {
+public record SCCTycker(Trace.@Nullable Builder builder, CollectingReporter reporter) {
   public @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
     if (scc.sizeEquals(1)) return checkOne(reporter, scc.first(), false, Buffer.create()).toImmutableSeq();
     var headerOrder = headerOrder(scc);
@@ -39,7 +39,7 @@ public record SCCTycker(Trace.@Nullable Builder builder, StoringReporter reporte
     return wellTyped.toImmutableSeq();
   }
 
-  private @Nullable Buffer<Def> checkOne(@NotNull StoringReporter reporter,
+  private @Nullable Buffer<Def> checkOne(@NotNull CollectingReporter reporter,
                                          @NotNull Stmt stmt, boolean headerOnly,
                                          @Nullable Buffer<Def> wellTyped) {
     try {

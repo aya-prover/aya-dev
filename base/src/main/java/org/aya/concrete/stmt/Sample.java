@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
-import org.aya.api.error.CollectingReporter;
+import org.aya.api.error.BufferReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.def.Def;
@@ -48,9 +48,9 @@ public sealed interface Sample extends Stmt {
     }
   }
 
-  record Counter(@NotNull Decl delegate, @NotNull CollectingReporter reporter) implements Sample {
+  record Counter(@NotNull Decl delegate, @NotNull BufferReporter reporter) implements Sample {
     public Counter(@NotNull Decl delegate) {
-      this(delegate, new CollectingReporter());
+      this(delegate, new BufferReporter());
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

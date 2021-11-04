@@ -8,7 +8,7 @@ import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.CollectingReporter;
+import org.aya.api.error.BufferReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.SourcePos;
@@ -58,7 +58,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var filePath = Path.of(URI.create(uri));
     Log.d("Loading %s (vscode: %s)", filePath, uri);
 
-    var reporter = new CollectingReporter();
+    var reporter = new BufferReporter();
     var compiler = new SingleFileCompiler(reporter, libraryManager, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
@@ -87,7 +87,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return new HighlightResult(uri, symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
-  public void reportErrors(@NotNull CollectingReporter reporter, @NotNull DistillerOptions options) {
+  public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
     lastErrorReportedFiles.forEach(f ->
       Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
     var diags = reporter.problems().stream()
