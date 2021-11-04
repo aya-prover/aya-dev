@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar.error;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
@@ -86,8 +86,8 @@ public final class OperatorProblem {
     }
   }
 
-  public record CircleError(
-    @NotNull Buffer<BinOpSet.BinOP> items
+  public record Circular(
+    @NotNull ImmutableSeq<BinOpSet.BinOP> items
   ) implements Problem {
     @Override public @NotNull SourcePos sourcePos() {
       return items.view().map(BinOpSet.BinOP::firstBind)
@@ -96,7 +96,7 @@ public final class OperatorProblem {
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(
-        Doc.english("Precedence circle found between"),
+        Doc.english("Circular precedence found between"),
         Doc.commaList(items.view().map(BinOpSet.BinOP::name).toImmutableSeq()
           .sorted().view().map(Doc::plain))
       );

@@ -8,13 +8,14 @@ import kala.collection.mutable.Buffer;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.CollectingReporter;
+import org.aya.api.error.BufferReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.SourcePos;
 import org.aya.api.util.WithPos;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.concrete.resolve.ShallowResolveInfo;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
@@ -57,7 +58,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var filePath = Path.of(URI.create(uri));
     Log.d("Loading %s (vscode: %s)", filePath, uri);
 
-    var reporter = new CollectingReporter();
+    var reporter = new BufferReporter();
     var compiler = new SingleFileCompiler(reporter, libraryManager, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
@@ -67,7 +68,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     try {
       compiler.compile(filePath, compilerFlags, new FileModuleLoader.FileModuleLoaderCallback() {
         @Override
-        public void onResolved(@NotNull Path sourcePath, @NotNull FileModuleLoader.FileResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
+        public void onResolved(@NotNull Path sourcePath, @NotNull ShallowResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
           // only build highlight for current file
           if (sourcePath.equals(filePath)) stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
         }
@@ -86,7 +87,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     return new HighlightResult(uri, symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
-  public void reportErrors(@NotNull CollectingReporter reporter, @NotNull DistillerOptions options) {
+  public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
     lastErrorReportedFiles.forEach(f ->
       Log.publishProblems(new PublishDiagnosticsParams(f.toUri().toString(), Collections.emptyList())));
     var diags = reporter.problems().stream()

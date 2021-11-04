@@ -5,8 +5,8 @@ package org.aya.concrete.remark;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import org.aya.api.error.SourcePos;
-import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaProducer;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
@@ -91,9 +91,9 @@ public final class Remark implements Stmt {
     return sourcePos;
   }
 
-  public void doResolve(@NotNull BinOpSet binOpSet) {
-    if (literate == null) return;
+  public @NotNull ImmutableSeq<Stmt> doResolve(@NotNull ResolveInfo info) {
+    if (literate == null) return ImmutableSeq.empty();
     assert ctx != null : "Be sure to call the shallow resolver before resolving";
-    literate.resolve(binOpSet, ctx);
+    return literate.resolve(info, ctx);
   }
 }

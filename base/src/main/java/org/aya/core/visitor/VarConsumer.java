@@ -30,7 +30,6 @@ public interface VarConsumer<P> extends TermConsumer<P> {
   @Override default Unit visitHole(@NotNull CallTerm.Hole term, P p) {
     visitVar(term.ref(), p);
     return TermConsumer.super.visitHole(term, p);
-
   }
 
   @Override default Unit visitFnCall(CallTerm.@NotNull Fn fnCall, P p) {

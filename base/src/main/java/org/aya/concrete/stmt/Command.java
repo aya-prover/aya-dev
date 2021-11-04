@@ -19,13 +19,6 @@ public sealed interface Command extends Stmt {
     BindPred(@NotNull String keyword) {
       this.keyword = keyword;
     }
-
-    public @NotNull BindPred invert() {
-      return switch (this) {
-        case Tighter -> Looser;
-        case Looser -> Tighter;
-      };
-    }
   }
 
   /**
