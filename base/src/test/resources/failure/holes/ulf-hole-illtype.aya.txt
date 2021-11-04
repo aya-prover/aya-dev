@@ -20,7 +20,6 @@ In file $FILE:6:16 ->
                       ^^
 
 Error: Unsolved meta _
-       in `_`
        in `F _`
        in `Π (X : F _) → F (Neg <X>)`
 

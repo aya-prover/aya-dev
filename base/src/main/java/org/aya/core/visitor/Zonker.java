@@ -11,10 +11,7 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.core.sort.Sort;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.TyckState;
@@ -67,6 +64,7 @@ public final class Zonker implements TermFixpoint<Unit> {
     var metas = state.metas();
     if (!metas.containsKey(sol)) {
       reporter.report(new UnsolvedMeta(stack.view()
+        .drop(1)
         .map(t -> t.freezeHoles(state))
         .toImmutableSeq(), sol.sourcePos, sol.name));
       return new ErrorTerm(term);
@@ -106,8 +104,14 @@ public final class Zonker implements TermFixpoint<Unit> {
   ) implements Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       var lines = Buffer.of(Doc.english("Unsolved meta " + name));
-      for (var term : termStack)
-        lines.append(Doc.cat(Doc.plain("in"), Doc.par(1, Doc.styled(Style.code(), term.toDoc(options)))));
+      for (var term : termStack) {
+        var buf = Buffer.of(Doc.plain("in"), Doc.par(1, Doc.styled(Style.code(), term.toDoc(options))));
+        if (term instanceof RefTerm) {
+          buf.append(Doc.ALT_WS);
+          buf.append(Doc.parened(Doc.english("in the type")));
+        }
+        lines.append(Doc.cat(buf));
+      }
       return Doc.vcat(lines);
     }
 

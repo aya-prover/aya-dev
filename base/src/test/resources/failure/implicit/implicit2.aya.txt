@@ -6,7 +6,6 @@ In file $FILE:4:33 ->
                                        ^^
 
 Error: Unsolved meta a'
-       in `a'`
        in `y {a'}`
        in `λ {_} ⇒ y {a'}`
 

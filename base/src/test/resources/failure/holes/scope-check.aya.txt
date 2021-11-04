@@ -18,7 +18,6 @@ In file $FILE:15:14 ->
                      ^^
 
 Error: Unsolved meta _
-       in `_`
 
 In file $FILE:15:14 ->
 
@@ -28,7 +27,6 @@ In file $FILE:15:14 ->
                      ^^
 
 Error: Unsolved meta _
-       in `_`
        in `_`
        in `Eq {_} a b`
 
@@ -40,8 +38,7 @@ In file $FILE:15:14 ->
                      ^^
 
 Error: Unsolved meta _
-       in `_`
-       in `a`
+       in `a` (in the type)
        in `Eq {_} a b`
 
 4 error(s), 0 warning(s).
