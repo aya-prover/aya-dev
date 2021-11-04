@@ -121,7 +121,9 @@ public record StmtTycker(
       case Decl.DataDecl data -> {
         var pos = data.sourcePos;
         var tele = checkTele(tycker, data.telescope, FormTerm.freshUniv(pos));
-        var result = tycker.zonk(data.result, tycker.inherit(data.result, FormTerm.freshUniv(pos))).wellTyped();
+        var result = data.result instanceof Expr.HoleExpr ? FormTerm.Univ.ZERO
+          // ^ probably omitted
+          : tycker.zonk(data.result, tycker.inherit(data.result, FormTerm.freshUniv(pos))).wellTyped();
         data.signature = new Def.Signature(tycker.extractLevels(), tele, result);
       }
       case Decl.StructDecl struct -> {
@@ -174,6 +176,8 @@ public record StmtTycker(
     var pat = patTycker.visitPatterns(sig, ctor.patterns);
     var tele = checkTele(tycker, ctor.telescope.map(param ->
       param.mapExpr(expr -> expr.accept(patTycker.refSubst, Unit.unit()))), dataSig.result());
+    var signature = new Def.Signature(sortParam, tele, dataCall);
+    ctor.signature = signature;
     var patSubst = patTycker.refSubst.clone();
     var dataParamView = dataSig.param().view();
     if (pat.isNotEmpty()) {
@@ -182,8 +186,6 @@ public record StmtTycker(
         .<Var, Term>toImmutableMap();
       dataCall = (CallTerm.Data) dataCall.subst(subst);
     }
-    var signature = new Def.Signature(sortParam, tele, dataCall);
-    ctor.signature = signature;
     var elabClauses = patTycker.elabClauses(patSubst, signature, ctor.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
