@@ -2,8 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE file.
 dependencies {
   api(project(":api"))
-  implementation(project(":pretty"))
-  implementation(project(":parser"))
+  api(project(":tools"))
+  api(project(":pretty"))
+  api(project(":parser"))
   val deps: java.util.Properties by rootProject.ext
   implementation("org.commonmark", "commonmark", version = deps.getProperty("version.commonmark"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
