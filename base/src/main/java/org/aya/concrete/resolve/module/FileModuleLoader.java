@@ -93,7 +93,6 @@ public record FileModuleLoader(
     try (var delayedReporter = new DelayedReporter(reporter)) {
       var SCCs = resolveInfo.declGraph().topologicalOrder()
         .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder());
-      // show(SCCs);
       var wellTyped = SCCs
         .flatMap(scc -> tyckSCC(scc, builder, delayedReporter))
         .toImmutableSeq();
@@ -106,23 +105,6 @@ public record FileModuleLoader(
       onResolved.acceptChecked(shallowResolveInfo);
     }
   }
-
-  // private static void show(SeqView<ImmutableSeq<Stmt>> sccs) {
-  //   System.out.println("==== Tyck order ====");
-  //   sccs.forEach(scc -> {
-  //     System.out.println("  Group:");
-  //     scc.forEach(s -> {
-  //       switch (s) {
-  //         case Decl decl -> System.out.println("    Decl: " + decl.ref().name());
-  //         case Sample sam -> System.out.println((sam instanceof Sample.Working ? "    Example: " : "    CounterExample: ") + ((Decl) sam.delegate()).ref().name());
-  //         case Remark rem -> System.out.println("    Remark: " + rem);
-  //         default -> {
-  //         }
-  //       }
-  //     });
-  //   });
-  //   System.out.println("====================");
-  // }
 
   /**
    * Tyck a group of statements in an SCC.

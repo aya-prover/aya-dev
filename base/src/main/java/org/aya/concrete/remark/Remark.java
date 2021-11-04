@@ -91,9 +91,9 @@ public final class Remark implements Stmt {
     return sourcePos;
   }
 
-  public void doResolve(@NotNull ResolveInfo info) {
-    if (literate == null) return;
+  public @NotNull ImmutableSeq<Stmt> doResolve(@NotNull ResolveInfo info) {
+    if (literate == null) return ImmutableSeq.empty();
     assert ctx != null : "Be sure to call the shallow resolver before resolving";
-    literate.resolve(info, ctx);
+    return literate.resolve(info, ctx);
   }
 }

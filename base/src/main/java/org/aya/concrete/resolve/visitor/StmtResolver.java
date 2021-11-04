@@ -153,7 +153,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
   }
 
   @Override public Unit visitRemark(@NotNull Remark remark, ResolveInfo info) {
-    remark.doResolve(info);
+    info.sampleGraph().suc(remark).addAll(remark.doResolve(info));
     return Unit.unit();
   }
 }

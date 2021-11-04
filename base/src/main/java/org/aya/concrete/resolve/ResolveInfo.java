@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @param opSet       binary operators
  * @param declGraph   dependency graph of decls. Successors should be tycked first.
- * @param sampleGraph dependency graph of samples.
+ * @param sampleGraph dependency graph of samples and remarks.
  */
 public record ResolveInfo(
   @NotNull BinOpSet opSet,
