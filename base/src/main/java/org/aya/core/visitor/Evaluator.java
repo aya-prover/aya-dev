@@ -2,7 +2,9 @@
 // Use of this source code is governed by the GNU GPLv3 license that can be found in the LICENSE file.
 package org.aya.core.visitor;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
 import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
@@ -23,7 +25,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     return new Value.Arg(arg.term().accept(this, env), arg.explicit());
   }
 
-  private Value makeLam(ImmutableSeq<Term.Param> telescope, Term body, Environment env) {
+  private Value makeLam(SeqView<Term.Param> telescope, Term body, Environment env) {
     var param = telescope.firstOrNull();
     if (param != null) {
       var p = eval(param, env);
@@ -43,15 +45,15 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     return switch (pattern) {
       case Pat.Bind ignore -> ImmutableSeq.of(value);
       case Pat.Tuple tuple -> {
-        ImmutableSeq<Value> parts = ImmutableSeq.empty();
+        var parts = Buffer.<Value>create();
         for (var pat : tuple.pats()) {
           if (!(value instanceof IntroValue.Pair pair)) yield null;
           var subparts = matchPat(pat, pair.left());
           if (subparts == null) yield null;
-          parts = parts.concat(subparts);
+          parts.appendAll(subparts);
           value = pair.right();
         }
-        yield parts;
+        yield parts.toImmutableSeq();
       }
       // TODO: Handle prim/ctor call
       case Pat.Prim prim -> null;
@@ -70,12 +72,11 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     return switch (pattern) {
       case Pat.Bind bind -> ImmutableSeq.of(new Term.Param(bind.as(), bind.type(), bind.explicit()));
       case Pat.Tuple tuple -> {
-        var params = tuple.pats().map(this::extractBinders)
-          .fold(ImmutableSeq.empty(), ImmutableSeq::concat);
+        var params = Buffer.from(tuple.pats().flatMap(this::extractBinders));
         if (tuple.as() != null) {
-          params = params.appended(new Term.Param(tuple.as(), tuple.type(), tuple.explicit()));
+          params.append(new Term.Param(tuple.as(), tuple.type(), tuple.explicit()));
         }
-        yield params;
+        yield params.toImmutableSeq();
       }
       // TODO: Handle prim/ctor call
       case Pat.Prim prim -> null;
@@ -95,12 +96,11 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     }
     for (var matching : matchings) {
       var parts = matching.patterns().zip(values)
-        .map(tup -> matchPat(tup._1, tup._2))
-        .fold(ImmutableSeq.empty(), ImmutableSeq::concat);
+        .flatMap(tup -> matchPat(tup._1, tup._2));
       if (parts == null) continue;
-      var tele = matching.patterns().map(this::extractBinders).fold(ImmutableSeq.empty(), ImmutableSeq::concat);
+      var tele = matching.patterns().flatMap(this::extractBinders);
       ImmutableSeq<Value.Segment> spine = parts.zip(tele).map(tup -> new Value.Segment.Apply(tup._1, tup._2.explicit()));
-      return makeLam(tele, matching.body(), env).elim(spine);
+      return makeLam(tele.view(), matching.body(), env).elim(spine);
     }
     return null;
   }
@@ -158,7 +158,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
     var args = fnCall.args().map(arg -> eval(arg, env));
     ImmutableSeq<Value.Segment> spine = args.map(Value.Segment.Apply::new);
     return new RefValue.Flex(fnCall.ref(), spine, () -> fnDef.body.fold(
-      body -> makeLam(fnDef.telescope, body, env),
+      body -> makeLam(fnDef.telescope.view(), body, env),
       matchings -> makeLam(fnDef.telescope, matchings, env)
     ).elim(spine));
   }
