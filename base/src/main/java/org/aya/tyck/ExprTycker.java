@@ -414,7 +414,7 @@ public final class ExprTycker {
   public @NotNull Result inherit(@NotNull Expr expr, @NotNull Term type) {
     tracing(builder -> builder.shift(new Trace.ExprT(expr, type.freezeHoles(state))));
     Result result;
-    if (type instanceof FormTerm.Pi pi && needImplicitParamIns(expr, pi)) {
+    if (type instanceof FormTerm.Pi pi && !pi.param().explicit() && needImplicitParamIns(expr)) {
       var implicitParam = new Term.Param(new LocalVar(Constants.ANONYMOUS_PREFIX), pi.param().type(), false);
       var body = localCtx.with(implicitParam, () ->
         inherit(expr, pi.substBody(implicitParam.toTerm()))).wellTyped;
@@ -431,10 +431,9 @@ public final class ExprTycker {
     return res;
   }
 
-  private static boolean needImplicitParamIns(@NotNull Expr expr, @NotNull FormTerm.Pi type) {
-    return !type.param().explicit()
-      && (expr instanceof Expr.LamExpr ex && ex.param().explicit()
-      || !(expr instanceof Expr.LamExpr));
+  private static boolean needImplicitParamIns(@NotNull Expr expr) {
+    return expr instanceof Expr.LamExpr ex && ex.param().explicit()
+      || !(expr instanceof Expr.LamExpr);
   }
 
   public @NotNull Result zonk(@NotNull Expr expr, @NotNull Result result) {
