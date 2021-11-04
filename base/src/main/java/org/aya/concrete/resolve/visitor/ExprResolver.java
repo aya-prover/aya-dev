@@ -6,10 +6,12 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.Buffer;
 import kala.tuple.Tuple2;
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.PreLevelVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
+import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -25,20 +27,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ExprResolver(
   boolean allowGeneralized,
-  @NotNull Buffer<PreLevelVar> allowedLevels
+  @NotNull Buffer<PreLevelVar> allowedLevels,
+  @NotNull Buffer<Decl> reference
 ) implements ExprFixpoint<Context> {
-  static final @NotNull ExprResolver NO_GENERALIZED = new ExprResolver(false, Buffer.create());
-
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
     var name = expr.name();
     var resolved = ctx.get(name);
     var refExpr = new Expr.RefExpr(sourcePos, resolved);
-    if (resolved instanceof PreLevelVar levelVar) {
-      if (allowGeneralized) allowedLevels.append(levelVar);
-      else if (!allowedLevels.contains(levelVar)) {
-        ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
-        throw new Context.ResolvingInterruptedException();
+    switch (resolved) {
+      case PreLevelVar levelVar -> {
+        if (allowGeneralized) allowedLevels.append(levelVar);
+        else if (!allowedLevels.contains(levelVar)) {
+          ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
+          throw new Context.ResolvingInterruptedException();
+        }
+      }
+      case DefVar<?, ?> ref && ref.concrete instanceof Decl decl -> reference.append(decl);
+      default -> {
       }
     }
     return refExpr;

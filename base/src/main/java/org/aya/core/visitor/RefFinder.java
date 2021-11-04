@@ -20,12 +20,12 @@ import org.jetbrains.annotations.NotNull;
 public record RefFinder(boolean withBody) implements
   Def.Visitor<@NotNull Buffer<Def>, Unit>,
   VarConsumer<@NotNull Buffer<Def>> {
+  public static final @NotNull RefFinder HEADER_ONLY = new RefFinder(false);
+  public static final @NotNull RefFinder HEADER_AND_BODY = new RefFinder(true);
+
   @Override public void visitVar(Var usage, @NotNull Buffer<Def> defs) {
     if (usage instanceof DefVar<?, ?> ref && ref.core instanceof Def def) defs.append(def);
   }
-
-  public static final @NotNull RefFinder HEADER_ONLY = new RefFinder(false);
-  public static final @NotNull RefFinder HEADER_AND_BODY = new RefFinder(true);
 
   @Override public Unit visitFn(@NotNull FnDef fn, @NotNull Buffer<Def> references) {
     tele(references, fn.telescope());

@@ -105,7 +105,7 @@ public sealed interface Literate extends Docile {
     }
 
     @Override public void resolve(@NotNull ResolveInfo info, @NotNull Context context) {
-      modify(new ExprResolver(false, Buffer.create()), context);
+      modify(new ExprResolver(false, Buffer.create(), Buffer.create()), context);
     }
 
     private @NotNull Doc normalize(@NotNull Term term) {

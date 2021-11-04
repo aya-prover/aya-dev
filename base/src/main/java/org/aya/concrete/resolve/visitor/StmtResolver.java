@@ -17,12 +17,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Resolves expressions inside stmts, after {@link StmtShallowResolver}
  *
- * @author re-xyr, ice1000
+ * @author re-xyr, ice1000, kiva
  * @see StmtShallowResolver
  * @see ExprResolver
  */
 public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
   public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
+  private static final @NotNull ExprResolver NO_GENERALIZED = new ExprResolver(false, Buffer.create(), Buffer.create());
 
   private StmtResolver() {
   }
@@ -75,11 +76,12 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, ResolveInfo info) {
-    var signatureResolver = new ExprResolver(true, Buffer.create());
+    var reference = Buffer.<Decl>create();
+    var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels());
+    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
     for (var ctor : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
       ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
@@ -87,16 +89,17 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
     }
+    info.deps().suc(decl).addAll(reference);
     return Unit.unit();
   }
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, ResolveInfo info) {
-    var signatureResolver = new ExprResolver(true, Buffer.create());
+    var reference = Buffer.<Decl>create();
+    var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
-
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels());
+    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
     decl.fields.forEach(field -> {
       var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
       field.telescope = fieldLocal._1;
@@ -104,27 +107,29 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
       field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
     });
-
+    info.deps().suc(decl).addAll(reference);
     return Unit.unit();
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, ResolveInfo info) {
-    var signatureResolver = new ExprResolver(true, Buffer.create());
+    var reference = Buffer.<Decl>create();
+    var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels());
+    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
     decl.body = decl.body.map(
       expr -> expr.accept(bodyResolver, local._2),
       pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
+    info.deps().suc(decl).addAll(reference);
     return Unit.unit();
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, ResolveInfo info) {
-    var local = ExprResolver.NO_GENERALIZED.resolveParams(decl.telescope, decl.ctx);
+    var local = NO_GENERALIZED.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
-    if (decl.result != null) decl.result = decl.result.accept(ExprResolver.NO_GENERALIZED, local._2);
+    if (decl.result != null) decl.result = decl.result.accept(NO_GENERALIZED, local._2);
     return Unit.unit();
   }
 

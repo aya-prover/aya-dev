@@ -53,7 +53,7 @@ public sealed interface Expr extends ConcreteExpr {
    */
   @Contract(mutates = "this")
   default Expr resolve(@NotNull ModuleContext context) {
-    var exprResolver = new ExprResolver(false, Buffer.create());
+    var exprResolver = new ExprResolver(false, Buffer.create(), Buffer.create());
     return accept(exprResolver, context);
   }
 
