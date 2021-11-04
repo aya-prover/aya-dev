@@ -104,8 +104,6 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
     public ImmutableSeq<ImmutableSeq<T>> tarjan() {
       // view should be lazy or this code will blow up
       E.keysView().filter(v -> info(v).noIndex()).forEach(this::makeSCC);
-      // tarjan order is the reverse of topological order
-      SCCs.reverse(); // this should be faster than `.toImmutableSeq().reversed()`
       return SCCs.toImmutableSeq();
     }
   }
