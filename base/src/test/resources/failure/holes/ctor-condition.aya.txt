@@ -21,7 +21,8 @@ In file $FILE:12:13 ->
   12 |   | pos a => {??}
                     ^--^
 
-Error: Unsolved meta
+Error: Unsolved meta _
+       in `_`
 
 1 error(s), 0 warning(s).
 What are you doing?

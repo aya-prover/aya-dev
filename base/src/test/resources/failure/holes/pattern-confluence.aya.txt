@@ -93,7 +93,8 @@ In file $FILE:7:15 ->
   7 |   | m, zero => {??}
                      ^--^
 
-Error: Unsolved meta
+Error: Unsolved meta _
+       in `_`
 
 6 error(s), 0 warning(s).
 What are you doing?

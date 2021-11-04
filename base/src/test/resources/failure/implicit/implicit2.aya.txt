@@ -5,7 +5,10 @@ In file $FILE:4:33 ->
   4 | def x : Pi {a : Unit} -> Unit => y
                                        ^^
 
-Error: Unsolved meta
+Error: Unsolved meta a'
+       in `a'`
+       in `y {a'}`
+       in `λ {_} ⇒ y {a'}`
 
 1 error(s), 0 warning(s).
 What are you doing?

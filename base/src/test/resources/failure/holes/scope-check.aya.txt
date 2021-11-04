@@ -17,7 +17,8 @@ In file $FILE:15:14 ->
   15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
                      ^^
 
-Error: Unsolved meta
+Error: Unsolved meta _
+       in `_`
 
 In file $FILE:15:14 ->
 
@@ -26,7 +27,10 @@ In file $FILE:15:14 ->
   15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
                      ^^
 
-Error: Unsolved meta
+Error: Unsolved meta _
+       in `_`
+       in `_`
+       in `Eq {_} a b`
 
 In file $FILE:15:14 ->
 
@@ -35,7 +39,10 @@ In file $FILE:15:14 ->
   15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
                      ^^
 
-Error: Unsolved meta
+Error: Unsolved meta _
+       in `_`
+       in `a`
+       in `Eq {_} a b`
 
 4 error(s), 0 warning(s).
 What are you doing?

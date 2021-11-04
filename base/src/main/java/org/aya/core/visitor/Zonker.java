@@ -2,6 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.Buffer;
+import kala.collection.mutable.LinkedBuffer;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
@@ -13,6 +16,7 @@ import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.LevelMismatchError;
 import org.jetbrains.annotations.Contract;
@@ -31,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public final class Zonker implements TermFixpoint<Unit> {
   public final @NotNull TyckState state;
   public final @NotNull Reporter reporter;
+  private final @NotNull LinkedBuffer<Term> stack = LinkedBuffer.of();
   private boolean reported = false;
 
   public Zonker(@NotNull TyckState state, @NotNull Reporter reporter) {
@@ -49,11 +54,21 @@ public final class Zonker implements TermFixpoint<Unit> {
     return term;
   }
 
+  @Override public void traceEntrance(@NotNull Term term, Unit unit) {
+    stack.push(term);
+  }
+
+  @Override public void traceExit(@NotNull Term term) {
+    stack.pop();
+  }
+
   @Contract(pure = true) @Override public @NotNull Term visitHole(@NotNull CallTerm.Hole term, Unit unit) {
     var sol = term.ref();
     var metas = state.metas();
     if (!metas.containsKey(sol)) {
-      reporter.report(new UnsolvedMeta(sol.sourcePos));
+      reporter.report(new UnsolvedMeta(stack.view()
+        .map(t -> t.freezeHoles(state))
+        .toImmutableSeq(), sol.sourcePos, sol.name));
       return new ErrorTerm(term);
     }
     return metas.get(sol).accept(this, Unit.unit());
@@ -85,9 +100,15 @@ public final class Zonker implements TermFixpoint<Unit> {
     return new FormTerm.Univ(sort);
   }
 
-  public record UnsolvedMeta(@Override @NotNull SourcePos sourcePos) implements Problem {
+  public record UnsolvedMeta(
+    @NotNull ImmutableSeq<Term> termStack,
+    @Override @NotNull SourcePos sourcePos, @NotNull String name
+  ) implements Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.plain("Unsolved meta");
+      var lines = Buffer.of(Doc.english("Unsolved meta " + name));
+      for (var term : termStack)
+        lines.append(Doc.cat(Doc.plain("in"), Doc.par(1, Doc.styled(Style.code(), term.toDoc(options)))));
+      return Doc.vcat(lines);
     }
 
     @Override public @NotNull Severity level() {
