@@ -1,0 +1,5 @@
+open data Unit : Type | unit
+
+def test (a : Unit) : Unit
+ | a => a
+ | unit => unit

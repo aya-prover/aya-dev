@@ -110,6 +110,7 @@ public record FileModuleLoader(
    * Tyck a group of statements in an SCC.
    */
   private static @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc, Trace.@Nullable Builder builder, DelayedReporter reporter) {
+    // TODO[kiva]: check signatures first, then bodies
     var wellTyped = Buffer.<Def>create();
     for (var stmt : scc) {
       if (stmt instanceof Decl decl) wellTyped.append(decl.tyck(reporter, builder));
