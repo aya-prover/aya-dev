@@ -3,7 +3,6 @@
 package org.aya.tyck;
 
 import org.aya.concrete.stmt.Decl;
-import org.aya.test.ThrowingReporter;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
 import org.intellij.lang.annotations.Language;
@@ -35,7 +34,7 @@ public class TracingTest {
     var decls = TyckDeclTest.successDesugarDecls(code);
     var builder = new Trace.Builder();
     decls.forEach(decl -> {
-      if (decl instanceof Decl signatured) signatured.tyck(ThrowingReporter.INSTANCE, builder);
+      if (decl instanceof Decl signatured) TyckDeclTest.tyck(signatured, builder);
     });
     return builder;
   }

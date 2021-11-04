@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.api.concrete.ConcreteDecl;
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
@@ -14,8 +13,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
-import org.aya.tyck.StmtTycker;
-import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +49,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
 
   protected abstract <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
-  public @NotNull Def tyck(@NotNull Reporter reporter, Trace.@Nullable Builder builder) {
-    var tycker = new StmtTycker(reporter, builder);
-    return tycker.tyck(this, tycker.newTycker());
-  }
 
   @Override public final <P, R> R accept(Stmt.@NotNull Visitor<P, R> visitor, P p) {
     return accept((Visitor<? super P, ? extends R>) visitor, p);
