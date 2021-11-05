@@ -20,4 +20,8 @@ public record ResolveInfo(
   public ResolveInfo(@NotNull BinOpSet opSet) {
     this(opSet, MutableGraph.empty(), MutableGraph.empty());
   }
+
+  public @NotNull ResolveInfo toUsageInfo() {
+    return new ResolveInfo(opSet, declGraph.transpose(), sampleGraph.transpose());
+  }
 }

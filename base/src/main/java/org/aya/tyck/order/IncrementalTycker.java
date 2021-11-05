@@ -16,11 +16,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public record IncrementalTycker(
   @NotNull SCCTycker sccTycker,
-  @NotNull ResolveInfo resolveInfo,
+  @NotNull ResolveInfo usageInfo,
   @NotNull MutableSet<Stmt> skipped
 ) {
   public IncrementalTycker(@NotNull SCCTycker sccTycker, @NotNull ResolveInfo resolveInfo) {
-    this(sccTycker, resolveInfo, MutableSet.of());
+    this(sccTycker, resolveInfo.toUsageInfo(), MutableSet.of());
   }
 
   public void tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
@@ -37,9 +37,7 @@ public record IncrementalTycker(
   private void skip(@NotNull Stmt failed) {
     if (skipped.contains(failed)) return;
     skipped.add(failed);
-    var graph = failed instanceof Decl ? resolveInfo.declGraph() : resolveInfo.sampleGraph();
-    graph.E().forEach((v, deps) -> {
-      if (deps.contains(failed)) skip(v);
-    });
+    var graph = failed instanceof Decl ? usageInfo.declGraph() : usageInfo.sampleGraph();
+    graph.suc(failed).forEach(this::skip);
   }
 }

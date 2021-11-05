@@ -39,6 +39,12 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
     return new Tarjan().tarjan();
   }
 
+  public @NotNull MutableGraph<T> transpose() {
+    var tr = MutableGraph.<T>empty();
+    E.forEach((v, ws) -> ws.forEach(w -> tr.suc(w).add(v)));
+    return tr;
+  }
+
   private static class Info {
     static final int INDEX_NONE = Integer.MAX_VALUE;
     int index = INDEX_NONE;
