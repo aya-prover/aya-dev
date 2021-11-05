@@ -91,10 +91,8 @@ public record FileModuleLoader(
       var sccTycker = new SCCTycker(builder, delayedReporter);
       var SCCs = resolveInfo.declGraph().topologicalOrder()
         .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder());
-      var wellTyped = SCCs
-        .flatMap(sccTycker::tyckSCC)
-        .toImmutableSeq();
-      onTycked.acceptChecked(wellTyped);
+      SCCs.forEach(sccTycker::tyckSCC);
+      onTycked.acceptChecked(sccTycker.wellTyped().toImmutableSeq());
     } catch (SCCTycker.SCCTyckingFailed ignored) {
       // stop tycking the rest of groups since some of their dependencies are failed.
       // Random thought: we may assume their signatures are correct and try to tyck
