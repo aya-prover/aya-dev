@@ -2,9 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
-import kala.collection.Seq;
-import kala.collection.SeqLike;
-import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
 import org.aya.api.error.CollectingReporter;
@@ -34,7 +32,7 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
     this(new StmtTycker(reporter, builder), reporter, DynamicSeq.create());
   }
 
-  public void tyckSCC(@NotNull SeqLike<Stmt> scc) throws SCCTyckingFailed {
+  public void tyckSCC(@NotNull ImmutableSeq<Stmt> scc) throws SCCTyckingFailed {
     if (scc.sizeEquals(1)) checkBody(scc.first());
     else {
       var headerOrder = headerOrder(scc);
@@ -46,7 +44,7 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
   private void checkHeader(@NotNull Stmt stmt) {
     if (stmt instanceof Decl decl) tycker.tyckHeader(decl, tycker.newTycker());
     else if (stmt instanceof Sample sample) sample.tyckHeader(tycker);
-    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(Seq.of(stmt));
+    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 
   private void checkBody(@NotNull Stmt stmt) {
@@ -56,7 +54,7 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
       default -> {}
     }
-    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(SeqView.of(stmt));
+    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 
   /**
@@ -64,15 +62,15 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
    *
    * @author re-xyr, kiva
    */
-  public @NotNull SeqLike<Stmt> headerOrder(@NotNull SeqLike<Stmt> stmts) {
+  public @NotNull ImmutableSeq<Stmt> headerOrder(@NotNull ImmutableSeq<Stmt> stmts) {
     var graph = MutableGraph.<Stmt>empty();
     stmts.forEach(stmt -> {
       var reference = DynamicSeq.<Stmt>create();
       stmt.accept(SigRefFinder.HEADER_ONLY, reference);
       graph.suc(stmt).addAll(reference);
     });
-    var order = graph.topologicalOrder().view();
-    var cycle = order.filter(s -> s.sizeGreaterThan(1));
+    var order = graph.topologicalOrder();
+    var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
     if (cycle.isNotEmpty()) {
       cycle.forEach(c -> reporter.report(new CircularSignatureError(c)));
       throw new SCCTyckingFailed(stmts);
@@ -81,9 +79,9 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
   }
 
   public static class SCCTyckingFailed extends InterruptException {
-    public @NotNull SeqLike<Stmt> what;
+    public @NotNull ImmutableSeq<Stmt> what;
 
-    public SCCTyckingFailed(@NotNull SeqLike<Stmt> what) {
+    public SCCTyckingFailed(@NotNull ImmutableSeq<Stmt> what) {
       this.what = what;
     }
 

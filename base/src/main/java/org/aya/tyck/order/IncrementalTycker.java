@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
-import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.Decl;
@@ -23,12 +23,12 @@ public record IncrementalTycker(
     this(sccTycker, resolveInfo, MutableSet.of());
   }
 
-  public void tyckSCC(@NotNull SeqLike<Stmt> scc) {
+  public void tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
     try {
       // we are more likely to check correct programs.
       // I'm not sure whether it's necessary to optimize on our own.
       if (skipped.isEmpty()) sccTycker.tyckSCC(scc);
-      else sccTycker.tyckSCC(scc.view().filterNot(skipped::contains));
+      else sccTycker.tyckSCC(scc.filterNot(skipped::contains));
     } catch (SCCTycker.SCCTyckingFailed failed) {
       failed.what.forEach(this::skip);
     }

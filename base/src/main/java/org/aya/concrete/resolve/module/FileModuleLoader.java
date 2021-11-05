@@ -92,7 +92,8 @@ public record FileModuleLoader(
     // in case we have un-messaged TyckException
     try (delayedReporter) {
       var SCCs = resolveInfo.declGraph().topologicalOrder()
-        .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder());
+        .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder())
+        .toImmutableSeq();
       SCCs.forEach(sccTycker::tyckSCC);
     } finally {
       onResolved.acceptChecked(shallowResolveInfo);
