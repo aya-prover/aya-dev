@@ -20,7 +20,7 @@ public record ExprRefSubst(
   @NotNull MutableHashSet<Var> bad
 ) implements ExprFixpoint<Unit>, Cloneable {
   public ExprRefSubst(@NotNull Reporter reporter) {
-    this(reporter, MutableHashMap.of(), MutableHashSet.of());
+    this(reporter, MutableHashMap.create(), MutableHashSet.create());
   }
 
   @Override public @NotNull Expr visitRef(@NotNull Expr.RefExpr expr, Unit unit) {

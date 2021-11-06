@@ -4,7 +4,7 @@ package org.aya.concrete.resolve.module;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
 import org.aya.api.error.DelayedReporter;
@@ -79,7 +79,7 @@ public record FileModuleLoader(
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     Trace.@Nullable Builder builder
   ) throws E {
-    var shallowResolveInfo = new ShallowResolveInfo(Buffer.create());
+    var shallowResolveInfo = new ShallowResolveInfo(DynamicSeq.create());
     var shallowResolver = new StmtShallowResolver(recurseLoader, shallowResolveInfo);
     program.forEach(s -> s.accept(shallowResolver, context));
     var resolveInfo = new ResolveInfo(new BinOpSet(reporter));

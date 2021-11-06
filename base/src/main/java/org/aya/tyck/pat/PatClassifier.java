@@ -4,7 +4,7 @@ package org.aya.tyck.pat;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
@@ -149,7 +149,7 @@ public record PatClassifier(
           .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
           .firstOption();
         if (lrSplit.isDefined()) {
-          var buffer = Buffer.<PatClass>create();
+          var buffer = DynamicSeq.<PatClass>create();
           // Interval pattern matching is only available in conditions,
           // so in case we need coverage, report an error on this pattern matching
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
@@ -188,7 +188,7 @@ public record PatClassifier(
           // there are no clauses starting with a constructor pattern -- we don't need a split!
           subPatsSeq.noneMatch(subPats -> subPats.head() instanceof Pat.Ctor)
         ) break;
-        var buffer = Buffer.<PatClass>create();
+        var buffer = DynamicSeq.<PatClass>create();
         // For all constructors,
         for (var ctor : dataCall.ref().core.body) {
           var conTele = ctor.selfTele;

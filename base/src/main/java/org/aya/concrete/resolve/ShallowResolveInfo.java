@@ -3,10 +3,10 @@
 package org.aya.concrete.resolve;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.jetbrains.annotations.NotNull;
 
 public record ShallowResolveInfo(
-  @NotNull Buffer<ImmutableSeq<String>> imports
+  @NotNull DynamicSeq<ImmutableSeq<String>> imports
 ) {
 }

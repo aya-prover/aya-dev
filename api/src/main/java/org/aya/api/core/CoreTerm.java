@@ -3,7 +3,7 @@
 package org.aya.api.core;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -25,6 +25,6 @@ public interface CoreTerm extends AyaDocile {
    * @param allowed variables allowed in this term.
    * @return the variables in this term that are not allowed.
    */
-  @NotNull Buffer<LocalVar> scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed);
+  @NotNull DynamicSeq<LocalVar> scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed);
   @Nullable CorePat toPat(boolean explicit);
 }

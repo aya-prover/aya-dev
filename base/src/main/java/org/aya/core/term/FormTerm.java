@@ -4,7 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.error.SourcePos;
 import org.aya.core.sort.Sort;
 import org.aya.generic.Constants;
@@ -29,7 +29,7 @@ public sealed interface FormTerm extends Term {
       return body.subst(param.ref(), term);
     }
 
-    public @NotNull Term parameters(@NotNull Buffer<Term.@NotNull Param> params) {
+    public @NotNull Term parameters(@NotNull DynamicSeq<Term.@NotNull Param> params) {
       params.append(param);
       var t = body;
       while (t instanceof Pi pi) {

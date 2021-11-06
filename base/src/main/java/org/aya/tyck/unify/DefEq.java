@@ -213,7 +213,7 @@ public final class DefEq {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = type1.ref().core.telescope().view().zip(type1.args().view()).map(x ->
           Tuple2.of(x._1.ref(), x._2.term())).<Var, Term>toImmutableMap();
-        var fieldSubst = new Substituter.TermSubst(MutableHashMap.of());
+        var fieldSubst = new Substituter.TermSubst(MutableHashMap.create());
         for (var fieldSig : fieldSigs) {
           var dummyVars = fieldSig.selfTele.map(par ->
             new LocalVar(par.ref().name(), par.ref().definition()));

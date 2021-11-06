@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.api.error;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.jetbrains.annotations.NotNull;
 
 public interface CollectingReporter extends Reporter {
-  @NotNull Buffer<Problem> problems();
+  @NotNull DynamicSeq<Problem> problems();
 }

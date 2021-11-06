@@ -3,7 +3,7 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -82,8 +82,8 @@ public interface VarConsumer<P> extends TermConsumer<P> {
 
   final class ScopeChecker implements VarConsumer<Unit> {
     public final @NotNull ImmutableSeq<LocalVar> allowed;
-    public final @NotNull Buffer<LocalVar> invalidVars = Buffer.create();
-    private final @NotNull Buffer<LocalVar> bound = Buffer.create();
+    public final @NotNull DynamicSeq<LocalVar> invalidVars = DynamicSeq.create();
+    private final @NotNull DynamicSeq<LocalVar> bound = DynamicSeq.create();
 
     @Contract(pure = true) public ScopeChecker(@NotNull ImmutableSeq<LocalVar> allowed) {
       this.allowed = allowed;
@@ -113,7 +113,9 @@ public interface VarConsumer<P> extends TermConsumer<P> {
         bound.append(param.ref());
         param.type().accept(this, Unit.unit());
       });
-      bound.removeAt(start, term.params().size());
+      for (int i = 0; i < term.params().size(); i++) {
+        bound.removeAt(start); // TODO: DynamicSeq::removeAt(int, int)
+      }
       return unit;
     }
 

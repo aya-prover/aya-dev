@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
@@ -17,7 +17,7 @@ import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<HighlightResult.Symbol>> {
+public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<HighlightResult.Symbol>> {
   public static final SyntaxHighlight INSTANCE = new SyntaxHighlight();
 
   private @NotNull Range rangeOf(@NotNull Signatured signatured) {
@@ -25,37 +25,37 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
   }
 
   // region def, data, struct, prim, levels
-  @Override public Unit visitData(@NotNull Decl.DataDecl decl, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitData(@NotNull Decl.DataDecl decl, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(decl), HighlightResult.Symbol.Kind.DataDef));
     return StmtConsumer.super.visitData(decl, buffer);
   }
 
-  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(ctor), HighlightResult.Symbol.Kind.ConDef));
     return StmtConsumer.super.visitCtor(ctor, buffer);
   }
 
-  @Override public Unit visitStruct(@NotNull Decl.StructDecl decl, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitStruct(@NotNull Decl.StructDecl decl, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(decl), HighlightResult.Symbol.Kind.StructDef));
     return StmtConsumer.super.visitStruct(decl, buffer);
   }
 
-  @Override public Unit visitField(@NotNull Decl.StructField field, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitField(@NotNull Decl.StructField field, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(field), HighlightResult.Symbol.Kind.FieldDef));
     return StmtConsumer.super.visitField(field, buffer);
   }
 
-  @Override public Unit visitFn(@NotNull Decl.FnDecl decl, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitFn(@NotNull Decl.FnDecl decl, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(decl), HighlightResult.Symbol.Kind.FnDef));
     return StmtConsumer.super.visitFn(decl, buffer);
   }
 
-  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(decl), HighlightResult.Symbol.Kind.PrimDef));
     return StmtConsumer.super.visitPrim(decl, buffer);
   }
 
-  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     for (var level : levels.levels())
       buffer.append(new HighlightResult.Symbol(LspRange.toRange(level.sourcePos()), HighlightResult.Symbol.Kind.Generalize));
     return StmtConsumer.super.visitLevels(levels, buffer);
@@ -63,23 +63,23 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
   // endregion
 
   // region call terms
-  @Override public Unit visitRef(@NotNull Expr.RefExpr expr, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitRef(@NotNull Expr.RefExpr expr, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     if (expr.resolvedVar() instanceof DefVar<?, ?> defVar)
       visitCall(defVar, expr.sourcePos(), buffer);
     return StmtConsumer.super.visitRef(expr, buffer);
   }
 
-  @Override public Unit visitProj(@NotNull Expr.ProjExpr expr, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitProj(@NotNull Expr.ProjExpr expr, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     if (expr.resolvedIx().value instanceof DefVar<?, ?> defVar)
       visitCall(defVar, expr.ix().getRightValue().sourcePos(), buffer);
     return StmtConsumer.super.visitProj(expr, buffer);
   }
 
-  @Override public Unit visitError(Expr.@NotNull ErrorExpr error, @NotNull Buffer<HighlightResult.Symbol> symbols) {
+  @Override public Unit visitError(Expr.@NotNull ErrorExpr error, @NotNull DynamicSeq<HighlightResult.Symbol> symbols) {
     return Unit.unit();
   }
 
-  private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  private void visitCall(@NotNull DefVar<?, ?> ref, @NotNull SourcePos headPos, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     if (ref.concrete instanceof Decl.FnDecl)
       buffer.append(new HighlightResult.Symbol(LspRange.toRange(headPos), HighlightResult.Symbol.Kind.FnCall));
     else if (ref.concrete instanceof Decl.PrimDecl)
@@ -97,13 +97,13 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
   // endregion
 
   // region pattern
-  @Override public Unit visitBind(@NotNull Pattern.Bind bind, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitBind(@NotNull Pattern.Bind bind, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     if (bind.resolved().value instanceof DefVar<?, ?> defVar)
       visitCall(defVar, bind.sourcePos(), buffer);
     return StmtConsumer.super.visitBind(bind, buffer);
   }
 
-  @Override public Unit visitCtor(@NotNull Pattern.Ctor ctor, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitCtor(@NotNull Pattern.Ctor ctor, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     if (ctor.resolved().value instanceof DefVar<?, ?> defVar)
       visitCall(defVar, ctor.name().sourcePos(), buffer);
     return StmtConsumer.super.visitCtor(ctor, buffer);
@@ -112,17 +112,17 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
 
   // region import, open, module
 
-  @Override public Unit visitImport(Command.@NotNull Import cmd, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitImport(Command.@NotNull Import cmd, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(cmd.sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
     return StmtConsumer.super.visitImport(cmd, buffer);
   }
 
-  @Override public Unit visitOpen(Command.@NotNull Open cmd, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitOpen(Command.@NotNull Open cmd, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(cmd.sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
     return StmtConsumer.super.visitOpen(cmd, buffer);
   }
 
-  @Override public Unit visitModule(Command.@NotNull Module mod, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitModule(Command.@NotNull Module mod, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(mod.sourcePos()), HighlightResult.Symbol.Kind.ModuleDef));
     return StmtConsumer.super.visitModule(mod, buffer);
   }
@@ -137,12 +137,12 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull Buffer<Highl
     };
   }
 
-  private void visitOperator(@NotNull Buffer<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @NotNull Ref<@Nullable OpDecl> ref) {
+  private void visitOperator(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @NotNull Ref<@Nullable OpDecl> ref) {
     if (ref.value == null) return;
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(ref.value)));
   }
 
-  @Override public Unit visitBind(Command.@NotNull Bind bind, @NotNull Buffer<HighlightResult.Symbol> buffer) {
+  @Override public Unit visitBind(Command.@NotNull Bind bind, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     visitOperator(buffer, bind.op().sourcePos(), bind.resolvedOp());
     visitOperator(buffer, bind.target().sourcePos(), bind.resolvedTarget());
     return StmtConsumer.super.visitBind(bind, buffer);

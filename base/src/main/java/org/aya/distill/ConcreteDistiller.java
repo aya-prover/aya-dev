@@ -5,7 +5,7 @@ package org.aya.distill;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
@@ -64,7 +64,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     if (!options.showImplicitPats() && !expr.param().explicit()) {
       return expr.body().accept(this, nestedCall);
     }
-    var prelude = Buffer.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
+    var prelude = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
       lambdaParam(expr.param()));
     if (!(expr.body() instanceof Expr.HoleExpr)) {
       prelude.append(Doc.symbol("=>"));
@@ -258,7 +258,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitImport(Command.@NotNull Import cmd, Unit unit) {
-    var prelude = Buffer.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
+    var prelude = DynamicSeq.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
     if (cmd.asName() != null) {
       prelude.append(Doc.styled(KEYWORD, "as"));
       prelude.append(Doc.plain(cmd.asName()));
@@ -305,7 +305,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitData(Decl.@NotNull DataDecl decl, Unit unit) {
-    var prelude = Buffer.of(
+    var prelude = DynamicSeq.of(
       visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
       Doc.styled(KEYWORD, "data"),
       linkDef(decl.ref, DATA_CALL),
@@ -318,7 +318,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitCtor(Decl.@NotNull DataCtor ctor, Unit unit) {
-    var prelude = Buffer.of(
+    var prelude = DynamicSeq.of(
       coe(ctor.coerce),
       linkDef(ctor.ref, CON_CALL),
       visitTele(ctor.telescope),
@@ -341,7 +341,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
-    var prelude = Buffer.of(visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
+    var prelude = DynamicSeq.of(visitAccess(decl.accessibility(), Stmt.Accessibility.Public),
       Doc.styled(KEYWORD, "struct"),
       linkDef(decl.ref, STRUCT_CALL),
       visitTele(decl.telescope));
@@ -352,14 +352,14 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
     );
   }
 
-  private void appendResult(Buffer<Doc> prelude, Expr result) {
+  private void appendResult(DynamicSeq<Doc> prelude, Expr result) {
     if (result instanceof Expr.HoleExpr) return;
     prelude.append(Doc.symbol(":"));
     prelude.append(result.accept(this, false));
   }
 
   @Override public Doc visitField(Decl.@NotNull StructField field, Unit unit) {
-    var doc = Buffer.of(Doc.symbol("|"),
+    var doc = DynamicSeq.of(Doc.symbol("|"),
       coe(field.coerce),
       linkDef(field.ref, FIELD_CALL),
       visitTele(field.telescope));
@@ -373,7 +373,7 @@ public record ConcreteDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
-    var prelude = Buffer.of(visitAccess(decl.accessibility(), Stmt.Accessibility.Public), Doc.styled(KEYWORD, "def"));
+    var prelude = DynamicSeq.of(visitAccess(decl.accessibility(), Stmt.Accessibility.Public), Doc.styled(KEYWORD, "def"));
     prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
     prelude.append(linkDef(decl.ref, FN_CALL));
     prelude.append(visitTele(decl.telescope));

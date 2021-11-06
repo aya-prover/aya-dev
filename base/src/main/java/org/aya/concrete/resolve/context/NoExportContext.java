@@ -25,6 +25,6 @@ public record NoExportContext(
 
   public NoExportContext(@NotNull PhysicalModuleContext parent) {
     this(parent, MutableMap.create(),
-      MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of()));
+      MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create()));
   }
 }

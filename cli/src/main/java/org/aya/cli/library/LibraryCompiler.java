@@ -3,7 +3,7 @@
 package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
@@ -49,8 +49,8 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
   private void make(@NotNull LibraryConfig config) throws IOException {
     // TODO[kiva]: move to package manager
-    var compiledModulePath = Buffer.<Path>create();
-    var modulePath = Buffer.<Path>create();
+    var compiledModulePath = DynamicSeq.<Path>create();
+    var modulePath = DynamicSeq.<Path>create();
     for (var dep : config.deps()) {
       var depConfig = depConfig(dep);
       if (depConfig == null) {
@@ -76,8 +76,8 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
 
   private void callSingleFileCompiler(
     @NotNull Path file,
-    @NotNull Buffer<Path> compiledModulePath,
-    @NotNull Buffer<Path> modulePath,
+    @NotNull DynamicSeq<Path> compiledModulePath,
+    @NotNull DynamicSeq<Path> modulePath,
     @NotNull Path outRoot
   ) {
     var locator = new SourceFileLocator.Module(modulePath.view());

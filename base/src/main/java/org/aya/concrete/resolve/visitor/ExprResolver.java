@@ -4,7 +4,7 @@ package org.aya.concrete.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Tuple2;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.PreLevelVar;
@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ExprResolver(
   boolean allowGeneralized,
-  @NotNull Buffer<PreLevelVar> allowedLevels,
-  @NotNull Buffer<Stmt> reference
+  @NotNull DynamicSeq<PreLevelVar> allowedLevels,
+  @NotNull DynamicSeq<Stmt> reference
 ) implements ExprFixpoint<Context> {
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
@@ -105,7 +105,7 @@ public record ExprResolver(
   }
 
   @Override public @NotNull Expr visitHole(@NotNull Expr.HoleExpr expr, Context context) {
-    expr.accessibleLocal().set(context.collect(Buffer.create()).toImmutableSeq());
+    expr.accessibleLocal().set(context.collect(DynamicSeq.create()).toImmutableSeq());
     return ExprFixpoint.super.visitHole(expr, context);
   }
 }

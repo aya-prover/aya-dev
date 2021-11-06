@@ -3,7 +3,7 @@
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -191,7 +191,7 @@ public final class PatTycker {
   }
 
   public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, ImmutableSeq<Pattern> stream) {
-    var results = Buffer.<Pat>create();
+    var results = DynamicSeq.<Pat>create();
     stream.forEach(pat -> {
       if (sig.value.param().isEmpty()) {
         exprTycker.reporter.report(new PatternProblem

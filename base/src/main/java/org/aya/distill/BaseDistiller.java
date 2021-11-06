@@ -4,7 +4,7 @@ package org.aya.distill;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
@@ -69,8 +69,8 @@ public interface BaseDistiller {
   default Doc visitTele(@NotNull SeqLike<? extends ParamLike<?>> telescope) {
     if (telescope.isEmpty()) return Doc.empty();
     var last = telescope.first();
-    var buf = Buffer.<Doc>create();
-    var names = Buffer.of(last.nameDoc());
+    var buf = DynamicSeq.<Doc>create();
+    var names = DynamicSeq.of(last.nameDoc());
     for (var param : telescope.view().drop(1)) {
       if (!Objects.equals(param.type(), last.type())) {
         buf.append(last.toDoc(Doc.sep(names), options()));

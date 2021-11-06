@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -15,17 +15,17 @@ import java.util.Objects;
  */
 public abstract class GenericBuilder<T extends GenericBuilder.Tree<T>> {
   public interface Tree<T extends Tree<T>> {
-    @NotNull Buffer<T> children();
+    @NotNull DynamicSeq<T> children();
   }
 
-  protected final Deque<@NotNull Buffer<@NotNull T>> tops = new ArrayDeque<>();
+  protected final Deque<@NotNull DynamicSeq<@NotNull T>> tops = new ArrayDeque<>();
 
-  public @NotNull Buffer<@NotNull T> root() {
+  public @NotNull DynamicSeq<@NotNull T> root() {
     return tops.getFirst();
   }
 
   {
-    tops.addLast(Buffer.create());
+    tops.addLast(DynamicSeq.create());
   }
 
   public void append(@NotNull T trace) {

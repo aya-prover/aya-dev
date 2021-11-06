@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.trace;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
@@ -31,7 +31,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
   final class Builder extends GenericBuilder<Trace> {
-    @VisibleForTesting public @NotNull Deque<Buffer<Trace>> getTops() {
+    @VisibleForTesting public @NotNull Deque<DynamicSeq<Trace>> getTops() {
       return tops;
     }
   }
@@ -39,10 +39,10 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   record LabelT(
     @NotNull SourcePos pos,
     @NotNull String label,
-    @NotNull Buffer<@NotNull Trace> children
+    @NotNull DynamicSeq<@NotNull Trace> children
   ) implements Trace {
     public LabelT(@NotNull SourcePos pos, @NotNull String label) {
-      this(pos, label, Buffer.create());
+      this(pos, label, DynamicSeq.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -52,10 +52,10 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
 
   record DeclT(
     @NotNull DefVar<?, ?> var, @NotNull SourcePos pos,
-    @NotNull Buffer<@NotNull Trace> children
+    @NotNull DynamicSeq<@NotNull Trace> children
   ) implements Trace {
     public DeclT(@NotNull DefVar<?, ?> var, @NotNull SourcePos pos) {
-      this(var, pos, Buffer.create());
+      this(var, pos, DynamicSeq.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -63,9 +63,9 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
     }
   }
 
-  record ExprT(@NotNull Expr expr, @Nullable Term term, @NotNull Buffer<@NotNull Trace> children) implements Trace {
+  record ExprT(@NotNull Expr expr, @Nullable Term term, @NotNull DynamicSeq<@NotNull Trace> children) implements Trace {
     public ExprT(@NotNull Expr expr, @Nullable Term term) {
-      this(expr, term, Buffer.create());
+      this(expr, term, DynamicSeq.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -76,14 +76,14 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   record UnifyT(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull SourcePos pos, @Nullable Term type,
-    @NotNull Buffer<@NotNull Trace> children
+    @NotNull DynamicSeq<@NotNull Trace> children
   ) implements Trace {
     public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos) {
       this(lhs, rhs, pos, null);
     }
 
     public UnifyT(@NotNull Term lhs, @NotNull Term rhs, @NotNull SourcePos pos, @Nullable Term type) {
-      this(lhs, rhs, pos, type, Buffer.create());
+      this(lhs, rhs, pos, type, DynamicSeq.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -94,10 +94,10 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   record TyckT(
     @NotNull Term term, @NotNull Term type,
     @NotNull SourcePos pos,
-    @NotNull Buffer<@NotNull Trace> children
+    @NotNull DynamicSeq<@NotNull Trace> children
   ) implements Trace {
     public TyckT(@NotNull Term term, @NotNull Term type, @NotNull SourcePos pos) {
-      this(term, type, pos, Buffer.create());
+      this(term, type, pos, DynamicSeq.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -108,10 +108,10 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
   record PatT(
     @NotNull Term term, @NotNull Pattern pat,
     @NotNull SourcePos pos,
-    @NotNull Buffer<@NotNull Trace> children
+    @NotNull DynamicSeq<@NotNull Trace> children
   ) implements Trace {
     public PatT(@NotNull Term term, @NotNull Pattern pat, @NotNull SourcePos pos) {
-      this(term, pat, pos, Buffer.create());
+      this(term, pat, pos, DynamicSeq.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

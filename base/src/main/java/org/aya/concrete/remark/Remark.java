@@ -3,7 +3,7 @@
 package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.ResolveInfo;
@@ -42,7 +42,7 @@ public final class Remark implements Stmt {
     @NotNull AyaProducer producer
   ) {
     Node next;
-    var children = Buffer.<Literate>create();
+    var children = DynamicSeq.<Literate>create();
     for (var node = parent.getFirstChild(); node != null; node = next) {
       if (children.isNotEmpty() && node instanceof Paragraph) {
         children.append(new Literate.Raw(Doc.line()));

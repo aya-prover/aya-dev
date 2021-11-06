@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * @author ice1000, kiva
  */
 public class GotoDefinition implements StmtConsumer<XY> {
-  public final @NotNull Buffer<WithPos<Var>> locations = Buffer.create();
+  public final @NotNull DynamicSeq<WithPos<Var>> locations = DynamicSeq.create();
 
   @NotNull
   public static List<LocationLink> invoke(@NotNull DefinitionParams params, @NotNull AyaService.AyaFile loadedFile) {

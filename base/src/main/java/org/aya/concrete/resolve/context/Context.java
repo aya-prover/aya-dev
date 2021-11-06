@@ -4,7 +4,7 @@ package org.aya.concrete.resolve.context;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -51,7 +51,7 @@ public interface Context {
       : getQualified(name, name.sourcePos());
   }
 
-  default Buffer<LocalVar> collect(@NotNull Buffer<LocalVar> container) {
+  default DynamicSeq<LocalVar> collect(@NotNull DynamicSeq<LocalVar> container) {
     return container;
   }
 

@@ -3,7 +3,7 @@
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
 import kala.tuple.Unit;
 import kala.value.Ref;
@@ -53,7 +53,7 @@ public sealed interface Expr extends ConcreteExpr {
    */
   @Contract(mutates = "this")
   default Expr resolve(@NotNull ModuleContext context) {
-    var exprResolver = new ExprResolver(false, Buffer.create(), Buffer.create());
+    var exprResolver = new ExprResolver(false, DynamicSeq.create(), DynamicSeq.create());
     return accept(exprResolver, context);
   }
 

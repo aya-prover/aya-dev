@@ -4,7 +4,7 @@ package org.aya.lsp.server;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
-  private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.of(), Buffer.create());
+  private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.create(), DynamicSeq.create());
   private Set<Path> lastErrorReportedFiles = Collections.emptySet();
 
   public void registerLibrary(@NotNull Path path) {
@@ -64,7 +64,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       CompilerFlags.Message.EMOJI, false, null,
       libraryManager.modulePath.view());
 
-    var symbols = Buffer.<HighlightResult.Symbol>create();
+    var symbols = DynamicSeq.<HighlightResult.Symbol>create();
     try {
       compiler.compile(filePath, compilerFlags, new FileModuleLoader.FileModuleLoaderCallback() {
         @Override
@@ -188,7 +188,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public record LspLibraryManager(
     @NotNull MutableHashMap<@NotNull Path, AyaFile> loadedFiles,
-    @NotNull Buffer<Path> modulePath
+    @NotNull DynamicSeq<Path> modulePath
   ) implements SourceFileLocator {
     @Override public @NotNull Path displayName(@NotNull Path path) {
       // vscode needs absolute path

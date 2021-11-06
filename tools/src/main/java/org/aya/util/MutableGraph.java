@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@NotNull T>> E) {
   public static @NotNull <T> MutableGraph<T> empty() {
-    return new MutableGraph<>(MutableHashMap.of());
+    return new MutableGraph<>(MutableHashMap.create());
   }
 
   public @NotNull MutableSet<T> suc(@NotNull T elem) {
@@ -16,7 +16,7 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
   }
 
   public boolean hasPath(@NotNull T from, @NotNull T to) {
-    return hasPath(MutableSet.of(), from, to);
+    return hasPath(MutableSet.create(), from, to);
   }
 
   private boolean hasPath(@NotNull MutableSet<T> book, @NotNull T from, @NotNull T to) {
@@ -56,8 +56,8 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
    */
   private class Tarjan {
     MutableMap<T, Info> info = MutableMap.create();
-    LinkedBuffer<T> stack = LinkedBuffer.of();
-    Buffer<ImmutableSeq<T>> SCCs = Buffer.create();
+    DynamicLinkedSeq<T> stack = DynamicLinkedSeq.create();
+    DynamicSeq<ImmutableSeq<T>> SCCs = DynamicSeq.create();
     int index = 0;
 
     private @NotNull Info info(@NotNull T t) {
@@ -95,7 +95,7 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
 
       // If v is a root node, pop the stack and generate an SCC
       if (infoV.lowlink == infoV.index) {
-        var scc = Buffer.<T>create();
+        var scc = DynamicSeq.<T>create();
         T t = null;
         while (v != t) {
           t = pop();

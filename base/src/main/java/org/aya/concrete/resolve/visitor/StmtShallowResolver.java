@@ -48,7 +48,7 @@ public record StmtShallowResolver(
       cmd.path().ids(),
       cmd.accessibility(),
       cmd.useHide()::uses,
-      MutableHashMap.of(), // TODO handle renaming
+      MutableHashMap.create(), // TODO handle renaming
       cmd.sourcePos()
     );
     return Unit.unit();

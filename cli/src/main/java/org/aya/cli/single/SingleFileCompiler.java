@@ -3,7 +3,7 @@
 package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.CountingReporter;
@@ -118,7 +118,7 @@ public record SingleFileCompiler(
     ImmutableSeq<? extends AyaDocile> doc, Path distillDir,
     String fileName, String fileExt, BiFunction<Doc, Boolean, String> toString
   ) throws IOException {
-    var docs = Buffer.<Doc>create();
+    var docs = DynamicSeq.<Doc>create();
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
       var thisDoc = item.toDoc(DistillerOptions.DEFAULT);

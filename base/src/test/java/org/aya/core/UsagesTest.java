@@ -3,7 +3,7 @@
 package org.aya.core;
 
 import kala.collection.Seq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -25,7 +25,7 @@ public class UsagesTest {
        | neg n => n
       open data Fin (n : Nat) : Type | suc m => fzero | suc m => fsuc (Fin m)
       """).forEach(def -> {
-      var of = Buffer.<Def>create();
+      var of = DynamicSeq.<Def>create();
       def.accept(RefFinder.HEADER_AND_BODY, of);
       assertFalse(of.isEmpty());
       of.clear();

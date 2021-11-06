@@ -4,7 +4,7 @@ package org.aya.cli.utils;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
@@ -107,7 +107,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
 
   private void visitSub(
     String s, Color color, JImGui imGui,
-    Buffer<@NotNull Trace> subtraces,
+    DynamicSeq<@NotNull Trace> subtraces,
     @NotNull Runnable callback,
     int hashCode
   ) {
@@ -143,7 +143,7 @@ public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
       " : " +
       type.toDoc(options).debugRender();
     imGui.text("-".repeat(s.length() + 4));
-    visitSub(s, Color.YELLOW, imGui, Buffer.create(), () -> pos = t.pos(), Objects.hashCode(t));
+    visitSub(s, Color.YELLOW, imGui, DynamicSeq.create(), () -> pos = t.pos(), Objects.hashCode(t));
     return Unit.unit();
   }
 

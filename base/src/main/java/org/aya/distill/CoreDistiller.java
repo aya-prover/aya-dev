@@ -5,7 +5,7 @@ package org.aya.distill;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
@@ -200,7 +200,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
-    var line1 = Buffer.of(Doc.styled(KEYWORD, "def"),
+    var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "def"),
       linkDef(def.ref(), FN_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
@@ -225,7 +225,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitData(@NotNull DataDef def, Unit unit) {
-    var line1 = Buffer.of(Doc.styled(KEYWORD, "data"),
+    var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "data"),
       linkDef(def.ref(), DATA_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),

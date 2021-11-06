@@ -4,7 +4,7 @@ package org.aya.tyck.order;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
 import org.aya.api.error.CollectingReporter;
 import org.aya.api.error.Problem;
@@ -34,7 +34,7 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
   }
 
   public @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
-    var wellTyped = Buffer.<Def>create();
+    var wellTyped = DynamicSeq.<Def>create();
     if (scc.sizeEquals(1)) checkBody(scc.first(), wellTyped);
     else {
       var headerOrder = headerOrder(scc);
@@ -49,7 +49,7 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
     else if (stmt instanceof Sample sample) sample.tyckHeader(tycker);
   }
 
-  private void checkBody(@NotNull Stmt stmt, @NotNull Buffer<Def> wellTyped) {
+  private void checkBody(@NotNull Stmt stmt, @NotNull DynamicSeq<Def> wellTyped) {
     switch (stmt) {
       case Decl decl -> wellTyped.append(tycker.tyck(decl, tycker.newTycker()));
       case Sample sample -> wellTyped.append(sample.tyck(tycker));
@@ -67,7 +67,7 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
   public @NotNull ImmutableSeq<Stmt> headerOrder(@NotNull Seq<Stmt> stmts) {
     var graph = MutableGraph.<Stmt>empty();
     stmts.forEach(stmt -> {
-      var reference = Buffer.<Stmt>create();
+      var reference = DynamicSeq.<Stmt>create();
       stmt.accept(SigRefFinder.HEADER_ONLY, reference);
       graph.suc(stmt).addAll(reference);
     });
