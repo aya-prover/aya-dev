@@ -5,7 +5,7 @@ package org.aya.concrete.resolve.context;
 import kala.collection.Map;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
@@ -36,7 +36,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     if (result == null) return null;
     else if (result.size() == 1) return result.iterator().next().getValue();
     else {
-      var disamb = Buffer.<Seq<String>>create();
+      var disamb = DynamicSeq.<Seq<String>>create();
       result.forEach((k, v) -> disamb.append(k));
       return reportAndThrow(new AmbiguousNameError(name, disamb.toImmutableSeq(), sourcePos));
     }
@@ -114,7 +114,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
         reporter().report(new ShadowingWarn(name, sourcePos));
       }
-      definitions.set(name, MutableHashMap.of());
+      definitions.set(name, MutableHashMap.create());
     } else if (definitions.get(name).containsKey(modName)) {
       reportAndThrow(new DuplicateNameError(name, ref, sourcePos));
     } else {

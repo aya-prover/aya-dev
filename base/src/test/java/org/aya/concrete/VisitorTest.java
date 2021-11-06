@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VisitorTest {
   @Test public void stmt() {
-    var exprs = Buffer.<Expr>create();
+    var exprs = DynamicSeq.<Expr>create();
     var visitor = new StmtConsumer<Unit>() {
       @Override public Unit visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Unit unit) {
         exprs.append(expr);

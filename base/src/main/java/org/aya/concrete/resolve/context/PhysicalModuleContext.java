@@ -18,9 +18,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions = MutableHashMap.of();
-  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
-  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.of());
+  public final @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions = MutableHashMap.create();
+  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create());
+  public final @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> exports = MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create());
 
   private final @NotNull ImmutableSeq<String> moduleName;
 

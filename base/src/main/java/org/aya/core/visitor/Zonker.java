@@ -3,8 +3,8 @@
 package org.aya.core.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
-import kala.collection.mutable.LinkedBuffer;
+import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.DynamicLinkedSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public final class Zonker implements TermFixpoint<Unit> {
   public final @NotNull TyckState state;
   public final @NotNull Reporter reporter;
-  private final @NotNull LinkedBuffer<Term> stack = LinkedBuffer.of();
+  private final @NotNull DynamicLinkedSeq<Term> stack = DynamicLinkedSeq.create();
   private boolean reported = false;
 
   public Zonker(@NotNull TyckState state, @NotNull Reporter reporter) {
@@ -103,9 +103,9 @@ public final class Zonker implements TermFixpoint<Unit> {
     @Override @NotNull SourcePos sourcePos, @NotNull String name
   ) implements Problem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      var lines = Buffer.of(Doc.english("Unsolved meta " + name));
+      var lines = DynamicSeq.of(Doc.english("Unsolved meta " + name));
       for (var term : termStack) {
-        var buf = Buffer.of(Doc.plain("in"), Doc.par(1, Doc.styled(Style.code(), term.toDoc(options))));
+        var buf = DynamicSeq.of(Doc.plain("in"), Doc.par(1, Doc.styled(Style.code(), term.toDoc(options))));
         if (term instanceof RefTerm) {
           buf.append(Doc.ALT_WS);
           buf.append(Doc.parened(Doc.english("in the type")));

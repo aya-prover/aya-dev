@@ -3,7 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import org.aya.api.error.SourcePos;
@@ -65,7 +65,7 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
   }
 
   public @NotNull ImmutableSeq<Term.Param> extract() {
-    var ctx = Buffer.<Term.Param>create();
+    var ctx = DynamicSeq.<Term.Param>create();
     var map = this;
     while (map != null) {
       map.localMap.mapTo(ctx, (k, v) -> new Term.Param(k, v, false));

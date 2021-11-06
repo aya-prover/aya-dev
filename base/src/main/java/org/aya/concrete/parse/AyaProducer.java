@@ -4,7 +4,7 @@ package org.aya.concrete.parse;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.LinkedBuffer;
+import kala.collection.mutable.DynamicLinkedSeq;
 import kala.collection.mutable.MutableHashSet;
 import kala.control.Either;
 import kala.control.Option;
@@ -359,7 +359,7 @@ public final class AyaProducer {
     var head = new BinOpParser.Elem(null, visitExpr(ctx.expr()), true);
     var tail = ctx.argument().stream()
       .map(this::visitArgument)
-      .collect(LinkedBuffer.factory());
+      .collect(DynamicLinkedSeq.factory());
     tail.push(head);
     return new Expr.BinOpSeq(sourcePosOf(ctx), tail.toImmutableSeq());
   }

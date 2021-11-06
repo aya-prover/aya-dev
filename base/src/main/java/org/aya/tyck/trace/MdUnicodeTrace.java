@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.trace;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.distill.BaseDistiller;
@@ -30,12 +30,12 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
       indentedChildren(t.children()));
   }
 
-  private @NotNull Doc indentedChildren(Buffer<@NotNull Trace> children) {
+  private @NotNull Doc indentedChildren(DynamicSeq<@NotNull Trace> children) {
     return Doc.nest(indent, Doc.vcat(children.view().map(trace -> trace.accept(this, Unit.unit()))));
   }
 
   @Override public Doc visitExpr(Trace.@NotNull ExprT t, Unit unit) {
-    var buf = Buffer.of(plus, Doc.symbol("\u22A2"), Doc.styled(Style.code(), t.expr().toDoc(options)));
+    var buf = DynamicSeq.of(plus, Doc.symbol("\u22A2"), Doc.styled(Style.code(), t.expr().toDoc(options)));
     if (t.term() != null) {
       buf.append(colon);
       buf.append(t.term().toDoc(options));
@@ -44,7 +44,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   }
 
   @Override public Doc visitUnify(Trace.@NotNull UnifyT t, Unit unit) {
-    var buf = Buffer.of(plus,
+    var buf = DynamicSeq.of(plus,
       Doc.symbol("\u22A2"),
       t.lhs().toDoc(options),
       Doc.symbol("\u2261"),

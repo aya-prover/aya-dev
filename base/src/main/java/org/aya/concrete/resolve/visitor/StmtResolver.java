@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.resolve.visitor;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
@@ -71,8 +71,8 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, ResolveInfo info) {
-    var reference = Buffer.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
+    var reference = DynamicSeq.<Stmt>create();
+    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
@@ -89,8 +89,8 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
   }
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, ResolveInfo info) {
-    var reference = Buffer.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
+    var reference = DynamicSeq.<Stmt>create();
+    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
@@ -108,8 +108,8 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, ResolveInfo info) {
-    var reference = Buffer.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, Buffer.create(), reference);
+    var reference = DynamicSeq.<Stmt>create();
+    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
@@ -122,7 +122,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, ResolveInfo info) {
-    var resolver = new ExprResolver(false, Buffer.create(), Buffer.create());
+    var resolver = new ExprResolver(false, DynamicSeq.create(), DynamicSeq.create());
     var local = resolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     if (decl.result != null) decl.result = decl.result.accept(resolver, local._2);

@@ -3,7 +3,7 @@
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
@@ -18,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
 public record PatTree(
   @NotNull String s,
   boolean explicit, int argsCount,
-  @NotNull Buffer<PatTree> children
+  @NotNull DynamicSeq<PatTree> children
 ) implements GenericBuilder.Tree<PatTree> {
   public PatTree(@NotNull String s, boolean explicit, int argsCount) {
-    this(s, explicit, argsCount, Buffer.create());
+    this(s, explicit, argsCount, DynamicSeq.create());
   }
 
   public @NotNull Pattern toPattern() {

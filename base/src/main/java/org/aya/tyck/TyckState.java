@@ -3,7 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableMap;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -33,13 +33,13 @@ import org.jetbrains.annotations.Nullable;
  * Currently we only deal with ambiguous equations (so no 'stuck' equations).
  */
 public record TyckState(
-  @NotNull Buffer<Eqn> eqns,
-  @NotNull Buffer<WithPos<Meta>> activeMetas,
+  @NotNull DynamicSeq<Eqn> eqns,
+  @NotNull DynamicSeq<WithPos<Meta>> activeMetas,
   @NotNull LevelEqnSet levelEqns,
   @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas
 ) {
   public TyckState() {
-    this(Buffer.create(), Buffer.create(), new LevelEqnSet(), MutableMap.create());
+    this(DynamicSeq.create(), DynamicSeq.create(), new LevelEqnSet(), MutableMap.create());
   }
 
   public void solveEqn(
@@ -53,7 +53,7 @@ public record TyckState(
   public boolean simplify(
     @NotNull Reporter reporter, @Nullable Trace.Builder tracer
   ) {
-    var removingMetas = Buffer.<WithPos<Meta>>create();
+    var removingMetas = DynamicSeq.<WithPos<Meta>>create();
     for (var activeMeta : activeMetas) {
       if (metas.containsKey(activeMeta.data())) {
         eqns.filterInPlace(eqn -> {

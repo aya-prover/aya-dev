@@ -2,14 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.jetbrains.annotations.NotNull;
 
 public class Styles {
-  public Buffer<Style> styles;
+  public DynamicSeq<Style> styles;
 
   Styles(Style style) {
-    this.styles = Buffer.of(style);
+    this.styles = DynamicSeq.of(style);
   }
 
   public @NotNull Styles italic() {

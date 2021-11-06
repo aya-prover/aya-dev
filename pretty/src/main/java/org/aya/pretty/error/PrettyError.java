@@ -5,7 +5,7 @@ package org.aya.pretty.error;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -63,10 +63,10 @@ public record PrettyError(
       .skip(Math.max(startLine - 1 - showMore, 0))
       .limit(endLine - startLine + 1 + showMore)
       .map(line -> visualizeLine(config, line))
-      .collect(Buffer.factory());
+      .collect(DynamicSeq.factory());
 
     int lineNo = Math.max(startLine - showMore, 1);
-    var docs = Buffer.<Doc>create();
+    var docs = DynamicSeq.<Doc>create();
 
     for (var line : lines) {
       docs.append(renderLine(line, lineNo, linenoWidth));

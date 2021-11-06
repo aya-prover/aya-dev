@@ -4,7 +4,7 @@ package org.aya.tyck.unify.level;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import org.aya.core.sort.Sort;
@@ -60,11 +60,11 @@ public class LevelSolver {
     g[u][v] = Math.min(g[u][v], dist);
   }
 
-  private final MutableSet<LvlVar> unfreeNodes = MutableSet.of();
-  private final MutableSet<LvlVar> freeNodes = MutableSet.of();
+  private final MutableSet<LvlVar> unfreeNodes = MutableSet.create();
+  private final MutableSet<LvlVar> freeNodes = MutableSet.create();
   private final MutableMap<LvlVar, Integer> graphMap = MutableMap.create();
   private final MutableMap<LvlVar, Integer> defaultValues = MutableMap.create();
-  public final Buffer<Eqn> avoidableEqns = Buffer.create();
+  public final DynamicSeq<Eqn> avoidableEqns = DynamicSeq.create();
 
   private void genGraphNode(SeqLike<Level<LvlVar>> l) {
     for (var e : l) {
@@ -168,7 +168,7 @@ public class LevelSolver {
       prepareGraphNode(g, e.lhs().levels());
       prepareGraphNode(g, e.rhs().levels());
     }
-    var specialEq = Buffer.<Eqn>create();
+    var specialEq = DynamicSeq.<Eqn>create();
     var equationsImm = equations.toImmutableSeq();
     var hasError = equationsImm
       // Do NOT make this lazy -- the `populate` function has side effects
@@ -194,14 +194,14 @@ public class LevelSolver {
       }
       int lowerBound = -gg[u][0];
       if (lowerBound < 0) lowerBound = 0;
-      var upperNodes = Buffer.<Level<LvlVar>>create();
-      var lowerNodes = Buffer.<Level<LvlVar>>create();
+      var upperNodes = DynamicSeq.<Level<LvlVar>>create();
+      var lowerNodes = DynamicSeq.<Level<LvlVar>>create();
       for (var nu : unfreeNodes) {
         int v = graphMap.get(nu);
         if (gg[v][u] != INF) upperNodes.append(new Level.Reference<>(nu, gg[v][u]));
         if (gg[u][v] < INF / 2) lowerNodes.append(new Level.Reference<>(nu, -gg[u][v]));
       }
-      var retList = Buffer.<Level<LvlVar>>create();
+      var retList = DynamicSeq.<Level<LvlVar>>create();
       if (!lowerNodes.isEmpty() || upperNodes.isEmpty()) {
         if (lowerBound != 0 || lowerNodes.isEmpty()) retList.append(new Level.Constant<>(lowerBound));
         retList.appendAll(lowerNodes);
@@ -217,7 +217,7 @@ public class LevelSolver {
   }
 
   /** @return true if fail */
-  private boolean populate(int[][] g, Buffer<Eqn> specialEq, Eqn e, boolean complex) {
+  private boolean populate(int[][] g, DynamicSeq<Eqn> specialEq, Eqn e, boolean complex) {
     var lhs = e.lhs();
     var rhs = e.rhs();
     return switch (e.cmp()) {
@@ -230,7 +230,7 @@ public class LevelSolver {
   }
 
   /** @return true if fail */
-  private boolean populateLt(int[][] g, Buffer<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs, boolean complex) {
+  private boolean populateLt(int[][] g, DynamicSeq<Eqn> specialEq, Eqn e, Sort lhs, Sort rhs, boolean complex) {
     if (complex && rhs.levels().sizeGreaterThan(1)) return false;
     var lhsLevels = lhs.levels().filter(vr -> {
       if (vr instanceof Level.Reference<LvlVar> ref) {
@@ -245,7 +245,7 @@ public class LevelSolver {
       }
       return true;
     });
-    var rhsLevels = Buffer.<Level<LvlVar>>create();
+    var rhsLevels = DynamicSeq.<Level<LvlVar>>create();
     for (var vr : rhs.levels()) {
       var insert = true;
       if (vr instanceof Level.Reference<LvlVar> ref) {

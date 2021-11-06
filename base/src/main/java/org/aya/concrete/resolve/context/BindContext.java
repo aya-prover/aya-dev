@@ -3,7 +3,7 @@
 package org.aya.concrete.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
@@ -32,7 +32,7 @@ public record BindContext(
     return parent.reporter();
   }
 
-  @Override public Buffer<LocalVar> collect(@NotNull Buffer<LocalVar> container) {
+  @Override public DynamicSeq<LocalVar> collect(@NotNull DynamicSeq<LocalVar> container) {
     if (container.noneMatch(v -> Objects.equals(v.name(), ref.name()))) container.append(ref);
     return parent.collect(container);
   }

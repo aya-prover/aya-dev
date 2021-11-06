@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify.level;
 
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
@@ -21,12 +21,12 @@ import org.jetbrains.annotations.TestOnly;
  * @author ice1000
  */
 public record LevelEqnSet(
-  @NotNull Buffer<Sort.LvlVar> vars,
-  @NotNull Buffer<@NotNull Eqn> eqns,
+  @NotNull DynamicSeq<Sort.LvlVar> vars,
+  @NotNull DynamicSeq<@NotNull Eqn> eqns,
   @NotNull MutableMap<Sort.LvlVar, @NotNull Sort> solution
 ) implements LevelSubst.Default {
   public LevelEqnSet() {
-    this(Buffer.create(), Buffer.create(), MutableMap.create());
+    this(DynamicSeq.create(), DynamicSeq.create(), MutableMap.create());
   }
 
   public void add(@NotNull Sort lhs, @NotNull Sort rhs, @NotNull Ordering cmp, @NotNull SourcePos loc) {
@@ -48,7 +48,7 @@ public record LevelEqnSet(
       eqns.clear();
     } catch (LevelSolver.UnsatException ignored) {
       // Level unsolved, leave the 'useful' equations
-      var buf = Buffer.<Eqn>create();
+      var buf = DynamicSeq.<Eqn>create();
       eqns.filterNotTo(buf, solver.avoidableEqns::contains);
       eqns.clear();
       eqns.appendAll(buf);

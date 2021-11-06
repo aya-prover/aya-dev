@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.Map;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreTerm;
@@ -81,7 +81,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     return counter.usageCount();
   }
 
-  @Override default @NotNull Buffer<LocalVar> scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
+  @Override default @NotNull DynamicSeq<LocalVar> scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed) {
     var checker = new VarConsumer.ScopeChecker(allowed);
     accept(checker, Unit.unit());
     assert checker.isCleared() : "The scope checker is not properly cleared up";
@@ -149,7 +149,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     @NotNull Term type,
     boolean explicit
   ) implements Bind, ParamLike<Term> {
-    public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(Buffer<Tuple3<LocalVar, Boolean, Term>> buf) {
+    public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(DynamicSeq<Tuple3<LocalVar, Boolean, Term>> buf) {
       return buf.view().map(tup -> new Param(tup._1, tup._3, tup._2)).toImmutableSeq();
     }
 

@@ -3,7 +3,7 @@
 package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
 import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
@@ -30,12 +30,12 @@ public class ReplCompiler {
   private final @NotNull CountingReporter reporter;
   private final @Nullable SourceFileLocator locator;
   private final @NotNull ReplContext context;
-  private final @NotNull Buffer<Path> modulePaths;
+  private final @NotNull DynamicSeq<Path> modulePaths;
 
   ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
     this.reporter = new CountingReporter(reporter);
     this.locator = locator;
-    this.modulePaths = Buffer.create();
+    this.modulePaths = DynamicSeq.create();
     this.context = new ReplContext(new EmptyContext(this.reporter), ImmutableSeq.of("REPL"));
   }
 
