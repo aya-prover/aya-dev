@@ -23,5 +23,5 @@ def test2 {A B : Type} {a : A} {b : B} => wow A B a a
 Observe the elaborated term of `test2`: `wow {Type} {\ _ => A} A B a a`
 Showing the lambda types: `wow {Type} {\ (_ : Type) => A} A B a a`
 Showing the universe levels: `wow {Type 0} {\ _ => A} A B a a`
-Showing the implicit arguments: `\ {A} => \ {B} => \ {a} => \ {b} => wow A B a a`
-Default: `\ {A} => \ {B} => \ {a} => \ {b} => wow {Type} {\ _ => A} A B a a`
+Showing the implicit arguments: `\ {A} {B} {a} {b} => wow A B a a`
+Default: `\ {A} {B} {a} {b} => wow {Type} {\ _ => A} A B a a`

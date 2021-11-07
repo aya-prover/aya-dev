@@ -51,7 +51,7 @@ public class CoreDistiller extends BaseDistiller implements
         if (checkUneta(args, params.last())) {
           args = args.dropLast(1);
           params.removeLast();
-        }
+        } else break;
       }
       bodyDoc = call instanceof CallTerm.Access access
         ? visitAccessHead(access)
