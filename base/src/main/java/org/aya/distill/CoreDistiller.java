@@ -4,18 +4,18 @@ package org.aya.distill;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
+import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.distill.BaseDistiller.*;
@@ -81,27 +81,27 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
-    return visitCalls(term.of(), term.arg(), nestedCall);
+    return visitCalls(term.of().accept(this, false), Seq.of(term.arg()), nestedCall);
   }
 
   @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
-    return visitCalls(fnCall.ref(), FN_CALL, fnCall.args(), nestedCall);
+    return visitCalls(linkRef(fnCall.ref(), FN_CALL), fnCall.args(), nestedCall);
   }
 
   @Override public Doc visitPrimCall(CallTerm.@NotNull Prim prim, Boolean nestedCall) {
-    return visitCalls(prim.ref(), FN_CALL, prim.args(), nestedCall);
+    return visitCalls(linkRef(prim.ref(), FN_CALL), prim.args(), nestedCall);
   }
 
   @Override public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
-    return visitCalls(dataCall.ref(), DATA_CALL, dataCall.args(), nestedCall);
+    return visitCalls(linkRef(dataCall.ref(), DATA_CALL), dataCall.args(), nestedCall);
   }
 
   @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Boolean nestedCall) {
-    return visitCalls(structCall.ref(), STRUCT_CALL, structCall.args(), nestedCall);
+    return visitCalls(linkRef(structCall.ref(), STRUCT_CALL), structCall.args(), nestedCall);
   }
 
   @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Boolean nestedCall) {
-    return visitCalls(conCall.ref(), CON_CALL, conCall.conArgs(), nestedCall);
+    return visitCalls(linkRef(conCall.ref(), CON_CALL), conCall.conArgs(), nestedCall);
   }
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
@@ -127,19 +127,18 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitAccess(CallTerm.@NotNull Access term, Boolean nestedCall) {
-    var ref = term.ref();
     var doc = Doc.cat(term.of().accept(this, false), Doc.symbol("."),
-      linkRef(ref, FIELD_CALL));
-    return visitCalls(doc, term.fieldArgs(), (n, t) -> t.accept(this, n), nestedCall);
+      linkRef(term.ref(), FIELD_CALL));
+    return visitCalls(doc, term.fieldArgs(), nestedCall);
   }
 
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
     var name = term.ref();
     var inner = varDoc(name);
     if (options.inlineMetas())
-      return visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), nestedCall);
+      return visitCalls(inner, term.args(), nestedCall);
     return Doc.wrap("{?", "?}",
-      visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), false));
+      visitCalls(inner, term.args(), false));
   }
 
   @Override
@@ -152,18 +151,11 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     return !term.isReallyError() ? doc : Doc.angled(doc);
   }
 
-  private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
-    return visitCalls(fn.accept(this, false), Seq.of(arg),
-      (nest, term) -> term.accept(this, nest), nestedCall);
-  }
-
   private Doc visitCalls(
-    @NotNull DefVar<?, ?> fn, @NotNull Style style,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
+    @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
     boolean nestedCall
   ) {
-    var hyperLink = linkRef(fn, style);
-    return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
+    return visitCalls(fn, args, (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {

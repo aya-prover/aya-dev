@@ -5,10 +5,12 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.FieldDef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Introduction rules.
@@ -19,9 +21,16 @@ public sealed interface IntroTerm extends Term {
   /**
    * @author ice1000
    */
-  record Lambda(@NotNull Term.Param param, @NotNull Term body) implements IntroTerm {
+  record Lambda(@NotNull Param param, @NotNull Term body) implements IntroTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLam(this, p);
+    }
+
+    public static @NotNull Term unwrap(@NotNull Term term, @Nullable DynamicSeq<@NotNull Param> params) {
+      if (term instanceof Lambda lambda) {
+        if (params != null) params.append(lambda.param);
+        return unwrap(lambda.body, params);
+      } else return term;
     }
 
     public static @NotNull Term make(@NotNull SeqLike<@NotNull Param> telescope, @NotNull Term body) {
