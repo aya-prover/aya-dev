@@ -146,7 +146,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
 
   private void visitSample(@NotNull Sample sample, ResolveInfo info) {
     var delegate = sample.delegate();
-    var delegateInfo = new ResolveInfo(info.opSet(), MutableGraph.empty(), MutableGraph.empty());
+    var delegateInfo = new ResolveInfo(info.opSet(), MutableGraph.create(), MutableGraph.create());
     delegate.accept(this, delegateInfo);
     // little hacky: transfer dependencies from `delegate` to `sample`
     info.sampleGraph().suc(sample).addAll(delegateInfo.declGraph().suc(delegate));

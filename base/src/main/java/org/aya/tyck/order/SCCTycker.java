@@ -63,7 +63,7 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
    * @author re-xyr, kiva
    */
   public @NotNull ImmutableSeq<Stmt> headerOrder(@NotNull ImmutableSeq<Stmt> stmts) {
-    var graph = MutableGraph.<Stmt>empty();
+    var graph = MutableGraph.<Stmt>create();
     stmts.forEach(stmt -> {
       var reference = DynamicSeq.<Stmt>create();
       stmt.accept(SigRefFinder.HEADER_ONLY, reference);

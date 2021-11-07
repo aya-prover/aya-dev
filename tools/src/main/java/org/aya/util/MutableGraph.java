@@ -7,7 +7,7 @@ import kala.collection.mutable.*;
 import org.jetbrains.annotations.NotNull;
 
 public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@NotNull T>> E) {
-  public static @NotNull <T> MutableGraph<T> empty() {
+  public static @NotNull <T> MutableGraph<T> create() {
     return new MutableGraph<>(MutableHashMap.create());
   }
 
@@ -40,7 +40,7 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
   }
 
   public @NotNull MutableGraph<T> transpose() {
-    var tr = MutableGraph.<T>empty();
+    var tr = MutableGraph.<T>create();
     E.forEach((v, ws) -> ws.forEach(w -> tr.suc(w).add(v)));
     return tr;
   }

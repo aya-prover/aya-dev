@@ -18,7 +18,7 @@ public record ResolveInfo(
   @NotNull MutableGraph<Stmt> sampleGraph
 ) {
   public ResolveInfo(@NotNull BinOpSet opSet) {
-    this(opSet, MutableGraph.empty(), MutableGraph.empty());
+    this(opSet, MutableGraph.create(), MutableGraph.create());
   }
 
   public @NotNull ResolveInfo toUsageInfo() {
