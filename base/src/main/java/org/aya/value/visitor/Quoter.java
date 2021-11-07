@@ -3,7 +3,7 @@
 package org.aya.value.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.term.FormTerm;
@@ -31,7 +31,7 @@ public class Quoter implements Visitor<Unit, Term> {
   public Term visitSigma(FormValue.@NotNull Sigma sigma, Unit u) {
     var param = quote(sigma.param(), u);
     var body = sigma.func().apply(new RefValue.Neu(param.ref())).accept(this, u);
-    var params = Buffer.of(param);
+    var params = DynamicSeq.of(param);
     if (body instanceof FormTerm.Sigma sig) {
       params.appendAll(sig.params());
     } else {
@@ -60,7 +60,7 @@ public class Quoter implements Visitor<Unit, Term> {
   @Override
   public Term visitPair(IntroValue.@NotNull Pair pair, Unit u) {
     var left = pair.left().accept(this, u);
-    var items = Buffer.of(left);
+    var items = DynamicSeq.of(left);
     var right = pair.right().accept(this, u);
     if (right instanceof IntroTerm.Tuple tup) {
       items.appendAll(tup.items());

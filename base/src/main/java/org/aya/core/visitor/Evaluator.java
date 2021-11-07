@@ -4,7 +4,7 @@ package org.aya.core.visitor;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.Buffer;
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.util.Arg;
 import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
@@ -43,7 +43,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
    *
    * @return if match succeeds
    */
-  private boolean matchPat(@NotNull Pat pattern, @NotNull Value value, @NotNull Buffer<Matchy> out) {
+  private boolean matchPat(@NotNull Pat pattern, @NotNull Value value, @NotNull DynamicSeq<Matchy> out) {
     return switch (pattern) {
       case Pat.Bind bind -> {
         out.append(new Matchy(value, new Term.Param(bind.as(), bind.type(), bind.explicit())));
@@ -78,7 +78,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
       return new IntroValue.Lam(p, arg -> matchingsHelper(telescope.drop(1), matchings, values.appended(arg), env.added(p.ref(), arg)));
     }
     for (var matching : matchings) {
-      var out = Buffer.<Matchy>create();
+      var out = DynamicSeq.<Matchy>create();
       var matches = matching.patterns().zip(values)
         .allMatch(tup -> matchPat(tup._1, tup._2, out));
       if (!matches) continue;
