@@ -40,7 +40,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
     var params = DynamicSeq.<Term.Param>create();
-    var body = IntroTerm.Lambda.unwrap(term.body(), params);
+    var body = IntroTerm.Lambda.unwrap(term, params);
     Doc bodyDoc;
     // Syntactic eta-contraction
     if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {
