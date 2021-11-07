@@ -25,17 +25,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static org.aya.distill.BaseDistiller.*;
-
 /**
  * @author ice1000, kiva
  * @see CoreDistiller
  */
-public record ConcreteDistiller(@NotNull DistillerOptions options) implements
+public class ConcreteDistiller extends BaseDistiller implements
   Stmt.Visitor<Unit, Doc>,
   Pattern.Visitor<Boolean, Doc>,
-  Expr.Visitor<Boolean, Doc>,
-  BaseDistiller {
+  Expr.Visitor<Boolean, Doc> {
+  public ConcreteDistiller(@NotNull DistillerOptions options) {
+    super(options);
+  }
+
   @Override public Doc visitRef(Expr.@NotNull RefExpr expr, Boolean nestedCall) {
     var ref = expr.resolvedVar();
     if (ref instanceof DefVar<?, ?> defVar) return visitDefVar(defVar);

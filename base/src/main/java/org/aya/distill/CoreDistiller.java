@@ -19,8 +19,6 @@ import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.distill.BaseDistiller.*;
-
 /**
  * It's called distiller, and it serves as the pretty printer.
  * Credit after <a
@@ -29,11 +27,14 @@ import static org.aya.distill.BaseDistiller.*;
  * @author ice1000, kiva
  * @see ConcreteDistiller
  */
-public record CoreDistiller(@NotNull DistillerOptions options) implements
+public class CoreDistiller extends BaseDistiller implements
   Pat.Visitor<Boolean, Doc>,
   Def.Visitor<Unit, @NotNull Doc>,
-  Term.Visitor<Boolean, Doc>,
-  BaseDistiller {
+  Term.Visitor<Boolean, Doc> {
+  public CoreDistiller(@NotNull DistillerOptions options) {
+    super(options);
+  }
+
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
     return varDoc(term.var());
   }
