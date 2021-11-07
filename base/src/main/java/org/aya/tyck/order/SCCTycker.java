@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
@@ -28,35 +27,34 @@ import java.util.function.Function;
  *
  * @author kiva
  */
-public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter reporter) {
+public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter reporter, DynamicSeq<Def> wellTyped) {
   public SCCTycker(@Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
-    this(new StmtTycker(reporter, builder), reporter);
+    this(new StmtTycker(reporter, builder), reporter, DynamicSeq.create());
   }
 
-  public @NotNull ImmutableSeq<Def> tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
-    var wellTyped = DynamicSeq.<Def>create();
-    if (scc.sizeEquals(1)) checkBody(scc.first(), wellTyped);
+  public void tyckSCC(@NotNull ImmutableSeq<Stmt> scc) throws SCCTyckingFailed {
+    if (scc.sizeEquals(1)) checkBody(scc.first());
     else {
       var headerOrder = headerOrder(scc);
       headerOrder.forEach(this::checkHeader);
-      headerOrder.forEach(tup -> checkBody(tup, wellTyped));
+      headerOrder.forEach(this::checkBody);
     }
-    return wellTyped.toImmutableSeq();
   }
 
   private void checkHeader(@NotNull Stmt stmt) {
     if (stmt instanceof Decl decl) tycker.tyckHeader(decl, tycker.newTycker());
     else if (stmt instanceof Sample sample) sample.tyckHeader(tycker);
+    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 
-  private void checkBody(@NotNull Stmt stmt, @NotNull DynamicSeq<Def> wellTyped) {
+  private void checkBody(@NotNull Stmt stmt) {
     switch (stmt) {
       case Decl decl -> wellTyped.append(tycker.tyck(decl, tycker.newTycker()));
       case Sample sample -> wellTyped.append(sample.tyck(tycker));
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
       default -> {}
     }
-    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed();
+    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 
   /**
@@ -64,8 +62,8 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
    *
    * @author re-xyr, kiva
    */
-  public @NotNull ImmutableSeq<Stmt> headerOrder(@NotNull Seq<Stmt> stmts) {
-    var graph = MutableGraph.<Stmt>empty();
+  public @NotNull ImmutableSeq<Stmt> headerOrder(@NotNull ImmutableSeq<Stmt> stmts) {
+    var graph = MutableGraph.<Stmt>create();
     stmts.forEach(stmt -> {
       var reference = DynamicSeq.<Stmt>create();
       stmt.accept(SigRefFinder.HEADER_ONLY, reference);
@@ -75,12 +73,18 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
     var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
     if (cycle.isNotEmpty()) {
       cycle.forEach(c -> reporter.report(new CircularSignatureError(c)));
-      throw new SCCTyckingFailed();
+      throw new SCCTyckingFailed(stmts);
     }
     return order.flatMap(Function.identity());
   }
 
   public static class SCCTyckingFailed extends InterruptException {
+    public @NotNull ImmutableSeq<Stmt> what;
+
+    public SCCTyckingFailed(@NotNull ImmutableSeq<Stmt> what) {
+      this.what = what;
+    }
+
     @Override public InterruptStage stage() {
       return InterruptStage.Tycking;
     }

@@ -23,6 +23,7 @@ import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.order.IncrementalTycker;
 import org.aya.tyck.order.SCCTycker;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
@@ -86,21 +87,17 @@ public record FileModuleLoader(
     program.forEach(s -> s.resolve(resolveInfo));
     resolveInfo.opSet().reportIfCycles();
     program.forEach(s -> s.desugar(reporter, resolveInfo.opSet()));
+    var delayedReporter = new DelayedReporter(reporter);
+    var sccTycker = new IncrementalTycker(new SCCTycker(builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
-    try (var delayedReporter = new DelayedReporter(reporter)) {
-      var sccTycker = new SCCTycker(builder, delayedReporter);
+    try (delayedReporter) {
       var SCCs = resolveInfo.declGraph().topologicalOrder()
-        .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder());
-      var wellTyped = SCCs
-        .flatMap(sccTycker::tyckSCC)
+        .view().appendedAll(resolveInfo.sampleGraph().topologicalOrder())
         .toImmutableSeq();
-      onTycked.acceptChecked(wellTyped);
-    } catch (SCCTycker.SCCTyckingFailed ignored) {
-      // stop tycking the rest of groups since some of their dependencies are failed.
-      // Random thought: we may assume their signatures are correct and try to tyck
-      // the rest of program as much as possible, which can make LSP more user-friendly?
+      SCCs.forEach(sccTycker::tyckSCC);
     } finally {
       onResolved.acceptChecked(shallowResolveInfo);
+      onTycked.acceptChecked(sccTycker.sccTycker().wellTyped().toImmutableSeq());
     }
   }
 

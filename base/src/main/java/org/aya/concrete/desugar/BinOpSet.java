@@ -23,7 +23,7 @@ public record BinOpSet(
     () -> new OpDecl.Operator("application", Assoc.InfixL));
 
   public BinOpSet(@NotNull Reporter reporter) {
-    this(reporter, MutableSet.of(APP_ELEM), MutableGraph.empty());
+    this(reporter, MutableSet.of(APP_ELEM), MutableGraph.create());
   }
 
   public void bind(@NotNull OpDecl op, @NotNull Command.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
