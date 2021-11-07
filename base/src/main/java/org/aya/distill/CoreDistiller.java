@@ -4,6 +4,7 @@ package org.aya.distill;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
@@ -14,11 +15,9 @@ import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
+import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
-
-import static org.aya.distill.BaseDistiller.*;
 
 /**
  * It's called distiller, and it serves as the pretty printer.
@@ -28,26 +27,66 @@ import static org.aya.distill.BaseDistiller.*;
  * @author ice1000, kiva
  * @see ConcreteDistiller
  */
-public record CoreDistiller(@NotNull DistillerOptions options) implements
+public class CoreDistiller extends BaseDistiller implements
   Pat.Visitor<Boolean, Doc>,
   Def.Visitor<Unit, @NotNull Doc>,
-  Term.Visitor<Boolean, Doc>,
-  BaseDistiller {
+  Term.Visitor<Boolean, Doc> {
+  public CoreDistiller(@NotNull DistillerOptions options) {
+    super(options);
+  }
+
   @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
     return varDoc(term.var());
   }
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
-    if (!options.showImplicitPats() && !term.param().explicit()) {
-      return term.body().accept(this, nestedCall);
+    var params = DynamicSeq.<Term.Param>create();
+    var body = IntroTerm.Lambda.unwrap(term, params);
+    Doc bodyDoc;
+    // Syntactic eta-contraction
+    if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {
+      var args = visibleArgsOf(call).view();
+      while (params.isNotEmpty() && args.isNotEmpty()) {
+        var param = params.last();
+        if (checkUneta(args, params.last())) {
+          args = args.dropLast(1);
+          params.removeLast();
+        } else break;
+      }
+      bodyDoc = call instanceof CallTerm.Access access
+        ? visitAccessHead(access)
+        : visitCalls(visitDefVar(defVar), args, false);
+    } else {
+      bodyDoc = body.accept(this, false);
     }
-    var doc = Doc.sep(
-      Doc.styled(KEYWORD, Doc.symbol("\\")),
-      lambdaParam(term.param()),
-      Doc.symbol("=>"),
-      term.body().accept(this, false)
-    );
+
+    if (!options.showImplicitPats())
+      params.removeAll(param -> !param.explicit());
+    if (params.isEmpty()) return bodyDoc;
+
+    var list = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
+    params.forEach(param -> list.append(lambdaParam(param)));
+    list.append(Doc.symbol("=>"));
+    list.append(bodyDoc);
+    var doc = Doc.sep(list);
     return nestedCall ? Doc.parened(doc) : doc;
+  }
+
+  /** @return if we can eta-contract the last argument */
+  private boolean checkUneta(SeqView<Arg<Term>> args, Term.Param param) {
+    var arg = args.last();
+    if (arg.explicit() != param.explicit()) return false;
+    if (!(arg.term() instanceof RefTerm argRef)) return false;
+    if (argRef.var() != param.ref()) return false;
+    var counter = new VarConsumer.UsageCounter(param.ref());
+    args.dropLast(1).forEach(t -> t.term().accept(counter, Unit.unit()));
+    return counter.usageCount() == 0;
+  }
+
+  private ImmutableSeq<Arg<Term>> visibleArgsOf(CallTerm call) {
+    return call instanceof CallTerm.Con con
+      ? con.conArgs() : call instanceof CallTerm.Access access
+      ? access.fieldArgs() : call.args();
   }
 
   @Override public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
@@ -81,27 +120,27 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
-    return visitCalls(term.of(), term.arg(), nestedCall);
+    return visitCalls(term.of().accept(this, false), Seq.of(term.arg()), nestedCall);
   }
 
   @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
-    return visitCalls(fnCall.ref(), FN_CALL, fnCall.args(), nestedCall);
+    return visitCalls(linkRef(fnCall.ref(), FN_CALL), fnCall.args(), nestedCall);
   }
 
   @Override public Doc visitPrimCall(CallTerm.@NotNull Prim prim, Boolean nestedCall) {
-    return visitCalls(prim.ref(), FN_CALL, prim.args(), nestedCall);
+    return visitCalls(linkRef(prim.ref(), FN_CALL), prim.args(), nestedCall);
   }
 
   @Override public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
-    return visitCalls(dataCall.ref(), DATA_CALL, dataCall.args(), nestedCall);
+    return visitCalls(linkRef(dataCall.ref(), DATA_CALL), dataCall.args(), nestedCall);
   }
 
   @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Boolean nestedCall) {
-    return visitCalls(structCall.ref(), STRUCT_CALL, structCall.args(), nestedCall);
+    return visitCalls(linkRef(structCall.ref(), STRUCT_CALL), structCall.args(), nestedCall);
   }
 
   @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Boolean nestedCall) {
-    return visitCalls(conCall.ref(), CON_CALL, conCall.conArgs(), nestedCall);
+    return visitCalls(linkRef(conCall.ref(), CON_CALL), conCall.conArgs(), nestedCall);
   }
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
@@ -127,19 +166,21 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
   }
 
   @Override public Doc visitAccess(CallTerm.@NotNull Access term, Boolean nestedCall) {
-    var ref = term.ref();
-    var doc = Doc.cat(term.of().accept(this, false), Doc.symbol("."),
-      linkRef(ref, FIELD_CALL));
-    return visitCalls(doc, term.fieldArgs(), (n, t) -> t.accept(this, n), nestedCall);
+    return visitCalls(visitAccessHead(term), term.fieldArgs(), nestedCall);
+  }
+
+  @NotNull private Doc visitAccessHead(CallTerm.@NotNull Access term) {
+    return Doc.cat(term.of().accept(this, true), Doc.symbol("."),
+      linkRef(term.ref(), FIELD_CALL));
   }
 
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
     var name = term.ref();
     var inner = varDoc(name);
     if (options.inlineMetas())
-      return visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), nestedCall);
+      return visitCalls(inner, term.args(), nestedCall);
     return Doc.wrap("{?", "?}",
-      visitCalls(inner, term.args(), (nest, t) -> t.accept(this, nest), false));
+      visitCalls(inner, term.args(), false));
   }
 
   @Override
@@ -152,18 +193,11 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
     return !term.isReallyError() ? doc : Doc.angled(doc);
   }
 
-  private Doc visitCalls(@NotNull Term fn, @NotNull Arg<@NotNull Term> arg, boolean nestedCall) {
-    return visitCalls(fn.accept(this, false), Seq.of(arg),
-      (nest, term) -> term.accept(this, nest), nestedCall);
-  }
-
   private Doc visitCalls(
-    @NotNull DefVar<?, ?> fn, @NotNull Style style,
-    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
+    @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
     boolean nestedCall
   ) {
-    var hyperLink = linkRef(fn, style);
-    return visitCalls(hyperLink, args, (nest, term) -> term.accept(this, nest), nestedCall);
+    return visitCalls(fn, args, (nest, term) -> term.accept(this, nest), nestedCall);
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {

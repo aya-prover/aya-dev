@@ -243,17 +243,13 @@ public final class ExprTycker {
   }
 
   private void univArgs(Term app, Expr.UnivArgsExpr univArgs) {
-    if (unwrapLambda(app) instanceof CallTerm call) {
+    if (IntroTerm.Lambda.unwrap(app, null) instanceof CallTerm call) {
       var sortArgs = call.sortArgs();
       var levels = univArgs.univArgs();
       if (sortArgs.sizeEquals(levels)) sortArgs.zipView(levels).forEach(t ->
         state.levelEqns().add(t._1, transformLevel(t._2), Ordering.Eq, univArgs.sourcePos()));
       else reporter.report(new UnivArgsError.SizeMismatch(univArgs, sortArgs.size()));
     } else reporter.report(new UnivArgsError.Misplaced(univArgs));
-  }
-
-  private @NotNull Term unwrapLambda(@NotNull Term term) {
-    return term instanceof IntroTerm.Lambda lambda ? unwrapLambda(lambda.body()) : term;
   }
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {

@@ -80,7 +80,9 @@ public record StmtTycker(
         yield decl.body.fold(
           body -> {
             var result = tycker.zonk(body, tycker.inherit(body, signature.result()));
-            return factory.apply(result.type(), Either.left(result.wellTyped()));
+            // It may contain unsolved metas. See `checkTele`.
+            var resultTy = signature.result().zonk(tycker, decl.result.sourcePos());
+            return factory.apply(resultTy, Either.left(result.wellTyped()));
           },
           clauses -> {
             var patTycker = new PatTycker(tycker);

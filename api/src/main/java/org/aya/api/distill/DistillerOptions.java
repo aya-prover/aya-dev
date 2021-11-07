@@ -18,4 +18,6 @@ public record DistillerOptions(
     new DistillerOptions(false, true, true, true, true);
   public static final @NotNull DistillerOptions DEFAULT =
     new DistillerOptions(true, true, true, false, false);
+  public static final @NotNull DistillerOptions PRETTY =
+    new DistillerOptions(true, false, true, false, false);
 }
