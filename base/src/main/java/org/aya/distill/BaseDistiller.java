@@ -8,9 +8,12 @@ import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Sample;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -110,5 +113,22 @@ public interface BaseDistiller {
 
   static @NotNull Doc linkDef(@NotNull Var ref) {
     return Doc.linkDef(Doc.plain(ref.name()), ref.hashCode());
+  }
+
+  static @NotNull Doc visitDefVar(DefVar<?, ?> ref) {
+    return visitDefVar(ref, ref.concrete);
+  }
+
+  private static @NotNull Doc visitDefVar(DefVar<?, ?> ref, Object concrete) {
+    return switch (concrete) {
+      case Decl.FnDecl d -> linkRef(ref, FN_CALL);
+      case Decl.DataDecl d -> linkRef(ref, DATA_CALL);
+      case Decl.DataCtor d -> linkRef(ref, CON_CALL);
+      case Decl.StructDecl d -> linkRef(ref, STRUCT_CALL);
+      case Decl.StructField d -> linkRef(ref, FIELD_CALL);
+      case Decl.PrimDecl d -> linkRef(ref, FN_CALL);
+      case Sample sample -> visitDefVar(ref, sample.delegate());
+      case null, default -> varDoc(ref);
+    };
   }
 }
