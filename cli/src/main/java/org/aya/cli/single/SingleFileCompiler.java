@@ -121,7 +121,7 @@ public record SingleFileCompiler(
     var docs = DynamicSeq.<Doc>create();
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
-      var thisDoc = item.toDoc(DistillerOptions.DEFAULT);
+      var thisDoc = item.toDoc(DistillerOptions.PRETTY);
       Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + fileExt), toString.apply(thisDoc, false));
       docs.append(thisDoc);
     }

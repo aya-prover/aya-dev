@@ -59,7 +59,7 @@ public record CoreDistiller(@NotNull DistillerOptions options) implements
       bodyDoc = body.accept(this, false);
     }
 
-    if (options.showImplicitPats())
+    if (!options.showImplicitPats())
       params.removeAll(param -> !param.explicit());
     if (params.isEmpty()) return bodyDoc;
 
