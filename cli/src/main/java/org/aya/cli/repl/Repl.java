@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.AyaHome;
+import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.Command;
 import org.aya.cli.repl.command.CommandArg;
@@ -122,7 +123,8 @@ public abstract class Repl implements Closeable, Runnable {
       return false;
     } catch (InterruptedException ignored) {
       // user send ctrl-c
-      return true;
+    } catch (InterruptException ignored) {
+      // compilation errors are already printed by reporters
     } catch (Throwable e) {
       var stackTrace = new StringWriter();
       e.printStackTrace(new PrintWriter(stackTrace));
