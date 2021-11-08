@@ -97,5 +97,8 @@ ID : AYA_LETTER AYA_LETTER_FOLLOW* | '-' AYA_LETTER AYA_LETTER_FOLLOW*;
 WS : [ \t\r\n]+ -> channel(HIDDEN);
 fragment COMMENT_CONTENT : ~[\r\n]*;
 DOC_COMMENT : '--|' COMMENT_CONTENT;
-LINE_COMMENT : '--' COMMENT_CONTENT -> skip;
+LINE_COMMENT : '--' COMMENT_CONTENT -> channel(HIDDEN);
 COMMENT : '{-' (COMMENT|.)*? '-}' -> channel(HIDDEN);
+
+// avoid token recognition error in REPL
+ERROR_CHAR : .;
