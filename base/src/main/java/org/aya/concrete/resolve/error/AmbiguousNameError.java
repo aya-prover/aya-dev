@@ -21,7 +21,7 @@ public record AmbiguousNameError(
   }
 
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-    return Doc.vcat(Doc.cat(
+    return Doc.vcat(Doc.sep(
         Doc.english("The unqualified name"),
         Doc.styled(Style.code(), Doc.plain(name)),
         Doc.english("is ambiguous")),

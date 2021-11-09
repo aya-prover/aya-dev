@@ -1,0 +1,24 @@
+prim I
+prim left
+prim right
+prim arcoe
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+  | at (i : I) : A i {
+    | left => a
+    | right => b
+  }
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def refl {A : Type} {a : A} : a = a => path (\ i => a)
+def Eq {A : Type} (a b : A) : Type => a = b
+open data Nat | zero | suc Nat
+
+struct Monoid : Type
+  | op (a b : Nat) : Nat {
+    | zero, n => n
+  }
+  | r-id (a : Nat) : Eq (op a zero) a
+  | assoc (a b c : Nat) : Eq (op (op a b) c) (op a (op b c))
+
+def l-id (M : Monoid) (a : Nat) : Eq (M.add zero a) a => refl
