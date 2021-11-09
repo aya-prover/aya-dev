@@ -29,6 +29,7 @@ val isMac = Os.isFamily(Os.FAMILY_MAC)
 
 jlink {
   options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+  addExtraDependencies("jline-terminal-jansi")
   launcher {
     mainClass.set(mainClassQName)
     name = "aya-lsp"

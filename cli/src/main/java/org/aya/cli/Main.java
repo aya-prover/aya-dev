@@ -2,17 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
-import org.aya.api.distill.DistillerOptions;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.cli.utils.ImGuiTrace;
 import org.aya.cli.utils.MainArgs;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
-import org.ice1000.jimgui.util.JniLoader;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
@@ -41,7 +38,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       // TODO: move to a new tool
       return LibraryCompiler.compile(filePath);
     }
-    var traceBuilder = traceFormat != null ? new Trace.Builder() : null;
+    var traceBuilder = enableTrace ? new Trace.Builder() : null;
     var compiler = new SingleFileCompiler(CliReporter.INSTANCE, null, traceBuilder);
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
       prettyStage,
@@ -51,14 +48,8 @@ public class Main extends MainArgs implements Callable<Integer> {
     var status = compiler.compile(filePath, new CompilerFlags(
       message, interruptedTrace, distillation,
       modulePaths().view().map(Paths::get)), null);
-    if (traceBuilder != null) switch (traceFormat) {
-      case imgui -> {
-        JniLoader.load();
-        var sourceCode = checkAndRead(filePath, inputFile);
-        new ImGuiTrace(sourceCode, DistillerOptions.DEBUG).mainLoop(traceBuilder.root());
-      }
-      case markdown -> System.err.println(new MdUnicodeTrace().docify(traceBuilder).debugRender());
-    }
+    if (traceBuilder != null)
+      System.err.println(new MdUnicodeTrace().docify(traceBuilder).debugRender());
     return status;
   }
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.utils;
+package org.aya.cli;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
@@ -16,6 +16,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * This is no longer useful.
+ *
+ * @see org.aya.tyck.trace.MdUnicodeTrace
+ */
 @SuppressWarnings("AccessStaticViaInstance")
 public class ImGuiTrace implements Trace.Visitor<JImGui, Unit> {
   public static final float SCALE_FACTOR = 1.6f;

@@ -11,7 +11,7 @@ import picocli.CommandLine.Parameters;
 
 import java.util.List;
 
-import static org.aya.cli.utils.PicocliUtils.CANDIDATES_ON_A_NEW_LINE;
+import static org.aya.cli.utils.PicocliUtils.CANDIDATES;
 
 @Command(name = "aya",
   mixinStandardHelpOptions = true,
@@ -21,7 +21,7 @@ public class MainArgs {
   public static class ReplAction {
     @Option(names = {"--repl", "--interactive", "-i"}, description = "Start an interactive REPL.", required = true)
     public boolean repl;
-    @Option(names = {"--repl-type", "--interactive-type"}, description = "Specify the type of the interactive REPL." + CANDIDATES_ON_A_NEW_LINE, defaultValue = "jline")
+    @Option(names = {"--repl-type", "--interactive-type"}, description = "Specify the type of the interactive REPL." + CANDIDATES, defaultValue = "jline")
     public ReplType replType;
   }
 
@@ -43,14 +43,14 @@ public class MainArgs {
 
   @Option(names = {"--interrupted-trace"}, hidden = true)
   public boolean interruptedTrace;
-  @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage." + CANDIDATES_ON_A_NEW_LINE)
+  @Option(names = {"--pretty-stage"}, description = "Pretty print the code in a certain stage." + CANDIDATES)
   public DistillStage prettyStage;
-  @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES_ON_A_NEW_LINE, defaultValue = "html")
+  @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES, defaultValue = "html")
   public DistillFormat prettyFormat;
   @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.")
   public String prettyDir;
-  @Option(names = {"--trace"}, description = "Specify format of printing type checking traces." + CANDIDATES_ON_A_NEW_LINE)
-  public TraceFormat traceFormat;
+  @Option(names = {"--trace"}, description = "Enable tracing.")
+  public boolean enableTrace;
   @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message.")
   public boolean asciiOnly;
   @Option(names = {"--module-path"}, description = "Search for module under this path.")
@@ -73,11 +73,6 @@ public class MainArgs {
     plain,
     latex,
     unix,
-  }
-
-  public enum TraceFormat {
-    imgui,
-    markdown,
   }
 
   public enum ReplType {

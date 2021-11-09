@@ -10,7 +10,6 @@ dependencies {
   api("com.google.code.gson", "gson", version = deps.getProperty("version.gson"))
   api("info.picocli", "picocli", version = deps.getProperty("version.picocli"))
   annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
-  implementation("org.ice1000.jimgui", "core", version = deps.getProperty("version.jimgui"))
   val jlineVersion = deps.getProperty("version.jline")
   implementation("org.jline", "jline-terminal", version = jlineVersion)
   implementation("org.jline", "jline-terminal-jansi", version = jlineVersion)
@@ -18,6 +17,7 @@ dependencies {
   implementation("org.jline", "jline-builtins", version = jlineVersion)
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
+  testImplementation("org.ice1000.jimgui", "core", version = deps.getProperty("version.jimgui"))
 }
 
 tasks.withType<AbstractCopyTask>().configureEach {
