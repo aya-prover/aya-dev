@@ -11,6 +11,7 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.WithPos;
+import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface Pattern extends ConcretePat {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new ConcreteDistiller(options), false);
+    return accept(new ConcreteDistiller(options), BaseDistiller.Outer.Free);
   }
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

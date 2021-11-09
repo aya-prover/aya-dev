@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
-import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
@@ -40,37 +39,32 @@ public abstract class BaseDistiller {
     this.options = options;
   }
 
-  @NotNull Doc univDoc(boolean nestedCall, String head, @NotNull AyaDocile lvl) {
-    var hd = Doc.styled(KEYWORD, head);
-    if (!options.showLevels()) return hd;
-    return visitCalls(hd, Seq.of(new Arg<>(lvl, true)),
-      (nc, l) -> l.toDoc(options), nestedCall);
-  }
-
   <T extends AyaDocile> @NotNull Doc visitCalls(
     @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
-    @NotNull BiFunction<Boolean, T, Doc> formatter, boolean nestedCall
+    @NotNull BiFunction<Outer, T, Doc> formatter, Outer outer
   ) {
     if (args.isEmpty()) return fn;
     var call = Doc.sep(
       fn, Doc.sep(args.view().flatMap(arg -> {
-        // Do not use `arg.term().toDoc()` because we want to
-        // wrap args in parens if we are inside a nested call
-        // such as `suc (suc (suc n))`
-        if (arg.explicit()) return Option.of(formatter.apply(true, arg.term()));
-        if (options.showImplicitArgs()) return Option.of(Doc.braced(formatter.apply(false, arg.term())));
+        if (arg.explicit())
+          // Explicit argument, it is in a spine, not parenthesized.
+          return Option.of(formatter.apply(Outer.AppSpine, arg.term()));
+        if (options.showImplicitArgs())
+          // Implicit argument, it is already in a pair of braces.
+          return Option.of(Doc.braced(formatter.apply(Outer.Free, arg.term())));
         return Option.none();
       }))
     );
-    return nestedCall ? Doc.parened(call) : call;
+    // If we're in a spine, add parentheses
+    return outer.prec >= Outer.AppSpine.prec ? Doc.parened(call) : call;
   }
 
-  @NotNull Doc ctorDoc(boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
+  @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
     boolean as = ctorAs != null;
     var withEx = ex ? ctorDoc : Doc.braced(ctorDoc);
     var withAs = !as ? withEx :
       Doc.sep(Doc.parened(withEx), Doc.plain("as"), linkDef(ctorAs));
-    return !ex && !as ? withAs : nestedCall && !noParams ? Doc.parened(withAs) : withAs;
+    return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
   }
 
   Doc visitTele(@NotNull SeqLike<? extends ParamLike<?>> telescope) {
@@ -134,5 +128,29 @@ public abstract class BaseDistiller {
       case Sample sample -> visitDefVar(ref, sample.delegate());
       case null, default -> varDoc(ref);
     };
+  }
+
+  /**
+   * What's outside?
+   *
+   * <ul>
+   *   <li>Top-level expression may not need parentheses, stone free!</li>
+   *   <li>It might be an application! Stay in parentheses!</li>
+   *   <li>It might be a binary operator! Applications within are fine.</li>
+   * </ul>
+   */
+  public enum Outer {
+    Free(0),
+    BinOp(1),
+    AppHead(2),
+    AppSpine(3),
+    ProjHead(4),
+    ;
+
+    public final int prec;
+
+    Outer(int prec) {
+      this.prec = prec;
+    }
   }
 }
