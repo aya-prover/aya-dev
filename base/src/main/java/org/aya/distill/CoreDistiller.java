@@ -61,7 +61,7 @@ public class CoreDistiller extends BaseDistiller implements
     }
 
     if (!options.showImplicitPats())
-      params.removeAll(param -> !param.explicit());
+      params.retainAll(Term.Param::explicit);
     if (params.isEmpty()) return bodyDoc;
 
     var list = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")));

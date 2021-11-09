@@ -20,6 +20,6 @@ public record EmacsColorScheme(
     Tuple.of("aya:DataCall", ColorScheme.colorOf(0.13f, 0.55f, 0.13f)),
     Tuple.of("aya:StructCall", ColorScheme.colorOf(0.13f, 0.55f, 0.13f)),
     Tuple.of("aya:ConCall", ColorScheme.colorOf(0.63f, 0.13f, 0.94f)),
-    Tuple.of("aya:FieldCall", ColorScheme.colorOf(0.63f, 0.13f, 0.94f))
+    Tuple.of("aya:FieldCall", ColorScheme.colorOf(0, 0.55f, 0.55f))
   ));
 }

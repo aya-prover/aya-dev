@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
+  @Override protected void renderHeader(@NotNull Cursor cursor) {
+    cursor.invisibleContent("\\noindent");
+  }
+
   @Override protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content) {
     super.renderPlainText(cursor, content
       .replace("\\", "")

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
@@ -27,7 +28,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class ReplCompiler {
-  private final @NotNull CountingReporter reporter;
+  final @NotNull CountingReporter reporter;
   private final @Nullable SourceFileLocator locator;
   private final @NotNull ReplContext context;
   private final @NotNull DynamicSeq<Path> modulePaths;
@@ -39,8 +40,8 @@ public class ReplCompiler {
     this.context = new ReplContext(new EmptyContext(this.reporter), ImmutableSeq.of("REPL"));
   }
 
+  /** @see ReplCompiler#compileExpr(String, NormalizeMode) */
   public int loadToContext(@NotNull Path file) throws IOException {
-    this.reporter.clear();
     return new SingleFileCompiler(reporter, null, null)
       .compile(file, r -> context, new CompilerFlags(CompilerFlags.Message.EMOJI, false, null,
         modulePaths.view()), null);
@@ -52,9 +53,8 @@ public class ReplCompiler {
    * @param text the text of code to compile, witch might either be a `program` or an `expr`.
    * @see org.aya.cli.single.SingleFileCompiler#compile
    */
-  public @Nullable Either<ImmutableSeq<Def>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
+  public @NotNull Either<ImmutableSeq<Def>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
-    var reporter = new CountingReporter(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
     var programOrExpr = AyaParsing.repl(reporter, text);
     try {
@@ -65,7 +65,22 @@ public class ReplCompiler {
           var newDefs = new Ref<ImmutableSeq<Def>>();
           FileModuleLoader.tyckModule(context, loader, program, reporter,
             resolveInfo -> {}, newDefs::set, null);
-          return newDefs.get();
+          var defs = newDefs.get();
+          if (reporter.noError()) return defs;
+          else {
+            // When there are errors, we need to remove the defs from the context.
+            var toRemoveDef = DynamicSeq.<String>create();
+            context.definitions.forEach((name, mod) -> {
+              var toRemoveMod = DynamicSeq.<Seq<String>>create();
+              mod.forEach((modName, def) -> {
+                if (defs.anyMatch(realDef -> realDef.ref() == def)) toRemoveMod.append(modName);
+              });
+              if (toRemoveMod.sizeEquals(mod.size())) toRemoveDef.append(name);
+              else toRemoveMod.forEach(mod::remove);
+            });
+            toRemoveDef.forEach(context.definitions::remove);
+            return ImmutableSeq.empty();
+          }
         },
         expr -> FileModuleLoader.tyckExpr(context, expr, reporter, null).wellTyped()
           .normalize(null, normalizeMode)
@@ -81,7 +96,6 @@ public class ReplCompiler {
    * @see #loadToContext
    */
   public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
-    var reporter = new CountingReporter(this.reporter);
     try {
       var expr = AyaParsing.expr(reporter, text);
       return FileModuleLoader.tyckExpr(context, expr, reporter, null)

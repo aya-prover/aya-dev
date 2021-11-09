@@ -4,9 +4,11 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.api.error.ExprProblem;
 import org.aya.api.error.Problem;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.concrete.Expr;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -35,6 +37,19 @@ public sealed interface FieldProblem extends Problem {
       return Doc.sep(Doc.english("No such field(s):"),
         Doc.commaList(notFound.view()
           .map(m -> Doc.styled(Style.code(), Doc.plain(m))))
+      );
+    }
+  }
+
+  record UnknownField(
+    @Override @NotNull Expr.ProjExpr expr,
+    @NotNull String name
+  ) implements FieldProblem, ExprProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(
+        Doc.english("Unknown field"),
+        Doc.styled(Style.code(), Doc.plain(name)),
+        Doc.english("projected")
       );
     }
   }

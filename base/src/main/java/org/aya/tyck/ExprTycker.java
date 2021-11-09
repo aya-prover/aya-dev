@@ -144,7 +144,7 @@ public final class ExprTycker {
             var telescope = sigma.params();
             var index = ix - 1;
             if (index < 0 || index >= telescope.size())
-              return fail(proj, ErrorTerm.typeOf(proj), new ProjIxError(proj, ix, telescope.size()));
+              return fail(proj, new ProjIxError(proj, ix, telescope.size()));
             var type = telescope.get(index).type();
             var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
             return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
@@ -155,10 +155,7 @@ public final class ExprTycker {
             var structCore = structCall.ref().core;
             if (structCore == null) throw new UnsupportedOperationException("TODO");
             var projected = structCore.fields.find(field -> Objects.equals(field.ref().name(), fieldName));
-            if (projected.isEmpty()) {
-              // TODO[ice]: field not found
-              throw new TyckerException();
-            }
+            if (projected.isEmpty()) return fail(proj, new FieldProblem.UnknownField(proj, fieldName));
             // TODO[ice]: instantiate the type
             var field = projected.get();
             var fieldRef = field.ref();
@@ -448,6 +445,10 @@ public final class ExprTycker {
     var domain = localCtx.freshHole(FormTerm.freshUniv(pos), genName + "ty", pos)._2;
     var codomain = localCtx.freshHole(FormTerm.freshUniv(pos), pos)._2;
     return new FormTerm.Pi(new Term.Param(new LocalVar(genName, pos), domain, explicit), codomain);
+  }
+
+  private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Problem prob) {
+    return fail(expr, ErrorTerm.typeOf(expr), prob);
   }
 
   private @NotNull Result fail(@NotNull AyaDocile expr, @NotNull Term term, @NotNull Problem prob) {

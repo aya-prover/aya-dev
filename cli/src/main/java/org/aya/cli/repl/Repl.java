@@ -108,6 +108,7 @@ public abstract class Repl implements Closeable, Runnable {
    * <code>false</code> if it should quit.
    */
   private boolean singleLoop() {
+    replCompiler.reporter.clear();
     try {
       var line = readLine(config.prompt).trim();
       if (line.startsWith(Command.MULTILINE_BEGIN) && line.endsWith(Command.MULTILINE_END)) {
@@ -135,8 +136,7 @@ public abstract class Repl implements Closeable, Runnable {
 
   private @NotNull Command.Output eval(@NotNull String line) {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
-    return programOrTerm == null ? Command.Output.stderr("The input text is neither a program nor an expression.")
-      : Command.Output.stdout(programOrTerm.fold(
+    return Command.Output.stdout(programOrTerm.fold(
       program -> render(options -> Doc.vcat(program.view().map(def -> def.toDoc(options)))),
       this::render
     ));
