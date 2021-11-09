@@ -56,7 +56,7 @@ public abstract class BaseDistiller {
       }))
     );
     // If we're in a spine, add parentheses
-    return outer.prec >= Outer.AppSpine.prec ? Doc.parened(call) : call;
+    return outer.ordinal() >= Outer.AppSpine.ordinal() ? Doc.parened(call) : call;
   }
 
   @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
@@ -140,17 +140,10 @@ public abstract class BaseDistiller {
    * </ul>
    */
   public enum Outer {
-    Free(0),
-    BinOp(1),
-    AppHead(2),
-    AppSpine(3),
-    ProjHead(4),
-    ;
-
-    public final int prec;
-
-    Outer(int prec) {
-      this.prec = prec;
-    }
+    Free,
+    BinOp,
+    AppHead,
+    AppSpine,
+    ProjHead,
   }
 }

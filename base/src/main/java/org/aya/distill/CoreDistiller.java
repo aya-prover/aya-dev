@@ -70,7 +70,7 @@ public class CoreDistiller extends BaseDistiller implements
     list.append(bodyDoc);
     var doc = Doc.sep(list);
     // Add paren when it's in a spine
-    return outer.prec >= Outer.AppSpine.prec ? Doc.parened(doc) : doc;
+    return outer.ordinal() >= Outer.AppSpine.ordinal() ? Doc.parened(doc) : doc;
   }
 
   /** @return if we can eta-contract the last argument */
@@ -101,7 +101,7 @@ public class CoreDistiller extends BaseDistiller implements
       term.body().accept(this, Outer.Free)
     );
     // Add paren when it's not free
-    return outer.prec >= Outer.BinOp.prec ? Doc.parened(doc) : doc;
+    return outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Outer outer) {
@@ -112,7 +112,7 @@ public class CoreDistiller extends BaseDistiller implements
       term.params().last().toDoc(options)
     );
     // Add paren when it's not free
-    return outer.prec >= Outer.BinOp.prec ? Doc.parened(doc) : doc;
+    return outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
