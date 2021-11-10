@@ -2,10 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
-import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
-import kala.control.Option;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
@@ -18,6 +17,7 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -26,6 +26,10 @@ import java.util.function.BiFunction;
  * @author ice1000
  */
 public abstract class BaseDistiller {
+  @FunctionalInterface
+  protected interface Fmt<T extends AyaDocile> extends BiFunction<Outer, T, Doc> {
+  }
+
   public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
   public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
   public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
@@ -40,37 +44,49 @@ public abstract class BaseDistiller {
     this.options = options;
   }
 
-  @NotNull Doc univDoc(boolean nestedCall, String head, @NotNull AyaDocile lvl) {
-    var hd = Doc.styled(KEYWORD, head);
-    if (!options.showLevels()) return hd;
-    return visitCalls(hd, Seq.of(new Arg<>(lvl, true)),
-      (nc, l) -> l.toDoc(options), nestedCall);
-  }
-
   <T extends AyaDocile> @NotNull Doc visitCalls(
-    @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
-    @NotNull BiFunction<Boolean, T, Doc> formatter, boolean nestedCall
+    boolean infix, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
+    @NotNull SeqView<@NotNull Arg<@NotNull T>> args
   ) {
-    if (args.isEmpty()) return fn;
-    var call = Doc.sep(
-      fn, Doc.sep(args.view().flatMap(arg -> {
-        // Do not use `arg.term().toDoc()` because we want to
-        // wrap args in parens if we are inside a nested call
-        // such as `suc (suc (suc n))`
-        if (arg.explicit()) return Option.of(formatter.apply(true, arg.term()));
-        if (options.showImplicitArgs()) return Option.of(Doc.braced(formatter.apply(false, arg.term())));
-        return Option.none();
-      }))
-    );
-    return nestedCall ? Doc.parened(call) : call;
+    var visibleArgs = (options.showImplicitArgs() ? args : args.filter(Arg::explicit)).toImmutableSeq();
+    if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
+    // Print as a binary operator
+    if (infix) {
+      var firstArg = visibleArgs.first();
+      if (!firstArg.explicit()) return prefix(Doc.parened(fn), fmt, outer, visibleArgs.view());
+      var first = fmt.apply(Outer.BinOp, firstArg.term());
+      // If we're in a binApp/head/spine/etc., add parentheses
+      if (visibleArgs.sizeEquals(1)) return checkParen(outer, Doc.sep(first, fn), Outer.BinOp);
+      var triple = Doc.sep(first, fn, visitArg(fmt, visibleArgs.get(1), Outer.BinOp));
+      if (visibleArgs.sizeEquals(2)) return checkParen(outer, triple, Outer.BinOp);
+      return prefix(Doc.parened(triple), fmt, outer, visibleArgs.view().drop(2));
+    }
+    return prefix(fn, fmt, outer, visibleArgs.view());
   }
 
-  @NotNull Doc ctorDoc(boolean nestedCall, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
+  private <T extends AyaDocile> @NotNull Doc
+  prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<Arg<T>> args) {
+    var call = Doc.sep(fn, Doc.sep(args.map(arg ->
+      visitArg(fmt, arg, Outer.AppSpine))));
+    // If we're in a spine, add parentheses
+    return checkParen(outer, call, Outer.AppSpine);
+  }
+
+  private <T extends AyaDocile> Doc visitArg(@NotNull Fmt<T> fmt, @NotNull Arg<T> arg, @NotNull Outer outer) {
+    if (arg.explicit()) return fmt.apply(outer, arg.term());
+    return Doc.braced(fmt.apply(Outer.Free, arg.term()));
+  }
+
+  public static @NotNull Doc checkParen(@NotNull Outer outer, @NotNull Doc binApp, @NotNull Outer binOp) {
+    return outer.ordinal() >= binOp.ordinal() ? Doc.parened(binApp) : binApp;
+  }
+
+  @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
     boolean as = ctorAs != null;
     var withEx = ex ? ctorDoc : Doc.braced(ctorDoc);
     var withAs = !as ? withEx :
       Doc.sep(Doc.parened(withEx), Doc.plain("as"), linkDef(ctorAs));
-    return !ex && !as ? withAs : nestedCall && !noParams ? Doc.parened(withAs) : withAs;
+    return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
   }
 
   Doc visitTele(@NotNull SeqLike<? extends ParamLike<?>> telescope) {
@@ -120,19 +136,40 @@ public abstract class BaseDistiller {
   }
 
   static @NotNull Doc visitDefVar(DefVar<?, ?> ref) {
-    return visitDefVar(ref, ref.concrete);
+    var style = chooseStyle(ref.concrete);
+    return style != null ? linkDef(ref, style) : varDoc(ref);
   }
 
-  private static @NotNull Doc visitDefVar(DefVar<?, ?> ref, Object concrete) {
+  protected static @Nullable Style chooseStyle(Object concrete) {
     return switch (concrete) {
-      case Decl.FnDecl d -> linkRef(ref, FN_CALL);
-      case Decl.DataDecl d -> linkRef(ref, DATA_CALL);
-      case Decl.DataCtor d -> linkRef(ref, CON_CALL);
-      case Decl.StructDecl d -> linkRef(ref, STRUCT_CALL);
-      case Decl.StructField d -> linkRef(ref, FIELD_CALL);
-      case Decl.PrimDecl d -> linkRef(ref, FN_CALL);
-      case Sample sample -> visitDefVar(ref, sample.delegate());
-      case null, default -> varDoc(ref);
+      case Decl.FnDecl d -> FN_CALL;
+      case Decl.DataDecl d -> DATA_CALL;
+      case Decl.DataCtor d -> CON_CALL;
+      case Decl.StructDecl d -> STRUCT_CALL;
+      case Decl.StructField d -> FIELD_CALL;
+      case Decl.PrimDecl d -> FN_CALL;
+      case Sample sample -> chooseStyle(sample.delegate());
+      case null, default -> null;
     };
+  }
+
+  /**
+   * Expression: where am I?
+   *
+   * <ul>
+   *   <li>Top-level expression may not need parentheses, stone free!</li>
+   *   <li>An argument of an application! Stay in parentheses!</li>
+   *   <li>An operand of a binary application! Applications within are safe,
+   *     but other binary applications are in danger!</li>
+   *   <li>Codomain of a telescope</li>
+   * </ul>
+   */
+  public enum Outer {
+    Free,
+    Codomain,
+    BinOp,
+    AppHead,
+    AppSpine,
+    ProjHead,
   }
 }

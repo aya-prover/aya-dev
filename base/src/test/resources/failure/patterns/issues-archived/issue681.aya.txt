@@ -8,8 +8,8 @@ In file $FILE:30:4 ->
 Error: There is no parameter for the pattern
          zero
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
-        y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → (=) {Nat} (x + (y + z)) ((x +
+        y) + z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
 
@@ -23,8 +23,8 @@ In file $FILE:30:10 ->
 Error: There is no parameter for the pattern
          y
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
-        y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → (=) {Nat} (x + (y + z)) ((x +
+        y) + z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
 
@@ -38,8 +38,8 @@ In file $FILE:30:13 ->
 Error: There is no parameter for the pattern
          z
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
-        y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → (=) {Nat} (x + (y + z)) ((x +
+        y) + z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
 
@@ -53,8 +53,8 @@ In file $FILE:31:4 ->
 Error: There is no parameter for the pattern
          suc x
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
-        y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → (=) {Nat} (x + (y + z)) ((x +
+        y) + z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
 
@@ -68,8 +68,8 @@ In file $FILE:31:11 ->
 Error: There is no parameter for the pattern
          y
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
-        y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → (=) {Nat} (x + (y + z)) ((x +
+        y) + z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
 
@@ -83,8 +83,8 @@ In file $FILE:31:14 ->
 Error: There is no parameter for the pattern
          z
        to match against, given the return type
-         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → = {Nat} (+ x (+ y z)) (+ (+ x
-        y) z)
+         Π (x : Nat) → Π (y : Nat) → Π (z : Nat) → (=) {Nat} (x + (y + z)) ((x +
+        y) + z)
        (and in case it's a function type, you may want to move its parameters before
        the `:` in the signature)
 

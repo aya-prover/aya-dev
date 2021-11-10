@@ -11,12 +11,14 @@ import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
+import org.aya.concrete.stmt.OpDecl;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,18 +30,18 @@ import org.jetbrains.annotations.NotNull;
  * @see ConcreteDistiller
  */
 public class CoreDistiller extends BaseDistiller implements
-  Pat.Visitor<Boolean, Doc>,
+  Pat.Visitor<BaseDistiller.Outer, Doc>,
   Def.Visitor<Unit, @NotNull Doc>,
-  Term.Visitor<Boolean, Doc> {
+  Term.Visitor<BaseDistiller.Outer, Doc> {
   public CoreDistiller(@NotNull DistillerOptions options) {
     super(options);
   }
 
-  @Override public Doc visitRef(@NotNull RefTerm term, Boolean nestedCall) {
+  @Override public Doc visitRef(@NotNull RefTerm term, Outer outer) {
     return varDoc(term.var());
   }
 
-  @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Boolean nestedCall) {
+  @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Outer outer) {
     var params = DynamicSeq.<Term.Param>create();
     var body = IntroTerm.Lambda.unwrap(term, params);
     Doc bodyDoc;
@@ -53,11 +55,15 @@ public class CoreDistiller extends BaseDistiller implements
           params.removeLast();
         } else break;
       }
-      bodyDoc = call instanceof CallTerm.Access access
-        ? visitAccessHead(access)
-        : visitCalls(visitDefVar(defVar), args, false);
+      if (call instanceof CallTerm.Access access) bodyDoc = visitAccessHead(access);
+      else {
+        var style = chooseStyle(defVar);
+        bodyDoc = style != null
+          ? visitCalls(defVar, style, args, Outer.Free)
+          : visitCalls(false, varDoc(defVar), args, Outer.Free);
+      }
     } else {
-      bodyDoc = body.accept(this, false);
+      bodyDoc = body.accept(this, Outer.Free);
     }
 
     if (!options.showImplicitPats())
@@ -69,7 +75,8 @@ public class CoreDistiller extends BaseDistiller implements
     list.append(Doc.symbol("=>"));
     list.append(bodyDoc);
     var doc = Doc.sep(list);
-    return nestedCall ? Doc.parened(doc) : doc;
+    // Add paren when it's in a spine
+    return checkParen(outer, doc, Outer.AppSpine);
   }
 
   /** @return if we can eta-contract the last argument */
@@ -89,148 +96,158 @@ public class CoreDistiller extends BaseDistiller implements
       ? access.fieldArgs() : call.args();
   }
 
-  @Override public Doc visitPi(@NotNull FormTerm.Pi term, Boolean nestedCall) {
+  @Override public Doc visitPi(@NotNull FormTerm.Pi term, Outer outer) {
     if (!options.showImplicitPats() && !term.param().explicit()) {
-      return term.body().accept(this, nestedCall);
+      return term.body().accept(this, outer);
     }
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
       term.param().toDoc(options),
       Doc.symbol("->"),
-      term.body().accept(this, false)
+      term.body().accept(this, Outer.Codomain)
     );
-    return nestedCall ? Doc.parened(doc) : doc;
+    // Add paren when it's not free or a codomain
+    return checkParen(outer, doc, Outer.BinOp);
   }
 
-  @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Boolean nestedCall) {
+  @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Outer outer) {
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
       visitTele(term.params().view().dropLast(1)),
       Doc.symbol("**"),
       term.params().last().toDoc(options)
     );
-    return nestedCall ? Doc.parened(doc) : doc;
+    // Same as Pi
+    return checkParen(outer, doc, Outer.BinOp);
   }
 
-  @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Boolean nestedCall) {
+  @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
-    return visitCalls(fn, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true)),
-      (nest, t) -> t.toDoc(options), nestedCall);
+    return visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true))
+    );
   }
 
-  @Override public Doc visitApp(@NotNull ElimTerm.App term, Boolean nestedCall) {
-    return visitCalls(term.of().accept(this, false), Seq.of(term.arg()), nestedCall);
+  @Override public Doc visitApp(@NotNull ElimTerm.App term, Outer outer) {
+    return visitCalls(false, term.of().accept(this, Outer.AppHead), SeqView.of(term.arg()), outer);
   }
 
-  @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Boolean nestedCall) {
-    return visitCalls(linkRef(fnCall.ref(), FN_CALL), fnCall.args(), nestedCall);
+  @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Outer outer) {
+    return visitCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
   }
 
-  @Override public Doc visitPrimCall(CallTerm.@NotNull Prim prim, Boolean nestedCall) {
-    return visitCalls(linkRef(prim.ref(), FN_CALL), prim.args(), nestedCall);
+  @Override public Doc visitPrimCall(CallTerm.@NotNull Prim prim, Outer outer) {
+    return visitCalls(prim.ref(), FN_CALL, prim.args(), outer);
   }
 
-  @Override public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Boolean nestedCall) {
-    return visitCalls(linkRef(dataCall.ref(), DATA_CALL), dataCall.args(), nestedCall);
+  @Override public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Outer outer) {
+    return visitCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
   }
 
-  @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Boolean nestedCall) {
-    return visitCalls(linkRef(structCall.ref(), STRUCT_CALL), structCall.args(), nestedCall);
+  @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Outer outer) {
+    return visitCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
   }
 
-  @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Boolean nestedCall) {
-    return visitCalls(linkRef(conCall.ref(), CON_CALL), conCall.conArgs(), nestedCall);
+  @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Outer outer) {
+    return visitCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
   }
 
-  @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Boolean nestedCall) {
+  @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Outer outer) {
     return Doc.parened(Doc.commaList(term.items().view()
-      .map(t -> t.accept(this, false))));
+      .map(t -> t.accept(this, Outer.Free))));
   }
 
-  @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Boolean aBoolean) {
+  @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Outer outer) {
     return Doc.sep(
       Doc.styled(KEYWORD, "new"),
       Doc.symbol("{"),
       Doc.sep(newTerm.params().view()
         .map((k, v) -> Doc.sep(Doc.symbol("|"),
           linkRef(k, FIELD_CALL),
-          Doc.symbol("=>"), v.accept(this, false)))
+          Doc.symbol("=>"), v.accept(this, Outer.Free)))
         .toImmutableSeq()),
       Doc.symbol("}")
     );
   }
 
-  @Override public Doc visitProj(@NotNull ElimTerm.Proj term, Boolean nestedCall) {
-    return Doc.cat(term.of().accept(this, false), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
+  @Override public Doc visitProj(@NotNull ElimTerm.Proj term, Outer outer) {
+    return Doc.cat(term.of().accept(this, Outer.ProjHead), Doc.symbol("."), Doc.plain(String.valueOf(term.ix())));
   }
 
-  @Override public Doc visitAccess(CallTerm.@NotNull Access term, Boolean nestedCall) {
-    return visitCalls(visitAccessHead(term), term.fieldArgs(), nestedCall);
+  @Override public Doc visitAccess(CallTerm.@NotNull Access term, Outer outer) {
+    return visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer);
   }
 
   @NotNull private Doc visitAccessHead(CallTerm.@NotNull Access term) {
-    return Doc.cat(term.of().accept(this, true), Doc.symbol("."),
+    return Doc.cat(term.of().accept(this, Outer.ProjHead), Doc.symbol("."),
       linkRef(term.ref(), FIELD_CALL));
   }
 
-  @Override public Doc visitHole(CallTerm.@NotNull Hole term, Boolean nestedCall) {
+  @Override public Doc visitHole(CallTerm.@NotNull Hole term, Outer outer) {
     var name = term.ref();
     var inner = varDoc(name);
     if (options.inlineMetas())
-      return visitCalls(inner, term.args(), nestedCall);
+      return visitCalls(false, inner, term.args().view(), outer);
     return Doc.wrap("{?", "?}",
-      visitCalls(inner, term.args(), false));
+      visitCalls(false, inner, term.args().view(), Outer.Free));
   }
 
   @Override
-  public Doc visitFieldRef(@NotNull RefTerm.Field term, Boolean aBoolean) {
+  public Doc visitFieldRef(@NotNull RefTerm.Field term, Outer outer) {
     return linkRef(term.ref(), FIELD_CALL);
   }
 
-  @Override public Doc visitError(@NotNull ErrorTerm term, Boolean aBoolean) {
+  @Override public Doc visitError(@NotNull ErrorTerm term, Outer outer) {
     var doc = term.description().toDoc(options);
     return !term.isReallyError() ? doc : Doc.angled(doc);
   }
 
   private Doc visitCalls(
-    @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
-    boolean nestedCall
+    @NotNull DefVar<?, ?> var, @NotNull Style style,
+    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer
   ) {
-    return visitCalls(fn, args, (nest, term) -> term.accept(this, nest), nestedCall);
+    return visitCalls(var.concrete instanceof OpDecl decl && decl.asOperator() != null,
+      linkRef(var, style), args.view(), outer);
   }
 
-  @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Boolean nested) {
+  private Doc visitCalls(
+    boolean infix, @NotNull Doc fn,
+    @NotNull SeqView<@NotNull Arg<@NotNull Term>> args, Outer outer
+  ) {
+    return visitCalls(infix, fn, (nest, term) -> term.accept(this, nest), outer, args);
+  }
+
+  @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Outer outer) {
     var tup = Doc.licit(tuple.explicit(),
-      Doc.commaList(tuple.pats().view().map(pat -> pat.accept(this, false))));
+      Doc.commaList(tuple.pats().view().map(pat -> pat.accept(this, Outer.Free))));
     return tuple.as() == null ? tup
       : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
   }
 
-  @Override public Doc visitBind(Pat.@NotNull Bind bind, Boolean aBoolean) {
+  @Override public Doc visitBind(Pat.@NotNull Bind bind, Outer outer) {
     var doc = linkDef(bind.as());
     return bind.explicit() ? doc : Doc.braced(doc);
   }
 
-  @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Boolean aBoolean) {
+  @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Outer outer) {
     var doc = Doc.styled(KEYWORD, "impossible");
     return absurd.explicit() ? doc : Doc.braced(doc);
   }
 
-  @Override public Doc visitPrim(Pat.@NotNull Prim prim, Boolean aBoolean) {
+  @Override public Doc visitPrim(Pat.@NotNull Prim prim, Outer outer) {
     var link = linkRef(prim.ref(), CON_CALL);
     return prim.explicit() ? link : Doc.braced(link);
   }
 
-  @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Boolean nestedCall) {
-    var ctorDoc = Doc.cat(linkRef(ctor.ref(), CON_CALL), visitMaybeCtorPatterns(ctor.params(), true, Doc.ONE_WS));
-    return ctorDoc(nestedCall, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+  @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Outer outer) {
+    var ctorDoc = Doc.cat(linkRef(ctor.ref(), CON_CALL), visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ONE_WS));
+    return ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
   }
 
-  public Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, boolean nestedCall, @NotNull Doc delim) {
+  public Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, Outer outer, @NotNull Doc delim) {
     var pats = options.showImplicitPats() ? patterns : patterns.view().filter(Pat::explicit);
     return Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
-      pats.view().map(p -> p.accept(this, nestedCall)))));
+      pats.view().map(p -> p.accept(this, outer)))));
   }
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
@@ -238,9 +255,9 @@ public class CoreDistiller extends BaseDistiller implements
       linkDef(def.ref(), FN_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().accept(this, false));
+      def.result().accept(this, Outer.Free));
     return def.body.fold(
-      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.accept(this, false)),
+      term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.accept(this, Outer.Free)),
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
   }
 
@@ -263,7 +280,7 @@ public class CoreDistiller extends BaseDistiller implements
       linkDef(def.ref(), DATA_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().accept(this, false));
+      def.result().accept(this, Outer.Free));
     return Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, Doc.vcat(
       def.body.view().map(ctor -> ctor.accept(this, Unit.unit())))));
   }
@@ -274,7 +291,7 @@ public class CoreDistiller extends BaseDistiller implements
       visitTele(ctor.selfTele));
     Doc line1;
     if (ctor.pats.isNotEmpty()) {
-      var pats = Doc.commaList(ctor.pats.view().map(pat -> pat.accept(this, false)));
+      var pats = Doc.commaList(ctor.pats.view().map(pat -> pat.accept(this, Outer.Free)));
       line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
     } else line1 = Doc.sep(Doc.symbol("|"), doc);
     return visitConditions(line1, ctor.clauses);
@@ -285,7 +302,7 @@ public class CoreDistiller extends BaseDistiller implements
       linkDef(def.ref(), STRUCT_CALL),
       visitTele(def.telescope()),
       Doc.symbol(":"),
-      def.result().accept(this, false)
+      def.result().accept(this, Outer.Free)
     ), Doc.nest(2, Doc.vcat(
       def.fields.view().map(field -> field.accept(this, Unit.unit())))));
   }
@@ -296,7 +313,7 @@ public class CoreDistiller extends BaseDistiller implements
       linkDef(field.ref(), FIELD_CALL),
       visitTele(field.selfTele),
       Doc.symbol(":"),
-      field.result.accept(this, false)), field.clauses);
+      field.result.accept(this, Outer.Free)), field.clauses);
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {

@@ -4,5 +4,5 @@ package org.aya.cli.utils;
 
 public class PicocliUtils {
   // I couldn't find a simpler way to let Picocli automatically show candidate values. Appending this is a workaround solution.
-  public static final String CANDIDATES_ON_A_NEW_LINE = "\n  Candidates: ${COMPLETION-CANDIDATES}";
+  public static final String CANDIDATES = "\n  Candidates: ${COMPLETION-CANDIDATES}";
 }

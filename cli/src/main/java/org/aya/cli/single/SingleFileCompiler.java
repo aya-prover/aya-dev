@@ -121,6 +121,8 @@ public record SingleFileCompiler(
     var docs = DynamicSeq.<Doc>create();
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
+      // Skip uninteresting items
+      if (item instanceof PrimDef) continue;
       var thisDoc = item.toDoc(DistillerOptions.PRETTY);
       Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + fileExt), toString.apply(thisDoc, false));
       docs.append(thisDoc);

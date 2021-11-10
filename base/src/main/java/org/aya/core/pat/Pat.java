@@ -18,6 +18,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
+import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.LocalCtx;
@@ -41,7 +42,7 @@ public sealed interface Pat extends CorePat {
     return new Arg<>(toTerm(), explicit());
   }
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new CoreDistiller(options), false);
+    return accept(new CoreDistiller(options), BaseDistiller.Outer.Free);
   }
   void storeBindings(@NotNull LocalCtx localCtx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {

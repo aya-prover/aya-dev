@@ -5,7 +5,6 @@ package org.aya.concrete.parse;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import kala.control.Option;
 import org.antlr.v4.runtime.CodePointBuffer;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -64,15 +63,18 @@ public interface AyaParsing {
     @NotNull SourceFileLocator locator,
     @NotNull Reporter reporter, @NotNull Path path
   ) throws IOException {
-    var sourceCode = Files.readString(path);
-    var sourceFile = new SourceFile(Option.some(locator.displayName(path)), sourceCode);
-    var parser = parser(sourceFile, reporter);
-    return new AyaProducer(sourceFile, reporter).visitProgram(parser.program());
+    return program(reporter, new SourceFile(locator.displayName(path), Files.readString(path)));
   }
 
-  private static @NotNull <T> T replParser(@NotNull Reporter reporter, @NotNull String text,
-                                           @NotNull BiFunction<AyaProducer, AyaParser, T> tree) {
-    var sourceFile = new SourceFile(Option.some(Path.of("stdin")), text);
+  static @NotNull ImmutableSeq<Stmt> program(@NotNull Reporter reporter, SourceFile sourceFile) {
+    return new AyaProducer(sourceFile, reporter).visitProgram(parser(sourceFile, reporter).program());
+  }
+
+  private static @NotNull <T> T replParser(
+    @NotNull Reporter reporter, @NotNull String text,
+    @NotNull BiFunction<AyaProducer, AyaParser, T> tree
+  ) {
+    var sourceFile = new SourceFile(Path.of("stdin"), text);
     var parser = parser(sourceFile, reporter);
     return tree.apply(new AyaProducer(sourceFile, reporter), parser);
   }

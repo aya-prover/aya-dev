@@ -3,6 +3,7 @@
 package org.aya.core;
 
 import org.aya.api.distill.DistillerOptions;
+import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckDeclTest;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class DistillerTest {
@@ -79,6 +81,18 @@ public class DistillerTest {
     assertFalse(declDoc(code).renderToTeX().isEmpty());
     tearDown();
     assertFalse(declCDoc(code).renderToTeX().isEmpty());
+  }
+
+  @Test public void nestedPi() {
+    var decls = TyckDeclTest.successTyckDecls("""
+      def infix = (A B : Type) => A
+      def test1 (X : Type) => Pi (A : Type) -> A = X
+      def test2 (X : Type) => (Pi (A : Type) -> A) = X
+      """);
+    var test1 = ((FnDef) decls.get(1)).body.getLeftValue();
+    var test2 = ((FnDef) decls.get(2)).body.getLeftValue();
+    assertEquals("Pi (A : Type) -> A = X", test1.toDoc(DistillerOptions.DEFAULT).debugRender());
+    assertEquals("(Pi (A : Type) -> A) = X", test2.toDoc(DistillerOptions.DEFAULT).debugRender());
   }
 
   @AfterEach public void tearDown() {

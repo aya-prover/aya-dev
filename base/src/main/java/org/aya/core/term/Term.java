@@ -21,6 +21,7 @@ import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.visitor.*;
+import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
@@ -110,7 +111,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new CoreDistiller(options), false);
+    return accept(new CoreDistiller(options), BaseDistiller.Outer.Free);
   }
   default @NotNull Term computeType(@Nullable TyckState state) {
     return accept(new LittleTyper(state), Unit.unit());

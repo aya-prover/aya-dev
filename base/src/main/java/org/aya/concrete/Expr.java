@@ -24,6 +24,7 @@ import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.term.Term;
+import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
@@ -62,7 +63,7 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new ConcreteDistiller(options), false);
+    return accept(new ConcreteDistiller(options), BaseDistiller.Outer.Free);
   }
 
   interface Visitor<P, R> {
