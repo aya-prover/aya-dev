@@ -142,8 +142,7 @@ public final class PatTycker {
       }
       case Pattern.Bind bind -> {
         var v = bind.bind();
-        var interval = PrimDef.Factory.INSTANCE.getOption(PrimDef.ID.INTERVAL);
-        if (term instanceof CallTerm.Prim prim && interval.isNotEmpty() && prim.ref() == interval.get().ref())
+        if (term instanceof CallTerm.Prim prim && prim.ref().core.id == PrimDef.ID.INTERVAL)
           for (var primName : PrimDef.Factory.LEFT_RIGHT)
             if (Objects.equals(bind.bind().name(), primName.id)) {
               refSubst.bad().add(bind.bind());
