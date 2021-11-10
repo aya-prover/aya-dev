@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import org.aya.api.distill.AyaDocile;
+import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @param isReallyError true if this is indeed an error,
  *                      false if this is just for pretty printing placeholder
  * @author ice1000
- * @see CoreDistiller#visitError(ErrorTerm, Boolean)
+ * @see CoreDistiller#visitError(ErrorTerm, BaseDistiller.Outer)
  */
 public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) implements Term {
   public ErrorTerm(@NotNull Term description) {

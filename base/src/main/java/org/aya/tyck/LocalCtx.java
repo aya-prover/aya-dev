@@ -46,15 +46,6 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     return with(param.ref(), param.type(), action);
   }
 
-  public <T> T with(@NotNull ImmutableSeq<Term.Param> params, @NotNull Supplier<T> action) {
-    for (var param : params) localMap.put(param.ref(), param.type());
-    try {
-      return action.get();
-    } finally {
-      for (var param : params) localMap.remove(param.ref());
-    }
-  }
-
   public <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
     localMap.put(var, type);
     try {
@@ -94,9 +85,5 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
 
   @Contract(" -> new") public @NotNull LocalCtx derive() {
     return new LocalCtx(MutableMap.wrapJava(new LinkedHashMap<>()), this);
-  }
-
-  public boolean isNotEmpty() {
-    return !isEmpty();
   }
 }

@@ -95,13 +95,5 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.sep(param.view().map(p -> p.toDoc(options))), Doc.symbol("->"), result.toDoc(options));
     }
-
-    @Contract("_ -> new") public @NotNull Signature mapTerm(@NotNull Term term) {
-      return new Signature(sortParam, param, term);
-    }
-
-    public @NotNull Signature subst(@NotNull Substituter.TermSubst subst) {
-      return new Signature(sortParam, param.map(p -> p.subst(subst)), result.subst(subst));
-    }
   }
 }

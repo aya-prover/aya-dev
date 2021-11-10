@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 public final class DefEq {
   private final @NotNull MutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst = new MutableHashMap<>();
   private final @Nullable Trace.Builder traceBuilder;
-  boolean allowVague;
+  final boolean allowVague;
   private final @NotNull TyckState state;
   private final @NotNull Reporter reporter;
   private final @NotNull SourcePos pos;

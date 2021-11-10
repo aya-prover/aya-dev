@@ -48,7 +48,7 @@ public record BindContext(
   }
 
   @Override
-  public @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName, @NotNull SourcePos sourcePos) {
+  public @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
     return null;
   }
 }
