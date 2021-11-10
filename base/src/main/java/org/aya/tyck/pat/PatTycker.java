@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
@@ -9,7 +10,6 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
-import kala.value.Ref;
 import org.aya.api.error.IgnoringReporter;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -125,7 +125,7 @@ public final class PatTycker {
         var as = tuple.as();
         if (as != null) exprTycker.localCtx.put(as, sigma);
         yield new Pat.Tuple(tuple.explicit(),
-          visitPatterns(new Ref<>(sig), tuple.patterns()), as, sigma);
+          visitPatterns(sig, tuple.patterns().view())._1, as, sigma);
       }
       case Pattern.Ctor ctor -> {
         var realCtor = selectCtor(term, ctor.name().data(), refSubst.reporter(), ctor);
@@ -135,10 +135,10 @@ public final class PatTycker {
         var ctorCore = ctorRef.core;
         final var dataCall = realCtor._1;
         var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
-        var sig = new Ref<>(new Def.Signature(ImmutableSeq.empty(),
-          Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall));
-        var patterns = visitPatterns(sig, ctor.params());
-        yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
+        var sig = new Def.Signature(ImmutableSeq.empty(),
+          Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall);
+        var patterns = visitPatterns(sig, ctor.params().view());
+        yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns._1, ctor.as(), realCtor._1);
       }
       case Pattern.Bind bind -> {
         var v = bind.bind();
@@ -170,11 +170,10 @@ public final class PatTycker {
   }
 
   private Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
-    var sig = new Ref<>(signature);
     exprTycker.localCtx = exprTycker.localCtx.derive();
     currentClause = match;
-    var patterns = visitPatterns(sig, match.patterns);
-    var type = sig.value.result();
+    var patterns = visitPatterns(signature, match.patterns.view());
+    var type = patterns._2;
     match.expr = match.expr.map(e -> e.accept(refSubst, Unit.unit()));
     var result = match.hasError
       // In case the patterns are malformed, do not check the body
@@ -187,46 +186,73 @@ public final class PatTycker {
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
-    return new Pat.PrototypeClause(match.sourcePos, patterns, result);
+    return new Pat.PrototypeClause(match.sourcePos, patterns._1, result);
   }
 
-  public @NotNull ImmutableSeq<Pat> visitPatterns(Ref<Def.Signature> sig, ImmutableSeq<Pattern> stream) {
+  public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
+  visitPatterns(Def.Signature sig, SeqView<Pattern> stream) {
     var results = DynamicSeq.<Pat>create();
-    stream.forEach(pat -> {
-      if (sig.value.param().isEmpty()) {
-        exprTycker.reporter.report(new PatternProblem
-          .TooManyPattern(pat, sig.value.result().freezeHoles(exprTycker.state)));
-        foundError();
-        return;
-      }
-      var param = sig.value.param().first();
-      while (param.explicit() != pat.explicit()) if (pat.explicit()) {
-        // TODO: implicitly generated patterns might be inferred to something else?
-        var bind = new Pat.Bind(false, new LocalVar(param.ref().name(), param.ref().definition()), param.type());
-        results.append(bind);
-        exprTycker.localCtx.put(bind.as(), param.type());
-        termSubst.add(param.ref(), bind.toTerm());
-        sig.value = sig.value.inst(termSubst);
-        if (sig.value.param().isEmpty()) {
-          // TODO[ice]: report error
+    while (sig.param().isNotEmpty()) {
+      var param = sig.param().first();
+      Pattern pat;
+      if (param.explicit()) {
+        if (stream.isEmpty()) {
           foundError();
+          // TODO[ice]: not enough patterns
           throw new ExprTycker.TyckerException();
         }
-        param = sig.value.param().first();
+        pat = stream.first();
+        stream = stream.drop(1);
+        if (!pat.explicit()) {
+          foundError();
+          // TODO[ice]: too many implicit patterns
+          throw new ExprTycker.TyckerException();
+        }
       } else {
-        // TODO[ice]: unexpected implicit pattern
-        foundError();
-        throw new ExprTycker.TyckerException();
+        // Type is implicit, so....?
+        if (stream.isEmpty()) {
+          sig = generatePat(new PatData(sig, results, param));
+          continue;
+        }
+        pat = stream.first();
+        if (pat.explicit()) {
+          // Pattern is explicit, so we leave it to the next type, do not "consume" it
+          sig = generatePat(new PatData(sig, results, param));
+          continue;
+        } else stream = stream.drop(1);
+        // ^ Pattern is implicit, so we "consume" it (stream.drop(1))
       }
-      var type = param.type();
-      tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
-      var res = doTyck(pat, type);
-      tracing(GenericBuilder::reduce);
-      termSubst.add(param.ref(), res.toTerm());
-      sig.value = sig.value.inst(termSubst);
-      results.append(res);
-    });
-    return results.toImmutableSeq();
+      sig = updateSig(new PatData(sig, results, param), pat);
+    }
+    if (stream.isNotEmpty()) {
+      foundError();
+      exprTycker.reporter.report(new PatternProblem
+        .TooManyPattern(stream.first(), sig.result().freezeHoles(exprTycker.state)));
+    }
+    return Tuple.of(results.toImmutableSeq(), sig.result());
+  }
+
+  private record PatData(Def.Signature sig, DynamicSeq<Pat> results, Term.Param param) {
+  }
+
+  private @NotNull Def.Signature updateSig(PatData data, Pattern pat) {
+    var type = data.param.type();
+    tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
+    var res = doTyck(pat, type);
+    tracing(GenericBuilder::reduce);
+    termSubst.add(data.param.ref(), res.toTerm());
+    data.results.append(res);
+    return data.sig.inst(termSubst);
+  }
+
+  private @NotNull Def.Signature generatePat(PatData data) {
+    var ref = data.param.ref();
+    // TODO: implicitly generated patterns might be inferred to something else?
+    var bind = new Pat.Bind(false, new LocalVar(ref.name(), ref.definition()), data.param.type());
+    data.results.append(bind);
+    exprTycker.localCtx.put(bind.as(), data.param.type());
+    termSubst.add(ref, bind.toTerm());
+    return data.sig.inst(termSubst);
   }
 
   private void foundError() {

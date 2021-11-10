@@ -288,6 +288,9 @@ public record PatClassifier(
 
   record SubPats(@NotNull SeqView<Pat> pats, int ix) {
     @Contract(pure = true) public @NotNull Pat head() {
+      if (pats.isEmpty()) {
+        throw new IllegalStateException("Empty pattern list");
+      }
       return pats.first();
     }
 
