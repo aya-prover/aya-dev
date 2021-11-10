@@ -44,15 +44,26 @@ public abstract class BaseDistiller {
     boolean infix, @NotNull Doc fn, @NotNull SeqView<@NotNull Arg<@NotNull T>> args,
     @NotNull BiFunction<Outer, T, Doc> formatter, Outer outer
   ) {
-    if (args.isEmpty()) return fn;
     var visibleArgs = (options.showImplicitArgs() ? args : args.filter(Arg::explicit)).toImmutableSeq();
+    if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
+    var first = formatter.apply(Outer.BinOp, visibleArgs.first().term());
     // Print as a binary operator
-    if (infix && visibleArgs.sizeEquals(2)) {
-      var binApp = Doc.sep(formatter.apply(Outer.BinOp, visibleArgs.get(0).term()),
-        fn, formatter.apply(Outer.BinOp, visibleArgs.get(1).term()));
-      // If we're in a binApp/head/spine/etc., add parentheses
-      return outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(binApp) : binApp;
-    }
+    if (infix) return switch (visibleArgs.size()) {
+      case 2 -> {
+        var binApp = Doc.sep(first, fn, formatter.apply(Outer.BinOp, visibleArgs.get(1).term()));
+        // If we're in a binApp/head/spine/etc., add parentheses
+        yield outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(binApp) : binApp;
+      }
+      case 1 -> {
+        var binApp = Doc.sep(first, fn);
+        // Ditto
+        yield outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(binApp) : binApp;
+      }
+      default -> {
+        var head = Doc.sep(first, fn, formatter.apply(Outer.BinOp, visibleArgs.get(1).term()));
+        yield visitCalls(false, head, visibleArgs.view().drop(2), formatter, outer);
+      }
+    };
     var call = Doc.sep(fn, Doc.sep(visibleArgs.view().map(arg -> {
       if (arg.explicit()) return formatter.apply(Outer.AppSpine, arg.term());
       else return Doc.braced(formatter.apply(Outer.Free, arg.term()));
