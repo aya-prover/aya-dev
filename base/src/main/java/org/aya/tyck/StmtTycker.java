@@ -174,7 +174,11 @@ public record StmtTycker(
       .toImmutableSeq(), dataArgs);
     var sig = new Def.Signature(sortParam, dataSig.param(), dataCall);
     var patTycker = new PatTycker(tycker);
-    var pat = patTycker.visitPatterns(sig, ctor.patterns.view())._1;
+    // There might be patterns in the constructor
+    var pat = ctor.patterns.isNotEmpty()
+      ? patTycker.visitPatterns(sig, ctor.patterns.view())._1
+      // No patterns, leave it blank
+      : ImmutableSeq.<Pat>empty();
     var tele = checkTele(tycker, ctor.telescope.map(param ->
       param.mapExpr(expr -> expr.accept(patTycker.refSubst, Unit.unit()))), dataSig.result());
     var signature = new Def.Signature(sortParam, tele, dataCall);

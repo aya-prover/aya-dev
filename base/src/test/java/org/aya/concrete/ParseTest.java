@@ -81,6 +81,7 @@ public class ParseTest {
   @Test public void successLiteral() {
     assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
     parseUniv("Type");
+    parseUniv("Type 0");
   }
 
   @Test

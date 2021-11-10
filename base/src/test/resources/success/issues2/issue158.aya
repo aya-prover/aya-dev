@@ -1,0 +1,38 @@
+prim I
+prim left
+prim right
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+  | at (i : I) : A i {
+    | left => a
+    | right => b
+  }
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def idp {A : Type} {a : A} : a = a => path (\ i => a)
+def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
+  : f a = f b => path (\ i => f (p.at i))
+
+open data List (A : Type) : Type | nil | infix cons A (List A)
+open data Nat | zero | suc Nat
+open data Fin (n : Nat)
+| suc n => fzero
+| suc n => fsuc (Fin n)
+
+def length {A : Type} (l : List A) : Nat
+| nil => zero
+| cons a l => suc (length l)
+
+def infix !! {A : Type} (l : List A) (i : Fin (length l)) : A
+| cons a l, fzero => a
+| cons a l, fsuc i => l !! i
+
+def infix ++ {A : Type} (xs ys : List A) : List A
+| nil, ys => ys
+| cons a xs, ys => a cons xs ++ ys
+bind cons looser ++
+bind ++ tighter =
+
+def ++-assoc {A : Type} {xs ys zs : List A} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
+  | {A}, {nil} => idp
+  | {A}, {cons x xs} => pmap (x cons) ++-assoc
