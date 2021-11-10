@@ -118,30 +118,30 @@ public class ConcreteDistiller extends BaseDistiller implements
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
-    return visitCalls(false, fn, SeqView.of(expr.level()).map(t -> new Arg<>(t, true)),
-      (nc, l) -> l.toDoc(options), outer);
+    return visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer, SeqView.of(expr.level()).map(t -> new Arg<>(t, true))
+    );
   }
 
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Outer outer) {
     // TODO[ice]: binary?
     return visitCalls(false,
       expr.function().accept(this, Outer.AppHead),
-      SeqView.of(expr.argument()),
-      (nest, arg) -> arg.expr().accept(this, nest), outer);
+      (nest, arg) -> arg.expr().accept(this, nest), outer, SeqView.of(expr.argument())
+    );
   }
 
   @Override public Doc visitLsuc(Expr.@NotNull LSucExpr expr, Outer outer) {
     return visitCalls(false,
       Doc.styled(KEYWORD, "lsuc"),
-      SeqView.of(new Arg<>(expr.expr(), true)),
-      (nest, arg) -> arg.accept(this, nest), outer);
+      (nest, arg) -> arg.accept(this, nest), outer, SeqView.of(new Arg<>(expr.expr(), true))
+    );
   }
 
   @Override public Doc visitLmax(Expr.@NotNull LMaxExpr expr, Outer outer) {
     return visitCalls(false,
       Doc.styled(KEYWORD, "lmax"),
-      expr.levels().view().map(term -> new Arg<>(term, true)),
-      (nest, arg) -> arg.accept(this, nest), outer);
+      (nest, arg) -> arg.accept(this, nest), outer, expr.levels().view().map(term -> new Arg<>(term, true))
+    );
   }
 
   @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Outer outer) {
@@ -194,9 +194,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     if (seq.sizeEquals(1)) return seq.first().expr().accept(this, outer);
     return visitCalls(false,
       seq.first().expr().accept(this, Outer.AppSpine),
-      seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
-      (nest, arg) -> arg.accept(this, nest),
-      outer
+      (nest, arg) -> arg.accept(this, nest), outer, seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit()))
     );
   }
 

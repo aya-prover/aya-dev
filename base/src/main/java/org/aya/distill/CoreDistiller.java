@@ -124,8 +124,8 @@ public class CoreDistiller extends BaseDistiller implements
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
-    return visitCalls(false, fn, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true)),
-      (nest, t) -> t.toDoc(options), outer);
+    return visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true))
+    );
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Outer outer) {
@@ -214,7 +214,7 @@ public class CoreDistiller extends BaseDistiller implements
     boolean infix, @NotNull Doc fn,
     @NotNull SeqView<@NotNull Arg<@NotNull Term>> args, Outer outer
   ) {
-    return visitCalls(infix, fn, args, (nest, term) -> term.accept(this, nest), outer);
+    return visitCalls(infix, fn, (nest, term) -> term.accept(this, nest), outer, args);
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Outer outer) {

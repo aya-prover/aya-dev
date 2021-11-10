@@ -26,6 +26,10 @@ import java.util.function.BiFunction;
  * @author ice1000
  */
 public abstract class BaseDistiller {
+  @FunctionalInterface
+  protected interface Fmt<T extends AyaDocile> extends BiFunction<Outer, T, Doc> {
+  }
+
   public static final @NotNull Style KEYWORD = Style.preset("aya:Keyword");
   public static final @NotNull Style FN_CALL = Style.preset("aya:FnCall");
   public static final @NotNull Style DATA_CALL = Style.preset("aya:DataCall");
@@ -41,26 +45,36 @@ public abstract class BaseDistiller {
   }
 
   <T extends AyaDocile> @NotNull Doc visitCalls(
-    boolean infix, @NotNull Doc fn, @NotNull SeqView<@NotNull Arg<@NotNull T>> args,
-    @NotNull BiFunction<Outer, T, Doc> formatter, Outer outer
+    boolean infix, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
+    @NotNull SeqView<@NotNull Arg<@NotNull T>> args
   ) {
     var visibleArgs = (options.showImplicitArgs() ? args : args.filter(Arg::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
     // Print as a binary operator
     if (infix) {
-      var first = formatter.apply(Outer.BinOp, visibleArgs.first().term());
+      var firstArg = visibleArgs.first();
+      if (!firstArg.explicit()) return prefix(Doc.parened(fn), fmt, outer, visibleArgs.view());
+      var first = fmt.apply(Outer.BinOp, firstArg.term());
       // If we're in a binApp/head/spine/etc., add parentheses
       if (visibleArgs.sizeEquals(1)) return checkParen(outer, Doc.sep(first, fn), Outer.BinOp);
-      var triple = Doc.sep(first, fn, formatter.apply(Outer.BinOp, visibleArgs.get(1).term()));
+      var triple = Doc.sep(first, fn, visitArg(fmt, visibleArgs.get(1), Outer.BinOp));
       if (visibleArgs.sizeEquals(2)) return checkParen(outer, triple, Outer.BinOp);
-      return visitCalls(false, triple, visibleArgs.view().drop(2), formatter, outer);
+      return prefix(Doc.parened(triple), fmt, outer, visibleArgs.view().drop(2));
     }
-    var call = Doc.sep(fn, Doc.sep(visibleArgs.view().map(arg -> {
-      if (arg.explicit()) return formatter.apply(Outer.AppSpine, arg.term());
-      else return Doc.braced(formatter.apply(Outer.Free, arg.term()));
-    })));
+    return prefix(fn, fmt, outer, visibleArgs.view());
+  }
+
+  private <T extends AyaDocile> @NotNull Doc
+  prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<Arg<T>> args) {
+    var call = Doc.sep(fn, Doc.sep(args.map(arg ->
+      visitArg(fmt, arg, Outer.AppSpine))));
     // If we're in a spine, add parentheses
     return checkParen(outer, call, Outer.AppSpine);
+  }
+
+  private <T extends AyaDocile> Doc visitArg(@NotNull Fmt<T> fmt, @NotNull Arg<T> arg, @NotNull Outer outer) {
+    if (arg.explicit()) return fmt.apply(outer, arg.term());
+    return Doc.braced(fmt.apply(Outer.Free, arg.term()));
   }
 
   public static @NotNull Doc checkParen(@NotNull Outer outer, @NotNull Doc binApp, @NotNull Outer binOp) {

@@ -8,7 +8,7 @@ In file $FILE:29:61 ->
 Error: Unable to apply the expression
          idp a
        because the type of what you applied is not a Pi type, but instead:
-         = {A} a a
+         (=) {A} a a
          (Normalized: Path (λ i ⇒ A) a a)
 
 1 error(s), 0 warning(s).
