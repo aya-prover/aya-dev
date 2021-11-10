@@ -98,10 +98,10 @@ public class CoreDistiller extends BaseDistiller implements
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
       term.param().toDoc(options),
       Doc.symbol("->"),
-      term.body().accept(this, Outer.Free)
+      term.body().accept(this, Outer.Codomain)
     );
-    // Add paren when it's not free
-    return outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(doc) : doc;
+    // Add paren when it's not free or a codomain
+    return outer.ordinal() > Outer.Codomain.ordinal() ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Outer outer) {
@@ -112,7 +112,7 @@ public class CoreDistiller extends BaseDistiller implements
       term.params().last().toDoc(options)
     );
     // Add paren when it's not free
-    return outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(doc) : doc;
+    return outer.ordinal() >= Outer.Codomain.ordinal() ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {

@@ -131,16 +131,19 @@ public abstract class BaseDistiller {
   }
 
   /**
-   * What's outside?
+   * Expression: where am I?
    *
    * <ul>
    *   <li>Top-level expression may not need parentheses, stone free!</li>
-   *   <li>It might be an application! Stay in parentheses!</li>
-   *   <li>It might be a binary operator! Applications within are fine.</li>
+   *   <li>An argument of an application! Stay in parentheses!</li>
+   *   <li>An operand of a binary application! Applications within are safe,
+   *     but other binary applications are in danger!</li>
+   *   <li>Codomain of a telescope</li>
    * </ul>
    */
   public enum Outer {
     Free,
+    Codomain,
     BinOp,
     AppHead,
     AppSpine,

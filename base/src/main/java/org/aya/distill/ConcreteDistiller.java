@@ -74,26 +74,30 @@ public class ConcreteDistiller extends BaseDistiller implements
         return unit;
       }
     }, Unit.unit());
+    Doc doc;
     if (!data[0] && !data[1]) {
       var type = expr.param().type();
       var tyDoc = type != null ? type.toDoc(options) : Doc.symbol("?");
-      return Doc.sep(expr.param().explicit() ? tyDoc : Doc.braced(tyDoc),
+      doc = Doc.sep(expr.param().explicit() ? tyDoc : Doc.braced(tyDoc),
         Doc.symbol("->"),
-        expr.last().accept(this, Outer.Free));
-    }
-    return Doc.sep(
+        expr.last().accept(this, Outer.Codomain));
+    } else doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
       expr.param().toDoc(options),
       Doc.symbol("->"),
-      expr.last().accept(this, Outer.Free));
+      expr.last().accept(this, Outer.Codomain));
+    // When outsider is neither a codomain nor non-expression, we need to add parentheses.
+    return outer.ordinal() > Outer.Codomain.ordinal() ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitSigma(Expr.@NotNull SigmaExpr expr, Outer outer) {
-    return Doc.sep(
+    var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Sig")),
       visitTele(expr.params().dropLast(1)),
       Doc.symbol("**"),
-      Objects.requireNonNull(expr.params().last().type()).accept(this, Outer.Free));
+      Objects.requireNonNull(expr.params().last().type()).accept(this, Outer.Codomain));
+    // When outsider is neither a codomain nor non-expression, we need to add parentheses.
+    return outer.ordinal() > Outer.Codomain.ordinal() ? Doc.parened(doc) : doc;
   }
 
   @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Outer outer) {
