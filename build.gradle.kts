@@ -68,6 +68,7 @@ subprojects {
 
   tasks.withType<Javadoc>().configureEach {
     val options = options as StandardJavadocDocletOptions
+    options.modulePath = tasks.compileJava.get().classpath.toList()
     options.addBooleanOption("-enable-preview", true)
     options.addStringOption("-source", "17")
     options.encoding("UTF-8")
