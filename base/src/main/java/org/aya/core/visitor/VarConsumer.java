@@ -120,8 +120,10 @@ public interface VarConsumer<P> extends TermConsumer<P> {
     }
 
     @Contract(mutates = "this") @Override public void visitVar(Var v, Unit unit) {
-      if (v instanceof LocalVar local && !(allowed.contains(local) || bound.contains(local)))
-        invalidVars.append(local);
+      if (v instanceof LocalVar local
+        && !(allowed.contains(local) || bound.contains(local))
+        && !invalidVars.contains(local)
+      ) invalidVars.append(local);
     }
   }
 }

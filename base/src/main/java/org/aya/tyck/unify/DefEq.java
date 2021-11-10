@@ -367,7 +367,7 @@ public final class DefEq {
         }
         subst.add(argSubst);
         varSubst.forEach(subst::add);
-        var solved = preRhs.subst(subst);
+        var solved = preRhs.subst(subst).freezeHoles(state);
         assert !state.metas().containsKey(meta);
         compareUntyped(solved.computeType(state), meta.result);
         var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());

@@ -80,11 +80,10 @@ public class ParseTest {
 
   @Test public void successLiteral() {
     assertTrue(parseExpr("diavolo") instanceof Expr.UnresolvedExpr);
-    parseUniv("Type");
+    assertTrue(parseExpr("Type") instanceof Expr.RawUnivExpr);
   }
 
-  @Test
-  public void successDecl() {
+  @Test public void successDecl() {
     parseFn("def a => 1");
     parseFn("def a (b : X) => b");
     parseFn("def a (f : Pi a b c d -> a) => b");
@@ -191,10 +190,6 @@ public class ParseTest {
 
   private void parseData(@Language("TEXT") String code) {
     assertTrue(parseDecl(code)._1 instanceof Decl.DataDecl);
-  }
-
-  private void parseUniv(@Language("TEXT") String code) {
-    assertTrue(parseExpr(code) instanceof Expr.RawUnivExpr);
   }
 
   @Test

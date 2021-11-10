@@ -83,7 +83,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     } catch (IOException e) {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());
     }
-    reportErrors(reporter, DistillerOptions.DEFAULT);
+    reportErrors(reporter, DistillerOptions.PRETTY);
     return new HighlightResult(uri, symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
@@ -210,7 +210,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     }
 
     @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {
-      return describe(DistillerOptions.DEFAULT);
+      return describe(DistillerOptions.PRETTY);
     }
   }
 }
