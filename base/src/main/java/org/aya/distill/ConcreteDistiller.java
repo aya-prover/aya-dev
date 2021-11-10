@@ -4,6 +4,7 @@ package org.aya.distill;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
@@ -117,30 +118,31 @@ public class ConcreteDistiller extends BaseDistiller implements
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
-    return visitCalls(fn, Seq.of(expr.level()).view().map(t -> new Arg<>(t, true)),
+    return visitCalls(false, fn, SeqView.of(expr.level()).map(t -> new Arg<>(t, true)),
       (nc, l) -> l.toDoc(options), outer);
   }
 
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Outer outer) {
-    return visitCalls(
+    // TODO[ice]: binary?
+    return visitCalls(false,
       expr.function().accept(this, Outer.AppHead),
-      Seq.of(expr.argument()),
+      SeqView.of(expr.argument()),
       (nest, arg) -> arg.expr().accept(this, nest),
       outer);
   }
 
   @Override public Doc visitLsuc(Expr.@NotNull LSucExpr expr, Outer outer) {
-    return visitCalls(
+    return visitCalls(false,
       Doc.styled(KEYWORD, "lsuc"),
-      ImmutableSeq.of(new Arg<>(expr.expr(), true)),
+      SeqView.of(new Arg<>(expr.expr(), true)),
       (nest, arg) -> arg.accept(this, nest),
       outer);
   }
 
   @Override public Doc visitLmax(Expr.@NotNull LMaxExpr expr, Outer outer) {
-    return visitCalls(
+    return visitCalls(false,
       Doc.styled(KEYWORD, "lmax"),
-      expr.levels().map(term -> new Arg<>(term, true)),
+      expr.levels().view().map(term -> new Arg<>(term, true)),
       (nest, arg) -> arg.accept(this, nest),
       outer);
   }
@@ -193,7 +195,7 @@ public class ConcreteDistiller extends BaseDistiller implements
   public Doc visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Outer outer) {
     var seq = binOpSeq.seq();
     if (seq.sizeEquals(1)) return seq.first().expr().accept(this, outer);
-    return visitCalls(
+    return visitCalls(false,
       seq.first().expr().accept(this, Outer.AppSpine),
       seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
       (nest, arg) -> arg.accept(this, nest),

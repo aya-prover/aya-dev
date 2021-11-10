@@ -11,12 +11,14 @@ import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
+import org.aya.concrete.stmt.OpDecl;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,9 +55,13 @@ public class CoreDistiller extends BaseDistiller implements
           params.removeLast();
         } else break;
       }
-      bodyDoc = call instanceof CallTerm.Access access
-        ? visitAccessHead(access)
-        : visitCalls(visitDefVar(defVar), args, Outer.Free);
+      if (call instanceof CallTerm.Access access) bodyDoc = visitAccessHead(access);
+      else {
+        var style = chooseStyle(defVar);
+        bodyDoc = style != null
+          ? visitCalls(defVar, style, args, Outer.Free)
+          : visitCalls(false, varDoc(defVar), args, Outer.Free);
+      }
     } else {
       bodyDoc = body.accept(this, Outer.Free);
     }
@@ -118,32 +124,32 @@ public class CoreDistiller extends BaseDistiller implements
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.showLevels()) return fn;
-    return visitCalls(fn, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true)),
+    return visitCalls(false, fn, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true)),
       (nest, t) -> t.toDoc(options), outer);
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Outer outer) {
-    return visitCalls(term.of().accept(this, Outer.AppHead), Seq.of(term.arg()), outer);
+    return visitCalls(false, term.of().accept(this, Outer.AppHead), SeqView.of(term.arg()), outer);
   }
 
   @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Outer outer) {
-    return visitCalls(linkRef(fnCall.ref(), FN_CALL), fnCall.args(), outer);
+    return visitCalls(fnCall.ref(), FN_CALL, fnCall.args(), outer);
   }
 
   @Override public Doc visitPrimCall(CallTerm.@NotNull Prim prim, Outer outer) {
-    return visitCalls(linkRef(prim.ref(), FN_CALL), prim.args(), outer);
+    return visitCalls(prim.ref(), FN_CALL, prim.args(), outer);
   }
 
   @Override public Doc visitDataCall(@NotNull CallTerm.Data dataCall, Outer outer) {
-    return visitCalls(linkRef(dataCall.ref(), DATA_CALL), dataCall.args(), outer);
+    return visitCalls(dataCall.ref(), DATA_CALL, dataCall.args(), outer);
   }
 
   @Override public Doc visitStructCall(@NotNull CallTerm.Struct structCall, Outer outer) {
-    return visitCalls(linkRef(structCall.ref(), STRUCT_CALL), structCall.args(), outer);
+    return visitCalls(structCall.ref(), STRUCT_CALL, structCall.args(), outer);
   }
 
   @Override public Doc visitConCall(@NotNull CallTerm.Con conCall, Outer outer) {
-    return visitCalls(linkRef(conCall.ref(), CON_CALL), conCall.conArgs(), outer);
+    return visitCalls(conCall.ref(), CON_CALL, conCall.conArgs(), outer);
   }
 
   @Override public Doc visitTup(@NotNull IntroTerm.Tuple term, Outer outer) {
@@ -169,7 +175,7 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitAccess(CallTerm.@NotNull Access term, Outer outer) {
-    return visitCalls(visitAccessHead(term), term.fieldArgs(), outer);
+    return visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer);
   }
 
   @NotNull private Doc visitAccessHead(CallTerm.@NotNull Access term) {
@@ -181,9 +187,9 @@ public class CoreDistiller extends BaseDistiller implements
     var name = term.ref();
     var inner = varDoc(name);
     if (options.inlineMetas())
-      return visitCalls(inner, term.args(), outer);
+      return visitCalls(false, inner, term.args().view(), outer);
     return Doc.wrap("{?", "?}",
-      visitCalls(inner, term.args(), Outer.Free));
+      visitCalls(false, inner, term.args().view(), Outer.Free));
   }
 
   @Override
@@ -197,10 +203,17 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   private Doc visitCalls(
-    @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args,
-    Outer outer
+    @NotNull DefVar<?, ?> var, @NotNull Style style,
+    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer
   ) {
-    return visitCalls(fn, args, (nest, term) -> term.accept(this, nest), outer);
+    return visitCalls(var.concrete instanceof OpDecl, linkRef(var, style), args.view(), outer);
+  }
+
+  private Doc visitCalls(
+    boolean infix, @NotNull Doc fn,
+    @NotNull SeqView<@NotNull Arg<@NotNull Term>> args, Outer outer
+  ) {
+    return visitCalls(infix, fn, args, (nest, term) -> term.accept(this, nest), outer);
   }
 
   @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Outer outer) {

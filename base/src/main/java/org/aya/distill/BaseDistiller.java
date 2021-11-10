@@ -3,8 +3,8 @@
 package org.aya.distill;
 
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
-import kala.control.Option;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
@@ -17,6 +17,7 @@ import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -40,21 +41,22 @@ public abstract class BaseDistiller {
   }
 
   <T extends AyaDocile> @NotNull Doc visitCalls(
-    @NotNull Doc fn, @NotNull SeqLike<@NotNull Arg<@NotNull T>> args,
+    boolean infix, @NotNull Doc fn, @NotNull SeqView<@NotNull Arg<@NotNull T>> args,
     @NotNull BiFunction<Outer, T, Doc> formatter, Outer outer
   ) {
     if (args.isEmpty()) return fn;
-    var call = Doc.sep(
-      fn, Doc.sep(args.view().flatMap(arg -> {
-        if (arg.explicit())
-          // Explicit argument, it is in a spine, not parenthesized.
-          return Option.of(formatter.apply(Outer.AppSpine, arg.term()));
-        if (options.showImplicitArgs())
-          // Implicit argument, it is already in a pair of braces.
-          return Option.of(Doc.braced(formatter.apply(Outer.Free, arg.term())));
-        return Option.none();
-      }))
-    );
+    var visibleArgs = (options.showImplicitArgs() ? args : args.filter(Arg::explicit)).toImmutableSeq();
+    // Print as a binary operator
+    if (infix && visibleArgs.sizeEquals(2)) {
+      var binApp = Doc.sep(formatter.apply(Outer.BinOp, visibleArgs.get(0).term()),
+        fn, formatter.apply(Outer.BinOp, visibleArgs.get(1).term()));
+      // If we're in a binApp/head/spine/etc., add parentheses
+      return outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(binApp) : binApp;
+    }
+    var call = Doc.sep(fn, Doc.sep(visibleArgs.view().map(arg -> {
+      if (arg.explicit()) return formatter.apply(Outer.AppSpine, arg.term());
+      else return Doc.braced(formatter.apply(Outer.Free, arg.term()));
+    })));
     // If we're in a spine, add parentheses
     return outer.ordinal() >= Outer.AppSpine.ordinal() ? Doc.parened(call) : call;
   }
@@ -114,19 +116,20 @@ public abstract class BaseDistiller {
   }
 
   static @NotNull Doc visitDefVar(DefVar<?, ?> ref) {
-    return visitDefVar(ref, ref.concrete);
+    var style = chooseStyle(ref.concrete);
+    return style != null ? linkDef(ref, style) : varDoc(ref);
   }
 
-  private static @NotNull Doc visitDefVar(DefVar<?, ?> ref, Object concrete) {
+  protected static @Nullable Style chooseStyle(Object concrete) {
     return switch (concrete) {
-      case Decl.FnDecl d -> linkRef(ref, FN_CALL);
-      case Decl.DataDecl d -> linkRef(ref, DATA_CALL);
-      case Decl.DataCtor d -> linkRef(ref, CON_CALL);
-      case Decl.StructDecl d -> linkRef(ref, STRUCT_CALL);
-      case Decl.StructField d -> linkRef(ref, FIELD_CALL);
-      case Decl.PrimDecl d -> linkRef(ref, FN_CALL);
-      case Sample sample -> visitDefVar(ref, sample.delegate());
-      case null, default -> varDoc(ref);
+      case Decl.FnDecl d -> FN_CALL;
+      case Decl.DataDecl d -> DATA_CALL;
+      case Decl.DataCtor d -> CON_CALL;
+      case Decl.StructDecl d -> STRUCT_CALL;
+      case Decl.StructField d -> FIELD_CALL;
+      case Decl.PrimDecl d -> FN_CALL;
+      case Sample sample -> chooseStyle(sample.delegate());
+      case null, default -> null;
     };
   }
 

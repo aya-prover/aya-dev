@@ -7,7 +7,6 @@ import org.aya.api.error.SourceFile;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -65,8 +65,7 @@ public class TyckDeclTest {
   }
 
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
-    var decls = new AyaProducer(SourceFile.NONE,
-      ThrowingReporter.INSTANCE).visitProgram(AyaParsing.parser(text).program());
+    var decls = AyaParsing.program(ThrowingReporter.INSTANCE, new SourceFile(Path.of("114514"), text));
     var ssr = new StmtShallowResolver(new EmptyModuleLoader(), null);
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
     decls.forEach(d -> d.accept(ssr, ctx));

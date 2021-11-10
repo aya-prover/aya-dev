@@ -9,6 +9,10 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 public record SourceFile(@NotNull Option<Path> path, @NotNull String sourceCode) {
+  public SourceFile(@NotNull Path path, @NotNull String sourceCode) {
+    this(Option.some(path), sourceCode);
+  }
+
   public static final SourceFile NONE = new SourceFile(Option.none(), "");
 
   public boolean isSomeFile() {
