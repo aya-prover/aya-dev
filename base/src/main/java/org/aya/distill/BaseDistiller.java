@@ -46,30 +46,25 @@ public abstract class BaseDistiller {
   ) {
     var visibleArgs = (options.showImplicitArgs() ? args : args.filter(Arg::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
-    var first = formatter.apply(Outer.BinOp, visibleArgs.first().term());
     // Print as a binary operator
-    if (infix) return switch (visibleArgs.size()) {
-      case 2 -> {
-        var binApp = Doc.sep(first, fn, formatter.apply(Outer.BinOp, visibleArgs.get(1).term()));
-        // If we're in a binApp/head/spine/etc., add parentheses
-        yield outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(binApp) : binApp;
-      }
-      case 1 -> {
-        var binApp = Doc.sep(first, fn);
-        // Ditto
-        yield outer.ordinal() >= Outer.BinOp.ordinal() ? Doc.parened(binApp) : binApp;
-      }
-      default -> {
-        var head = Doc.sep(first, fn, formatter.apply(Outer.BinOp, visibleArgs.get(1).term()));
-        yield visitCalls(false, head, visibleArgs.view().drop(2), formatter, outer);
-      }
-    };
+    if (infix) {
+      var first = formatter.apply(Outer.BinOp, visibleArgs.first().term());
+      // If we're in a binApp/head/spine/etc., add parentheses
+      if (visibleArgs.sizeEquals(1)) return checkParen(outer, Doc.sep(first, fn), Outer.BinOp);
+      var triple = Doc.sep(first, fn, formatter.apply(Outer.BinOp, visibleArgs.get(1).term()));
+      if (visibleArgs.sizeEquals(2)) return checkParen(outer, triple, Outer.BinOp);
+      return visitCalls(false, triple, visibleArgs.view().drop(2), formatter, outer);
+    }
     var call = Doc.sep(fn, Doc.sep(visibleArgs.view().map(arg -> {
       if (arg.explicit()) return formatter.apply(Outer.AppSpine, arg.term());
       else return Doc.braced(formatter.apply(Outer.Free, arg.term()));
     })));
     // If we're in a spine, add parentheses
-    return outer.ordinal() >= Outer.AppSpine.ordinal() ? Doc.parened(call) : call;
+    return checkParen(outer, call, Outer.AppSpine);
+  }
+
+  public static @NotNull Doc checkParen(@NotNull Outer outer, @NotNull Doc binApp, @NotNull Outer binOp) {
+    return outer.ordinal() >= binOp.ordinal() ? Doc.parened(binApp) : binApp;
   }
 
   @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {

@@ -76,7 +76,7 @@ public class CoreDistiller extends BaseDistiller implements
     list.append(bodyDoc);
     var doc = Doc.sep(list);
     // Add paren when it's in a spine
-    return outer.ordinal() >= Outer.AppSpine.ordinal() ? Doc.parened(doc) : doc;
+    return checkParen(outer, doc, Outer.AppSpine);
   }
 
   /** @return if we can eta-contract the last argument */
@@ -107,7 +107,7 @@ public class CoreDistiller extends BaseDistiller implements
       term.body().accept(this, Outer.Codomain)
     );
     // Add paren when it's not free or a codomain
-    return outer.ordinal() > Outer.Codomain.ordinal() ? Doc.parened(doc) : doc;
+    return checkParen(outer, doc, Outer.BinOp);
   }
 
   @Override public Doc visitSigma(@NotNull FormTerm.Sigma term, Outer outer) {
@@ -117,8 +117,8 @@ public class CoreDistiller extends BaseDistiller implements
       Doc.symbol("**"),
       term.params().last().toDoc(options)
     );
-    // Add paren when it's not free
-    return outer.ordinal() >= Outer.Codomain.ordinal() ? Doc.parened(doc) : doc;
+    // Same as Pi
+    return checkParen(outer, doc, Outer.BinOp);
   }
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
@@ -206,7 +206,8 @@ public class CoreDistiller extends BaseDistiller implements
     @NotNull DefVar<?, ?> var, @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer
   ) {
-    return visitCalls(var.concrete instanceof OpDecl, linkRef(var, style), args.view(), outer);
+    return visitCalls(var.concrete instanceof OpDecl decl && decl.asOperator() != null,
+      linkRef(var, style), args.view(), outer);
   }
 
   private Doc visitCalls(

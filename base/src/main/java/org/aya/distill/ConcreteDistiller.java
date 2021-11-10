@@ -88,7 +88,7 @@ public class ConcreteDistiller extends BaseDistiller implements
       Doc.symbol("->"),
       expr.last().accept(this, Outer.Codomain));
     // When outsider is neither a codomain nor non-expression, we need to add parentheses.
-    return outer.ordinal() > Outer.Codomain.ordinal() ? Doc.parened(doc) : doc;
+    return checkParen(outer, doc, Outer.BinOp);
   }
 
   @Override public Doc visitSigma(Expr.@NotNull SigmaExpr expr, Outer outer) {
@@ -97,8 +97,8 @@ public class ConcreteDistiller extends BaseDistiller implements
       visitTele(expr.params().dropLast(1)),
       Doc.symbol("**"),
       Objects.requireNonNull(expr.params().last().type()).accept(this, Outer.Codomain));
-    // When outsider is neither a codomain nor non-expression, we need to add parentheses.
-    return outer.ordinal() > Outer.Codomain.ordinal() ? Doc.parened(doc) : doc;
+    // Same as Pi
+    return checkParen(outer, doc, Outer.BinOp);
   }
 
   @Override public Doc visitRawUniv(Expr.@NotNull RawUnivExpr expr, Outer outer) {
@@ -127,24 +127,21 @@ public class ConcreteDistiller extends BaseDistiller implements
     return visitCalls(false,
       expr.function().accept(this, Outer.AppHead),
       SeqView.of(expr.argument()),
-      (nest, arg) -> arg.expr().accept(this, nest),
-      outer);
+      (nest, arg) -> arg.expr().accept(this, nest), outer);
   }
 
   @Override public Doc visitLsuc(Expr.@NotNull LSucExpr expr, Outer outer) {
     return visitCalls(false,
       Doc.styled(KEYWORD, "lsuc"),
       SeqView.of(new Arg<>(expr.expr(), true)),
-      (nest, arg) -> arg.accept(this, nest),
-      outer);
+      (nest, arg) -> arg.accept(this, nest), outer);
   }
 
   @Override public Doc visitLmax(Expr.@NotNull LMaxExpr expr, Outer outer) {
     return visitCalls(false,
       Doc.styled(KEYWORD, "lmax"),
       expr.levels().view().map(term -> new Arg<>(term, true)),
-      (nest, arg) -> arg.accept(this, nest),
-      outer);
+      (nest, arg) -> arg.accept(this, nest), outer);
   }
 
   @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Outer outer) {
