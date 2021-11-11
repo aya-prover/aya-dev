@@ -246,17 +246,19 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     }
   }
 
-  public static final class StructField extends Signatured {
+  public static final class StructField extends Signatured implements OpDecl {
     public final @NotNull DefVar<FieldDef, Decl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
+    public final @Nullable Operator operator;
     public @NotNull Option<Expr> body;
 
     public final boolean coerce;
 
     public StructField(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
+      @Nullable Operator operator,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
@@ -269,11 +271,16 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.result = result;
       this.clauses = clauses;
       this.body = body;
+      this.operator = operator;
       this.ref = DefVar.concrete(this, name);
     }
 
     @Override public @NotNull DefVar<? extends Def, StructField> ref() {
       return ref;
+    }
+
+    @Override public @Nullable Operator asOperator() {
+      return operator;
     }
   }
 
