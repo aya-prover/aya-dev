@@ -84,7 +84,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
     }
-    info.declGraph().suc(decl).addAll(reference);
+    info.declGraph().suc(decl).appendAll(reference);
     return Unit.unit();
   }
 
@@ -102,7 +102,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
       field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
     });
-    info.declGraph().suc(decl).addAll(reference);
+    info.declGraph().suc(decl).appendAll(reference);
     return Unit.unit();
   }
 
@@ -117,7 +117,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     decl.body = decl.body.map(
       expr -> expr.accept(bodyResolver, local._2),
       pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
-    info.declGraph().suc(decl).addAll(reference);
+    info.declGraph().suc(decl).appendAll(reference);
     return Unit.unit();
   }
 
@@ -126,7 +126,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     var local = resolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     if (decl.result != null) decl.result = decl.result.accept(resolver, local._2);
-    info.declGraph().suc(decl).addAll(resolver.reference());
+    info.declGraph().suc(decl).appendAll(resolver.reference());
     return Unit.unit();
   }
 
@@ -149,11 +149,11 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     var delegateInfo = new ResolveInfo(info.opSet(), MutableGraph.create(), MutableGraph.create());
     delegate.accept(this, delegateInfo);
     // little hacky: transfer dependencies from `delegate` to `sample`
-    info.sampleGraph().suc(sample).addAll(delegateInfo.declGraph().suc(delegate));
+    info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));
   }
 
   @Override public Unit visitRemark(@NotNull Remark remark, ResolveInfo info) {
-    info.sampleGraph().suc(remark).addAll(remark.doResolve(info));
+    info.sampleGraph().suc(remark).appendAll(remark.doResolve(info));
     return Unit.unit();
   }
 }

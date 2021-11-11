@@ -67,7 +67,7 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
     stmts.forEach(stmt -> {
       var reference = DynamicSeq.<Stmt>create();
       stmt.accept(SigRefFinder.HEADER_ONLY, reference);
-      graph.suc(stmt).addAll(reference);
+      graph.suc(stmt).appendAll(reference);
     });
     var order = graph.topologicalOrder();
     var cycle = order.view().filter(s -> s.sizeGreaterThan(1));
