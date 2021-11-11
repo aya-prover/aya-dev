@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
+import kala.collection.mutable.DynamicSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.LocalVar;
@@ -28,6 +29,12 @@ public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
   }
   default @NotNull Doc toDoc(@NotNull Doc names, @NotNull DistillerOptions options) {
     var type = type();
-    return Doc.licit(explicit(), Doc.cat(names, type == null ? Doc.empty() : Doc.cat(Doc.symbol(" : "), type.toDoc(options))));
+    var docs = DynamicSeq.of(names);
+    if (pattern()) docs.insert(0, Doc.styled(BaseDistiller.KEYWORD, "pattern"));
+    if (type != null) {
+      docs.append(Doc.symbol(":"));
+      docs.append(type.toDoc(options));
+    }
+    return Doc.licit(explicit(), Doc.sep(docs));
   }
 }
