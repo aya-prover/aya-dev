@@ -370,15 +370,15 @@ public class ConcreteDistiller extends BaseDistiller implements
     var tighters = bindBlock.resolvedTighters().value;
     if (loosers.isEmpty() && tighters.isEmpty()) return Doc.empty();
 
-    if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(
-      Doc.styled(KEYWORD, "bind"), Doc.ONE_WS, Doc.styled(KEYWORD, "tighter"), Doc.ONE_WS,
+    if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
+      Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "tighter"),
       Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)))));
-    else if (tighters.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(
-      Doc.styled(KEYWORD, "bind"), Doc.ONE_WS, Doc.styled(KEYWORD, "looser"), Doc.ONE_WS,
+    else if (tighters.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
+      Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "looser"),
       Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar)))));
-    return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.cat(Doc.ONE_WS,
-      Doc.styled(KEYWORD, "tighter"), Doc.ONE_WS, Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)), Doc.ONE_WS,
-      Doc.styled(KEYWORD, "looser"), Doc.ONE_WS, Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar)), Doc.ONE_WS
+    return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.sep(
+      Doc.styled(KEYWORD, "tighter"), Doc.ONE_WS, Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)),
+      Doc.styled(KEYWORD, "looser"), Doc.ONE_WS, Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar))
     )))));
   }
 
