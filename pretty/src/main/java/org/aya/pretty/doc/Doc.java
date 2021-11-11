@@ -372,6 +372,20 @@ public sealed interface Doc extends Docile {
     return nest(indent, cat(plain(" ".repeat(indent)), doc));
   }
 
+  /**
+   * Creates a C-style indented block of statements.
+   * <pre>
+   *   prefix {
+   *   [indent]block
+   *   }
+   * </pre>
+   */
+  @Contract("_, _, _ -> new")
+  static @NotNull Doc cblock(@NotNull Doc prefix, int indent, @NotNull Doc block) {
+    if (!block.isNotEmpty()) return prefix;
+    return Doc.vcat(Doc.sep(prefix, Doc.symbol("{")), Doc.nest(indent, Doc.vcat(block)), Doc.symbol("}"));
+  }
+
   @Contract("_ -> new")
   static @NotNull Doc ordinal(int n) {
     var m = n % 100;

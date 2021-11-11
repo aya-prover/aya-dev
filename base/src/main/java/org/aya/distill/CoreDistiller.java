@@ -158,16 +158,12 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitNew(@NotNull IntroTerm.New newTerm, Outer outer) {
-    return Doc.sep(
-      Doc.styled(KEYWORD, "new"),
-      Doc.symbol("{"),
-      Doc.sep(newTerm.params().view()
+    return Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
+      Doc.vcat(newTerm.params().view()
         .map((k, v) -> Doc.sep(Doc.symbol("|"),
           linkRef(k, FIELD_CALL),
           Doc.symbol("=>"), v.accept(this, Outer.Free)))
-        .toImmutableSeq()),
-      Doc.symbol("}")
-    );
+        .toImmutableSeq()));
   }
 
   @Override public Doc visitProj(@NotNull ElimTerm.Proj term, Outer outer) {
@@ -261,14 +257,6 @@ public class CoreDistiller extends BaseDistiller implements
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
   }
 
-  private Doc visitConditions(Doc line1, @NotNull ImmutableSeq<Matching> clauses) {
-    if (clauses.isEmpty()) return line1;
-    return Doc.vcat(
-      Doc.sep(line1, Doc.symbol("{")),
-      Doc.nest(2, visitClauses(clauses)),
-      Doc.symbol("}"));
-  }
-
   private Doc visitClauses(@NotNull ImmutableSeq<Matching> clauses) {
     return Doc.vcat(clauses.view()
       .map(matching -> matching.toDoc(options))
@@ -294,7 +282,7 @@ public class CoreDistiller extends BaseDistiller implements
       var pats = Doc.commaList(ctor.pats.view().map(pat -> pat.accept(this, Outer.Free)));
       line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
     } else line1 = Doc.sep(Doc.symbol("|"), doc);
-    return visitConditions(line1, ctor.clauses);
+    return Doc.cblock(line1, 2, visitClauses(ctor.clauses));
   }
 
   @Override public Doc visitStruct(@NotNull StructDef def, Unit unit) {
@@ -308,12 +296,12 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitField(@NotNull FieldDef field, Unit unit) {
-    return visitConditions(Doc.sepNonEmpty(Doc.symbol("|"),
+    return Doc.cblock(Doc.sepNonEmpty(Doc.symbol("|"),
       coe(field.coerce),
       linkDef(field.ref(), FIELD_CALL),
       visitTele(field.selfTele),
       Doc.symbol(":"),
-      field.result.accept(this, Outer.Free)), field.clauses);
+      field.result.accept(this, Outer.Free)), 2, visitClauses(field.clauses));
   }
 
   @Override public @NotNull Doc visitPrim(@NotNull PrimDef def, Unit unit) {
