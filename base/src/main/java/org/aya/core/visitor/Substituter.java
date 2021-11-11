@@ -98,8 +98,7 @@ public record Substituter(
 
     @Override
     public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      return Doc.join(
-        Doc.cat(Doc.plain(","), Doc.ONE_WS),
+      return Doc.commaList(
         map.view().map((var, term) -> Doc.sep(
           BaseDistiller.varDoc(var),
           Doc.symbol("=>"),

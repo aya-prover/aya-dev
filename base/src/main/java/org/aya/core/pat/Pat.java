@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Unit;
 import org.aya.api.core.CorePat;
+import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
@@ -148,7 +149,14 @@ public sealed interface Pat extends CorePat {
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pat> patterns,
     @NotNull Option<Term> expr
-  ) {
+  ) implements AyaDocile {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      var doc = new CoreDistiller(options).visitMaybeCtorPatterns(
+        patterns, BaseDistiller.Outer.Free, Doc.COMMA);
+      if (expr.isDefined()) return Doc.sep(doc, Doc.symbol("=>"), expr.get().toDoc(options));
+      else return doc;
+    }
+
     public static @NotNull PrototypeClause prototypify(@NotNull Matching clause) {
       return new PrototypeClause(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
     }
