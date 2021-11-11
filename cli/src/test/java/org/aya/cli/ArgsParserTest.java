@@ -10,52 +10,41 @@ import picocli.CommandLine;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ArgsParserTest {
-  @Test
-  public void version() {
-    var cliArgs = new MainArgs();
-    var commandLine = new CommandLine(cliArgs);
+  @Test public void version() {
+    var commandLine = new CommandLine(new MainArgs());
     commandLine.parseArgs("--version");
     assertTrue(commandLine.isVersionHelpRequested());
   }
 
-  @Test
-  public void file() {
+  @Test public void file() {
     var cliArgs = new MainArgs();
-    var commandLine = new CommandLine(cliArgs);
     var s = "boy.aya";
-    commandLine.parseArgs(s);
+    new CommandLine(cliArgs).parseArgs(s);
     assertNotNull(cliArgs.action.compile);
     assertNull(cliArgs.action.repl);
     assertEquals(s, cliArgs.action.compile.inputFile);
   }
 
-  @Test
-  public void fileAfterDoubleDash() {
+  @Test public void fileAfterDoubleDash() {
     var cliArgs = new MainArgs();
-    var commandLine = new CommandLine(cliArgs);
     var s = "boy.aya";
-    commandLine.parseArgs("--", s);
+    new CommandLine(cliArgs).parseArgs("--", s);
     assertNotNull(cliArgs.action.compile);
     assertNull(cliArgs.action.repl);
     assertEquals(s, cliArgs.action.compile.inputFile);
   }
 
-  @Test
-  public void interactiveSwitch() {
+  @Test public void interactiveSwitch() {
     var cliArgs = new MainArgs();
-    var commandLine = new CommandLine(cliArgs);
-    commandLine.parseArgs("-i");
+    new CommandLine(cliArgs).parseArgs("-i");
     assertNotNull(cliArgs.action.repl);
     assertNull(cliArgs.action.compile);
     assertTrue(cliArgs.action.repl.repl);
   }
 
-  @Test
-  public void defaultValues() {
+  @Test public void defaultValues() {
     var cliArgs = new MainArgs();
-    var commandLine = new CommandLine(cliArgs);
-    var s = "boy.aya";
-    commandLine.parseArgs(s);
+    new CommandLine(cliArgs).parseArgs("boy.aya");
     assertFalse(cliArgs.interruptedTrace);
     assertEquals(DistillFormat.html, cliArgs.prettyFormat);
   }

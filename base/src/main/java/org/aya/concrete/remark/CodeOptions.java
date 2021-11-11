@@ -53,7 +53,10 @@ public record CodeOptions(
       distillOpts.map.put(DistillerOptions.Key.ShowImplicitArgs, !close.contains("I"));
       distillOpts.map.put(DistillerOptions.Key.ShowImplicitPats, !close.contains("P"));
       distillOpts.map.put(DistillerOptions.Key.ShowLevels, open.contains("U"));
-      distillOpts.map.put(DistillerOptions.Key.ShowLevels, open.contains("L"));
+      distillOpts.map.put(DistillerOptions.Key.ShowLambdaTypes, open.contains("L"));
+    } else {
+      distillOpts.map.put(DistillerOptions.Key.ShowImplicitArgs, true);
+      distillOpts.map.put(DistillerOptions.Key.ShowImplicitPats, true);
     }
     var expr = producer.visitExpr(AyaParsing.parser(matcher.group(6)).expr());
     var options = new CodeOptions(mode, distillOpts, showCode);
