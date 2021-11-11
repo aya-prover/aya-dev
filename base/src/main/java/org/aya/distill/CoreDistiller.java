@@ -66,7 +66,7 @@ public class CoreDistiller extends BaseDistiller implements
       bodyDoc = body.accept(this, Outer.Free);
     }
 
-    if (!(boolean) options.map.get(DistillerOptions.Key.ShowImplicitPats))
+    if (!options.map.get(DistillerOptions.Key.ShowImplicitPats))
       params.retainAll(Term.Param::explicit);
     if (params.isEmpty()) return bodyDoc;
 
@@ -97,7 +97,7 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitPi(@NotNull FormTerm.Pi term, Outer outer) {
-    if (!(boolean) options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
+    if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
       return term.body().accept(this, outer);
     }
     var doc = Doc.sep(
@@ -123,7 +123,7 @@ public class CoreDistiller extends BaseDistiller implements
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
-    if (!(boolean) options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
+    if (!options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
     return visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true))
     );
   }
