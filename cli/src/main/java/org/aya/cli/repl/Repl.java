@@ -5,7 +5,6 @@ package org.aya.cli.repl;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.util.AyaHome;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.Command;
@@ -27,9 +26,7 @@ import java.util.Scanner;
 
 public abstract class Repl implements Closeable, Runnable {
   public static int start(MainArgs.@NotNull ReplAction replAction) throws IOException {
-    var configFile = AyaHome.ayaHome().resolve("repl_config.json");
-    var replConfig = ReplConfig.loadFrom(configFile);
-    try (var repl = makeRepl(replAction, replConfig)) {
+    try (var repl = makeRepl(replAction, ReplConfig.loadFromDefault())) {
       repl.run();
     }
     return 0;

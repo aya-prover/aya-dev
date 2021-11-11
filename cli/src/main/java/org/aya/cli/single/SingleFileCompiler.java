@@ -36,8 +36,13 @@ import java.util.function.Function;
 public record SingleFileCompiler(
   @NotNull Reporter reporter,
   @Nullable SourceFileLocator locator,
-  Trace.@Nullable Builder builder
+  @Nullable Trace.Builder builder,
+  @NotNull DistillerOptions distillerOptions
 ) {
+  public SingleFileCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator, @Nullable Trace.Builder builder) {
+    this(reporter, locator, builder, DistillerOptions.pretty());
+  }
+
   public int compile(
     @NotNull Path sourceFile,
     @NotNull CompilerFlags flags,
@@ -122,10 +127,10 @@ public record SingleFileCompiler(
     for (int i = 0; i < doc.size(); i++) {
       var item = doc.get(i);
       // Skip uninteresting items
-      if (item instanceof PrimDef) continue;
-      var thisDoc = item.toDoc(DistillerOptions.pretty());
-      Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + fileExt), toString.apply(thisDoc, false));
+      var thisDoc = item.toDoc(distillerOptions);
       docs.append(thisDoc);
+      if (item instanceof PrimDef) continue;
+      Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + fileExt), toString.apply(thisDoc, false));
     }
     Files.writeString(distillDir.resolve(fileName + fileExt), toString.apply(Doc.vcat(docs), true));
   }

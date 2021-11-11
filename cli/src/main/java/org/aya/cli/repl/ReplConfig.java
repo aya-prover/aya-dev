@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.api.util.AyaHome;
 import org.aya.api.util.NormalizeMode;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,10 @@ public class ReplConfig implements AutoCloseable {
 
   private void checkInitialization() {
     if (distillerOptions.map.isEmpty()) distillerOptions.reset();
+  }
+
+  public static @NotNull ReplConfig loadFromDefault() throws IOException {
+    return ReplConfig.loadFrom(AyaHome.ayaHome().resolve("repl_config.json"));
   }
 
   public static @NotNull ReplConfig loadFrom(@NotNull Path file) throws IOException {

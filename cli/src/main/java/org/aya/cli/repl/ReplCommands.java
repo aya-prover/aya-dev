@@ -88,7 +88,7 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command TOGGLE_DISTILL = new Command(ImmutableSeq.of("pretty-toggle"), "Toggle a pretty printing option") {
+  @NotNull Command TOGGLE_DISTILL = new Command(ImmutableSeq.of("print-toggle"), "Toggle a pretty printing option") {
     @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable DistillerOptions.Key key) {
       var builder = new StringBuilder();
       var map = repl.config.distillerOptions.map;
