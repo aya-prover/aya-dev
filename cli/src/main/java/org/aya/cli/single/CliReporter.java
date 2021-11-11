@@ -16,7 +16,7 @@ public record CliReporter(@NotNull Consumer<String> out, @NotNull Consumer<Strin
   public static final CliReporter INSTANCE = new CliReporter(System.out::println, System.err::println);
 
   @Override public void report(@NotNull Problem problem) {
-    var errorMsg = problem.computeFullErrorMessage(DistillerOptions.DEFAULT);
+    var errorMsg = problem.computeFullErrorMessage(DistillerOptions.informative());
     var level = problem.level();
     if (problem.isError() || level == Problem.Severity.WARN) err.accept(errorMsg);
     else out.accept(errorMsg);

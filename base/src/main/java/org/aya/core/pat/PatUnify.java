@@ -52,7 +52,7 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
   }
 
   private void reportError(@NotNull Pat lhs, @NotNull Pat pat) {
-    var doc = Doc.sep(lhs.toDoc(DistillerOptions.DEBUG), Doc.plain("and"), pat.toDoc(DistillerOptions.DEBUG));
+    var doc = Doc.sep(lhs.toDoc(DistillerOptions.debug()), Doc.plain("and"), pat.toDoc(DistillerOptions.debug()));
     throw new IllegalArgumentException(doc.debugRender() + " are patterns of different types!");
   }
 

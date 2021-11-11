@@ -143,7 +143,7 @@ public abstract class Repl implements Closeable, Runnable {
   }
 
   public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(DistillerOptions.DEFAULT);
+    return ayaDocile.toDoc(DistillerOptions.informative());
   }
 
   public @NotNull String renderDoc(@NotNull Doc doc) {

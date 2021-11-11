@@ -123,7 +123,7 @@ public record SingleFileCompiler(
       var item = doc.get(i);
       // Skip uninteresting items
       if (item instanceof PrimDef) continue;
-      var thisDoc = item.toDoc(DistillerOptions.PRETTY);
+      var thisDoc = item.toDoc(DistillerOptions.pretty());
       Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + fileExt), toString.apply(thisDoc, false));
       docs.append(thisDoc);
     }

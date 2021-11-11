@@ -47,7 +47,7 @@ public class DesugarTest {
     var stmt = ParseTest.parseStmt(code);
     stmt.forEach(s -> s.desugar(ThrowingReporter.INSTANCE, new BinOpSet(ThrowingReporter.INSTANCE)));
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-        .map(s -> s.toDoc(DistillerOptions.DEBUG)))
+        .map(s -> s.toDoc(DistillerOptions.debug())))
       .debugRender()
       .trim());
   }

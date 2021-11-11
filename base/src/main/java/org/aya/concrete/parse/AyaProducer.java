@@ -616,7 +616,7 @@ public final class AyaProducer {
     var first = atoms.first().apply(true);
     if (!(first instanceof Pattern.Bind bind)) {
       reporter.report(new ParseError(first.sourcePos(),
-        "`" + first.toDoc(DistillerOptions.DEBUG).debugRender() + "` is not a constructor name"));
+        "`" + first.toDoc(DistillerOptions.debug()).debugRender() + "` is not a constructor name"));
       throw new ParsingInterruptedException();
     }
     return (ex, as) -> new Pattern.Ctor(

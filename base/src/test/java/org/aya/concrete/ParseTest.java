@@ -169,23 +169,23 @@ public class ParseTest {
     );
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app
       && app.seq().sizeEquals(2)
-      && !app.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty()
+      && !app.toDoc(DistillerOptions.debug()).debugRender().isEmpty()
       && app.seq().get(1).expr() instanceof Expr.TupExpr tup
       && tup.items().sizeEquals(3));
     assertTrue(parseExpr("new Pair A B { | fst => a | snd => b }") instanceof Expr.NewExpr neo
-      && !neo.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty());
+      && !neo.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseImport(@Language("TEXT") String code) {
-    assertTrue(parseStmt(code).first() instanceof Command.Import s && !s.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty());
+    assertTrue(parseStmt(code).first() instanceof Command.Import s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseOpen(@Language("TEXT") String code) {
-    assertTrue(parseStmt(code).last() instanceof Command.Open s && !s.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty());
+    assertTrue(parseStmt(code).last() instanceof Command.Open s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseFn(@Language("TEXT") String code) {
-    assertTrue(parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc(DistillerOptions.DEBUG).debugRender().isEmpty());
+    assertTrue(parseDecl(code)._1 instanceof Decl.FnDecl s && !s.toDoc(DistillerOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseData(@Language("TEXT") String code) {
@@ -344,7 +344,7 @@ public class ParseTest {
   private void parseAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
     var stmt = parseStmt(code);
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
-        .map(s -> s.toDoc(DistillerOptions.DEBUG)))
+        .map(s -> s.toDoc(DistillerOptions.debug())))
       .debugRender()
       .trim());
   }

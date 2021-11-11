@@ -53,7 +53,7 @@ public record Normalizer(@Nullable TyckState state) implements Unfolder<Normaliz
     var ix = term.ix();
     if (!(tup instanceof IntroTerm.Tuple t)) return tup == term.of() ? term : new ElimTerm.Proj(tup, ix);
     // should not fail due to tycking
-    assert t.items().sizeGreaterThanOrEquals(ix) && ix > 0 : term.toDoc(DistillerOptions.DEBUG).debugRender();
+    assert t.items().sizeGreaterThanOrEquals(ix) && ix > 0 : term.toDoc(DistillerOptions.debug()).debugRender();
     return t.items().get(ix - 1).accept(this, mode);
   }
 }
