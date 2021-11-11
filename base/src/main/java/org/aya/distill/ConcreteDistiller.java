@@ -377,8 +377,8 @@ public class ConcreteDistiller extends BaseDistiller implements
       Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "looser"),
       Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar)))));
     return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.sep(
-      Doc.styled(KEYWORD, "tighter"), Doc.ONE_WS, Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)),
-      Doc.styled(KEYWORD, "looser"), Doc.ONE_WS, Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar))
+      Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)),
+      Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar))
     )))));
   }
 

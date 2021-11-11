@@ -34,6 +34,7 @@ public interface OpDecl {
     @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedLoosers,
     @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedTighters
   ) {
+    public static final BindBlock EMPTY = new BindBlock(SourcePos.NONE, new Ref<>(), ImmutableSeq.empty(), ImmutableSeq.empty(), new Ref<>(), new Ref<>());
   }
 
   @Nullable OpInfo opInfo();

@@ -8,7 +8,6 @@ import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.remark.Remark;
@@ -18,7 +17,6 @@ import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Resolves expressions inside stmts, after {@link StmtShallowResolver}
@@ -46,18 +44,19 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     return Unit.unit();
   }
 
-  public void visitBind(@NotNull OpDecl self, OpDecl.@Nullable BindBlock bind, ResolveInfo info) {
-    if (bind == null) return;
+  public void visitBind(@NotNull OpDecl self, OpDecl.@NotNull BindBlock bind, ResolveInfo info) {
+    if (bind == OpDecl.BindBlock.EMPTY) return;
     var ctx = bind.context().value;
     assert ctx != null : "no shallow resolver?";
-    bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(looser.sourcePos(), self, info.opSet(), ctx, OpDecl.BindPred.Looser, looser));
-    bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(tighter.sourcePos(), self, info.opSet(), ctx, OpDecl.BindPred.Tighter, tighter));
+    var opSet = info.opSet();
+    bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
+    bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
   }
 
-  private @NotNull DefVar<?, ?> bind(@NotNull SourcePos sourcePos, @NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
+  private @NotNull DefVar<?, ?> bind(@NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
                                      @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id) {
     var target = resolveOp(opSet.reporter(), ctx, id);
-    opSet.bind(self, pred, target._2, sourcePos);
+    opSet.bind(self, pred, target._2, id.sourcePos());
     return target._1;
   }
 

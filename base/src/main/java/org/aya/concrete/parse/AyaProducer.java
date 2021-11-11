@@ -139,23 +139,26 @@ public final class AyaProducer {
 
   public OpDecl.@NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
     if (ctx.LOOSER() != null) return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
-      visitQIdsComma(ctx.qIdsComma()), ImmutableSeq.empty(), new Ref<>(), new Ref<>());
+      visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()), ImmutableSeq.empty(),
+      new Ref<>(), new Ref<>());
     else if (ctx.TIGHTER() != null) return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
-      ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()), new Ref<>(), new Ref<>());
+      ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()),
+      new Ref<>(), new Ref<>());
     else return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
-        visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()), new Ref<>(), new Ref<>());
+        visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()),
+        new Ref<>(), new Ref<>());
   }
 
   public @NotNull ImmutableSeq<QualifiedID> visitLoosers(List<AyaParser.LoosersContext> ctx) {
-    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma()).stream()).collect(ImmutableSeq.factory());
+    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma())).collect(ImmutableSeq.factory());
   }
 
   public @NotNull ImmutableSeq<QualifiedID> visitTighters(List<AyaParser.TightersContext> ctx) {
-    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma()).stream()).collect(ImmutableSeq.factory());
+    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma())).collect(ImmutableSeq.factory());
   }
 
-  public @NotNull ImmutableSeq<QualifiedID> visitQIdsComma(AyaParser.QIdsCommaContext ctx) {
-    return ctx.qualifiedId().stream().map(this::visitQualifiedId).collect(ImmutableSeq.factory());
+  public @NotNull Stream<QualifiedID> visitQIdsComma(AyaParser.QIdsCommaContext ctx) {
+    return ctx.qualifiedId().stream().map(this::visitQualifiedId);
   }
 
   public @NotNull Sample visitSample(AyaParser.SampleContext ctx) {
@@ -214,7 +217,7 @@ public final class AyaProducer {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
-      bind == null ? null : visitBind(bind)
+      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
     );
   }
 
@@ -552,7 +555,7 @@ public final class AyaProducer {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       body,
-      bind == null ? null : visitBind(bind)
+      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
     );
     return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
@@ -589,7 +592,7 @@ public final class AyaProducer {
       visitClauses(ctx.clauses()),
       patterns,
       ctx.COERCE() != null,
-      bind == null ? null : visitBind(bind)
+      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
     );
   }
 
@@ -696,7 +699,7 @@ public final class AyaProducer {
       type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
       fields,
-      bind == null ? null : visitBind(bind)
+      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
     );
   }
 
@@ -722,7 +725,7 @@ public final class AyaProducer {
       Option.of(ctx.expr()).map(this::visitExpr),
       ImmutableSeq.empty(),
       false,
-      bind == null ? null : visitBind(bind)
+      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
     );
   }
 
@@ -740,7 +743,7 @@ public final class AyaProducer {
       Option.none(),
       visitClauses(ctx.clauses()),
       ctx.COERCE() != null,
-      bind == null ? null : visitBind(bind)
+      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
     );
   }
 
