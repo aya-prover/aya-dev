@@ -12,6 +12,9 @@ def cover2 (f : Fin (suc zero)) : Nat
  | fzero => zero
  | fsuc impossible
 
+def cover2-fuel (f : Fin (suc zero)) : Nat
+ | fzero => zero
+
 def finToNat (n : Nat) (att : Fin n) : Nat
  | suc n, fzero => zero
  | suc n, fsuc a => suc (finToNat n a)
