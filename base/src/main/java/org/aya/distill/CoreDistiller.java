@@ -66,7 +66,7 @@ public class CoreDistiller extends BaseDistiller implements
       bodyDoc = body.accept(this, Outer.Free);
     }
 
-    if (!options.showImplicitPats())
+    if (!options.map.get(DistillerOptions.Key.ShowImplicitPats))
       params.retainAll(Term.Param::explicit);
     if (params.isEmpty()) return bodyDoc;
 
@@ -97,7 +97,7 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitPi(@NotNull FormTerm.Pi term, Outer outer) {
-    if (!options.showImplicitPats() && !term.param().explicit()) {
+    if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
       return term.body().accept(this, outer);
     }
     var doc = Doc.sep(
@@ -123,7 +123,7 @@ public class CoreDistiller extends BaseDistiller implements
 
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
-    if (!options.showLevels()) return fn;
+    if (!options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
     return visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true))
     );
   }
@@ -186,7 +186,7 @@ public class CoreDistiller extends BaseDistiller implements
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Outer outer) {
     var name = term.ref();
     var inner = varDoc(name);
-    if (options.inlineMetas())
+    if (options.map.get(DistillerOptions.Key.InlineMetas))
       return visitCalls(false, inner, term.args().view(), outer);
     return Doc.wrap("{?", "?}",
       visitCalls(false, inner, term.args().view(), Outer.Free));
@@ -245,7 +245,7 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   public Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, Outer outer, @NotNull Doc delim) {
-    var pats = options.showImplicitPats() ? patterns : patterns.view().filter(Pat::explicit);
+    var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
     return Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
       pats.view().map(p -> p.accept(this, outer)))));
   }

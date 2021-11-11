@@ -22,7 +22,7 @@ public class MdUnicodeTrace implements Trace.Visitor<Unit, Doc> {
   }
 
   public MdUnicodeTrace() {
-    this(2, DistillerOptions.DEFAULT);
+    this(2, DistillerOptions.informative());
   }
 
   @Override public Doc visitDecl(Trace.@NotNull DeclT t, Unit unit) {

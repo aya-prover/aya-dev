@@ -6,13 +6,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.*;
 import org.jetbrains.annotations.NotNull;
 
-public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@NotNull T>> E) {
+public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull DynamicSeq<@NotNull T>> E) {
   public static @NotNull <T> MutableGraph<T> create() {
     return new MutableGraph<>(MutableHashMap.create());
   }
 
-  public @NotNull MutableSet<T> suc(@NotNull T elem) {
-    return E.getOrPut(elem, MutableSet::of);
+  public @NotNull DynamicSeq<T> suc(@NotNull T elem) {
+    return E.getOrPut(elem, DynamicSeq::of);
   }
 
   public boolean hasPath(@NotNull T from, @NotNull T to) {
@@ -41,7 +41,7 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull MutableSet<@No
 
   public @NotNull MutableGraph<T> transpose() {
     var tr = MutableGraph.<T>create();
-    E.forEach((v, ws) -> ws.forEach(w -> tr.suc(w).add(v)));
+    E.forEach((v, ws) -> ws.forEach(w -> tr.suc(w).append(v)));
     return tr;
   }
 

@@ -72,7 +72,7 @@ public record BinOpSet(
 
   private void addTighter(@NotNull BinOpSet.BinOP from, @NotNull BinOpSet.BinOP to) {
     tighterGraph.suc(to);
-    tighterGraph.suc(from).add(to);
+    tighterGraph.suc(from).append(to);
   }
 
   public void reportIfCycles() {

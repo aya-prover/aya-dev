@@ -22,7 +22,7 @@ public record ComputeTermResult(@NotNull String uri, @NotNull String computed, @
   }
 
   public static ComputeTermResult good(@NotNull Params params, @NotNull WithPos<Term> type) {
-    return new ComputeTermResult(params.uri, type.data().toDoc(DistillerOptions.DEFAULT).debugRender(),
+    return new ComputeTermResult(params.uri, type.data().toDoc(DistillerOptions.informative()).debugRender(),
       LspRange.toRange(type.sourcePos()));
   }
 }

@@ -5,6 +5,8 @@ package org.aya.cli.repl;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import org.aya.api.distill.DistillerOptions;
+import org.aya.api.util.AyaHome;
 import org.aya.api.util.NormalizeMode;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,10 +18,19 @@ public class ReplConfig implements AutoCloseable {
   public transient final Path configFile;
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
+  public @NotNull DistillerOptions distillerOptions = DistillerOptions.pretty();
   public boolean enableUnicode = true;
 
   public ReplConfig(@NotNull Path file) {
     this.configFile = file;
+  }
+
+  private void checkInitialization() {
+    if (distillerOptions.map.isEmpty()) distillerOptions.reset();
+  }
+
+  public static @NotNull ReplConfig loadFromDefault() throws IOException {
+    return ReplConfig.loadFrom(AyaHome.ayaHome().resolve("repl_config.json"));
   }
 
   public static @NotNull ReplConfig loadFrom(@NotNull Path file) throws IOException {
@@ -29,6 +40,7 @@ public class ReplConfig implements AutoCloseable {
       .create()
       .fromJson(Files.newBufferedReader(file), ReplConfig.class);
     if (config == null) return new ReplConfig(file);
+    config.checkInitialization();
     return config;
   }
 

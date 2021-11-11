@@ -5,7 +5,6 @@ package org.aya.cli.repl;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.util.AyaHome;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.Command;
@@ -27,9 +26,7 @@ import java.util.Scanner;
 
 public abstract class Repl implements Closeable, Runnable {
   public static int start(MainArgs.@NotNull ReplAction replAction) throws IOException {
-    var configFile = AyaHome.ayaHome().resolve("repl_config.json");
-    var replConfig = ReplConfig.loadFrom(configFile);
-    try (var repl = makeRepl(replAction, replConfig)) {
+    try (var repl = makeRepl(replAction, ReplConfig.loadFromDefault())) {
       repl.run();
     }
     return 0;
@@ -54,12 +51,14 @@ public abstract class Repl implements Closeable, Runnable {
       CommandArg.shellLike(Path.class, new Completers.FileNameCompleter(), this::resolveFile),
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.Code(this), ReplCommands.Code::new),
       CommandArg.from(ReplCommands.HelpItem.class, new AyaCompleters.Help(this), ReplCommands.HelpItem::new),
+      CommandArg.fromEnum(DistillerOptions.Key.class),
       CommandArg.fromEnum(NormalizeMode.class)
     ), ImmutableSeq.of(
       ReplCommands.HELP,
       ReplCommands.QUIT,
       ReplCommands.CHANGE_PROMPT,
       ReplCommands.CHANGE_NORM_MODE,
+      ReplCommands.TOGGLE_DISTILL,
       ReplCommands.SHOW_TYPE,
       ReplCommands.CHANGE_PP_WIDTH,
       ReplCommands.TOGGLE_UNICODE,
@@ -137,13 +136,13 @@ public abstract class Repl implements Closeable, Runnable {
   private @NotNull Command.Output eval(@NotNull String line) {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
-      program -> render(options -> Doc.vcat(program.view().map(def -> def.toDoc(options)))),
+      program -> Doc.vcat(program.view().map(def -> def.toDoc(config.distillerOptions))),
       this::render
     ));
   }
 
   public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(DistillerOptions.DEFAULT);
+    return ayaDocile.toDoc(config.distillerOptions);
   }
 
   public @NotNull String renderDoc(@NotNull Doc doc) {

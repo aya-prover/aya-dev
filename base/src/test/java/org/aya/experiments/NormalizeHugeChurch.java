@@ -34,7 +34,7 @@ public class NormalizeHugeChurch {
     var nf = last.normalize(null, NormalizeMode.NF);
     println("Normalize: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
-    var doc = nf.toDoc(DistillerOptions.DEFAULT);
+    var doc = nf.toDoc(DistillerOptions.informative());
     println("Docify: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var text = doc.debugRender();
