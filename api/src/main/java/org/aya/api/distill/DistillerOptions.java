@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public final class DistillerOptions {
   public final @NotNull MutableMap<Key, Boolean> map = MutableMap.create();
 
-  public DistillerOptions() {
+  {
     for (Key value : Key.values()) map.put(value, false);
     map.put(Key.InlineMetas, true);
   }

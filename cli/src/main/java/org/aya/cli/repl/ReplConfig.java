@@ -5,6 +5,7 @@ package org.aya.cli.repl;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ public class ReplConfig implements AutoCloseable {
   public transient final Path configFile;
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
+  public @NotNull DistillerOptions distillerOptions = DistillerOptions.pretty();
   public boolean enableUnicode = true;
 
   public ReplConfig(@NotNull Path file) {

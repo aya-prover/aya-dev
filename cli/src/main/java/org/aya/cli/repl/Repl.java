@@ -4,7 +4,6 @@ package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.AyaHome;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
@@ -60,6 +59,7 @@ public abstract class Repl implements Closeable, Runnable {
       ReplCommands.QUIT,
       ReplCommands.CHANGE_PROMPT,
       ReplCommands.CHANGE_NORM_MODE,
+      ReplCommands.TOGGLE_DISTILL,
       ReplCommands.SHOW_TYPE,
       ReplCommands.CHANGE_PP_WIDTH,
       ReplCommands.TOGGLE_UNICODE,
@@ -72,7 +72,6 @@ public abstract class Repl implements Closeable, Runnable {
   public final @NotNull ReplConfig config;
   public @NotNull Path cwd = Path.of("");
   public int prettyPrintWidth = 80;
-  public @NotNull DistillerOptions distillerOptions = DistillerOptions.pretty();
 
   public Repl(@NotNull ReplConfig config) {
     this.config = config;
@@ -138,13 +137,13 @@ public abstract class Repl implements Closeable, Runnable {
   private @NotNull Command.Output eval(@NotNull String line) {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
-      program -> Doc.vcat(program.view().map(def -> def.toDoc(distillerOptions))),
+      program -> Doc.vcat(program.view().map(def -> def.toDoc(config.distillerOptions))),
       this::render
     ));
   }
 
   public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(distillerOptions);
+    return ayaDocile.toDoc(config.distillerOptions);
   }
 
   public @NotNull String renderDoc(@NotNull Doc doc) {

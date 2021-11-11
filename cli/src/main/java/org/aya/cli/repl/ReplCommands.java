@@ -3,6 +3,7 @@
 package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.Command;
 import org.aya.pretty.doc.Doc;
@@ -84,6 +85,24 @@ public interface ReplCommands {
         repl.config.normalizeMode = normalizeMode;
         return Result.ok("Normalization mode set to " + normalizeMode, true);
       }
+    }
+  };
+
+  @NotNull Command TOGGLE_DISTILL = new Command(ImmutableSeq.of("pretty-toggle"), "Toggle a pretty printing option") {
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable DistillerOptions.Key key) {
+      var builder = new StringBuilder();
+      var map = repl.config.distillerOptions.map;
+      if (key == null) {
+        builder.append("Current pretty printing options:");
+        for (var k : DistillerOptions.Key.values()) builder
+          .append("\n").append(k.name()).append(": ")
+          .append(map.get(k));
+      } else {
+        var newValue = !map.get(key);
+        map.put(key, newValue);
+        builder.append(key.name()).append(" changed to ").append(newValue);
+      }
+      return Result.ok(builder.toString(), true);
     }
   };
 
