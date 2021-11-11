@@ -24,6 +24,10 @@ public class ReplConfig implements AutoCloseable {
     this.configFile = file;
   }
 
+  private void checkInitialization() {
+    if (distillerOptions.map.isEmpty()) distillerOptions.reset();
+  }
+
   public static @NotNull ReplConfig loadFrom(@NotNull Path file) throws IOException {
     if (Files.notExists(file)) return new ReplConfig(file);
     var config = new GsonBuilder()
@@ -31,6 +35,7 @@ public class ReplConfig implements AutoCloseable {
       .create()
       .fromJson(Files.newBufferedReader(file), ReplConfig.class);
     if (config == null) return new ReplConfig(file);
+    config.checkInitialization();
     return config;
   }
 

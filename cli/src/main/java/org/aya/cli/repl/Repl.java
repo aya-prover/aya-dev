@@ -4,6 +4,7 @@ package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
+import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.AyaHome;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
@@ -53,6 +54,7 @@ public abstract class Repl implements Closeable, Runnable {
       CommandArg.shellLike(Path.class, new Completers.FileNameCompleter(), this::resolveFile),
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.Code(this), ReplCommands.Code::new),
       CommandArg.from(ReplCommands.HelpItem.class, new AyaCompleters.Help(this), ReplCommands.HelpItem::new),
+      CommandArg.fromEnum(DistillerOptions.Key.class),
       CommandArg.fromEnum(NormalizeMode.class)
     ), ImmutableSeq.of(
       ReplCommands.HELP,
