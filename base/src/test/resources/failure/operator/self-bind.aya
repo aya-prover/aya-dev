@@ -1,2 +1,2 @@
 def infix + : Type => +
-bind + looser +
+  bind looser +

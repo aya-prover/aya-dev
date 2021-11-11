@@ -16,8 +16,7 @@ def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
 
 def infix ∘ { A B C : Type } ( g : B -> C ) ( f : A -> B ) : A -> C
  => \ x => g (f x)
-
-bind ∘ tighter =
+  bind tighter =
 
 struct Isomorphism { A B : Type } : Type
   | to : A -> B

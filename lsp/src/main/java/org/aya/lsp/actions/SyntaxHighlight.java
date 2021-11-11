@@ -40,7 +40,8 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     return StmtConsumer.super.visitStruct(decl, buffer);
   }
 
-  @Override public Unit visitField(@NotNull Decl.StructField field, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
+  @Override
+  public Unit visitField(@NotNull Decl.StructField field, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(field), HighlightResult.Symbol.Kind.FieldDef));
     return StmtConsumer.super.visitField(field, buffer);
   }
@@ -55,7 +56,8 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     return StmtConsumer.super.visitPrim(decl, buffer);
   }
 
-  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
+  @Override
+  public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     for (var level : levels.levels())
       buffer.append(new HighlightResult.Symbol(LspRange.toRange(level.sourcePos()), HighlightResult.Symbol.Kind.Generalize));
     return StmtConsumer.super.visitLevels(levels, buffer);
@@ -141,12 +143,5 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     if (ref.value == null) return;
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(ref.value)));
   }
-
-  @Override public Unit visitBind(Command.@NotNull Bind bind, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
-    visitOperator(buffer, bind.op().sourcePos(), bind.resolvedOp());
-    visitOperator(buffer, bind.target().sourcePos(), bind.resolvedTarget());
-    return StmtConsumer.super.visitBind(bind, buffer);
-  }
-
   // endregion
 }

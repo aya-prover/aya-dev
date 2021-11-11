@@ -1,10 +1,10 @@
 def infix a => a
+  bind tighter b
 def infix b => b
+  bind tighter c
 def infix c => c
+  bind tighter d
 def infix d => d
+  bind tighter b
 def infix e => e
 
-bind a tighter b
-bind b tighter c
-bind c tighter d
-bind d tighter b

@@ -53,7 +53,6 @@ public sealed interface Stmt extends AyaDocile
     R visitImport(@NotNull Command.Import cmd, P p);
     R visitOpen(@NotNull Command.Open cmd, P p);
     R visitModule(@NotNull Command.Module mod, P p);
-    R visitBind(@NotNull Command.Bind bind, P p);
     R visitRemark(@NotNull Remark remark, P p);
     R visitLevels(@NotNull Generalize.Levels levels, P p);
     R visitExample(@NotNull Sample.Working example, P p);

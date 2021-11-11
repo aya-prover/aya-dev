@@ -54,8 +54,8 @@ public record StmtShallowResolver(
     return Unit.unit();
   }
 
-  @Override public Unit visitBind(Command.@NotNull Bind bind, @NotNull ModuleContext context) {
-    bind.context().value = context;
+  public Unit visitBind(OpDecl.@Nullable BindBlock bind, @NotNull ModuleContext context) {
+    if (bind != null) bind.context().value = context;
     return Unit.unit();
   }
 
@@ -64,11 +64,10 @@ public record StmtShallowResolver(
     return Unit.unit();
   }
 
-  private Unit visitDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
+  private void visitDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
     decl.ref().module = context.moduleName();
     context.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
     decl.ctx = context;
-    return Unit.unit();
   }
 
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull ModuleContext context) {
@@ -96,6 +95,7 @@ public record StmtShallowResolver(
       decl.sourcePos()
     );
     decl.ctx = dataInnerCtx;
+    visitBind(decl.bindBlock, dataInnerCtx);
     return Unit.unit();
   }
 
@@ -104,12 +104,14 @@ public record StmtShallowResolver(
     var structInnerCtx = context.derive(decl.ref().name());
     decl.fields.forEach(field -> visitField(field, structInnerCtx));
     decl.ctx = structInnerCtx;
+    visitBind(decl.bindBlock, structInnerCtx);
     return Unit.unit();
   }
 
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, @NotNull ModuleContext context) {
-    // TODO[xyr]: abuse block currently have no use, so we ignore it for now.
-    return visitDecl(decl, context);
+    visitDecl(decl, context);
+    visitBind(decl.bindBlock, context);
+    return Unit.unit();
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, @NotNull ModuleContext moduleContext) {

@@ -75,10 +75,6 @@ public class SigRefFinder implements
     return Unit.unit();
   }
 
-  @Override public Unit visitBind(Command.@NotNull Bind bind, @NotNull DynamicSeq<Stmt> stmts) {
-    return Unit.unit();
-  }
-
   @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull DynamicSeq<Stmt> stmts) {
     return Unit.unit();
   }

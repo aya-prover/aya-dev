@@ -16,7 +16,6 @@ stmt : decl
      | remark
      | levels
      | generalize
-     | bind
      | sample
      ;
 
@@ -26,7 +25,6 @@ remark : DOC_COMMENT+;
 importCmd : IMPORT qualifiedId (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? qualifiedId useHide?;
 module : MODULE_KW ID LBRACE stmt* RBRACE;
-bind : BIND_KW qualifiedId (TIGHTER | LOOSER) qualifiedId;
 
 useHide : use+
         | hide+;
@@ -50,9 +48,12 @@ assoc : INFIX | INFIXL | INFIXR;
 
 declNameOrInfix : ID | assoc ID;
 
-abuse : ABUSING (LBRACE stmt* RBRACE | stmt);
+bindBlock : BIND_KW (TIGHTER | LOOSER) qIdsComma
+          | BIND_KW LBRACE (tighters | loosers)* RBRACE ;
+tighters : TIGHTER qIdsComma;
+loosers : LOOSER qIdsComma;
 
-fnDecl : DEF fnModifiers* declNameOrInfix tele* type? fnBody abuse?;
+fnDecl : DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?;
 
 fnBody : IMPLIES expr
        | (BAR clause)* ;
@@ -61,7 +62,7 @@ fnModifiers : ERASE
             | INLINE
             ;
 
-structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* abuse?;
+structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;
 
 primDecl : PRIM assoc? ID tele* type? ;
 
@@ -69,7 +70,7 @@ field : COERCE? declNameOrInfix tele* type clauses? # fieldDecl
       | declNameOrInfix tele* type? IMPLIES expr    # fieldImpl
       ;
 
-dataDecl : (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* abuse?;
+dataDecl : (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* bindBlock?;
 
 dataBody : (BAR dataCtor)       # dataCtors
          | dataCtorClause       # dataClauses
@@ -96,7 +97,6 @@ expr : atom                            # single
 
 newArg : BAR ID ids IMPLIES expr;
 
-exprList : (expr COMMA)* expr?;
 atom : literal
      | LPAREN exprList RPAREN
      ;
@@ -145,7 +145,9 @@ teleBinder : expr
 teleMaybeTypedExpr : PATTERN_KW? ids type?;
 
 // utilities
+exprList : (expr COMMA)* expr?;
 idsComma : (ID COMMA)* ID?;
+qIdsComma : (qualifiedId COMMA)* qualifiedId?;
 ids : ID*;
 type : COLON expr;
 

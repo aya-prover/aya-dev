@@ -307,8 +307,6 @@ public class ParseTest {
   }
 
   @Test public void globalStmt() {
-    parseAndPretty("bind + tighter =", "bind + tighter =");
-    parseAndPretty("bind + tighter application", "bind + tighter application");
     parseAndPretty("universe uu", "universe uu");
   }
 

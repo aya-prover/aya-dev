@@ -275,15 +275,6 @@ public class ConcreteDistiller extends BaseDistiller implements
     );
   }
 
-  @Override public Doc visitBind(Command.@NotNull Bind bind, Unit unit) {
-    return Doc.sep(
-      Doc.styled(KEYWORD, "bind"),
-      Doc.plain(bind.op().join()),
-      Doc.styled(KEYWORD, bind.pred().keyword),
-      Doc.plain(bind.target().join())
-    );
-  }
-
   @Override public Doc visitRemark(@NotNull Remark remark, Unit unit) {
     var literate = remark.literate;
     return literate != null ? literate.toDoc() : Doc.plain(remark.raw);
@@ -365,8 +356,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       decl.body.fold(expr -> Doc.cat(Doc.ONE_WS, Doc.symbol("=>"), Doc.ONE_WS, expr.accept(this, Outer.Free)),
-        clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
-      Doc.emptyIf(decl.abuseBlock.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.styled(KEYWORD, "abusing"), Doc.ONE_WS, visitAbuse(decl.abuseBlock)))
+        clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false))))
     );
   }
 
@@ -379,10 +369,6 @@ public class ConcreteDistiller extends BaseDistiller implements
       case Inline -> "inline";
       case Erase -> "erase";
     });
-  }
-
-  private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
-    return Doc.vcat(block.view().map(stmt -> stmt.accept(this, Unit.unit())));
   }
 
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {

@@ -3,45 +3,11 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.value.Ref;
 import org.aya.api.error.SourcePos;
-import org.aya.concrete.resolve.context.Context;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public sealed interface Command extends Stmt {
-  enum BindPred {
-    Tighter("tighter"),
-    Looser("looser");
-
-    public final @NotNull String keyword;
-
-    BindPred(@NotNull String keyword) {
-      this.keyword = keyword;
-    }
-  }
-
-  /**
-   * @author kiva
-   */
-  record Bind(
-    @Override @NotNull SourcePos sourcePos,
-    @NotNull QualifiedID op,
-    @NotNull BindPred pred,
-    @NotNull QualifiedID target,
-    @NotNull Ref<@Nullable Context> context,
-    @NotNull Ref<@Nullable OpDecl> resolvedOp,
-    @NotNull Ref<@Nullable OpDecl> resolvedTarget
-  ) implements Command {
-    @Override public @NotNull Accessibility accessibility() {
-      return Accessibility.Public;
-    }
-
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitBind(this, p);
-    }
-  }
-
   /**
    * @author re-xyr
    */

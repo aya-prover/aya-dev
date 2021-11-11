@@ -113,8 +113,6 @@ public final class AyaProducer {
     if (mod != null) return ImmutableSeq.of(visitModule(mod));
     var levels = ctx.levels();
     if (levels != null) return ImmutableSeq.of(visitLevels(levels));
-    var bind = ctx.bind();
-    if (bind != null) return ImmutableSeq.of(visitBind(bind));
     var remark = ctx.remark();
     if (remark != null) return ImmutableSeq.of(visitRemark(remark));
     return unreachable(ctx);
@@ -139,17 +137,25 @@ public final class AyaProducer {
       .collect(ImmutableSeq.factory()));
   }
 
-  public Command.@NotNull Bind visitBind(AyaParser.BindContext ctx) {
-    var bindOp = ctx.qualifiedId();
-    return new Command.Bind(
-      sourcePosOf(ctx),
-      visitQualifiedId(bindOp.get(0)),
-      ctx.TIGHTER() != null ? Command.BindPred.Tighter : Command.BindPred.Looser,
-      visitQualifiedId(bindOp.get(1)),
-      new Ref<>(null),
-      new Ref<>(null),
-      new Ref<>(null)
-    );
+  public OpDecl.@NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
+    if (ctx.LOOSER() != null) return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
+      visitQIdsComma(ctx.qIdsComma()), ImmutableSeq.empty());
+    else if (ctx.TIGHTER() != null) return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
+      ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()));
+    else return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
+        visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()));
+  }
+
+  public @NotNull ImmutableSeq<QualifiedID> visitLoosers(List<AyaParser.LoosersContext> ctx) {
+    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma()).stream()).collect(ImmutableSeq.factory());
+  }
+
+  public @NotNull ImmutableSeq<QualifiedID> visitTighters(List<AyaParser.TightersContext> ctx) {
+    return ctx.stream().flatMap(c -> visitQIdsComma(c.qIdsComma()).stream()).collect(ImmutableSeq.factory());
+  }
+
+  public @NotNull ImmutableSeq<QualifiedID> visitQIdsComma(AyaParser.QIdsCommaContext ctx) {
+    return ctx.qualifiedId().stream().map(this::visitQualifiedId).collect(ImmutableSeq.factory());
   }
 
   public @NotNull Sample visitSample(AyaParser.SampleContext ctx) {
@@ -175,7 +181,7 @@ public final class AyaProducer {
     return unreachable(ctx);
   }
 
-  public Tuple2<@NotNull String, OpDecl.@Nullable Operator> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx) {
+  public Tuple2<@NotNull String, OpDecl.@Nullable OpInfo> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx) {
     var assoc = ctx.assoc();
     var id = ctx.ID().getText();
     if (assoc == null) return Tuple.of(id, null);
@@ -183,10 +189,10 @@ public final class AyaProducer {
     return Tuple.of(infix.name(), infix);
   }
 
-  private @NotNull OpDecl.Operator makeInfix(@NotNull AyaParser.AssocContext assoc, @NotNull String id) {
-    if (assoc.INFIX() != null) return new OpDecl.Operator(id, Assoc.Infix);
-    if (assoc.INFIXL() != null) return new OpDecl.Operator(id, Assoc.InfixL);
-    if (assoc.INFIXR() != null) return new OpDecl.Operator(id, Assoc.InfixR);
+  private @NotNull OpDecl.OpInfo makeInfix(@NotNull AyaParser.AssocContext assoc, @NotNull String id) {
+    if (assoc.INFIX() != null) return new OpDecl.OpInfo(id, Assoc.Infix);
+    if (assoc.INFIXL() != null) return new OpDecl.OpInfo(id, Assoc.InfixL);
+    if (assoc.INFIXR() != null) return new OpDecl.OpInfo(id, Assoc.InfixR);
     throw new IllegalArgumentException("Unknown assoc: " + assoc.getText());
   }
 
@@ -195,7 +201,7 @@ public final class AyaProducer {
       .map(this::visitFnModifiers)
       .distinct()
       .collect(Collectors.toCollection(() -> EnumSet.noneOf(Modifier.class)));
-    var abuseCtx = ctx.abuse();
+    var bind = ctx.bindBlock();
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
 
     return new Decl.FnDecl(
@@ -208,7 +214,7 @@ public final class AyaProducer {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
-      abuseCtx == null ? ImmutableSeq.empty() : visitAbuse(abuseCtx)
+      bind == null ? null : visitBind(bind)
     );
   }
 
@@ -222,10 +228,6 @@ public final class AyaProducer {
 
   public @NotNull ImmutableSeq<Expr.@NotNull Param> visitForallTelescope(List<AyaParser.TeleContext> telescope) {
     return ImmutableSeq.from(telescope).flatMap(t -> visitTele(t, true));
-  }
-
-  public @NotNull ImmutableSeq<@NotNull Stmt> visitAbuse(AyaParser.AbuseContext ctx) {
-    return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
   }
 
   public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> visitFnBody(AyaParser.FnBodyContext ctx) {
@@ -535,7 +537,7 @@ public final class AyaProducer {
 
   public @NotNull
   Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
-    var abuseCtx = ctx.abuse();
+    var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
     checkRedefinition(RedefinitionError.Kind.Ctor,
@@ -550,7 +552,7 @@ public final class AyaProducer {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       body,
-      abuseCtx == null ? ImmutableSeq.empty() : visitAbuse(abuseCtx)
+      bind == null ? null : visitBind(bind)
     );
     return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
@@ -678,7 +680,7 @@ public final class AyaProducer {
   }
 
   public @NotNull Decl.StructDecl visitStructDecl(AyaParser.StructDeclContext ctx, Stmt.Accessibility accessibility) {
-    var abuseCtx = ctx.abuse();
+    var bind = ctx.bindBlock();
     var fields = visitFields(ctx.field());
     checkRedefinition(RedefinitionError.Kind.Field,
       fields.view().map(field -> new WithPos<>(field.sourcePos, field.ref.name())));
@@ -693,7 +695,7 @@ public final class AyaProducer {
       type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
       fields,
-      abuseCtx == null ? ImmutableSeq.empty() : visitAbuse(abuseCtx)
+      bind == null ? null : visitBind(bind)
     );
   }
 
