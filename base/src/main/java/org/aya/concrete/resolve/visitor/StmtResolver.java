@@ -48,14 +48,15 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     if (bind == null) return;
     var ctx = bind.context().value;
     assert ctx != null : "no shallow resolver?";
-    bind.loosers().forEach(looser -> bind(looser.sourcePos(), self, info.opSet(), ctx, OpDecl.BindPred.Looser, looser));
-    bind.tighters().forEach(tighter -> bind(tighter.sourcePos(), self, info.opSet(), ctx, OpDecl.BindPred.Tighter, tighter));
+    bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(looser.sourcePos(), self, info.opSet(), ctx, OpDecl.BindPred.Looser, looser));
+    bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(tighter.sourcePos(), self, info.opSet(), ctx, OpDecl.BindPred.Tighter, tighter));
   }
 
-  private void bind(@NotNull SourcePos sourcePos, @NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
-                    @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id) {
+  private @NotNull OpDecl bind(@NotNull SourcePos sourcePos, @NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
+                               @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id) {
     var target = resolveOp(opSet.reporter(), ctx, id);
     opSet.bind(self, pred, target, sourcePos);
+    return target;
   }
 
   private @NotNull OpDecl resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull QualifiedID id) {

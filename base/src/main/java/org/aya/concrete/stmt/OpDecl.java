@@ -29,7 +29,9 @@ public interface OpDecl {
     @Override @NotNull SourcePos sourcePos,
     @NotNull Ref<@Nullable Context> context,
     @NotNull ImmutableSeq<QualifiedID> loosers,
-    @NotNull ImmutableSeq<QualifiedID> tighters
+    @NotNull ImmutableSeq<QualifiedID> tighters,
+    @NotNull Ref<ImmutableSeq<OpDecl>> resolvedLoosers,
+    @NotNull Ref<ImmutableSeq<OpDecl>> resolvedTighters
   ) {
   }
 

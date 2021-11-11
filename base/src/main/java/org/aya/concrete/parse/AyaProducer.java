@@ -139,11 +139,11 @@ public final class AyaProducer {
 
   public OpDecl.@NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
     if (ctx.LOOSER() != null) return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
-      visitQIdsComma(ctx.qIdsComma()), ImmutableSeq.empty());
+      visitQIdsComma(ctx.qIdsComma()), ImmutableSeq.empty(), new Ref<>(), new Ref<>());
     else if (ctx.TIGHTER() != null) return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
-      ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()));
+      ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()), new Ref<>(), new Ref<>());
     else return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
-        visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()));
+        visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()), new Ref<>(), new Ref<>());
   }
 
   public @NotNull ImmutableSeq<QualifiedID> visitLoosers(List<AyaParser.LoosersContext> ctx) {
