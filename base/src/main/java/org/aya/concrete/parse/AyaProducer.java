@@ -709,11 +709,12 @@ public final class AyaProducer {
 
   public Decl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
     var telescope = visitTelescope(ctx.tele());
-    var id = ctx.ID();
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
     return new Decl.StructField(
-      sourcePosOf(id),
+      sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
-      id.getText(),
+      nameOrInfix._2,
+      nameOrInfix._1,
       telescope,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.of(ctx.expr()).map(this::visitExpr),
@@ -724,11 +725,12 @@ public final class AyaProducer {
 
   public Decl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
     var telescope = visitTelescope(ctx.tele());
-    var id = ctx.ID();
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
     return new Decl.StructField(
-      sourcePosOf(id),
+      sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
-      id.getText(),
+      nameOrInfix._2,
+      nameOrInfix._1,
       telescope,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.none(),

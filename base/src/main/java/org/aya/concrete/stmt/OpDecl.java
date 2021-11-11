@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface OpDecl {
-  @Nullable Operator asOperator();
+  @Nullable Operator getOperator();
 
   record Operator(@NotNull String name, @NotNull Assoc assoc) {
   }

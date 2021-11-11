@@ -55,7 +55,7 @@ public record BinOpSet(
   }
 
   public boolean isOperand(@Nullable OpDecl opDecl) {
-    return opDecl == null || opDecl.asOperator() == null;
+    return opDecl == null || opDecl.getOperator() == null;
   }
 
   public BinOP ensureHasElem(@NotNull OpDecl opDecl) {
@@ -90,7 +90,7 @@ public record BinOpSet(
     @NotNull Assoc assoc
   ) {
     private static @NotNull OpDecl.Operator ensureOperator(@NotNull OpDecl opDecl) {
-      var op = opDecl.asOperator();
+      var op = opDecl.getOperator();
       if (op == null) throw new IllegalArgumentException("not an operator");
       return op;
     }

@@ -120,7 +120,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return visitor.visitPrim(this, p);
     }
 
-    @Override public @Nullable Operator asOperator() {
+    @Override public @Nullable Operator getOperator() {
       return operator;
     }
   }
@@ -154,7 +154,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return ref;
     }
 
-    @Override public @Nullable Operator asOperator() {
+    @Override public @Nullable Operator getOperator() {
       return operator;
     }
   }
@@ -169,7 +169,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public @NotNull Expr result;
     public final @NotNull ImmutableSeq<DataCtor> body;
-    public @Nullable Operator operator;
+    public final @Nullable Operator operator;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -197,7 +197,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return this.ref;
     }
 
-    @Override public @Nullable Operator asOperator() {
+    @Override public @Nullable Operator getOperator() {
       return operator;
     }
   }
@@ -241,22 +241,24 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return visitor.visitStruct(this, p);
     }
 
-    @Override public @Nullable Operator asOperator() {
+    @Override public @Nullable Operator getOperator() {
       return operator;
     }
   }
 
-  public static final class StructField extends Signatured {
+  public static final class StructField extends Signatured implements OpDecl {
     public final @NotNull DefVar<FieldDef, Decl.StructField> ref;
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
+    public final @Nullable Operator operator;
     public @NotNull Option<Expr> body;
 
     public final boolean coerce;
 
     public StructField(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
+      @Nullable Operator operator,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
@@ -269,11 +271,16 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.result = result;
       this.clauses = clauses;
       this.body = body;
+      this.operator = operator;
       this.ref = DefVar.concrete(this, name);
     }
 
     @Override public @NotNull DefVar<? extends Def, StructField> ref() {
       return ref;
+    }
+
+    @Override public @Nullable Operator getOperator() {
+      return operator;
     }
   }
 
@@ -317,7 +324,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       return this.ref;
     }
 
-    @Override public @Nullable Operator asOperator() {
+    @Override public @Nullable Operator getOperator() {
       return operator;
     }
   }
