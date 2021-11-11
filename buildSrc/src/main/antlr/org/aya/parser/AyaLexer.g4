@@ -49,6 +49,7 @@ EXTENDS : 'extends';
 NEW_KW : 'new';
 LSUC_KW : 'lsuc';
 LMAX_KW : 'lmax';
+PATTERN_KW : 'pattern';
 
 // symbols
 SIGMA : 'Sig' | '\u03A3';

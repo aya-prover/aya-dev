@@ -41,7 +41,7 @@ public final class Renamer implements TermFixpoint<Unit> {
     var v = param.renameVar();
     var type = param.type().accept(this, Unit.unit());
     subst.addDirectly(param.ref(), new RefTerm(v, type));
-    return new Term.Param(v, type, param.explicit());
+    return new Term.Param(v, type, param.pattern(), param.explicit());
   }
 
   @Override public @NotNull Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {

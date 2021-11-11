@@ -4,7 +4,7 @@ package org.aya.generic;
 
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.ref.Var;
+import org.aya.api.ref.LocalVar;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ParamLike<Expr extends AyaDocile> extends AyaDocile {
   boolean explicit();
-  @NotNull Var ref();
+  boolean pattern();
+  @NotNull LocalVar ref();
   @Nullable Expr type();
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return toDoc(nameDoc(), options);

@@ -68,7 +68,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     @NotNull Term.Param theParam, @NotNull Term theBody, @NotNull P p, @NotNull T original,
     @NotNull BiFunction<Term.@NotNull Param, @NotNull Term, T> callback
   ) {
-    var param = new Term.Param(theParam.ref(), theParam.type().accept(this, p), theParam.explicit());
+    var param = new Term.Param(theParam, theParam.type().accept(this, p));
     var body = theBody.accept(this, p);
     if (param.type() == theParam.type() && body == theBody) return original;
     return callback.apply(param, body);
@@ -91,7 +91,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
 
   @Override default @NotNull Term visitSigma(@NotNull FormTerm.Sigma term, P p) {
     var params = term.params().map(param ->
-      new Term.Param(param.ref(), param.type().accept(this, p), param.explicit()));
+      new Term.Param(param, param.type().accept(this, p)));
     if (params.sameElements(term.params(), true)) return term;
     return new FormTerm.Sigma(params);
   }

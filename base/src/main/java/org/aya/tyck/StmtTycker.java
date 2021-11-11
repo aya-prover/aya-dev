@@ -238,14 +238,14 @@ public record StmtTycker(
       assert param.type() != null; // guaranteed by AyaProducer
       var paramTyped = exprTycker.inherit(param.type(), univ).wellTyped();
       exprTycker.localCtx.put(param.ref(), paramTyped);
-      return Tuple.of(new Term.Param(param.ref(), paramTyped, param.explicit()), param.sourcePos());
+      return Tuple.of(new Term.Param(param, paramTyped), param.sourcePos());
     });
     exprTycker.solveMetas();
     return okTele.map(tt -> {
       var t = tt._1;
       var term = t.type().zonk(exprTycker, tt._2);
       exprTycker.localCtx.put(t.ref(), term);
-      return new Term.Param(t.ref(), term, t.explicit());
+      return new Term.Param(t, term);
     });
   }
 }
