@@ -191,11 +191,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
 
     public static @NotNull ImmutableSeq<Param>
     subst(@NotNull ImmutableSeq<@NotNull Param> params, @NotNull LevelSubst levelSubst) {
-      return params.map(param -> param.subst(Substituter.TermSubst.EMPTY, levelSubst));
-    }
-
-    public @NotNull Param subst(@NotNull LevelSubst levelSubst) {
-      return subst(Substituter.TermSubst.EMPTY, levelSubst);
+      return subst(params, Substituter.TermSubst.EMPTY, levelSubst);
     }
 
     public @NotNull Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {

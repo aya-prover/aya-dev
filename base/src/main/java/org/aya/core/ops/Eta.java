@@ -70,7 +70,6 @@ public interface Eta {
   }
 
   private static boolean appearFree(@NotNull RefTerm refTerm, @NotNull Term term) {
-    //noinspection ConstantConditions
     return switch (term) {
       case RefTerm rTerm -> !compareRefTerm(refTerm, rTerm);
       case IntroTerm.Lambda lamTerm -> appearFree(refTerm, lamTerm.body());

@@ -51,8 +51,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     return ref;
   }
 
-  @Override default @Nullable MutableMap<String, Var>
-  getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName, @NotNull SourcePos sourcePos) {
+  @Override default @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
     return modules().getOrNull(modName);
   }
 

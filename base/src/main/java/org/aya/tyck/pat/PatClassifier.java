@@ -45,7 +45,7 @@ public record PatClassifier(
   ) {
     var classifier = new PatClassifier(reporter, pos, state, new PatTree.Builder());
     var classification = classifier.classifySub(telescope, clauses
-      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), coverage);
+      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), coverage, 5);
     for (var pats : classification) {
       if (pats instanceof PatClass.Err err) {
         reporter.report(new ClausesProblem.MissingCase(pos, err.errorMessage));
@@ -92,7 +92,7 @@ public record PatClassifier(
   private static void domination(Substituter.TermSubst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching matching) {
     if (rhsSubst.isEmpty())
       reporter.report(new ClausesProblem.Domination(
-      lhsIx + 1, rhsIx + 1, matching.sourcePos()));
+        lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
   /**
@@ -103,13 +103,29 @@ public record PatClassifier(
   private @NotNull ImmutableSeq<PatClass> classifySub(
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
-    boolean coverage
+    boolean coverage, int fuel
   ) {
-    // Done
-    if (telescope.isEmpty()) {
-      var oneClass = subPatsSeq.map(SubPats::ix);
-      return ImmutableSeq.of(new PatClass.Ok(oneClass));
+    while (telescope.isNotEmpty()) {
+      var res = classifySubImpl(telescope, subPatsSeq, coverage, fuel);
+      if (res != null) return res;
+      else {
+        telescope = telescope.drop(1);
+        subPatsSeq = subPatsSeq.map(SubPats::drop);
+      }
     }
+    // Done
+    return ImmutableSeq.of(new PatClass.Ok(subPatsSeq.map(SubPats::ix)));
+  }
+
+  /**
+   * @param telescope must be nonempty
+   * @see #classifySub(ImmutableSeq, ImmutableSeq, boolean, int)
+   */
+  private @Nullable ImmutableSeq<PatClass> classifySubImpl(
+    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull ImmutableSeq<SubPats> subPatsSeq,
+    boolean coverage, int fuel
+  ) {
     // We're gonna split on this type
     var target = telescope.first();
     var explicit = target.explicit();
@@ -135,10 +151,11 @@ public record PatClassifier(
             .map(param -> param.subst(target.ref(), thatTuple))
             .toImmutableSeq();
           // Classify according to the tuple elements
-          return classifySub(sigma.params(), hasTuple, coverage)
+          var fuelCopy = fuel;
+          return classifySub(sigma.params(), hasTuple, coverage, fuel)
             .flatMap(pat -> mapClass(pat,
               // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
-              classifySub(newTele, PatClass.extract(pat, subPatsSeq).map(SubPats::drop), coverage)));
+              classifySub(newTele, PatClass.extract(pat, subPatsSeq).map(SubPats::drop), coverage, fuelCopy)));
         }
       }
       // Only `I` might be split, we just assume that
@@ -171,7 +188,7 @@ public record PatClassifier(
                 .map(param -> param.subst(target.ref(), lrCall))
                 .toImmutableSeq();
               // Classify according the rest of the patterns
-              var rest = classifySub(newTele, classes, false);
+              var rest = classifySub(newTele, classes, false, fuel);
               // We have some new classes!
               buffer.appendAll(rest);
             }
@@ -207,32 +224,33 @@ public record PatClassifier(
             .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
           // Push this constructor to the error message builder
           builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
-          // In case we're the last pattern in the list, and no pattern matches this constructor,
-          if (telescope.sizeEquals(1) && matches.isEmpty()) {
+          // In case no pattern matches this constructor,
+          var matchesEmpty = matches.isEmpty();
+          // we consume one unit of fuel and,
+          if (matchesEmpty) fuel--;
+          // if the pattern has no arguments and no clause matches,
+          var definitely = matchesEmpty && conTele.isEmpty() && telescope.sizeEquals(1);
+          // we report an error.
+          // If we're running out of fuel, we also report an error.
+          if (definitely || fuel <= 0) {
             // for non-coverage case, we don't bother
-            if (coverage) {
-              // Actually, if we step further, we may realize that this pattern may actually be impossible
-              // since its arguments constitute an impossible pattern matching,
-              // but if *is possible*, then this recursion will run infinitely.
-              // We may add some checks (e.g. if the type changes then go ahead, but if unchanged then you're guilty),
-              // but be careful of inductive-inductive definitions where type recursion can be indirect!
-              // I decide to keep things simple for now.
-              buffer.append(new PatClass.Err(ImmutableSeq.empty(),
-                builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
-            }
+            if (coverage) buffer.append(new PatClass.Err(ImmutableSeq.empty(),
+              builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
             builder.reduce();
             builder.unshift();
             continue;
           }
-          var classified = classifySub(conTele, matches, coverage);
+          var classified = classifySub(conTele, matches, coverage, fuel);
           builder.reduce();
           var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTeleCapture.map(Term.Param::toArg));
           var newTele = telescope.view()
             .drop(1)
             .map(param -> param.subst(target.ref(), conCall))
             .toImmutableSeq();
+          var fuelCopy = fuel;
           var rest = classified.flatMap(pat ->
-            mapClass(pat, classifySub(newTele, PatClass.extract(pat, subPatsSeq).map(SubPats::drop), coverage)));
+            mapClass(pat, classifySub(newTele, PatClass.extract(pat, subPatsSeq)
+              .map(SubPats::drop), coverage, fuelCopy)));
           builder.unshift();
           buffer.appendAll(rest);
         }
@@ -242,7 +260,7 @@ public record PatClassifier(
     // Progress without pattern matching
     builder.shiftEmpty(explicit);
     builder.unshift();
-    return classifySub(telescope.drop(1), subPatsSeq.map(SubPats::drop), coverage);
+    return null; // Proceed loop
   }
 
   private ImmutableSeq<PatClass> mapClass(@NotNull PatClass pat, @NotNull ImmutableSeq<PatClass> classes) {
@@ -286,7 +304,7 @@ public record PatClassifier(
     }
   }
 
-  record SubPats(@NotNull SeqView<Pat> pats, int ix) {
+  private record SubPats(@NotNull SeqView<Pat> pats, int ix) {
     @Contract(pure = true) public @NotNull Pat head() {
       if (pats.isEmpty()) {
         throw new IllegalStateException("Empty pattern list");

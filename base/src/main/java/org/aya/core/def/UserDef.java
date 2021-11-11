@@ -18,7 +18,7 @@ public sealed abstract class UserDef extends TopLevelDef permits DataDef, FnDef,
   /**
    * In case of counterexamples, this field will be assigned.
    *
-   * @see org.aya.concrete.stmt.Sample#tyck(org.aya.api.error.Reporter, org.aya.tyck.trace.Trace.Builder)
+   * @see org.aya.concrete.stmt.Sample#tyck(org.aya.tyck.StmtTycker)
    */
   public @Nullable ImmutableSeq<Problem> problems;
 

@@ -92,9 +92,9 @@ public interface Context {
     return getQualified(modName, name, sourcePos);
   }
 
-  @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName, @NotNull SourcePos sourcePos);
+  @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName);
   default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull ImmutableSeq<String> modName, @NotNull SourcePos sourcePos) {
-    var ref = getModuleLocalMaybe(modName, sourcePos);
+    var ref = getModuleLocalMaybe(modName);
     if (ref == null) {
       var p = parent();
       if (p == null) return null;
