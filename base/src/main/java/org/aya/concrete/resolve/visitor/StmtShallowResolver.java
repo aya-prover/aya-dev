@@ -141,12 +141,14 @@ public record StmtShallowResolver(
   @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
     ctor.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
+    visitBind(ctor.bindBlock, context);
     return Unit.unit();
   }
 
   @Override public Unit visitField(@NotNull Decl.StructField field, @NotNull ModuleContext context) {
     field.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
+    visitBind(field.bindBlock, context);
     return Unit.unit();
   }
 }

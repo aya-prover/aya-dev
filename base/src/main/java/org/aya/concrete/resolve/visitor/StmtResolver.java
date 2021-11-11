@@ -90,6 +90,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
+      visitBind(ctor, ctor.bindBlock, info);
     }
     visitBind(decl, decl.bindBlock, info);
     info.declGraph().suc(decl).appendAll(reference);
@@ -109,6 +110,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       field.result = field.result.accept(bodyResolver, fieldLocal._2);
       field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
       field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
+      visitBind(field, field.bindBlock, info);
     });
     visitBind(decl, decl.bindBlock, info);
     info.declGraph().suc(decl).appendAll(reference);

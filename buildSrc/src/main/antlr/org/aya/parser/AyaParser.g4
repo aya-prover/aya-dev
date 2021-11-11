@@ -66,8 +66,8 @@ structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)*
 
 primDecl : PRIM assoc? ID tele* type? ;
 
-field : COERCE? declNameOrInfix tele* type clauses? # fieldDecl
-      | declNameOrInfix tele* type? IMPLIES expr    # fieldImpl
+field : COERCE? declNameOrInfix tele* type clauses? bindBlock? # fieldDecl
+      | declNameOrInfix tele* type? IMPLIES expr    bindBlock? # fieldImpl
       ;
 
 dataDecl : (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* bindBlock?;
@@ -76,7 +76,7 @@ dataBody : (BAR dataCtor)       # dataCtors
          | dataCtorClause       # dataClauses
          ;
 
-dataCtor : COERCE? declNameOrInfix tele* clauses?;
+dataCtor : COERCE? declNameOrInfix tele* clauses? bindBlock?;
 
 dataCtorClause : BAR patterns IMPLIES dataCtor;
 

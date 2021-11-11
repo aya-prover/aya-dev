@@ -579,7 +579,7 @@ public final class AyaProducer {
   public Decl.DataCtor visitDataCtor(@NotNull ImmutableSeq<Pattern> patterns, AyaParser.DataCtorContext ctx) {
     var telescope = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
-
+    var bind = ctx.bindBlock();
     return new Decl.DataCtor(
       sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
@@ -588,7 +588,8 @@ public final class AyaProducer {
       telescope,
       visitClauses(ctx.clauses()),
       patterns,
-      ctx.COERCE() != null
+      ctx.COERCE() != null,
+      bind == null ? null : visitBind(bind)
     );
   }
 
@@ -710,6 +711,7 @@ public final class AyaProducer {
   public Decl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
     var telescope = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
+    var bind = ctx.bindBlock();
     return new Decl.StructField(
       sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
@@ -719,13 +721,15 @@ public final class AyaProducer {
       type(ctx.type(), sourcePosOf(ctx)),
       Option.of(ctx.expr()).map(this::visitExpr),
       ImmutableSeq.empty(),
-      false
+      false,
+      bind == null ? null : visitBind(bind)
     );
   }
 
   public Decl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
     var telescope = visitTelescope(ctx.tele());
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
+    var bind = ctx.bindBlock();
     return new Decl.StructField(
       sourcePosOf(ctx.declNameOrInfix()),
       sourcePosOf(ctx),
@@ -735,7 +739,8 @@ public final class AyaProducer {
       type(ctx.type(), sourcePosOf(ctx)),
       Option.none(),
       visitClauses(ctx.clauses()),
-      ctx.COERCE() != null
+      ctx.COERCE() != null,
+      bind == null ? null : visitBind(bind)
     );
   }
 

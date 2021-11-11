@@ -127,6 +127,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
     public final @Nullable OpDecl.OpInfo opInfo;
+    public final @Nullable OpDecl.BindBlock bindBlock;
     public final boolean coerce;
 
     public DataCtor(
@@ -136,7 +137,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
       @NotNull ImmutableSeq<Pattern> patterns,
-      boolean coerce
+      boolean coerce,
+      @Nullable OpDecl.BindBlock bindBlock
     ) {
       super(sourcePos, entireSourcePos, telescope);
       this.clauses = clauses;
@@ -144,6 +146,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.coerce = coerce;
       this.patterns = patterns;
       this.ref = DefVar.concrete(this, name);
+      this.bindBlock = bindBlock;
     }
 
     @Override public @NotNull DefVar<CtorDef, DataCtor> ref() {
@@ -252,6 +255,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
     public final @Nullable OpDecl.OpInfo opInfo;
+    public final @Nullable OpDecl.BindBlock bindBlock;
     public @NotNull Option<Expr> body;
 
     public final boolean coerce;
@@ -264,7 +268,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull Expr result,
       @NotNull Option<Expr> body,
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
-      boolean coerce
+      boolean coerce,
+      @Nullable OpDecl.BindBlock bindBlock
     ) {
       super(sourcePos, entireSourcePos, telescope);
       this.coerce = coerce;
@@ -273,6 +278,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.body = body;
       this.opInfo = opInfo;
       this.ref = DefVar.concrete(this, name);
+      this.bindBlock = bindBlock;
     }
 
     @Override public @NotNull DefVar<? extends Def, StructField> ref() {
