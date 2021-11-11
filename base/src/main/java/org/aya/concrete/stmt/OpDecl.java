@@ -5,6 +5,7 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.DefVar;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.resolve.context.Context;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +31,8 @@ public interface OpDecl {
     @NotNull Ref<@Nullable Context> context,
     @NotNull ImmutableSeq<QualifiedID> loosers,
     @NotNull ImmutableSeq<QualifiedID> tighters,
-    @NotNull Ref<ImmutableSeq<OpDecl>> resolvedLoosers,
-    @NotNull Ref<ImmutableSeq<OpDecl>> resolvedTighters
+    @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedLoosers,
+    @NotNull Ref<ImmutableSeq<DefVar<?, ?>>> resolvedTighters
   ) {
   }
 

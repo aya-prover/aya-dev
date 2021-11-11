@@ -23,6 +23,7 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.StringEscapeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -289,7 +290,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       Doc.emptyIf(decl.body.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.body.view().map(ctor -> visitCtor(ctor, Unit.unit()))))))
+        decl.body.view().map(ctor -> visitCtor(ctor, Unit.unit())))))),
+      visitBindBlock(decl.bindBlock)
     );
   }
 
@@ -324,7 +326,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.fields.view().map(field -> visitField(field, Unit.unit()))))))
+        decl.fields.view().map(field -> visitField(field, Unit.unit())))))),
+      visitBindBlock(decl.bindBlock)
     );
   }
 
@@ -356,8 +359,27 @@ public class ConcreteDistiller extends BaseDistiller implements
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       decl.body.fold(expr -> Doc.cat(Doc.ONE_WS, Doc.symbol("=>"), Doc.ONE_WS, expr.accept(this, Outer.Free)),
-        clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false))))
+        clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
+      visitBindBlock(decl.bindBlock)
     );
+  }
+
+  public Doc visitBindBlock(@Nullable OpDecl.BindBlock bindBlock) {
+    if (bindBlock == null) return Doc.empty();
+    var loosers = bindBlock.resolvedLoosers().value;
+    var tighters = bindBlock.resolvedTighters().value;
+    if (loosers.isEmpty() && tighters.isEmpty()) return Doc.empty();
+
+    if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(
+      Doc.styled(KEYWORD, "bind"), Doc.ONE_WS, Doc.styled(KEYWORD, "tighter"), Doc.ONE_WS,
+      Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)))));
+    else if (tighters.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(
+      Doc.styled(KEYWORD, "bind"), Doc.ONE_WS, Doc.styled(KEYWORD, "looser"), Doc.ONE_WS,
+      Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar)))));
+    return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.cat(Doc.ONE_WS,
+      Doc.styled(KEYWORD, "tighter"), Doc.ONE_WS, Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)), Doc.ONE_WS,
+      Doc.styled(KEYWORD, "looser"), Doc.ONE_WS, Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar)), Doc.ONE_WS
+    )))));
   }
 
   @Override public Doc visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {

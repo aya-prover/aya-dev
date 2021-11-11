@@ -131,7 +131,7 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     return StmtConsumer.super.visitModule(mod, buffer);
   }
 
-  private HighlightResult.Symbol.@NotNull Kind kindOf(@NotNull OpDecl opDecl) {
+  private HighlightResult.Symbol.@NotNull Kind kindOf(@NotNull Object opDecl) {
     return switch (opDecl) {
       case Decl.FnDecl ignored -> HighlightResult.Symbol.Kind.FnCall;
       case Decl.StructDecl ignored -> HighlightResult.Symbol.Kind.StructCall;
@@ -141,9 +141,9 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     };
   }
 
-  private void visitOperator(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @Nullable OpDecl op) {
+  private void visitOperator(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @Nullable DefVar<?, ?> op) {
     if (op == null) return;
-    buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(op)));
+    buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(op.concrete)));
   }
 
   private void visitBind(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @Nullable OpDecl.BindBlock bindBlock) {
