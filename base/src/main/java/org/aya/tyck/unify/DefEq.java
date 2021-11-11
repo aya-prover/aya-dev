@@ -14,7 +14,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Signatured;
 import org.aya.core.Meta;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -84,7 +84,8 @@ public final class DefEq {
   public @Nullable Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs) {
     // lhs & rhs will both be WHNF if either is not a potentially reducible call
     if (isCall(lhs) || isCall(rhs)) {
-      final var ty = doCompareUntyped(lhs, rhs);
+      var ty = compareApprox(lhs, rhs);
+      if (ty == null) ty = doCompareUntyped(lhs, rhs);
       if (ty != null) return ty.normalize(state, NormalizeMode.WHNF);
     }
     lhs = lhs.normalize(state, NormalizeMode.WHNF);
@@ -103,6 +104,7 @@ public final class DefEq {
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs) {
     return switch (preLhs) {
       case CallTerm.Fn lhs && preRhs instanceof CallTerm.Fn rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
+      case CallTerm.Con lhs && preRhs instanceof CallTerm.Con rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
       case CallTerm.Prim lhs && preRhs instanceof CallTerm.Prim rhs -> lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lhs.ref());
       default -> null;
     };
@@ -153,7 +155,7 @@ public final class DefEq {
 
   @Nullable private Term visitCall(
     @NotNull CallTerm lhs, @NotNull CallTerm rhs,
-    @NotNull DefVar<? extends Def, ? extends Decl> lhsRef
+    @NotNull DefVar<? extends Def, ? extends Signatured> lhsRef
   ) {
     var retType = getType(lhs, lhsRef);
     // Lossy comparison
@@ -164,7 +166,7 @@ public final class DefEq {
   }
 
   @NotNull private LevelSubst levels(
-    @NotNull DefVar<? extends Def, ? extends Decl> def,
+    @NotNull DefVar<? extends Def, ? extends Signatured> def,
     ImmutableSeq<@NotNull Sort> l, ImmutableSeq<@NotNull Sort> r
   ) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
@@ -309,6 +311,7 @@ public final class DefEq {
         state.levelEqns().add(lhs.sort(), rhs.sort(), cmp, this.pos);
         yield new FormTerm.Univ((cmp == Ordering.Lt ? lhs : rhs).sort().lift(1));
       }
+      // See compareApprox for why we don't compare these
       case CallTerm.Fn lhs -> null;
       case CallTerm.Data lhs -> {
         if (!(preRhs instanceof CallTerm.Data rhs) || lhs.ref() != rhs.ref()) yield null;
