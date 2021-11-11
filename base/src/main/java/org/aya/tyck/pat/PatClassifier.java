@@ -105,7 +105,7 @@ public record PatClassifier(
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
     boolean coverage, int fuel
   ) {
-    while (true) {
+    while (telescope.isNotEmpty()) {
       var res = classifySubImpl(telescope, subPatsSeq, coverage, fuel);
       if (res != null) return res;
       else {
@@ -113,19 +113,19 @@ public record PatClassifier(
         subPatsSeq = subPatsSeq.map(SubPats::drop);
       }
     }
+    // Done
+    return ImmutableSeq.of(new PatClass.Ok(subPatsSeq.map(SubPats::ix)));
   }
 
-  /** @see #classifySub(ImmutableSeq, ImmutableSeq, boolean, int) */
+  /**
+   * @param telescope must be nonempty
+   * @see #classifySub(ImmutableSeq, ImmutableSeq, boolean, int)
+   */
   private @Nullable ImmutableSeq<PatClass> classifySubImpl(
     @NotNull ImmutableSeq<Term.Param> telescope,
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
     boolean coverage, int fuel
   ) {
-    // Done
-    if (telescope.isEmpty()) {
-      var oneClass = subPatsSeq.map(SubPats::ix);
-      return ImmutableSeq.of(new PatClass.Ok(oneClass));
-    }
     // We're gonna split on this type
     var target = telescope.first();
     var explicit = target.explicit();
