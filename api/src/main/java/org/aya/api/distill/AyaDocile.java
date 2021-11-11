@@ -20,7 +20,7 @@ public interface AyaDocile /*extends Docile*/ {
    * @deprecated use {@link #toDoc(DistillerOptions)} instead
    */
   @Deprecated default @NotNull Doc debuggerOnlyToDoc() {
-    return toDoc(DistillerOptions.DEBUG);
+    return toDoc(DistillerOptions.debug());
   }
 
   @NotNull Doc toDoc(@NotNull DistillerOptions options);

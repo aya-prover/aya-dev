@@ -50,7 +50,7 @@ public class ConcreteDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitLam(Expr.@NotNull LamExpr expr, Outer outer) {
-    if (!options.showImplicitPats && !expr.param().explicit()) {
+    if (!(boolean) options.map.get(DistillerOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
       return expr.body().accept(this, outer);
     }
     var prelude = DynamicSeq.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
@@ -117,7 +117,7 @@ public class ConcreteDistiller extends BaseDistiller implements
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
-    if (!options.showLevels) return fn;
+    if (!(boolean) options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
     return visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer, SeqView.of(expr.level()).map(t -> new Arg<>(t, true))
     );
   }
@@ -232,7 +232,7 @@ public class ConcreteDistiller extends BaseDistiller implements
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, Outer outer, @NotNull Doc delim) {
-    patterns = options.showImplicitPats ? patterns : patterns.view().filter(Pattern::explicit);
+    patterns = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pattern::explicit);
     return Doc.join(delim, patterns.view().map(p -> p.accept(this, outer)));
   }
 

@@ -72,6 +72,7 @@ public abstract class Repl implements Closeable, Runnable {
   public final @NotNull ReplConfig config;
   public @NotNull Path cwd = Path.of("");
   public int prettyPrintWidth = 80;
+  public @NotNull DistillerOptions distillerOptions = DistillerOptions.pretty();
 
   public Repl(@NotNull ReplConfig config) {
     this.config = config;
@@ -137,13 +138,13 @@ public abstract class Repl implements Closeable, Runnable {
   private @NotNull Command.Output eval(@NotNull String line) {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
-      program -> render(options -> Doc.vcat(program.view().map(def -> def.toDoc(options)))),
+      program -> Doc.vcat(program.view().map(def -> def.toDoc(distillerOptions))),
       this::render
     ));
   }
 
   public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(DistillerOptions.informative());
+    return ayaDocile.toDoc(distillerOptions);
   }
 
   public @NotNull String renderDoc(@NotNull Doc doc) {

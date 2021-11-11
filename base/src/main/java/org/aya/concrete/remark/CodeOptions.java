@@ -25,10 +25,7 @@ public record CodeOptions(
     "\\A(([\\w ]*)(\\|([\\w ]*)\\|([\\w ]*))?:)?(.*)\\z");
 
   public static @NotNull Literate.Code analyze(@NotNull String literal, @NotNull AyaProducer producer) {
-    var showImplicitArgs = true;
-    var showImplicitPats = true;
-    var showLambdaTypes = false;
-    var showLevels = false;
+    var distillOpts = new DistillerOptions();
     var matcher = PARSER.matcher(literal);
     var found = matcher.find();
     assert found;
@@ -53,19 +50,13 @@ public record CodeOptions(
     if (open != null && close != null) {
       open = open.toUpperCase(Locale.ROOT);
       close = close.toUpperCase(Locale.ROOT);
-      if (close.contains("I")) showImplicitArgs = false;
-      if (open.contains("U")) showLevels = true;
-      if (open.contains("L")) showLambdaTypes = true;
-      if (close.contains("P")) showImplicitPats = false;
+      distillOpts.map.put(DistillerOptions.Key.ShowImplicitArgs, !close.contains("I"));
+      distillOpts.map.put(DistillerOptions.Key.ShowImplicitPats, !close.contains("P"));
+      distillOpts.map.put(DistillerOptions.Key.ShowLevels, open.contains("U"));
+      distillOpts.map.put(DistillerOptions.Key.ShowLevels, open.contains("L"));
     }
     var expr = producer.visitExpr(AyaParsing.parser(matcher.group(6)).expr());
-    var distillOpt = new DistillerOptions(
-      true,
-      showImplicitArgs,
-      showImplicitPats,
-      showLambdaTypes,
-      showLevels);
-    var options = new CodeOptions(mode, distillOpt, showCode);
+    var options = new CodeOptions(mode, distillOpts, showCode);
     return new Literate.Code(expr, options);
   }
 

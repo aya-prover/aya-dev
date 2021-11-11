@@ -48,7 +48,7 @@ public abstract class BaseDistiller {
     boolean infix, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
     @NotNull SeqView<@NotNull Arg<@NotNull T>> args
   ) {
-    var visibleArgs = (options.showImplicitArgs ? args : args.filter(Arg::explicit)).toImmutableSeq();
+    var visibleArgs = (options.map.get(DistillerOptions.Key.ShowImplicitArgs) ? args : args.filter(Arg::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
     // Print as a binary operator
     if (infix) {
@@ -107,7 +107,7 @@ public abstract class BaseDistiller {
   }
 
   @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
-    return options.showLambdaTypes ? param.toDoc(options)
+    return options.map.get(DistillerOptions.Key.ShowLambdaTypes) ? param.toDoc(options)
       : param.explicit() ? param.nameDoc() : Doc.braced(param.nameDoc());
   }
 

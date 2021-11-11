@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.api.distill;
 
+import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,35 +10,37 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public final class DistillerOptions {
-  public boolean inlineMetas;
-  public boolean showImplicitArgs;
-  public boolean showImplicitPats;
-  public boolean showLambdaTypes;
-  public boolean showLevels;
+  public final @NotNull MutableMap<Key, Boolean> map = MutableMap.create();
 
-  public DistillerOptions(
-    boolean inlineMetas,
-    boolean showImplicitArgs,
-    boolean showImplicitPats,
-    boolean showLambdaTypes,
-    boolean showLevels
-  ) {
-    this.inlineMetas = inlineMetas;
-    this.showImplicitArgs = showImplicitArgs;
-    this.showImplicitPats = showImplicitPats;
-    this.showLambdaTypes = showLambdaTypes;
-    this.showLevels = showLevels;
+  public DistillerOptions() {
+    for (Key value : Key.values()) map.put(value, false);
+    map.put(Key.InlineMetas, true);
+  }
+
+  public enum Key {
+    InlineMetas,
+    ShowImplicitArgs,
+    ShowImplicitPats,
+    ShowLambdaTypes,
+    ShowLevels,
   }
 
   @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions debug() {
-    return new DistillerOptions(false, true, true, true, true);
+    var map = informative();
+    map.map.put(Key.ShowLambdaTypes, true);
+    map.map.put(Key.ShowLevels, true);
+    return map;
   }
 
   @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions informative() {
-    return new DistillerOptions(true, true, true, false, false);
+    var map = pretty();
+    map.map.put(Key.ShowImplicitArgs, true);
+    return map;
   }
 
   @Contract(pure = true, value = "->new") public static @NotNull DistillerOptions pretty() {
-    return new DistillerOptions(true, false, true, false, false);
+    var map = new DistillerOptions();
+    map.map.put(Key.ShowImplicitPats, true);
+    return map;
   }
 }
