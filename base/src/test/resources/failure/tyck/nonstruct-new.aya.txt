@@ -4,7 +4,7 @@ In file $FILE:1:12 ->
                   ^---------^
 
 Error: Unable to construct the expression
-         new Type {  }
+         new Type
        because the type you gave is not a struct type, but instead:
          Type
          (Normalized: Type)

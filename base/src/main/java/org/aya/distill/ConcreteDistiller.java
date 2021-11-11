@@ -162,18 +162,14 @@ public class ConcreteDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitNew(Expr.@NotNull NewExpr expr, Outer outer) {
-    return Doc.sep(
-      Doc.styled(KEYWORD, "new"),
-      expr.struct().accept(this, Outer.Free),
-      Doc.symbol("{"),
-      Doc.sep(expr.fields().view().map(t ->
+    return Doc.cblock(
+      Doc.sep(Doc.styled(KEYWORD, "new"), expr.struct().accept(this, Outer.Free)),
+      2, Doc.vcat(expr.fields().view().map(t ->
         Doc.sep(Doc.symbol("|"), Doc.plain(t.name()),
           Doc.emptyIf(t.bindings().isEmpty(), () ->
             Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
           Doc.plain("=>"), t.body().accept(this, Outer.Free))
-      )),
-      Doc.symbol("}")
-    );
+      )));
   }
 
   @Override public Doc visitLitInt(Expr.@NotNull LitIntExpr expr, Outer outer) {
