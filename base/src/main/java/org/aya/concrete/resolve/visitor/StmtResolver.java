@@ -3,11 +3,8 @@
 package org.aya.concrete.resolve.visitor;
 
 import kala.collection.mutable.DynamicSeq;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.tuple.Unit;
 import kala.value.Ref;
-import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.remark.Remark;
@@ -55,16 +52,14 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
 
   private @NotNull DefVar<?, ?> bind(@NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
                                      @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id) {
-    var target = resolveOp(opSet.reporter(), ctx, id);
-    opSet.bind(self, pred, target._2, id.sourcePos());
-    return target._1;
-  }
-
-  private @NotNull Tuple2<DefVar<?, ?>, OpDecl> resolveOp(@NotNull Reporter reporter, @NotNull Context ctx, @NotNull QualifiedID id) {
     var var = ctx.get(id);
-    if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) return Tuple.of(defVar, op);
-    reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
-    throw new Context.ResolvingInterruptedException();
+    if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
+      opSet.bind(self, pred, op, id.sourcePos());
+      return defVar;
+    } else {
+      opSet.reporter().report(new UnknownOperatorError(id.sourcePos(), id.join()));
+      throw new Context.ResolvingInterruptedException();
+    }
   }
 
   @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, ResolveInfo info) {

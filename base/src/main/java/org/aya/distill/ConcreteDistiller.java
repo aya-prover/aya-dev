@@ -23,7 +23,6 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.StringEscapeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -364,8 +363,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     );
   }
 
-  public Doc visitBindBlock(@Nullable OpDecl.BindBlock bindBlock) {
-    if (bindBlock == null) return Doc.empty();
+  public Doc visitBindBlock(@NotNull OpDecl.BindBlock bindBlock) {
+    if (bindBlock == OpDecl.BindBlock.EMPTY) return Doc.empty();
     var loosers = bindBlock.resolvedLoosers().value;
     var tighters = bindBlock.resolvedTighters().value;
     if (loosers.isEmpty() && tighters.isEmpty()) return Doc.empty();
