@@ -12,8 +12,13 @@ import org.jetbrains.annotations.NotNull;
 @FunctionalInterface
 @Debug.Renderer(text = "debuggerOnlyToDoc().debugRender()")
 public interface AyaDocile /*extends Docile*/ {
-  // load DistillerOptions by using it explicitly so IDEA won't show cannot load blahblah
-  // in the debugger window. this should not be used in any other place.
+  /**
+   * Load DistillerOptions by using it explicitly so IDEA won't show cannot load blahblah
+   * in the debugger window.
+   *
+   * @apiNote This should not be used in any other place.
+   * @deprecated use {@link #toDoc(DistillerOptions)} instead
+   */
   @Deprecated default @NotNull Doc debuggerOnlyToDoc() {
     return toDoc(DistillerOptions.DEBUG);
   }
