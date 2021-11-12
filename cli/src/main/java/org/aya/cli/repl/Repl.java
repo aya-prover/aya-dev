@@ -73,7 +73,7 @@ public abstract class Repl implements Closeable, Runnable {
 
   public Repl(@NotNull ReplConfig config) {
     this.config = config;
-    replCompiler = new ReplCompiler(new CliReporter(config.enableUnicode, this::println, this::errPrintln), null);
+    replCompiler = new ReplCompiler(new CliReporter(() -> config.enableUnicode, this::println, this::errPrintln), null);
   }
 
   protected abstract void println(@NotNull String x);
