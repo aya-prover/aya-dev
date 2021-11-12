@@ -34,10 +34,10 @@ public class Main extends MainArgs implements Callable<Integer> {
     var distillOptions = ReplConfig.loadFromDefault().distillerOptions;
     if (action.compile.isLibrary) {
       // TODO: move to a new tool
-      return LibraryCompiler.compile(filePath);
+      return LibraryCompiler.compile(filePath, !asciiOnly);
     }
     var traceBuilder = enableTrace ? new Trace.Builder() : null;
-    var compiler = new SingleFileCompiler(CliReporter.INSTANCE, null, traceBuilder, distillOptions);
+    var compiler = new SingleFileCompiler(CliReporter.stdio(!asciiOnly), null, traceBuilder, distillOptions);
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
       prettyStage,
       prettyFormat,

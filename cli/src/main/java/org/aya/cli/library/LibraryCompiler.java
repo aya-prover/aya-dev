@@ -29,10 +29,10 @@ import java.nio.file.Path;
 /**
  * @author kiva
  */
-public record LibraryCompiler(@NotNull Path buildRoot) {
-  public static int compile(@NotNull Path libraryRoot) throws IOException {
+public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
+  public static int compile(@NotNull Path libraryRoot, boolean unicode) throws IOException {
     var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
-    new LibraryCompiler(config.libraryBuildRoot()).make(config);
+    new LibraryCompiler(config.libraryBuildRoot(), unicode).make(config);
     return 0;
   }
 
@@ -88,7 +88,7 @@ public record LibraryCompiler(@NotNull Path buildRoot) {
       System.out.println("UP-TO-DATE");
       return;
     }
-    var compiler = new SingleFileCompiler(CliReporter.INSTANCE, locator, null);
+    var compiler = new SingleFileCompiler(CliReporter.stdio(unicode), locator, null);
     try {
       compiler.compile(file, new CompilerFlags(
         CompilerFlags.Message.EMOJI, false, null, compiledModulePath

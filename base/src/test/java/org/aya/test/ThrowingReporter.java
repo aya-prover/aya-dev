@@ -17,7 +17,7 @@ public final class ThrowingReporter implements Reporter {
   }
 
   @Override public void report(@NotNull Problem problem) {
-    var render = problem.computeFullErrorMessage(DistillerOptions.informative());
+    var render = problem.computeFullErrorMessage(DistillerOptions.informative(), false);
     if (!problem.isError()) {
       System.err.println(render);
       return;

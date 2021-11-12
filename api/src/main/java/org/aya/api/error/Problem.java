@@ -35,7 +35,7 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  /** @see Problem#computeFullErrorMessage(DistillerOptions) */
+  /** @see Problem#computeFullErrorMessage(DistillerOptions, boolean) */
   @NotNull Doc describe(@NotNull DistillerOptions options);
   @NotNull Severity level();
   default @NotNull Stage stage() {
@@ -84,9 +84,10 @@ public interface Problem {
     );
   }
 
-  default @NotNull String computeFullErrorMessage(@NotNull DistillerOptions options) {
-    if (sourcePos() == SourcePos.NONE) return describe(options).commonRender();
-    return toPrettyError(options).toDoc().commonRender();
+  int PAGE_WIDTH = 80;
+  default @NotNull String computeFullErrorMessage(@NotNull DistillerOptions options, boolean unicode) {
+    if (sourcePos() == SourcePos.NONE) return describe(options).renderWithPageWidth(PAGE_WIDTH, unicode);
+    return toPrettyError(options).toDoc().renderWithPageWidth(PAGE_WIDTH, unicode);
   }
 
   default @NotNull String computeBriefErrorMessage(@NotNull DistillerOptions options) {
