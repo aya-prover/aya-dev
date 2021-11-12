@@ -19,11 +19,11 @@ In file $FILE:13:72 ->
                                                                                ^------------------------------^
 
 Error: Cannot check the expression of type
-         Path (λ _ ⇒ A' _) (p.at <I>) (p.at <I>)
-         (Normalized: Path (λ _ ⇒ A' _) (p.at <I>) (p.at <I>))
+         Path (\ _ => A' _) (p.at <I>) (p.at <I>)
+         (Normalized: Path (\ _ => A' _) (p.at <I>) (p.at <I>))
        against the type
          (=) {A'} a (p.at i)
-         (Normalized: Path (λ i ⇒ A') a (p.at i))
+         (Normalized: Path (\ i => A') a (p.at i))
 
 2 error(s), 0 warning(s).
 What are you doing?

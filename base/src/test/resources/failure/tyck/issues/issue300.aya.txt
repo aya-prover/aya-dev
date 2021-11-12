@@ -6,8 +6,8 @@ In file $FILE:6:35 ->
                                          ^--------^
 
 Error: Cannot check the expression of type
-         Π (b : Unit) → Nat
-         (Normalized: Π (b : Unit) → Nat)
+         Pi (b : Unit) -> Nat
+         (Normalized: Pi (b : Unit) -> Nat)
        against the type
          Nat
          (Normalized: Nat)

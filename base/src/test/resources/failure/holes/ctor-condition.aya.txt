@@ -12,7 +12,7 @@ Goal: Goal of type
         {a : Nat}
         {a : Int} (not in scope)
       To ensure confluence:
-        Given (a ⇒ zero), we should have: zero
+        Given (a => zero), we should have: zero
 
 In file $FILE:12:13 ->
 
