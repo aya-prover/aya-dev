@@ -76,7 +76,7 @@ public class TyckDeclTest {
   private static void prepareForTyck(@NotNull ImmutableSeq<Stmt> decls) {
     var resolveInfo = new ResolveInfo(new BinOpSet(ThrowingReporter.INSTANCE));
     decls.forEach(s -> s.resolve(resolveInfo));
-    resolveInfo.opSet().reportIfCycles();
+    resolveInfo.opSet().reportIfCyclic();
     decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE, resolveInfo.opSet()));
   }
 

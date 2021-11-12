@@ -75,7 +75,7 @@ public record BinOpSet(
     tighterGraph.suc(from).append(to);
   }
 
-  public void reportIfCycles() {
+  public void reportIfCyclic() {
     var cycles = tighterGraph.findCycles();
     if (cycles.isNotEmpty()) {
       cycles.forEach(c -> reporter.report(new OperatorProblem.Circular(c)));

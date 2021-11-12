@@ -78,14 +78,14 @@ public record FileModuleLoader(
     @NotNull Reporter reporter,
     @NotNull CheckedConsumer<ShallowResolveInfo, E> onResolved,
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
-    Trace.@Nullable Builder builder
+    @Nullable Trace.Builder builder
   ) throws E {
     var shallowResolveInfo = new ShallowResolveInfo(DynamicSeq.create());
     var shallowResolver = new StmtShallowResolver(recurseLoader, shallowResolveInfo);
     program.forEach(s -> s.accept(shallowResolver, context));
     var resolveInfo = new ResolveInfo(new BinOpSet(reporter));
     program.forEach(s -> s.resolve(resolveInfo));
-    resolveInfo.opSet().reportIfCycles();
+    resolveInfo.opSet().reportIfCyclic();
     program.forEach(s -> s.desugar(reporter, resolveInfo.opSet()));
     var delayedReporter = new DelayedReporter(reporter);
     var sccTycker = new IncrementalTycker(new SCCTycker(builder, delayedReporter), resolveInfo);
