@@ -61,7 +61,7 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull DynamicSeq<@No
    * and return the topological order (need reversing) of the components.
    */
   private class Tarjan {
-    MutableMap<T, Info> info = MutableMap.create();
+    MutableMap<T, Info> info = MutableLinkedHashMap.of();
     DynamicLinkedSeq<T> stack = DynamicLinkedSeq.create();
     DynamicSeq<ImmutableSeq<T>> SCCs = DynamicSeq.create();
     int index = 0;
