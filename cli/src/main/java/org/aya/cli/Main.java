@@ -11,12 +11,8 @@ import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.tyck.trace.MdUnicodeTrace;
 import org.aya.tyck.trace.Trace;
-import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
@@ -38,10 +34,10 @@ public class Main extends MainArgs implements Callable<Integer> {
     var distillOptions = ReplConfig.loadFromDefault().distillerOptions;
     if (action.compile.isLibrary) {
       // TODO: move to a new tool
-      return LibraryCompiler.compile(filePath);
+      return LibraryCompiler.compile(filePath, !asciiOnly);
     }
     var traceBuilder = enableTrace ? new Trace.Builder() : null;
-    var compiler = new SingleFileCompiler(CliReporter.INSTANCE, null, traceBuilder, distillOptions);
+    var compiler = new SingleFileCompiler(CliReporter.stdio(!asciiOnly), null, traceBuilder, distillOptions);
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
       prettyStage,
       prettyFormat,
@@ -54,15 +50,5 @@ public class Main extends MainArgs implements Callable<Integer> {
       System.err.println(new MdUnicodeTrace(2, distillOptions)
         .docify(traceBuilder).debugRender());
     return status;
-  }
-
-  private static @NotNull String checkAndRead(@NotNull Path filePath, @NotNull String fileDisplayName) {
-    try {
-      return Files.readString(filePath);
-    } catch (IOException e) {
-      System.err.println(fileDisplayName + ": file not found (" + filePath + ")");
-    }
-    System.exit(1);
-    throw new IllegalStateException();
   }
 }

@@ -29,7 +29,7 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
       if (oldType == null) return param;
       var type = oldType.accept(this, p);
       if (type == oldType) return param;
-      return new Expr.Param(param.sourcePos(), param.ref(), type, param.explicit());
+      return new Expr.Param(param, type);
     });
   }
 

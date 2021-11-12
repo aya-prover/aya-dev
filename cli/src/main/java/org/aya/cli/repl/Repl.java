@@ -40,9 +40,6 @@ public abstract class Repl implements Closeable, Runnable {
     };
   }
 
-  public final @NotNull ReplCompiler replCompiler = new ReplCompiler(new CliReporter(this::println, this::errPrintln), null);
-  public final @NotNull CommandManager commandManager = makeCommand();
-
   public CommandManager makeCommand() {
     return new CommandManager(ImmutableSeq.of(
       CommandArg.STRING,
@@ -71,9 +68,12 @@ public abstract class Repl implements Closeable, Runnable {
   public final @NotNull ReplConfig config;
   public @NotNull Path cwd = Path.of("");
   public int prettyPrintWidth = 80;
+  public final @NotNull ReplCompiler replCompiler;
+  public final @NotNull CommandManager commandManager = makeCommand();
 
   public Repl(@NotNull ReplConfig config) {
     this.config = config;
+    replCompiler = new ReplCompiler(new CliReporter(() -> config.enableUnicode, this::println, this::errPrintln), null);
   }
 
   protected abstract void println(@NotNull String x);

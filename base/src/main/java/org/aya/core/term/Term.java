@@ -148,18 +148,27 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
   record Param(
     @NotNull LocalVar ref,
     @NotNull Term type,
+    boolean pattern,
     boolean explicit
   ) implements Bind, ParamLike<Term> {
+    public Param(@NotNull LocalVar ref, @NotNull Term type, boolean explicit) {
+      this(ref, type, false, explicit);
+    }
+
+    public Param(@NotNull ParamLike<?> param, @NotNull Term type) {
+      this(param.ref(), type, param.pattern(), param.explicit());
+    }
+
     public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(DynamicSeq<Tuple3<LocalVar, Boolean, Term>> buf) {
-      return buf.view().map(tup -> new Param(tup._1, tup._3, tup._2)).toImmutableSeq();
+      return buf.view().map(tup -> new Param(tup._1, tup._3, false, tup._2)).toImmutableSeq();
     }
 
     @Contract(" -> new") public @NotNull Param implicitify() {
-      return new Param(ref, type, false);
+      return new Param(ref, type, pattern, false);
     }
 
     @Contract(" -> new") public @NotNull Param rename() {
-      return new Param(renameVar(), type, explicit);
+      return new Param(renameVar(), type, pattern, explicit);
     }
 
     @Contract(" -> new") public @NotNull LocalVar renameVar() {
@@ -195,7 +204,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     }
 
     public @NotNull Param subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
-      return new Param(ref, type.subst(subst, levelSubst), explicit);
+      return new Param(ref, type.subst(subst, levelSubst), pattern, explicit);
     }
 
     @TestOnly @Contract(pure = true)

@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -280,8 +279,8 @@ public final class AyaProducer {
     if (literal != null) {
       var pos = sourcePosOf(ctx);
       return ImmutableSeq.of(isParamLiteral
-        ? new Expr.Param(pos, visitParamLiteral(literal), type(null, pos), true)
-        : new Expr.Param(pos, Constants.randomlyNamed(pos), visitLiteral(literal), true)
+        ? new Expr.Param(pos, visitParamLiteral(literal), type(null, pos), false, true)
+        : new Expr.Param(pos, Constants.randomlyNamed(pos), visitLiteral(literal), false, true)
       );
     }
     var teleBinder = ctx.teleBinder();
@@ -290,7 +289,7 @@ public final class AyaProducer {
       var type = teleBinder.expr();
       if (type != null) {
         var pos = sourcePosOf(ctx);
-        return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(type), true));
+        return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(type), false, true));
       }
       teleMaybeTypedExpr = teleBinder.teleMaybeTypedExpr();
     }
@@ -299,11 +298,13 @@ public final class AyaProducer {
     return unreachable(ctx);
   }
 
-  public @NotNull
-  Function<Boolean, ImmutableSeq<Expr.Param>> visitTeleMaybeTypedExpr(AyaParser.TeleMaybeTypedExprContext ctx) {
-    var type = type(ctx.type(), sourcePosOf(ctx.ids()));
-    return explicit -> visitIds(ctx.ids())
-      .map(v -> new Expr.Param(v.sourcePos(), WithPos.toVar(v), type, explicit))
+  public @NotNull BooleanFunction<ImmutableSeq<Expr.Param>>
+  visitTeleMaybeTypedExpr(AyaParser.TeleMaybeTypedExprContext ctx) {
+    var ids = ctx.ids();
+    var type = type(ctx.type(), sourcePosOf(ids));
+    var pattern = ctx.PATTERN_KW() != null;
+    return explicit -> visitIds(ids)
+      .map(v -> new Expr.Param(v.sourcePos(), WithPos.toVar(v), type, pattern, explicit))
       .collect(ImmutableSeq.factory());
   }
 
@@ -345,14 +346,11 @@ public final class AyaProducer {
   }
 
   public @NotNull Expr visitArr(AyaParser.ArrContext ctx) {
-    var from = visitExpr(ctx.expr(0));
+    var expr0 = ctx.expr(0);
     var to = visitExpr(ctx.expr(1));
-    var pos = sourcePosOf(ctx.expr(0));
-    return new Expr.PiExpr(
-      sourcePosOf(ctx),
-      false,
-      new Expr.Param(pos, Constants.randomlyNamed(pos), from, true),
-      to);
+    var pos = sourcePosOf(expr0);
+    var param = new Expr.Param(pos, Constants.randomlyNamed(pos), visitExpr(expr0), false, true);
+    return new Expr.PiExpr(sourcePosOf(ctx), false, param, to);
   }
 
   public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
@@ -458,7 +456,7 @@ public final class AyaProducer {
         visitExpr(ctx.expr()).sourcePos(),
         Constants.anonymous(),
         visitExpr(ctx.expr()),
-        true))
+        false, true))
     );
   }
 

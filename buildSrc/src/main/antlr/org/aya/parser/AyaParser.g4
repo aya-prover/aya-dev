@@ -142,7 +142,7 @@ tele : literal
 teleBinder : expr
            | teleMaybeTypedExpr ;
 
-teleMaybeTypedExpr : ids type?;
+teleMaybeTypedExpr : PATTERN_KW? ids type?;
 
 // utilities
 idsComma : (ID COMMA)* ID?;

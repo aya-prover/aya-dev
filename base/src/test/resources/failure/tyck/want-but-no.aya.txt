@@ -4,7 +4,7 @@ In file $FILE:1:19 ->
                          ^------^
 
 Error: Unable to apply the expression
-         λ x ⇒ x
+         \ x => x
        because the type of what you applied is not a Pi type, but instead:
          Type
          (Normalized: Type)

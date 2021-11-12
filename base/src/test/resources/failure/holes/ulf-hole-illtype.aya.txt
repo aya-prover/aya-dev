@@ -21,7 +21,7 @@ In file $FILE:6:16 ->
 
 Error: Unsolved meta _
        in `F _`
-       in `Π (X : F _) → F (Neg <X>)`
+       in `Pi (X : F _) -> F (Neg <X>)`
 
 In file $FILE:6:44 ->
 
@@ -46,7 +46,7 @@ In file $FILE:6:42 ->
 
 Error: Cannot check the expression of type
          F (Neg <X>)
-         (Normalized: F (Π (_ : <X>) → Empty))
+         (Normalized: F (Pi (_ : <X>) -> Empty))
        against the type
          Nat
          (Normalized: Nat)

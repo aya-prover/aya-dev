@@ -363,14 +363,19 @@ public sealed interface Expr extends ConcreteExpr {
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar ref,
     @Nullable Expr type,
+    boolean pattern,
     boolean explicit
   ) implements ParamLike<Expr> {
+    public Param(@NotNull Param param, @Nullable Expr type) {
+      this(param.sourcePos, param.ref, type, param.pattern, param.explicit);
+    }
+
     public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
-      this(sourcePos, var, null, explicit);
+      this(sourcePos, var, null, false, explicit);
     }
 
     public @NotNull Expr.Param mapExpr(@NotNull Function<@NotNull Expr, @Nullable Expr> mapper) {
-      return new Param(sourcePos, ref, type != null ? mapper.apply(type) : null, explicit);
+      return new Param(sourcePos, ref, type != null ? mapper.apply(type) : null, pattern, explicit);
     }
   }
 }
