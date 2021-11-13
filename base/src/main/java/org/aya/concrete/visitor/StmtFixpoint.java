@@ -23,7 +23,6 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
 
   default void visitDecl(@NotNull Decl decl, P pp) {
     visitSignatured(decl, pp);
-    decl.abuseBlock.forEach(stmt -> stmt.accept(this, pp));
   }
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {
@@ -82,10 +81,6 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
     field.result = field.result.accept(this, p);
     field.clauses = field.clauses.map(clause -> visitClause(clause, p));
     field.body = field.body.map(expr -> expr.accept(this, p));
-    return Unit.unit();
-  }
-
-  @Override default Unit visitBind(Command.@NotNull Bind bind, P p) {
     return Unit.unit();
   }
 

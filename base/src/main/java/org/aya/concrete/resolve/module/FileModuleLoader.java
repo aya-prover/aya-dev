@@ -84,9 +84,7 @@ public record FileModuleLoader(
     var shallowResolver = new StmtShallowResolver(recurseLoader, shallowResolveInfo);
     program.forEach(s -> s.accept(shallowResolver, context));
     var resolveInfo = new ResolveInfo(new BinOpSet(reporter));
-    program.forEach(s -> s.resolve(resolveInfo));
-    resolveInfo.opSet().reportIfCyclic();
-    program.forEach(s -> s.desugar(reporter, resolveInfo.opSet()));
+    Stmt.resolve(program, resolveInfo);
     var delayedReporter = new DelayedReporter(reporter);
     var sccTycker = new IncrementalTycker(new SCCTycker(builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException

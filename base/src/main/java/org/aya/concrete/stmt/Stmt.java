@@ -2,16 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
+import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.Reporter;
 import org.aya.api.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.visitor.BindResolver;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
@@ -28,13 +29,17 @@ public sealed interface Stmt extends AyaDocile
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
-  @Contract(mutates = "this")
-  default void resolve(@NotNull ResolveInfo resolveInfo) {
-    accept(StmtResolver.INSTANCE, resolveInfo);
+  @Contract(mutates = "param1")
+  static void resolve(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo) {
+    statements.forEach(s -> s.accept(StmtResolver.INSTANCE, resolveInfo));
+    statements.forEach(s -> s.accept(BindResolver.INSTANCE, resolveInfo));
+    var opSet = resolveInfo.opSet();
+    opSet.reportIfCyclic();
+    statements.forEach(s -> s.desugar(opSet));
   }
 
-  default void desugar(@NotNull Reporter reporter, @NotNull BinOpSet opSet) {
-    accept(new Desugarer(reporter, opSet), Unit.unit());
+  default void desugar(@NotNull BinOpSet opSet) {
+    accept(new Desugarer(opSet), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
@@ -53,7 +58,6 @@ public sealed interface Stmt extends AyaDocile
     R visitImport(@NotNull Command.Import cmd, P p);
     R visitOpen(@NotNull Command.Open cmd, P p);
     R visitModule(@NotNull Command.Module mod, P p);
-    R visitBind(@NotNull Command.Bind bind, P p);
     R visitRemark(@NotNull Remark remark, P p);
     R visitLevels(@NotNull Generalize.Levels levels, P p);
     R visitExample(@NotNull Sample.Working example, P p);

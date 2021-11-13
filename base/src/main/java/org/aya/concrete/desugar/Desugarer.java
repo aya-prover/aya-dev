@@ -4,7 +4,6 @@ package org.aya.concrete.desugar;
 
 import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
-import org.aya.api.error.Reporter;
 import org.aya.api.ref.PreLevelVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.LevelProblem;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000, kiva
  */
-public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) implements StmtFixpoint<Unit> {
+public record Desugarer(@NotNull BinOpSet opSet) implements StmtFixpoint<Unit> {
   @Override public @NotNull Expr visitApp(@NotNull Expr.AppExpr expr, Unit unit) {
     if (expr.function() instanceof Expr.RawUnivExpr univ) return desugarUniv(expr, univ);
     return StmtFixpoint.super.visitApp(expr, unit);
@@ -55,7 +54,7 @@ public record Desugarer(@NotNull Reporter reporter, @NotNull BinOpSet opSet) imp
       case Expr.RefExpr ref && ref.resolvedVar() instanceof PreLevelVar lv -> new Level.Reference<>(lv);
       case Expr.HoleExpr hole -> new Level.Reference<>(new PreLevelVar(Constants.randomName(hole), hole.sourcePos()));
       default -> {
-        reporter.report(new LevelProblem.BadLevelExpr(expr));
+        opSet.reporter().report(new LevelProblem.BadLevelExpr(expr));
         throw new DesugarInterruption();
       }
     };

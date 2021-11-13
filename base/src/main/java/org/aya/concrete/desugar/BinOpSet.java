@@ -8,7 +8,6 @@ import org.aya.api.error.SourcePos;
 import org.aya.api.util.Assoc;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.OpDecl;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +18,13 @@ public record BinOpSet(
   @NotNull MutableSet<BinOP> ops,
   @NotNull MutableGraph<BinOP> tighterGraph
 ) {
-  static final @NotNull BinOpSet.BinOP APP_ELEM = BinOP.from(SourcePos.NONE,
-    () -> new OpDecl.Operator("application", Assoc.InfixL));
+  static final @NotNull BinOpSet.BinOP APP_ELEM = BinOP.from(SourcePos.NONE, OpDecl.APPLICATION);
 
   public BinOpSet(@NotNull Reporter reporter) {
     this(reporter, MutableSet.of(APP_ELEM), MutableGraph.create());
   }
 
-  public void bind(@NotNull OpDecl op, @NotNull Command.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
+  public void bind(@NotNull OpDecl op, @NotNull OpDecl.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
     var opElem = ensureHasElem(op, sourcePos);
     var targetElem = ensureHasElem(target, sourcePos);
     if (opElem == targetElem) {
@@ -55,7 +53,7 @@ public record BinOpSet(
   }
 
   public boolean isOperand(@Nullable OpDecl opDecl) {
-    return opDecl == null || opDecl.getOperator() == null;
+    return opDecl == null || opDecl.opInfo() == null;
   }
 
   public BinOP ensureHasElem(@NotNull OpDecl opDecl) {
@@ -89,8 +87,8 @@ public record BinOpSet(
     @NotNull String name,
     @NotNull Assoc assoc
   ) {
-    private static @NotNull OpDecl.Operator ensureOperator(@NotNull OpDecl opDecl) {
-      var op = opDecl.getOperator();
+    private static @NotNull OpDecl.OpInfo ensureOperator(@NotNull OpDecl opDecl) {
+      var op = opDecl.opInfo();
       if (op == null) throw new IllegalArgumentException("not an operator");
       return op;
     }

@@ -275,15 +275,6 @@ public class ConcreteDistiller extends BaseDistiller implements
     );
   }
 
-  @Override public Doc visitBind(Command.@NotNull Bind bind, Unit unit) {
-    return Doc.sep(
-      Doc.styled(KEYWORD, "bind"),
-      Doc.plain(bind.op().join()),
-      Doc.styled(KEYWORD, bind.pred().keyword),
-      Doc.plain(bind.target().join())
-    );
-  }
-
   @Override public Doc visitRemark(@NotNull Remark remark, Unit unit) {
     var literate = remark.literate;
     return literate != null ? literate.toDoc() : Doc.plain(remark.raw);
@@ -298,7 +289,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       Doc.emptyIf(decl.body.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.body.view().map(ctor -> visitCtor(ctor, Unit.unit()))))))
+        decl.body.view().map(ctor -> visitCtor(ctor, Unit.unit())))))),
+      visitBindBlock(decl.bindBlock)
     );
   }
 
@@ -333,7 +325,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-        decl.fields.view().map(field -> visitField(field, Unit.unit()))))))
+        decl.fields.view().map(field -> visitField(field, Unit.unit())))))),
+      visitBindBlock(decl.bindBlock)
     );
   }
 
@@ -366,8 +359,26 @@ public class ConcreteDistiller extends BaseDistiller implements
     return Doc.cat(Doc.sepNonEmpty(prelude),
       decl.body.fold(expr -> Doc.cat(Doc.ONE_WS, Doc.symbol("=>"), Doc.ONE_WS, expr.accept(this, Outer.Free)),
         clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
-      Doc.emptyIf(decl.abuseBlock.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.styled(KEYWORD, "abusing"), Doc.ONE_WS, visitAbuse(decl.abuseBlock)))
+      visitBindBlock(decl.bindBlock)
     );
+  }
+
+  public Doc visitBindBlock(@NotNull OpDecl.BindBlock bindBlock) {
+    if (bindBlock == OpDecl.BindBlock.EMPTY) return Doc.empty();
+    var loosers = bindBlock.resolvedLoosers().value;
+    var tighters = bindBlock.resolvedTighters().value;
+    if (loosers.isEmpty() && tighters.isEmpty()) return Doc.empty();
+
+    if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
+      Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "tighter"),
+      Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)))));
+    else if (tighters.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
+      Doc.styled(KEYWORD, "bind"), Doc.styled(KEYWORD, "looser"),
+      Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar)))));
+    return Doc.cat(Doc.line(), Doc.hang(2, Doc.cat(Doc.styled(KEYWORD, "bind"), Doc.braced(Doc.sep(
+      Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BaseDistiller::visitDefVar)),
+      Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BaseDistiller::visitDefVar))
+    )))));
   }
 
   @Override public Doc visitPrim(@NotNull Decl.PrimDecl decl, Unit unit) {
@@ -379,10 +390,6 @@ public class ConcreteDistiller extends BaseDistiller implements
       case Inline -> "inline";
       case Erase -> "erase";
     });
-  }
-
-  private Doc visitAbuse(@NotNull ImmutableSeq<Stmt> block) {
-    return Doc.vcat(block.view().map(stmt -> stmt.accept(this, Unit.unit())));
   }
 
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {

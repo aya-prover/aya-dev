@@ -40,8 +40,7 @@ def infix + (a b : ℕ) : ℕ
  | a, zero => a
  | suc a, b => suc (a + b)
  | a, suc b => suc (a + b)
-
-bind + tighter =
+ bind tighter =
 
 def +-comm (a b : ℕ) : a + b = b + a
   | zero, a => idp

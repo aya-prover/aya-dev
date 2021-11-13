@@ -40,7 +40,6 @@ BIND_KW : 'bind';
 MATCH : 'match';
 ABSURD : 'impossible';
 VARIABLE : 'variable';
-ABUSING : 'abusing';
 DEF : 'def';
 STRUCT : 'struct';
 DATA : 'data';

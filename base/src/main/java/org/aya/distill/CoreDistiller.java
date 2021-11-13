@@ -202,7 +202,7 @@ public class CoreDistiller extends BaseDistiller implements
     @NotNull DefVar<?, ?> var, @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer
   ) {
-    return visitCalls(var.concrete instanceof OpDecl decl && decl.getOperator() != null,
+    return visitCalls(var.concrete instanceof OpDecl decl && decl.opInfo() != null,
       linkRef(var, style), args.view(), outer);
   }
 

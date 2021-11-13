@@ -43,8 +43,7 @@ def infixl + (m n : Nat) : Nat
   | n, zero => n
   | suc m, n => suc (m + n)
   | m, suc n => suc (m + n)
-
-bind + tighter =
+  bind tighter =
 
 def +-comm (x y : Nat) : x + y = y + x
   | zero, n => idp n
@@ -58,14 +57,13 @@ def infixl * (m n : Nat) : Nat
   | zero, n => zero
   | m, zero => zero
   | suc m, suc n => suc (m + n + m * n)
+  bind tighter +
 
 def infixl *' (m n : Nat) : Nat
   | zero, n => zero
   | m, zero => zero
   | suc m, n => n + m *' n
-
-bind * tighter +
-bind *' tighter +
+  bind tighter +
 
 def *'-suc (m n : Nat) : m *' suc n = m + m *' n
   | zero, n => idp _

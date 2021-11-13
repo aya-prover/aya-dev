@@ -4,7 +4,6 @@ package org.aya.lsp.actions;
 
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
@@ -27,6 +26,7 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
   // region def, data, struct, prim, levels
   @Override public Unit visitData(@NotNull Decl.DataDecl decl, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(decl), HighlightResult.Symbol.Kind.DataDef));
+    visitBind(buffer, decl.bindBlock);
     return StmtConsumer.super.visitData(decl, buffer);
   }
 
@@ -37,16 +37,19 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
 
   @Override public Unit visitStruct(@NotNull Decl.StructDecl decl, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(decl), HighlightResult.Symbol.Kind.StructDef));
+    visitBind(buffer, decl.bindBlock);
     return StmtConsumer.super.visitStruct(decl, buffer);
   }
 
-  @Override public Unit visitField(@NotNull Decl.StructField field, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
+  @Override
+  public Unit visitField(@NotNull Decl.StructField field, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(field), HighlightResult.Symbol.Kind.FieldDef));
     return StmtConsumer.super.visitField(field, buffer);
   }
 
   @Override public Unit visitFn(@NotNull Decl.FnDecl decl, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     buffer.append(new HighlightResult.Symbol(rangeOf(decl), HighlightResult.Symbol.Kind.FnDef));
+    visitBind(buffer, decl.bindBlock);
     return StmtConsumer.super.visitFn(decl, buffer);
   }
 
@@ -55,7 +58,8 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     return StmtConsumer.super.visitPrim(decl, buffer);
   }
 
-  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
+  @Override
+  public Unit visitLevels(Generalize.@NotNull Levels levels, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
     for (var level : levels.levels())
       buffer.append(new HighlightResult.Symbol(LspRange.toRange(level.sourcePos()), HighlightResult.Symbol.Kind.Generalize));
     return StmtConsumer.super.visitLevels(levels, buffer);
@@ -127,7 +131,7 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     return StmtConsumer.super.visitModule(mod, buffer);
   }
 
-  private HighlightResult.Symbol.@NotNull Kind kindOf(@NotNull OpDecl opDecl) {
+  private HighlightResult.Symbol.@NotNull Kind kindOf(@NotNull Object opDecl) {
     return switch (opDecl) {
       case Decl.FnDecl ignored -> HighlightResult.Symbol.Kind.FnCall;
       case Decl.StructDecl ignored -> HighlightResult.Symbol.Kind.StructCall;
@@ -137,16 +141,17 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     };
   }
 
-  private void visitOperator(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @NotNull Ref<@Nullable OpDecl> ref) {
-    if (ref.value == null) return;
-    buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(ref.value)));
+  private void visitOperator(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @Nullable DefVar<?, ?> op) {
+    if (op == null) return;
+    buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(op.concrete)));
   }
 
-  @Override public Unit visitBind(Command.@NotNull Bind bind, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
-    visitOperator(buffer, bind.op().sourcePos(), bind.resolvedOp());
-    visitOperator(buffer, bind.target().sourcePos(), bind.resolvedTarget());
-    return StmtConsumer.super.visitBind(bind, buffer);
+  private void visitBind(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull OpDecl.BindBlock bindBlock) {
+    if (bindBlock == OpDecl.BindBlock.EMPTY) return;
+    bindBlock.loosers().view().zip(bindBlock.resolvedLoosers().value.view())
+      .forEach(tup -> visitOperator(buffer, tup._1.sourcePos(), tup._2));
+    bindBlock.tighters().view().zip(bindBlock.resolvedTighters().value.view())
+      .forEach(tup -> visitOperator(buffer, tup._1.sourcePos(), tup._2));
   }
-
   // endregion
 }

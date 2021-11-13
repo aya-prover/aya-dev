@@ -58,22 +58,17 @@ def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
 def infixr >== {A : Type} {a b c : A} (p : a = b) (q : b = c) => p *> q
+  bind looser qed, ==<
 def infix  ==< {A : Type} (a : A) {b : A} (p : a = b) => p
 
 def infix qed {A : Type} (a : A) : a = a => idp a
-
-bind >== looser qed
-bind >== looser ==<
 
 -----------------------------------------
 
 def infix + (a b : Nat) : Nat
  | a, zero => a
  | a, suc b => suc (a + b)
-
-bind + tighter =
-bind + tighter ==<
-bind + tighter qed
+ bind tighter =, ==<, qed
 
 def +-comm (a b : Nat) : a + b = b + a
   | zero, zero => idp _

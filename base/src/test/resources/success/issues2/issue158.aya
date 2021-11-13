@@ -30,8 +30,7 @@ def infix !! {A : Type} (l : List A) (i : Fin (length l)) : A
 def infix ++ {A : Type} (xs ys : List A) : List A
 | nil, ys => ys
 | cons a xs, ys => a cons xs ++ ys
-bind cons looser ++
-bind ++ tighter =
+bind { tighter =, cons }
 
 def ++-assoc {A : Type} {xs ys zs : List A} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
   | {A}, {nil} => idp

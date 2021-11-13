@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -56,7 +56,7 @@ public final class ExprTycker {
   public final @Nullable Trace.Builder traceBuilder;
   public final @NotNull TyckState state = new TyckState();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
-  public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableMap.wrapJava(new LinkedHashMap<>());
+  public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableLinkedHashMap.of();
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);

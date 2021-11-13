@@ -32,8 +32,7 @@ def infix + ( a b : Nat ) : Nat
  | a, zero => a
  | suc a, b => suc (a + b)
  | a, suc b => suc (a + b)
-
-bind + tighter =
+ bind tighter =
 
 def +-assoc ( a b c : Nat ) : (a + b) + c = a + (b + c)
   | zero  , b , c => idp (b + c)

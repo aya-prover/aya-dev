@@ -21,7 +21,6 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
 
   default void visitDecl(@NotNull Decl decl, P pp) {
     visitSignatured(decl, pp);
-    decl.abuseBlock.forEach(stmt -> stmt.accept(this, pp));
   }
 
   default void visitClause(@NotNull Pattern.Clause c, P pp) {
@@ -87,9 +86,6 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
     return Unit.unit();
   }
 
-  @Override default Unit visitBind(Command.@NotNull Bind bind, P p) {
-    return Unit.unit();
-  }
   @Override default Unit visitRemark(@NotNull Remark remark, P p) {
     if (remark.literate != null) remark.literate.visit(this, p);
     return Unit.unit();

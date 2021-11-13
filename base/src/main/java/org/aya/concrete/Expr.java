@@ -59,7 +59,7 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
-    return accept(new Desugarer(reporter, new BinOpSet(reporter)), Unit.unit());
+    return accept(new Desugarer(new BinOpSet(reporter)), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
