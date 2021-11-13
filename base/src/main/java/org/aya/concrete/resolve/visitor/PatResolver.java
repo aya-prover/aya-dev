@@ -7,8 +7,10 @@ import kala.tuple.Tuple2;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.util.WithPos;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
+import org.aya.tyck.pat.PatternProblem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +34,7 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
       match.expr.map(e -> e.accept(bodyResolver, ctx.value)));
   }
 
-  Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
+  @NotNull Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
     var res = pat.accept(this, ctx.value);
     ctx.value = res._1;
     return res._2;
@@ -42,14 +44,17 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
     return as != null ? ctx.bind(as, sourcePos) : ctx;
   }
 
-  @Contract(value = "_, _ -> fail", pure = true)
+  @Contract(pure = true)
   @Override public Tuple2<Context, Pattern> visitCtor(Pattern.@NotNull Ctor ctor, Context context) {
     var newCtx = new Ref<>(context);
     var params = ctor.params().map(p -> subpatterns(newCtx, p));
+    var namePos = ctor.resolved().sourcePos();
+    var resolution = context.getUnqualifiedMaybe(ctor.resolved().data().name(), namePos);
+    if (resolution == null) context.reportAndThrow(new PatternProblem.UnknownCtor(ctor));
     var sourcePos = ctor.sourcePos();
     return Tuple.of(
       bindAs(ctor.as(), newCtx.value, sourcePos),
-      new Pattern.Ctor(sourcePos, ctor.explicit(), ctor.name(), params, ctor.as(), ctor.resolved()));
+      new Pattern.Ctor(sourcePos, ctor.explicit(), new WithPos<>(namePos, resolution), params, ctor.as()));
   }
 
   @Override public Tuple2<Context, Pattern> visitTuple(Pattern.@NotNull Tuple tuple, Context context) {
@@ -73,7 +78,8 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
   }
 
   @Override public Tuple2<Context, Pattern> visitBind(Pattern.@NotNull Bind bind, Context context) {
-    bind.resolved().value = context.getUnqualifiedMaybe(bind.bind().name(), bind.sourcePos());
-    return Tuple.of(context.bind(bind.bind(), bind.sourcePos(), var -> false), bind);
+    var maybe = context.getUnqualifiedMaybe(bind.bind().name(), bind.sourcePos());
+    if (maybe != null) return Tuple.of(context, new Pattern.Ctor(bind, maybe));
+    else return Tuple.of(context.bind(bind.bind(), bind.sourcePos(), var -> false), bind);
   }
 }

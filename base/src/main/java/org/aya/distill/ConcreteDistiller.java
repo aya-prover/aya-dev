@@ -222,7 +222,7 @@ public class ConcreteDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitCtor(Pattern.@NotNull Ctor ctor, Outer outer) {
-    var name = Doc.styled(CON_CALL, ctor.name().data());
+    var name = linkRef(ctor.resolved().data(), CON_CALL);
     var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
     return ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
   }

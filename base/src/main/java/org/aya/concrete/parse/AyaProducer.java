@@ -624,13 +624,10 @@ public final class AyaProducer {
       throw new ParsingInterruptedException();
     }
     return (ex, as) -> new Pattern.Ctor(
-      sourcePosOf(ctx),
-      ex,
-      new WithPos<>(bind.sourcePos(), bind.bind().name()),
+      sourcePosOf(ctx), ex,
+      new WithPos<>(bind.sourcePos(), bind.bind()),
       atoms.view().drop(1).map(p -> p.apply(true)).toImmutableSeq(),
-      as,
-      new Ref<>(null)
-    );
+      as);
   }
 
   public @NotNull BooleanFunction<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
@@ -654,8 +651,7 @@ public final class AyaProducer {
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null)
-      return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)));
     if (ctx.ABSURD() != null) return ex -> new Pattern.Absurd(sourcePos, ex);
 
     return unreachable(ctx);

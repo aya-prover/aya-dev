@@ -4,7 +4,6 @@ package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import kala.value.Ref;
 import org.aya.api.concrete.ConcretePat;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.SourcePos;
@@ -86,31 +85,27 @@ public sealed interface Pattern extends ConcretePat {
     }
   }
 
-  /**
-   * @param resolved will be set to local binding or ctor head during resolving and tycking
-   */
   record Bind(
     @NotNull SourcePos sourcePos,
     boolean explicit,
-    @NotNull LocalVar bind,
-    @NotNull Ref<@Nullable Var> resolved
+    @NotNull LocalVar bind
   ) implements Pattern {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitBind(this, p);
     }
   }
 
-  /**
-   * @param resolved will be set to ctor head during tycking
-   */
   record Ctor(
     @NotNull SourcePos sourcePos,
     boolean explicit,
-    @NotNull WithPos<String> name,
+    @NotNull WithPos<@NotNull Var> resolved,
     @NotNull ImmutableSeq<Pattern> params,
-    @Nullable LocalVar as,
-    @NotNull Ref<@Nullable Var> resolved
+    @Nullable LocalVar as
   ) implements Pattern {
+    public Ctor(@NotNull Pattern.Bind bind, @NotNull Var maybe) {
+      this(bind.sourcePos(), bind.explicit(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty(), null);
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitCtor(this, p);
     }

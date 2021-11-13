@@ -10,12 +10,13 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
-import org.aya.api.error.IgnoringReporter;
 import org.aya.api.error.Problem;
-import org.aya.api.error.Reporter;
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
+import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
@@ -37,7 +38,6 @@ import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -104,10 +104,10 @@ public final class PatTycker {
     return checked.map(c -> c._1.mapTerm(e -> e.zonk(exprTycker, c._2)));
   }
 
-  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
+  @SuppressWarnings("unchecked") private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
-        var selection = selectCtor(term, null, refSubst.reporter(), absurd);
+        var selection = selectCtor(term, null, absurd);
         if (selection != null) {
           foundError();
           refSubst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
@@ -116,7 +116,7 @@ public final class PatTycker {
       }
       case Pattern.Tuple tuple -> {
         if (!(term instanceof FormTerm.Sigma sigma))
-          yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, "?", term);
+          yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, term);
         // sig.result is a dummy term
         var sig = new Def.Signature(
           ImmutableSeq.empty(),
@@ -128,10 +128,16 @@ public final class PatTycker {
           visitPatterns(sig, tuple.patterns().view())._1, as, sigma);
       }
       case Pattern.Ctor ctor -> {
-        var realCtor = selectCtor(term, ctor.name().data(), refSubst.reporter(), ctor);
-        if (realCtor == null) yield withError(new PatternProblem.UnknownCtor(ctor), ctor, ctor.name().data(), term);
+        var var = ctor.resolved().data();
+        if (term instanceof CallTerm.Prim prim
+          && prim.ref().core.id == PrimDef.ID.INTERVAL
+          && var instanceof DefVar<?, ?> defVar
+          && defVar.core instanceof PrimDef def
+          && PrimDef.Factory.LEFT_RIGHT.contains(def.id)
+        ) yield new Pat.Prim(ctor.explicit(), (DefVar<PrimDef, Decl.PrimDecl>) defVar, term);
+        var realCtor = selectCtor(term, var, ctor);
+        if (realCtor == null) yield randomPat(pattern, term);
         var ctorRef = realCtor._3.ref();
-        ctor.resolved().value = ctorRef;
         var ctorCore = ctorRef.core;
         final var dataCall = realCtor._1;
         var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
@@ -142,27 +148,8 @@ public final class PatTycker {
       }
       case Pattern.Bind bind -> {
         var v = bind.bind();
-        if (term instanceof CallTerm.Prim prim && prim.ref().core.id == PrimDef.ID.INTERVAL)
-          for (var primName : PrimDef.Factory.LEFT_RIGHT)
-            if (Objects.equals(bind.bind().name(), primName.id)) {
-              refSubst.bad().add(bind.bind());
-              yield new Pat.Prim(bind.explicit(), PrimDef.Factory.INSTANCE.getOption(primName).get().ref(), term);
-            }
-        var selected = selectCtor(term, v.name(), IgnoringReporter.INSTANCE, bind);
-        if (selected == null) {
-          exprTycker.localCtx.put(v, term);
-          yield new Pat.Bind(bind.explicit(), v, term);
-        }
-        var ctorCore = selected._3.ref().core;
-        if (ctorCore.selfTele.isNotEmpty()) {
-          // TODO: error report: not enough parameters bind
-          foundError();
-          throw new ExprTycker.TyckerException();
-        }
-        var value = bind.resolved().value;
-        if (value != null) refSubst.good().putIfAbsent(v, value);
-        else refSubst.bad().add(v);
-        yield new Pat.Ctor(bind.explicit(), selected._3.ref(), ImmutableSeq.empty(), null, selected._1);
+        exprTycker.localCtx.put(v, term);
+        yield new Pat.Bind(bind.explicit(), v, term);
       }
       case default -> throw new UnsupportedOperationException("Number and underscore patterns are unsupported yet");
     };
@@ -259,31 +246,36 @@ public final class PatTycker {
     if (currentClause != null) currentClause.hasError = true;
   }
 
-  private @NotNull Pat withError(Problem problem, Pattern pattern, String name, Term param) {
+  private @NotNull Pat withError(Problem problem, Pattern pattern, Term param) {
     exprTycker.reporter.report(problem);
     foundError();
     // In case something's wrong, produce a random pattern
-    return new Pat.Bind(pattern.explicit(), new LocalVar(name), param);
+    return randomPat(pattern, param);
+  }
+
+  private @NotNull Pat randomPat(Pattern pattern, Term param) {
+    return new Pat.Bind(pattern.explicit(), new LocalVar("?"), param);
   }
 
   /**
-   * @param name     if null, the selection will be performed on all constructors
-   * @param reporter see also {@link IgnoringReporter#INSTANCE}
+   * @param name if null, the selection will be performed on all constructors
    * @return null means selection failed
    */
   private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
-  selectCtor(Term param, @Nullable String name, @NotNull Reporter reporter, @NotNull Pattern pos) {
+  selectCtor(Term param, @Nullable Var name, @NotNull Pattern pos) {
     if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
-      reporter.report(new PatternProblem.SplittingOnNonData(pos, param));
+      exprTycker.reporter.report(new PatternProblem.SplittingOnNonData(pos, param));
+      foundError();
       return null;
     }
     var core = dataCall.ref().core;
     if (core == null) {
-      reporter.report(new NotYetTyckedError(pos.sourcePos(), dataCall.ref()));
+      exprTycker.reporter.report(new NotYetTyckedError(pos.sourcePos(), dataCall.ref()));
+      foundError();
       return null;
     }
     for (var ctor : core.body) {
-      if (name != null && !Objects.equals(ctor.ref().name(), name)) continue;
+      if (name != null && ctor.ref() != name) continue;
       var matchy = mischa(dataCall, core, ctor);
       if (matchy != null) return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
       // For absurd pattern, we look at the next constructor
@@ -291,8 +283,8 @@ public final class PatTycker {
       // Since we cannot have two constructors of the same name,
       // if the name-matching constructor mismatches the type,
       // we get an error.
-      var severity = reporter == IgnoringReporter.INSTANCE ? Problem.Severity.WARN : Problem.Severity.ERROR;
-      refSubst.reporter().report(new PatternProblem.UnavailableCtor(pos, severity));
+      exprTycker.reporter.report(new PatternProblem.UnavailableCtor(pos));
+      foundError();
       return null;
     }
     return null;

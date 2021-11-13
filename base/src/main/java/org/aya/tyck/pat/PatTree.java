@@ -4,7 +4,6 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import kala.value.Ref;
 import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.WithPos;
@@ -26,9 +25,9 @@ public record PatTree(
 
   public @NotNull Pattern toPattern() {
     var childPatterns = children.isEmpty()
-      ? ImmutableSeq.<Pattern>fill(argsCount, new Pattern.Bind(SourcePos.NONE, true, new LocalVar("_"), new Ref<>()))
+      ? ImmutableSeq.<Pattern>fill(argsCount, new Pattern.Bind(SourcePos.NONE, true, new LocalVar("_")))
       : children.view().map(PatTree::toPattern).toImmutableSeq();
-    return new Pattern.Ctor(SourcePos.NONE, explicit, new WithPos<>(SourcePos.NONE, s), childPatterns, null, new Ref<>(null));
+    return new Pattern.Ctor(SourcePos.NONE, explicit, new WithPos<>(SourcePos.NONE, new LocalVar(s)), childPatterns, null);
   }
 
   public final static class Builder extends GenericBuilder<PatTree> {

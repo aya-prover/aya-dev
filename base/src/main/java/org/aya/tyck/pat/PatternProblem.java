@@ -51,7 +51,11 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record UnavailableCtor(@Override @NotNull Pattern pattern, @NotNull Severity level) implements PatternProblem {
+  record UnavailableCtor(@Override @NotNull Pattern pattern) implements PatternProblem {
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
+
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Cannot match with"),
