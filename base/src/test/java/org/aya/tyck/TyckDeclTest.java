@@ -3,9 +3,8 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.util.error.SourceFile;
 import org.aya.concrete.ParseTest;
-import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
@@ -17,6 +16,7 @@ import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.error.SourceFile;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public class TyckDeclTest {
   }
 
   private static void resolve(@NotNull ImmutableSeq<Stmt> decls) {
-    Stmt.resolve(decls, new ResolveInfo(new BinOpSet(ThrowingReporter.INSTANCE)));
+    Stmt.resolve(decls, new ResolveInfo(new AyaBinOpSet(ThrowingReporter.INSTANCE)));
   }
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {

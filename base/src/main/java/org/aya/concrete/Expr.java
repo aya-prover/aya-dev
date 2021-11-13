@@ -15,8 +15,8 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.PreLevelVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.BinOpParser;
-import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
@@ -59,7 +59,7 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   @Override default @NotNull Expr desugar(@NotNull Reporter reporter) {
-    return accept(new Desugarer(new BinOpSet(reporter)), Unit.unit());
+    return accept(new Desugarer(new AyaBinOpSet(reporter)), Unit.unit());
   }
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {

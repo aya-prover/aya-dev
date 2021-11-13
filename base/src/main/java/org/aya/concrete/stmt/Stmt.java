@@ -7,8 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
-import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
@@ -16,6 +15,7 @@ import org.aya.concrete.resolve.visitor.BindResolver;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +38,7 @@ public sealed interface Stmt extends AyaDocile
     statements.forEach(s -> s.desugar(opSet));
   }
 
-  default void desugar(@NotNull BinOpSet opSet) {
+  default void desugar(@NotNull AyaBinOpSet opSet) {
     accept(new Desugarer(opSet), Unit.unit());
   }
 

@@ -4,9 +4,6 @@ package org.aya.concrete.desugar;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
-import org.aya.api.error.Reporter;
-import org.aya.concrete.desugar.error.OperatorProblem;
-import org.aya.concrete.resolve.context.Context;
 import org.aya.util.MutableGraph;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -14,16 +11,10 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record BinOpSet(
-  @NotNull Reporter reporter,
-  @NotNull MutableSet<BinOP> ops,
-  @NotNull MutableGraph<BinOP> tighterGraph
-) {
-  static final @NotNull BinOpSet.BinOP APP_ELEM = BinOP.from(SourcePos.NONE, OpDecl.APPLICATION);
-
-  public BinOpSet(@NotNull Reporter reporter) {
-    this(reporter, MutableSet.of(APP_ELEM), MutableGraph.create());
-  }
+public abstract class BinOpSet {
+  public final @NotNull MutableGraph<BinOP> tighterGraph = MutableGraph.create();
+  public final @NotNull MutableSet<BinOP> ops = MutableSet.of(APP_ELEM);
+  public static final @NotNull BinOpSet.BinOP APP_ELEM = BinOP.from(SourcePos.NONE, OpDecl.APPLICATION);
 
   public void bind(@NotNull OpDecl op, @NotNull OpDecl.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
     var opElem = ensureHasElem(op, sourcePos);
@@ -35,12 +26,7 @@ public record BinOpSet(
     }
   }
 
-  private void reportSelfBind(@NotNull SourcePos sourcePos) {
-    reporter.report(new OperatorProblem.BindSelfError(sourcePos));
-    throw new Context.ResolvingInterruptedException();
-  }
-
-  public PredCmp compare(@NotNull BinOpSet.BinOP lhs, @NotNull BinOpSet.BinOP rhs) {
+  PredCmp compare(@NotNull BinOpSet.BinOP lhs, @NotNull BinOpSet.BinOP rhs) {
     // BinOp all have lower priority than application
     if (lhs == APP_ELEM) return PredCmp.Tighter;
     if (rhs == APP_ELEM) return PredCmp.Looser;
@@ -55,7 +41,7 @@ public record BinOpSet(
     return ensureHasElem(opDecl).assoc;
   }
 
-  public boolean isOperand(@Nullable OpDecl opDecl) {
+  public final boolean isOperand(@Nullable OpDecl opDecl) {
     return opDecl == null || opDecl.opInfo() == null;
   }
 
@@ -83,10 +69,8 @@ public record BinOpSet(
     }
   }
 
-  private void reportCyclic(ImmutableSeq<ImmutableSeq<BinOP>> cycles) {
-    cycles.forEach(c -> reporter.report(new OperatorProblem.Circular(c)));
-    throw new Context.ResolvingInterruptedException();
-  }
+  abstract protected void reportSelfBind(@NotNull SourcePos sourcePos);
+  abstract protected void reportCyclic(ImmutableSeq<ImmutableSeq<BinOP>> cycles);
 
   public record BinOP(
     @NotNull SourcePos firstBind,
@@ -102,7 +86,7 @@ public record BinOpSet(
 
     private static @NotNull BinOpSet.BinOP from(@NotNull SourcePos sourcePos, @NotNull OpDecl opDecl) {
       var op = ensureOperator(opDecl);
-      return new BinOP(sourcePos, opDecl, op.name(), op.assoc());
+      return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc());
     }
   }
 

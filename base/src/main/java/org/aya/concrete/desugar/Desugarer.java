@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000, kiva
  */
-public record Desugarer(@NotNull BinOpSet opSet) implements StmtFixpoint<Unit> {
+public record Desugarer(@NotNull AyaBinOpSet opSet) implements StmtFixpoint<Unit> {
   @Override public @NotNull Expr visitApp(@NotNull Expr.AppExpr expr, Unit unit) {
     if (expr.function() instanceof Expr.RawUnivExpr univ) return desugarUniv(expr, univ);
     return StmtFixpoint.super.visitApp(expr, unit);
@@ -54,7 +54,7 @@ public record Desugarer(@NotNull BinOpSet opSet) implements StmtFixpoint<Unit> {
       case Expr.RefExpr ref && ref.resolvedVar() instanceof PreLevelVar lv -> new Level.Reference<>(lv);
       case Expr.HoleExpr hole -> new Level.Reference<>(new PreLevelVar(Constants.randomName(hole), hole.sourcePos()));
       default -> {
-        opSet.reporter().report(new LevelProblem.BadLevelExpr(expr));
+        opSet.reporter.report(new LevelProblem.BadLevelExpr(expr));
         throw new DesugarInterruption();
       }
     };

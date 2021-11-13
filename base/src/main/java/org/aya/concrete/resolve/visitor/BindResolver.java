@@ -4,7 +4,7 @@ package org.aya.concrete.resolve.visitor;
 
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
@@ -46,13 +46,13 @@ public final class BindResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
   }
 
-  private @NotNull DefVar<?, ?> bind(@NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
+  private @NotNull DefVar<?, ?> bind(@NotNull OpDecl self, @NotNull AyaBinOpSet opSet, @NotNull Context ctx,
                                      @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id) {
     if (ctx.get(id) instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
       opSet.bind(self, pred, op, id.sourcePos());
       return defVar;
     } else {
-      opSet.reporter().report(new UnknownOperatorError(id.sourcePos(), id.join()));
+      opSet.reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
       throw new Context.ResolvingInterruptedException();
     }
   }

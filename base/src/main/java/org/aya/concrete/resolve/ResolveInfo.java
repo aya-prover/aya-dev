@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.resolve;
 
-import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
@@ -13,11 +13,11 @@ import org.jetbrains.annotations.NotNull;
  * @param sampleGraph dependency graph of samples and remarks.
  */
 public record ResolveInfo(
-  @NotNull BinOpSet opSet,
+  @NotNull AyaBinOpSet opSet,
   @NotNull MutableGraph<Stmt> declGraph,
   @NotNull MutableGraph<Stmt> sampleGraph
 ) {
-  public ResolveInfo(@NotNull BinOpSet opSet) {
+  public ResolveInfo(@NotNull AyaBinOpSet opSet) {
     this(opSet, MutableGraph.create(), MutableGraph.create());
   }
 

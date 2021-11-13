@@ -13,7 +13,7 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.api.ref.Var;
 import org.aya.api.util.InternalException;
 import org.aya.concrete.Expr;
-import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.ShallowResolveInfo;
@@ -83,7 +83,7 @@ public record FileModuleLoader(
     var shallowResolveInfo = new ShallowResolveInfo(DynamicSeq.create());
     var shallowResolver = new StmtShallowResolver(recurseLoader, shallowResolveInfo);
     program.forEach(s -> s.accept(shallowResolver, context));
-    var resolveInfo = new ResolveInfo(new BinOpSet(reporter));
+    var resolveInfo = new ResolveInfo(new AyaBinOpSet(reporter));
     Stmt.resolve(program, resolveInfo);
     var delayedReporter = new DelayedReporter(reporter);
     var sccTycker = new IncrementalTycker(new SCCTycker(builder, delayedReporter), resolveInfo);

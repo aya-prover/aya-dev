@@ -24,10 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public final class BinOpParser {
-  private final @NotNull BinOpSet opSet;
+  private final @NotNull AyaBinOpSet opSet;
   private final @NotNull SeqView<@NotNull Elem> seq;
 
-  public BinOpParser(@NotNull BinOpSet opSet, @NotNull SeqView<@NotNull Elem> seq) {
+  public BinOpParser(@NotNull AyaBinOpSet opSet, @NotNull SeqView<@NotNull Elem> seq) {
     this.opSet = opSet;
     this.seq = seq;
   }
@@ -77,7 +77,7 @@ public final class BinOpParser {
             var topAssoc = top._2.assoc();
             var currentAssoc = currentOp.assoc();
             if (topAssoc != currentAssoc || topAssoc == Assoc.Infix) {
-              opSet.reporter().report(new OperatorProblem.FixityError(currentOp.name(),
+              opSet.reporter.report(new OperatorProblem.FixityError(currentOp.name(),
                 currentAssoc, top._2.name(), topAssoc, top._1.expr.sourcePos()));
               return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
             }
@@ -86,7 +86,7 @@ public final class BinOpParser {
           } else if (cmp == BinOpSet.PredCmp.Looser) {
             break;
           } else {
-            opSet.reporter().report(new OperatorProblem.AmbiguousPredError(
+            opSet.reporter.report(new OperatorProblem.AmbiguousPredError(
               currentOp.name(), top._2.name(), top._1.expr.sourcePos()));
             return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
           }
