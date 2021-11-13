@@ -47,8 +47,7 @@ public final class BindResolver implements Stmt.Visitor<ResolveInfo, Unit> {
 
   private @NotNull DefVar<?, ?> bind(@NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
                                      @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id) {
-    var var = ctx.get(id);
-    if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
+    if (ctx.get(id) instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
       opSet.bind(self, pred, op, id.sourcePos());
       return defVar;
     } else {
@@ -91,11 +90,11 @@ public final class BindResolver implements Stmt.Visitor<ResolveInfo, Unit> {
   }
 
   @Override public Unit visitExample(Sample.@NotNull Working example, ResolveInfo info) {
-    return Unit.unit();
+    return example.delegate().accept(this, info);
   }
 
   @Override public Unit visitCounterexample(Sample.@NotNull Counter example, ResolveInfo info) {
-    return Unit.unit();
+    return example.delegate().accept(this, info);
   }
 
   @Override public Unit visitRemark(@NotNull Remark remark, ResolveInfo info) {

@@ -45,7 +45,7 @@ public class DesugarTest {
 
   private void desugarAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
     var stmt = ParseTest.parseStmt(code);
-    stmt.forEach(s -> s.desugar(ThrowingReporter.INSTANCE, new BinOpSet(ThrowingReporter.INSTANCE)));
+    stmt.forEach(s -> s.desugar(new BinOpSet(ThrowingReporter.INSTANCE)));
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
         .map(s -> s.toDoc(DistillerOptions.debug())))
       .debugRender()

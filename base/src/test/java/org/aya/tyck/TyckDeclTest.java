@@ -39,7 +39,7 @@ public class TyckDeclTest {
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = ParseTest.parseDecl(code)._1;
     decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
-    prepareForTyck(ImmutableSeq.of(decl));
+    resolve(ImmutableSeq.of(decl));
     var def = tyck(decl, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
@@ -69,15 +69,12 @@ public class TyckDeclTest {
     var ssr = new StmtShallowResolver(new EmptyModuleLoader(), null);
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
     decls.forEach(d -> d.accept(ssr, ctx));
-    prepareForTyck(decls);
+    resolve(decls);
     return decls;
   }
 
-  private static void prepareForTyck(@NotNull ImmutableSeq<Stmt> decls) {
-    var resolveInfo = new ResolveInfo(new BinOpSet(ThrowingReporter.INSTANCE));
-    decls.forEach(s -> s.resolve(resolveInfo));
-    resolveInfo.opSet().reportIfCyclic();
-    decls.forEach(stmt -> stmt.desugar(ThrowingReporter.INSTANCE, resolveInfo.opSet()));
+  private static void resolve(@NotNull ImmutableSeq<Stmt> decls) {
+    Stmt.resolve(decls, new ResolveInfo(new BinOpSet(ThrowingReporter.INSTANCE)));
   }
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
