@@ -71,6 +71,7 @@ subprojects {
     options.modulePath = tasks.compileJava.get().classpath.toList()
     options.addBooleanOption("-enable-preview", true)
     options.addStringOption("-source", "17")
+    options.addStringOption("Xdoclint:none", "-quiet")
     options.encoding("UTF-8")
     options.tags(
       "apiNote:a:API Note:",
