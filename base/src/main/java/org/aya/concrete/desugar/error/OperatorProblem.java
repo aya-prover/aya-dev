@@ -5,12 +5,12 @@ package org.aya.concrete.desugar.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
-import org.aya.util.error.SourcePos;
-import org.aya.api.util.Assoc;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.binop.Assoc;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;

@@ -2,13 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.api.error.Reporter;
-import org.aya.api.util.Assoc;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.stmt.OpDecl;
 import org.aya.util.MutableGraph;
+import org.aya.util.binop.Assoc;
+import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +28,16 @@ public record BinOpSet(
   public void bind(@NotNull OpDecl op, @NotNull OpDecl.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
     var opElem = ensureHasElem(op, sourcePos);
     var targetElem = ensureHasElem(target, sourcePos);
-    if (opElem == targetElem) {
-      reporter.report(new OperatorProblem.BindSelfError(sourcePos));
-      throw new Context.ResolvingInterruptedException();
-    }
+    if (opElem == targetElem) reportSelfBind(sourcePos);
     switch (pred) {
       case Tighter -> addTighter(opElem, targetElem);
       case Looser -> addTighter(targetElem, opElem);
     }
+  }
+
+  private void reportSelfBind(@NotNull SourcePos sourcePos) {
+    reporter.report(new OperatorProblem.BindSelfError(sourcePos));
+    throw new Context.ResolvingInterruptedException();
   }
 
   public PredCmp compare(@NotNull BinOpSet.BinOP lhs, @NotNull BinOpSet.BinOP rhs) {
@@ -76,9 +79,13 @@ public record BinOpSet(
   public void reportIfCyclic() {
     var cycles = tighterGraph.findCycles();
     if (cycles.isNotEmpty()) {
-      cycles.forEach(c -> reporter.report(new OperatorProblem.Circular(c)));
-      throw new Context.ResolvingInterruptedException();
+      reportCyclic(cycles);
     }
+  }
+
+  private void reportCyclic(ImmutableSeq<ImmutableSeq<BinOP>> cycles) {
+    cycles.forEach(c -> reporter.report(new OperatorProblem.Circular(c)));
+    throw new Context.ResolvingInterruptedException();
   }
 
   public record BinOP(
