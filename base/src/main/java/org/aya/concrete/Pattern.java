@@ -117,7 +117,7 @@ public sealed interface Pattern extends ConcretePat {
   final class Clause {
     public final @NotNull SourcePos sourcePos;
     public final @NotNull ImmutableSeq<Pattern> patterns;
-    public @NotNull Option<Expr> expr;
+    public final @NotNull Option<Expr> expr;
     public boolean hasError = false;
 
     public Clause(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Pattern> patterns, @NotNull Option<Expr> expr) {
