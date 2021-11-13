@@ -12,8 +12,6 @@ import org.aya.api.util.WithPos;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.stmt.Decl;
-import org.aya.core.def.CtorDef;
-import org.aya.core.def.PrimDef;
 import org.aya.tyck.pat.PatternProblem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -66,8 +64,8 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
     return context.iterate(c -> {
       var maybe = c.getUnqualifiedLocalMaybe(name, namePos);
       if (!(maybe instanceof DefVar<?, ?> defVar)) return null;
-      if (defVar.core instanceof CtorDef || defVar.concrete instanceof Decl.DataCtor) return defVar;
-      if (defVar.core instanceof PrimDef || defVar.concrete instanceof Decl.PrimDecl) return defVar;
+      if (defVar.concrete instanceof Decl.DataCtor) return defVar;
+      if (defVar.concrete instanceof Decl.PrimDecl) return defVar;
       return null;
     });
   }

@@ -88,9 +88,7 @@ public interface Context {
 
   default @NotNull Var getQualified(@NotNull QualifiedID qualifiedID, @NotNull SourcePos sourcePos) {
     var view = qualifiedID.ids().view();
-    var name = view.last();
-    var modName = view.dropLast(1).toImmutableSeq();
-    return getQualified(modName, name, sourcePos);
+    return getQualified(view.dropLast(1).toImmutableSeq(), view.last(), sourcePos);
   }
 
   @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName);
@@ -106,10 +104,7 @@ public interface Context {
     return bind(ref.name(), ref, sourcePos, toWarn);
   }
 
-  default @NotNull BindContext bind(
-    @NotNull LocalVar ref,
-    @NotNull SourcePos sourcePos
-  ) {
+  default @NotNull BindContext bind(@NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
     return bind(ref.name(), ref, sourcePos, var -> var instanceof LocalVar);
   }
 
