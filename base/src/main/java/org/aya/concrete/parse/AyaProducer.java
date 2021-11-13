@@ -27,6 +27,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.remark.Remark;
+import org.aya.concrete.resolve.error.BadCounterexampleWarn;
 import org.aya.concrete.resolve.error.PrimDependencyError;
 import org.aya.concrete.resolve.error.RedefinitionError;
 import org.aya.concrete.resolve.error.UnknownPrimError;
@@ -108,7 +109,7 @@ public final class AyaProducer {
       return result._2.view().prepended(result._1);
     }
     var sample = ctx.sample();
-    if (sample != null) return ImmutableSeq.of(visitSample(sample));
+    if (sample != null) return visitSample(sample);
     var mod = ctx.module();
     if (mod != null) return ImmutableSeq.of(visitModule(mod));
     var levels = ctx.levels();
@@ -161,10 +162,15 @@ public final class AyaProducer {
     return ctx.qualifiedId().stream().map(this::visitQualifiedId);
   }
 
-  public @NotNull Sample visitSample(AyaParser.SampleContext ctx) {
+  public @NotNull ImmutableSeq<Stmt> visitSample(AyaParser.SampleContext ctx) {
     var decl = visitDecl(ctx.decl());
-    // TODO: submodule in example modules
-    return ctx.COUNTEREXAMPLE() != null ? new Sample.Counter(decl._1) : new Sample.Working(decl._1);
+    var stmts = decl._2.view().prepended(decl._1);
+    if (ctx.COUNTEREXAMPLE() != null) {
+      var stmtOption = decl._2.firstOption(stmt -> !(stmt instanceof Decl));
+      if (stmtOption.isDefined()) reporter.report(new BadCounterexampleWarn(stmtOption.get()));
+      return stmts.filterIsInstance(Decl.class).<Stmt>map(Sample.Counter::new).toImmutableSeq();
+    }
+    return stmts.<Stmt>map(Sample.Working::new).toImmutableSeq();
   }
 
   private <T> T unreachable(ParserRuleContext ctx) {
@@ -624,13 +630,10 @@ public final class AyaProducer {
       throw new ParsingInterruptedException();
     }
     return (ex, as) -> new Pattern.Ctor(
-      sourcePosOf(ctx),
-      ex,
-      new WithPos<>(bind.sourcePos(), bind.bind().name()),
+      sourcePosOf(ctx), ex,
+      new WithPos<>(bind.sourcePos(), bind.bind()),
       atoms.view().drop(1).map(p -> p.apply(true)).toImmutableSeq(),
-      as,
-      new Ref<>(null)
-    );
+      as);
   }
 
   public @NotNull BooleanFunction<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
@@ -654,8 +657,7 @@ public final class AyaProducer {
     var number = ctx.NUMBER();
     if (number != null) return ex -> new Pattern.Number(sourcePos, ex, Integer.parseInt(number.getText()));
     var id = ctx.ID();
-    if (id != null)
-      return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)), new Ref<>());
+    if (id != null) return ex -> new Pattern.Bind(sourcePos, ex, new LocalVar(id.getText(), sourcePosOf(id)));
     if (ctx.ABSURD() != null) return ex -> new Pattern.Absurd(sourcePos, ex);
 
     return unreachable(ctx);

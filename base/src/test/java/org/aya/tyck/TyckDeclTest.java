@@ -13,22 +13,20 @@ import org.aya.concrete.resolve.module.EmptyModuleLoader;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
-import org.aya.core.term.CallTerm;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.trace.Trace;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TyckDeclTest {
   public static Def tyck(@NotNull Decl decl, Trace.@Nullable Builder builder) {
@@ -44,24 +42,6 @@ public class TyckDeclTest {
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
     return ((FnDef) def);
-  }
-
-  @Test public void ctorPatScoping() {
-    var defs = successTyckDecls("""
-      data Nat : Type | zero | suc Nat
-      def xyr (zero : Nat) : Nat
-        | zero => zero
-        | suc n => zero""");
-    // ^ the latter `zero` refers to the `zero` parameter, and will be substituted as `suc n`
-    var nat = (DataDef) defs.get(0);
-    var xyr = (FnDef) defs.get(1);
-    var ctors = nat.body;
-    assertEquals(2, ctors.size());
-    var clauses = xyr.body.getRightValue();
-    var sucToZero = clauses.get(1);
-    var sucCtor = ctors.get(1);
-    assertEquals(1, sucCtor.selfTele.size());
-    assertEquals(((CallTerm.Con) sucToZero.body()).ref(), sucCtor.ref);
   }
 
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {

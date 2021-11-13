@@ -27,7 +27,11 @@ import java.util.function.Function;
  *
  * @author kiva
  */
-public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter reporter, DynamicSeq<Def> wellTyped) {
+public record SCCTycker(
+  @NotNull StmtTycker tycker,
+  @NotNull CollectingReporter reporter,
+  @NotNull DynamicSeq<@NotNull Def> wellTyped
+) {
   public SCCTycker(@Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
     this(new StmtTycker(reporter, builder), reporter, DynamicSeq.create());
   }
@@ -50,7 +54,10 @@ public record SCCTycker(@NotNull StmtTycker tycker, @NotNull CollectingReporter 
   private void checkBody(@NotNull Stmt stmt) {
     switch (stmt) {
       case Decl decl -> wellTyped.append(tycker.tyck(decl, tycker.newTycker()));
-      case Sample sample -> wellTyped.append(sample.tyck(tycker));
+      case Sample sample -> {
+        var tyck = sample.tyck(tycker);
+        if (tyck != null) wellTyped.append(tyck);
+      }
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
       default -> {}
     }

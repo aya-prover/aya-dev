@@ -63,11 +63,11 @@ public record StmtTycker(
     return r;
   }
 
-  public Def tyck(@NotNull Decl decl, @NotNull ExprTycker tycker) {
+  public @NotNull Def tyck(@NotNull Decl decl, @NotNull ExprTycker tycker) {
     return traced(decl, tycker, this::doTyck);
   }
 
-  private Def doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
+  private @NotNull Def doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
     if (predecl.signature == null) tyckHeader(predecl, tycker);
     else predecl.signature.param().forEach(param -> tycker.localCtx.put(param.ref(), param.type()));
     var signature = predecl.signature;

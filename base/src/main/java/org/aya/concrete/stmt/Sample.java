@@ -27,17 +27,17 @@ public sealed interface Sample extends Stmt {
     return Accessibility.Private;
   }
 
-  record Working(@NotNull Decl delegate) implements Sample {
+  record Working(@NotNull Stmt delegate) implements Sample {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitExample(this, p);
     }
 
     @Override public void tyckHeader(@NotNull StmtTycker stmtTycker) {
-      stmtTycker.tyckHeader(delegate, stmtTycker.newTycker());
+      if (delegate instanceof Decl decl) stmtTycker.tyckHeader(decl, stmtTycker.newTycker());
     }
 
     @Override public @Nullable Def tyck(@NotNull StmtTycker stmtTycker) {
-      return stmtTycker.tyck(delegate, stmtTycker.newTycker());
+      return delegate instanceof Decl decl ? stmtTycker.tyck(decl, stmtTycker.newTycker()) : null;
     }
   }
 
@@ -55,20 +55,15 @@ public sealed interface Sample extends Stmt {
       stmtTycker.tyckHeader(delegate, exprTycker);
     }
 
-    @Override public @Nullable Def tyck(@NotNull StmtTycker stmtTycker) {
+    @Override public @NotNull Def tyck(@NotNull StmtTycker stmtTycker) {
       var exprTycker = new ExprTycker(this.reporter, stmtTycker.traceBuilder());
       var def = stmtTycker.tyck(delegate, exprTycker);
       var problems = this.reporter.problems().toImmutableSeq();
       if (problems.isEmpty()) {
         stmtTycker.reporter().report(new CounterexampleError(delegate.sourcePos(), delegate.ref()));
       }
-      if (def instanceof UserDef userDef) {
-        userDef.problems = problems;
-        return userDef;
-      } else {
-        // TODO[ice]: a counterexample should be a function, a data, or a struct, not other stuffs!
-        return null;
-      }
+      if (def instanceof UserDef userDef) userDef.problems = problems;
+      return def;
     }
   }
 }

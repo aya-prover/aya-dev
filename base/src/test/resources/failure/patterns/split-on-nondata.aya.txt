@@ -1,22 +1,14 @@
-In file $FILE:2:3 ->
+In file $FILE:3:3 ->
 
-  1 | def test (a : Type) : Type
-  2 |  | x y => a
-         ^-^
+  1 | open data Unit | unit
+  2 | def test (a : Type) : Type
+  3 |  | unit y => a
+         ^----^
 
 Error: Cannot split on a non-inductive type
          Type
        with a constructor pattern
-         x y
+         unit y
 
-In file $FILE:2:3 ->
-
-  1 | def test (a : Type) : Type
-  2 |  | x y => a
-         ^-^
-
-Error: Unknown constructor
-         x y
-
-2 error(s), 0 warning(s).
+1 error(s), 0 warning(s).
 What are you doing?

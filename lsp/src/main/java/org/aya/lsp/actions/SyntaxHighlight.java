@@ -102,14 +102,12 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
 
   // region pattern
   @Override public Unit visitBind(@NotNull Pattern.Bind bind, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
-    if (bind.resolved().value instanceof DefVar<?, ?> defVar)
-      visitCall(defVar, bind.sourcePos(), buffer);
     return StmtConsumer.super.visitBind(bind, buffer);
   }
 
   @Override public Unit visitCtor(@NotNull Pattern.Ctor ctor, @NotNull DynamicSeq<HighlightResult.Symbol> buffer) {
-    if (ctor.resolved().value instanceof DefVar<?, ?> defVar)
-      visitCall(defVar, ctor.name().sourcePos(), buffer);
+    if (ctor.resolved().data() instanceof DefVar<?, ?> defVar)
+      visitCall(defVar, ctor.resolved().sourcePos(), buffer);
     return StmtConsumer.super.visitCtor(ctor, buffer);
   }
   // endregion

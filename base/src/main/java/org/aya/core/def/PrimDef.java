@@ -4,7 +4,6 @@ package org.aya.core.def;
 
 import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -206,7 +206,7 @@ public final class PrimDef extends TopLevelDef {
   }
 
   public static class Factory {
-    private final @NotNull MutableMap<@NotNull ID, @NotNull PrimDef> defs = MutableMap.create();
+    private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
     public static final @NotNull PrimDef.Factory INSTANCE = new Factory();
 
     private Factory() {
@@ -225,12 +225,12 @@ public final class PrimDef extends TopLevelDef {
     public @NotNull PrimDef factory(@NotNull ID name) {
       assert !have(name);
       var rst = SEEDS.get(name).supply();
-      defs.set(name, rst);
+      defs.put(name, rst);
       return rst;
     }
 
     public @NotNull Option<PrimDef> getOption(@NotNull ID name) {
-      return defs.getOption(name);
+      return Option.of(defs.get(name));
     }
 
     public boolean have(@NotNull ID name) {

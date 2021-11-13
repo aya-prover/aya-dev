@@ -1,2 +1,3 @@
+open data Unit | unit
 def test (a : Type) : Type
- | x y => a
+ | unit y => a
