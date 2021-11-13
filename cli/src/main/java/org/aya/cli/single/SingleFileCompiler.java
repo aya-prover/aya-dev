@@ -107,16 +107,18 @@ public record SingleFileCompiler(
     var dotIndex = ayaFileName.indexOf('.');
     var distillDir = sourceFile.resolveSibling(flags.distillDir());
     if (!Files.exists(distillDir)) Files.createDirectories(distillDir);
-    var fileName = ayaFileName
-      .substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length())
-      // Escape file names, see https://stackoverflow.com/a/41108758/7083401
-      .replaceAll("[\\\\/:*?\"<>|]", "_");
+    var fileName = escape(ayaFileName.substring(0, dotIndex > 0 ? dotIndex : ayaFileName.length()));
     switch (flags.distillFormat()) {
       case html -> doWrite(doc, distillDir, fileName, ".html", Doc::renderToHtml);
       case latex -> doWrite(doc, distillDir, fileName, ".tex", (thisDoc, $) -> thisDoc.renderToTeX());
       case plain -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.debugRender());
       case unix -> doWrite(doc, distillDir, fileName, ".txt", (thisDoc, $) -> thisDoc.renderToString(StringPrinterConfig.unixTerminal()));
     }
+  }
+
+  private @NotNull String escape(@NotNull String s) {
+    // Escape file names, see https://stackoverflow.com/a/41108758/7083401
+    return s.replaceAll("[\\\\/:*?\"<>|]", "_");
   }
 
   private void doWrite(
@@ -130,7 +132,7 @@ public record SingleFileCompiler(
       var thisDoc = item.toDoc(distillerOptions);
       docs.append(thisDoc);
       if (item instanceof PrimDef) continue;
-      Files.writeString(distillDir.resolve(fileName + "-" + nameOf(i, item) + fileExt), toString.apply(thisDoc, false));
+      Files.writeString(distillDir.resolve(fileName + "-" + escape(nameOf(i, item)) + fileExt), toString.apply(thisDoc, false));
     }
     Files.writeString(distillDir.resolve(fileName + fileExt), toString.apply(Doc.vcat(docs), true));
   }
