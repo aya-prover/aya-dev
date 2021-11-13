@@ -9,7 +9,7 @@ import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.pretty.doc.Doc;

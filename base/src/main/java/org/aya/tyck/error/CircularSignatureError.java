@@ -5,12 +5,12 @@ package org.aya.tyck.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
-import org.aya.api.error.SourcePos;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;

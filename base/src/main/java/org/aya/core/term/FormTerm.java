@@ -5,10 +5,10 @@ package org.aya.core.term;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.error.SourcePos;
 import org.aya.core.sort.Sort;
 import org.aya.generic.Constants;
 import org.aya.generic.Level;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**

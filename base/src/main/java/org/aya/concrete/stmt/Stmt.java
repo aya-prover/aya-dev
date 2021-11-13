@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;

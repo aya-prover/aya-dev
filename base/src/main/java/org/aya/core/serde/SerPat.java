@@ -3,7 +3,7 @@
 package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
 import org.jetbrains.annotations.NotNull;

@@ -10,7 +10,7 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;

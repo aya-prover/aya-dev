@@ -4,12 +4,12 @@ package org.aya.lsp.actions;
 
 import kala.tuple.Unit;
 import org.aya.api.util.NormalizeMode;
-import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.XY;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -9,7 +9,7 @@ import kala.tuple.Unit;
 import org.aya.api.core.CorePat;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;

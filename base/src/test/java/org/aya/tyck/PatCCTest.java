@@ -3,7 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.test.ThrowingReporter;

@@ -3,7 +3,7 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

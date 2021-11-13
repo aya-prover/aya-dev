@@ -5,7 +5,6 @@ package org.aya.tyck.pat;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Unit;
-import org.aya.api.error.SourcePos;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.Matching;
@@ -22,6 +21,7 @@ import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.Ordering;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**

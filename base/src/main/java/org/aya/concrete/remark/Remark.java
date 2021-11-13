@@ -4,7 +4,7 @@ package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;

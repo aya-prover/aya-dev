@@ -10,12 +10,12 @@ import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourceFile;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
+import org.aya.util.error.SourceFile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

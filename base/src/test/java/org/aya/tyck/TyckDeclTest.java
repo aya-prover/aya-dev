@@ -3,7 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.error.SourceFile;
+import org.aya.util.error.SourceFile;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.parse.AyaParsing;

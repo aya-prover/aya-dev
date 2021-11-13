@@ -8,7 +8,6 @@ import kala.collection.Set;
 import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
 import org.aya.api.util.Assoc;
@@ -18,6 +17,7 @@ import org.aya.concrete.stmt.OpDecl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -4,7 +4,7 @@ package org.aya.concrete;
 
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import org.aya.api.Global;
+import org.aya.util.error.Global;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.PrimDef;
 import org.jetbrains.annotations.NotNull;

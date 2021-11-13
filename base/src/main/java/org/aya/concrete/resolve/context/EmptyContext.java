@@ -5,8 +5,8 @@ package org.aya.concrete.resolve.context;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

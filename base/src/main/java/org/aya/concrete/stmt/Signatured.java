@@ -4,7 +4,7 @@ package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.concrete.ConcreteDecl;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.concrete.Expr;
 import org.aya.core.def.Def;
 import org.jetbrains.annotations.NotNull;

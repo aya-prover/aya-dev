@@ -3,6 +3,7 @@
 package org.aya.api.error;
 
 import org.aya.api.concrete.ConcreteExpr;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**

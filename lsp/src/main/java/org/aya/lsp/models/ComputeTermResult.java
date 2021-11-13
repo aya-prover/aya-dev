@@ -3,9 +3,9 @@
 package org.aya.lsp.models;
 
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.util.WithPos;
 import org.aya.core.term.Term;
 import org.aya.lsp.utils.LspRange;
+import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;

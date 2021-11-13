@@ -3,7 +3,7 @@
 package org.aya.api.concrete;
 
 import org.aya.api.distill.AyaDocile;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
