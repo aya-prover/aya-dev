@@ -4,3 +4,4 @@
 ./gradlew :pretty:publish
 ./gradlew :parser:publish
 ./gradlew :tools:publish
+./gradlew :lsp:publish
