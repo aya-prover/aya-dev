@@ -3,7 +3,7 @@
 package org.aya.concrete.stmt;
 
 import org.aya.api.error.BufferReporter;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.core.def.Def;
 import org.aya.core.def.UserDef;
 import org.aya.tyck.ExprTycker;

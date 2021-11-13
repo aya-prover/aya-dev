@@ -5,12 +5,12 @@ package org.aya.tyck.error;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.term.CallTerm;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.TyckState;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record Goal(

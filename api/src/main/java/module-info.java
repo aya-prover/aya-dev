@@ -4,6 +4,7 @@ module org.aya.api {
   requires kala.collection;
 
   requires org.aya.pretty;
+  requires org.aya.util;
 
   exports org.aya.api.concrete;
   exports org.aya.api.core;
@@ -11,5 +12,4 @@ module org.aya.api {
   exports org.aya.api.error;
   exports org.aya.api.ref;
   exports org.aya.api.util;
-  exports org.aya.api;
 }

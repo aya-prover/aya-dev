@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Tuple2;
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.core.term.CallTerm;
@@ -15,6 +14,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Constants;
 import org.aya.tyck.TyckState;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**

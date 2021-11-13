@@ -7,9 +7,10 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.util.WithPos;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
+import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;

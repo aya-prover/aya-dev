@@ -9,7 +9,6 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
-import kala.tuple.Unit;
 import org.aya.api.error.Problem;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -17,7 +16,6 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.visitor.ExprRefSubst;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -45,7 +43,6 @@ import java.util.function.Consumer;
  */
 public final class PatTycker {
   private final @NotNull ExprTycker exprTycker;
-  public final @NotNull ExprRefSubst refSubst;
   private final Substituter.@NotNull TermSubst termSubst;
   private final Trace.@Nullable Builder traceBuilder;
   private boolean hasError = false;
@@ -57,12 +54,10 @@ public final class PatTycker {
 
   public PatTycker(
     @NotNull ExprTycker exprTycker,
-    @NotNull ExprRefSubst refSubst,
     @NotNull Substituter.TermSubst termSubst,
     @Nullable Trace.Builder traceBuilder
   ) {
     this.exprTycker = exprTycker;
-    this.refSubst = refSubst;
     this.termSubst = termSubst;
     this.traceBuilder = traceBuilder;
   }
@@ -72,8 +67,7 @@ public final class PatTycker {
   }
 
   public PatTycker(@NotNull ExprTycker exprTycker) {
-    this(exprTycker, new ExprRefSubst(exprTycker.reporter),
-      new Substituter.TermSubst(MutableMap.create()), exprTycker.traceBuilder);
+    this(exprTycker, new Substituter.TermSubst(MutableMap.create()), exprTycker.traceBuilder);
   }
 
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
@@ -83,7 +77,6 @@ public final class PatTycker {
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
-      refSubst.clear();
       var elabClause = visitMatch(clause, signature);
       tracing(GenericBuilder::reduce);
       return elabClause;
@@ -93,13 +86,9 @@ public final class PatTycker {
   }
 
   @NotNull public ImmutableSeq<Pat.PrototypeClause> elabClauses(
-    @Nullable ExprRefSubst patSubst, Def.Signature signature,
-    @NotNull ImmutableSeq<Pattern.Clause> clauses
+    Def.Signature signature, @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) {
-    var checked = clauses.map(c -> {
-      if (patSubst != null) refSubst.resetTo(patSubst);
-      return Tuple.of(visitMatch(c, signature), c.sourcePos);
-    });
+    var checked = clauses.map(c -> Tuple.of(visitMatch(c, signature), c.sourcePos));
     exprTycker.solveMetas();
     return checked.map(c -> c._1.mapTerm(e -> e.zonk(exprTycker, c._2)));
   }
@@ -110,7 +99,7 @@ public final class PatTycker {
         var selection = selectCtor(term, null, absurd);
         if (selection != null) {
           foundError();
-          refSubst.reporter().report(new PatternProblem.PossiblePat(absurd, selection._3));
+          exprTycker.reporter.report(new PatternProblem.PossiblePat(absurd, selection._3));
         }
         yield new Pat.Absurd(absurd.explicit(), term);
       }
@@ -160,7 +149,6 @@ public final class PatTycker {
     currentClause = match;
     var patterns = visitPatterns(signature, match.patterns.view());
     var type = patterns._2;
-    match.expr = match.expr.map(e -> e.accept(refSubst, Unit.unit()));
     var result = match.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,

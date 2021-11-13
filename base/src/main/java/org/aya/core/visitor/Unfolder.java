@@ -10,7 +10,7 @@ import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
-import org.aya.api.util.WithPos;
+import org.aya.util.error.WithPos;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;

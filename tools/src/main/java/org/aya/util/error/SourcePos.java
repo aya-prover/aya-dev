@@ -1,8 +1,7 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.api.error;
+package org.aya.util.error;
 
-import org.aya.api.Global;
 import org.aya.pretty.error.LineColSpan;
 import org.aya.pretty.error.RangeSpan;
 import org.aya.pretty.error.Span;
@@ -35,7 +34,7 @@ public record SourcePos(
    */
   public static final SourcePos NONE = new SourcePos(SourceFile.NONE, -1, -1, -1, -1, -1, -1);
 
-  public Span toSpan() {
+  public @NotNull Span toSpan() {
     if (indexAvailable()) {
       return new RangeSpan(file().sourceCode(), tokenStartIndex, tokenEndIndex);
     } else {

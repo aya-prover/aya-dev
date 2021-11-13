@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
-import org.aya.api.Global;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.concrete.desugar.BinOpSet;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
+import org.aya.util.error.Global;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

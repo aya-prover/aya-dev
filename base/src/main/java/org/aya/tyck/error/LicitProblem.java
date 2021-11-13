@@ -5,12 +5,12 @@ package org.aya.tyck.error;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
 import org.aya.api.error.Problem;
-import org.aya.api.error.SourcePos;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface LicitProblem extends Problem {

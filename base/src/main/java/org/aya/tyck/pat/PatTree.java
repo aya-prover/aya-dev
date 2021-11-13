@@ -4,9 +4,9 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.api.ref.LocalVar;
-import org.aya.api.util.WithPos;
+import org.aya.util.error.WithPos;
 import org.aya.concrete.Pattern;
 import org.aya.generic.GenericBuilder;
 import org.jetbrains.annotations.NotNull;

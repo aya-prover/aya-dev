@@ -3,11 +3,11 @@
 package org.aya.concrete.resolve.error;
 
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record DuplicateNameError(

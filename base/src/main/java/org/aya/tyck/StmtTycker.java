@@ -6,9 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.tuple.Tuple;
-import kala.tuple.Unit;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
@@ -179,11 +178,9 @@ public record StmtTycker(
       ? patTycker.visitPatterns(sig, ctor.patterns.view())._1
       // No patterns, leave it blank
       : ImmutableSeq.<Pat>empty();
-    var tele = checkTele(tycker, ctor.telescope.map(param ->
-      param.mapExpr(expr -> expr.accept(patTycker.refSubst, Unit.unit()))), dataSig.result());
+    var tele = checkTele(tycker, ctor.telescope, dataSig.result());
     var signature = new Def.Signature(sortParam, tele, dataCall);
     ctor.signature = signature;
-    var patSubst = patTycker.refSubst.clone();
     var dataParamView = dataSig.param().view();
     if (pat.isNotEmpty()) {
       var subst = dataParamView.map(Term.Param::ref)
@@ -191,7 +188,7 @@ public record StmtTycker(
         .<Var, Term>toImmutableMap();
       dataCall = (CallTerm.Data) dataCall.subst(subst);
     }
-    var elabClauses = patTycker.elabClauses(patSubst, signature, ctor.clauses);
+    var elabClauses = patTycker.elabClauses(signature, ctor.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
@@ -223,7 +220,7 @@ public record StmtTycker(
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
-    var elabClauses = patTycker.elabClauses(null, field.signature, field.clauses);
+    var elabClauses = patTycker.elabClauses(field.signature, field.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);

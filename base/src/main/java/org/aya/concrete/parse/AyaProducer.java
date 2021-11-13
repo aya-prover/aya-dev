@@ -17,12 +17,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourceFile;
-import org.aya.api.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.PreLevelVar;
 import org.aya.api.util.Assoc;
-import org.aya.api.util.WithPos;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.BinOpParser;
@@ -36,6 +33,9 @@ import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaParser;
+import org.aya.util.error.SourceFile;
+import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -315,7 +315,7 @@ public final class AyaProducer {
     var type = type(ctx.type(), sourcePosOf(ids));
     var pattern = ctx.PATTERN_KW() != null;
     return explicit -> visitIds(ids)
-      .map(v -> new Expr.Param(v.sourcePos(), WithPos.toVar(v), type, pattern, explicit))
+      .map(v -> new Expr.Param(v.sourcePos(), LocalVar.from(v), type, pattern, explicit))
       .collect(ImmutableSeq.factory());
   }
 
@@ -351,7 +351,7 @@ public final class AyaProducer {
       visitExpr(ctx.expr()),
       ImmutableSeq.from(ctx.newArg())
         .map(na -> new Expr.Field(na.ID().getText(), visitIds(na.ids())
-          .map(t -> new WithPos<>(t.sourcePos(), WithPos.toVar(t)))
+          .map(t -> new WithPos<>(t.sourcePos(), LocalVar.from(t)))
           .collect(ImmutableSeq.factory()), visitExpr(na.expr())))
     );
   }

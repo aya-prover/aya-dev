@@ -4,7 +4,7 @@ package org.aya.concrete.parse;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 

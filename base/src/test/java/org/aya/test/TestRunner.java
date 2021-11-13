@@ -3,7 +3,7 @@
 package org.aya.test;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.Global;
+import org.aya.util.error.Global;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.StreamReporter;

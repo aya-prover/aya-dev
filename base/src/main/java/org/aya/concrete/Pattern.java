@@ -6,10 +6,10 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.api.concrete.ConcretePat;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
-import org.aya.api.util.WithPos;
+import org.aya.util.error.WithPos;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
@@ -117,7 +117,7 @@ public sealed interface Pattern extends ConcretePat {
   final class Clause {
     public final @NotNull SourcePos sourcePos;
     public final @NotNull ImmutableSeq<Pattern> patterns;
-    public @NotNull Option<Expr> expr;
+    public final @NotNull Option<Expr> expr;
     public boolean hasError = false;
 
     public Clause(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<Pattern> patterns, @NotNull Option<Expr> expr) {

@@ -4,6 +4,7 @@ package org.aya.api.error;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

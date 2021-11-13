@@ -3,7 +3,7 @@
 package org.aya.tyck.trace;
 
 import kala.collection.mutable.DynamicSeq;
-import org.aya.api.error.SourcePos;
+import org.aya.util.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;

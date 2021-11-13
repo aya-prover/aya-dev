@@ -5,10 +5,10 @@ package org.aya.core;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.SourcePos;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /** @author ice1000 */
