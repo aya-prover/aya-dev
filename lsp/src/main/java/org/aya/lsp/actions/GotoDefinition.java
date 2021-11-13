@@ -60,14 +60,11 @@ public class GotoDefinition implements StmtConsumer<XY> {
   }
 
   @Override public Unit visitBind(@NotNull Pattern.Bind bind, XY xy) {
-    if (bind.resolved().value instanceof DefVar<?, ?> defVar)
-      check(xy, bind.sourcePos(), defVar);
     return StmtConsumer.super.visitBind(bind, xy);
   }
 
   @Override public Unit visitCtor(@NotNull Pattern.Ctor ctor, XY xy) {
-    if (ctor.resolved().value != null)
-      check(xy, ctor.name().sourcePos(), ctor.resolved().get());
+    check(xy, ctor.resolved().sourcePos(), ctor.resolved().data());
     return StmtConsumer.super.visitCtor(ctor, xy);
   }
 

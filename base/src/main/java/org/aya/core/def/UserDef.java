@@ -4,8 +4,10 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
+import org.aya.tyck.ExprTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +20,7 @@ public sealed abstract class UserDef extends TopLevelDef permits DataDef, FnDef,
   /**
    * In case of counterexamples, this field will be assigned.
    *
-   * @see org.aya.concrete.stmt.Sample#tyck(org.aya.tyck.StmtTycker)
+   * @see org.aya.tyck.StmtTycker#tyck(Decl, ExprTycker)
    */
   public @Nullable ImmutableSeq<Problem> problems;
 

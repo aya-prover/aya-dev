@@ -2,7 +2,7 @@ open data Nat : Type 0
  | zero
  | suc Nat
 
-data Fin (n : Nat) : Type 0
+open data Fin (n : Nat) : Type 0
  | suc m => fzero
  | suc m => fsuc (Fin m)
 
