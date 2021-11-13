@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Reporter;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
+import org.aya.util.binop.BinOpSet;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

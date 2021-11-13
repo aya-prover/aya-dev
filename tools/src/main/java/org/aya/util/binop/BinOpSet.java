@@ -1,12 +1,10 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.desugar;
+package org.aya.util.binop;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.util.MutableGraph;
-import org.aya.util.binop.Assoc;
-import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +24,7 @@ public abstract class BinOpSet {
     }
   }
 
-  PredCmp compare(@NotNull BinOpSet.BinOP lhs, @NotNull BinOpSet.BinOP rhs) {
+  public PredCmp compare(@NotNull BinOpSet.BinOP lhs, @NotNull BinOpSet.BinOP rhs) {
     // BinOp all have lower priority than application
     if (lhs == APP_ELEM) return PredCmp.Tighter;
     if (rhs == APP_ELEM) return PredCmp.Looser;

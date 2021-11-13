@@ -16,6 +16,7 @@ import org.aya.concrete.stmt.Signatured;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.Assoc;
+import org.aya.util.binop.BinOpSet;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
