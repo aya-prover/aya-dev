@@ -6,13 +6,18 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
 import org.aya.api.error.SourcePos;
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.WithPos;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.stmt.Decl;
+import org.aya.core.def.CtorDef;
+import org.aya.core.def.PrimDef;
 import org.aya.tyck.pat.PatternProblem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
@@ -46,15 +51,25 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
 
   @Contract(pure = true)
   @Override public Tuple2<Context, Pattern> visitCtor(Pattern.@NotNull Ctor ctor, Context context) {
-    var newCtx = new Ref<>(context);
-    var params = ctor.params().map(p -> subpatterns(newCtx, p));
     var namePos = ctor.resolved().sourcePos();
-    var resolution = context.getUnqualifiedMaybe(ctor.resolved().data().name(), namePos);
+    var resolution = findPatternDef(context, namePos, ctor.resolved().data().name());
     if (resolution == null) context.reportAndThrow(new PatternProblem.UnknownCtor(ctor));
     var sourcePos = ctor.sourcePos();
+    var newCtx = new Ref<>(context);
+    var params = ctor.params().map(p -> subpatterns(newCtx, p));
     return Tuple.of(
       bindAs(ctor.as(), newCtx.value, sourcePos),
       new Pattern.Ctor(sourcePos, ctor.explicit(), new WithPos<>(namePos, resolution), params, ctor.as()));
+  }
+
+  private @Nullable DefVar<?, ?> findPatternDef(Context context, SourcePos namePos, String name) {
+    return context.iterate(c -> {
+      var maybe = c.getUnqualifiedLocalMaybe(name, namePos);
+      if (!(maybe instanceof DefVar<?, ?> defVar)) return null;
+      if (defVar.core instanceof CtorDef || defVar.concrete instanceof Decl.DataCtor) return defVar;
+      if (defVar.core instanceof PrimDef || defVar.concrete instanceof Decl.PrimDecl) return defVar;
+      return null;
+    });
   }
 
   @Override public Tuple2<Context, Pattern> visitTuple(Pattern.@NotNull Tuple tuple, Context context) {
@@ -78,7 +93,7 @@ public final class PatResolver implements Pattern.Visitor<Context, Tuple2<Contex
   }
 
   @Override public Tuple2<Context, Pattern> visitBind(Pattern.@NotNull Bind bind, Context context) {
-    var maybe = context.getUnqualifiedMaybe(bind.bind().name(), bind.sourcePos());
+    var maybe = findPatternDef(context, bind.sourcePos(), bind.bind().name());
     if (maybe != null) return Tuple.of(context, new Pattern.Ctor(bind, maybe));
     else return Tuple.of(context.bind(bind.bind(), bind.sourcePos(), var -> false), bind);
   }

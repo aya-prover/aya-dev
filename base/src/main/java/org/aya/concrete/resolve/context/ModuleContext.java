@@ -74,7 +74,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     if (modules.containsKey(componentName)) {
       reportAndThrow(new DuplicateModNameError(componentName, sourcePos));
     }
-    if (getModuleMaybe(componentName, sourcePos) != null) {
+    if (getModuleMaybe(componentName) != null) {
       reporter().report(new ModShadowingWarn(componentName, sourcePos));
     }
     modules.set(componentName, mod);
@@ -87,7 +87,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull Map<String, String> rename,
     @NotNull SourcePos sourcePos
   ) {
-    var mod = getModuleMaybe(modName, sourcePos);
+    var mod = getModuleMaybe(modName);
     if (mod == null) reportAndThrow(new ModNameNotFoundError(modName, sourcePos));
     mod.forEach((name, ref) -> {
       if (using.apply(name)) {

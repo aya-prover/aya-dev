@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -32,6 +33,16 @@ public interface Context {
   @Nullable Context parent();
 
   @NotNull Reporter reporter();
+
+  default <T> @Nullable T iterate(@NotNull Function<@NotNull Context, @Nullable T> f) {
+    var p = this;
+    while (p != null) {
+      var result = f.apply(p);
+      if (result != null) return result;
+      p = p.parent();
+    }
+    return null;
+  }
 
   default @NotNull ImmutableSeq<String> moduleName() {
     var p = parent();
@@ -57,12 +68,7 @@ public interface Context {
 
   @Nullable Var getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);
   default @Nullable Var getUnqualifiedMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    var ref = getUnqualifiedLocalMaybe(name, sourcePos);
-    if (ref == null) {
-      var p = parent();
-      if (p == null) return null;
-      else return p.getUnqualifiedMaybe(name, sourcePos);
-    } else return ref;
+    return iterate(c -> c.getUnqualifiedLocalMaybe(name, sourcePos));
   }
   default @NotNull Var getUnqualified(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getUnqualifiedMaybe(name, sourcePos);
@@ -72,12 +78,7 @@ public interface Context {
 
   @Nullable Var getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos);
   default @Nullable Var getQualifiedMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
-    var ref = getQualifiedLocalMaybe(modName, name, sourcePos);
-    if (ref == null) {
-      var p = parent();
-      if (p == null) return null;
-      else return p.getQualifiedMaybe(modName, name, sourcePos);
-    } else return ref;
+    return iterate(c -> c.getQualifiedLocalMaybe(modName, name, sourcePos));
   }
   default @NotNull Var getQualified(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getQualifiedMaybe(modName, name, sourcePos);
@@ -93,13 +94,8 @@ public interface Context {
   }
 
   @Nullable MutableMap<String, Var> getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName);
-  default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull ImmutableSeq<String> modName, @NotNull SourcePos sourcePos) {
-    var ref = getModuleLocalMaybe(modName);
-    if (ref == null) {
-      var p = parent();
-      if (p == null) return null;
-      else return p.getModuleMaybe(modName, sourcePos);
-    } else return ref;
+  default @Nullable MutableMap<String, Var> getModuleMaybe(@NotNull ImmutableSeq<String> modName) {
+    return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 
   default @NotNull BindContext bind(
