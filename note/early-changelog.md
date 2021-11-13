@@ -2,6 +2,26 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.12
+
+Actually implemented the inference of type checking ordering,
+extracted some tools from `base` to `tools`, allow emission of `Type 0`
+in data declarations, suppressed some unnecessary errors, improved
+'unresolved meta' error message with a description of their location,
+enhanced pretty printing (for `new` expressions, binary operators,
+reduced unnecessary parentheses and added necessary parentheses,
+eta-contract def-calls), added error message for unknown fields,
+make the latex backend automatically insert `\noindent`,
+removed jimgui-based tracer (moved to test) for smaller fatJars,
+fixed no-arg constructor pattern matching, improved coverage checker
+(fixed a divergence case, added fuel for impossible cases elimination),
+fixed pattern checker when there are more implicit parameters omitted
+in the patterns, added `compareApprox` in `compareUntyped`,
+removed `abusing` syntax, refactor `bind` syntax, use the REPL for
+pretty-printing options configuration.
+
+Publish the `lsp` module.
+
 ## 0.11
 
 Enhanced repl: completion, command system, command parser based on antlr,
