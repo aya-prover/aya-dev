@@ -1,7 +1,7 @@
-./gradlew :api:publish
-./gradlew :base:publish
-./gradlew :cli:publish
-./gradlew :pretty:publish
-./gradlew :parser:publish
-./gradlew :tools:publish
-./gradlew :lsp:publish
+call gradlew.bat :api:publish
+call gradlew.bat :base:publish
+call gradlew.bat :cli:publish
+call gradlew.bat :pretty:publish
+call gradlew.bat :parser:publish
+call gradlew.bat :tools:publish
+call gradlew.bat :lsp:publish
