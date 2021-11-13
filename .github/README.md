@@ -5,10 +5,27 @@
 [![tokei]](https://github.com/XAMPPRocky/tokei)
 [![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
 
-You need Java SE 17 (available at <https://jdk.java.net/17/>) to set this project up.
-This also means if your choice of IDE is IntelliJ IDEA, you need version 2021.2.1 or higher.
-If you have problems downloading dependencies (like you are in China), check out [how to][proxy] let
-gradle use proxies.
+## Download
+
+You may download the latest nightly release of Aya from [GitHub Releases].
+There are prebuilt binaries for Windows, Linux, and macOS that can be used
+in Java-free environments as well as fat-jar files which can be invoked via `java -jar`.
+Note that the nightly release is updated for each commit to the `main` branch,
+but the release date displayed is very old and is an issue of GitHub.
+
+The minimum required version of Java is [Java 17].
+
+See also [use as a library](#use-as-a-library).
+
+[GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
+[Java 17]: https://jdk.java.net/17
+
+## Build
+
+Since you need Java 17 to set this project up,  in case your choice
+of IDE is IntelliJ IDEA, version 2021.2.1 or higher is required.
+If you have problems downloading dependencies (like you are in China),
+check out [how to][proxy] let gradle use a proxy.
 
 ```bash
 # build Aya and its language server as applications to lsp/build/image
