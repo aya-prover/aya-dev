@@ -5,12 +5,8 @@ package org.aya.concrete.resolve.visitor;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import kala.value.Ref;
-import org.aya.api.ref.DefVar;
-import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
-import org.aya.concrete.resolve.context.Context;
-import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
@@ -41,27 +37,6 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     return Unit.unit();
   }
 
-  public void visitBind(@NotNull OpDecl self, OpDecl.@NotNull BindBlock bind, ResolveInfo info) {
-    if (bind == OpDecl.BindBlock.EMPTY) return;
-    var ctx = bind.context().value;
-    assert ctx != null : "no shallow resolver?";
-    var opSet = info.opSet();
-    bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
-    bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
-  }
-
-  private @NotNull DefVar<?, ?> bind(@NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
-                                     @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id) {
-    var var = ctx.get(id);
-    if (var instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
-      opSet.bind(self, pred, op, id.sourcePos());
-      return defVar;
-    } else {
-      opSet.reporter().report(new UnknownOperatorError(id.sourcePos(), id.join()));
-      throw new Context.ResolvingInterruptedException();
-    }
-  }
-
   @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, ResolveInfo info) {
     throw new UnsupportedOperationException();
   }
@@ -84,9 +59,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
-      visitBind(ctor, ctor.bindBlock, info);
     }
-    visitBind(decl, decl.bindBlock, info);
     info.declGraph().suc(decl).appendAll(reference);
     return Unit.unit();
   }
@@ -104,9 +77,7 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       field.result = field.result.accept(bodyResolver, fieldLocal._2);
       field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
       field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
-      visitBind(field, field.bindBlock, info);
     });
-    visitBind(decl, decl.bindBlock, info);
     info.declGraph().suc(decl).appendAll(reference);
     return Unit.unit();
   }
@@ -122,7 +93,6 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     decl.body = decl.body.map(
       expr -> expr.accept(bodyResolver, local._2),
       pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
-    visitBind(decl, decl.bindBlock, info);
     info.declGraph().suc(decl).appendAll(reference);
     return Unit.unit();
   }

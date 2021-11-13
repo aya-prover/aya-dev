@@ -12,6 +12,7 @@ import org.aya.concrete.desugar.BinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.visitor.BindResolver;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
@@ -31,6 +32,7 @@ public sealed interface Stmt extends AyaDocile
   @Contract(mutates = "this")
   default void resolve(@NotNull ResolveInfo resolveInfo) {
     accept(StmtResolver.INSTANCE, resolveInfo);
+    accept(BindResolver.INSTANCE, resolveInfo);
   }
 
   default void desugar(@NotNull Reporter reporter, @NotNull BinOpSet opSet) {
