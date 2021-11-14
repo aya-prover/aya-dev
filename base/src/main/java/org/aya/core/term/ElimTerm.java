@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.util.Arg;
 import org.aya.core.visitor.Substituter;
@@ -38,5 +39,13 @@ public sealed interface ElimTerm extends Term {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
     }
+  }
+
+  static @NotNull Term underlyingHead(@NotNull Term term, DynamicSeq<Arg<@NotNull Term>> args) {
+    while (term instanceof ElimTerm.App app) {
+      args.append(app.arg);
+      term = app.of;
+    }
+    return term;
   }
 }

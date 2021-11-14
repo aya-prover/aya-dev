@@ -42,8 +42,8 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitLam(@NotNull IntroTerm.Lambda term, Outer outer) {
-    var params = DynamicSeq.<Term.Param>create();
-    var body = IntroTerm.Lambda.unwrap(term, params);
+    var params = DynamicSeq.of(term.param());
+    var body = IntroTerm.Lambda.unwrap(term.body(), params);
     Doc bodyDoc;
     // Syntactic eta-contraction
     if (body instanceof CallTerm call && call.ref() instanceof DefVar<?, ?> defVar) {
@@ -129,7 +129,10 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Outer outer) {
-    return visitCalls(false, term.of().accept(this, Outer.AppHead), SeqView.of(term.arg()), outer);
+    var args = DynamicSeq.of(term.arg());
+    var head = ElimTerm.underlyingHead(term.of(), args);
+    if (head instanceof RefTerm.Field fieldRef) return visitCalls(fieldRef.ref(), FIELD_CALL, args, outer);
+    return visitCalls(false, head.accept(this, Outer.AppHead), args.view(), outer);
   }
 
   @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Outer outer) {
