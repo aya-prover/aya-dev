@@ -12,4 +12,4 @@ open data Vec (A : Type) (n : N) : Type
 
 def fold {A R : Type} {n : N} (f : Pi R A -> R) (init : R) (xs : Vec A n) : R
   | {A}, {R}, {zero}, f, init, vnil => init
-  | {A}, {R}, {suc m}, f, acc, ++ x xs => fold f (f acc x) xs
+  | {A}, {R}, {suc m}, f, acc, x ++ xs => fold f (f acc x) xs
