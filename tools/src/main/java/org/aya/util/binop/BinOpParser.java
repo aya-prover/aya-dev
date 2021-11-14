@@ -105,7 +105,7 @@ public abstract class BinOpParser<
   }
 
   protected abstract void reportAmbiguousPred(String op1, String op2, SourcePos pos);
-  protected abstract void reportFixityError(Assoc topAssoc, Assoc currentAssoc, String op2, String op1, SourcePos pos);
+  protected abstract void reportFixityError(Assoc top, Assoc current, String op2, String op1, SourcePos pos);
   protected abstract @NotNull Expr createErrorExpr(@NotNull SourcePos sourcePos);
 
   private @NotNull Seq<Arg> insertApplication() {

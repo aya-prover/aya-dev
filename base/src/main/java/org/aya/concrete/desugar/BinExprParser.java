@@ -52,6 +52,10 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
   }
 
   @Override protected int argc(@NotNull OpDecl opDecl) {
+    return argc0(opDecl);
+  }
+
+  static int argc0(@NotNull OpDecl opDecl) {
     if (opDecl instanceof Signatured sig) return sig.telescope.view().count(Expr.Param::explicit);
     throw new IllegalArgumentException("not an operator");
   }
