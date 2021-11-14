@@ -4,7 +4,6 @@ package org.aya.concrete.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
-import org.aya.util.binop.BinOpParser;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
@@ -130,6 +129,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, P p) {
     return new Expr.BinOpSeq(binOpSeq.sourcePos(),
-      binOpSeq.seq().map(e -> new BinOpParser.Elem<>(e.name(), e.expr().accept(this, p), e.explicit())));
+      binOpSeq.seq().map(e -> new Expr.NamedArg(e.explicit(), e.name(), e.expr().accept(this, p))));
   }
 }

@@ -160,11 +160,13 @@ public sealed interface Expr extends ConcreteExpr {
   /**
    * @author AustinZhu
    */
-  record NamedArg(
-    boolean explicit,
-    @Nullable String name,
-    @NotNull Expr expr
-  ) implements AyaDocile, SourceNode {
+  record NamedArg(boolean explicit, @Nullable String name, @NotNull Expr expr)
+    implements AyaDocile, SourceNode, BinOpParser.Elem<Expr> {
+
+    public NamedArg(boolean explicit, @NotNull Expr expr) {
+      this(explicit, null, expr);
+    }
+
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       var doc = name == null ? expr.toDoc(options) :
         Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), expr.toDoc(options)));
@@ -353,7 +355,7 @@ public sealed interface Expr extends ConcreteExpr {
    */
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<BinOpParser.Elem<Expr>> seq
+    @NotNull ImmutableSeq<NamedArg> seq
   ) implements Expr {
     @Override
     public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

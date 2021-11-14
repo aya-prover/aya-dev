@@ -32,7 +32,6 @@ import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaParser;
 import org.aya.util.binop.Assoc;
-import org.aya.util.binop.BinOpParser;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
@@ -366,7 +365,7 @@ public final class AyaProducer {
   }
 
   public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
-    var head = new BinOpParser.Elem<>(null, visitExpr(ctx.expr()), true);
+    var head = new Expr.NamedArg(true, visitExpr(ctx.expr()));
     var tail = ctx.argument().stream()
       .map(this::visitArgument)
       .collect(DynamicLinkedSeq.factory());
@@ -389,7 +388,7 @@ public final class AyaProducer {
     );
   }
 
-  public @NotNull BinOpParser.Elem<Expr> visitArgument(AyaParser.ArgumentContext ctx) {
+  public @NotNull Expr.NamedArg visitArgument(AyaParser.ArgumentContext ctx) {
     var atom = ctx.atom();
     if (atom != null) {
       var fixes = ctx.projFix();
@@ -398,19 +397,19 @@ public final class AyaProducer {
         .foldLeft(Tuple.of(sourcePosOf(ctx), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
-      return new BinOpParser.Elem<>(projected, true);
+      return new Expr.NamedArg(true, projected);
     }
     // assert ctx.LBRACE() != null;
     var id = ctx.ID();
-    if (id != null) return new BinOpParser.Elem<>(id.getText(), visitExpr(ctx.expr()), false);
+    if (id != null) return new Expr.NamedArg(false, id.getText(), visitExpr(ctx.expr()));
     var items = ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
     if (ctx.ULEVEL() != null) {
       var univArgsExpr = new Expr.RawUnivArgsExpr(sourcePosOf(ctx), items);
-      return new BinOpParser.Elem<>(univArgsExpr, false);
+      return new Expr.NamedArg(false, univArgsExpr);
     }
-    if (items.sizeEquals(1)) return new BinOpParser.Elem<>(newBinOPScope(items.first()), false);
+    if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.first()));
     var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
-    return new BinOpParser.Elem<>(tupExpr, false);
+    return new Expr.NamedArg(false, tupExpr);
   }
 
   /**
@@ -421,7 +420,7 @@ public final class AyaProducer {
    */
   public @NotNull Expr newBinOPScope(@NotNull Expr expr) {
     return new Expr.BinOpSeq(expr.sourcePos(),
-      ImmutableSeq.of(new BinOpParser.Elem<>(expr, true)));
+      ImmutableSeq.of(new Expr.NamedArg(true, expr)));
   }
 
   public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
