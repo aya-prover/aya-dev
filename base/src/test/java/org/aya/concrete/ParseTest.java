@@ -6,11 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
-import org.aya.util.error.Global;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.util.error.SourceFile;
-import org.aya.util.error.SourcePos;
-import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.stmt.Command;
@@ -18,6 +14,10 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
+import org.aya.util.binop.BinOpParser;
+import org.aya.util.error.Global;
+import org.aya.util.error.SourceFile;
+import org.aya.util.error.SourcePos;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -146,11 +146,11 @@ public class ParseTest {
       new Expr.BinOpSeq(
         SourcePos.NONE,
         ImmutableSeq.of(
-          new BinOpParser.Elem(null, new Expr.BinOpSeq(
+          new BinOpParser.Elem<>(null, new Expr.BinOpSeq(
             SourcePos.NONE,
             ImmutableSeq.of(
-              new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-              new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
+              new BinOpParser.Elem<>(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
+              new BinOpParser.Elem<>(null, new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
             )
           ), true)
         )
@@ -161,8 +161,8 @@ public class ParseTest {
     parseTo("f a . 1", new Expr.BinOpSeq(
         SourcePos.NONE,
         ImmutableSeq.of(
-          new BinOpParser.Elem(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-          new BinOpParser.Elem(null, new Expr.ProjExpr(SourcePos.NONE,
+          new BinOpParser.Elem<>(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
+          new BinOpParser.Elem<>(null, new Expr.ProjExpr(SourcePos.NONE,
             new Expr.UnresolvedExpr(SourcePos.NONE, "a"), Either.left(1), new Ref<>(null)),
             true))
       )

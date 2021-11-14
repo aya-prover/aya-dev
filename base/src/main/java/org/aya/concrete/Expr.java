@@ -16,7 +16,6 @@ import org.aya.api.ref.PreLevelVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
@@ -27,6 +26,7 @@ import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.binop.BinOpParser;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
@@ -348,7 +348,7 @@ public sealed interface Expr extends ConcreteExpr {
    */
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<BinOpParser.Elem> seq
+    @NotNull ImmutableSeq<BinOpParser.Elem<Expr>> seq
   ) implements Expr {
     @Override
     public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {

@@ -63,7 +63,7 @@ public record Desugarer(@NotNull AyaBinOpSet opSet) implements StmtFixpoint<Unit
   @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
     var seq = binOpSeq.seq();
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
-    return new AyaBinOpParser(opSet, seq.view())
+    return new BinExprParser(opSet, seq.view())
       .build(binOpSeq.sourcePos())
       .accept(this, Unit.unit());
   }
