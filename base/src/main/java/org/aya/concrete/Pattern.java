@@ -83,12 +83,12 @@ public sealed interface Pattern extends ConcretePat, BinOpParser.Elem<Pattern> {
     boolean explicit
   ) implements Pattern {}
 
-  record ErrorPattern(
+  record Error(
     @NotNull SourcePos sourcePos,
     @NotNull AyaDocile description,
     boolean explicit
   ) implements Pattern {
-    public ErrorPattern(@NotNull SourcePos sourcePos, @NotNull Doc description) {
+    public Error(@NotNull SourcePos sourcePos, @NotNull Doc description) {
       this(sourcePos, options -> description, true);
     }
   }

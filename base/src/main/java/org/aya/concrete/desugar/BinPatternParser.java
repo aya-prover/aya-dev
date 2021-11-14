@@ -55,7 +55,7 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
   }
 
   @Override protected @NotNull Pattern createErrorExpr(@NotNull SourcePos sourcePos) {
-    return new Pattern.ErrorPattern(sourcePos, Doc.english("an constructor pattern"));
+    return new Pattern.Error(sourcePos, Doc.english("an constructor pattern"));
   }
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Pattern elem) {

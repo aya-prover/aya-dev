@@ -217,7 +217,7 @@ public class ConcreteDistiller extends BaseDistiller implements
         var ctorDoc = visitMaybeCtorPatterns(param, Outer.AppSpine, Doc.ALT_WS);
         yield ctorDoc(outer, seq.explicit(), ctorDoc, seq.as(), param.sizeLessThanOrEquals(1));
       }
-      case Pattern.ErrorPattern e -> e.description().toDoc(options);
+      case Pattern.Error e -> e.description().toDoc(options);
     };
   }
 
