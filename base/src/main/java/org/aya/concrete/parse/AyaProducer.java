@@ -824,6 +824,7 @@ public final class AyaProducer {
   public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {
     if (ctx.ERASE() != null) return Modifier.Erase;
     if (ctx.INLINE() != null) return Modifier.Inline;
+    if (ctx.PATTERN_KW() != null) return Modifier.Pattern;
     return unreachable(ctx);
   }
 

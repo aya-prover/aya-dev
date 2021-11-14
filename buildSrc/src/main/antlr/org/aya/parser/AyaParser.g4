@@ -60,6 +60,7 @@ fnBody : IMPLIES expr
 
 fnModifiers : ERASE
             | INLINE
+            | PATTERN_KW
             ;
 
 structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;

@@ -381,11 +381,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     return primDoc(decl.ref);
   }
 
-  private Doc visitModifier(@NotNull Modifier modifier) {
-    return Doc.styled(KEYWORD, switch (modifier) {
-      case Inline -> "inline";
-      case Erase -> "erase";
-    });
+  private @NotNull Doc visitModifier(@NotNull Modifier modifier) {
+    return Doc.styled(KEYWORD, modifier.keyword);
   }
 
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
