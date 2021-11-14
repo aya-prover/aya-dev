@@ -34,11 +34,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
       case Pattern.BinOpSeq seq -> visitBinOpPattern(seq, pp);
       case Pattern.Ctor ctor -> new Pattern.Ctor(ctor.sourcePos(), ctor.explicit(), ctor.resolved(), ctor.params().map(p -> visitPattern(p, pp)), ctor.as());
       case Pattern.Tuple tup -> new Pattern.Tuple(tup.sourcePos(), tup.explicit(), tup.patterns().map(p -> visitPattern(p, pp)), tup.as());
-      case Pattern.Bind bind -> bind;
-      case Pattern.Absurd absurd -> absurd;
-      case Pattern.CalmFace calmFace -> calmFace;
-      case Pattern.Number number -> number;
-      case Pattern.ErrorPattern e -> e;
+      default -> pattern;
     };
   }
 
