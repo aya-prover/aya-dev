@@ -6,6 +6,7 @@ import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
 import org.aya.api.ref.PreLevelVar;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.generic.Constants;
@@ -60,11 +61,18 @@ public record Desugarer(@NotNull AyaBinOpSet opSet) implements StmtFixpoint<Unit
     };
   }
 
-  @Override public @NotNull Expr visitBinOpSeq(@NotNull Expr.BinOpSeq binOpSeq, Unit unit) {
+  @Override public @NotNull Expr visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, Unit unit) {
     var seq = binOpSeq.seq();
     assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
     return new BinExprParser(opSet, seq.view())
       .build(binOpSeq.sourcePos())
       .accept(this, Unit.unit());
+  }
+
+  @Override public @NotNull Pattern visitBinOpPattern(Pattern.@NotNull BinOpSeq binOpSeq, Unit unit) {
+    var seq = binOpSeq.seq();
+    assert seq.isNotEmpty() : binOpSeq.sourcePos().toString();
+    var pat = new BinPatternParser(binOpSeq.explicit(), opSet, seq.view()).build(binOpSeq.sourcePos());
+    return StmtFixpoint.super.visitPattern(pat, unit);
   }
 }

@@ -233,7 +233,8 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Outer outer) {
-    var ctorDoc = Doc.cat(linkRef(ctor.ref(), CON_CALL), visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ONE_WS));
+    var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? ctor.params().view() : ctor.params().view().filter(Pat::explicit);
+    var ctorDoc = visitCalls(ctor.ref(), CON_CALL, pats.map(p -> new Arg<>(p.toTerm(), p.explicit())), outer);
     return ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
   }
 

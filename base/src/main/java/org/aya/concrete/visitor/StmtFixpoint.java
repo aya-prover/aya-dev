@@ -26,7 +26,20 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   }
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {
-    return new Pattern.Clause(c.sourcePos, c.patterns, c.expr.map(expr -> expr.accept(this, pp)));
+    return new Pattern.Clause(c.sourcePos, c.patterns.map(p -> visitPattern(p, pp)), c.expr.map(expr -> expr.accept(this, pp)));
+  }
+
+  default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
+    return switch (pattern) {
+      case Pattern.BinOpSeq seq -> visitBinOpPattern(seq, pp);
+      case Pattern.Ctor ctor -> new Pattern.Ctor(ctor.sourcePos(), ctor.explicit(), ctor.resolved(), ctor.params().map(p -> visitPattern(p, pp)), ctor.as());
+      case Pattern.Tuple tup -> new Pattern.Tuple(tup.sourcePos(), tup.explicit(), tup.patterns().map(p -> visitPattern(p, pp)), tup.as());
+      default -> pattern;
+    };
+  }
+
+  default @NotNull Pattern visitBinOpPattern(@NotNull Pattern.BinOpSeq seq, P pp) {
+    return new Pattern.BinOpSeq(seq.sourcePos(), seq.seq().map(p -> visitPattern(p, pp)), seq.as(), seq.explicit());
   }
 
   @Override default Unit visitData(@NotNull Decl.DataDecl decl, P p) {
@@ -73,6 +86,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   }
   @Override default Unit visitCtor(Decl.@NotNull DataCtor ctor, P p) {
     visitSignatured(ctor, p);
+    ctor.patterns = ctor.patterns.map(pat -> visitPattern(pat, p));
     ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, p));
     return Unit.unit();
   }

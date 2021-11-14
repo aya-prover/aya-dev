@@ -60,8 +60,15 @@ public class GotoDefinition implements StmtConsumer<XY> {
   }
 
   @Override public void visitPattern(@NotNull Pattern pattern, XY xy) {
-    if (pattern instanceof Pattern.Ctor ctor) check(xy, ctor.resolved().sourcePos(), ctor.resolved().data());
-    StmtConsumer.super.visitPattern(pattern, xy);
+    switch (pattern) {
+      case Pattern.Ctor ctor -> {
+        check(xy, ctor.resolved().sourcePos(), ctor.resolved().data());
+        ctor.params().forEach(pat -> visitPattern(pat, xy));
+      }
+      case Pattern.Tuple tup -> tup.patterns().forEach(p -> visitPattern(p, xy));
+      case Pattern.BinOpSeq seq -> seq.seq().forEach(p -> visitPattern(p, xy));
+      default -> {}
+    }
   }
 
   private void check(@NotNull XY xy, @NotNull SourcePos sourcePos, Var var) {

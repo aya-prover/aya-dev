@@ -32,6 +32,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> 
     switch (pattern) {
       case Pattern.Ctor ctor -> ctor.params().forEach(param -> visitPattern(pattern, p));
       case Pattern.Tuple tuple -> tuple.patterns().forEach(pat -> visitPattern(pat, p));
+      case Pattern.BinOpSeq seq -> seq.seq().forEach(pat -> visitPattern(pat, p));
       default -> {
       }
     }

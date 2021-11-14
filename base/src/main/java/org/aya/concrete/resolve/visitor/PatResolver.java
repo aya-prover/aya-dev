@@ -10,9 +10,7 @@ import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.stmt.Decl;
-import org.aya.tyck.pat.PatternProblem;
 import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,17 +46,6 @@ public final class PatResolver {
 
   private Tuple2<Context, Pattern> resolve(@NotNull Pattern pattern, Context context) {
     return switch (pattern) {
-      case Pattern.Ctor ctor -> {
-        var namePos = ctor.resolved().sourcePos();
-        var resolution = findPatternDef(context, namePos, ctor.resolved().data().name());
-        if (resolution == null) context.reportAndThrow(new PatternProblem.UnknownCtor(ctor));
-        var sourcePos = ctor.sourcePos();
-        var newCtx = new Ref<>(context);
-        var params = ctor.params().map(p -> subpatterns(newCtx, p));
-        yield Tuple.of(
-          bindAs(ctor.as(), newCtx.value, sourcePos),
-          new Pattern.Ctor(sourcePos, ctor.explicit(), new WithPos<>(namePos, resolution), params, ctor.as()));
-      }
       case Pattern.Tuple tuple -> {
         var newCtx = new Ref<>(context);
         var patterns = tuple.patterns().map(p -> subpatterns(newCtx, p));
@@ -70,6 +57,14 @@ public final class PatResolver {
         var maybe = findPatternDef(context, bind.sourcePos(), bind.bind().name());
         if (maybe != null) yield Tuple.of(context, new Pattern.Ctor(bind, maybe));
         else yield Tuple.of(context.bind(bind.bind(), bind.sourcePos(), var -> false), bind);
+      }
+      // We will never have Ctor instances before desugar.
+      case Pattern.BinOpSeq seq -> {
+        var newCtx = new Ref<>(context);
+        var pats = seq.seq().map(p -> subpatterns(newCtx, p));
+        yield Tuple.of(
+          bindAs(seq.as(), newCtx.value, seq.sourcePos()),
+          new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.as(), seq.explicit()));
       }
       default -> Tuple.of(context, pattern);
     };

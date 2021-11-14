@@ -9,11 +9,26 @@
 
 You may download the latest nightly release of Aya from [GitHub Releases].
 There are prebuilt binaries for Windows, Linux, and macOS that can be used
-in Java-free environments as well as fat-jar files which can be invoked via `java -jar`.
+in Java-free environments as well as fat-jar files which can be invoked via `java --enable-preview -jar`.
 Note that the nightly release is updated for each commit to the `main` branch,
 but the release date displayed is very old and is an issue of GitHub.
 
 The minimum required version of Java is [Java 17].
+
+Aya is under active development. Nothing guaranteed! However, we can share some cool stuffs here:
+
++ Dependent types, including pi-types, sigma types, etc.
+  You could write a [type-safe interpreter][gadt].
++ Arend-ish interval type which is used to define the HoTT [path type][oop]
+  and prove [regularity by computation][regularity] thanks to Arend's type theory.
+  We also have the classic cubical-flavored [funExt].
+  + We are considering moving to cubical type theory.
++ Overlapping patterns. Very [useful][oop] in theorem proving.
++ A literate programming mode with inline code fragment support.
+  We already have a prototype, but we plan to revise it before sharing demos.
++ Binary operators, with precedence specified by a [partial ordering][binop]
+  (instead of a number, such as in Haskell or Agda)
+  which is useful for [equation reasoning][assoc]
 
 See also [use as a library](#use-as-a-library).
 
@@ -42,21 +57,6 @@ check out [how to][proxy] let gradle use a proxy.
 ./gradlew mergeJacocoReports
 ```
 
-Aya is under active development. Nothing guaranteed! However, we can share some cool stuffs here:
-
-+ Dependent types, including pi-types, sigma types, etc.
-  You could write a [type-safe interpreter][gadt].
-+ Arend-ish interval type which is used to define the HoTT [path type][oop]
-  and prove [regularity by computation][regularity] thanks to Arend's type theory.
-  We also have the classic cubical-flavored [funExt].
-  + We are considering moving to cubical type theory.
-+ Overlapping patterns. Very [useful][oop] in theorem proving.
-+ A literate programming mode with inline code fragment support.
-  We already have a prototype, but we plan to revise it before sharing demos.
-+ Binary operators, with precedence specified by a [partial ordering][binop]
-  (instead of a number, such as in Haskell or Agda)
-  which is useful for [equation reasoning][assoc]
-
 ## Contributing to Aya
 
 + Questions or concerns are welcomed in the discussion area.
@@ -82,8 +82,8 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
 [gadt]: ../base/src/test/resources/success/type-safe-norm.aya
 [regularity]: ../base/src/test/resources/success/regularity.aya
 [funExt]: ../base/src/test/resources/success/funExt.aya
-[assoc]: ../base/src/test/resources/success/assoc.aya
-[binop]: ../base/src/test/resources/success/issues2/issue69.aya#L47
+[assoc]: ../base/src/test/resources/success/assoc.aya#L73
+[binop]: ../base/src/test/resources/success/issues2/issue69.aya#L46
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 
 ## Use as a library
