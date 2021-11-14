@@ -56,7 +56,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     throw new IllegalArgumentException("not an operator");
   }
 
-  @Override protected @Nullable OpDecl asOpDecl(@NotNull Expr.NamedArg elem) {
+  @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
     if (elem.expr() instanceof Expr.RefExpr ref
       && ref.resolvedVar() instanceof DefVar<?, ?> defVar
       && defVar.concrete instanceof OpDecl opDecl
@@ -64,23 +64,18 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     return null;
   }
 
-  @Override protected @NotNull Expr
-  makeApp(@NotNull SourcePos sourcePos, @NotNull Expr function, @NotNull Expr.NamedArg arg) {
-    return new Expr.AppExpr(sourcePos, function, arg);
+  @Override protected @NotNull Expr.NamedArg
+  makeArg(@NotNull SourcePos pos, @NotNull Expr func, Expr.@NotNull NamedArg arg, boolean explicit) {
+    return new Expr.NamedArg(explicit, new Expr.AppExpr(pos, func, arg));
   }
 
-
-  @Override protected @NotNull Expr.NamedArg makeArg(@NotNull Expr expr, boolean explicit) {
-    return new Expr.NamedArg(explicit, expr);
-  }
-
-  @Override public @NotNull Expr makeSectionApp(
+  @Override public @NotNull Expr.NamedArg makeSectionApp(
     @NotNull SourcePos pos, Expr.@NotNull NamedArg op, @NotNull Function<Expr.NamedArg, Expr> lamBody
   ) {
     var missing = Constants.randomlyNamed(op.expr().sourcePos());
     var missingElem = new Expr.NamedArg(true, new Expr.RefExpr(SourcePos.NONE, missing));
     var missingParam = new Expr.Param(missing.definition(), missing, true);
-    return new Expr.LamExpr(pos, missingParam, lamBody.apply(missingElem));
-
+    var term = new Expr.LamExpr(pos, missingParam, lamBody.apply(missingElem));
+    return new Expr.NamedArg(op.explicit(), term);
   }
 }

@@ -227,9 +227,9 @@ public sealed interface Doc extends Docile {
     return cat(symbol(leftSymbol), doc, symbol(rightSymbol));
   }
 
-  /** @param explicit when false, add braces */
-  static @NotNull Doc braced(Doc doc, boolean explicit) {
-    return explicit ? doc : braced(doc);
+  /** @param falsification when false, add braces */
+  static @NotNull Doc bracedUnless(Doc doc, boolean falsification) {
+    return falsification ? doc : braced(doc);
   }
 
   static @NotNull Doc braced(Doc doc) {

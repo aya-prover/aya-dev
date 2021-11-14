@@ -11,6 +11,7 @@ import org.aya.api.ref.Var;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.binop.BinOpParser;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +20,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author kiva, ice1000
  */
-public sealed interface Pattern extends ConcretePat {
+public sealed interface Pattern extends ConcretePat, BinOpParser.Elem<Pattern> {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new ConcreteDistiller(options).visitPattern(this, BaseDistiller.Outer.Free);
+  }
+
+  @Override @NotNull default Pattern expr() {
+    return this;
   }
 
   record Tuple(
@@ -68,7 +73,6 @@ public sealed interface Pattern extends ConcretePat {
     public Ctor(@NotNull Pattern.Bind bind, @NotNull Var maybe) {
       this(bind.sourcePos(), bind.explicit(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty(), null);
     }
-
   }
 
   /**
