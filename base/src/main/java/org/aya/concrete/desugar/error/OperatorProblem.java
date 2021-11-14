@@ -16,6 +16,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 public final class OperatorProblem {
+  public record NotOperator(@NotNull SourcePos sourcePos, @NotNull String op) implements Problem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(Doc.plain(op), Doc.english("is not an operator. It cannot have bind block."));
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
+  }
+
   public record FixityError(
     @NotNull String op1, @NotNull Assoc assoc1,
     @NotNull String op2, @NotNull Assoc assoc2,

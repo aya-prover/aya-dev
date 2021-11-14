@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.visitor;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.desugar.AyaBinOpSet;
+import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
@@ -37,12 +38,15 @@ public final class BindResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     return Unit.unit();
   }
 
-  public void visitBind(@NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
+  public void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
     if (bind == BindBlock.EMPTY) return;
     var ctx = bind.context().value;
     assert ctx != null : "no shallow resolver?";
     var opSet = info.opSet();
-    // TODO[kiva]: ensure self is an operator
+    if (opSet.isOperand(self)) {
+      opSet.reporter.report(new OperatorProblem.NotOperator(selfDef.concrete.sourcePos(), selfDef.name()));
+      throw new Context.ResolvingInterruptedException();
+    }
     bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
     bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
   }
@@ -67,19 +71,19 @@ public final class BindResolver implements Stmt.Visitor<ResolveInfo, Unit> {
   }
 
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, ResolveInfo info) {
-    decl.body.forEach(ctor -> visitBind(ctor, ctor.bindBlock, info));
-    visitBind(decl, decl.bindBlock, info);
+    decl.body.forEach(ctor -> visitBind(ctor.ref, ctor, ctor.bindBlock, info));
+    visitBind(decl.ref, decl, decl.bindBlock, info);
     return Unit.unit();
   }
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, ResolveInfo info) {
-    decl.fields.forEach(field -> visitBind(field, field.bindBlock, info));
-    visitBind(decl, decl.bindBlock, info);
+    decl.fields.forEach(field -> visitBind(field.ref, field, field.bindBlock, info));
+    visitBind(decl.ref, decl, decl.bindBlock, info);
     return Unit.unit();
   }
 
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, ResolveInfo info) {
-    visitBind(decl, decl.bindBlock, info);
+    visitBind(decl.ref, decl, decl.bindBlock, info);
     return Unit.unit();
   }
 

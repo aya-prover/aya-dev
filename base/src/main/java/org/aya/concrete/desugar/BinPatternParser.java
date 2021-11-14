@@ -7,7 +7,9 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.error.OperatorProblem;
+import org.aya.concrete.resolve.context.Context;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.pat.PatternProblem;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.binop.BinOpSet;
@@ -73,6 +75,9 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
     // param explicit should be ignored since the BinOpSeq we are processing already specified the explicitness
     if (func instanceof Pattern.Ctor ctor) {
       return new Pattern.Ctor(pos, outerMostLicit, ctor.resolved(), ctor.params().appended(arg), ctor.as());
-    } else return createErrorExpr(pos);
+    } else {
+      opSet.reporter.report(new PatternProblem.UnknownCtor(func));
+      throw new Context.ResolvingInterruptedException();
+    }
   }
 }
