@@ -64,23 +64,18 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     return null;
   }
 
-  @Override protected @NotNull Expr
-  makeApp(@NotNull SourcePos sourcePos, @NotNull Expr function, @NotNull Expr.NamedArg arg) {
-    return new Expr.AppExpr(sourcePos, function, arg);
+  @Override protected @NotNull Expr.NamedArg
+  makeArg(@NotNull SourcePos sourcePos, @NotNull Expr function, Expr.@NotNull NamedArg namedArg, boolean explicit) {
+    return new Expr.NamedArg(explicit, new Expr.AppExpr(sourcePos, function, namedArg));
   }
 
-
-  @Override protected @NotNull Expr.NamedArg makeArg(@NotNull Expr expr, boolean explicit) {
-    return new Expr.NamedArg(explicit, expr);
-  }
-
-  @Override public @NotNull Expr makeSectionApp(
+  @Override public @NotNull Expr.NamedArg makeSectionApp(
     @NotNull SourcePos pos, Expr.@NotNull NamedArg op, @NotNull Function<Expr.NamedArg, Expr> lamBody
   ) {
     var missing = Constants.randomlyNamed(op.expr().sourcePos());
     var missingElem = new Expr.NamedArg(true, new Expr.RefExpr(SourcePos.NONE, missing));
     var missingParam = new Expr.Param(missing.definition(), missing, true);
-    return new Expr.LamExpr(pos, missingParam, lamBody.apply(missingElem));
-
+    var term = new Expr.LamExpr(pos, missingParam, lamBody.apply(missingElem));
+    return new Expr.NamedArg(op.explicit(), term);
   }
 }

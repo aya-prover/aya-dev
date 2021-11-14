@@ -45,10 +45,10 @@ public abstract class BinOpParser<
       var second = seq.get(1);
       // case 1: `+ f` becomes `\lam _ => _ + f`
       if (opSet.assocOf(asOpDecl(first)).infix && argc(first) == 2)
-        return makeSectionApp(sourcePos, first, elem -> replicate(seq.prepended(elem)).build(sourcePos));
+        return makeSectionApp(sourcePos, first, elem -> replicate(seq.prepended(elem)).build(sourcePos)).expr();
       // case 2: `f +` becomes `\lam _ => f + _`
       if (opSet.assocOf(asOpDecl(second)).infix && argc(second) == 2)
-        return makeSectionApp(sourcePos, second, elem -> replicate(seq.appended(elem)).build(sourcePos));
+        return makeSectionApp(sourcePos, second, elem -> replicate(seq.appended(elem)).build(sourcePos)).expr();
     }
     return convertToPrefix(sourcePos);
   }
@@ -60,7 +60,7 @@ public abstract class BinOpParser<
    * @implSpec should create a lambda expression with
    * <code>lamBody.apply(lamArg)</code> as its body.
    */
-  public abstract @NotNull Expr makeSectionApp(
+  public abstract @NotNull Arg makeSectionApp(
     @NotNull SourcePos pos, @NotNull Arg op,
     @NotNull Function<Arg, Expr> lamBody);
 
@@ -135,14 +135,14 @@ public abstract class BinOpParser<
 
   private void foldTop() {
     var op = opStack.pop();
-    prefixes.append(makeArg(makeBinApp(op._1), op._1.explicit()));
+    prefixes.append(makeBinApp(op._1));
   }
 
-  private @NotNull Expr makeBinApp(@NotNull Arg op) {
+  private @NotNull Arg makeBinApp(@NotNull Arg op) {
     int argc = argc(op);
     if (argc == 1) {
       var operand = prefixes.dequeue();
-      return makeApp(union(operand, op), op.expr(), operand);
+      return makeArg(union(operand, op), op.expr(), operand, op.explicit());
     } else if (argc == 2) {
       if (prefixes.sizeGreaterThanOrEquals(2)) {
         var rhs = prefixes.dequeue();
@@ -153,19 +153,21 @@ public abstract class BinOpParser<
         var sides = getAppliedSides(op);
         var applied = prefixes.dequeue();
         var side = sides.elementAt(0);
-        return makeSectionApp(union(op, applied), op, elem -> switch (side) {
+        return makeSectionApp(union(op, applied), op, elem -> (switch (side) {
           case Lhs -> makeBinApp(op, elem, applied);
           case Rhs -> makeBinApp(op, applied, elem);
-        });
+        }).expr());
       }
     }
 
     throw new UnsupportedOperationException("TODO?");
   }
 
-  private @NotNull Expr makeBinApp(@NotNull Arg op, @NotNull Arg rhs, @NotNull Arg lhs) {
-    if (op == appOp()) return makeApp(union(lhs, rhs), lhs.expr(), rhs);
-    return makeApp(union(op, lhs, rhs), makeApp(union(op, lhs), op.expr(), lhs), rhs);
+  private @NotNull Arg makeBinApp(@NotNull Arg op, @NotNull Arg rhs, @NotNull Arg lhs) {
+    var explicit = op.explicit();
+    if (op == appOp()) return makeArg(union(lhs, rhs), lhs.expr(), rhs, explicit);
+    return makeArg(union(op, lhs, rhs), makeArg(union(op, lhs), op.expr(), lhs, true).expr(), rhs, explicit);
+    // ^ `true` above is supposed to be ignored, totally.
   }
 
   public boolean isOperand(@NotNull Arg elem, @NotNull BinOpSet opSet) {
@@ -187,8 +189,7 @@ public abstract class BinOpParser<
 
   protected abstract @Nullable OpDecl asOpDecl(@NotNull Arg elem);
   protected abstract int argc(@NotNull OpDecl decl);
-  protected abstract @NotNull Expr makeApp(@NotNull SourcePos sourcePos, @NotNull Expr function, @NotNull Arg arg);
-  protected abstract @NotNull Arg makeArg(@NotNull Expr expr, boolean explicit);
+  protected abstract @NotNull Arg makeArg(@NotNull SourcePos sourcePos, @NotNull Expr function, @NotNull Arg arg, boolean explicit);
 
   private @NotNull SourcePos union(@NotNull Arg a, @NotNull Arg b, @NotNull Arg c) {
     return union(a, b).union(c.sourcePos());
