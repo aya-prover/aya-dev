@@ -11,7 +11,6 @@ import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
-import org.aya.concrete.stmt.OpDecl;
 import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
@@ -19,6 +18,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 
 /**

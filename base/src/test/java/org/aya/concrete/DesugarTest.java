@@ -3,7 +3,7 @@
 package org.aya.concrete;
 
 import org.aya.api.distill.DistillerOptions;
-import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
 import org.aya.util.error.Global;
@@ -45,7 +45,7 @@ public class DesugarTest {
 
   private void desugarAndPretty(@NotNull @NonNls @Language("TEXT") String code, @NotNull @NonNls @Language("TEXT") String pretty) {
     var stmt = ParseTest.parseStmt(code);
-    stmt.forEach(s -> s.desugar(new BinOpSet(ThrowingReporter.INSTANCE)));
+    stmt.forEach(s -> s.desugar(new AyaBinOpSet(ThrowingReporter.INSTANCE)));
     assertEquals(pretty.trim(), Doc.vcat(stmt.view()
         .map(s -> s.toDoc(DistillerOptions.debug())))
       .debugRender()

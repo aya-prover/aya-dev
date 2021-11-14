@@ -54,8 +54,8 @@ public record StmtShallowResolver(
     return Unit.unit();
   }
 
-  public void visitBind(OpDecl.@NotNull BindBlock bind, @NotNull ModuleContext context) {
-    if (bind != OpDecl.BindBlock.EMPTY) bind.context().value = context;
+  public void visitBind(@NotNull BindBlock bind, @NotNull ModuleContext context) {
+    if (bind != BindBlock.EMPTY) bind.context().value = context;
   }
 
   @Override public Unit visitRemark(@NotNull Remark remark, @NotNull ModuleContext context) {

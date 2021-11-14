@@ -12,6 +12,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
+import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -127,7 +128,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
     public final @Nullable OpDecl.OpInfo opInfo;
-    public final @NotNull OpDecl.BindBlock bindBlock;
+    public final @NotNull BindBlock bindBlock;
     public final boolean coerce;
 
     public DataCtor(
@@ -138,7 +139,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
       @NotNull ImmutableSeq<Pattern> patterns,
       boolean coerce,
-      @NotNull OpDecl.BindBlock bindBlock
+      @NotNull BindBlock bindBlock
     ) {
       super(sourcePos, entireSourcePos, telescope);
       this.clauses = clauses;
@@ -169,7 +170,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull Expr result;
     public final @NotNull ImmutableSeq<DataCtor> body;
     public final @Nullable OpDecl.OpInfo opInfo;
-    public final @NotNull OpDecl.BindBlock bindBlock;
+    public final @NotNull BindBlock bindBlock;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -179,7 +180,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull ImmutableSeq<DataCtor> body,
-      @NotNull OpDecl.BindBlock bindBlock
+      @NotNull BindBlock bindBlock
     ) {
       super(sourcePos, entireSourcePos, accessibility, telescope);
       this.result = result;
@@ -213,7 +214,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull
     final ImmutableSeq<StructField> fields;
     public final @Nullable OpDecl.OpInfo opInfo;
-    public final @NotNull OpDecl.BindBlock bindBlock;
+    public final @NotNull BindBlock bindBlock;
     public @NotNull Expr result;
 
     public StructDecl(
@@ -225,7 +226,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull Expr result,
       // @NotNull ImmutableSeq<String> superClassNames,
       @NotNull ImmutableSeq<StructField> fields,
-      @NotNull OpDecl.BindBlock bindBlock
+      @NotNull BindBlock bindBlock
     ) {
       super(sourcePos, entireSourcePos, accessibility, telescope);
       this.opInfo = opInfo;
@@ -255,7 +256,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
     public final @Nullable OpDecl.OpInfo opInfo;
-    public final @NotNull OpDecl.BindBlock bindBlock;
+    public final @NotNull BindBlock bindBlock;
     public @NotNull Option<Expr> body;
 
     public final boolean coerce;
@@ -269,7 +270,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull Option<Expr> body,
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
       boolean coerce,
-      @NotNull OpDecl.BindBlock bindBlock
+      @NotNull BindBlock bindBlock
     ) {
       super(sourcePos, entireSourcePos, telescope);
       this.coerce = coerce;
@@ -299,7 +300,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class FnDecl extends Decl implements OpDecl {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @Nullable OpDecl.OpInfo opInfo;
-    public final @NotNull OpDecl.BindBlock bindBlock;
+    public final @NotNull BindBlock bindBlock;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
     public @NotNull Expr result;
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
@@ -313,7 +314,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
-      @NotNull OpDecl.BindBlock bindBlock
+      @NotNull BindBlock bindBlock
     ) {
       super(sourcePos, entireSourcePos, accessibility, telescope);
       this.modifiers = modifiers;

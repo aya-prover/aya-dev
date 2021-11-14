@@ -6,5 +6,6 @@ module org.aya.util {
 
   exports org.aya.util.cancel;
   exports org.aya.util.error;
+  exports org.aya.util.binop;
   exports org.aya.util;
 }

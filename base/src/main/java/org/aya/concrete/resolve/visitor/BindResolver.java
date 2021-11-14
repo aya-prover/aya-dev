@@ -4,12 +4,13 @@ package org.aya.concrete.resolve.visitor;
 
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.desugar.BinOpSet;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
+import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,8 +37,8 @@ public final class BindResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     return Unit.unit();
   }
 
-  public void visitBind(@NotNull OpDecl self, OpDecl.@NotNull BindBlock bind, ResolveInfo info) {
-    if (bind == OpDecl.BindBlock.EMPTY) return;
+  public void visitBind(@NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
+    if (bind == BindBlock.EMPTY) return;
     var ctx = bind.context().value;
     assert ctx != null : "no shallow resolver?";
     var opSet = info.opSet();
@@ -45,13 +46,13 @@ public final class BindResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
   }
 
-  private @NotNull DefVar<?, ?> bind(@NotNull OpDecl self, @NotNull BinOpSet opSet, @NotNull Context ctx,
+  private @NotNull DefVar<?, ?> bind(@NotNull OpDecl self, @NotNull AyaBinOpSet opSet, @NotNull Context ctx,
                                      @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id) {
     if (ctx.get(id) instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
       opSet.bind(self, pred, op, id.sourcePos());
       return defVar;
     } else {
-      opSet.reporter().report(new UnknownOperatorError(id.sourcePos(), id.join()));
+      opSet.reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
       throw new Context.ResolvingInterruptedException();
     }
   }

@@ -4,7 +4,6 @@ package org.aya.lsp.actions;
 
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -12,6 +11,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.LspRange;
+import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,8 +144,8 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(op.concrete)));
   }
 
-  private void visitBind(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull OpDecl.BindBlock bindBlock) {
-    if (bindBlock == OpDecl.BindBlock.EMPTY) return;
+  private void visitBind(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull BindBlock bindBlock) {
+    if (bindBlock == BindBlock.EMPTY) return;
     bindBlock.loosers().view().zip(bindBlock.resolvedLoosers().value.view())
       .forEach(tup -> visitOperator(buffer, tup._1.sourcePos(), tup._2));
     bindBlock.tighters().view().zip(bindBlock.resolvedTighters().value.view())

@@ -19,10 +19,8 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.PreLevelVar;
-import org.aya.api.util.Assoc;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.desugar.BinOpParser;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.error.BadCounterexampleWarn;
 import org.aya.concrete.resolve.error.PrimDependencyError;
@@ -33,6 +31,9 @@ import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.parser.AyaParser;
+import org.aya.util.binop.Assoc;
+import org.aya.util.binop.BinOpParser;
+import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -138,14 +139,14 @@ public final class AyaProducer {
       .collect(ImmutableSeq.factory()));
   }
 
-  public OpDecl.@NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
-    if (ctx.LOOSER() != null) return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
+  public @NotNull BindBlock visitBind(AyaParser.BindBlockContext ctx) {
+    if (ctx.LOOSER() != null) return new BindBlock(sourcePosOf(ctx), new Ref<>(),
       visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()), ImmutableSeq.empty(),
       new Ref<>(), new Ref<>());
-    else if (ctx.TIGHTER() != null) return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
+    else if (ctx.TIGHTER() != null) return new BindBlock(sourcePosOf(ctx), new Ref<>(),
       ImmutableSeq.empty(), visitQIdsComma(ctx.qIdsComma()).collect(ImmutableSeq.factory()),
       new Ref<>(), new Ref<>());
-    else return new OpDecl.BindBlock(sourcePosOf(ctx), new Ref<>(),
+    else return new BindBlock(sourcePosOf(ctx), new Ref<>(),
         visitLoosers(ctx.loosers()), visitTighters(ctx.tighters()),
         new Ref<>(), new Ref<>());
   }
@@ -223,7 +224,7 @@ public final class AyaProducer {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       visitFnBody(ctx.fnBody()),
-      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
   }
 
@@ -365,7 +366,7 @@ public final class AyaProducer {
   }
 
   public @NotNull Expr visitApp(AyaParser.AppContext ctx) {
-    var head = new BinOpParser.Elem(null, visitExpr(ctx.expr()), true);
+    var head = new BinOpParser.Elem<>(null, visitExpr(ctx.expr()), true);
     var tail = ctx.argument().stream()
       .map(this::visitArgument)
       .collect(DynamicLinkedSeq.factory());
@@ -388,7 +389,7 @@ public final class AyaProducer {
     );
   }
 
-  public @NotNull BinOpParser.Elem visitArgument(AyaParser.ArgumentContext ctx) {
+  public @NotNull BinOpParser.Elem<Expr> visitArgument(AyaParser.ArgumentContext ctx) {
     var atom = ctx.atom();
     if (atom != null) {
       var fixes = ctx.projFix();
@@ -397,19 +398,19 @@ public final class AyaProducer {
         .foldLeft(Tuple.of(sourcePosOf(ctx), expr),
           (acc, proj) -> Tuple.of(acc._2.sourcePos(), buildProj(acc._1, acc._2, proj)))
         ._2;
-      return new BinOpParser.Elem(projected, true);
+      return new BinOpParser.Elem<>(projected, true);
     }
     // assert ctx.LBRACE() != null;
     var id = ctx.ID();
-    if (id != null) return new BinOpParser.Elem(id.getText(), visitExpr(ctx.expr()), false);
+    if (id != null) return new BinOpParser.Elem<>(id.getText(), visitExpr(ctx.expr()), false);
     var items = ImmutableSeq.from(ctx.exprList().expr()).map(this::visitExpr);
     if (ctx.ULEVEL() != null) {
       var univArgsExpr = new Expr.RawUnivArgsExpr(sourcePosOf(ctx), items);
-      return new BinOpParser.Elem(univArgsExpr, false);
+      return new BinOpParser.Elem<>(univArgsExpr, false);
     }
-    if (items.sizeEquals(1)) return new BinOpParser.Elem(newBinOPScope(items.first()), false);
+    if (items.sizeEquals(1)) return new BinOpParser.Elem<>(newBinOPScope(items.first()), false);
     var tupExpr = new Expr.TupExpr(sourcePosOf(ctx), items);
-    return new BinOpParser.Elem(tupExpr, false);
+    return new BinOpParser.Elem<>(tupExpr, false);
   }
 
   /**
@@ -420,7 +421,7 @@ public final class AyaProducer {
    */
   public @NotNull Expr newBinOPScope(@NotNull Expr expr) {
     return new Expr.BinOpSeq(expr.sourcePos(),
-      ImmutableSeq.of(new BinOpParser.Elem(expr, true)));
+      ImmutableSeq.of(new BinOpParser.Elem<>(expr, true)));
   }
 
   public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
@@ -561,7 +562,7 @@ public final class AyaProducer {
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
       body,
-      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
     return Tuple2.of(data, ctx.OPEN() == null ? ImmutableSeq.empty() : ImmutableSeq.of(
       new Command.Open(
@@ -598,7 +599,7 @@ public final class AyaProducer {
       visitClauses(ctx.clauses()),
       patterns,
       ctx.COERCE() != null,
-      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
   }
 
@@ -701,7 +702,7 @@ public final class AyaProducer {
       type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
       fields,
-      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
   }
 
@@ -727,7 +728,7 @@ public final class AyaProducer {
       Option.of(ctx.expr()).map(this::visitExpr),
       ImmutableSeq.empty(),
       false,
-      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
   }
 
@@ -745,7 +746,7 @@ public final class AyaProducer {
       Option.none(),
       visitClauses(ctx.clauses()),
       ctx.COERCE() != null,
-      bind == null ? OpDecl.BindBlock.EMPTY : visitBind(bind)
+      bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
   }
 
