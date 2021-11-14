@@ -5,6 +5,7 @@ package org.aya.concrete;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.api.concrete.ConcretePat;
+import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -72,6 +73,22 @@ public sealed interface Pattern extends ConcretePat, BinOpParser.Elem<Pattern> {
   ) implements Pattern {
     public Ctor(@NotNull Pattern.Bind bind, @NotNull Var maybe) {
       this(bind.sourcePos(), bind.explicit(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty(), null);
+    }
+  }
+
+  record BinOpSeq(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<Pattern> seq,
+    boolean explicit
+  ) implements Pattern {}
+
+  record ErrorPattern(
+    @NotNull SourcePos sourcePos,
+    @NotNull AyaDocile description,
+    boolean explicit
+  ) implements Pattern {
+    public ErrorPattern(@NotNull SourcePos sourcePos, @NotNull Doc description) {
+      this(sourcePos, options -> description, true);
     }
   }
 

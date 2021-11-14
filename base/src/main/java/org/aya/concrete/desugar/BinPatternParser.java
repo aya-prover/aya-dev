@@ -6,6 +6,8 @@ import kala.collection.SeqView;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.desugar.error.OperatorProblem;
+import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.binop.BinOpSet;
@@ -36,21 +38,19 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
 
   @Override public @NotNull Pattern
   makeSectionApp(@NotNull SourcePos pos, @NotNull Pattern op, @NotNull Function<Pattern, Pattern> lamBody) {
-    // TODO[ice]: pattern does not support operator section
     return createErrorExpr(pos);
   }
 
   @Override protected void reportAmbiguousPred(String op1, String op2, SourcePos pos) {
-    // TODO
+    opSet.reporter.report(new OperatorProblem.AmbiguousPredError(op1, op2, pos));
   }
 
-  @Override protected void reportFixityError(Assoc top, Assoc current, String op2, String op1, SourcePos pos) {
-    // TODO
+  @Override protected void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos) {
+    opSet.reporter.report(new OperatorProblem.FixityError(currentOp, current, topOp, top, pos));
   }
 
   @Override protected @NotNull Pattern createErrorExpr(@NotNull SourcePos sourcePos) {
-    // TODO
-    return null;
+    return new Pattern.ErrorPattern(sourcePos, Doc.english("an constructor pattern"));
   }
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Pattern elem) {
@@ -62,12 +62,12 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
   }
 
   @Override protected int argc(@NotNull OpDecl decl) {
-    return BinExprParser.argc0(decl);
+    return BinExprParser.countExplicit(decl);
   }
 
   @Override protected @NotNull Pattern
   makeArg(@NotNull SourcePos pos, @NotNull Pattern func, @NotNull Pattern arg, boolean explicit) {
-    if (arg instanceof Pattern.Ctor ctor) {
+    if (func instanceof Pattern.Ctor ctor) {
       return new Pattern.Ctor(pos, explicit, ctor.resolved(), ctor.params().appended(arg), ctor.as());
     } else return createErrorExpr(pos);
   }

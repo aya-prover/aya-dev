@@ -47,15 +47,15 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
   }
 
-  @Override protected void reportFixityError(Assoc top, Assoc current, String op2, String op1, SourcePos pos) {
-    opSet.reporter.report(new OperatorProblem.FixityError(op1, current, op2, top, pos));
+  @Override protected void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos) {
+    opSet.reporter.report(new OperatorProblem.FixityError(currentOp, current, topOp, top, pos));
   }
 
   @Override protected int argc(@NotNull OpDecl opDecl) {
-    return argc0(opDecl);
+    return countExplicit(opDecl);
   }
 
-  static int argc0(@NotNull OpDecl opDecl) {
+  static int countExplicit(@NotNull OpDecl opDecl) {
     if (opDecl instanceof Signatured sig) return sig.telescope.view().count(Expr.Param::explicit);
     throw new IllegalArgumentException("not an operator");
   }

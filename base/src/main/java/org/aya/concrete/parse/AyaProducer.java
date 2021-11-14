@@ -15,7 +15,6 @@ import kala.value.Ref;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.PreLevelVar;
@@ -423,6 +422,11 @@ public final class AyaProducer {
       ImmutableSeq.of(new Expr.NamedArg(true, expr)));
   }
 
+  public @NotNull Pattern newBinOPScope(@NotNull Pattern expr) {
+    return new Pattern.BinOpSeq(expr.sourcePos(),
+      ImmutableSeq.of(expr), expr.explicit());
+  }
+
   public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
     return (Expr.LamExpr) buildLam(
       sourcePosOf(ctx),
@@ -615,25 +619,17 @@ public final class AyaProducer {
     return visitAtomPatterns(ctx.atomPatterns()).apply(true, null);
   }
 
-
   public BiFunction<Boolean, LocalVar, Pattern> visitAtomPatterns(@NotNull AyaParser.AtomPatternsContext ctx) {
     var atoms = ctx.atomPattern().stream()
       .map(this::visitAtomPattern)
       .collect(ImmutableSeq.factory());
-    if (atoms.sizeEquals(1)) return (ex, as) -> atoms.first().apply(ex);
+    if (atoms.sizeEquals(1)) return (ex, as) -> newBinOPScope(atoms.first().apply(ex));
 
-    // this `apply` does nothing on explicitness because we only used its bind
-    var first = atoms.first().apply(true);
-    if (!(first instanceof Pattern.Bind bind)) {
-      reporter.report(new ParseError(first.sourcePos(),
-        "`" + first.toDoc(DistillerOptions.debug()).debugRender() + "` is not a constructor name"));
-      throw new ParsingInterruptedException();
-    }
-    return (ex, as) -> new Pattern.Ctor(
-      sourcePosOf(ctx), ex,
-      new WithPos<>(bind.sourcePos(), bind.bind()),
-      atoms.view().drop(1).map(p -> p.apply(true)).toImmutableSeq(),
-      as);
+    return (ex, as) -> new Pattern.BinOpSeq(
+      sourcePosOf(ctx),
+      atoms.view().map(p -> p.apply(true)).toImmutableSeq(),
+      ex
+    );
   }
 
   public @NotNull BooleanFunction<Pattern> visitAtomPattern(AyaParser.AtomPatternContext ctx) {
@@ -646,7 +642,7 @@ public final class AyaProducer {
         .map(t -> visitAtomPatterns(t.atomPatterns()))
         .collect(ImmutableSeq.factory());
       return tupElem.sizeEquals(1)
-        ? (exIgnored -> tupElem.first().apply(forceEx, as))
+        ? (exIgnored -> newBinOPScope(tupElem.first().apply(forceEx, as)))
         : (exIgnored -> new Pattern.Tuple(
         sourcePos,
         forceEx,

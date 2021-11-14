@@ -42,6 +42,7 @@ public final class BindResolver implements Stmt.Visitor<ResolveInfo, Unit> {
     var ctx = bind.context().value;
     assert ctx != null : "no shallow resolver?";
     var opSet = info.opSet();
+    // TODO[kiva]: ensure self is an operator
     bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
     bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
   }

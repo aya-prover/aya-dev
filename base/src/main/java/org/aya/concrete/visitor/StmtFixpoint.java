@@ -26,7 +26,23 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   }
 
   default @NotNull Pattern.Clause visitClause(@NotNull Pattern.Clause c, P pp) {
-    return new Pattern.Clause(c.sourcePos, c.patterns, c.expr.map(expr -> expr.accept(this, pp)));
+    return new Pattern.Clause(c.sourcePos, c.patterns.map(p -> visitPattern(p, pp)), c.expr.map(expr -> expr.accept(this, pp)));
+  }
+
+  default @NotNull Pattern visitPattern(@NotNull Pattern pattern, P pp) {
+    return switch (pattern) {
+      case Pattern.BinOpSeq seq -> visitBinOpPattern(seq, pp);
+      case Pattern.Ctor ctor -> new Pattern.Ctor(ctor.sourcePos(), ctor.explicit(), ctor.resolved(), ctor.params().map(p -> visitPattern(p, pp)), ctor.as());
+      case Pattern.Tuple tup -> new Pattern.Tuple(tup.sourcePos(), tup.explicit(), tup.patterns().map(p -> visitPattern(p, pp)), tup.as());
+      case Pattern.Bind bind -> bind;
+      case Pattern.Absurd absurd -> absurd;
+      case Pattern.CalmFace calmFace -> calmFace;
+      case Pattern.Number number -> number;
+    };
+  }
+
+  default @NotNull Pattern visitBinOpPattern(@NotNull Pattern.BinOpSeq seq, P pp) {
+    return new Pattern.BinOpSeq(seq.sourcePos(), seq.seq().map(p -> visitPattern(p, pp)), seq.explicit());
   }
 
   @Override default Unit visitData(@NotNull Decl.DataDecl decl, P p) {
