@@ -3,12 +3,12 @@
 package org.aya.tyck.trace;
 
 import kala.collection.mutable.DynamicSeq;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
-import org.aya.generic.GenericBuilder;
+import org.aya.util.TreeBuilder;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -18,7 +18,7 @@ import java.util.Deque;
 /**
  * @author ice1000
  */
-public sealed interface Trace extends GenericBuilder.Tree<Trace> {
+public sealed interface Trace extends TreeBuilder.Tree<Trace> {
   interface Visitor<P, R> {
     R visitExpr(@NotNull ExprT t, P p);
     R visitUnify(@NotNull UnifyT t, P p);
@@ -30,7 +30,7 @@ public sealed interface Trace extends GenericBuilder.Tree<Trace> {
 
   <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
 
-  final class Builder extends GenericBuilder<Trace> {
+  final class Builder extends TreeBuilder<Trace> {
     @VisibleForTesting public @NotNull Deque<DynamicSeq<Trace>> getTops() {
       return tops;
     }

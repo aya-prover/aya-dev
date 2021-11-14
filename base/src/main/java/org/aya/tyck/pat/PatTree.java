@@ -4,11 +4,11 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.LocalVar;
-import org.aya.util.error.WithPos;
 import org.aya.concrete.Pattern;
-import org.aya.generic.GenericBuilder;
+import org.aya.util.TreeBuilder;
+import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +18,7 @@ public record PatTree(
   @NotNull String s,
   boolean explicit, int argsCount,
   @NotNull DynamicSeq<PatTree> children
-) implements GenericBuilder.Tree<PatTree> {
+) implements TreeBuilder.Tree<PatTree> {
   public PatTree(@NotNull String s, boolean explicit, int argsCount) {
     this(s, explicit, argsCount, DynamicSeq.create());
   }
@@ -30,7 +30,7 @@ public record PatTree(
     return new Pattern.Ctor(SourcePos.NONE, explicit, new WithPos<>(SourcePos.NONE, new LocalVar(s)), childPatterns, null);
   }
 
-  public final static class Builder extends GenericBuilder<PatTree> {
+  public final static class Builder extends TreeBuilder<PatTree> {
     public void shiftEmpty(boolean explicit) {
       append(new PatTree("_", explicit, 0));
     }
