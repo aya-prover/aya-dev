@@ -18,7 +18,6 @@ public record Arg<T extends AyaDocile>(@NotNull T term, boolean explicit) implem
   }
 
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    var termDoc = term.toDoc(options);
-    return explicit() ? termDoc : Doc.braced(termDoc);
+    return Doc.braced(term.toDoc(options), explicit);
   }
 }

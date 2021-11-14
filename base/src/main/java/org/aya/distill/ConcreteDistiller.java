@@ -32,7 +32,6 @@ import java.util.Objects;
  */
 public class ConcreteDistiller extends BaseDistiller implements
   Stmt.Visitor<Unit, Doc>,
-  Pattern.Visitor<BaseDistiller.Outer, Doc>,
   Expr.Visitor<BaseDistiller.Outer, Doc> {
   public ConcreteDistiller(@NotNull DistillerOptions options) {
     super(options);
@@ -79,7 +78,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     if (!data[0] && !data[1]) {
       var type = expr.param().type();
       var tyDoc = type != null ? type.toDoc(options) : Doc.symbol("?");
-      doc = Doc.sep(expr.param().explicit() ? tyDoc : Doc.braced(tyDoc),
+      doc = Doc.sep(Doc.braced(tyDoc, expr.param().explicit()),
         Doc.symbol("->"),
         expr.last().accept(this, Outer.Codomain));
     } else doc = Doc.sep(
@@ -126,7 +125,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     // TODO[ice]: binary?
     return visitCalls(false,
       expr.function().accept(this, Outer.AppHead),
-      (nest, arg) -> arg.expr().accept(this, nest), outer, SeqView.of(expr.argument())
+      (nest, arg) -> arg.expr().accept(this, nest), outer,
+      SeqView.of(new Arg<>(expr.argument(), expr.argument().explicit()))
     );
   }
 
@@ -194,42 +194,29 @@ public class ConcreteDistiller extends BaseDistiller implements
     );
   }
 
-  @Override public Doc visitTuple(Pattern.@NotNull Tuple tuple, Outer outer) {
-    var tup = Doc.licit(tuple.explicit(),
-      Doc.commaList(tuple.patterns().view().map(p -> p.accept(this, Outer.Free))));
-    return tuple.as() == null ? tup
-      : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
-  }
-
-  @Override public Doc visitNumber(Pattern.@NotNull Number number, Outer outer) {
-    var doc = Doc.plain(String.valueOf(number.number()));
-    return number.explicit() ? doc : Doc.braced(doc);
-  }
-
-  @Override public Doc visitBind(Pattern.@NotNull Bind bind, Outer outer) {
-    var doc = linkDef(bind.bind());
-    return bind.explicit() ? doc : Doc.braced(doc);
-  }
-
-  @Override public Doc visitAbsurd(Pattern.@NotNull Absurd absurd, Outer outer) {
-    var doc = Doc.styled(KEYWORD, "impossible");
-    return absurd.explicit() ? doc : Doc.braced(doc);
-  }
-
-  @Override public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Outer outer) {
-    var doc = Doc.plain(Constants.ANONYMOUS_PREFIX);
-    return calmFace.explicit() ? doc : Doc.braced(doc);
-  }
-
-  @Override public Doc visitCtor(Pattern.@NotNull Ctor ctor, Outer outer) {
-    var name = linkRef(ctor.resolved().data(), CON_CALL);
-    var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
-    return ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+  public @NotNull Doc visitPattern(@NotNull Pattern pattern, Outer outer) {
+    return switch (pattern) {
+      case Pattern.Tuple tuple -> {
+        var tup = Doc.licit(tuple.explicit(),
+          Doc.commaList(tuple.patterns().view().map(p -> visitPattern(p, Outer.Free))));
+        yield tuple.as() == null ? tup
+          : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
+      }
+      case Pattern.Absurd absurd -> Doc.braced(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
+      case Pattern.Bind bind -> Doc.braced(linkDef(bind.bind()), bind.explicit());
+      case Pattern.CalmFace calmFace -> Doc.braced(Doc.plain(Constants.ANONYMOUS_PREFIX), calmFace.explicit());
+      case Pattern.Number number -> Doc.braced(Doc.plain(String.valueOf(number.number())), number.explicit());
+      case Pattern.Ctor ctor -> {
+        var name = linkRef(ctor.resolved().data(), CON_CALL);
+        var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
+        yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+      }
+    };
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, Outer outer, @NotNull Doc delim) {
     patterns = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pattern::explicit);
-    return Doc.join(delim, patterns.view().map(p -> p.accept(this, outer)));
+    return Doc.join(delim, patterns.view().map(p -> visitPattern(p, outer)));
   }
 
   public Doc matchy(Pattern.@NotNull Clause match) {
@@ -303,7 +290,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     );
     var doc = Doc.sepNonEmpty(prelude);
     if (ctor.patterns.isNotEmpty()) {
-      var pats = Doc.commaList(ctor.patterns.view().map(pattern -> pattern.accept(this, Outer.Free)));
+      var pats = Doc.commaList(ctor.patterns.view().map(pattern -> visitPattern(pattern, Outer.Free)));
       return Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);
     } else return Doc.sep(Doc.symbol("|"), doc);
   }
@@ -314,7 +301,7 @@ public class ConcreteDistiller extends BaseDistiller implements
       clauses.view()
         .map(this::matchy)
         .map(doc -> Doc.sep(Doc.symbol("|"), doc)));
-    return wrapInBraces ? Doc.braced(clausesDoc) : clausesDoc;
+    return Doc.braced(clausesDoc, !wrapInBraces);
   }
 
   @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {

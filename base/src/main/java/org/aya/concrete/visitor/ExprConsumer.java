@@ -4,7 +4,6 @@ package org.aya.concrete.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
-import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,12 +53,8 @@ public interface ExprConsumer<P> extends Expr.Visitor<P, Unit> {
     return Unit.unit();
   }
 
-  private void visitArg(@NotNull Arg<Expr.NamedArg> arg, P p) {
-    arg.term().expr().accept(this, p);
-  }
-
   @Override default Unit visitApp(Expr.@NotNull AppExpr expr, P p) {
-    visitArg(expr.argument(), p);
+    expr.argument().expr().accept(this, p);
     return expr.function().accept(this, p);
   }
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>, Pattern.Visitor<P, Unit> {
+public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> {
   default void visitSignatured(@NotNull Signatured signatured, P pp) {
     signatured.telescope.forEach(p -> {
       var type = p.type();
@@ -24,8 +24,17 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
   }
 
   default void visitClause(@NotNull Pattern.Clause c, P pp) {
-    c.patterns.forEach(pattern -> pattern.accept(this, pp));
+    c.patterns.forEach(pattern -> visitPattern(pattern, pp));
     c.expr.forEach(expr -> expr.accept(this, pp));
+  }
+
+  default void visitPattern(@NotNull Pattern pattern, P p) {
+    switch (pattern) {
+      case Pattern.Ctor ctor -> ctor.params().forEach(param -> visitPattern(pattern, p));
+      case Pattern.Tuple tuple -> tuple.patterns().forEach(pat -> visitPattern(pat, p));
+      default -> {
+      }
+    }
   }
 
   @Override default Unit visitData(@NotNull Decl.DataDecl decl, P p) {
@@ -73,7 +82,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
 
   @Override default Unit visitCtor(Decl.@NotNull DataCtor ctor, P p) {
     visitSignatured(ctor, p);
-    ctor.patterns.forEach(pattern -> pattern.accept(this, p));
+    ctor.patterns.forEach(pattern -> visitPattern(pattern, p));
     ctor.clauses.forEach(clause -> visitClause(clause, p));
     return Unit.unit();
   }
@@ -92,32 +101,6 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P>,
   }
 
   @Override default Unit visitLevels(Generalize.@NotNull Levels levels, P p) {
-    return Unit.unit();
-  }
-
-  @Override default Unit visitTuple(Pattern.@NotNull Tuple tuple, P p) {
-    tuple.patterns().forEach(pattern -> pattern.accept(this, p));
-    return Unit.unit();
-  }
-
-  @Override default Unit visitNumber(Pattern.@NotNull Number number, P p) {
-    return Unit.unit();
-  }
-
-  @Override default Unit visitAbsurd(Pattern.@NotNull Absurd absurd, P p) {
-    return Unit.unit();
-  }
-
-  @Override default Unit visitCalmFace(Pattern.@NotNull CalmFace calmFace, P p) {
-    return Unit.unit();
-  }
-
-  @Override default Unit visitBind(Pattern.@NotNull Bind bind, P p) {
-    return Unit.unit();
-  }
-
-  @Override default Unit visitCtor(Pattern.@NotNull Ctor ctor, P p) {
-    ctor.params().forEach(pattern -> pattern.accept(this, p));
     return Unit.unit();
   }
 

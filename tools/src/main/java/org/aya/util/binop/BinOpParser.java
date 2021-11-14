@@ -15,27 +15,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Function;
 
-public abstract class BinOpParser<OpSet extends BinOpSet, Expr extends SourceNode, Arg> {
+public abstract class BinOpParser<
+  OpSet extends BinOpSet,
+  Expr extends SourceNode,
+  Arg extends BinOpParser.Elem<Expr>> {
   protected final @NotNull OpSet opSet;
-  private final @NotNull SeqView<@NotNull Elem<Expr>> seq;
+  private final @NotNull SeqView<@NotNull Arg> seq;
 
-  public BinOpParser(@NotNull OpSet opSet, @NotNull SeqView<@NotNull Elem<Expr>> seq) {
+  public BinOpParser(@NotNull OpSet opSet, @NotNull SeqView<@NotNull Arg> seq) {
     this.opSet = opSet;
     this.seq = seq;
   }
 
-  private final DynamicLinkedSeq<Tuple2<Elem<Expr>, BinOpSet.BinOP>> opStack = DynamicLinkedSeq.create();
-  private final DynamicDoubleLinkedSeq<Elem<Expr>> prefixes = DynamicDoubleLinkedSeq.create();
-  private final MutableMap<Elem<Expr>, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
+  private final DynamicLinkedSeq<Tuple2<Arg, BinOpSet.BinOP>> opStack = DynamicLinkedSeq.create();
+  private final DynamicDoubleLinkedSeq<Arg> prefixes = DynamicDoubleLinkedSeq.create();
+  private final MutableMap<Arg, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
 
   /** @implSpec equivalent to <code>new BinOpParser(this.opSet, seq)</code>. */
-  protected abstract @NotNull BinOpParser<OpSet, Expr, Arg> replicate(@NotNull SeqView<@NotNull Elem<Expr>> seq);
+  protected abstract @NotNull BinOpParser<OpSet, Expr, Arg> replicate(@NotNull SeqView<@NotNull Arg> seq);
   /** @implSpec must always return a static instance! */
-  protected abstract @NotNull Elem<Expr> appOp();
+  protected abstract @NotNull Arg appOp();
 
   public @NotNull Expr build(@NotNull SourcePos sourcePos) {
     // No need to build
-    if (seq.sizeEquals(1)) return seq.get(0).expr;
+    if (seq.sizeEquals(1)) return seq.get(0).expr();
     // BinOP section fast path
     if (seq.sizeEquals(2)) {
       var first = seq.get(0);
@@ -58,8 +61,8 @@ public abstract class BinOpParser<OpSet extends BinOpSet, Expr extends SourceNod
    * <code>lamBody.apply(lamArg)</code> as its body.
    */
   public abstract @NotNull Expr makeSectionApp(
-    @NotNull SourcePos pos, @NotNull Elem<Expr> op,
-    @NotNull Function<Elem<Expr>, Expr> lamBody);
+    @NotNull SourcePos pos, @NotNull Arg op,
+    @NotNull Function<Arg, Expr> lamBody);
 
   private @NotNull Expr convertToPrefix(@NotNull SourcePos sourcePos) {
     for (var expr : insertApplication()) {
@@ -76,7 +79,7 @@ public abstract class BinOpParser<OpSet extends BinOpSet, Expr extends SourceNod
             var topAssoc = top._2.assoc();
             var currentAssoc = currentOp.assoc();
             if (topAssoc != currentAssoc || topAssoc == Assoc.Infix) {
-              reportFixityError(topAssoc, currentAssoc, top._2.name(), currentOp.name(), top._1.expr.sourcePos());
+              reportFixityError(topAssoc, currentAssoc, top._2.name(), currentOp.name(), top._1.sourcePos());
               return createErrorExpr(sourcePos);
             }
             if (topAssoc == Assoc.InfixL) foldLhsFor(expr);
@@ -84,7 +87,7 @@ public abstract class BinOpParser<OpSet extends BinOpSet, Expr extends SourceNod
           } else if (cmp == BinOpSet.PredCmp.Looser) {
             break;
           } else {
-            reportAmbiguousPred(currentOp.name(), top._2.name(), top._1.expr.sourcePos());
+            reportAmbiguousPred(currentOp.name(), top._2.name(), top._1.sourcePos());
             return createErrorExpr(sourcePos);
           }
         }
@@ -98,15 +101,15 @@ public abstract class BinOpParser<OpSet extends BinOpSet, Expr extends SourceNod
     }
 
     assert prefixes.sizeEquals(1);
-    return prefixes.first().expr;
+    return prefixes.first().expr();
   }
 
   protected abstract void reportAmbiguousPred(String op1, String op2, SourcePos pos);
   protected abstract void reportFixityError(Assoc topAssoc, Assoc currentAssoc, String op2, String op1, SourcePos pos);
   protected abstract @NotNull Expr createErrorExpr(@NotNull SourcePos sourcePos);
 
-  private @NotNull Seq<Elem<Expr>> insertApplication() {
-    var seqWithApp = DynamicSeq.<Elem<Expr>>create();
+  private @NotNull Seq<Arg> insertApplication() {
+    var seqWithApp = DynamicSeq.<Arg>create();
     var lastIsOperand = true;
     for (var expr : seq) {
       var isOperand = isOperand(expr, opSet);
@@ -117,30 +120,29 @@ public abstract class BinOpParser<OpSet extends BinOpSet, Expr extends SourceNod
     return seqWithApp;
   }
 
-  private void markAppliedOperand(@NotNull Elem<Expr> elem, @NotNull BinOpParser.AppliedSide side) {
+  private void markAppliedOperand(@NotNull Arg elem, @NotNull BinOpParser.AppliedSide side) {
     appliedOperands.getOrPut(elem, MutableSet::of).add(side);
   }
 
-  private @NotNull Set<AppliedSide> getAppliedSides(@NotNull Elem<Expr> elem) {
+  private @NotNull Set<AppliedSide> getAppliedSides(@NotNull Arg elem) {
     return appliedOperands.getOrPut(elem, MutableSet::of);
   }
 
-  private void foldLhsFor(@NotNull Elem<Expr> forOp) {
+  private void foldLhsFor(@NotNull Arg forOp) {
     foldTop();
     markAppliedOperand(forOp, AppliedSide.Lhs);
   }
 
   private void foldTop() {
     var op = opStack.pop();
-    var app = makeBinApp(op._1);
-    prefixes.append(new Elem<>(app, op._1.explicit));
+    prefixes.append(makeArg(makeBinApp(op._1), op._1.explicit()));
   }
 
-  private @NotNull Expr makeBinApp(@NotNull Elem<Expr> op) {
+  private @NotNull Expr makeBinApp(@NotNull Arg op) {
     int argc = argc(op);
     if (argc == 1) {
       var operand = prefixes.dequeue();
-      return makeApp(union(operand, op), op.expr, makeArg(operand));
+      return makeApp(union(operand, op), op.expr(), operand);
     } else if (argc == 2) {
       if (prefixes.sizeGreaterThanOrEquals(2)) {
         var rhs = prefixes.dequeue();
@@ -161,52 +163,50 @@ public abstract class BinOpParser<OpSet extends BinOpSet, Expr extends SourceNod
     throw new UnsupportedOperationException("TODO?");
   }
 
-  private @NotNull Expr makeBinApp(@NotNull Elem<Expr> op, @NotNull Elem<Expr> rhs, @NotNull Elem<Expr> lhs) {
-    if (op == appOp()) return makeApp(union(lhs, rhs), lhs.expr, makeArg(rhs));
-    return makeApp(
-      union(op, lhs, rhs),
-      makeApp(union(op, lhs), op.expr, makeArg(lhs)),
-      makeArg(rhs)
-    );
+  private @NotNull Expr makeBinApp(@NotNull Arg op, @NotNull Arg rhs, @NotNull Arg lhs) {
+    if (op == appOp()) return makeApp(union(lhs, rhs), lhs.expr(), rhs);
+    return makeApp(union(op, lhs, rhs), makeApp(union(op, lhs), op.expr(), lhs), rhs);
   }
 
-  public boolean isOperand(@NotNull Elem<Expr> elem, @NotNull BinOpSet opSet) {
+  public boolean isOperand(@NotNull Arg elem, @NotNull BinOpSet opSet) {
     if (elem == appOp()) return false;
     var tryOp = asOpDecl(elem);
     return opSet.isOperand(tryOp);
   }
 
-  public BinOpSet.@NotNull BinOP toSetElem(@NotNull Elem<Expr> elem, @NotNull BinOpSet opSet) {
+  public BinOpSet.@NotNull BinOP toSetElem(@NotNull Arg elem, @NotNull BinOpSet opSet) {
     if (elem == appOp()) return BinOpSet.APP_ELEM;
     var tryOp = asOpDecl(elem);
     assert tryOp != null; // should never fail
     return opSet.ensureHasElem(tryOp);
   }
 
-  private int argc(@NotNull Elem<Expr> elem) {
+  private int argc(@NotNull Arg elem) {
     return elem == appOp() ? 2 : argc(Objects.requireNonNull(asOpDecl(elem)));
   }
 
-  protected abstract @Nullable OpDecl asOpDecl(@NotNull Elem<Expr> elem);
+  protected abstract @Nullable OpDecl asOpDecl(@NotNull Arg elem);
   protected abstract int argc(@NotNull OpDecl decl);
   protected abstract @NotNull Expr makeApp(@NotNull SourcePos sourcePos, @NotNull Expr function, @NotNull Arg arg);
-  protected abstract @NotNull Arg makeArg(@NotNull Elem<Expr> elem);
+  protected abstract @NotNull Arg makeArg(@NotNull Expr expr, boolean explicit);
 
-  private @NotNull SourcePos union(@NotNull Elem<Expr> a, @NotNull Elem<Expr> b, @NotNull Elem<Expr> c) {
-    return union(a, b).union(c.expr.sourcePos());
+  private @NotNull SourcePos union(@NotNull Arg a, @NotNull Arg b, @NotNull Arg c) {
+    return union(a, b).union(c.sourcePos());
   }
 
-  private @NotNull SourcePos union(@NotNull Elem<Expr> a, @NotNull Elem<Expr> b) {
-    return a.expr.sourcePos().union(b.expr.sourcePos());
+  private @NotNull SourcePos union(@NotNull Arg a, @NotNull Arg b) {
+    return a.sourcePos().union(b.sourcePos());
   }
 
   enum AppliedSide {
     Lhs, Rhs
   }
 
-  public record Elem<Expr extends SourceNode>(@Nullable String name, @NotNull Expr expr, boolean explicit) {
-    public Elem(@NotNull Expr expr, boolean explicit) {
-      this(null, expr, explicit);
+  public interface Elem<Expr extends SourceNode> extends SourceNode {
+    @NotNull Expr expr();
+    boolean explicit();
+    @Override default @NotNull SourcePos sourcePos() {
+      return expr().sourcePos();
     }
   }
 }

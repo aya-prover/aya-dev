@@ -14,7 +14,6 @@ import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
 import org.aya.test.ThrowingReporter;
-import org.aya.util.binop.BinOpParser;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
@@ -146,25 +145,22 @@ public class ParseTest {
       new Expr.BinOpSeq(
         SourcePos.NONE,
         ImmutableSeq.of(
-          new BinOpParser.Elem<>(null, new Expr.BinOpSeq(
+          new Expr.NamedArg(true, new Expr.BinOpSeq(
             SourcePos.NONE,
             ImmutableSeq.of(
-              new BinOpParser.Elem<>(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-              new BinOpParser.Elem<>(null, new Expr.UnresolvedExpr(SourcePos.NONE, "a"), true)
-            )
-          ), true)
-        )
-      ),
+              new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "f")),
+              new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "a"))
+            ))))),
       Either.left(1),
       new Ref<>(null)
     ));
     parseTo("f a . 1", new Expr.BinOpSeq(
         SourcePos.NONE,
         ImmutableSeq.of(
-          new BinOpParser.Elem<>(null, new Expr.UnresolvedExpr(SourcePos.NONE, "f"), true),
-          new BinOpParser.Elem<>(null, new Expr.ProjExpr(SourcePos.NONE,
-            new Expr.UnresolvedExpr(SourcePos.NONE, "a"), Either.left(1), new Ref<>(null)),
-            true))
+          new Expr.NamedArg(true, new Expr.UnresolvedExpr(SourcePos.NONE, "f")),
+          new Expr.NamedArg(true,
+            new Expr.ProjExpr(SourcePos.NONE, new Expr.UnresolvedExpr(SourcePos.NONE, "a"),
+              Either.left(1), new Ref<>(null))))
       )
     );
     assertTrue(parseExpr("f (a, b, c)") instanceof Expr.BinOpSeq app

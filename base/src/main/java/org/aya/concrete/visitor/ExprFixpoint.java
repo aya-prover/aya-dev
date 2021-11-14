@@ -3,9 +3,7 @@
 package org.aya.concrete.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
-import org.aya.util.binop.BinOpParser;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
@@ -75,17 +73,13 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
     return expr;
   }
 
-  default @NotNull Arg<Expr.NamedArg> visitArg(@NotNull Arg<Expr.NamedArg> arg, P p) {
-    var term = arg.term().expr().accept(this, p);
-    if (term == arg.term().expr()) return arg;
-    return new Arg<>(new Expr.NamedArg(arg.term().name(), term), arg.explicit());
-  }
-
   @Override default @NotNull Expr visitApp(Expr.@NotNull AppExpr expr, P p) {
     var function = expr.function().accept(this, p);
-    var arg = visitArg(expr.argument(), p);
-    if (function == expr.function() && arg == expr.argument()) return expr;
-    return new Expr.AppExpr(expr.sourcePos(), function, arg);
+    var argument = expr.argument();
+    var argExpr = argument.expr().accept(this, p);
+    if (function == expr.function() && argExpr == argument.expr()) return expr;
+    var newArg = new Expr.NamedArg(argument.explicit(), argument.name(), argExpr);
+    return new Expr.AppExpr(expr.sourcePos(), function, newArg);
   }
 
   @Override default @NotNull Expr visitTup(Expr.@NotNull TupExpr expr, P p) {
@@ -135,6 +129,6 @@ public interface ExprFixpoint<P> extends Expr.Visitor<P, @NotNull Expr> {
 
   @Override default @NotNull Expr visitBinOpSeq(Expr.@NotNull BinOpSeq binOpSeq, P p) {
     return new Expr.BinOpSeq(binOpSeq.sourcePos(),
-      binOpSeq.seq().map(e -> new BinOpParser.Elem<>(e.name(), e.expr().accept(this, p), e.explicit())));
+      binOpSeq.seq().map(e -> new Expr.NamedArg(e.explicit(), e.name(), e.expr().accept(this, p))));
   }
 }

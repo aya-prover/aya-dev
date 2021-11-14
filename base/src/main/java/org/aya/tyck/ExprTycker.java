@@ -182,8 +182,7 @@ public final class ExprTycker {
         if (f.wellTyped instanceof ErrorTerm || f.type instanceof ErrorTerm) yield f;
         var app = f.wellTyped;
         var argument = appE.argument();
-        var namedArg = argument.term();
-        if (namedArg.expr() instanceof Expr.UnivArgsExpr univArgs) {
+        if (argument.expr() instanceof Expr.UnivArgsExpr univArgs) {
           univArgs(app, univArgs);
           yield f;
         }
@@ -202,10 +201,10 @@ public final class ExprTycker {
         var subst = new Substituter.TermSubst(MutableMap.create());
         try {
           while (pi.param().explicit() != argLicit ||
-            namedArg.name() != null && !Objects.equals(pi.param().ref().name(), namedArg.name())) {
-            if (argLicit || namedArg.name() != null) {
+            argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
+            if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
-              var holeApp = mockTerm(pi.param().subst(subst), namedArg.expr().sourcePos());
+              var holeApp = mockTerm(pi.param().subst(subst), argument.expr().sourcePos());
               app = CallTerm.make(app, new Arg<>(holeApp, false));
               subst.addDirectly(pi.param().ref(), holeApp);
               pi = ensurePiOrThrow(pi.body());
@@ -215,7 +214,7 @@ public final class ExprTycker {
         } catch (NotPi notPi) {
           yield fail(expr, ErrorTerm.unexpected(notPi.what), BadTypeError.pi(expr, notPi.what));
         }
-        var elabArg = inherit(namedArg.expr(), pi.param().type()).wellTyped;
+        var elabArg = inherit(argument.expr(), pi.param().type()).wellTyped;
         app = CallTerm.make(app, new Arg<>(elabArg, argLicit));
         subst.addDirectly(pi.param().ref(), elabArg);
         yield new Result(app, pi.body().subst(subst));

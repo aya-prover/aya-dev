@@ -31,7 +31,7 @@ public record Desugarer(@NotNull AyaBinOpSet opSet) implements StmtFixpoint<Unit
 
   @NotNull private Expr desugarUniv(Expr.@NotNull AppExpr expr, Expr.RawUnivExpr univ) {
     return catching(expr, () -> new Expr.UnivExpr(univ.sourcePos(),
-      levelVar(expr.argument().term().expr())));
+      levelVar(expr.argument().expr())));
   }
 
   private @NotNull Expr catching(@NotNull Expr expr, @NotNull CheckedSupplier<@NotNull Expr, DesugarInterruption> f) {

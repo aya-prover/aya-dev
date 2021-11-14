@@ -3,12 +3,10 @@
 package org.aya.api.concrete;
 
 import org.aya.api.distill.AyaDocile;
-import org.aya.util.error.SourcePos;
+import org.aya.util.binop.SourceNode;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.NonExtendable
-public interface ConcretePat extends AyaDocile {
-  @NotNull SourcePos sourcePos();
+public interface ConcretePat extends AyaDocile, SourceNode {
   boolean explicit();
 }
