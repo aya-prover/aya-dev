@@ -211,7 +211,8 @@ public class ConcreteDistiller extends BaseDistiller implements
         var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
         yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
       }
-      case Pattern.BinOpSeq seq -> Doc.plain("TODO");
+      case Pattern.BinOpSeq seq -> Doc.plain("<ConcreteDistillerTODO>");
+      case Pattern.ErrorPattern e -> e.description().toDoc(options);
     };
   }
 

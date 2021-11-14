@@ -19,13 +19,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pattern> {
-  public BinPatternParser(@NotNull AyaBinOpSet opSet, @NotNull SeqView<@NotNull Pattern> seq) {
+  private final boolean outerMostLicit;
+
+  public BinPatternParser(boolean outerMostLicit, @NotNull AyaBinOpSet opSet, @NotNull SeqView<@NotNull Pattern> seq) {
     super(opSet, seq);
+    this.outerMostLicit = outerMostLicit;
   }
 
   @Override protected @NotNull BinOpParser<AyaBinOpSet, Pattern, Pattern>
   replicate(@NotNull SeqView<@NotNull Pattern> seq) {
-    return new BinPatternParser(opSet, seq);
+    return new BinPatternParser(outerMostLicit, opSet, seq);
   }
 
   private static final Pattern OP_APP = new Pattern.Bind(
@@ -67,8 +70,9 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
 
   @Override protected @NotNull Pattern
   makeArg(@NotNull SourcePos pos, @NotNull Pattern func, @NotNull Pattern arg, boolean explicit) {
+    // param explicit should be ignored since the BinOpSeq we are processing already specified the explicitness
     if (func instanceof Pattern.Ctor ctor) {
-      return new Pattern.Ctor(pos, explicit, ctor.resolved(), ctor.params().appended(arg), ctor.as());
+      return new Pattern.Ctor(pos, outerMostLicit, ctor.resolved(), ctor.params().appended(arg), ctor.as());
     } else return createErrorExpr(pos);
   }
 }

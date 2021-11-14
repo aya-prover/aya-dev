@@ -21,17 +21,17 @@ open data Fin (n : Nat)
 
 def length {A : Type} (l : List A) : Nat
 | nil => zero
-| cons a l => suc (length l)
+| a cons l => suc (length l)
 
 def infix !! {A : Type} (l : List A) (i : Fin (length l)) : A
-| cons a l, fzero => a
-| cons a l, fsuc i => l !! i
+| a cons l, fzero => a
+| a cons l, fsuc i => l !! i
 
 def infix ++ {A : Type} (xs ys : List A) : List A
 | nil, ys => ys
-| cons a xs, ys => a cons xs ++ ys
+| a cons xs, ys => a cons xs ++ ys
 bind { tighter =, cons }
 
 def ++-assoc {A : Type} {xs ys zs : List A} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
   | {A}, {nil} => idp
-  | {A}, {cons x xs} => pmap (x cons) ++-assoc
+  | {A}, {x cons xs} => pmap (x cons) ++-assoc
