@@ -78,7 +78,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     if (!data[0] && !data[1]) {
       var type = expr.param().type();
       var tyDoc = type != null ? type.toDoc(options) : Doc.symbol("?");
-      doc = Doc.sep(expr.param().explicit() ? tyDoc : Doc.braced(tyDoc),
+      doc = Doc.sep(Doc.braced(tyDoc, expr.param().explicit()),
         Doc.symbol("->"),
         expr.last().accept(this, Outer.Codomain));
     } else doc = Doc.sep(
@@ -201,22 +201,10 @@ public class ConcreteDistiller extends BaseDistiller implements
         yield tuple.as() == null ? tup
           : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
       }
-      case Pattern.Absurd absurd -> {
-        var doc = Doc.styled(KEYWORD, "impossible");
-        yield absurd.explicit() ? doc : Doc.braced(doc);
-      }
-      case Pattern.Bind bind -> {
-        var doc = linkDef(bind.bind());
-        yield bind.explicit() ? doc : Doc.braced(doc);
-      }
-      case Pattern.CalmFace calmFace -> {
-        var doc = Doc.plain(Constants.ANONYMOUS_PREFIX);
-        yield calmFace.explicit() ? doc : Doc.braced(doc);
-      }
-      case Pattern.Number number -> {
-        var doc = Doc.plain(String.valueOf(number.number()));
-        yield number.explicit() ? doc : Doc.braced(doc);
-      }
+      case Pattern.Absurd absurd -> Doc.braced(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
+      case Pattern.Bind bind -> Doc.braced(linkDef(bind.bind()), bind.explicit());
+      case Pattern.CalmFace calmFace -> Doc.braced(Doc.plain(Constants.ANONYMOUS_PREFIX), calmFace.explicit());
+      case Pattern.Number number -> Doc.braced(Doc.plain(String.valueOf(number.number())), number.explicit());
       case Pattern.Ctor ctor -> {
         var name = linkRef(ctor.resolved().data(), CON_CALL);
         var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
@@ -312,7 +300,7 @@ public class ConcreteDistiller extends BaseDistiller implements
       clauses.view()
         .map(this::matchy)
         .map(doc -> Doc.sep(Doc.symbol("|"), doc)));
-    return wrapInBraces ? Doc.braced(clausesDoc) : clausesDoc;
+    return Doc.braced(clausesDoc, !wrapInBraces);
   }
 
   @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {

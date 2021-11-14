@@ -221,18 +221,15 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitBind(Pat.@NotNull Bind bind, Outer outer) {
-    var doc = linkDef(bind.as());
-    return bind.explicit() ? doc : Doc.braced(doc);
+    return Doc.braced(linkDef(bind.as()), bind.explicit());
   }
 
   @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Outer outer) {
-    var doc = Doc.styled(KEYWORD, "impossible");
-    return absurd.explicit() ? doc : Doc.braced(doc);
+    return Doc.braced(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
   }
 
   @Override public Doc visitPrim(Pat.@NotNull Prim prim, Outer outer) {
-    var link = linkRef(prim.ref(), CON_CALL);
-    return prim.explicit() ? link : Doc.braced(link);
+    return Doc.braced(linkRef(prim.ref(), CON_CALL), prim.explicit());
   }
 
   @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Outer outer) {
