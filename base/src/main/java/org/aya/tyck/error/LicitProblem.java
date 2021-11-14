@@ -5,7 +5,6 @@ package org.aya.tyck.error;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.ExprProblem;
 import org.aya.api.error.Problem;
-import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
@@ -29,9 +28,9 @@ public sealed interface LicitProblem extends Problem {
     }
   }
 
-  record UnexpectedImplicitArgError(@Override @NotNull Arg<Expr.NamedArg> expr) implements LicitProblem {
+  record UnexpectedImplicitArgError(@Override @NotNull Expr.NamedArg expr) implements LicitProblem {
     @Override public @NotNull SourcePos sourcePos() {
-      return expr.term().expr().sourcePos();
+      return expr.expr().sourcePos();
     }
 
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {

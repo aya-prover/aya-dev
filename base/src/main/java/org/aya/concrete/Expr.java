@@ -14,7 +14,6 @@ import org.aya.api.error.Reporter;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.PreLevelVar;
 import org.aya.api.ref.Var;
-import org.aya.api.util.Arg;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.resolve.context.ModuleContext;
@@ -27,6 +26,7 @@ import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.BinOpParser;
+import org.aya.util.binop.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
@@ -150,7 +150,7 @@ public sealed interface Expr extends ConcreteExpr {
   record AppExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Expr function,
-    @NotNull Arg<NamedArg> argument
+    @NotNull NamedArg argument
   ) implements Expr {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitApp(this, p);
@@ -161,13 +161,18 @@ public sealed interface Expr extends ConcreteExpr {
    * @author AustinZhu
    */
   record NamedArg(
+    boolean explicit,
     @Nullable String name,
     @NotNull Expr expr
-  ) implements AyaDocile {
-    @Override
-    public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      return name == null ? expr.toDoc(options) :
+  ) implements AyaDocile, SourceNode {
+    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+      var doc = name == null ? expr.toDoc(options) :
         Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), expr.toDoc(options)));
+      return Doc.braced(doc, explicit);
+    }
+
+    @Override public @NotNull SourcePos sourcePos() {
+      return expr.sourcePos();
     }
   }
 

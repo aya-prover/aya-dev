@@ -4,7 +4,6 @@ package org.aya.concrete.desugar;
 
 import kala.collection.SeqView;
 import org.aya.api.ref.DefVar;
-import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.stmt.Signatured;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Arg<Expr.NamedArg>> {
+public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.NamedArg> {
   public BinExprParser(@NotNull AyaBinOpSet opSet, @NotNull SeqView<@NotNull Elem<Expr>> seq) {
     super(opSet, seq);
   }
@@ -35,7 +34,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Arg<Expr
     return OP_APP;
   }
 
-  @Override protected @NotNull BinOpParser<AyaBinOpSet, Expr, Arg<Expr.NamedArg>>
+  @Override protected @NotNull BinOpParser<AyaBinOpSet, Expr, Expr.NamedArg>
   replicate(@NotNull SeqView<@NotNull Elem<Expr>> seq) {
     return new BinExprParser(opSet, seq);
   }
@@ -66,12 +65,12 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Arg<Expr
   }
 
   @Override protected @NotNull Expr
-  makeApp(@NotNull SourcePos sourcePos, @NotNull Expr function, @NotNull Arg<Expr.NamedArg> arg) {
+  makeApp(@NotNull SourcePos sourcePos, @NotNull Expr function, @NotNull Expr.NamedArg arg) {
     return new Expr.AppExpr(sourcePos, function, arg);
   }
 
-  @Override protected @NotNull Arg<Expr.NamedArg> makeArg(@NotNull Elem<Expr> elem) {
-    return new Arg<>(new Expr.NamedArg(elem.name(), elem.expr()), elem.explicit());
+  @Override protected @NotNull Expr.NamedArg makeArg(@NotNull Elem<Expr> elem) {
+    return new Expr.NamedArg(elem.explicit(), elem.name(), elem.expr());
   }
 
   @Override public @NotNull Expr makeSectionApp(

@@ -125,7 +125,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     // TODO[ice]: binary?
     return visitCalls(false,
       expr.function().accept(this, Outer.AppHead),
-      (nest, arg) -> arg.expr().accept(this, nest), outer, SeqView.of(expr.argument())
+      (nest, arg) -> arg.expr().accept(this, nest), outer,
+      SeqView.of(new Arg<>(expr.argument(), expr.argument().explicit()))
     );
   }
 
