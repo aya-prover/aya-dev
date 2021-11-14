@@ -83,7 +83,7 @@ public abstract class BaseDistiller {
 
   @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, LocalVar ctorAs, boolean noParams) {
     boolean as = ctorAs != null;
-    var withEx = Doc.braced(ctorDoc, ex);
+    var withEx = Doc.bracedUnless(ctorDoc, ex);
     var withAs = !as ? withEx :
       Doc.sep(Doc.parened(withEx), Doc.plain("as"), linkDef(ctorAs));
     return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
@@ -108,7 +108,7 @@ public abstract class BaseDistiller {
 
   @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
     return options.map.get(DistillerOptions.Key.ShowLambdaTypes) ? param.toDoc(options)
-      : Doc.braced(param.nameDoc(), param.explicit());
+      : Doc.bracedUnless(param.nameDoc(), param.explicit());
   }
 
   public static @NotNull Doc varDoc(@NotNull Var ref) {

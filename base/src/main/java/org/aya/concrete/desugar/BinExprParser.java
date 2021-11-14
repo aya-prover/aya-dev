@@ -56,7 +56,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     throw new IllegalArgumentException("not an operator");
   }
 
-  @Override protected @Nullable OpDecl asOpDecl(@NotNull Expr.NamedArg elem) {
+  @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
     if (elem.expr() instanceof Expr.RefExpr ref
       && ref.resolvedVar() instanceof DefVar<?, ?> defVar
       && defVar.concrete instanceof OpDecl opDecl
@@ -65,8 +65,8 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
   }
 
   @Override protected @NotNull Expr.NamedArg
-  makeArg(@NotNull SourcePos sourcePos, @NotNull Expr function, Expr.@NotNull NamedArg namedArg, boolean explicit) {
-    return new Expr.NamedArg(explicit, new Expr.AppExpr(sourcePos, function, namedArg));
+  makeArg(@NotNull SourcePos pos, @NotNull Expr func, Expr.@NotNull NamedArg arg, boolean explicit) {
+    return new Expr.NamedArg(explicit, new Expr.AppExpr(pos, func, arg));
   }
 
   @Override public @NotNull Expr.NamedArg makeSectionApp(

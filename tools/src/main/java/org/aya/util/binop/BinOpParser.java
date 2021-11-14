@@ -44,10 +44,10 @@ public abstract class BinOpParser<
       var first = seq.get(0);
       var second = seq.get(1);
       // case 1: `+ f` becomes `\lam _ => _ + f`
-      if (opSet.assocOf(asOpDecl(first)).infix && argc(first) == 2)
+      if (opSet.assocOf(underlyingOpDecl(first)).infix && argc(first) == 2)
         return makeSectionApp(sourcePos, first, elem -> replicate(seq.prepended(elem)).build(sourcePos)).expr();
       // case 2: `f +` becomes `\lam _ => f + _`
-      if (opSet.assocOf(asOpDecl(second)).infix && argc(second) == 2)
+      if (opSet.assocOf(underlyingOpDecl(second)).infix && argc(second) == 2)
         return makeSectionApp(sourcePos, second, elem -> replicate(seq.appended(elem)).build(sourcePos)).expr();
     }
     return convertToPrefix(sourcePos);
@@ -172,24 +172,24 @@ public abstract class BinOpParser<
 
   public boolean isOperand(@NotNull Arg elem, @NotNull BinOpSet opSet) {
     if (elem == appOp()) return false;
-    var tryOp = asOpDecl(elem);
+    var tryOp = underlyingOpDecl(elem);
     return opSet.isOperand(tryOp);
   }
 
   public BinOpSet.@NotNull BinOP toSetElem(@NotNull Arg elem, @NotNull BinOpSet opSet) {
     if (elem == appOp()) return BinOpSet.APP_ELEM;
-    var tryOp = asOpDecl(elem);
+    var tryOp = underlyingOpDecl(elem);
     assert tryOp != null; // should never fail
     return opSet.ensureHasElem(tryOp);
   }
 
   private int argc(@NotNull Arg elem) {
-    return elem == appOp() ? 2 : argc(Objects.requireNonNull(asOpDecl(elem)));
+    return elem == appOp() ? 2 : argc(Objects.requireNonNull(underlyingOpDecl(elem)));
   }
 
-  protected abstract @Nullable OpDecl asOpDecl(@NotNull Arg elem);
+  protected abstract @Nullable OpDecl underlyingOpDecl(@NotNull Arg elem);
   protected abstract int argc(@NotNull OpDecl decl);
-  protected abstract @NotNull Arg makeArg(@NotNull SourcePos sourcePos, @NotNull Expr function, @NotNull Arg arg, boolean explicit);
+  protected abstract @NotNull Arg makeArg(@NotNull SourcePos pos, @NotNull Expr func, @NotNull Arg arg, boolean explicit);
 
   private @NotNull SourcePos union(@NotNull Arg a, @NotNull Arg b, @NotNull Arg c) {
     return union(a, b).union(c.sourcePos());

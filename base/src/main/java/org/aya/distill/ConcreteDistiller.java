@@ -78,7 +78,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     if (!data[0] && !data[1]) {
       var type = expr.param().type();
       var tyDoc = type != null ? type.toDoc(options) : Doc.symbol("?");
-      doc = Doc.sep(Doc.braced(tyDoc, expr.param().explicit()),
+      doc = Doc.sep(Doc.bracedUnless(tyDoc, expr.param().explicit()),
         Doc.symbol("->"),
         expr.last().accept(this, Outer.Codomain));
     } else doc = Doc.sep(
@@ -202,10 +202,10 @@ public class ConcreteDistiller extends BaseDistiller implements
         yield tuple.as() == null ? tup
           : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
       }
-      case Pattern.Absurd absurd -> Doc.braced(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
-      case Pattern.Bind bind -> Doc.braced(linkDef(bind.bind()), bind.explicit());
-      case Pattern.CalmFace calmFace -> Doc.braced(Doc.plain(Constants.ANONYMOUS_PREFIX), calmFace.explicit());
-      case Pattern.Number number -> Doc.braced(Doc.plain(String.valueOf(number.number())), number.explicit());
+      case Pattern.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
+      case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());
+      case Pattern.CalmFace calmFace -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), calmFace.explicit());
+      case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), number.explicit());
       case Pattern.Ctor ctor -> {
         var name = linkRef(ctor.resolved().data(), CON_CALL);
         var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
@@ -301,7 +301,7 @@ public class ConcreteDistiller extends BaseDistiller implements
       clauses.view()
         .map(this::matchy)
         .map(doc -> Doc.sep(Doc.symbol("|"), doc)));
-    return Doc.braced(clausesDoc, !wrapInBraces);
+    return Doc.bracedUnless(clausesDoc, !wrapInBraces);
   }
 
   @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {

@@ -170,7 +170,7 @@ public sealed interface Expr extends ConcreteExpr {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       var doc = name == null ? expr.toDoc(options) :
         Doc.braced(Doc.sep(Doc.plain(name), Doc.symbol("=>"), expr.toDoc(options)));
-      return Doc.braced(doc, explicit);
+      return Doc.bracedUnless(doc, explicit);
     }
 
     @Override public @NotNull SourcePos sourcePos() {
