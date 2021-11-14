@@ -1,7 +1,0 @@
-open data 单人代词 : Type
-  | 我
-  | 你
-open data 多人代词 : Type
-  | 我们
-  | 他们
-def 测测测测测测测测测 : 单人代词 => 我们
