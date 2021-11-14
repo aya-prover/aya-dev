@@ -38,6 +38,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
       case Pattern.Absurd absurd -> absurd;
       case Pattern.CalmFace calmFace -> calmFace;
       case Pattern.Number number -> number;
+      case Pattern.ErrorPattern e -> e;
     };
   }
 
@@ -89,6 +90,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   }
   @Override default Unit visitCtor(Decl.@NotNull DataCtor ctor, P p) {
     visitSignatured(ctor, p);
+    ctor.patterns = ctor.patterns.map(pat -> visitPattern(pat, p));
     ctor.clauses = ctor.clauses.map(clause -> visitClause(clause, p));
     return Unit.unit();
   }
