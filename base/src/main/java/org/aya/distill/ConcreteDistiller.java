@@ -32,7 +32,6 @@ import java.util.Objects;
  */
 public class ConcreteDistiller extends BaseDistiller implements
   Stmt.Visitor<Unit, Doc>,
-  Pattern.Visitor<BaseDistiller.Outer, Doc>,
   Expr.Visitor<BaseDistiller.Outer, Doc> {
   public ConcreteDistiller(@NotNull DistillerOptions options) {
     super(options);
@@ -194,42 +193,41 @@ public class ConcreteDistiller extends BaseDistiller implements
     );
   }
 
-  @Override public Doc visitTuple(Pattern.@NotNull Tuple tuple, Outer outer) {
-    var tup = Doc.licit(tuple.explicit(),
-      Doc.commaList(tuple.patterns().view().map(p -> p.accept(this, Outer.Free))));
-    return tuple.as() == null ? tup
-      : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
-  }
-
-  @Override public Doc visitNumber(Pattern.@NotNull Number number, Outer outer) {
-    var doc = Doc.plain(String.valueOf(number.number()));
-    return number.explicit() ? doc : Doc.braced(doc);
-  }
-
-  @Override public Doc visitBind(Pattern.@NotNull Bind bind, Outer outer) {
-    var doc = linkDef(bind.bind());
-    return bind.explicit() ? doc : Doc.braced(doc);
-  }
-
-  @Override public Doc visitAbsurd(Pattern.@NotNull Absurd absurd, Outer outer) {
-    var doc = Doc.styled(KEYWORD, "impossible");
-    return absurd.explicit() ? doc : Doc.braced(doc);
-  }
-
-  @Override public Doc visitCalmFace(Pattern.@NotNull CalmFace calmFace, Outer outer) {
-    var doc = Doc.plain(Constants.ANONYMOUS_PREFIX);
-    return calmFace.explicit() ? doc : Doc.braced(doc);
-  }
-
-  @Override public Doc visitCtor(Pattern.@NotNull Ctor ctor, Outer outer) {
-    var name = linkRef(ctor.resolved().data(), CON_CALL);
-    var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
-    return ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+  public @NotNull Doc visitPattern(@NotNull Pattern pattern, Outer outer) {
+    return switch (pattern) {
+      case Pattern.Tuple tuple -> {
+        var tup = Doc.licit(tuple.explicit(),
+          Doc.commaList(tuple.patterns().view().map(p -> visitPattern(p, Outer.Free))));
+        yield tuple.as() == null ? tup
+          : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
+      }
+      case Pattern.Absurd absurd -> {
+        var doc = Doc.styled(KEYWORD, "impossible");
+        yield absurd.explicit() ? doc : Doc.braced(doc);
+      }
+      case Pattern.Bind bind -> {
+        var doc = linkDef(bind.bind());
+        yield bind.explicit() ? doc : Doc.braced(doc);
+      }
+      case Pattern.CalmFace calmFace -> {
+        var doc = Doc.plain(Constants.ANONYMOUS_PREFIX);
+        yield calmFace.explicit() ? doc : Doc.braced(doc);
+      }
+      case Pattern.Number number -> {
+        var doc = Doc.plain(String.valueOf(number.number()));
+        yield number.explicit() ? doc : Doc.braced(doc);
+      }
+      case Pattern.Ctor ctor -> {
+        var name = linkRef(ctor.resolved().data(), CON_CALL);
+        var ctorDoc = ctor.params().isEmpty() ? name : Doc.sep(name, visitMaybeCtorPatterns(ctor.params(), Outer.AppSpine, Doc.ALT_WS));
+        yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+      }
+    };
   }
 
   private Doc visitMaybeCtorPatterns(SeqLike<Pattern> patterns, Outer outer, @NotNull Doc delim) {
     patterns = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pattern::explicit);
-    return Doc.join(delim, patterns.view().map(p -> p.accept(this, outer)));
+    return Doc.join(delim, patterns.view().map(p -> visitPattern(p, outer)));
   }
 
   public Doc matchy(Pattern.@NotNull Clause match) {
@@ -303,7 +301,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     );
     var doc = Doc.sepNonEmpty(prelude);
     if (ctor.patterns.isNotEmpty()) {
-      var pats = Doc.commaList(ctor.patterns.view().map(pattern -> pattern.accept(this, Outer.Free)));
+      var pats = Doc.commaList(ctor.patterns.view().map(pattern -> visitPattern(pattern, Outer.Free)));
       return Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);
     } else return Doc.sep(Doc.symbol("|"), doc);
   }

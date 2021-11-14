@@ -59,13 +59,9 @@ public class GotoDefinition implements StmtConsumer<XY> {
     return StmtConsumer.super.visitProj(expr, xy);
   }
 
-  @Override public Unit visitBind(@NotNull Pattern.Bind bind, XY xy) {
-    return StmtConsumer.super.visitBind(bind, xy);
-  }
-
-  @Override public Unit visitCtor(@NotNull Pattern.Ctor ctor, XY xy) {
-    check(xy, ctor.resolved().sourcePos(), ctor.resolved().data());
-    return StmtConsumer.super.visitCtor(ctor, xy);
+  @Override public void visitPattern(@NotNull Pattern pattern, XY xy) {
+    if (pattern instanceof Pattern.Ctor ctor) check(xy, ctor.resolved().sourcePos(), ctor.resolved().data());
+    StmtConsumer.super.visitPattern(pattern, xy);
   }
 
   private void check(@NotNull XY xy, @NotNull SourcePos sourcePos, Var var) {

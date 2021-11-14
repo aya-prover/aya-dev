@@ -6,13 +6,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.api.concrete.ConcretePat;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
-import org.aya.util.error.WithPos;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,68 +21,34 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface Pattern extends ConcretePat {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new ConcreteDistiller(options), BaseDistiller.Outer.Free);
-  }
-
-  default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-    visitor.traceEntrance(this, p);
-    var ret = doAccept(visitor, p);
-    visitor.traceExit(ret, this, p);
-    return ret;
-  }
-
-  <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
-
-  interface Visitor<P, R> {
-    R visitTuple(@NotNull Tuple tuple, P p);
-    R visitNumber(@NotNull Number number, P p);
-    R visitAbsurd(@NotNull Absurd absurd, P p);
-    R visitBind(@NotNull Bind bind, P p);
-    R visitCalmFace(@NotNull CalmFace calmFace, P p);
-    R visitCtor(@NotNull Ctor ctor, P p);
-    default void traceEntrance(@NotNull Pattern pat, P p) {
-    }
-    default void traceExit(R r, @NotNull Pattern pat, P p) {
-    }
+    return new ConcreteDistiller(options).visitPattern(this, BaseDistiller.Outer.Free);
   }
 
   record Tuple(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     boolean explicit,
     @NotNull ImmutableSeq<Pattern> patterns,
     @Nullable LocalVar as
   ) implements Pattern {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTuple(this, p);
-    }
   }
 
   record Number(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     boolean explicit,
     int number
   ) implements Pattern {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitNumber(this, p);
-    }
   }
 
   record Absurd(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     boolean explicit
   ) implements Pattern {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitAbsurd(this, p);
-    }
   }
 
   record CalmFace(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     boolean explicit
   ) implements Pattern {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitCalmFace(this, p);
-    }
   }
 
   record Bind(
@@ -90,13 +56,10 @@ public sealed interface Pattern extends ConcretePat {
     boolean explicit,
     @NotNull LocalVar bind
   ) implements Pattern {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitBind(this, p);
-    }
   }
 
   record Ctor(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     boolean explicit,
     @NotNull WithPos<@NotNull Var> resolved,
     @NotNull ImmutableSeq<Pattern> params,
@@ -106,9 +69,6 @@ public sealed interface Pattern extends ConcretePat {
       this(bind.sourcePos(), bind.explicit(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty(), null);
     }
 
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitCtor(this, p);
-    }
   }
 
   /**
