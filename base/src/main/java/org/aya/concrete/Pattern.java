@@ -79,6 +79,7 @@ public sealed interface Pattern extends ConcretePat, BinOpParser.Elem<Pattern> {
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pattern> seq,
+    @Nullable LocalVar as,
     boolean explicit
   ) implements Pattern {}
 

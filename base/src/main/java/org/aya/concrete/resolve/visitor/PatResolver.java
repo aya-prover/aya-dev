@@ -63,8 +63,8 @@ public final class PatResolver {
         var newCtx = new Ref<>(context);
         var pats = seq.seq().map(p -> subpatterns(newCtx, p));
         yield Tuple.of(
-          newCtx.value,
-          new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.explicit()));
+          bindAs(seq.as(), newCtx.value, seq.sourcePos()),
+          new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.as(), seq.explicit()));
       }
       default -> Tuple.of(context, pattern);
     };

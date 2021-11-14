@@ -422,9 +422,9 @@ public final class AyaProducer {
       ImmutableSeq.of(new Expr.NamedArg(true, expr)));
   }
 
-  public @NotNull Pattern newBinOPScope(@NotNull Pattern expr) {
+  public @NotNull Pattern newBinOPScope(@NotNull Pattern expr, @Nullable LocalVar as) {
     return new Pattern.BinOpSeq(expr.sourcePos(),
-      ImmutableSeq.of(expr), expr.explicit());
+      ImmutableSeq.of(expr), as, expr.explicit());
   }
 
   public Expr.@NotNull LamExpr visitLam(AyaParser.LamContext ctx) {
@@ -623,12 +623,12 @@ public final class AyaProducer {
     var atoms = ctx.atomPattern().stream()
       .map(this::visitAtomPattern)
       .collect(ImmutableSeq.factory());
-    if (atoms.sizeEquals(1)) return (ex, as) -> newBinOPScope(atoms.first().apply(ex));
+    if (atoms.sizeEquals(1)) return (ex, as) -> newBinOPScope(atoms.first().apply(ex), as);
 
     return (ex, as) -> new Pattern.BinOpSeq(
       sourcePosOf(ctx),
       atoms.view().map(p -> p.apply(true)).toImmutableSeq(),
-      ex
+      as, ex
     );
   }
 
@@ -642,7 +642,7 @@ public final class AyaProducer {
         .map(t -> visitAtomPatterns(t.atomPatterns()))
         .collect(ImmutableSeq.factory());
       return tupElem.sizeEquals(1)
-        ? (exIgnored -> newBinOPScope(tupElem.first().apply(forceEx, as)))
+        ? (exIgnored -> newBinOPScope(tupElem.first().apply(forceEx, as), as))
         : (exIgnored -> new Pattern.Tuple(
         sourcePos,
         forceEx,
