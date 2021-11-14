@@ -11,7 +11,6 @@ import kala.tuple.Tuple2;
 import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
-import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
@@ -24,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public final class BinOpParser {
-  private final @NotNull AyaBinOpSet opSet;
+public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
+  protected final @NotNull AyaBinOpSet opSet;
   private final @NotNull SeqView<@NotNull Elem> seq;
 
   public BinOpParser(@NotNull AyaBinOpSet opSet, @NotNull SeqView<@NotNull Elem> seq) {
@@ -37,7 +36,9 @@ public final class BinOpParser {
   private final DynamicDoubleLinkedSeq<Elem> prefixes = DynamicDoubleLinkedSeq.create();
   private final MutableMap<Elem, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
 
-  @NotNull public Expr build(@NotNull SourcePos sourcePos) {
+  protected abstract @NotNull BinOpParser<AyaBinOpSet> replicate(@NotNull SeqView<@NotNull Elem> seq);
+
+  public @NotNull Expr build(@NotNull SourcePos sourcePos) {
     // No need to build
     if (seq.sizeEquals(1)) return seq.get(0).expr;
     // BinOP section fast path
@@ -46,10 +47,10 @@ public final class BinOpParser {
       var second = seq.get(1);
       // case 1: `+ f` becomes `\lam _ => _ + f`
       if (opSet.assocOf(first.asOpDecl()).infix && first.argc() == 2)
-        return makeSectionApp(sourcePos, first, elem -> new BinOpParser(opSet, seq.prepended(elem)).build(sourcePos));
+        return makeSectionApp(sourcePos, first, elem -> replicate(seq.prepended(elem)).build(sourcePos));
       // case 2: `f +` becomes `\lam _ => f + _`
       if (opSet.assocOf(second.asOpDecl()).infix && second.argc() == 2)
-        return makeSectionApp(sourcePos, second, elem -> new BinOpParser(opSet, seq.appended(elem)).build(sourcePos));
+        return makeSectionApp(sourcePos, second, elem -> replicate(seq.appended(elem)).build(sourcePos));
     }
     return convertToPrefix(sourcePos);
   }
@@ -78,8 +79,7 @@ public final class BinOpParser {
             var topAssoc = top._2.assoc();
             var currentAssoc = currentOp.assoc();
             if (topAssoc != currentAssoc || topAssoc == Assoc.Infix) {
-              opSet.reporter.report(new OperatorProblem.FixityError(currentOp.name(),
-                currentAssoc, top._2.name(), topAssoc, top._1.expr.sourcePos()));
+              reportFixityError(topAssoc, currentAssoc, top._2.name(), currentOp.name(), top._1.expr.sourcePos());
               return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
             }
             if (topAssoc == Assoc.InfixL) foldLhsFor(expr);
@@ -87,8 +87,7 @@ public final class BinOpParser {
           } else if (cmp == BinOpSet.PredCmp.Looser) {
             break;
           } else {
-            opSet.reporter.report(new OperatorProblem.AmbiguousPredError(
-              currentOp.name(), top._2.name(), top._1.expr.sourcePos()));
+            reportAmbiguousPred(currentOp.name(), top._2.name(), top._1.expr.sourcePos());
             return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
           }
         }
@@ -104,6 +103,10 @@ public final class BinOpParser {
     assert prefixes.sizeEquals(1);
     return prefixes.first().expr;
   }
+
+  protected abstract void reportAmbiguousPred(String op1, String op2, SourcePos pos);
+
+  protected abstract void reportFixityError(Assoc topAssoc, Assoc currentAssoc, String op2, String op1, SourcePos pos);
 
   private @NotNull Seq<Elem> insertApplication(@NotNull SeqView<@NotNull Elem> seq) {
     var seqWithApp = DynamicSeq.<Elem>create();
