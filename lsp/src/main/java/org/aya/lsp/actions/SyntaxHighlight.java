@@ -102,11 +102,16 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
 
   // region pattern
   @Override public void visitPattern(@NotNull Pattern pattern, @NotNull DynamicSeq<HighlightResult.Symbol> symbols) {
-    if (pattern instanceof Pattern.Ctor ctor) {
-      if (ctor.resolved().data() instanceof DefVar<?, ?> defVar)
-        visitCall(defVar, ctor.resolved().sourcePos(), symbols);
+    switch (pattern) {
+      case Pattern.Ctor ctor -> {
+        if (ctor.resolved().data() instanceof DefVar<?, ?> defVar)
+          visitCall(defVar, ctor.resolved().sourcePos(), symbols);
+        ctor.params().forEach(param -> visitPattern(param, symbols));
+      }
+      case Pattern.Tuple tup -> tup.patterns().forEach(p -> visitPattern(p, symbols));
+      case Pattern.BinOpSeq seq -> seq.seq().forEach(p -> visitPattern(p, symbols));
+      default -> {}
     }
-    StmtConsumer.super.visitPattern(pattern, symbols);
   }
   // endregion
 
