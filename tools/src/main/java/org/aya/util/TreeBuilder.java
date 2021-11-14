@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.generic;
+package org.aya.util;
 
 import kala.collection.mutable.DynamicSeq;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.Objects;
  * @param <T> the tree
  * @author ice1000
  */
-public abstract class GenericBuilder<T extends GenericBuilder.Tree<T>> {
+public abstract class TreeBuilder<T extends TreeBuilder.Tree<T>> {
   public interface Tree<T extends Tree<T>> {
     @NotNull DynamicSeq<T> children();
   }

@@ -28,11 +28,11 @@ import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
-import org.aya.generic.GenericBuilder;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.TreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +78,7 @@ public final class PatTycker {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
       var elabClause = visitMatch(clause, signature);
-      tracing(GenericBuilder::reduce);
+      tracing(TreeBuilder::reduce);
       return elabClause;
     });
     exprTycker.solveMetas();
@@ -213,7 +213,7 @@ public final class PatTycker {
     var type = data.param.type();
     tracing(builder -> builder.shift(new Trace.PatT(type, pat, pat.sourcePos())));
     var res = doTyck(pat, type);
-    tracing(GenericBuilder::reduce);
+    tracing(TreeBuilder::reduce);
     termSubst.add(data.param.ref(), res.toTerm());
     data.results.append(res);
     return data.sig.inst(termSubst);

@@ -7,7 +7,6 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.tuple.Tuple;
 import org.aya.api.error.Reporter;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
@@ -21,12 +20,13 @@ import org.aya.core.term.CallTerm;
 import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
-import org.aya.generic.GenericBuilder;
 import org.aya.generic.Level;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.TreeBuilder;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +115,7 @@ public record StmtTycker(
         var resultTele = checkTele(tycker, fn.telescope, FormTerm.freshUniv(fn.sourcePos));
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped();
-        tracing(GenericBuilder::reduce);
+        tracing(TreeBuilder::reduce);
         fn.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
       }
       case Decl.DataDecl data -> {
@@ -209,7 +209,7 @@ public record StmtTycker(
     PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
     Conquer.against(matchings, tycker, pos, signature);
     tycker.solveMetas();
-    tracing(GenericBuilder::reduce);
+    tracing(TreeBuilder::reduce);
   }
 
   private @NotNull FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {

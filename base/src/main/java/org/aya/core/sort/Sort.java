@@ -3,13 +3,12 @@
 package org.aya.core.sort;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDocile {
+public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements Docile {
   public Sort(@NotNull Level<LvlVar> level) {
     this(ImmutableSeq.of(level));
   }
@@ -47,10 +46,10 @@ public record Sort(@NotNull ImmutableSeq<Level<LvlVar>> levels) implements AyaDo
     return new Sort(levels.map(l -> l.lift(n)));
   }
 
-  @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return levels.sizeEquals(1) ? levels.first().toDoc(options) : Doc.parened(Doc.sep(
+  @Override public @NotNull Doc toDoc() {
+    return levels.sizeEquals(1) ? levels.first().toDoc() : Doc.parened(Doc.sep(
       Doc.styled(CoreDistiller.KEYWORD, "lmax"),
-      Doc.sep(levels.map(l -> l.toDoc(options)))
+      Doc.sep(levels.map(Docile::toDoc))
     ));
   }
 
