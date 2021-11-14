@@ -4,12 +4,11 @@ package org.aya.tyck.unify.level;
 
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.generic.Level;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +83,7 @@ public record LevelEqnSet(
   public record Eqn(
     @NotNull Sort lhs, @NotNull Sort rhs,
     @NotNull Ordering cmp, @NotNull SourcePos sourcePos
-  ) implements AyaDocile {
+  ) implements Docile {
     public boolean used(@NotNull Sort.LvlVar var) {
       return used(var, lhs) || used(var, rhs);
     }
@@ -118,8 +117,8 @@ public record LevelEqnSet(
       builder.append(")))");
     }
 
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
+    @Override public @NotNull Doc toDoc() {
+      return Doc.stickySep(lhs.toDoc(), Doc.symbol(cmp.symbol), rhs.toDoc());
     }
   }
 }

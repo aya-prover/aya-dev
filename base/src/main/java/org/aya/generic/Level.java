@@ -3,12 +3,11 @@
 package org.aya.generic;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.distill.AyaDocile;
-import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.PreLevelVar;
 import org.aya.api.ref.Var;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @see org.aya.concrete.Expr.UnivExpr
  * @see org.aya.core.sort.Sort
  */
-public sealed interface Level<V extends Var> extends AyaDocile {
+public sealed interface Level<V extends Var> extends Docile {
   @NotNull Level<V> lift(int n);
 
   /**
@@ -31,7 +30,7 @@ public sealed interface Level<V extends Var> extends AyaDocile {
       return new Polymorphic(lift + n);
     }
 
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc toDoc() {
       return levelDoc(lift, "lp");
     }
   }
@@ -41,9 +40,9 @@ public sealed interface Level<V extends Var> extends AyaDocile {
       return new Maximum(among.map(l -> l.lift(n)));
     }
 
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc toDoc() {
       return Doc.parened(Doc.sep(among.view()
-        .map(l -> l.toDoc(options))
+        .map(Docile::toDoc)
         .prepended(Doc.styled(CoreDistiller.KEYWORD, "max"))
         .toImmutableSeq()));
     }
@@ -59,7 +58,7 @@ public sealed interface Level<V extends Var> extends AyaDocile {
       return new Constant<>(value + n);
     }
 
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc toDoc() {
       return Doc.plain(String.valueOf(value));
     }
   }
@@ -73,7 +72,7 @@ public sealed interface Level<V extends Var> extends AyaDocile {
       return new Reference<>(ref, lift + n);
     }
 
-    @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
+    @Override public @NotNull Doc toDoc() {
       return levelDoc(lift, ref.name());
     }
   }

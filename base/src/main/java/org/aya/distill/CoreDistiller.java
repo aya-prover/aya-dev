@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.distill;
 
-import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -124,7 +123,8 @@ public class CoreDistiller extends BaseDistiller implements
   @Override public Doc visitUniv(@NotNull FormTerm.Univ term, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
-    return visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer, Seq.of(term.sort()).view().map(t -> new Arg<>(t, true))
+    return visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,
+      SeqView.of(new Arg<>(o -> term.sort().toDoc(), true))
     );
   }
 

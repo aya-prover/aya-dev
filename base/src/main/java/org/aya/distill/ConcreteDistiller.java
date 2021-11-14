@@ -20,6 +20,7 @@ import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.util.StringEscapeUtil;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -111,13 +112,14 @@ public class ConcreteDistiller extends BaseDistiller implements
 
   @Override public Doc visitUnivArgs(Expr.@NotNull UnivArgsExpr expr, Outer outer) {
     return Doc.sep(Doc.styled(KEYWORD, "universe"),
-      Doc.commaList(expr.univArgs().view().map(e -> e.toDoc(options))));
+      Doc.commaList(expr.univArgs().view().map(Docile::toDoc)));
   }
 
   @Override public Doc visitUniv(Expr.@NotNull UnivExpr expr, Outer outer) {
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
-    return visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer, SeqView.of(expr.level()).map(t -> new Arg<>(t, true))
+    return visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
+      SeqView.of(new Arg<>(o -> expr.level().toDoc(), true))
     );
   }
 
