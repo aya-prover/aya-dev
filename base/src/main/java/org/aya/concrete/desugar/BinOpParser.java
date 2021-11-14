@@ -8,12 +8,9 @@ import kala.collection.Set;
 import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.api.ref.DefVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.generic.Constants;
-import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpSet;
 import org.aya.util.binop.OpDecl;
@@ -23,11 +20,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
-  protected final @NotNull AyaBinOpSet opSet;
+public abstract class BinOpParser<OpSet extends BinOpSet> {
+  protected final @NotNull OpSet opSet;
   private final @NotNull SeqView<@NotNull Elem> seq;
 
-  public BinOpParser(@NotNull AyaBinOpSet opSet, @NotNull SeqView<@NotNull Elem> seq) {
+  public BinOpParser(@NotNull OpSet opSet, @NotNull SeqView<@NotNull Elem> seq) {
     this.opSet = opSet;
     this.seq = seq;
   }
@@ -36,7 +33,10 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
   private final DynamicDoubleLinkedSeq<Elem> prefixes = DynamicDoubleLinkedSeq.create();
   private final MutableMap<Elem, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
 
-  protected abstract @NotNull BinOpParser<AyaBinOpSet> replicate(@NotNull SeqView<@NotNull Elem> seq);
+  /** @implSpec equivalent to <code>new BinOpParser(this.opSet, seq)</code>. */
+  protected abstract @NotNull BinOpParser<OpSet> replicate(@NotNull SeqView<@NotNull Elem> seq);
+  /** @implSpec must always return a static instance! */
+  protected abstract @NotNull Elem appOp();
 
   public @NotNull Expr build(@NotNull SourcePos sourcePos) {
     // No need to build
@@ -46,10 +46,10 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
       var first = seq.get(0);
       var second = seq.get(1);
       // case 1: `+ f` becomes `\lam _ => _ + f`
-      if (opSet.assocOf(first.asOpDecl()).infix && first.argc() == 2)
+      if (opSet.assocOf(asOpDecl(first)).infix && argc(first) == 2)
         return makeSectionApp(sourcePos, first, elem -> replicate(seq.prepended(elem)).build(sourcePos));
       // case 2: `f +` becomes `\lam _ => f + _`
-      if (opSet.assocOf(second.asOpDecl()).infix && second.argc() == 2)
+      if (opSet.assocOf(asOpDecl(second)).infix && argc(second) == 2)
         return makeSectionApp(sourcePos, second, elem -> replicate(seq.appended(elem)).build(sourcePos));
     }
     return convertToPrefix(sourcePos);
@@ -66,9 +66,9 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
 
   private @NotNull Expr convertToPrefix(@NotNull SourcePos sourcePos) {
     for (var expr : insertApplication(seq)) {
-      if (expr.isOperand(opSet)) prefixes.append(expr);
+      if (isOperand(expr, opSet)) prefixes.append(expr);
       else {
-        var currentOp = expr.toSetElem(opSet);
+        var currentOp = toSetElem(expr, opSet);
         while (opStack.isNotEmpty()) {
           var top = opStack.peek();
           var cmp = opSet.compare(top._2, currentOp);
@@ -80,7 +80,7 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
             var currentAssoc = currentOp.assoc();
             if (topAssoc != currentAssoc || topAssoc == Assoc.Infix) {
               reportFixityError(topAssoc, currentAssoc, top._2.name(), currentOp.name(), top._1.expr.sourcePos());
-              return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
+              return createErrorExpr(sourcePos);
             }
             if (topAssoc == Assoc.InfixL) foldLhsFor(expr);
             else break;
@@ -88,7 +88,7 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
             break;
           } else {
             reportAmbiguousPred(currentOp.name(), top._2.name(), top._1.expr.sourcePos());
-            return new Expr.ErrorExpr(sourcePos, Doc.english("an application"));
+            return createErrorExpr(sourcePos);
           }
         }
         opStack.push(Tuple.of(expr, currentOp));
@@ -105,15 +105,15 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
   }
 
   protected abstract void reportAmbiguousPred(String op1, String op2, SourcePos pos);
-
   protected abstract void reportFixityError(Assoc topAssoc, Assoc currentAssoc, String op2, String op1, SourcePos pos);
+  protected abstract @NotNull Expr createErrorExpr(@NotNull SourcePos sourcePos);
 
   private @NotNull Seq<Elem> insertApplication(@NotNull SeqView<@NotNull Elem> seq) {
     var seqWithApp = DynamicSeq.<Elem>create();
     var lastIsOperand = true;
     for (var expr : seq) {
-      var isOperand = expr.isOperand(opSet);
-      if (isOperand && lastIsOperand && seqWithApp.isNotEmpty()) seqWithApp.append(Elem.OP_APP);
+      var isOperand = isOperand(expr, opSet);
+      if (isOperand && lastIsOperand && seqWithApp.isNotEmpty()) seqWithApp.append(appOp());
       lastIsOperand = isOperand;
       seqWithApp.append(expr);
     }
@@ -140,7 +140,7 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
   }
 
   private @NotNull Expr makeBinApp(@NotNull Elem op) {
-    int argc = op.argc();
+    int argc = argc(op);
     if (argc == 1) {
       var operand = prefixes.dequeue();
       return new Expr.AppExpr(union(operand, op), op.expr, operand.toNamedArg());
@@ -165,7 +165,7 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
   }
 
   private @NotNull Expr makeBinApp(@NotNull Elem op, @NotNull Elem rhs, @NotNull Elem lhs) {
-    if (op == Elem.OP_APP) return new Expr.AppExpr(
+    if (op == appOp()) return new Expr.AppExpr(
       union(lhs, rhs),
       lhs.expr,
       rhs.toNamedArg()
@@ -176,6 +176,22 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
       rhs.toNamedArg()
     );
   }
+
+  public boolean isOperand(@NotNull Elem elem, @NotNull BinOpSet opSet) {
+    if (elem == appOp()) return false;
+    var tryOp = asOpDecl(elem);
+    return opSet.isOperand(tryOp);
+  }
+
+  public BinOpSet.@NotNull BinOP toSetElem(@NotNull Elem elem, @NotNull BinOpSet opSet) {
+    if (elem == appOp()) return BinOpSet.APP_ELEM;
+    var tryOp = asOpDecl(elem);
+    assert tryOp != null; // should never fail
+    return opSet.ensureHasElem(tryOp);
+  }
+
+  protected @Nullable abstract OpDecl asOpDecl(@NotNull Elem elem);
+  protected abstract int argc(@NotNull Elem elem);
 
   private @NotNull SourcePos union(@NotNull Elem a, @NotNull Elem b, @NotNull Elem c) {
     return union(a, b).union(c.expr.sourcePos());
@@ -194,46 +210,8 @@ public abstract class BinOpParser<AyaBinOpSet extends BinOpSet> {
    * but only used in binary operator building
    */
   public record Elem(@Nullable String name, @NotNull Expr expr, boolean explicit) {
-    private static final Elem OP_APP = new Elem(
-      BinOpSet.APP_ELEM.name(),
-      new Expr.ErrorExpr(SourcePos.NONE, Doc.english("fakeApp escaped from BinOpParser")),
-      true
-    );
-
     public Elem(@NotNull Expr expr, boolean explicit) {
       this(null, expr, explicit);
-    }
-
-    private @Nullable OpDecl asOpDecl() {
-      if (expr instanceof Expr.RefExpr ref
-        && ref.resolvedVar() instanceof DefVar<?, ?> defVar
-        && defVar.concrete instanceof OpDecl opDecl) {
-        return opDecl;
-      }
-      return null;
-    }
-
-    public boolean isOperand(@NotNull BinOpSet opSet) {
-      if (this == OP_APP) return false;
-      var tryOp = asOpDecl();
-      return opSet.isOperand(tryOp);
-    }
-
-    public BinOpSet.@NotNull BinOP toSetElem(@NotNull BinOpSet opSet) {
-      if (this == OP_APP) return BinOpSet.APP_ELEM;
-      var tryOp = asOpDecl();
-      assert tryOp != null; // should never fail
-      return opSet.ensureHasElem(tryOp);
-    }
-
-    private int argc() {
-      if (this == OP_APP) return 2;
-      if (this.asOpDecl() instanceof Signatured sig) return countExplicitParam(sig.telescope);
-      throw new IllegalArgumentException("not an operator");
-    }
-
-    private int countExplicitParam(@NotNull Seq<Expr.Param> telescope) {
-      return telescope.view().count(Expr.Param::explicit);
     }
 
     public @NotNull Arg<Expr.NamedArg> toNamedArg() {
