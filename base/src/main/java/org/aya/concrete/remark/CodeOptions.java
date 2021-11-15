@@ -7,17 +7,15 @@ import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.parse.AyaProducer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * @param mode <code>null</code> if as-is
  * @author ice1000
  */
 public record CodeOptions(
-  @Nullable NormalizeMode mode,
+  @NotNull NormalizeMode mode,
   @NotNull DistillerOptions options,
   @NotNull ShowCode showCode
 ) {
@@ -30,7 +28,7 @@ public record CodeOptions(
     var found = matcher.find();
     assert found;
     var commonOpt = matcher.group(2);
-    NormalizeMode mode = null;
+    var mode = NormalizeMode.NULL;
     ShowCode showCode = ShowCode.Concrete;
     if (commonOpt != null) {
       commonOpt = commonOpt.toUpperCase(Locale.ROOT);
