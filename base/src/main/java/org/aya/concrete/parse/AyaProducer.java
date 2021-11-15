@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.parse;
 
+import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicLinkedSeq;
@@ -204,23 +205,34 @@ public final class AyaProducer {
   }
 
   public Decl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
-    var modifiers = ctx.fnModifiers().stream()
-      .map(this::visitFnModifiers)
-      .distinct()
-      .collect(Collectors.toCollection(() -> EnumSet.noneOf(Modifier.class)));
+    var modifiers = Seq.from(ctx.fnModifiers()).view()
+      .map(fn -> Tuple.of(fn, visitFnModifiers(fn)))
+      .toImmutableSeq();
+    var inline = modifiers.find(t -> t._2 == Modifier.Inline);
+    var opaque = modifiers.find(t -> t._2 == Modifier.Opaque);
+    if (inline.isDefined() && opaque.isDefined()) {
+      var gunpowder = inline.get();
+      reporter.report(new BadModifierWarn(sourcePosOf(gunpowder._1), gunpowder._2));
+    }
     var bind = ctx.bindBlock();
     var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
 
+    var dynamite = visitFnBody(ctx.fnBody());
+    if (dynamite.isRight() && inline.isDefined()) {
+      var gelatin = inline.get();
+      reporter.report(new BadModifierWarn(sourcePosOf(gelatin._1), gelatin._2));
+    }
     return new Decl.FnDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       accessibility,
-      modifiers,
+      modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
+        () -> EnumSet.noneOf(Modifier.class))),
       nameOrInfix._2,
       nameOrInfix._1.data(),
       visitTelescope(ctx.tele()),
       type(ctx.type(), sourcePosOf(ctx)),
-      visitFnBody(ctx.fnBody()),
+      dynamite,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
     );
   }
@@ -823,7 +835,8 @@ public final class AyaProducer {
   public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {
     if (ctx.OPAQUE() != null) return Modifier.Opaque;
     if (ctx.INLINE() != null) return Modifier.Inline;
-    /*if (ctx.PATTERN_KW() != null)*/ return Modifier.Pattern;
+    /*if (ctx.PATTERN_KW() != null)*/
+    return Modifier.Pattern;
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
