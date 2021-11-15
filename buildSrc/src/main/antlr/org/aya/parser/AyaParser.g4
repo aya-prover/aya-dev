@@ -58,8 +58,9 @@ fnDecl : DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?;
 fnBody : IMPLIES expr
        | (BAR clause)* ;
 
-fnModifiers : ERASE
+fnModifiers : OPAQUE
             | INLINE
+            | PATTERN_KW
             ;
 
 structDecl : STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?;

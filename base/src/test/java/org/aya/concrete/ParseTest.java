@@ -309,8 +309,8 @@ public class ParseTest {
   @Test public void patterns() {
     parseAndPretty("def inline final : Nat | _ => a",
       "def inline final : Nat\n  | _ => a");
-    parseAndPretty("def erase final : Nat | impossible",
-      "def erase final : Nat\n  | impossible");
+    parseAndPretty("def opaque final : Nat | impossible",
+      "def opaque final : Nat\n  | impossible");
   }
 
   @Test public void exprAndCounterexamples() {

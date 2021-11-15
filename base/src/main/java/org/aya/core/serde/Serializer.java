@@ -217,7 +217,7 @@ public record Serializer(@NotNull Serializer.State state) implements
     return new SerDef.Fn(state.def(def.ref), serializeParams(def.telescope),
       def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
       def.body.map(this::serialize, matchings -> matchings.map(this::serialize)),
-      serialize(def.result));
+      def.modifiers, serialize(def.result));
   }
 
   @Override public SerDef visitData(@NotNull DataDef def, Unit unit) {

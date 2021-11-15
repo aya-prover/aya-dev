@@ -33,7 +33,7 @@ PRIVATE : 'private';
 USING : 'using';
 HIDING : 'hiding';
 COERCE : 'coerce';
-ERASE : 'erase';
+OPAQUE : 'opaque';
 INLINE : 'inline';
 MODULE_KW : 'module';
 BIND_KW : 'bind';

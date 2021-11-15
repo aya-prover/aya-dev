@@ -6,9 +6,11 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.core.def.*;
+import org.aya.generic.Modifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.EnumSet;
 
 /**
  * @author ice1000
@@ -24,13 +26,14 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
     @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
     @NotNull Either<SerTerm, ImmutableSeq<SerPat.Matchy>> body,
+    @NotNull EnumSet<Modifier> modifiers,
     @NotNull SerTerm result
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new FnDef(
         state.def(name), telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
-        result.de(state),
+        result.de(state), modifiers,
         body.map(term -> term.de(state), mischa -> mischa.map(matchy -> matchy.de(state))));
     }
   }

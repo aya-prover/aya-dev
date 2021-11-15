@@ -253,6 +253,7 @@ public class CoreDistiller extends BaseDistiller implements
       visitTele(def.telescope()),
       Doc.symbol(":"),
       def.result().accept(this, Outer.Free));
+    def.modifiers.forEach(m -> line1.insert(0, Doc.styled(KEYWORD, m.keyword)));
     return def.body.fold(
       term -> Doc.sep(Doc.sepNonEmpty(line1), Doc.symbol("=>"), term.accept(this, Outer.Free)),
       clauses -> Doc.vcat(Doc.sepNonEmpty(line1), Doc.nest(2, visitClauses(clauses))));
