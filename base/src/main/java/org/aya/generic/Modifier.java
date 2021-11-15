@@ -12,7 +12,7 @@ public enum Modifier {
    * Denotes that a function's invocations are never reduced,
    * and should be removed during elaboration.
    */
-  Erase("erase"),
+  Opaque("opaque"),
   /**
    * Denotes that a function's invocations are eagerly reduced.
    */

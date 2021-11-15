@@ -74,7 +74,7 @@ public record StmtTycker(
       case Decl.FnDecl decl -> {
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
-          new FnDef(decl.ref, signature.param(), signature.sortParam(), resultTy, body));
+          new FnDef(decl.ref, signature.param(), signature.sortParam(), resultTy, decl.modifiers, body));
         yield decl.body.fold(
           body -> {
             var result = tycker.zonk(body, tycker.inherit(body, signature.result()));
