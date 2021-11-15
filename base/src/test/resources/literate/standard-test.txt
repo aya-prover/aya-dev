@@ -17,11 +17,12 @@ Here, `wow` has two implicit parameters,
 and note that the second one is a higher one (it is of a function type).
 Consider the following example:
 def test1 {A B : Type} {a : A} {b : B} => wow A B a b
-Observe the elaborated term of `test1`: `wow {Type} {\ _ => _} A B a b`
+Observe the elaborated term of `test1`: `wow A B a b`
 Consider another example:
 def test2 {A B : Type} {a : A} {b : B} => wow A B a a
-Observe the elaborated term of `test2`: `wow {Type} {\ _ => A} A B a a`
+Observe the elaborated term of `test2`: `wow A B a a`
+Showing the implicit arguments: `wow {Type} {\ _ => A} A B a a`
+Showing the implicit patterns: `\ {A} {B} {a} {b} => wow A B a a`
 Showing the lambda types: `wow {Type} {\ (_ : Type) => A} A B a a`
 Showing the universe levels: `wow {Type 0} {\ _ => A} A B a a`
-Showing the implicit arguments: `\ {A} {B} {a} {b} => wow A B a a`
-Default: `\ {A} {B} {a} {b} => wow {Type} {\ _ => A} A B a a`
+Default: `wow A B a a`

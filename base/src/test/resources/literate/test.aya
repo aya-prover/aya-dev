@@ -19,13 +19,14 @@ open data Wow : Type 2
 
 def test1 {A B : Type 0} {a : A} {b : B} => wow A B a b
 
---| Observe the elaborated term of `test1`: `CN||P:test1`\
+--| Observe the elaborated term of `test1`: `test1`{show=core, mode=nf}\
 --| Consider another example:
 
 def test2 {A B : Type 0} {a : A} {b : B} => wow A B a a
 
---| Observe the elaborated term of `test2`: `CN||P:test2`\
---| Showing the lambda types: `CN|L|P:test2`
---| Showing the universe levels: `CN|U|P:test2`
---| Showing the implicit arguments: `CN||I:test2`
---| Default: `CN:test2`
+--| Observe the elaborated term of `test2`: `test2`{show=core, mode=nf}\
+--| Showing the implicit arguments: `test2`{show=core, mode=nf, implicitArgs=true}
+--| Showing the implicit patterns: `test2`{show=core, mode=nf, implicitPats=true}
+--| Showing the lambda types: `test2`{show=core, mode=nf, implicitArgs=true, lambdaTypes=true}
+--| Showing the universe levels: `test2`{show=core, mode=nf, implicitArgs=true, levels=true}
+--| Default: `test2`{show=core, mode=nf}

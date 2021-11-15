@@ -5,17 +5,20 @@ package org.aya.concrete.remark;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
+import org.aya.util.StringUtil;
 import org.commonmark.node.*;
 import org.commonmark.parser.delimiter.DelimiterProcessor;
 import org.commonmark.parser.delimiter.DelimiterRun;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
-
 /**
  * https://github.com/commonmark/commonmark-java/blob/main/commonmark-ext-image-attributes/src/main/java/org/commonmark/ext/image/attributes/internal/ImageAttributesDelimiterProcessor.java
  */
 public class CodeAttrProcessor implements DelimiterProcessor {
+  public static final @NotNull CodeAttrProcessor INSTANCE = new CodeAttrProcessor();
+
+  private CodeAttrProcessor() {}
+
   public static class Attr extends CustomNode implements Delimited {
     public final @NotNull CodeOptions options;
 
@@ -49,12 +52,8 @@ public class CodeAttrProcessor implements DelimiterProcessor {
       return 0;
     }
 
-    // Check if the attributes can be applied - if the previous node is an Image, and if all the attributes are in
-    // the set of SUPPORTED_ATTRIBUTES
     var opener = openingRun.getOpener();
-    if (!(opener.getPrevious() instanceof Code code)) {
-      return 0;
-    }
+    if (!(opener.getPrevious() instanceof Code code)) return 0;
 
     var toUnlink = DynamicSeq.<Node>create();
     var content = new StringBuilder();
@@ -73,24 +72,24 @@ public class CodeAttrProcessor implements DelimiterProcessor {
     var dist = new DistillerOptions();
     var mode = NormalizeMode.NULL;
     var show = CodeOptions.ShowCode.Core;
-    var attributes = content.toString();
-    for (var s : attributes.split("[\\s,;]+")) {
+    for (var s : content.toString().split("[\\s,;]+")) {
       var attribute = s.split("=", 2);
       if (attribute.length > 1) {
-        var key = attribute[0].toLowerCase(Locale.ROOT);
-        var isTrue = attribute[1].equalsIgnoreCase("true")
-          || attribute[1].equalsIgnoreCase("yes");
+        var key = attribute[0];
+        var val = attribute[1];
+        var isTrue = val.equalsIgnoreCase("true")
+          || val.equalsIgnoreCase("yes");
         var cbt = cbt(key, DistillerOptions.Key.values(), null);
         if (cbt != null) {
           dist.map.put(cbt, isTrue);
           continue;
         }
-        if (key.equals("mode")) {
-          mode = cbt(attribute[1].toUpperCase(Locale.ROOT), NormalizeMode.values(), NormalizeMode.NULL);
+        if ("mode".equalsIgnoreCase(key)) {
+          mode = cbt(val, NormalizeMode.values(), NormalizeMode.NULL);
           continue;
         }
-        if (key.equals("show")) {
-          show = cbt(attribute[1].toUpperCase(Locale.ROOT), CodeOptions.ShowCode.values(), CodeOptions.ShowCode.Core);
+        if ("show".equalsIgnoreCase(key)) {
+          show = cbt(val, CodeOptions.ShowCode.values(), CodeOptions.ShowCode.Core);
           continue;
         }
       }
@@ -112,7 +111,7 @@ public class CodeAttrProcessor implements DelimiterProcessor {
 
   private <E extends Enum<E>> E cbt(@NotNull String key, E[] values, E otherwise) {
     for (var val : values)
-      if (val.name().toLowerCase(Locale.ROOT).contains(key)) return val;
+      if (StringUtil.containsIgnoreCase(val.name(), key)) return val;
     return otherwise;
   }
 }
