@@ -10,7 +10,6 @@ import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
-import org.aya.util.error.WithPos;
 import org.aya.core.Matching;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
@@ -21,7 +20,9 @@ import org.aya.core.sort.Sort.LvlVar;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
+import org.aya.generic.Modifier;
 import org.aya.tyck.TyckState;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +66,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     // Not yet type checked
     if (def == null) return fnCall;
     var args = fnCall.args().map(arg -> visitArg(arg, p));
+    if (def.modifiers.contains(Modifier.Opaque)) return new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
     var levelSubst = buildSubst(def.levels, fnCall.sortArgs());
     var body = def.body;
     if (body.isLeft()) {

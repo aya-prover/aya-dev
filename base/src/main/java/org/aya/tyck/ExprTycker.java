@@ -32,6 +32,7 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.generic.Level;
+import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.*;
 import org.aya.tyck.trace.Trace;
@@ -508,8 +509,11 @@ public final class ExprTycker {
     var tele = Term.Param.subst(Def.defTele(defVar), level._1);
     var teleRenamed = tele.map(Term.Param::rename);
     // unbound these abstracted variables
-    var body = function.make(defVar, level._2, teleRenamed.map(Term.Param::toArg));
+    Term body = function.make(defVar, level._2, teleRenamed.map(Term.Param::toArg));
     var type = FormTerm.Pi.make(tele, Def.defResult(defVar).subst(Substituter.TermSubst.EMPTY, level._1));
+    if (defVar.core instanceof FnDef fn && fn.modifiers.contains(Modifier.Inline)) {
+      body = body.normalize(state, NormalizeMode.WHNF);
+    }
     return new Result(IntroTerm.Lambda.make(teleRenamed, body), type);
   }
 
