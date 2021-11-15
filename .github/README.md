@@ -61,6 +61,8 @@ check out [how to][proxy] let gradle use a proxy.
 
 + Questions or concerns are welcomed in the discussion area.
   We will try our best to answer your questions, but please be nice.
++ We welcome nitpicks on error reporting! Please let us know anything not perfect.
+  We have already implemented several user-suggested error messages.
 + Before contributing in any form, please read
   [the contribution guideline](https://github.com/aya-prover/aya-dev/blob/master/.github/CONTRIBUTING.md) thoroughly
   and make sure you understand your responsibilities.

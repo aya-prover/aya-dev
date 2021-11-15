@@ -60,6 +60,7 @@ fnBody : IMPLIES expr
 
 fnModifiers : OPAQUE
             | INLINE
+            | OVERLAP
             | PATTERN_KW
             ;
 

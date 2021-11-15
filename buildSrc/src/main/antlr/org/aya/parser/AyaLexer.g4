@@ -25,6 +25,8 @@ ULEVEL : 'universe';
 TYPE : 'Type';
 
 // other keywords
+// principal: add `_KW` suffix to avoid conflict with a potential rule name.
+// if it seems impossible, then forget about it.
 AS : 'as';
 OPEN : 'open';
 IMPORT : 'import';
@@ -35,6 +37,7 @@ HIDING : 'hiding';
 COERCE : 'coerce';
 OPAQUE : 'opaque';
 INLINE : 'inline';
+OVERLAP : 'overlap';
 MODULE_KW : 'module';
 BIND_KW : 'bind';
 MATCH : 'match';
