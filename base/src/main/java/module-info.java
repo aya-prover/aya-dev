@@ -10,17 +10,20 @@ module org.aya {
   requires transitive kala.base;
   requires transitive kala.collection;
 
-  exports org.aya.concrete.desugar;
-  exports org.aya.core.ops;
   exports org.aya.concrete.desugar.error;
+  exports org.aya.concrete.desugar;
+  exports org.aya.concrete.parse.error;
   exports org.aya.concrete.parse;
   exports org.aya.concrete.remark;
   exports org.aya.concrete.resolve.context;
+  exports org.aya.concrete.resolve.error;
   exports org.aya.concrete.resolve.module;
+  exports org.aya.concrete.resolve;
   exports org.aya.concrete.stmt;
   exports org.aya.concrete.visitor;
   exports org.aya.concrete;
   exports org.aya.core.def;
+  exports org.aya.core.ops;
   exports org.aya.core.pat;
   exports org.aya.core.serde;
   exports org.aya.core.sort;
@@ -35,5 +38,4 @@ module org.aya {
   exports org.aya.tyck.unify.level;
   exports org.aya.tyck.unify;
   exports org.aya.tyck;
-  exports org.aya.concrete.resolve;
 }

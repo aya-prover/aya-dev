@@ -4,6 +4,7 @@ package org.aya.concrete.parse;
 
 import org.antlr.v4.runtime.*;
 import org.aya.api.error.Reporter;
+import org.aya.concrete.parse.error.ParseError;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
