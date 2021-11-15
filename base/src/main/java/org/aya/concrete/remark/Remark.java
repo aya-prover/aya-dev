@@ -4,13 +4,13 @@ package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.util.error.SourcePos;
 import org.aya.concrete.parse.AyaProducer;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.error.SourcePos;
 import org.commonmark.node.*;
 import org.commonmark.parser.Parser;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public final class Remark implements Stmt {
   }
 
   public static @NotNull Remark make(@NotNull String raw, @NotNull SourcePos pos, @NotNull AyaProducer producer) {
-    var parser = Parser.builder().build();
+    var parser = Parser.builder().customDelimiterProcessor(CodeAttrProcessor.INSTANCE).build();
     var ast = parser.parse(raw);
     return new Remark(mapAST(ast, pos, producer), raw, pos);
   }
@@ -58,7 +58,7 @@ public final class Remark implements Stmt {
     @NotNull AyaProducer producer
   ) {
     if (node instanceof Code code) {
-      return CodeOptions.analyze(code.getLiteral(), producer);
+      return CodeOptions.analyze(code, producer);
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {

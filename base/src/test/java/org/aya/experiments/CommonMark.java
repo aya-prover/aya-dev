@@ -2,30 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.experiments;
 
-import org.aya.concrete.remark.CodeOptions;
+import org.aya.concrete.remark.CodeAttrProcessor;
 import org.commonmark.parser.Parser;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class CommonMark {
   @Test public void backend() {
-    var parser = Parser.builder().build();
-    var node = parser.parse("hey `ast`");
+    var parser = Parser.builder().customDelimiterProcessor(CodeAttrProcessor.INSTANCE).build();
+    var node = parser.parse("hey `ast`{show=type, implicit=false}");
     assertNotNull(node);
     // System.out.println(node);
-  }
-
-  @Test public void regexCodeOptions() {
-    var matcher1 = CodeOptions.PARSER.matcher("CT: wow A B");
-    var matcher2 = CodeOptions.PARSER.matcher("CT|I|K: anqur x y");
-    assertTrue(matcher1.find());
-    assertEquals("CT", matcher1.group(2));
-    assertEquals(" wow A B", matcher1.group(6));
-    assertTrue(matcher2.find());
-    assertEquals("CT", matcher2.group(2));
-    assertEquals("I", matcher2.group(4));
-    assertEquals("K", matcher2.group(5));
-    assertEquals(" anqur x y", matcher2.group(6));
   }
 }
