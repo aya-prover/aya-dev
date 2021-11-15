@@ -58,6 +58,7 @@ public final class ExprTycker {
   public final @NotNull TyckState state = new TyckState();
   public final @NotNull Sort.LvlVar universe = new Sort.LvlVar("u", null);
   public final @NotNull MutableMap<PreLevelVar, Sort.LvlVar> levelMapping = MutableLinkedHashMap.of();
+  public final @NotNull TyckOptions tyckOptions;
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
@@ -67,6 +68,9 @@ public final class ExprTycker {
     return switch (expr) {
       case Expr.LamExpr lam -> inherit(lam, generatePi(lam));
       case Expr.UnivExpr univ -> {
+        if (!tyckOptions.enableSort()) {
+          throw new TyckerException();
+        }
         var sort = transformLevel(univ.level());
         yield new Result(new FormTerm.Univ(sort), new FormTerm.Univ(sort.lift(1)));
       }
@@ -93,8 +97,12 @@ public final class ExprTycker {
         var subst = new Substituter.TermSubst(MutableMap.from(
           Def.defTele(structRef).view().zip(structCall.args())
             .map(t -> Tuple.of(t._1.ref(), t._2.term()))));
+        var defLevels = Def.defLevels(structRef);
+        if (!tyckOptions.enableSort() && defLevels.isNotEmpty()) {
+          throw new TyckerException();
+        }
         var levelSubst = new LevelSubst.Simple(MutableMap.from(
-          Def.defLevels(structRef).view().zip(structCall.sortArgs())));
+          defLevels.view().zip(structCall.sortArgs())));
 
         var fields = DynamicSeq.<Tuple2<DefVar<FieldDef, Decl.StructField>, Term>>create();
         var missing = DynamicSeq.<Var>create();
@@ -184,6 +192,9 @@ public final class ExprTycker {
         var app = f.wellTyped;
         var argument = appE.argument();
         if (argument.expr() instanceof Expr.UnivArgsExpr univArgs) {
+          if (!tyckOptions.enableSort()) {
+            throw new TyckerException();
+          }
           univArgs(app, univArgs);
           yield f;
         }
@@ -362,6 +373,10 @@ public final class ExprTycker {
   }
 
   public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
+    if (!tyckOptions.enableSort() &&
+      (!state.levelEqns().isEmpty() || !levelMapping.isEmpty())) {
+      throw new TyckerException();
+    }
     return Seq.of(universe).view()
       .filter(state.levelEqns()::used)
       .appendedAll(levelMapping.valuesView())
@@ -395,9 +410,15 @@ public final class ExprTycker {
   }
   */
 
-  public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+  public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder,
+                    @NotNull TyckOptions tyckOptions) {
     this.reporter = reporter;
     this.traceBuilder = traceBuilder;
+    this.tyckOptions = tyckOptions;
+  }
+
+  public ExprTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder) {
+    this(reporter, traceBuilder, new TyckOptions(true));
   }
 
   public void solveMetas() {
@@ -520,7 +541,11 @@ public final class ExprTycker {
   private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort>>
   levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
-    var levelVars = Def.defLevels(defVar).map(v -> {
+    var defLevels = Def.defLevels(defVar);
+    if (!tyckOptions.enableSort() && defLevels.isNotEmpty()) {
+      throw new TyckerException();
+    }
+    var levelVars = defLevels.map(v -> {
       var lvlVar = new Sort.LvlVar(defVar.name() + "." + v.name(), pos);
       levelSubst.solution().put(v, new Sort(new Level.Reference<>(lvlVar)));
       return lvlVar;

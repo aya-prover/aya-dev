@@ -41,10 +41,11 @@ import java.util.function.Consumer;
  */
 public record StmtTycker(
   @NotNull Reporter reporter,
-  Trace.@Nullable Builder traceBuilder
+  Trace.@Nullable Builder traceBuilder,
+  @NotNull TyckOptions tyckOptions
 ) {
   public @NotNull ExprTycker newTycker() {
-    return new ExprTycker(reporter, traceBuilder);
+    return new ExprTycker(reporter, traceBuilder, tyckOptions);
   }
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -70,6 +71,9 @@ public record StmtTycker(
     if (predecl.signature == null) tyckHeader(predecl, tycker);
     else predecl.signature.param().forEach(param -> tycker.localCtx.put(param.ref(), param.type()));
     var signature = predecl.signature;
+    if (!tyckOptions.enableSort() && signature.sortParam().isNotEmpty()) {
+      throw new ExprTycker.TyckerException();
+    }
     return switch (predecl) {
       case Decl.FnDecl decl -> {
         assert signature != null;

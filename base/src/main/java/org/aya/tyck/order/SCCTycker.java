@@ -14,6 +14,7 @@ import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.StmtTycker;
+import org.aya.tyck.TyckOptions;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.MutableGraph;
@@ -33,7 +34,7 @@ public record SCCTycker(
   @NotNull DynamicSeq<@NotNull Def> wellTyped
 ) {
   public SCCTycker(@Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
-    this(new StmtTycker(reporter, builder), reporter, DynamicSeq.create());
+    this(new StmtTycker(reporter, builder, new TyckOptions(true)), reporter, DynamicSeq.create());
   }
 
   public void tyckSCC(@NotNull ImmutableSeq<Stmt> scc) throws SCCTyckingFailed {

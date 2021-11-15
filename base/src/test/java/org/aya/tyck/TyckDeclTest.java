@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TyckDeclTest {
   public static Def tyck(@NotNull Decl decl, Trace.@Nullable Builder builder) {
-    var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder);
+    var tycker = new StmtTycker(ThrowingReporter.INSTANCE, builder, new TyckOptions(true));
     return tycker.tyck(decl, tycker.newTycker());
   }
 
