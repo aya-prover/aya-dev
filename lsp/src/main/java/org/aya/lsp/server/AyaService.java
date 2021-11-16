@@ -206,7 +206,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     }
 
     @Override public @NotNull Severity level() {
-      return owner.level();
+      return Severity.INFO;
     }
 
     @Override public @NotNull Doc brief(@NotNull DistillerOptions options) {

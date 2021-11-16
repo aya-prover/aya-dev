@@ -22,7 +22,7 @@ public sealed interface PatternProblem extends Problem {
 
   record BlockedEval(@Override @NotNull Pattern pattern, @NotNull CallTerm.Data dataCall) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.sep(
+      return Doc.vcat(
         Doc.english("Unsure if this pattern is actually impossible, as constructor selection is blocked on:"),
         Doc.par(1, dataCall.toDoc(options)));
     }
@@ -51,12 +51,10 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record UnavailableCtor(@Override @NotNull Pattern pattern,
-                         @NotNull CallTerm.Data dataCall) implements PatternProblem {
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
-
+  record UnavailableCtor(
+    @Override @NotNull Pattern pattern,
+    @NotNull CallTerm.Data dataCall
+  ) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("Cannot match with"),
