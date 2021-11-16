@@ -559,8 +559,8 @@ public final class AyaProducer {
     );
   }
 
-  public @NotNull
-  Tuple2<Decl, ImmutableSeq<Stmt>> visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
+  public @NotNull Tuple2<Decl, ImmutableSeq<Stmt>>
+  visitDataDecl(AyaParser.DataDeclContext ctx, Stmt.Accessibility accessibility) {
     var bind = ctx.bindBlock();
     var openAccessibility = ctx.PUBLIC() != null ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
@@ -790,36 +790,24 @@ public final class AyaProducer {
     else return ImmutableSeq.of(open);
   }
 
-  public Command.Open.UseHide visitUse(List<AyaParser.UseContext> ctxs) {
+  public Command.Open.UseHide useHide(List<AyaParser.UseHideListContext> ctxs, Command.Open.UseHide.Strategy strategy) {
     return new Command.Open.UseHide(
       ctxs.stream()
-        .map(AyaParser.UseContext::useHideList)
         .map(AyaParser.UseHideListContext::idsComma)
         .flatMap(this::visitIdsComma)
         .collect(ImmutableSeq.factory()),
-      Command.Open.UseHide.Strategy.Using);
-  }
-
-  public Command.Open.UseHide visitHide(List<AyaParser.HideContext> ctxs) {
-    return new Command.Open.UseHide(
-      ctxs.stream()
-        .map(AyaParser.HideContext::useHideList)
-        .map(AyaParser.UseHideListContext::idsComma)
-        .flatMap(this::visitIdsComma)
-        .collect(ImmutableSeq.factory()),
-      Command.Open.UseHide.Strategy.Hiding);
+      strategy);
   }
 
   public @NotNull Command.Open.UseHide visitUseHide(@NotNull AyaParser.UseHideContext ctx) {
-    var use = ctx.use();
-    if (use != null) return visitUse(use);
-    return visitHide(ctx.hide());
+    return useHide(ctx.useHideList(), ctx.USING() != null
+      ? Command.Open.UseHide.Strategy.Using : Command.Open.UseHide.Strategy.Hiding);
   }
 
   public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {
+    var id = ctx.ID();
     return new Command.Module(
-      sourcePosOf(ctx.ID()),
-      ctx.ID().getText(),
+      sourcePosOf(id), id.getText(),
       ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt)
     );
   }
