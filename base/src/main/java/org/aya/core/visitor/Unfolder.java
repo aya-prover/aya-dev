@@ -114,8 +114,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(matchy.patterns(), args);
-      if (termSubst != null) {
-        subst.add(termSubst);
+      if (termSubst.isOk()) {
+        subst.add(termSubst.get());
         var newBody = matchy.body().subst(subst, levelSubst).accept(this, p).rename();
         return new WithPos<>(matchy.sourcePos(), newBody);
       }

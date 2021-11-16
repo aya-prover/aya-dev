@@ -32,7 +32,7 @@ public class NormalizeTest {
        | a, suc b => suc (tracy a b)
       def xyr : Nat => tracy zero (suc zero)
       def kiva : Nat => tracy (suc zero) zero
-      def overlap (a : Nat) : Nat => tracy a zero
+      def overlap1 (a : Nat) : Nat => tracy a zero
       def overlap2 (a : Nat) : Nat => tracy zero a""");
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(null, NormalizeMode.NF);
     assertTrue(normalizer.apply(2) instanceof CallTerm.Con conCall

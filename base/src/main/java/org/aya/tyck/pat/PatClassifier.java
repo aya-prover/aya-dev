@@ -10,7 +10,6 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
 import org.aya.api.error.Reporter;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
@@ -24,6 +23,7 @@ import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.util.Ordering;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,8 +213,8 @@ public record PatClassifier(
           if (ctor.pats.isNotEmpty()) {
             var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
             // If not, forget about this constructor
-            if (matchy == null) continue;
-            conTele = conTele.map(param -> param.subst(matchy));
+            if (matchy.isErr()) continue;
+            conTele = conTele.map(param -> param.subst(matchy.get()));
           }
           // Java wants a final local variable, let's alias it
           var conTeleCapture = conTele;
