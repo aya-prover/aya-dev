@@ -3,6 +3,7 @@
 package org.aya.core.def;
 
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreDef;
@@ -52,9 +53,9 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).result;
   }
-  static @NotNull ImmutableSeq<Term.Param>
+  static @NotNull SeqLike<Term.Param>
   substParams(@NotNull SeqLike<Term.@NotNull Param> param, Substituter.@NotNull TermSubst subst) {
-    return param.view().drop(1).map(p -> p.subst(subst)).toImmutableSeq();
+    return param.view().drop(1).map(p -> p.subst(subst));
   }
 
   @Override @NotNull Term result();
@@ -84,12 +85,12 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
    * @author ice1000
    */
   record Signature(
-    @NotNull ImmutableSeq<Sort.@NotNull LvlVar> sortParam,
-    @NotNull ImmutableSeq<Term.@NotNull Param> param,
+    @NotNull ImmutableArray<Sort.@NotNull LvlVar> sortParam,
+    @NotNull ImmutableArray<Term.@NotNull Param> param,
     @NotNull Term result
   ) implements AyaDocile {
     @Contract("_ -> new") public @NotNull Signature inst(@NotNull Substituter.TermSubst subst) {
-      return new Signature(sortParam, substParams(param, subst), result.subst(subst));
+      return new Signature(sortParam, substParams(param, subst).toImmutableArray(), result.subst(subst));
     }
 
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {

@@ -3,6 +3,7 @@
 package org.aya.core.def;
 
 import kala.collection.Map;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
@@ -53,7 +54,7 @@ public final class PrimDef extends TopLevelDef {
     return Factory.INSTANCE.unfold(Objects.requireNonNull(ID.find(ref.name())), primCall, state);
   }
 
-  public @NotNull ImmutableSeq<Term.Param> telescope() {
+  public @NotNull ImmutableArray<Term.Param> telescope() {
     if (telescope.isEmpty()) return telescope;
     if (ref.concrete != null) {
       var signature = ref.concrete.signature;
@@ -83,7 +84,7 @@ public final class PrimDef extends TopLevelDef {
     // Interval
     public static CallTerm.Prim intervalCall() {
       return new CallTerm.Prim(Factory.INSTANCE.getOrCreate(ID.INTERVAL).ref(),
-        ImmutableSeq.empty(), ImmutableSeq.empty());
+        ImmutableArray.empty(), ImmutableArray.empty());
     }
 
     public static final @NotNull PrimSeed INTERVAL = new PrimSeed(
@@ -120,7 +121,7 @@ public final class PrimDef extends TopLevelDef {
       if (argA instanceof IntroTerm.Lambda lambda) {
         var normalize = lambda.body().normalize(state, NormalizeMode.NF);
         if (normalize.findUsages(lambda.param().ref()) == 0) return argBase.term();
-        else return new CallTerm.Prim(prim.ref(), prim.sortArgs(), ImmutableSeq.of(
+        else return new CallTerm.Prim(prim.ref(), prim.sortArgs(), ImmutableArray.of(
           new Arg<>(new IntroTerm.Lambda(lambda.param(), normalize), true), argBase, argI));
       }
       return prim;
@@ -135,7 +136,7 @@ public final class PrimDef extends TopLevelDef {
       var paramATy = new FormTerm.Pi(paramIToATy, result);
       var aRef = new RefTerm(paramA, paramATy);
       var left = Factory.INSTANCE.getOrCreate(ID.LEFT);
-      var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
+      var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableArray.empty(), ImmutableArray.empty()), true));
       return new PrimDef(
         ImmutableSeq.of(
           new Term.Param(paramA, paramATy, true),
@@ -162,11 +163,11 @@ public final class PrimDef extends TopLevelDef {
         var left = lr._1;
         var right = lr._2;
         if (primCall.ref() == left.ref)
-          return new CallTerm.Prim(right.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+          return new CallTerm.Prim(right.ref, ImmutableArray.empty(), ImmutableArray.empty());
         if (primCall.ref() == right.ref)
-          return new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty());
+          return new CallTerm.Prim(left.ref, ImmutableArray.empty(), ImmutableArray.empty());
       }
-      return new CallTerm.Prim(prim.ref(), ImmutableSeq.empty(), ImmutableSeq.of(new Arg<>(arg, true)));
+      return new CallTerm.Prim(prim.ref(), ImmutableArray.empty(), ImmutableArray.of(new Arg<>(arg, true)));
     }
 
     public static final @NotNull PrimDef.PrimSeed INVOL = new PrimSeed(ID.INVOL, PrimSeed::invol, () -> new PrimDef(

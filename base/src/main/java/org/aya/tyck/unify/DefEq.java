@@ -144,7 +144,7 @@ public final class DefEq {
     var typesSubst = types.view();
     var lu = l.toImmutableSeq();
     var ru = r.toImmutableSeq();
-    for (int i = 0; i < lu.size(); i++) {
+    for (int i = 0; lu.sizeGreaterThan(i); i++) {
       var li = lu.get(i);
       var head = typesSubst.first();
       if (!compare(li, ru.get(i), head.type())) return false;
@@ -283,8 +283,10 @@ public final class DefEq {
         for (int i = 1; i < lhs.ix(); i++) {
           var l = new ElimTerm.Proj(lhs, i);
           var currentParam = params.first();
+          // TODO: optimize
           params = params.view().drop(1)
-            .map(x -> x.subst(currentParam.ref(), l)).toImmutableSeq();
+            .map(x -> x.subst(currentParam.ref(), l))
+            .toImmutableArray();
         }
         if (params.isNotEmpty()) yield params.first().type();
         yield params.last().type();

@@ -3,13 +3,13 @@
 package org.aya.core.pat;
 
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Unit;
 import org.aya.api.core.CorePat;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
@@ -23,6 +23,7 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.LocalCtx;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,7 @@ public sealed interface Pat extends CorePat {
 
   record Tuple(
     boolean explicit,
-    @NotNull ImmutableSeq<Pat> pats,
+    @NotNull ImmutableArray<Pat> pats,
     @Nullable LocalVar as,
     @NotNull Term type
   ) implements Pat {
@@ -110,7 +111,7 @@ public sealed interface Pat extends CorePat {
   record Ctor(
     boolean explicit,
     @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
-    @NotNull ImmutableSeq<Pat> params,
+    @NotNull ImmutableArray<Pat> params,
     @Nullable LocalVar as,
     @NotNull CallTerm.Data type
   ) implements Pat {
@@ -147,7 +148,7 @@ public sealed interface Pat extends CorePat {
    */
   record PrototypeClause(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull ImmutableArray<Pat> patterns,
     @NotNull Option<Term> expr
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {

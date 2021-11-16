@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
@@ -98,7 +99,7 @@ public record StmtTycker(
       }
       case Decl.DataDecl decl -> {
         assert signature != null;
-        var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
+        var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor)).toImmutableArray();
         yield new DataDef(decl.ref, signature.param(), signature.sortParam(), signature.result(), body);
       }
       case Decl.PrimDecl decl -> decl.ref.core;
@@ -158,7 +159,7 @@ public record StmtTycker(
         } else if (prim.result != null) {
           var result = tycker.synthesize(prim.result).wellTyped();
           tycker.unifyTyReported(result, core.result(), prim.result);
-        } else prim.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
+        } else prim.signature = new Def.Signature(ImmutableArray.empty(), core.telescope(), core.result());
         tycker.solveMetas();
       }
     }
@@ -173,7 +174,7 @@ public record StmtTycker(
     var dataCall = new CallTerm.Data(dataRef, sortParam.view()
       .map(Level.Reference::new)
       .map(Sort::new)
-      .toImmutableSeq(), dataArgs);
+      .toImmutableArray(), dataArgs);
     var sig = new Def.Signature(sortParam, dataSig.param(), dataCall);
     var patTycker = new PatTycker(tycker);
     // There might be patterns in the constructor
@@ -234,7 +235,7 @@ public record StmtTycker(
     return elaborated;
   }
 
-  private @NotNull ImmutableSeq<Term.Param>
+  private @NotNull ImmutableArray<Term.Param>
   checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @NotNull Term univ) {
     var okTele = tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
@@ -248,6 +249,6 @@ public record StmtTycker(
       var term = t.type().zonk(exprTycker, tt._2);
       exprTycker.localCtx.put(t.ref(), term);
       return new Term.Param(t, term);
-    });
+    }).toImmutableArray();
   }
 }

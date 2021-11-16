@@ -3,8 +3,8 @@
 package org.aya.tyck;
 
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableMap;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
@@ -144,7 +144,7 @@ public final class ExprTycker {
               return fail(struct, whnf, BadTypeError.sigmaAcc(struct, ix, whnf));
             var telescope = sigma.params();
             var index = ix - 1;
-            if (index < 0 || index >= telescope.size())
+            if (index < 0 || telescope.sizeLessThanOrEquals(index))
               return fail(proj, new ProjIxError(proj, ix, telescope.size()));
             var type = telescope.get(index).type();
             var subst = ElimTerm.Proj.projSubst(projectee.wellTyped, index, telescope);
@@ -174,9 +174,9 @@ public final class ExprTycker {
         );
       }
       case Expr.TupExpr tuple -> {
-        var items = tuple.items().map(this::synthesize);
-        yield new Result(new IntroTerm.Tuple(items.map(Result::wellTyped)),
-          new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type, true))));
+        var items = tuple.items().view().map(this::synthesize);
+        yield new Result(new IntroTerm.Tuple(items.map(Result::wellTyped).toImmutableArray()),
+          new FormTerm.Sigma(items.map(item -> new Term.Param(Constants.anonymous(), item.type, true)).toImmutableArray()));
       }
       case Expr.AppExpr appE -> {
         var f = synthesize(appE.function());
@@ -269,7 +269,9 @@ public final class ExprTycker {
           againstTele = againstTele.drop(1);
           if (againstTele.isNotEmpty()) {
             var subst = new Substituter.TermSubst(ref, result.wellTyped);
-            againstTele = againstTele.map(param -> param.subst(subst)).toSeq().view();
+            // TODO: optimize
+            againstTele = againstTele.map(param -> param.subst(subst))
+              .toImmutableArray().view();
             last = last.subst(subst);
           } else {
             if (iter.hasNext()) {
@@ -278,8 +280,8 @@ public final class ExprTycker {
             } else items.append(inherit(item, last).wellTyped);
           }
         }
-        var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
-        yield new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resTy);
+        var resTy = new FormTerm.Sigma(resultTele.toImmutableArray());
+        yield new Result(new IntroTerm.Tuple(items.toImmutableArray()), resTy);
       }
       case Expr.HoleExpr hole -> {
         // TODO[ice]: deal with unit type
@@ -361,11 +363,11 @@ public final class ExprTycker {
     };
   }
 
-  public @NotNull ImmutableSeq<Sort.LvlVar> extractLevels() {
+  public @NotNull ImmutableArray<Sort.LvlVar> extractLevels() {
     return Seq.of(universe).view()
       .filter(state.levelEqns()::used)
       .appendedAll(levelMapping.valuesView())
-      .toImmutableSeq();
+      .toImmutableArray();
   }
 
   private void traceExit(Result result, @NotNull Expr expr) {
@@ -517,7 +519,7 @@ public final class ExprTycker {
     return new Result(IntroTerm.Lambda.make(teleRenamed, body), type);
   }
 
-  private @NotNull Tuple2<LevelSubst.Simple, ImmutableSeq<Sort>>
+  private @NotNull Tuple2<LevelSubst.Simple, ImmutableArray<Sort>>
   levelStuffs(@NotNull SourcePos pos, DefVar<? extends Def, ? extends Signatured> defVar) {
     var levelSubst = new LevelSubst.Simple(MutableMap.create());
     var levelVars = Def.defLevels(defVar).map(v -> {
@@ -529,7 +531,7 @@ public final class ExprTycker {
     return Tuple.of(levelSubst, levelVars.view()
       .map(Level.Reference::new)
       .map(Sort::new)
-      .toImmutableSeq());
+      .toImmutableArray());
   }
 
   private boolean unifyTy(@NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos) {

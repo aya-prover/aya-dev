@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class StructDef extends UserDef {
   public final @NotNull DefVar<StructDef, Decl.StructDecl> ref;
-  public final @NotNull ImmutableSeq<FieldDef> fields;
+  public final @NotNull ImmutableArray<FieldDef> fields;
 
   public StructDef(
     @NotNull DefVar<StructDef, Decl.StructDecl> ref,
@@ -29,7 +30,7 @@ public final class StructDef extends UserDef {
     super(telescope, result, levels);
     ref.core = this;
     this.ref = ref;
-    this.fields = fields;
+    this.fields = fields.toImmutableArray();
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

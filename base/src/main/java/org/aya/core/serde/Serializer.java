@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
@@ -62,7 +62,7 @@ public record Serializer(@NotNull Serializer.State state) implements
 
     public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {
       assert var.module != null;
-      return new SerDef.QName(var.module, var.name(), defCache.getOrPut(var, defCache::size));
+      return new SerDef.QName(var.module.toImmutableArray(), var.name(), defCache.getOrPut(var, defCache::size));
     }
   }
 
@@ -70,7 +70,7 @@ public record Serializer(@NotNull Serializer.State state) implements
     return new SerTerm.SerParam(param.explicit(), param.pattern(), state.local(param.ref()), serialize(param.type()));
   }
 
-  private @NotNull ImmutableSeq<SerTerm.SerParam> serializeParams(ImmutableSeq<Term.@NotNull Param> params) {
+  private @NotNull ImmutableArray<SerTerm.SerParam> serializeParams(ImmutableArray<Term.@NotNull Param> params) {
     return params.map(this::serialize);
   }
 
@@ -107,7 +107,7 @@ public record Serializer(@NotNull Serializer.State state) implements
     return new SerTerm.Univ(serialize(term.sort()));
   }
 
-  private @NotNull ImmutableSeq<SerTerm.SerArg> serializeArgs(@NotNull ImmutableSeq<Arg<Term>> args) {
+  private @NotNull ImmutableArray<SerTerm.SerArg> serializeArgs(@NotNull ImmutableArray<Arg<Term>> args) {
     return args.map(this::serialize);
   }
 
@@ -115,11 +115,11 @@ public record Serializer(@NotNull Serializer.State state) implements
     return SerLevel.ser(level, state.levelCache());
   }
 
-  private @NotNull ImmutableSeq<SerLevel.Max> serializeLevels(@NotNull ImmutableSeq<Sort> sortArgs) {
+  private @NotNull ImmutableArray<SerLevel.Max> serializeLevels(@NotNull ImmutableArray<Sort> sortArgs) {
     return sortArgs.map(this::serialize);
   }
 
-  private @NotNull ImmutableSeq<SerPat> serializePats(@NotNull ImmutableSeq<Pat> pats) {
+  private @NotNull ImmutableArray<SerPat> serializePats(@NotNull ImmutableArray<Pat> pats) {
     return pats.map(this::serialize);
   }
 
@@ -128,8 +128,8 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   private @NotNull SerTerm.CallData serializeCall(
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
+    @NotNull ImmutableArray<@NotNull Sort> sortArgs,
+    @NotNull ImmutableArray<Arg<@NotNull Term>> args) {
     return new SerTerm.CallData(serializeLevels(sortArgs), serializeArgs(args));
   }
 

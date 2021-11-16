@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.api.ref.DefVar;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * @author ice1000
@@ -21,7 +23,7 @@ import java.util.function.BiFunction;
 public final class FnDef extends UserDef {
   public final @NotNull EnumSet<Modifier> modifiers;
   public final @NotNull DefVar<FnDef, Decl.FnDecl> ref;
-  public final @NotNull Either<Term, ImmutableSeq<Matching>> body;
+  public final @NotNull Either<Term, ImmutableArray<Matching>> body;
 
   public FnDef(
     @NotNull DefVar<FnDef, Decl.FnDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
@@ -33,7 +35,7 @@ public final class FnDef extends UserDef {
     this.modifiers = modifiers;
     ref.core = this;
     this.ref = ref;
-    this.body = body;
+    this.body = body.map(Function.identity(), ImmutableArray::from);
   }
 
   public static <T> BiFunction<Term, Either<Term, ImmutableSeq<Matching>>, T>

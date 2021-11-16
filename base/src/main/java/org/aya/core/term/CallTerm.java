@@ -3,7 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableArray;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
@@ -21,15 +21,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface CallTerm extends Term {
   @NotNull Var ref();
-  @NotNull ImmutableSeq<@NotNull Sort> sortArgs();
-  @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
+  @NotNull ImmutableArray<@NotNull Sort> sortArgs();
+  @NotNull ImmutableArray<@NotNull Arg<Term>> args();
 
   @FunctionalInterface
   interface Factory<D extends Def, S extends Signatured> {
     @Contract(pure = true, value = "_,_,_->new") @NotNull CallTerm make(
       DefVar<D, S> defVar,
-      ImmutableSeq<@NotNull Sort> sortArgs,
-      ImmutableSeq<@NotNull Arg<Term>> args
+      ImmutableArray<@NotNull Sort> sortArgs,
+      ImmutableArray<@NotNull Arg<Term>> args
     );
   }
 
@@ -51,8 +51,8 @@ public sealed interface CallTerm extends Term {
 
   record Fn(
     @NotNull DefVar<FnDef, Decl.FnDecl> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+    @NotNull ImmutableArray<@NotNull Sort> sortArgs,
+    @NotNull ImmutableArray<@NotNull Arg<Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitFnCall(this, p);
@@ -61,8 +61,8 @@ public sealed interface CallTerm extends Term {
 
   record Prim(
     @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+    @NotNull ImmutableArray<@NotNull Sort> sortArgs,
+    @NotNull ImmutableArray<@NotNull Arg<Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPrimCall(this, p);
@@ -71,8 +71,8 @@ public sealed interface CallTerm extends Term {
 
   record Data(
     @NotNull DefVar<DataDef, Decl.DataDecl> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+    @NotNull ImmutableArray<@NotNull Sort> sortArgs,
+    @NotNull ImmutableArray<@NotNull Arg<Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitDataCall(this, p);
@@ -88,8 +88,8 @@ public sealed interface CallTerm extends Term {
    */
   record Struct(
     @NotNull DefVar<StructDef, Decl.StructDecl> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> args
+    @NotNull ImmutableArray<@NotNull Sort> sortArgs,
+    @NotNull ImmutableArray<@NotNull Arg<Term>> args
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitStructCall(this, p);
@@ -99,8 +99,8 @@ public sealed interface CallTerm extends Term {
   record ConHead(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
     @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
-    @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs
+    @NotNull ImmutableArray<@NotNull Sort> sortArgs,
+    @NotNull ImmutableArray<Arg<@NotNull Term>> dataArgs
   ) {
     public @NotNull Data underlyingDataCall() {
       return new Data(dataRef, sortArgs, dataArgs);
@@ -109,14 +109,14 @@ public sealed interface CallTerm extends Term {
 
   record Con(
     @NotNull ConHead head,
-    @NotNull ImmutableSeq<Arg<Term>> conArgs
+    @NotNull ImmutableArray<Arg<Term>> conArgs
   ) implements CallTerm {
     public Con(
       @NotNull DefVar<DataDef, Decl.DataDecl> dataRef,
       @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
-      @NotNull ImmutableSeq<Arg<@NotNull Term>> dataArgs,
-      @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
-      @NotNull ImmutableSeq<Arg<@NotNull Term>> conArgs
+      @NotNull ImmutableArray<Arg<@NotNull Term>> dataArgs,
+      @NotNull ImmutableArray<@NotNull Sort> sortArgs,
+      @NotNull ImmutableArray<Arg<@NotNull Term>> conArgs
     ) {
       this(new ConHead(dataRef, ref, sortArgs, dataArgs), conArgs);
     }
@@ -125,7 +125,7 @@ public sealed interface CallTerm extends Term {
       return head.ref;
     }
 
-    @Override public @NotNull ImmutableSeq<@NotNull Sort> sortArgs() {
+    @Override public @NotNull ImmutableArray<@NotNull Sort> sortArgs() {
       return head.sortArgs;
     }
 
@@ -133,8 +133,8 @@ public sealed interface CallTerm extends Term {
       return visitor.visitConCall(this, p);
     }
 
-    @Override public @NotNull ImmutableSeq<Arg<@NotNull Term>> args() {
-      return head.dataArgs.view().concat(conArgs).toImmutableSeq();
+    @Override public @NotNull ImmutableArray<@NotNull Arg<Term>> args() {
+      return head.dataArgs.concat(conArgs);
     }
   }
 
@@ -143,8 +143,8 @@ public sealed interface CallTerm extends Term {
    */
   record Hole(
     @NotNull Meta ref,
-    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
-    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
+    @NotNull ImmutableArray<@NotNull Arg<@NotNull Term>> contextArgs,
+    @NotNull ImmutableArray<@NotNull Arg<Term>> args
   ) implements CallTerm {
     public @NotNull FormTerm.Pi asPi(boolean explicit) {
       return ref.asPi(ref.name() + "dom", ref.name() + "cod", explicit, contextArgs);
@@ -158,8 +158,8 @@ public sealed interface CallTerm extends Term {
       return visitor.visitHole(this, p);
     }
 
-    @Override public @NotNull ImmutableSeq<@NotNull Sort> sortArgs() {
-      return ImmutableSeq.empty();
+    @Override public @NotNull ImmutableArray<@NotNull Sort> sortArgs() {
+      return ImmutableArray.empty();
     }
   }
 
@@ -169,15 +169,15 @@ public sealed interface CallTerm extends Term {
   record Access(
     @NotNull Term of,
     @NotNull DefVar<FieldDef, Decl.StructField> ref,
-    @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
-    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
-    @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
+    @NotNull ImmutableArray<@NotNull Sort> sortArgs,
+    @NotNull ImmutableArray<@NotNull Arg<@NotNull Term>> structArgs,
+    @NotNull ImmutableArray<@NotNull Arg<@NotNull Term>> fieldArgs
   ) implements CallTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitAccess(this, p);
     }
 
-    @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> args() {
+    @Override public @NotNull ImmutableArray<@NotNull Arg<Term>> args() {
       return structArgs.concat(fieldArgs);
     }
   }

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableArray;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.core.pat.Pat;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /** @author ice1000 */
 public record Matching(
   @NotNull SourcePos sourcePos,
-  @NotNull ImmutableSeq<Pat> patterns,
+  @NotNull ImmutableArray<Pat> patterns,
   @NotNull Term body
 ) implements AyaDocile {
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {

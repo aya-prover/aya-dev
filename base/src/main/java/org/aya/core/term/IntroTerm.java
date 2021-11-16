@@ -3,8 +3,8 @@
 package org.aya.core.term;
 
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableMap;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
@@ -53,7 +53,7 @@ public sealed interface IntroTerm extends Term {
   /**
    * @author re-xyr
    */
-  record Tuple(@NotNull ImmutableSeq<Term> items) implements IntroTerm {
+  record Tuple(@NotNull ImmutableArray<Term> items) implements IntroTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitTup(this, p);
     }

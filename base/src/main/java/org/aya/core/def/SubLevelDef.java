@@ -3,6 +3,7 @@
 package org.aya.core.def;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.Matching;
 import org.aya.core.term.Term;
@@ -14,20 +15,20 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public sealed abstract class SubLevelDef implements Def permits CtorDef, FieldDef {
-  public final @NotNull ImmutableSeq<Term.Param> ownerTele;
-  public final @NotNull ImmutableSeq<Term.Param> selfTele;
+  public final @NotNull ImmutableArray<Term.Param> ownerTele;
+  public final @NotNull ImmutableArray<Term.Param> selfTele;
   public final @NotNull Term result;
-  public final @NotNull ImmutableSeq<Matching> clauses;
+  public final @NotNull ImmutableArray<Matching> clauses;
   public final boolean coerce;
 
   protected SubLevelDef(
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
     @NotNull Term result, @NotNull ImmutableSeq<Matching> clauses, boolean coerce
   ) {
-    this.ownerTele = ownerTele;
-    this.selfTele = selfTele;
+    this.ownerTele = ownerTele.toImmutableArray();
+    this.selfTele = selfTele.toImmutableArray();
     this.result = result;
-    this.clauses = clauses;
+    this.clauses = clauses.toImmutableArray();
     this.coerce = coerce;
   }
 

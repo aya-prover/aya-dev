@@ -3,7 +3,7 @@
 package org.aya.core.serde;
 
 import kala.collection.Seq;
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.concrete.ConcreteDecl;
@@ -64,7 +64,7 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Sigma(@NotNull ImmutableSeq<SerParam> params) implements SerTerm {
+  record Sigma(@NotNull ImmutableArray<SerParam> params) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new FormTerm.Sigma(params.map(p -> p.de(state)));
     }
@@ -114,14 +114,14 @@ public sealed interface SerTerm extends Serializable {
   }
 
   record CallData(
-    @NotNull ImmutableSeq<SerLevel.Max> sortArgs,
-    @NotNull ImmutableSeq<SerArg> args
+    @NotNull ImmutableArray<SerLevel.Max> sortArgs,
+    @NotNull ImmutableArray<SerArg> args
   ) implements Serializable {
-    public @NotNull ImmutableSeq<Sort> de(@NotNull MutableMap<Integer, Sort.LvlVar> levelCache) {
+    public @NotNull ImmutableArray<Sort> de(@NotNull MutableMap<Integer, Sort.LvlVar> levelCache) {
       return sortArgs.map(max -> max.de(levelCache));
     }
 
-    public @NotNull ImmutableSeq<Arg<Term>> de(@NotNull DeState state) {
+    public @NotNull ImmutableArray<Arg<Term>> de(@NotNull DeState state) {
       return args.map(arg -> arg.de(state));
     }
   }
@@ -152,7 +152,7 @@ public sealed interface SerTerm extends Serializable {
 
   record ConCall(
     @NotNull SerDef.QName dataRef, @NotNull SerDef.QName selfRef,
-    @NotNull CallData dataArgs, @NotNull ImmutableSeq<SerArg> args
+    @NotNull CallData dataArgs, @NotNull ImmutableArray<SerArg> args
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CallTerm.Con(
@@ -162,7 +162,7 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Tup(@NotNull ImmutableSeq<SerTerm> components) implements SerTerm {
+  record Tup(@NotNull ImmutableArray<SerTerm> components) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new IntroTerm.Tuple(components.map(t -> t.de(state)));
     }
@@ -171,9 +171,9 @@ public sealed interface SerTerm extends Serializable {
   record Access(
     @NotNull SerTerm of,
     @NotNull SerDef.QName ref,
-    @NotNull ImmutableSeq<SerLevel.@NotNull Max> sortArgs,
-    @NotNull ImmutableSeq<@NotNull SerArg> structArgs,
-    @NotNull ImmutableSeq<@NotNull SerArg> fieldArgs
+    @NotNull ImmutableArray<SerLevel.@NotNull Max> sortArgs,
+    @NotNull ImmutableArray<@NotNull SerArg> structArgs,
+    @NotNull ImmutableArray<@NotNull SerArg> fieldArgs
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CallTerm.Access(

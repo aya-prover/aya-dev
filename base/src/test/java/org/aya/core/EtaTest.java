@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
@@ -48,32 +49,32 @@ public class EtaTest {
 
   // (x.1, x.2)
   @Test public void tupleUneta() {
-    var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
+    var sigmaTerm = new FormTerm.Sigma(ImmutableArray.of(
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false)));
     var xRefTerm = new RefTerm(new LocalVar("x"), sigmaTerm);
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
-    var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
+    var tuple = new IntroTerm.Tuple(ImmutableArray.of(firstTerm, secondTerm));
     assertTrue(Eta.compareRefTerm(xRefTerm, Eta.uneta(tuple)));
   }
 
   // (x.1, (x.1, x.2).2)
   @Test public void nestTupleUneta() {
-    var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
+    var sigmaTerm = new FormTerm.Sigma(ImmutableArray.of(
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false)));
     var xRefTerm = new RefTerm(new LocalVar("x"), sigmaTerm);
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
-    var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
-    var finalTuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, new ElimTerm.Proj(tuple, 2)));
+    var tuple = new IntroTerm.Tuple(ImmutableArray.of(firstTerm, secondTerm));
+    var finalTuple = new IntroTerm.Tuple(ImmutableArray.of(firstTerm, new ElimTerm.Proj(tuple, 2)));
     assertTrue(Eta.compareRefTerm(xRefTerm, Eta.uneta(finalTuple)));
   }
 
   // \x -> f (x.1, x.2)
   @Test public void tupleAndLambdaUneta() {
-    var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
+    var sigmaTerm = new FormTerm.Sigma(ImmutableArray.of(
       new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
       new Term.Param(new LocalVar("B"), FormTerm.Univ.ZERO, false)));
     var xParamTerm = new Term.Param(new LocalVar("x"), sigmaTerm, false);
@@ -82,7 +83,7 @@ public class EtaTest {
     // construct lambda body: tuple term
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
-    var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
+    var tuple = new IntroTerm.Tuple(ImmutableArray.of(firstTerm, secondTerm));
     var lambda = IntroTerm.Lambda.make(
       // Params
       ImmutableSeq.of(xParamTerm),

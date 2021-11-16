@@ -3,6 +3,7 @@
 package org.aya.core;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Tuple2;
@@ -23,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
  * @implNote Do not override equals or hashCode
  */
 public final class Meta implements Var {
-  public final @NotNull ImmutableSeq<Term.Param> contextTele;
-  public final @NotNull ImmutableSeq<Term.Param> telescope;
+  public final @NotNull ImmutableArray<Term.Param> contextTele;
+  public final @NotNull ImmutableArray<Term.Param> telescope;
   public final @NotNull String name;
   public final @NotNull Term result;
   public final @NotNull SourcePos sourcePos;
@@ -46,15 +47,15 @@ public final class Meta implements Var {
     @NotNull String name, @NotNull Term result,
     @NotNull SourcePos sourcePos
   ) {
-    this.contextTele = contextTele;
-    this.telescope = telescope;
+    this.contextTele = contextTele.toImmutableArray();
+    this.telescope = telescope.toImmutableArray();
     this.name = name;
     this.result = result;
     this.sourcePos = sourcePos;
   }
 
   public static @NotNull Meta from(
-    @NotNull ImmutableSeq<Term.Param> contextTele, @NotNull String name,
+    @NotNull ImmutableArray<Term.Param> contextTele, @NotNull String name,
     @NotNull Term result, @NotNull SourcePos sourcePos
   ) {
     if (result instanceof FormTerm.Pi pi) {
@@ -66,13 +67,13 @@ public final class Meta implements Var {
 
   public @NotNull FormTerm.Pi asPi(
     @NotNull String domName, @NotNull String codName, boolean explicit,
-    @NotNull ImmutableSeq<Arg<Term>> contextArgs
+    @NotNull ImmutableArray<Arg<Term>> contextArgs
   ) {
     assert telescope.isEmpty();
     var domVar = Meta.from(contextTele, domName, result, sourcePos);
     var codVar = Meta.from(contextTele, codName, result, sourcePos);
-    var dom = new CallTerm.Hole(domVar, contextArgs, ImmutableSeq.empty());
-    var cod = new CallTerm.Hole(codVar, contextArgs, ImmutableSeq.empty());
+    var dom = new CallTerm.Hole(domVar, contextArgs, ImmutableArray.empty());
+    var cod = new CallTerm.Hole(codVar, contextArgs, ImmutableArray.empty());
     var domParam = new Term.Param(Constants.randomlyNamed(sourcePos), dom, explicit);
     return new FormTerm.Pi(domParam, cod);
   }

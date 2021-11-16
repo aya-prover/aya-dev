@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableArray;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.core.def.*;
@@ -18,14 +18,14 @@ import java.util.EnumSet;
 public sealed interface SerDef extends Serializable {
   @NotNull Def de(@NotNull SerTerm.DeState state);
 
-  record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name, int id) implements Serializable {
+  record QName(@NotNull ImmutableArray<String> mod, @NotNull String name, int id) implements Serializable {
   }
 
   record Fn(
     @NotNull QName name,
-    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
-    @NotNull Either<SerTerm, ImmutableSeq<SerPat.Matchy>> body,
+    @NotNull ImmutableArray<SerTerm.SerParam> telescope,
+    @NotNull ImmutableArray<SerLevel.LvlVar> levels,
+    @NotNull Either<SerTerm, ImmutableArray<SerPat.Matchy>> body,
     @NotNull EnumSet<Modifier> modifiers,
     @NotNull SerTerm result
   ) implements SerDef {
@@ -40,10 +40,10 @@ public sealed interface SerDef extends Serializable {
 
   record Ctor(
     @NotNull QName data, @NotNull QName self,
-    @NotNull ImmutableSeq<SerPat> pats,
-    @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
-    @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
-    @NotNull ImmutableSeq<SerPat.Matchy> clauses,
+    @NotNull ImmutableArray<SerPat> pats,
+    @NotNull ImmutableArray<SerTerm.SerParam> ownerTele,
+    @NotNull ImmutableArray<SerTerm.SerParam> selfTele,
+    @NotNull ImmutableArray<SerPat.Matchy> clauses,
     @NotNull SerTerm result, boolean coerce
   ) implements SerDef {
     @Override public @NotNull CtorDef de(SerTerm.@NotNull DeState state) {
@@ -57,10 +57,10 @@ public sealed interface SerDef extends Serializable {
 
   record Data(
     @NotNull QName name,
-    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
+    @NotNull ImmutableArray<SerTerm.SerParam> telescope,
+    @NotNull ImmutableArray<SerLevel.LvlVar> levels,
     @NotNull SerTerm result,
-    @NotNull ImmutableSeq<Ctor> bodies
+    @NotNull ImmutableArray<Ctor> bodies
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new DataDef(
@@ -74,10 +74,10 @@ public sealed interface SerDef extends Serializable {
   record Field(
     @NotNull QName struct,
     @NotNull QName self,
-    @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
-    @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
+    @NotNull ImmutableArray<SerTerm.SerParam> ownerTele,
+    @NotNull ImmutableArray<SerTerm.SerParam> selfTele,
     @NotNull SerTerm result,
-    @NotNull ImmutableSeq<SerPat.Matchy> clauses,
+    @NotNull ImmutableArray<SerPat.Matchy> clauses,
     @NotNull Option<SerTerm> body,
     boolean coerce
   ) implements SerDef {
@@ -98,10 +98,10 @@ public sealed interface SerDef extends Serializable {
 
   record Struct(
     @NotNull QName name,
-    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
+    @NotNull ImmutableArray<SerTerm.SerParam> telescope,
+    @NotNull ImmutableArray<SerLevel.LvlVar> levels,
     @NotNull SerTerm result,
-    @NotNull ImmutableSeq<Field> fields
+    @NotNull ImmutableArray<Field> fields
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new StructDef(
@@ -115,8 +115,8 @@ public sealed interface SerDef extends Serializable {
   }
 
   record Prim(
-    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
+    @NotNull ImmutableArray<SerTerm.SerParam> telescope,
+    @NotNull ImmutableArray<SerLevel.LvlVar> levels,
     @NotNull SerTerm result,
     @NotNull PrimDef.ID name
   ) implements SerDef {

@@ -3,7 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.core.sort.Sort;
 import org.aya.generic.Constants;
@@ -47,7 +47,7 @@ public sealed interface FormTerm extends Term {
   /**
    * @author re-xyr
    */
-  record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements FormTerm {
+  record Sigma(@NotNull ImmutableArray<@NotNull Param> params) implements FormTerm {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitSigma(this, p);
     }

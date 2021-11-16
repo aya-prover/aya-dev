@@ -3,6 +3,7 @@
 package org.aya.tyck.pat;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
@@ -109,7 +110,7 @@ public final class PatTycker {
           yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, term);
         // sig.result is a dummy term
         var sig = new Def.Signature(
-          ImmutableSeq.empty(),
+          ImmutableArray.empty(),
           sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
@@ -131,7 +132,7 @@ public final class PatTycker {
         var ctorCore = ctorRef.core;
         final var dataCall = realCtor._1;
         var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
-        var sig = new Def.Signature(ImmutableSeq.empty(),
+        var sig = new Def.Signature(ImmutableArray.empty(),
           Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall);
         var patterns = visitPatterns(sig, ctor.params().view());
         yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns._1, ctor.as(), realCtor._1);
@@ -164,7 +165,7 @@ public final class PatTycker {
     return new Pat.PrototypeClause(match.sourcePos, patterns._1, result);
   }
 
-  public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
+  public @NotNull Tuple2<ImmutableArray<Pat>, Term>
   visitPatterns(Def.Signature sig, SeqView<Pattern> stream) {
     var results = DynamicSeq.<Pat>create();
     while (sig.param().isNotEmpty()) {
@@ -204,7 +205,7 @@ public final class PatTycker {
       exprTycker.reporter.report(new PatternProblem
         .TooManyPattern(stream.first(), sig.result().freezeHoles(exprTycker.state)));
     }
-    return Tuple.of(results.toImmutableSeq(), sig.result());
+    return Tuple.of(results.toImmutableArray(), sig.result());
   }
 
   private record PatData(Def.Signature sig, DynamicSeq<Pat> results, Term.Param param) {

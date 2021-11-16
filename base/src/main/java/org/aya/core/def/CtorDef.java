@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
@@ -19,7 +20,7 @@ import java.util.Objects;
 public final class CtorDef extends SubLevelDef {
   public final @NotNull DefVar<DataDef, Decl.DataDecl> dataRef;
   public final @NotNull DefVar<CtorDef, Decl.DataCtor> ref;
-  public final @NotNull ImmutableSeq<Pat> pats;
+  public final @NotNull ImmutableArray<Pat> pats;
 
   public CtorDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> dataRef, @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
@@ -27,11 +28,11 @@ public final class CtorDef extends SubLevelDef {
     @NotNull ImmutableSeq<Term.Param> ownerTele, @NotNull ImmutableSeq<Term.Param> selfTele,
     @NotNull ImmutableSeq<Matching> clauses, @NotNull Term result, boolean coerce
   ) {
-    super(ownerTele, selfTele, result, clauses, coerce);
+    super(ownerTele.toImmutableArray(), selfTele, result, clauses, coerce);
     ref.core = this;
     this.dataRef = dataRef;
     this.ref = ref;
-    this.pats = pats;
+    this.pats = pats.toImmutableArray();
   }
 
   public static @NotNull ImmutableSeq<Term.Param> conTele(@NotNull DefVar<CtorDef, Decl.DataCtor> conVar) {
@@ -49,16 +50,16 @@ public final class CtorDef extends SubLevelDef {
       var dataDef = core.dataRef.core;
       var conTelescope = core.selfTele;
       if (dataDef != null)
-        return new DataDef.CtorTelescopes(dataDef.telescope, sort, conTelescope);
+        return new DataDef.CtorTelescopes(dataDef.telescope, sort.toImmutableArray(), conTelescope);
       var signature = core.dataRef.concrete.signature;
       assert signature != null;
-      return new DataDef.CtorTelescopes(signature.param(), sort, conTelescope);
+      return new DataDef.CtorTelescopes(signature.param(), sort.toImmutableArray(), conTelescope);
     }
     var dataSignature = defVar.concrete.dataRef.concrete.signature;
     assert dataSignature != null;
     var conSignature = defVar.concrete.signature;
     assert conSignature != null;
-    return new DataDef.CtorTelescopes(dataSignature.param(), sort, conSignature.param());
+    return new DataDef.CtorTelescopes(dataSignature.param(), sort.toImmutableArray(), conSignature.param());
   }
 
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {

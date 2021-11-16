@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.stmt.Decl;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class DataDef extends UserDef {
   public final @NotNull DefVar<DataDef, Decl.DataDecl> ref;
-  public final @NotNull ImmutableSeq<CtorDef> body;
+  public final @NotNull ImmutableArray<CtorDef> body;
 
   public DataDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
@@ -27,7 +28,7 @@ public final class DataDef extends UserDef {
     super(telescope, result, levels);
     ref.core = this;
     this.ref = ref;
-    this.body = body;
+    this.body = body.toImmutableArray();
   }
 
   public static @NotNull DefVar<DataDef, Decl.DataDecl> fromCtor(@NotNull DefVar<CtorDef, Decl.DataCtor> conHead) {
@@ -47,9 +48,9 @@ public final class DataDef extends UserDef {
    * @author ice1000
    */
   public record CtorTelescopes(
-    @NotNull ImmutableSeq<Term.Param> dataTele,
-    @NotNull ImmutableSeq<Sort> sortTele,
-    @NotNull ImmutableSeq<Term.Param> conTele
+    @NotNull ImmutableArray<Term.Param> dataTele,
+    @NotNull ImmutableArray<Sort> sortTele,
+    @NotNull ImmutableArray<Term.Param> conTele
   ) {
     public @NotNull CallTerm.Con toConCall(DefVar<CtorDef, Decl.DataCtor> conVar) {
       return new CallTerm.Con(fromCtor(conVar), conVar,
@@ -62,7 +63,7 @@ public final class DataDef extends UserDef {
       return new CtorTelescopes(dataTele.view()
         .map(Term.Param::implicitify)
         .map(Term.Param::rename)
-        .toImmutableSeq(), sortTele, conTele.map(Term.Param::rename));
+        .toImmutableArray(), sortTele, conTele.map(Term.Param::rename));
     }
 
     public @NotNull ImmutableSeq<Term.Param> params() {

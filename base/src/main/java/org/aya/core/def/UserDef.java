@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.concrete.stmt.Decl;
@@ -22,7 +23,7 @@ public sealed abstract class UserDef extends TopLevelDef permits DataDef, FnDef,
    *
    * @see org.aya.tyck.StmtTycker#tyck(Decl, ExprTycker)
    */
-  public @Nullable ImmutableSeq<Problem> problems;
+  public @Nullable ImmutableArray<Problem> problems;
 
   protected UserDef(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result, @NotNull ImmutableSeq<Sort.LvlVar> levels) {
     super(telescope, result, levels);

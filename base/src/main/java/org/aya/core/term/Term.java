@@ -4,13 +4,13 @@ package org.aya.core.term;
 
 import kala.collection.Map;
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreTerm;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -28,6 +28,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,8 +160,8 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
       this(param.ref(), type, param.pattern(), param.explicit());
     }
 
-    public static @NotNull ImmutableSeq<@NotNull Param> fromBuffer(DynamicSeq<Tuple3<LocalVar, Boolean, Term>> buf) {
-      return buf.view().map(tup -> new Param(tup._1, tup._3, false, tup._2)).toImmutableSeq();
+    public static @NotNull ImmutableArray<@NotNull Param> fromBuffer(DynamicSeq<Tuple3<LocalVar, Boolean, Term>> buf) {
+      return buf.view().map(tup -> new Param(tup._1, tup._3, false, tup._2)).toImmutableArray();
     }
 
     @Contract(" -> new") public @NotNull Param implicitify() {
@@ -191,14 +192,14 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
       return subst(subst, LevelSubst.EMPTY);
     }
 
-    public static @NotNull ImmutableSeq<Param> subst(
+    public static @NotNull ImmutableArray<Param> subst(
       @NotNull ImmutableSeq<@NotNull Param> params,
       @NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst
     ) {
-      return params.map(param -> param.subst(subst, levelSubst));
+      return params.map(param -> param.subst(subst, levelSubst)).toImmutableArray();
     }
 
-    public static @NotNull ImmutableSeq<Param>
+    public static @NotNull ImmutableArray<Param>
     subst(@NotNull ImmutableSeq<@NotNull Param> params, @NotNull LevelSubst levelSubst) {
       return subst(params, Substituter.TermSubst.EMPTY, levelSubst);
     }
