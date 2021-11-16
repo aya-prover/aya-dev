@@ -25,7 +25,7 @@ public class NormalizeTest {
   @Test public void unfoldPatterns() {
     var defs = TyckDeclTest.successTyckDecls("""
       open data Nat : Type | zero | suc Nat
-      def tracy (a b : Nat) : Nat
+      def overlap tracy (a b : Nat) : Nat
        | zero, a => a
        | a, zero => a
        | suc a, b => suc (tracy a b)

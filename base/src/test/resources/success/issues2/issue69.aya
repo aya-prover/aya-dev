@@ -31,14 +31,14 @@ def infixr ~ {A : Type} {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
-def funext {A B : Type} (f g : A -> B) (p : Pi (a : A) -> f a = g a) : f = g
+def funExt {A B : Type} (f g : A -> B) (p : Pi (a : A) -> f a = g a) : f = g
   => path (\ i x => (p x).at i)
 
 open data Nat : Type
   | zero
   | suc Nat
 
-def infixl + (m n : Nat) : Nat
+def overlap infixl + (m n : Nat) : Nat
   | zero, n => n
   | n, zero => n
   | suc m, n => suc (m + n)
@@ -53,13 +53,13 @@ def +-assoc (x y z : Nat) : x + (y + z) = (x + y) + z
   | zero, y, z => idp _
   | suc x, y, z => pmap suc (+-assoc x y z)
 
-def infixl * (m n : Nat) : Nat
+def overlap infixl * (m n : Nat) : Nat
   | zero, n => zero
   | m, zero => zero
   | suc m, suc n => suc (m + n + m * n)
   bind tighter +
 
-def infixl *' (m n : Nat) : Nat
+def overlap infixl *' (m n : Nat) : Nat
   | zero, n => zero
   | m, zero => zero
   | suc m, n => n + m *' n
@@ -77,11 +77,11 @@ def *'-suc-suc (m n : Nat) : suc m *' suc n = suc (m + n + m *' n)
     ~ +-assoc n m (m *' n)
     ~ pmap (+ m *' n) (+-comm n m))
 
-def *-*'-iso (m n : Nat) : m * n = m *' n
+def overlap *-*'-iso (m n : Nat) : m * n = m *' n
   | zero, n => idp _
   | m, zero => idp _
   | suc m, suc n => pmap (\ x => suc (m + n + x)) (*-*'-iso m n) ~ sym (*'-suc-suc m n)
 
-def *-*'-eq : (*) = (*') => funext (*) (*') (\ m => funext (m *) (m *') (*-*'-iso m))
+def *-*'-eq : (*) = (*') => funExt (*) (*') (\ m => funExt (m *) (m *') (*-*'-iso m))
 
 def err_eq (m n : Nat) : m * n = m *' n => pmap (\ f => f m n) *-*'-eq

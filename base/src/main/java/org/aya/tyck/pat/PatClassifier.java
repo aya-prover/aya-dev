@@ -56,6 +56,7 @@ public record PatClassifier(
   }
 
   public static void confluence(
+    boolean doUnification,
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos,
     @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
@@ -72,6 +73,7 @@ public record PatClassifier(
         PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(), lhsSubst, rhsSubst);
         domination(rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
         domination(lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
+        if (!doUnification) continue;
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
         var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
         // TODO: Currently all holes at this point is in an ErrorTerm

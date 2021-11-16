@@ -7,7 +7,7 @@ def id2 {A : Type} (a : A) : A
 open data Nat : Type
  | zero | suc Nat
 
-def add {a b : Nat} : Nat
+def overlap add {a b : Nat} : Nat
  | {zero}, {b} => b
  | {a}, {zero} => a
  | {suc a}, {b} => suc (add {a} {b})

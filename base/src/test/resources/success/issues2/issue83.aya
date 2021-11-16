@@ -1,6 +1,6 @@
 open data N : Type | zero | suc N
 
-def infix + (a b : N) : N
+def overlap infix + (a b : N) : N
   | zero, a => a
   | a, zero => a
   | suc a, b => suc (a + b)
