@@ -7,7 +7,8 @@ In file $FILE:8:6 ->
 
 Error: Cannot match with
          vnil
-       due to a failed index unification
+       as index unification is blocked for type
+         Vect A n
 
 In file $FILE:9:6 ->
 
@@ -18,7 +19,8 @@ In file $FILE:9:6 ->
 
 Error: Cannot match with
          vcons x xs
-       due to a failed index unification
+       as index unification is blocked for type
+         Vect A n
 
 2 error(s), 0 warning(s).
 What are you doing?

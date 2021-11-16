@@ -229,7 +229,10 @@ public record PatClassifier(
             var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
             // If not, forget about this constructor
             if (matchy.isErr()) {
-              if (matchy.getErr()) {
+              // If subPatsSeq is empty, we continue splitting to see
+              // if we can ensure that the other cases are impossible, it would be fine.
+              // Conjecture: if subPatsSeq is full of catch-all patterns, it would also be fine.
+              if (matchy.getErr() && subPatsSeq.isNotEmpty()) {
                 // Index unification fails negatively
                 // TODO[ice]: report
                 throw new ExprTycker.TyckerException();

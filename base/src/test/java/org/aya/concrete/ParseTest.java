@@ -63,8 +63,7 @@ public class ParseTest {
       ImmutableSeq.of(new Command.Module(SourcePos.NONE, "a", ImmutableSeq.empty())));
   }
 
-  @Test
-  public void successCmd() {
+  @Test public void successCmd() {
     parseOpen("open A");
     parseOpen("open A::B");
     parseOpen("open A using ()");
@@ -72,7 +71,7 @@ public class ParseTest {
     parseImport("import A");
     parseImport("import A::B");
     parseImport("import A::B using ()");
-    parseAndPretty("open Boy::Next::Door using (door) using (next)", """
+    parseAndPretty("open Boy::Next::Door using (door) (next)", """
         open Boy::Next::Door using (door, next)
       """);
   }
@@ -307,8 +306,8 @@ public class ParseTest {
   }
 
   @Test public void patterns() {
-    parseAndPretty("def inline final : Nat | _ => a",
-      "def inline final : Nat\n  | _ => a");
+    parseAndPretty("def inline final : Nat => a",
+      "def inline final : Nat => a");
     parseAndPretty("def opaque final : Nat | impossible",
       "def opaque final : Nat\n  | impossible");
   }

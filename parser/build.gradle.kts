@@ -20,7 +20,7 @@ val generateLexerToken = tasks.register<org.aya.gradle.GenerateLexerTokenTask>("
 tasks.compileJava { dependsOn(generateLexerToken) }
 tasks.sourcesJar { dependsOn(generateLexerToken) }
 
-idea.module.generatedSourceDirs.add(genDir)
+//idea.module.generatedSourceDirs.add(genDir)
 tasks.register("cleanSource") {
   group = "build"
   genDir.deleteRecursively()
