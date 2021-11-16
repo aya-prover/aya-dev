@@ -20,9 +20,11 @@ public sealed interface PatternProblem extends Problem {
     return pattern().sourcePos();
   }
 
-  record BlockedEval(@Override @NotNull Pattern pattern) implements PatternProblem {
+  record BlockedEval(@Override @NotNull Pattern pattern, @NotNull CallTerm.Data dataCall) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-      return Doc.english("Unsure if this pattern is actually impossible as constructor selection is blocked");
+      return Doc.sep(
+        Doc.english("Unsure if this pattern is actually impossible, as constructor selection is blocked on:"),
+        Doc.par(1, dataCall.toDoc(options)));
     }
 
     @Override public @NotNull Severity level() {
@@ -61,7 +63,7 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record UnavailableCtor(@Override @NotNull Pattern pattern) implements PatternProblem {
+  record UnavailableCtor(@Override @NotNull Pattern pattern, @NotNull CallTerm.Data dataCall) implements PatternProblem {
     @Override public @NotNull Severity level() {
       return Severity.ERROR;
     }
@@ -70,9 +72,8 @@ public sealed interface PatternProblem extends Problem {
       return Doc.vcat(
         Doc.english("Cannot match with"),
         Doc.par(1, pattern.toDoc(options)),
-        Doc.cat(
-          Doc.english("due to a failed index unification"),
-          Doc.emptyIf(isError(), () -> Doc.english(", treating as bind pattern"))));
+        Doc.english("as index unification is blocked for type"),
+        Doc.par(1, dataCall.toDoc(options)));
     }
   }
 
