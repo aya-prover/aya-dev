@@ -26,10 +26,6 @@ public sealed interface PatternProblem extends Problem {
         Doc.english("Unsure if this pattern is actually impossible, as constructor selection is blocked on:"),
         Doc.par(1, dataCall.toDoc(options)));
     }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
   }
 
   record PossiblePat(
@@ -43,10 +39,6 @@ public sealed interface PatternProblem extends Problem {
         Doc.english("is still available")
       );
     }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
   }
 
   record SplittingOnNonData(@Override @NotNull Pattern pattern, @NotNull Term type) implements PatternProblem {
@@ -57,13 +49,10 @@ public sealed interface PatternProblem extends Problem {
         Doc.english("with a constructor pattern"),
         Doc.par(1, pattern.toDoc(options)));
     }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
   }
 
-  record UnavailableCtor(@Override @NotNull Pattern pattern, @NotNull CallTerm.Data dataCall) implements PatternProblem {
+  record UnavailableCtor(@Override @NotNull Pattern pattern,
+                         @NotNull CallTerm.Data dataCall) implements PatternProblem {
     @Override public @NotNull Severity level() {
       return Severity.ERROR;
     }
@@ -84,10 +73,6 @@ public sealed interface PatternProblem extends Problem {
         Doc.par(1, pattern.toDoc(options))
       );
     }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
   }
 
   record TupleNonSig(@Override @NotNull Pattern.Tuple pattern, @NotNull Term type) implements PatternProblem {
@@ -98,10 +83,6 @@ public sealed interface PatternProblem extends Problem {
         Doc.english("splits only on sigma types, while the actual type"),
         Doc.par(1, type.freezeHoles(null).toDoc(options)),
         Doc.english("does not look like one"));
-    }
-
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
     }
   }
 
@@ -117,9 +98,9 @@ public sealed interface PatternProblem extends Problem {
           Doc.styled(Style.code(), ":"),
           Doc.english("in the signature"))));
     }
+  }
 
-    @Override public @NotNull Severity level() {
-      return Severity.ERROR;
-    }
+  @Override default @NotNull Severity level() {
+    return Severity.ERROR;
   }
 }
