@@ -260,23 +260,20 @@ public final class ExprTycker {
           yield fail(tuple, term, BadTypeError.sigmaCon(tuple, term));
         var againstTele = dt.params().view();
         var last = dt.params().last().type();
+        var subst = new Substituter.TermSubst(MutableMap.create());
         for (var iter = tuple.items().iterator(); iter.hasNext(); ) {
           var item = iter.next();
-          var result = inherit(item, againstTele.first().type());
+          var first = againstTele.first().subst(subst);
+          var result = inherit(item, first.type());
           items.append(result.wellTyped);
-          var ref = againstTele.first().ref();
-          resultTele.append(new Term.Param(ref, result.type, againstTele.first().explicit()));
+          var ref = first.ref();
+          resultTele.append(new Term.Param(ref, result.type, first.explicit()));
           againstTele = againstTele.drop(1);
-          if (againstTele.isNotEmpty()) {
-            var subst = new Substituter.TermSubst(ref, result.wellTyped);
-            againstTele = againstTele.map(param -> param.subst(subst)).toSeq().view();
-            last = last.subst(subst);
-          } else {
-            if (iter.hasNext()) {
-              // TODO[ice]: too few tuple elements
-              throw new TyckerException();
-            } else items.append(inherit(item, last).wellTyped);
-          }
+          if (againstTele.isNotEmpty()) subst.add(ref, result.wellTyped);
+          else if (iter.hasNext()) {
+            // TODO[ice]: too few tuple elements
+            throw new TyckerException();
+          } else items.append(inherit(item, last.subst(subst)).wellTyped);
         }
         var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
         yield new Result(new IntroTerm.Tuple(items.toImmutableSeq()), resTy);
