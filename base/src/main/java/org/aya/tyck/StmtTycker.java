@@ -209,7 +209,9 @@ public record StmtTycker(
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     var classification = PatClassifier.classify(elabClauses, signature.param(),
       tycker.state, tycker.reporter, pos, coverage);
-    PatClassifier.confluence(orderIndependent, elabClauses, tycker, pos, signature.result(), classification);
+    if (orderIndependent) PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
+    else if (classification.isNotEmpty())
+      PatClassifier.firstMatchDomination(elabClauses, reporter, pos, classification);
     Conquer.against(matchings, orderIndependent, tycker, pos, signature);
     tycker.solveMetas();
     tracing(TreeBuilder::reduce);

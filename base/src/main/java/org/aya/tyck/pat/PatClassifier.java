@@ -55,8 +55,20 @@ public record PatClassifier(
     return classification;
   }
 
+  public static void firstMatchDomination(
+    @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
+    @NotNull Reporter reporter, @NotNull SourcePos pos,
+    @NotNull ImmutableSeq<PatClass> classification
+  ) {
+    // Google says they're initialized to false
+    var numbers = new boolean[clauses.size()];
+    for (var results : classification) numbers[results.contents().min()] = true;
+    // ^ The minimum is supposed to be the first one, but why not be robust?
+    for (int i = 0; i < numbers.length; i++)
+      if (!numbers[i]) reporter.report(new ClausesProblem.FMDomination(i + 1, pos));
+  }
+
   public static void confluence(
-    boolean doUnification,
     @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos,
     @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
@@ -73,7 +85,6 @@ public record PatClassifier(
         PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(), lhsSubst, rhsSubst);
         domination(rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
         domination(lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
-        if (!doUnification) continue;
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
         var rhsTerm = rhsInfo._2.body().subst(rhsSubst);
         // TODO: Currently all holes at this point is in an ErrorTerm
