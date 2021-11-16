@@ -70,7 +70,7 @@ def infix + (a b : Nat) : Nat
  | a, suc b => suc (a + b)
  bind tighter =, ==<, qed
 
-def +-comm (a b : Nat) : a + b = b + a
+def overlap +-comm (a b : Nat) : a + b = b + a
   | zero, zero => idp _
   | suc a, zero => pmap suc (+-comm a zero)
   | zero, suc b => pmap suc (+-comm zero b)

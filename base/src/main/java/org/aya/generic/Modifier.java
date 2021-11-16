@@ -9,15 +9,23 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum Modifier {
   /**
-   * Denotes that a function's invocations are never reduced,
-   * and should be removed during elaboration.
+   * Denotes that a function's invocations are never reduced.
+   * Useful in debugging, when you really don't wanna see the full NF.
    */
   Opaque("opaque"),
   /**
    * Denotes that a function's invocations are eagerly reduced.
    */
   Inline("inline"),
+  /**
+   * That this function is a pattern synonym.
+   */
   Pattern("pattern"),
+  /**
+   * That this function uses overlapping and order-insensitive
+   * pattern matching semantics.
+   */
+  Overlap("overlap"),
   ;
 
   public final @NotNull String keyword;

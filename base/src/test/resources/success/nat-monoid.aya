@@ -27,7 +27,7 @@ struct Monoid { A : Type } ( op : A -> A -> A ): Type
   | id_r (a: A) : op a (id unit) = a
   | id_l (a: A) : op (id unit) a = a
 
-def infix + ( a b : Nat ) : Nat
+def overlap infix + ( a b : Nat ) : Nat
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (a + b)

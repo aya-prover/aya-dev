@@ -121,4 +121,17 @@ public sealed interface ClausesProblem extends Problem {
       return Severity.WARN;
     }
   }
+
+  record FMDomination(int sub, @Override @NotNull SourcePos sourcePos) implements ClausesProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(
+        Doc.english("The"), Doc.ordinal(sub),
+        Doc.english("clause is dominated by the other clauses, hence unreachable")
+      );
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.WARN;
+    }
+  }
 }

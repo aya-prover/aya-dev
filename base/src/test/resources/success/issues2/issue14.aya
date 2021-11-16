@@ -33,7 +33,7 @@ open data Nat : Type
   | zero
   | suc Nat
 
-def infix + (m n : Nat) : Nat
+def overlap infix + (m n : Nat) : Nat
   | zero, n => n
   | n, zero => n
   | suc m, n => suc (m + n)

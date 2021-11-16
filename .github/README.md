@@ -23,7 +23,10 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
   and prove [regularity by computation][regularity] thanks to Arend's type theory.
   We also have the classic cubical-flavored [funExt].
   + We are considering moving to cubical type theory.
-+ Overlapping patterns. Very [useful][oop] in theorem proving.
++ Pattern matching with first-match semantics.
+  We can implement [redblack tree][rbtree] (without deletion) elegantly.
++ Overlapping and order-independent patterns.
+  Very [useful][oop] in theorem proving.
 + A literate programming mode with inline code fragment support.
   We already have a prototype, but we plan to revise it before sharing demos.
 + Binary operators, with precedence specified by a [partial ordering][binop]
@@ -61,6 +64,8 @@ check out [how to][proxy] let gradle use a proxy.
 
 + Questions or concerns are welcomed in the discussion area.
   We will try our best to answer your questions, but please be nice.
++ We welcome nitpicks on error reporting! Please let us know anything not perfect.
+  We have already implemented several user-suggested error messages.
 + Before contributing in any form, please read
   [the contribution guideline](https://github.com/aya-prover/aya-dev/blob/master/.github/CONTRIBUTING.md) thoroughly
   and make sure you understand your responsibilities.
@@ -82,6 +87,7 @@ check out [how to][proxy] let gradle use a proxy.
 [gadt]: ../base/src/test/resources/success/type-safe-norm.aya
 [regularity]: ../base/src/test/resources/success/regularity.aya
 [funExt]: ../base/src/test/resources/success/funExt.aya
+[rbtree]: ../base/src/test/resources/success/redblack.aya
 [assoc]: ../base/src/test/resources/success/assoc.aya#L73
 [binop]: ../base/src/test/resources/success/issues2/issue69.aya#L46
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover

@@ -6,7 +6,7 @@ open data Fin (n : Nat) : Type 0
  | suc m => fzero
  | suc m => fsuc (Fin m)
 
-def addN (a b : Nat) : Nat
+def overlap addN (a b : Nat) : Nat
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (addN a b)

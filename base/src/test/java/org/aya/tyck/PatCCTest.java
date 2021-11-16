@@ -3,11 +3,11 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.util.error.SourcePos;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.test.ThrowingReporter;
 import org.aya.tyck.pat.PatClassifier;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +25,7 @@ public class PatCCTest {
   @Test public void addCC() {
     var decls = TyckDeclTest.successTyckDecls("""
       open data Nat : Type | zero | suc Nat
-      def add (a b : Nat) : Nat
+      def overlap add (a b : Nat) : Nat
        | zero, b => b
        | a, zero => a
        | suc a, b => suc (add a b)

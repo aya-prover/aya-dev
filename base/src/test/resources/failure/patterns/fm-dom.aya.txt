@@ -1,0 +1,10 @@
+In file $FILE:2:4 ->
+
+  1 | open data Nat | suc Nat | zero
+  2 | def addN (a b : Nat) : Nat
+          ^--^
+  3 | | zero, a => a
+
+Warning: The 4th clause is dominated by the other clauses, hence unreachable
+
+That looks right!

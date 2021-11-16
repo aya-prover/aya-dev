@@ -1,0 +1,160 @@
+---- HoTT-I ----
+prim I
+prim left
+prim right
+prim arcoe
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+  | at (i : I) : A i {
+    | left => a
+    | right => b
+  }
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
+def idp {A : Type} {a : A} : a = a => path (\ i => a)
+
+def hfill2d {A : Type}
+  {a b c d : A}
+  (p : a = b)
+  (q : b = d)
+  (r : a = c)
+  (i j : I) : A
+  => (arcoe (\ k => r.at k = q.at k) p i).at j
+def hcomp2d {A : Type}
+  {a b c d : A}
+  (p : a = b)
+  (q : b = d)
+  (r : a = c) : c = d
+  => path (hfill2d p q r right)
+
+def sym {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d idp idp p
+def infix <==> {A : Type} {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q idp
+def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
+  : f a = f b => path (\ i => f (p.at i))
+
+---- Basic types ----
+
+open data Nat | zero | suc Nat
+open data Bool | false | true
+
+open data Fin (n : Nat)
+| suc n => fzero
+| suc n => fsuc (Fin n)
+
+---- List ----
+
+open data List (A : Type) : Type
+| nil
+| infixr cons A (List A)
+bind tighter =
+
+def length {A : Type} (l : List A) : Nat
+| nil => zero
+| a cons l => suc (length l)
+
+def infix !! {A : Type} (l : List A) (i : Fin (length l)) : A
+| a cons l, fzero => a
+| a cons l, fsuc i => l !! i
+
+def overlap infixr ++ {A : Type} (xs ys : List A) : List A
+| nil, ys => ys
+| xs, nil => xs
+| a cons xs, ys => a cons xs ++ ys
+bind tighter cons
+
+def ++-assoc {A : Type} {xs ys zs : List A} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
+| {A}, {nil} => idp
+| {A}, {x cons xs} => pmap (x cons) ++-assoc
+
+def ++nil {A : Type} {l : List A} : l ++ nil = l
+| {B}, {nil} => idp
+| {A}, {a cons l} => pmap (a cons) ++nil
+
+def map {A B : Type} (f : A -> B) (l : List A) : List B
+| f, nil => nil
+| f, a cons l => f a cons map f l
+
+def length_map {A B : Type} (f : A -> B) (l : List A) : length (map f l) = length l
+| f, nil => idp
+| f, a cons l => pmap suc (length_map f l)
+
+def map_comp {A B C : Type} (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l)
+| g, f, nil => idp
+| g, f, a cons l => pmap (g _ cons) (map_comp g f l)
+
+def map_id {A : Type} (l : List A) : map (\x => x) l = l
+| nil => idp
+| a cons l => pmap (a cons) (map_id l)
+
+def headDef {A : Type} (x : A) (xs : List A) : A
+| x, nil => x
+| x, a cons b => a
+
+def curry {A B C : Type} (t : Sig A ** B) (f : A -> B -> C) => f t.1 t.2
+
+def splitAt {A : Type} (n : Nat) (l : List A) : Sig (List A) ** (List A)
+| zero, l => (nil, l)
+| suc n, nil => (nil, nil)
+| suc n, a cons l => curry (splitAt n l) (\l1 l2 => (a cons l1, l2))
+
+def take {A : Type} (n : Nat) (l : List A) => (splitAt n l).1
+
+def drop {A : Type} (n : Nat) (l : List A) => (splitAt n l).2
+
+def replace {A : Type} (l : List A) (i s : Nat) (r : List A) =>
+  curry (splitAt i l) (\l1 l2 => l1 ++ r ++ drop s l2)
+
+def splitAt-appendLem {A : Type} (n : Nat) (l : List A) : take n l ++ drop n l = l
+| zero, l => idp
+| suc n, nil => idp
+| suc n, a cons l => pmap (a cons) (splitAt-appendLem n l)
+
+def slice {A : Type} (l : List A) (i s : Nat) => take s (drop i l)
+
+def slice-appendLem {A : Type} (l : List A) (i s : Nat)
+   : take i l ++ (slice l i s ++ drop s (drop i l)) = l
+| l, zero, s => splitAt-appendLem s l
+| nil, suc i, zero => idp
+| nil, suc i, suc s => idp
+| a cons l, suc i, s => pmap (a cons) (slice-appendLem l i s)
+
+---- Red black trees ----
+
+open data Color | red | black
+open data RBTree (A : Type) : Type
+| rbLeaf
+| rbBranch Color (RBTree A) A (RBTree A)
+
+def rbTreeToList {A : Type} (t : RBTree A) (r : List A) : List A
+| rbLeaf, r => r
+| rbBranch x t1 a t2, r => rbTreeToList t1 (a cons rbTreeToList t2 r)
+
+def repaint {A : Type} (t : RBTree A) : RBTree A
+| rbBranch c l a r => rbBranch black l a r
+| rbLeaf => rbLeaf
+
+def balanceLeft {A : Type} (c : Color) (l : RBTree A) (v : A) (r : RBTree A) : RBTree A
+| black, rbBranch red (rbBranch red a x b) y c, v, r => rbBranch red (rbBranch black a x b) y (rbBranch black c v r)
+| black, rbBranch red a x (rbBranch red b y c), v, r => rbBranch red (rbBranch black a x b) y (rbBranch black c v r)
+| c, a, v, r => rbBranch c a v r
+
+def balanceRight {A : Type} (c : Color) (l : RBTree A) (v : A) (r : RBTree A) : RBTree A
+| black, l, v, rbBranch red (rbBranch red b y c) z d => rbBranch red (rbBranch black l v b) y (rbBranch black c z d)
+| black, l, v, rbBranch red b y (rbBranch red c z d) => rbBranch red (rbBranch black l v b) y (rbBranch black c z d)
+| c, l, v, b => rbBranch c l v b
+
+def Decider (A : Type) => Pi (x y : A) -> Bool
+
+def insert-lemma {A : Type} (dec< : Decider A) (a a1 : A) (c : Color) (l1 l2 : RBTree A) (a1<a : Bool) : RBTree A
+| dec<, a, a1, c, l1, l2, true => balanceRight c l1 a1 (insert a l2 dec<)
+| dec<, a, a1, c, l1, l2, false => balanceLeft c (insert a l1 dec<) a1 l2
+
+def insert {A : Type} (a : A) (t : RBTree A) (dec< : Decider A) : RBTree A
+| a, rbLeaf, dec< => rbBranch red rbLeaf a rbLeaf
+| a, rbBranch c l1 a1 l2, dec< => insert-lemma dec< a a1 c l1 l2 (dec< a1 a)
+
+def aux {A : Type} (l : List A) (r : RBTree A) (dec< : Decider A) : RBTree A
+| nil, r, dec< => r
+| a cons l, r, dec< => aux l (repaint (insert a r dec<)) dec<
+
+def tree-sort {A : Type} (dec< : Decider A) (l : List A) => rbTreeToList (aux l rbLeaf dec<) nil

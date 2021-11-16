@@ -33,16 +33,17 @@ public record Conquer(
   @NotNull ImmutableSeq<Matching> matchings,
   @NotNull SourcePos sourcePos,
   @NotNull Def.Signature signature,
+  boolean orderIndependent,
   @NotNull ExprTycker tycker
 ) implements Pat.Visitor<Integer, Unit> {
   public static void against(
-    @NotNull ImmutableSeq<Matching> matchings,
+    @NotNull ImmutableSeq<Matching> matchings, boolean orderIndependent,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
     for (int i = 0, size = matchings.size(); i < size; i++) {
       var matching = matchings.get(i);
       for (var pat : matching.patterns())
-        pat.accept(new Conquer(matchings, pos, signature, tycker), i);
+        pat.accept(new Conquer(matchings, pos, signature, orderIndependent, tycker), i);
     }
   }
 
@@ -62,7 +63,7 @@ public record Conquer(
     for (int i = 0, size = conditions.size(); i < size; i++) {
       var condition = conditions.get(i);
       var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
-      if (matchy != null) checkConditions(ctor, nth, i + 1, condition.body(), matchy, condition.sourcePos());
+      if (matchy.isOk()) checkConditions(ctor, nth, i + 1, condition.body(), matchy.get(), condition.sourcePos());
     }
     return Unit.unit();
   }
@@ -76,7 +77,7 @@ public record Conquer(
       }
     }, Unit.unit()), pat.explicit()));
     var volynskaya = new Normalizer(tycker.state).tryUnfoldClauses(
-      NormalizeMode.WHNF, newArgs, LevelSubst.EMPTY, matchings);
+      NormalizeMode.WHNF, orderIndependent, newArgs, LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, null, conditionPos, currentClause.sourcePos(), null));

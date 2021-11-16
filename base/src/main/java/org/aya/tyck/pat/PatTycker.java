@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
+import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
@@ -265,9 +266,16 @@ public final class PatTycker {
     for (var ctor : core.body) {
       if (name != null && ctor.ref() != name) continue;
       var matchy = mischa(dataCall, core, ctor);
-      if (matchy != null) return Tuple.of(dataCall, matchy, dataCall.conHead(ctor.ref()));
+      if (matchy.isOk()) return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
       // For absurd pattern, we look at the next constructor
-      if (name == null) continue;
+      if (name == null) {
+        // Is blocked
+        if (matchy.getErr()) {
+          exprTycker.reporter.report(new PatternProblem.BlockedEval(pos));
+          return null;
+        }
+        continue;
+      }
       // Since we cannot have two constructors of the same name,
       // if the name-matching constructor mismatches the type,
       // we get an error.
@@ -278,8 +286,8 @@ public final class PatTycker {
     return null;
   }
 
-  private @Nullable Substituter.TermSubst mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
+  private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
     if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
-    else return Unfolder.buildSubst(core.telescope(), dataCall.args());
+    else return Result.ok(Unfolder.buildSubst(core.telescope(), dataCall.args()));
   }
 }

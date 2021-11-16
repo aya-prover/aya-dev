@@ -29,15 +29,15 @@ def hcomp2d {A : Type}
 def sym {A : Type} {a b : A} (p : Eq a b) : Eq b a => hcomp2d idp idp p
 def pmap {A B : Type} (f : A -> B) {a b : A} (p : Eq a b)
   : Eq (f a) (f b) => path (\ i => f (p.at i))
-open data Nat : Type | zero | suc Nat
+open data Nat | zero | suc Nat
 
-def addN (a b : Nat) : Nat
+def overlap addN (a b : Nat) : Nat
 | zero, a => a
 | a, zero => a
 | suc a, b => suc (addN a b)
 | a, suc b => suc (addN a b)
 
-def addN-comm (a b : Nat) : Eq (addN a b) (addN b a)
+def overlap addN-comm (a b : Nat) : Eq (addN a b) (addN b a)
  | zero, a => idp
  | a, zero => idp
  | suc a, b => pmap suc (addN-comm _ _)

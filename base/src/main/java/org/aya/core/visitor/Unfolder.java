@@ -50,7 +50,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
     var levelArgs = conCall.sortArgs();
     var levelSubst = buildSubst(levelParams, levelArgs);
     var dropped = args.drop(conCall.head().dataArgs().size());
-    var volynskaya = tryUnfoldClauses(p, dropped, levelSubst, def.clauses);
+    var volynskaya = tryUnfoldClauses(p, true, dropped, levelSubst, def.clauses);
     return volynskaya != null ? volynskaya.data() : new CallTerm.Con(conCall.head(), dropped);
   }
 
@@ -73,7 +73,8 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var termSubst = checkAndBuildSubst(def.telescope(), args);
       return body.getLeftValue().subst(termSubst, levelSubst).accept(this, p).rename();
     }
-    var volynskaya = tryUnfoldClauses(p, args, levelSubst, body.getRightValue());
+    var orderIndependent = def.modifiers.contains(Modifier.Overlap);
+    var volynskaya = tryUnfoldClauses(p, orderIndependent, args, levelSubst, body.getRightValue());
     return volynskaya != null ? volynskaya.data().accept(this, p) : new CallTerm.Fn(fnCall.ref(), fnCall.sortArgs(), args);
   }
   private @NotNull Substituter.TermSubst
@@ -101,24 +102,27 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   default @Nullable WithPos<Term> tryUnfoldClauses(
-    P p, SeqLike<Arg<Term>> args, LevelSubst levelSubst,
-    @NotNull ImmutableSeq<Matching> clauses
+    P p, boolean orderIndependent, SeqLike<Arg<Term>> args,
+    LevelSubst levelSubst, @NotNull ImmutableSeq<Matching> clauses
   ) {
-    return tryUnfoldClauses(p, args, new Substituter.TermSubst(MutableMap.create()), levelSubst, clauses);
+    return tryUnfoldClauses(p, orderIndependent, args,
+      new Substituter.TermSubst(MutableMap.create()), levelSubst, clauses);
   }
 
   default @Nullable WithPos<Term> tryUnfoldClauses(
-    P p, SeqLike<Arg<Term>> args,
+    P p, boolean orderIndependent, SeqLike<Arg<Term>> args,
     Substituter.@NotNull TermSubst subst, LevelSubst levelSubst,
     @NotNull ImmutableSeq<Matching> clauses
   ) {
     for (var matchy : clauses) {
       var termSubst = PatMatcher.tryBuildSubstArgs(matchy.patterns(), args);
-      if (termSubst != null) {
-        subst.add(termSubst);
+      if (termSubst.isOk()) {
+        subst.add(termSubst.get());
         var newBody = matchy.body().subst(subst, levelSubst).accept(this, p).rename();
         return new WithPos<>(matchy.sourcePos(), newBody);
-      }
+      } else if (!orderIndependent && termSubst.getErr()) return null;
+      // ^ if we have an order-dependent clause and the pattern matching is blocked,
+      // we refuse to unfold the clauses (first-match semantics)
     }
     // Unfold failed
     return null;
@@ -133,7 +137,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
       var fieldSubst = checkAndBuildSubst(core.fullTelescope(), args);
       var levelSubst = buildSubst(Def.defLevels(field), term.sortArgs());
       var dropped = args.drop(term.structArgs().size());
-      var mischa = tryUnfoldClauses(p, dropped, fieldSubst, levelSubst, core.clauses);
+      var mischa = tryUnfoldClauses(p, true, dropped, fieldSubst, levelSubst, core.clauses);
       return mischa != null ? mischa.data() : new CallTerm.Access(nevv, field,
         term.sortArgs(), term.structArgs(), dropped);
     }

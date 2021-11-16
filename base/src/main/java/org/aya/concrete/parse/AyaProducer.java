@@ -835,6 +835,7 @@ public final class AyaProducer {
   public @NotNull Modifier visitFnModifiers(AyaParser.FnModifiersContext ctx) {
     if (ctx.OPAQUE() != null) return Modifier.Opaque;
     if (ctx.INLINE() != null) return Modifier.Inline;
+    if (ctx.OVERLAP() != null) return Modifier.Overlap;
     /*if (ctx.PATTERN_KW() != null)*/
     return Modifier.Pattern;
   }

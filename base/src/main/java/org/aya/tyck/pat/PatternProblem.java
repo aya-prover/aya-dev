@@ -4,13 +4,13 @@ package org.aya.tyck.pat;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
-import org.aya.util.error.SourcePos;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface PatternProblem extends Problem {
@@ -18,6 +18,16 @@ public sealed interface PatternProblem extends Problem {
 
   @Override default @NotNull SourcePos sourcePos() {
     return pattern().sourcePos();
+  }
+
+  record BlockedEval(@Override @NotNull Pattern pattern) implements PatternProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.english("Unsure if this pattern is actually impossible as constructor selection is blocked");
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
   }
 
   record PossiblePat(

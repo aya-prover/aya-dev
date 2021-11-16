@@ -21,6 +21,7 @@ import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Level;
+import org.aya.generic.Modifier;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
@@ -87,8 +88,10 @@ public record StmtTycker(
             var result = patTycker.elabClauses(clauses, signature);
             var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
             var def = factory.apply(result._1, Either.right(matchings));
-            if (patTycker.noError())
-              ensureConfluent(tycker, signature, result._2, matchings, decl.sourcePos, true);
+            if (patTycker.noError()) {
+              var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
+              ensureConfluent(tycker, signature, result._2, matchings, decl.sourcePos, true, orderIndependent);
+            }
             return def;
           }
         );
@@ -193,21 +196,23 @@ public record StmtTycker(
     var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
     if (patTycker.noError())
-      ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false);
+      ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false, true);
     return elaborated;
   }
 
   private void ensureConfluent(
     ExprTycker tycker, Def.Signature signature, ImmutableSeq<Pat.PrototypeClause> elabClauses,
     ImmutableSeq<@NotNull Matching> matchings, @NotNull SourcePos pos,
-    boolean coverage
+    boolean coverage, boolean orderIndependent
   ) {
     if (!matchings.isNotEmpty()) return;
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     var classification = PatClassifier.classify(elabClauses, signature.param(),
       tycker.state, tycker.reporter, pos, coverage);
-    PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
-    Conquer.against(matchings, tycker, pos, signature);
+    if (orderIndependent) PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
+    else if (classification.isNotEmpty())
+      PatClassifier.firstMatchDomination(elabClauses, reporter, pos, classification);
+    Conquer.against(matchings, orderIndependent, tycker, pos, signature);
     tycker.solveMetas();
     tracing(TreeBuilder::reduce);
   }
@@ -225,7 +230,7 @@ public record StmtTycker(
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
     if (patTycker.noError())
-      ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false);
+      ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false, true);
     return elaborated;
   }
 

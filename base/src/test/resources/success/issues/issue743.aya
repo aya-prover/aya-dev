@@ -2,7 +2,7 @@ open data Nat : Type
  | zero
  | suc Nat
 
-def add {a biu : Nat} : Nat
+def overlap add {a biu : Nat} : Nat
  | {zero}, {x} => biu
  | {suc a}, {zero} => biu
  | {suc a}, {bua} => bua

@@ -1,5 +1,5 @@
-open data Unit : Type | unit
+open data Unit | unit
 
-def test (a : Unit) : Unit
+def overlap test (a : Unit) : Unit
  | a => a
  | unit => unit
