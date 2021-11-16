@@ -279,17 +279,16 @@ public final class DefEq {
         var preTupType = compareUntyped(lhs.of(), rhs.of());
         if (!(preTupType instanceof FormTerm.Sigma tupType)) yield null;
         if (lhs.ix() != rhs.ix()) yield null;
-        var params = tupType.params();
+        var params = tupType.params().view();
+        var subst = new Substituter.TermSubst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
           var l = new ElimTerm.Proj(lhs, i);
           var currentParam = params.first();
-          // TODO: optimize
-          params = params.view().drop(1)
-            .map(x -> x.subst(currentParam.ref(), l))
-            .toImmutableArray();
+          subst.add(currentParam.ref(), l);
+          params = params.drop(1);
         }
-        if (params.isNotEmpty()) yield params.first().type();
-        yield params.last().type();
+        if (params.isNotEmpty()) yield params.first().subst(subst).type();
+        yield params.last().subst(subst).type();
       }
       case ErrorTerm term -> ErrorTerm.typeOf(term.freezeHoles(state));
       case FormTerm.Pi lhs -> {
