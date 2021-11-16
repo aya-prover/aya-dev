@@ -109,6 +109,8 @@ public record PatClassifier(
   }
 
   /**
+   * Helper method to avoid stack being too deep and fuel being consumed for distinct patterns.
+   *
    * @param subPatsSeq should be of the same length, and should <strong>not</strong> be empty.
    * @param coverage   if true, in uncovered cases an error will be reported
    * @return pattern classes
@@ -226,7 +228,16 @@ public record PatClassifier(
           if (ctor.pats.isNotEmpty()) {
             var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
             // If not, forget about this constructor
-            if (matchy.isErr()) continue;
+            if (matchy.isErr()) {
+              // If subPatsSeq is empty, we continue splitting to see
+              // if we can ensure that the other cases are impossible, it would be fine.
+              // Conjecture: if subPatsSeq is full of catch-all patterns, it would also be fine.
+              if (matchy.getErr() && subPatsSeq.isNotEmpty()) {
+                // Index unification fails negatively
+                // TODO[ice]: report
+                throw new ExprTycker.TyckerException();
+              } else continue;
+            }
             conTele = conTele.map(param -> param.subst(matchy.get()));
           }
           // Java wants a final local variable, let's alias it

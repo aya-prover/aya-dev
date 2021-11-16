@@ -26,10 +26,7 @@ importCmd : IMPORT qualifiedId (AS ID)?;
 openCmd : PUBLIC? OPEN IMPORT? qualifiedId useHide?;
 module : MODULE_KW ID LBRACE stmt* RBRACE;
 
-useHide : use+
-        | hide+;
-use : USING useHideList;
-hide : HIDING useHideList;
+useHide : (USING | HIDING) useHideList+;
 useHideList : LPAREN idsComma RPAREN;
 
 levels : ULEVEL ids ;

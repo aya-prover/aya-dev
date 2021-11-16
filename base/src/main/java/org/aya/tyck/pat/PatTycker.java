@@ -105,7 +105,7 @@ public final class PatTycker {
         yield new Pat.Absurd(absurd.explicit(), term);
       }
       case Pattern.Tuple tuple -> {
-        if (!(term instanceof FormTerm.Sigma sigma))
+        if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof FormTerm.Sigma sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), tuple, term);
         // sig.result is a dummy term
         var sig = new Def.Signature(
@@ -271,7 +271,7 @@ public final class PatTycker {
       if (name == null) {
         // Is blocked
         if (matchy.getErr()) {
-          exprTycker.reporter.report(new PatternProblem.BlockedEval(pos));
+          exprTycker.reporter.report(new PatternProblem.BlockedEval(pos, dataCall));
           return null;
         }
         continue;
@@ -279,7 +279,7 @@ public final class PatTycker {
       // Since we cannot have two constructors of the same name,
       // if the name-matching constructor mismatches the type,
       // we get an error.
-      exprTycker.reporter.report(new PatternProblem.UnavailableCtor(pos));
+      exprTycker.reporter.report(new PatternProblem.UnavailableCtor(pos, dataCall));
       foundError();
       return null;
     }
