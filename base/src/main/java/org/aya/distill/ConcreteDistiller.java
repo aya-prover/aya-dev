@@ -22,6 +22,7 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.StringEscapeUtil;
+import org.aya.util.binop.OpDecl;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +60,7 @@ public class ConcreteDistiller extends BaseDistiller implements
       prelude.append(Doc.symbol("=>"));
       prelude.append(expr.body().accept(this, Outer.Free));
     }
-    return Doc.sep(prelude);
+    return checkParen(outer, Doc.sep(prelude), Outer.BinOp);
   }
 
   @Override public Doc visitPi(Expr.@NotNull PiExpr expr, Outer outer) {
@@ -124,11 +125,15 @@ public class ConcreteDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitApp(Expr.@NotNull AppExpr expr, Outer outer) {
-    // TODO[ice]: binary?
-    return visitCalls(false,
-      expr.function().accept(this, Outer.AppHead),
-      (nest, arg) -> arg.expr().accept(this, nest), outer,
-      SeqView.of(new Arg<>(expr.argument(), expr.argument().explicit()))
+    var args = DynamicSeq.of(expr.argument());
+    var head = Expr.unapp(expr.function(), args);
+    var infix = false;
+    if (head instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar)
+      infix = defVar.concrete instanceof OpDecl decl && decl.opInfo() != null;
+    return visitCalls(infix,
+      head.accept(this, Outer.AppHead),
+      (nest, arg) -> arg.accept(this, nest), outer,
+      args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit()))
     );
   }
 
@@ -290,26 +295,22 @@ public class ConcreteDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitCtor(Decl.@NotNull DataCtor ctor, Unit unit) {
-    var prelude = DynamicSeq.of(
+    var doc = Doc.cblock(Doc.sepNonEmpty(
       coe(ctor.coerce),
       linkDef(ctor.ref, CON_CALL),
-      visitTele(ctor.telescope),
-      visitClauses(ctor.clauses, true)
-    );
-    var doc = Doc.sepNonEmpty(prelude);
+      visitTele(ctor.telescope)), 2, visitClauses(ctor.clauses));
     if (ctor.patterns.isNotEmpty()) {
       var pats = Doc.commaList(ctor.patterns.view().map(pattern -> visitPattern(pattern, Outer.Free)));
       return Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);
     } else return Doc.sep(Doc.symbol("|"), doc);
   }
 
-  private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses, boolean wrapInBraces) {
+  private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses) {
     if (clauses.isEmpty()) return Doc.empty();
-    var clausesDoc = Doc.vcat(
+    return Doc.vcat(
       clauses.view()
         .map(this::matchy)
         .map(doc -> Doc.sep(Doc.symbol("|"), doc)));
-    return Doc.bracedUnless(clausesDoc, !wrapInBraces);
   }
 
   @Override public Doc visitStruct(@NotNull Decl.StructDecl decl, Unit unit) {
@@ -341,8 +342,7 @@ public class ConcreteDistiller extends BaseDistiller implements
       doc.append(Doc.symbol("=>"));
       doc.append(field.body.get().accept(this, Outer.Free));
     }
-    doc.append(visitClauses(field.clauses, true));
-    return Doc.sepNonEmpty(doc);
+    return Doc.cblock(Doc.sepNonEmpty(doc), 2, visitClauses(field.clauses));
   }
 
   @Override public Doc visitFn(Decl.@NotNull FnDecl decl, Unit unit) {
@@ -353,7 +353,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     appendResult(prelude, decl.result);
     return Doc.cat(Doc.sepNonEmpty(prelude),
       decl.body.fold(expr -> Doc.cat(Doc.ONE_WS, Doc.symbol("=>"), Doc.ONE_WS, expr.accept(this, Outer.Free)),
-        clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses, false)))),
+        clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses)))),
       visitBindBlock(decl.bindBlock)
     );
   }

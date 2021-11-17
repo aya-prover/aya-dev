@@ -129,7 +129,7 @@ public class CoreDistiller extends BaseDistiller implements
 
   @Override public Doc visitApp(@NotNull ElimTerm.App term, Outer outer) {
     var args = DynamicSeq.of(term.arg());
-    var head = ElimTerm.underlyingHead(term.of(), args);
+    var head = ElimTerm.unapp(term.of(), args);
     if (head instanceof RefTerm.Field fieldRef) return visitCalls(fieldRef.ref(), FIELD_CALL, args, outer);
     return visitCalls(false, head.accept(this, Outer.AppHead), args.view(), outer);
   }
@@ -221,7 +221,7 @@ public class CoreDistiller extends BaseDistiller implements
       case Pat.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
       case Pat.Ctor ctor -> {
         var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? ctor.params().view() : ctor.params().view().filter(Pat::explicit);
-        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, pats.map(p -> new Arg<>(p.toTerm(), p.explicit())), outer);
+        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, pats.map(Pat::toArg), outer);
         yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
       }
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
