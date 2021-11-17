@@ -73,7 +73,8 @@ jobs :
           tag_name : nightly-build
           release_name : "Nightly builds"
           body_mrkdwn : |
-            _This is the newest build, but GitHub date can't be updated. Corresponding commit: ${{ github.sha }}_
+            _These are latest builds, but the date on GitHub is frozen due to stupid limitations.
+            Corresponding commit: <https://github.com/aya-prover/aya-dev/commit/${{ github.sha }}>_
           assets : aya-prover-jlink-${{ matrix.os }}_x86-64.zip;./lsp-fatjar.jar;./cli-fatjar.jar
           replace_assets : true
           github_token : ${{ secrets.GH_TOKEN }}

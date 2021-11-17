@@ -8,7 +8,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.resolve.context.Context;
-import org.aya.pretty.doc.Doc;
 import org.aya.tyck.pat.PatternProblem;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
@@ -55,7 +54,7 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
   }
 
   @Override protected @NotNull Pattern createErrorExpr(@NotNull SourcePos sourcePos) {
-    return new Pattern.Error(sourcePos, Doc.english("an constructor pattern"));
+    return new Pattern.Bind(sourcePos, true, new LocalVar("a broken constructor pattern"));
   }
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Pattern elem) {
