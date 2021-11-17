@@ -10,7 +10,6 @@ import kala.tuple.Tuple3;
 import kala.tuple.Unit;
 import org.aya.api.core.CoreTerm;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Bind;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
@@ -28,6 +27,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,9 @@ import org.jetbrains.annotations.TestOnly;
  *
  * @author ice1000
  */
-public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorTerm, FormTerm, IntroTerm, RefTerm, RefTerm.Field {
+public sealed interface Term extends CoreTerm permits
+  CallTerm, ElimTerm, ErrorTerm, FormTerm, IntroTerm,
+  RefTerm, RefTerm.Field, RefTerm.MetaPat {
   <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p);
 
   default <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
@@ -140,6 +142,7 @@ public sealed interface Term extends CoreTerm permits CallTerm, ElimTerm, ErrorT
     R visitHole(@NotNull CallTerm.Hole hole, P p);
     R visitFieldRef(@NotNull RefTerm.Field field, P p);
     R visitError(@NotNull ErrorTerm error, P p);
+    R visitMetaPat(@NotNull RefTerm.MetaPat metaPat, P p);
   }
 
   /**

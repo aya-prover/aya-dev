@@ -42,6 +42,7 @@ public record Serializer(@NotNull Serializer.State state) implements
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(),
         serializePats(tuple.pats()), state.localMaybe(tuple.as()), serialize(tuple.type()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.as()), serialize(bind.type()));
+      case Pat.Meta meta -> throw new IllegalArgumentException(meta.toString());
     };
   }
 
@@ -87,6 +88,10 @@ public record Serializer(@NotNull Serializer.State state) implements
 
   @Override public SerTerm visitError(@NotNull ErrorTerm term, Unit unit) {
     throw new AssertionError("Shall not have error term serialized.");
+  }
+
+  @Override public SerTerm visitMetaPat(RefTerm.@NotNull MetaPat metaPat, Unit unit) {
+    throw new AssertionError("Shall not have metaPats serialized.");
   }
 
   @Override public SerTerm visitHole(CallTerm.@NotNull Hole term, Unit unit) {

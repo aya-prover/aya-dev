@@ -287,7 +287,7 @@ public final class PatTycker {
   }
 
   private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs( ctor.pats, dataCall.args());
     else return Result.ok(Unfolder.buildSubst(core.telescope(), dataCall.args()));
   }
 }

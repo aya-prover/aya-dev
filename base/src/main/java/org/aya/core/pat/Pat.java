@@ -5,6 +5,7 @@ package org.aya.core.pat;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import kala.value.Ref;
 import org.aya.api.core.CorePat;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
@@ -57,6 +58,22 @@ public sealed interface Pat extends CorePat {
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       localCtx.put(as, type);
+    }
+  }
+
+  record Meta(
+    boolean explicit,
+    @NotNull Ref<Pat> solution,
+    @NotNull Term type
+  ) implements Pat {
+    @Override public void storeBindings(@NotNull LocalCtx localCtx) {
+      // Do nothing
+      // This is safe because storeBindings is called only in extractTele which is
+      // only used for constructor ownerTele extraction for simpler indexed types
+    }
+
+    @Override public @Nullable LocalVar as() {
+      return null;
     }
   }
 

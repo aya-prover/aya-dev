@@ -202,6 +202,10 @@ public class CoreDistiller extends BaseDistiller implements
     return !term.isReallyError() ? doc : Doc.angled(doc);
   }
 
+  @Override public Doc visitMetaPat(RefTerm.@NotNull MetaPat metaPat, Outer outer) {
+    return Doc.plain("<metaPat>");
+  }
+
   private Doc visitCalls(
     @NotNull DefVar<?, ?> var, @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer
@@ -219,6 +223,10 @@ public class CoreDistiller extends BaseDistiller implements
 
   public Doc visitPat(@NotNull Pat pat, Outer outer) {
     return switch (pat) {
+      case Pat.Meta meta-> {
+        var sol = meta.solution().value;
+        yield sol != null ? visitPat(sol, outer) : Doc.plain("<meta>");
+      }
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.as()), bind.explicit());
       case Pat.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
       case Pat.Ctor ctor -> {

@@ -35,6 +35,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
     return tryBuildSubstTerms(pats, terms.view().map(Arg::term));
   }
 
+  /** @see this#tryBuildSubstArgs(ImmutableSeq, SeqLike) */
   public static Result<Substituter.TermSubst, Boolean> tryBuildSubstTerms(
     @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms
@@ -70,6 +71,11 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
         var as = tuple.as();
         if (as != null) subst.addDirectly(as, tup);
         visitList(tuple.pats(), tup.items());
+      }
+      case Pat.Meta meta -> {
+        var sol = meta.solution().value;
+        assert sol != null : "Unsolved pattern " + meta;
+        match(sol, term);
       }
     }
   }
