@@ -5,11 +5,9 @@ package org.aya.core.pat;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import kala.tuple.Unit;
 import org.aya.api.core.CorePat;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
@@ -23,6 +21,7 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.LocalCtx;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,15 +34,14 @@ import java.util.function.Function;
 @Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
 public sealed interface Pat extends CorePat {
   @Override @NotNull Term type();
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Term toTerm() {
-    return accept(PatToTerm.INSTANCE, Unit.unit());
+    return PatToTerm.INSTANCE.visit(this);
   }
   @Override default @NotNull Arg<Term> toArg() {
     return new Arg<>(toTerm(), explicit());
   }
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new CoreDistiller(options), BaseDistiller.Outer.Free);
+    return new CoreDistiller(options).visitPat(this, BaseDistiller.Outer.Free);
   }
   void storeBindings(@NotNull LocalCtx localCtx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
@@ -52,23 +50,11 @@ public sealed interface Pat extends CorePat {
     return localCtx.extract();
   }
 
-  interface Visitor<P, R> {
-    R visitBind(@NotNull Bind bind, P p);
-    R visitTuple(@NotNull Tuple tuple, P p);
-    R visitCtor(@NotNull Ctor ctor, P p);
-    R visitAbsurd(@NotNull Absurd absurd, P p);
-    R visitPrim(@NotNull Prim prim, P p);
-  }
-
   record Bind(
     boolean explicit,
     @NotNull LocalVar as,
     @NotNull Term type
   ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitBind(this, p);
-    }
-
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       localCtx.put(as, type);
     }
@@ -78,10 +64,6 @@ public sealed interface Pat extends CorePat {
     boolean explicit,
     @NotNull Term type
   ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitAbsurd(this, p);
-    }
-
     @Override public @Nullable LocalVar as() {
       return null;
     }
@@ -97,10 +79,6 @@ public sealed interface Pat extends CorePat {
     @Nullable LocalVar as,
     @NotNull Term type
   ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTuple(this, p);
-    }
-
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       if (as != null) localCtx.put(as, type);
       pats.forEach(pat -> pat.storeBindings(localCtx));
@@ -114,10 +92,6 @@ public sealed interface Pat extends CorePat {
     @Nullable LocalVar as,
     @NotNull CallTerm.Data type
   ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitCtor(this, p);
-    }
-
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       if (as != null) localCtx.put(as, type);
       params.forEach(pat -> pat.storeBindings(localCtx));
@@ -131,10 +105,6 @@ public sealed interface Pat extends CorePat {
   ) implements Pat {
     @Override public @Nullable LocalVar as() {
       return null;
-    }
-
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitPrim(this, p);
     }
 
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {

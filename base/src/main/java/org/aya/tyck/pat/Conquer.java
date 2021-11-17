@@ -4,7 +4,6 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import kala.tuple.Unit;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.Matching;
@@ -35,47 +34,51 @@ public record Conquer(
   @NotNull Def.Signature signature,
   boolean orderIndependent,
   @NotNull ExprTycker tycker
-) implements Pat.Visitor<Integer, Unit> {
+) {
   public static void against(
     @NotNull ImmutableSeq<Matching> matchings, boolean orderIndependent,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull Def.Signature signature
   ) {
+    var conquer = new Conquer(matchings, pos, signature, orderIndependent, tycker);
     for (int i = 0, size = matchings.size(); i < size; i++) {
       var matching = matchings.get(i);
-      for (var pat : matching.patterns())
-        pat.accept(new Conquer(matchings, pos, signature, orderIndependent, tycker), i);
+      for (var pat : matching.patterns()) conquer.visit(pat, i);
     }
   }
 
-  @Override public Unit visitBind(Pat.@NotNull Bind bind, Integer nth) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitTuple(Pat.@NotNull Tuple tuple, Integer nth) {
-    for (var pat : tuple.pats()) pat.accept(this, nth);
-    return Unit.unit();
-  }
-
-  @Override public Unit visitCtor(Pat.@NotNull Ctor ctor, Integer nth) {
-    var params = ctor.params();
-    for (var pat : params) pat.accept(this, nth);
-    var conditions = ctor.ref().core.clauses;
-    for (int i = 0, size = conditions.size(); i < size; i++) {
-      var condition = conditions.get(i);
-      var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
-      if (matchy.isOk()) checkConditions(ctor, nth, i + 1, condition.body(), matchy.get(), condition.sourcePos());
+  public void visit(@NotNull Pat pat, int nth) {
+    switch (pat) {
+      case Pat.Prim prim -> {
+        var core = prim.ref().core;
+        assert PrimDef.Factory.INSTANCE.leftOrRight(core);
+      }
+      case Pat.Ctor ctor -> {
+        var params = ctor.params();
+        for (var sub : params) visit(sub, nth);
+        var conditions = ctor.ref().core.clauses;
+        for (int i = 0, size = conditions.size(); i < size; i++) {
+          var condition = conditions.get(i);
+          var matchy = PatMatcher.tryBuildSubstTerms(params, condition.patterns().view().map(Pat::toTerm));
+          if (matchy.isOk()) checkConditions(ctor, nth, i + 1, condition.body(), matchy.get(), condition.sourcePos());
+        }
+      }
+      case Pat.Tuple tuple -> {
+        for (var sub : tuple.pats()) visit(sub, nth);
+      }
+      // case Pat.Bind $ -> {}
+      // case Pat.Absurd $ -> {}
+      default -> {}
     }
-    return Unit.unit();
   }
 
   private void checkConditions(Pat ctor, int nth, int i, Term condition, Substituter.TermSubst matchy, SourcePos conditionPos) {
     var currentClause = matchings.get(nth);
     var newBody = currentClause.body().subst(matchy);
-    var newArgs = currentClause.patterns().map(pat -> new Arg<>(pat.accept(new PatToTerm() {
-      @Override public Term visitCtor(Pat.@NotNull Ctor newCtor, Unit unit) {
-        return newCtor == ctor ? condition : super.visitCtor(newCtor, unit);
+    var newArgs = currentClause.patterns().map(pat -> new Arg<>(new PatToTerm() {
+      @Override public @NotNull Term visitCtor(Pat.@NotNull Ctor newCtor) {
+        return newCtor == ctor ? condition : super.visitCtor(newCtor);
       }
-    }, Unit.unit()), pat.explicit()));
+    }.visit(pat), pat.explicit()));
     var volynskaya = new Normalizer(tycker.state).tryUnfoldClauses(
       NormalizeMode.WHNF, orderIndependent, newArgs, LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
@@ -94,15 +97,5 @@ public record Conquer(
       tycker.reporter.report(new ClausesProblem.Conditions(
         sourcePos, nth + 1, i, newBody, volynskaya.data(), conditionPos, currentClause.sourcePos(), volynskaya.sourcePos()));
     }
-  }
-
-  @Override public Unit visitAbsurd(Pat.@NotNull Absurd absurd, Integer nth) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitPrim(Pat.@NotNull Prim prim, Integer nth) {
-    var core = prim.ref().core;
-    assert PrimDef.Factory.INSTANCE.leftOrRight(core);
-    return Unit.unit();
   }
 }
