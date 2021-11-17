@@ -98,11 +98,13 @@ public class CoreDistiller extends BaseDistiller implements
     if (!options.map.get(DistillerOptions.Key.ShowImplicitPats) && !term.param().explicit()) {
       return term.body().accept(this, outer);
     }
+    var params = DynamicSeq.of(term.param());
+    var body = FormTerm.unpi(term.body(), params);
     var doc = Doc.sep(
       Doc.styled(KEYWORD, Doc.symbol("Pi")),
-      term.param().toDoc(options),
+      visitTele(params),
       Doc.symbol("->"),
-      term.body().accept(this, Outer.Codomain)
+      body.accept(this, Outer.Codomain)
     );
     // Add paren when it's not free or a codomain
     return checkParen(outer, doc, Outer.BinOp);

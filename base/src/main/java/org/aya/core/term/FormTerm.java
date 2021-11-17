@@ -44,6 +44,15 @@ public sealed interface FormTerm extends Term {
     }
   }
 
+  static @NotNull Term unpi(@NotNull Term term, @NotNull DynamicSeq<Term.Param> params) {
+    if (term instanceof Pi pi) {
+      params.append(pi.param);
+      term = pi.body;
+    }
+    params.reverse();
+    return term;
+  }
+
   /**
    * @author re-xyr
    */
