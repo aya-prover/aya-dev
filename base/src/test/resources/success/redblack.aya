@@ -118,43 +118,129 @@ def slice-appendLem {A : Type} (l : List A) (i s : Nat)
 | nil, suc i, suc s => idp
 | a cons l, suc i, s => pmap (a cons) (slice-appendLem l i s)
 
----- Red black trees ----
+---- Red black tree, extrinsic ----
 
-open data Color | red | black
-open data RBTree (A : Type) : Type
-| rbLeaf
-| rbBranch Color (RBTree A) A (RBTree A)
+module RedBlackEx {
+  open data Color | red | black
+  open data RBTree (A : Type) : Type
+  | rbLeaf
+  | rbNode Color (RBTree A) A (RBTree A)
 
-def rbTreeToList {A : Type} (t : RBTree A) (r : List A) : List A
-| rbLeaf, r => r
-| rbBranch x t1 a t2, r => rbTreeToList t1 (a cons rbTreeToList t2 r)
+  def rbTreeToList {A : Type} (RBTree A) (List A) : List A
+  | rbLeaf, r => r
+  | rbNode x t1 a t2, r => rbTreeToList t1 (a cons rbTreeToList t2 r)
 
-def repaint {A : Type} (t : RBTree A) : RBTree A
-| rbBranch c l a r => rbBranch black l a r
-| rbLeaf => rbLeaf
+  def repaint {A : Type} (RBTree A) : RBTree A
+  | rbNode c l a r => rbNode black l a r
+  | rbLeaf => rbLeaf
 
-def balanceLeft {A : Type} (c : Color) (l : RBTree A) (v : A) (r : RBTree A) : RBTree A
-| black, rbBranch red (rbBranch red a x b) y c, v, r => rbBranch red (rbBranch black a x b) y (rbBranch black c v r)
-| black, rbBranch red a x (rbBranch red b y c), v, r => rbBranch red (rbBranch black a x b) y (rbBranch black c v r)
-| c, a, v, r => rbBranch c a v r
+  def balanceLeft {A : Type} Color (RBTree A) A (RBTree A) : RBTree A
+  | black, rbNode red (rbNode red a x b) y c, v, r => rbNode red (rbNode black a x b) y (rbNode black c v r)
+  | black, rbNode red a x (rbNode red b y c), v, r => rbNode red (rbNode black a x b) y (rbNode black c v r)
+  | c, a, v, r => rbNode c a v r
 
-def balanceRight {A : Type} (c : Color) (l : RBTree A) (v : A) (r : RBTree A) : RBTree A
-| black, l, v, rbBranch red (rbBranch red b y c) z d => rbBranch red (rbBranch black l v b) y (rbBranch black c z d)
-| black, l, v, rbBranch red b y (rbBranch red c z d) => rbBranch red (rbBranch black l v b) y (rbBranch black c z d)
-| c, l, v, b => rbBranch c l v b
+  def balanceRight {A : Type} Color (RBTree A) A (RBTree A) : RBTree A
+  | black, l, v, rbNode red (rbNode red b y c) z d => rbNode red (rbNode black l v b) y (rbNode black c z d)
+  | black, l, v, rbNode red b y (rbNode red c z d) => rbNode red (rbNode black l v b) y (rbNode black c z d)
+  | c, l, v, b => rbNode c l v b
 
-def Decider (A : Type) => Pi (x y : A) -> Bool
+  def Decider (A : Type) => Pi (x y : A) -> Bool
 
-def insert-lemma {A : Type} (dec< : Decider A) (a a1 : A) (c : Color) (l1 l2 : RBTree A) (a1<a : Bool) : RBTree A
-| dec<, a, a1, c, l1, l2, true => balanceRight c l1 a1 (insert a l2 dec<)
-| dec<, a, a1, c, l1, l2, false => balanceLeft c (insert a l1 dec<) a1 l2
+  def insert-lemma {A : Type} (Decider A) (a a1 : A) Color (l1 l2 : RBTree A) Bool : RBTree A
+  | dec<, a, a1, c, l1, l2, true => balanceRight c l1 a1 (insert a l2 dec<)
+  | dec<, a, a1, c, l1, l2, false => balanceLeft c (insert a l1 dec<) a1 l2
 
-def insert {A : Type} (a : A) (t : RBTree A) (dec< : Decider A) : RBTree A
-| a, rbLeaf, dec< => rbBranch red rbLeaf a rbLeaf
-| a, rbBranch c l1 a1 l2, dec< => insert-lemma dec< a a1 c l1 l2 (dec< a1 a)
+  def insert {A : Type} A (RBTree A) (Decider A) : RBTree A
+  | a, rbLeaf, dec< => rbNode red rbLeaf a rbLeaf
+  | a, rbNode c l1 a1 l2, dec< => insert-lemma dec< a a1 c l1 l2 (dec< a1 a)
 
-def aux {A : Type} (l : List A) (r : RBTree A) (dec< : Decider A) : RBTree A
-| nil, r, dec< => r
-| a cons l, r, dec< => aux l (repaint (insert a r dec<)) dec<
+  def aux {A : Type} (List A) (RBTree A) (Decider A) : RBTree A
+  | nil, r, dec< => r
+  | a cons l, r, dec< => aux l (repaint (insert a r dec<)) dec<
 
-def tree-sort {A : Type} (dec< : Decider A) (l : List A) => rbTreeToList (aux l rbLeaf dec<) nil
+  def tree-sort {A : Type} (dec< : Decider A) (l : List A) => rbTreeToList (aux l rbLeaf dec<) nil
+}
+
+---- Red black tree, intrinsic ----
+
+module RedBlackIn {
+  open RedBlackEx using (Color, Decider)
+  open RedBlackEx::Color using (red, black)
+  open data Tree (A : Type) Color Nat : Type
+  | A, black, zero => rbLeaf
+  | A, red, n => rbRed (Tree A black n) A (Tree A black n)
+  | A, black, suc n => rbBlack {c1 c2 : Color} (Tree A c1 n) A (Tree A c2 n)
+
+  def RBTree (A : Type) : Type => Sig (n : Nat) ** (Tree A black n)
+
+  open data HTree (A : Type) Nat : Type
+  | A, m => hRed (Tree A red m)
+  | A, suc m => hBlack (Tree A black (suc m))
+
+  open data AlmostTreeData (A : Type) Color Nat : Type
+  | A, black, suc n => alBlack {c1 c2 : Color} (Tree A c1 n) A (Tree A c2 n)
+  | A, red, n => alRed {c1 c2 : Color} (Tree A c1 n) A (Tree A c2 n)
+  def AlmostTree (A : Type) (n : Nat) : Type => Sig (c : Color) ** (AlmostTreeData A c n)
+
+  def balanceLeftRed {A : Type} {n : Nat} {c : Color} (HTree A n) A (Tree A c n)
+    : AlmostTree A n
+  | hRed l, x, r => (_, alRed l x r)
+  | {A}, {suc n}, hBlack l, x, r => (_, alRed l x r)
+
+  def balanceRightRed {A : Type} {n : Nat} {c : Color} (Tree A c n) A (HTree A n)
+    : AlmostTree A n
+  | l, x, hRed r => (_, alRed l x r)
+  | {A}, {suc n}, l, x, hBlack r => (_, alRed l x r)
+
+  def balanceLeftBlack {A : Type} {n : Nat} {c : Color} (AlmostTree A n) A (Tree A c n)
+    : HTree A (suc n)
+  -- rotation
+  | (red, alRed {red} (rbRed a x b) y c), z, d => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
+  | (red, alRed {c1} {red} a x (rbRed b y c)), z, d => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
+  -- expand catch-all for different proofs
+  | {A}, {zero}, (red, alRed {black} {black} rbLeaf x rbLeaf), y, r => hBlack (rbBlack (rbRed rbLeaf x rbLeaf) y r)
+  | {A}, {suc n}, (red, alRed {black} {black} l x r), y, c => hBlack (rbBlack (rbRed l x r) y c)
+  | {A}, {suc n}, (black, alBlack a x b), y, r => hBlack (rbBlack (rbBlack a x b) y r)
+
+  def balanceRightBlack {A : Type} {n : Nat} {c : Color} (Tree A c n) A (AlmostTree A n)
+    : HTree A (suc n)
+  -- rotation
+  | a, x, (red, alRed {red} (rbRed b y c) z d) => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
+  | a, x, (red, alRed {c1} {red} b y (rbRed c z d)) => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
+  -- ditto
+  | {A}, {zero}, a, x, (red, alRed {black} {black} rbLeaf y rbLeaf) => hBlack (rbBlack a x (rbRed rbLeaf y rbLeaf))
+  | {A}, {suc n}, a, x, (red, alRed {black} {black} l y r) => hBlack (rbBlack a x (rbRed l y r))
+  | {A}, {suc n}, a, x, (black, alBlack b y c) => hBlack (rbBlack a x (rbBlack b y c))
+
+  def forget {A : Type} {n : Nat} (HTree A n) : AlmostTree A n
+  | hRed (rbRed l x r) => (_, alRed l x r)
+  | {A}, {suc n}, hBlack (rbBlack l x r) => (_, alBlack l x r)
+
+  def insertBlack {A : Type} {n : Nat} (Tree A black n) A (Decider A) : HTree A n
+  | {A}, {zero}, rbLeaf, x, dec< => hRed (rbRed rbLeaf x rbLeaf)
+  | {A}, {suc n}, rbBlack l y r, x, dec< => insertBlack-lemma dec< l y r x (dec< x y)
+
+  def insertBlack-lemma {A : Type} {n : Nat} {c1 c2 : Color}
+      (Decider A) (Tree A c1 n) A (Tree A c2 n) A Bool
+    : HTree A (suc n)
+  | dec<, l, y, r, x, true => balanceLeftBlack (insertRed l x dec<) y r
+  | dec<, l, y, r, x, false => balanceRightBlack l x (insertRed r x dec<)
+
+  def insertRed {A : Type} {n : Nat} {c : Color} (Tree A c n) A (Decider A) : AlmostTree A n
+  | {A}, {zero}, {black}, rbLeaf, x, dec< => forget (insertBlack rbLeaf x dec<)
+  | {A}, {suc n}, {black}, rbBlack l y r, x, dec< => forget (insertBlack (rbBlack l y r) x dec<)
+  | {A}, {n}, {red}, rbRed l y r, x, dec< => insert-lemma dec< l y r x (dec< x y)
+
+  def insert-lemma {A : Type} {n : Nat} (Decider A)
+      (Tree A black n) A (Tree A black n) A Bool
+    : AlmostTree A n
+  | dec<, l, y, r, x, true => balanceLeftRed (insertBlack l x dec<) y r
+  | dec<, l, y, r, x, false => balanceRightRed l y (insertBlack r x dec<)
+
+  def dyeRoot {A : Type} {n : Nat} (HTree A n) : RBTree A
+  | hRed (rbRed l x r) => (_, rbBlack l x r)
+  | {A}, {suc n}, hBlack (rbBlack l x r) => (_, rbBlack l x r)
+
+  def insert {A : Type} {n : Nat} (t : RBTree A) (x : A) (dec< : Decider A)
+      => dyeRoot (insertBlack t.2 x dec<)
+}

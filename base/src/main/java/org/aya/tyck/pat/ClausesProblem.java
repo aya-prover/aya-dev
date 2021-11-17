@@ -8,7 +8,9 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
 import org.aya.concrete.Pattern;
+import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
+import org.aya.core.term.CallTerm;
 import org.aya.core.term.Term;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -102,6 +104,22 @@ public sealed interface ClausesProblem extends Problem {
       return Doc.sep(
         Doc.english("Cannot perform pattern matching"),
         Doc.styled(Style.code(), pat.toDoc(options))
+      );
+    }
+  }
+
+  record UnsureCase(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull CtorDef ctor,
+    @NotNull CallTerm.Data dataCall
+  ) implements ClausesProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(
+        // Use `unsure` instead of `not sure`, which is used in Agda
+        Doc.english("I'm unsure if there should be a case for constructor"),
+        Doc.par(1, ctor.toDoc(options)),
+        Doc.english("because I got stuck on the index unification of type"),
+        Doc.par(1, dataCall.toDoc(options))
       );
     }
   }

@@ -227,18 +227,21 @@ public record PatClassifier(
           // Check if this constructor is available by doing the obvious thing
           if (ctor.pats.isNotEmpty()) {
             var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
-            // If not, forget about this constructor
+            // If not, check the reason why: it may fail negatively or positively
             if (matchy.isErr()) {
-              // If subPatsSeq is empty, we continue splitting to see
-              // if we can ensure that the other cases are impossible, it would be fine.
-              // Conjecture: if subPatsSeq is full of catch-all patterns, it would also be fine.
-              if (matchy.getErr() && subPatsSeq.isNotEmpty()) {
-                // Index unification fails negatively
-                // TODO[ice]: report
-                throw new ExprTycker.TyckerException();
+              // Index unification fails negatively
+              if (matchy.getErr()) {
+                // If subPatsSeq is empty, we continue splitting to see
+                // if we can ensure that the other cases are impossible, it would be fine.
+                if (subPatsSeq.isNotEmpty() &&
+                  // If subPatsSeq has catch-all pattern(s), it would also be fine.
+                  subPatsSeq.noneMatch(seq -> seq.head() instanceof Pat.Bind)) {
+                  reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
+                  continue;
+                }
               } else continue;
-            }
-            conTele = conTele.map(param -> param.subst(matchy.get()));
+              // ^ If fails positively, this would be an impossible case
+            } else conTele = conTele.map(param -> param.subst(matchy.get()));
           }
           // Java wants a final local variable, let's alias it
           var conTeleCapture = conTele;
