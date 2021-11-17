@@ -41,11 +41,12 @@ public sealed interface ElimTerm extends Term {
     }
   }
 
-  static @NotNull Term underlyingHead(@NotNull Term term, DynamicSeq<Arg<@NotNull Term>> args) {
+  static @NotNull Term unapp(@NotNull Term term, DynamicSeq<Arg<@NotNull Term>> args) {
     while (term instanceof ElimTerm.App app) {
       args.append(app.arg);
       term = app.of;
     }
+    args.reverse();
     return term;
   }
 }

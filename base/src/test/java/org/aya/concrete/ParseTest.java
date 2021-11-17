@@ -274,8 +274,10 @@ public class ParseTest {
         """,
       """
         struct Path (A : I -> Type) (a : A left) (b : A right) : Type
-          | at (i : I) : A i {| left => a
-          | right => b}
+          | at (i : I) : A i {
+            | left => a
+            | right => b
+          }
         """
     );
     parseAndPretty(

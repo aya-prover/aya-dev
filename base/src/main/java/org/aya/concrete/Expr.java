@@ -157,6 +157,15 @@ public sealed interface Expr extends ConcreteExpr {
     }
   }
 
+  static @NotNull Expr unapp(@NotNull Expr expr, @NotNull DynamicSeq<NamedArg> args) {
+    while (expr instanceof AppExpr app) {
+      args.append(app.argument);
+      expr = app.function;
+    }
+    args.reverse();
+    return expr;
+  }
+
   /**
    * @author AustinZhu
    */

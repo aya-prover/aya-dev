@@ -89,7 +89,7 @@ public abstract class BaseDistiller {
     return !ex && !as ? withAs : outer != Outer.Free && !noParams ? Doc.parened(withAs) : withAs;
   }
 
-  Doc visitTele(@NotNull SeqLike<? extends ParamLike<?>> telescope) {
+  @NotNull Doc visitTele(@NotNull SeqLike<? extends ParamLike<?>> telescope) {
     if (telescope.isEmpty()) return Doc.empty();
     var last = telescope.first();
     var buf = DynamicSeq.<Doc>create();
