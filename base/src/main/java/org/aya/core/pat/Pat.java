@@ -34,7 +34,6 @@ import java.util.function.Function;
 @Debug.Renderer(text = "toTerm().toDoc(DistillerOptions.DEBUG).debugRender()")
 public sealed interface Pat extends CorePat {
   @Override @NotNull Term type();
-  <P, R> R accept(@NotNull Visitor<P, R> visitor, P p);
   @Override default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
@@ -51,23 +50,11 @@ public sealed interface Pat extends CorePat {
     return localCtx.extract();
   }
 
-  interface Visitor<P, R> {
-    R visitBind(@NotNull Bind bind, P p);
-    R visitTuple(@NotNull Tuple tuple, P p);
-    R visitCtor(@NotNull Ctor ctor, P p);
-    R visitAbsurd(@NotNull Absurd absurd, P p);
-    R visitPrim(@NotNull Prim prim, P p);
-  }
-
   record Bind(
     boolean explicit,
     @NotNull LocalVar as,
     @NotNull Term type
   ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitBind(this, p);
-    }
-
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       localCtx.put(as, type);
     }
@@ -77,10 +64,6 @@ public sealed interface Pat extends CorePat {
     boolean explicit,
     @NotNull Term type
   ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitAbsurd(this, p);
-    }
-
     @Override public @Nullable LocalVar as() {
       return null;
     }
@@ -96,10 +79,6 @@ public sealed interface Pat extends CorePat {
     @Nullable LocalVar as,
     @NotNull Term type
   ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitTuple(this, p);
-    }
-
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       if (as != null) localCtx.put(as, type);
       pats.forEach(pat -> pat.storeBindings(localCtx));
@@ -113,10 +92,6 @@ public sealed interface Pat extends CorePat {
     @Nullable LocalVar as,
     @NotNull CallTerm.Data type
   ) implements Pat {
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitCtor(this, p);
-    }
-
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       if (as != null) localCtx.put(as, type);
       params.forEach(pat -> pat.storeBindings(localCtx));
@@ -130,10 +105,6 @@ public sealed interface Pat extends CorePat {
   ) implements Pat {
     @Override public @Nullable LocalVar as() {
       return null;
-    }
-
-    @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitPrim(this, p);
     }
 
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
