@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * @see ConcreteDistiller
  */
 public class CoreDistiller extends BaseDistiller implements
-  Pat.Visitor<BaseDistiller.Outer, Doc>,
   Def.Visitor<Unit, @NotNull Doc>,
   Term.Visitor<BaseDistiller.Outer, Doc> {
   public CoreDistiller(@NotNull DistillerOptions options) {
@@ -216,35 +215,29 @@ public class CoreDistiller extends BaseDistiller implements
     return visitCalls(infix, fn, (nest, term) -> term.accept(this, nest), outer, args);
   }
 
-  @Override public Doc visitTuple(Pat.@NotNull Tuple tuple, Outer outer) {
-    var tup = Doc.licit(tuple.explicit(),
-      Doc.commaList(tuple.pats().view().map(pat -> pat.accept(this, Outer.Free))));
-    return tuple.as() == null ? tup
-      : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
-  }
-
-  @Override public Doc visitBind(Pat.@NotNull Bind bind, Outer outer) {
-    return Doc.bracedUnless(linkDef(bind.as()), bind.explicit());
-  }
-
-  @Override public Doc visitAbsurd(Pat.@NotNull Absurd absurd, Outer outer) {
-    return Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
-  }
-
-  @Override public Doc visitPrim(Pat.@NotNull Prim prim, Outer outer) {
-    return Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
-  }
-
-  @Override public Doc visitCtor(Pat.@NotNull Ctor ctor, Outer outer) {
-    var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? ctor.params().view() : ctor.params().view().filter(Pat::explicit);
-    var ctorDoc = visitCalls(ctor.ref(), CON_CALL, pats.map(p -> new Arg<>(p.toTerm(), p.explicit())), outer);
-    return ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+  public Doc visitPat(@NotNull Pat pat, Outer outer) {
+    return switch (pat) {
+      case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.as()), bind.explicit());
+      case Pat.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
+      case Pat.Ctor ctor -> {
+        var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? ctor.params().view() : ctor.params().view().filter(Pat::explicit);
+        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, pats.map(p -> new Arg<>(p.toTerm(), p.explicit())), outer);
+        yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+      }
+      case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
+      case Pat.Tuple tuple -> {
+        var tup = Doc.licit(tuple.explicit(),
+          Doc.commaList(tuple.pats().view().map(sub -> visitPat(sub, Outer.Free))));
+        yield tuple.as() == null ? tup
+          : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
+      }
+    };
   }
 
   public Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, Outer outer, @NotNull Doc delim) {
     var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
     return Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
-      pats.view().map(p -> p.accept(this, outer)))));
+      pats.view().map(p -> visitPat(p, outer)))));
   }
 
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
@@ -281,7 +274,7 @@ public class CoreDistiller extends BaseDistiller implements
       visitTele(ctor.selfTele));
     Doc line1;
     if (ctor.pats.isNotEmpty()) {
-      var pats = Doc.commaList(ctor.pats.view().map(pat -> pat.accept(this, Outer.Free)));
+      var pats = Doc.commaList(ctor.pats.view().map(pat -> visitPat(pat, Outer.Free)));
       line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
     } else line1 = Doc.sep(Doc.symbol("|"), doc);
     return Doc.cblock(line1, 2, visitClauses(ctor.clauses));

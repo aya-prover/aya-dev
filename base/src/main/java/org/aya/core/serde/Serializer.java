@@ -24,14 +24,25 @@ import java.util.Objects;
  */
 public record Serializer(@NotNull Serializer.State state) implements
   Term.Visitor<Unit, SerTerm>,
-  Def.Visitor<Unit, SerDef>,
-  Pat.Visitor<Unit, SerPat> {
+  Def.Visitor<Unit, SerDef> {
   private @NotNull SerTerm serialize(@NotNull Term term) {
     return term.accept(this, Unit.unit());
   }
 
   private @NotNull SerPat serialize(@NotNull Pat pat) {
-    return pat.accept(this, Unit.unit());
+    return switch (pat) {
+      case Pat.Absurd absurd -> new SerPat.Absurd(absurd.explicit(), serialize(absurd.type()));
+      case Pat.Ctor ctor -> new SerPat.Ctor(
+        ctor.explicit(),
+        state.def(ctor.ref()),
+        serializePats(ctor.params()),
+        state.localMaybe(ctor.as()),
+        visitDataCall(ctor.type(), Unit.unit()));
+      case Pat.Prim prim -> new SerPat.Prim(prim.explicit(), state.def(prim.ref()), serialize(prim.type()));
+      case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(),
+        serializePats(tuple.pats()), state.localMaybe(tuple.as()), serialize(tuple.type()));
+      case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.as()), serialize(bind.type()));
+    };
   }
 
   private @NotNull SerPat.Matchy serialize(@NotNull Matching matchy) {
@@ -185,32 +196,6 @@ public record Serializer(@NotNull Serializer.State state) implements
       serializeArgs(term.structArgs()),
       serializeArgs(term.fieldArgs())
     );
-  }
-
-  @Override public SerPat visitBind(Pat.@NotNull Bind bind, Unit unit) {
-    return new SerPat.Bind(bind.explicit(), state.local(bind.as()), serialize(bind.type()));
-  }
-
-  @Override public SerPat visitTuple(Pat.@NotNull Tuple tuple, Unit unit) {
-    return new SerPat.Tuple(tuple.explicit(),
-      serializePats(tuple.pats()), state.localMaybe(tuple.as()), serialize(tuple.type()));
-  }
-
-  @Override public SerPat visitCtor(Pat.@NotNull Ctor ctor, Unit unit) {
-    return new SerPat.Ctor(
-      ctor.explicit(),
-      state.def(ctor.ref()),
-      serializePats(ctor.params()),
-      state.localMaybe(ctor.as()),
-      visitDataCall(ctor.type(), unit));
-  }
-
-  @Override public SerPat visitAbsurd(Pat.@NotNull Absurd absurd, Unit unit) {
-    return new SerPat.Absurd(absurd.explicit(), serialize(absurd.type()));
-  }
-
-  @Override public SerPat visitPrim(Pat.@NotNull Prim prim, Unit unit) {
-    return new SerPat.Prim(prim.explicit(), state.def(prim.ref()), serialize(prim.type()));
   }
 
   @Override public SerDef visitFn(@NotNull FnDef def, Unit unit) {

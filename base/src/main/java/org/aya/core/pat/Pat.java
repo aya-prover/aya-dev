@@ -42,7 +42,7 @@ public sealed interface Pat extends CorePat {
     return new Arg<>(toTerm(), explicit());
   }
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return accept(new CoreDistiller(options), BaseDistiller.Outer.Free);
+    return new CoreDistiller(options).visitPat(this, BaseDistiller.Outer.Free);
   }
   void storeBindings(@NotNull LocalCtx localCtx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
