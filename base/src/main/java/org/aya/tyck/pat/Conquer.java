@@ -4,7 +4,6 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import kala.tuple.Unit;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
 import org.aya.core.Matching;
@@ -75,11 +74,11 @@ public record Conquer(
   private void checkConditions(Pat ctor, int nth, int i, Term condition, Substituter.TermSubst matchy, SourcePos conditionPos) {
     var currentClause = matchings.get(nth);
     var newBody = currentClause.body().subst(matchy);
-    var newArgs = currentClause.patterns().map(pat -> new Arg<>(pat.accept(new PatToTerm() {
-      @Override public Term visitCtor(Pat.@NotNull Ctor newCtor, Unit unit) {
-        return newCtor == ctor ? condition : super.visitCtor(newCtor, unit);
+    var newArgs = currentClause.patterns().map(pat -> new Arg<>(new PatToTerm() {
+      @Override public @NotNull Term visitCtor(Pat.@NotNull Ctor newCtor) {
+        return newCtor == ctor ? condition : super.visitCtor(newCtor);
       }
-    }, Unit.unit()), pat.explicit()));
+    }.visit(pat), pat.explicit()));
     var volynskaya = new Normalizer(tycker.state).tryUnfoldClauses(
       NormalizeMode.WHNF, orderIndependent, newArgs, LevelSubst.EMPTY, matchings);
     if (volynskaya == null) {
