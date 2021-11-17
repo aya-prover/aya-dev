@@ -191,10 +191,10 @@ public record StmtTycker(
         .<Var, Term>toImmutableMap();
       dataCall = (CallTerm.Data) dataCall.subst(subst);
     }
+    ctor.patternTele = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elabClauses = patTycker.elabClauses(signature, ctor.clauses);
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
-    var implicits = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
-    var elaborated = new CtorDef(dataRef, ctor.ref, pat, implicits, tele, matchings, dataCall, ctor.coerce);
+    var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, matchings, dataCall, ctor.coerce);
     if (patTycker.noError())
       ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false, true);
     return elaborated;

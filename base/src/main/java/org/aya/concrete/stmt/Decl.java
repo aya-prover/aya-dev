@@ -11,6 +11,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.*;
+import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
@@ -125,6 +126,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataCtor extends Signatured implements OpDecl {
     public final @NotNull DefVar<CtorDef, Decl.DataCtor> ref;
     public DefVar<DataDef, DataDecl> dataRef;
+    /** Similar to {@link Signatured#signature}, but stores the bindings in {@link DataCtor#patterns} */
+    public ImmutableSeq<Term.Param> patternTele;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
     public final @Nullable OpDecl.OpInfo opInfo;
