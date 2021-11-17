@@ -45,15 +45,8 @@ public final class CtorDef extends SubLevelDef {
   public static @NotNull DataDef.CtorTelescopes
   telescopes(@NotNull DefVar<CtorDef, Decl.DataCtor> defVar, ImmutableSeq<Sort> sort) {
     var core = defVar.core;
-    if (core != null) {
-      var dataDef = core.dataRef.core;
-      var conTelescope = core.selfTele;
-      if (dataDef != null)
-        return new DataDef.CtorTelescopes(dataDef.telescope, sort, conTelescope);
-      var signature = core.dataRef.concrete.signature;
-      assert signature != null;
-      return new DataDef.CtorTelescopes(signature.param(), sort, conTelescope);
-    }
+    if (core != null) return new DataDef.CtorTelescopes(core.ownerTele, sort, core.selfTele);
+    // TODO[ice]: put ownerTele into ctor concrete signature and use that instead
     var dataSignature = defVar.concrete.dataRef.concrete.signature;
     assert dataSignature != null;
     var conSignature = defVar.concrete.signature;
