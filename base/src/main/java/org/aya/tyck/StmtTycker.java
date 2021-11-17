@@ -192,7 +192,7 @@ public record StmtTycker(
       dataCall = (CallTerm.Data) dataCall.subst(subst);
     }
     ctor.patternTele = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
-    var elabClauses = patTycker.elabClauses(signature, ctor.clauses);
+    var elabClauses = patTycker.elabClauses(ctor.clauses, signature)._2;
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, matchings, dataCall, ctor.coerce);
     if (patTycker.noError())
@@ -225,7 +225,7 @@ public record StmtTycker(
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
-    var elabClauses = patTycker.elabClauses(field.signature, field.clauses);
+    var elabClauses = patTycker.elabClauses(field.clauses, field.signature)._2;
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);

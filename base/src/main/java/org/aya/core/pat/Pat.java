@@ -17,7 +17,10 @@ import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
+import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.Zonker;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.pretty.doc.Doc;
@@ -44,6 +47,8 @@ public sealed interface Pat extends CorePat {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).visitPat(this, BaseDistiller.Outer.Free);
   }
+  @NotNull Pat rename(@NotNull Substituter.TermSubst subst);
+  @NotNull Pat zonk(@NotNull Zonker zonker);
   void storeBindings(@NotNull LocalCtx localCtx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
     var localCtx = new LocalCtx();
@@ -58,6 +63,17 @@ public sealed interface Pat extends CorePat {
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       localCtx.put(as, type);
+    }
+
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+      var newName = new LocalVar(as.name(), as.definition());
+      var bind = new Bind(explicit, newName, type.subst(subst));
+      subst.addDirectly(as, new RefTerm(newName, type));
+      return bind;
+    }
+
+    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
+      return new Bind(explicit, as, zonker.zonk(type, as.definition()));
     }
   }
 
@@ -75,18 +91,31 @@ public sealed interface Pat extends CorePat {
     @Override public @Nullable LocalVar as() {
       return null;
     }
+
+    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
+      return solution.value.zonk(zonker);
+    }
+
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+      throw new IllegalStateException("unreachable");
+    }
   }
 
-  record Absurd(
-    boolean explicit,
-    @NotNull Term type
-  ) implements Pat {
+  record Absurd(boolean explicit, @NotNull Term type) implements Pat {
     @Override public @Nullable LocalVar as() {
       return null;
     }
 
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       throw new IllegalStateException();
+    }
+
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+      throw new IllegalStateException();
+    }
+
+    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
+      return this;
     }
   }
 
@@ -99,6 +128,19 @@ public sealed interface Pat extends CorePat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       if (as != null) localCtx.put(as, type);
       pats.forEach(pat -> pat.storeBindings(localCtx));
+    }
+
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+      var params = pats.map(pat -> pat.rename(subst));
+      var newName = as == null ? null : new LocalVar(as.name(), as.definition());
+      var tuple = new Tuple(explicit, params, newName, type.subst(subst));
+      if (as != null) subst.addDirectly(as, new RefTerm(newName, type));
+      return tuple;
+    }
+
+    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
+      return new Tuple(explicit, pats.map(pat -> pat.zonk(zonker)), as,
+        zonker.zonk(type, as == null ? null : as.definition()));
     }
   }
 
@@ -113,6 +155,20 @@ public sealed interface Pat extends CorePat {
       if (as != null) localCtx.put(as, type);
       params.forEach(pat -> pat.storeBindings(localCtx));
     }
+
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+      var params = this.params.map(pat -> pat.rename(subst));
+      var newName = as == null ? null : new LocalVar(as.name(), as.definition());
+      var ctor = new Ctor(explicit, ref, params, newName, (CallTerm.Data) type.subst(subst));
+      if (as != null) subst.addDirectly(as, new RefTerm(newName, type));
+      return ctor;
+    }
+
+    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
+      // The cast must succeed
+      return new Ctor(explicit, ref, params.map(pat -> pat.zonk(zonker)), as,
+        (CallTerm.Data) zonker.zonk(type, as != null ? as.definition() : null));
+    }
   }
 
   record Prim(
@@ -126,6 +182,14 @@ public sealed interface Pat extends CorePat {
 
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       // Do nothing
+    }
+
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+      return this;
+    }
+
+    @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
+      return this;
     }
   }
 
