@@ -31,6 +31,10 @@ public record ExprResolver(
   @NotNull DynamicSeq<PreLevelVar> allowedLevels,
   @NotNull DynamicSeq<Stmt> reference
 ) implements ExprFixpoint<Context> {
+  public ExprResolver(boolean allowGeneralized, @NotNull ExprResolver parent) {
+    this(allowGeneralized, parent.allowedLevels, parent.reference);
+  }
+
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
     var name = expr.name();

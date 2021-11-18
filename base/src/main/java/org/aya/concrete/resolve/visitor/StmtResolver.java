@@ -47,12 +47,11 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, ResolveInfo info) {
-    var reference = DynamicSeq.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
+    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), DynamicSeq.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
+    var bodyResolver = new ExprResolver(false, signatureResolver);
     for (var ctor : decl.body) {
       var localCtxWithPat = new Ref<>(local._2);
       ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
@@ -60,17 +59,16 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       ctor.telescope = ctorLocal._1;
       ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
     }
-    info.declGraph().suc(decl).appendAll(reference);
+    info.declGraph().suc(decl).appendAll(signatureResolver.reference());
     return Unit.unit();
   }
 
   @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, ResolveInfo info) {
-    var reference = DynamicSeq.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
+    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), DynamicSeq.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
+    var bodyResolver = new ExprResolver(false, signatureResolver);
     decl.fields.forEach(field -> {
       var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
       field.telescope = fieldLocal._1;
@@ -78,22 +76,21 @@ public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
       field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
       field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
     });
-    info.declGraph().suc(decl).appendAll(reference);
+    info.declGraph().suc(decl).appendAll(signatureResolver.reference());
     return Unit.unit();
   }
 
   /** @apiNote Note that this function MUTATES the decl. */
   @Override public Unit visitFn(Decl.@NotNull FnDecl decl, ResolveInfo info) {
-    var reference = DynamicSeq.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
+    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), DynamicSeq.create());
     var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
     decl.telescope = local._1;
     decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
+    var bodyResolver = new ExprResolver(false, signatureResolver);
     decl.body = decl.body.map(
       expr -> expr.accept(bodyResolver, local._2),
       pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
-    info.declGraph().suc(decl).appendAll(reference);
+    info.declGraph().suc(decl).appendAll(signatureResolver.reference());
     return Unit.unit();
   }
 
