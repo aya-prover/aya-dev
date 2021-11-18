@@ -260,6 +260,11 @@ public final class DefEq {
       preRhs.freezeHoles(state), this.pos));
     var ret = switch (type) {
       default -> throw new IllegalStateException();
+      case RefTerm.MetaPat metaPat -> {
+        var lhsRef = metaPat.ref();
+        if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
+        else yield null;
+      }
       case RefTerm lhs -> {
         if (preRhs instanceof RefTerm rhs
           && varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var()) {

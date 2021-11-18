@@ -10,6 +10,7 @@ import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
+import kala.value.Ref;
 import org.aya.api.error.Problem;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -219,8 +220,11 @@ public final class PatTycker {
 
   private @NotNull Def.Signature generatePat(PatData data) {
     var ref = data.param.ref();
-    // TODO: implicitly generated patterns might be inferred to something else?
-    var bind = new Pat.Bind(false, new LocalVar(ref.name(), ref.definition()), data.param.type());
+    Pat bind;
+    var freshVar = new LocalVar(ref.name(), ref.definition());
+    if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)
+      bind = new Pat.Meta(false, new Ref<>(), freshVar, data.param.type());
+    else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(bind.as(), data.param.type());
     termSubst.add(ref, bind.toTerm());

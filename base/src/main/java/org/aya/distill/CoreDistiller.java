@@ -203,7 +203,9 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitMetaPat(RefTerm.@NotNull MetaPat metaPat, Outer outer) {
-    return Doc.plain("<metaPat>");
+    var ref = metaPat.ref();
+    if (ref.solution().value == null) return varDoc(ref.as());
+    return visitPat(ref, outer);
   }
 
   private Doc visitCalls(
@@ -223,9 +225,9 @@ public class CoreDistiller extends BaseDistiller implements
 
   public Doc visitPat(@NotNull Pat pat, Outer outer) {
     return switch (pat) {
-      case Pat.Meta meta-> {
+      case Pat.Meta meta -> {
         var sol = meta.solution().value;
-        yield sol != null ? visitPat(sol, outer) : Doc.plain("<meta>");
+        yield sol != null ? visitPat(sol, outer) : Doc.bracedUnless(linkDef(meta.as()), meta.explicit());
       }
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.as()), bind.explicit());
       case Pat.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());

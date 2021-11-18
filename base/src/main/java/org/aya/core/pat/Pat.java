@@ -78,6 +78,7 @@ public sealed interface Pat extends CorePat {
   record Meta(
     boolean explicit,
     @NotNull Ref<Pat> solution,
+    @NotNull LocalVar as, // placeholder name
     @NotNull Term type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
@@ -86,12 +87,10 @@ public sealed interface Pat extends CorePat {
       // only used for constructor ownerTele extraction for simpler indexed types
     }
 
-    @Override public @Nullable LocalVar as() {
-      return null;
-    }
-
     @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return solution.value.zonk(zonker);
+      var value = solution.value;
+      if (value == null) return new Bind(explicit, as, type);
+      return value.zonk(zonker);
     }
 
     @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, boolean explicit) {
