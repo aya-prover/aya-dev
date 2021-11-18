@@ -57,24 +57,24 @@ public sealed interface Pat extends CorePat {
 
   record Bind(
     boolean explicit,
-    @NotNull LocalVar as,
+    @NotNull LocalVar bind,
     @NotNull Term type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      localCtx.put(as, type);
+      localCtx.put(bind, type);
     }
 
     @Override
     public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      var newName = new LocalVar(as.name(), as.definition());
-      var bind = new Bind(explicit, newName, type.subst(subst));
-      subst.addDirectly(as, new RefTerm(newName, type));
+      var newName = new LocalVar(bind.name(), bind.definition());
+      var newBind = new Bind(explicit, newName, type.subst(subst));
+      subst.addDirectly(bind, new RefTerm(newName, type));
       localCtx.put(newName, type);
-      return bind;
+      return newBind;
     }
 
     @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Bind(explicit, as, zonker.zonk(type, as.definition()));
+      return new Bind(explicit, bind, zonker.zonk(type, bind.definition()));
     }
 
     @Override public @NotNull Pat inline() {
@@ -85,7 +85,7 @@ public sealed interface Pat extends CorePat {
   record Meta(
     boolean explicit,
     @NotNull Ref<Pat> solution,
-    @NotNull LocalVar as, // placeholder name
+    @NotNull LocalVar fakeBind,
     @NotNull Term type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
@@ -100,7 +100,7 @@ public sealed interface Pat extends CorePat {
 
     @Override public @NotNull Pat inline() {
       var value = solution.value;
-      if (value == null) return solution.value = new Bind(explicit, as, type);
+      if (value == null) return solution.value = new Bind(explicit, fakeBind, type);
       else return value;
     }
 

@@ -55,7 +55,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst, @Nullable LocalCt
 
   private void match(@NotNull Pat pat, @NotNull Term term) throws Mismatch {
     switch (pat) {
-      case Pat.Bind bind -> subst.addDirectly(bind.as(), term);
+      case Pat.Bind bind -> subst.addDirectly(bind.bind(), term);
       case Pat.Absurd absurd -> throw new IllegalStateException("unreachable");
       case Pat.Prim prim -> {
         var core = prim.ref().core;

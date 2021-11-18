@@ -26,7 +26,7 @@ public class PatToTerm {
       case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"), absurd.type());
       case Pat.Prim prim -> new CallTerm.Prim(prim.ref(), ImmutableSeq.empty(), ImmutableSeq.empty());
       case Pat.Ctor ctor -> visitCtor(ctor);
-      case Pat.Bind bind -> new RefTerm(bind.as(), bind.type());
+      case Pat.Bind bind -> new RefTerm(bind.bind(), bind.type());
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new RefTerm.MetaPat(meta);
     };

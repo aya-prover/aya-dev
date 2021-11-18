@@ -39,7 +39,7 @@ public record Serializer(@NotNull Serializer.State state) implements
       case Pat.Prim prim -> new SerPat.Prim(prim.explicit(), state.def(prim.ref()), serialize(prim.type()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(),
         serializePats(tuple.pats()), serialize(tuple.type()));
-      case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.as()), serialize(bind.type()));
+      case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.bind()), serialize(bind.type()));
       case Pat.Meta meta -> throw new IllegalArgumentException(meta.toString());
     };
   }

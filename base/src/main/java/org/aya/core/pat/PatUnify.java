@@ -20,8 +20,8 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
     switch (lhs) {
       default -> throw new IllegalStateException();
-      case Pat.Bind bind -> visitAs(bind.as(), rhs);
-      case Pat.Meta meta -> visitAs(meta.as(), rhs);
+      case Pat.Bind bind -> visitAs(bind.bind(), rhs);
+      case Pat.Meta meta -> visitAs(meta.fakeBind(), rhs);
       case Pat.Tuple tuple -> {
         if (rhs instanceof Pat.Tuple tuple1) visitList(tuple.pats(), tuple1.pats());
         else reportError(lhs, rhs);
