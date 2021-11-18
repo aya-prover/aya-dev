@@ -30,6 +30,7 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
+import org.aya.core.visitor.Zonker;
 import org.aya.generic.Constants;
 import org.aya.generic.Level;
 import org.aya.generic.Modifier;
@@ -61,6 +62,10 @@ public final class ExprTycker {
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  public @NotNull Zonker newZonker() {
+    return new Zonker(state, reporter);
   }
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
@@ -429,7 +434,8 @@ public final class ExprTycker {
   public @NotNull Result zonk(@NotNull Expr expr, @NotNull Result result) {
     solveMetas();
     var pos = expr.sourcePos();
-    return new Result(result.wellTyped.zonk(this, pos), result.type.zonk(this, pos));
+    var zonker = newZonker();
+    return new Result(zonker.zonk(result.wellTyped, pos), zonker.zonk(result.type, pos));
   }
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {

@@ -42,6 +42,10 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
     return term;
   }
 
+  @Override default @NotNull Term visitMetaPat(RefTerm.@NotNull MetaPat metaPat, P p) {
+    return metaPat;
+  }
+
   @Override default @NotNull Term visitConCall(@NotNull CallTerm.Con conCall, P p) {
     var dataArgs = conCall.head().dataArgs().map(arg -> visitArg(arg, p));
     var conArgs = conCall.conArgs().map(arg -> visitArg(arg, p));

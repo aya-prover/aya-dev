@@ -1,4 +1,4 @@
-open data ℕ : Type
+open data ℕ
   | zero
   | suc ℕ
 
@@ -11,3 +11,14 @@ def overlap infix + (a b : ℕ) : ℕ
 example def test => \ x => x + zero
 
 example def test2 => (zero, suc zero)
+
+def addTup (Sig ℕ ** ℕ) : ℕ
+ | (zero, a) => a
+ | (a, zero) => a
+ | (suc a, b) => suc (a + b)
+ | (a, suc b) => suc (a + b)
+
+open data Wow (n : ℕ)
+ | suc zero => wow
+
+example def test3 : Wow (addTup test2) => wow

@@ -28,6 +28,7 @@ public class PatToTerm {
       case Pat.Ctor ctor -> visitCtor(ctor);
       case Pat.Bind bind -> new RefTerm(bind.as(), bind.type());
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
+      case Pat.Meta meta -> new RefTerm.MetaPat(meta);
     };
   }
 

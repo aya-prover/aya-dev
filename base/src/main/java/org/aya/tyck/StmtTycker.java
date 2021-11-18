@@ -2,12 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.tuple.Tuple;
 import org.aya.api.error.Reporter;
-import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
@@ -78,14 +78,16 @@ public record StmtTycker(
           new FnDef(decl.ref, signature.param(), signature.sortParam(), resultTy, decl.modifiers, body));
         yield decl.body.fold(
           body -> {
-            var result = tycker.zonk(body, tycker.inherit(body, signature.result()));
+            var nobody = tycker.inherit(body, signature.result()).wellTyped();
+            tycker.solveMetas();
+            var zonker = tycker.newZonker();
             // It may contain unsolved metas. See `checkTele`.
-            var resultTy = signature.result().zonk(tycker, decl.result.sourcePos());
-            return factory.apply(resultTy, Either.left(result.wellTyped()));
+            var resultTy = zonker.zonk(signature.result(), decl.result.sourcePos());
+            return factory.apply(resultTy, Either.left(zonker.zonk(nobody, body.sourcePos())));
           },
           clauses -> {
             var patTycker = new PatTycker(tycker);
-            var result = patTycker.elabClauses(clauses, signature);
+            var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
             var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
             var def = factory.apply(result._1, Either.right(matchings));
             if (patTycker.noError()) {
@@ -184,15 +186,13 @@ public record StmtTycker(
     var tele = checkTele(tycker, ctor.telescope, dataSig.result());
     var signature = new Def.Signature(sortParam, tele, dataCall);
     ctor.signature = signature;
-    var dataParamView = dataSig.param().view();
+    var dataTeleView = dataSig.param().view();
     if (pat.isNotEmpty()) {
-      var subst = dataParamView.map(Term.Param::ref)
-        .zip(pat.view().map(Pat::toTerm))
-        .<Var, Term>toImmutableMap();
-      dataCall = (CallTerm.Data) dataCall.subst(subst);
+      dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
+        dataTeleView.map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
     }
-    ctor.patternTele = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
-    var elabClauses = patTycker.elabClauses(signature, ctor.clauses);
+    ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
+    var elabClauses = patTycker.elabClauses(ctor.clauses, signature, ctor.sourcePos)._2;
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, matchings, dataCall, ctor.coerce);
     if (patTycker.noError())
@@ -225,7 +225,7 @@ public record StmtTycker(
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
-    var elabClauses = patTycker.elabClauses(field.signature, field.clauses);
+    var elabClauses = patTycker.elabClauses(field.clauses, field.signature, field.result.sourcePos())._2;
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
@@ -243,9 +243,10 @@ public record StmtTycker(
       return Tuple.of(new Term.Param(param, paramTyped), param.sourcePos());
     });
     exprTycker.solveMetas();
+    var zonker = exprTycker.newZonker();
     return okTele.map(tt -> {
       var t = tt._1;
-      var term = t.type().zonk(exprTycker, tt._2);
+      var term = zonker.zonk(t.type(), tt._2);
       exprTycker.localCtx.put(t.ref(), term);
       return new Term.Param(t, term);
     });

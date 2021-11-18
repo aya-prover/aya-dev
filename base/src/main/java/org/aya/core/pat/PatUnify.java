@@ -20,13 +20,13 @@ import org.jetbrains.annotations.Nullable;
 public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst) {
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
     switch (lhs) {
+      default -> throw new IllegalStateException();
       case Pat.Bind bind -> {
       }
       case Pat.Tuple tuple -> {
         if (rhs instanceof Pat.Tuple tuple1) visitList(tuple.pats(), tuple1.pats());
         else reportError(lhs, rhs);
       }
-      case Pat.Absurd absurd -> throw new IllegalStateException();
       case Pat.Prim prim -> {
         if (!(rhs instanceof Pat.Prim prim1)) reportError(lhs, rhs);
         else assert prim.ref() == prim1.ref();

@@ -226,7 +226,7 @@ public record PatClassifier(
           var conTele = ctor.selfTele;
           // Check if this constructor is available by doing the obvious thing
           if (ctor.pats.isNotEmpty()) {
-            var matchy = PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
+            var matchy = PatMatcher.tryBuildSubstArgs(null, ctor.pats, dataCall.args());
             // If not, check the reason why: it may fail negatively or positively
             if (matchy.isErr()) {
               // Index unification fails negatively

@@ -185,40 +185,40 @@ module RedBlackIn {
   def balanceLeftRed {A : Type} {n : Nat} {c : Color} (HTree A n) A (Tree A c n)
     : AlmostTree A n
   | hRed l, x, r => (_, alRed l x r)
-  | {A}, {suc n}, hBlack l, x, r => (_, alRed l x r)
+  | hBlack l, x, r => (_, alRed l x r)
 
   def balanceRightRed {A : Type} {n : Nat} {c : Color} (Tree A c n) A (HTree A n)
     : AlmostTree A n
   | l, x, hRed r => (_, alRed l x r)
-  | {A}, {suc n}, l, x, hBlack r => (_, alRed l x r)
+  | l, x, hBlack r => (_, alRed l x r)
 
   def balanceLeftBlack {A : Type} {n : Nat} {c : Color} (AlmostTree A n) A (Tree A c n)
     : HTree A (suc n)
   -- rotation
-  | (red, alRed {red} (rbRed a x b) y c), z, d => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
-  | (red, alRed {c1} {red} a x (rbRed b y c)), z, d => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
+  | (red, alRed (rbRed a x b) y c), z, d => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
+  | (red, alRed a x (rbRed b y c)), z, d => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
   -- expand catch-all for different proofs
-  | {A}, {zero}, (red, alRed {black} {black} rbLeaf x rbLeaf), y, r => hBlack (rbBlack (rbRed rbLeaf x rbLeaf) y r)
-  | {A}, {suc n}, (red, alRed {black} {black} l x r), y, c => hBlack (rbBlack (rbRed l x r) y c)
-  | {A}, {suc n}, (black, alBlack a x b), y, r => hBlack (rbBlack (rbBlack a x b) y r)
+  | (red, alRed rbLeaf x rbLeaf), y, r => hBlack (rbBlack (rbRed rbLeaf x rbLeaf) y r)
+  | (red, alRed {black} {black} l x r), y, c => hBlack (rbBlack (rbRed l x r) y c)
+  | (black, alBlack a x b), y, r => hBlack (rbBlack (rbBlack a x b) y r)
 
   def balanceRightBlack {A : Type} {n : Nat} {c : Color} (Tree A c n) A (AlmostTree A n)
     : HTree A (suc n)
   -- rotation
-  | a, x, (red, alRed {red} (rbRed b y c) z d) => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
-  | a, x, (red, alRed {c1} {red} b y (rbRed c z d)) => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
+  | a, x, (red, alRed (rbRed b y c) z d) => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
+  | a, x, (red, alRed b y (rbRed c z d)) => hRed (rbRed (rbBlack a x b) y (rbBlack c z d))
   -- ditto
-  | {A}, {zero}, a, x, (red, alRed {black} {black} rbLeaf y rbLeaf) => hBlack (rbBlack a x (rbRed rbLeaf y rbLeaf))
-  | {A}, {suc n}, a, x, (red, alRed {black} {black} l y r) => hBlack (rbBlack a x (rbRed l y r))
-  | {A}, {suc n}, a, x, (black, alBlack b y c) => hBlack (rbBlack a x (rbBlack b y c))
+  | a, x, (red, alRed rbLeaf y rbLeaf) => hBlack (rbBlack a x (rbRed rbLeaf y rbLeaf))
+  | a, x, (red, alRed {black} {black} l y r) => hBlack (rbBlack a x (rbRed l y r))
+  | a, x, (black, alBlack b y c) => hBlack (rbBlack a x (rbBlack b y c))
 
   def forget {A : Type} {n : Nat} (HTree A n) : AlmostTree A n
   | hRed (rbRed l x r) => (_, alRed l x r)
-  | {A}, {suc n}, hBlack (rbBlack l x r) => (_, alBlack l x r)
+  | hBlack (rbBlack l x r) => (_, alBlack l x r)
 
   def insertBlack {A : Type} {n : Nat} (Tree A black n) A (Decider A) : HTree A n
-  | {A}, {zero}, rbLeaf, x, dec< => hRed (rbRed rbLeaf x rbLeaf)
-  | {A}, {suc n}, rbBlack l y r, x, dec< => insertBlack-lemma dec< l y r x (dec< x y)
+  | rbLeaf, x, dec< => hRed (rbRed rbLeaf x rbLeaf)
+  | rbBlack l y r, x, dec< => insertBlack-lemma dec< l y r x (dec< x y)
 
   def insertBlack-lemma {A : Type} {n : Nat} {c1 c2 : Color}
       (Decider A) (Tree A c1 n) A (Tree A c2 n) A Bool
@@ -227,9 +227,9 @@ module RedBlackIn {
   | dec<, l, y, r, x, false => balanceRightBlack l x (insertRed r x dec<)
 
   def insertRed {A : Type} {n : Nat} {c : Color} (Tree A c n) A (Decider A) : AlmostTree A n
-  | {A}, {zero}, {black}, rbLeaf, x, dec< => forget (insertBlack rbLeaf x dec<)
-  | {A}, {suc n}, {black}, rbBlack l y r, x, dec< => forget (insertBlack (rbBlack l y r) x dec<)
-  | {A}, {n}, {red}, rbRed l y r, x, dec< => insert-lemma dec< l y r x (dec< x y)
+  | rbLeaf, x, dec< => forget (insertBlack rbLeaf x dec<)
+  | rbBlack l y r, x, dec< => forget (insertBlack (rbBlack l y r) x dec<)
+  | rbRed l y r, x, dec< => insert-lemma dec< l y r x (dec< x y)
 
   def insert-lemma {A : Type} {n : Nat} (Decider A)
       (Tree A black n) A (Tree A black n) A Bool
@@ -239,7 +239,7 @@ module RedBlackIn {
 
   def dyeRoot {A : Type} {n : Nat} (HTree A n) : RBTree A
   | hRed (rbRed l x r) => (_, rbBlack l x r)
-  | {A}, {suc n}, hBlack (rbBlack l x r) => (_, rbBlack l x r)
+  | hBlack (rbBlack l x r) => (_, rbBlack l x r)
 
   def insert {A : Type} {n : Nat} (t : RBTree A) (x : A) (dec< : Decider A)
       => dyeRoot (insertBlack t.2 x dec<)

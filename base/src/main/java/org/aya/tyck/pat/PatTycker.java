@@ -10,6 +10,8 @@ import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
+import kala.tuple.Unit;
+import kala.value.Ref;
 import org.aya.api.error.Problem;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -23,17 +25,17 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.TermFixpoint;
 import org.aya.core.visitor.Unfolder;
+import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +76,7 @@ public final class PatTycker {
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
   elabClauses(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature
+    @NotNull Def.Signature signature, @Nullable SourcePos resultPos
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
@@ -83,15 +85,11 @@ public final class PatTycker {
       return elabClause;
     });
     exprTycker.solveMetas();
-    return Tuple.of(signature.result().zonk(exprTycker, null), res.map(c -> c.mapTerm(e -> e.zonk(exprTycker, null))));
-  }
-
-  @NotNull public ImmutableSeq<Pat.PrototypeClause> elabClauses(
-    Def.Signature signature, @NotNull ImmutableSeq<Pattern.Clause> clauses
-  ) {
-    var checked = clauses.map(c -> Tuple.of(visitMatch(c, signature), c.sourcePos));
-    exprTycker.solveMetas();
-    return checked.map(c -> c._1.mapTerm(e -> e.zonk(exprTycker, c._2)));
+    var zonker = exprTycker.newZonker();
+    return Tuple.of(zonker.zonk(signature.result(), resultPos),
+      res.map(c -> new Pat.PrototypeClause(
+        c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
+        c.expr().map(e -> zonker.zonk(e, c.sourcePos())))));
   }
 
   @SuppressWarnings("unchecked") private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
@@ -133,23 +131,30 @@ public final class PatTycker {
         var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
         var sig = new Def.Signature(ImmutableSeq.empty(),
           Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall);
-        var patterns = visitPatterns(sig, ctor.params().view());
-        yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns._1, ctor.as(), realCtor._1);
+        var patterns = visitPatterns(sig, ctor.params().view())._1;
+        yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
       }
       case Pattern.Bind bind -> {
         var v = bind.bind();
         exprTycker.localCtx.put(v, term);
         yield new Pat.Bind(bind.explicit(), v, term);
       }
-      case default -> throw new UnsupportedOperationException("Number and underscore patterns are unsupported yet");
+      case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
+        new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
+      case default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
     };
   }
 
   private Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
     exprTycker.localCtx = exprTycker.localCtx.derive();
     currentClause = match;
-    var patterns = visitPatterns(signature, match.patterns.view());
-    var type = patterns._2;
+    var patResult = visitPatterns(signature, match.patterns.view());
+    var patterns = patResult._1.map(Pat::inline);
+    var type = patResult._2.accept(new TermFixpoint<>() {
+      @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
+        return metaPat.inline();
+      }
+    }, Unit.unit());
     var result = match.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,
@@ -161,7 +166,7 @@ public final class PatTycker {
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
-    return new Pat.PrototypeClause(match.sourcePos, patterns._1, result);
+    return new Pat.PrototypeClause(match.sourcePos, patterns, result);
   }
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
@@ -222,8 +227,11 @@ public final class PatTycker {
 
   private @NotNull Def.Signature generatePat(PatData data) {
     var ref = data.param.ref();
-    // TODO: implicitly generated patterns might be inferred to something else?
-    var bind = new Pat.Bind(false, new LocalVar(ref.name(), ref.definition()), data.param.type());
+    Pat bind;
+    var freshVar = new LocalVar(ref.name(), ref.definition());
+    if (data.param.type().normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)
+      bind = new Pat.Meta(false, new Ref<>(), freshVar, data.param.type());
+    else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
     exprTycker.localCtx.put(bind.as(), data.param.type());
     termSubst.add(ref, bind.toTerm());
@@ -287,7 +295,7 @@ public final class PatTycker {
   }
 
   private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(exprTycker.localCtx, ctor.pats, dataCall.args());
     else return Result.ok(Unfolder.buildSubst(core.telescope(), dataCall.args()));
   }
 }

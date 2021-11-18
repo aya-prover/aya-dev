@@ -1,2 +1,0 @@
-open data Bool | true | false
-open data Nat | zero | succ Nat

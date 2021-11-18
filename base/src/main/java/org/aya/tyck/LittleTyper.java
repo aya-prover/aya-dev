@@ -42,6 +42,10 @@ public record LittleTyper(@Nullable TyckState state) implements Term.Visitor<Uni
     return ErrorTerm.typeOf(term);
   }
 
+  @Override public Term visitMetaPat(RefTerm.@NotNull MetaPat metaPat, Unit unit) {
+    return metaPat.ref().type();
+  }
+
   @Override public Term visitSigma(FormTerm.@NotNull Sigma term, Unit unit) {
     var univ = term.params().view()
       .map(param -> param.type()
