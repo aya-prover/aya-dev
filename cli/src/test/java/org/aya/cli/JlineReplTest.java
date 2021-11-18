@@ -14,8 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JlineReplTest {
   private static AyaReplParser parser;
@@ -58,8 +57,9 @@ public class JlineReplTest {
   @Test public void parenTyCode() {
     var line = parser.parse("(Ty", 2);
     var candidates = new ArrayList<Candidate>();
-    AyaCompleters.KW.complete(repl.lineReader, line, candidates);
+    new AyaCompleters.Code(repl).complete(repl.lineReader, line, candidates);
     assertFalse(candidates.isEmpty());
+    assertTrue(candidates.stream().anyMatch(c -> "Type".equals(c.value())));
   }
 
   @Test public void sucZeroIx() {

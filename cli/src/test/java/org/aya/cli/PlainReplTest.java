@@ -41,7 +41,15 @@ public class PlainReplTest {
   }
 
   @Test public void redefinition() {
-    assertNotNull(repl("def test => Type\ndef test => Type"));
+    assertNotNull(repl("def test => Type\ndef test => Type")._1);
+  }
+
+  @Test public void illTyped() {
+    assertNotNull(repl("prim I\ndef test : I => Type")._2);
+  }
+
+  @Test public void load() {
+    assertNotNull(repl(":l ../base/src/test/resources/success/add-comm.aya")._1);
   }
 
   @Test public void typeType() {
