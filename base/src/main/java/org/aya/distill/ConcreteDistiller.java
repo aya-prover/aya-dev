@@ -152,7 +152,7 @@ public class ConcreteDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitHole(Expr.@NotNull HoleExpr expr, Outer outer) {
-    if (!expr.explicit()) return Doc.symbol("_");
+    if (!expr.explicit()) return Doc.symbol(Constants.ANONYMOUS_PREFIX);
     var filling = expr.filling();
     if (filling == null) return Doc.symbol("{??}");
     return Doc.sep(Doc.symbol("{?"), filling.accept(this, Outer.Free), Doc.symbol("?}"));

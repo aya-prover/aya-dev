@@ -29,6 +29,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.TermFixpoint;
 import org.aya.core.visitor.Unfolder;
+import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.NotYetTyckedError;
@@ -138,7 +139,9 @@ public final class PatTycker {
         exprTycker.localCtx.put(v, term);
         yield new Pat.Bind(bind.explicit(), v, term);
       }
-      case default -> throw new UnsupportedOperationException("Number and underscore patterns are unsupported yet");
+      case Pattern.CalmFace face -> new Pat.Meta(face.explicit(), new Ref<>(),
+        new LocalVar(Constants.ANONYMOUS_PREFIX, face.sourcePos()), term);
+      case default -> throw new UnsupportedOperationException("Number patterns are unsupported yet");
     };
   }
 
