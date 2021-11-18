@@ -111,9 +111,13 @@ public final class PatTycker {
           sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         var as = tuple.as();
-        if (as != null) exprTycker.localCtx.put(as, sigma);
-        yield new Pat.Tuple(tuple.explicit(),
-          visitPatterns(sig, tuple.patterns().view())._1, as, sigma);
+        var ret = new Pat.Tuple(tuple.explicit(),
+          visitPatterns(sig, tuple.patterns().view())._1, sigma);
+        if (as != null) {
+          exprTycker.localCtx.put(as, sigma);
+          termSubst.addDirectly(as, ret.toTerm());
+        }
+        yield ret;
       }
       case Pattern.Ctor ctor -> {
         var var = ctor.resolved().data();
@@ -132,7 +136,13 @@ public final class PatTycker {
         var sig = new Def.Signature(ImmutableSeq.empty(),
           Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall);
         var patterns = visitPatterns(sig, ctor.params().view())._1;
-        yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
+        var as = ctor.as();
+        var ret = new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, dataCall);
+        if (as != null) {
+          exprTycker.localCtx.put(as, dataCall);
+          termSubst.addDirectly(as, ret.toTerm());
+        }
+        yield ret;
       }
       case Pattern.Bind bind -> {
         var v = bind.bind();
@@ -233,7 +243,7 @@ public final class PatTycker {
       bind = new Pat.Meta(false, new Ref<>(), freshVar, data.param.type());
     else bind = new Pat.Bind(false, freshVar, data.param.type());
     data.results.append(bind);
-    exprTycker.localCtx.put(bind.as(), data.param.type());
+    exprTycker.localCtx.put(freshVar, data.param.type());
     termSubst.add(ref, bind.toTerm());
     return data.sig.inst(termSubst);
   }

@@ -3,15 +3,12 @@
 package org.aya.api.core;
 
 import org.aya.api.distill.AyaDocile;
-import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.NonExtendable
 public interface CorePat extends AyaDocile {
-  @Nullable LocalVar as();
   boolean explicit();
   @NotNull CoreTerm type();
   @NotNull CoreTerm toTerm();

@@ -209,7 +209,7 @@ public class CoreDistiller extends BaseDistiller implements
 
   @Override public Doc visitMetaPat(RefTerm.@NotNull MetaPat metaPat, Outer outer) {
     var ref = metaPat.ref();
-    if (ref.solution().value == null) return varDoc(ref.as());
+    if (ref.solution().value == null) return varDoc(ref.fakeBind());
     return visitPat(ref, outer);
   }
 
@@ -240,22 +240,18 @@ public class CoreDistiller extends BaseDistiller implements
     return switch (pat) {
       case Pat.Meta meta -> {
         var sol = meta.solution().value;
-        yield sol != null ? visitPat(sol, outer) : Doc.bracedUnless(linkDef(meta.as()), meta.explicit());
+        yield sol != null ? visitPat(sol, outer) : Doc.bracedUnless(linkDef(meta.fakeBind()), meta.explicit());
       }
-      case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.as()), bind.explicit());
+      case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), bind.explicit());
       case Pat.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
       case Pat.Ctor ctor -> {
         var ctorDoc = visitCalls(ctor.ref(), CON_CALL, ctor.params().view().map(Pat::toArg), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitPats));
-        yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+        yield ctorDoc(outer, ctor.explicit(), ctorDoc, null, ctor.params().isEmpty());
       }
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
-      case Pat.Tuple tuple -> {
-        var tup = Doc.licit(tuple.explicit(),
-          Doc.commaList(tuple.pats().view().map(sub -> visitPat(sub, Outer.Free))));
-        yield tuple.as() == null ? tup
-          : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
-      }
+      case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
+        Doc.commaList(tuple.pats().view().map(sub -> visitPat(sub, Outer.Free))));
     };
   }
 

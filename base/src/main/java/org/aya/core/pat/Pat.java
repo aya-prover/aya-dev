@@ -57,24 +57,24 @@ public sealed interface Pat extends CorePat {
 
   record Bind(
     boolean explicit,
-    @NotNull LocalVar as,
+    @NotNull LocalVar bind,
     @NotNull Term type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      localCtx.put(as, type);
+      localCtx.put(bind, type);
     }
 
     @Override
     public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
-      var newName = new LocalVar(as.name(), as.definition());
-      var bind = new Bind(explicit, newName, type.subst(subst));
-      subst.addDirectly(as, new RefTerm(newName, type));
+      var newName = new LocalVar(bind.name(), bind.definition());
+      var newBind = new Bind(explicit, newName, type.subst(subst));
+      subst.addDirectly(bind, new RefTerm(newName, type));
       localCtx.put(newName, type);
-      return bind;
+      return newBind;
     }
 
     @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Bind(explicit, as, zonker.zonk(type, as.definition()));
+      return new Bind(explicit, bind, zonker.zonk(type, bind.definition()));
     }
 
     @Override public @NotNull Pat inline() {
@@ -85,7 +85,7 @@ public sealed interface Pat extends CorePat {
   record Meta(
     boolean explicit,
     @NotNull Ref<Pat> solution,
-    @NotNull LocalVar as, // placeholder name
+    @NotNull LocalVar fakeBind,
     @NotNull Term type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
@@ -100,7 +100,7 @@ public sealed interface Pat extends CorePat {
 
     @Override public @NotNull Pat inline() {
       var value = solution.value;
-      if (value == null) return solution.value = new Bind(explicit, as, type);
+      if (value == null) return solution.value = new Bind(explicit, fakeBind, type);
       else return value;
     }
 
@@ -111,10 +111,6 @@ public sealed interface Pat extends CorePat {
   }
 
   record Absurd(boolean explicit, @NotNull Term type) implements Pat {
-    @Override public @Nullable LocalVar as() {
-      return null;
-    }
-
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       throw new IllegalStateException();
     }
@@ -136,33 +132,24 @@ public sealed interface Pat extends CorePat {
   record Tuple(
     boolean explicit,
     @NotNull ImmutableSeq<Pat> pats,
-    @Nullable LocalVar as,
     @NotNull Term type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      if (as != null) localCtx.put(as, type);
       pats.forEach(pat -> pat.storeBindings(localCtx));
     }
 
     @Override
     public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = pats.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      var newName = as == null ? null : new LocalVar(as.name(), as.definition());
-      var tuple = new Tuple(explicit, params, newName, type.subst(subst));
-      if (as != null) {
-        subst.addDirectly(as, new RefTerm(newName, type));
-        localCtx.put(newName, type);
-      }
-      return tuple;
+      return new Tuple(explicit, params, type.subst(subst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Tuple(explicit, pats.map(pat -> pat.zonk(zonker)), as,
-        zonker.zonk(type, as == null ? null : as.definition()));
+      return new Tuple(explicit, pats.map(pat -> pat.zonk(zonker)), zonker.zonk(type, null));
     }
 
     @Override public @NotNull Pat inline() {
-      return new Tuple(explicit, pats.map(Pat::inline), as, type);
+      return new Tuple(explicit, pats.map(Pat::inline), type);
     }
   }
 
@@ -170,34 +157,26 @@ public sealed interface Pat extends CorePat {
     boolean explicit,
     @NotNull DefVar<CtorDef, Decl.DataCtor> ref,
     @NotNull ImmutableSeq<Pat> params,
-    @Nullable LocalVar as,
     @NotNull CallTerm.Data type
   ) implements Pat {
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
-      if (as != null) localCtx.put(as, type);
       params.forEach(pat -> pat.storeBindings(localCtx));
     }
 
     @Override
     public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var params = this.params.map(pat -> pat.rename(subst, localCtx, pat.explicit()));
-      var newName = as == null ? null : new LocalVar(as.name(), as.definition());
-      var ctor = new Ctor(explicit, ref, params, newName, (CallTerm.Data) type.subst(subst));
-      if (as != null) {
-        subst.addDirectly(as, new RefTerm(newName, type));
-        localCtx.put(newName, type);
-      }
-      return ctor;
+      return new Ctor(explicit, ref, params, (CallTerm.Data) type.subst(subst));
     }
 
     @Override public @NotNull Pat zonk(@NotNull Zonker zonker) {
-      return new Ctor(explicit, ref, params.map(pat -> pat.zonk(zonker)), as,
-        (CallTerm.Data) zonker.zonk(type, as != null ? as.definition() : null));
+      return new Ctor(explicit, ref, params.map(pat -> pat.zonk(zonker)),
+        (CallTerm.Data) zonker.zonk(type, null));
       // The cast must succeed
     }
 
     @Override public @NotNull Pat inline() {
-      return new Ctor(explicit, ref, params.map(Pat::inline), as, type);
+      return new Ctor(explicit, ref, params.map(Pat::inline), type);
     }
   }
 
@@ -206,10 +185,6 @@ public sealed interface Pat extends CorePat {
     @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
     @NotNull Term type
   ) implements Pat {
-    @Override public @Nullable LocalVar as() {
-      return null;
-    }
-
     @Override public void storeBindings(@NotNull LocalCtx localCtx) {
       // Do nothing
     }
