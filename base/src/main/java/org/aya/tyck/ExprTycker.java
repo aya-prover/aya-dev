@@ -434,7 +434,8 @@ public final class ExprTycker {
   public @NotNull Result zonk(@NotNull Expr expr, @NotNull Result result) {
     solveMetas();
     var pos = expr.sourcePos();
-    return new Result(result.wellTyped.zonk(this, pos), result.type.zonk(this, pos));
+    var zonker = newZonker();
+    return new Result(zonker.zonk(result.wellTyped, pos), zonker.zonk(result.type, pos));
   }
 
   private @NotNull Term generatePi(Expr.@NotNull LamExpr expr) {

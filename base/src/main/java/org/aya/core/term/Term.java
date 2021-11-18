@@ -24,10 +24,8 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.LittleTyper;
 import org.aya.tyck.TyckState;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,10 +66,6 @@ public sealed interface Term extends CoreTerm permits
 
   default @NotNull Term subst(@NotNull Substituter.TermSubst subst, @NotNull LevelSubst levelSubst) {
     return accept(new Substituter(subst, levelSubst), Unit.unit());
-  }
-
-  default @NotNull Term zonk(@NotNull ExprTycker tycker, @Nullable SourcePos pos) {
-    return tycker.newZonker().zonk(this, pos);
   }
 
   @Override default @NotNull Term rename() {

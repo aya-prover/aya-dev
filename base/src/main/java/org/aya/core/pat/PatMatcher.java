@@ -61,13 +61,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
           case CallTerm.Prim primCall -> {
             if (primCall.ref() != prim.ref()) throw new Mismatch(false);
           }
-          case RefTerm.MetaPat metaPat -> {
-            var referee = metaPat.ref();
-            var todo = referee.solution();
-            if (todo.value != null) throw new UnsupportedOperationException(
-              "unsure what to do, please file an issue with reproduction if you see this!");
-            todo.value = pat.rename(subst, referee.explicit());
-          }
+          case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
           default -> throw new Mismatch(true);
         }
       }
@@ -90,6 +84,14 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
         match(sol, term);
       }
     }
+  }
+
+  private void solve(@NotNull Pat pat, @NotNull RefTerm.MetaPat metaPat) {
+    var referee = metaPat.ref();
+    var todo = referee.solution();
+    if (todo.value != null) throw new UnsupportedOperationException(
+      "unsure what to do, please file an issue with reproduction if you see this!");
+    todo.value = pat.rename(subst, referee.explicit());
   }
 
   private void visitList(ImmutableSeq<Pat> lpats, SeqLike<Term> terms) throws Mismatch {

@@ -78,10 +78,12 @@ public record StmtTycker(
           new FnDef(decl.ref, signature.param(), signature.sortParam(), resultTy, decl.modifiers, body));
         yield decl.body.fold(
           body -> {
-            var result = tycker.zonk(body, tycker.inherit(body, signature.result()));
+            var nobody = tycker.inherit(body, signature.result()).wellTyped();
+            tycker.solveMetas();
+            var zonker = tycker.newZonker();
             // It may contain unsolved metas. See `checkTele`.
-            var resultTy = signature.result().zonk(tycker, decl.result.sourcePos());
-            return factory.apply(resultTy, Either.left(result.wellTyped()));
+            var resultTy = zonker.zonk(signature.result(), decl.result.sourcePos());
+            return factory.apply(resultTy, Either.left(zonker.zonk(nobody, body.sourcePos())));
           },
           clauses -> {
             var patTycker = new PatTycker(tycker);
@@ -241,9 +243,10 @@ public record StmtTycker(
       return Tuple.of(new Term.Param(param, paramTyped), param.sourcePos());
     });
     exprTycker.solveMetas();
+    var zonker = exprTycker.newZonker();
     return okTele.map(tt -> {
       var t = tt._1;
-      var term = t.type().zonk(exprTycker, tt._2);
+      var term = zonker.zonk(t.type(), tt._2);
       exprTycker.localCtx.put(t.ref(), term);
       return new Term.Param(t, term);
     });

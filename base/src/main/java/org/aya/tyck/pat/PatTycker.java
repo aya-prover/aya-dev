@@ -85,7 +85,7 @@ public final class PatTycker {
     });
     exprTycker.solveMetas();
     var zonker = exprTycker.newZonker();
-    return Tuple.of(signature.result().zonk(exprTycker, resultPos),
+    return Tuple.of(zonker.zonk(signature.result(), resultPos),
       res.map(c -> new Pat.PrototypeClause(
         c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
         c.expr().map(e -> zonker.zonk(e, c.sourcePos())))));
