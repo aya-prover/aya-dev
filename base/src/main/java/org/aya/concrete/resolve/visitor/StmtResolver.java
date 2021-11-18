@@ -2,15 +2,19 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.resolve.visitor;
 
+import kala.collection.SeqLike;
 import kala.collection.mutable.DynamicSeq;
 import kala.value.Ref;
+import org.aya.api.ref.DefVar;
+import org.aya.concrete.desugar.AyaBinOpSet;
+import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Sample;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.resolve.error.UnknownOperatorError;
+import org.aya.concrete.stmt.*;
 import org.aya.util.MutableGraph;
+import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,13 +25,14 @@ import org.jetbrains.annotations.NotNull;
  * @see ExprResolver
  */
 public interface StmtResolver {
+  static void resolveStmt(SeqLike<@NotNull Stmt> stmt, @NotNull ResolveInfo info) {
+    stmt.forEach(s -> resolveStmt(s, info));
+  }
+
   /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
-  static void visit(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
+  static void resolveStmt(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
-      default -> {
-        // do nothing
-      }
-      case Command.Module mod -> mod.contents().forEach(s -> visit(s, info));
+      case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
         var signatureResolver = new ExprResolver(true, DynamicSeq.create(), DynamicSeq.create());
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
@@ -79,11 +84,63 @@ public interface StmtResolver {
       case Sample sample -> {
         var delegate = sample.delegate();
         var delegateInfo = new ResolveInfo(info.opSet(), MutableGraph.create(), MutableGraph.create());
-        visit(delegate, delegateInfo);
+        resolveStmt(delegate, delegateInfo);
         // little hacky: transfer dependencies from `delegate` to `sample`
         info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));
       }
       case Remark remark -> info.sampleGraph().suc(remark).appendAll(remark.doResolve(info));
+      case Command cmd -> {}
+      case Generalize.Levels levels -> {}
+    }
+  }
+
+  static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
+    if (bind == BindBlock.EMPTY) return;
+    var ctx = bind.context().value;
+    assert ctx != null : "no shallow resolver?";
+    var opSet = info.opSet();
+    if (opSet.isOperand(self)) {
+      opSet.reporter.report(new OperatorProblem.NotOperator(selfDef.concrete.sourcePos(), selfDef.name()));
+      throw new Context.ResolvingInterruptedException();
+    }
+    bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
+    bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
+  }
+
+  private static @NotNull DefVar<?, ?> bind(
+    @NotNull OpDecl self, @NotNull AyaBinOpSet opSet, @NotNull Context ctx,
+    @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
+  ) throws Context.ResolvingInterruptedException {
+    if (ctx.get(id) instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
+      opSet.bind(self, pred, op, id.sourcePos());
+      return defVar;
+    } else {
+      opSet.reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
+      throw new Context.ResolvingInterruptedException();
+    }
+  }
+
+  static void resolveBind(SeqLike<@NotNull Stmt> contents, @NotNull ResolveInfo info) {
+    contents.forEach(s -> resolveBind(s, info));
+  }
+
+  static void resolveBind(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
+    switch (stmt) {
+      case Command.Module mod -> resolveBind(mod.contents(), info);
+      case Decl.DataDecl decl -> {
+        decl.body.forEach(ctor -> visitBind(ctor.ref, ctor, ctor.bindBlock, info));
+        visitBind(decl.ref, decl, decl.bindBlock, info);
+      }
+      case Decl.StructDecl decl -> {
+        decl.fields.forEach(field -> visitBind(field.ref, field, field.bindBlock, info));
+        visitBind(decl.ref, decl, decl.bindBlock, info);
+      }
+      case Decl.FnDecl decl -> visitBind(decl.ref, decl, decl.bindBlock, info);
+      case Sample sample -> resolveBind(sample.delegate(), info);
+      case Remark remark -> {}
+      case Command cmd -> {}
+      case Generalize.Levels levels -> {}
+      case Decl.PrimDecl decl -> {}
     }
   }
 }
