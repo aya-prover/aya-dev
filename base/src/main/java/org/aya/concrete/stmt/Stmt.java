@@ -31,7 +31,7 @@ public sealed interface Stmt extends AyaDocile
 
   @Contract(mutates = "param1")
   static void resolve(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo) {
-    statements.forEach(s -> s.accept(StmtResolver.INSTANCE, resolveInfo));
+    statements.forEach(s -> StmtResolver.visit(s, resolveInfo));
     statements.forEach(s -> s.accept(BindResolver.INSTANCE, resolveInfo));
     var opSet = resolveInfo.opSet();
     opSet.reportIfCyclic();
