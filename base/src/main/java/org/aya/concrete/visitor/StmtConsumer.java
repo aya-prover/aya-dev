@@ -106,7 +106,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> 
   }
 
   @Override default Unit visitVariables(Generalize.@NotNull Variables variables, P p) {
-    variables.variables().forEach(variable -> variable.type.accept(this, p));
+    variables.type.accept(this, p);
     return Unit.unit();
   }
 

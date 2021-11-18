@@ -25,28 +25,31 @@ public sealed interface Generalize extends Stmt {
     }
   }
 
-  record Variables(
-    @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Param> variables
-  ) implements Generalize {
-    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
-      return visitor.visitVariables(this, p);
-    }
-  }
-
-  final class Param {
+  final class Variables implements Generalize {
     public final @NotNull SourcePos sourcePos;
-    public final @NotNull GeneralizedVar ref;
+    public final @NotNull ImmutableSeq<GeneralizedVar> variables;
     public @NotNull Expr type;
 
-    public Param(@NotNull SourcePos sourcePos, @NotNull GeneralizedVar ref, @NotNull Expr type) {
+    public Variables(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<GeneralizedVar> variables, @NotNull Expr type) {
       this.sourcePos = sourcePos;
-      this.ref = ref;
+      this.variables = variables;
       this.type = type;
     }
 
-    public @NotNull Expr.Param toExpr() {
-      return new Expr.Param(sourcePos, new LocalVar(ref.name(), ref.sourcePos()), type, false, true);
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitVariables(this, p);
+    }
+
+    public @NotNull Expr.Param toExpr(@NotNull GeneralizedVar one) {
+      return new Expr.Param(sourcePos, new LocalVar(one.name(), one.sourcePos()), type, false, true);
+    }
+
+    public @NotNull ImmutableSeq<Expr.Param> toExpr() {
+      return variables.map(this::toExpr);
+    }
+
+    public @NotNull SourcePos sourcePos() {
+      return sourcePos;
     }
   }
 }

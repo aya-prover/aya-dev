@@ -395,8 +395,7 @@ public class ConcreteDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitVariables(Generalize.@NotNull Variables variables, Unit unit) {
-    return Doc.sep(Doc.styled(KEYWORD, "variables"),
-      visitTele(variables.variables().view().map(Generalize.Param::toExpr)));
+    return Doc.sep(Doc.styled(KEYWORD, "variables"), visitTele(variables.toExpr()));
   }
 
   @Override public Doc visitExample(Sample.@NotNull Working example, Unit unit) {

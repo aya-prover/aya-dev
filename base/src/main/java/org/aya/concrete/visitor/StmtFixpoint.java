@@ -103,7 +103,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
   }
 
   @Override default Unit visitVariables(Generalize.@NotNull Variables variables, P p) {
-    variables.variables().forEach(v -> v.type = v.type.accept(this, p));
+    variables.type = variables.type.accept(this, p);
     return Unit.unit();
   }
 
