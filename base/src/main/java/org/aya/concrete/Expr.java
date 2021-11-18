@@ -52,9 +52,9 @@ public sealed interface Expr extends ConcreteExpr {
    * @see org.aya.concrete.stmt.Stmt#resolve
    * @see org.aya.concrete.resolve.visitor.StmtShallowResolver
    */
-  @Contract(mutates = "this")
+  @Contract(pure = true)
   default Expr resolve(@NotNull ModuleContext context) {
-    var exprResolver = new ExprResolver(false, DynamicSeq.create(), DynamicSeq.create());
+    var exprResolver = new ExprResolver(ExprResolver.RESTRICTIVE);
     return accept(exprResolver, context);
   }
 

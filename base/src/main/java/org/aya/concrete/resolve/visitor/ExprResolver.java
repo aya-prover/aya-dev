@@ -20,17 +20,32 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Resolves bindings.
  *
- * @param allowGeneralized true for signatures, false for bodies
- * @param allowedLevels    will be filled with generalized level vars if allowGeneralized,
- *                         and represents the allowed generalized level vars otherwise
+ * @param allowedLevels will be filled with generalized level vars if allowGeneralized,
+ *                      and represents the allowed generalized level vars otherwise
  * @author re-xyr, ice1000
  * @see StmtResolver
  */
 public record ExprResolver(
-  boolean allowGeneralized,
+  @NotNull Options options,
   @NotNull DynamicSeq<PreLevelVar> allowedLevels,
   @NotNull DynamicSeq<Stmt> reference
 ) implements ExprFixpoint<Context> {
+  /**
+   * @param allowGeneralized true for signatures, false for bodies
+   */
+  public record Options(boolean allowGeneralized) {
+  }
+
+  public static final @NotNull Options RESTRICTIVE = new Options(false);
+
+  public ExprResolver(@NotNull Options options) {
+    this(options, DynamicSeq.create(), DynamicSeq.create());
+  }
+
+  public ExprResolver(@NotNull Options options, @NotNull ExprResolver parent) {
+    this(options, parent.allowedLevels, parent.reference);
+  }
+
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
     var name = expr.name();
@@ -38,7 +53,7 @@ public record ExprResolver(
     var refExpr = new Expr.RefExpr(sourcePos, resolved);
     switch (resolved) {
       case PreLevelVar levelVar -> {
-        if (allowGeneralized) allowedLevels.append(levelVar);
+        if (options.allowGeneralized) allowedLevels.append(levelVar);
         else if (!allowedLevels.contains(levelVar)) {
           ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
           throw new Context.ResolvingInterruptedException();

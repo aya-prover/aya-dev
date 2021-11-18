@@ -2,13 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.resolve.visitor;
 
-import kala.collection.mutable.DynamicSeq;
-import kala.tuple.Unit;
+import kala.collection.SeqLike;
 import kala.value.Ref;
+import org.aya.api.ref.DefVar;
+import org.aya.concrete.desugar.AyaBinOpSet;
+import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.context.Context;
+import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
-import org.aya.util.MutableGraph;
+import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,118 +22,123 @@ import org.jetbrains.annotations.NotNull;
  * @see StmtShallowResolver
  * @see ExprResolver
  */
-public final class StmtResolver implements Stmt.Visitor<ResolveInfo, Unit> {
-  public static final @NotNull StmtResolver INSTANCE = new StmtResolver();
-
-  private StmtResolver() {
+public interface StmtResolver {
+  static void resolveStmt(SeqLike<@NotNull Stmt> stmt, @NotNull ResolveInfo info) {
+    stmt.forEach(s -> resolveStmt(s, info));
   }
 
-  @Override public Unit visitModule(Command.@NotNull Module mod, ResolveInfo info) {
-    visitAll(mod.contents(), info);
-    return Unit.unit();
-  }
-
-  @Override public Unit visitImport(Command.@NotNull Import cmd, ResolveInfo info) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitOpen(Command.@NotNull Open cmd, ResolveInfo info) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitCtor(@NotNull Decl.DataCtor ctor, ResolveInfo info) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override public Unit visitField(@NotNull Decl.StructField field, ResolveInfo info) {
-    throw new UnsupportedOperationException();
-  }
-
-  /** @apiNote Note that this function MUTATES the decl. */
-  @Override public Unit visitData(Decl.@NotNull DataDecl decl, ResolveInfo info) {
-    var reference = DynamicSeq.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
-    var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-    decl.telescope = local._1;
-    decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
-    for (var ctor : decl.body) {
-      var localCtxWithPat = new Ref<>(local._2);
-      ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
-      var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
-      ctor.telescope = ctorLocal._1;
-      ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
+  /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
+  static void resolveStmt(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
+    switch (stmt) {
+      case Command.Module mod -> resolveStmt(mod.contents(), info);
+      case Decl.DataDecl decl -> {
+        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
+        decl.telescope = local._1;
+        decl.result = decl.result.accept(signatureResolver, local._2);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        for (var ctor : decl.body) {
+          var localCtxWithPat = new Ref<>(local._2);
+          ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
+          var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
+          ctor.telescope = ctorLocal._1;
+          ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
+        }
+        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+      }
+      case Decl.FnDecl decl -> {
+        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
+        decl.telescope = local._1;
+        decl.result = decl.result.accept(signatureResolver, local._2);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        decl.body = decl.body.map(
+          expr -> expr.accept(bodyResolver, local._2),
+          pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
+        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+      }
+      case Decl.StructDecl decl -> {
+        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
+        decl.telescope = local._1;
+        decl.result = decl.result.accept(signatureResolver, local._2);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        decl.fields.forEach(field -> {
+          var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
+          field.telescope = fieldLocal._1;
+          field.result = field.result.accept(bodyResolver, fieldLocal._2);
+          field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
+          field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
+        });
+        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+      }
+      case Decl.PrimDecl decl -> {
+        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
+        var local = resolver.resolveParams(decl.telescope, decl.ctx);
+        decl.telescope = local._1;
+        if (decl.result != null) decl.result = decl.result.accept(resolver, local._2);
+        info.declGraph().suc(decl).appendAll(resolver.reference());
+      }
+      case Sample sample -> {
+        var delegate = sample.delegate();
+        var delegateInfo = new ResolveInfo(info.opSet());
+        resolveStmt(delegate, delegateInfo);
+        // little hacky: transfer dependencies from `delegate` to `sample`
+        info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));
+      }
+      case Remark remark -> info.sampleGraph().suc(remark).appendAll(remark.doResolve(info));
+      case Command cmd -> {}
+      case Generalize.Levels levels -> {}
     }
-    info.declGraph().suc(decl).appendAll(reference);
-    return Unit.unit();
   }
 
-  @Override public Unit visitStruct(Decl.@NotNull StructDecl decl, ResolveInfo info) {
-    var reference = DynamicSeq.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
-    var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-    decl.telescope = local._1;
-    decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
-    decl.fields.forEach(field -> {
-      var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
-      field.telescope = fieldLocal._1;
-      field.result = field.result.accept(bodyResolver, fieldLocal._2);
-      field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
-      field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
-    });
-    info.declGraph().suc(decl).appendAll(reference);
-    return Unit.unit();
+  static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
+    if (bind == BindBlock.EMPTY) return;
+    var ctx = bind.context().value;
+    assert ctx != null : "no shallow resolver?";
+    var opSet = info.opSet();
+    if (opSet.isOperand(self)) {
+      opSet.reporter.report(new OperatorProblem.NotOperator(selfDef.concrete.sourcePos(), selfDef.name()));
+      throw new Context.ResolvingInterruptedException();
+    }
+    bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
+    bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
   }
 
-  /** @apiNote Note that this function MUTATES the decl. */
-  @Override public Unit visitFn(Decl.@NotNull FnDecl decl, ResolveInfo info) {
-    var reference = DynamicSeq.<Stmt>create();
-    var signatureResolver = new ExprResolver(true, DynamicSeq.create(), reference);
-    var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-    decl.telescope = local._1;
-    decl.result = decl.result.accept(signatureResolver, local._2);
-    var bodyResolver = new ExprResolver(false, signatureResolver.allowedLevels(), reference);
-    decl.body = decl.body.map(
-      expr -> expr.accept(bodyResolver, local._2),
-      pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
-    info.declGraph().suc(decl).appendAll(reference);
-    return Unit.unit();
+  private static @NotNull DefVar<?, ?> bind(
+    @NotNull OpDecl self, @NotNull AyaBinOpSet opSet, @NotNull Context ctx,
+    @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
+  ) throws Context.ResolvingInterruptedException {
+    if (ctx.get(id) instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
+      opSet.bind(self, pred, op, id.sourcePos());
+      return defVar;
+    } else {
+      opSet.reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
+      throw new Context.ResolvingInterruptedException();
+    }
   }
 
-  @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, ResolveInfo info) {
-    var resolver = new ExprResolver(false, DynamicSeq.create(), DynamicSeq.create());
-    var local = resolver.resolveParams(decl.telescope, decl.ctx);
-    decl.telescope = local._1;
-    if (decl.result != null) decl.result = decl.result.accept(resolver, local._2);
-    info.declGraph().suc(decl).appendAll(resolver.reference());
-    return Unit.unit();
+  static void resolveBind(SeqLike<@NotNull Stmt> contents, @NotNull ResolveInfo info) {
+    contents.forEach(s -> resolveBind(s, info));
   }
 
-  @Override public Unit visitLevels(Generalize.@NotNull Levels levels, ResolveInfo info) {
-    return Unit.unit();
-  }
-
-  @Override public Unit visitExample(Sample.@NotNull Working example, ResolveInfo info) {
-    visitSample(example, info);
-    return Unit.unit();
-  }
-
-  @Override public Unit visitCounterexample(Sample.@NotNull Counter example, ResolveInfo info) {
-    visitSample(example, info);
-    return Unit.unit();
-  }
-
-  private void visitSample(@NotNull Sample sample, ResolveInfo info) {
-    var delegate = sample.delegate();
-    var delegateInfo = new ResolveInfo(info.opSet(), MutableGraph.create(), MutableGraph.create());
-    delegate.accept(this, delegateInfo);
-    // little hacky: transfer dependencies from `delegate` to `sample`
-    info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));
-  }
-
-  @Override public Unit visitRemark(@NotNull Remark remark, ResolveInfo info) {
-    info.sampleGraph().suc(remark).appendAll(remark.doResolve(info));
-    return Unit.unit();
+  static void resolveBind(@NotNull Stmt stmt, @NotNull ResolveInfo info) {
+    switch (stmt) {
+      case Command.Module mod -> resolveBind(mod.contents(), info);
+      case Decl.DataDecl decl -> {
+        decl.body.forEach(ctor -> visitBind(ctor.ref, ctor, ctor.bindBlock, info));
+        visitBind(decl.ref, decl, decl.bindBlock, info);
+      }
+      case Decl.StructDecl decl -> {
+        decl.fields.forEach(field -> visitBind(field.ref, field, field.bindBlock, info));
+        visitBind(decl.ref, decl, decl.bindBlock, info);
+      }
+      case Decl.FnDecl decl -> visitBind(decl.ref, decl, decl.bindBlock, info);
+      case Sample sample -> resolveBind(sample.delegate(), info);
+      case Remark remark -> {}
+      case Command cmd -> {}
+      case Generalize.Levels levels -> {}
+      case Decl.PrimDecl decl -> {}
+    }
   }
 }

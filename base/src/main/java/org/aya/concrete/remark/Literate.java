@@ -3,7 +3,6 @@
 package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
 import kala.value.Ref;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
@@ -110,7 +109,7 @@ public sealed interface Literate extends Docile {
     }
 
     @Override public @NotNull ImmutableSeq<Stmt> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
-      var resolver = new ExprResolver(false, DynamicSeq.create(), DynamicSeq.create());
+      var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
       modify(resolver, context);
       return resolver.reference().toImmutableSeq();
     }

@@ -11,7 +11,6 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
-import org.aya.concrete.resolve.visitor.BindResolver;
 import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
@@ -31,8 +30,8 @@ public sealed interface Stmt extends AyaDocile
 
   @Contract(mutates = "param1")
   static void resolve(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo) {
-    statements.forEach(s -> s.accept(StmtResolver.INSTANCE, resolveInfo));
-    statements.forEach(s -> s.accept(BindResolver.INSTANCE, resolveInfo));
+    StmtResolver.resolveStmt(statements, resolveInfo);
+    StmtResolver.resolveBind(statements, resolveInfo);
     var opSet = resolveInfo.opSet();
     opSet.reportIfCyclic();
     statements.forEach(s -> s.desugar(opSet));
