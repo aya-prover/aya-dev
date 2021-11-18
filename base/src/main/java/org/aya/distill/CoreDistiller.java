@@ -58,7 +58,8 @@ public class CoreDistiller extends BaseDistiller implements
         var style = chooseStyle(defVar);
         bodyDoc = style != null
           ? visitCalls(defVar, style, args, Outer.Free)
-          : visitCalls(false, varDoc(defVar), args, Outer.Free);
+          : visitCalls(false, varDoc(defVar), args, Outer.Free,
+          options.map.get(DistillerOptions.Key.ShowImplicitArgs));
       }
     } else {
       bodyDoc = body.accept(this, Outer.Free);
@@ -125,7 +126,8 @@ public class CoreDistiller extends BaseDistiller implements
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
     return visitCalls(false, fn, (nest, t) -> t.toDoc(options), outer,
-      SeqView.of(new Arg<>(o -> term.sort().toDoc(), true))
+      SeqView.of(new Arg<>(o -> term.sort().toDoc(), true)),
+      options.map.get(DistillerOptions.Key.ShowImplicitArgs)
     );
   }
 
@@ -133,7 +135,8 @@ public class CoreDistiller extends BaseDistiller implements
     var args = DynamicSeq.of(term.arg());
     var head = ElimTerm.unapp(term.of(), args);
     if (head instanceof RefTerm.Field fieldRef) return visitCalls(fieldRef.ref(), FIELD_CALL, args, outer);
-    return visitCalls(false, head.accept(this, Outer.AppHead), args.view(), outer);
+    return visitCalls(false, head.accept(this, Outer.AppHead), args.view(), outer,
+      options.map.get(DistillerOptions.Key.ShowImplicitArgs));
   }
 
   @Override public Doc visitFnCall(@NotNull CallTerm.Fn fnCall, Outer outer) {
@@ -175,7 +178,8 @@ public class CoreDistiller extends BaseDistiller implements
   }
 
   @Override public Doc visitAccess(CallTerm.@NotNull Access term, Outer outer) {
-    return visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer);
+    return visitCalls(false, visitAccessHead(term), term.fieldArgs().view(), outer,
+      options.map.get(DistillerOptions.Key.ShowImplicitArgs));
   }
 
   @NotNull private Doc visitAccessHead(CallTerm.@NotNull Access term) {
@@ -186,10 +190,11 @@ public class CoreDistiller extends BaseDistiller implements
   @Override public Doc visitHole(CallTerm.@NotNull Hole term, Outer outer) {
     var name = term.ref();
     var inner = varDoc(name);
+    var showImplicits = options.map.get(DistillerOptions.Key.ShowImplicitArgs);
     if (options.map.get(DistillerOptions.Key.InlineMetas))
-      return visitCalls(false, inner, term.args().view(), outer);
+      return visitCalls(false, inner, term.args().view(), outer, showImplicits);
     return Doc.wrap("{?", "?}",
-      visitCalls(false, inner, term.args().view(), Outer.Free));
+      visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
   }
 
   @Override
@@ -212,15 +217,23 @@ public class CoreDistiller extends BaseDistiller implements
     @NotNull DefVar<?, ?> var, @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer
   ) {
+    return visitCalls(var, style, args, outer, options.map.get(DistillerOptions.Key.ShowImplicitArgs));
+  }
+
+  private Doc visitCalls(
+    @NotNull DefVar<?, ?> var, @NotNull Style style,
+    @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer, boolean showImplicits
+  ) {
     return visitCalls(var.concrete instanceof OpDecl decl && decl.opInfo() != null,
-      linkRef(var, style), args.view(), outer);
+      linkRef(var, style), args.view(), outer, showImplicits);
   }
 
   private Doc visitCalls(
     boolean infix, @NotNull Doc fn,
-    @NotNull SeqView<@NotNull Arg<@NotNull Term>> args, Outer outer
+    @NotNull SeqView<@NotNull Arg<@NotNull Term>> args, Outer outer, boolean showImplicits
   ) {
-    return visitCalls(infix, fn, (nest, term) -> term.accept(this, nest), outer, args);
+    return visitCalls(infix, fn, (nest, term) -> term.accept(this, nest),
+      outer, args, showImplicits);
   }
 
   public Doc visitPat(@NotNull Pat pat, Outer outer) {
@@ -232,8 +245,8 @@ public class CoreDistiller extends BaseDistiller implements
       case Pat.Bind bind -> Doc.bracedUnless(linkDef(bind.as()), bind.explicit());
       case Pat.Prim prim -> Doc.bracedUnless(linkRef(prim.ref(), CON_CALL), prim.explicit());
       case Pat.Ctor ctor -> {
-        var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? ctor.params().view() : ctor.params().view().filter(Pat::explicit);
-        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, pats.map(Pat::toArg), outer);
+        var ctorDoc = visitCalls(ctor.ref(), CON_CALL, ctor.params().view().map(Pat::toArg), outer,
+          options.map.get(DistillerOptions.Key.ShowImplicitPats));
         yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
       }
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());

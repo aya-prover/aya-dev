@@ -46,9 +46,9 @@ public abstract class BaseDistiller {
 
   <T extends AyaDocile> @NotNull Doc visitCalls(
     boolean infix, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
-    @NotNull SeqView<@NotNull Arg<@NotNull T>> args
+    @NotNull SeqView<@NotNull Arg<@NotNull T>> args, boolean showImplicits
   ) {
-    var visibleArgs = (options.map.get(DistillerOptions.Key.ShowImplicitArgs) ? args : args.filter(Arg::explicit)).toImmutableSeq();
+    var visibleArgs = (showImplicits ? args : args.filter(Arg::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return infix ? Doc.parened(fn) : fn;
     // Print as a binary operator
     if (infix) {

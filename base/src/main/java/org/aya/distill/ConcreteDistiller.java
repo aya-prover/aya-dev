@@ -120,7 +120,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     var fn = Doc.styled(KEYWORD, "Type");
     if (!options.map.get(DistillerOptions.Key.ShowLevels)) return fn;
     return visitCalls(false, fn, (nc, l) -> l.toDoc(options), outer,
-      SeqView.of(new Arg<>(o -> expr.level().toDoc(), true))
+      SeqView.of(new Arg<>(o -> expr.level().toDoc(), true)),
+      true
     );
   }
 
@@ -133,21 +134,24 @@ public class ConcreteDistiller extends BaseDistiller implements
     return visitCalls(infix,
       head.accept(this, Outer.AppHead),
       (nest, arg) -> arg.accept(this, nest), outer,
-      args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit()))
+      args.view().map(arg -> new Arg<>(arg.expr(), arg.explicit())),
+      options.map.get(DistillerOptions.Key.ShowImplicitArgs)
     );
   }
 
   @Override public Doc visitLsuc(Expr.@NotNull LSucExpr expr, Outer outer) {
     return visitCalls(false,
       Doc.styled(KEYWORD, "lsuc"),
-      (nest, arg) -> arg.accept(this, nest), outer, SeqView.of(new Arg<>(expr.expr(), true))
+      (nest, arg) -> arg.accept(this, nest), outer, SeqView.of(new Arg<>(expr.expr(), true)),
+      true
     );
   }
 
   @Override public Doc visitLmax(Expr.@NotNull LMaxExpr expr, Outer outer) {
     return visitCalls(false,
       Doc.styled(KEYWORD, "lmax"),
-      (nest, arg) -> arg.accept(this, nest), outer, expr.levels().view().map(term -> new Arg<>(term, true))
+      (nest, arg) -> arg.accept(this, nest), outer, expr.levels().view().map(term -> new Arg<>(term, true)),
+      true
     );
   }
 
@@ -197,7 +201,8 @@ public class ConcreteDistiller extends BaseDistiller implements
     if (seq.sizeEquals(1)) return seq.first().expr().accept(this, outer);
     return visitCalls(false,
       seq.first().expr().accept(this, Outer.AppSpine),
-      (nest, arg) -> arg.accept(this, nest), outer, seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit()))
+      (nest, arg) -> arg.accept(this, nest), outer, seq.view().drop(1).map(e -> new Arg<>(e.expr(), e.explicit())),
+      options.map.get(DistillerOptions.Key.ShowImplicitArgs)
     );
   }
 
