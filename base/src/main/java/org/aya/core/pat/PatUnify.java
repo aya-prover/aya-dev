@@ -9,7 +9,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The unification of patterns. This is <strong>not</strong> pattern unification.
@@ -21,8 +20,8 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
     switch (lhs) {
       default -> throw new IllegalStateException();
-      case Pat.Bind bind -> {
-      }
+      case Pat.Bind bind -> visitAs(bind.as(), rhs);
+      case Pat.Meta meta -> visitAs(meta.as(), rhs);
       case Pat.Tuple tuple -> {
         if (rhs instanceof Pat.Tuple tuple1) visitList(tuple.pats(), tuple1.pats());
         else reportError(lhs, rhs);
@@ -46,9 +45,8 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
     lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst));
   }
 
-  private static void visitAs(@Nullable LocalVar as, Pat rhs, PatUnify unifier) {
-    if (as == null) return;
-    unifier.lhsSubst.add(as, rhs.toTerm());
+  private void visitAs(@NotNull LocalVar as, Pat rhs) {
+    lhsSubst.add(as, rhs.toTerm());
   }
 
   private void reportError(@NotNull Pat lhs, @NotNull Pat pat) {
@@ -65,8 +63,6 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
       unify = new PatUnify(lhsSubst, rhsSubst);
       unify.unify(lhs, rhs);
     }
-    visitAs(lhs.as(), rhs, unify);
-    visitAs(rhs.as(), lhs, unify);
   }
 
   /**

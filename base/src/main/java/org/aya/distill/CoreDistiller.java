@@ -247,15 +247,11 @@ public class CoreDistiller extends BaseDistiller implements
       case Pat.Ctor ctor -> {
         var ctorDoc = visitCalls(ctor.ref(), CON_CALL, ctor.params().view().map(Pat::toArg), outer,
           options.map.get(DistillerOptions.Key.ShowImplicitPats));
-        yield ctorDoc(outer, ctor.explicit(), ctorDoc, ctor.as(), ctor.params().isEmpty());
+        yield ctorDoc(outer, ctor.explicit(), ctorDoc, null, ctor.params().isEmpty());
       }
       case Pat.Absurd absurd -> Doc.bracedUnless(Doc.styled(KEYWORD, "impossible"), absurd.explicit());
-      case Pat.Tuple tuple -> {
-        var tup = Doc.licit(tuple.explicit(),
-          Doc.commaList(tuple.pats().view().map(sub -> visitPat(sub, Outer.Free))));
-        yield tuple.as() == null ? tup
-          : Doc.sep(tup, Doc.styled(KEYWORD, "as"), linkDef(tuple.as()));
-      }
+      case Pat.Tuple tuple -> Doc.licit(tuple.explicit(),
+        Doc.commaList(tuple.pats().view().map(sub -> visitPat(sub, Outer.Free))));
     };
   }
 

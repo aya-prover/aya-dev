@@ -3,9 +3,9 @@
 package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.util.error.SourcePos;
 import org.aya.core.Matching;
 import org.aya.core.pat.Pat;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -28,10 +28,9 @@ public sealed interface SerPat extends Serializable {
     }
   }
 
-  record Tuple(boolean explicit, @NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm.SimpVar as,
-               @NotNull SerTerm ty) implements SerPat {
+  record Tuple(boolean explicit, @NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm ty) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Tuple(explicit, pats.map(pat -> pat.de(state)), as.var() < 0 ? null : state.var(as), ty.de(state));
+      return new Pat.Tuple(explicit, pats.map(pat -> pat.de(state)), ty.de(state));
     }
   }
 
@@ -49,13 +48,11 @@ public sealed interface SerPat extends Serializable {
 
   record Ctor(
     boolean explicit,
-    @NotNull SerDef.QName name, @NotNull ImmutableSeq<SerPat> params, @NotNull SerTerm.SimpVar as,
+    @NotNull SerDef.QName name, @NotNull ImmutableSeq<SerPat> params,
     @NotNull SerTerm.DataCall ty
   ) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Ctor(
-        explicit, state.def(name), params.map(param -> param.de(state)),
-        as.var() < 0 ? null : state.var(as), ty.de(state));
+      return new Pat.Ctor(explicit, state.def(name), params.map(param -> param.de(state)), ty.de(state));
     }
   }
 }

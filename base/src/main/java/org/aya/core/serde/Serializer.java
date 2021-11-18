@@ -15,7 +15,6 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -36,11 +35,10 @@ public record Serializer(@NotNull Serializer.State state) implements
         ctor.explicit(),
         state.def(ctor.ref()),
         serializePats(ctor.params()),
-        state.localMaybe(ctor.as()),
         visitDataCall(ctor.type(), Unit.unit()));
       case Pat.Prim prim -> new SerPat.Prim(prim.explicit(), state.def(prim.ref()), serialize(prim.type()));
       case Pat.Tuple tuple -> new SerPat.Tuple(tuple.explicit(),
-        serializePats(tuple.pats()), state.localMaybe(tuple.as()), serialize(tuple.type()));
+        serializePats(tuple.pats()), serialize(tuple.type()));
       case Pat.Bind bind -> new SerPat.Bind(bind.explicit(), state.local(bind.as()), serialize(bind.type()));
       case Pat.Meta meta -> throw new IllegalArgumentException(meta.toString());
     };
@@ -65,11 +63,6 @@ public record Serializer(@NotNull Serializer.State state) implements
 
     public @NotNull SerTerm.SimpVar local(@NotNull LocalVar var) {
       return new SerTerm.SimpVar(localCache.getOrPut(var, localCache::size), var.name());
-    }
-
-    public @NotNull SerTerm.SimpVar localMaybe(@Nullable LocalVar var) {
-      if (var == null) return new SerTerm.SimpVar(-1, "");
-      else return local(var);
     }
 
     public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {

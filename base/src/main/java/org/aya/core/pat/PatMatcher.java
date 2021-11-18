@@ -71,8 +71,6 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst, @Nullable LocalCt
       case Pat.Ctor ctor -> {
         switch (term) {
           case CallTerm.Con conCall -> {
-            var as = ctor.as();
-            if (as != null) subst.addDirectly(as, conCall);
             if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
             visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
           }
@@ -82,11 +80,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst, @Nullable LocalCt
       }
       case Pat.Tuple tuple -> {
         switch (term) {
-          case IntroTerm.Tuple tup -> {
-            var as = tuple.as();
-            if (as != null) subst.addDirectly(as, tup);
-            visitList(tuple.pats(), tup.items());
-          }
+          case IntroTerm.Tuple tup -> visitList(tuple.pats(), tup.items());
           case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
           default -> throw new Mismatch(true);
         }

@@ -21,14 +21,14 @@ public interface TermToPat {
       default -> null;
       case RefTerm ref -> new Pat.Bind(explicit, ref.var(), ref.type());
       case CallTerm.Con conCall -> new Pat.Ctor(explicit, conCall.ref(),
-        conCall.args().map(TermToPat::toPat), null,
+        conCall.args().map(TermToPat::toPat),
         conCall.head().underlyingDataCall());
       case CallTerm.Prim prim -> switch (prim.ref().core.id) {
         case LEFT, RIGHT -> new Pat.Prim(explicit, prim.ref(), prim.computeType(null));
         default -> null;
       };
       case IntroTerm.Tuple tuple -> new Pat.Tuple(explicit,
-        tuple.items().map(item -> toPat(item, true)), null, term);
+        tuple.items().map(item -> toPat(item, true)), term);
     };
   }
 }
