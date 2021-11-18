@@ -259,12 +259,6 @@ public class CoreDistiller extends BaseDistiller implements
     };
   }
 
-  public Doc visitMaybeCtorPatterns(SeqLike<Pat> patterns, Outer outer, @NotNull Doc delim) {
-    var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
-    return Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.join(delim,
-      pats.view().map(p -> visitPat(p, outer)))));
-  }
-
   @Override public Doc visitFn(@NotNull FnDef def, Unit unit) {
     var line1 = DynamicSeq.of(Doc.styled(KEYWORD, "def"),
       linkDef(def.ref(), FN_CALL),

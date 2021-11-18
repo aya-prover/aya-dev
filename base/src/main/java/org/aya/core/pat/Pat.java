@@ -237,8 +237,10 @@ public sealed interface Pat extends CorePat {
     @NotNull Option<Term> expr
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-      var doc = new CoreDistiller(options).visitMaybeCtorPatterns(
-        patterns, BaseDistiller.Outer.Free, Doc.COMMA);
+      var distiller = new CoreDistiller(options);
+      var pats = options.map.get(DistillerOptions.Key.ShowImplicitPats) ? patterns : patterns.view().filter(Pat::explicit);
+      var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
+        pats.view().map(p -> distiller.visitPat(p, BaseDistiller.Outer.Free)))));
       if (expr.isDefined()) return Doc.sep(doc, Doc.symbol("=>"), expr.get().toDoc(options));
       else return doc;
     }
