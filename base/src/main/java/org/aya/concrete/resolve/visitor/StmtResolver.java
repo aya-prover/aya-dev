@@ -89,6 +89,7 @@ public interface StmtResolver {
       case Remark remark -> info.sampleGraph().suc(remark).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize.Levels levels -> {}
+      case Generalize.Variables variables -> {}
     }
   }
 
@@ -137,8 +138,9 @@ public interface StmtResolver {
       case Sample sample -> resolveBind(sample.delegate(), info);
       case Remark remark -> {}
       case Command cmd -> {}
-      case Generalize.Levels levels -> {}
       case Decl.PrimDecl decl -> {}
+      case Generalize.Levels levels -> {}
+      case Generalize.Variables variables -> {}
     }
   }
 }

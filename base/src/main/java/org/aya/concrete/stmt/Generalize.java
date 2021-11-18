@@ -5,11 +5,13 @@ package org.aya.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Expr;
+import org.aya.concrete.resolve.context.Context;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public sealed interface Generalize extends Stmt {
   @Override default @NotNull Accessibility accessibility() {
@@ -29,6 +31,7 @@ public sealed interface Generalize extends Stmt {
     public final @NotNull SourcePos sourcePos;
     public final @NotNull ImmutableSeq<GeneralizedVar> variables;
     public @NotNull Expr type;
+    public @Nullable Context ctx = null;
 
     public Variables(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<GeneralizedVar> variables, @NotNull Expr type) {
       this.sourcePos = sourcePos;
