@@ -7,13 +7,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Tuple2;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.PreLevelVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.ExprFixpoint;
+import org.aya.generic.ref.PreLevelVar;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

@@ -3,12 +3,12 @@
 package org.aya.concrete.stmt;
 
 import org.aya.api.error.BufferReporter;
-import org.aya.util.error.SourcePos;
 import org.aya.core.def.Def;
 import org.aya.core.def.UserDef;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CounterexampleError;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,14 +51,14 @@ public sealed interface Sample extends Stmt {
     }
 
     @Override public void tyckHeader(@NotNull StmtTycker stmtTycker) {
-      var exprTycker = new ExprTycker(this.reporter, stmtTycker.traceBuilder());
+      var exprTycker = new ExprTycker(reporter, stmtTycker.traceBuilder());
       stmtTycker.tyckHeader(delegate, exprTycker);
     }
 
     @Override public @NotNull Def tyck(@NotNull StmtTycker stmtTycker) {
-      var exprTycker = new ExprTycker(this.reporter, stmtTycker.traceBuilder());
+      var exprTycker = new ExprTycker(reporter, stmtTycker.traceBuilder());
       var def = stmtTycker.tyck(delegate, exprTycker);
-      var problems = this.reporter.problems().toImmutableSeq();
+      var problems = reporter.problems().toImmutableSeq();
       if (problems.isEmpty()) {
         stmtTycker.reporter().report(new CounterexampleError(delegate.sourcePos(), delegate.ref()));
       }

@@ -31,6 +31,7 @@ module org.aya {
   exports org.aya.core.visitor;
   exports org.aya.core;
   exports org.aya.distill;
+  exports org.aya.generic.ref;
   exports org.aya.generic;
   exports org.aya.prelude;
   exports org.aya.tyck.pat;

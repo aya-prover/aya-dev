@@ -10,7 +10,6 @@ import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.PreLevelVar;
 import org.aya.api.util.Arg;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -19,6 +18,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.util.StringEscapeUtil;
@@ -392,6 +392,11 @@ public class ConcreteDistiller extends BaseDistiller implements
   @Override public Doc visitLevels(Generalize.@NotNull Levels levels, Unit unit) {
     var vars = levels.levels().map(t -> linkDef(t.data(), GENERALIZED));
     return Doc.sep(Doc.styled(KEYWORD, "universe"), Doc.sep(vars));
+  }
+
+  @Override public Doc visitVariables(Generalize.@NotNull Variables variables, Unit unit) {
+    return Doc.sep(Doc.styled(KEYWORD, "variables"),
+      visitTele(variables.variables().view().map(Generalize.Param::toExpr)));
   }
 
   @Override public Doc visitExample(Sample.@NotNull Working example, Unit unit) {
