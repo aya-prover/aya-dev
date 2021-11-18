@@ -1,21 +1,21 @@
-In file $FILE:8:6 ->
+In file $FILE:8:21 ->
 
   6 |  | A, suc m => vcons A (Vect A m)
   7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
-  8 |  | f, vnil => vnil
-            ^--^
+  8 |  | {A}, {B}, {n}, f, vnil => vnil
+                           ^--^
 
 Error: Cannot match with
          vnil
        as index unification is blocked for type
          Vect A n
 
-In file $FILE:9:6 ->
+In file $FILE:9:21 ->
 
   7 | def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
-  8 |  | f, vnil => vnil
-  9 |  | f, vcons x xs => _
-            ^--------^
+  8 |  | {A}, {B}, {n}, f, vnil => vnil
+  9 |  | {A}, {B}, {n}, f, vcons x xs => _
+                           ^--------^
 
 Error: Cannot match with
          vcons x xs

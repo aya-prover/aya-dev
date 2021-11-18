@@ -27,5 +27,10 @@ public record RefTerm(@NotNull LocalVar var, @NotNull Term type) implements Term
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitMetaPat(this, p);
     }
+
+    public @NotNull Term inline() {
+      var sol = ref.solution().value;
+      return sol != null ? sol.toTerm() : this;
+    }
   }
 }

@@ -23,9 +23,13 @@ public record Normalizer(@Nullable TyckState state) implements Unfolder<Normaliz
     return term;
   }
 
-  @Override
-  public @NotNull Term visitFieldRef(@NotNull RefTerm.Field term, NormalizeMode normalizeMode) {
+  @Override public @NotNull Term
+  visitFieldRef(@NotNull RefTerm.Field term, NormalizeMode normalizeMode) {
     return term;
+  }
+
+  @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, NormalizeMode normalizeMode) {
+    return metaPat.inline();
   }
 
   @Override public @NotNull Term visitLam(@NotNull IntroTerm.Lambda term, NormalizeMode mode) {

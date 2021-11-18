@@ -15,33 +15,36 @@ import org.aya.core.term.IntroTerm;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
+import org.aya.tyck.LocalCtx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Matches a term with a pattern.
  *
  * @author ice1000
- * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(ImmutableSeq, SeqLike)} instead of instantiating the class directly.
+ * @apiNote Use {@link PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike)} instead of instantiating the class directly.
  * @implNote The substitution built is made from parallel substitutions.
  */
-public record PatMatcher(@NotNull Substituter.TermSubst subst) {
+public record PatMatcher(@NotNull Substituter.TermSubst subst, @Nullable LocalCtx localCtx) {
   /**
+   * @param localCtx not null only if we expect the presence of {@link RefTerm.MetaPat}
    * @return ok if the term matches the pattern,
    * err(false) if fails positively, err(true) if fails negatively
    */
   public static Result<Substituter.TermSubst, Boolean> tryBuildSubstArgs(
-    @NotNull ImmutableSeq<@NotNull Pat> pats,
+    @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> terms
   ) {
-    return tryBuildSubstTerms(pats, terms.view().map(Arg::term));
+    return tryBuildSubstTerms(localCtx, pats, terms.view().map(Arg::term));
   }
 
-  /** @see PatMatcher#tryBuildSubstArgs(ImmutableSeq, SeqLike) */
+  /** @see PatMatcher#tryBuildSubstArgs(LocalCtx, ImmutableSeq, SeqLike) */
   public static Result<Substituter.TermSubst, Boolean> tryBuildSubstTerms(
-    @NotNull ImmutableSeq<@NotNull Pat> pats,
+    @Nullable LocalCtx localCtx, @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms
   ) {
-    var matchy = new PatMatcher(new Substituter.TermSubst(new MutableHashMap<>()));
+    var matchy = new PatMatcher(new Substituter.TermSubst(new MutableHashMap<>()), localCtx);
     try {
       for (var pat : pats.zip(terms)) matchy.match(pat);
       return Result.ok(matchy.subst());
@@ -66,17 +69,27 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
         }
       }
       case Pat.Ctor ctor -> {
-        if (!(term instanceof CallTerm.Con conCall)) throw new Mismatch(true);
-        var as = ctor.as();
-        if (as != null) subst.addDirectly(as, conCall);
-        if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
-        visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
+        switch (term) {
+          case CallTerm.Con conCall -> {
+            var as = ctor.as();
+            if (as != null) subst.addDirectly(as, conCall);
+            if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
+            visitList(ctor.params(), conCall.conArgs().view().map(Arg::term));
+          }
+          case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
+          default -> throw new Mismatch(true);
+        }
       }
       case Pat.Tuple tuple -> {
-        if (!(term instanceof IntroTerm.Tuple tup)) throw new Mismatch(true);
-        var as = tuple.as();
-        if (as != null) subst.addDirectly(as, tup);
-        visitList(tuple.pats(), tup.items());
+        switch (term) {
+          case IntroTerm.Tuple tup -> {
+            var as = tuple.as();
+            if (as != null) subst.addDirectly(as, tup);
+            visitList(tuple.pats(), tup.items());
+          }
+          case RefTerm.MetaPat metaPat -> solve(pat, metaPat);
+          default -> throw new Mismatch(true);
+        }
       }
       case Pat.Meta meta -> {
         var sol = meta.solution().value;
@@ -91,7 +104,8 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
     var todo = referee.solution();
     if (todo.value != null) throw new UnsupportedOperationException(
       "unsure what to do, please file an issue with reproduction if you see this!");
-    todo.value = pat.rename(subst, referee.explicit());
+    assert localCtx != null;
+    todo.value = pat.rename(subst, localCtx, referee.explicit());
   }
 
   private void visitList(ImmutableSeq<Pat> lpats, SeqLike<Term> terms) throws Mismatch {

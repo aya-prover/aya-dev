@@ -10,6 +10,7 @@ import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
+import kala.tuple.Unit;
 import kala.value.Ref;
 import org.aya.api.error.Problem;
 import org.aya.api.ref.DefVar;
@@ -24,11 +25,9 @@ import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
-import org.aya.core.term.CallTerm;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.FormTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
+import org.aya.core.visitor.TermFixpoint;
 import org.aya.core.visitor.Unfolder;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
@@ -131,8 +130,8 @@ public final class PatTycker {
         var levelSubst = Unfolder.buildSubst(Def.defLevels(dataCall.ref()), dataCall.sortArgs());
         var sig = new Def.Signature(ImmutableSeq.empty(),
           Term.Param.subst(ctorCore.selfTele, realCtor._2, levelSubst), dataCall);
-        var patterns = visitPatterns(sig, ctor.params().view());
-        yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns._1, ctor.as(), realCtor._1);
+        var patterns = visitPatterns(sig, ctor.params().view())._1;
+        yield new Pat.Ctor(ctor.explicit(), realCtor._3.ref(), patterns, ctor.as(), realCtor._1);
       }
       case Pattern.Bind bind -> {
         var v = bind.bind();
@@ -146,8 +145,13 @@ public final class PatTycker {
   private Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
     exprTycker.localCtx = exprTycker.localCtx.derive();
     currentClause = match;
-    var patterns = visitPatterns(signature, match.patterns.view());
-    var type = patterns._2;
+    var patResult = visitPatterns(signature, match.patterns.view());
+    var patterns = patResult._1.map(p -> p.zonk(null));
+    var type = patResult._2.accept(new TermFixpoint<>() {
+      @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
+        return metaPat.inline();
+      }
+    }, Unit.unit());
     var result = match.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,
@@ -159,7 +163,7 @@ public final class PatTycker {
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
-    return new Pat.PrototypeClause(match.sourcePos, patterns._1, result);
+    return new Pat.PrototypeClause(match.sourcePos, patterns, result);
   }
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
@@ -288,7 +292,7 @@ public final class PatTycker {
   }
 
   private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
-    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(ctor.pats, dataCall.args());
+    if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(exprTycker.localCtx, ctor.pats, dataCall.args());
     else return Result.ok(Unfolder.buildSubst(core.telescope(), dataCall.args()));
   }
 }
