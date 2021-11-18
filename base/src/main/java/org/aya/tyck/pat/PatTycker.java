@@ -146,7 +146,7 @@ public final class PatTycker {
     exprTycker.localCtx = exprTycker.localCtx.derive();
     currentClause = match;
     var patResult = visitPatterns(signature, match.patterns.view());
-    var patterns = patResult._1.map(p -> p.zonk(null));
+    var patterns = patResult._1.map(Pat::inline);
     var type = patResult._2.accept(new TermFixpoint<>() {
       @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
         return metaPat.inline();
