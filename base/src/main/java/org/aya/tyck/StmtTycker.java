@@ -2,12 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.tuple.Tuple;
 import org.aya.api.error.Reporter;
-import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
@@ -85,7 +85,7 @@ public record StmtTycker(
           },
           clauses -> {
             var patTycker = new PatTycker(tycker);
-            var result = patTycker.elabClauses(clauses, signature);
+            var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
             var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
             var def = factory.apply(result._1, Either.right(matchings));
             if (patTycker.noError()) {
@@ -184,15 +184,13 @@ public record StmtTycker(
     var tele = checkTele(tycker, ctor.telescope, dataSig.result());
     var signature = new Def.Signature(sortParam, tele, dataCall);
     ctor.signature = signature;
-    var dataParamView = dataSig.param().view();
+    var dataTeleView = dataSig.param().view();
     if (pat.isNotEmpty()) {
-      var subst = dataParamView.map(Term.Param::ref)
-        .zip(pat.view().map(Pat::toTerm))
-        .<Var, Term>toImmutableMap();
-      dataCall = (CallTerm.Data) dataCall.subst(subst);
+      dataCall = (CallTerm.Data) dataCall.subst(ImmutableMap.from(
+        dataTeleView.map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
     }
-    ctor.patternTele = pat.isEmpty() ? dataParamView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
-    var elabClauses = patTycker.elabClauses(ctor.clauses, signature)._2;
+    ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
+    var elabClauses = patTycker.elabClauses(ctor.clauses, signature, ctor.sourcePos)._2;
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, matchings, dataCall, ctor.coerce);
     if (patTycker.noError())
@@ -225,7 +223,7 @@ public record StmtTycker(
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
-    var elabClauses = patTycker.elabClauses(field.clauses, field.signature)._2;
+    var elabClauses = patTycker.elabClauses(field.clauses, field.signature, field.result.sourcePos())._2;
     var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);

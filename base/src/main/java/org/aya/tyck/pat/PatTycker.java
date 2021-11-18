@@ -29,12 +29,12 @@ import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
-import org.aya.core.visitor.Zonker;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +75,7 @@ public final class PatTycker {
   public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
   elabClauses(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature
+    @NotNull Def.Signature signature, @Nullable SourcePos resultPos
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
@@ -83,7 +83,12 @@ public final class PatTycker {
       tracing(TreeBuilder::reduce);
       return elabClause;
     });
-    return Tuple.of(signature.result(), res);
+    exprTycker.solveMetas();
+    var zonker = exprTycker.newZonker();
+    return Tuple.of(signature.result().zonk(exprTycker, resultPos),
+      res.map(c -> new Pat.PrototypeClause(
+        c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
+        c.expr().map(e -> zonker.zonk(e, c.sourcePos())))));
   }
 
   @SuppressWarnings("unchecked") private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
@@ -137,9 +142,6 @@ public final class PatTycker {
     };
   }
 
-  /**
-   * @return already zonked
-   */
   private Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
     exprTycker.localCtx = exprTycker.localCtx.derive();
     currentClause = match;
@@ -152,15 +154,11 @@ public final class PatTycker {
       // not be added to the localCtx of tycker, causing assertion errors
       ? match.expr.<Term>map(e -> new ErrorTerm(e, false))
       : match.expr.map(e -> exprTycker.inherit(e, type).wellTyped().subst(termSubst));
-    var zonker = new Zonker(exprTycker.state, exprTycker.reporter);
-    exprTycker.solveMetas();
-    result = result.map(e -> zonker.zonk(e, match.expr.get().sourcePos()));
     termSubst.clear();
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
-    var zonkPats = patterns._1.map(pat -> pat.zonk(zonker));
-    return new Pat.PrototypeClause(match.sourcePos, zonkPats, result);
+    return new Pat.PrototypeClause(match.sourcePos, patterns._1, result);
   }
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>

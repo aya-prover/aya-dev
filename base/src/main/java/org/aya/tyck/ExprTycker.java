@@ -30,6 +30,7 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
+import org.aya.core.visitor.Zonker;
 import org.aya.generic.Constants;
 import org.aya.generic.Level;
 import org.aya.generic.Modifier;
@@ -61,6 +62,10 @@ public final class ExprTycker {
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
+  }
+
+  public @NotNull Zonker newZonker() {
+    return new Zonker(state, reporter);
   }
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {

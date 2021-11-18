@@ -12,6 +12,7 @@ import org.aya.api.util.Arg;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
+import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
     return tryBuildSubstTerms(pats, terms.view().map(Arg::term));
   }
 
-  /** @see this#tryBuildSubstArgs(ImmutableSeq, SeqLike) */
+  /** @see PatMatcher#tryBuildSubstArgs(ImmutableSeq, SeqLike) */
   public static Result<Substituter.TermSubst, Boolean> tryBuildSubstTerms(
     @NotNull ImmutableSeq<@NotNull Pat> pats,
     @NotNull SeqView<@NotNull Term> terms
@@ -56,8 +57,19 @@ public record PatMatcher(@NotNull Substituter.TermSubst subst) {
       case Pat.Prim prim -> {
         var core = prim.ref().core;
         assert PrimDef.Factory.INSTANCE.leftOrRight(core);
-        if (!(term instanceof CallTerm.Prim primCall)) throw new Mismatch(true);
-        if (primCall.ref() != prim.ref()) throw new Mismatch(false);
+        switch (term) {
+          case CallTerm.Prim primCall -> {
+            if (primCall.ref() != prim.ref()) throw new Mismatch(false);
+          }
+          case RefTerm.MetaPat metaPat -> {
+            var referee = metaPat.ref();
+            var todo = referee.solution();
+            if (todo.value != null) throw new UnsupportedOperationException(
+              "unsure what to do, please file an issue with reproduction if you see this!");
+            todo.value = pat.rename(subst, referee.explicit());
+          }
+          default -> throw new Mismatch(true);
+        }
       }
       case Pat.Ctor ctor -> {
         if (!(term instanceof CallTerm.Con conCall)) throw new Mismatch(true);

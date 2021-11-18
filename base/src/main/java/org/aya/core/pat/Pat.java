@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
-
 /**
  * @author kiva, ice1000
  */
@@ -47,7 +45,7 @@ public sealed interface Pat extends CorePat {
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return new CoreDistiller(options).visitPat(this, BaseDistiller.Outer.Free);
   }
-  @NotNull Pat rename(@NotNull Substituter.TermSubst subst);
+  @NotNull Pat rename(@NotNull Substituter.TermSubst subst, boolean explicit);
   @NotNull Pat zonk(@NotNull Zonker zonker);
   void storeBindings(@NotNull LocalCtx localCtx);
   static @NotNull ImmutableSeq<Term.Param> extractTele(@NotNull SeqLike<Pat> pats) {
@@ -65,9 +63,9 @@ public sealed interface Pat extends CorePat {
       localCtx.put(as, type);
     }
 
-    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, boolean explicit) {
       var newName = new LocalVar(as.name(), as.definition());
-      var bind = new Bind(explicit, newName, type.subst(subst));
+      var bind = new Bind(this.explicit, newName, type.subst(subst));
       subst.addDirectly(as, new RefTerm(newName, type));
       return bind;
     }
@@ -96,7 +94,7 @@ public sealed interface Pat extends CorePat {
       return solution.value.zonk(zonker);
     }
 
-    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, boolean explicit) {
       throw new IllegalStateException("unreachable");
     }
   }
@@ -110,7 +108,7 @@ public sealed interface Pat extends CorePat {
       throw new IllegalStateException();
     }
 
-    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, boolean explicit) {
       throw new IllegalStateException();
     }
 
@@ -130,10 +128,10 @@ public sealed interface Pat extends CorePat {
       pats.forEach(pat -> pat.storeBindings(localCtx));
     }
 
-    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
-      var params = pats.map(pat -> pat.rename(subst));
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, boolean explicit) {
+      var params = pats.map(pat -> pat.rename(subst, pat.explicit()));
       var newName = as == null ? null : new LocalVar(as.name(), as.definition());
-      var tuple = new Tuple(explicit, params, newName, type.subst(subst));
+      var tuple = new Tuple(this.explicit, params, newName, type.subst(subst));
       if (as != null) subst.addDirectly(as, new RefTerm(newName, type));
       return tuple;
     }
@@ -156,10 +154,10 @@ public sealed interface Pat extends CorePat {
       params.forEach(pat -> pat.storeBindings(localCtx));
     }
 
-    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
-      var params = this.params.map(pat -> pat.rename(subst));
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, boolean explicit) {
+      var params = this.params.map(pat -> pat.rename(subst, pat.explicit()));
       var newName = as == null ? null : new LocalVar(as.name(), as.definition());
-      var ctor = new Ctor(explicit, ref, params, newName, (CallTerm.Data) type.subst(subst));
+      var ctor = new Ctor(this.explicit, ref, params, newName, (CallTerm.Data) type.subst(subst));
       if (as != null) subst.addDirectly(as, new RefTerm(newName, type));
       return ctor;
     }
@@ -184,7 +182,7 @@ public sealed interface Pat extends CorePat {
       // Do nothing
     }
 
-    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst) {
+    @Override public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, boolean explicit) {
       return this;
     }
 
@@ -210,10 +208,6 @@ public sealed interface Pat extends CorePat {
 
     public static @NotNull PrototypeClause prototypify(@NotNull Matching clause) {
       return new PrototypeClause(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
-    }
-
-    public @NotNull PrototypeClause mapTerm(@NotNull Function<Term, Term> termMap) {
-      return new PrototypeClause(sourcePos, patterns, expr.map(termMap));
     }
 
     public static @NotNull Option<@NotNull Matching> deprototypify(@NotNull PrototypeClause clause) {
