@@ -3,7 +3,6 @@
 package org.aya.concrete.resolve.visitor;
 
 import kala.collection.SeqLike;
-import kala.collection.mutable.DynamicSeq;
 import kala.value.Ref;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.desugar.AyaBinOpSet;
@@ -13,7 +12,6 @@ import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
-import org.aya.util.MutableGraph;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,11 +32,11 @@ public interface StmtResolver {
     switch (stmt) {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
-        var signatureResolver = new ExprResolver(true, DynamicSeq.create(), DynamicSeq.create());
+        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
         decl.telescope = local._1;
         decl.result = decl.result.accept(signatureResolver, local._2);
-        var bodyResolver = new ExprResolver(false, signatureResolver);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         for (var ctor : decl.body) {
           var localCtxWithPat = new Ref<>(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
@@ -49,22 +47,22 @@ public interface StmtResolver {
         info.declGraph().suc(decl).appendAll(signatureResolver.reference());
       }
       case Decl.FnDecl decl -> {
-        var signatureResolver = new ExprResolver(true, DynamicSeq.create(), DynamicSeq.create());
+        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
         decl.telescope = local._1;
         decl.result = decl.result.accept(signatureResolver, local._2);
-        var bodyResolver = new ExprResolver(false, signatureResolver);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         decl.body = decl.body.map(
           expr -> expr.accept(bodyResolver, local._2),
           pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
         info.declGraph().suc(decl).appendAll(signatureResolver.reference());
       }
       case Decl.StructDecl decl -> {
-        var signatureResolver = new ExprResolver(true, DynamicSeq.create(), DynamicSeq.create());
+        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
         decl.telescope = local._1;
         decl.result = decl.result.accept(signatureResolver, local._2);
-        var bodyResolver = new ExprResolver(false, signatureResolver);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         decl.fields.forEach(field -> {
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
           field.telescope = fieldLocal._1;
@@ -75,7 +73,7 @@ public interface StmtResolver {
         info.declGraph().suc(decl).appendAll(signatureResolver.reference());
       }
       case Decl.PrimDecl decl -> {
-        var resolver = new ExprResolver(false, DynamicSeq.create(), DynamicSeq.create());
+        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
         var local = resolver.resolveParams(decl.telescope, decl.ctx);
         decl.telescope = local._1;
         if (decl.result != null) decl.result = decl.result.accept(resolver, local._2);
@@ -83,7 +81,7 @@ public interface StmtResolver {
       }
       case Sample sample -> {
         var delegate = sample.delegate();
-        var delegateInfo = new ResolveInfo(info.opSet(), MutableGraph.create(), MutableGraph.create());
+        var delegateInfo = new ResolveInfo(info.opSet());
         resolveStmt(delegate, delegateInfo);
         // little hacky: transfer dependencies from `delegate` to `sample`
         info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));
