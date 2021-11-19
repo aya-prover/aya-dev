@@ -3,17 +3,20 @@
 package org.aya.concrete.resolve.error;
 
 import org.aya.api.distill.DistillerOptions;
-import org.aya.api.error.ExprProblem;
-import org.aya.concrete.Expr;
+import org.aya.api.ref.Var;
+import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-public record GeneralizedNotAvailableError(@Override @NotNull Expr expr) implements ExprProblem, ResolveProblem {
+public record GeneralizedNotAvailableError(
+  @Override @NotNull SourcePos sourcePos, @NotNull Var var
+) implements ResolveProblem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
     return Doc.sep(
       Doc.english("The generalized variable"),
-      Doc.styled(Style.code(), expr.toDoc(options)),
+      Doc.styled(Style.code(), BaseDistiller.varDoc(var)),
       Doc.english("is not available here")
     );
   }

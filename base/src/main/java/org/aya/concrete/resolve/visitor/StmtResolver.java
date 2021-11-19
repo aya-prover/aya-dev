@@ -34,7 +34,7 @@ public interface StmtResolver {
       case Decl.DataDecl decl -> {
         var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1;
+        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
         decl.result = decl.result.accept(signatureResolver, local._2);
         var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         for (var ctor : decl.body) {
@@ -49,8 +49,7 @@ public interface StmtResolver {
       case Decl.FnDecl decl -> {
         var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1;
-        // TODO[ice]: ^ prepend with the generalizations and substitute the body
+        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
         decl.result = decl.result.accept(signatureResolver, local._2);
         var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         decl.body = decl.body.map(
@@ -61,7 +60,7 @@ public interface StmtResolver {
       case Decl.StructDecl decl -> {
         var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1;
+        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
         decl.result = decl.result.accept(signatureResolver, local._2);
         var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         decl.fields.forEach(field -> {
