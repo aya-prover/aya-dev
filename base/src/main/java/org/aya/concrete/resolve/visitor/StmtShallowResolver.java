@@ -80,7 +80,7 @@ public record StmtShallowResolver(
   @Override public Unit visitVariables(Generalize.@NotNull Variables variables, @NotNull ModuleContext context) {
     variables.ctx = context;
     for (var variable : variables.variables)
-      context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos());
+      context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
     return Unit.unit();
   }
 

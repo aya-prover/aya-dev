@@ -37,18 +37,19 @@ public sealed interface Generalize extends Stmt {
       this.sourcePos = sourcePos;
       this.variables = variables;
       this.type = type;
+      variables.forEach(variable -> variable.owner = this);
     }
 
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitVariables(this, p);
     }
 
-    public @NotNull Expr.Param toExpr(@NotNull GeneralizedVar one) {
-      return new Expr.Param(sourcePos, new LocalVar(one.name(), one.sourcePos()), type, false, true);
+    public @NotNull Expr.Param toExpr(@NotNull GeneralizedVar one, boolean explicit) {
+      return new Expr.Param(sourcePos, new LocalVar(one.name(), one.sourcePos), type, false, explicit);
     }
 
     public @NotNull ImmutableSeq<Expr.Param> toExpr() {
-      return variables.map(this::toExpr);
+      return variables.map(one -> toExpr(one, true));
     }
 
     public @NotNull SourcePos sourcePos() {

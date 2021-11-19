@@ -13,6 +13,7 @@ import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.ExprFixpoint;
+import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.ref.PreLevelVar;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -20,30 +21,34 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Resolves bindings.
  *
- * @param allowedLevels will be filled with generalized level vars if allowGeneralized,
- *                      and represents the allowed generalized level vars otherwise
+ * @param allowedLevels      will be filled with generalized level vars if allowLevels,
+ *                           and represents the allowed generalized level vars otherwise
+ * @param allowedGeneralizes will be filled with generalized vars if allowGeneralized,
+ *                           and represents the allowed generalized level vars otherwise
  * @author re-xyr, ice1000
  * @see StmtResolver
  */
 public record ExprResolver(
   @NotNull Options options,
   @NotNull DynamicSeq<PreLevelVar> allowedLevels,
+  @NotNull DynamicSeq<GeneralizedVar> allowedGeneralizes,
   @NotNull DynamicSeq<Stmt> reference
 ) implements ExprFixpoint<Context> {
   /**
-   * @param allowGeneralized true for signatures, false for bodies
+   * @param allowLevels true for signatures, false for bodies
    */
-  public record Options(boolean allowGeneralized) {
+  public record Options(boolean allowLevels, boolean allowGeneralized) {
   }
 
-  public static final @NotNull Options RESTRICTIVE = new Options(false);
+  public static final @NotNull Options RESTRICTIVE = new Options(false, false);
+  public static final @NotNull Options LAX = new ExprResolver.Options(true, true);
 
   public ExprResolver(@NotNull Options options) {
-    this(options, DynamicSeq.create(), DynamicSeq.create());
+    this(options, DynamicSeq.create(), DynamicSeq.create(), DynamicSeq.create());
   }
 
   public ExprResolver(@NotNull Options options, @NotNull ExprResolver parent) {
-    this(options, parent.allowedLevels, parent.reference);
+    this(options, parent.allowedLevels, parent.allowedGeneralizes, parent.reference);
   }
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
@@ -53,11 +58,17 @@ public record ExprResolver(
     var refExpr = new Expr.RefExpr(sourcePos, resolved);
     switch (resolved) {
       case PreLevelVar levelVar -> {
-        if (options.allowGeneralized) allowedLevels.append(levelVar);
-        else if (!allowedLevels.contains(levelVar)) {
-          ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
-          throw new Context.ResolvingInterruptedException();
-        }
+        if (options.allowLevels) allowedLevels.append(levelVar);
+        else if (!allowedLevels.contains(levelVar)) generalizedUnavailable(ctx, refExpr);
+      }
+      case GeneralizedVar generalized -> {
+        if (options.allowGeneralized) {
+          // Ordered set semantics. Do not expect too many generalized vars.
+          if (!allowedGeneralizes.contains(generalized)) {
+            allowedGeneralizes.append(generalized);
+            reference.append(generalized.owner);
+          }
+        } else if (!allowedGeneralizes.contains(generalized)) generalizedUnavailable(ctx, refExpr);
       }
       case DefVar<?, ?> ref -> {
         switch (ref.concrete) {
@@ -71,6 +82,11 @@ public record ExprResolver(
       }
     }
     return refExpr;
+  }
+
+  private void generalizedUnavailable(Context ctx, Expr.RefExpr refExpr) {
+    ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
+    throw new Context.ResolvingInterruptedException();
   }
 
   public @NotNull Tuple2<Expr.Param, Context> visitParam(@NotNull Expr.Param param, Context ctx) {

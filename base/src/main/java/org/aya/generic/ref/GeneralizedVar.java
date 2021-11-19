@@ -3,16 +3,21 @@
 package org.aya.generic.ref;
 
 import org.aya.api.ref.Var;
+import org.aya.concrete.stmt.Generalize;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public record GeneralizedVar(@NotNull String name, @NotNull SourcePos sourcePos) implements Var {
-  @Override public boolean equals(@Nullable Object o) {
-    return this == o;
+public final class GeneralizedVar implements Var {
+  public final @NotNull String name;
+  public final @NotNull SourcePos sourcePos;
+  public Generalize.Variables owner;
+
+  public GeneralizedVar(@NotNull String name, @NotNull SourcePos sourcePos) {
+    this.name = name;
+    this.sourcePos = sourcePos;
   }
 
-  @Override public int hashCode() {
-    return System.identityHashCode(this);
+  public @NotNull String name() {
+    return name;
   }
 }

@@ -32,7 +32,7 @@ public interface StmtResolver {
     switch (stmt) {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
-        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
         decl.telescope = local._1;
         decl.result = decl.result.accept(signatureResolver, local._2);
@@ -47,9 +47,10 @@ public interface StmtResolver {
         info.declGraph().suc(decl).appendAll(signatureResolver.reference());
       }
       case Decl.FnDecl decl -> {
-        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
         decl.telescope = local._1;
+        // TODO[ice]: ^ prepend with the generalizations and substitute the body
         decl.result = decl.result.accept(signatureResolver, local._2);
         var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         decl.body = decl.body.map(
@@ -58,7 +59,7 @@ public interface StmtResolver {
         info.declGraph().suc(decl).appendAll(signatureResolver.reference());
       }
       case Decl.StructDecl decl -> {
-        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
         decl.telescope = local._1;
         decl.result = decl.result.accept(signatureResolver, local._2);
@@ -89,7 +90,11 @@ public interface StmtResolver {
       case Remark remark -> info.sampleGraph().suc(remark).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize.Levels levels -> {}
-      case Generalize.Variables variables -> {}
+      case Generalize.Variables variables -> {
+        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
+        variables.type = variables.type.accept(resolver, variables.ctx);
+        info.declGraph().suc(variables).appendAll(resolver.reference());
+      }
     }
   }
 
