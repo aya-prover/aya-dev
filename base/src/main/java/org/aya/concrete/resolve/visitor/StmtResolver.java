@@ -3,12 +3,10 @@
 package org.aya.concrete.resolve.visitor;
 
 import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
 import org.aya.api.ref.DefVar;
-import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.remark.Remark;
@@ -36,9 +34,8 @@ public interface StmtResolver {
     switch (stmt) {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
-        var signatureResolver = new ExprResolver(ExprResolver.LAX);
-        var local = resolveDeclSignature(decl, signatureResolver);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
         for (var ctor : decl.body) {
           var localCtxWithPat = new Ref<>(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
@@ -46,21 +43,19 @@ public interface StmtResolver {
           ctor.telescope = ctorLocal._1.toImmutableSeq();
           ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
         }
-        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+        info.declGraph().suc(decl).appendAll(local._1.reference());
       }
       case Decl.FnDecl decl -> {
-        var signatureResolver = new ExprResolver(ExprResolver.LAX);
-        var local = resolveDeclSignature(decl, signatureResolver);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
         decl.body = decl.body.map(
           expr -> expr.accept(bodyResolver, local._2),
           pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
-        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+        info.declGraph().suc(decl).appendAll(local._1.reference());
       }
       case Decl.StructDecl decl -> {
-        var signatureResolver = new ExprResolver(ExprResolver.LAX);
-        var local = resolveDeclSignature(decl, signatureResolver);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
         decl.fields.forEach(field -> {
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
           field.telescope = fieldLocal._1.toImmutableSeq();
@@ -68,12 +63,11 @@ public interface StmtResolver {
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
         });
-        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+        info.declGraph().suc(decl).appendAll(local._1.reference());
       }
       case Decl.PrimDecl decl -> {
-        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
-        resolveDeclSignature(decl, resolver);
-        info.declGraph().suc(decl).appendAll(resolver.reference());
+        var local = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
+        info.declGraph().suc(decl).appendAll(local.reference());
       }
       case Sample sample -> {
         var delegate = sample.delegate();
@@ -92,12 +86,15 @@ public interface StmtResolver {
       }
     }
   }
-  private static @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context>
-  resolveDeclSignature(@NotNull Decl decl, @NotNull ExprResolver signatureResolver) {
-    var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-    decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView()).toImmutableSeq();
-    decl.result = decl.result.accept(signatureResolver, local._2);
-    return Tuple.of(decl.telescope, local._2);
+  private static @NotNull Tuple2<ExprResolver, Context>
+  resolveDeclSignature(@NotNull Decl decl, ExprResolver.@NotNull Options options) {
+    var resolver = new ExprResolver(options);
+    var local = resolver.resolveParams(decl.telescope, decl.ctx);
+    decl.telescope = local._1
+      .prependedAll(resolver.allowedGeneralizes().valuesView())
+      .toImmutableSeq();
+    decl.result = decl.result.accept(resolver, local._2);
+    return Tuple.of(resolver, local._2);
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
