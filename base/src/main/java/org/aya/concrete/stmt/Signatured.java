@@ -4,9 +4,10 @@ package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.concrete.ConcreteDecl;
-import org.aya.util.error.SourcePos;
 import org.aya.concrete.Expr;
 import org.aya.core.def.Def;
+import org.aya.util.binop.OpDecl;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,9 +16,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed abstract class Signatured implements ConcreteDecl permits Decl, Decl.DataCtor, Decl.StructField {
+public sealed abstract class Signatured implements ConcreteDecl, OpDecl permits Decl, Decl.DataCtor, Decl.StructField {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
+  public final @Nullable OpInfo opInfo;
 
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
@@ -30,10 +32,16 @@ public sealed abstract class Signatured implements ConcreteDecl permits Decl, De
   protected Signatured(
     @NotNull SourcePos sourcePos,
     @NotNull SourcePos entireSourcePos,
+    @Nullable OpDecl.OpInfo opInfo,
     @NotNull ImmutableSeq<Expr.Param> telescope
   ) {
     this.sourcePos = sourcePos;
     this.entireSourcePos = entireSourcePos;
+    this.opInfo = opInfo;
     this.telescope = telescope;
+  }
+
+  @Override public @Nullable OpInfo opInfo() {
+    return opInfo;
   }
 }
