@@ -26,6 +26,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.parser.AyaParser;
 import org.aya.util.binop.Assoc;
@@ -111,6 +112,8 @@ public final class AyaProducer {
     if (mod != null) return ImmutableSeq.of(visitModule(mod));
     var levels = ctx.levels();
     if (levels != null) return ImmutableSeq.of(visitLevels(levels));
+    var generalize = ctx.generalize();
+    if (generalize != null) return ImmutableSeq.of(visitGeneralize(generalize));
     var remark = ctx.remark();
     if (remark != null) return ImmutableSeq.of(visitRemark(remark));
     return unreachable(ctx);
@@ -127,6 +130,12 @@ public final class AyaProducer {
     var core = Remark.make(sb.toString(), pos, this);
     overridingSourcePos = null;
     return core;
+  }
+
+  public Generalize visitGeneralize(AyaParser.GeneralizeContext ctx) {
+    return new Generalize.Variables(sourcePosOf(ctx), visitIds(ctx.ids())
+      .map(id -> new GeneralizedVar(id.data(), id.sourcePos()))
+      .collect(ImmutableSeq.factory()), visitType(ctx.type()));
   }
 
   public Generalize visitLevels(AyaParser.LevelsContext ctx) {

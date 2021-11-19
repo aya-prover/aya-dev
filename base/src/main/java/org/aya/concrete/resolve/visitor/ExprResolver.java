@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
  *                           and represents the allowed generalized level vars otherwise
  * @param allowedGeneralizes will be filled with generalized vars if allowGeneralized,
  *                           and represents the allowed generalized level vars otherwise
- * @implSpec allowedGeneralizes must be linked map
  * @author re-xyr, ice1000
+ * @implSpec allowedGeneralizes must be linked map
  * @see StmtResolver
  */
 public record ExprResolver(
