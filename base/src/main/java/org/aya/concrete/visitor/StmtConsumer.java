@@ -64,7 +64,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> 
 
   @Override default Unit visitPrim(@NotNull Decl.PrimDecl decl, P p) {
     visitDecl(decl, p);
-    if (decl.result != null) decl.result.accept(this, p);
+    decl.result.accept(this, p);
     return Unit.unit();
   }
 

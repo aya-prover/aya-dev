@@ -143,7 +143,8 @@ public record StmtTycker(
         var core = prim.ref.core;
         var tele = checkTele(tycker, prim.telescope, FormTerm.freshUniv(prim.sourcePos));
         if (tele.isNotEmpty()) {
-          if (prim.result == null) {
+          // ErrorExpr on prim.result means the result type is unspecified.
+          if (prim.result instanceof Expr.ErrorExpr) {
             // TODO[ice]: Expect type and term
             throw new ExprTycker.TyckerException();
           }
@@ -157,7 +158,7 @@ public record StmtTycker(
             .subst(Substituter.TermSubst.EMPTY, levelSubst);
           tycker.unifyTyReported(FormTerm.Pi.make(tele, result), target, prim.result);
           prim.signature = new Def.Signature(levels, tele, result);
-        } else if (prim.result != null) {
+        } else if (!(prim.result instanceof Expr.ErrorExpr)) {
           var result = tycker.synthesize(prim.result).wellTyped();
           tycker.unifyTyReported(result, core.result(), prim.result);
         } else prim.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());

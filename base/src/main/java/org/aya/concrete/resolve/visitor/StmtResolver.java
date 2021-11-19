@@ -76,7 +76,7 @@ public interface StmtResolver {
         var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
         var local = resolver.resolveParams(decl.telescope, decl.ctx);
         decl.telescope = local._1;
-        if (decl.result != null) decl.result = decl.result.accept(resolver, local._2);
+        decl.result = decl.result.accept(resolver, local._2);
         info.declGraph().suc(decl).appendAll(resolver.reference());
       }
       case Sample sample -> {

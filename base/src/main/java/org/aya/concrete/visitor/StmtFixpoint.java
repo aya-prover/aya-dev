@@ -68,7 +68,7 @@ public interface StmtFixpoint<P> extends ExprFixpoint<P>, Stmt.Visitor<P, Unit> 
 
   @Override default Unit visitPrim(@NotNull Decl.PrimDecl decl, P p) {
     visitDecl(decl, p);
-    if (decl.result != null) decl.result = decl.result.accept(this, p);
+    decl.result = decl.result.accept(this, p);
     return Unit.unit();
   }
 

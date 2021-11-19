@@ -85,6 +85,8 @@ public class SigRefFinder implements
   }
 
   @Override public Unit visitRemark(@NotNull Remark remark, @NotNull DynamicSeq<Stmt> stmts) {
+    assert remark.literate != null;
+    remark.literate.visit(this, stmts);
     return Unit.unit();
   }
 

@@ -92,16 +92,16 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    * @see PrimDef
    */
   public static final class PrimDecl extends Decl implements OpDecl {
-    public final @NotNull DefVar<? extends PrimDef, PrimDecl> ref;
-    public @Nullable Expr result;
+    public final @NotNull DefVar<PrimDef, PrimDecl> ref;
+    public @NotNull Expr result;
     public final @Nullable OpDecl.OpInfo opInfo;
 
     public PrimDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @Nullable OpDecl.OpInfo opInfo,
-      @NotNull DefVar<? extends PrimDef, PrimDecl> ref,
+      @NotNull DefVar<PrimDef, PrimDecl> ref,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @Nullable Expr result
+      @NotNull Expr result
     ) {
       super(sourcePos, entireSourcePos, Accessibility.Public, telescope);
       this.result = result;
@@ -110,7 +110,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.ref = ref;
     }
 
-    @Override public @NotNull DefVar<? extends PrimDef, PrimDecl> ref() {
+    @Override public @NotNull DefVar<PrimDef, PrimDecl> ref() {
       return ref;
     }
 
@@ -240,7 +240,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       fields.forEach(field -> field.structRef = ref);
     }
 
-    @Override public @NotNull DefVar<? extends Def, StructDecl> ref() {
+    @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
       return ref;
     }
 
@@ -285,7 +285,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.bindBlock = bindBlock;
     }
 
-    @Override public @NotNull DefVar<? extends Def, StructField> ref() {
+    @Override public @NotNull DefVar<FieldDef, StructField> ref() {
       return ref;
     }
 
