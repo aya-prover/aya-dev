@@ -32,9 +32,9 @@ public interface StmtResolver {
     switch (stmt) {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
-        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1;
+        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
         decl.result = decl.result.accept(signatureResolver, local._2);
         var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         for (var ctor : decl.body) {
@@ -47,9 +47,9 @@ public interface StmtResolver {
         info.declGraph().suc(decl).appendAll(signatureResolver.reference());
       }
       case Decl.FnDecl decl -> {
-        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1;
+        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
         decl.result = decl.result.accept(signatureResolver, local._2);
         var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         decl.body = decl.body.map(
@@ -58,9 +58,9 @@ public interface StmtResolver {
         info.declGraph().suc(decl).appendAll(signatureResolver.reference());
       }
       case Decl.StructDecl decl -> {
-        var signatureResolver = new ExprResolver(new ExprResolver.Options(true));
+        var signatureResolver = new ExprResolver(ExprResolver.LAX);
         var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1;
+        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
         decl.result = decl.result.accept(signatureResolver, local._2);
         var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
         decl.fields.forEach(field -> {
@@ -89,6 +89,11 @@ public interface StmtResolver {
       case Remark remark -> info.sampleGraph().suc(remark).appendAll(remark.doResolve(info));
       case Command cmd -> {}
       case Generalize.Levels levels -> {}
+      case Generalize.Variables variables -> {
+        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
+        variables.type = variables.type.accept(resolver, variables.ctx);
+        info.declGraph().suc(variables).appendAll(resolver.reference());
+      }
     }
   }
 
@@ -137,8 +142,9 @@ public interface StmtResolver {
       case Sample sample -> resolveBind(sample.delegate(), info);
       case Remark remark -> {}
       case Command cmd -> {}
-      case Generalize.Levels levels -> {}
       case Decl.PrimDecl decl -> {}
+      case Generalize.Levels levels -> {}
+      case Generalize.Variables variables -> {}
     }
   }
 }

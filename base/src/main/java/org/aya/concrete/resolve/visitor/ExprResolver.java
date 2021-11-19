@@ -5,59 +5,77 @@ package org.aya.concrete.resolve.visitor;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
 import org.aya.api.ref.DefVar;
-import org.aya.api.ref.PreLevelVar;
+import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.ExprFixpoint;
+import org.aya.generic.ref.GeneralizedVar;
+import org.aya.generic.ref.PreLevelVar;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Resolves bindings.
  *
- * @param allowedLevels will be filled with generalized level vars if allowGeneralized,
- *                      and represents the allowed generalized level vars otherwise
+ * @param allowedLevels      will be filled with generalized level vars if allowLevels,
+ *                           and represents the allowed generalized level vars otherwise
+ * @param allowedGeneralizes will be filled with generalized vars if allowGeneralized,
+ *                           and represents the allowed generalized level vars otherwise
  * @author re-xyr, ice1000
+ * @implSpec allowedGeneralizes must be linked map
  * @see StmtResolver
  */
 public record ExprResolver(
   @NotNull Options options,
   @NotNull DynamicSeq<PreLevelVar> allowedLevels,
+  @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull DynamicSeq<Stmt> reference
 ) implements ExprFixpoint<Context> {
   /**
-   * @param allowGeneralized true for signatures, false for bodies
+   * @param allowLevels true for signatures, false for bodies
    */
-  public record Options(boolean allowGeneralized) {
+  public record Options(boolean allowLevels, boolean allowGeneralized) {
   }
 
-  public static final @NotNull Options RESTRICTIVE = new Options(false);
+  public static final @NotNull Options RESTRICTIVE = new Options(false, false);
+  public static final @NotNull Options LAX = new ExprResolver.Options(true, true);
 
   public ExprResolver(@NotNull Options options) {
-    this(options, DynamicSeq.create(), DynamicSeq.create());
+    this(options, DynamicSeq.create(), MutableLinkedHashMap.of(), DynamicSeq.create());
   }
 
   public ExprResolver(@NotNull Options options, @NotNull ExprResolver parent) {
-    this(options, parent.allowedLevels, parent.reference);
+    this(options, parent.allowedLevels, parent.allowedGeneralizes, parent.reference);
   }
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
     var sourcePos = expr.sourcePos();
-    var name = expr.name();
-    var resolved = ctx.get(name);
-    var refExpr = new Expr.RefExpr(sourcePos, resolved);
-    switch (resolved) {
+    return switch (ctx.get(expr.name())) {
       case PreLevelVar levelVar -> {
-        if (options.allowGeneralized) allowedLevels.append(levelVar);
-        else if (!allowedLevels.contains(levelVar)) {
-          ctx.reporter().report(new GeneralizedNotAvailableError(refExpr));
-          throw new Context.ResolvingInterruptedException();
-        }
+        if (options.allowLevels) allowedLevels.append(levelVar);
+        else if (!allowedLevels.contains(levelVar)) generalizedUnavailable(ctx, sourcePos, levelVar);
+        yield new Expr.RefExpr(sourcePos, levelVar);
+      }
+      case GeneralizedVar generalized -> {
+        if (options.allowGeneralized) {
+          // Ordered set semantics. Do not expect too many generalized vars.
+          if (!allowedGeneralizes.containsKey(generalized)) {
+            var owner = generalized.owner;
+            assert owner != null : "Sanity check";
+            allowedGeneralizes.put(generalized, owner.toExpr(generalized, false));
+            reference.append(owner);
+          }
+        } else if (!allowedGeneralizes.containsKey(generalized))
+          generalizedUnavailable(ctx, sourcePos, generalized);
+        yield new Expr.RefExpr(sourcePos, allowedGeneralizes.get(generalized).ref());
       }
       case DefVar<?, ?> ref -> {
         switch (ref.concrete) {
@@ -66,11 +84,15 @@ public record ExprResolver(
           case Decl.StructField field -> reference.append(field.structRef.concrete);
           default -> throw new IllegalStateException("unreachable");
         }
+        yield new Expr.RefExpr(sourcePos, ref);
       }
-      default -> {
-      }
-    }
-    return refExpr;
+      case Var var -> new Expr.RefExpr(sourcePos, var);
+    };
+  }
+
+  private void generalizedUnavailable(Context ctx, SourcePos refExpr, Var var) {
+    ctx.reporter().report(new GeneralizedNotAvailableError(refExpr, var));
+    throw new Context.ResolvingInterruptedException();
   }
 
   public @NotNull Tuple2<Expr.Param, Context> visitParam(@NotNull Expr.Param param, Context ctx) {

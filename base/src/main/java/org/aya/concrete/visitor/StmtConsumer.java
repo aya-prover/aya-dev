@@ -105,6 +105,11 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> 
     return Unit.unit();
   }
 
+  @Override default Unit visitVariables(Generalize.@NotNull Variables variables, P p) {
+    variables.type.accept(this, p);
+    return Unit.unit();
+  }
+
   @Override default Unit visitExample(Sample.@NotNull Working example, P p) {
     return example.delegate().accept(this, p);
   }

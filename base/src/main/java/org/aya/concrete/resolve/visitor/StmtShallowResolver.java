@@ -77,6 +77,13 @@ public record StmtShallowResolver(
     return Unit.unit();
   }
 
+  @Override public Unit visitVariables(Generalize.@NotNull Variables variables, @NotNull ModuleContext context) {
+    variables.ctx = context;
+    for (var variable : variables.variables)
+      context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
+    return Unit.unit();
+  }
+
   @Override public Unit visitData(Decl.@NotNull DataDecl decl, @NotNull ModuleContext context) {
     visitDecl(decl, context);
     var dataInnerCtx = context.derive(decl.ref().name());

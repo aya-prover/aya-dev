@@ -4,13 +4,13 @@ package org.aya.concrete.desugar;
 
 import kala.function.CheckedSupplier;
 import kala.tuple.Unit;
-import org.aya.api.ref.PreLevelVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.error.LevelProblem;
 import org.aya.concrete.visitor.StmtFixpoint;
 import org.aya.generic.Constants;
 import org.aya.generic.Level;
+import org.aya.generic.ref.PreLevelVar;
 import org.jetbrains.annotations.NotNull;
 
 /**

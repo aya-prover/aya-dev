@@ -4,9 +4,9 @@ package org.aya.concrete;
 
 import kala.collection.mutable.DynamicSeq;
 import kala.tuple.Unit;
-import org.aya.util.error.Global;
 import org.aya.concrete.visitor.StmtConsumer;
 import org.aya.core.def.PrimDef;
+import org.aya.util.error.Global;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,7 +39,7 @@ public class VisitorTest {
       def add (a b : Nat) : Nat
         | zero, zero => {??}
       prim I prim left : I prim right
-      struct Path (A : I -> hType (lsuc l)) (a : A left) (b : A right) : hType l
+      struct Path (A : I -> Type (lsuc l)) (a : A left) (b : A right) : Type l
         | at (i : I) : A i { | left => a | right => b }
       open data Int : Type
         | pos Nat

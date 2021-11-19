@@ -3,10 +3,15 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.api.ref.PreLevelVar;
+import org.aya.api.ref.LocalVar;
+import org.aya.concrete.Expr;
+import org.aya.concrete.resolve.context.Context;
+import org.aya.generic.ref.GeneralizedVar;
+import org.aya.generic.ref.PreLevelVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public sealed interface Generalize extends Stmt {
   @Override default @NotNull Accessibility accessibility() {
@@ -19,6 +24,36 @@ public sealed interface Generalize extends Stmt {
   ) implements Generalize {
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitLevels(this, p);
+    }
+  }
+
+  final class Variables implements Generalize {
+    public final @NotNull SourcePos sourcePos;
+    public final @NotNull ImmutableSeq<GeneralizedVar> variables;
+    public @NotNull Expr type;
+    public @Nullable Context ctx = null;
+
+    public Variables(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<GeneralizedVar> variables, @NotNull Expr type) {
+      this.sourcePos = sourcePos;
+      this.variables = variables;
+      this.type = type;
+      variables.forEach(variable -> variable.owner = this);
+    }
+
+    @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
+      return visitor.visitVariables(this, p);
+    }
+
+    public @NotNull Expr.Param toExpr(@NotNull GeneralizedVar one, boolean explicit) {
+      return new Expr.Param(sourcePos, new LocalVar(one.name(), one.sourcePos), type, false, explicit);
+    }
+
+    public @NotNull ImmutableSeq<Expr.Param> toExpr() {
+      return variables.map(one -> toExpr(one, true));
+    }
+
+    public @NotNull SourcePos sourcePos() {
+      return sourcePos;
     }
   }
 }

@@ -79,6 +79,11 @@ public class SigRefFinder implements
     return Unit.unit();
   }
 
+  @Override public Unit visitVariables(Generalize.@NotNull Variables variables, @NotNull DynamicSeq<Stmt> stmts) {
+    variables.type.accept(this, stmts);
+    return Unit.unit();
+  }
+
   @Override public Unit visitRemark(@NotNull Remark remark, @NotNull DynamicSeq<Stmt> stmts) {
     return Unit.unit();
   }
