@@ -93,6 +93,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
   /**
    * @author ice1000
+   * @implSpec the result field of {@link PrimDecl} might be {@link org.aya.concrete.Expr.ErrorExpr},
+   * which means it's unspecified in the concrete syntax.
    * @see PrimDef
    */
   public static final class PrimDecl extends Decl implements OpDecl {

@@ -23,6 +23,11 @@ public class SigRefFinder implements
   ExprConsumer<@NotNull DynamicSeq<Stmt>> {
   public static final @NotNull SigRefFinder HEADER_ONLY = new SigRefFinder();
 
+  private void decl(@NotNull DynamicSeq<Stmt> stmts, @NotNull Decl decl) {
+    tele(stmts, decl.telescope);
+    decl.result.accept(this, stmts);
+  }
+
   private void tele(@NotNull DynamicSeq<Stmt> stmts, @NotNull ImmutableSeq<Expr.Param> telescope) {
     telescope.mapNotNull(Expr.Param::type).forEach(type -> type.accept(this, stmts));
   }
@@ -34,24 +39,22 @@ public class SigRefFinder implements
   }
 
   @Override public Unit visitData(@NotNull Decl.DataDecl decl, @NotNull DynamicSeq<Stmt> stmts) {
-    tele(stmts, decl.telescope);
-    decl.result.accept(this, stmts);
+    decl(stmts, decl);
     return Unit.unit();
   }
 
   @Override public Unit visitStruct(@NotNull Decl.StructDecl decl, @NotNull DynamicSeq<Stmt> stmts) {
-    tele(stmts, decl.telescope);
-    decl.result.accept(this, stmts);
+    decl(stmts, decl);
     return Unit.unit();
   }
 
   @Override public Unit visitFn(@NotNull Decl.FnDecl decl, @NotNull DynamicSeq<Stmt> stmts) {
-    tele(stmts, decl.telescope);
-    decl.result.accept(this, stmts);
+    decl(stmts, decl);
     return Unit.unit();
   }
 
   @Override public Unit visitPrim(@NotNull Decl.PrimDecl decl, @NotNull DynamicSeq<Stmt> stmts) {
+    decl(stmts, decl);
     return Unit.unit();
   }
 
