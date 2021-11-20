@@ -124,8 +124,8 @@ public final class ExprTycker {
           var telescope = defField.ref().core.selfTele.map(term -> term.subst(subst, levelSubst));
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
-            // TODO[ice]: number of args don't match
-            throw new TyckerException();
+            // TODO: Maybe it's better for field to have a SourcePos?
+            yield fail(newExpr, structCall, new FieldProblem.ArgMismatchError(newExpr.sourcePos(), defField, bindings.size()));
           }
           var fieldExpr = bindings.zip(telescope).foldRight(conField.body(), (pair, lamExpr) ->
             new Expr.LamExpr(conField.body().sourcePos(), new Expr.Param(pair._1.sourcePos(), pair._1.data(), pair._2.explicit()), lamExpr));
@@ -276,8 +276,7 @@ public final class ExprTycker {
           againstTele = againstTele.drop(1);
           if (againstTele.isNotEmpty()) subst.add(ref, result.wellTyped);
           else if (iter.hasNext()) {
-            // TODO[ice]: too few tuple elements
-            throw new TyckerException();
+            yield fail(tuple, term, new TupleProblem.ElemMismatchError(tuple.sourcePos(), dt.params().size(), tuple.items().size()));
           } else items.append(inherit(item, last.subst(subst)).wellTyped);
         }
         var resTy = new FormTerm.Sigma(resultTele.toImmutableSeq());
@@ -317,8 +316,7 @@ public final class ExprTycker {
           var result = inherit(lamParam, FormTerm.freshUniv(lamParam.sourcePos()));
           var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
           if (!comparison) {
-            // TODO[ice]: expected type mismatch lambda type annotation
-            throw new TyckerException();
+            yield fail(lam, dt, TypeMismatchError.lamParam(lam, type, result.wellTyped));
           } else type = result.wellTyped;
         }
         var resultParam = new Term.Param(var, type, param.explicit());

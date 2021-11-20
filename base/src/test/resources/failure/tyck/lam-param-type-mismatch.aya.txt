@@ -1,0 +1,16 @@
+In file $FILE:1:42 ->
+
+  1 | def id2 {A : Type} {B : Type} : B -> A => \ (a : A) => a
+                                                ^------------^
+
+Error: Unable to apply or construct the expression
+         \ a => a
+       because the type of the lamda's param is expected to be a: 
+         B
+         (Normalized: B)
+       but currently it's:
+         A
+         (Normalized: A)
+
+1 error(s), 0 warning(s).
+What are you doing?
