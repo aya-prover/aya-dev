@@ -182,21 +182,23 @@ public final class PatTycker {
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
   visitPatterns(Def.Signature sig, SeqView<Pattern> stream) {
     var results = DynamicSeq.<Pat>create();
+    if (sig.param().isEmpty() && stream.isEmpty()) return Tuple.of(results.toImmutableSeq(), sig.result());
+    Pattern last_pat = stream.last();
     while (sig.param().isNotEmpty()) {
       var param = sig.param().first();
       Pattern pat;
       if (param.explicit()) {
         if (stream.isEmpty()) {
           foundError();
-          // TODO[ice]: not enough patterns
-          throw new ExprTycker.TyckerException();
+          exprTycker.reporter.report(new PatternProblem.NotEnoughPattern(last_pat, param));
+          return Tuple.of(results.toImmutableSeq(), sig.result());
         }
         pat = stream.first();
         stream = stream.drop(1);
         if (!pat.explicit()) {
           foundError();
-          // TODO[ice]: too many implicit patterns
-          throw new ExprTycker.TyckerException();
+          exprTycker.reporter.report(new PatternProblem.TooManyImplicitPattern(pat, param));
+          return Tuple.of(results.toImmutableSeq(), sig.result());
         }
       } else {
         // Type is implicit, so....?

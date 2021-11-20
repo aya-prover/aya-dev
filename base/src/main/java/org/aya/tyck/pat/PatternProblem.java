@@ -98,6 +98,25 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
+  record NotEnoughPattern(@Override @NotNull Pattern pattern, @NotNull Term.Param param) implements PatternProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(
+        Doc.english("There is no pattern for the parameter"),
+        Doc.par(1, param.toDoc(options)));
+    }
+  }
+
+  record TooManyImplicitPattern(@Override @NotNull Pattern pattern, @NotNull Term.Param param) implements PatternProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.vcat(
+        Doc.english("There are too many implicit patterns:"),
+        Doc.par(1, pattern.toDoc(options)),
+        Doc.english("should be an explicit pattern matched against"),
+        Doc.par(1, param.toDoc(options)));
+    }
+  }
+
+
   @Override default @NotNull Severity level() {
     return Severity.ERROR;
   }

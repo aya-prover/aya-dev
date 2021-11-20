@@ -22,6 +22,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Substituter;
 import org.aya.generic.Level;
 import org.aya.generic.Modifier;
+import org.aya.tyck.error.PrimProblem;
 import org.aya.tyck.pat.Conquer;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
@@ -145,8 +146,8 @@ public record StmtTycker(
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
           if (prim.result instanceof Expr.ErrorExpr) {
-            // TODO[ice]: Expect type and term
-            throw new ExprTycker.TyckerException();
+            reporter.report(new PrimProblem.NoResultTypeError(prim));
+            return ;
           }
           var result = tycker.synthesize(prim.result).wellTyped();
           var levelSubst = new LevelSubst.Simple(MutableMap.create());

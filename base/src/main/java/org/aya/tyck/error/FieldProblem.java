@@ -8,6 +8,7 @@ import org.aya.api.error.ExprProblem;
 import org.aya.api.error.Problem;
 import org.aya.api.ref.Var;
 import org.aya.concrete.Expr;
+import org.aya.core.def.FieldDef;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
@@ -51,6 +52,21 @@ public sealed interface FieldProblem extends Problem {
         Doc.styled(Style.code(), Doc.plain(name)),
         Doc.english("projected")
       );
+    }
+  }
+
+  record ArgMismatchError(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull FieldDef fieldDef,
+    int supplied
+  ) implements FieldProblem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.sep(Doc.english("Expected"),
+        Doc.plain(String.valueOf(fieldDef.ref.core.selfTele.size())),
+        Doc.english("arguments, but found"),
+        Doc.plain(String.valueOf(supplied)),
+        Doc.english("arguments for field"),
+        BaseDistiller.linkRef(fieldDef.ref, BaseDistiller.FIELD_CALL));
     }
   }
 }

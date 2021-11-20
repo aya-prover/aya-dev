@@ -127,7 +127,7 @@ public abstract class BaseDistiller {
     return Doc.linkDef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
-  static @NotNull Doc linkRef(@NotNull Var ref, @NotNull Style color) {
+  public static @NotNull Doc linkRef(@NotNull Var ref, @NotNull Style color) {
     return Doc.linkRef(Doc.styled(color, ref.name()), ref.hashCode());
   }
 
