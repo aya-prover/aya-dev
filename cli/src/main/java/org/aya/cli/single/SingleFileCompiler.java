@@ -73,8 +73,7 @@ public record SingleFileCompiler(
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
           distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
           if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, stmts, defs);
-        }
-        , builder);
+        }, builder);
     } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);
       reporter.reportString("Internal error");
