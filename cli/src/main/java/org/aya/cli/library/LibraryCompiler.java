@@ -12,9 +12,6 @@ import org.aya.cli.library.json.LibraryDependency;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.concrete.resolve.ResolveInfo;
-import org.aya.concrete.resolve.module.FileModuleLoader;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;
@@ -90,9 +87,10 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     }
     var compiler = new SingleFileCompiler(CliReporter.stdio(unicode), locator, null);
     try {
-      compiler.compile(file, new CompilerFlags(
-        CompilerFlags.Message.EMOJI, false, null, compiledModulePath
-      ), new CoreSaver(locator, outRoot, timestamp));
+      var flags = new CompilerFlags(CompilerFlags.Message.EMOJI, false, null, compiledModulePath);
+      var coreSaver = new CoreSaver(locator, outRoot, timestamp);
+      compiler.compile(file, flags, ((moduleResolve, stmts, defs) ->
+        coreSaver.saveCompiledCore(moduleResolve.thisModule().underlyingFile(), defs)));
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -133,22 +131,13 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     @NotNull SourceFileLocator locator,
     @NotNull Path outRoot,
     @NotNull Timestamp timestamp
-  ) implements FileModuleLoader.FileModuleLoaderCallback {
-    @Override
-    public void onResolved(@NotNull Path sourcePath, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
-    }
-
-    @Override
-    public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
-      saveCompiledCore(sourcePath, defs);
-      timestamp.update(sourcePath);
-    }
-
+  ) {
     private void saveCompiledCore(@NotNull Path sourcePath, ImmutableSeq<Def> defs) {
       try (var outputStream = openCompiledCore(sourcePath)) {
         var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
         var compiled = CompiledAya.from(serDefs);
         outputStream.writeObject(compiled);
+        timestamp.update(sourcePath);
       } catch (IOException e) {
         e.printStackTrace();
       }

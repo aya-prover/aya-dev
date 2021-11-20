@@ -13,6 +13,7 @@ import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.concrete.resolve.ModuleCallback;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
@@ -43,19 +44,19 @@ public record SingleFileCompiler(
     this(reporter, locator, builder, DistillerOptions.pretty());
   }
 
-  public int compile(
+  public <E extends IOException> int compile(
     @NotNull Path sourceFile,
     @NotNull CompilerFlags flags,
-    @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
+    @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
     return compile(sourceFile, reporter -> new EmptyContext(reporter, sourceFile).derive(ImmutableSeq.of("Mian")), flags, moduleCallback);
   }
 
-  public int compile(
+  public <E extends IOException> int compile(
     @NotNull Path sourceFile,
     @NotNull Function<Reporter, ModuleContext> context,
     @NotNull CompilerFlags flags,
-    @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
+    @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
     var reporter = this.reporter instanceof CountingReporter countingReporter
       ? countingReporter : new CountingReporter(this.reporter);
@@ -66,16 +67,14 @@ public record SingleFileCompiler(
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
-        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, builder))).toImmutableSeq());
+        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
       FileModuleLoader.tyckModule(ctx, loader, program, reporter,
-        resolveInfo -> {
+        (moduleResolve, stmts, defs) -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
-          if (moduleCallback != null) moduleCallback.onResolved(sourceFile, resolveInfo, program);
-        },
-        defs -> {
           distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
-          if (moduleCallback != null) moduleCallback.onTycked(sourceFile, program, defs);
-        }, builder);
+          if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, stmts, defs);
+        }
+        , builder);
     } catch (InternalException e) {
       FileModuleLoader.handleInternalError(e);
       reporter.reportString("Internal error");
