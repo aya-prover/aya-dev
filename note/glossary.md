@@ -28,15 +28,14 @@
 + `Tele` -- 函数式风格的列表存储的一组 binding，后面的 binding 的类型可以引用前面的 binding 的值。
   在实例化时，需要按顺序从左到右依次实例化，每次实例化需要对后面的 binding 跑 substitution。
   + Arend 中叫 `DependentLink`
-+ `DT` -- 依赖类型，一般来说都是包含一个 `Tele` 的 canonical 的类型表达式
 + `Univ` -- 类型的类型
   + Arend 里面叫 `Universe`
   + Agda 里面叫 `Sort`
 + `Sort` -- `Univ` 的属性，包括 universe level 和 homotopy truncation level
   + 命名来自 Arend
   + Agda 里面就叫 `Level` 但是他们没有 homotopy truncation level
-+ `Distill` -- pretty print 或格式化代码（format/reformat code）（参见：https://github.com/jonsterling/dreamtt/blob/master/frontend/Distiller.ml ）
-+ `Stmt` -- 语句（statement）
++ `Distill` -- pretty print 或格式化代码（format/reformat code）（参见：https://github.com/jonsterling/dreamtt/blob/main/frontend/Distiller.ml ）
++ `Stmt` -- 语句（statement），文件由一组 `Stmt` 组成
 
 ### 各种 Visitor
 
@@ -59,7 +58,7 @@
 + Unfold -- 展开一个函数调用表达式
   + Agda, Coq, Arend 里面都是这么叫的
 + DefEq -- 其实就是 conversion check 或者 unification
-  + 很多地方叫 definitional equality 或者 judgemental equality
+  + 很多地方叫 definitional equality 或者 judgmental equality
 
 ## 其他
 + LSP -- Language Server Protocol
