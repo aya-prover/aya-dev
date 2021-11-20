@@ -5,9 +5,8 @@ In file $FILE:4:9 ->
   4 |  | true, x => x
                ^^
 
-Error: There is no pattern for the param
+Error: There is no pattern for the parameter
          (y : A)
-       to match against
 
 1 error(s), 0 warning(s).
 What are you doing?

@@ -66,8 +66,7 @@ public sealed interface FieldProblem extends Problem {
         Doc.english("args, but found"),
         Doc.plain(String.valueOf(supplied)),
         Doc.english("args for field"),
-        Doc.plain(fieldDef.ref().name())
-      );
+        BaseDistiller.linkRef(fieldDef.ref, BaseDistiller.FIELD_CALL));
     }
   }
 }

@@ -5,7 +5,7 @@ In file $FILE:4:13 ->
   4 |  | true, x, {y} => x
                    ^^
 
-Error: There are too many implicit patterns: 
+Error: There are too many implicit patterns:
          {y}
        should be an explicit pattern matched against
          (y : A)

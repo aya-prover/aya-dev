@@ -316,7 +316,7 @@ public final class ExprTycker {
           var result = inherit(lamParam, FormTerm.freshUniv(lamParam.sourcePos()));
           var comparison = unifyTy(result.wellTyped, type, lamParam.sourcePos());
           if (!comparison) {
-            yield fail(lam, dt, TypeMismatchError.lamParam(lam, type, result.wellTyped));
+            yield fail(lam, dt, BadTypeError.lamParam(lam, type, result.wellTyped));
           } else type = result.wellTyped;
         }
         var resultParam = new Term.Param(var, type, param.explicit());
