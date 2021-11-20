@@ -54,6 +54,7 @@ public class TyckDeclTest {
 
   private static void resolve(@NotNull ImmutableSeq<Stmt> decls, @NotNull ModuleContext module, @NotNull ModuleLoader loader) {
     Stmt.resolve(decls, new ResolveInfo(module, new AyaBinOpSet(ThrowingReporter.INSTANCE)), loader);
+    assertNotNull(module.underlyingFile());
   }
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {
