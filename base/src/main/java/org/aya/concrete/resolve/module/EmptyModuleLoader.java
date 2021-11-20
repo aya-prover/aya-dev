@@ -3,15 +3,13 @@
 package org.aya.concrete.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
-import org.aya.api.ref.Var;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EmptyModuleLoader implements ModuleLoader {
   @Override
-  public @Nullable MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>
-  load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     return null;
   }
 }

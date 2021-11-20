@@ -7,20 +7,24 @@ import kala.collection.mutable.MutableSet;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Incremental and non-stopping compiler for SCCs.
  *
+ * @param declUsage   transpose of {@link ResolveInfo#declGraph()}. Vertex should be tycked first.
+ * @param sampleUsage transpose of {@link ResolveInfo#sampleGraph()}
  * @author kiva
  */
 public record IncrementalTycker(
   @NotNull SCCTycker sccTycker,
-  @NotNull ResolveInfo usageInfo,
+  @NotNull MutableGraph<Stmt> declUsage,
+  @NotNull MutableGraph<Stmt> sampleUsage,
   @NotNull MutableSet<Stmt> skipped
 ) {
   public IncrementalTycker(@NotNull SCCTycker sccTycker, @NotNull ResolveInfo resolveInfo) {
-    this(sccTycker, resolveInfo.toUsageInfo(), MutableSet.of());
+    this(sccTycker, resolveInfo.declGraph().transpose(), resolveInfo.sampleGraph().transpose(), MutableSet.of());
   }
 
   public void tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
@@ -37,7 +41,7 @@ public record IncrementalTycker(
   private void skip(@NotNull Stmt failed) {
     if (skipped.contains(failed)) return;
     skipped.add(failed);
-    var graph = failed instanceof Decl ? usageInfo.declGraph() : usageInfo.sampleGraph();
+    var graph = failed instanceof Decl ? declUsage : sampleUsage;
     graph.suc(failed).forEach(this::skip);
   }
 }

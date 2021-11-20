@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.resolve;
 
+import kala.collection.mutable.DynamicSeq;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.stmt.Stmt;
@@ -16,14 +17,11 @@ import org.jetbrains.annotations.NotNull;
 public record ResolveInfo(
   @NotNull ModuleContext thisModule,
   @NotNull AyaBinOpSet opSet,
+  @NotNull DynamicSeq<ResolveInfo> imports,
   @NotNull MutableGraph<Stmt> declGraph,
   @NotNull MutableGraph<Stmt> sampleGraph
 ) {
   public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull AyaBinOpSet opSet) {
-    this(thisModule, opSet, MutableGraph.create(), MutableGraph.create());
-  }
-
-  public @NotNull ResolveInfo toUsageInfo() {
-    return new ResolveInfo(thisModule, opSet, declGraph.transpose(), sampleGraph.transpose());
+    this(thisModule, opSet, DynamicSeq.create(), MutableGraph.create(), MutableGraph.create());
   }
 }

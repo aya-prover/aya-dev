@@ -4,12 +4,10 @@ package org.aya.concrete.resolve.module;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
-import org.aya.api.ref.Var;
 import org.aya.api.util.InternalException;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
@@ -48,13 +46,12 @@ public record FileModuleLoader(
     return withoutExt.resolveSibling(withoutExt.getFileName() + ".aya");
   }
 
-  @Override public @Nullable MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>
-  load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      tyckModule(context, recurseLoader, program, reporter,
+      return tyckModule(context, recurseLoader, program, reporter,
         resolveInfo -> {
           if (callback != null) callback.onResolved(sourcePath, resolveInfo, program);
         },
@@ -62,13 +59,12 @@ public record FileModuleLoader(
           if (callback != null) callback.onTycked(sourcePath, program, defs);
         },
         builder);
-      return context.exports;
     } catch (IOException e) {
       return null;
     }
   }
 
-  public static <E extends Exception> void tyckModule(
+  public static <E extends Exception> @NotNull ResolveInfo tyckModule(
     @NotNull ModuleContext context,
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
@@ -91,6 +87,7 @@ public record FileModuleLoader(
       onResolved.acceptChecked(resolveInfo);
       onTycked.acceptChecked(sccTycker.sccTycker().wellTyped().toImmutableSeq());
     }
+    return resolveInfo;
   }
 
   /**

@@ -5,7 +5,7 @@ package org.aya.concrete.resolve.module;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import org.aya.api.ref.Var;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public final class CachedModuleLoader implements ModuleLoader {
-  final @NotNull MutableMap<@NotNull String, MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>> cache = new MutableHashMap<>();
+  final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = new MutableHashMap<>();
   final @NotNull ModuleLoader loader;
 
   public CachedModuleLoader(@NotNull ModuleLoader loader) {
@@ -22,8 +22,7 @@ public final class CachedModuleLoader implements ModuleLoader {
   }
 
   @Override
-  public @Nullable MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>
-  load(@NotNull ImmutableSeq<String> path, @NotNull ModuleLoader recurseLoader) {
+  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<String> path, @NotNull ModuleLoader recurseLoader) {
     var stringifiedPath = QualifiedID.join(path);
     return cache.getOrElse(stringifiedPath, () -> {
       var ctx = loader.load(path, recurseLoader);
