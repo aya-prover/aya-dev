@@ -5,7 +5,7 @@ In file $FILE:1:42 ->
 
 Error: Unable to apply or construct the expression
          \ a => a
-       because the type of the lamda's param is not a B, but instead:
+       because the type of the lambda parameter is not a B, but instead:
          A
          (Normalized: A)
 

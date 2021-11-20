@@ -56,16 +56,16 @@ public sealed interface FieldProblem extends Problem {
   }
 
   record ArgMismatchError(
-    @NotNull SourcePos sourcePos,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull FieldDef fieldDef,
     int supplied
-    ) implements FieldProblem {
+  ) implements FieldProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.sep(Doc.english("Expected"),
-        Doc.plain(String.valueOf(fieldDef.ref().core.selfTele.size())),
-        Doc.english("args, but found"),
+        Doc.plain(String.valueOf(fieldDef.ref.core.selfTele.size())),
+        Doc.english("arguments, but found"),
         Doc.plain(String.valueOf(supplied)),
-        Doc.english("args for field"),
+        Doc.english("arguments for field"),
         BaseDistiller.linkRef(fieldDef.ref, BaseDistiller.FIELD_CALL));
     }
   }

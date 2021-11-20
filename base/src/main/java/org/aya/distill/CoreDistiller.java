@@ -197,8 +197,7 @@ public class CoreDistiller extends BaseDistiller implements
       visitCalls(false, inner, term.args().view(), Outer.Free, showImplicits));
   }
 
-  @Override
-  public Doc visitFieldRef(@NotNull RefTerm.Field term, Outer outer) {
+  @Override public Doc visitFieldRef(@NotNull RefTerm.Field term, Outer outer) {
     return linkRef(term.ref(), FIELD_CALL);
   }
 

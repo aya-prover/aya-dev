@@ -342,11 +342,8 @@ public final class ExprTycker {
         var resultTele = DynamicSeq.<Tuple3<LocalVar, Boolean, Term>>create();
         sigma.params().forEach(tuple -> {
           final var type = tuple.type();
-          if (type == null) {
-            // TODO[ice]: report error or generate meta?
-            //  I guess probably report error for now.
-            throw new TyckerException();
-          }
+          // https://github.com/aya-prover/aya-dev/pull/210#pullrequestreview-811835389
+          assert type != null : "AyaProducer used to generate hole on omitted type!!";
           var result = inherit(type, term);
           var ref = tuple.ref();
           localCtx.put(ref, result.wellTyped);

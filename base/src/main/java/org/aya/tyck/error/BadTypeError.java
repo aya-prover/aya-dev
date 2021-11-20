@@ -68,7 +68,7 @@ public record BadTypeError(
                                                @NotNull Term actualParamType) {
     return new BadTypeError(lamExpr, actualParamType,
       Doc.english("apply or construct"),
-      Doc.english("of the lamda's param"),
+      Doc.english("of the lambda parameter"),
       paramType);
   }
 }
