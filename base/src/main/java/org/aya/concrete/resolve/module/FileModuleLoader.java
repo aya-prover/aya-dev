@@ -53,7 +53,7 @@ public record FileModuleLoader(
     var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
-      var context = new EmptyContext(reporter).derive(path);
+      var context = new EmptyContext(reporter, sourcePath).derive(path);
       tyckModule(context, recurseLoader, program, reporter,
         resolveInfo -> {
           if (callback != null) callback.onResolved(sourcePath, resolveInfo, program);

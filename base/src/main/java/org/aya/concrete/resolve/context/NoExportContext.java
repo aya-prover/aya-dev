@@ -9,6 +9,8 @@ import kala.collection.mutable.MutableMap;
 import org.aya.api.ref.Var;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
+
 /**
  * @author ice1000
  * Used for examples and counterexamples
@@ -26,5 +28,9 @@ public record NoExportContext(
   public NoExportContext(@NotNull PhysicalModuleContext parent) {
     this(parent, MutableMap.create(),
       MutableHashMap.of(TOP_LEVEL_MOD_NAME, MutableHashMap.create()));
+  }
+
+  @Override public @NotNull Path underlyingFile() {
+    return parent.underlyingFile();
   }
 }

@@ -16,7 +16,6 @@ import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * simply adds all top-level names to the context
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public record StmtShallowResolver(
   @NotNull ModuleLoader loader,
-  @Nullable ResolveInfo resolveInfo
+  @NotNull ResolveInfo resolveInfo
 ) {
   public void resolveStmt(@NotNull SeqLike<Stmt> stmts, ModuleContext context) {
     stmts.forEach(stmt -> resolveStmt(stmt, context));
@@ -40,7 +39,6 @@ public record StmtShallowResolver(
       }
       case Command.Import cmd -> {
         var ids = cmd.path().ids();
-        if (resolveInfo != null) resolveInfo.imports().append(ids);
         var success = loader.load(ids);
         if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
         context.importModules(cmd.path().ids(), Stmt.Accessibility.Private, success, cmd.sourcePos());
