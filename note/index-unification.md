@@ -1,4 +1,4 @@
-This is a compilation of the summaries of a few pull requests on index unification merged in v0.12.
+This is a compilation of the summaries of a few pull requests on index unification merged in v0.13.
 These features are sophisticated, so I don't want to lose these implementation notes.
 
 [#193]: https://github.com/aya-prover/aya-dev/pull/193

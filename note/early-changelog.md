@@ -2,6 +2,26 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.13
+
+Upgraded gradle, resolve pattern matching in the resolver instead of the type checker,
+moved some code (source locations and generalized tree builder) to `tools`,
+generalized the binop parser into `tools`, implemented binop in patterns,
+several bug fixes of the distiller, actually use the `opaque` (renamed from `erased`)
+and `inline` modifiers in unfolder, improved the parser for literate inline codeblocks,
+disable overlapping patterns in function definitions by default (still enabled for conditions),
+use first-match semantics on non-overlapping patterns, enabled overlapping patterns with `overlap`
+modifier, improved index unification, added support for forced patterns (see [index-unification.md]),
+replaced a lot of visitors with pattern matching, inline `as` in patterns during type checking,
+added experimental `variable` keyword which is similar to the one in Agda (it lacks several
+desirable features such as referring to a generalized variable from a generalized variable),
+use `ErrorExpr` instead of `null` for unspecified result type of primitive definitions.
+
+The most notable improvement would be the generalized binary operator parser in `tools`.
+It should be _very useful_ to PL implementers using Java 17.
+
+[index-unification.md]: index-unification.md
+
 ## 0.12
 
 Actually implemented the inference of type checking ordering,
