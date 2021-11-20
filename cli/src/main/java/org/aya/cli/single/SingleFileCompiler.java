@@ -48,7 +48,7 @@ public record SingleFileCompiler(
     @NotNull CompilerFlags flags,
     @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
   ) throws IOException {
-    return compile(sourceFile, reporter -> new EmptyContext(reporter).derive(ImmutableSeq.of("Mian")), flags, moduleCallback);
+    return compile(sourceFile, reporter -> new EmptyContext(reporter, sourceFile).derive(ImmutableSeq.of("Mian")), flags, moduleCallback);
   }
 
   public int compile(

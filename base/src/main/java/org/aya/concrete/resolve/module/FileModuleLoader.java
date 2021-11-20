@@ -4,7 +4,6 @@ package org.aya.concrete.resolve.module;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.function.CheckedConsumer;
 import org.aya.api.error.DelayedReporter;
@@ -16,10 +15,8 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
-import org.aya.concrete.resolve.ShallowResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
-import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
@@ -40,7 +37,7 @@ public record FileModuleLoader(
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
   public interface FileModuleLoaderCallback {
-    void onResolved(@NotNull Path sourcePath, @NotNull ShallowResolveInfo moduleInfo, @NotNull ImmutableSeq<Stmt> stmts);
+    void onResolved(@NotNull Path sourcePath, @NotNull ResolveInfo moduleInfo, @NotNull ImmutableSeq<Stmt> stmts);
     void onTycked(@NotNull Path sourcePath,
                   @NotNull ImmutableSeq<Stmt> stmts,
                   @NotNull ImmutableSeq<Def> defs);
@@ -56,7 +53,7 @@ public record FileModuleLoader(
     var sourcePath = resolveFile(path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
-      var context = new EmptyContext(reporter).derive(path);
+      var context = new EmptyContext(reporter, sourcePath).derive(path);
       tyckModule(context, recurseLoader, program, reporter,
         resolveInfo -> {
           if (callback != null) callback.onResolved(sourcePath, resolveInfo, program);
@@ -76,15 +73,12 @@ public record FileModuleLoader(
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
-    @NotNull CheckedConsumer<ShallowResolveInfo, E> onResolved,
+    @NotNull CheckedConsumer<ResolveInfo, E> onResolved,
     @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
     @Nullable Trace.Builder builder
   ) throws E {
-    var shallowResolveInfo = new ShallowResolveInfo(DynamicSeq.create());
-    var shallowResolver = new StmtShallowResolver(recurseLoader, shallowResolveInfo);
-    program.forEach(s -> s.accept(shallowResolver, context));
-    var resolveInfo = new ResolveInfo(new AyaBinOpSet(reporter));
-    Stmt.resolve(program, resolveInfo);
+    var resolveInfo = new ResolveInfo(context, new AyaBinOpSet(reporter));
+    Stmt.resolve(program, resolveInfo, recurseLoader);
     var delayedReporter = new DelayedReporter(reporter);
     var sccTycker = new IncrementalTycker(new SCCTycker(builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
@@ -94,7 +88,7 @@ public record FileModuleLoader(
         .toImmutableSeq();
       SCCs.forEach(sccTycker::tyckSCC);
     } finally {
-      onResolved.acceptChecked(shallowResolveInfo);
+      onResolved.acceptChecked(resolveInfo);
       onTycked.acceptChecked(sccTycker.sccTycker().wellTyped().toImmutableSeq());
     }
   }

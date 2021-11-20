@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -31,8 +32,8 @@ public interface Context {
   ImmutableSeq<String> TOP_LEVEL_MOD_NAME = ImmutableSeq.empty();
 
   @Nullable Context parent();
-
   @NotNull Reporter reporter();
+  @NotNull Path underlyingFile();
 
   default <T> @Nullable T iterate(@NotNull Function<@NotNull Context, @Nullable T> f) {
     var p = this;

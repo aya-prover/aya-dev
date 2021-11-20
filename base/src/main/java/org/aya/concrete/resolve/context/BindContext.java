@@ -12,6 +12,7 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 /**
@@ -30,6 +31,10 @@ public record BindContext(
 
   @Override public @NotNull Reporter reporter() {
     return parent.reporter();
+  }
+
+  @Override public @NotNull Path underlyingFile() {
+    return parent.underlyingFile();
   }
 
   @Override public DynamicSeq<LocalVar> collect(@NotNull DynamicSeq<LocalVar> container) {

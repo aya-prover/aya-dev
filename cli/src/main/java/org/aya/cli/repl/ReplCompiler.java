@@ -37,7 +37,7 @@ public class ReplCompiler {
     this.reporter = new CountingReporter(reporter);
     this.locator = locator;
     this.modulePaths = DynamicSeq.create();
-    this.context = new ReplContext(new EmptyContext(this.reporter), ImmutableSeq.of("REPL"));
+    this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
   }
 
   /** @see ReplCompiler#compileExpr(String, NormalizeMode) */

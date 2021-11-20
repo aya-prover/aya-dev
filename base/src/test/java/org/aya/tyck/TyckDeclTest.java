@@ -8,8 +8,9 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
+import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
-import org.aya.concrete.resolve.visitor.StmtShallowResolver;
+import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
@@ -36,8 +37,8 @@ public class TyckDeclTest {
 
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = ParseTest.parseDecl(code)._1;
-    decl.ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
-    resolve(ImmutableSeq.of(decl));
+    var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
+    resolve(ImmutableSeq.of(decl), ctx, new EmptyModuleLoader());
     var def = tyck(decl, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
@@ -46,15 +47,14 @@ public class TyckDeclTest {
 
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
     var decls = AyaParsing.program(ThrowingReporter.INSTANCE, new SourceFile(Path.of("114514"), text));
-    var ssr = new StmtShallowResolver(new EmptyModuleLoader(), null);
-    var ctx = new EmptyContext(ThrowingReporter.INSTANCE).derive("decl");
-    decls.forEach(d -> d.accept(ssr, ctx));
-    resolve(decls);
+    var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
+    resolve(decls, ctx, new EmptyModuleLoader());
     return decls;
   }
 
-  private static void resolve(@NotNull ImmutableSeq<Stmt> decls) {
-    Stmt.resolve(decls, new ResolveInfo(new AyaBinOpSet(ThrowingReporter.INSTANCE)));
+  private static void resolve(@NotNull ImmutableSeq<Stmt> decls, @NotNull ModuleContext module, @NotNull ModuleLoader loader) {
+    Stmt.resolve(decls, new ResolveInfo(module, new AyaBinOpSet(ThrowingReporter.INSTANCE)), loader);
+    assertNotNull(module.underlyingFile());
   }
 
   public static @NotNull ImmutableSeq<Def> successTyckDecls(@Language("TEXT") @NonNls @NotNull String text) {

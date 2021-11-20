@@ -9,14 +9,15 @@ import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.error.Reporter;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.concrete.resolve.error.*;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.Constants;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.function.Function;
 
 /**
@@ -27,7 +28,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   @Override default @NotNull Reporter reporter() {
     return parent().reporter();
   }
-
+  @Override default @NotNull Path underlyingFile() {
+    return parent().underlyingFile();
+  }
   @NotNull MutableMap<String, MutableMap<Seq<String>, Var>> definitions();
   @NotNull MutableMap<ImmutableSeq<String>, MutableMap<String, Var>> modules();
 
