@@ -11,7 +11,9 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.resolve.visitor.StmtResolver;
+import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
@@ -29,7 +31,9 @@ public sealed interface Stmt extends AyaDocile
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
   @Contract(mutates = "param1")
-  static void resolve(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo) {
+  static void resolve(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader recurseLoader) {
+    var shallowResolver = new StmtShallowResolver(recurseLoader, resolveInfo);
+    shallowResolver.resolveStmt(statements, resolveInfo.thisModule());
     StmtResolver.resolveStmt(statements, resolveInfo);
     StmtResolver.resolveBind(statements, resolveInfo);
     var opSet = resolveInfo.opSet();

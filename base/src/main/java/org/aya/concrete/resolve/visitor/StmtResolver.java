@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ExprResolver
  */
 public interface StmtResolver {
-  static void resolveStmt(SeqLike<@NotNull Stmt> stmt, @NotNull ResolveInfo info) {
+  static void resolveStmt(@NotNull SeqLike<@NotNull Stmt> stmt, @NotNull ResolveInfo info) {
     stmt.forEach(s -> resolveStmt(s, info));
   }
 
@@ -75,7 +75,7 @@ public interface StmtResolver {
       }
       case Sample sample -> {
         var delegate = sample.delegate();
-        var delegateInfo = new ResolveInfo(info.opSet());
+        var delegateInfo = new ResolveInfo(info.thisModule(), info.opSet());
         resolveStmt(delegate, delegateInfo);
         // little hacky: transfer dependencies from `delegate` to `sample`
         info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));

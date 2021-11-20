@@ -12,7 +12,7 @@ import org.aya.cli.library.json.LibraryDependency;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.concrete.resolve.ShallowResolveInfo;
+import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
@@ -135,7 +135,7 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     @NotNull Timestamp timestamp
   ) implements FileModuleLoader.FileModuleLoaderCallback {
     @Override
-    public void onResolved(@NotNull Path sourcePath, @NotNull ShallowResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
+    public void onResolved(@NotNull Path sourcePath, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
     }
 
     @Override
