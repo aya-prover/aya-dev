@@ -73,7 +73,7 @@ public record SCCTycker(
     var graph = MutableGraph.<Stmt>create();
     stmts.forEach(stmt -> {
       var reference = DynamicSeq.<Stmt>create();
-      stmt.accept(SigRefFinder.HEADER_ONLY, reference);
+      SigRefFinder.HEADER_ONLY.visit(stmt, reference);
       graph.suc(stmt).appendAll(reference);
     });
     var order = graph.topologicalOrder();

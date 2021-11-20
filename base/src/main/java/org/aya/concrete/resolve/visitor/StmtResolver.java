@@ -3,8 +3,12 @@
 package org.aya.concrete.resolve.visitor;
 
 import kala.collection.SeqLike;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.value.Ref;
 import org.aya.api.ref.DefVar;
+import org.aya.api.ref.LocalVar;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.remark.Remark;
@@ -13,7 +17,9 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
 import org.aya.util.binop.OpDecl;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Resolves expressions inside stmts, after {@link StmtShallowResolver}
@@ -32,52 +38,40 @@ public interface StmtResolver {
     switch (stmt) {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
-        var signatureResolver = new ExprResolver(ExprResolver.LAX);
-        var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
-        decl.result = decl.result.accept(signatureResolver, local._2);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
         for (var ctor : decl.body) {
           var localCtxWithPat = new Ref<>(local._2);
-          ctor.patterns = ctor.patterns.map(pattern -> PatResolver.INSTANCE.subpatterns(localCtxWithPat, pattern));
+          ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
           var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
-          ctor.telescope = ctorLocal._1;
-          ctor.clauses = ctor.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, ctorLocal._2, bodyResolver));
+          ctor.telescope = ctorLocal._1.toImmutableSeq();
+          ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
         }
-        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+        info.declGraph().suc(decl).appendAll(local._1.reference());
       }
       case Decl.FnDecl decl -> {
-        var signatureResolver = new ExprResolver(ExprResolver.LAX);
-        var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
-        decl.result = decl.result.accept(signatureResolver, local._2);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
         decl.body = decl.body.map(
           expr -> expr.accept(bodyResolver, local._2),
-          pats -> pats.map(clause -> PatResolver.INSTANCE.matchy(clause, local._2, bodyResolver)));
-        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+          pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
+        info.declGraph().suc(decl).appendAll(local._1.reference());
       }
       case Decl.StructDecl decl -> {
-        var signatureResolver = new ExprResolver(ExprResolver.LAX);
-        var local = signatureResolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1.prependedAll(signatureResolver.allowedGeneralizes().valuesView());
-        decl.result = decl.result.accept(signatureResolver, local._2);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, signatureResolver);
+        var local = resolveDeclSignature(decl, ExprResolver.LAX);
+        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
         decl.fields.forEach(field -> {
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
-          field.telescope = fieldLocal._1;
+          field.telescope = fieldLocal._1.toImmutableSeq();
           field.result = field.result.accept(bodyResolver, fieldLocal._2);
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
-          field.clauses = field.clauses.map(clause -> PatResolver.INSTANCE.matchy(clause, fieldLocal._2, bodyResolver));
+          field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
         });
-        info.declGraph().suc(decl).appendAll(signatureResolver.reference());
+        info.declGraph().suc(decl).appendAll(local._1.reference());
       }
       case Decl.PrimDecl decl -> {
-        var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
-        var local = resolver.resolveParams(decl.telescope, decl.ctx);
-        decl.telescope = local._1;
-        if (decl.result != null) decl.result = decl.result.accept(resolver, local._2);
-        info.declGraph().suc(decl).appendAll(resolver.reference());
+        var local = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
+        info.declGraph().suc(decl).appendAll(local.reference());
       }
       case Sample sample -> {
         var delegate = sample.delegate();
@@ -95,6 +89,16 @@ public interface StmtResolver {
         info.declGraph().suc(variables).appendAll(resolver.reference());
       }
     }
+  }
+  private static @NotNull Tuple2<ExprResolver, Context>
+  resolveDeclSignature(@NotNull Decl decl, ExprResolver.@NotNull Options options) {
+    var resolver = new ExprResolver(options);
+    var local = resolver.resolveParams(decl.telescope, decl.ctx);
+    decl.telescope = local._1
+      .prependedAll(resolver.allowedGeneralizes().valuesView())
+      .toImmutableSeq();
+    decl.result = decl.result.accept(resolver, local._2);
+    return Tuple.of(resolver, local._2);
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
@@ -143,8 +147,64 @@ public interface StmtResolver {
       case Remark remark -> {}
       case Command cmd -> {}
       case Decl.PrimDecl decl -> {}
-      case Generalize.Levels levels -> {}
-      case Generalize.Variables variables -> {}
+      case Generalize generalize -> {}
     }
+  }
+
+  static Pattern.Clause matchy(
+    @NotNull Pattern.Clause match,
+    @NotNull Context context,
+    @NotNull ExprResolver bodyResolver
+  ) {
+    var ctx = new Ref<>(context);
+    var pats = match.patterns.map(pat -> subpatterns(ctx, pat));
+    return new Pattern.Clause(match.sourcePos, pats,
+      match.expr.map(e -> e.accept(bodyResolver, ctx.value)));
+  }
+
+  static @NotNull Pattern subpatterns(Ref<Context> ctx, Pattern pat) {
+    var res = resolve(pat, ctx.value);
+    ctx.value = res._1;
+    return res._2;
+  }
+
+  static Context bindAs(LocalVar as, Context ctx, SourcePos sourcePos) {
+    return as != null ? ctx.bind(as, sourcePos) : ctx;
+  }
+
+  static Tuple2<Context, Pattern> resolve(@NotNull Pattern pattern, Context context) {
+    return switch (pattern) {
+      case Pattern.Tuple tuple -> {
+        var newCtx = new Ref<>(context);
+        var patterns = tuple.patterns().map(p -> subpatterns(newCtx, p));
+        yield Tuple.of(
+          bindAs(tuple.as(), newCtx.value, tuple.sourcePos()),
+          new Pattern.Tuple(tuple.sourcePos(), tuple.explicit(), patterns, tuple.as()));
+      }
+      case Pattern.Bind bind -> {
+        var maybe = findPatternDef(context, bind.sourcePos(), bind.bind().name());
+        if (maybe != null) yield Tuple.of(context, new Pattern.Ctor(bind, maybe));
+        else yield Tuple.of(context.bind(bind.bind(), bind.sourcePos(), var -> false), bind);
+      }
+      // We will never have Ctor instances before desugar.
+      case Pattern.BinOpSeq seq -> {
+        var newCtx = new Ref<>(context);
+        var pats = seq.seq().map(p -> subpatterns(newCtx, p));
+        yield Tuple.of(
+          bindAs(seq.as(), newCtx.value, seq.sourcePos()),
+          new Pattern.BinOpSeq(seq.sourcePos(), pats, seq.as(), seq.explicit()));
+      }
+      default -> Tuple.of(context, pattern);
+    };
+  }
+
+  static @Nullable DefVar<?, ?> findPatternDef(Context context, SourcePos namePos, String name) {
+    return context.iterate(c -> {
+      var maybe = c.getUnqualifiedLocalMaybe(name, namePos);
+      if (!(maybe instanceof DefVar<?, ?> defVar)) return null;
+      if (defVar.concrete instanceof Decl.DataCtor) return defVar;
+      if (defVar.concrete instanceof Decl.PrimDecl) return defVar;
+      return null;
+    });
   }
 }

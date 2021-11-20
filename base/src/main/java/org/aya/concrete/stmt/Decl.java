@@ -31,6 +31,7 @@ import java.util.function.BiFunction;
 public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDecl {
   public final @NotNull Accessibility accessibility;
   public @Nullable Context ctx = null;
+  public @NotNull Expr result;
 
   @Override public @NotNull Accessibility accessibility() {
     return accessibility;
@@ -39,10 +40,13 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   protected Decl(
     @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
     @NotNull Accessibility accessibility,
-    @NotNull ImmutableSeq<Expr.Param> telescope
+    @Nullable OpInfo opInfo,
+    @NotNull ImmutableSeq<Expr.Param> telescope,
+    @NotNull Expr result
   ) {
-    super(sourcePos, entireSourcePos, telescope);
+    super(sourcePos, entireSourcePos, opInfo, telescope);
     this.accessibility = accessibility;
+    this.result = result;
   }
 
   @Contract(pure = true) public abstract @NotNull DefVar<? extends Def, ? extends Decl> ref();
@@ -89,37 +93,31 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
   /**
    * @author ice1000
+   * @implSpec the result field of {@link PrimDecl} might be {@link org.aya.concrete.Expr.ErrorExpr},
+   * which means it's unspecified in the concrete syntax.
    * @see PrimDef
    */
   public static final class PrimDecl extends Decl implements OpDecl {
-    public final @NotNull DefVar<? extends PrimDef, PrimDecl> ref;
-    public @Nullable Expr result;
-    public final @Nullable OpDecl.OpInfo opInfo;
+    public final @NotNull DefVar<PrimDef, PrimDecl> ref;
 
     public PrimDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @Nullable OpDecl.OpInfo opInfo,
-      @NotNull DefVar<? extends PrimDef, PrimDecl> ref,
+      @NotNull DefVar<PrimDef, PrimDecl> ref,
       @NotNull ImmutableSeq<Expr.Param> telescope,
-      @Nullable Expr result
+      @NotNull Expr result
     ) {
-      super(sourcePos, entireSourcePos, Accessibility.Public, telescope);
-      this.result = result;
-      this.opInfo = opInfo;
+      super(sourcePos, entireSourcePos, Accessibility.Public, opInfo, telescope, result);
       ref.concrete = this;
       this.ref = ref;
     }
 
-    @Override public @NotNull DefVar<? extends PrimDef, PrimDecl> ref() {
+    @Override public @NotNull DefVar<PrimDef, PrimDecl> ref() {
       return ref;
     }
 
     @Override protected <P, R> R doAccept(@NotNull Decl.Visitor<P, R> visitor, P p) {
       return visitor.visitPrim(this, p);
-    }
-
-    @Override public @Nullable OpDecl.OpInfo opInfo() {
-      return opInfo;
     }
   }
 
@@ -130,13 +128,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public ImmutableSeq<Term.Param> patternTele;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
-    public final @Nullable OpDecl.OpInfo opInfo;
     public final @NotNull BindBlock bindBlock;
     public final boolean coerce;
 
     public DataCtor(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @Nullable OpDecl.OpInfo opInfo,
+      @Nullable OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
@@ -144,9 +141,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       boolean coerce,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, telescope);
+      super(sourcePos, entireSourcePos, opInfo, telescope);
       this.clauses = clauses;
-      this.opInfo = opInfo;
       this.coerce = coerce;
       this.patterns = patterns;
       this.ref = DefVar.concrete(this, name);
@@ -155,10 +151,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
     @Override public @NotNull DefVar<CtorDef, DataCtor> ref() {
       return ref;
-    }
-
-    @Override public @Nullable OpDecl.OpInfo opInfo() {
-      return opInfo;
     }
   }
 
@@ -170,25 +162,21 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    */
   public static final class DataDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
-    public @NotNull Expr result;
     public final @NotNull ImmutableSeq<DataCtor> body;
-    public final @Nullable OpDecl.OpInfo opInfo;
     public final @NotNull BindBlock bindBlock;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull Accessibility accessibility,
-      @Nullable OpDecl.OpInfo opInfo,
+      @Nullable OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       @NotNull ImmutableSeq<DataCtor> body,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, accessibility, telescope);
-      this.result = result;
+      super(sourcePos, entireSourcePos, accessibility, opInfo, telescope, result);
       this.body = body;
-      this.opInfo = opInfo;
       this.ref = DefVar.concrete(this, name);
       this.bindBlock = bindBlock;
       body.forEach(ctors -> ctors.dataRef = ref);
@@ -201,10 +189,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     @Override public @NotNull DefVar<DataDef, DataDecl> ref() {
       return this.ref;
     }
-
-    @Override public @Nullable OpDecl.OpInfo opInfo() {
-      return opInfo;
-    }
   }
 
   /**
@@ -216,14 +200,12 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
-    public final @Nullable OpDecl.OpInfo opInfo;
     public final @NotNull BindBlock bindBlock;
-    public @NotNull Expr result;
 
     public StructDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
       @NotNull Accessibility accessibility,
-      @Nullable OpDecl.OpInfo opInfo,
+      @Nullable OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
@@ -231,25 +213,19 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull ImmutableSeq<StructField> fields,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, accessibility, telescope);
-      this.opInfo = opInfo;
-      this.result = result;
+      super(sourcePos, entireSourcePos, accessibility, opInfo, telescope, result);
       this.fields = fields;
       this.ref = DefVar.concrete(this, name);
       this.bindBlock = bindBlock;
       fields.forEach(field -> field.structRef = ref);
     }
 
-    @Override public @NotNull DefVar<? extends Def, StructDecl> ref() {
+    @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
       return ref;
     }
 
     @Override protected <P, R> R doAccept(Decl.@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitStruct(this, p);
-    }
-
-    @Override public @Nullable OpDecl.OpInfo opInfo() {
-      return opInfo;
     }
   }
 
@@ -258,7 +234,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
-    public final @Nullable OpDecl.OpInfo opInfo;
     public final @NotNull BindBlock bindBlock;
     public @NotNull Option<Expr> body;
 
@@ -266,7 +241,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
     public StructField(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @Nullable OpDecl.OpInfo opInfo,
+      @Nullable OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
@@ -275,17 +250,16 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       boolean coerce,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, telescope);
+      super(sourcePos, entireSourcePos, opInfo, telescope);
       this.coerce = coerce;
       this.result = result;
       this.clauses = clauses;
       this.body = body;
-      this.opInfo = opInfo;
       this.ref = DefVar.concrete(this, name);
       this.bindBlock = bindBlock;
     }
 
-    @Override public @NotNull DefVar<? extends Def, StructField> ref() {
+    @Override public @NotNull DefVar<FieldDef, StructField> ref() {
       return ref;
     }
 
@@ -302,10 +276,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
    */
   public static final class FnDecl extends Decl implements OpDecl {
     public final @NotNull EnumSet<Modifier> modifiers;
-    public final @Nullable OpDecl.OpInfo opInfo;
     public final @NotNull BindBlock bindBlock;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
-    public @NotNull Expr result;
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
 
     public FnDecl(
@@ -319,11 +291,9 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, accessibility, telescope);
+      super(sourcePos, entireSourcePos, accessibility, opInfo, telescope, result);
       this.modifiers = modifiers;
-      this.opInfo = opInfo;
       this.ref = DefVar.concrete(this, name);
-      this.result = result;
       this.body = body;
       this.bindBlock = bindBlock;
     }
@@ -334,10 +304,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
 
     @Override public @NotNull DefVar<FnDef, FnDecl> ref() {
       return this.ref;
-    }
-
-    @Override public @Nullable OpDecl.OpInfo opInfo() {
-      return opInfo;
     }
   }
 }

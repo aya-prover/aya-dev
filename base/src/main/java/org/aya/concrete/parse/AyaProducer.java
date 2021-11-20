@@ -29,6 +29,7 @@ import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.parser.AyaParser;
+import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourceFile;
@@ -92,7 +93,7 @@ public final class AyaProducer {
       assoc == null ? null : makeInfix(assoc, name),
       core.ref(),
       visitTelescope(ctx.tele()),
-      type == null ? null : visitType(type)
+      type == null ? new Expr.ErrorExpr(sourcePos, Doc.plain("missing result")) : visitType(type)
     );
   }
 

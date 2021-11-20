@@ -21,6 +21,7 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> 
 
   default void visitDecl(@NotNull Decl decl, P pp) {
     visitSignatured(decl, pp);
+    decl.result.accept(this, pp);
   }
 
   default void visitClause(@NotNull Pattern.Clause c, P pp) {
@@ -40,21 +41,18 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> 
 
   @Override default Unit visitData(@NotNull Decl.DataDecl decl, P p) {
     visitDecl(decl, p);
-    decl.result.accept(this, p);
     decl.body.forEach(ctor -> traced(ctor, p, this::visitCtor));
     return Unit.unit();
   }
 
   @Override default Unit visitStruct(@NotNull Decl.StructDecl decl, P p) {
     visitDecl(decl, p);
-    decl.result.accept(this, p);
     decl.fields.forEach(field -> traced(field, p, this::visitField));
     return Unit.unit();
   }
 
   @Override default Unit visitFn(@NotNull Decl.FnDecl decl, P p) {
     visitDecl(decl, p);
-    decl.result.accept(this, p);
     decl.body.forEach(
       expr -> expr.accept(this, p),
       clauses -> clauses.forEach(clause -> visitClause(clause, p))
@@ -64,7 +62,6 @@ public interface StmtConsumer<P> extends Stmt.Visitor<P, Unit>, ExprConsumer<P> 
 
   @Override default Unit visitPrim(@NotNull Decl.PrimDecl decl, P p) {
     visitDecl(decl, p);
-    if (decl.result != null) decl.result.accept(this, p);
     return Unit.unit();
   }
 

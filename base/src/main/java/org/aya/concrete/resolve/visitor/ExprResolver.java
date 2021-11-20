@@ -3,7 +3,7 @@
 package org.aya.concrete.resolve.visitor;
 
 import kala.collection.SeqLike;
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
@@ -102,9 +102,9 @@ public record ExprResolver(
   }
 
   @Contract(pure = true)
-  public @NotNull Tuple2<ImmutableSeq<Expr.Param>, Context>
+  public @NotNull Tuple2<SeqView<Expr.Param>, Context>
   resolveParams(@NotNull SeqLike<Expr.Param> params, Context ctx) {
-    if (params.isEmpty()) return Tuple2.of(ImmutableSeq.empty(), ctx);
+    if (params.isEmpty()) return Tuple2.of(SeqView.empty(), ctx);
     var first = params.first();
     var type = first.type();
     type = type == null ? null : type.accept(this, ctx);
@@ -132,7 +132,7 @@ public record ExprResolver(
 
   @Override public @NotNull Expr visitSigma(@NotNull Expr.SigmaExpr expr, Context ctx) {
     var params = resolveParams(expr.params(), ctx);
-    return new Expr.SigmaExpr(expr.sourcePos(), expr.co(), params._1);
+    return new Expr.SigmaExpr(expr.sourcePos(), expr.co(), params._1.toImmutableSeq());
   }
 
   @Override public @NotNull Expr visitHole(@NotNull Expr.HoleExpr expr, Context context) {
