@@ -21,38 +21,70 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Same as {@link FileModuleLoader}, but only resolves the module.
+ * This module loader is used to load source/compiled modules in a library.
+ * For modules belonging to this library, both compiled/source modules are searched and loaded (compiled first).
+ * For modules belonging to dependencies, only compiled modules are searched and loaded.
+ * This is archived by not storing source dirs of dependencies to
+ * {@link LibraryModuleLoader#thisModulePath} and always trying to find compiled cores in
+ * {@link LibraryModuleLoader#thisOutRoot}.
  *
+ * <p>
+ * Unlike {@link FileModuleLoader}, this loader only resolves the module rather than tycking it.
+ * Tyck decision is made by {@link LibraryCompiler} by judging whether the source file
+ * is modified since last build.
+ *
+ * @param thisModulePath Source dirs of this module, out dirs of all dependencies.
+ * @param thisOutRoot    Out dir of this module.
  * @author kiva
  * @see FileModuleLoader
  */
 public record LibraryModuleLoader(
+  @NotNull Reporter reporter,
   @NotNull SourceFileLocator locator,
   @NotNull LibraryCompiler.Timestamp timestamp,
-  @NotNull SeqView<Path> modulePath,
-  @NotNull Path outRoot,
-  @NotNull Reporter reporter
+  @NotNull SeqView<Path> thisModulePath,
+  @NotNull Path thisOutRoot
 ) implements ModuleLoader {
   static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
     var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
     return withoutExt.resolveSibling(withoutExt.getFileName() + ".ayac");
   }
 
-  static @NotNull Path resolveFile(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
+  static @Nullable Path resolveCompiledDepCore(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
+    for (var p : modulePath) {
+      var file = resolveCompiledCore(p, moduleName);
+      if (Files.exists(file)) return file;
+    }
+    return null;
+  }
+
+  static @Nullable Path resolveFile(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
     for (var p : modulePath) {
       var file = FileModuleLoader.resolveFile(p, moduleName);
       if (Files.exists(file)) return file;
     }
-    throw new IllegalArgumentException("invalid module path");
+    return null;
   }
 
   @Override
   public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
-    var sourcePath = resolveFile(modulePath, mod);
-    var corePath = resolveCompiledCore(outRoot, mod);
-    if (Files.exists(corePath) && !timestamp().sourceModified(sourcePath))
-      return loadCompiledCore(mod, corePath, sourcePath);
+    var sourcePath = resolveFile(thisModulePath, mod);
+    if (sourcePath == null) {
+      // We are loading a module belonging to dependencies, find the compiled core.
+      // The compiled core should always exist, otherwise the dependency is not built.
+      var depCorePath = resolveCompiledDepCore(thisModulePath, mod);
+      assert depCorePath != null : "dependencies not built?";
+      return loadCompiledCore(mod, depCorePath, depCorePath);
+    }
 
+    // we are loading a module belonging to this library, try finding compiled core first.
+    // If found, check modifications and decide whether to proceed with compiled core.
+    var corePath = resolveCompiledCore(thisOutRoot, mod);
+    if (Files.exists(corePath) && !timestamp().sourceModified(sourcePath)) {
+      return loadCompiledCore(mod, corePath, sourcePath);
+    }
+
+    // No compiled core is found, or source file is modified, compile it from source.
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(mod);

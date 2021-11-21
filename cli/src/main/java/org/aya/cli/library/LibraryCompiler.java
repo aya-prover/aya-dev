@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -58,28 +59,6 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     return IntStream.range(0, displayNoExt.getNameCount())
       .mapToObj(i -> displayNoExt.getName(i).toString())
       .collect(ImmutableSeq.factory());
-  }
-
-  private @NotNull DynamicLinkedSeq<Path> collectSource(@NotNull Path srcRoot) throws IOException {
-    return Files.walk(srcRoot).filter(Files::isRegularFile)
-      .filter(path -> path.getFileName().toString().endsWith(".aya"))
-      .map(ResolveInfo::canonicalize)
-      .collect(DynamicLinkedSeq.factory());
-  }
-
-  private void collectDep(@NotNull MutableGraph<ResolveInfo> dep, @NotNull ResolveInfo info) {
-    dep.suc(info).appendAll(info.imports());
-    info.imports().forEach(i -> collectDep(dep, i));
-  }
-
-  private void collectChanged(
-    @NotNull MutableGraph<ResolveInfo> usage,
-    @NotNull ResolveInfo changed,
-    @NotNull MutableSet<ResolveInfo> changedList
-  ) {
-    if (changedList.contains(changed)) return;
-    changedList.add(changed);
-    usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedList));
   }
 
   private @NotNull ResolveInfo resolveModule(
@@ -117,37 +96,50 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     return graph;
   }
 
-  private void make(@NotNull LibraryConfig config) throws IOException {
+  /**
+   * Incrementally compiles a library.
+   *
+   * @return whether the library is up-to-date.
+   * @apiNote The return value does not indicate whether the library is compiled successfully.
+   */
+  private boolean make(@NotNull LibraryConfig config) throws IOException {
     // TODO[kiva]: move to package manager
-    var modulePath = DynamicSeq.<Path>create();
+    var thisModulePath = DynamicSeq.<Path>create();
     var locatorPath = DynamicSeq.<Path>create();
+    var anyDepChanged = false;
     for (var dep : config.deps()) {
       var depConfig = depConfig(dep);
       if (depConfig == null) {
         System.out.println("Skipping " + dep.depName());
         continue;
       }
-      make(depConfig);
-      modulePath.append(depConfig.libraryOutRoot());
+      var upToDate = make(depConfig);
+      anyDepChanged = anyDepChanged || !upToDate;
+      thisModulePath.append(depConfig.libraryOutRoot());
       locatorPath.append(depConfig.librarySrcRoot());
     }
 
     System.out.println("Compiling " + config.name());
+    // TODO: be incremental when dependencies changed
+    if (anyDepChanged) deleteRecursively(config.libraryOutRoot());
 
     var srcRoot = config.librarySrcRoot();
-    var outRoot = Files.createDirectories(config.libraryOutRoot());
-    modulePath.append(srcRoot);
+    var thisOutRoot = Files.createDirectories(config.libraryOutRoot());
+    thisModulePath.append(srcRoot);
     locatorPath.prepend(srcRoot);
     var locator = new SourceFileLocator.Module(locatorPath.view());
 
     var reporter = CliReporter.stdio(unicode);
-    var timestamp = new Timestamp(locator, outRoot);
-    var loader = new CachedModuleLoader(new LibraryModuleLoader(locator, timestamp, modulePath.view(), outRoot, reporter));
+    var timestamp = new Timestamp(locator, thisOutRoot);
+    var loader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, timestamp, thisModulePath.view(), thisOutRoot));
     var depGraph = resolveLibrary(loader, locator, config);
-    recompile(reporter, depGraph, timestamp);
+    return make(reporter, depGraph, timestamp);
   }
 
-  private void recompile(
+  /**
+   * @return whether the library is up-to-date.
+   */
+  private boolean make(
     @NotNull Reporter reporter,
     @NotNull MutableGraph<ResolveInfo> depGraph,
     @NotNull Timestamp timestamp
@@ -161,7 +153,7 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
 
     if (changed.isEmpty()) {
       System.out.println("  [Info] No changes detected, no need to remake");
-      return;
+      return true;
     }
 
     var incrementalDep = MutableGraph.<ResolveInfo>create();
@@ -181,6 +173,7 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
         },
         null);
     });
+    return false;
   }
 
   private static @NotNull Path coreFile(
@@ -229,6 +222,39 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     private @NotNull ObjectOutputStream openCompiledCore(@NotNull Path sourcePath) throws IOException {
       return new ObjectOutputStream(Files.newOutputStream(
         coreFile(timestamp.locator, sourcePath, timestamp.outRoot)));
+    }
+  }
+
+  private static @NotNull DynamicLinkedSeq<Path> collectSource(@NotNull Path srcRoot) throws IOException {
+    try (var walk = Files.walk(srcRoot)) {
+      return walk.filter(Files::isRegularFile)
+        .filter(path -> path.getFileName().toString().endsWith(".aya"))
+        .map(ResolveInfo::canonicalize)
+        .collect(DynamicLinkedSeq.factory());
+    }
+  }
+
+  private static void collectDep(@NotNull MutableGraph<ResolveInfo> dep, @NotNull ResolveInfo info) {
+    dep.suc(info).appendAll(info.imports());
+    info.imports().forEach(i -> collectDep(dep, i));
+  }
+
+  private static void collectChanged(
+    @NotNull MutableGraph<ResolveInfo> usage,
+    @NotNull ResolveInfo changed,
+    @NotNull MutableSet<ResolveInfo> changedList
+  ) {
+    if (changedList.contains(changed)) return;
+    changedList.add(changed);
+    usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedList));
+  }
+
+  private static void deleteRecursively(@NotNull Path path) throws IOException {
+    if (!Files.exists(path)) return;
+    try (var walk = Files.walk(path)) {
+      walk.sorted(Comparator.reverseOrder())
+        .collect(ImmutableSeq.factory())
+        .forEachChecked(Files::deleteIfExists);
     }
   }
 }
