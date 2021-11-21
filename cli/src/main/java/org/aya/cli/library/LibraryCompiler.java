@@ -7,6 +7,7 @@ import kala.collection.mutable.DynamicLinkedSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
+import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
@@ -16,7 +17,6 @@ import org.aya.cli.single.CliReporter;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
-import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.def.Def;
 import org.aya.core.serde.Serializer;
@@ -135,25 +135,21 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     System.out.println("Compiling " + config.name());
 
     var srcRoot = config.librarySrcRoot();
-    var outRoot = config.libraryOutRoot();
-    modulePath.prepend(Files.createDirectories(outRoot));
+    var outRoot = Files.createDirectories(config.libraryOutRoot());
     modulePath.append(srcRoot);
     locatorPath.prepend(srcRoot);
     var locator = new SourceFileLocator.Module(locatorPath.view());
 
     var reporter = CliReporter.stdio(unicode);
-    var loader = new ModuleListLoader(modulePath.view().map(path ->
-      new CachedModuleLoader(new LibraryModuleLoader(locator, path, reporter))).toImmutableSeq());
-    var depGraph = resolveLibrary(loader, locator, config);
     var timestamp = new Timestamp(locator, outRoot);
-    var coreSaver = new CoreSaver(timestamp);
-    recompile(reporter, depGraph, coreSaver, timestamp);
+    var loader = new CachedModuleLoader(new LibraryModuleLoader(locator, timestamp, modulePath.view(), outRoot, reporter));
+    var depGraph = resolveLibrary(loader, locator, config);
+    recompile(reporter, depGraph, timestamp);
   }
 
   private void recompile(
     @NotNull Reporter reporter,
     @NotNull MutableGraph<ResolveInfo> depGraph,
-    @NotNull CoreSaver coreSaver,
     @NotNull Timestamp timestamp
   ) {
     var changed = MutableSet.<ResolveInfo>create();
@@ -170,10 +166,19 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
 
     var incrementalDep = MutableGraph.<ResolveInfo>create();
     changed.forEach(c -> collectDep(incrementalDep, c));
+
+    var coreSaver = new CoreSaver(timestamp);
     incrementalDep.topologicalOrder().flatMap(Function.identity()).forEach(mod -> {
+      if (mod.thisProgram().isEmpty()) {
+        System.out.println("  [Reuse] " + mod.thisModule().underlyingFile());
+        return;
+      }
       System.out.println("  [Tyck] " + mod.thisModule().underlyingFile());
-      FileModuleLoader.tyckResolvedModule(mod, reporter,
-        (moduleResolve, stmts, defs) -> coreSaver.saveCompiledCore(moduleResolve, defs),
+      var counting = new CountingReporter(reporter);
+      FileModuleLoader.tyckResolvedModule(mod, counting,
+        (moduleResolve, stmts, defs) -> {
+          if (counting.noError()) coreSaver.saveCompiledCore(moduleResolve, defs);
+        },
         null);
     });
   }
@@ -213,7 +218,7 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
       var sourcePath = resolveInfo.canonicalPath();
       try (var outputStream = openCompiledCore(sourcePath)) {
         var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
-        var compiled = CompiledAya.from(serDefs);
+        var compiled = CompiledAya.from(resolveInfo, serDefs);
         outputStream.writeObject(compiled);
         timestamp.update(sourcePath);
       } catch (IOException e) {

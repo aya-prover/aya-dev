@@ -79,6 +79,11 @@ public record ExprResolver(
       }
       case DefVar<?, ?> ref -> {
         switch (ref.concrete) {
+          case null -> {
+            // RefExpr is referring to a serialized core which is already tycked.
+            // Collecting tyck order for tycked terms is unnecessary, just skip.
+            assert ref.core != null; // ensure it is tycked
+          }
           case Decl decl -> reference.append(decl);
           case Decl.DataCtor ctor -> reference.append(ctor.dataRef.concrete);
           case Decl.StructField field -> reference.append(field.structRef.concrete);
