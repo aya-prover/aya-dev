@@ -67,7 +67,7 @@ public record Serializer(@NotNull Serializer.State state) implements
 
     public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {
       assert var.module != null;
-      return new SerDef.QName(var.module, var.name(), defCache.getOrPut(var, defCache::size));
+      return new SerDef.QName(var.module, var.name());
     }
   }
 

@@ -5,6 +5,8 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
+import org.aya.api.ref.DefVar;
+import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +20,7 @@ import java.util.EnumSet;
 public sealed interface SerDef extends Serializable {
   @NotNull Def de(@NotNull SerTerm.DeState state);
 
-  record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name, int id) implements Serializable {
+  record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name) implements Serializable {
   }
 
   record Fn(
@@ -30,8 +32,9 @@ public sealed interface SerDef extends Serializable {
     @NotNull SerTerm result
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
+      DefVar<FnDef, Decl.FnDecl> ref = state.def(name);
       return new FnDef(
-        state.def(name), telescope.map(tele -> tele.de(state)),
+        ref, telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
         result.de(state), modifiers,
         body.map(term -> term.de(state), mischa -> mischa.map(matchy -> matchy.de(state))));
@@ -47,8 +50,9 @@ public sealed interface SerDef extends Serializable {
     @NotNull SerTerm result, boolean coerce
   ) implements SerDef {
     @Override public @NotNull CtorDef de(SerTerm.@NotNull DeState state) {
+      DefVar<CtorDef, Decl.DataCtor> ref = state.def(self);
       return new CtorDef(
-        state.def(data), state.def(self), pats.map(pat -> pat.de(state)),
+        state.def(data), ref, pats.map(pat -> pat.de(state)),
         ownerTele.map(tele -> tele.de(state)), selfTele.map(tele -> tele.de(state)),
         clauses.map(matching -> matching.de(state)),
         result.de(state), coerce);
@@ -63,8 +67,9 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<Ctor> bodies
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
+      DefVar<DataDef, Decl.DataDecl> ref = state.def(name);
       return new DataDef(
-        state.def(name), telescope.map(tele -> tele.de(state)),
+        ref, telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
         result.de(state),
         bodies.map(body -> body.de(state)));
@@ -83,9 +88,10 @@ public sealed interface SerDef extends Serializable {
   ) implements SerDef {
     @Override
     public @NotNull FieldDef de(SerTerm.@NotNull DeState state) {
+      DefVar<FieldDef, Decl.StructField> ref = state.def(self);
       return new FieldDef(
         state.def(struct),
-        state.def(self),
+        ref,
         ownerTele.map(tele -> tele.de(state)),
         selfTele.map(tele -> tele.de(state)),
         result.de(state),
@@ -104,8 +110,9 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
+      DefVar<StructDef, Decl.StructDecl> ref = state.def(name);
       return new StructDef(
-        state.def(name),
+        ref,
         telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
         result.de(state),

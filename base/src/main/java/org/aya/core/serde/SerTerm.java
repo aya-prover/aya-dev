@@ -23,7 +23,7 @@ import java.util.Objects;
  */
 public sealed interface SerTerm extends Serializable {
   record DeState(
-    @NotNull MutableMap<Seq<String>, MutableMap<Integer, DefVar<?, ?>>> defCache,
+    @NotNull MutableMap<Seq<String>, MutableMap<String, DefVar<?, ?>>> defCache,
     @NotNull MutableMap<Integer, Sort.LvlVar> levelCache,
     @NotNull MutableMap<Integer, LocalVar> localCache
   ) {
@@ -41,8 +41,9 @@ public sealed interface SerTerm extends Serializable {
       // We assume this cast to be safe
       var dv = (DefVar<Core, Concrete>) defCache
         .getOrPut(name.mod(), MutableHashMap::new)
-        .getOrPut(name.id(), () -> DefVar.empty(name.name()));
+        .getOrPut(name.name(), () -> DefVar.empty(name.name()));
       assert Objects.equals(name.name(), dv.name());
+      dv.module = name.mod();
       return dv;
     }
   }

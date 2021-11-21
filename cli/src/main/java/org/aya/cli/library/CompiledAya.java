@@ -32,7 +32,7 @@ public record CompiledAya(
     ctx.exports.view().forEach((k, vs) -> {
       var qnameMod = modName.appendedAll(k);
       vs.view().forEach((n, v) -> {
-        var qname = new SerDef.QName(qnameMod, n, 0);
+        var qname = new SerDef.QName(qnameMod, n);
         exports.append(qname);
       });
     });
@@ -84,6 +84,6 @@ public record CompiledAya(
   }
 
   private boolean isExported(@NotNull SerDef.QName qname) {
-    return exports.find(q -> q.name().equals(qname.name()) && q.mod().equals(qname.mod())).isDefined();
+    return exports.contains(qname);
   }
 }
