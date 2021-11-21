@@ -34,6 +34,10 @@ public record ResolveInfo(
     return canonicalize(thisModule.underlyingFile());
   }
 
+  public boolean holds(@NotNull Path path) {
+    return canonicalPath().equals(canonicalize(path));
+  }
+
   public static @NotNull Path canonicalize(@NotNull Path path) {
     try {
       return path.toRealPath();
