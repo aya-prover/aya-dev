@@ -55,49 +55,33 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     return buildRoot.resolve("deps").resolve(depName + "_" + version);
   }
 
-  record LibraryImportFileLoader(
-    @NotNull LibraryCompiler compiler,
+  private @NotNull LibrarySource resolveImports(
+    @NotNull LibraryConfig owner,
     @NotNull Reporter reporter,
     @NotNull SourceFileLocator locator,
-    @NotNull SeqView<Path> thisModulePath
-  ) implements ImportResolver.ImportFileLoader {
-    @Override public ImportResolver.@Nullable Imports loadFile(@NotNull ImmutableSeq<String> mod) {
-      try {
-        for (var path : thisModulePath) {
-          var file = FileModuleLoader.resolveFile(path, mod);
-          if (Files.exists(file)) return compiler.resolveImports(reporter, locator, this, file);
-        }
-      } catch (IOException ignored) {
-      }
-      return null;
-    }
-  }
-
-  private ImportResolver.Imports resolveImports(
-    @NotNull Reporter reporter,
-    @NotNull SourceFileLocator locator,
-    @NotNull ImportResolver.ImportFileLoader loader,
+    @NotNull ImportResolver.ImportLoader loader,
     @NotNull Path path
   ) throws IOException {
     var program = AyaParsing.program(locator, reporter, path);
-    var imports = new ImportResolver.Imports(path, DynamicSeq.create());
-    var finder = new ImportResolver(loader, imports);
+    var source = new LibrarySource(owner, path);
+    var finder = new ImportResolver(loader, source);
     finder.resolveStmt(program);
-    return imports;
+    return source;
   }
 
-  private @NotNull MutableGraph<ImportResolver.Imports> resolveImports(
+  private @NotNull MutableGraph<LibrarySource> resolveImports(
+    @NotNull LibraryConfig owner,
     @NotNull Reporter reporter,
     @NotNull SourceFileLocator locator,
-    @NotNull ImportResolver.ImportFileLoader loader,
+    @NotNull ImportResolver.ImportLoader loader,
     @NotNull LibraryConfig config
   ) throws IOException {
     System.out.println("  [Info] Collecting source files");
-    var graph = MutableGraph.<ImportResolver.Imports>create();
+    var graph = MutableGraph.<LibrarySource>create();
     var sources = collectSource(config.librarySrcRoot());
     System.out.println("  [Info] Resolving source file dependency");
     for (var file : sources) {
-      var resolve = resolveImports(reporter, locator, loader, file);
+      var resolve = resolveImports(owner, reporter, locator, loader, file);
       collectDep(graph, resolve);
     }
     return graph;
@@ -139,10 +123,10 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     var locator = new SourceFileLocator.Module(locatorPath.view());
     var timestamp = new Timestamp(locator, thisOutRoot);
 
-    var resolveLoader = new LibraryImportFileLoader(this, reporter, locator, SeqView.of(srcRoot));
-    var depGraph = resolveImports(reporter, locator, resolveLoader, config);
+    var resolveLoader = new LibraryImportLoader(config, this, reporter, locator, locatorPath.view());
+    var depGraph = resolveImports(config, reporter, locator, resolveLoader, config);
 
-    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, timestamp, thisModulePath.view(), thisOutRoot));
+    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
     return make(reporter, moduleLoader, depGraph, timestamp);
   }
 
@@ -152,13 +136,13 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
   private boolean make(
     @NotNull Reporter reporter,
     @NotNull ModuleLoader moduleLoader,
-    @NotNull MutableGraph<ImportResolver.Imports> depGraph,
+    @NotNull MutableGraph<LibrarySource> depGraph,
     @NotNull Timestamp timestamp
-  ) {
-    var changed = MutableSet.<ImportResolver.Imports>create();
+  ) throws IOException {
+    var changed = MutableSet.<LibrarySource>create();
     var usage = depGraph.transpose();
     depGraph.E().keysView().forEach(s -> {
-      if (timestamp.sourceModified(s.self()))
+      if (timestamp.sourceModified(s.file()))
         collectChanged(usage, s, changed);
     });
 
@@ -167,12 +151,12 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
       return true;
     }
 
-    var changedDepGraph = MutableGraph.<ImportResolver.Imports>create();
+    var changedDepGraph = MutableGraph.<LibrarySource>create();
     changed.forEach(c -> collectDep(changedDepGraph, c));
 
     var order = changedDepGraph.topologicalOrder().view()
       .flatMap(Function.identity())
-      .map(ImportResolver.Imports::self)
+      .map(LibrarySource::file)
       .toImmutableSeq();
     tyckLibrary(reporter, moduleLoader, timestamp.locator, timestamp, order);
     return false;
@@ -185,8 +169,9 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     @NotNull SourceFileLocator locator,
     @NotNull Timestamp timestamp,
     @NotNull ImmutableSeq<Path> order
-  ) {
+  ) throws IOException {
     var coreSaver = new CoreSaver(timestamp);
+    for (var f : order) Files.deleteIfExists(coreFile(locator, f, timestamp.outRoot));
     order.forEach(file -> {
       var mod = resolveModule(moduleLoader, locator, file);
       if (mod.thisProgram().isEmpty()) {
@@ -273,7 +258,7 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     }
   }
 
-  private static void collectDep(@NotNull MutableGraph<ImportResolver.Imports> dep, @NotNull ImportResolver.Imports info) {
+  private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {
     dep.suc(info).appendAll(info.imports());
     info.imports().forEach(i -> {
       collectDep(dep, i);
@@ -281,9 +266,9 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
   }
 
   private static void collectChanged(
-    @NotNull MutableGraph<ImportResolver.Imports> usage,
-    @NotNull ImportResolver.Imports changed,
-    @NotNull MutableSet<ImportResolver.Imports> changedList
+    @NotNull MutableGraph<LibrarySource> usage,
+    @NotNull LibrarySource changed,
+    @NotNull MutableSet<LibrarySource> changedList
   ) {
     if (changedList.contains(changed)) return;
     changedList.add(changed);
@@ -304,6 +289,24 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
       walk.sorted(Comparator.reverseOrder())
         .collect(ImmutableSeq.factory())
         .forEachChecked(Files::deleteIfExists);
+    }
+  }
+
+  record LibraryImportLoader(
+    @NotNull LibraryConfig owner,
+    @NotNull LibraryCompiler compiler,
+    @NotNull Reporter reporter,
+    @NotNull SourceFileLocator locator,
+    @NotNull SeqView<Path> thisModulePath
+  ) implements ImportResolver.ImportLoader {
+    @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
+      var file = LibraryModuleLoader.resolveFile(thisModulePath, mod);
+      if (file == null) throw new IllegalArgumentException("incomplete module path");
+      try {
+        return compiler.resolveImports(owner, reporter, locator, this, file);
+      } catch (IOException e) {
+        throw new RuntimeException("Cannot load imported module " + mod, e);
+      }
     }
   }
 }

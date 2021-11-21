@@ -4,42 +4,17 @@ package org.aya.cli.library;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
-import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.nio.file.Path;
-import java.util.Objects;
 
 public record ImportResolver(
-  @NotNull ImportResolver.ImportFileLoader loader,
-  @NotNull Imports imports
+  @NotNull ImportResolver.ImportLoader loader,
+  @NotNull LibrarySource librarySource
 ) {
-  record Imports(
-    @NotNull Path self,
-    @NotNull DynamicSeq<Imports> imports
-  ) {
-    public @NotNull Path canonicalPath() {
-      return ResolveInfo.canonicalize(self);
-    }
-
-    @Override public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Imports imports = (Imports) o;
-      return canonicalPath().equals(imports.canonicalPath());
-    }
-
-    @Override public int hashCode() {
-      return Objects.hash(self);
-    }
-  }
-
-  interface ImportFileLoader {
-    @Nullable Imports loadFile(@NotNull ImmutableSeq<String> mod);
+  @FunctionalInterface
+  interface ImportLoader {
+    @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod);
   }
 
   public void resolveStmt(@NotNull SeqLike<Stmt> stmts) {
@@ -51,8 +26,8 @@ public record ImportResolver(
       case Command.Module mod -> resolveStmt(mod.contents());
       case Command.Import cmd -> {
         var ids = cmd.path().ids();
-        var success = loader.loadFile(ids);
-        if (success != null) imports.imports.append(success);
+        var success = loader.load(ids);
+        librarySource.imports().append(success);
       }
       default -> {}
     }

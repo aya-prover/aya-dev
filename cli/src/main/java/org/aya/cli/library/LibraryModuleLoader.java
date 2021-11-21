@@ -41,16 +41,15 @@ import java.nio.file.Path;
 public record LibraryModuleLoader(
   @NotNull Reporter reporter,
   @NotNull SourceFileLocator locator,
-  @NotNull LibraryCompiler.Timestamp timestamp,
   @NotNull SeqView<Path> thisModulePath,
   @NotNull Path thisOutRoot
 ) implements ModuleLoader {
-  static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
+  public static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
     var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
     return withoutExt.resolveSibling(withoutExt.getFileName() + ".ayac");
   }
 
-  static @Nullable Path resolveCompiledDepCore(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
+  public static @Nullable Path resolveCompiledDepCore(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
     for (var p : modulePath) {
       var file = resolveCompiledCore(p, moduleName);
       if (Files.exists(file)) return file;
@@ -58,7 +57,7 @@ public record LibraryModuleLoader(
     return null;
   }
 
-  static @Nullable Path resolveFile(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
+  public static @Nullable Path resolveFile(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
     for (var p : modulePath) {
       var file = FileModuleLoader.resolveFile(p, moduleName);
       if (Files.exists(file)) return file;
@@ -80,7 +79,7 @@ public record LibraryModuleLoader(
     // we are loading a module belonging to this library, try finding compiled core first.
     // If found, check modifications and decide whether to proceed with compiled core.
     var corePath = resolveCompiledCore(thisOutRoot, mod);
-    if (Files.exists(corePath) && !timestamp().sourceModified(sourcePath)) {
+    if (Files.exists(corePath)) {
       return loadCompiledCore(mod, corePath, sourcePath);
     }
 
