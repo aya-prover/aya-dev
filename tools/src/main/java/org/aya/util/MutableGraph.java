@@ -41,7 +41,10 @@ public record MutableGraph<T>(@NotNull MutableHashMap<T, @NotNull DynamicSeq<@No
 
   public @NotNull MutableGraph<T> transpose() {
     var tr = MutableGraph.<T>create();
-    E.forEach((v, ws) -> ws.forEach(w -> tr.suc(w).append(v)));
+    E.forEach((v, ws) -> {
+      tr.suc(v);
+      ws.forEach(w -> tr.suc(w).append(v));
+    });
     return tr;
   }
 

@@ -146,11 +146,13 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
     var order = changed.topologicalOrder().view()
       .flatMap(Function.identity())
-      .toImmutableSeq()
+      .toImmutableLinkedSeq()
       .reversed();
     // ^ top order generated from usage graph should be reversed
-    // Only here we generate top order from usage graph,
-    // in other cases we generate top order from dependency graph.
+    // Only here we generate top order from usage graph just for efficiency
+    // (transposing a graph is slower than reversing a linked list).
+    // in other cases we always generate top order from dependency graphs
+    // because usage graphs are never needed.
     if (order.isEmpty()) {
       System.out.println("  [Info] No changes detected, no need to remake");
       return true;
