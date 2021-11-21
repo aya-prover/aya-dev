@@ -4,9 +4,7 @@ package org.aya.cli.library;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicLinkedSeq;
 import kala.collection.mutable.DynamicSeq;
-import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
@@ -32,15 +30,34 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.function.Function;
-import java.util.stream.IntStream;
 
 /**
  * @author kiva
  */
-public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
+public class LibraryCompiler implements ImportResolver.ImportLoader {
+  final @NotNull LibraryConfig library;
+  final @NotNull SourceFileLocator locator;
+
+  private final @NotNull Reporter reporter;
+  private final @NotNull Path buildRoot;
+  private final @NotNull Timestamp timestamp;
+  private final boolean unicode;
+  private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
+  private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
+  private final @NotNull DynamicSeq<LibrarySource> resolvedSources = DynamicSeq.create();
+
+  public LibraryCompiler(@NotNull LibraryConfig library, @NotNull Path buildRoot, boolean unicode) {
+    this.library = library;
+    this.buildRoot = buildRoot;
+    this.unicode = unicode;
+    this.reporter = CliReporter.stdio(unicode);
+    this.locator = new SourceFileLocator.Module(SeqView.of(library.librarySrcRoot()));
+    this.timestamp = new Timestamp(locator, library.libraryOutRoot());
+  }
+
   public static int compile(@NotNull Path libraryRoot, boolean unicode) throws IOException {
     var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
-    new LibraryCompiler(config.libraryBuildRoot(), unicode).make(config);
+    new LibraryCompiler(config, config.libraryBuildRoot(), unicode).make();
     return 0;
   }
 
@@ -56,32 +73,23 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
   }
 
   private @NotNull LibrarySource resolveImports(
-    @NotNull LibraryConfig owner,
-    @NotNull Reporter reporter,
-    @NotNull SourceFileLocator locator,
-    @NotNull ImportResolver.ImportLoader loader,
+    @NotNull LibraryCompiler owner,
     @NotNull Path path
   ) throws IOException {
-    var program = AyaParsing.program(locator, reporter, path);
+    var program = AyaParsing.program(owner.locator, owner.reporter, path);
     var source = new LibrarySource(owner, path);
-    var finder = new ImportResolver(loader, source);
+    var finder = new ImportResolver(owner, source);
     finder.resolveStmt(program);
     return source;
   }
 
-  private @NotNull MutableGraph<LibrarySource> resolveImports(
-    @NotNull LibraryConfig owner,
-    @NotNull Reporter reporter,
-    @NotNull SourceFileLocator locator,
-    @NotNull ImportResolver.ImportLoader loader,
-    @NotNull LibraryConfig config
-  ) throws IOException {
-    System.out.println("  [Info] Collecting source files");
+  private @NotNull MutableGraph<LibrarySource> resolveLibraryImports() throws IOException {
     var graph = MutableGraph.<LibrarySource>create();
-    var sources = collectSource(config.librarySrcRoot());
+    var sources = collectSource(library.librarySrcRoot());
     System.out.println("  [Info] Resolving source file dependency");
     for (var file : sources) {
-      var resolve = resolveImports(owner, reporter, locator, loader, file);
+      var resolve = resolveImports(this, file);
+      resolvedSources.append(resolve);
       collectDep(graph, resolve);
     }
     return graph;
@@ -93,85 +101,73 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
    * @return whether the library is up-to-date.
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
-  private boolean make(@NotNull LibraryConfig config) throws IOException {
+  private boolean make() throws IOException {
     // TODO[kiva]: move to package manager
-    var thisModulePath = DynamicSeq.<Path>create();
-    var locatorPath = DynamicSeq.<Path>create();
     var anyDepChanged = false;
-    for (var dep : config.deps()) {
+    for (var dep : library.deps()) {
       var depConfig = depConfig(dep);
       if (depConfig == null) {
         System.out.println("Skipping " + dep.depName());
         continue;
       }
-      var upToDate = make(depConfig);
-      anyDepChanged = anyDepChanged || !upToDate;
-      thisModulePath.append(depConfig.libraryOutRoot());
-      locatorPath.append(depConfig.librarySrcRoot());
+      var depCompiler = new LibraryCompiler(depConfig, library.libraryBuildRoot(), unicode);
+      deps.append(depCompiler);
     }
 
-    System.out.println("Compiling " + config.name());
+    for (var dep : deps) {
+      var upToDate = dep.make();
+      anyDepChanged = anyDepChanged || !upToDate;
+      thisModulePath.append(dep.library.libraryOutRoot());
+    }
+
+    System.out.println("Compiling " + library.name());
     // TODO: be incremental when dependencies changed
-    if (anyDepChanged) deleteRecursively(config.libraryOutRoot());
+    if (anyDepChanged) deleteRecursively(library.libraryOutRoot());
 
-    var srcRoot = config.librarySrcRoot();
-    var thisOutRoot = Files.createDirectories(config.libraryOutRoot());
+    var srcRoot = library.librarySrcRoot();
     thisModulePath.append(srcRoot);
-    locatorPath.prepend(srcRoot);
 
-    var reporter = CliReporter.stdio(unicode);
-    var locator = new SourceFileLocator.Module(locatorPath.view());
-    var timestamp = new Timestamp(locator, thisOutRoot);
-
-    var resolveLoader = new LibraryImportLoader(config, this, reporter, locator, locatorPath.view());
-    var depGraph = resolveImports(config, reporter, locator, resolveLoader, config);
-
-    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
-    return make(reporter, moduleLoader, depGraph, timestamp);
+    var depGraph = resolveLibraryImports();
+    return make(depGraph);
   }
 
   /**
    * @return whether the library is up-to-date.
    */
   private boolean make(
-    @NotNull Reporter reporter,
-    @NotNull ModuleLoader moduleLoader,
-    @NotNull MutableGraph<LibrarySource> depGraph,
-    @NotNull Timestamp timestamp
+    @NotNull MutableGraph<LibrarySource> depGraph
   ) throws IOException {
-    var changed = MutableSet.<LibrarySource>create();
+    var changed = MutableGraph.<LibrarySource>create();
     var usage = depGraph.transpose();
     depGraph.E().keysView().forEach(s -> {
-      if (timestamp.sourceModified(s.file()))
+      if (s.owner().timestamp.sourceModified(s.file()))
         collectChanged(usage, s, changed);
     });
 
-    if (changed.isEmpty()) {
+    var order = changed.topologicalOrder().view()
+      .flatMap(Function.identity())
+      .toImmutableSeq()
+      .reversed();
+    // ^ top order generated from usage graph should be reversed
+    // Only here we generate top order from usage graph,
+    // in other cases we generate top order from dependency graph.
+    if (order.isEmpty()) {
       System.out.println("  [Info] No changes detected, no need to remake");
       return true;
     }
-
-    var changedDepGraph = MutableGraph.<LibrarySource>create();
-    changed.forEach(c -> collectDep(changedDepGraph, c));
-
-    var order = changedDepGraph.topologicalOrder().view()
-      .flatMap(Function.identity())
-      .map(LibrarySource::file)
-      .toImmutableSeq();
-    tyckLibrary(reporter, moduleLoader, timestamp.locator, timestamp, order);
+    tyckLibrary(order);
     return false;
   }
 
   /** Produces tyck order of modules in a library */
   private void tyckLibrary(
-    @NotNull Reporter reporter,
-    @NotNull ModuleLoader moduleLoader,
-    @NotNull SourceFileLocator locator,
-    @NotNull Timestamp timestamp,
-    @NotNull ImmutableSeq<Path> order
+    @NotNull ImmutableSeq<LibrarySource> order
   ) throws IOException {
+    var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
+    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
     var coreSaver = new CoreSaver(timestamp);
-    for (var f : order) Files.deleteIfExists(coreFile(locator, f, timestamp.outRoot));
+
+    for (var f : order) Files.deleteIfExists(coreFile(locator, f.file(), timestamp.outRoot()));
     order.forEach(file -> {
       var mod = resolveModule(moduleLoader, locator, file);
       if (mod.thisProgram().isEmpty()) {
@@ -191,43 +187,29 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
   private @NotNull ResolveInfo resolveModule(
     @NotNull ModuleLoader moduleLoader,
     @NotNull SourceFileLocator locator,
-    @NotNull Path file
+    @NotNull LibrarySource file
   ) {
-    var mod = moduleName(locator, file);
-    System.out.printf("  [Resolve] %s (%s)%n", mod.joinToString("::"), file);
+    var mod = file.moduleName();
+    System.out.printf("  [Resolve] %s (%s)%n", mod.joinToString("::"), file.file());
     var resolveInfo = moduleLoader.load(mod);
     if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
     return resolveInfo;
   }
 
-  private static @NotNull Path coreFile(
+  private @Nullable LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
+    return resolvedSources.find(s -> {
+      var checkMod = s.moduleName();
+      return checkMod.equals(mod);
+    }).getOrNull();
+  }
+
+  public static @NotNull Path coreFile(
     @NotNull SourceFileLocator locator, @NotNull Path file, @NotNull Path outRoot
   ) throws IOException {
     var raw = outRoot.resolve(locator.displayName(file));
     var core = raw.resolveSibling(raw.getFileName().toString() + "c");
     Files.createDirectories(core.getParent());
     return core;
-  }
-
-  record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoot) {
-    public boolean sourceModified(@NotNull Path file) {
-      try {
-        var core = coreFile(locator, file, outRoot);
-        if (!Files.exists(core)) return true;
-        return Files.getLastModifiedTime(file)
-          .compareTo(Files.getLastModifiedTime(core)) > 0;
-      } catch (IOException ignore) {
-        return true;
-      }
-    }
-
-    public void update(@NotNull Path file) {
-      try {
-        var core = coreFile(locator, file, outRoot);
-        Files.setLastModifiedTime(core, Files.getLastModifiedTime(file));
-      } catch (IOException ignore) {
-      }
-    }
   }
 
   record CoreSaver(@NotNull Timestamp timestamp) {
@@ -245,42 +227,34 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
 
     private @NotNull ObjectOutputStream openCompiledCore(@NotNull Path sourcePath) throws IOException {
       return new ObjectOutputStream(Files.newOutputStream(
-        coreFile(timestamp.locator, sourcePath, timestamp.outRoot)));
+        coreFile(timestamp.locator(), sourcePath, timestamp.outRoot())));
     }
   }
 
-  private static @NotNull DynamicLinkedSeq<Path> collectSource(@NotNull Path srcRoot) throws IOException {
+  private static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot) {
     try (var walk = Files.walk(srcRoot)) {
       return walk.filter(Files::isRegularFile)
         .filter(path -> path.getFileName().toString().endsWith(".aya"))
         .map(ResolveInfo::canonicalize)
-        .collect(DynamicLinkedSeq.factory());
+        .collect(ImmutableSeq.factory());
+    } catch (IOException e) {
+      return ImmutableSeq.empty();
     }
   }
 
   private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {
     dep.suc(info).appendAll(info.imports());
-    info.imports().forEach(i -> {
-      collectDep(dep, i);
-    });
+    info.imports().forEach(i -> collectDep(dep, i));
   }
 
   private static void collectChanged(
     @NotNull MutableGraph<LibrarySource> usage,
     @NotNull LibrarySource changed,
-    @NotNull MutableSet<LibrarySource> changedList
+    @NotNull MutableGraph<LibrarySource> changedGraph
   ) {
-    if (changedList.contains(changed)) return;
-    changedList.add(changed);
-    usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedList));
-  }
-
-  private static @NotNull ImmutableSeq<String> moduleName(@NotNull SourceFileLocator locator, @NotNull Path file) {
-    var display = locator.displayName(file);
-    var displayNoExt = display.resolveSibling(display.getFileName().toString().replaceAll("\\.aya", ""));
-    return IntStream.range(0, displayNoExt.getNameCount())
-      .mapToObj(i -> displayNoExt.getName(i).toString())
-      .collect(ImmutableSeq.factory());
+    if (changedGraph.E().containsKey(changed)) return;
+    changedGraph.suc(changed).appendAll(usage.suc(changed));
+    usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedGraph));
   }
 
   private static void deleteRecursively(@NotNull Path path) throws IOException {
@@ -292,21 +266,19 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     }
   }
 
-  record LibraryImportLoader(
-    @NotNull LibraryConfig owner,
-    @NotNull LibraryCompiler compiler,
-    @NotNull Reporter reporter,
-    @NotNull SourceFileLocator locator,
-    @NotNull SeqView<Path> thisModulePath
-  ) implements ImportResolver.ImportLoader {
-    @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
-      var file = LibraryModuleLoader.resolveFile(thisModulePath, mod);
-      if (file == null) throw new IllegalArgumentException("incomplete module path");
-      try {
-        return compiler.resolveImports(owner, reporter, locator, this, file);
-      } catch (IOException e) {
-        throw new RuntimeException("Cannot load imported module " + mod, e);
+  @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
+    var file = findModuleFile(mod);
+    if (file == null) {
+      for (var dep : deps) {
+        file = dep.findModuleFile(mod);
+        if (file != null) break;
       }
+    }
+    if (file == null) throw new IllegalArgumentException("invalid module path");
+    try {
+      return resolveImports(file.owner(), file.file());
+    } catch (IOException e) {
+      throw new RuntimeException("Cannot load imported module " + mod, e);
     }
   }
 }
