@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicLinkedSeq;
 import kala.collection.mutable.DynamicSeq;
@@ -14,6 +15,7 @@ import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
 import org.aya.cli.single.CliReporter;
+import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
@@ -53,45 +55,50 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     return buildRoot.resolve("deps").resolve(depName + "_" + version);
   }
 
-  private @NotNull ImmutableSeq<String> moduleName(@NotNull SourceFileLocator locator, @NotNull Path file) {
-    var display = locator.displayName(file);
-    var displayNoExt = display.resolveSibling(display.getFileName().toString().replaceAll("\\.aya", ""));
-    return IntStream.range(0, displayNoExt.getNameCount())
-      .mapToObj(i -> displayNoExt.getName(i).toString())
-      .collect(ImmutableSeq.factory());
+  record LibraryImportFileLoader(
+    @NotNull LibraryCompiler compiler,
+    @NotNull Reporter reporter,
+    @NotNull SourceFileLocator locator,
+    @NotNull SeqView<Path> thisModulePath
+  ) implements ImportResolver.ImportFileLoader {
+    @Override public ImportResolver.@Nullable Imports loadFile(@NotNull ImmutableSeq<String> mod) {
+      try {
+        for (var path : thisModulePath) {
+          var file = FileModuleLoader.resolveFile(path, mod);
+          if (Files.exists(file)) return compiler.resolveImports(reporter, locator, this, file);
+        }
+      } catch (IOException ignored) {
+      }
+      return null;
+    }
   }
 
-  private @NotNull ResolveInfo resolveModule(
-    @NotNull ModuleLoader moduleLoader,
+  private ImportResolver.Imports resolveImports(
+    @NotNull Reporter reporter,
     @NotNull SourceFileLocator locator,
-    @NotNull Path file
-  ) {
-    var mod = moduleName(locator, file);
-    System.out.printf("  [Resolve] %s (%s)%n", mod.joinToString("::"), file);
-    var resolveInfo = moduleLoader.load(mod);
-    if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
-    return resolveInfo;
+    @NotNull ImportResolver.ImportFileLoader loader,
+    @NotNull Path path
+  ) throws IOException {
+    var program = AyaParsing.program(locator, reporter, path);
+    var imports = new ImportResolver.Imports(path, DynamicSeq.create());
+    var finder = new ImportResolver(loader, imports);
+    finder.resolveStmt(program);
+    return imports;
   }
 
-  /** Produces tyck order of modules in a library */
-  private @NotNull MutableGraph<ResolveInfo> resolveLibrary(
-    @NotNull ModuleLoader moduleLoader,
+  private @NotNull MutableGraph<ImportResolver.Imports> resolveImports(
+    @NotNull Reporter reporter,
     @NotNull SourceFileLocator locator,
+    @NotNull ImportResolver.ImportFileLoader loader,
     @NotNull LibraryConfig config
   ) throws IOException {
     System.out.println("  [Info] Collecting source files");
-    var remaining = collectSource(config.librarySrcRoot());
-    var graph = MutableGraph.<ResolveInfo>create();
-    if (!remaining.isNotEmpty()) return graph;
-
-    while (remaining.isNotEmpty()) {
-      var file = remaining.pop();
-      var resolveInfo = resolveModule(moduleLoader, locator, file);
-      resolveInfo.imports().forEach(r -> {
-        var path = r.canonicalPath();
-        remaining.removeAll(path::equals);
-      });
-      collectDep(graph, resolveInfo);
+    var graph = MutableGraph.<ImportResolver.Imports>create();
+    var sources = collectSource(config.librarySrcRoot());
+    System.out.println("  [Info] Resolving source file dependency");
+    for (var file : sources) {
+      var resolve = resolveImports(reporter, locator, loader, file);
+      collectDep(graph, resolve);
     }
     return graph;
   }
@@ -127,13 +134,16 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     var thisOutRoot = Files.createDirectories(config.libraryOutRoot());
     thisModulePath.append(srcRoot);
     locatorPath.prepend(srcRoot);
-    var locator = new SourceFileLocator.Module(locatorPath.view());
 
     var reporter = CliReporter.stdio(unicode);
+    var locator = new SourceFileLocator.Module(locatorPath.view());
     var timestamp = new Timestamp(locator, thisOutRoot);
-    var loader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, timestamp, thisModulePath.view(), thisOutRoot));
-    var depGraph = resolveLibrary(loader, locator, config);
-    return make(reporter, depGraph, timestamp);
+
+    var resolveLoader = new LibraryImportFileLoader(this, reporter, locator, SeqView.of(srcRoot));
+    var depGraph = resolveImports(reporter, locator, resolveLoader, config);
+
+    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, timestamp, thisModulePath.view(), thisOutRoot));
+    return make(reporter, moduleLoader, depGraph, timestamp);
   }
 
   /**
@@ -141,13 +151,14 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
    */
   private boolean make(
     @NotNull Reporter reporter,
-    @NotNull MutableGraph<ResolveInfo> depGraph,
+    @NotNull ModuleLoader moduleLoader,
+    @NotNull MutableGraph<ImportResolver.Imports> depGraph,
     @NotNull Timestamp timestamp
   ) {
-    var changed = MutableSet.<ResolveInfo>create();
+    var changed = MutableSet.<ImportResolver.Imports>create();
     var usage = depGraph.transpose();
     depGraph.E().keysView().forEach(s -> {
-      if (timestamp.sourceModified(s.canonicalPath()))
+      if (timestamp.sourceModified(s.self()))
         collectChanged(usage, s, changed);
     });
 
@@ -156,11 +167,28 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
       return true;
     }
 
-    var incrementalDep = MutableGraph.<ResolveInfo>create();
-    changed.forEach(c -> collectDep(incrementalDep, c));
+    var changedDepGraph = MutableGraph.<ImportResolver.Imports>create();
+    changed.forEach(c -> collectDep(changedDepGraph, c));
 
+    var order = changedDepGraph.topologicalOrder().view()
+      .flatMap(Function.identity())
+      .map(ImportResolver.Imports::self)
+      .toImmutableSeq();
+    tyckLibrary(reporter, moduleLoader, timestamp.locator, timestamp, order);
+    return false;
+  }
+
+  /** Produces tyck order of modules in a library */
+  private void tyckLibrary(
+    @NotNull Reporter reporter,
+    @NotNull ModuleLoader moduleLoader,
+    @NotNull SourceFileLocator locator,
+    @NotNull Timestamp timestamp,
+    @NotNull ImmutableSeq<Path> order
+  ) {
     var coreSaver = new CoreSaver(timestamp);
-    incrementalDep.topologicalOrder().flatMap(Function.identity()).forEach(mod -> {
+    order.forEach(file -> {
+      var mod = resolveModule(moduleLoader, locator, file);
       if (mod.thisProgram().isEmpty()) {
         System.out.println("  [Reuse] " + mod.thisModule().underlyingFile());
         return;
@@ -173,7 +201,18 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
         },
         null);
     });
-    return false;
+  }
+
+  private @NotNull ResolveInfo resolveModule(
+    @NotNull ModuleLoader moduleLoader,
+    @NotNull SourceFileLocator locator,
+    @NotNull Path file
+  ) {
+    var mod = moduleName(locator, file);
+    System.out.printf("  [Resolve] %s (%s)%n", mod.joinToString("::"), file);
+    var resolveInfo = moduleLoader.load(mod);
+    if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
+    return resolveInfo;
   }
 
   private static @NotNull Path coreFile(
@@ -234,19 +273,29 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     }
   }
 
-  private static void collectDep(@NotNull MutableGraph<ResolveInfo> dep, @NotNull ResolveInfo info) {
+  private static void collectDep(@NotNull MutableGraph<ImportResolver.Imports> dep, @NotNull ImportResolver.Imports info) {
     dep.suc(info).appendAll(info.imports());
-    info.imports().forEach(i -> collectDep(dep, i));
+    info.imports().forEach(i -> {
+      collectDep(dep, i);
+    });
   }
 
   private static void collectChanged(
-    @NotNull MutableGraph<ResolveInfo> usage,
-    @NotNull ResolveInfo changed,
-    @NotNull MutableSet<ResolveInfo> changedList
+    @NotNull MutableGraph<ImportResolver.Imports> usage,
+    @NotNull ImportResolver.Imports changed,
+    @NotNull MutableSet<ImportResolver.Imports> changedList
   ) {
     if (changedList.contains(changed)) return;
     changedList.add(changed);
     usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedList));
+  }
+
+  private static @NotNull ImmutableSeq<String> moduleName(@NotNull SourceFileLocator locator, @NotNull Path file) {
+    var display = locator.displayName(file);
+    var displayNoExt = display.resolveSibling(display.getFileName().toString().replaceAll("\\.aya", ""));
+    return IntStream.range(0, displayNoExt.getNameCount())
+      .mapToObj(i -> displayNoExt.getName(i).toString())
+      .collect(ImmutableSeq.factory());
   }
 
   private static void deleteRecursively(@NotNull Path path) throws IOException {

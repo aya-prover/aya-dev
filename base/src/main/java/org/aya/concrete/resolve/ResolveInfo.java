@@ -8,6 +8,7 @@ import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.util.MutableGraph;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
  * @param declGraph   dependency graph of decls. Successors should be tycked first.
  * @param sampleGraph dependency graph of samples and remarks.
  */
+@Debug.Renderer(text = "thisModule.moduleName().joinToString(\"::\")")
 public record ResolveInfo(
   @NotNull ModuleContext thisModule,
   @NotNull ImmutableSeq<Stmt> thisProgram,
@@ -32,10 +34,6 @@ public record ResolveInfo(
 
   public @NotNull Path canonicalPath() {
     return canonicalize(thisModule.underlyingFile());
-  }
-
-  public boolean holds(@NotNull Path path) {
-    return canonicalPath().equals(canonicalize(path));
   }
 
   public static @NotNull Path canonicalize(@NotNull Path path) {
