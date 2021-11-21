@@ -5,7 +5,9 @@ package org.aya.cli.library;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicLinkedSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableSet;
 import kala.tuple.Unit;
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
@@ -59,11 +61,26 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
       .collect(ImmutableSeq.factory());
   }
 
-  private @NotNull DynamicLinkedSeq<Path> collect(@NotNull Path srcRoot) throws IOException {
+  private @NotNull DynamicLinkedSeq<Path> collectSource(@NotNull Path srcRoot) throws IOException {
     return Files.walk(srcRoot).filter(Files::isRegularFile)
       .filter(path -> path.getFileName().toString().endsWith(".aya"))
       .map(ResolveInfo::canonicalize)
       .collect(DynamicLinkedSeq.factory());
+  }
+
+  private void collectDep(@NotNull MutableGraph<ResolveInfo> dep, @NotNull ResolveInfo info) {
+    dep.suc(info).appendAll(info.imports());
+    info.imports().forEach(i -> collectDep(dep, i));
+  }
+
+  private void collectChanged(
+    @NotNull MutableGraph<ResolveInfo> usage,
+    @NotNull ResolveInfo changed,
+    @NotNull MutableSet<ResolveInfo> changedList
+  ) {
+    if (changedList.contains(changed)) return;
+    changedList.add(changed);
+    usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedList));
   }
 
   private @NotNull ResolveInfo resolveModule(
@@ -85,7 +102,7 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     @NotNull LibraryConfig config
   ) throws IOException {
     System.out.println("  [Info] Collecting source files");
-    var remaining = collect(config.librarySrcRoot());
+    var remaining = collectSource(config.librarySrcRoot());
     var graph = MutableGraph.<ResolveInfo>create();
     if (!remaining.isNotEmpty()) return graph;
 
@@ -94,18 +111,11 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
       var resolveInfo = resolveModule(moduleLoader, locator, file);
       resolveInfo.imports().forEach(r -> {
         var path = r.canonicalPath();
-        var depMod = moduleName(locator, path);
-        System.out.printf("   [Import] %s (%s)%n", depMod.joinToString("::"), path);
         remaining.removeAll(path::equals);
       });
-      buildGraph(graph, resolveInfo);
+      collectDep(graph, resolveInfo);
     }
     return graph;
-  }
-
-  private void buildGraph(@NotNull MutableGraph<ResolveInfo> graph, @NotNull ResolveInfo info) {
-    graph.suc(info).appendAll(info.imports());
-    info.imports().forEach(i -> buildGraph(graph, i));
   }
 
   private void make(@NotNull LibraryConfig config) throws IOException {
@@ -135,10 +145,33 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
     var reporter = CliReporter.stdio(unicode);
     var loader = new ModuleListLoader(modulePath.view().map(path ->
       new CachedModuleLoader(new LibraryModuleLoader(locator, path, reporter))).toImmutableSeq());
-    var graph = resolveLibrary(loader, locator, config);
+    var depGraph = resolveLibrary(loader, locator, config);
     var timestamp = new Timestamp(locator, outRoot);
     var coreSaver = new CoreSaver(timestamp);
-    graph.topologicalOrder().flatMap(Function.identity()).forEach(mod -> {
+    recompile(reporter, depGraph, coreSaver, timestamp);
+  }
+
+  private void recompile(
+    @NotNull Reporter reporter,
+    @NotNull MutableGraph<ResolveInfo> depGraph,
+    @NotNull CoreSaver coreSaver,
+    @NotNull Timestamp timestamp
+  ) {
+    var changed = MutableSet.<ResolveInfo>create();
+    var usage = depGraph.transpose();
+    depGraph.E().keysView().forEach(s -> {
+      if (timestamp.sourceModified(s.canonicalPath()))
+        collectChanged(usage, s, changed);
+    });
+
+    if (changed.isEmpty()) {
+      System.out.println("  [Info] No changes detected, no need to remake");
+      return;
+    }
+
+    var incrementalDep = MutableGraph.<ResolveInfo>create();
+    changed.forEach(c -> collectDep(incrementalDep, c));
+    incrementalDep.topologicalOrder().flatMap(Function.identity()).forEach(mod -> {
       System.out.println("  [Tyck] " + mod.thisModule().underlyingFile());
       FileModuleLoader.tyckResolvedModule(mod, reporter,
         (moduleResolve, stmts, defs) -> coreSaver.saveCompiledCore(moduleResolve, defs),
@@ -156,8 +189,7 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
   }
 
   record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoot) {
-    public boolean needRecompile(@NotNull Path file) {
-      // TODO[kiva]: build file dependency and trigger recompile
+    public boolean sourceModified(@NotNull Path file) {
       try {
         var core = coreFile(locator, file, outRoot);
         if (!Files.exists(core)) return true;
