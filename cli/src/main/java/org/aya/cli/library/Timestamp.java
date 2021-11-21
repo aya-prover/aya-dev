@@ -12,7 +12,7 @@ import java.nio.file.Path;
 public record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoot) {
   public boolean sourceModified(@NotNull Path file) {
     try {
-      var core = LibraryCompiler.coreFile(locator, file, outRoot);
+      var core = LibrarySource.coreFile(locator, file, outRoot);
       if (!Files.exists(core)) return true;
       return Files.getLastModifiedTime(file)
         .compareTo(Files.getLastModifiedTime(core)) > 0;
@@ -23,7 +23,7 @@ public record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoo
 
   public void update(@NotNull Path file) {
     try {
-      var core = LibraryCompiler.coreFile(locator, file, outRoot);
+      var core = LibrarySource.coreFile(locator, file, outRoot);
       Files.setLastModifiedTime(core, Files.getLastModifiedTime(file));
     } catch (IOException ignore) {
     }

@@ -37,10 +37,10 @@ import java.util.function.Function;
 public class LibraryCompiler implements ImportResolver.ImportLoader {
   final @NotNull LibraryConfig library;
   final @NotNull SourceFileLocator locator;
+  final @NotNull Timestamp timestamp;
 
   private final @NotNull Reporter reporter;
   private final @NotNull Path buildRoot;
-  private final @NotNull Timestamp timestamp;
   private final boolean unicode;
   private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
   private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
@@ -102,7 +102,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
   private boolean make() throws IOException {
-    // TODO[kiva]: move to package manager
     var anyDepChanged = false;
     for (var dep : library.deps()) {
       var depConfig = depConfig(dep);
@@ -121,7 +120,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     System.out.println("Compiling " + library.name());
-    // TODO: be incremental when dependencies changed
     if (anyDepChanged) deleteRecursively(library.libraryOutRoot());
 
     var srcRoot = library.librarySrcRoot();
@@ -169,9 +167,9 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
     var coreSaver = new CoreSaver(timestamp);
 
-    for (var f : order) Files.deleteIfExists(coreFile(locator, f.file(), timestamp.outRoot()));
+    for (var f : order) Files.deleteIfExists(f.coreFile());
     order.forEach(file -> {
-      var mod = resolveModule(moduleLoader, locator, file);
+      var mod = resolveModule(moduleLoader, file);
       if (mod.thisProgram().isEmpty()) {
         System.out.println("  [Reuse] " + mod.thisModule().underlyingFile());
         return;
@@ -180,7 +178,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       var counting = new CountingReporter(reporter);
       FileModuleLoader.tyckResolvedModule(mod, counting,
         (moduleResolve, stmts, defs) -> {
-          if (counting.noError()) coreSaver.saveCompiledCore(moduleResolve, defs);
+          if (counting.noError()) coreSaver.saveCompiledCore(file, moduleResolve, defs);
         },
         null);
     });
@@ -188,7 +186,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   private @NotNull ResolveInfo resolveModule(
     @NotNull ModuleLoader moduleLoader,
-    @NotNull SourceFileLocator locator,
     @NotNull LibrarySource file
   ) {
     var mod = file.moduleName();
@@ -205,19 +202,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }).getOrNull();
   }
 
-  public static @NotNull Path coreFile(
-    @NotNull SourceFileLocator locator, @NotNull Path file, @NotNull Path outRoot
-  ) throws IOException {
-    var raw = outRoot.resolve(locator.displayName(file));
-    var core = raw.resolveSibling(raw.getFileName().toString() + "c");
-    Files.createDirectories(core.getParent());
-    return core;
-  }
-
   record CoreSaver(@NotNull Timestamp timestamp) {
-    private void saveCompiledCore(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
+    private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
       var sourcePath = resolveInfo.canonicalPath();
-      try (var outputStream = openCompiledCore(sourcePath)) {
+      try (var outputStream = openCompiledCore(file)) {
         var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
         var compiled = CompiledAya.from(resolveInfo, serDefs);
         outputStream.writeObject(compiled);
@@ -227,9 +215,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       }
     }
 
-    private @NotNull ObjectOutputStream openCompiledCore(@NotNull Path sourcePath) throws IOException {
-      return new ObjectOutputStream(Files.newOutputStream(
-        coreFile(timestamp.locator(), sourcePath, timestamp.outRoot())));
+    private @NotNull ObjectOutputStream openCompiledCore(@NotNull LibrarySource file) throws IOException {
+      return new ObjectOutputStream(Files.newOutputStream(file.coreFile()));
     }
   }
 
@@ -270,11 +257,9 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
     var file = findModuleFile(mod);
-    if (file == null) {
-      for (var dep : deps) {
-        file = dep.findModuleFile(mod);
-        if (file != null) break;
-      }
+    if (file == null) for (var dep : deps) {
+      file = dep.findModuleFile(mod);
+      if (file != null) break;
     }
     if (file == null) throw new IllegalArgumentException("invalid module path");
     try {

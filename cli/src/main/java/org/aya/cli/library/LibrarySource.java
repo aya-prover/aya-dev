@@ -6,12 +6,16 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+@Debug.Renderer(text = "file")
 public record LibrarySource(
   @NotNull LibraryCompiler owner,
   @NotNull Path file,
@@ -23,6 +27,10 @@ public record LibrarySource(
 
   public @NotNull ImmutableSeq<String> moduleName() {
     return moduleName(owner.locator, file);
+  }
+
+  public @NotNull Path coreFile() throws IOException {
+    return coreFile(owner.locator, file(), owner.timestamp.outRoot());
   }
 
   @Override public boolean equals(Object o) {
@@ -42,5 +50,14 @@ public record LibrarySource(
     return IntStream.range(0, displayNoExt.getNameCount())
       .mapToObj(i -> displayNoExt.getName(i).toString())
       .collect(ImmutableSeq.factory());
+  }
+
+  public static @NotNull Path coreFile(
+    @NotNull SourceFileLocator locator, @NotNull Path file, @NotNull Path outRoot
+  ) throws IOException {
+    var raw = outRoot.resolve(locator.displayName(file));
+    var core = raw.resolveSibling(raw.getFileName().toString() + "c");
+    Files.createDirectories(core.getParent());
+    return core;
   }
 }
