@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic.ref;
 
+import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.stmt.Generalize;
 import org.aya.util.error.SourcePos;
@@ -15,6 +16,10 @@ public final class GeneralizedVar implements Var {
   public GeneralizedVar(@NotNull String name, @NotNull SourcePos sourcePos) {
     this.name = name;
     this.sourcePos = sourcePos;
+  }
+
+  public @NotNull LocalVar toLocal() {
+    return new LocalVar(name, sourcePos);
   }
 
   public @NotNull String name() {

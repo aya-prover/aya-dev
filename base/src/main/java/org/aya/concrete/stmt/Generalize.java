@@ -44,12 +44,12 @@ public sealed interface Generalize extends Stmt {
       return visitor.visitVariables(this, p);
     }
 
-    public @NotNull Expr.Param toExpr(@NotNull GeneralizedVar one, boolean explicit) {
-      return new Expr.Param(sourcePos, new LocalVar(one.name(), one.sourcePos), type, false, explicit);
+    public @NotNull Expr.Param toExpr(boolean explicit, @NotNull LocalVar ref) {
+      return new Expr.Param(sourcePos, ref, type, false, explicit);
     }
 
     public @NotNull ImmutableSeq<Expr.Param> toExpr() {
-      return variables.map(one -> toExpr(one, true));
+      return variables.map(one -> toExpr(true, one.toLocal()));
     }
 
     public @NotNull SourcePos sourcePos() {
