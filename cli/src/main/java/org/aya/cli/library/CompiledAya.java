@@ -5,6 +5,7 @@ package org.aya.cli.library;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
+import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.ResolveInfo;
@@ -54,24 +55,28 @@ public record CompiledAya(
     switch (serDef) {
       case SerDef.Fn fn -> {
         if (isExported(fn.name())) {
-          export(context, fn.name().mod().drop(drop), fn.name().name(), def.ref());
+          export(context, drop, fn.name(), def.ref());
           export(context, fn.name().name(), def.ref());
         }
       }
       case SerDef.Data data -> {
         if (isExported(data.name())) export(context, data.name().name(), def.ref());
         data.bodies().view().zip(((DataDef) def).body).forEach(tup -> {
-          if (isExported(tup._1.self())) export(context, tup._1.self().mod().drop(drop), tup._1.self().name(), tup._2.ref);
+          if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
         });
       }
       case SerDef.Struct struct -> {
         if (isExported(struct.name())) export(context, struct.name().name(), def.ref());
         struct.fields().view().zip(((StructDef) def).fields).forEach(tup -> {
-          if (isExported(tup._1.self())) export(context, tup._1.self().mod().drop(drop), tup._1.self().name(), tup._2.ref);
+          if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
         });
       }
       default -> {}
     }
+  }
+
+  private void export(@NotNull PhysicalModuleContext context, int dropMod, @NotNull SerDef.QName qname, DefVar<?, ?> ref) {
+    export(context, qname.mod().drop(dropMod), qname.name(), ref);
   }
 
   private void export(@NotNull PhysicalModuleContext context, @NotNull String name, @NotNull Var var) {

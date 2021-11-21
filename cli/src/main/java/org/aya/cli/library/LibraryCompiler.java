@@ -9,16 +9,19 @@ import kala.tuple.Unit;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
+import org.aya.api.util.InternalException;
+import org.aya.api.util.InterruptException;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
-import org.aya.cli.single.CliReporter;
+import org.aya.cli.single.CompilerFlags;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.serde.Serializer;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
@@ -39,26 +42,26 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   final @NotNull SourceFileLocator locator;
   final @NotNull Timestamp timestamp;
 
-  private final @NotNull Reporter reporter;
+  private final @NotNull CompilerFlags flags;
+  private final @NotNull CountingReporter reporter;
   private final @NotNull Path buildRoot;
-  private final boolean unicode;
   private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
   private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
   private final @NotNull DynamicSeq<LibrarySource> resolvedSources = DynamicSeq.create();
 
-  public LibraryCompiler(@NotNull LibraryConfig library, @NotNull Path buildRoot, boolean unicode) {
+  public LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library, @NotNull Path buildRoot) {
+    this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
+    this.flags = flags;
     this.library = library;
     this.buildRoot = buildRoot;
-    this.unicode = unicode;
-    this.reporter = CliReporter.stdio(unicode);
     this.locator = new SourceFileLocator.Module(SeqView.of(library.librarySrcRoot()));
     this.timestamp = new Timestamp(locator, library.libraryOutRoot());
   }
 
-  public static int compile(@NotNull Path libraryRoot, boolean unicode) throws IOException {
+  public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
     var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
-    new LibraryCompiler(config, config.libraryBuildRoot(), unicode).make();
-    return 0;
+    var compiler = new LibraryCompiler(reporter, flags, config, config.libraryBuildRoot());
+    return compiler.start();
   }
 
   private @Nullable LibraryConfig depConfig(@NotNull LibraryDependency dep) throws IOException {
@@ -86,13 +89,40 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   private @NotNull MutableGraph<LibrarySource> resolveLibraryImports() throws IOException {
     var graph = MutableGraph.<LibrarySource>create();
     var sources = collectSource(library.librarySrcRoot());
-    System.out.println("  [Info] Resolving source file dependency");
+    reporter.reportString("  [Info] Resolving source file dependency");
     for (var file : sources) {
       var resolve = resolveImports(this, file);
       resolvedSources.append(resolve);
       collectDep(graph, resolve);
     }
     return graph;
+  }
+
+  public int start() throws IOException {
+    if (flags.modulePaths().isNotEmpty()) reporter.reportString(
+      "Warning: command-line specified module path is ignored when compiling libraries.");
+    if (flags.distillInfo() != null) reporter.reportString(
+      "Warning: command-line specified distill info is ignored when compiling libraries.");
+    try {
+      make();
+    } catch (InternalException e) {
+      FileModuleLoader.handleInternalError(e);
+      reporter.reportString("Internal error");
+      return e.exitCode();
+    } catch (InterruptException e) {
+      reporter.reportString(e.stage().name() + " interrupted due to:");
+      if (flags.interruptedTrace()) e.printStackTrace();
+    } finally {
+      PrimDef.Factory.INSTANCE.clear();
+    }
+    if (reporter.noError()) {
+      reporter.reportString(flags.message().successNotion());
+      return 0;
+    } else {
+      reporter.reportString(reporter.countToString());
+      reporter.reportString(flags.message().failNotion());
+      return 1;
+    }
   }
 
   /**
@@ -106,10 +136,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     for (var dep : library.deps()) {
       var depConfig = depConfig(dep);
       if (depConfig == null) {
-        System.out.println("Skipping " + dep.depName());
+        reporter.reportString("Skipping " + dep.depName());
         continue;
       }
-      var depCompiler = new LibraryCompiler(depConfig, library.libraryBuildRoot(), unicode);
+      var depCompiler = new LibraryCompiler(reporter, flags, depConfig, library.libraryBuildRoot());
       deps.append(depCompiler);
     }
 
@@ -119,7 +149,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       thisModulePath.append(dep.library.libraryOutRoot());
     }
 
-    System.out.println("Compiling " + library.name());
+    reporter.reportString("Compiling " + library.name());
     if (anyDepChanged) deleteRecursively(library.libraryOutRoot());
 
     var srcRoot = library.librarySrcRoot();
@@ -152,7 +182,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     // in other cases we always generate top order from dependency graphs
     // because usage graphs are never needed.
     if (order.isEmpty()) {
-      System.out.println("  [Info] No changes detected, no need to remake");
+      reporter.reportString("  [Info] No changes detected, no need to remake");
       return true;
     }
     tyckLibrary(order);
@@ -170,15 +200,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     for (var f : order) Files.deleteIfExists(f.coreFile());
     order.forEach(file -> {
       var mod = resolveModule(moduleLoader, file);
-      if (mod.thisProgram().isEmpty()) {
-        System.out.println("  [Reuse] " + mod.thisModule().underlyingFile());
-        return;
-      }
-      System.out.println("  [Tyck] " + mod.thisModule().underlyingFile());
-      var counting = new CountingReporter(reporter);
-      FileModuleLoader.tyckResolvedModule(mod, counting,
+      reporter.reportString("  [Tyck] " + mod.thisModule().underlyingFile());
+      FileModuleLoader.tyckResolvedModule(mod, reporter,
         (moduleResolve, stmts, defs) -> {
-          if (counting.noError()) coreSaver.saveCompiledCore(file, moduleResolve, defs);
+          if (reporter.noError()) coreSaver.saveCompiledCore(file, moduleResolve, defs);
         },
         null);
     });
