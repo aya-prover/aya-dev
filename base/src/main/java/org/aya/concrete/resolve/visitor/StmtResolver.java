@@ -75,7 +75,7 @@ public interface StmtResolver {
       }
       case Sample sample -> {
         var delegate = sample.delegate();
-        var delegateInfo = new ResolveInfo(info.thisModule(), info.opSet());
+        var delegateInfo = new ResolveInfo(info.thisModule(), info.thisProgram(), info.opSet());
         resolveStmt(delegate, delegateInfo);
         // little hacky: transfer dependencies from `delegate` to `sample`
         info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));
