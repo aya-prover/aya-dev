@@ -19,7 +19,6 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.def.Def;
-import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
