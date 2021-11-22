@@ -59,15 +59,14 @@ public sealed interface SerDef extends Serializable {
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
     @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
-    @NotNull SerTerm result,
+    @NotNull SerLevel.Max result,
     @NotNull ImmutableSeq<Ctor> bodies
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new DataDef(
         state.def(name), telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
-        result.de(state),
-        bodies.map(body -> body.de(state)));
+        result.de(state.levelCache()), bodies.map(body -> body.de(state)));
     }
   }
 
@@ -100,7 +99,7 @@ public sealed interface SerDef extends Serializable {
     @NotNull QName name,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
     @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
-    @NotNull SerTerm result,
+    @NotNull SerLevel.Max result,
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
@@ -108,7 +107,7 @@ public sealed interface SerDef extends Serializable {
         state.def(name),
         telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
-        result.de(state),
+        result.de(state.levelCache()),
         fields.map(field -> field.de(state))
       );
     }

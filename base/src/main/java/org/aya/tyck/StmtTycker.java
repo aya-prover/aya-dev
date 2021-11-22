@@ -101,13 +101,14 @@ public record StmtTycker(
       }
       case Decl.DataDecl decl -> {
         assert signature != null;
-        var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
-        yield new DataDef(decl.ref, signature.param(), signature.sortParam(), signature.result(), body);
+        var result = tycker.sort(decl.result, signature.result());
+        var body = decl.body.map(clause -> traced(clause, tycker, (ctor, t) -> visitCtor(ctor, t, result)));
+        yield new DataDef(decl.ref, signature.param(), signature.sortParam(), result, body);
       }
       case Decl.PrimDecl decl -> decl.ref.core;
       case Decl.StructDecl decl -> {
         assert signature != null;
-        var result = signature.result();
+        var result = tycker.sort(decl.result, signature.result());
         yield new StructDef(decl.ref, signature.param(), signature.sortParam(), result, decl.fields.map(field ->
           traced(field, tycker, (f, tyck) -> visitField(f, tyck, result))));
       }
@@ -118,7 +119,7 @@ public record StmtTycker(
     switch (decl) {
       case Decl.FnDecl fn -> {
         tracing(builder -> builder.shift(new Trace.LabelT(fn.sourcePos, "telescope")));
-        var resultTele = checkTele(tycker, fn.telescope, FormTerm.freshUniv(fn.sourcePos));
+        var resultTele = checkTele(tycker, fn.telescope, FormTerm.freshSort(fn.sourcePos));
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped();
         tracing(TreeBuilder::reduce);
@@ -126,7 +127,7 @@ public record StmtTycker(
       }
       case Decl.DataDecl data -> {
         var pos = data.sourcePos;
-        var tele = checkTele(tycker, data.telescope, FormTerm.freshUniv(pos));
+        var tele = checkTele(tycker, data.telescope, FormTerm.freshSort(pos));
         var result = data.result instanceof Expr.HoleExpr ? FormTerm.Univ.ZERO
           // ^ probably omitted
           : tycker.zonk(data.result, tycker.inherit(data.result, FormTerm.freshUniv(pos))).wellTyped();
@@ -134,7 +135,7 @@ public record StmtTycker(
       }
       case Decl.StructDecl struct -> {
         var pos = struct.sourcePos;
-        var tele = checkTele(tycker, struct.telescope, FormTerm.freshUniv(pos));
+        var tele = checkTele(tycker, struct.telescope, FormTerm.freshSort(pos));
         var result = tycker.zonk(struct.result, tycker.inherit(struct.result, FormTerm.freshUniv(pos))).wellTyped();
         // var levelSubst = tycker.equations.solve();
         struct.signature = new Def.Signature(tycker.extractLevels(), tele, result);
@@ -142,12 +143,12 @@ public record StmtTycker(
       case Decl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
         var core = prim.ref.core;
-        var tele = checkTele(tycker, prim.telescope, FormTerm.freshUniv(prim.sourcePos));
+        var tele = checkTele(tycker, prim.telescope, FormTerm.freshSort(prim.sourcePos));
         if (tele.isNotEmpty()) {
           // ErrorExpr on prim.result means the result type is unspecified.
           if (prim.result instanceof Expr.ErrorExpr) {
             reporter.report(new PrimProblem.NoResultTypeError(prim));
-            return ;
+            return;
           }
           var result = tycker.synthesize(prim.result).wellTyped();
           var levelSubst = new LevelSubst.Simple(MutableMap.create());
@@ -168,7 +169,7 @@ public record StmtTycker(
     }
   }
 
-  private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
+  private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker, Sort dataSort) {
     var dataRef = ctor.dataRef;
     var dataSig = dataRef.concrete.signature;
     assert dataSig != null;
@@ -185,7 +186,7 @@ public record StmtTycker(
       ? patTycker.visitPatterns(sig, ctor.patterns.view())._1
       // No patterns, leave it blank
       : ImmutableSeq.<Pat>empty();
-    var tele = checkTele(tycker, ctor.telescope, dataSig.result());
+    var tele = checkTele(tycker, ctor.telescope, dataSort);
     var signature = new Def.Signature(sortParam, tele, dataCall);
     ctor.signature = signature;
     var dataTeleView = dataSig.param().view();
@@ -219,10 +220,10 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  private @NotNull FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Term structResult) {
-    var tele = checkTele(tycker, field.telescope, structResult);
+  private @NotNull FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Sort structSort) {
+    var tele = checkTele(tycker, field.telescope, structSort);
     var structRef = field.structRef;
-    var result = tycker.zonk(field.result, tycker.inherit(field.result, structResult)).wellTyped();
+    var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     var structSig = structRef.concrete.signature;
     assert structSig != null;
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
@@ -237,10 +238,10 @@ public record StmtTycker(
   }
 
   private @NotNull ImmutableSeq<Term.Param>
-  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, @NotNull Term univ) {
+  checkTele(@NotNull ExprTycker exprTycker, @NotNull ImmutableSeq<Expr.Param> tele, Sort sort) {
     var okTele = tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
-      var paramTyped = exprTycker.inherit(param.type(), univ).wellTyped();
+      var paramTyped = exprTycker.inherit(param.type(), new FormTerm.Univ(sort)).wellTyped();
       exprTycker.localCtx.put(param.ref(), paramTyped);
       return Tuple.of(new Term.Param(param, paramTyped), param.sourcePos());
     });

@@ -569,6 +569,12 @@ public final class ExprTycker {
     return fail(term.freezeHoles(state), upper, new UnifyError(loc, upper, lower));
   }
 
+  public @NotNull Sort sort(@NotNull Expr expr, @NotNull Term term) {
+    if (term instanceof FormTerm.Univ univ) return univ.sort();
+    reporter.report(BadTypeError.univ(expr, term));
+    return FormTerm.Univ.ZERO.sort();
+  }
+
   private @NotNull Term mockTerm(Term.Param param, SourcePos pos) {
     // TODO: maybe we should create a concrete hole and check it against the type
     //  in case we can synthesize this term via its type only

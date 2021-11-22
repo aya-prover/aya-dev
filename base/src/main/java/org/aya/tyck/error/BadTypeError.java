@@ -64,6 +64,13 @@ public record BadTypeError(
       options -> Doc.english("struct type"));
   }
 
+  public static @NotNull BadTypeError univ(@NotNull Expr expr, @NotNull Term actual) {
+    return new BadTypeError(expr, actual,
+      Doc.english("make sense of"),
+      Doc.english("provided"),
+      options -> Doc.english("universe"));
+  }
+
   public static @NotNull BadTypeError lamParam(@NotNull Expr lamExpr, @NotNull AyaDocile paramType,
                                                @NotNull Term actualParamType) {
     return new BadTypeError(lamExpr, actualParamType,

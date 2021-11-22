@@ -208,7 +208,7 @@ public record Serializer(@NotNull Serializer.State state) implements
       state.def(def.ref),
       serializeParams(def.telescope),
       def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
-      serialize(def.result),
+      serialize(def.resultSort),
       def.body.map(ctor -> visitCtor(ctor, Unit.unit()))
     );
   }
@@ -231,7 +231,7 @@ public record Serializer(@NotNull Serializer.State state) implements
       state.def(def.ref()),
       serializeParams(def.telescope),
       def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
-      serialize(def.result),
+      serialize(def.resultSort),
       def.fields.map(field -> visitField(field, Unit.unit()))
     );
   }
