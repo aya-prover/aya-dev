@@ -1,0 +1,9 @@
+{
+  "ayaVersion": "0.13",
+  "name": "tests",
+  "version": "0.1.0",
+
+  "dependency": {
+    "common": { "file": "common" }
+  }
+}

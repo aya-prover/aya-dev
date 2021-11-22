@@ -1,0 +1,16 @@
+open import Arith::Nat
+
+example open data Int : Type
+ | pos Nat
+ | neg Nat { | zero => pos zero }
+
+example def abs (n : Int) : Nat
+ | pos n => n
+ | neg n => n
+
+example def abs2 (n : Int) => abs n
+
+counterexample def overlap absBad (n : Int) : Nat
+ | pos (suc n) => suc zero
+ | pos zero => suc zero
+ | neg n => zero

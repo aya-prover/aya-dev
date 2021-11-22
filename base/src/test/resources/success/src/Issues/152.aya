@@ -1,0 +1,9 @@
+open import Arith::Nat
+open import Paths
+
+struct Monoid : Type
+| infix <> (a b : Nat) : Nat {
+  | zero, n => n
+} bind tighter =
+| r-id (a : Nat) : a <> zero = a
+| assoc (a b c : Nat) : (a <> b) <> c = a <> (b <> c)

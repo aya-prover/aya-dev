@@ -1,0 +1,27 @@
+open import Arith::Nat
+open import Paths
+
+public open data Int
+| pos Nat
+| neg Nat { | zero => pos zero }
+
+def overlap subNI (a b : Nat) : Int
+| zero, a => neg a
+| a, zero => pos a
+| suc a, suc b => subNI a b
+
+def overlap addI (a b : Int) : Int
+| pos zero, n => n
+| n, pos zero => n
+| neg zero, n => n
+| n, neg zero => n
+| pos n, pos m => pos (n + m)
+| neg n, neg m => neg (n + m)
+| neg n, pos m => subNI m n
+| pos n, neg m => subNI n m
+
+def addI-comm (a b : Int) : addI a b = addI b a
+| pos n, pos m => pmap pos (+-comm n m)
+| neg n, neg m => pmap neg (+-comm n m)
+| pos n, neg m => idp
+| neg n, pos m => idp

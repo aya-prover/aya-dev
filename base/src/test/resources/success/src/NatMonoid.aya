@@ -1,0 +1,18 @@
+open import Paths
+open import Arith::Nat
+
+open data Unit | unit
+
+struct Monoid { A : Type } ( op : A -> A -> A ): Type
+  | id ( x : Unit ) : A
+  | assoc (a b c : A) : op (op a b) c = op a (op b c)
+  | id_r (a: A) : op a (id unit) = a
+  | id_l (a: A) : op (id unit) a = a
+
+def idpath {A : Type} (a : A) => idp {A} {a}
+def +-monoid => new Monoid (+) {
+  | id x => zero
+  | assoc => +-assoc
+  | id_r => idpath
+  | id_l => idpath
+}

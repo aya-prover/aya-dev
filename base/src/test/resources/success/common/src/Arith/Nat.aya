@@ -1,0 +1,56 @@
+open import Paths
+
+public open data Nat
+| zero
+| suc Nat
+
+def overlap infixl + (a b : Nat) : Nat
+| zero, a => a
+| a, zero => a
+| suc a, b => suc (a + b)
+| a, suc b => suc (a + b)
+bind tighter =
+
+def overlap +-assoc (a b c : Nat) : (a + b) + c = a + (b + c)
+| zero, b, c => idp
+| a, zero, c => idp
+| a, b, zero => idp
+| suc a, b, c => pmap suc (+-assoc a b c)
+
+def overlap +-comm (a b : Nat) : a + b = b + a
+| zero, a => idp
+| a, zero => idp
+| suc a, b => pmap suc (+-comm _ _)
+| a, suc b => pmap suc (+-comm _ _)
+
+def overlap infixl * (m n : Nat) : Nat
+| zero, n => zero
+| m, zero => zero
+| suc m, suc n => suc (m + n + m * n)
+bind tighter +
+
+def overlap infixl *' (m n : Nat) : Nat
+| zero, n => zero
+| m, zero => zero
+| suc m, n => n + m *' n
+bind tighter +
+
+def *'-suc (m n : Nat) : m *' suc n = m + m *' n
+| zero, n => idp
+| suc m, n => pmap suc (pmap (n +) (*'-suc m n)
+  <==> sym (+-assoc n m (m *' n))
+  <==> pmap (+ m *' n) (+-comm n m)
+  <==> +-assoc m n (m *' n))
+
+def *'-suc-suc (m n : Nat) : suc m *' suc n = suc (m + n + m *' n)
+  => pmap suc (pmap (n +) (*'-suc m n)
+    <==> sym (+-assoc n m (m *' n))
+    <==> pmap (+ m *' n) (+-comm n m))
+
+def overlap *-*'-iso (m n : Nat) : m * n = m *' n
+| zero, n => idp
+| m, zero => idp
+| suc m, suc n => pmap (\ x => suc (m + n + x)) (*-*'-iso m n)
+  <==> sym (*'-suc-suc m n)
+
+def *-*'-eq : (*) = (*') => funExt (*) (*') (\ m => funExt (m *) (m *') (*-*'-iso m))

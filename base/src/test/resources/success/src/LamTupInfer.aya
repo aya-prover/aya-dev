@@ -1,0 +1,16 @@
+open import Arith::Nat
+
+example def test => \ x => x + zero
+
+example def test2 => (zero, suc zero)
+
+def addTup (Sig Nat ** Nat) : Nat
+ | (zero, a) => a
+ | (a, zero) => a
+ | (suc a, b) => suc (a + b)
+ | (a, suc b) => suc (a + b)
+
+open data Wow (n : Nat)
+ | suc zero => wow
+
+example def test3 : Wow (addTup test2) => wow

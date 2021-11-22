@@ -1,6 +1,0 @@
-open data Unit : Type | unit
-open data Eq : Type | true | false Unit { | unit => true }
-
-def test {A B : Type} (t : Sig A ** B) (eq : Eq) : Sig A ** B
- | t, true => t
- | t, false unit => (t.1, t.2)

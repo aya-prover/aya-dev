@@ -1,7 +1,0 @@
-universe u
-struct Lift (A : Type u) : Type (lsuc u)
- | value : A
-
-open data Nat : Type 0 | zero
-
-def test => new Lift Nat { | value => zero }
