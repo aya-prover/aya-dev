@@ -9,12 +9,11 @@ import kala.tuple.Unit;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
-import org.aya.api.util.InternalException;
-import org.aya.api.util.InterruptException;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
@@ -22,7 +21,6 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.Def;
-import org.aya.core.def.PrimDef;
 import org.aya.core.serde.Serializer;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.MutableGraph;
@@ -97,38 +95,23 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       "Warning: command-line specified module path is ignored when compiling libraries.");
     if (flags.distillInfo() != null) reporter.reportString(
       "Warning: command-line specified distill info is ignored when compiling libraries.");
-    try {
-      make();
-    } catch (InternalException e) {
-      FileModuleLoader.handleInternalError(e);
-      reporter.reportString("Internal error");
-      return e.exitCode();
-    } catch (InterruptException e) {
-      reporter.reportString(e.stage().name() + " interrupted due to:");
-      if (flags.interruptedTrace()) e.printStackTrace();
-    } finally {
-      PrimDef.Factory.INSTANCE.clear();
-    }
-    if (reporter.noError()) {
-      reporter.reportString(flags.message().successNotion());
-      return 0;
-    } else {
-      reporter.reportString(reporter.countToString());
-      reporter.reportString(flags.message().failNotion());
-      return 1;
-    }
+    return AyaCompiler.catching(reporter, flags, this::make);
   }
 
   /**
-   * Incrementally compiles a library.
+   * Incrementally compiles a library without handling compilation errors.
    *
    * @return whether the library is up-to-date.
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
   private boolean make() throws IOException {
     var anyDepChanged = false;
+    // note[kiva]: the code below creates separate compiler for each dependency, which
+    // should be done in the constructor. Since `depConfig` may throw IOException,
+    // I decide to put them here because throwing exceptions in constructor is not a good idea.
     for (var dep : library.deps()) {
       var depConfig = depConfig(dep);
+      // TODO[kiva]: should not be null if we have a proper package manager
       if (depConfig == null) {
         reporter.reportString("Skipping " + dep.depName());
         continue;
@@ -156,9 +139,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   /**
    * @return whether the library is up-to-date.
    */
-  private boolean make(
-    @NotNull MutableGraph<LibrarySource> depGraph
-  ) throws IOException {
+  private boolean make(@NotNull MutableGraph<LibrarySource> depGraph) throws IOException {
     var changed = MutableGraph.<LibrarySource>create();
     var usage = depGraph.transpose();
     depGraph.E().keysView().forEach(s -> {
@@ -183,10 +164,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     return false;
   }
 
-  /** Produces tyck order of modules in a library */
-  private void tyckLibrary(
-    @NotNull ImmutableSeq<LibrarySource> order
-  ) throws IOException {
+  private void tyckLibrary(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
     var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
 

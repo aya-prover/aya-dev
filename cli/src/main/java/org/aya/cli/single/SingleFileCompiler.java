@@ -9,8 +9,7 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
-import org.aya.api.util.InternalException;
-import org.aya.api.util.InterruptException;
+import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ModuleCallback;
@@ -62,7 +61,7 @@ public record SingleFileCompiler(
       ? countingReporter : new CountingReporter(this.reporter);
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
-    try {
+    return AyaCompiler.catching(reporter, flags, () -> {
       var program = AyaParsing.program(locator, reporter, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
@@ -74,24 +73,7 @@ public record SingleFileCompiler(
           distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
           if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, stmts, defs);
         }, builder);
-    } catch (InternalException e) {
-      FileModuleLoader.handleInternalError(e);
-      reporter.reportString("Internal error");
-      return e.exitCode();
-    } catch (InterruptException e) {
-      reporter.reportString(e.stage().name() + " interrupted due to:");
-      if (flags.interruptedTrace()) e.printStackTrace();
-    } finally {
-      PrimDef.Factory.INSTANCE.clear();
-    }
-    if (reporter.noError()) {
-      reporter.reportString(flags.message().successNotion());
-      return 0;
-    } else {
-      reporter.reportString(reporter.countToString());
-      reporter.reportString(flags.message().failNotion());
-      return 1;
-    }
+    });
   }
 
   private void distill(
