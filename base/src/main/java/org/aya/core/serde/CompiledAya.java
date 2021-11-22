@@ -155,6 +155,7 @@ public record CompiledAya(
           if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
         });
       }
+      case SerDef.Prim prim -> export(context, mod, prim.name().id, def.ref());
       default -> {}
     }
   }
