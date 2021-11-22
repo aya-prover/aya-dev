@@ -30,7 +30,7 @@ public record LibrarySource(
       .collect(ImmutableSeq.factory());
   }
 
-  public @NotNull Path coreFile() throws IOException {
+  public @NotNull Path coreFile() {
     var mod = moduleName();
     return LibraryModuleLoader.resolveCompiledCore(owner.library.libraryOutRoot(), mod);
   }

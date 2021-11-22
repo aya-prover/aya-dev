@@ -44,7 +44,7 @@ public class ReplCompiler {
   public int loadToContext(@NotNull Path file) throws IOException {
     return new SingleFileCompiler(reporter, null, null)
       .compile(file, r -> context, new CompilerFlags(CompilerFlags.Message.EMOJI, false, null,
-        modulePaths.view()), null);
+        modulePaths.view(), null), null);
   }
 
   /**
@@ -63,8 +63,8 @@ public class ReplCompiler {
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
-          FileModuleLoader.tyckModule(context, loader, program, reporter,
-            ((moduleResolve, stmts, defs) -> newDefs.set(defs)), null);
+          FileModuleLoader.tyckModule(context, loader, program, reporter, null,
+            ((moduleResolve, stmts, defs) -> newDefs.set(defs)));
           var defs = newDefs.get();
           if (reporter.noError()) return defs;
           else {

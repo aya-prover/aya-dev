@@ -13,7 +13,8 @@ public record CompilerFlags(
   @NotNull Message message,
   boolean interruptedTrace,
   @Nullable DistillInfo distillInfo,
-  @NotNull SeqLike<Path> modulePaths
+  @NotNull SeqLike<Path> modulePaths,
+  @Nullable Path outputFile
 ) {
   public record DistillInfo(
     @NotNull MainArgs.DistillStage distillStage,

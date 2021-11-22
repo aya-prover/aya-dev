@@ -5,7 +5,6 @@ package org.aya.cli.library;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import kala.tuple.Unit;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
@@ -21,14 +20,12 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.Def;
-import org.aya.core.serde.Serializer;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -91,6 +88,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   public int start() throws IOException {
+    if (flags.outputFile() != null) reporter.reportString(
+      "Warning: command-line specified output file is ignored when compiling libraries.");
     if (flags.modulePaths().isNotEmpty()) reporter.reportString(
       "Warning: command-line specified module path is ignored when compiling libraries.");
     if (flags.distillInfo() != null) reporter.reportString(
@@ -172,11 +171,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     order.forEach(file -> {
       var mod = resolveModule(moduleLoader, file);
       reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), mod.thisModule().underlyingFile()));
-      FileModuleLoader.tyckResolvedModule(mod, reporter,
+      FileModuleLoader.tyckResolvedModule(mod, reporter, null,
         (moduleResolve, stmts, defs) -> {
           if (reporter.noError()) saveCompiledCore(file, moduleResolve, defs);
-        },
-        null);
+        });
     });
   }
 
@@ -198,20 +196,13 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
-    try (var outputStream = coreWriter(file)) {
-      var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
-      var compiled = CompiledAya.from(resolveInfo, serDefs);
-      outputStream.writeObject(compiled);
+    try {
+      var coreFile = file.coreFile();
+      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs);
       Timestamp.update(file);
     } catch (IOException e) {
       e.printStackTrace();
     }
-  }
-
-  private @NotNull ObjectOutputStream coreWriter(@NotNull LibrarySource file) throws IOException {
-    var coreFile = file.coreFile();
-    Files.createDirectories(coreFile.getParent());
-    return new ObjectOutputStream(Files.newOutputStream(file.coreFile()));
   }
 
   private void reportNest(@NotNull String text) {

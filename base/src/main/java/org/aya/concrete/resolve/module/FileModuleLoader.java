@@ -38,7 +38,7 @@ public record FileModuleLoader(
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(context, recurseLoader, program, reporter, null, builder);
+      return tyckModule(context, recurseLoader, program, reporter, builder, null);
     } catch (IOException e) {
       return null;
     }
@@ -60,19 +60,19 @@ public record FileModuleLoader(
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
-    @Nullable ModuleCallback<E> onTycked,
-    @Nullable Trace.Builder builder
+    @Nullable Trace.Builder builder,
+    @Nullable ModuleCallback<E> onTycked
   ) throws E {
     var resolveInfo = resolveModule(context, recurseLoader, program, reporter);
-    tyckResolvedModule(resolveInfo, reporter, onTycked, builder);
+    tyckResolvedModule(resolveInfo, reporter, builder, onTycked);
     return resolveInfo;
   }
 
   public static <E extends Exception> void tyckResolvedModule(
     @NotNull ResolveInfo resolveInfo,
     @NotNull Reporter reporter,
-    @Nullable ModuleCallback<E> onTycked,
-    Trace.@Nullable Builder builder
+    Trace.@Nullable Builder builder,
+    @Nullable ModuleCallback<E> onTycked
   ) throws E {
     var program = resolveInfo.thisProgram();
     var delayedReporter = new DelayedReporter(reporter);

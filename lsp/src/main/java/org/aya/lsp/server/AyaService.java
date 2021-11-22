@@ -60,7 +60,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var compiler = new SingleFileCompiler(reporter, libraryManager, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
-      libraryManager.modulePath.view());
+      libraryManager.modulePath.view(), null);
     var symbols = DynamicSeq.<HighlightResult.Symbol>create();
     libraryManager.loadedFiles.remove(filePath);
     try {

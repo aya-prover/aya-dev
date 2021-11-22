@@ -22,8 +22,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     System.exit(exitCode);
   }
 
-  @Override
-  public Integer call() throws Exception {
+  @Override public Integer call() throws Exception {
     if (action == null) {
       System.err.println("Try `aya --help` to see available commands");
       return 1;
@@ -33,7 +32,9 @@ public class Main extends MainArgs implements Callable<Integer> {
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
     var inputFile = action.compile.inputFile;
+    var outputFile = action.compile.outputFile;
     var filePath = Paths.get(inputFile);
+    var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var distillOptions = ReplConfig.loadFromDefault().distillerOptions;
     var reporter = CliReporter.stdio(!asciiOnly);
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
@@ -42,7 +43,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       Paths.get(prettyDir != null ? prettyDir : ".")
     ) : null;
     var flags = new CompilerFlags(message, interruptedTrace, distillation,
-      modulePaths().view().map(Paths::get));
+      modulePaths().view().map(Paths::get), outputPath);
 
     if (action.compile.isLibrary) {
       // TODO: move to a new tool

@@ -3,7 +3,6 @@
 package org.aya.test;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.util.error.Global;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.error.StreamReporter;
@@ -11,6 +10,7 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
 import org.aya.prelude.GeneratedVersion;
+import org.aya.util.error.Global;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -86,7 +86,7 @@ public class TestRunner {
 
       System.out.print(file.getFileName() + " ---> ");
       new SingleFileCompiler(reporter, LOCATOR, null)
-        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.empty()), null);
+        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.empty(), null), null);
 
       postRun(file, expectSuccess, hookOut.toString(StandardCharsets.UTF_8), reporter);
     } catch (IOException e) {

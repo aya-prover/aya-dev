@@ -30,6 +30,8 @@ public class MainArgs {
     public boolean isLibrary;
     @Parameters(paramLabel = "<input-file>", description = "File to compile")
     public String inputFile;
+    @Option(names = {"-o", "--output"}, description = "Set output file")
+    public String outputFile;
   }
 
   // only one of `repl` and `compile` is not null

@@ -32,7 +32,7 @@ public class LiterateTest {
   @Test public void literate() throws IOException {
     var literate = TestRunner.DEFAULT_TEST_DIR.resolve("literate");
     var distillInfo = new CompilerFlags.DistillInfo(MainArgs.DistillStage.scoped, MainArgs.DistillFormat.plain, literate);
-    var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, distillInfo, ImmutableSeq.empty());
+    var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, distillInfo, ImmutableSeq.empty(), null);
     var compiler = new SingleFileCompiler(ThrowingReporter.INSTANCE, TestRunner.LOCATOR, null);
     compiler.compile(literate.resolve("test.aya"), flags, null);
     var strings = List.of("test.txt", "test.aya", "standard-test.txt");
