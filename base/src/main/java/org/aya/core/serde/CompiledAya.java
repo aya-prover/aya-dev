@@ -176,18 +176,24 @@ public record CompiledAya(
         }
       }
       case SerDef.Data data -> {
+        var innerCtx = context.derive(data.name().name());
         if (isExported(data.name())) export(context, data.name().name(), def.ref());
         data.bodies().view().zip(((DataDef) def).body).forEach(tup -> {
           if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
+          export(innerCtx, tup._1.self().name(), tup._2.ref);
         });
+        context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
       }
       case SerDef.Struct struct -> {
+        var innerCtx = context.derive(struct.name().name());
         if (isExported(struct.name())) export(context, struct.name().name(), def.ref());
         struct.fields().view().zip(((StructDef) def).fields).forEach(tup -> {
           if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
+          export(innerCtx, tup._1.self().name(), tup._2.ref);
         });
+        context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
       }
-      case SerDef.Prim prim -> export(context, mod, prim.name().id, def.ref());
+      case SerDef.Prim prim -> export(context, mod.drop(drop), prim.name().id, def.ref());
       default -> {}
     }
   }
