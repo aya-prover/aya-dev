@@ -11,7 +11,6 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.visitor.ExprResolver;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.core.def.UserDef;
@@ -20,6 +19,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.aya.pretty.doc.Style;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -36,16 +36,16 @@ public sealed interface Literate extends Docile {
   default void tyck(@NotNull ExprTycker tycker) {
   }
 
-  @NotNull ImmutableSeq<Stmt> resolve(@NotNull ResolveInfo info, @NotNull Context context);
+  @NotNull ImmutableSeq<TyckUnit> resolve(@NotNull ResolveInfo info, @NotNull Context context);
 
   record Raw(@NotNull Doc toDoc) implements Literate {
-    @Override public @NotNull ImmutableSeq<Stmt> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
+    @Override public @NotNull ImmutableSeq<TyckUnit> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       return ImmutableSeq.empty();
     }
   }
 
   record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
-    @Override public @NotNull ImmutableSeq<Stmt> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
+    @Override public @NotNull ImmutableSeq<TyckUnit> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       children.forEach(child -> child.resolve(info, context));
       return ImmutableSeq.empty();
     }
@@ -69,7 +69,7 @@ public sealed interface Literate extends Docile {
   }
 
   record Err(@NotNull Ref<Var> def, @Override @NotNull SourcePos sourcePos) implements Literate {
-    @Override public @NotNull ImmutableSeq<Stmt> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
+    @Override public @NotNull ImmutableSeq<TyckUnit> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       def.set(context.getUnqualified(def.value.name(), sourcePos));
       // TODO: add to dependency?
       return ImmutableSeq.empty();
@@ -108,7 +108,7 @@ public sealed interface Literate extends Docile {
       tyckResult = tycker.zonk(expr, tycker.synthesize(expr));
     }
 
-    @Override public @NotNull ImmutableSeq<Stmt> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
+    @Override public @NotNull ImmutableSeq<TyckUnit> resolve(@NotNull ResolveInfo info, @NotNull Context context) {
       var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
       modify(resolver, context);
       return resolver.reference().toImmutableSeq();

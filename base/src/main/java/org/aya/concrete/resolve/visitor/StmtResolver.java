@@ -16,6 +16,7 @@ import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
+import org.aya.tyck.order.TyckUnit;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public interface StmtResolver {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = new ExprResolver(local._1);
+        var bodyResolver = local._1.body();
         for (var ctor : decl.body) {
           var localCtxWithPat = new Ref<>(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
@@ -51,7 +52,7 @@ public interface StmtResolver {
       }
       case Decl.FnDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = new ExprResolver(local._1);
+        var bodyResolver = local._1.body();
         decl.body = decl.body.map(
           expr -> expr.accept(bodyResolver, local._2),
           pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
@@ -59,7 +60,7 @@ public interface StmtResolver {
       }
       case Decl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = new ExprResolver(local._1);
+        var bodyResolver = local._1.body();
         decl.fields.forEach(field -> {
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
           field.telescope = fieldLocal._1.toImmutableSeq();
@@ -89,7 +90,7 @@ public interface StmtResolver {
     }
   }
 
-  private static void addReferences(@NotNull ResolveInfo info, Stmt decl, ExprResolver resolver) {
+  private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, ExprResolver resolver) {
     info.declGraph().suc(decl).appendAll(resolver.reference());
   }
 
