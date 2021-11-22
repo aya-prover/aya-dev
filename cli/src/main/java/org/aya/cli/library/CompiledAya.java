@@ -3,30 +3,45 @@
 package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.PhysicalModuleContext;
+import org.aya.concrete.stmt.BindBlock;
 import org.aya.core.def.DataDef;
+import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
 import org.aya.core.serde.SerDef;
 import org.aya.core.serde.SerTerm;
+import org.aya.core.serde.Serializer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.function.Function;
 
+/**
+ * The .ayac file representation.
+ *
+ * @author kiva
+ */
 public record CompiledAya(
   @NotNull ImmutableSeq<SerDef.QName> exports,
-  @NotNull ImmutableSeq<SerDef> serDefs
+  @NotNull ImmutableSeq<SerDef> serDefs,
+  @NotNull ImmutableSeq<SerDef.SerOp> serOps
 ) implements Serializable {
-  public static @NotNull CompiledAya from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<SerDef> defs) {
+  public static @NotNull CompiledAya from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       // TODO[kiva]: how to reach here?
       throw new UnsupportedOperationException();
     }
+
+    var serDefs = DynamicSeq.<SerDef>create();
+    var serOps = DynamicSeq.<SerDef.SerOp>create();
+    ser(defs, serDefs, serOps);
 
     var modName = ctx.moduleName();
     var exports = ctx.exports.view().map((k, vs) -> {
@@ -34,7 +49,58 @@ public record CompiledAya(
       return vs.view().map((n, v) -> new SerDef.QName(qnameMod, n));
     }).flatMap(Function.identity()).toImmutableSeq();
 
-    return new CompiledAya(exports, defs);
+    return new CompiledAya(exports, serDefs.toImmutableSeq(), serOps.toImmutableSeq());
+  }
+
+  private static void ser(
+    @NotNull ImmutableSeq<Def> defs,
+    @NotNull DynamicSeq<SerDef> serDefs,
+    @NotNull DynamicSeq<SerDef.SerOp> serOps
+  ) {
+    defs.forEach(def -> {
+      var state = new Serializer.State();
+      var serDef = def.accept(new Serializer(state), Unit.unit());
+      serDefs.append(serDef);
+      serOp(state, serDef, def, serOps);
+      switch (serDef) {
+        case SerDef.Data data -> data.bodies().view().zip(((DataDef) def).body).forEach(tup ->
+          serOp(state, tup._1, tup._2, serOps));
+        case SerDef.Struct struct -> struct.fields().view().zip(((StructDef) def).fields).forEach(tup ->
+          serOp(state, tup._1, tup._2, serOps));
+        default -> {}
+      }
+    });
+  }
+
+  private static void serOp(
+    @NotNull Serializer.State state,
+    @NotNull SerDef serDef,
+    @NotNull Def def,
+    @NotNull DynamicSeq<SerDef.SerOp> serOps
+  ) {
+    var opInfo = def.ref().concrete.opInfo;
+    var bindBlock = def.ref().concrete.bindBlock;
+    if (opInfo != null) serOps.append(new SerDef.SerOp(
+      nameOf(serDef), opInfo.assoc(),
+      serBind(state, bindBlock)));
+  }
+
+  @NotNull private static SerDef.SerBind serBind(Serializer.@NotNull State state, BindBlock bindBlock) {
+    if (bindBlock == BindBlock.EMPTY) return SerDef.SerBind.EMPTY;
+    var loosers = bindBlock.resolvedLoosers().value.map(state::def);
+    var tighters = bindBlock.resolvedTighters().value.map(state::def);
+    return new SerDef.SerBind(loosers, tighters);
+  }
+
+  private static SerDef.QName nameOf(@NotNull SerDef def) {
+    return switch (def) {
+      case SerDef.Fn fn -> fn.name();
+      case SerDef.Struct struct -> struct.name();
+      case SerDef.Field field -> field.self();
+      case SerDef.Data data -> data.name();
+      case SerDef.Ctor ctor -> ctor.self();
+      case SerDef.Prim prim -> new SerDef.QName(ImmutableSeq.empty(), prim.name().name());
+    };
   }
 
   public @NotNull ResolveInfo toResolveInfo(@NotNull PhysicalModuleContext context) {

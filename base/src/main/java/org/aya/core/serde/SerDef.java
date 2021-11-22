@@ -7,6 +7,7 @@ import kala.control.Either;
 import kala.control.Option;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
+import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -129,5 +130,14 @@ public sealed interface SerDef extends Serializable {
         name
       );
     }
+  }
+
+  /** Serialized version of {@link org.aya.util.binop.OpDecl.OpInfo} */
+  record SerOp(@NotNull QName name, @NotNull Assoc assoc, @NotNull SerBind bind) implements Serializable {
+  }
+
+  /** Serialized version of {@link org.aya.concrete.stmt.BindBlock} */
+  record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
+    public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
   }
 }

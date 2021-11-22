@@ -17,7 +17,7 @@ public final class DefVar<Core extends CoreDef, Concrete extends ConcreteDecl> i
   public @UnknownNullability Concrete concrete;
   /** Initialized in type checking or core deserialization, so it might be null for unchecked user definitions. */
   public @UnknownNullability Core core;
-  /** Initialized in the resolver. */
+  /** Initialized in the resolver or core deserialization */
   public @UnknownNullability ImmutableSeq<String> module;
   private final @NotNull String name;
 

@@ -20,6 +20,7 @@ public sealed abstract class Signatured implements ConcreteDecl, OpDecl permits 
   public final @NotNull SourcePos sourcePos;
   public final @NotNull SourcePos entireSourcePos;
   public final @Nullable OpInfo opInfo;
+  public final @NotNull BindBlock bindBlock;
 
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
@@ -33,11 +34,13 @@ public sealed abstract class Signatured implements ConcreteDecl, OpDecl permits 
     @NotNull SourcePos sourcePos,
     @NotNull SourcePos entireSourcePos,
     @Nullable OpDecl.OpInfo opInfo,
+    @NotNull BindBlock bindBlock,
     @NotNull ImmutableSeq<Expr.Param> telescope
   ) {
     this.sourcePos = sourcePos;
     this.entireSourcePos = entireSourcePos;
     this.opInfo = opInfo;
+    this.bindBlock = bindBlock;
     this.telescope = telescope;
   }
 
