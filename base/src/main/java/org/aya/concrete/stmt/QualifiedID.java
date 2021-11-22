@@ -5,7 +5,7 @@ package org.aya.concrete.stmt;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Constants;
-import org.aya.util.binop.SourceNode;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

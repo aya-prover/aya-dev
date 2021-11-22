@@ -8,7 +8,10 @@ import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.remark.Remark;
-import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Generalize;
+import org.aya.concrete.stmt.Sample;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,25 +21,22 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  * @see org.aya.core.visitor.RefFinder
  */
-public class SigRefFinder implements ExprConsumer<@NotNull DynamicSeq<Stmt>> {
+public class SigRefFinder implements ExprConsumer<@NotNull DynamicSeq<TyckUnit>> {
   public static final @NotNull SigRefFinder HEADER_ONLY = new SigRefFinder();
 
-  private void decl(@NotNull DynamicSeq<Stmt> stmts, @NotNull Decl decl) {
+  private void decl(@NotNull DynamicSeq<TyckUnit> stmts, @NotNull Decl decl) {
     tele(stmts, decl.telescope);
     decl.result.accept(this, stmts);
   }
 
-  public void visit(@NotNull Signatured stmt, @NotNull DynamicSeq<Stmt> stmts) {
-    switch (stmt) {
+  public void visit(@NotNull TyckUnit sn, @NotNull DynamicSeq<TyckUnit> stmts) {
+    switch (sn) {
       case Decl decl -> decl(stmts, decl);
-      case Decl.DataCtor ctor -> {}
-      case Decl.StructField field -> {}
-    }
-  }
-
-  public void visit(@NotNull Stmt stmt, @NotNull DynamicSeq<Stmt> stmts) {
-    switch (stmt) {
-      case Decl decl -> decl(stmts, decl);
+      case Decl.DataCtor ctor -> tele(stmts, ctor.telescope);
+      case Decl.StructField field -> {
+        tele(stmts, field.telescope);
+        field.result.accept(this, stmts);
+      }
       case Command.Module module -> {}
       case Command cmd -> {}
       case Remark remark -> {
@@ -49,11 +49,11 @@ public class SigRefFinder implements ExprConsumer<@NotNull DynamicSeq<Stmt>> {
     }
   }
 
-  private void tele(@NotNull DynamicSeq<Stmt> stmts, @NotNull ImmutableSeq<Expr.Param> telescope) {
+  private void tele(@NotNull DynamicSeq<TyckUnit> stmts, @NotNull ImmutableSeq<Expr.Param> telescope) {
     telescope.mapNotNull(Expr.Param::type).forEach(type -> type.accept(this, stmts));
   }
 
-  @Override public Unit visitRef(@NotNull Expr.RefExpr expr, @NotNull DynamicSeq<Stmt> stmts) {
+  @Override public Unit visitRef(@NotNull Expr.RefExpr expr, @NotNull DynamicSeq<TyckUnit> stmts) {
     if (expr.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.concrete instanceof Decl decl)
       stmts.append(decl);
     return Unit.unit();

@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,15 +19,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public record IncrementalTycker(
   @NotNull SCCTycker sccTycker,
-  @NotNull MutableGraph<Stmt> declUsage,
-  @NotNull MutableGraph<Stmt> sampleUsage,
-  @NotNull MutableSet<Stmt> skipped
+  @NotNull MutableGraph<TyckUnit> declUsage,
+  @NotNull MutableGraph<TyckUnit> sampleUsage,
+  @NotNull MutableSet<TyckUnit> skipped
 ) {
   public IncrementalTycker(@NotNull SCCTycker sccTycker, @NotNull ResolveInfo resolveInfo) {
     this(sccTycker, resolveInfo.declGraph().transpose(), resolveInfo.sampleGraph().transpose(), MutableSet.of());
   }
 
-  public void tyckSCC(@NotNull ImmutableSeq<Stmt> scc) {
+  public void tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) {
     try {
       // we are more likely to check correct programs.
       // I'm not sure whether it's necessary to optimize on our own.
@@ -39,7 +38,7 @@ public record IncrementalTycker(
     }
   }
 
-  private void skip(@NotNull Stmt failed) {
+  private void skip(@NotNull TyckUnit failed) {
     if (skipped.contains(failed)) return;
     skipped.add(failed);
     var graph = failed instanceof Decl ? declUsage : sampleUsage;

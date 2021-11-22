@@ -70,7 +70,7 @@ public record StmtTycker(
 
   private @NotNull Def doTyck(@NotNull Decl predecl, @NotNull ExprTycker tycker) {
     if (predecl.signature == null) tyckHeader(predecl, tycker);
-    else predecl.signature.param().forEach(param -> tycker.localCtx.put(param.ref(), param.type()));
+    else predecl.signature.param().forEach(tycker.localCtx::put);
     var signature = predecl.signature;
     return switch (predecl) {
       case Decl.FnDecl decl -> {
@@ -107,20 +107,19 @@ public record StmtTycker(
       case Decl.PrimDecl decl -> decl.ref.core;
       case Decl.StructDecl decl -> {
         assert signature != null;
-        yield new StructDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, decl.fields.map(field ->
-          traced(field, tycker, this::visitField)));
+        var body = decl.fields.map(field -> traced(field, tycker, this::visitField));
+        yield new StructDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, body);
       }
     };
   }
 
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
+    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos, "telescope")));
     switch (decl) {
       case Decl.FnDecl fn -> {
-        tracing(builder -> builder.shift(new Trace.LabelT(fn.sourcePos, "telescope")));
         var resultTele = checkTele(tycker, fn.telescope, FormTerm.freshSort(fn.sourcePos));
         // It might contain unsolved holes, but that's acceptable.
         var resultRes = tycker.synthesize(fn.result).wellTyped();
-        tracing(TreeBuilder::reduce);
         fn.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
       }
       case Decl.DataDecl data -> {
@@ -167,6 +166,7 @@ public record StmtTycker(
         tycker.solveMetas();
       }
     }
+    tracing(TreeBuilder::reduce);
   }
 
   private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
@@ -244,16 +244,17 @@ public record StmtTycker(
     var okTele = tele.map(param -> {
       assert param.type() != null; // guaranteed by AyaProducer
       var paramTyped = exprTycker.inherit(param.type(), new FormTerm.Univ(sort)).wellTyped();
-      exprTycker.localCtx.put(param.ref(), paramTyped);
-      return Tuple.of(new Term.Param(param, paramTyped), param.sourcePos());
+      var newParam = new Term.Param(param, paramTyped);
+      exprTycker.localCtx.put(newParam);
+      return Tuple.of(newParam, param.sourcePos());
     });
     exprTycker.solveMetas();
     var zonker = exprTycker.newZonker();
     return okTele.map(tt -> {
-      var t = tt._1;
-      var term = zonker.zonk(t.type(), tt._2);
-      exprTycker.localCtx.put(t.ref(), term);
-      return new Term.Param(t, term);
+      var rawParam = tt._1;
+      var param = new Term.Param(rawParam, zonker.zonk(rawParam.type(), tt._2));
+      exprTycker.localCtx.put(param);
+      return param;
     });
   }
 }

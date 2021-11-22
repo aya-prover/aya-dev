@@ -10,6 +10,7 @@ import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourcePos;
 import org.commonmark.node.*;
 import org.commonmark.parser.Parser;
@@ -91,7 +92,7 @@ public final class Remark implements Stmt {
     return sourcePos;
   }
 
-  public @NotNull ImmutableSeq<Stmt> doResolve(@NotNull ResolveInfo info) {
+  public @NotNull ImmutableSeq<TyckUnit> doResolve(@NotNull ResolveInfo info) {
     if (literate == null) return ImmutableSeq.empty();
     assert ctx != null : "Be sure to call the shallow resolver before resolving";
     return literate.resolve(info, ctx);

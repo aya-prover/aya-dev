@@ -74,6 +74,10 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     return parent != null ? parent.get(var) : null;
   }
 
+  public void put(@NotNull Term.Param param) {
+    put(param.ref(), param.type());
+  }
+
   public void put(@NotNull LocalVar var, @NotNull Term term) {
     localMap.set(var, term);
   }

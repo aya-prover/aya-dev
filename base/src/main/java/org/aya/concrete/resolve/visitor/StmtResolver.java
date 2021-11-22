@@ -16,6 +16,7 @@ import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
+import org.aya.tyck.order.TyckUnit;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public interface StmtResolver {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
+        var bodyResolver = local._1.body();
         for (var ctor : decl.body) {
           var localCtxWithPat = new Ref<>(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
@@ -47,19 +48,19 @@ public interface StmtResolver {
           ctor.telescope = ctorLocal._1.toImmutableSeq();
           ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
         }
-        info.declGraph().suc(decl).appendAll(local._1.reference());
+        addReferences(info, decl, local._1);
       }
       case Decl.FnDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
+        var bodyResolver = local._1.body();
         decl.body = decl.body.map(
           expr -> expr.accept(bodyResolver, local._2),
           pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
-        info.declGraph().suc(decl).appendAll(local._1.reference());
+        addReferences(info, decl, local._1);
       }
       case Decl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = new ExprResolver(ExprResolver.RESTRICTIVE, local._1);
+        var bodyResolver = local._1.body();
         decl.fields.forEach(field -> {
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
           field.telescope = fieldLocal._1.toImmutableSeq();
@@ -67,12 +68,10 @@ public interface StmtResolver {
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
         });
-        info.declGraph().suc(decl).appendAll(local._1.reference());
+        addReferences(info, decl, local._1);
       }
-      case Decl.PrimDecl decl -> {
-        var local = resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1;
-        info.declGraph().suc(decl).appendAll(local.reference());
-      }
+      case Decl.PrimDecl decl -> addReferences(info, decl,
+        resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1);
       case Sample sample -> {
         var delegate = sample.delegate();
         var delegateInfo = new ResolveInfo(info.thisModule(), info.thisProgram(), info.opSet());
@@ -86,10 +85,15 @@ public interface StmtResolver {
       case Generalize.Variables variables -> {
         var resolver = new ExprResolver(ExprResolver.RESTRICTIVE);
         variables.type = variables.type.accept(resolver, variables.ctx);
-        info.declGraph().suc(variables).appendAll(resolver.reference());
+        addReferences(info, variables, resolver);
       }
     }
   }
+
+  private static void addReferences(@NotNull ResolveInfo info, TyckUnit decl, ExprResolver resolver) {
+    info.declGraph().suc(decl).appendAll(resolver.reference());
+  }
+
   private static @NotNull Tuple2<ExprResolver, Context>
   resolveDeclSignature(@NotNull Decl decl, ExprResolver.@NotNull Options options) {
     var resolver = new ExprResolver(options);

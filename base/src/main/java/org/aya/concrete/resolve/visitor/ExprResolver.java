@@ -14,10 +14,10 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.GeneralizedNotAvailableError;
 import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.visitor.ExprFixpoint;
 import org.aya.generic.ref.GeneralizedVar;
 import org.aya.generic.ref.PreLevelVar;
+import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public record ExprResolver(
   @NotNull Options options,
   @NotNull DynamicSeq<PreLevelVar> allowedLevels,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
-  @NotNull DynamicSeq<Stmt> reference
+  @NotNull DynamicSeq<TyckUnit> reference
 ) implements ExprFixpoint<Context> {
   /**
    * @param allowLevels true for signatures, false for bodies
@@ -52,8 +52,12 @@ public record ExprResolver(
     this(options, DynamicSeq.create(), MutableLinkedHashMap.of(), DynamicSeq.create());
   }
 
-  public ExprResolver(@NotNull Options options, @NotNull ExprResolver parent) {
-    this(options, parent.allowedLevels, parent.allowedGeneralizes, parent.reference);
+  public @NotNull ExprResolver member(@NotNull TyckUnit decl) {
+    return new ExprResolver(RESTRICTIVE, allowedLevels, allowedGeneralizes, DynamicSeq.of(decl));
+  }
+
+  public @NotNull ExprResolver body() {
+    return new ExprResolver(RESTRICTIVE, allowedLevels, allowedGeneralizes, reference);
   }
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
