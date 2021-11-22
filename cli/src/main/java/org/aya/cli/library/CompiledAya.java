@@ -3,7 +3,6 @@
 package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
@@ -17,6 +16,7 @@ import org.aya.core.serde.SerTerm;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.function.Function;
 
 public record CompiledAya(
   @NotNull ImmutableSeq<SerDef.QName> exports,
@@ -29,16 +29,12 @@ public record CompiledAya(
     }
 
     var modName = ctx.moduleName();
-    var exports = DynamicSeq.<SerDef.QName>create();
-    ctx.exports.view().forEach((k, vs) -> {
+    var exports = ctx.exports.view().map((k, vs) -> {
       var qnameMod = modName.appendedAll(k);
-      vs.view().forEach((n, v) -> {
-        var qname = new SerDef.QName(qnameMod, n);
-        exports.append(qname);
-      });
-    });
+      return vs.view().map((n, v) -> new SerDef.QName(qnameMod, n));
+    }).flatMap(Function.identity()).toImmutableSeq();
 
-    return new CompiledAya(exports.toImmutableSeq(), defs);
+    return new CompiledAya(exports, defs);
   }
 
   public @NotNull ResolveInfo toResolveInfo(@NotNull PhysicalModuleContext context) {

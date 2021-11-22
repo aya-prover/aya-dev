@@ -13,7 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @param opSet       binary operators
- * @param declGraph   dependency graph of decls. Successors should be tycked first.
+ * @param declGraph   dependency graph of decls. for each (v, successors) in the graph,
+ *                    `successors` should be tycked first.
  * @param sampleGraph dependency graph of samples and remarks.
  */
 @Debug.Renderer(text = "thisModule.moduleName().joinToString(\"::\")")

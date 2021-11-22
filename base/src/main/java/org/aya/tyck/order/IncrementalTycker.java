@@ -13,7 +13,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Incremental and non-stopping compiler for SCCs.
  *
- * @param declUsage   transpose of {@link ResolveInfo#declGraph()}. Vertex should be tycked first.
+ * @param declUsage   usage graph of decls (usually the transpose of {@link ResolveInfo#declGraph()}).
+ *                    for each (vertex, w) in the graph, the vertex should be tycked first.
  * @param sampleUsage transpose of {@link ResolveInfo#sampleGraph()}
  * @author kiva
  */
