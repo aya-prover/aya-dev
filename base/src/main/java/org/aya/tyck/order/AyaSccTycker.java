@@ -88,7 +88,8 @@ public record AyaSccTycker(
     switch (stmt) {
       case Decl decl -> tycker.tyckHeader(decl, tycker.newTycker());
       case Sample sample -> sample.tyckHeader(tycker);
-      // TODO[ice]: tyck ctor/field
+      case Decl.DataCtor ctor -> tycker.visitCtor(ctor, tycker.newTycker());
+      case Decl.StructField field -> tycker.visitField(field, tycker.newTycker());
       default -> {}
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));

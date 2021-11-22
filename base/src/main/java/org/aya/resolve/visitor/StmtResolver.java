@@ -42,33 +42,34 @@ public interface StmtResolver {
       case Command.Module mod -> resolveStmt(mod.contents(), info);
       case Decl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = local._1.body();
-        decl.body.forEach(ctor -> {
+        for (var ctor : decl.body) {
+          var bodyResolver = local._1.member(decl);
           var localCtxWithPat = new Ref<>(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
           var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
           ctor.telescope = ctorLocal._1.toImmutableSeq();
           ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
-        });
+          addReferences(info, ctor, bodyResolver);
+        }
         addReferences(info, decl, local._1);
       }
       case Decl.FnDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = local._1.body();
         decl.body = decl.body.map(
-          expr -> expr.accept(bodyResolver, local._2),
-          pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
+          expr -> expr.accept(local._1.body(), local._2),
+          pats -> pats.map(clause -> matchy(clause, local._2, local._1.body())));
         addReferences(info, decl, local._1);
       }
       case Decl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
-        var bodyResolver = local._1.body();
         decl.fields.forEach(field -> {
+          var bodyResolver = local._1.member(decl);
           var fieldLocal = bodyResolver.resolveParams(field.telescope, local._2);
           field.telescope = fieldLocal._1.toImmutableSeq();
           field.result = field.result.accept(bodyResolver, fieldLocal._2);
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
+          addReferences(info, field, bodyResolver);
         });
         addReferences(info, decl, local._1);
       }
