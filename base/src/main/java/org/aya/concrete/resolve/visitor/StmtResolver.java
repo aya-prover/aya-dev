@@ -16,6 +16,8 @@ import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.stmt.*;
+import org.aya.core.def.CtorDef;
+import org.aya.core.def.PrimDef;
 import org.aya.tyck.order.TyckUnit;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
@@ -208,8 +210,8 @@ public interface StmtResolver {
     return context.iterate(c -> {
       var maybe = c.getUnqualifiedLocalMaybe(name, namePos);
       if (!(maybe instanceof DefVar<?, ?> defVar)) return null;
-      if (defVar.concrete instanceof Decl.DataCtor) return defVar;
-      if (defVar.concrete instanceof Decl.PrimDecl) return defVar;
+      if (defVar.core instanceof CtorDef || defVar.concrete instanceof Decl.DataCtor) return defVar;
+      if (defVar.core instanceof PrimDef || defVar.concrete instanceof Decl.PrimDecl) return defVar;
       return null;
     });
   }

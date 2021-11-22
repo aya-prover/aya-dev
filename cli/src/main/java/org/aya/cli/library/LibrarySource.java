@@ -46,7 +46,7 @@ public record LibrarySource(
     return Objects.hash(owner.library, file);
   }
 
-  private static @NotNull Path canonicalize(@NotNull Path path) {
+  public static @NotNull Path canonicalize(@NotNull Path path) {
     try {
       return path.toRealPath();
     } catch (IOException ignored) {

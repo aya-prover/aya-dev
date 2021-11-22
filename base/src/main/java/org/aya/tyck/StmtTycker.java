@@ -119,7 +119,7 @@ public record StmtTycker(
       case Decl.FnDecl fn -> {
         var resultTele = checkTele(tycker, fn.telescope, FormTerm.freshSort(fn.sourcePos));
         // It might contain unsolved holes, but that's acceptable.
-        var resultRes = tycker.synthesize(fn.result).wellTyped();
+        var resultRes = tycker.synthesize(fn.result).wellTyped().freezeHoles(tycker.state);
         fn.signature = new Def.Signature(tycker.extractLevels(), resultTele, resultRes);
       }
       case Decl.DataDecl data -> {

@@ -54,7 +54,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
-    var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
+    var config = LibraryConfigData.fromLibraryRoot(LibrarySource.canonicalize(libraryRoot));
     var compiler = new LibraryCompiler(reporter, flags, config);
     return compiler.start();
   }

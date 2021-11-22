@@ -99,7 +99,7 @@ public record LibraryModuleLoader(
     try (var inputStream = openCompiledCore(corePath)) {
       var compiledAya = (CompiledAya) inputStream.readObject();
       return compiledAya.toResolveInfo(context);
-    } catch (Exception e) {
+    } catch (IOException | ClassNotFoundException e) {
       return null;
     }
   }
