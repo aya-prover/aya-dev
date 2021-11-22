@@ -12,6 +12,7 @@ import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
+import org.aya.core.serde.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

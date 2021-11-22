@@ -7,12 +7,12 @@ import kala.function.CheckedRunnable;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.util.InternalException;
 import org.aya.api.util.InterruptException;
-import org.aya.cli.library.CompiledAya;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.core.serde.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -54,8 +54,7 @@ public class AyaCompiler {
     @NotNull ImmutableSeq<Def> defs
   ) throws IOException {
     try (var outputStream = coreWriter(coreFile)) {
-      var compiled = CompiledAya.from(resolveInfo, defs);
-      outputStream.writeObject(compiled);
+      outputStream.writeObject(CompiledAya.from(resolveInfo, defs));
     }
   }
 
