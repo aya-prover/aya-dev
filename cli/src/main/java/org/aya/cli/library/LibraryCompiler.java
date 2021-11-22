@@ -5,6 +5,7 @@ package org.aya.cli.library;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
@@ -165,7 +166,9 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   private void tyckLibrary(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
-    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
+    var loader = new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot, new Ref<>());
+    var moduleLoader = new CachedModuleLoader(loader);
+    loader.cachedSelf().value = moduleLoader;
 
     for (var f : order) Files.deleteIfExists(f.coreFile());
     order.forEach(file -> {

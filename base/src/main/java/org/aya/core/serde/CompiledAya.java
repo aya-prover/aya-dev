@@ -6,12 +6,15 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
-import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.PhysicalModuleContext;
+import org.aya.concrete.resolve.error.ModNotFoundError;
+import org.aya.concrete.resolve.error.UnknownOperatorError;
+import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -29,6 +32,7 @@ import java.util.function.Function;
  * @author kiva
  */
 public record CompiledAya(
+  @NotNull ImmutableSeq<ImmutableSeq<String>> imports,
   @NotNull ImmutableSeq<SerDef.QName> exports,
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps
@@ -48,7 +52,8 @@ public record CompiledAya(
       return vs.view().map((n, v) -> new SerDef.QName(qnameMod, n));
     }).flatMap(Function.identity()).toImmutableSeq();
 
-    return new CompiledAya(exports, serialization.serDefs.toImmutableSeq(), serialization.serOps.toImmutableSeq());
+    var imports = resolveInfo.imports().toImmutableSeq().map(i -> i.thisModule().moduleName());
+    return new CompiledAya(imports, exports, serialization.serDefs.toImmutableSeq(), serialization.serOps.toImmutableSeq());
   }
 
   private record Serialization(
@@ -100,14 +105,27 @@ public record CompiledAya(
     };
   }
 
-  public @NotNull ResolveInfo toResolveInfo(@NotNull PhysicalModuleContext context) {
+  public @NotNull ResolveInfo toResolveInfo(@NotNull CachedModuleLoader loader, @NotNull PhysicalModuleContext context) {
     var state = new SerTerm.DeState();
     serDefs.forEach(serDef -> de(context, serDef, state));
-    return new ResolveInfo(context, ImmutableSeq.empty(), deOp(state, context.reporter()));
+    var resolveInfo = new ResolveInfo(context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
+    shallowResolve(loader, resolveInfo);
+    deOp( state, resolveInfo.opSet());
+    return resolveInfo;
   }
 
-  private @NotNull AyaBinOpSet deOp(@NotNull SerTerm.DeState state, @NotNull Reporter reporter) {
-    var opSet = new AyaBinOpSet(reporter);
+  /** like {@link org.aya.concrete.resolve.visitor.StmtShallowResolver} but only resolve import */
+  private void shallowResolve(@NotNull CachedModuleLoader loader, @NotNull ResolveInfo thisResolve) {
+    for (var modName : imports) {
+      var success = loader.load(modName);
+      if (success == null) thisResolve.thisModule().reportAndThrow(new ModNotFoundError(modName, SourcePos.NONE));
+      thisResolve.imports().append(success);
+      thisResolve.opSet().operators.putAll(success.opSet().operators);
+    }
+  }
+
+  /** like {@link org.aya.concrete.resolve.visitor.StmtResolver} but only resolve operator */
+  private void deOp(@NotNull SerTerm.DeState state, @NotNull AyaBinOpSet opSet) {
     serOps.forEach(serOp -> {
       var defVar = state.def(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc(), serOp.argc());
@@ -119,16 +137,26 @@ public record CompiledAya(
       var opDecl = opSet.operators.get(defVar);
       var bind = serOp.bind();
       opSet.ensureHasElem(opDecl);
-      bind.loosers().view().map(state::def).forEach(looser -> {
-        var target = opSet.operators.get(looser);
+      bind.loosers().forEach(looser -> {
+        var target = resolveOp(opSet, looser);
         opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
       });
-      bind.tighters().view().map(state::def).forEach(tighter -> {
-        var target = opSet.operators.get(tighter);
+      bind.tighters().forEach(tighter -> {
+        var target = resolveOp(opSet, tighter);
         opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
       });
     });
-    return opSet;
+  }
+
+  private @NotNull OpDecl resolveOp(@NotNull AyaBinOpSet opSet, @NotNull SerDef.QName name) {
+    var iter = opSet.operators.iterator();
+    while (iter.hasNext()) {
+      var next = iter.next();
+      var defVar = next._1;
+      if (defVar.module.equals(name.mod()) && defVar.name().equals(name.name())) return next._2;
+    }
+    opSet.reporter.report(new UnknownOperatorError(SourcePos.NONE, name.name()));
+    throw new Context.ResolvingInterruptedException();
   }
 
   private void de(@NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
