@@ -19,8 +19,8 @@ In file $FILE:13:72 ->
                                                                                ^------------------------------^
 
 Error: Cannot check the expression of type
-         Path (\ _ => A' _) (p.at <I>) (p.at <I>)
-         (Normalized: Path (\ _ => A' _) (p.at <I>) (p.at <I>))
+         Path (\ _ => A) (p.at <I>) (p.at <I>)
+         (Normalized: Path (\ _ => A) (p.at <I>) (p.at <I>))
        against the type
          (=) {A} a (p.at i)
          (Normalized: Path (\ i => A) a (p.at i))
