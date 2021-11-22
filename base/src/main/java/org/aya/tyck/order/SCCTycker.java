@@ -46,8 +46,11 @@ public record SCCTycker(
   }
 
   private void checkHeader(@NotNull Stmt stmt) {
-    if (stmt instanceof Decl decl) tycker.tyckHeader(decl, tycker.newTycker());
-    else if (stmt instanceof Sample sample) sample.tyckHeader(tycker);
+    switch (stmt) {
+      case Decl decl -> tycker.tyckHeader(decl, tycker.newTycker());
+      case Sample sample -> sample.tyckHeader(tycker);
+      default -> {}
+    }
     if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 

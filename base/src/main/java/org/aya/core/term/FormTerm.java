@@ -63,7 +63,11 @@ public sealed interface FormTerm extends Term {
   }
 
   static @NotNull Univ freshUniv(@NotNull SourcePos pos) {
-    return new Univ(new Sort(new Level.Reference<>(new Sort.LvlVar(Constants.randomName(pos), pos))));
+    return new Univ(freshSort(pos));
+  }
+
+  static @NotNull Sort freshSort(@NotNull SourcePos pos) {
+    return new Sort(new Level.Reference<>(new Sort.LvlVar(Constants.randomName(pos), pos)));
   }
 
   /**
