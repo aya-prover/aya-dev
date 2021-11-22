@@ -52,8 +52,9 @@ public record ExprResolver(
     this(options, DynamicSeq.create(), MutableLinkedHashMap.of(), DynamicSeq.create());
   }
 
-  public ExprResolver(@NotNull Options options, @NotNull ExprResolver parent) {
-    this(options, parent.allowedLevels, parent.allowedGeneralizes, parent.reference);
+  @SuppressWarnings("CopyConstructorMissesField")
+  public ExprResolver(@NotNull ExprResolver parent) {
+    this(RESTRICTIVE, parent.allowedLevels, parent.allowedGeneralizes, parent.reference);
   }
 
   @Override public @NotNull Expr visitUnresolved(@NotNull Expr.UnresolvedExpr expr, Context ctx) {
