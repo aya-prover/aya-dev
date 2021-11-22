@@ -42,9 +42,8 @@ public record CompiledAya(
       throw new UnsupportedOperationException();
     }
 
-    var serDefs = DynamicSeq.<SerDef>create();
-    var serOps = DynamicSeq.<SerDef.SerOp>create();
-    ser(defs, serDefs, serOps);
+    var serialization = new Serialization(new Serializer.State(), DynamicSeq.create(), DynamicSeq.create());
+    serialization.ser(defs);
 
     var modName = ctx.moduleName();
     var exports = ctx.exports.view().map((k, vs) -> {
@@ -52,47 +51,45 @@ public record CompiledAya(
       return vs.view().map((n, v) -> new SerDef.QName(qnameMod, n));
     }).flatMap(Function.identity()).toImmutableSeq();
 
-    return new CompiledAya(exports, serDefs.toImmutableSeq(), serOps.toImmutableSeq());
+    return new CompiledAya(exports, serialization.serDefs.toImmutableSeq(), serialization.serOps.toImmutableSeq());
   }
 
-  private static void ser(
-    @NotNull ImmutableSeq<Def> defs,
+  private record Serialization(
+    @NotNull Serializer.State state,
     @NotNull DynamicSeq<SerDef> serDefs,
     @NotNull DynamicSeq<SerDef.SerOp> serOps
   ) {
-    var state = new Serializer.State();
-    defs.forEach(def -> {
+    private void ser(@NotNull ImmutableSeq<Def> defs) {
+      defs.forEach(this::serDef);
+    }
+
+    private void serDef(@NotNull Def def) {
       var serDef = def.accept(new Serializer(state), Unit.unit());
       serDefs.append(serDef);
-      serOp(state, serDef, def, serOps);
+      serOp(serDef, def);
       switch (serDef) {
         case SerDef.Data data -> data.bodies().view().zip(((DataDef) def).body).forEach(tup ->
-          serOp(state, tup._1, tup._2, serOps));
+          serOp(tup._1, tup._2));
         case SerDef.Struct struct -> struct.fields().view().zip(((StructDef) def).fields).forEach(tup ->
-          serOp(state, tup._1, tup._2, serOps));
+          serOp(tup._1, tup._2));
         default -> {}
       }
-    });
-  }
+    }
 
-  private static void serOp(
-    @NotNull Serializer.State state,
-    @NotNull SerDef serDef,
-    @NotNull Def def,
-    @NotNull DynamicSeq<SerDef.SerOp> serOps
-  ) {
-    var opInfo = def.ref().concrete.opInfo;
-    var bindBlock = def.ref().concrete.bindBlock;
-    if (opInfo != null) serOps.append(new SerDef.SerOp(
-      nameOf(serDef), opInfo.assoc(), opInfo.argc(),
-      serBind(state, bindBlock)));
-  }
+    private void serOp(@NotNull SerDef serDef, @NotNull Def def) {
+      var concrete = def.ref().concrete;
+      var opInfo = concrete.opInfo;
+      if (opInfo != null) serOps.append(new SerDef.SerOp(
+        nameOf(serDef), opInfo.assoc(), opInfo.argc(),
+        serBind(concrete.bindBlock)));
+    }
 
-  private static @NotNull SerDef.SerBind serBind(Serializer.@NotNull State state, BindBlock bindBlock) {
-    if (bindBlock == BindBlock.EMPTY) return SerDef.SerBind.EMPTY;
-    var loosers = bindBlock.resolvedLoosers().value.map(state::def);
-    var tighters = bindBlock.resolvedTighters().value.map(state::def);
-    return new SerDef.SerBind(loosers, tighters);
+    private @NotNull SerDef.SerBind serBind(@NotNull BindBlock bindBlock) {
+      if (bindBlock == BindBlock.EMPTY) return SerDef.SerBind.EMPTY;
+      var loosers = bindBlock.resolvedLoosers().value.map(state::def);
+      var tighters = bindBlock.resolvedTighters().value.map(state::def);
+      return new SerDef.SerBind(loosers, tighters);
+    }
   }
 
   private static SerDef.QName nameOf(@NotNull SerDef def) {
