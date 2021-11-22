@@ -3,9 +3,11 @@
 package org.aya.core.serde;
 
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import org.aya.api.concrete.ConcreteDecl;
 import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
@@ -53,7 +55,8 @@ public sealed interface SerTerm extends Serializable {
 
   @NotNull Term de(@NotNull DeState state);
 
-  record SerParam(boolean explicit, boolean pattern, @NotNull SimpVar var, @NotNull SerTerm term) implements Serializable {
+  record SerParam(boolean explicit, boolean pattern, @NotNull SimpVar var,
+                  @NotNull SerTerm term) implements Serializable {
     public @NotNull Term.Param de(@NotNull DeState state) {
       return new Term.Param(state.var(var), term.de(state), pattern, explicit);
     }
@@ -89,10 +92,10 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  // TODO
-  record New(@NotNull StructCall call) implements SerTerm {
+  record New(@NotNull StructCall call, @NotNull ImmutableMap<SerDef.QName, SerTerm> map) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      throw new UnsupportedOperationException("TODO");
+      return new IntroTerm.New(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
+        Tuple.of(state.def(k), v.de(state)))));
     }
   }
 
@@ -128,7 +131,7 @@ public sealed interface SerTerm extends Serializable {
   }
 
   record StructCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
-    @Override public @NotNull Term de(@NotNull DeState state) {
+    @Override public @NotNull CallTerm.Struct de(@NotNull DeState state) {
       return new CallTerm.Struct(state.def(name), data.de(state.levelCache), data.de(state));
     }
   }

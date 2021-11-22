@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
@@ -159,7 +161,7 @@ public record Serializer(@NotNull Serializer.State state) implements
     );
   }
 
-  @Override public SerTerm visitStructCall(@NotNull CallTerm.Struct structCall, Unit unit) {
+  @Override public SerTerm.StructCall visitStructCall(@NotNull CallTerm.Struct structCall, Unit unit) {
     return new SerTerm.StructCall(
       state.def(structCall.ref()),
       serializeCall(structCall.sortArgs(), structCall.args())
@@ -175,10 +177,8 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitNew(IntroTerm.@NotNull New newTerm, Unit unit) {
-    return new SerTerm.New(new SerTerm.StructCall(
-      state.def(newTerm.struct().ref()),
-      serializeCall(newTerm.struct().sortArgs(), newTerm.struct().args())
-    ));
+    return new SerTerm.New(visitStructCall(newTerm.struct(), unit), ImmutableMap.from(newTerm.params().view().map((k, v) ->
+      Tuple.of(state.def(k), serialize(v)))));
   }
 
   @Override public SerTerm visitProj(ElimTerm.@NotNull Proj term, Unit unit) {
