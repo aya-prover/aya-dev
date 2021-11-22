@@ -70,7 +70,7 @@ public record ExprResolver(
           if (!allowedGeneralizes.containsKey(generalized)) {
             var owner = generalized.owner;
             assert owner != null : "Sanity check";
-            allowedGeneralizes.put(generalized, owner.toExpr(generalized, false));
+            allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
             reference.append(owner);
           }
         } else if (!allowedGeneralizes.containsKey(generalized))

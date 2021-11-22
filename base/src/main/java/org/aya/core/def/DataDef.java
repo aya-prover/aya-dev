@@ -15,16 +15,16 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author kiva
  */
-public final class DataDef extends UserDef {
+public final class DataDef extends UserDef.Type {
   public final @NotNull DefVar<DataDef, Decl.DataDecl> ref;
   public final @NotNull ImmutableSeq<CtorDef> body;
 
   public DataDef(
     @NotNull DefVar<DataDef, Decl.DataDecl> ref, @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<Sort.LvlVar> levels, @NotNull Term result,
-    @NotNull ImmutableSeq<CtorDef> body
+    @NotNull ImmutableSeq<Sort.LvlVar> levels,
+    @NotNull Sort sort, @NotNull ImmutableSeq<CtorDef> body
   ) {
-    super(telescope, result, levels);
+    super(telescope, sort, levels);
     ref.core = this;
     this.ref = ref;
     this.body = body;

@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.Problem;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.sort.Sort;
+import org.aya.core.term.FormTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.ExprTycker;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public sealed abstract class UserDef extends TopLevelDef permits DataDef, FnDef, StructDef {
+public sealed abstract class UserDef extends TopLevelDef permits FnDef, UserDef.Type {
   /**
    * In case of counterexamples, this field will be assigned.
    *
@@ -26,5 +27,14 @@ public sealed abstract class UserDef extends TopLevelDef permits DataDef, FnDef,
 
   protected UserDef(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result, @NotNull ImmutableSeq<Sort.LvlVar> levels) {
     super(telescope, result, levels);
+  }
+
+  public static abstract sealed class Type extends UserDef permits DataDef, StructDef {
+    public final @NotNull Sort resultSort;
+
+    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Sort sort, @NotNull ImmutableSeq<Sort.LvlVar> levels) {
+      super(telescope, new FormTerm.Univ(sort), levels);
+      this.resultSort = sort;
+    }
   }
 }
