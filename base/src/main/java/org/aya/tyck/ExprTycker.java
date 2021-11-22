@@ -566,7 +566,8 @@ public final class ExprTycker {
       lower = pi.substBody(mock);
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
-    return fail(term.freezeHoles(state), upper, new UnifyError(loc, upper, lower));
+    return fail(term.freezeHoles(state), upper, new UnifyError(loc,
+      upper.freezeHoles(state), lower.freezeHoles(state)));
   }
 
   public @NotNull Sort sort(@NotNull Expr expr, @NotNull Term term) {
