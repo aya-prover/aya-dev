@@ -13,6 +13,7 @@ import org.aya.api.core.CoreDef;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
+import org.aya.core.def.PrimDef;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.jetbrains.annotations.NotNull;
@@ -148,9 +149,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record PrimCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+  record PrimCall(@NotNull SerDef.QName name, @NotNull PrimDef.ID id, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Prim(state.def(name), data.de(state.levelCache), data.de(state));
+      return new CallTerm.Prim(state.def(name), id, data.de(state.levelCache), data.de(state));
     }
   }
 

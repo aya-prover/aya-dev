@@ -85,7 +85,7 @@ public interface Unfolder<P> extends TermFixpoint<P> {
   }
 
   @Override @NotNull default Term visitPrimCall(@NotNull CallTerm.Prim prim, P p) {
-    return prim.ref().core.unfold(prim, state());
+    return PrimDef.Factory.INSTANCE.unfold(prim.id(), prim, state());
   }
 
   default @NotNull Term visitHole(@NotNull CallTerm.Hole hole, P p) {

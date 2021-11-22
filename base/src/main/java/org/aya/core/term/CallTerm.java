@@ -61,9 +61,16 @@ public sealed interface CallTerm extends Term {
 
   record Prim(
     @NotNull DefVar<PrimDef, Decl.PrimDecl> ref,
+    @NotNull PrimDef.ID id,
     @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
     @NotNull ImmutableSeq<Arg<@NotNull Term>> args
   ) implements CallTerm {
+    public Prim(@NotNull DefVar<@NotNull PrimDef, Decl.PrimDecl> ref,
+                @NotNull ImmutableSeq<@NotNull Sort> sortArgs,
+                @NotNull ImmutableSeq<Arg<@NotNull Term>> args) {
+      this(ref, ref.core.id, sortArgs, args);
+    }
+
     @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
       return visitor.visitPrimCall(this, p);
     }

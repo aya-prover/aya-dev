@@ -169,7 +169,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitPrimCall(CallTerm.@NotNull Prim prim, Unit unit) {
-    return new SerTerm.PrimCall(state.def(prim.ref()), serializeCall(prim.sortArgs(), prim.args()));
+    return new SerTerm.PrimCall(state.def(prim.ref()), prim.id(), serializeCall(prim.sortArgs(), prim.args()));
   }
 
   @Override public SerTerm visitTup(IntroTerm.@NotNull Tuple term, Unit unit) {
