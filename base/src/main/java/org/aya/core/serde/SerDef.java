@@ -138,7 +138,7 @@ public sealed interface SerDef extends Serializable {
   }
 
   /** Serialized version of {@link org.aya.util.binop.OpDecl.OpInfo} */
-  record SerOp(@NotNull QName name, @NotNull Assoc assoc, @NotNull SerBind bind) implements Serializable {
+  record SerOp(@NotNull QName name, @NotNull Assoc assoc, int argc, @NotNull SerBind bind) implements Serializable {
   }
 
   /** Serialized version of {@link org.aya.concrete.stmt.BindBlock} */

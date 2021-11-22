@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.error.OperatorProblem;
-import org.aya.concrete.stmt.Signatured;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.Assoc;
@@ -51,21 +50,10 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     opSet.reporter.report(new OperatorProblem.FixityError(currentOp, current, topOp, top, pos));
   }
 
-  @Override protected int argc(@NotNull OpDecl opDecl) {
-    return countExplicit(opDecl);
-  }
-
-  static int countExplicit(@NotNull OpDecl opDecl) {
-    if (opDecl instanceof Signatured sig) return sig.telescope.view().count(Expr.Param::explicit);
-    throw new IllegalArgumentException("not an operator");
-  }
-
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
-    if (elem.expr() instanceof Expr.RefExpr ref
-      && ref.resolvedVar() instanceof DefVar<?, ?> defVar
-      && defVar.concrete instanceof OpDecl opDecl
-    ) return opDecl;
-    return null;
+    return elem.expr() instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar
+      ? opSet.operators.getOrNull(defVar)
+      : null;
   }
 
   @Override protected @NotNull Expr.NamedArg

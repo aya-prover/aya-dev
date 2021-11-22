@@ -12,7 +12,6 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Function;
 
 public abstract class BinOpParser<
@@ -44,10 +43,10 @@ public abstract class BinOpParser<
       var first = seq.get(0);
       var second = seq.get(1);
       // case 1: `+ f` becomes `\lam _ => _ + f`
-      if (opSet.assocOf(underlyingOpDecl(first)).infix && argc(first) == 2)
+      if (opSet.assocOf(underlyingOpDecl(first)).infix && toSetElem(first, opSet).argc() == 2)
         return makeSectionApp(sourcePos, first, elem -> replicate(seq.prepended(elem)).build(sourcePos)).expr();
       // case 2: `f +` becomes `\lam _ => f + _`
-      if (opSet.assocOf(underlyingOpDecl(second)).infix && argc(second) == 2)
+      if (opSet.assocOf(underlyingOpDecl(second)).infix && toSetElem(second, opSet).argc() == 2)
         return makeSectionApp(sourcePos, second, elem -> replicate(seq.appended(elem)).build(sourcePos)).expr();
     }
     return convertToPrefix(sourcePos);
@@ -139,7 +138,7 @@ public abstract class BinOpParser<
   }
 
   private @NotNull Arg makeBinApp(@NotNull Arg op) {
-    int argc = argc(op);
+    int argc = toSetElem(op, opSet).argc();
     if (argc == 1) {
       var operand = prefixes.dequeue();
       return makeArg(union(operand, op), op.expr(), operand, op.explicit());
@@ -183,12 +182,7 @@ public abstract class BinOpParser<
     return opSet.ensureHasElem(tryOp);
   }
 
-  private int argc(@NotNull Arg elem) {
-    return elem == appOp() ? 2 : argc(Objects.requireNonNull(underlyingOpDecl(elem)));
-  }
-
   protected abstract @Nullable OpDecl underlyingOpDecl(@NotNull Arg elem);
-  protected abstract int argc(@NotNull OpDecl decl);
   protected abstract @NotNull Arg makeArg(@NotNull SourcePos pos, @NotNull Expr func, @NotNull Arg arg, boolean explicit);
 
   private @NotNull SourcePos union(@NotNull Arg a, @NotNull Arg b, @NotNull Arg c) {

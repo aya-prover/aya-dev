@@ -74,7 +74,8 @@ public abstract class BinOpSet {
     @NotNull SourcePos firstBind,
     @NotNull OpDecl op,
     @NotNull String name,
-    @NotNull Assoc assoc
+    @NotNull Assoc assoc,
+    int argc
   ) {
     private static @NotNull OpDecl.OpInfo ensureOperator(@NotNull OpDecl opDecl) {
       var op = opDecl.opInfo();
@@ -84,7 +85,7 @@ public abstract class BinOpSet {
 
     private static @NotNull BinOpSet.BinOP from(@NotNull SourcePos sourcePos, @NotNull OpDecl opDecl) {
       var op = ensureOperator(opDecl);
-      return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc());
+      return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc(), op.argc());
     }
   }
 

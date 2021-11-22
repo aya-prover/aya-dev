@@ -5,7 +5,6 @@ package org.aya.cli.library;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
 import kala.tuple.Unit;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
@@ -85,7 +84,7 @@ public record CompiledAya(
     var opInfo = def.ref().concrete.opInfo;
     var bindBlock = def.ref().concrete.bindBlock;
     if (opInfo != null) serOps.append(new SerDef.SerOp(
-      nameOf(serDef), opInfo.assoc(),
+      nameOf(serDef), opInfo.assoc(), opInfo.argc(),
       serBind(state, bindBlock)));
   }
 
@@ -115,24 +114,23 @@ public record CompiledAya(
 
   private @NotNull AyaBinOpSet deOp(@NotNull SerTerm.DeState state, @NotNull Reporter reporter) {
     var opSet = new AyaBinOpSet(reporter);
-    var opDecls = serOps
-      .map(serOp -> {
-        var defVar = state.def(serOp.name());
-        var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc());
-        var opDecl = new SerDef.SerOpDecl(opInfo);
-        return Tuple.of(defVar, opDecl);
-      }).<DefVar<?, ?>, OpDecl>toImmutableMap();
+    serOps.forEach(serOp -> {
+      var defVar = state.def(serOp.name());
+      var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc(), serOp.argc());
+      var opDecl = new SerDef.SerOpDecl(opInfo);
+      opSet.operators.put(defVar, opDecl);
+    });
     serOps.view().forEach(serOp -> {
       var defVar = state.def(serOp.name());
-      var opDecl = opDecls.get(defVar);
+      var opDecl = opSet.operators.get(defVar);
       var bind = serOp.bind();
       opSet.ensureHasElem(opDecl);
       bind.loosers().view().map(state::def).forEach(looser -> {
-        var target = opDecls.get(looser);
+        var target = opSet.operators.get(looser);
         opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
       });
       bind.tighters().view().map(state::def).forEach(tighter -> {
-        var target = opDecls.get(tighter);
+        var target = opSet.operators.get(tighter);
         opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
       });
     });
