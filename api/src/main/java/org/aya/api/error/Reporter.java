@@ -25,6 +25,11 @@ public interface Reporter {
 
   @ApiStatus.Internal
   default void reportString(@NotNull String s) {
+    reportDoc(Doc.plain(s));
+  }
+
+  @ApiStatus.Internal
+  default void reportDoc(@NotNull Doc doc) {
     report(new Problem() {
       @Override public @NotNull SourcePos sourcePos() {
         return SourcePos.NONE;
@@ -35,7 +40,7 @@ public interface Reporter {
       }
 
       @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-        return Doc.plain(s);
+        return doc;
       }
     });
   }

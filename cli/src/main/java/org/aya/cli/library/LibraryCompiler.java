@@ -20,9 +20,11 @@ import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.Serializer;
+import org.aya.pretty.doc.Doc;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +84,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   private @NotNull MutableGraph<LibrarySource> resolveLibraryImports() throws IOException {
     var graph = MutableGraph.<LibrarySource>create();
-    reporter.reportString("  [Info] Resolving source file dependency");
+    reportNest("[Info] Resolving source file dependency");
     for (var file : sources) {
       resolveImports(file);
       collectDep(graph, file);
@@ -174,7 +176,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     // in other cases we always generate top order from dependency graphs
     // because usage graphs are never needed.
     if (order.isEmpty()) {
-      reporter.reportString("  [Info] No changes detected, no need to remake");
+      reportNest("[Info] No changes detected, no need to remake");
       return true;
     }
     tyckLibrary(order);
@@ -191,7 +193,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     for (var f : order) Files.deleteIfExists(f.coreFile());
     order.forEach(file -> {
       var mod = resolveModule(moduleLoader, file);
-      reporter.reportString("  [Tyck] " + mod.thisModule().underlyingFile());
+      reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), mod.thisModule().underlyingFile()));
       FileModuleLoader.tyckResolvedModule(mod, reporter,
         (moduleResolve, stmts, defs) -> {
           if (reporter.noError()) saveCompiledCore(file, moduleResolve, defs);
@@ -205,7 +207,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     @NotNull LibrarySource file
   ) {
     var mod = file.moduleName();
-    System.out.printf("  [Resolve] %s (%s)%n", mod.joinToString("::"), file.file());
     var resolveInfo = moduleLoader.load(mod);
     if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
     return resolveInfo;
@@ -233,6 +234,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     var coreFile = file.coreFile();
     Files.createDirectories(coreFile.getParent());
     return new ObjectOutputStream(Files.newOutputStream(file.coreFile()));
+  }
+
+  private void reportNest(@NotNull String text) {
+    reporter.reportDoc(Doc.nest(2, Doc.english(text)));
   }
 
   private static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot) {
