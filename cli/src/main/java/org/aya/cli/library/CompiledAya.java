@@ -60,8 +60,8 @@ public record CompiledAya(
     @NotNull DynamicSeq<SerDef> serDefs,
     @NotNull DynamicSeq<SerDef.SerOp> serOps
   ) {
+    var state = new Serializer.State();
     defs.forEach(def -> {
-      var state = new Serializer.State();
       var serDef = def.accept(new Serializer(state), Unit.unit());
       serDefs.append(serDef);
       serOp(state, serDef, def, serOps);
@@ -88,7 +88,7 @@ public record CompiledAya(
       serBind(state, bindBlock)));
   }
 
-  @NotNull private static SerDef.SerBind serBind(Serializer.@NotNull State state, BindBlock bindBlock) {
+  private static @NotNull SerDef.SerBind serBind(Serializer.@NotNull State state, BindBlock bindBlock) {
     if (bindBlock == BindBlock.EMPTY) return SerDef.SerBind.EMPTY;
     var loosers = bindBlock.resolvedLoosers().value.map(state::def);
     var tighters = bindBlock.resolvedTighters().value.map(state::def);

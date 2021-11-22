@@ -129,7 +129,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public ImmutableSeq<Term.Param> patternTele;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull ImmutableSeq<Pattern> patterns;
-    public final @NotNull BindBlock bindBlock;
     public final boolean coerce;
 
     public DataCtor(
@@ -147,7 +146,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.coerce = coerce;
       this.patterns = patterns;
       this.ref = DefVar.concrete(this, name);
-      this.bindBlock = bindBlock;
     }
 
     @Override public @NotNull DefVar<CtorDef, DataCtor> ref() {
@@ -164,7 +162,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public final @NotNull ImmutableSeq<DataCtor> body;
-    public final @NotNull BindBlock bindBlock;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -179,7 +176,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result);
       this.body = body;
       this.ref = DefVar.concrete(this, name);
-      this.bindBlock = bindBlock;
       body.forEach(ctors -> ctors.dataRef = ref);
     }
 
@@ -201,7 +197,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<StructDef, StructDecl> ref;
     public @NotNull
     final ImmutableSeq<StructField> fields;
-    public final @NotNull BindBlock bindBlock;
 
     public StructDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -217,7 +212,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result);
       this.fields = fields;
       this.ref = DefVar.concrete(this, name);
-      this.bindBlock = bindBlock;
       fields.forEach(field -> field.structRef = ref);
     }
 
@@ -235,7 +229,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public DefVar<StructDef, StructDecl> structRef;
     public @NotNull ImmutableSeq<Pattern.Clause> clauses;
     public @NotNull Expr result;
-    public final @NotNull BindBlock bindBlock;
     public @NotNull Option<Expr> body;
 
     public final boolean coerce;
@@ -257,7 +250,6 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.clauses = clauses;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
-      this.bindBlock = bindBlock;
     }
 
     @Override public @NotNull DefVar<FieldDef, StructField> ref() {
