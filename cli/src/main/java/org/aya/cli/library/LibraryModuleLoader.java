@@ -15,6 +15,7 @@ import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.serde.CompiledAya;
+import org.aya.core.serde.SerTerm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,8 @@ public record LibraryModuleLoader(
   @NotNull SourceFileLocator locator,
   @NotNull SeqView<Path> thisModulePath,
   @NotNull Path thisOutRoot,
-  @NotNull Ref<CachedModuleLoader> cachedSelf
+  @NotNull Ref<CachedModuleLoader> cachedSelf,
+  @NotNull SerTerm.DeState deState
 ) implements ModuleLoader {
   public static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
     var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
@@ -101,7 +103,7 @@ public record LibraryModuleLoader(
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     try (var inputStream = openCompiledCore(corePath)) {
       var compiledAya = (CompiledAya) inputStream.readObject();
-      return compiledAya.toResolveInfo(cachedSelf.value, context);
+      return compiledAya.toResolveInfo(cachedSelf.value, context, deState);
     } catch (IOException | ClassNotFoundException e) {
       return null;
     }

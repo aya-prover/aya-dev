@@ -38,13 +38,16 @@ public record CompiledAya(
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps
 ) implements Serializable {
-  public static @NotNull CompiledAya from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
+  public static @NotNull CompiledAya from(
+    @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs,
+    @NotNull Serializer.State state
+  ) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       // TODO[kiva]: how to reach here?
       throw new UnsupportedOperationException();
     }
 
-    var serialization = new Serialization(new Serializer.State(), DynamicSeq.create(), DynamicSeq.create());
+    var serialization = new Serialization(state, DynamicSeq.create(), DynamicSeq.create());
     serialization.ser(defs);
 
     var modName = ctx.moduleName();
@@ -106,11 +109,10 @@ public record CompiledAya(
     };
   }
 
-  public @NotNull ResolveInfo toResolveInfo(@NotNull CachedModuleLoader loader, @NotNull PhysicalModuleContext context) {
+  public @NotNull ResolveInfo toResolveInfo(@NotNull CachedModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull SerTerm.DeState state) {
     var resolveInfo = new ResolveInfo(context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
     shallowResolve(loader, resolveInfo);
-    var state = new SerTerm.DeState(context);
-    serDefs.forEach(serDef -> de(serDef, state));
+    serDefs.forEach(serDef -> de(context, serDef, state));
     deOp(state, resolveInfo.opSet());
     return resolveInfo;
   }
@@ -162,8 +164,7 @@ public record CompiledAya(
     throw new Context.ResolvingInterruptedException();
   }
 
-  private void de(@NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
-    var context = ((PhysicalModuleContext) state.context());
+  private void de(@NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
     var mod = context.moduleName();
     var drop = mod.size();
     var def = serDef.de(state);
