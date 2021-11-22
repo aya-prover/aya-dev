@@ -7,6 +7,8 @@ import kala.control.Either;
 import kala.control.Option;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
+import org.aya.util.binop.Assoc;
+import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -18,7 +20,7 @@ import java.util.EnumSet;
 public sealed interface SerDef extends Serializable {
   @NotNull Def de(@NotNull SerTerm.DeState state);
 
-  record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name, int id) implements Serializable {
+  record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name) implements Serializable {
   }
 
   record Fn(
@@ -114,19 +116,24 @@ public sealed interface SerDef extends Serializable {
   }
 
   record Prim(
-    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull ImmutableSeq<SerLevel.LvlVar> levels,
-    @NotNull SerTerm result,
     @NotNull PrimDef.ID name
   ) implements SerDef {
     @Override
     public @NotNull Def de(SerTerm.@NotNull DeState state) {
-      return new PrimDef(
-        telescope.map(tele -> tele.de(state)),
-        levels.map(level -> level.de(state.levelCache())),
-        result.de(state),
-        name
-      );
+      return PrimDef.Factory.INSTANCE.getOrCreate(name);
     }
+  }
+
+  /** To use serialized operators in {@link org.aya.concrete.desugar.AyaBinOpSet} */
+  record SerOpDecl(@NotNull OpInfo opInfo) implements OpDecl {
+  }
+
+  /** Serialized version of {@link org.aya.util.binop.OpDecl.OpInfo} */
+  record SerOp(@NotNull QName name, @NotNull Assoc assoc, int argc, @NotNull SerBind bind) implements Serializable {
+  }
+
+  /** Serialized version of {@link org.aya.concrete.stmt.BindBlock} */
+  record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
+    public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
   }
 }

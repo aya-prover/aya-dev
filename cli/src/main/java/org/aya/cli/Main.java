@@ -22,30 +22,36 @@ public class Main extends MainArgs implements Callable<Integer> {
     System.exit(exitCode);
   }
 
-  @Override
-  public Integer call() throws Exception {
-    if (action == null) return 0;
+  @Override public Integer call() throws Exception {
+    if (action == null) {
+      System.err.println("Try `aya --help` to see available commands");
+      return 1;
+    }
     if (action.repl != null) return Repl.start(action.repl);
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
     var inputFile = action.compile.inputFile;
+    var outputFile = action.compile.outputFile;
     var filePath = Paths.get(inputFile);
+    var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var distillOptions = ReplConfig.loadFromDefault().distillerOptions;
-    if (action.compile.isLibrary) {
-      // TODO: move to a new tool
-      return LibraryCompiler.compile(filePath, !asciiOnly);
-    }
-    var traceBuilder = enableTrace ? new Trace.Builder() : null;
-    var compiler = new SingleFileCompiler(CliReporter.stdio(!asciiOnly), null, traceBuilder, distillOptions);
+    var reporter = CliReporter.stdio(!asciiOnly);
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
       prettyStage,
       prettyFormat,
       Paths.get(prettyDir != null ? prettyDir : ".")
     ) : null;
-    var status = compiler.compile(filePath, new CompilerFlags(
-      message, interruptedTrace, distillation,
-      modulePaths().view().map(Paths::get)), null);
+    var flags = new CompilerFlags(message, interruptedTrace, distillation,
+      modulePaths().view().map(Paths::get), outputPath);
+
+    if (action.compile.isLibrary) {
+      // TODO: move to a new tool
+      return LibraryCompiler.compile(reporter, flags, filePath);
+    }
+    var traceBuilder = enableTrace ? new Trace.Builder() : null;
+    var compiler = new SingleFileCompiler(reporter, null, traceBuilder, distillOptions);
+    var status = compiler.compile(filePath, flags, null);
     if (traceBuilder != null)
       System.err.println(new MdUnicodeTrace(2, distillOptions)
         .docify(traceBuilder).debugRender());

@@ -9,10 +9,10 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
-import org.aya.api.util.InternalException;
-import org.aya.api.util.InterruptException;
+import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.concrete.resolve.ModuleCallback;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
@@ -43,57 +43,38 @@ public record SingleFileCompiler(
     this(reporter, locator, builder, DistillerOptions.pretty());
   }
 
-  public int compile(
+  public <E extends IOException> int compile(
     @NotNull Path sourceFile,
     @NotNull CompilerFlags flags,
-    @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
+    @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
     return compile(sourceFile, reporter -> new EmptyContext(reporter, sourceFile).derive(ImmutableSeq.of("Mian")), flags, moduleCallback);
   }
 
-  public int compile(
+  public <E extends IOException> int compile(
     @NotNull Path sourceFile,
     @NotNull Function<Reporter, ModuleContext> context,
     @NotNull CompilerFlags flags,
-    @Nullable FileModuleLoader.FileModuleLoaderCallback moduleCallback
+    @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
     var reporter = this.reporter instanceof CountingReporter countingReporter
       ? countingReporter : new CountingReporter(this.reporter);
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
-    try {
+    return AyaCompiler.catching(reporter, flags, () -> {
       var program = AyaParsing.program(locator, reporter, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
-        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, moduleCallback, builder))).toImmutableSeq());
-      FileModuleLoader.tyckModule(ctx, loader, program, reporter,
-        resolveInfo -> {
+        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
+      FileModuleLoader.tyckModule(ctx, loader, program, reporter, builder,
+        (moduleResolve, stmts, defs) -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
-          if (moduleCallback != null) moduleCallback.onResolved(sourceFile, resolveInfo, program);
-        },
-        defs -> {
           distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
-          if (moduleCallback != null) moduleCallback.onTycked(sourceFile, program, defs);
-        }, builder);
-    } catch (InternalException e) {
-      FileModuleLoader.handleInternalError(e);
-      reporter.reportString("Internal error");
-      return e.exitCode();
-    } catch (InterruptException e) {
-      reporter.reportString(e.stage().name() + " interrupted due to:");
-      if (flags.interruptedTrace()) e.printStackTrace();
-    } finally {
-      PrimDef.Factory.INSTANCE.clear();
-    }
-    if (reporter.noError()) {
-      reporter.reportString(flags.message().successNotion());
-      return 0;
-    } else {
-      reporter.reportString(reporter.countToString());
-      reporter.reportString(flags.message().failNotion());
-      return 1;
-    }
+          if (flags.outputFile() != null) AyaCompiler.saveCompiledCore(flags.outputFile(), moduleResolve, defs);
+          if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, stmts, defs);
+        });
+    });
   }
 
   private void distill(

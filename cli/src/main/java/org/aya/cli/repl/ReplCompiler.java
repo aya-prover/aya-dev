@@ -44,7 +44,7 @@ public class ReplCompiler {
   public int loadToContext(@NotNull Path file) throws IOException {
     return new SingleFileCompiler(reporter, null, null)
       .compile(file, r -> context, new CompilerFlags(CompilerFlags.Message.EMOJI, false, null,
-        modulePaths.view()), null);
+        modulePaths.view(), null), null);
   }
 
   /**
@@ -59,12 +59,12 @@ public class ReplCompiler {
     var programOrExpr = AyaParsing.repl(reporter, text);
     try {
       var loader = new ModuleListLoader(modulePaths.view().map(path ->
-        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, null, null))).toImmutableSeq());
+        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, null))).toImmutableSeq());
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
-          FileModuleLoader.tyckModule(context, loader, program, reporter,
-            resolveInfo -> {}, newDefs::set, null);
+          FileModuleLoader.tyckModule(context, loader, program, reporter, null,
+            ((moduleResolve, stmts, defs) -> newDefs.set(defs)));
           var defs = newDefs.get();
           if (reporter.noError()) return defs;
           else {

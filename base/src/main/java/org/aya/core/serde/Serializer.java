@@ -16,8 +16,6 @@ import org.aya.core.term.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * @author ice1000
  */
@@ -67,7 +65,7 @@ public record Serializer(@NotNull Serializer.State state) implements
 
     public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {
       assert var.module != null;
-      return new SerDef.QName(var.module, var.name(), defCache.getOrPut(var, defCache::size));
+      return new SerDef.QName(var.module, var.name());
     }
   }
 
@@ -250,11 +248,6 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerDef visitPrim(@NotNull PrimDef def, Unit unit) {
-    return new SerDef.Prim(
-      serializeParams(def.telescope),
-      def.levels.map(lvl -> SerLevel.ser(lvl, state.levelCache)),
-      serialize(def.result),
-      Objects.requireNonNull(PrimDef.ID.find(def.ref.name()))
-    );
+    return new SerDef.Prim(def.id);
   }
 }

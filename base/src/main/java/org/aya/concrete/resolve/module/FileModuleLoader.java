@@ -4,21 +4,18 @@ package org.aya.concrete.resolve.module;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
-import kala.function.CheckedConsumer;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
-import org.aya.api.ref.Var;
 import org.aya.api.util.InternalException;
 import org.aya.concrete.Expr;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.concrete.resolve.ModuleCallback;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.Def;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.order.IncrementalTycker;
 import org.aya.tyck.order.SCCTycker;
@@ -33,52 +30,51 @@ public record FileModuleLoader(
   @NotNull SourceFileLocator locator,
   @NotNull Path basePath,
   @NotNull Reporter reporter,
-  @Nullable FileModuleLoaderCallback callback,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
-  public interface FileModuleLoaderCallback {
-    void onResolved(@NotNull Path sourcePath, @NotNull ResolveInfo moduleInfo, @NotNull ImmutableSeq<Stmt> stmts);
-    void onTycked(@NotNull Path sourcePath,
-                  @NotNull ImmutableSeq<Stmt> stmts,
-                  @NotNull ImmutableSeq<Def> defs);
-  }
-
-  private @NotNull Path resolveFile(@NotNull Seq<@NotNull String> path) {
-    var withoutExt = path.foldLeft(basePath, Path::resolve);
-    return withoutExt.resolveSibling(withoutExt.getFileName() + ".aya");
-  }
-
-  @Override public @Nullable MutableMap<ImmutableSeq<String>, MutableMap<String, Var>>
-  load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
-    var sourcePath = resolveFile(path);
+  @Override
+  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+    var sourcePath = resolveFile(basePath, path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      tyckModule(context, recurseLoader, program, reporter,
-        resolveInfo -> {
-          if (callback != null) callback.onResolved(sourcePath, resolveInfo, program);
-        },
-        defs -> {
-          if (callback != null) callback.onTycked(sourcePath, program, defs);
-        },
-        builder);
-      return context.exports;
+      return tyckModule(context, recurseLoader, program, reporter, builder, null);
     } catch (IOException e) {
       return null;
     }
   }
 
-  public static <E extends Exception> void tyckModule(
+  public static ResolveInfo resolveModule(
+    @NotNull ModuleContext context,
+    @NotNull ModuleLoader recurseLoader,
+    @NotNull ImmutableSeq<Stmt> program,
+    @NotNull Reporter reporter
+  ) {
+    var resolveInfo = new ResolveInfo(context, program, new AyaBinOpSet(reporter));
+    Stmt.resolve(program, resolveInfo, recurseLoader);
+    return resolveInfo;
+  }
+
+  public static <E extends Exception> @NotNull ResolveInfo tyckModule(
     @NotNull ModuleContext context,
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull Reporter reporter,
-    @NotNull CheckedConsumer<ResolveInfo, E> onResolved,
-    @NotNull CheckedConsumer<ImmutableSeq<Def>, E> onTycked,
-    @Nullable Trace.Builder builder
+    @Nullable Trace.Builder builder,
+    @Nullable ModuleCallback<E> onTycked
   ) throws E {
-    var resolveInfo = new ResolveInfo(context, new AyaBinOpSet(reporter));
-    Stmt.resolve(program, resolveInfo, recurseLoader);
+    var resolveInfo = resolveModule(context, recurseLoader, program, reporter);
+    tyckResolvedModule(resolveInfo, reporter, builder, onTycked);
+    return resolveInfo;
+  }
+
+  public static <E extends Exception> void tyckResolvedModule(
+    @NotNull ResolveInfo resolveInfo,
+    @NotNull Reporter reporter,
+    Trace.@Nullable Builder builder,
+    @Nullable ModuleCallback<E> onTycked
+  ) throws E {
+    var program = resolveInfo.thisProgram();
     var delayedReporter = new DelayedReporter(reporter);
     var sccTycker = new IncrementalTycker(new SCCTycker(builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
@@ -88,8 +84,8 @@ public record FileModuleLoader(
         .toImmutableSeq();
       SCCs.forEach(sccTycker::tyckSCC);
     } finally {
-      onResolved.acceptChecked(resolveInfo);
-      onTycked.acceptChecked(sccTycker.sccTycker().wellTyped().toImmutableSeq());
+      if (onTycked != null) onTycked.onModuleTycked(resolveInfo, program,
+        sccTycker.sccTycker().wellTyped().toImmutableSeq());
     }
   }
 
@@ -110,6 +106,11 @@ public record FileModuleLoader(
       var tycker = new ExprTycker(delayedReporter, builder);
       return tycker.zonk(expr, tycker.synthesize(resolvedExpr.desugar(delayedReporter)));
     }
+  }
+
+  public static @NotNull Path resolveFile(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
+    var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
+    return withoutExt.resolveSibling(withoutExt.getFileName() + ".aya");
   }
 
   public static void handleInternalError(@NotNull InternalException e) {

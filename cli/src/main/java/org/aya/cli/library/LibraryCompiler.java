@@ -2,38 +2,61 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import kala.tuple.Unit;
+import org.aya.api.error.CountingReporter;
+import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
-import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.cli.single.SingleFileCompiler;
+import org.aya.cli.utils.AyaCompiler;
+import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.resolve.module.ModuleLoader;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.Def;
-import org.aya.core.serde.CompiledAya;
-import org.aya.core.serde.Serializer;
+import org.aya.pretty.doc.Doc;
+import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.function.Function;
 
 /**
  * @author kiva
  */
-public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
-  public static int compile(@NotNull Path libraryRoot, boolean unicode) throws IOException {
+public class LibraryCompiler implements ImportResolver.ImportLoader {
+  final @NotNull LibraryConfig library;
+  final @NotNull SourceFileLocator locator;
+
+  private final @NotNull CompilerFlags flags;
+  private final @NotNull CountingReporter reporter;
+  private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
+  private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
+  private final @NotNull ImmutableSeq<LibrarySource> sources;
+
+  public LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library) {
+    this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
+    this.flags = flags;
+    this.library = library;
+    var srcRoot = library.librarySrcRoot();
+    this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
+    this.sources = collectSource(srcRoot).map(p -> new LibrarySource(this, p));
+  }
+
+  public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
     var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
-    new LibraryCompiler(config.libraryBuildRoot(), unicode).make(config);
-    return 0;
+    var compiler = new LibraryCompiler(reporter, flags, config);
+    return compiler.start();
   }
 
   private @Nullable LibraryConfig depConfig(@NotNull LibraryDependency dep) throws IOException {
@@ -44,119 +67,194 @@ public record LibraryCompiler(@NotNull Path buildRoot, boolean unicode) {
   }
 
   private @NotNull Path depBuildRoot(@NotNull String depName, @NotNull String version) {
-    return buildRoot.resolve("deps").resolve(depName + "_" + version);
+    return library.libraryBuildRoot().resolve("deps").resolve(depName + "_" + version);
   }
 
-  private void make(@NotNull LibraryConfig config) throws IOException {
-    // TODO[kiva]: move to package manager
-    var compiledModulePath = DynamicSeq.<Path>create();
-    var modulePath = DynamicSeq.<Path>create();
-    for (var dep : config.deps()) {
+  private void resolveImports(@NotNull LibrarySource source) throws IOException {
+    var owner = source.owner();
+    var program = AyaParsing.program(owner.locator, owner.reporter, source.file());
+    var finder = new ImportResolver(owner, source);
+    finder.resolveStmt(program);
+  }
+
+  private @NotNull MutableGraph<LibrarySource> resolveLibraryImports() throws IOException {
+    var graph = MutableGraph.<LibrarySource>create();
+    reportNest("[Info] Resolving source file dependency");
+    for (var file : sources) {
+      resolveImports(file);
+      collectDep(graph, file);
+    }
+    return graph;
+  }
+
+  public int start() throws IOException {
+    if (flags.outputFile() != null) reporter.reportString(
+      "Warning: command-line specified output file is ignored when compiling libraries.");
+    if (flags.modulePaths().isNotEmpty()) reporter.reportString(
+      "Warning: command-line specified module path is ignored when compiling libraries.");
+    if (flags.distillInfo() != null) reporter.reportString(
+      "Warning: command-line specified distill info is ignored when compiling libraries.");
+    return AyaCompiler.catching(reporter, flags, this::make);
+  }
+
+  /**
+   * Incrementally compiles a library without handling compilation errors.
+   *
+   * @return whether the library is up-to-date.
+   * @apiNote The return value does not indicate whether the library is compiled successfully.
+   */
+  private boolean make() throws IOException {
+    var anyDepChanged = false;
+    // note[kiva]: the code below creates separate compiler for each dependency, which
+    // should be done in the constructor. Since `depConfig` may throw IOException,
+    // I decide to put them here because throwing exceptions in constructor is not a good idea.
+    for (var dep : library.deps()) {
       var depConfig = depConfig(dep);
+      // TODO[kiva]: should not be null if we have a proper package manager
       if (depConfig == null) {
-        System.out.println("Skipping " + dep.depName());
+        reporter.reportString("Skipping " + dep.depName());
         continue;
       }
-      make(depConfig);
-      compiledModulePath.append(depConfig.libraryOutRoot());
-      modulePath.append(depConfig.librarySrcRoot());
+      var depCompiler = new LibraryCompiler(reporter, flags, depConfig);
+      deps.append(depCompiler);
     }
 
-    System.out.println("Compiling " + config.name());
+    for (var dep : deps) {
+      var upToDate = dep.make();
+      anyDepChanged = anyDepChanged || !upToDate;
+      thisModulePath.append(dep.library.libraryOutRoot());
+    }
 
-    var srcRoot = config.librarySrcRoot();
-    var outRoot = config.libraryOutRoot();
-    compiledModulePath.prepend(Files.createDirectories(outRoot));
-    compiledModulePath.append(srcRoot);
-    modulePath.prepend(srcRoot);
+    reporter.reportString("Compiling " + library.name());
+    if (anyDepChanged) deleteRecursively(library.libraryOutRoot());
 
-    Files.walk(srcRoot).filter(Files::isRegularFile)
-      .forEach(file -> callSingleFileCompiler(file, compiledModulePath, modulePath, outRoot));
+    var srcRoot = library.librarySrcRoot();
+    thisModulePath.append(srcRoot);
+
+    var depGraph = resolveLibraryImports();
+    return make(depGraph);
   }
 
-  private void callSingleFileCompiler(
-    @NotNull Path file,
-    @NotNull DynamicSeq<Path> compiledModulePath,
-    @NotNull DynamicSeq<Path> modulePath,
-    @NotNull Path outRoot
-  ) {
-    var locator = new SourceFileLocator.Module(modulePath.view());
-    var relativeToLibRoot = locator.displayName(file);
-    var timestamp = new Timestamp(locator, outRoot);
-    System.out.print(" -- " + relativeToLibRoot + " : ");
-    if (!timestamp.needRecompile(file)) {
-      System.out.println("UP-TO-DATE");
-      return;
+  /**
+   * @return whether the library is up-to-date.
+   */
+  private boolean make(@NotNull MutableGraph<LibrarySource> depGraph) throws IOException {
+    var changed = MutableGraph.<LibrarySource>create();
+    var usage = depGraph.transpose();
+    depGraph.E().keysView().forEach(s -> {
+      if (Timestamp.sourceModified(s))
+        collectChanged(usage, s, changed);
+    });
+
+    var order = changed.topologicalOrder().view()
+      .flatMap(Function.identity())
+      .toImmutableLinkedSeq()
+      .reversed();
+    // ^ top order generated from usage graph should be reversed
+    // Only here we generate top order from usage graph just for efficiency
+    // (transposing a graph is slower than reversing a linked list).
+    // in other cases we always generate top order from dependency graphs
+    // because usage graphs are never needed.
+    if (order.isEmpty()) {
+      reportNest("[Info] No changes detected, no need to remake");
+      return true;
     }
-    var compiler = new SingleFileCompiler(CliReporter.stdio(unicode), locator, null);
+    tyckLibrary(order);
+    return false;
+  }
+
+  private void tyckLibrary(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
+    var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
+    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
+
+    for (var f : order) Files.deleteIfExists(f.coreFile());
+    order.forEach(file -> {
+      var mod = resolveModule(moduleLoader, file);
+      reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), mod.thisModule().underlyingFile()));
+      FileModuleLoader.tyckResolvedModule(mod, reporter, null,
+        (moduleResolve, stmts, defs) -> {
+          if (reporter.noError()) saveCompiledCore(file, moduleResolve, defs);
+        });
+    });
+  }
+
+  private @NotNull ResolveInfo resolveModule(
+    @NotNull ModuleLoader moduleLoader,
+    @NotNull LibrarySource file
+  ) {
+    var mod = file.moduleName();
+    var resolveInfo = moduleLoader.load(mod);
+    if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
+    return resolveInfo;
+  }
+
+  private @Nullable LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
+    return sources.find(s -> {
+      var checkMod = s.moduleName();
+      return checkMod.equals(mod);
+    }).getOrNull();
+  }
+
+  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
     try {
-      compiler.compile(file, new CompilerFlags(
-        CompilerFlags.Message.EMOJI, false, null, compiledModulePath
-      ), new CoreSaver(locator, outRoot, timestamp));
+      var coreFile = file.coreFile();
+      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs);
+      Timestamp.update(file);
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  private static @NotNull Path coreFile(
-    @NotNull SourceFileLocator locator, @NotNull Path file, @NotNull Path outRoot
-  ) throws IOException {
-    var raw = outRoot.resolve(locator.displayName(file));
-    var core = raw.resolveSibling(raw.getFileName().toString() + "c");
-    Files.createDirectories(core.getParent());
-    return core;
+  private void reportNest(@NotNull String text) {
+    reporter.reportDoc(Doc.nest(2, Doc.english(text)));
   }
 
-  record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoot) {
-    public boolean needRecompile(@NotNull Path file) {
-      // TODO[kiva]: build file dependency and trigger recompile
-      try {
-        var core = coreFile(locator, file, outRoot);
-        if (!Files.exists(core)) return true;
-        return Files.getLastModifiedTime(file)
-          .compareTo(Files.getLastModifiedTime(core)) > 0;
-      } catch (IOException ignore) {
-        return true;
-      }
-    }
-
-    public void update(@NotNull Path file) {
-      try {
-        var core = coreFile(locator, file, outRoot);
-        Files.setLastModifiedTime(core, Files.getLastModifiedTime(file));
-      } catch (IOException ignore) {
-      }
+  private static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot) {
+    try (var walk = Files.walk(srcRoot)) {
+      return walk.filter(Files::isRegularFile)
+        .filter(path -> path.getFileName().toString().endsWith(".aya"))
+        .collect(ImmutableSeq.factory());
+    } catch (IOException e) {
+      return ImmutableSeq.empty();
     }
   }
 
-  record CoreSaver(
-    @NotNull SourceFileLocator locator,
-    @NotNull Path outRoot,
-    @NotNull Timestamp timestamp
-  ) implements FileModuleLoader.FileModuleLoaderCallback {
-    @Override
-    public void onResolved(@NotNull Path sourcePath, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
-    }
+  private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {
+    dep.suc(info).appendAll(info.imports());
+    info.imports().forEach(i -> collectDep(dep, i));
+  }
 
-    @Override
-    public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
-      saveCompiledCore(sourcePath, defs);
-      timestamp.update(sourcePath);
-    }
+  private static void collectChanged(
+    @NotNull MutableGraph<LibrarySource> usage,
+    @NotNull LibrarySource changed,
+    @NotNull MutableGraph<LibrarySource> changedGraph
+  ) {
+    if (changedGraph.E().containsKey(changed)) return;
+    changedGraph.suc(changed).appendAll(usage.suc(changed));
+    usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedGraph));
+  }
 
-    private void saveCompiledCore(@NotNull Path sourcePath, ImmutableSeq<Def> defs) {
-      try (var outputStream = openCompiledCore(sourcePath)) {
-        var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
-        var compiled = CompiledAya.from(serDefs);
-        outputStream.writeObject(compiled);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+  private static void deleteRecursively(@NotNull Path path) throws IOException {
+    if (!Files.exists(path)) return;
+    try (var walk = Files.walk(path)) {
+      walk.sorted(Comparator.reverseOrder())
+        .collect(ImmutableSeq.factory())
+        .forEachChecked(Files::deleteIfExists);
     }
+  }
 
-    private @NotNull ObjectOutputStream openCompiledCore(@NotNull Path sourcePath) throws IOException {
-      return new ObjectOutputStream(Files.newOutputStream(
-        coreFile(locator, sourcePath, outRoot)));
+  @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
+    var file = findModuleFile(mod);
+    if (file == null) for (var dep : deps) {
+      file = dep.findModuleFile(mod);
+      if (file != null) break;
     }
+    if (file == null) throw new IllegalArgumentException("No library owns module: " + mod);
+    try {
+      resolveImports(file);
+    } catch (IOException e) {
+      throw new RuntimeException("Cannot load imported module " + mod, e);
+    }
+    return file;
   }
 }

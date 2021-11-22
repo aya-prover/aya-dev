@@ -5,7 +5,7 @@ package org.aya.cli.library.json;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 /**
  * @author kiva
@@ -16,10 +16,10 @@ public class LibraryDependencyData {
   public @Nullable String github;
   public @Nullable String file;
 
-  public @NotNull LibraryDependency as(@NotNull String depName) {
+  public @NotNull LibraryDependency as(@NotNull Path libraryRoot, @NotNull String depName) {
     if (version != null) return new LibraryDependency.DepVersion(depName, version);
     if (github != null) return new LibraryDependency.DepGithub(depName, github);
-    if (file != null) return new LibraryDependency.DepFile(depName, Paths.get(file));
+    if (file != null) return new LibraryDependency.DepFile(depName, libraryRoot.resolve(file));
     throw new IllegalArgumentException("Unsupported dependency type for " + depName);
   }
 }

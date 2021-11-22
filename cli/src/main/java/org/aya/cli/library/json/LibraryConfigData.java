@@ -53,7 +53,7 @@ public final class LibraryConfigData {
       buildRoot,
       buildRoot.resolve("out"),
       ImmutableSeq.from(dependency.entrySet()).view()
-        .map(e -> e.getValue().as(e.getKey()))
+        .map(e -> e.getValue().as(libraryRoot, e.getKey()))
         .toImmutableSeq()
     );
   }

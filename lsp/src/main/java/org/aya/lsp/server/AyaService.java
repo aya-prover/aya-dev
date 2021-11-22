@@ -13,8 +13,6 @@ import org.aya.api.error.Problem;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.concrete.resolve.ResolveInfo;
-import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.lsp.actions.ComputeTerm;
@@ -62,24 +60,16 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var compiler = new SingleFileCompiler(reporter, libraryManager, null);
     var compilerFlags = new CompilerFlags(
       CompilerFlags.Message.EMOJI, false, null,
-      libraryManager.modulePath.view());
+      libraryManager.modulePath.view(), null);
     var symbols = DynamicSeq.<HighlightResult.Symbol>create();
     libraryManager.loadedFiles.remove(filePath);
     try {
-      compiler.compile(filePath, compilerFlags, new FileModuleLoader.FileModuleLoaderCallback() {
-        @Override
-        public void onResolved(@NotNull Path sourcePath, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> stmts) {
-          // only build highlight for current file
-          if (sourcePath.equals(filePath)) stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
-        }
-
-        @Override
-        public void onTycked(@NotNull Path sourcePath, @NotNull ImmutableSeq<Stmt> stmts, @NotNull ImmutableSeq<Def> defs) {
-          // but store all compiled source
+      compiler.compile(filePath, compilerFlags,
+        (moduleResolve, stmts, defs) -> {
+          var sourcePath = moduleResolve.thisModule().underlyingFile();
           libraryManager.loadedFiles.put(sourcePath, new AyaFile(defs, stmts));
           if (sourcePath.equals(filePath)) stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
-        }
-      });
+        });
     } catch (IOException e) {
       Log.e("Unable to read file %s", filePath.toAbsolutePath());
     }

@@ -41,15 +41,24 @@ public record StmtShallowResolver(
         var ids = cmd.path().ids();
         var success = loader.load(ids);
         if (success == null) context.reportAndThrow(new ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
-        context.importModules(cmd.path().ids(), Stmt.Accessibility.Private, success, cmd.sourcePos());
+        var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
+        resolveInfo.imports().append(success);
+        context.importModules(cmd.path().ids(), Stmt.Accessibility.Private, mod.exports, cmd.sourcePos());
       }
-      case Command.Open cmd -> context.openModule(
-        cmd.path().ids(),
-        cmd.accessibility(),
-        cmd.useHide()::uses,
-        MutableHashMap.create(), // TODO handle renaming
-        cmd.sourcePos()
-      );
+      case Command.Open cmd -> {
+        var mod = cmd.path().ids();
+        context.openModule(
+          mod,
+          cmd.accessibility(),
+          cmd.useHide()::uses,
+          MutableHashMap.create(), // TODO handle renaming
+          cmd.sourcePos()
+        );
+        // open operators as well
+        var modInfo = resolveInfo.imports().find(i -> i.thisModule().moduleName().equals(mod));
+        if (modInfo.isDefined()) resolveInfo.opSet().operators.putAll(modInfo.get().opSet().operators);
+        // ^ modInfo is empty if we are opening a submodule
+      }
       case Remark remark -> remark.ctx = context;
       case Generalize.Levels levels -> {
         for (var level : levels.levels()) {

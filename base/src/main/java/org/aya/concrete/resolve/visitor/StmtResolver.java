@@ -75,7 +75,7 @@ public interface StmtResolver {
       }
       case Sample sample -> {
         var delegate = sample.delegate();
-        var delegateInfo = new ResolveInfo(info.thisModule(), info.opSet());
+        var delegateInfo = new ResolveInfo(info.thisModule(), info.thisProgram(), info.opSet());
         resolveStmt(delegate, delegateInfo);
         // little hacky: transfer dependencies from `delegate` to `sample`
         info.sampleGraph().suc(sample).appendAll(delegateInfo.declGraph().suc(delegate));
@@ -102,14 +102,16 @@ public interface StmtResolver {
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
-    if (bind == BindBlock.EMPTY) return;
-    var ctx = bind.context().value;
-    assert ctx != null : "no shallow resolver?";
     var opSet = info.opSet();
-    if (opSet.isOperand(self)) {
+    var isOperator = !opSet.isOperand(self);
+    if (!isOperator && bind != BindBlock.EMPTY) {
       opSet.reporter.report(new OperatorProblem.NotOperator(selfDef.concrete.sourcePos(), selfDef.name()));
       throw new Context.ResolvingInterruptedException();
     }
+    if (isOperator) opSet.operators.put(selfDef, self);
+    if (bind == BindBlock.EMPTY) return;
+    var ctx = bind.context().value;
+    assert ctx != null : "no shallow resolver?";
     bind.resolvedLoosers().value = bind.loosers().map(looser -> bind(self, opSet, ctx, OpDecl.BindPred.Looser, looser));
     bind.resolvedTighters().value = bind.tighters().map(tighter -> bind(self, opSet, ctx, OpDecl.BindPred.Tighter, tighter));
   }

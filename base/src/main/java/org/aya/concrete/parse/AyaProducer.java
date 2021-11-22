@@ -24,6 +24,7 @@ import org.aya.concrete.parse.error.*;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
+import org.aya.core.term.Term;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.ref.GeneralizedVar;
@@ -90,7 +91,7 @@ public final class AyaProducer {
     return new Decl.PrimDecl(
       sourcePos,
       sourcePosOf(ctx),
-      assoc == null ? null : makeInfix(assoc, name),
+      assoc == null ? null : makeInfix(assoc, name, core.telescope.count(Term.Param::explicit)),
       core.ref(),
       visitTelescope(ctx.tele()),
       type == null ? new Expr.ErrorExpr(sourcePos, Doc.plain("missing result")) : visitType(type)
@@ -197,21 +198,25 @@ public final class AyaProducer {
     return unreachable(ctx);
   }
 
-  public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx) {
+  public Tuple2<@NotNull WithPos<String>, OpDecl.@Nullable OpInfo> visitDeclNameOrInfix(@NotNull AyaParser.DeclNameOrInfixContext ctx, int argc) {
     var assoc = ctx.assoc();
     var id = ctx.ID();
     var txt = id.getText();
     var pos = sourcePosOf(id);
     if (assoc == null) return Tuple.of(new WithPos<>(pos, txt), null);
-    var infix = makeInfix(assoc, txt);
+    var infix = makeInfix(assoc, txt, argc);
     return Tuple.of(new WithPos<>(pos, infix.name()), infix);
   }
 
-  private @NotNull OpDecl.OpInfo makeInfix(@NotNull AyaParser.AssocContext assoc, @NotNull String id) {
-    if (assoc.INFIX() != null) return new OpDecl.OpInfo(id, Assoc.Infix);
-    if (assoc.INFIXL() != null) return new OpDecl.OpInfo(id, Assoc.InfixL);
-    if (assoc.INFIXR() != null) return new OpDecl.OpInfo(id, Assoc.InfixR);
+  private @NotNull OpDecl.OpInfo makeInfix(@NotNull AyaParser.AssocContext assoc, @NotNull String id, int argc) {
+    if (assoc.INFIX() != null) return new OpDecl.OpInfo(id, Assoc.Infix, argc);
+    if (assoc.INFIXL() != null) return new OpDecl.OpInfo(id, Assoc.InfixL, argc);
+    if (assoc.INFIXR() != null) return new OpDecl.OpInfo(id, Assoc.InfixR, argc);
     throw new IllegalArgumentException("Unknown assoc: " + assoc.getText());
+  }
+
+  private int countExplicit(@NotNull ImmutableSeq<Expr.Param> tele) {
+    return tele.count(Expr.Param::explicit);
   }
 
   public Decl.@NotNull FnDecl visitFnDecl(AyaParser.FnDeclContext ctx, Stmt.Accessibility accessibility) {
@@ -224,8 +229,10 @@ public final class AyaProducer {
       var gunpowder = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gunpowder._1), gunpowder._2));
     }
+
+    var tele = visitTelescope(ctx.tele());
     var bind = ctx.bindBlock();
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
 
     var dynamite = visitFnBody(ctx.fnBody());
     if (dynamite.isRight() && inline.isDefined()) {
@@ -240,7 +247,7 @@ public final class AyaProducer {
         () -> EnumSet.noneOf(Modifier.class))),
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      visitTelescope(ctx.tele()),
+      tele,
       type(ctx.type(), sourcePosOf(ctx)),
       dynamite,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
@@ -576,14 +583,15 @@ public final class AyaProducer {
     var body = ctx.dataBody().stream().map(this::visitDataBody).collect(ImmutableSeq.factory());
     checkRedefinition(RedefinitionError.Kind.Ctor,
       body.view().map(ctor -> new WithPos<>(ctor.sourcePos, ctor.ref.name())));
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
+    var tele = visitTelescope(ctx.tele());
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var data = new Decl.DataDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       accessibility,
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      visitTelescope(ctx.tele()),
+      tele,
       type(ctx.type(), sourcePosOf(ctx)),
       body,
       bind == null ? BindBlock.EMPTY : visitBind(bind)
@@ -611,15 +619,15 @@ public final class AyaProducer {
   }
 
   public Decl.DataCtor visitDataCtor(@NotNull ImmutableSeq<Pattern> patterns, AyaParser.DataCtorContext ctx) {
-    var telescope = visitTelescope(ctx.tele());
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
+    var tele = visitTelescope(ctx.tele());
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var bind = ctx.bindBlock();
     return new Decl.DataCtor(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      telescope,
+      tele,
       visitClauses(ctx.clauses()),
       patterns,
       ctx.COERCE() != null,
@@ -707,14 +715,15 @@ public final class AyaProducer {
     var fields = visitFields(ctx.field());
     checkRedefinition(RedefinitionError.Kind.Field,
       fields.view().map(field -> new WithPos<>(field.sourcePos, field.ref.name())));
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
+    var tele = visitTelescope(ctx.tele());
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     return new Decl.StructDecl(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       accessibility,
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      visitTelescope(ctx.tele()),
+      tele,
       type(ctx.type(), sourcePosOf(ctx)),
       // ctx.ids(),
       fields,
@@ -731,15 +740,15 @@ public final class AyaProducer {
   }
 
   public Decl.StructField visitFieldImpl(AyaParser.FieldImplContext ctx) {
-    var telescope = visitTelescope(ctx.tele());
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
+    var tele = visitTelescope(ctx.tele());
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var bind = ctx.bindBlock();
     return new Decl.StructField(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      telescope,
+      tele,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.of(ctx.expr()).map(this::visitExpr),
       ImmutableSeq.empty(),
@@ -749,15 +758,15 @@ public final class AyaProducer {
   }
 
   public Decl.StructField visitFieldDecl(AyaParser.FieldDeclContext ctx) {
-    var telescope = visitTelescope(ctx.tele());
-    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix());
+    var tele = visitTelescope(ctx.tele());
+    var nameOrInfix = visitDeclNameOrInfix(ctx.declNameOrInfix(), countExplicit(tele));
     var bind = ctx.bindBlock();
     return new Decl.StructField(
       nameOrInfix._1.sourcePos(),
       sourcePosOf(ctx),
       nameOrInfix._2,
       nameOrInfix._1.data(),
-      telescope,
+      tele,
       type(ctx.type(), sourcePosOf(ctx)),
       Option.none(),
       visitClauses(ctx.clauses()),

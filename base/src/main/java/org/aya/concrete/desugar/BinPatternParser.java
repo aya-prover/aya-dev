@@ -65,10 +65,6 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Pa
     return null;
   }
 
-  @Override protected int argc(@NotNull OpDecl decl) {
-    return BinExprParser.countExplicit(decl);
-  }
-
   @Override protected @NotNull Pattern
   makeArg(@NotNull SourcePos pos, @NotNull Pattern func, @NotNull Pattern arg, boolean explicit) {
     // param explicit should be ignored since the BinOpSeq we are processing already specified the explicitness
