@@ -5,7 +5,9 @@ package org.aya.cli.library;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import kala.tuple.Unit;
+import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.desugar.AyaBinOpSet;
@@ -18,6 +20,8 @@ import org.aya.core.def.StructDef;
 import org.aya.core.serde.SerDef;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
+import org.aya.util.binop.OpDecl;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -106,7 +110,33 @@ public record CompiledAya(
   public @NotNull ResolveInfo toResolveInfo(@NotNull PhysicalModuleContext context) {
     var state = new SerTerm.DeState();
     serDefs.forEach(serDef -> de(context, serDef, state));
-    return new ResolveInfo(context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
+    return new ResolveInfo(context, ImmutableSeq.empty(), deOp(state, context.reporter()));
+  }
+
+  private @NotNull AyaBinOpSet deOp(@NotNull SerTerm.DeState state, @NotNull Reporter reporter) {
+    var opSet = new AyaBinOpSet(reporter);
+    var opDecls = serOps
+      .map(serOp -> {
+        var defVar = state.def(serOp.name());
+        var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc());
+        var opDecl = new SerDef.SerOpDecl(opInfo);
+        return Tuple.of(defVar, opDecl);
+      }).<DefVar<?, ?>, OpDecl>toImmutableMap();
+    serOps.view().forEach(serOp -> {
+      var defVar = state.def(serOp.name());
+      var opDecl = opDecls.get(defVar);
+      var bind = serOp.bind();
+      opSet.ensureHasElem(opDecl);
+      bind.loosers().view().map(state::def).forEach(looser -> {
+        var target = opDecls.get(looser);
+        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
+      });
+      bind.tighters().view().map(state::def).forEach(tighter -> {
+        var target = opDecls.get(tighter);
+        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
+      });
+    });
+    return opSet;
   }
 
   private void de(@NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {

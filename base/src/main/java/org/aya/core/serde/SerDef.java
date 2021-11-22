@@ -8,6 +8,7 @@ import kala.control.Option;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
 import org.aya.util.binop.Assoc;
+import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -130,6 +131,10 @@ public sealed interface SerDef extends Serializable {
         name
       );
     }
+  }
+
+  /** To use serialized operators in {@link org.aya.concrete.desugar.AyaBinOpSet} */
+  record SerOpDecl(@NotNull OpInfo opInfo) implements OpDecl {
   }
 
   /** Serialized version of {@link org.aya.util.binop.OpDecl.OpInfo} */
