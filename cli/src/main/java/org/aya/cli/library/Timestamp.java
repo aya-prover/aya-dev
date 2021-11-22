@@ -2,29 +2,27 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
-import org.aya.api.error.SourceFileLocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
-public record Timestamp(@NotNull SourceFileLocator locator, @NotNull Path outRoot) {
-  public boolean sourceModified(@NotNull Path file) {
+public class Timestamp {
+  public static boolean sourceModified(@NotNull LibrarySource file) {
     try {
-      var core = LibrarySource.coreFile(locator, file, outRoot);
+      var core = file.coreFile();
       if (!Files.exists(core)) return true;
-      return Files.getLastModifiedTime(file)
+      return Files.getLastModifiedTime(file.file())
         .compareTo(Files.getLastModifiedTime(core)) > 0;
     } catch (IOException ignore) {
       return true;
     }
   }
 
-  public void update(@NotNull Path file) {
+  public static void update(@NotNull LibrarySource file) {
     try {
-      var core = LibrarySource.coreFile(locator, file, outRoot);
-      Files.setLastModifiedTime(core, Files.getLastModifiedTime(file));
+      var core = file.coreFile();
+      Files.setLastModifiedTime(core, Files.getLastModifiedTime(file.file()));
     } catch (IOException ignore) {
     }
   }

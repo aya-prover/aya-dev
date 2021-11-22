@@ -26,7 +26,7 @@ public class Main extends MainArgs implements Callable<Integer> {
   public Integer call() throws Exception {
     if (action == null) {
       System.err.println("Try `aya --help` to see available commands");
-      return 0;
+      return 1;
     }
     if (action.repl != null) return Repl.start(action.repl);
     var message = asciiOnly

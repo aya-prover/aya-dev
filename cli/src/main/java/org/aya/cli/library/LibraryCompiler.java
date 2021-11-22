@@ -40,27 +40,25 @@ import java.util.function.Function;
 public class LibraryCompiler implements ImportResolver.ImportLoader {
   final @NotNull LibraryConfig library;
   final @NotNull SourceFileLocator locator;
-  final @NotNull Timestamp timestamp;
 
   private final @NotNull CompilerFlags flags;
   private final @NotNull CountingReporter reporter;
-  private final @NotNull Path buildRoot;
   private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
   private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
-  private final @NotNull DynamicSeq<LibrarySource> resolvedSources = DynamicSeq.create();
+  private final @NotNull ImmutableSeq<LibrarySource> sources;
 
-  public LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library, @NotNull Path buildRoot) {
+  public LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library) {
     this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
     this.flags = flags;
     this.library = library;
-    this.buildRoot = buildRoot;
-    this.locator = new SourceFileLocator.Module(SeqView.of(library.librarySrcRoot()));
-    this.timestamp = new Timestamp(locator, library.libraryOutRoot());
+    var srcRoot = library.librarySrcRoot();
+    this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
+    this.sources = collectSource(srcRoot).map(p -> new LibrarySource(this, p));
   }
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
     var config = LibraryConfigData.fromLibraryRoot(libraryRoot);
-    var compiler = new LibraryCompiler(reporter, flags, config, config.libraryBuildRoot());
+    var compiler = new LibraryCompiler(reporter, flags, config);
     return compiler.start();
   }
 
@@ -72,28 +70,22 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   private @NotNull Path depBuildRoot(@NotNull String depName, @NotNull String version) {
-    return buildRoot.resolve("deps").resolve(depName + "_" + version);
+    return library.libraryBuildRoot().resolve("deps").resolve(depName + "_" + version);
   }
 
-  private @NotNull LibrarySource resolveImports(
-    @NotNull LibraryCompiler owner,
-    @NotNull Path path
-  ) throws IOException {
-    var program = AyaParsing.program(owner.locator, owner.reporter, path);
-    var source = new LibrarySource(owner, path);
+  private void resolveImports(@NotNull LibrarySource source) throws IOException {
+    var owner = source.owner();
+    var program = AyaParsing.program(owner.locator, owner.reporter, source.file());
     var finder = new ImportResolver(owner, source);
     finder.resolveStmt(program);
-    return source;
   }
 
   private @NotNull MutableGraph<LibrarySource> resolveLibraryImports() throws IOException {
     var graph = MutableGraph.<LibrarySource>create();
-    var sources = collectSource(library.librarySrcRoot());
     reporter.reportString("  [Info] Resolving source file dependency");
     for (var file : sources) {
-      var resolve = resolveImports(this, file);
-      resolvedSources.append(resolve);
-      collectDep(graph, resolve);
+      resolveImports(file);
+      collectDep(graph, file);
     }
     return graph;
   }
@@ -139,7 +131,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
         reporter.reportString("Skipping " + dep.depName());
         continue;
       }
-      var depCompiler = new LibraryCompiler(reporter, flags, depConfig, library.libraryBuildRoot());
+      var depCompiler = new LibraryCompiler(reporter, flags, depConfig);
       deps.append(depCompiler);
     }
 
@@ -168,7 +160,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     var changed = MutableGraph.<LibrarySource>create();
     var usage = depGraph.transpose();
     depGraph.E().keysView().forEach(s -> {
-      if (s.owner().timestamp.sourceModified(s.file()))
+      if (Timestamp.sourceModified(s))
         collectChanged(usage, s, changed);
     });
 
@@ -195,7 +187,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   ) throws IOException {
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
     var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
-    var coreSaver = new CoreSaver(timestamp);
 
     for (var f : order) Files.deleteIfExists(f.coreFile());
     order.forEach(file -> {
@@ -203,7 +194,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       reporter.reportString("  [Tyck] " + mod.thisModule().underlyingFile());
       FileModuleLoader.tyckResolvedModule(mod, reporter,
         (moduleResolve, stmts, defs) -> {
-          if (reporter.noError()) coreSaver.saveCompiledCore(file, moduleResolve, defs);
+          if (reporter.noError()) saveCompiledCore(file, moduleResolve, defs);
         },
         null);
     });
@@ -221,35 +212,33 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   private @Nullable LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
-    return resolvedSources.find(s -> {
+    return sources.find(s -> {
       var checkMod = s.moduleName();
       return checkMod.equals(mod);
     }).getOrNull();
   }
 
-  record CoreSaver(@NotNull Timestamp timestamp) {
-    private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
-      var sourcePath = resolveInfo.canonicalPath();
-      try (var outputStream = openCompiledCore(file)) {
-        var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
-        var compiled = CompiledAya.from(resolveInfo, serDefs);
-        outputStream.writeObject(compiled);
-        timestamp.update(sourcePath);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
+    try (var outputStream = coreWriter(file)) {
+      var serDefs = defs.map(def -> def.accept(new Serializer(new Serializer.State()), Unit.unit()));
+      var compiled = CompiledAya.from(resolveInfo, serDefs);
+      outputStream.writeObject(compiled);
+      Timestamp.update(file);
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+  }
 
-    private @NotNull ObjectOutputStream openCompiledCore(@NotNull LibrarySource file) throws IOException {
-      return new ObjectOutputStream(Files.newOutputStream(file.coreFile()));
-    }
+  private @NotNull ObjectOutputStream coreWriter(@NotNull LibrarySource file) throws IOException {
+    var coreFile = file.coreFile();
+    Files.createDirectories(coreFile.getParent());
+    return new ObjectOutputStream(Files.newOutputStream(file.coreFile()));
   }
 
   private static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot) {
     try (var walk = Files.walk(srcRoot)) {
       return walk.filter(Files::isRegularFile)
         .filter(path -> path.getFileName().toString().endsWith(".aya"))
-        .map(ResolveInfo::canonicalize)
         .collect(ImmutableSeq.factory());
     } catch (IOException e) {
       return ImmutableSeq.empty();
@@ -286,11 +275,12 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       file = dep.findModuleFile(mod);
       if (file != null) break;
     }
-    if (file == null) throw new IllegalArgumentException("invalid module path");
+    if (file == null) throw new IllegalArgumentException("No library owns module: " + mod);
     try {
-      return resolveImports(file.owner(), file.file());
+      resolveImports(file);
     } catch (IOException e) {
       throw new RuntimeException("Cannot load imported module " + mod, e);
     }
+    return file;
   }
 }
