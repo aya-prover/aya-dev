@@ -20,6 +20,8 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.Def;
+import org.aya.core.serde.SerTerm;
+import org.aya.core.serde.Serializer;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +45,15 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
   private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
   private final @NotNull ImmutableSeq<LibrarySource> sources;
+  private final @NotNull United states;
 
-  public LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library) {
+  public record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {}
+
+  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library, @NotNull United states) {
     this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
     this.flags = flags;
     this.library = library;
+    this.states = states;
     var srcRoot = library.librarySrcRoot();
     this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
     this.sources = collectSource(srcRoot).map(p -> new LibrarySource(this, p));
@@ -55,7 +61,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
     var config = LibraryConfigData.fromLibraryRoot(LibrarySource.canonicalize(libraryRoot));
-    var compiler = new LibraryCompiler(reporter, flags, config);
+    var compiler = new LibraryCompiler(reporter, flags, config, new United(new SerTerm.DeState(), new Serializer.State()));
     return compiler.start();
   }
 
@@ -115,7 +121,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
         reporter.reportString("Skipping " + dep.depName());
         continue;
       }
-      var depCompiler = new LibraryCompiler(reporter, flags, depConfig);
+      var depCompiler = new LibraryCompiler(reporter, flags, depConfig, states);
       deps.append(depCompiler);
     }
 
@@ -165,7 +171,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   private void tyckLibrary(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
-    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot));
+    var moduleLoader = new CachedModuleLoader(new LibraryModuleLoader(
+      reporter, locator, thisModulePath.view(), thisOutRoot, states.de));
 
     for (var f : order) Files.deleteIfExists(f.coreFile());
     order.forEach(file -> {
@@ -198,7 +205,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
     try {
       var coreFile = file.coreFile();
-      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs);
+      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states.ser);
       Timestamp.update(file);
     } catch (IOException e) {
       e.printStackTrace();

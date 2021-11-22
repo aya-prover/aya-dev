@@ -33,13 +33,16 @@ public record CompiledAya(
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps
 ) implements Serializable {
-  public static @NotNull CompiledAya from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
+  public static @NotNull CompiledAya from(
+    @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs,
+    @NotNull Serializer.State state
+  ) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       // TODO[kiva]: how to reach here?
       throw new UnsupportedOperationException();
     }
 
-    var serialization = new Serialization(new Serializer.State(), DynamicSeq.create(), DynamicSeq.create());
+    var serialization = new Serialization(state, DynamicSeq.create(), DynamicSeq.create());
     serialization.ser(defs);
 
     var modName = ctx.moduleName();
@@ -100,8 +103,7 @@ public record CompiledAya(
     };
   }
 
-  public @NotNull ResolveInfo toResolveInfo(@NotNull PhysicalModuleContext context) {
-    var state = new SerTerm.DeState();
+  public @NotNull ResolveInfo toResolveInfo(@NotNull PhysicalModuleContext context, SerTerm.DeState state) {
     serDefs.forEach(serDef -> de(context, serDef, state));
     return new ResolveInfo(context, ImmutableSeq.empty(), deOp(state, context.reporter()));
   }

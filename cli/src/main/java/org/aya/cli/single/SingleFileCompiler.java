@@ -21,6 +21,7 @@ import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.core.serde.Serializer;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.trace.Trace;
@@ -71,7 +72,7 @@ public record SingleFileCompiler(
         (moduleResolve, stmts, defs) -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
           distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
-          if (flags.outputFile() != null) AyaCompiler.saveCompiledCore(flags.outputFile(), moduleResolve, defs);
+          if (flags.outputFile() != null) AyaCompiler.saveCompiledCore(flags.outputFile(), moduleResolve, defs, new Serializer.State());
           if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, stmts, defs);
         });
     });
