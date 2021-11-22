@@ -16,6 +16,7 @@ import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.stmt.BindBlock;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
@@ -106,11 +107,11 @@ public record CompiledAya(
   }
 
   public @NotNull ResolveInfo toResolveInfo(@NotNull CachedModuleLoader loader, @NotNull PhysicalModuleContext context) {
-    var state = new SerTerm.DeState();
-    serDefs.forEach(serDef -> de(context, serDef, state));
     var resolveInfo = new ResolveInfo(context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
     shallowResolve(loader, resolveInfo);
-    deOp( state, resolveInfo.opSet());
+    var state = new SerTerm.DeState(context);
+    serDefs.forEach(serDef -> de(serDef, state));
+    deOp(state, resolveInfo.opSet());
     return resolveInfo;
   }
 
@@ -118,8 +119,10 @@ public record CompiledAya(
   private void shallowResolve(@NotNull CachedModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var modName : imports) {
       var success = loader.load(modName);
-      if (success == null) thisResolve.thisModule().reportAndThrow(new ModNotFoundError(modName, SourcePos.NONE));
+      if (success == null) thisResolve.thisModule().reportAndThrow(new ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().append(success);
+      var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
+      thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
       thisResolve.opSet().operators.putAll(success.opSet().operators);
     }
   }
@@ -139,11 +142,11 @@ public record CompiledAya(
       opSet.ensureHasElem(opDecl);
       bind.loosers().forEach(looser -> {
         var target = resolveOp(opSet, looser);
-        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
+        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
       });
       bind.tighters().forEach(tighter -> {
         var target = resolveOp(opSet, tighter);
-        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
+        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
       });
     });
   }
@@ -155,11 +158,12 @@ public record CompiledAya(
       var defVar = next._1;
       if (defVar.module.equals(name.mod()) && defVar.name().equals(name.name())) return next._2;
     }
-    opSet.reporter.report(new UnknownOperatorError(SourcePos.NONE, name.name()));
+    opSet.reporter.report(new UnknownOperatorError(SourcePos.SER, name.name()));
     throw new Context.ResolvingInterruptedException();
   }
 
-  private void de(@NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
+  private void de(@NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
+    var context = ((PhysicalModuleContext) state.context());
     var mod = context.moduleName();
     var drop = mod.size();
     var def = serDef.de(state);

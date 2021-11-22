@@ -33,6 +33,8 @@ public record SourcePos(
    * Single instance SourcePos for mocking tests and other usages.
    */
   public static final SourcePos NONE = new SourcePos(SourceFile.NONE, -1, -1, -1, -1, -1, -1);
+  /** Source pos used in serialized core */
+  public static final SourcePos SER = new SourcePos(SourceFile.SER, -1, -1, -1, -1, -1, -1);
 
   public @NotNull Span toSpan() {
     if (indexAvailable()) {

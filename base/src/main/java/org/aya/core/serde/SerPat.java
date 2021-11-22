@@ -18,7 +18,7 @@ public sealed interface SerPat extends Serializable {
 
   record Matchy(@NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm body) implements Serializable {
     public @NotNull Matching de(@NotNull SerTerm.DeState state) {
-      return new Matching(SourcePos.NONE, pats.map(pat -> pat.de(state)), body.de(state));
+      return new Matching(SourcePos.SER, pats.map(pat -> pat.de(state)), body.de(state));
     }
   }
 

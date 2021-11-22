@@ -129,6 +129,12 @@ public interface Context {
     return new PhysicalModuleContext(this, this.moduleName().concat(extraName));
   }
 
+  default boolean holds(@NotNull ImmutableSeq<String> maybeSubmodule) {
+    var moduleName = this.moduleName();
+    if (maybeSubmodule.sizeLessThan(moduleName.size())) return false;
+    return maybeSubmodule.slice(0, moduleName.size()).equals(moduleName);
+  }
+
   class ResolvingInterruptedException extends InterruptException {
     @Override public InterruptStage stage() {
       return InterruptStage.Resolving;

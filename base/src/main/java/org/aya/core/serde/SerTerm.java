@@ -14,8 +14,10 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.def.PrimDef;
+import org.aya.concrete.resolve.context.Context;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -26,12 +28,13 @@ import java.util.Objects;
  */
 public sealed interface SerTerm extends Serializable {
   record DeState(
+    @NotNull Context context,
     @NotNull MutableMap<Seq<String>, MutableMap<String, DefVar<?, ?>>> defCache,
     @NotNull MutableMap<Integer, Sort.LvlVar> levelCache,
     @NotNull MutableMap<Integer, LocalVar> localCache
   ) {
-    public DeState() {
-      this(MutableMap.create(), MutableMap.create(), MutableMap.create());
+    public DeState(@NotNull Context context) {
+      this(context, MutableMap.create(), MutableMap.create(), MutableMap.create());
     }
 
     public @NotNull LocalVar var(@NotNull SimpVar var) {
@@ -41,13 +44,23 @@ public sealed interface SerTerm extends Serializable {
     @SuppressWarnings("unchecked")
     public <Core extends CoreDef, Concrete extends ConcreteDecl>
     @NotNull DefVar<Core, Concrete> def(@NotNull SerDef.QName name) {
-      // We assume this cast to be safe
-      var dv = (DefVar<Core, Concrete>) defCache
-        .getOrPut(name.mod(), MutableHashMap::new)
-        .getOrPut(name.name(), () -> DefVar.empty(name.name()));
-      assert Objects.equals(name.name(), dv.name());
-      dv.module = name.mod();
-      return dv;
+      // Resolving this module's definition, it's safe to create new
+      if (context.holds(name.mod())) {
+        // We assume this cast to be safe
+        var dv = (DefVar<Core, Concrete>) defCache
+          .getOrPut(name.mod(), MutableHashMap::new)
+          .getOrPut(name.name(), () -> DefVar.empty(name.name()));
+        assert Objects.equals(name.name(), dv.name());
+        dv.module = name.mod();
+        return dv;
+      } else {
+        // Resolving imported definition, it's only safe to resolve from context.
+        return (DefVar<Core, Concrete>) context.getQualified(
+          name.mod(),
+          name.name(),
+          SourcePos.SER
+        );
+      }
     }
   }
 
