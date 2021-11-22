@@ -101,16 +101,14 @@ public record StmtTycker(
       }
       case Decl.DataDecl decl -> {
         assert signature != null;
-        var result = tycker.sort(decl.result, signature.result());
-        var body = decl.body.map(clause -> traced(clause, tycker, (ctor, t) -> visitCtor(ctor, t, result)));
-        yield new DataDef(decl.ref, signature.param(), signature.sortParam(), result, body);
+        var body = decl.body.map(clause -> traced(clause, tycker, this::visitCtor));
+        yield new DataDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, body);
       }
       case Decl.PrimDecl decl -> decl.ref.core;
       case Decl.StructDecl decl -> {
         assert signature != null;
-        var result = tycker.sort(decl.result, signature.result());
-        yield new StructDef(decl.ref, signature.param(), signature.sortParam(), result, decl.fields.map(field ->
-          traced(field, tycker, (f, tyck) -> visitField(f, tyck, result))));
+        yield new StructDef(decl.ref, signature.param(), signature.sortParam(), decl.sort, decl.fields.map(field ->
+          traced(field, tycker, this::visitField)));
       }
     };
   }
@@ -132,6 +130,7 @@ public record StmtTycker(
           // ^ probably omitted
           : tycker.zonk(data.result, tycker.inherit(data.result, FormTerm.freshUniv(pos))).wellTyped();
         data.signature = new Def.Signature(tycker.extractLevels(), tele, result);
+        data.sort = tycker.sort(decl.result, result);
       }
       case Decl.StructDecl struct -> {
         var pos = struct.sourcePos;
@@ -139,6 +138,7 @@ public record StmtTycker(
         var result = tycker.zonk(struct.result, tycker.inherit(struct.result, FormTerm.freshUniv(pos))).wellTyped();
         // var levelSubst = tycker.equations.solve();
         struct.signature = new Def.Signature(tycker.extractLevels(), tele, result);
+        struct.sort = tycker.sort(decl.result, result);
       }
       case Decl.PrimDecl prim -> {
         assert tycker.localCtx.isEmpty();
@@ -169,9 +169,10 @@ public record StmtTycker(
     }
   }
 
-  private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker, Sort dataSort) {
+  private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var dataRef = ctor.dataRef;
     var dataSig = dataRef.concrete.signature;
+    var dataSort = dataRef.concrete.sort;
     assert dataSig != null;
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var sortParam = dataSig.sortParam();
@@ -220,12 +221,13 @@ public record StmtTycker(
     tracing(TreeBuilder::reduce);
   }
 
-  private @NotNull FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker, @NotNull Sort structSort) {
-    var tele = checkTele(tycker, field.telescope, structSort);
+  private @NotNull FieldDef visitField(Decl.@NotNull StructField field, ExprTycker tycker) {
     var structRef = field.structRef;
-    var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
+    var structSort = structRef.concrete.sort;
     var structSig = structRef.concrete.signature;
     assert structSig != null;
+    var tele = checkTele(tycker, field.telescope, structSort);
+    var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
     var elabClauses = patTycker.elabClauses(field.clauses, field.signature, field.result.sourcePos())._2;

@@ -11,6 +11,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.core.def.*;
+import org.aya.core.sort.Sort;
 import org.aya.core.term.Term;
 import org.aya.generic.Modifier;
 import org.aya.util.binop.OpDecl;
@@ -164,6 +165,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public final @NotNull ImmutableSeq<DataCtor> body;
     public final @NotNull BindBlock bindBlock;
+    public Sort sort;
 
     public DataDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -201,6 +203,7 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
     public @NotNull
     final ImmutableSeq<StructField> fields;
     public final @NotNull BindBlock bindBlock;
+    public Sort sort;
 
     public StructDecl(
       @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
