@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.context.ModuleContext;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.tyck.order.TyckUnit;
 import org.aya.util.MutableGraph;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +20,13 @@ import org.jetbrains.annotations.NotNull;
 @Debug.Renderer(text = "thisModule.moduleName().joinToString(\"::\")")
 public record ResolveInfo(
   @NotNull ModuleContext thisModule,
-  @NotNull ImmutableSeq<Stmt> thisProgram,
+  @NotNull ImmutableSeq<TyckUnit> thisProgram,
   @NotNull AyaBinOpSet opSet,
   @NotNull DynamicSeq<ResolveInfo> imports,
-  @NotNull MutableGraph<Stmt> declGraph,
-  @NotNull MutableGraph<Stmt> sampleGraph
+  @NotNull MutableGraph<TyckUnit> declGraph,
+  @NotNull MutableGraph<TyckUnit> sampleGraph
 ) {
-  public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull ImmutableSeq<Stmt> thisProgram, @NotNull AyaBinOpSet opSet) {
+  public ResolveInfo(@NotNull ModuleContext thisModule, @NotNull ImmutableSeq<TyckUnit> thisProgram, @NotNull AyaBinOpSet opSet) {
     this(thisModule, thisProgram, opSet, DynamicSeq.create(), MutableGraph.create(), MutableGraph.create());
   }
 }

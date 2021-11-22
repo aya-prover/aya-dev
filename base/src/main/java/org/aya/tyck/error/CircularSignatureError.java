@@ -8,18 +8,19 @@ import org.aya.api.error.Problem;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.Signatured;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.order.TyckUnit;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
 public record CircularSignatureError(
-  @NotNull ImmutableSeq<Stmt> cycles
+  @NotNull ImmutableSeq<TyckUnit> cycles
 ) implements Problem {
   @Override public @NotNull SourcePos sourcePos() {
-    return cycles.view().map(Stmt::sourcePos)
+    return cycles.view().map(TyckUnit::sourcePos)
       .max(Comparator.comparingInt(SourcePos::endLine));
   }
 
@@ -31,11 +32,12 @@ public record CircularSignatureError(
     );
   }
 
-  private @NotNull String nameOf(@NotNull Stmt stmt) {
+  private @NotNull String nameOf(@NotNull TyckUnit stmt) {
     return switch (stmt) {
       case Decl decl -> decl.ref().name();
       case Sample sample -> nameOf(sample.delegate());
-      case Remark remark -> remark.raw;
+      case Remark remark -> "a remark";
+      case Signatured signatured -> signatured.ref().name();
       default -> throw new IllegalStateException("Unexpected stmt seen in SCCTycker: " + stmt);
     };
   }

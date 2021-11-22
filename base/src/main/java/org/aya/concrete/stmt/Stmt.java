@@ -16,17 +16,15 @@ import org.aya.concrete.resolve.visitor.StmtResolver;
 import org.aya.concrete.resolve.visitor.StmtShallowResolver;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.error.SourcePos;
+import org.aya.util.error.SourceNode;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author kiva
  */
-public sealed interface Stmt extends AyaDocile
+public sealed interface Stmt extends AyaDocile, SourceNode, org.aya.tyck.order.TyckUnit
   permits Command, Decl, Generalize, Remark, Sample {
-  @Contract(pure = true) @NotNull SourcePos sourcePos();
-
   /** @apiNote the \import stmts do not have a meaningful accessibility, do not refer to this in those cases */
   @Contract(pure = true) @NotNull Accessibility accessibility();
 

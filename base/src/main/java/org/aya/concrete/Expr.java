@@ -26,7 +26,7 @@ import org.aya.generic.ParamLike;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.binop.BinOpParser;
-import org.aya.util.binop.SourceNode;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;

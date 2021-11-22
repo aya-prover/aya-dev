@@ -11,7 +11,6 @@ import org.aya.api.util.InterruptException;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Sample;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
@@ -36,7 +35,7 @@ public record SCCTycker(
     this(new StmtTycker(reporter, builder), reporter, DynamicSeq.create());
   }
 
-  public void tyckSCC(@NotNull ImmutableSeq<Stmt> scc) throws SCCTyckingFailed {
+  public void tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) throws SCCTyckingFailed {
     if (scc.sizeEquals(1)) checkBody(scc.first());
     else {
       var headerOrder = headerOrder(scc);
@@ -45,16 +44,17 @@ public record SCCTycker(
     }
   }
 
-  private void checkHeader(@NotNull Stmt stmt) {
+  private void checkHeader(@NotNull TyckUnit stmt) {
     switch (stmt) {
       case Decl decl -> tycker.tyckHeader(decl, tycker.newTycker());
       case Sample sample -> sample.tyckHeader(tycker);
+      // TODO[ice]: tyck ctor/field
       default -> {}
     }
     if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 
-  private void checkBody(@NotNull Stmt stmt) {
+  private void checkBody(@NotNull TyckUnit stmt) {
     switch (stmt) {
       case Decl decl -> wellTyped.append(tycker.tyck(decl, tycker.newTycker()));
       case Sample sample -> {
@@ -72,10 +72,10 @@ public record SCCTycker(
    *
    * @author re-xyr, kiva
    */
-  public @NotNull ImmutableSeq<Stmt> headerOrder(@NotNull ImmutableSeq<Stmt> stmts) {
-    var graph = MutableGraph.<Stmt>create();
+  public @NotNull ImmutableSeq<TyckUnit> headerOrder(@NotNull ImmutableSeq<TyckUnit> stmts) {
+    var graph = MutableGraph.<TyckUnit>create();
     stmts.forEach(stmt -> {
-      var reference = DynamicSeq.<Stmt>create();
+      var reference = DynamicSeq.<TyckUnit>create();
       SigRefFinder.HEADER_ONLY.visit(stmt, reference);
       graph.suc(stmt).appendAll(reference);
     });
@@ -89,9 +89,9 @@ public record SCCTycker(
   }
 
   public static class SCCTyckingFailed extends InterruptException {
-    public @NotNull ImmutableSeq<Stmt> what;
+    public @NotNull ImmutableSeq<TyckUnit> what;
 
-    public SCCTyckingFailed(@NotNull ImmutableSeq<Stmt> what) {
+    public SCCTyckingFailed(@NotNull ImmutableSeq<TyckUnit> what) {
       this.what = what;
     }
 

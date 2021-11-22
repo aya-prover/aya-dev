@@ -90,6 +90,11 @@ public interface StmtResolver {
       }
     }
   }
+
+  private static void addReferences(@NotNull ResolveInfo info, Stmt decl, ExprResolver resolver) {
+    info.declGraph().suc(decl).appendAll(resolver.reference());
+  }
+
   private static @NotNull Tuple2<ExprResolver, Context>
   resolveDeclSignature(@NotNull Decl decl, ExprResolver.@NotNull Options options) {
     var resolver = new ExprResolver(options);

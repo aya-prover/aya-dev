@@ -8,6 +8,7 @@ import kala.collection.Set;
 import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
