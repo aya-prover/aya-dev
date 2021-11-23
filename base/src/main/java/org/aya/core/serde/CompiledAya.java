@@ -4,6 +4,7 @@ package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
@@ -35,6 +36,7 @@ import java.util.function.Function;
 public record CompiledAya(
   @NotNull ImmutableSeq<ImmutableSeq<String>> imports,
   @NotNull ImmutableSeq<SerDef.QName> exports,
+  @NotNull ImmutableSeq<ImmutableSeq<String>> reExports,
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps
 ) implements Serializable {
@@ -57,7 +59,11 @@ public record CompiledAya(
     }).flatMap(Function.identity()).toImmutableSeq();
 
     var imports = resolveInfo.imports().toImmutableSeq().map(i -> i.thisModule().moduleName());
-    return new CompiledAya(imports, exports, serialization.serDefs.toImmutableSeq(), serialization.serOps.toImmutableSeq());
+    return new CompiledAya(imports, exports,
+      resolveInfo.reExports().toImmutableSeq(),
+      serialization.serDefs.toImmutableSeq(),
+      serialization.serOps.toImmutableSeq()
+    );
   }
 
   private record Serialization(
@@ -125,6 +131,12 @@ public record CompiledAya(
       thisResolve.imports().append(success);
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
+      // TODO: more public open (re-export) info
+      if (reExports.contains(modName)) thisResolve.thisModule().openModule(modName,
+        Stmt.Accessibility.Public,
+        s -> true,
+        MutableHashMap.create(),
+        SourcePos.SER);
       thisResolve.opSet().operators.putAll(success.opSet().operators);
       thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
     }

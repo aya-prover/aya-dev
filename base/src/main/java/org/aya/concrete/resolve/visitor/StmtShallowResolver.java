@@ -47,9 +47,10 @@ public record StmtShallowResolver(
       }
       case Command.Open cmd -> {
         var mod = cmd.path().ids();
+        var acc = cmd.accessibility();
         context.openModule(
           mod,
-          cmd.accessibility(),
+          acc,
           cmd.useHide()::uses,
           MutableHashMap.create(), // TODO handle renaming
           cmd.sourcePos()
@@ -58,6 +59,7 @@ public record StmtShallowResolver(
         var modInfo = resolveInfo.imports().find(i -> i.thisModule().moduleName().equals(mod));
         // modInfo is empty if we are opening a submodule
         if (modInfo.isDefined()) {
+          if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().append(mod);
           var modOpSet = modInfo.get().opSet();
           resolveInfo.opSet().operators.putAll(modOpSet.operators);
           resolveInfo.opSet().importBind(modOpSet, cmd.sourcePos());
