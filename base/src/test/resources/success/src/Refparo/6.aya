@@ -1,4 +1,5 @@
 -- https://github.com/aya-prover/aya-dev/issues/8
+-- Some are also from #2
 open import Refparo::Common
 
 open data Entity : Type 0 | john

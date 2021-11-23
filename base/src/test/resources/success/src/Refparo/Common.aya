@@ -1,6 +1,6 @@
 public open import Paths
 
-public open data Unit : Type 0 | unit
+public open data Unit | unit
 def coe {a b : Type} (eq : a = b) (x : a) (i : I) : eq.at i
   => arcoe eq.at x i
 def idpath {A : Type} (a : A) : a = a => idp {A} {a}
