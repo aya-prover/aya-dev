@@ -20,7 +20,7 @@ public class LibraryTest {
     try (var walk = Files.walk(dir.resolve("build"))) {
       walk.sorted(Comparator.reverseOrder())
         .collect(ImmutableSeq.factory())
-        .forEachChecked(Files::delete);
+        .forEachChecked(Files::deleteIfExists);
     }
     LibraryCompiler.compile(ThrowingReporter.INSTANCE, TestRunner.flags(), dir);
   }
