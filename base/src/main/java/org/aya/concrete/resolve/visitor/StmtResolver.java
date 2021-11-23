@@ -43,13 +43,15 @@ public interface StmtResolver {
       case Decl.DataDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
         var bodyResolver = local._1.body();
-        for (var ctor : decl.body) {
+        decl.body.forEach(ctor -> {
           var localCtxWithPat = new Ref<>(local._2);
           ctor.patterns = ctor.patterns.map(pattern -> subpatterns(localCtxWithPat, pattern));
           var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
           ctor.telescope = ctorLocal._1.toImmutableSeq();
           ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
-        }
+          visitOp(ctor.ref, ctor, info);
+        });
+        visitOp(decl.ref, decl, info);
         addReferences(info, decl, local._1);
       }
       case Decl.FnDecl decl -> {
@@ -59,6 +61,7 @@ public interface StmtResolver {
           expr -> expr.accept(bodyResolver, local._2),
           pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
         addReferences(info, decl, local._1);
+        visitOp(decl.ref, decl, info);
       }
       case Decl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
@@ -69,8 +72,10 @@ public interface StmtResolver {
           field.result = field.result.accept(bodyResolver, fieldLocal._2);
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
+          visitOp(field.ref, field, info);
         });
         addReferences(info, decl, local._1);
+        visitOp(decl.ref, decl, info);
       }
       case Decl.PrimDecl decl -> addReferences(info, decl,
         resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1);
@@ -108,14 +113,19 @@ public interface StmtResolver {
     return Tuple.of(resolver, local._2);
   }
 
-  static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull BindBlock bind, ResolveInfo info) {
+  static void visitOp(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull ResolveInfo info) {
     var opSet = info.opSet();
     var isOperator = !opSet.isOperand(self);
-    if (!isOperator && bind != BindBlock.EMPTY) {
+    if (isOperator) opSet.operators.put(selfDef, self);
+  }
+
+  static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
+    var opSet = info.opSet();
+    var self = opSet.operators.getOrNull(selfDef);
+    if (self == null && bind != BindBlock.EMPTY) {
       opSet.reporter.report(new OperatorProblem.NotOperator(selfDef.concrete.sourcePos(), selfDef.name()));
       throw new Context.ResolvingInterruptedException();
     }
-    if (isOperator) opSet.operators.put(selfDef, self);
     if (bind == BindBlock.EMPTY) return;
     var ctx = bind.context().value;
     assert ctx != null : "no shallow resolver?";
@@ -138,7 +148,7 @@ public interface StmtResolver {
     throw new Context.ResolvingInterruptedException();
   }
 
-  static void resolveBind(SeqLike<@NotNull Stmt> contents, @NotNull ResolveInfo info) {
+  static void resolveBind(@NotNull SeqLike<@NotNull Stmt> contents, @NotNull ResolveInfo info) {
     contents.forEach(s -> resolveBind(s, info));
   }
 
@@ -146,14 +156,14 @@ public interface StmtResolver {
     switch (stmt) {
       case Command.Module mod -> resolveBind(mod.contents(), info);
       case Decl.DataDecl decl -> {
-        decl.body.forEach(ctor -> visitBind(ctor.ref, ctor, ctor.bindBlock, info));
-        visitBind(decl.ref, decl, decl.bindBlock, info);
+        decl.body.forEach(ctor -> visitBind(ctor.ref, ctor.bindBlock, info));
+        visitBind(decl.ref, decl.bindBlock, info);
       }
       case Decl.StructDecl decl -> {
-        decl.fields.forEach(field -> visitBind(field.ref, field, field.bindBlock, info));
-        visitBind(decl.ref, decl, decl.bindBlock, info);
+        decl.fields.forEach(field -> visitBind(field.ref, field.bindBlock, info));
+        visitBind(decl.ref, decl.bindBlock, info);
       }
-      case Decl.FnDecl decl -> visitBind(decl.ref, decl, decl.bindBlock, info);
+      case Decl.FnDecl decl -> visitBind(decl.ref, decl.bindBlock, info);
       case Sample sample -> resolveBind(sample.delegate(), info);
       case Remark remark -> {}
       case Command cmd -> {}
