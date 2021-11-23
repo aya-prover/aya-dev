@@ -8,6 +8,7 @@ import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableSet;
 import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
+import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
@@ -171,8 +172,13 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     var moduleLoader = new CachedModuleLoader(loader);
     loader.cachedSelf().value = moduleLoader;
 
-    var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(this, moduleLoader), changed);
-    SCCs.forEachChecked(tycker::tyckSCC);
+    var delayedReporter = new DelayedReporter(reporter);
+    var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(delayedReporter, this, moduleLoader), changed);
+    // use delayed reporter to avoid showing errors in the middle of compilation.
+    // we only show errors after all SCCs are tycked
+    try (delayedReporter) {
+      SCCs.forEachChecked(tycker::tyckSCC);
+    }
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("Failing module(s):");
       tycker.skippedSet.forEach(f -> reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
@@ -196,13 +202,13 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   record LibrarySccTycker(
+    @NotNull Reporter outerReporter,
     @NotNull LibraryCompiler delegate,
     @NotNull CachedModuleLoader moduleLoader
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
-      var reporter = delegate.reporter;
+      var reporter = new CountingReporter(outerReporter);
       for (var f : order) Files.deleteIfExists(f.coreFile());
-      reporter.clear();
       for (var f : order) {
         tyckOne(reporter, f);
         if (!reporter.noError()) return ImmutableSeq.of(f);
