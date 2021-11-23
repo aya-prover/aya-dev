@@ -61,7 +61,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     this.states = states;
     var srcRoot = library.librarySrcRoot();
     this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
-    this.sources = collectSource(srcRoot).map(p -> new LibrarySource(this, p));
+    this.sources = FileUtil.collectSource(srcRoot, ".aya").map(p -> new LibrarySource(this, p));
   }
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
@@ -272,16 +272,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   private void reportNest(@NotNull String text, int indent) {
     reporter.reportDoc(Doc.nest(indent, Doc.english(text)));
-  }
-
-  private static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot) {
-    try (var walk = Files.walk(srcRoot)) {
-      return walk.filter(Files::isRegularFile)
-        .filter(path -> path.getFileName().toString().endsWith(".aya"))
-        .collect(ImmutableSeq.factory());
-    } catch (IOException e) {
-      return ImmutableSeq.empty();
-    }
   }
 
   private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {

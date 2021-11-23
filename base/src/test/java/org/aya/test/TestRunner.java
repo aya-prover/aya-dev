@@ -10,6 +10,7 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
 import org.aya.prelude.GeneratedVersion;
+import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
@@ -67,14 +68,9 @@ public class TestRunner {
     System.out.println(":: Running tests under " + path.toAbsolutePath());
     assertTrue(path.toFile().isDirectory(), "should be a directory");
 
-    try {
-      Files.walk(path)
-        .filter(Files::isRegularFile)
-        .filter(f -> f.getFileName().toString().endsWith(".aya"))
-        .forEach(file -> runFile(file, expectSuccess));
-    } catch (IOException e) {
-      fail("error reading directory " + path.toAbsolutePath());
-    }
+    var source = FileUtil.collectSource(path, ".aya");
+    assertTrue(source.isNotEmpty(), "should have at least one .aya file");
+    source.forEach(file -> runFile(file, expectSuccess));
   }
 
   private void runFile(@NotNull Path file, boolean expectSuccess) {

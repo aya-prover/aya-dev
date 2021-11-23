@@ -19,4 +19,14 @@ public interface FileUtil {
         .forEachChecked(Files::deleteIfExists);
     }
   }
+
+  static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull String postfix) {
+    try (var walk = Files.walk(srcRoot)) {
+      return walk.filter(Files::isRegularFile)
+        .filter(path -> path.getFileName().toString().endsWith(postfix))
+        .collect(ImmutableSeq.factory());
+    } catch (IOException e) {
+      return ImmutableSeq.empty();
+    }
+  }
 }
