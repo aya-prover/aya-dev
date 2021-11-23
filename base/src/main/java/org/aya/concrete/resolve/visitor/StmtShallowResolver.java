@@ -76,6 +76,7 @@ public record StmtShallowResolver(
         var childCtx = exampleContext(context).derive("counter");
         var delegate = example.delegate();
         delegate.ctx = childCtx;
+        delegate.ref().module = childCtx.moduleName();
         childCtx.addGlobalSimple(Stmt.Accessibility.Private, delegate.ref(), delegate.sourcePos);
       }
       case Decl.DataDecl decl -> {
