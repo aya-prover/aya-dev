@@ -183,6 +183,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
         (moduleResolve, stmts, defs) -> {
           if (reporter.noError()) saveCompiledCore(file, moduleResolve, defs);
         });
+      reporter.clear();
     });
   }
 
