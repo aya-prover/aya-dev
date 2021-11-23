@@ -194,7 +194,7 @@ public record CompiledAya(
         });
         context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
       }
-      case SerDef.Prim prim -> export(context, mod.drop(drop), prim.name().id, def.ref());
+      case SerDef.Prim prim -> export(context, prim.name().id, def.ref());
       default -> {}
     }
   }

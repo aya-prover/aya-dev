@@ -44,10 +44,20 @@ public sealed interface SerTerm extends Serializable {
       // We assume this cast to be safe
       var dv = (DefVar<Core, Concrete>) defCache
         .getOrPut(name.mod(), MutableHashMap::new)
-        .getOrPut(name.name(), () -> DefVar.empty(name.name()));
+        .getOrThrow(name.name(), () -> new SerDef.DeserializeException("unable to find DefVar: " + name));
       assert Objects.equals(name.name(), dv.name());
       dv.module = name.mod();
       return dv;
+    }
+
+    public void putPrim(
+      @NotNull ImmutableSeq<String> mod,
+      @NotNull PrimDef.ID id,
+      @NotNull DefVar<?, ?> defVar
+    ) {
+      var old = defCache.getOrPut(mod, MutableHashMap::new).put(id.id, defVar);
+      if (old.isDefined()) throw new SerDef.DeserializeException("same prim deserialized twice: " + id.id);
+      defVar.module = mod;
     }
   }
 

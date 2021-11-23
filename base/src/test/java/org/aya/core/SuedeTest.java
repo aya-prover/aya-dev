@@ -3,19 +3,15 @@
 package org.aya.core;
 
 import kala.tuple.Unit;
-import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
-import org.aya.test.ThrowingReporter;
 import org.aya.tyck.TyckDeclTest;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.nio.file.Path;
 
 public class SuedeTest {
   @BeforeEach public void cleanup() {
@@ -73,7 +69,7 @@ public class SuedeTest {
   }
 
   private void suedeAll(@Language("TEXT") @NotNull String code) {
-    var state = new SerTerm.DeState(new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")));
+    var state = new SerTerm.DeState();
     var serializer = new Serializer(new Serializer.State());
     TyckDeclTest.successTyckDecls(code).view()
       .map(def -> def.accept(serializer, Unit.unit()))

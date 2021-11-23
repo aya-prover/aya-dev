@@ -61,11 +61,11 @@ public final class AyaProducer {
   public Either<ImmutableSeq<Stmt>, Expr> visitRepl(AyaParser.ReplContext ctx) {
     var expr = ctx.expr();
     if (expr != null) return Either.right(visitExpr(expr));
-    return Either.left(ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt));
+    return Either.left(ImmutableSeq.from(ctx.stmt()).flatMap(s -> visitStmt(s, false)));
   }
 
-  public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
-    return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
+  public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx, boolean importOnly) {
+    return ImmutableSeq.from(ctx.stmt()).flatMap(s -> visitStmt(s, importOnly));
   }
 
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
@@ -98,9 +98,12 @@ public final class AyaProducer {
     );
   }
 
-  public @NotNull SeqLike<Stmt> visitStmt(AyaParser.StmtContext ctx) {
+  public @NotNull SeqLike<Stmt> visitStmt(AyaParser.StmtContext ctx, boolean importOnly) {
     var importCmd = ctx.importCmd();
     if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
+    var mod = ctx.module();
+    if (mod != null) return ImmutableSeq.of(visitModule(mod, importOnly));
+    if (importOnly) return ImmutableSeq.empty();
     var openCmd = ctx.openCmd();
     if (openCmd != null) return visitOpenCmd(openCmd);
     var decl = ctx.decl();
@@ -110,8 +113,6 @@ public final class AyaProducer {
     }
     var sample = ctx.sample();
     if (sample != null) return visitSample(sample);
-    var mod = ctx.module();
-    if (mod != null) return ImmutableSeq.of(visitModule(mod));
     var levels = ctx.levels();
     if (levels != null) return ImmutableSeq.of(visitLevels(levels));
     var generalize = ctx.generalize();
@@ -823,11 +824,11 @@ public final class AyaProducer {
       ? Command.Open.UseHide.Strategy.Using : Command.Open.UseHide.Strategy.Hiding);
   }
 
-  public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {
+  public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx, boolean importOnly) {
     var id = ctx.ID();
     return new Command.Module(
       sourcePosOf(id), id.getText(),
-      ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt)
+      ImmutableSeq.from(ctx.stmt()).flatMap(s -> visitStmt(s, importOnly))
     );
   }
 

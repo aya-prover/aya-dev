@@ -79,7 +79,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
     var owner = source.owner();
-    var program = AyaParsing.program(owner.locator, owner.reporter, source.file());
+    var program = AyaParsing.program(owner.locator, owner.reporter, source.file(), true);
     var finder = new ImportResolver(owner, source);
     finder.resolveStmt(program);
   }

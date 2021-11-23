@@ -5,6 +5,7 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
+import org.aya.api.util.InternalException;
 import org.aya.core.def.*;
 import org.aya.generic.Modifier;
 import org.aya.util.binop.Assoc;
@@ -116,11 +117,14 @@ public sealed interface SerDef extends Serializable {
   }
 
   record Prim(
+    @NotNull ImmutableSeq<String> module,
     @NotNull PrimDef.ID name
   ) implements SerDef {
     @Override
     public @NotNull Def de(SerTerm.@NotNull DeState state) {
-      return PrimDef.Factory.INSTANCE.getOrCreate(name);
+      var def = PrimDef.Factory.INSTANCE.getOrCreate(name);
+      state.putPrim(module, name, def.ref);
+      return def;
     }
   }
 
@@ -135,5 +139,21 @@ public sealed interface SerDef extends Serializable {
   /** Serialized version of {@link org.aya.concrete.stmt.BindBlock} */
   record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
     public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
+  }
+
+  class DeserializeException extends InternalException {
+    public @NotNull String reason;
+
+    public DeserializeException(@NotNull String reason) {
+      this.reason = reason;
+    }
+
+    @Override public void printHint() {
+      System.out.println(reason);
+    }
+
+    @Override public int exitCode() {
+      return 99;
+    }
   }
 }

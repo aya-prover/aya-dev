@@ -248,6 +248,6 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerDef visitPrim(@NotNull PrimDef def, Unit unit) {
-    return new SerDef.Prim(def.id);
+    return new SerDef.Prim(def.ref.module, def.id);
   }
 }
