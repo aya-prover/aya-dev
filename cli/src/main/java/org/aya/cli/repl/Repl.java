@@ -5,6 +5,7 @@ package org.aya.cli.repl;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.api.error.Problem;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.repl.command.Command;
@@ -73,7 +74,8 @@ public abstract class Repl implements Closeable, Runnable {
 
   public Repl(@NotNull ReplConfig config) {
     this.config = config;
-    replCompiler = new ReplCompiler(new CliReporter(() -> config.enableUnicode, this::println, this::errPrintln), null);
+    replCompiler = new ReplCompiler(new CliReporter(() -> config.enableUnicode,
+      Problem.Severity.INFO, this::println, this::errPrintln), null);
   }
 
   protected abstract void println(@NotNull String x);

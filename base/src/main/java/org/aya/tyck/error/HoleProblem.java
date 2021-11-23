@@ -93,7 +93,7 @@ public sealed interface HoleProblem extends Problem {
     }
 
     @Override public @NotNull Severity level() {
-      return Severity.WARN;
+      return Severity.INFO;
     }
   }
 }

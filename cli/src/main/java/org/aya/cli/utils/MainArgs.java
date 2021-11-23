@@ -3,6 +3,7 @@
 package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.error.Problem;
 import org.aya.prelude.GeneratedVersion;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -34,7 +35,7 @@ public class MainArgs {
     public String outputFile;
   }
 
-  // only one of `repl` and `compile` is not null
+  /** Either `repl` or `compile` is not null */
   public static class Action {
     @CommandLine.ArgGroup(exclusive = false, heading = "REPL arguments:%n")
     public ReplAction repl;
@@ -57,6 +58,9 @@ public class MainArgs {
   public boolean asciiOnly;
   @Option(names = {"--module-path"}, description = "Search for module under this path.")
   public List<String> modulePaths;
+  @Option(names = {"--verbosity", "-v"}, description = "Minimum severity of error reported." + CANDIDATES, defaultValue = "WARN")
+  public Problem.Severity verbosity;
+
   @CommandLine.ArgGroup
   public Action action;
 

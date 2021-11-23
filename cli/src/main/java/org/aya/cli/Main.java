@@ -36,7 +36,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var filePath = Paths.get(inputFile);
     var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var distillOptions = ReplConfig.loadFromDefault().distillerOptions;
-    var reporter = CliReporter.stdio(!asciiOnly);
+    var reporter = CliReporter.stdio(!asciiOnly, verbosity);
     var distillation = prettyStage != null ? new CompilerFlags.DistillInfo(
       prettyStage,
       prettyFormat,
