@@ -56,8 +56,12 @@ public record StmtShallowResolver(
         );
         // open operators as well
         var modInfo = resolveInfo.imports().find(i -> i.thisModule().moduleName().equals(mod));
-        if (modInfo.isDefined()) resolveInfo.opSet().operators.putAll(modInfo.get().opSet().operators);
-        // ^ modInfo is empty if we are opening a submodule
+        // modInfo is empty if we are opening a submodule
+        if (modInfo.isDefined()) {
+          var modOpSet = modInfo.get().opSet();
+          resolveInfo.opSet().operators.putAll(modOpSet.operators);
+          resolveInfo.opSet().importBind(modOpSet, cmd.sourcePos());
+        }
       }
       case Remark remark -> remark.ctx = context;
       case Generalize.Levels levels -> {

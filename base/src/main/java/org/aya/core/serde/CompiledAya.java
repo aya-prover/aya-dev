@@ -126,6 +126,7 @@ public record CompiledAya(
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
       thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
       thisResolve.opSet().operators.putAll(success.opSet().operators);
+      thisResolve.opSet().importBind(success.opSet(), SourcePos.SER);
     }
   }
 
