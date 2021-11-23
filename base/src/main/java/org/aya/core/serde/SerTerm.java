@@ -40,14 +40,26 @@ public sealed interface SerTerm extends Serializable {
 
     @SuppressWarnings("unchecked")
     public <Core extends CoreDef, Concrete extends ConcreteDecl>
-    @NotNull DefVar<Core, Concrete> def(@NotNull SerDef.QName name) {
+    @NotNull DefVar<Core, Concrete> resolve(@NotNull SerDef.QName name) {
       // We assume this cast to be safe
       var dv = (DefVar<Core, Concrete>) defCache
-        .getOrPut(name.mod(), MutableHashMap::new)
-        .getOrThrow(name.name(), () -> new SerDef.DeserializeException("unable to find DefVar: " + name));
+        .getOrThrow(name.mod(), () -> new SerDef.DeserializeException("Unable to find module: " + name.mod()))
+        .getOrThrow(name.name(), () -> new SerDef.DeserializeException("Unable to find DefVar: " + name));
       assert Objects.equals(name.name(), dv.name());
-      dv.module = name.mod();
       return dv;
+    }
+
+    @SuppressWarnings("unchecked")
+    <Core extends CoreDef, Concrete extends ConcreteDecl>
+    @NotNull DefVar<Core, Concrete> newDef(@NotNull SerDef.QName name) {
+      // We assume this cast to be safe
+      var defVar=  DefVar.empty(name.name());
+      var old = defCache
+        .getOrPut(name.mod(), MutableHashMap::new)
+        .put(name.name(), defVar);
+      if (old.isDefined()) throw new SerDef.DeserializeException("Same definition deserialized twice: " + name);
+      defVar.module = name.mod();
+      return (DefVar<Core, Concrete>) defVar;
     }
 
     public void putPrim(
@@ -56,7 +68,7 @@ public sealed interface SerTerm extends Serializable {
       @NotNull DefVar<?, ?> defVar
     ) {
       var old = defCache.getOrPut(mod, MutableHashMap::new).put(id.id, defVar);
-      if (old.isDefined()) throw new SerDef.DeserializeException("same prim deserialized twice: " + id.id);
+      if (old.isDefined()) throw new SerDef.DeserializeException("Same prim deserialized twice: " + id.id);
       defVar.module = mod;
     }
   }
@@ -106,7 +118,7 @@ public sealed interface SerTerm extends Serializable {
   record New(@NotNull StructCall call, @NotNull ImmutableMap<SerDef.QName, SerTerm> map) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new IntroTerm.New(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
-        Tuple.of(state.def(k), v.de(state)))));
+        Tuple.of(state.resolve(k), v.de(state)))));
     }
   }
 
@@ -143,25 +155,25 @@ public sealed interface SerTerm extends Serializable {
 
   record StructCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull CallTerm.Struct de(@NotNull DeState state) {
-      return new CallTerm.Struct(state.def(name), data.de(state.levelCache), data.de(state));
+      return new CallTerm.Struct(state.resolve(name), data.de(state.levelCache), data.de(state));
     }
   }
 
   record FnCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Fn(state.def(name), data.de(state.levelCache), data.de(state));
+      return new CallTerm.Fn(state.resolve(name), data.de(state.levelCache), data.de(state));
     }
   }
 
   record DataCall(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull CallTerm.Data de(@NotNull DeState state) {
-      return new CallTerm.Data(state.def(name), data.de(state.levelCache), data.de(state));
+      return new CallTerm.Data(state.resolve(name), data.de(state.levelCache), data.de(state));
     }
   }
 
   record PrimCall(@NotNull SerDef.QName name, @NotNull PrimDef.ID id, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new CallTerm.Prim(state.def(name), id, data.de(state.levelCache), data.de(state));
+      return new CallTerm.Prim(state.resolve(name), id, data.de(state.levelCache), data.de(state));
     }
   }
 
@@ -171,7 +183,7 @@ public sealed interface SerTerm extends Serializable {
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CallTerm.Con(
-        state.def(dataRef), state.def(selfRef),
+        state.resolve(dataRef), state.resolve(selfRef),
         dataArgs.de(state), dataArgs.de(state.levelCache),
         args.map(arg -> arg.de(state)));
     }
@@ -192,7 +204,7 @@ public sealed interface SerTerm extends Serializable {
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new CallTerm.Access(
-        of.de(state), state.def(ref),
+        of.de(state), state.resolve(ref),
         sortArgs.map(max -> max.de(state.levelCache)),
         structArgs.map(arg -> arg.de(state)),
         fieldArgs.map(arg -> arg.de(state)));
@@ -201,7 +213,7 @@ public sealed interface SerTerm extends Serializable {
 
   record FieldRef(@NotNull SerDef.QName name) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new RefTerm.Field(state.def(name));
+      return new RefTerm.Field(state.resolve(name));
     }
   }
 }

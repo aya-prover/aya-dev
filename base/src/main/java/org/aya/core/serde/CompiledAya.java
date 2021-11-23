@@ -132,13 +132,13 @@ public record CompiledAya(
   /** like {@link org.aya.concrete.resolve.visitor.StmtResolver} but only resolve operator */
   private void deOp(@NotNull SerTerm.DeState state, @NotNull AyaBinOpSet opSet) {
     serOps.forEach(serOp -> {
-      var defVar = state.def(serOp.name());
+      var defVar = state.resolve(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc(), serOp.argc());
       var opDecl = new SerDef.SerOpDecl(opInfo);
       opSet.operators.put(defVar, opDecl);
     });
     serOps.view().forEach(serOp -> {
-      var defVar = state.def(serOp.name());
+      var defVar = state.resolve(serOp.name());
       var opDecl = opSet.operators.get(defVar);
       var bind = serOp.bind();
       opSet.ensureHasElem(opDecl);
