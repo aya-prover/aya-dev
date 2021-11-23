@@ -5,14 +5,17 @@ package org.aya.cli.library;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
+import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.serde.CompiledAya;
+import org.aya.core.serde.SerTerm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +46,9 @@ public record LibraryModuleLoader(
   @NotNull Reporter reporter,
   @NotNull SourceFileLocator locator,
   @NotNull SeqView<Path> thisModulePath,
-  @NotNull Path thisOutRoot
+  @NotNull Path thisOutRoot,
+  @NotNull Ref<CachedModuleLoader> cachedSelf,
+  @NotNull SerTerm.DeState deState
 ) implements ModuleLoader {
   public static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
     var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
@@ -98,7 +103,7 @@ public record LibraryModuleLoader(
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     try (var inputStream = openCompiledCore(corePath)) {
       var compiledAya = (CompiledAya) inputStream.readObject();
-      return compiledAya.toResolveInfo(context);
+      return compiledAya.toResolveInfo(cachedSelf.value, context, deState);
     } catch (IOException | ClassNotFoundException e) {
       return null;
     }

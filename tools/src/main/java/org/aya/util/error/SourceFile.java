@@ -14,12 +14,15 @@ public record SourceFile(@NotNull Option<Path> path, @NotNull String sourceCode)
   }
 
   public static final SourceFile NONE = new SourceFile(Option.none(), "");
+  public static final SourceFile SER = new SourceFile(Option.none(), "");
 
   public boolean isSomeFile() {
     return this != SourceFile.NONE && path.isDefined();
   }
 
   public @NotNull String name() {
+    if (this == NONE) return "<unknown-file>";
+    if (this == SER) return "<serialized-core>";
     return path.map(Objects::toString).getOrDefault("<unknown-file>");
   }
 }

@@ -18,7 +18,7 @@ public sealed interface SerPat extends Serializable {
 
   record Matchy(@NotNull ImmutableSeq<SerPat> pats, @NotNull SerTerm body) implements Serializable {
     public @NotNull Matching de(@NotNull SerTerm.DeState state) {
-      return new Matching(SourcePos.NONE, pats.map(pat -> pat.de(state)), body.de(state));
+      return new Matching(SourcePos.SER, pats.map(pat -> pat.de(state)), body.de(state));
     }
   }
 
@@ -42,7 +42,7 @@ public sealed interface SerPat extends Serializable {
 
   record Prim(boolean explicit, @NotNull SerDef.QName name, @NotNull SerTerm ty) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Prim(explicit, state.def(name), ty.de(state));
+      return new Pat.Prim(explicit, state.resolve(name), ty.de(state));
     }
   }
 
@@ -52,7 +52,7 @@ public sealed interface SerPat extends Serializable {
     @NotNull SerTerm.DataCall ty
   ) implements SerPat {
     @Override public @NotNull Pat de(SerTerm.@NotNull DeState state) {
-      return new Pat.Ctor(explicit, state.def(name), params.map(param -> param.de(state)), ty.de(state));
+      return new Pat.Ctor(explicit, state.resolve(name), params.map(param -> param.de(state)), ty.de(state));
     }
   }
 }

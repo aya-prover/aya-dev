@@ -6,13 +6,17 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Unit;
-import org.aya.api.error.Reporter;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.Var;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.resolve.context.PhysicalModuleContext;
+import org.aya.concrete.resolve.error.ModNotFoundError;
+import org.aya.concrete.resolve.error.UnknownOperatorError;
+import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.stmt.BindBlock;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
@@ -29,17 +33,21 @@ import java.util.function.Function;
  * @author kiva
  */
 public record CompiledAya(
+  @NotNull ImmutableSeq<ImmutableSeq<String>> imports,
   @NotNull ImmutableSeq<SerDef.QName> exports,
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps
 ) implements Serializable {
-  public static @NotNull CompiledAya from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
+  public static @NotNull CompiledAya from(
+    @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs,
+    @NotNull Serializer.State state
+  ) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       // TODO[kiva]: how to reach here?
       throw new UnsupportedOperationException();
     }
 
-    var serialization = new Serialization(new Serializer.State(), DynamicSeq.create(), DynamicSeq.create());
+    var serialization = new Serialization(state, DynamicSeq.create(), DynamicSeq.create());
     serialization.ser(defs);
 
     var modName = ctx.moduleName();
@@ -48,7 +56,8 @@ public record CompiledAya(
       return vs.view().map((n, v) -> new SerDef.QName(qnameMod, n));
     }).flatMap(Function.identity()).toImmutableSeq();
 
-    return new CompiledAya(exports, serialization.serDefs.toImmutableSeq(), serialization.serOps.toImmutableSeq());
+    var imports = resolveInfo.imports().toImmutableSeq().map(i -> i.thisModule().moduleName());
+    return new CompiledAya(imports, exports, serialization.serDefs.toImmutableSeq(), serialization.serOps.toImmutableSeq());
   }
 
   private record Serialization(
@@ -100,35 +109,59 @@ public record CompiledAya(
     };
   }
 
-  public @NotNull ResolveInfo toResolveInfo(@NotNull PhysicalModuleContext context) {
-    var state = new SerTerm.DeState();
+  public @NotNull ResolveInfo toResolveInfo(@NotNull CachedModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull SerTerm.DeState state) {
+    var resolveInfo = new ResolveInfo(context, ImmutableSeq.empty(), new AyaBinOpSet(context.reporter()));
+    shallowResolve(loader, resolveInfo);
     serDefs.forEach(serDef -> de(context, serDef, state));
-    return new ResolveInfo(context, ImmutableSeq.empty(), deOp(state, context.reporter()));
+    deOp(state, resolveInfo.opSet());
+    return resolveInfo;
   }
 
-  private @NotNull AyaBinOpSet deOp(@NotNull SerTerm.DeState state, @NotNull Reporter reporter) {
-    var opSet = new AyaBinOpSet(reporter);
+  /** like {@link org.aya.concrete.resolve.visitor.StmtShallowResolver} but only resolve import */
+  private void shallowResolve(@NotNull CachedModuleLoader loader, @NotNull ResolveInfo thisResolve) {
+    for (var modName : imports) {
+      var success = loader.load(modName);
+      if (success == null) thisResolve.thisModule().reportAndThrow(new ModNotFoundError(modName, SourcePos.SER));
+      thisResolve.imports().append(success);
+      var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
+      thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
+      thisResolve.opSet().operators.putAll(success.opSet().operators);
+    }
+  }
+
+  /** like {@link org.aya.concrete.resolve.visitor.StmtResolver} but only resolve operator */
+  private void deOp(@NotNull SerTerm.DeState state, @NotNull AyaBinOpSet opSet) {
     serOps.forEach(serOp -> {
-      var defVar = state.def(serOp.name());
+      var defVar = state.resolve(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc(), serOp.argc());
       var opDecl = new SerDef.SerOpDecl(opInfo);
       opSet.operators.put(defVar, opDecl);
     });
     serOps.view().forEach(serOp -> {
-      var defVar = state.def(serOp.name());
+      var defVar = state.resolve(serOp.name());
       var opDecl = opSet.operators.get(defVar);
       var bind = serOp.bind();
       opSet.ensureHasElem(opDecl);
-      bind.loosers().view().map(state::def).forEach(looser -> {
-        var target = opSet.operators.get(looser);
-        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
+      bind.loosers().forEach(looser -> {
+        var target = resolveOp(opSet, looser);
+        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
       });
-      bind.tighters().view().map(state::def).forEach(tighter -> {
-        var target = opSet.operators.get(tighter);
-        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.NONE);
+      bind.tighters().forEach(tighter -> {
+        var target = resolveOp(opSet, tighter);
+        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
       });
     });
-    return opSet;
+  }
+
+  private @NotNull OpDecl resolveOp(@NotNull AyaBinOpSet opSet, @NotNull SerDef.QName name) {
+    var iter = opSet.operators.iterator();
+    while (iter.hasNext()) {
+      var next = iter.next();
+      var defVar = next._1;
+      if (defVar.module.equals(name.mod()) && defVar.name().equals(name.name())) return next._2;
+    }
+    opSet.reporter.report(new UnknownOperatorError(SourcePos.SER, name.name()));
+    throw new Context.ResolvingInterruptedException();
   }
 
   private void de(@NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
@@ -144,18 +177,24 @@ public record CompiledAya(
         }
       }
       case SerDef.Data data -> {
+        var innerCtx = context.derive(data.name().name());
         if (isExported(data.name())) export(context, data.name().name(), def.ref());
         data.bodies().view().zip(((DataDef) def).body).forEach(tup -> {
           if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
+          export(innerCtx, tup._1.self().name(), tup._2.ref);
         });
+        context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
       }
       case SerDef.Struct struct -> {
+        var innerCtx = context.derive(struct.name().name());
         if (isExported(struct.name())) export(context, struct.name().name(), def.ref());
         struct.fields().view().zip(((StructDef) def).fields).forEach(tup -> {
           if (isExported(tup._1.self())) export(context, drop, tup._1.self(), tup._2.ref);
+          export(innerCtx, tup._1.self().name(), tup._2.ref);
         });
+        context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
       }
-      case SerDef.Prim prim -> export(context, mod, prim.name().id, def.ref());
+      case SerDef.Prim prim -> export(context, prim.name().id, def.ref());
       default -> {}
     }
   }

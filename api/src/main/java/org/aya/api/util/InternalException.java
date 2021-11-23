@@ -6,6 +6,13 @@ package org.aya.api.util;
  * @author ice1000
  */
 public abstract class InternalException extends RuntimeException {
+  public InternalException() {
+  }
+
+  public InternalException(String message) {
+    super(message);
+  }
+
   public abstract void printHint();
   public abstract int exitCode();
 }

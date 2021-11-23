@@ -48,4 +48,8 @@ public sealed abstract class Signatured implements ConcreteDecl, OpDecl, TyckUni
   @Override public @Nullable OpInfo opInfo() {
     return opInfo;
   }
+
+  @Override public boolean needTyck() {
+    return ref().core == null;
+  }
 }

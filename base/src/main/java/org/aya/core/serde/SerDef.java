@@ -5,7 +5,9 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
+import org.aya.api.util.InternalException;
 import org.aya.core.def.*;
+import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -21,6 +23,9 @@ public sealed interface SerDef extends Serializable {
   @NotNull Def de(@NotNull SerTerm.DeState state);
 
   record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name) implements Serializable {
+    @Override public String toString() {
+      return mod.joinToString(Constants.SCOPE_SEPARATOR, "", Constants.SCOPE_SEPARATOR + name);
+    }
   }
 
   record Fn(
@@ -33,7 +38,7 @@ public sealed interface SerDef extends Serializable {
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new FnDef(
-        state.def(name), telescope.map(tele -> tele.de(state)),
+        state.newDef(name), telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
         result.de(state), modifiers,
         body.map(term -> term.de(state), mischa -> mischa.map(matchy -> matchy.de(state))));
@@ -50,7 +55,7 @@ public sealed interface SerDef extends Serializable {
   ) implements SerDef {
     @Override public @NotNull CtorDef de(SerTerm.@NotNull DeState state) {
       return new CtorDef(
-        state.def(data), state.def(self), pats.map(pat -> pat.de(state)),
+        state.resolve(data), state.newDef(self), pats.map(pat -> pat.de(state)),
         ownerTele.map(tele -> tele.de(state)), selfTele.map(tele -> tele.de(state)),
         clauses.map(matching -> matching.de(state)),
         result.de(state), coerce);
@@ -66,7 +71,7 @@ public sealed interface SerDef extends Serializable {
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new DataDef(
-        state.def(name), telescope.map(tele -> tele.de(state)),
+        state.newDef(name), telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
         result.de(state.levelCache()), bodies.map(body -> body.de(state)));
     }
@@ -85,8 +90,8 @@ public sealed interface SerDef extends Serializable {
     @Override
     public @NotNull FieldDef de(SerTerm.@NotNull DeState state) {
       return new FieldDef(
-        state.def(struct),
-        state.def(self),
+        state.resolve(struct),
+        state.newDef(self),
         ownerTele.map(tele -> tele.de(state)),
         selfTele.map(tele -> tele.de(state)),
         result.de(state),
@@ -106,7 +111,7 @@ public sealed interface SerDef extends Serializable {
   ) implements SerDef {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new StructDef(
-        state.def(name),
+        state.newDef(name),
         telescope.map(tele -> tele.de(state)),
         levels.map(level -> level.de(state.levelCache())),
         result.de(state.levelCache()),
@@ -116,11 +121,14 @@ public sealed interface SerDef extends Serializable {
   }
 
   record Prim(
+    @NotNull ImmutableSeq<String> module,
     @NotNull PrimDef.ID name
   ) implements SerDef {
     @Override
     public @NotNull Def de(SerTerm.@NotNull DeState state) {
-      return PrimDef.Factory.INSTANCE.getOrCreate(name);
+      var def = PrimDef.Factory.INSTANCE.getOrCreate(name);
+      state.putPrim(module, name, def.ref);
+      return def;
     }
   }
 
@@ -135,5 +143,19 @@ public sealed interface SerDef extends Serializable {
   /** Serialized version of {@link org.aya.concrete.stmt.BindBlock} */
   record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
     public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
+  }
+
+  class DeserializeException extends InternalException {
+    public DeserializeException(@NotNull String reason) {
+      super(reason);
+    }
+
+    @Override public void printHint() {
+      System.out.println(getMessage());
+    }
+
+    @Override public int exitCode() {
+      return 99;
+    }
   }
 }

@@ -114,6 +114,10 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
       this.ref = ref;
     }
 
+    @Override public boolean needTyck() {
+      return ref.concrete.signature == null;
+    }
+
     @Override public @NotNull DefVar<PrimDef, PrimDecl> ref() {
       return ref;
     }

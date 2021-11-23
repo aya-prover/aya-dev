@@ -13,6 +13,7 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.serde.CompiledAya;
+import org.aya.core.serde.Serializer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -51,10 +52,12 @@ public class AyaCompiler {
   public static void saveCompiledCore(
     @NotNull Path coreFile,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<Def> defs
+    @NotNull ImmutableSeq<Def> defs,
+    @NotNull Serializer.State state
   ) throws IOException {
+    var compiledAya = CompiledAya.from(resolveInfo, defs, state);
     try (var outputStream = coreWriter(coreFile)) {
-      outputStream.writeObject(CompiledAya.from(resolveInfo, defs));
+      outputStream.writeObject(compiledAya);
     }
   }
 
