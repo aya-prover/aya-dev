@@ -131,6 +131,7 @@ public class ConcreteDistiller extends BaseDistiller implements
     var infix = false;
     if (head instanceof Expr.RefExpr ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar)
       infix = defVar.concrete instanceof OpDecl decl && decl.opInfo() != null;
+    // TODO: ^ use new way of operator resolving, see BinExprParser.underlyingOpDecl
     return visitCalls(infix,
       head.accept(this, Outer.AppHead),
       (nest, arg) -> arg.accept(this, nest), outer,

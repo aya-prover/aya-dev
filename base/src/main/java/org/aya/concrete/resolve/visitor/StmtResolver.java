@@ -127,13 +127,15 @@ public interface StmtResolver {
     @NotNull OpDecl self, @NotNull AyaBinOpSet opSet, @NotNull Context ctx,
     @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
   ) throws Context.ResolvingInterruptedException {
-    if (ctx.get(id) instanceof DefVar<?, ?> defVar && defVar.concrete instanceof OpDecl op) {
-      opSet.bind(self, pred, op, id.sourcePos());
-      return defVar;
-    } else {
-      opSet.reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
-      throw new Context.ResolvingInterruptedException();
+    if (ctx.get(id) instanceof DefVar<?, ?> defVar) {
+      var opDecl = opSet.operators.getOrNull(defVar);
+      if (opDecl != null) {
+        opSet.bind(self, pred, opDecl, id.sourcePos());
+        return defVar;
+      }
     }
+    opSet.reporter.report(new UnknownOperatorError(id.sourcePos(), id.join()));
+    throw new Context.ResolvingInterruptedException();
   }
 
   static void resolveBind(SeqLike<@NotNull Stmt> contents, @NotNull ResolveInfo info) {
