@@ -52,7 +52,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   private final @NotNull ImmutableSeq<LibrarySource> sources;
   private final @NotNull United states;
 
-  public record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {}
+  public record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {
+  }
 
   private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library, @NotNull United states) {
     this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
@@ -65,6 +66,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
+    if (!Files.exists(libraryRoot)) {
+      reporter.reportString("Specified library root does not exist: " + libraryRoot);
+      return 1;
+    }
     var config = LibraryConfigData.fromLibraryRoot(LibrarySource.canonicalize(libraryRoot));
     var compiler = new LibraryCompiler(reporter, flags, config, new United(new SerTerm.DeState(), new Serializer.State()));
     return compiler.start();
@@ -205,7 +210,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       this(sccTycker, usage, MutableSet.create());
     }
 
-    @Override public @NotNull Iterable<LibrarySource> collectUsageOf(@NotNull LibrarySource failed) {
+    @Override
+    public @NotNull Iterable<LibrarySource> collectUsageOf(@NotNull LibrarySource failed) {
       return usageGraph.suc(failed);
     }
   }
@@ -289,7 +295,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedGraph));
   }
 
-  @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
+  @Override
+  public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
     var file = findModuleFile(mod);
     if (file == null) for (var dep : deps) {
       file = dep.findModuleFile(mod);
