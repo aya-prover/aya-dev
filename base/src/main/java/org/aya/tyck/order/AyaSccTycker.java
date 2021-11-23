@@ -16,6 +16,7 @@ import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.CircularSignatureError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.MutableGraph;
+import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,21 +27,26 @@ import java.util.function.Function;
  *
  * @author kiva
  */
-public record SCCTycker(
+public record AyaSccTycker(
   @NotNull StmtTycker tycker,
   @NotNull CollectingReporter reporter,
   @NotNull DynamicSeq<@NotNull Def> wellTyped
-) {
-  public SCCTycker(@Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
+) implements SCCTycker<TyckUnit> {
+  public AyaSccTycker(@Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
     this(new StmtTycker(reporter, builder), reporter, DynamicSeq.create());
   }
 
-  public void tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) throws SCCTyckingFailed {
-    if (scc.sizeEquals(1)) checkBody(scc.first());
-    else {
-      var headerOrder = headerOrder(scc);
-      headerOrder.forEach(this::checkHeader);
-      headerOrder.forEach(this::checkBody);
+  public ImmutableSeq<TyckUnit> tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) throws SCCTyckingFailed {
+    try {
+      if (scc.sizeEquals(1)) checkBody(scc.first());
+      else {
+        var headerOrder = headerOrder(scc);
+        headerOrder.forEach(this::checkHeader);
+        headerOrder.forEach(this::checkBody);
+      }
+      return ImmutableSeq.empty();
+    } catch (SCCTyckingFailed failed) {
+      return failed.what;
     }
   }
 

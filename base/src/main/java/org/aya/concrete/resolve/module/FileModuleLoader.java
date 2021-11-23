@@ -17,8 +17,8 @@ import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.order.IncrementalTycker;
-import org.aya.tyck.order.SCCTycker;
+import org.aya.tyck.order.AyaIncrementalTycker;
+import org.aya.tyck.order.AyaSccTycker;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +76,7 @@ public record FileModuleLoader(
   ) throws E {
     var program = resolveInfo.thisProgram();
     var delayedReporter = new DelayedReporter(reporter);
-    var sccTycker = new IncrementalTycker(new SCCTycker(builder, delayedReporter), resolveInfo);
+    var sccTycker = new AyaIncrementalTycker(new AyaSccTycker(builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
     try (delayedReporter) {
       var SCCs = resolveInfo.declGraph().topologicalOrder()
