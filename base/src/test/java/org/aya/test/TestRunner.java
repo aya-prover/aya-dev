@@ -48,7 +48,6 @@ public class TestRunner {
    */
   @Test void runAllAyaTests() {
     System.out.println("Aya Test Runner: Running for commit " + GeneratedVersion.COMMIT_HASH);
-    runDir(DEFAULT_TEST_DIR.resolve("success-leftover"), true);
     runDir(DEFAULT_TEST_DIR.resolve("failure"), false);
   }
 
@@ -102,11 +101,11 @@ public class TestRunner {
     var expectedOutFile = file.resolveSibling(file.getFileName() + ".txt");
     if (Files.exists(expectedOutFile)) {
       checkOutput(file, expectedOutFile, output);
-      System.out.println("success-leftover");
+      System.out.println("success");
     } else {
       if (expectSuccess) {
         if (reporter.noError()) {
-          System.out.println("success-leftover");
+          System.out.println("success");
         } else {
           System.out.println(); // add line break after `--->`
           System.err.printf(Locale.getDefault(),
