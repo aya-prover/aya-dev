@@ -52,8 +52,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   private final @NotNull ImmutableSeq<LibrarySource> sources;
   private final @NotNull United states;
 
-  public record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {
-  }
+  public record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {}
 
   private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library, @NotNull United states) {
     this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
@@ -194,9 +193,11 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       SCCs.forEachChecked(tycker::tyckSCC);
     }
     if (tycker.skippedSet.isNotEmpty()) {
-      reporter.reportString("Failing module(s):");
+      reporter.reportString("I dislike the following module(s):");
       tycker.skippedSet.forEach(f -> reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
       reporter.reportString("");
+    } else {
+      reporter.reportString("I like these modules :)");
     }
     return false;
   }
@@ -210,8 +211,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       this(sccTycker, usage, MutableSet.create());
     }
 
-    @Override
-    public @NotNull Iterable<LibrarySource> collectUsageOf(@NotNull LibrarySource failed) {
+    @Override public @NotNull Iterable<LibrarySource> collectUsageOf(@NotNull LibrarySource failed) {
       return usageGraph.suc(failed);
     }
   }
@@ -295,8 +295,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedGraph));
   }
 
-  @Override
-  public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
+  @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
     var file = findModuleFile(mod);
     if (file == null) for (var dep : deps) {
       file = dep.findModuleFile(mod);

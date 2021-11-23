@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.control.Option;
 import org.aya.api.error.CollectingReporter;
-import org.aya.api.error.Problem;
 import org.aya.api.util.InterruptException;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.Decl;
@@ -57,7 +56,7 @@ public record AyaSccTycker(
       // TODO[ice]: tyck ctor/field
       default -> {}
     }
-    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
+    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 
   private void checkBody(@NotNull TyckUnit stmt) {
@@ -70,7 +69,7 @@ public record AyaSccTycker(
       case Remark remark -> Option.of(remark.literate).forEach(l -> l.tyck(tycker.newTycker()));
       default -> {}
     }
-    if (reporter.problems().anyMatch(Problem::isError)) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
+    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(stmt));
   }
 
   /**
