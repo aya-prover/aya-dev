@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
  */
 public interface Problem {
   enum Severity {
-    INFO,
-    GOAL,
     ERROR,
+    GOAL,
     WARN,
+    INFO,
   }
 
   enum Stage {

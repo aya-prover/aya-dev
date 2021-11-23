@@ -61,10 +61,14 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     this.states = states;
     var srcRoot = library.librarySrcRoot();
     this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
-    this.sources = collectSource(srcRoot).map(p -> new LibrarySource(this, p));
+    this.sources = FileUtil.collectSource(srcRoot, ".aya").map(p -> new LibrarySource(this, p));
   }
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
+    if (!Files.exists(libraryRoot)) {
+      reporter.reportString("Specified library root does not exist: " + libraryRoot);
+      return 1;
+    }
     var config = LibraryConfigData.fromLibraryRoot(LibrarySource.canonicalize(libraryRoot));
     var compiler = new LibraryCompiler(reporter, flags, config, new United(new SerTerm.DeState(), new Serializer.State()));
     return compiler.start();
@@ -189,9 +193,11 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       SCCs.forEachChecked(tycker::tyckSCC);
     }
     if (tycker.skippedSet.isNotEmpty()) {
-      reporter.reportString("Failing module(s):");
+      reporter.reportString("I dislike the following module(s):");
       tycker.skippedSet.forEach(f -> reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
       reporter.reportString("");
+    } else {
+      reporter.reportString("I like these modules :)");
     }
     return false;
   }
@@ -272,16 +278,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   private void reportNest(@NotNull String text, int indent) {
     reporter.reportDoc(Doc.nest(indent, Doc.english(text)));
-  }
-
-  private static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot) {
-    try (var walk = Files.walk(srcRoot)) {
-      return walk.filter(Files::isRegularFile)
-        .filter(path -> path.getFileName().toString().endsWith(".aya"))
-        .collect(ImmutableSeq.factory());
-    } catch (IOException e) {
-      return ImmutableSeq.empty();
-    }
   }
 
   private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {

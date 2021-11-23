@@ -7,4 +7,12 @@ import org.jetbrains.annotations.NotNull;
 
 public interface CollectingReporter extends Reporter {
   @NotNull DynamicSeq<Problem> problems();
+
+  default boolean anyError() {
+    return problems().anyMatch(problem -> problem.level() == Problem.Severity.ERROR);
+  }
+
+  default boolean anyProblem() {
+    return problems().isNotEmpty();
+  }
 }
