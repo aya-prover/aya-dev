@@ -1,5 +1,5 @@
 -- https://github.com/aya-prover/aya-dev/issues/10#issuecomment-917887640
-open data Unit : Type 0 | unit
+open import Refparo::Common
 struct Struct : Type
   | field : Unit
 open data Foo (x : Struct) : Type | foo

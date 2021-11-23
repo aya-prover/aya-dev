@@ -1,19 +1,5 @@
 -- #5 in public repo
-prim I
-prim left
-prim right
-prim arcoe
-struct Path (A : I -> Type) (a : A left) (b : A right) : Type
- | at (i : I) : A i {
-   | left => a
-   | right => b
- }
-def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p left) (p right) { | at i => p i }
-def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
-def idp {A : Type} (a : A) : a = a => path (\ i => a)
-
-open data Unit : Type | unit
+open import Refparo::Common
 
 struct Struct : Type
   | value : Unit
@@ -23,7 +9,7 @@ def setValue (x : Unit) (t : Struct) : Struct
   => new Struct { | value => x }
 
 def value-inv : Pi {t : Struct} {u : Unit} -> u = getValue (setValue u t)
-  => \{t} {u} => idp u
+  => \{t} {u} => idpath u
 
 def foo {A : Type}
   (get : Struct -> A)

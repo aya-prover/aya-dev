@@ -1,23 +1,11 @@
 -- https://github.com/aya-prover/aya-dev/issues/8
-prim I prim left prim right prim arcoe
-struct Path (A : I -> Type) (a : A left) (b : A right) : Type
- | at (i : I) : A i {
-   | left => a
-   | right => b
- }
-def path {A : I -> Type} (p : Pi (i : I) -> A i)
-  => new Path A (p left) (p right) { | at i => p i }
-def infix = {A : Type} (a b : A) : Type => Path (\ i => A) a b
-def idp {A : Type} (a : A) : a = a => path (\ i => a)
-def coe {a b : Type} (eq : a = b) (x : a) (i : I) : eq.at i
-  => arcoe eq.at x i
+open import Refparo::Common
 
-open data Unit : Type 0 | unit
 open data Entity : Type 0 | john
 struct EventT : Type 1 | agentT : Type 0
 def getAgentT (t : EventT) : Type 0 => t.agentT
 def setAgentT (x : Type 0) (t : EventT) : EventT => new EventT { | agentT => x }
-def agentT-inv {t : EventT} {u : Type 0} : (setAgentT u t).agentT = u => idp u
+def agentT-inv {t : EventT} {u : Type 0} : (setAgentT u t).agentT = u => idpath u
 struct Event (t : EventT) : Type 2 | agent : t.agentT
 def getAgent (t : EventT) (e : Event t) : t.agentT => e.agent
 open data RunImpl (ag : Entity) : Type 0 | john => run1
@@ -54,4 +42,4 @@ def john-runs : Type 3 => mkSentence {new EventT { | agentT => Entity }}
 
 def proof-john-runs-event : Event (new EventT { | agentT => Entity })
   => new Event (new EventT { | agentT => Entity }) { | agent => john }
-def proof-john-runs : john-runs => (proof-john-runs-event, (run1, (idp john, unit)))
+def proof-john-runs : john-runs => (proof-john-runs-event, (run1, (idpath john, unit)))
