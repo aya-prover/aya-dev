@@ -103,9 +103,10 @@ public final class AyaProducer {
     if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
     var mod = ctx.module();
     if (mod != null) return ImmutableSeq.of(visitModule(mod, importOnly));
-    if (importOnly) return ImmutableSeq.empty();
     var openCmd = ctx.openCmd();
     if (openCmd != null) return visitOpenCmd(openCmd);
+    if (importOnly) return ImmutableSeq.empty();
+
     var decl = ctx.decl();
     if (decl != null) {
       var result = visitDecl(decl);
