@@ -25,6 +25,7 @@ import org.aya.core.def.Def;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.FileUtil;
 import org.aya.util.MutableGraph;
 import org.aya.util.tyck.NonStoppingTicker;
 import org.aya.util.tyck.SCCTycker;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 
 /**
  * @author kiva
@@ -135,7 +135,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     reporter.reportString("Compiling " + library.name());
-    if (anyDepChanged) deleteRecursively(library.libraryOutRoot());
+    if (anyDepChanged) FileUtil.deleteRecursively(library.libraryOutRoot());
 
     var srcRoot = library.librarySrcRoot();
     thisModulePath.append(srcRoot);
@@ -277,15 +277,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     if (changedGraph.E().containsKey(changed)) return;
     changedGraph.suc(changed).appendAll(usage.suc(changed));
     usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedGraph));
-  }
-
-  private static void deleteRecursively(@NotNull Path path) throws IOException {
-    if (!Files.exists(path)) return;
-    try (var walk = Files.walk(path)) {
-      walk.sorted(Comparator.reverseOrder())
-        .collect(ImmutableSeq.factory())
-        .forEachChecked(Files::deleteIfExists);
-    }
   }
 
   @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {

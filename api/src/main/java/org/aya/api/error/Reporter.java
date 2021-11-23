@@ -25,7 +25,7 @@ public interface Reporter {
 
   @ApiStatus.Internal
   default void reportString(@NotNull String s) {
-    reportDoc(Doc.plain(s));
+    reportDoc(Doc.english(s));
   }
 
   @ApiStatus.Internal
