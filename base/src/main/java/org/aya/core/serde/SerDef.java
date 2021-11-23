@@ -7,6 +7,7 @@ import kala.control.Either;
 import kala.control.Option;
 import org.aya.api.util.InternalException;
 import org.aya.core.def.*;
+import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -22,6 +23,9 @@ public sealed interface SerDef extends Serializable {
   @NotNull Def de(@NotNull SerTerm.DeState state);
 
   record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name) implements Serializable {
+    @Override public String toString() {
+      return mod.joinToString(Constants.SCOPE_SEPARATOR, "", Constants.SCOPE_SEPARATOR + name);
+    }
   }
 
   record Fn(

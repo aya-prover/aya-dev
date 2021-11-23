@@ -273,6 +273,10 @@ public final class PrimDef extends TopLevelDef {
     INVOL("invol");
     public final @NotNull @NonNls String id;
 
+    @Override public String toString() {
+      return id;
+    }
+
     public static @Nullable ID find(@NotNull String id) {
       for (var value : PrimDef.ID.values())
         if (Objects.equals(value.id, id)) return value;
