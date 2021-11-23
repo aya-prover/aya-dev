@@ -6,7 +6,7 @@ import kala.collection.mutable.MutableSet;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.Decl;
 import org.aya.util.MutableGraph;
-import org.aya.util.tyck.IncrementalTycker;
+import org.aya.util.tyck.NonStoppingTicker;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,13 +17,13 @@ import org.jetbrains.annotations.NotNull;
  * @param sampleUsage transpose of {@link ResolveInfo#sampleGraph()}
  * @author kiva
  */
-public record AyaIncrementalTycker(
+public record AyaNonStoppingTicker(
   @NotNull AyaSccTycker sccTycker,
   @NotNull MutableGraph<TyckUnit> declUsage,
   @NotNull MutableGraph<TyckUnit> sampleUsage,
   @NotNull MutableSet<TyckUnit> skippedSet
-) implements IncrementalTycker<TyckUnit> {
-  public AyaIncrementalTycker(@NotNull AyaSccTycker sccTycker, @NotNull ResolveInfo resolveInfo) {
+) implements NonStoppingTicker<TyckUnit, AyaSccTycker.SCCTyckingFailed> {
+  public AyaNonStoppingTicker(@NotNull AyaSccTycker sccTycker, @NotNull ResolveInfo resolveInfo) {
     this(sccTycker, resolveInfo.declGraph().transpose(), resolveInfo.sampleGraph().transpose(), MutableSet.of());
   }
 

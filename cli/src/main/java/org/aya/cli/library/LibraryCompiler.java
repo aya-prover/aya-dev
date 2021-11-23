@@ -5,6 +5,7 @@ package org.aya.cli.library;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableSet;
 import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
@@ -18,13 +19,14 @@ import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
-import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.Def;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.MutableGraph;
+import org.aya.util.tyck.NonStoppingTicker;
+import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.function.Function;
 
 /**
  * @author kiva
@@ -153,48 +154,77 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
         collectChanged(usage, s, changed);
     });
 
-    var order = changed.topologicalOrder().view()
-      .flatMap(Function.identity())
+    var SCCs = changed.topologicalOrder().view()
       .reversed().toImmutableSeq();
     // ^ top order generated from usage graph should be reversed
     // Only here we generate top order from usage graph just for efficiency
     // (transposing a graph is slower than reversing a list).
     // in other cases we always generate top order from dependency graphs
     // because usage graphs are never needed.
-    if (order.isEmpty()) {
+    if (SCCs.isEmpty()) {
       reportNest("[Info] No changes detected, no need to remake");
       return true;
     }
-    tyckLibrary(order);
-    return false;
-  }
 
-  private void tyckLibrary(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
     var loader = new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot, new Ref<>(), states.de);
     var moduleLoader = new CachedModuleLoader(loader);
     loader.cachedSelf().value = moduleLoader;
 
-    for (var f : order) Files.deleteIfExists(f.coreFile());
-    order.forEach(file -> {
-      var mod = resolveModule(moduleLoader, file);
-      reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), mod.thisModule().underlyingFile()));
-      FileModuleLoader.tyckResolvedModule(mod, reporter, null,
-        (moduleResolve, stmts, defs) -> {
-          if (reporter.noError()) saveCompiledCore(file, moduleResolve, defs);
-        });
-      reporter.clear();
-    });
+    var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(this, moduleLoader), changed);
+    SCCs.forEachChecked(tycker::tyckSCC);
+    if (tycker.skippedSet.isNotEmpty()) {
+      reporter.reportString("Failing module(s):");
+      tycker.skippedSet.forEach(f -> reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
+      reporter.reportString("");
+    }
+    return false;
   }
 
-  private @NotNull ResolveInfo resolveModule(
-    @NotNull ModuleLoader moduleLoader,
-    @NotNull LibrarySource file
-  ) {
-    var mod = file.moduleName();
-    var resolveInfo = moduleLoader.load(mod);
-    if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
-    return resolveInfo;
+  record LibraryNonStoppingTycker(
+    @NotNull LibrarySccTycker sccTycker,
+    @NotNull MutableGraph<LibrarySource> usageGraph,
+    @NotNull MutableSet<LibrarySource> skippedSet
+  ) implements NonStoppingTicker<LibrarySource, IOException> {
+    public LibraryNonStoppingTycker(@NotNull LibrarySccTycker sccTycker, @NotNull MutableGraph<LibrarySource> usage) {
+      this(sccTycker, usage, MutableSet.create());
+    }
+
+    @Override public @NotNull Iterable<LibrarySource> collectUsageOf(@NotNull LibrarySource failed) {
+      return usageGraph.suc(failed);
+    }
+  }
+
+  record LibrarySccTycker(
+    @NotNull LibraryCompiler delegate,
+    @NotNull CachedModuleLoader moduleLoader
+  ) implements SCCTycker<LibrarySource, IOException> {
+    @Override public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
+      var reporter = delegate.reporter;
+      for (var f : order) Files.deleteIfExists(f.coreFile());
+      reporter.clear();
+      for (var f : order) {
+        tyckOne(reporter, f);
+        if (!reporter.noError()) return ImmutableSeq.of(f);
+      }
+      return ImmutableSeq.empty();
+    }
+
+    private void tyckOne(CountingReporter reporter, LibrarySource file) {
+      var mod = resolveModule(file);
+      delegate.reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()));
+      FileModuleLoader.tyckResolvedModule(mod, reporter, null,
+        (moduleResolve, stmts, defs) -> {
+          if (reporter.noError()) delegate.saveCompiledCore(file, moduleResolve, defs);
+        });
+    }
+
+    private @NotNull ResolveInfo resolveModule(@NotNull LibrarySource file) {
+      var mod = file.moduleName();
+      var resolveInfo = moduleLoader.load(mod);
+      if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
+      return resolveInfo;
+    }
   }
 
   private @Nullable LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {

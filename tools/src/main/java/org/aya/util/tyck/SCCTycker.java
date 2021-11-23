@@ -3,11 +3,12 @@
 package org.aya.util.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Tyck SCCs. 
  */
-public interface SCCTycker<T> {
+public interface SCCTycker<T, E extends Exception> {
   /** @return failed items */
-  ImmutableSeq<T> tyckSCC(ImmutableSeq<T> scc);
+  @NotNull ImmutableSeq<T> tyckSCC(@NotNull ImmutableSeq<T> scc) throws E;
 }

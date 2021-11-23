@@ -7,16 +7,16 @@ import kala.collection.mutable.MutableSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Incremental and non-stopping compiler for SCCs.
+ * Non-stopping compiler for SCCs.
  *
  * @author kiva
  */
-public interface IncrementalTycker<T> {
-  @NotNull SCCTycker<T> sccTycker();
+public interface NonStoppingTicker<T, E extends Exception> {
+  @NotNull SCCTycker<T, E> sccTycker();
   @NotNull MutableSet<T> skippedSet();
-  @NotNull Iterable<T> collectUsageOf(T failed);
+  @NotNull Iterable<T> collectUsageOf(@NotNull T failed);
 
-  default void tyckSCC(@NotNull ImmutableSeq<T> scc) {
+  default void tyckSCC(@NotNull ImmutableSeq<T> scc) throws E {
     // we are more likely to check correct programs.
     // I'm not sure whether it's necessary to optimize on our own.
     var sccTycker = sccTycker();

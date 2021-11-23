@@ -31,12 +31,12 @@ public record AyaSccTycker(
   @NotNull StmtTycker tycker,
   @NotNull CollectingReporter reporter,
   @NotNull DynamicSeq<@NotNull Def> wellTyped
-) implements SCCTycker<TyckUnit> {
+) implements SCCTycker<TyckUnit, AyaSccTycker.SCCTyckingFailed> {
   public AyaSccTycker(@Nullable Trace.Builder builder, @NotNull CollectingReporter reporter) {
     this(new StmtTycker(reporter, builder), reporter, DynamicSeq.create());
   }
 
-  public ImmutableSeq<TyckUnit> tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) throws SCCTyckingFailed {
+  public @NotNull ImmutableSeq<TyckUnit> tyckSCC(@NotNull ImmutableSeq<TyckUnit> scc) {
     try {
       if (scc.sizeEquals(1)) checkBody(scc.first());
       else {
