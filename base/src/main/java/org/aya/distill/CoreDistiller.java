@@ -15,9 +15,9 @@ import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.VarConsumer;
+import org.aya.generic.ref.BinOpCollector;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -223,7 +223,7 @@ public class CoreDistiller extends BaseDistiller implements
     @NotNull DefVar<?, ?> var, @NotNull Style style,
     @NotNull SeqLike<@NotNull Arg<@NotNull Term>> args, Outer outer, boolean showImplicits
   ) {
-    return visitCalls(var.concrete instanceof OpDecl decl && decl.opInfo() != null,
+    return visitCalls(BinOpCollector.isInfix(var),
       linkRef(var, style), args.view(), outer, showImplicits);
   }
 

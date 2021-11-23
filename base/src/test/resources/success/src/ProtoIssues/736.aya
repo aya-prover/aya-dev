@@ -1,0 +1,8 @@
+struct PointedMagma {A : Type} : Type
+  | point : A
+  | op : A -> A -> A
+
+open data Unit | unit
+def test : Pi {x : Type} -> Type => \{x} => PointedMagma {x}
+
+def unitMagma : PointedMagma {Unit} => new test { | point => unit | op => \ x y => unit }

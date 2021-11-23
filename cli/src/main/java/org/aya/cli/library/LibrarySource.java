@@ -23,11 +23,15 @@ public record LibrarySource(
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {
-    var display = owner.locator.displayName(file);
+    var display = displayPath();
     var displayNoExt = display.resolveSibling(display.getFileName().toString().replaceAll("\\.aya", ""));
     return IntStream.range(0, displayNoExt.getNameCount())
       .mapToObj(i -> displayNoExt.getName(i).toString())
       .collect(ImmutableSeq.factory());
+  }
+
+  public @NotNull Path displayPath() {
+    return owner.locator.displayName(file);
   }
 
   public @NotNull Path coreFile() {

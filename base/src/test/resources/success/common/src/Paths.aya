@@ -1,0 +1,51 @@
+prim I
+prim left : I
+prim right : I
+struct Path (A : I -> Type) (a : A left) (b : A right) : Type
+  | at (i : I) : A i {
+    | left => a
+    | right => b
+  }
+def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  => new Path A (p left) (p right) { | at i => p i }
+
+variable A : Type
+
+def infix = (a b : A) : Type => Path (\ i => A) a b
+def idp {a : A} : a = a => path (\ i => a)
+
+prim squeezeL
+def psqueeze {a b : A} (p : a = b) (i : I)
+ : a = p.at i => path (\j => p.at (squeezeL i j))
+
+def J {a : A} (B : Pi (b : A) -> a = b -> Type)
+      (r : B a idp) {b : A} (p : a = b) : B b p =>
+      arcoe (\ i => B (p.at i) (psqueeze p i)) r right
+
+def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
+        (r : B a idp) : J B r idp = r => idp
+
+def funExt {A B : Type} (f g : A -> B) (p : forall a -> f a = g a) : f = g
+  => path (\ i x => (p x).at i)
+
+def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
+  : f a = f b => path (\ i => f (p.at i))
+
+prim arcoe -- (A : I -> Type) (A left) (i : I) : A i
+-- TODO[ice]: uncomment causes level solver error. ???
+def hfill2d
+  {a b c d : A}
+  (p : a = b)
+  (q : b = d)
+  (r : a = c)
+  (i j : I) : A
+  => (arcoe (\ k => r.at k = q.at k) p i).at j
+def hcomp2d
+  {a b c d : A}
+  (p : a = b)
+  (q : b = d)
+  (r : a = c) : c = d
+  => path (hfill2d p q r right)
+
+def sym {a b : A} (p : a = b) : b = a => hcomp2d idp idp p
+def infixr <==> {a b c : A} (p : a = b) (q : b = c) : a = c => hcomp2d p q idp

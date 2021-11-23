@@ -5,8 +5,10 @@ package org.aya.cli.library;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.collection.mutable.MutableSet;
 import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
+import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
@@ -18,26 +20,28 @@ import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
-import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.def.Def;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.FileUtil;
 import org.aya.util.MutableGraph;
+import org.aya.util.StringUtil;
+import org.aya.util.tyck.NonStoppingTicker;
+import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.function.Function;
 
 /**
  * @author kiva
  */
 public class LibraryCompiler implements ImportResolver.ImportLoader {
+  public static final int DEFAULT_INDENT = 2;
   final @NotNull LibraryConfig library;
   final @NotNull SourceFileLocator locator;
 
@@ -87,10 +91,13 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   private @NotNull MutableGraph<LibrarySource> resolveLibraryImports() throws IOException {
     var graph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
+    var startTime = System.currentTimeMillis();
     for (var file : sources) {
       resolveImports(file);
       collectDep(graph, file);
     }
+    reportNest("Done in " + StringUtil.timeToString(
+      System.currentTimeMillis() - startTime), DEFAULT_INDENT + 2);
     return graph;
   }
 
@@ -133,13 +140,17 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     reporter.reportString("Compiling " + library.name());
-    if (anyDepChanged) deleteRecursively(library.libraryOutRoot());
+    var startTime = System.currentTimeMillis();
+    if (anyDepChanged) FileUtil.deleteRecursively(library.libraryOutRoot());
 
     var srcRoot = library.librarySrcRoot();
     thisModulePath.append(srcRoot);
 
     var depGraph = resolveLibraryImports();
-    return make(depGraph);
+    var make = make(depGraph);
+    reportNest("Library loaded in " + StringUtil.timeToString(
+      System.currentTimeMillis() - startTime), DEFAULT_INDENT + 2);
+    return make;
   }
 
   /**
@@ -153,47 +164,89 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
         collectChanged(usage, s, changed);
     });
 
-    var order = changed.topologicalOrder().view()
-      .flatMap(Function.identity())
+    var SCCs = changed.topologicalOrder().view()
       .reversed().toImmutableSeq();
     // ^ top order generated from usage graph should be reversed
     // Only here we generate top order from usage graph just for efficiency
     // (transposing a graph is slower than reversing a list).
     // in other cases we always generate top order from dependency graphs
     // because usage graphs are never needed.
-    if (order.isEmpty()) {
+    if (SCCs.isEmpty()) {
       reportNest("[Info] No changes detected, no need to remake");
       return true;
     }
-    tyckLibrary(order);
-    return false;
-  }
 
-  private void tyckLibrary(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
     var loader = new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot, new Ref<>(), states.de);
     var moduleLoader = new CachedModuleLoader(loader);
     loader.cachedSelf().value = moduleLoader;
 
-    for (var f : order) Files.deleteIfExists(f.coreFile());
-    order.forEach(file -> {
-      var mod = resolveModule(moduleLoader, file);
-      reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), mod.thisModule().underlyingFile()));
-      FileModuleLoader.tyckResolvedModule(mod, reporter, null,
-        (moduleResolve, stmts, defs) -> {
-          if (reporter.noError()) saveCompiledCore(file, moduleResolve, defs);
-        });
-    });
+    var delayedReporter = new DelayedReporter(reporter);
+    var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(delayedReporter, this, moduleLoader), changed);
+    // use delayed reporter to avoid showing errors in the middle of compilation.
+    // we only show errors after all SCCs are tycked
+    try (delayedReporter) {
+      SCCs.forEachChecked(tycker::tyckSCC);
+    }
+    if (tycker.skippedSet.isNotEmpty()) {
+      reporter.reportString("Failing module(s):");
+      tycker.skippedSet.forEach(f -> reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
+      reporter.reportString("");
+    }
+    return false;
   }
 
-  private @NotNull ResolveInfo resolveModule(
-    @NotNull ModuleLoader moduleLoader,
-    @NotNull LibrarySource file
-  ) {
-    var mod = file.moduleName();
-    var resolveInfo = moduleLoader.load(mod);
-    if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
-    return resolveInfo;
+  record LibraryNonStoppingTycker(
+    @NotNull LibrarySccTycker sccTycker,
+    @NotNull MutableGraph<LibrarySource> usageGraph,
+    @NotNull MutableSet<LibrarySource> skippedSet
+  ) implements NonStoppingTicker<LibrarySource, IOException> {
+    public LibraryNonStoppingTycker(@NotNull LibrarySccTycker sccTycker, @NotNull MutableGraph<LibrarySource> usage) {
+      this(sccTycker, usage, MutableSet.create());
+    }
+
+    @Override public @NotNull Iterable<LibrarySource> collectUsageOf(@NotNull LibrarySource failed) {
+      return usageGraph.suc(failed);
+    }
+  }
+
+  record LibrarySccTycker(
+    @NotNull Reporter outerReporter,
+    @NotNull LibraryCompiler delegate,
+    @NotNull CachedModuleLoader moduleLoader
+  ) implements SCCTycker<LibrarySource, IOException> {
+    @Override
+    public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
+      var reporter = new CountingReporter(outerReporter);
+      for (var f : order) Files.deleteIfExists(f.coreFile());
+      for (var f : order) {
+        tyckOne(reporter, f);
+        if (!reporter.noError()) return ImmutableSeq.of(f);
+      }
+      return ImmutableSeq.empty();
+    }
+
+    private void tyckOne(CountingReporter reporter, LibrarySource file) {
+      var resolveStart = System.currentTimeMillis();
+      var mod = resolveModule(file);
+      var resolveEnd = System.currentTimeMillis();
+      delegate.reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()));
+      FileModuleLoader.tyckResolvedModule(mod, reporter, null,
+        (moduleResolve, stmts, defs) -> {
+          if (reporter.noError()) delegate.saveCompiledCore(file, moduleResolve, defs);
+        });
+      var tyckEnd = System.currentTimeMillis();
+      delegate.reportNest("Resolution takes %s, elaboration takes %s".formatted(
+        StringUtil.timeToString(resolveEnd - resolveStart),
+        StringUtil.timeToString(tyckEnd - resolveEnd)), DEFAULT_INDENT + 2);
+    }
+
+    private @NotNull ResolveInfo resolveModule(@NotNull LibrarySource file) {
+      var mod = file.moduleName();
+      var resolveInfo = moduleLoader.load(mod);
+      if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
+      return resolveInfo;
+    }
   }
 
   private @Nullable LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
@@ -214,7 +267,11 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   private void reportNest(@NotNull String text) {
-    reporter.reportDoc(Doc.nest(2, Doc.english(text)));
+    reportNest(text, DEFAULT_INDENT);
+  }
+
+  private void reportNest(@NotNull String text, int indent) {
+    reporter.reportDoc(Doc.nest(indent, Doc.english(text)));
   }
 
   private static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot) {
@@ -240,15 +297,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     if (changedGraph.E().containsKey(changed)) return;
     changedGraph.suc(changed).appendAll(usage.suc(changed));
     usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedGraph));
-  }
-
-  private static void deleteRecursively(@NotNull Path path) throws IOException {
-    if (!Files.exists(path)) return;
-    try (var walk = Files.walk(path)) {
-      walk.sorted(Comparator.reverseOrder())
-        .collect(ImmutableSeq.factory())
-        .forEachChecked(Files::deleteIfExists);
-    }
   }
 
   @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {

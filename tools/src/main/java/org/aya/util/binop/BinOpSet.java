@@ -70,6 +70,16 @@ public abstract class BinOpSet {
   abstract protected void reportSelfBind(@NotNull SourcePos sourcePos);
   abstract protected void reportCyclic(ImmutableSeq<ImmutableSeq<BinOP>> cycles);
 
+  public void importBind(@NotNull BinOpSet other, @NotNull SourcePos sourcePos) {
+    other.tighterGraph.E().view().forEach((from, tos) -> {
+      var fromOp = ensureHasElem(from.op, sourcePos);
+      tos.forEach(to -> {
+        var toOp = ensureHasElem(to.op, sourcePos);
+        addTighter(fromOp, toOp);
+      });
+    });
+  }
+
   public record BinOP(
     @NotNull SourcePos firstBind,
     @NotNull OpDecl op,
@@ -86,6 +96,10 @@ public abstract class BinOpSet {
     private static @NotNull BinOpSet.BinOP from(@NotNull SourcePos sourcePos, @NotNull OpDecl opDecl) {
       var op = ensureOperator(opDecl);
       return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc(), op.argc());
+    }
+
+    @Override public String toString() {
+      return name;
     }
   }
 

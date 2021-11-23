@@ -1,0 +1,17 @@
+open import Arith::Nat
+open import Data::Bool
+
+def odd Nat : Bool
+  | zero => false
+  | suc n => even n
+
+def even Nat : Bool
+  | zero => true
+  | suc n => odd n
+
+open data Rose (A : Type) : Type
+  | Node A (Forest A)
+
+open data Forest (A : Type) : Type
+  | Empty
+  | Cons (Rose A) (Forest A)

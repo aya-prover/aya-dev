@@ -29,7 +29,7 @@ Aya is under active development. Nothing guaranteed! However, we can share some 
   Very [useful][oop] in theorem proving.
 + A literate programming mode with inline code fragment support.
   We already have a prototype, but we plan to revise it before sharing demos.
-+ Binary operators, with precedence specified by a [partial ordering][binop]
++ Binary operators, with precedence specified by a partial ordering
   (instead of a number, such as in Haskell or Agda)
   which is useful for [equation reasoning][assoc]
 
@@ -82,14 +82,13 @@ check out [how to][proxy] let gradle use a proxy.
 [jitpack]: https://img.shields.io/jitpack/v/github/aya-prover/aya-dev?logo=github
 [tokei]: https://img.shields.io/tokei/lines/github/aya-prover/aya-dev?logo=java
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
-[oop]: ../base/src/test/resources/success/add-comm.aya
+[oop]: ../base/src/test/resources/success/common/src/Arith/Nat.aya
 [proxy]: https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
-[gadt]: ../base/src/test/resources/success/type-safe-norm.aya
-[regularity]: ../base/src/test/resources/success/regularity.aya
-[funExt]: ../base/src/test/resources/success/funExt.aya
-[rbtree]: ../base/src/test/resources/success/redblack.aya
-[assoc]: ../base/src/test/resources/success/assoc.aya#L73
-[binop]: ../base/src/test/resources/success/issues2/issue69.aya#L46
+[gadt]: ../base/src/test/resources/success/src/TypeSafeNorm.aya
+[regularity]: ../base/src/test/resources/success/common/src/Paths.aya
+[funExt]: ../base/src/test/resources/success/common/src/Paths.aya
+[rbtree]: ../base/src/test/resources/success/common/src/Data/RedBlack.aya
+[assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 
 ## Use as a library

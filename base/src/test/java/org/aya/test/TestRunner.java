@@ -48,7 +48,6 @@ public class TestRunner {
    */
   @Test void runAllAyaTests() {
     System.out.println("Aya Test Runner: Running for commit " + GeneratedVersion.COMMIT_HASH);
-    runDir(DEFAULT_TEST_DIR.resolve("success"), true);
     runDir(DEFAULT_TEST_DIR.resolve("failure"), false);
   }
 
@@ -86,12 +85,16 @@ public class TestRunner {
 
       System.out.print(file.getFileName() + " ---> ");
       new SingleFileCompiler(reporter, LOCATOR, null)
-        .compile(file, new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.empty(), null), null);
+        .compile(file, flags(), null);
 
       postRun(file, expectSuccess, hookOut.toString(StandardCharsets.UTF_8), reporter);
     } catch (IOException e) {
       fail("error reading file " + file.toAbsolutePath());
     }
+  }
+
+  public static @NotNull CompilerFlags flags() {
+    return new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.empty(), null);
   }
 
   private void postRun(@NotNull Path file, boolean expectSuccess, String output, CountingReporter reporter) {

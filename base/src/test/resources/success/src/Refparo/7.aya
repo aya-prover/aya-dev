@@ -1,0 +1,5 @@
+-- https://github.com/aya-prover/aya-dev/issues/13
+open import Refparo::Common
+
+def foo : Sig Unit ** Unit => (unit, unit)
+def bar : Sig Unit ** Unit => foo

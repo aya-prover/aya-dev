@@ -1,0 +1,7 @@
+public open data Bool | true | false
+def not Bool : Bool
+ | true => false
+ | false => true
+def ifElse {A : Type} Bool (x y : A) : A
+ | true, x, y => x
+ | false, x, y => y

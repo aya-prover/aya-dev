@@ -1,0 +1,80 @@
+open import Paths
+open import Arith::Nat
+open import Data::Fin
+
+public open data List (A : Type) : Type
+| nil
+| infixr cons A (List A)
+bind tighter =
+
+variable A B C : Type
+
+def length (l : List A) : Nat
+| nil => zero
+| a cons l => suc (length l)
+
+def infix !! (l : List A) (i : Fin (length l)) : A
+| a cons l, fzero => a
+| a cons l, fsuc i => l !! i
+
+def overlap infixr ++ (xs ys : List A) : List A
+| nil, ys => ys
+| xs, nil => xs
+| a cons xs, ys => a cons xs ++ ys
+bind tighter cons
+
+def ++-assoc {xs ys zs : List A} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
+| {A}, {nil} => idp
+| {A}, {x cons xs} => pmap (x cons) ++-assoc
+
+def ++nil {l : List A} : l ++ nil = l
+| {A}, {nil} => idp
+| {A}, {a cons l} => pmap (a cons) ++nil
+
+def map (f : A -> B) (l : List A) : List B
+| f, nil => nil
+| f, a cons l => f a cons map f l
+
+def length_map (f : A -> B) (l : List A) : length (map f l) = length l
+| f, nil => idp
+| f, a cons l => pmap suc (length_map f l)
+
+def map_comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l)
+| g, f, nil => idp
+| g, f, a cons l => pmap (g _ cons) (map_comp g f l)
+
+def map_id (l : List A) : map (\x => x) l = l
+| nil => idp
+| a cons l => pmap (a cons) (map_id l)
+
+def headDef (x : A) (xs : List A) : A
+| x, nil => x
+| x, a cons b => a
+
+def curry (t : Sig A ** B) (f : A -> B -> C) => f t.1 t.2
+
+def splitAt (n : Nat) (l : List A) : Sig (List A) ** (List A)
+| zero, l => (nil, l)
+| suc n, nil => (nil, nil)
+| suc n, a cons l => curry (splitAt n l) (\l1 l2 => (a cons l1, l2))
+
+def take (n : Nat) (l : List A) => (splitAt n l).1
+
+def drop (n : Nat) (l : List A) => (splitAt n l).2
+
+def replace (l : List A) (i s : Nat) (r : List A) =>
+  curry (splitAt i l) (\l1 l2 => l1 ++ r ++ drop s l2)
+
+def splitAt-appendLem (n : Nat) (l : List A) : take n l ++ drop n l = l
+| zero, l => idp
+| suc n, nil => idp
+| suc n, a cons l => pmap (a cons) (splitAt-appendLem n l)
+
+def slice (l : List A) (i s : Nat) => take s (drop i l)
+
+def slice-appendLem (l : List A) (i s : Nat)
+   : take i l ++ (slice l i s ++ drop s (drop i l)) = l
+| l, zero, s => splitAt-appendLem s l
+| nil, suc i, zero => idp
+| nil, suc i, suc s => idp
+| a cons l, suc i, s => pmap (a cons) (slice-appendLem l i s)

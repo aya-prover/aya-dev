@@ -15,6 +15,7 @@ import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
+import org.aya.generic.ref.BinOpCollector;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,17 +48,23 @@ public record StmtShallowResolver(
       }
       case Command.Open cmd -> {
         var mod = cmd.path().ids();
+        var acc = cmd.accessibility();
         context.openModule(
           mod,
-          cmd.accessibility(),
+          acc,
           cmd.useHide()::uses,
           MutableHashMap.create(), // TODO handle renaming
           cmd.sourcePos()
         );
         // open operators as well
         var modInfo = resolveInfo.imports().find(i -> i.thisModule().moduleName().equals(mod));
-        if (modInfo.isDefined()) resolveInfo.opSet().operators.putAll(modInfo.get().opSet().operators);
-        // ^ modInfo is empty if we are opening a submodule
+        // modInfo is empty if we are opening a submodule
+        if (modInfo.isDefined()) {
+          if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().append(mod);
+          var modOpSet = modInfo.get().opSet();
+          resolveInfo.opSet().operators.putAll(modOpSet.operators);
+          resolveInfo.opSet().importBind(modOpSet, cmd.sourcePos());
+        }
       }
       case Remark remark -> remark.ctx = context;
       case Generalize.Levels levels -> {
@@ -76,6 +83,7 @@ public record StmtShallowResolver(
         var childCtx = exampleContext(context).derive("counter");
         var delegate = example.delegate();
         delegate.ctx = childCtx;
+        delegate.ref().module = childCtx.moduleName();
         childCtx.addGlobalSimple(Stmt.Accessibility.Private, delegate.ref(), delegate.sourcePos);
       }
       case Decl.DataDecl decl -> {
@@ -94,25 +102,27 @@ public record StmtShallowResolver(
           decl.sourcePos()
         );
         decl.ctx = dataInnerCtx;
-        resolveBind(decl.bindBlock, dataInnerCtx);
+        resolveOpInfo(decl, dataInnerCtx);
       }
       case Decl.StructDecl decl -> {
         resolveDecl(decl, context);
         var structInnerCtx = context.derive(decl.ref().name());
         decl.fields.forEach(field -> resolveField(field, structInnerCtx));
         decl.ctx = structInnerCtx;
-        resolveBind(decl.bindBlock, structInnerCtx);
+        resolveOpInfo(decl, structInnerCtx);
       }
       case Decl.FnDecl decl -> {
         resolveDecl(decl, context);
-        resolveBind(decl.bindBlock, context);
+        resolveOpInfo(decl, context);
       }
       case Decl.PrimDecl decl -> resolveDecl(decl, context);
     }
   }
 
-  private void resolveBind(@NotNull BindBlock bind, @NotNull ModuleContext context) {
+  private void resolveOpInfo(@NotNull Signatured signatured, @NotNull ModuleContext context) {
+    var bind = signatured.bindBlock;
     if (bind != BindBlock.EMPTY) bind.context().value = context;
+    if (signatured.opInfo != null) BinOpCollector.collect(signatured.ref());
   }
 
   private void resolveDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
@@ -130,12 +140,12 @@ public record StmtShallowResolver(
   private void resolveCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
     ctor.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
-    resolveBind(ctor.bindBlock, context);
+    resolveOpInfo(ctor, context);
   }
 
   private void resolveField(@NotNull Decl.StructField field, @NotNull ModuleContext context) {
     field.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
-    resolveBind(field.bindBlock, context);
+    resolveOpInfo(field, context);
   }
 }

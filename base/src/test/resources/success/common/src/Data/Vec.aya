@@ -1,0 +1,21 @@
+open import Arith::Nat
+
+open data Vec (A : Type) (n : Nat) : Type
+| A, zero => vnil
+| A, suc m => infixr vcons A (Vec A m)
+
+variable A B : Type
+variable n m : Nat
+
+def map (f : Pi A -> B) (xs : Vec A n) : Vec B n
+| f, vnil => vnil
+| f, x vcons xs => f x vcons map f xs
+
+def overlap infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
+| vnil, ys => ys
+| xs, vnil => xs
+| x vcons xs, ys => x vcons (xs ++ ys)
+
+def fold (f : Pi B A -> B) (init : B) (xs : Vec A n) : B
+  | f, init, vnil => init
+  | f, acc, x vcons xs => fold f (f acc x) xs
