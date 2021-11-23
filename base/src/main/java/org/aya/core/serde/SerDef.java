@@ -146,14 +146,12 @@ public sealed interface SerDef extends Serializable {
   }
 
   class DeserializeException extends InternalException {
-    public @NotNull String reason;
-
     public DeserializeException(@NotNull String reason) {
-      this.reason = reason;
+      super(reason);
     }
 
     @Override public void printHint() {
-      System.out.println(reason);
+      System.out.println(getMessage());
     }
 
     @Override public int exitCode() {
