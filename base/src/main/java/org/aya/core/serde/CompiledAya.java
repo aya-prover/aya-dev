@@ -149,7 +149,7 @@ public record CompiledAya(
       });
       bind.tighters().forEach(tighter -> {
         var target = resolveOp(opSet, tighter);
-        opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
+        opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
       });
     });
   }

@@ -97,6 +97,10 @@ public abstract class BinOpSet {
       var op = ensureOperator(opDecl);
       return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc(), op.argc());
     }
+
+    @Override public String toString() {
+      return name;
+    }
   }
 
   public enum PredCmp {
