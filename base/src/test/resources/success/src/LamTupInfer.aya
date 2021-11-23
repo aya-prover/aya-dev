@@ -4,7 +4,7 @@ example def test => \ x => x + zero
 
 example def test2 => (zero, suc zero)
 
-def addTup (Sig Nat ** Nat) : Nat
+def overlap addTup (Sig Nat ** Nat) : Nat
  | (zero, a) => a
  | (a, zero) => a
  | (suc a, b) => suc (a + b)

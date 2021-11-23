@@ -27,6 +27,7 @@ import org.aya.core.serde.Serializer;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.FileUtil;
 import org.aya.util.MutableGraph;
+import org.aya.util.StringUtil;
 import org.aya.util.tyck.NonStoppingTicker;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ import java.nio.file.Path;
  * @author kiva
  */
 public class LibraryCompiler implements ImportResolver.ImportLoader {
+  public static final int DEFAULT_INDENT = 2;
   final @NotNull LibraryConfig library;
   final @NotNull SourceFileLocator locator;
 
@@ -89,10 +91,13 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   private @NotNull MutableGraph<LibrarySource> resolveLibraryImports() throws IOException {
     var graph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
+    var startTime = System.currentTimeMillis();
     for (var file : sources) {
       resolveImports(file);
       collectDep(graph, file);
     }
+    reportNest("Done in " + StringUtil.timeToString(
+      System.currentTimeMillis() - startTime), DEFAULT_INDENT + 2);
     return graph;
   }
 
@@ -135,13 +140,17 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     reporter.reportString("Compiling " + library.name());
+    var startTime = System.currentTimeMillis();
     if (anyDepChanged) FileUtil.deleteRecursively(library.libraryOutRoot());
 
     var srcRoot = library.librarySrcRoot();
     thisModulePath.append(srcRoot);
 
     var depGraph = resolveLibraryImports();
-    return make(depGraph);
+    var make = make(depGraph);
+    reportNest("Library loaded in " + StringUtil.timeToString(
+      System.currentTimeMillis() - startTime), DEFAULT_INDENT + 2);
+    return make;
   }
 
   /**
@@ -206,7 +215,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     @NotNull LibraryCompiler delegate,
     @NotNull CachedModuleLoader moduleLoader
   ) implements SCCTycker<LibrarySource, IOException> {
-    @Override public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
+    @Override
+    public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
       var reporter = new CountingReporter(outerReporter);
       for (var f : order) Files.deleteIfExists(f.coreFile());
       for (var f : order) {
@@ -217,12 +227,18 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     private void tyckOne(CountingReporter reporter, LibrarySource file) {
+      var resolveStart = System.currentTimeMillis();
       var mod = resolveModule(file);
+      var resolveEnd = System.currentTimeMillis();
       delegate.reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()));
       FileModuleLoader.tyckResolvedModule(mod, reporter, null,
         (moduleResolve, stmts, defs) -> {
           if (reporter.noError()) delegate.saveCompiledCore(file, moduleResolve, defs);
         });
+      var tyckEnd = System.currentTimeMillis();
+      delegate.reportNest("Resolution takes %s, elaboration takes %s".formatted(
+        StringUtil.timeToString(resolveEnd - resolveStart),
+        StringUtil.timeToString(tyckEnd - resolveEnd)), DEFAULT_INDENT + 2);
     }
 
     private @NotNull ResolveInfo resolveModule(@NotNull LibrarySource file) {
@@ -251,7 +267,11 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   private void reportNest(@NotNull String text) {
-    reporter.reportDoc(Doc.nest(2, Doc.english(text)));
+    reportNest(text, DEFAULT_INDENT);
+  }
+
+  private void reportNest(@NotNull String text, int indent) {
+    reporter.reportDoc(Doc.nest(indent, Doc.english(text)));
   }
 
   private static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot) {
