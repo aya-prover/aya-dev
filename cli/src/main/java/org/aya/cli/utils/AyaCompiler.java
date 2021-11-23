@@ -55,8 +55,9 @@ public class AyaCompiler {
     @NotNull ImmutableSeq<Def> defs,
     @NotNull Serializer.State state
   ) throws IOException {
+    var compiledAya = CompiledAya.from(resolveInfo, defs, state);
     try (var outputStream = coreWriter(coreFile)) {
-      outputStream.writeObject(CompiledAya.from(resolveInfo, defs, state));
+      outputStream.writeObject(compiledAya);
     }
   }
 
