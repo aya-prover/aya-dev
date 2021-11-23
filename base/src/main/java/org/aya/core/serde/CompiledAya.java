@@ -47,7 +47,7 @@ public record CompiledAya(
       throw new UnsupportedOperationException();
     }
 
-    var serialization = new Serialization(state, ctx, DynamicSeq.create(), DynamicSeq.create());
+    var serialization = new Serialization(state, DynamicSeq.create(), DynamicSeq.create());
     serialization.ser(defs);
 
     var modName = ctx.moduleName();
@@ -62,7 +62,6 @@ public record CompiledAya(
 
   private record Serialization(
     @NotNull Serializer.State state,
-    @NotNull Context thisModule,
     @NotNull DynamicSeq<SerDef> serDefs,
     @NotNull DynamicSeq<SerDef.SerOp> serOps
   ) {
@@ -71,7 +70,6 @@ public record CompiledAya(
     }
 
     private void serDef(@NotNull Def def) {
-      if (!thisModule.holds(def.ref().module)) return;
       var serDef = def.accept(new Serializer(state), Unit.unit());
       serDefs.append(serDef);
       serOp(serDef, def);
