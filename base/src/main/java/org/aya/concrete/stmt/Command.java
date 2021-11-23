@@ -8,6 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public sealed interface Command extends Stmt {
+  @Override default boolean needTyck() {
+    return true;
+  }
+
   /**
    * @author re-xyr
    */
@@ -16,7 +20,6 @@ public sealed interface Command extends Stmt {
     @NotNull QualifiedID path,
     @Nullable String asName
   ) implements Command {
-
     @Override public @NotNull Accessibility accessibility() {
       return Accessibility.Private;
     }

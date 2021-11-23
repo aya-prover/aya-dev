@@ -97,4 +97,9 @@ public final class Remark implements Stmt {
     assert ctx != null : "Be sure to call the shallow resolver before resolving";
     return literate.resolve(info, ctx);
   }
+
+  /** It's always downstream (cannot be imported), so always need to be checked. */
+  @Override public boolean needTyck() {
+    return true;
+  }
 }

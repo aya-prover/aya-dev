@@ -9,4 +9,5 @@ import org.aya.util.error.SourceNode;
 public sealed interface TyckUnit
   extends SourceNode
   permits Stmt, Signatured {
+  boolean needTyck();
 }

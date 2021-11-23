@@ -18,6 +18,10 @@ public sealed interface Generalize extends Stmt {
     return Accessibility.Private;
   }
 
+  @Override default boolean needTyck() {
+    return false;
+  }
+
   record Levels(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<WithPos<PreLevelVar>> levels

@@ -15,6 +15,10 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface Sample extends Stmt {
   @NotNull Stmt delegate();
 
+  @Override default boolean needTyck() {
+    return delegate().needTyck();
+  }
+
   /** @return <code>null</code> if the delegate is a command (not a definition) */
   @Nullable Def tyck(@NotNull StmtTycker stmtTycker);
   void tyckHeader(@NotNull StmtTycker stmtTycker);
