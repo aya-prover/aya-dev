@@ -73,7 +73,7 @@ public record SingleFileCompiler(
         distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
         if (flags.outputFile() != null) AyaCompiler.saveCompiledCore(flags.outputFile(), moduleResolve, defs, new Serializer.State());
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
-      }, loader);
+      });
     });
   }
 

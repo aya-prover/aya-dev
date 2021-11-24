@@ -13,17 +13,16 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
-import org.aya.cli.library.module.CachedLibraryLoader;
-import org.aya.cli.library.module.LibraryModuleLoader;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.util.FileUtil;
 import org.aya.util.MutableGraph;
 import org.aya.util.StringUtil;
-import org.aya.util.tyck.NonStoppingTicker;
+import org.aya.util.tyck.OrgaTycker;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +39,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   public final @NotNull CountingReporter reporter;
   final @NotNull LibraryConfig library;
   final @NotNull SourceFileLocator locator;
-  final @NotNull CachedLibraryLoader moduleLoader;
+  final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
 
   private final @NotNull CompilerFlags flags;
   private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
@@ -56,7 +55,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
     this.flags = flags;
     this.library = library;
-    this.moduleLoader = new CachedLibraryLoader(new LibraryModuleLoader.Impl(this, states));
+    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(this, states));
     var srcRoot = library.librarySrcRoot();
     this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
     this.sources = FileUtil.collectSource(srcRoot, ".aya").map(p -> new LibrarySource(this, p));
@@ -182,7 +181,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
     Files.createDirectories(outDir());
     var delayedReporter = new DelayedReporter(reporter);
-    var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(delayedReporter, moduleLoader), changed);
+    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(delayedReporter, moduleLoader), changed);
     // use delayed reporter to avoid showing errors in the middle of compilation.
     // we only show errors after all SCCs are tycked
     try (delayedReporter) {
@@ -203,12 +202,12 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     return library.libraryOutRoot();
   }
 
-  record LibraryNonStoppingTycker(
+  record LibraryOrgaTycker(
     @NotNull LibrarySccTycker sccTycker,
     @NotNull MutableGraph<LibrarySource> usageGraph,
     @NotNull MutableSet<LibrarySource> skippedSet
-  ) implements NonStoppingTicker<LibrarySource, IOException> {
-    public LibraryNonStoppingTycker(@NotNull LibrarySccTycker sccTycker, @NotNull MutableGraph<LibrarySource> usage) {
+  ) implements OrgaTycker<LibrarySource, IOException> {
+    public LibraryOrgaTycker(@NotNull LibrarySccTycker sccTycker, @NotNull MutableGraph<LibrarySource> usage) {
       this(sccTycker, usage, MutableSet.create());
     }
 

@@ -10,7 +10,7 @@ import org.aya.concrete.resolve.ModuleCallback;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.tyck.order.AyaNonStoppingTicker;
+import org.aya.tyck.order.AyaOrgaTycker;
 import org.aya.tyck.order.AyaSccTycker;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
@@ -24,16 +24,15 @@ public interface ModuleLoader {
     @NotNull ModuleContext context,
     @NotNull ImmutableSeq<Stmt> program,
     @Nullable Trace.Builder builder,
-    @Nullable ModuleCallback<E> onTycked,
-    @NotNull ModuleLoader recurseLoader
+    @Nullable ModuleCallback<E> onTycked
   ) throws E {
-    return tyckModule(builder, resolveModule(context, program, recurseLoader), onTycked);
+    return tyckModule(builder, resolveModule(context, program, this), onTycked);
   }
 
-  private <E extends Exception> @NotNull ResolveInfo
+  default <E extends Exception> @NotNull ResolveInfo
   tyckModule(Trace.Builder builder, ResolveInfo resolveInfo, ModuleCallback<E> onTycked) throws E {
     var delayedReporter = new DelayedReporter(reporter());
-    var sccTycker = new AyaNonStoppingTicker(new AyaSccTycker(builder, delayedReporter), resolveInfo);
+    var sccTycker = new AyaOrgaTycker(new AyaSccTycker(builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
     try (delayedReporter) {
       var SCCs = resolveInfo.declGraph().topologicalOrder()

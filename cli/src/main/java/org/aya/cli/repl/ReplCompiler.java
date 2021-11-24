@@ -75,7 +75,7 @@ public class ReplCompiler {
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
-          loader.tyckModule(context, program, null, ((moduleResolve, defs) -> newDefs.set(defs)), loader);
+          loader.tyckModule(context, program, null, ((moduleResolve, defs) -> newDefs.set(defs)));
           var defs = newDefs.get();
           if (reporter.noError()) return defs;
           else {

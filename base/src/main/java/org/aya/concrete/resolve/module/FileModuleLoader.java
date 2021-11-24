@@ -29,7 +29,7 @@ public record FileModuleLoader(
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(context, program, builder, null, recurseLoader);
+      return tyckModule(builder, resolveModule(context, program, recurseLoader),  null);
     } catch (IOException e) {
       return null;
     }
