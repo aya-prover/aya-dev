@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  */
 public final class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader {
   private final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = MutableTreeMap.of();
-  final @NotNull ML loader;
+  public final @NotNull ML loader;
 
   @Override public @NotNull Reporter reporter() {
     return loader.reporter();

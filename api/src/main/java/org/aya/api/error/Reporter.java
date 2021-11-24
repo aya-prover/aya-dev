@@ -29,6 +29,11 @@ public interface Reporter {
   }
 
   @ApiStatus.Internal
+  default void reportNest(@NotNull String text, int indent) {
+    reportDoc(Doc.nest(indent, Doc.english(text)));
+  }
+
+  @ApiStatus.Internal
   default void reportDoc(@NotNull Doc doc) {
     report(new Problem() {
       @Override public @NotNull SourcePos sourcePos() {
