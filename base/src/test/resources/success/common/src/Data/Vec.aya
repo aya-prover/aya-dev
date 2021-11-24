@@ -17,5 +17,5 @@ def overlap infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 | x vcons xs, ys => x vcons (xs ++ ys)
 
 def fold (f : Pi B A -> B) (init : B) (xs : Vec A n) : B
-  | f, init, vnil => init
-  | f, acc, x vcons xs => fold f (f acc x) xs
+| f, init, vnil => init
+| f, acc, x vcons xs => fold f (f acc x) xs

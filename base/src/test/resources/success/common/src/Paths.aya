@@ -9,7 +9,7 @@ struct Path (A : I -> Type) (a : A left) (b : A right) : Type
 def path {A : I -> Type} (p : Pi (i : I) -> A i)
   => new Path A (p left) (p right) { | at i => p i }
 
-variable A : Type
+variable A B C : Type
 
 def infix = (a b : A) : Type => Path (\ i => A) a b
 def idp {a : A} : a = a => path (\ i => a)
@@ -25,10 +25,14 @@ def J {a : A} (B : Pi (b : A) -> a = b -> Type)
 def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
         (r : B a idp) : J B r idp = r => idp
 
-def funExt {A B : Type} (f g : A -> B) (p : forall a -> f a = g a) : f = g
+def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
   => path (\ i x => (p x).at i)
 
-def pmap {A B : Type} (f : A -> B) {a b : A} (p : a = b)
+-- TODO: fix unification
+-- def funExt2 (f g : A -> B -> C) (p : forall a -> forall b -> f a b = g a b) : f = g
+--   => path (\ i a b => (p a b).at i)
+
+def pmap (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
 prim arcoe -- (A : I -> Type) (A left) (i : I) : A i
