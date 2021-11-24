@@ -29,8 +29,8 @@ public sealed interface Stmt extends AyaDocile, TyckUnit
   @Contract(pure = true) @NotNull Accessibility accessibility();
 
   @Contract(mutates = "param1")
-  static void resolve(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader recurseLoader) {
-    var shallowResolver = new StmtShallowResolver(recurseLoader, resolveInfo);
+  static void resolve(@NotNull SeqLike<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader loader) {
+    var shallowResolver = new StmtShallowResolver(loader, resolveInfo);
     shallowResolver.resolveStmt(statements, resolveInfo.thisModule());
     StmtResolver.resolveStmt(statements, resolveInfo);
     StmtResolver.resolveBind(statements, resolveInfo);

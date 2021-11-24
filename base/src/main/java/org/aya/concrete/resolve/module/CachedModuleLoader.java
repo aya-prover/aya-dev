@@ -3,8 +3,9 @@
 package org.aya.concrete.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableTreeMap;
+import org.aya.api.error.Reporter;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,17 +17,21 @@ import java.util.function.Supplier;
 /**
  * @author re-xyr
  */
-public final class CachedModuleLoader implements ModuleLoader {
-  final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = new MutableHashMap<>();
-  final @NotNull ModuleLoader loader;
+public final class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader {
+  private final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = MutableTreeMap.of();
+  final @NotNull ML loader;
 
-  public CachedModuleLoader(@NotNull ModuleLoader loader) {
+  @Override public @NotNull Reporter reporter() {
+    return loader.reporter();
+  }
+
+  public CachedModuleLoader(@NotNull ML loader) {
     this.loader = loader;
   }
 
   @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<String> path, @NotNull ModuleLoader recurseLoader) {
-    return cachedOrLoad(path, () -> loader.load(path, recurseLoader));
+  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<String> path) {
+    return cachedOrLoad(path, () -> loader.load(path));
   }
 
   @ApiStatus.Internal

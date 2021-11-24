@@ -17,11 +17,8 @@ import org.aya.cli.library.json.LibraryDependency;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
-import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.core.def.Def;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
 import org.aya.pretty.doc.Doc;
@@ -183,8 +180,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
-    var loader = new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot, new Ref<>(), states.de);
-    loader.cachedSelf().value = new CachedModuleLoader(loader);
+    var loader = new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot, new Ref<>(), states);
+    loader.cachedSelf().value = new CachedModuleLoader<>(loader);
 
     var delayedReporter = new DelayedReporter(reporter);
     var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(delayedReporter, this, loader), changed);
@@ -234,25 +231,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     private void tyckOne(CountingReporter reporter, LibrarySource file) {
-      var resolveStart = System.currentTimeMillis();
-      var mod = resolveModule(file);
-      var resolveEnd = System.currentTimeMillis();
+      var mod = moduleLoader.loadLibrarySource(file);
+      if (mod == null) throw new IllegalStateException("Unable to load module: " + file.moduleName());
       file.resolveInfo().value = mod;
       delegate.reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()));
-      FileModuleLoader.tyckResolvedModule(mod, reporter, null,
-        (moduleResolve, stmts, defs) -> {
-          if (reporter.noError()) delegate.saveCompiledCore(file, moduleResolve, defs);
-        });
-      var tyckEnd = System.currentTimeMillis();
-      delegate.reportNest("Resolution takes %s, elaboration takes %s".formatted(
-        StringUtil.timeToString(resolveEnd - resolveStart),
-        StringUtil.timeToString(tyckEnd - resolveEnd)), DEFAULT_INDENT + 2);
-    }
-
-    private @NotNull ResolveInfo resolveModule(@NotNull LibrarySource file) {
-      var resolveInfo = moduleLoader.loadLibrarySource(file);
-      if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + file.moduleName());
-      return resolveInfo;
     }
   }
 
@@ -261,16 +243,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       var checkMod = s.moduleName();
       return checkMod.equals(mod);
     }).getOrNull();
-  }
-
-  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
-    try {
-      var coreFile = file.coreFile();
-      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states.ser);
-      Timestamp.update(file);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 
   private void reportNest(@NotNull String text) {

@@ -23,34 +23,39 @@ def overlap +-comm (a b : Nat) : a + b = b + a
 | suc a, b => pmap suc (+-comm _ _)
 | a, suc b => pmap suc (+-comm _ _)
 
-def overlap infixl * (m n : Nat) : Nat
-| zero, n => zero
-| m, zero => zero
-| suc m, suc n => suc (m + n + m * n)
-bind tighter +
-
 def overlap infixl *' (m n : Nat) : Nat
 | zero, n => zero
 | m, zero => zero
-| suc m, n => n + m *' n
+| suc m, suc n => suc (m + n + m *' n)
 bind tighter +
 
-def *'-suc (m n : Nat) : m *' suc n = m + m *' n
+def overlap infixl * (m n : Nat) : Nat
+| zero, n => zero
+| m, zero => zero
+| suc m, n => n + m * n
+bind tighter +
+
+def *-suc (m n : Nat) : m * suc n = m + m * n
 | zero, n => idp
-| suc m, n => pmap suc (pmap (n +) (*'-suc m n)
-  <==> sym (+-assoc n m (m *' n))
-  <==> pmap (+ m *' n) (+-comm n m)
-  <==> +-assoc m n (m *' n))
+| suc m, n => pmap suc (pmap (n +) (*-suc m n)
+  <==> sym (+-assoc n m (m * n))
+  <==> pmap (+ m * n) (+-comm n m)
+  <==> +-assoc m n (m * n))
 
-def *'-suc-suc (m n : Nat) : suc m *' suc n = suc (m + n + m *' n)
-  => pmap suc (pmap (n +) (*'-suc m n)
-    <==> sym (+-assoc n m (m *' n))
-    <==> pmap (+ m *' n) (+-comm n m))
+def overlap +-*-distl (n m k : Nat) : (m + k) * n = k * n + m * n
+| n, m, zero => idp
+| n, m, suc k => pmap (n +) (+-*-distl n m k) <==> sym (+-assoc _ _ _)
 
-def overlap *-*'-iso (m n : Nat) : m * n = m *' n
+def *-suc-suc (m n : Nat) : suc m * suc n = suc (m + n + m * n)
+  => pmap suc (pmap (n +) (*-suc m n)
+    <==> sym (+-assoc n m (m * n))
+    <==> pmap (+ m * n) (+-comm n m))
+
+def overlap *'-*-iso (m n : Nat) : m *' n = m * n
 | zero, n => idp
 | m, zero => idp
-| suc m, suc n => pmap (\ x => suc (m + n + x)) (*-*'-iso m n)
-  <==> sym (*'-suc-suc m n)
+| suc m, suc n => pmap (\ x => suc (m + n + x)) (*'-*-iso m n)
+  <==> sym (*-suc-suc m n)
 
-def *-*'-eq : (*) = (*') => funExt (*) (*') (\ m => funExt (m *) (m *') (*-*'-iso m))
+def *'-*-eq : (*') = (*) => funExt (*') (*)
+    (\ m => funExt (m *') (m *) (*'-*-iso m))

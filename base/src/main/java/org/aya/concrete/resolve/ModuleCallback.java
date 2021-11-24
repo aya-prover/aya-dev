@@ -3,15 +3,12 @@
 package org.aya.concrete.resolve;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
 import org.jetbrains.annotations.NotNull;
 
 /** CheckedTriConsumer */
 @FunctionalInterface
 public interface ModuleCallback<E extends Exception> {
-  void onModuleTycked(@NotNull ResolveInfo moduleResolve,
-                      @NotNull ImmutableSeq<Stmt> stmts,
-                      @NotNull ImmutableSeq<Def> defs)
+  void onModuleTycked(@NotNull ResolveInfo moduleResolve, @NotNull ImmutableSeq<Def> defs)
     throws E;
 }

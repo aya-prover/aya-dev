@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 @Debug.Renderer(text = "thisModule.moduleName().joinToString(\"::\")")
 public record ResolveInfo(
   @NotNull ModuleContext thisModule,
-  @NotNull ImmutableSeq<Stmt> thisProgram,
+  @NotNull ImmutableSeq<Stmt> program,
   @NotNull AyaBinOpSet opSet,
   @NotNull DynamicSeq<ResolveInfo> imports,
   @NotNull DynamicSeq<ImmutableSeq<String>> reExports,
