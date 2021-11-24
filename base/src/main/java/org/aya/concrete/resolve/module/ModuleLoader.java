@@ -26,7 +26,11 @@ public interface ModuleLoader {
     @Nullable Trace.Builder builder,
     @Nullable ModuleCallback<E> onTycked
   ) throws E {
-    var resolveInfo = resolveModule(context, program);
+    return tyckModule(builder, resolveModule(context, program), onTycked);
+  }
+
+  private <E extends Exception> @NotNull ResolveInfo
+  tyckModule(Trace.Builder builder, ResolveInfo resolveInfo, ModuleCallback<E> onTycked) throws E {
     var delayedReporter = new DelayedReporter(reporter());
     var sccTycker = new AyaNonStoppingTicker(new AyaSccTycker(builder, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
