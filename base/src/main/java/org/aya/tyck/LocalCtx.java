@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
@@ -43,6 +44,10 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
 
   public <T> T with(@NotNull Term.Param param, @NotNull Supplier<T> action) {
     return with(param.ref(), param.type(), action);
+  }
+
+  public void remove(@NotNull SeqView<LocalVar> vars) {
+    vars.forEach(localMap::remove);
   }
 
   public <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {

@@ -18,13 +18,13 @@ import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.visitor.ExprResolver;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.core.term.Term;
 import org.aya.distill.BaseDistiller;
 import org.aya.distill.ConcreteDistiller;
 import org.aya.generic.Level;
 import org.aya.generic.ParamLike;
 import org.aya.generic.ref.PreLevelVar;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.ExprTycker;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
@@ -94,8 +94,8 @@ public sealed interface Expr extends ConcreteExpr {
   }
 
   sealed interface WithTerm extends Expr {
-    @NotNull Ref<Term> theCore();
-    default @Nullable Term core() {
+    @NotNull Ref<ExprTycker.Result> theCore();
+    default @Nullable ExprTycker.Result core() {
       return theCore().value;
     }
   }
@@ -238,7 +238,7 @@ public sealed interface Expr extends ConcreteExpr {
   record RefExpr(
     @NotNull SourcePos sourcePos,
     @NotNull Var resolvedVar,
-    @NotNull Ref<Term> theCore
+    @NotNull Ref<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public RefExpr(@NotNull SourcePos sourcePos, @NotNull Var resolvedVar) {
       this(sourcePos, resolvedVar, new Ref<>());
@@ -300,7 +300,7 @@ public sealed interface Expr extends ConcreteExpr {
     @NotNull Expr tup,
     @NotNull Either<Integer, WithPos<String>> ix,
     @NotNull Ref<@Nullable Var> resolvedIx,
-    @NotNull Ref<Term> theCore
+    @NotNull Ref<ExprTycker.Result> theCore
   ) implements Expr, WithTerm {
     public ProjExpr(
       @NotNull SourcePos sourcePos, @NotNull Expr tup,
