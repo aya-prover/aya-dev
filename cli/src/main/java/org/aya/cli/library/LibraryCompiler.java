@@ -13,10 +13,11 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
+import org.aya.cli.library.module.CachedLibraryLoader;
+import org.aya.cli.library.module.LibraryModuleLoader;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.util.FileUtil;
@@ -36,10 +37,10 @@ import java.nio.file.Path;
  */
 public class LibraryCompiler implements ImportResolver.ImportLoader {
   public static final int DEFAULT_INDENT = 2;
+  public final @NotNull CountingReporter reporter;
   final @NotNull LibraryConfig library;
   final @NotNull SourceFileLocator locator;
-  final @NotNull CountingReporter reporter;
-  final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
+  final @NotNull CachedLibraryLoader moduleLoader;
 
   private final @NotNull CompilerFlags flags;
   private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
@@ -55,7 +56,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
     this.flags = flags;
     this.library = library;
-    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(this, states));
+    this.moduleLoader = new CachedLibraryLoader(new LibraryModuleLoader.Impl(this, states));
     var srcRoot = library.librarySrcRoot();
     this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
     this.sources = FileUtil.collectSource(srcRoot, ".aya").map(p -> new LibrarySource(this, p));
@@ -277,7 +278,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     return file;
   }
 
-  @NotNull LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
+  public @NotNull LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
     var file = findModuleFileHere(mod);
     if (file == null) for (var dep : deps) {
       file = dep.findModuleFileHere(mod);

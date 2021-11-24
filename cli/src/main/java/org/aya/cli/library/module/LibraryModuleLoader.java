@@ -1,11 +1,12 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.library;
+package org.aya.cli.library.module;
 
-import kala.collection.Seq;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.CountingReporter;
+import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.LibrarySource;
+import org.aya.cli.library.Timestamp;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
@@ -24,55 +25,43 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * This module loader is used to load source/compiled modules in a library.
- * For modules belonging to this library, both compiled/source modules are searched and loaded (compiled first).
- * For modules belonging to dependencies, only compiled modules are searched and loaded.
- * This is archived by not storing source dirs of dependencies to
- * {@link LibraryCompiler#modulePath()} and always trying to find compiled cores in
- * {@link LibraryCompiler#outDir()}.
- *
- * <p>
- * Unlike {@link FileModuleLoader}, this loader only resolves the module rather than tycking it.
- * Tyck decision is made by {@link LibraryCompiler} by judging whether the source file
- * is modified since last build.
- *
- * @author kiva
- * @see FileModuleLoader
- */
-public record LibraryModuleLoader(@NotNull LibraryCompiler compiler, @NotNull United states) implements ModuleLoader {
-  public static @Nullable Path resolveCompiledDepCore(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
-    for (var p : modulePath) {
-      var file = FileUtil.resolveFile(p, moduleName, Constants.AYAC_POSTFIX);
-      if (Files.exists(file)) return file;
+public interface LibraryModuleLoader extends ModuleLoader {
+  @NotNull LibraryCompiler compiler();
+  @NotNull LibraryModuleLoader.United states();
+  @Override default @NotNull CountingReporter reporter() {
+    return compiler().reporter;
+  }
+
+  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
+    try {
+      var coreFile = file.coreFile();
+      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states().ser());
+      Timestamp.update(file);
+    } catch (IOException e) {
+      e.printStackTrace();
     }
-    return null;
   }
 
-  @Override public @NotNull CountingReporter reporter() {
-    return compiler.reporter;
-  }
-
-  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod) {
-    var basePaths = compiler.modulePath();
+  @Override default @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod) {
+    var basePaths = compiler().modulePath();
     var sourcePath = FileUtil.resolveFile(basePaths, mod, ".aya");
     if (sourcePath == null) {
       // We are loading a module belonging to dependencies, find the compiled core.
       // The compiled core should always exist, otherwise the dependency is not built.
-      var depCorePath = resolveCompiledDepCore(basePaths, mod);
+      var depCorePath = FileUtil.resolveFile(basePaths, mod, Constants.AYAC_POSTFIX);
       assert depCorePath != null : "dependencies not built?";
       return loadCompiledCore(mod, depCorePath, depCorePath);
     }
 
     // we are loading a module belonging to this library, try finding compiled core first.
     // If found, check modifications and decide whether to proceed with compiled core.
-    var corePath = FileUtil.resolveFile(compiler.outDir(), mod, Constants.AYAC_POSTFIX);
+    var corePath = FileUtil.resolveFile(compiler().outDir(), mod, Constants.AYAC_POSTFIX);
     if (Files.exists(corePath)) {
       return loadCompiledCore(mod, corePath, sourcePath);
     }
 
     // No compiled core is found, or source file is modified, compile it from source.
-    var source = compiler.findModuleFile(mod);
+    var source = compiler().findModuleFile(mod);
     var program = source.program().value;
     assert program != null;
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
@@ -81,30 +70,42 @@ public record LibraryModuleLoader(@NotNull LibraryCompiler compiler, @NotNull Un
     });
   }
 
-  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
-    try {
-      var coreFile = file.coreFile();
-      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states.ser());
-      Timestamp.update(file);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
   private @Nullable ResolveInfo loadCompiledCore(@NotNull ImmutableSeq<String> mod, @NotNull Path corePath, @NotNull Path sourcePath) {
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledAya) inputStream.readObject();
       // VERY IMPORTANT! Must use `compiler.moduleLoader` instead of `this` as it's cached.
-      return compiledAya.toResolveInfo(compiler.moduleLoader, context, states.de());
+      return compiledAya.toResolveInfo(this, context, states().de());
     } catch (IOException | ClassNotFoundException e) {
       return null;
     }
   }
 
-  public record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {
+  record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {
     public United() {
       this(new SerTerm.DeState(), new Serializer.State());
     }
+  }
+
+  /**
+   * This module loader is used to load source/compiled modules in a library.
+   * For modules belonging to this library, both compiled/source modules are searched and loaded (compiled first).
+   * For modules belonging to dependencies, only compiled modules are searched and loaded.
+   * This is archived by not storing source dirs of dependencies to
+   * {@link LibraryCompiler#modulePath()} and always trying to find compiled cores in
+   * {@link LibraryCompiler#outDir()}.
+   *
+   * <p>
+   * Unlike {@link FileModuleLoader}, this loader only resolves the module rather than tycking it.
+   * Tyck decision is made by {@link LibraryCompiler} by judging whether the source file
+   * is modified since last build.
+   *
+   * @author kiva
+   * @see FileModuleLoader
+   */
+  record Impl(
+    @Override @NotNull LibraryCompiler compiler,
+    @Override @NotNull LibraryModuleLoader.United states
+  ) implements LibraryModuleLoader {
   }
 }
