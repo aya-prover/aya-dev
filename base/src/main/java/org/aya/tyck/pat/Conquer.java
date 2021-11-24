@@ -60,7 +60,12 @@ public record Conquer(
         for (int i = 0, size = conditions.size(); i < size; i++) {
           var condition = conditions.get(i);
           var matchy = PatMatcher.tryBuildSubstTerms(null, params, condition.patterns().view().map(Pat::toTerm));
-          if (matchy.isOk()) checkConditions(ctor, nth, i + 1, condition.body(), matchy.get(), condition.sourcePos());
+          if (matchy.isOk()) {
+            var ctx = new LocalCtx();
+            condition.patterns().forEach(tern -> tern.storeBindings(ctx));
+            // Do not need `ctor.storeBindings(ctx)` since they're substituted out by matchy
+            checkConditions(ctx, ctor, nth, i + 1, condition.body(), matchy.get(), condition.sourcePos());
+          }
         }
       }
       case Pat.Tuple tuple -> {
@@ -72,10 +77,12 @@ public record Conquer(
     }
   }
 
-  private void checkConditions(Pat ctor, int nth, int i, Term condition, Substituter.TermSubst matchy, SourcePos conditionPos) {
+  private void checkConditions(
+    LocalCtx ctx, Pat ctor, int nth, int i,
+    Term condition, Substituter.TermSubst matchy, SourcePos conditionPos
+  ) {
     var currentClause = matchings.get(nth);
     var newBody = currentClause.body().subst(matchy);
-    var ctx = new LocalCtx();
     var newArgs = currentClause.patterns().map(pat -> new Arg<>(new PatToTerm() {
       @Override public @NotNull Term visitCtor(Pat.@NotNull Ctor newCtor) {
         return newCtor == ctor ? condition : super.visitCtor(newCtor);
