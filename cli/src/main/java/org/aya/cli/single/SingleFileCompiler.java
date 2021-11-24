@@ -69,11 +69,11 @@ public record SingleFileCompiler(
       var loader = new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new CachedModuleLoader<>(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
       loader.tyckModule(ctx, program, builder,
-        (moduleResolve, stmts, defs) -> {
+        (moduleResolve, defs) -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
           distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);
           if (flags.outputFile() != null) AyaCompiler.saveCompiledCore(flags.outputFile(), moduleResolve, defs, new Serializer.State());
-          if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, stmts, defs);
+          if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
         });
     });
   }

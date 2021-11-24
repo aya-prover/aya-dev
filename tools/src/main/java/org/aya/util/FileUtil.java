@@ -2,8 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
+import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -33,5 +36,15 @@ public interface FileUtil {
 
   static @NotNull ObjectInputStream ois(@NotNull Path corePath) throws IOException {
     return new ObjectInputStream(Files.newInputStream(corePath));
+  }
+
+  static @NotNull Path resolveFile(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName, String postfix) {
+    var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
+    return withoutExt.resolveSibling(withoutExt.getFileName() + postfix);
+  }
+
+  static @Nullable Path resolveFile(@NotNull SeqView<Path> basePaths, @NotNull Seq<String> moduleName, String postfix) {
+    return basePaths.map(basePath -> resolveFile(basePath, moduleName, postfix))
+      .firstOrNull(Files::exists);
   }
 }

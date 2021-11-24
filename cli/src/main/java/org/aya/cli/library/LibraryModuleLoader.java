@@ -64,28 +64,19 @@ public record LibraryModuleLoader(
     return null;
   }
 
-  public static @Nullable Path resolveFile(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
-    for (var p : modulePath) {
-      var file = FileModuleLoader.resolveFile(p, moduleName);
-      if (Files.exists(file)) return file;
-    }
-    return null;
-  }
-
   @Nullable ResolveInfo loadLibrarySource(@NotNull LibrarySource source) {
     var mod = source.moduleName();
     var cached = cachedSelf.value;
     return cached.cachedOrLoad(mod, () -> {
       var context = new EmptyContext(reporter, source.file()).derive(mod);
-      return cached.tyckModule(context, source.program().value, null,
-        (moduleResolve, stmts, defs) -> {
-          if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs);
-        });
+      return cached.tyckModule(context, source.program().value, null, (moduleResolve, defs) -> {
+        if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs);
+      });
     });
   }
 
   @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod) {
-    var sourcePath = resolveFile(thisModulePath, mod);
+    var sourcePath = FileUtil.resolveFile(thisModulePath, mod, ".aya");
     if (sourcePath == null) {
       // We are loading a module belonging to dependencies, find the compiled core.
       // The compiled core should always exist, otherwise the dependency is not built.
