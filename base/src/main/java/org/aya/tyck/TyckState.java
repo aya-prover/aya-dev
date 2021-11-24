@@ -11,9 +11,7 @@ import kala.tuple.Unit;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Reporter;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.LocalVar;
-import org.aya.util.error.WithPos;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.RefTerm;
@@ -26,6 +24,8 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.DefEq;
 import org.aya.tyck.unify.level.LevelEqnSet;
 import org.aya.util.Ordering;
+import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public record TyckState(
     @NotNull Reporter reporter, Trace.@Nullable Builder tracer,
     @NotNull Eqn eqn, boolean allowVague
   ) {
-    new DefEq(eqn.cmp, reporter, allowVague, tracer, this, eqn.pos).checkEqn(eqn);
+    new DefEq(eqn.cmp, reporter, allowVague, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
   }
 
   /** @return true if <code>this.eqns</code> and <code>this.activeMetas</code> are mutated. */
@@ -102,6 +102,7 @@ public record TyckState(
   public record Eqn(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull Ordering cmp, @NotNull SourcePos pos,
+    @NotNull LocalCtx localCtx,
     @NotNull ImmutableMap<@NotNull LocalVar, @NotNull RefTerm> varSubst
   ) implements AyaDocile {
     public <P, R> Tuple2<R, R> accept(@NotNull Term.Visitor<P, R> visitor, P p) {

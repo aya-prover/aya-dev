@@ -7,15 +7,29 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.util.Arg;
 import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
+import org.aya.tyck.LocalCtx;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EtaTest {
+  private static final @NotNull Term SIGMA = new FormTerm.Sigma(ImmutableSeq.of(
+    new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
+    new Term.Param(new LocalVar("B"), FormTerm.Univ.ZERO, false)));
+  private static final @NotNull LocalVar X = new LocalVar("x");
+  private static final @NotNull LocalVar Y = new LocalVar("y");
+  private static final @NotNull Eta ETA = new Eta(new LocalCtx());
+
+  @BeforeAll public static void init() {
+    ETA.ctx().put(X, SIGMA);
+  }
+
   // \ x -> f x
   @Test public void oneLambdaUneta() {
-    var xParamTerm = new Term.Param(new LocalVar("x"), FormTerm.Univ.ZERO, false);
-    var xRefTerm = new RefTerm(new LocalVar("x"), FormTerm.Univ.ZERO);
+    var xParamTerm = new Term.Param(X, FormTerm.Univ.ZERO, false);
+    var xRefTerm = new RefTerm(X, FormTerm.Univ.ZERO);
     // It's rather tedious to construct a Fn here
     // So let's be lazy here as the type of f doesn't really matter
     var fRefTerm = new RefTerm(new LocalVar("f"), FormTerm.Univ.ZERO);
@@ -25,15 +39,15 @@ public class EtaTest {
       // Body
       new ElimTerm.App(fRefTerm, new Arg<>(xRefTerm, false))
     );
-    assertTrue(Eta.compareRefTerm(fRefTerm, Eta.uneta(lambda)));
+    assertTrue(Eta.compareRefTerm(fRefTerm, ETA.uneta(lambda)));
   }
 
   // \ x y -> f y x
   @Test public void twoLambdaUneta() {
-    var xParamTerm = new Term.Param(new LocalVar("x"), FormTerm.Univ.ZERO, false);
-    var yParamTerm = new Term.Param(new LocalVar("y"), FormTerm.Univ.ZERO, false);
-    var xRefTerm = new RefTerm(new LocalVar("x"), FormTerm.Univ.ZERO);
-    var yRefTerm = new RefTerm(new LocalVar("y"), FormTerm.Univ.ZERO);
+    var xParamTerm = new Term.Param(X, FormTerm.Univ.ZERO, false);
+    var yParamTerm = new Term.Param(Y, FormTerm.Univ.ZERO, false);
+    var xRefTerm = new RefTerm(X, FormTerm.Univ.ZERO);
+    var yRefTerm = new RefTerm(Y, FormTerm.Univ.ZERO);
     var fRefTerm = new RefTerm(new LocalVar("f"), FormTerm.Univ.ZERO);
     var lambda = IntroTerm.Lambda.make(
       // Params
@@ -43,41 +57,32 @@ public class EtaTest {
         new ElimTerm.App(fRefTerm, new Arg<>(yRefTerm, false)),
         new Arg<>(xRefTerm, false))
     );
-    assertTrue(Eta.compareRefTerm(fRefTerm, Eta.uneta(lambda)));
+    assertTrue(Eta.compareRefTerm(fRefTerm, ETA.uneta(lambda)));
   }
 
   // (x.1, x.2)
   @Test public void tupleUneta() {
-    var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
-      new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
-      new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false)));
-    var xRefTerm = new RefTerm(new LocalVar("x"), sigmaTerm);
+    var xRefTerm = new RefTerm(X, SIGMA);
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
-    assertTrue(Eta.compareRefTerm(xRefTerm, Eta.uneta(tuple)));
+    assertTrue(Eta.compareRefTerm(xRefTerm, ETA.uneta(tuple)));
   }
 
   // (x.1, (x.1, x.2).2)
   @Test public void nestTupleUneta() {
-    var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
-      new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
-      new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false)));
-    var xRefTerm = new RefTerm(new LocalVar("x"), sigmaTerm);
+    var xRefTerm = new RefTerm(X, SIGMA);
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
     var secondTerm = new ElimTerm.Proj(xRefTerm, 2);
     var tuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, secondTerm));
     var finalTuple = new IntroTerm.Tuple(ImmutableSeq.of(firstTerm, new ElimTerm.Proj(tuple, 2)));
-    assertTrue(Eta.compareRefTerm(xRefTerm, Eta.uneta(finalTuple)));
+    assertTrue(Eta.compareRefTerm(xRefTerm, ETA.uneta(finalTuple)));
   }
 
   // \x -> f (x.1, x.2)
   @Test public void tupleAndLambdaUneta() {
-    var sigmaTerm = new FormTerm.Sigma(ImmutableSeq.of(
-      new Term.Param(new LocalVar("A"), FormTerm.Univ.ZERO, false),
-      new Term.Param(new LocalVar("B"), FormTerm.Univ.ZERO, false)));
-    var xParamTerm = new Term.Param(new LocalVar("x"), sigmaTerm, false);
-    var xRefTerm = new RefTerm(new LocalVar("x"), sigmaTerm);
+    var xParamTerm = new Term.Param(X, SIGMA, false);
+    var xRefTerm = new RefTerm(X, SIGMA);
     var fRefTerm = new RefTerm(new LocalVar("f"), FormTerm.Univ.ZERO);
     // construct lambda body: tuple term
     var firstTerm = new ElimTerm.Proj(xRefTerm, 1);
@@ -89,6 +94,6 @@ public class EtaTest {
       // Body
       new ElimTerm.App(fRefTerm, new Arg<>(tuple, false))
     );
-    assertTrue(Eta.compareRefTerm(fRefTerm, Eta.uneta(lambda)));
+    assertTrue(Eta.compareRefTerm(fRefTerm, ETA.uneta(lambda)));
   }
 }
