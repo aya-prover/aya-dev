@@ -66,9 +66,9 @@ public record SingleFileCompiler(
       var program = AyaParsing.program(locator, reporter, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
-      var loader = new ModuleListLoader(flags.modulePaths().view().map(path ->
+      var loader = new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
-      FileModuleLoader.tyckModule(ctx, loader, program, reporter, builder,
+      FileModuleLoader.tyckModule(ctx, loader, program, builder,
         (moduleResolve, stmts, defs) -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
           distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);

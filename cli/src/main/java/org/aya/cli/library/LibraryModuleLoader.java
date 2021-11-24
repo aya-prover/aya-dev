@@ -76,7 +76,7 @@ public record LibraryModuleLoader(
     var cached = cachedSelf.value;
     return cached.cachedOrLoad(mod, () -> {
       var context = new EmptyContext(reporter, source.file()).derive(mod);
-      return ModuleLoader.resolveModule(context, cached, source.program().value, reporter);
+      return cached.resolveModule(context, source.program().value);
     });
   }
 
@@ -102,7 +102,7 @@ public record LibraryModuleLoader(
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(mod);
-      return ModuleLoader.resolveModule(context, recurseLoader, program, reporter);
+      return recurseLoader.resolveModule(context, program);
     } catch (IOException e) {
       return null;
     }

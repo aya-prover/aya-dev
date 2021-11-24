@@ -58,12 +58,12 @@ public class ReplCompiler {
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(modulePaths);
     var programOrExpr = AyaParsing.repl(reporter, text);
     try {
-      var loader = new ModuleListLoader(modulePaths.view().map(path ->
+      var loader = new ModuleListLoader(reporter, modulePaths.view().map(path ->
         new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, null))).toImmutableSeq());
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();
-          FileModuleLoader.tyckModule(context, loader, program, reporter, null,
+          FileModuleLoader.tyckModule(context, loader, program, null,
             ((moduleResolve, stmts, defs) -> newDefs.set(defs)));
           var defs = newDefs.get();
           if (reporter.noError()) return defs;

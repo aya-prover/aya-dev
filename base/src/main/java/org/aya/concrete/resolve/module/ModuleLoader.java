@@ -15,14 +15,13 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public interface ModuleLoader {
-  static @NotNull ResolveInfo resolveModule(
+  @NotNull Reporter reporter();
+  default @NotNull ResolveInfo resolveModule(
     @NotNull ModuleContext context,
-    @NotNull ModuleLoader recurseLoader,
-    @NotNull ImmutableSeq<Stmt> program,
-    @NotNull Reporter reporter
+    @NotNull ImmutableSeq<Stmt> program
   ) {
-    var resolveInfo = new ResolveInfo(context, program, new AyaBinOpSet(reporter));
-    Stmt.resolve(program, resolveInfo, recurseLoader);
+    var resolveInfo = new ResolveInfo(context, program, new AyaBinOpSet(reporter()));
+    Stmt.resolve(program, resolveInfo, this);
     return resolveInfo;
   }
 

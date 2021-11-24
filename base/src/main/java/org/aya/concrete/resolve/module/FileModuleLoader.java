@@ -28,7 +28,7 @@ import java.nio.file.Path;
 public record FileModuleLoader(
   @NotNull SourceFileLocator locator,
   @NotNull Path basePath,
-  @NotNull Reporter reporter,
+  @Override @NotNull Reporter reporter,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
   @Override
@@ -37,7 +37,7 @@ public record FileModuleLoader(
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(context, recurseLoader, program, reporter, builder, null);
+      return tyckModule(context, recurseLoader, program, builder, null);
     } catch (IOException e) {
       return null;
     }
@@ -47,12 +47,11 @@ public record FileModuleLoader(
     @NotNull ModuleContext context,
     @NotNull ModuleLoader recurseLoader,
     @NotNull ImmutableSeq<Stmt> program,
-    @NotNull Reporter reporter,
     @Nullable Trace.Builder builder,
     @Nullable ModuleCallback<E> onTycked
   ) throws E {
-    var resolveInfo = ModuleLoader.resolveModule(context, recurseLoader, program, reporter);
-    tyckResolvedModule(resolveInfo, reporter, builder, onTycked);
+    var resolveInfo = recurseLoader.resolveModule(context, program);
+    tyckResolvedModule(resolveInfo, recurseLoader.reporter(), builder, onTycked);
     return resolveInfo;
   }
 

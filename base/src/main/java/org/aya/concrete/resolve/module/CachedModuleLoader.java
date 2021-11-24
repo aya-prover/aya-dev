@@ -5,6 +5,7 @@ package org.aya.concrete.resolve.module;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
+import org.aya.api.error.Reporter;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,6 +20,10 @@ import java.util.function.Supplier;
 public final class CachedModuleLoader implements ModuleLoader {
   private final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = MutableTreeMap.of();
   final @NotNull ModuleLoader loader;
+
+  @Override public @NotNull Reporter reporter() {
+    return loader.reporter();
+  }
 
   public CachedModuleLoader(@NotNull ModuleLoader loader) {
     this.loader = loader;
