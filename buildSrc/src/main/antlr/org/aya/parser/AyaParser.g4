@@ -41,7 +41,7 @@ decl : PRIVATE?
      | primDecl
      );
 
-assoc : INFIX | INFIXL | INFIXR;
+assoc : INFIX | INFIXL | INFIXR | MIXFIX;
 
 declNameOrInfix : ID | assoc ID;
 

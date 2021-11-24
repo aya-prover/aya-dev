@@ -12,6 +12,7 @@ public enum Assoc {
   Infix(true),
   InfixL(true),
   InfixR(true),
+  Mixfix(false),
   Invalid(false);
 
   /**

@@ -11,6 +11,7 @@ REPL_COMMAND : ':' [a-zA-Z0-9-]+;
 INFIX  : 'infix';
 INFIXL : 'infixl';
 INFIXR : 'infixr';
+MIXFIX : 'mixfix';
 
 // operator precedence
 TIGHTER : 'tighter';

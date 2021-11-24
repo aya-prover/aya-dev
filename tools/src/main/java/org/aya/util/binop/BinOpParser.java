@@ -5,6 +5,7 @@ package org.aya.util.binop;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.Set;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 public abstract class BinOpParser<
   OpSet extends BinOpSet,
@@ -139,7 +141,8 @@ public abstract class BinOpParser<
   }
 
   private @NotNull Arg makeBinApp(@NotNull Arg op) {
-    int argc = toSetElem(op, opSet).argc();
+    var opElem = toSetElem(op, opSet);
+    int argc = opElem.argc();
     if (argc == 1) {
       var operand = prefixes.dequeue();
       return makeArg(union(operand, op), op.expr(), operand, op.explicit());
@@ -158,6 +161,15 @@ public abstract class BinOpParser<
           case Rhs -> makeBinApp(op, applied, elem);
         }).expr());
       }
+    }
+
+    if (opElem.assoc() == Assoc.Mixfix) {
+      // now the opStack should have (argc - 1) duplicate same op that should be removed
+      assert opStack.sizeGreaterThanOrEquals(argc - 1);
+      for (int i = 0; i < argc - 1; ++i) opStack.pop();
+      return IntStream.range(0, argc).mapToObj(i -> prefixes.dequeue())
+        .collect(ImmutableSeq.factory()).reversed()
+        .foldLeft(op, (app, arg) -> makeBinApp(appOp(), arg, app));
     }
 
     throw new UnsupportedOperationException("TODO?");

@@ -16,6 +16,8 @@ import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.ref.BinOpCollector;
+import org.aya.util.binop.Assoc;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -102,27 +104,41 @@ public record StmtShallowResolver(
           decl.sourcePos()
         );
         decl.ctx = dataInnerCtx;
-        resolveOpInfo(decl, dataInnerCtx);
+        resolveOpInfo(decl, dataInnerCtx, decl.accessibility, decl.sourcePos);
       }
       case Decl.StructDecl decl -> {
         resolveDecl(decl, context);
         var structInnerCtx = context.derive(decl.ref().name());
         decl.fields.forEach(field -> resolveField(field, structInnerCtx));
         decl.ctx = structInnerCtx;
-        resolveOpInfo(decl, structInnerCtx);
+        resolveOpInfo(decl, structInnerCtx, decl.accessibility, decl.sourcePos);
       }
       case Decl.FnDecl decl -> {
         resolveDecl(decl, context);
-        resolveOpInfo(decl, context);
+        resolveOpInfo(decl, context, decl.accessibility, decl.sourcePos);
       }
       case Decl.PrimDecl decl -> resolveDecl(decl, context);
     }
   }
 
-  private void resolveOpInfo(@NotNull Signatured signatured, @NotNull ModuleContext context) {
+  private void resolveOpInfo(
+    @NotNull Signatured signatured,
+    @NotNull ModuleContext context,
+    @NotNull Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos
+  ) {
     var bind = signatured.bindBlock;
     if (bind != BindBlock.EMPTY) bind.context().value = context;
-    if (signatured.opInfo != null) BinOpCollector.collect(signatured.ref());
+    if (signatured.opInfo != null) {
+      if (signatured.opInfo.assoc() == Assoc.Mixfix) {
+        var ref = signatured.ref();
+        var name = ref.name();
+        var parts = name.split("_");
+        for (var part : parts) context.addGlobal(Context.TOP_LEVEL_MOD_NAME,
+          part, accessibility, ref, sourcePos);
+      }
+      BinOpCollector.collect(signatured.ref());
+    }
   }
 
   private void resolveDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
@@ -140,12 +156,12 @@ public record StmtShallowResolver(
   private void resolveCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
     ctor.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
-    resolveOpInfo(ctor, context);
+    resolveOpInfo(ctor, context, Stmt.Accessibility.Public, ctor.sourcePos);
   }
 
   private void resolveField(@NotNull Decl.StructField field, @NotNull ModuleContext context) {
     field.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
-    resolveOpInfo(field, context);
+    resolveOpInfo(field, context, Stmt.Accessibility.Public, field.sourcePos);
   }
 }

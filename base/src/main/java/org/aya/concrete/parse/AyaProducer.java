@@ -212,6 +212,7 @@ public final class AyaProducer {
     if (assoc.INFIX() != null) return new OpDecl.OpInfo(id, Assoc.Infix, argc);
     if (assoc.INFIXL() != null) return new OpDecl.OpInfo(id, Assoc.InfixL, argc);
     if (assoc.INFIXR() != null) return new OpDecl.OpInfo(id, Assoc.InfixR, argc);
+    if (assoc.MIXFIX() != null) return new OpDecl.OpInfo(id, Assoc.Mixfix, argc);
     throw new IllegalArgumentException("Unknown assoc: " + assoc.getText());
   }
 
