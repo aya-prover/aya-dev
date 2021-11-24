@@ -14,7 +14,6 @@ import org.aya.concrete.resolve.ModuleCallback;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.order.AyaNonStoppingTicker;
 import org.aya.tyck.order.AyaSccTycker;
@@ -36,28 +35,16 @@ public record FileModuleLoader(
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(context, this, program, builder, null);
+      return tyckModule(context, program, builder, null);
     } catch (IOException e) {
       return null;
     }
   }
 
-  public static <E extends Exception> @NotNull ResolveInfo tyckModule(
-    @NotNull ModuleContext context,
-    @NotNull ModuleLoader recurseLoader,
-    @NotNull ImmutableSeq<Stmt> program,
-    @Nullable Trace.Builder builder,
-    @Nullable ModuleCallback<E> onTycked
-  ) throws E {
-    var resolveInfo = recurseLoader.resolveModule(context, program);
-    tyckResolvedModule(resolveInfo, recurseLoader.reporter(), builder, onTycked);
-    return resolveInfo;
-  }
-
   public static <E extends Exception> void tyckResolvedModule(
     @NotNull ResolveInfo resolveInfo,
     @NotNull Reporter reporter,
-    Trace.@Nullable Builder builder,
+    @Nullable Trace.Builder builder,
     @Nullable ModuleCallback<E> onTycked
   ) throws E {
     var program = resolveInfo.thisProgram();
@@ -78,7 +65,7 @@ public record FileModuleLoader(
   /**
    * Copied and adapted.
    *
-   * @see #tyckModule
+   * @see ModuleLoader#tyckModule
    */
   public static ExprTycker.@NotNull Result tyckExpr(
     @NotNull ModuleContext context,

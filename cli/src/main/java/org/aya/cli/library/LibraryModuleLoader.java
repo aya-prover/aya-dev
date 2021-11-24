@@ -16,11 +16,11 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.SerTerm;
+import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -110,15 +110,11 @@ public record LibraryModuleLoader(
 
   private @Nullable ResolveInfo loadCompiledCore(@NotNull ImmutableSeq<String> mod, @NotNull Path corePath, @NotNull Path sourcePath) {
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
-    try (var inputStream = openCompiledCore(corePath)) {
+    try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledAya) inputStream.readObject();
       return compiledAya.toResolveInfo(cachedSelf.value, context, deState);
     } catch (IOException | ClassNotFoundException e) {
       return null;
     }
-  }
-
-  private @NotNull ObjectInputStream openCompiledCore(@NotNull Path corePath) throws IOException {
-    return new ObjectInputStream(Files.newInputStream(corePath));
   }
 }

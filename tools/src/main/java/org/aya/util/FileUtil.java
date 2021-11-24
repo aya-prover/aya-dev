@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -28,5 +29,9 @@ public interface FileUtil {
     } catch (IOException e) {
       return ImmutableSeq.empty();
     }
+  }
+
+  static @NotNull ObjectInputStream ois(@NotNull Path corePath) throws IOException {
+    return new ObjectInputStream(Files.newInputStream(corePath));
   }
 }
