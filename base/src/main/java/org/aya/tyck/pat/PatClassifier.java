@@ -82,7 +82,7 @@ public record PatClassifier(
         var rhsInfo = contents.get(i);
         var lhsSubst = new Substituter.TermSubst(MutableMap.create());
         var rhsSubst = new Substituter.TermSubst(MutableMap.create());
-        PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(), lhsSubst, rhsSubst);
+        var ctx = PatUnify.unifyPat(lhsInfo._2.patterns(), rhsInfo._2.patterns(), lhsSubst, rhsSubst);
         domination(rhsSubst, tycker.reporter, lhsInfo._1, rhsInfo._1, rhsInfo._2);
         domination(lhsSubst, tycker.reporter, rhsInfo._1, lhsInfo._1, lhsInfo._2);
         var lhsTerm = lhsInfo._2.body().subst(lhsSubst);
@@ -93,7 +93,7 @@ public record PatClassifier(
         } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
           hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
         }
-        var unification = tycker.unifier(pos, Ordering.Eq).compare(lhsTerm, rhsTerm, result);
+        var unification = tycker.unifier(pos, Ordering.Eq, ctx).compare(lhsTerm, rhsTerm, result);
         if (!unification) {
           tycker.reporter.report(new ClausesProblem.Confluence(pos, lhsInfo._1 + 1, rhsInfo._1 + 1,
             lhsTerm, rhsTerm, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));

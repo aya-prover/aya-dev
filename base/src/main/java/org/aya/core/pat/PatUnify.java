@@ -8,6 +8,7 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.visitor.Substituter.TermSubst;
 import org.aya.pretty.doc.Doc;
+import org.aya.tyck.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @see PatUnify#unifyPat(SeqLike, SeqLike, TermSubst, TermSubst)
  */
-public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst) {
+public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst, @NotNull LocalCtx ctx) {
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
     switch (lhs) {
       default -> throw new IllegalStateException();
@@ -42,10 +43,12 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
 
   private void visitList(ImmutableSeq<Pat> lpats, ImmutableSeq<Pat> rpats) {
     assert rpats.sizeEquals(lpats.size());
-    lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst));
+    lpats.zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, ctx));
   }
 
   private void visitAs(@NotNull LocalVar as, Pat rhs) {
+    if (rhs instanceof Pat.Bind bind) ctx.put(bind.bind(), bind.type());
+    else rhs.storeBindings(ctx);
     lhsSubst.add(as, rhs.toTerm());
   }
 
@@ -54,13 +57,13 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
     throw new IllegalArgumentException(doc.debugRender() + " are patterns of different types!");
   }
 
-  private static void unifyPat(Pat lhs, Pat rhs, TermSubst lhsSubst, TermSubst rhsSubst) {
+  private static void unifyPat(Pat lhs, Pat rhs, TermSubst lhsSubst, TermSubst rhsSubst, LocalCtx ctx) {
     PatUnify unify;
     if (rhs instanceof Pat.Bind) {
-      unify = new PatUnify(rhsSubst, lhsSubst);
+      unify = new PatUnify(rhsSubst, lhsSubst, ctx);
       unify.unify(rhs, lhs);
     } else {
-      unify = new PatUnify(lhsSubst, rhsSubst);
+      unify = new PatUnify(lhsSubst, rhsSubst, ctx);
       unify.unify(lhs, rhs);
     }
   }
@@ -70,15 +73,19 @@ public record PatUnify(@NotNull TermSubst lhsSubst, @NotNull TermSubst rhsSubst)
    *
    * @param lhsSubst the substitutions that would turn the lhs pattern to the rhs one.
    * @param rhsSubst the substitutions that would turn the rhs pattern to the lhs one.
+   * @return a ctx that contains all variables that are not unified.
    * @throws IllegalArgumentException if failed
+   * @see PatUnify#visitAs(org.aya.api.ref.LocalVar, org.aya.core.pat.Pat)
    */
-  public static void unifyPat(
+  public static LocalCtx unifyPat(
     @NotNull SeqLike<Pat> lpats,
     @NotNull SeqLike<Pat> rpats,
     @NotNull TermSubst lhsSubst,
     @NotNull TermSubst rhsSubst
   ) {
+    var ctx = new LocalCtx();
     assert rpats.sizeEquals(lpats);
-    lpats.view().zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst));
+    lpats.view().zip(rpats).forEach(pp -> unifyPat(pp._1, pp._2, lhsSubst, rhsSubst, ctx));
+    return ctx;
   }
 }

@@ -536,7 +536,11 @@ public final class ExprTycker {
   }
 
   public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord) {
-    return new DefEq(ord, reporter, false, traceBuilder, state, pos, localCtx);
+    return unifier(pos, ord, localCtx);
+  }
+
+  public @NotNull DefEq unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
+    return new DefEq(ord, reporter, false, traceBuilder, state, pos, ctx);
   }
 
   /**

@@ -3,6 +3,7 @@
 package org.aya.tyck.unify;
 
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
@@ -121,17 +122,17 @@ public final class DefEq {
     if (!compare(l.type(), r.type(), type)) return fail.get();
     varSubst.put(r.ref(), l.toTerm());
     varSubst.put(l.ref(), r.toTerm());
-    var result = success.get();
+    var result = ctx.with(l, () -> ctx.with(r, success));
     varSubst.remove(r.ref());
     varSubst.remove(l.ref());
     return result;
   }
 
-  private <T> T checkParams(SeqLike<Term.@NotNull Param> l, SeqLike<Term.@NotNull Param> r, Supplier<T> fail, Supplier<T> success) {
+  private <T> T checkParams(SeqView<Term.@NotNull Param> l, SeqView<Term.@NotNull Param> r, Supplier<T> fail, Supplier<T> success) {
     if (!l.sizeEquals(r)) return fail.get();
     if (l.isEmpty()) return success.get();
     return checkParam(l.first(), r.first(), freshUniv(), fail, () ->
-      checkParams(l.view().drop(1), r.view().drop(1), fail, success));
+      checkParams(l.drop(1), r.drop(1), fail, success));
   }
 
   private @Contract("->new") @NotNull FormTerm.Univ freshUniv() {
@@ -242,22 +243,25 @@ public final class DefEq {
       case IntroTerm.Tuple $ -> throw new IllegalStateException("TupTerm is never type");
       case IntroTerm.New $ -> throw new IllegalStateException("NewTerm is never type");
       case ErrorTerm $ -> true;
-      case FormTerm.Sigma type1 -> {
-        var params = type1.params().view();
-        for (int i = 1, size = type1.params().size(); i <= size; i++) {
+      case FormTerm.Sigma sigma -> {
+        var params = sigma.params().view();
+        for (int i = 1, size = sigma.params().size(); i <= size; i++) {
           var l = new ElimTerm.Proj(lhs, i);
           var currentParam = params.first();
+          ctx.put(currentParam);
           if (!compare(l, new ElimTerm.Proj(rhs, i), currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
         }
+        ctx.remove(sigma.params().view().map(Term.Param::ref));
         yield true;
       }
-      case FormTerm.Pi type1 -> {
+      case FormTerm.Pi pi -> {
         var dummyVar = new LocalVar("dummy");
-        var ty = type1.param().type();
+        var ty = pi.param().type();
         var dummy = new RefTerm(dummyVar, ty);
-        var dummyArg = new Arg<Term>(dummy, type1.param().explicit());
-        yield compare(CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), type1.substBody(dummy));
+        var dummyArg = new Arg<Term>(dummy, pi.param().explicit());
+        yield ctx.with(dummyVar, ty, () -> compare(
+          CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), pi.substBody(dummy)));
       }
     };
     traceExit();
@@ -275,7 +279,7 @@ public final class DefEq {
         else yield null;
       }
       case RefTerm lhs -> preRhs instanceof RefTerm rhs
-        && varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var() ? rhs.type() : null;
+        && varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var() ? ctx.get(lhs.var()) : null;
       case ElimTerm.App lhs -> {
         if (!(preRhs instanceof ElimTerm.App rhs)) yield null;
         var preFnType = compareUntyped(lhs.of(), rhs.of());
@@ -310,7 +314,7 @@ public final class DefEq {
       }
       case FormTerm.Sigma lhs -> {
         if (!(preRhs instanceof FormTerm.Sigma rhs)) yield null;
-        yield checkParams(lhs.params(), rhs.params(), () -> null, () -> {
+        yield checkParams(lhs.params().view(), rhs.params().view(), () -> null, () -> {
           var bodyIsOk = compare(lhs.params().last().type(), rhs.params().last().type(), freshUniv());
           if (!bodyIsOk) return null;
           return freshUniv();

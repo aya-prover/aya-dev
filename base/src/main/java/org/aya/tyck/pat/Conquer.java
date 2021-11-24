@@ -19,6 +19,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Normalizer;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.LocalCtx;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -74,9 +75,15 @@ public record Conquer(
   private void checkConditions(Pat ctor, int nth, int i, Term condition, Substituter.TermSubst matchy, SourcePos conditionPos) {
     var currentClause = matchings.get(nth);
     var newBody = currentClause.body().subst(matchy);
+    var ctx = new LocalCtx();
     var newArgs = currentClause.patterns().map(pat -> new Arg<>(new PatToTerm() {
       @Override public @NotNull Term visitCtor(Pat.@NotNull Ctor newCtor) {
         return newCtor == ctor ? condition : super.visitCtor(newCtor);
+      }
+
+      @Override public Term visit(@NotNull Pat pat) {
+        if (pat instanceof Pat.Bind bind) ctx.put(bind.bind(), bind.type());
+        return super.visit(pat);
       }
     }.visit(pat), pat.explicit()));
     var volynskaya = new Normalizer(tycker.state).tryUnfoldClauses(
@@ -91,7 +98,7 @@ public record Conquer(
     } else if (volynskaya.data() instanceof ErrorTerm error && error.description() instanceof CallTerm.Hole hole) {
       hole.ref().conditions.append(Tuple.of(matchy, newBody));
     }
-    var unification = tycker.unifier(sourcePos, Ordering.Eq)
+    var unification = tycker.unifier(sourcePos, Ordering.Eq, ctx)
       .compare(newBody, volynskaya.data(), signature.result().subst(matchy));
     if (!unification) {
       tycker.reporter.report(new ClausesProblem.Conditions(

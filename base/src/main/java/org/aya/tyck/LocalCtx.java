@@ -86,8 +86,7 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
 
   @Contract(pure = true) public @NotNull Term get(LocalVar var) {
     var result = localMap.getOrElse(var, () -> parentGet(var));
-    if (result == null)
-      throw new AssertionError(var.name());
+    assert result != null : var.name();
     return result;
   }
 
