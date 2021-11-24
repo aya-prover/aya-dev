@@ -24,8 +24,6 @@ import org.aya.distill.BaseDistiller;
 import org.aya.distill.CoreDistiller;
 import org.aya.generic.ParamLike;
 import org.aya.pretty.doc.Doc;
-import org.aya.tyck.LittleTyper;
-import org.aya.tyck.LocalCtx;
 import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -109,9 +107,6 @@ public sealed interface Term extends CoreTerm permits
 
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return accept(new CoreDistiller(options), BaseDistiller.Outer.Free);
-  }
-  default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
-    return accept(new LittleTyper(state, ctx), Unit.unit());
   }
 
   interface Visitor<P, R> {
