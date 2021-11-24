@@ -14,14 +14,13 @@ import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Similar to <code>GetTypeVisitor</code> in Arend.
  *
  * @author ice1000
  */
-public record LittleTyper(@Nullable TyckState state, @NotNull LocalCtx localCtx) implements Term.Visitor<Unit, Term> {
+public record LittleTyper(@NotNull TyckState state, @NotNull LocalCtx localCtx) implements Term.Visitor<Unit, Term> {
   @Override public Term visitRef(@NotNull RefTerm term, Unit unit) {
     return localCtx.get(term.var());
   }

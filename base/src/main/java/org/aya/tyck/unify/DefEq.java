@@ -46,6 +46,7 @@ public final class DefEq {
   private final @NotNull SourcePos pos;
   private final @NotNull Ordering cmp;
   private final @NotNull LocalCtx ctx;
+  private final @NotNull Eta uneta;
 
   public DefEq(
     @NotNull Ordering cmp, @NotNull Reporter reporter, boolean allowVague,
@@ -59,6 +60,7 @@ public final class DefEq {
     this.state = state;
     this.pos = pos;
     this.ctx = ctx;
+    uneta = new Eta(ctx);
   }
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -205,7 +207,7 @@ public final class DefEq {
   ) {
     var subst = new Substituter.TermSubst(new MutableHashMap<>(/*spine.size() * 2*/));
     for (var arg : lhs.args().view().zip(meta.telescope)) {
-      if (Eta.uneta(arg._1.term()) instanceof RefTerm ref) {
+      if (uneta.uneta(arg._1.term()) instanceof RefTerm ref) {
         if (subst.map().containsKey(ref.var())) return null;
         subst.add(ref.var(), arg._2.toTerm());
       } else return null;
@@ -272,13 +274,8 @@ public final class DefEq {
         if (preRhs instanceof RefTerm.MetaPat rPat && lhsRef == rPat.ref()) yield lhsRef.type();
         else yield null;
       }
-      case RefTerm lhs -> {
-        if (preRhs instanceof RefTerm rhs
-          && varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var()) {
-          yield rhs.type();
-        }
-        yield null;
-      }
+      case RefTerm lhs -> preRhs instanceof RefTerm rhs
+        && varSubst.getOrDefault(rhs.var(), rhs).var() == lhs.var() ? rhs.type() : null;
       case ElimTerm.App lhs -> {
         if (!(preRhs instanceof ElimTerm.App rhs)) yield null;
         var preFnType = compareUntyped(lhs.of(), rhs.of());
@@ -368,10 +365,10 @@ public final class DefEq {
           }
           yield holeTy;
         }
-        // Long time ago I wrote this to offer more unification equations,
+        // Long time ago I wrote this to generate more unification equations,
         // which solves more universe levels. However, with latest version Aya (0.13),
         // removing this does not break anything.
-        // compareUntyped(preRhs.accept(new LittleTyper(state, ctx), Unit.unit()), meta.result);
+        // compareUntyped(preRhs.computeType(state, ctx), meta.result);
         var argSubst = extract(lhs, preRhs, meta);
         if (argSubst == null) {
           reporter.report(new HoleProblem.BadSpineError(lhs, pos));

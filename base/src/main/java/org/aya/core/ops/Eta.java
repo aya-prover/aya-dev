@@ -5,15 +5,16 @@ package org.aya.core.ops;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.util.Arg;
 import org.aya.core.term.*;
+import org.aya.tyck.LocalCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
-public interface Eta {
+public record Eta(@NotNull LocalCtx ctx) {
   /**
    * Note this is not a full eta-reduction. Several cases are ignored.
    * The overall goal is to determine whether a term can be reduced to RefTerm
    */
-  static @NotNull Term uneta(@NotNull Term term) {
+  public @NotNull Term uneta(@NotNull Term term) {
     return switch (term) {
       case IntroTerm.Lambda lambdaTerm -> {
         var etaBodyTerm = uneta(lambdaTerm.body());
@@ -26,13 +27,13 @@ public interface Eta {
       }
       case IntroTerm.Tuple tupleTerm -> {
         if (tupleTerm.items().isEmpty()) yield tupleTerm;
-        var etaItems = tupleTerm.items().map(Eta::uneta);
+        var etaItems = tupleTerm.items().map(this::uneta);
         var defaultRes = new IntroTerm.Tuple(etaItems);
         // Get first item's Proj.of Term to compare with other items'
         var firstItem = etaItems.first();
         if (!(firstItem instanceof ElimTerm.Proj projTerm
           && projTerm.of() instanceof RefTerm refTerm
-          && refTerm.type() instanceof FormTerm.Sigma sigmaTerm)) yield defaultRes;
+          && ctx.get(refTerm.var()) instanceof FormTerm.Sigma sigmaTerm)) yield defaultRes;
         // Make sure targetSigma's size is equal to this tuple's size
         if (!sigmaTerm.params().sizeEquals(tupleTerm.items().size())) yield defaultRes;
         // Make sure every Proj.of Term is the same and index match the position
@@ -81,9 +82,8 @@ public interface Eta {
   }
 
   @VisibleForTesting
-  static boolean compareRefTerm(@NotNull Term lhs, @NotNull Term rhs) {
-    if (!(lhs instanceof RefTerm lhsRefTerm
-      && rhs instanceof RefTerm rhsRefTerm)) return false;
-    return lhsRefTerm.var().name().equals(rhsRefTerm.var().name());
+  public static boolean compareRefTerm(@NotNull Term lhs, @NotNull Term rhs) {
+    if (!(lhs instanceof RefTerm lhsRefTerm && rhs instanceof RefTerm rhsRefTerm)) return false;
+    return lhsRefTerm.var() == rhsRefTerm.var();
   }
 }

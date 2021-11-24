@@ -110,7 +110,7 @@ public sealed interface Term extends CoreTerm permits
   @Override default @NotNull Doc toDoc(@NotNull DistillerOptions options) {
     return accept(new CoreDistiller(options), BaseDistiller.Outer.Free);
   }
-  default @NotNull Term computeType(@Nullable TyckState state, @NotNull LocalCtx ctx) {
+  default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return accept(new LittleTyper(state, ctx), Unit.unit());
   }
 
