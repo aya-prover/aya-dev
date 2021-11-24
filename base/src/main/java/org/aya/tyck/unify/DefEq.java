@@ -23,6 +23,7 @@ import org.aya.core.sort.Sort;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.core.visitor.Unfolder;
+import org.aya.tyck.LocalCtx;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.HoleProblem;
 import org.aya.tyck.trace.Trace;
@@ -44,10 +45,12 @@ public final class DefEq {
   private final @NotNull Reporter reporter;
   private final @NotNull SourcePos pos;
   private final @NotNull Ordering cmp;
+  private final @NotNull LocalCtx ctx;
 
   public DefEq(
     @NotNull Ordering cmp, @NotNull Reporter reporter, boolean allowVague,
-    @Nullable Trace.Builder traceBuilder, @NotNull TyckState state, @NotNull SourcePos pos
+    @Nullable Trace.Builder traceBuilder, @NotNull TyckState state,
+    @NotNull SourcePos pos, @NotNull LocalCtx ctx
   ) {
     this.cmp = cmp;
     this.allowVague = allowVague;
@@ -55,6 +58,7 @@ public final class DefEq {
     this.traceBuilder = traceBuilder;
     this.state = state;
     this.pos = pos;
+    this.ctx = ctx;
   }
 
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
@@ -190,7 +194,10 @@ public final class DefEq {
   }
 
   private @NotNull TyckState.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
-    return new TyckState.Eqn(lhs, rhs, cmp, pos, varSubst.toImmutableMap());
+    var local = new LocalCtx();
+    ctx.forward(local, lhs, state);
+    ctx.forward(local, rhs, state);
+    return new TyckState.Eqn(lhs, rhs, cmp, pos, local, varSubst.toImmutableMap());
   }
 
   private @Nullable Substituter.TermSubst extract(
@@ -361,6 +368,8 @@ public final class DefEq {
           }
           yield holeTy;
         }
+        // Offer more information (useful in unification)
+        compareUntyped(preRhs.computeType(state, ctx), meta.result);
         var argSubst = extract(lhs, preRhs, meta);
         if (argSubst == null) {
           reporter.report(new HoleProblem.BadSpineError(lhs, pos));
@@ -376,9 +385,8 @@ public final class DefEq {
         }
         subst.add(argSubst);
         varSubst.forEach(subst::add);
-        var solved = preRhs.subst(subst).freezeHoles(state);
         assert !state.metas().containsKey(meta);
-        compareUntyped(solved.computeType(state), meta.result);
+        var solved = preRhs.subst(subst).freezeHoles(state);
         var scopeCheck = solved.scopeCheck(meta.fullTelescope().map(Term.Param::ref).toImmutableSeq());
         if (scopeCheck.isNotEmpty()) {
           reporter.report(new HoleProblem.BadlyScopedError(lhs, solved, scopeCheck, pos));

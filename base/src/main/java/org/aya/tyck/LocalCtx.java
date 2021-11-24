@@ -8,11 +8,13 @@ import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple2;
+import kala.tuple.Unit;
 import org.aya.api.ref.LocalVar;
 import org.aya.core.Meta;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -50,6 +52,19 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
     vars.forEach(localMap::remove);
   }
 
+  public void forward(@NotNull LocalCtx dest, @NotNull Term term, @NotNull TyckState state) {
+    term.accept((VarConsumer<Unit>) (usage, o) -> {
+      switch (usage) {
+        case LocalVar localVar -> dest.put(localVar, get(localVar));
+        case Meta meta -> {
+          var sol = state.metas().getOrNull(meta);
+          if (sol != null) forward(dest, sol, state);
+        }
+        case null, default -> {}
+      }
+    }, Unit.unit());
+  }
+
   public <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
     localMap.put(var, type);
     try {
@@ -71,7 +86,8 @@ public record LocalCtx(@NotNull MutableMap<LocalVar, Term> localMap, @Nullable L
 
   @Contract(pure = true) public @NotNull Term get(LocalVar var) {
     var result = localMap.getOrElse(var, () -> parentGet(var));
-    assert result != null : var.name();
+    if (result == null)
+      throw new AssertionError(var.name());
     return result;
   }
 

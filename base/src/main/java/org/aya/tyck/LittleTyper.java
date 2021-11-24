@@ -21,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ice1000
  */
-public record LittleTyper(@Nullable TyckState state) implements Term.Visitor<Unit, Term> {
+public record LittleTyper(@Nullable TyckState state, @NotNull LocalCtx localCtx) implements Term.Visitor<Unit, Term> {
   @Override public Term visitRef(@NotNull RefTerm term, Unit unit) {
-    return term.type();
+    return localCtx.get(term.var());
   }
 
   @Override public Term visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
