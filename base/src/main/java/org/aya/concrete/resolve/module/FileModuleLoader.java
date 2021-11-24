@@ -31,13 +31,12 @@ public record FileModuleLoader(
   @Override @NotNull Reporter reporter,
   Trace.@Nullable Builder builder
 ) implements ModuleLoader {
-  @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path) {
     var sourcePath = resolveFile(basePath, path);
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(context, recurseLoader, program, builder, null);
+      return tyckModule(context, this, program, builder, null);
     } catch (IOException e) {
       return null;
     }

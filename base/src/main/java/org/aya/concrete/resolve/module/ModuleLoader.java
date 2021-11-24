@@ -25,9 +25,5 @@ public interface ModuleLoader {
     return resolveInfo;
   }
 
-  @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader);
-
-  default @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path) {
-    return load(path, this);
-  }
+  @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path);
 }

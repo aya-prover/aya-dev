@@ -81,7 +81,7 @@ public record LibraryModuleLoader(
   }
 
   @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
+  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod) {
     var sourcePath = resolveFile(thisModulePath, mod);
     if (sourcePath == null) {
       // We are loading a module belonging to dependencies, find the compiled core.
@@ -102,7 +102,7 @@ public record LibraryModuleLoader(
     try {
       var program = AyaParsing.program(locator, reporter, sourcePath);
       var context = new EmptyContext(reporter, sourcePath).derive(mod);
-      return recurseLoader.resolveModule(context, program);
+      return resolveModule(context, program);
     } catch (IOException e) {
       return null;
     }

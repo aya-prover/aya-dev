@@ -30,8 +30,8 @@ public final class CachedModuleLoader implements ModuleLoader {
   }
 
   @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<String> path, @NotNull ModuleLoader recurseLoader) {
-    return cachedOrLoad(path, () -> loader.load(path, recurseLoader));
+  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<String> path) {
+    return cachedOrLoad(path, () -> loader.load(path));
   }
 
   @ApiStatus.Internal
