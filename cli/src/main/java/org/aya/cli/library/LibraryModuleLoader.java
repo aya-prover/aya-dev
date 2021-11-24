@@ -40,11 +40,11 @@ import java.nio.file.Path;
  * @see FileModuleLoader
  */
 record LibraryModuleLoader(
-  @NotNull LibraryCompiler compiler,
+  @NotNull LibraryOwner compiler,
   @NotNull LibraryModuleLoader.United states
 ) implements ModuleLoader {
   @Override public @NotNull CountingReporter reporter() {
-    return compiler.reporter;
+    return compiler.reporter();
   }
 
   private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {

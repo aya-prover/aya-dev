@@ -34,20 +34,18 @@ import java.nio.file.Path;
 /**
  * @author kiva
  */
-public class LibraryCompiler implements ImportResolver.ImportLoader {
-  public static final int DEFAULT_INDENT = 2;
-  public final @NotNull CountingReporter reporter;
+public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwner {
   final @NotNull LibraryConfig library;
   final @NotNull SourceFileLocator locator;
   final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
 
+  private final @NotNull CountingReporter reporter;
   private final @NotNull CompilerFlags flags;
   private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
   private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
   private final @NotNull ImmutableSeq<LibrarySource> sources;
 
-  /** @return Source dirs of this module, out dirs of all dependencies. */
-  public @NotNull SeqView<Path> modulePath() {
+  @Override public @NotNull SeqView<Path> modulePath() {
     return thisModulePath.view();
   }
 
@@ -100,7 +98,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       collectDep(graph, file);
     }
     reporter.reportNest("Done in " + StringUtil.timeToString(
-      System.currentTimeMillis() - startTime), DEFAULT_INDENT + 2);
+      System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return graph;
   }
 
@@ -152,7 +150,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     var depGraph = resolveLibraryImports();
     var make = make(depGraph);
     reporter.reportNest("Library loaded in " + StringUtil.timeToString(
-      System.currentTimeMillis() - startTime), DEFAULT_INDENT + 2);
+      System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return make;
   }
 
@@ -197,9 +195,12 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     return false;
   }
 
-  /** @return Out dir of this module. */
-  public @NotNull Path outDir() {
+  @Override public @NotNull Path outDir() {
     return library.libraryOutRoot();
+  }
+
+  @Override public @NotNull CountingReporter reporter() {
+    return reporter;
   }
 
   record LibraryOrgaTycker(
@@ -237,7 +238,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       if (mod == null) throw new IllegalStateException("Unable to load module: " + moduleName);
       file.resolveInfo().value = mod;
       outerReporter.reportNest("[Tyck] %s (%s)".formatted(
-        QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), DEFAULT_INDENT);
+        QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
     }
   }
 
@@ -249,7 +250,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   private void reportNest(@NotNull String text) {
-    reporter.reportNest(text, DEFAULT_INDENT);
+    reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT);
   }
 
   private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {
@@ -277,7 +278,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     return file;
   }
 
-  public @NotNull LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
+  @Override public @NotNull LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
     var file = findModuleFileHere(mod);
     if (file == null) for (var dep : deps) {
       file = dep.findModuleFileHere(mod);
