@@ -16,6 +16,7 @@ import org.aya.concrete.resolve.context.PhysicalModuleContext;
 import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.error.UnknownOperatorError;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
+import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
@@ -124,7 +125,7 @@ public record CompiledAya(
   }
 
   /** like {@link org.aya.concrete.resolve.visitor.StmtShallowResolver} but only resolve import */
-  private void shallowResolve(@NotNull CachedModuleLoader<?> loader, @NotNull ResolveInfo thisResolve) {
+  private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var modName : imports) {
       var success = loader.load(modName);
       if (success == null) thisResolve.thisModule().reportAndThrow(new ModNotFoundError(modName, SourcePos.SER));

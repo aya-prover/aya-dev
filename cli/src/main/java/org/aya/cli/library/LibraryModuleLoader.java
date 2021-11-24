@@ -6,16 +6,17 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.Ref;
-import org.aya.api.error.Reporter;
+import org.aya.api.error.CountingReporter;
 import org.aya.api.error.SourceFileLocator;
+import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
+import org.aya.core.def.Def;
 import org.aya.core.serde.CompiledAya;
-import org.aya.core.serde.SerTerm;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,12 +44,12 @@ import java.nio.file.Path;
  * @see FileModuleLoader
  */
 public record LibraryModuleLoader(
-  @NotNull Reporter reporter,
+  @Override @NotNull CountingReporter reporter,
   @NotNull SourceFileLocator locator,
   @NotNull SeqView<Path> thisModulePath,
   @NotNull Path thisOutRoot,
   @NotNull Ref<CachedModuleLoader<LibraryModuleLoader>> cachedSelf,
-  @NotNull SerTerm.DeState deState
+  @NotNull LibraryCompiler.United states
 ) implements ModuleLoader {
   public static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
     var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
@@ -76,12 +77,14 @@ public record LibraryModuleLoader(
     var cached = cachedSelf.value;
     return cached.cachedOrLoad(mod, () -> {
       var context = new EmptyContext(reporter, source.file()).derive(mod);
-      return cached.resolveModule(context, source.program().value);
+      return cached.tyckModule(context, source.program().value, null,
+        (moduleResolve, stmts, defs) -> {
+          if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs);
+        });
     });
   }
 
-  @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod) {
+  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod) {
     var sourcePath = resolveFile(thisModulePath, mod);
     if (sourcePath == null) {
       // We are loading a module belonging to dependencies, find the compiled core.
@@ -108,11 +111,21 @@ public record LibraryModuleLoader(
     }
   }
 
+  private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
+    try {
+      var coreFile = file.coreFile();
+      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states.ser());
+      Timestamp.update(file);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
   private @Nullable ResolveInfo loadCompiledCore(@NotNull ImmutableSeq<String> mod, @NotNull Path corePath, @NotNull Path sourcePath) {
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledAya) inputStream.readObject();
-      return compiledAya.toResolveInfo(cachedSelf.value, context, deState);
+      return compiledAya.toResolveInfo(cachedSelf.value, context, states.de());
     } catch (IOException | ClassNotFoundException e) {
       return null;
     }
