@@ -10,6 +10,7 @@ import org.aya.cli.library.Timestamp;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
+import org.aya.concrete.resolve.module.CachedModuleLoader;
 import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.def.Def;
@@ -42,7 +43,7 @@ public interface LibraryModuleLoader extends ModuleLoader {
     }
   }
 
-  @Override default @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod) {
+  @Override default @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
     var basePaths = compiler().modulePath();
     var sourcePath = FileUtil.resolveFile(basePaths, mod, ".aya");
     if (sourcePath == null) {
@@ -50,14 +51,14 @@ public interface LibraryModuleLoader extends ModuleLoader {
       // The compiled core should always exist, otherwise the dependency is not built.
       var depCorePath = FileUtil.resolveFile(basePaths, mod, Constants.AYAC_POSTFIX);
       assert depCorePath != null : "dependencies not built?";
-      return loadCompiledCore(mod, depCorePath, depCorePath);
+      return loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
     }
 
     // we are loading a module belonging to this library, try finding compiled core first.
     // If found, check modifications and decide whether to proceed with compiled core.
     var corePath = FileUtil.resolveFile(compiler().outDir(), mod, Constants.AYAC_POSTFIX);
     if (Files.exists(corePath)) {
-      return loadCompiledCore(mod, corePath, sourcePath);
+      return loadCompiledCore(mod, corePath, sourcePath, recurseLoader);
     }
 
     // No compiled core is found, or source file is modified, compile it from source.
@@ -67,15 +68,18 @@ public interface LibraryModuleLoader extends ModuleLoader {
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
     return tyckModule(context, program, null, (moduleResolve, defs) -> {
       if (reporter().noError()) saveCompiledCore(source, moduleResolve, defs);
-    });
+    }, recurseLoader);
   }
 
-  private @Nullable ResolveInfo loadCompiledCore(@NotNull ImmutableSeq<String> mod, @NotNull Path corePath, @NotNull Path sourcePath) {
+  private @Nullable ResolveInfo loadCompiledCore(
+    @NotNull ImmutableSeq<String> mod, @NotNull Path corePath,
+    @NotNull Path sourcePath, @NotNull ModuleLoader recurseLoader
+  ) {
+    assert recurseLoader instanceof CachedModuleLoader<?>;
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledAya) inputStream.readObject();
-      // VERY IMPORTANT! Must use `compiler.moduleLoader` instead of `this` as it's cached.
-      return compiledAya.toResolveInfo(this, context, states().de());
+      return compiledAya.toResolveInfo(recurseLoader, context, states().de());
     } catch (IOException | ClassNotFoundException e) {
       return null;
     }

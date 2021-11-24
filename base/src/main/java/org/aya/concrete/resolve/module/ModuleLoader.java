@@ -24,9 +24,10 @@ public interface ModuleLoader {
     @NotNull ModuleContext context,
     @NotNull ImmutableSeq<Stmt> program,
     @Nullable Trace.Builder builder,
-    @Nullable ModuleCallback<E> onTycked
+    @Nullable ModuleCallback<E> onTycked,
+    @NotNull ModuleLoader recurseLoader
   ) throws E {
-    return tyckModule(builder, resolveModule(context, program), onTycked);
+    return tyckModule(builder, resolveModule(context, program, recurseLoader), onTycked);
   }
 
   private <E extends Exception> @NotNull ResolveInfo
@@ -48,13 +49,17 @@ public interface ModuleLoader {
 
   default @NotNull ResolveInfo resolveModule(
     @NotNull ModuleContext context,
-    @NotNull ImmutableSeq<Stmt> program
+    @NotNull ImmutableSeq<Stmt> program,
+    @NotNull ModuleLoader recurseLoader
   ) {
     var resolveInfo = new ResolveInfo(context, program, new AyaBinOpSet(reporter()));
-    Stmt.resolve(program, resolveInfo, this);
+    Stmt.resolve(program, resolveInfo, recurseLoader);
     return resolveInfo;
   }
 
   @NotNull Reporter reporter();
-  @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path);
+  @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader);
+  default @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path) {
+    return load(path, this);
+  }
 }

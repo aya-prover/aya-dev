@@ -15,9 +15,9 @@ public record ModuleListLoader(
   @Override @NotNull Reporter reporter,
   @NotNull ImmutableSeq<? extends ModuleLoader> loaders
 ) implements ModuleLoader {
-  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path) {
+  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     for (var loader : loaders) {
-      var mod = loader.load(path);
+      var mod = loader.load(path, recurseLoader);
       if (mod != null) return mod;
     }
     return null;

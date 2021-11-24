@@ -26,9 +26,9 @@ public class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader
     this.loader = loader;
   }
 
-  @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<String> path) {
+  @Override public @Nullable ResolveInfo
+  load(@NotNull ImmutableSeq<String> path, @NotNull ModuleLoader recurseLoader) {
     var qualified = QualifiedID.join(path);
-    return cache.getOrPut(qualified, () -> loader.load(path));
+    return cache.getOrPut(qualified, () -> loader.load(path, recurseLoader));
   }
 }

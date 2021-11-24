@@ -18,7 +18,7 @@ public final class EmptyModuleLoader implements ModuleLoader {
   private EmptyModuleLoader() {}
 
   @Override public @Nullable ResolveInfo
-  load(@NotNull ImmutableSeq<@NotNull String> path) {
+  load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     return null;
   }
 }
