@@ -46,11 +46,11 @@ public class ParseTest {
   }
 
   public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitStmt(AyaParsing.parser(code).stmt(), false).toImmutableSeq();
+    return INSTANCE.visitStmt(AyaParsing.parser(code).stmt()).toImmutableSeq();
   }
 
   public static @NotNull ImmutableSeq<Stmt> parseManyStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitProgram(AyaParsing.parser(code).program(), false);
+    return INSTANCE.visitProgram(AyaParsing.parser(code).program());
   }
 
   public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {

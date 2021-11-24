@@ -61,11 +61,11 @@ public final class AyaProducer {
   public Either<ImmutableSeq<Stmt>, Expr> visitRepl(AyaParser.ReplContext ctx) {
     var expr = ctx.expr();
     if (expr != null) return Either.right(visitExpr(expr));
-    return Either.left(ImmutableSeq.from(ctx.stmt()).flatMap(s -> visitStmt(s, false)));
+    return Either.left(ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt));
   }
 
-  public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx, boolean importOnly) {
-    return ImmutableSeq.from(ctx.stmt()).flatMap(s -> visitStmt(s, importOnly));
+  public ImmutableSeq<Stmt> visitProgram(AyaParser.ProgramContext ctx) {
+    return ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt);
   }
 
   public Decl.PrimDecl visitPrimDecl(AyaParser.PrimDeclContext ctx) {
@@ -98,15 +98,13 @@ public final class AyaProducer {
     );
   }
 
-  public @NotNull SeqLike<Stmt> visitStmt(AyaParser.StmtContext ctx, boolean importOnly) {
+  public @NotNull SeqLike<Stmt> visitStmt(AyaParser.StmtContext ctx) {
     var importCmd = ctx.importCmd();
     if (importCmd != null) return ImmutableSeq.of(visitImportCmd(importCmd));
     var mod = ctx.module();
-    if (mod != null) return ImmutableSeq.of(visitModule(mod, importOnly));
+    if (mod != null) return ImmutableSeq.of(visitModule(mod));
     var openCmd = ctx.openCmd();
     if (openCmd != null) return visitOpenCmd(openCmd);
-    if (importOnly) return ImmutableSeq.empty();
-
     var decl = ctx.decl();
     if (decl != null) {
       var result = visitDecl(decl);
@@ -825,11 +823,11 @@ public final class AyaProducer {
       ? Command.Open.UseHide.Strategy.Using : Command.Open.UseHide.Strategy.Hiding);
   }
 
-  public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx, boolean importOnly) {
+  public @NotNull Command.Module visitModule(AyaParser.ModuleContext ctx) {
     var id = ctx.ID();
     return new Command.Module(
       sourcePosOf(id), id.getText(),
-      ImmutableSeq.from(ctx.stmt()).flatMap(s -> visitStmt(s, importOnly))
+      ImmutableSeq.from(ctx.stmt()).flatMap(this::visitStmt)
     );
   }
 

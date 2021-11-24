@@ -4,6 +4,9 @@ package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.value.Ref;
+import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.stmt.Stmt;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,14 +15,22 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+/**
+ * A source file may or may not be tycked.
+ *
+ * @param program     initialized after parse
+ * @param resolveInfo initialized after resolve
+ */
 @Debug.Renderer(text = "file")
 public record LibrarySource(
   @NotNull LibraryCompiler owner,
   @NotNull Path file,
-  @NotNull DynamicSeq<LibrarySource> imports
+  @NotNull DynamicSeq<LibrarySource> imports,
+  @NotNull Ref<ImmutableSeq<Stmt>> program,
+  @NotNull Ref<ResolveInfo> resolveInfo
 ) {
   public LibrarySource(@NotNull LibraryCompiler owner, @NotNull Path file) {
-    this(owner, canonicalize(file), DynamicSeq.create());
+    this(owner, canonicalize(file), DynamicSeq.create(), new Ref<>(), new Ref<>());
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {

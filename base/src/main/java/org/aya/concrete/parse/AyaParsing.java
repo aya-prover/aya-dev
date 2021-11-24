@@ -63,21 +63,13 @@ public interface AyaParsing {
     @NotNull SourceFileLocator locator,
     @NotNull Reporter reporter, @NotNull Path path
   ) throws IOException {
-    return program(locator, reporter, path, false);
-  }
-
-  static @NotNull ImmutableSeq<Stmt> program(
-    @NotNull SourceFileLocator locator,
-    @NotNull Reporter reporter, @NotNull Path path,
-    boolean importOnly
-  ) throws IOException {
     return program(reporter, new SourceFile(locator.displayName(path),
-      Files.readString(path)), importOnly);
+      Files.readString(path)));
   }
 
-  static @NotNull ImmutableSeq<Stmt> program(@NotNull Reporter reporter, SourceFile sourceFile, boolean importOnly) {
+  static @NotNull ImmutableSeq<Stmt> program(@NotNull Reporter reporter, SourceFile sourceFile) {
     return new AyaProducer(sourceFile, reporter).visitProgram(
-      parser(sourceFile, reporter).program(), importOnly);
+      parser(sourceFile, reporter).program());
   }
 
   private static @NotNull <T> T replParser(

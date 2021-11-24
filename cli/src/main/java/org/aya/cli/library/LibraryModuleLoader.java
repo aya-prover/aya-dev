@@ -71,6 +71,15 @@ public record LibraryModuleLoader(
     return null;
   }
 
+  @Nullable ResolveInfo loadLibrarySource(@NotNull LibrarySource source) {
+    var mod = source.moduleName();
+    var cached = cachedSelf.value;
+    return cached.cachedOrLoad(mod, () -> {
+      var context = new EmptyContext(reporter, source.file()).derive(mod);
+      return FileModuleLoader.resolveModule(context, cached, source.program().value, reporter);
+    });
+  }
+
   @Override
   public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = resolveFile(thisModulePath, mod);

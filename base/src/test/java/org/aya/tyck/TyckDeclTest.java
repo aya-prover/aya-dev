@@ -46,7 +46,7 @@ public class TyckDeclTest {
   }
 
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
-    var decls = AyaParsing.program(ThrowingReporter.INSTANCE, new SourceFile(Path.of("114514"), text), false);
+    var decls = AyaParsing.program(ThrowingReporter.INSTANCE, new SourceFile(Path.of("114514"), text));
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
     resolve(decls, ctx, new EmptyModuleLoader());
     return decls;
