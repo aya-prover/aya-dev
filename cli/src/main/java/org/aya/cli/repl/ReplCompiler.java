@@ -59,7 +59,7 @@ public class ReplCompiler {
     var programOrExpr = AyaParsing.repl(reporter, text);
     try {
       var loader = new ModuleListLoader(reporter, modulePaths.view().map(path ->
-        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, null))).toImmutableSeq());
+        new CachedModuleLoader<>(new FileModuleLoader(locator, path, reporter, null))).toImmutableSeq());
       return programOrExpr.map(
         program -> {
           var newDefs = new Ref<ImmutableSeq<Def>>();

@@ -67,7 +67,7 @@ public record SingleFileCompiler(
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
-        new CachedModuleLoader(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
+        new CachedModuleLoader<>(new FileModuleLoader(locator, path, reporter, builder))).toImmutableSeq());
       loader.tyckModule(ctx, program, builder,
         (moduleResolve, stmts, defs) -> {
           distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);

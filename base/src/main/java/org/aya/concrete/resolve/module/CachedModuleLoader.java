@@ -17,15 +17,15 @@ import java.util.function.Supplier;
 /**
  * @author re-xyr
  */
-public final class CachedModuleLoader implements ModuleLoader {
+public final class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader {
   private final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = MutableTreeMap.of();
-  final @NotNull ModuleLoader loader;
+  final @NotNull ML loader;
 
   @Override public @NotNull Reporter reporter() {
     return loader.reporter();
   }
 
-  public CachedModuleLoader(@NotNull ModuleLoader loader) {
+  public CachedModuleLoader(@NotNull ML loader) {
     this.loader = loader;
   }
 

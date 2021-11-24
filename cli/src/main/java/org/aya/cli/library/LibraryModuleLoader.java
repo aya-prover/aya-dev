@@ -47,7 +47,7 @@ public record LibraryModuleLoader(
   @NotNull SourceFileLocator locator,
   @NotNull SeqView<Path> thisModulePath,
   @NotNull Path thisOutRoot,
-  @NotNull Ref<CachedModuleLoader> cachedSelf,
+  @NotNull Ref<CachedModuleLoader<LibraryModuleLoader>> cachedSelf,
   @NotNull SerTerm.DeState deState
 ) implements ModuleLoader {
   public static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {

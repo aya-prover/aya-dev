@@ -184,7 +184,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
     var loader = new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot, new Ref<>(), states.de);
-    loader.cachedSelf().value = new CachedModuleLoader(loader);
+    loader.cachedSelf().value = new CachedModuleLoader<>(loader);
 
     var delayedReporter = new DelayedReporter(reporter);
     var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(delayedReporter, this, loader), changed);
