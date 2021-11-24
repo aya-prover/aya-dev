@@ -368,8 +368,10 @@ public final class DefEq {
           }
           yield holeTy;
         }
-        // Offer more information (useful in unification)
-        compareUntyped(preRhs.computeType(state, ctx), meta.result);
+        // Long time ago I wrote this to offer more unification equations,
+        // which solves more universe levels. However, with latest version Aya (0.13),
+        // removing this does not break anything.
+        // compareUntyped(preRhs.accept(new LittleTyper(state, ctx), Unit.unit()), meta.result);
         var argSubst = extract(lhs, preRhs, meta);
         if (argSubst == null) {
           reporter.report(new HoleProblem.BadSpineError(lhs, pos));
