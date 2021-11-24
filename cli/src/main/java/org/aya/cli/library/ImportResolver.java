@@ -8,10 +8,7 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
 
-public record ImportResolver(
-  @NotNull ImportResolver.ImportLoader loader,
-  @NotNull LibrarySource librarySource
-) {
+public record ImportResolver(@NotNull ImportLoader loader, @NotNull LibrarySource librarySource) {
   @FunctionalInterface
   interface ImportLoader {
     @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod);

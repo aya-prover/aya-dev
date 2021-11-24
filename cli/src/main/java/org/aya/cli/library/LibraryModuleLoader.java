@@ -2,14 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
-import kala.collection.Seq;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
-import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.utils.AyaCompiler;
-import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
@@ -17,6 +12,9 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.def.Def;
 import org.aya.core.serde.CompiledAya;
+import org.aya.core.serde.SerTerm;
+import org.aya.core.serde.Serializer;
+import org.aya.generic.Constants;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,95 +28,81 @@ import java.nio.file.Path;
  * For modules belonging to this library, both compiled/source modules are searched and loaded (compiled first).
  * For modules belonging to dependencies, only compiled modules are searched and loaded.
  * This is archived by not storing source dirs of dependencies to
- * {@link LibraryModuleLoader#thisModulePath} and always trying to find compiled cores in
- * {@link LibraryModuleLoader#thisOutRoot}.
+ * {@link LibraryCompiler#modulePath()} and always trying to find compiled cores in
+ * {@link LibraryCompiler#outDir()}.
  *
  * <p>
  * Unlike {@link FileModuleLoader}, this loader only resolves the module rather than tycking it.
  * Tyck decision is made by {@link LibraryCompiler} by judging whether the source file
  * is modified since last build.
  *
- * @param thisModulePath Source dirs of this module, out dirs of all dependencies.
- * @param thisOutRoot    Out dir of this module.
  * @author kiva
  * @see FileModuleLoader
  */
-public record LibraryModuleLoader(
-  @Override @NotNull CountingReporter reporter,
-  @NotNull SourceFileLocator locator,
-  @NotNull SeqView<Path> thisModulePath,
-  @NotNull Path thisOutRoot,
-  @NotNull Ref<CachedModuleLoader<LibraryModuleLoader>> cachedSelf,
-  @NotNull LibraryCompiler.United states
+record LibraryModuleLoader(
+  @NotNull LibraryOwner compiler,
+  @NotNull LibraryModuleLoader.United states
 ) implements ModuleLoader {
-  public static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
-    var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
-    return withoutExt.resolveSibling(withoutExt.getFileName() + ".ayac");
-  }
-
-  public static @Nullable Path resolveCompiledDepCore(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
-    for (var p : modulePath) {
-      var file = resolveCompiledCore(p, moduleName);
-      if (Files.exists(file)) return file;
-    }
-    return null;
-  }
-
-  @Nullable ResolveInfo loadLibrarySource(@NotNull LibrarySource source) {
-    var mod = source.moduleName();
-    var cached = cachedSelf.value;
-    return cached.cachedOrLoad(mod, () -> {
-      var context = new EmptyContext(reporter, source.file()).derive(mod);
-      return cached.tyckModule(context, source.program().value, null, (moduleResolve, defs) -> {
-        if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs);
-      });
-    });
-  }
-
-  @Override public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> mod) {
-    var sourcePath = FileUtil.resolveFile(thisModulePath, mod, ".aya");
-    if (sourcePath == null) {
-      // We are loading a module belonging to dependencies, find the compiled core.
-      // The compiled core should always exist, otherwise the dependency is not built.
-      var depCorePath = resolveCompiledDepCore(thisModulePath, mod);
-      assert depCorePath != null : "dependencies not built?";
-      return loadCompiledCore(mod, depCorePath, depCorePath);
-    }
-
-    // we are loading a module belonging to this library, try finding compiled core first.
-    // If found, check modifications and decide whether to proceed with compiled core.
-    var corePath = resolveCompiledCore(thisOutRoot, mod);
-    if (Files.exists(corePath)) {
-      return loadCompiledCore(mod, corePath, sourcePath);
-    }
-
-    // No compiled core is found, or source file is modified, compile it from source.
-    try {
-      var program = AyaParsing.program(locator, reporter, sourcePath);
-      var context = new EmptyContext(reporter, sourcePath).derive(mod);
-      return resolveModule(context, program);
-    } catch (IOException e) {
-      return null;
-    }
+  @Override public @NotNull CountingReporter reporter() {
+    return compiler.reporter();
   }
 
   private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
     try {
       var coreFile = file.coreFile();
-      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states.ser());
+      AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, states.ser);
       Timestamp.update(file);
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  private @Nullable ResolveInfo loadCompiledCore(@NotNull ImmutableSeq<String> mod, @NotNull Path corePath, @NotNull Path sourcePath) {
-    var context = new EmptyContext(reporter, sourcePath).derive(mod);
+  @Override public @Nullable ResolveInfo
+  load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
+    var basePaths = compiler.modulePath();
+    var sourcePath = FileUtil.resolveFile(basePaths, mod, ".aya");
+    if (sourcePath == null) {
+      // We are loading a module belonging to dependencies, find the compiled core.
+      // The compiled core should always exist, otherwise the dependency is not built.
+      var depCorePath = FileUtil.resolveFile(basePaths, mod, Constants.AYAC_POSTFIX);
+      assert depCorePath != null : "dependencies not built?";
+      return loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
+    }
+
+    // we are loading a module belonging to this library, try finding compiled core first.
+    // If found, check modifications and decide whether to proceed with compiled core.
+    var corePath = FileUtil.resolveFile(compiler.outDir(), mod, Constants.AYAC_POSTFIX);
+    if (Files.exists(corePath)) {
+      return loadCompiledCore(mod, corePath, sourcePath, recurseLoader);
+    }
+
+    // No compiled core is found, or source file is modified, compile it from source.
+    var source = compiler.findModuleFile(mod);
+    var program = source.program().value;
+    assert program != null;
+    var context = new EmptyContext(reporter(), sourcePath).derive(mod);
+    return tyckModule(null, resolveModule(context, program, recurseLoader), (moduleResolve, defs) -> {
+      if (reporter().noError()) saveCompiledCore(source, moduleResolve, defs);
+    });
+  }
+
+  private @Nullable ResolveInfo loadCompiledCore(
+    @NotNull ImmutableSeq<String> mod, @NotNull Path corePath,
+    @NotNull Path sourcePath, @NotNull ModuleLoader recurseLoader
+  ) {
+    assert recurseLoader instanceof CachedModuleLoader<?>;
+    var context = new EmptyContext(reporter(), sourcePath).derive(mod);
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledAya) inputStream.readObject();
-      return compiledAya.toResolveInfo(cachedSelf.value, context, states.de());
+      return compiledAya.toResolveInfo(recurseLoader, context, states().de());
     } catch (IOException | ClassNotFoundException e) {
       return null;
+    }
+  }
+
+  record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {
+    public United() {
+      this(new SerTerm.DeState(), new Serializer.State());
     }
   }
 }

@@ -26,8 +26,7 @@ public class LibraryTest {
   public static final Path DIR = TestRunner.DEFAULT_TEST_DIR.resolve("success");
 
   public static void main(String... args) throws IOException {
-    FileUtil.deleteRecursively(DIR.resolve("build"));
-    compile();
+    new LibraryTest().test();
   }
 
   private static int compile() throws IOException {

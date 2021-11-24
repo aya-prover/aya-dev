@@ -8,10 +8,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Non-stopping compiler for SCCs.
+ * Don't you ever stop tycking.
  *
  * @author kiva
  */
-public interface NonStoppingTicker<T, E extends Exception> {
+public interface OrgaTycker<T, E extends Exception> {
   @NotNull SCCTycker<T, E> sccTycker();
   @NotNull MutableSet<T> skippedSet();
   @NotNull Iterable<T> collectUsageOf(@NotNull T failed);

@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableSet;
-import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
@@ -18,14 +17,12 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
+import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.core.serde.SerTerm;
-import org.aya.core.serde.Serializer;
-import org.aya.pretty.doc.Doc;
 import org.aya.util.FileUtil;
 import org.aya.util.MutableGraph;
 import org.aya.util.StringUtil;
-import org.aya.util.tyck.NonStoppingTicker;
+import org.aya.util.tyck.OrgaTycker;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,25 +34,26 @@ import java.nio.file.Path;
 /**
  * @author kiva
  */
-public class LibraryCompiler implements ImportResolver.ImportLoader {
-  public static final int DEFAULT_INDENT = 2;
+public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwner {
   final @NotNull LibraryConfig library;
   final @NotNull SourceFileLocator locator;
+  final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
 
-  private final @NotNull CompilerFlags flags;
   private final @NotNull CountingReporter reporter;
+  private final @NotNull CompilerFlags flags;
   private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
   private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
   private final @NotNull ImmutableSeq<LibrarySource> sources;
-  private final @NotNull United states;
 
-  public record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser) {}
+  @Override public @NotNull SeqView<Path> modulePath() {
+    return thisModulePath.view();
+  }
 
-  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library, @NotNull United states) {
+  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library, @NotNull LibraryModuleLoader.United states) {
     this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
     this.flags = flags;
     this.library = library;
-    this.states = states;
+    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(this, states));
     var srcRoot = library.librarySrcRoot();
     this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
     this.sources = FileUtil.collectSource(srcRoot, ".aya").map(p -> new LibrarySource(this, p));
@@ -67,7 +65,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       return 1;
     }
     var config = LibraryConfigData.fromLibraryRoot(LibrarySource.canonicalize(libraryRoot));
-    var compiler = new LibraryCompiler(reporter, flags, config, new United(new SerTerm.DeState(), new Serializer.State()));
+    var compiler = new LibraryCompiler(reporter, flags, config, new LibraryModuleLoader.United());
     return compiler.start();
   }
 
@@ -99,8 +97,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       resolveImports(file);
       collectDep(graph, file);
     }
-    reportNest("Done in " + StringUtil.timeToString(
-      System.currentTimeMillis() - startTime), DEFAULT_INDENT + 2);
+    reporter.reportNest("Done in " + StringUtil.timeToString(
+      System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return graph;
   }
 
@@ -132,7 +130,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
         reporter.reportString("Skipping " + dep.depName());
         continue;
       }
-      var depCompiler = new LibraryCompiler(reporter, flags, depConfig, states);
+      var depCompiler = new LibraryCompiler(reporter, flags, depConfig, moduleLoader.loader.states());
       deps.append(depCompiler);
     }
 
@@ -151,8 +149,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
     var depGraph = resolveLibraryImports();
     var make = make(depGraph);
-    reportNest("Library loaded in " + StringUtil.timeToString(
-      System.currentTimeMillis() - startTime), DEFAULT_INDENT + 2);
+    reporter.reportNest("Library loaded in " + StringUtil.timeToString(
+      System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return make;
   }
 
@@ -179,12 +177,9 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       return true;
     }
 
-    var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
-    var loader = new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot, new Ref<>(), states);
-    loader.cachedSelf().value = new CachedModuleLoader<>(loader);
-
+    Files.createDirectories(outDir());
     var delayedReporter = new DelayedReporter(reporter);
-    var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(delayedReporter, this, loader), changed);
+    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(delayedReporter, moduleLoader), changed);
     // use delayed reporter to avoid showing errors in the middle of compilation.
     // we only show errors after all SCCs are tycked
     try (delayedReporter) {
@@ -200,12 +195,20 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     return false;
   }
 
-  record LibraryNonStoppingTycker(
+  @Override public @NotNull Path outDir() {
+    return library.libraryOutRoot();
+  }
+
+  @Override public @NotNull CountingReporter reporter() {
+    return reporter;
+  }
+
+  record LibraryOrgaTycker(
     @NotNull LibrarySccTycker sccTycker,
     @NotNull MutableGraph<LibrarySource> usageGraph,
     @NotNull MutableSet<LibrarySource> skippedSet
-  ) implements NonStoppingTicker<LibrarySource, IOException> {
-    public LibraryNonStoppingTycker(@NotNull LibrarySccTycker sccTycker, @NotNull MutableGraph<LibrarySource> usage) {
+  ) implements OrgaTycker<LibrarySource, IOException> {
+    public LibraryOrgaTycker(@NotNull LibrarySccTycker sccTycker, @NotNull MutableGraph<LibrarySource> usage) {
       this(sccTycker, usage, MutableSet.create());
     }
 
@@ -216,8 +219,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   record LibrarySccTycker(
     @NotNull Reporter outerReporter,
-    @NotNull LibraryCompiler delegate,
-    @NotNull LibraryModuleLoader moduleLoader
+    @NotNull ModuleLoader moduleLoader
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
@@ -231,14 +233,16 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     private void tyckOne(CountingReporter reporter, LibrarySource file) {
-      var mod = moduleLoader.loadLibrarySource(file);
-      if (mod == null) throw new IllegalStateException("Unable to load module: " + file.moduleName());
+      var moduleName = file.moduleName();
+      var mod = moduleLoader.load(moduleName);
+      if (mod == null) throw new IllegalStateException("Unable to load module: " + moduleName);
       file.resolveInfo().value = mod;
-      delegate.reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()));
+      outerReporter.reportNest("[Tyck] %s (%s)".formatted(
+        QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
     }
   }
 
-  private @Nullable LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
+  private @Nullable LibrarySource findModuleFileHere(@NotNull ImmutableSeq<String> mod) {
     return sources.find(s -> {
       var checkMod = s.moduleName();
       return checkMod.equals(mod);
@@ -246,11 +250,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   private void reportNest(@NotNull String text) {
-    reportNest(text, DEFAULT_INDENT);
-  }
-
-  private void reportNest(@NotNull String text, int indent) {
-    reporter.reportDoc(Doc.nest(indent, Doc.english(text)));
+    reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT);
   }
 
   private static void collectDep(@NotNull MutableGraph<LibrarySource> dep, @NotNull LibrarySource info) {
@@ -270,16 +270,21 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
   @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
     var file = findModuleFile(mod);
-    if (file == null) for (var dep : deps) {
-      file = dep.findModuleFile(mod);
-      if (file != null) break;
-    }
-    if (file == null) throw new IllegalArgumentException("No library owns module: " + mod);
     try {
       resolveImports(file);
     } catch (IOException e) {
       throw new RuntimeException("Cannot load imported module " + mod, e);
     }
+    return file;
+  }
+
+  @Override public @NotNull LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
+    var file = findModuleFileHere(mod);
+    if (file == null) for (var dep : deps) {
+      file = dep.findModuleFileHere(mod);
+      if (file != null) break;
+    }
+    if (file == null) throw new IllegalArgumentException("No library owns module: " + mod);
     return file;
   }
 }
