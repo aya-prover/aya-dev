@@ -86,8 +86,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   }
 
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
+    if (source.program().value != null) return; // already parsed
     var owner = source.owner();
-    var program = AyaParsing.program(owner.locator, owner.reporter, source.file(), true);
+    var program = AyaParsing.program(owner.locator, owner.reporter, source.file());
+    source.program().value = program;
     var finder = new ImportResolver(owner, source);
     finder.resolveStmt(program);
   }
@@ -182,11 +184,10 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
 
     var thisOutRoot = Files.createDirectories(library.libraryOutRoot());
     var loader = new LibraryModuleLoader(reporter, locator, thisModulePath.view(), thisOutRoot, new Ref<>(), states.de);
-    var moduleLoader = new CachedModuleLoader(loader);
-    loader.cachedSelf().value = moduleLoader;
+    loader.cachedSelf().value = new CachedModuleLoader(loader);
 
     var delayedReporter = new DelayedReporter(reporter);
-    var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(delayedReporter, this, moduleLoader), changed);
+    var tycker = new LibraryNonStoppingTycker(new LibrarySccTycker(delayedReporter, this, loader), changed);
     // use delayed reporter to avoid showing errors in the middle of compilation.
     // we only show errors after all SCCs are tycked
     try (delayedReporter) {
@@ -219,7 +220,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
   record LibrarySccTycker(
     @NotNull Reporter outerReporter,
     @NotNull LibraryCompiler delegate,
-    @NotNull CachedModuleLoader moduleLoader
+    @NotNull LibraryModuleLoader moduleLoader
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
@@ -236,6 +237,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
       var resolveStart = System.currentTimeMillis();
       var mod = resolveModule(file);
       var resolveEnd = System.currentTimeMillis();
+      file.resolveInfo().value = mod;
       delegate.reportNest(String.format("[Tyck] %s (%s)", QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()));
       FileModuleLoader.tyckResolvedModule(mod, reporter, null,
         (moduleResolve, stmts, defs) -> {
@@ -248,9 +250,8 @@ public class LibraryCompiler implements ImportResolver.ImportLoader {
     }
 
     private @NotNull ResolveInfo resolveModule(@NotNull LibrarySource file) {
-      var mod = file.moduleName();
-      var resolveInfo = moduleLoader.load(mod);
-      if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + mod);
+      var resolveInfo = moduleLoader.loadLibrarySource(file);
+      if (resolveInfo == null) throw new IllegalStateException("Unable to load module: " + file.moduleName());
       return resolveInfo;
     }
   }

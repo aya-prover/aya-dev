@@ -7,8 +7,11 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.QualifiedID;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * @author re-xyr
@@ -23,11 +26,12 @@ public final class CachedModuleLoader implements ModuleLoader {
 
   @Override
   public @Nullable ResolveInfo load(@NotNull ImmutableSeq<String> path, @NotNull ModuleLoader recurseLoader) {
-    var stringifiedPath = QualifiedID.join(path);
-    return cache.getOrElse(stringifiedPath, () -> {
-      var ctx = loader.load(path, recurseLoader);
-      cache.put(stringifiedPath, ctx);
-      return ctx;
-    });
+    return cachedOrLoad(path, () -> loader.load(path, recurseLoader));
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ResolveInfo cachedOrLoad(@NotNull ImmutableSeq<String> path, @NotNull Supplier<ResolveInfo> supplier) {
+    var qualified = QualifiedID.join(path);
+    return cache.getOrPut(qualified, supplier);
   }
 }

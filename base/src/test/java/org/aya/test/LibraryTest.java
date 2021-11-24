@@ -9,16 +9,18 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class LibraryTest {
   @Test public void test() throws IOException {
     FileUtil.deleteRecursively(DIR.resolve("build"));
     // Full rebuild
-    compile();
+    assertEquals(0, compile());
     FileUtil.deleteRecursively(DIR.resolve("build").resolve("out"));
     // The second time should load the cache of 'common'.
-    compile();
+    assertEquals(0, compile());
     // The third time should do nothing.
-    compile();
+    assertEquals(0, compile());
   }
 
   public static final Path DIR = TestRunner.DEFAULT_TEST_DIR.resolve("success");
@@ -28,7 +30,7 @@ public class LibraryTest {
     compile();
   }
 
-  private static void compile() throws IOException {
-    LibraryCompiler.compile(ThrowingReporter.INSTANCE, TestRunner.flags(), DIR);
+  private static int compile() throws IOException {
+    return LibraryCompiler.compile(ThrowingReporter.INSTANCE, TestRunner.flags(), DIR);
   }
 }
