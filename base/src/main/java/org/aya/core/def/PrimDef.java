@@ -45,6 +45,11 @@ public final class PrimDef extends TopLevelDef {
     this(ImmutableSeq.empty(), ImmutableSeq.empty(), result, name);
   }
 
+  public static @NotNull CallTerm.Prim intervalCall() {
+    return new CallTerm.Prim(Factory.INSTANCE.getOrCreate(ID.INTERVAL).ref(),
+      ImmutableSeq.empty(), ImmutableSeq.empty());
+  }
+
   @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitPrim(this, p);
   }
@@ -78,12 +83,6 @@ public final class PrimDef extends TopLevelDef {
   ) {
     public @NotNull PrimDef supply() {
       return supplier.get();
-    }
-
-    // Interval
-    public static CallTerm.Prim intervalCall() {
-      return new CallTerm.Prim(Factory.INSTANCE.getOrCreate(ID.INTERVAL).ref(),
-        ImmutableSeq.empty(), ImmutableSeq.empty());
     }
 
     public static final @NotNull PrimSeed INTERVAL = new PrimSeed(
