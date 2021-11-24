@@ -7,9 +7,13 @@ import org.aya.concrete.resolve.ResolveInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EmptyModuleLoader implements ModuleLoader {
-  @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+public final class EmptyModuleLoader implements ModuleLoader {
+  public static final @NotNull EmptyModuleLoader INSTANCE = new EmptyModuleLoader();
+
+  private EmptyModuleLoader() {}
+
+  @Override public @Nullable ResolveInfo
+  load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     return null;
   }
 }

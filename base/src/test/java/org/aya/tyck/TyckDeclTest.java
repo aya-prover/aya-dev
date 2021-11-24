@@ -38,7 +38,7 @@ public class TyckDeclTest {
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = ParseTest.parseDecl(code)._1;
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
-    resolve(ImmutableSeq.of(decl), ctx, new EmptyModuleLoader());
+    resolve(ImmutableSeq.of(decl), ctx, EmptyModuleLoader.INSTANCE);
     var def = tyck(decl, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
@@ -48,7 +48,7 @@ public class TyckDeclTest {
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
     var decls = AyaParsing.program(ThrowingReporter.INSTANCE, new SourceFile(Path.of("114514"), text));
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
-    resolve(decls, ctx, new EmptyModuleLoader());
+    resolve(decls, ctx, EmptyModuleLoader.INSTANCE);
     return decls;
   }
 

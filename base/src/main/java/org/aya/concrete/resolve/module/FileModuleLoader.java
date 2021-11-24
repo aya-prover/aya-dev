@@ -9,7 +9,6 @@ import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.util.InternalException;
 import org.aya.concrete.Expr;
-import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ModuleCallback;
 import org.aya.concrete.resolve.ResolveInfo;
@@ -44,17 +43,6 @@ public record FileModuleLoader(
     }
   }
 
-  public static ResolveInfo resolveModule(
-    @NotNull ModuleContext context,
-    @NotNull ModuleLoader recurseLoader,
-    @NotNull ImmutableSeq<Stmt> program,
-    @NotNull Reporter reporter
-  ) {
-    var resolveInfo = new ResolveInfo(context, program, new AyaBinOpSet(reporter));
-    Stmt.resolve(program, resolveInfo, recurseLoader);
-    return resolveInfo;
-  }
-
   public static <E extends Exception> @NotNull ResolveInfo tyckModule(
     @NotNull ModuleContext context,
     @NotNull ModuleLoader recurseLoader,
@@ -63,7 +51,7 @@ public record FileModuleLoader(
     @Nullable Trace.Builder builder,
     @Nullable ModuleCallback<E> onTycked
   ) throws E {
-    var resolveInfo = resolveModule(context, recurseLoader, program, reporter);
+    var resolveInfo = ModuleLoader.resolveModule(context, recurseLoader, program, reporter);
     tyckResolvedModule(resolveInfo, reporter, builder, onTycked);
     return resolveInfo;
   }

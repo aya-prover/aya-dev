@@ -3,8 +3,8 @@
 package org.aya.concrete.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableTreeMap;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  * @author re-xyr
  */
 public final class CachedModuleLoader implements ModuleLoader {
-  final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = new MutableHashMap<>();
+  private final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = MutableTreeMap.of();
   final @NotNull ModuleLoader loader;
 
   public CachedModuleLoader(@NotNull ModuleLoader loader) {

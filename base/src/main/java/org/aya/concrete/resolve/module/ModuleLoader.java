@@ -3,7 +3,11 @@
 package org.aya.concrete.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.api.error.Reporter;
+import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.resolve.ResolveInfo;
+import org.aya.concrete.resolve.context.ModuleContext;
+import org.aya.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +15,17 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public interface ModuleLoader {
+  static @NotNull ResolveInfo resolveModule(
+    @NotNull ModuleContext context,
+    @NotNull ModuleLoader recurseLoader,
+    @NotNull ImmutableSeq<Stmt> program,
+    @NotNull Reporter reporter
+  ) {
+    var resolveInfo = new ResolveInfo(context, program, new AyaBinOpSet(reporter));
+    Stmt.resolve(program, resolveInfo, recurseLoader);
+    return resolveInfo;
+  }
+
   @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader);
 
   default @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path) {
