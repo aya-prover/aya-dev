@@ -36,6 +36,7 @@ public record LibrarySource(
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {
+    if (resolveInfo.value != null) return resolveInfo.value.thisModule().moduleName();
     var display = displayPath();
     var displayNoExt = display.resolveSibling(display.getFileName().toString().replaceAll("\\.aya", ""));
     return IntStream.range(0, displayNoExt.getNameCount())

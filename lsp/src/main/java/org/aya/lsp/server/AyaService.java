@@ -65,8 +65,9 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     libraryManager.loadedFiles.remove(filePath);
     try {
       compiler.compile(filePath, compilerFlags,
-        (moduleResolve, stmts, defs) -> {
+        (moduleResolve, defs) -> {
           var sourcePath = moduleResolve.thisModule().underlyingFile();
+          var stmts = moduleResolve.program();
           libraryManager.loadedFiles.put(sourcePath, new AyaFile(defs, stmts));
           if (sourcePath.equals(filePath)) stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
         });

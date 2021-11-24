@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.CountingReporter;
 import org.aya.cli.utils.AyaCompiler;
-import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.FileModuleLoader;
@@ -73,15 +72,13 @@ public record LibraryModuleLoader(@NotNull LibraryCompiler compiler, @NotNull Un
     }
 
     // No compiled core is found, or source file is modified, compile it from source.
-    try {
-      var program = AyaParsing.program(compiler.locator, reporter(), sourcePath);
-      var context = new EmptyContext(reporter(), sourcePath).derive(mod);
-      return tyckModule(context, program, null, (moduleResolve, defs) -> {
-        if (reporter().noError()) saveCompiledCore(compiler.findModuleFile(mod), moduleResolve, defs);
-      });
-    } catch (IOException e) {
-      return null;
-    }
+    var source = compiler.findModuleFile(mod);
+    var program = source.program().value;
+    assert program != null;
+    var context = new EmptyContext(reporter(), sourcePath).derive(mod);
+    return tyckModule(context, program, null, (moduleResolve, defs) -> {
+      if (reporter().noError()) saveCompiledCore(source, moduleResolve, defs);
+    });
   }
 
   private void saveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Def> defs) {
