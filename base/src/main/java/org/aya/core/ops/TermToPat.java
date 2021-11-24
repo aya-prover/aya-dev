@@ -3,6 +3,7 @@
 package org.aya.core.ops;
 
 import org.aya.api.util.Arg;
+import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.CallTerm;
 import org.aya.core.term.IntroTerm;
@@ -24,7 +25,7 @@ public interface TermToPat {
         conCall.args().map(TermToPat::toPat),
         conCall.head().underlyingDataCall());
       case CallTerm.Prim prim -> switch (prim.ref().core.id) {
-        case LEFT, RIGHT -> new Pat.Prim(explicit, prim.ref(), prim.computeType(null));
+        case LEFT, RIGHT -> new Pat.Prim(explicit, prim.ref(), PrimDef.intervalCall());
         default -> null;
       };
       case IntroTerm.Tuple tuple -> new Pat.Tuple(explicit,

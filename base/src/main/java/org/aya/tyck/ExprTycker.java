@@ -11,6 +11,7 @@ import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
+import kala.value.LazyValue;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.error.Problem;
 import org.aya.api.error.Reporter;
@@ -349,9 +350,7 @@ public final class ExprTycker {
           localCtx.put(ref, result.wellTyped);
           resultTele.append(Tuple.of(ref, tuple.explicit(), result.wellTyped));
         });
-        sigma.params().view()
-          .map(Expr.Param::ref)
-          .forEach(localCtx.localMap()::remove);
+        localCtx.remove(sigma.params().view().map(Expr.Param::ref));
         yield new Result(new FormTerm.Sigma(Term.Param.fromBuffer(resultTele)), term);
       }
       default -> unifyTyMaybeInsert(term, synthesize(expr), expr);
@@ -366,13 +365,14 @@ public final class ExprTycker {
   }
 
   private void traceExit(Result result, @NotNull Expr expr) {
+    var frozen = LazyValue.of(() -> result.freezeHoles(state));
     tracing(builder -> {
-      builder.append(new Trace.TyckT(result.wellTyped.freezeHoles(state), result.type.freezeHoles(state), expr.sourcePos()));
+      builder.append(new Trace.TyckT(frozen.get(), expr.sourcePos()));
       builder.reduce();
     });
     // assert validate(result.wellTyped);
     // assert validate(result.type);
-    if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(result.wellTyped);
+    if (expr instanceof Expr.WithTerm withTerm) withTerm.theCore().set(frozen.get());
   }
 
   /*
@@ -601,6 +601,10 @@ public final class ExprTycker {
   public record Result(@NotNull Term wellTyped, @NotNull Term type) {
     @Contract(value = " -> new", pure = true) public @NotNull Tuple2<Term, Term> toTuple() {
       return Tuple.of(type, wellTyped);
+    }
+
+    public @NotNull Result freezeHoles(@NotNull TyckState state) {
+      return new Result(wellTyped.freezeHoles(state), type.freezeHoles(state));
     }
   }
 }

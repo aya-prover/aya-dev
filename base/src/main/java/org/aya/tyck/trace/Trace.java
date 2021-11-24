@@ -7,6 +7,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.core.term.Term;
+import org.aya.tyck.ExprTycker;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -96,8 +97,8 @@ public sealed interface Trace extends TreeBuilder.Tree<Trace> {
     @NotNull SourcePos pos,
     @NotNull DynamicSeq<@NotNull Trace> children
   ) implements Trace {
-    public TyckT(@NotNull Term term, @NotNull Term type, @NotNull SourcePos pos) {
-      this(term, type, pos, DynamicSeq.create());
+    public TyckT(@NotNull ExprTycker.Result result, @NotNull SourcePos pos) {
+      this(result.wellTyped(), result.type(), pos, DynamicSeq.create());
     }
 
     @Override public <P, R> R accept(@NotNull Visitor<P, R> visitor, P p) {
