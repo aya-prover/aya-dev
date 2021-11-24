@@ -17,6 +17,7 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.core.def.Def;
 import org.aya.core.serde.CompiledAya;
+import org.aya.generic.Constants;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,14 +52,9 @@ public record LibraryModuleLoader(
   @NotNull Ref<CachedModuleLoader<LibraryModuleLoader>> cachedSelf,
   @NotNull LibraryCompiler.United states
 ) implements ModuleLoader {
-  public static @NotNull Path resolveCompiledCore(@NotNull Path basePath, @NotNull Seq<@NotNull String> moduleName) {
-    var withoutExt = moduleName.foldLeft(basePath, Path::resolve);
-    return withoutExt.resolveSibling(withoutExt.getFileName() + ".ayac");
-  }
-
   public static @Nullable Path resolveCompiledDepCore(@NotNull SeqView<Path> modulePath, @NotNull Seq<String> moduleName) {
     for (var p : modulePath) {
-      var file = resolveCompiledCore(p, moduleName);
+      var file = FileUtil.resolveFile(p, moduleName, Constants.AYAC_POSTFIX);
       if (Files.exists(file)) return file;
     }
     return null;
@@ -87,7 +83,7 @@ public record LibraryModuleLoader(
 
     // we are loading a module belonging to this library, try finding compiled core first.
     // If found, check modifications and decide whether to proceed with compiled core.
-    var corePath = resolveCompiledCore(thisOutRoot, mod);
+    var corePath = FileUtil.resolveFile(thisOutRoot, mod, Constants.AYAC_POSTFIX);
     if (Files.exists(corePath)) {
       return loadCompiledCore(mod, corePath, sourcePath);
     }

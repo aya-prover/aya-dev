@@ -7,6 +7,8 @@ import kala.collection.mutable.DynamicSeq;
 import kala.value.Ref;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.generic.Constants;
+import org.aya.util.FileUtil;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +49,7 @@ public record LibrarySource(
 
   public @NotNull Path coreFile() {
     var mod = moduleName();
-    return LibraryModuleLoader.resolveCompiledCore(owner.library.libraryOutRoot(), mod);
+    return FileUtil.resolveFile(owner.library.libraryOutRoot(), mod, Constants.AYAC_POSTFIX);
   }
 
   @Override public boolean equals(Object o) {

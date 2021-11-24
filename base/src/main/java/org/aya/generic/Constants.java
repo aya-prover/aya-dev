@@ -12,6 +12,8 @@ public interface Constants {
   @NotNull @NonNls String ANONYMOUS_PREFIX = "_";
   @NotNull @NonNls String GENERATED_POSTFIX = "'";
   @NotNull @NonNls String SCOPE_SEPARATOR = "::";
+  @NotNull @NonNls String AYA_POSTFIX = ".aya";
+  @NotNull @NonNls String AYAC_POSTFIX = ".ayac";
 
   static @NotNull LocalVar anonymous() {
     return new LocalVar(ANONYMOUS_PREFIX, SourcePos.NONE);

@@ -8,12 +8,14 @@ import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
 import kala.value.Ref;
 import org.aya.api.error.CountingReporter;
+import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
 import org.aya.api.util.InterruptException;
 import org.aya.api.util.NormalizeMode;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.concrete.Expr;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.module.CachedModuleLoader;
@@ -21,6 +23,7 @@ import org.aya.concrete.resolve.module.FileModuleLoader;
 import org.aya.concrete.resolve.module.ModuleListLoader;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
+import org.aya.tyck.ExprTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +41,15 @@ public class ReplCompiler {
     this.locator = locator;
     this.modulePaths = DynamicSeq.create();
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
+  }
+
+  private @NotNull ExprTycker.Result tyckExpr(@NotNull Expr expr) {
+    var resolvedExpr = expr.resolve(context);
+    // in case we have un-messaged TyckException
+    try (var delayedReporter = new DelayedReporter(reporter)) {
+      var tycker = new ExprTycker(delayedReporter, null);
+      return tycker.zonk(expr, tycker.synthesize(resolvedExpr.desugar(delayedReporter)));
+    }
   }
 
   /** @see ReplCompiler#compileExpr(String, NormalizeMode) */
@@ -81,8 +93,7 @@ public class ReplCompiler {
             return ImmutableSeq.empty();
           }
         },
-        expr -> FileModuleLoader.tyckExpr(context, expr, reporter, null).wellTyped()
-          .normalize(null, normalizeMode)
+        expr -> tyckExpr(expr).wellTyped().normalize(null, normalizeMode)
       );
     } catch (InterruptException ignored) {
       return Either.left(ImmutableSeq.empty());
@@ -96,9 +107,7 @@ public class ReplCompiler {
    */
   public @Nullable Term compileExpr(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     try {
-      var expr = AyaParsing.expr(reporter, text);
-      return FileModuleLoader.tyckExpr(context, expr, reporter, null)
-        .type().normalize(null, normalizeMode);
+      return tyckExpr(AyaParsing.expr(reporter, text)).type().normalize(null, normalizeMode);
     } catch (InterruptException ignored) {
       return null;
     }
