@@ -165,11 +165,12 @@ public abstract class BinOpParser<
 
     if (opElem.assoc() == Assoc.Mixfix) {
       // now the opStack should have (argc - 1) duplicate same op that should be removed
-      assert opStack.sizeGreaterThanOrEquals(argc - 1);
-      for (int i = 0; i < argc - 1; ++i) opStack.pop();
-      return IntStream.range(0, argc).mapToObj(i -> prefixes.dequeue())
+      while (opStack.isNotEmpty() && opStack.peek()._2 == opElem) opStack.pop();
+      if (prefixes.sizeGreaterThanOrEquals(argc)) return IntStream.range(0, argc)
+        .mapToObj(i -> prefixes.dequeue())
         .collect(ImmutableSeq.factory()).reversed()
         .foldLeft(op, (app, arg) -> makeBinApp(appOp(), arg, app));
+      else throw new UnsupportedOperationException("section for mixfix");
     }
 
     throw new UnsupportedOperationException("TODO?");

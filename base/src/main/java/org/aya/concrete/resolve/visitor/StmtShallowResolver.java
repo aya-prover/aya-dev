@@ -129,9 +129,10 @@ public record StmtShallowResolver(
   ) {
     var bind = signatured.bindBlock;
     if (bind != BindBlock.EMPTY) bind.context().value = context;
-    if (signatured.opInfo != null) {
+    var opInfo = signatured.opInfo;
+    if (opInfo != null) {
       var ref = signatured.ref();
-      if (signatured.opInfo.assoc() == Assoc.Mixfix) {
+      if (opInfo.assoc() == Assoc.Mixfix) {
         var name = ref.name();
         var parts = name.split("_");
         for (var part : parts) context.addGlobal(Context.TOP_LEVEL_MOD_NAME,
