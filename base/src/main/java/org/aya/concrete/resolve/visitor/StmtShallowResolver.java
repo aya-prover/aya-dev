@@ -16,6 +16,8 @@ import org.aya.concrete.resolve.error.ModNotFoundError;
 import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.ref.BinOpCollector;
+import org.aya.util.binop.Assoc;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -122,7 +124,11 @@ public record StmtShallowResolver(
   private void resolveOpInfo(@NotNull Signatured signatured, @NotNull ModuleContext context) {
     var bind = signatured.bindBlock;
     if (bind != BindBlock.EMPTY) bind.context().value = context;
-    if (signatured.opInfo != null) BinOpCollector.collect(signatured.ref());
+    if (signatured.opInfo != null) {
+      var ref = signatured.ref();
+      resolveInfo.opSet().operators.put(ref, signatured);
+      BinOpCollector.collect(ref);
+    }
   }
 
   private void resolveDecl(@NotNull Decl decl, @NotNull ModuleContext context) {
