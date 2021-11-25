@@ -1,5 +1,10 @@
+open import Paths
 open import Arith::Nat
+open import Data::Bool
+open import Data::List
+open import Data::Fin
 
+---------------------- infix operators
 example def test1 : Nat => (+ zero) zero
 example def test2 : Pi Nat -> Nat => + zero
 example def test3 : Nat => (zero +) zero
@@ -13,3 +18,60 @@ example def test5 : Nat => f1 (add)
 example def test6 : Nat => f2 {add}
 example def test7 : Nat => f1 (+)
 example def test8 : Nat => f2 {+}
+
+---------------------- mixfix operators
+
+def mixfix if_then_else_ {A : Type} Bool A A : A
+  | true,  t, _ => t
+  | false, _, f => f
+  bind tighter +, =
+
+def test10 : if true then zero else suc zero = zero => idp
+def test11 : zero + if true then zero else suc zero = zero => idp
+def test12 : if true then (zero + zero) else suc zero = zero => idp
+def test13 : if true then suc zero else (zero + zero) = suc zero => idp
+
+-- section
+def mixfix +++_assoc (a b c : Nat) : Nat => a
+  bind tighter =
+
+def test01 (a b c : Nat) : a +++ suc b assoc c = a => idp
+def test02 (a b c : Nat) : (+++ a assoc b) c = a => idp
+def test03 (a b : Nat) : Pi Nat -> Nat => +++ a assoc b
+def test04 (a b : Nat) : Pi Nat -> Nat => a +++ b assoc
+
+-- bracket overloading
+def mixfix [_] {A : Type} (a : A) : A => a
+  bind tighter +, =
+
+def test20 : [ suc zero ] = suc zero => idp
+def test21 : [ zero ] + zero = zero => idp
+
+-- boolean logical and
+def mixfix <_&&_> Bool Bool
+  | true, n => n
+  | false,_ => false
+  bind tighter =
+
+def test30 : < true && true > = true => idp
+def test31 : < true && false > = false => idp
+def test32 : < false && true > = false => idp
+def test33 : < false && false > = false => idp
+
+-- random access
+def mixfix _[[_]] {A : Type} (l : List A) (i : Fin (length l)) : A => l !! i
+  bind tighter =
+
+def list => zero cons (suc zero) cons nil
+def test40 : list [[ fzero ]] = zero => idp
+def test41 : list [[ fsuc fzero ]] = suc zero => idp
+
+--| Not supported yet:
+--def in-sub-expr : suc [ suc zero ] = suc (suc zero) => idp
+--def no-auto-parenthesize : if true then zero + zero else zero = suc zero => idp
+--def nested1 : [ [ suc zero ] ] = suc zero => idp
+--def nested2 : [ [ zero ] + zero ] = zero => idp
+--def nested3 : < true && < true && false > > = false => idp
+--def mixfix _+_ Nat Nat => (+)
+--^ use infix instead
+
