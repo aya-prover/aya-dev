@@ -130,13 +130,14 @@ public record StmtShallowResolver(
     var bind = signatured.bindBlock;
     if (bind != BindBlock.EMPTY) bind.context().value = context;
     if (signatured.opInfo != null) {
+      var ref = signatured.ref();
       if (signatured.opInfo.assoc() == Assoc.Mixfix) {
-        var ref = signatured.ref();
         var name = ref.name();
         var parts = name.split("_");
         for (var part : parts) context.addGlobal(Context.TOP_LEVEL_MOD_NAME,
           part, accessibility, ref, sourcePos);
       }
+      resolveInfo.opSet().operators.put(ref, signatured);
       BinOpCollector.collect(signatured.ref());
     }
   }
