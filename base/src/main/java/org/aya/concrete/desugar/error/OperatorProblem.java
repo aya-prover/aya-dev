@@ -116,4 +116,16 @@ public final class OperatorProblem {
       return Severity.ERROR;
     }
   }
+
+  public record AbusedMixfix(
+    @NotNull SourcePos sourcePos
+  ) implements Problem {
+    @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
+      return Doc.english("Mixfix operator with only one name is not allowed. Use infix instead.");
+    }
+
+    @Override public @NotNull Severity level() {
+      return Severity.ERROR;
+    }
+  }
 }

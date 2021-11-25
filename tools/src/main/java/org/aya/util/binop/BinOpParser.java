@@ -144,6 +144,23 @@ public abstract class BinOpParser<
   private @NotNull Arg makeBinApp(@NotNull Arg op) {
     var opElem = toSetElem(op, opSet);
     int argc = opElem.argc();
+
+    if (opElem.assoc() == Assoc.Mixfix) {
+      while (opStack.isNotEmpty() && opStack.peek()._2 == opElem) opStack.pop();
+      var size = prefixes.size();
+      var appliedArg = Math.min(size, argc);
+      var applied = IntStream.range(0, appliedArg)
+        .mapToObj(i -> prefixes.dequeue())
+        .collect(ImmutableSeq.factory()).reversed()
+        .foldLeft(op, (app, arg) -> makeBinApp(appOp(), arg, app));
+
+      // mixfix section
+      var ref = new Ref<>(applied);
+      for (int i = appliedArg; i < argc; i++)
+        ref.value = makeSectionApp(applied.sourcePos(), op, elem -> makeBinApp(appOp(), elem, ref.value).expr());
+      return ref.value;
+    }
+
     if (argc == 1) {
       var operand = prefixes.dequeue();
       return makeArg(union(operand, op), op.expr(), operand, op.explicit());
@@ -162,22 +179,6 @@ public abstract class BinOpParser<
           case Rhs -> makeBinApp(op, applied, elem);
         }).expr());
       }
-    }
-
-    if (opElem.assoc() == Assoc.Mixfix) {
-      while (opStack.isNotEmpty() && opStack.peek()._2 == opElem) opStack.pop();
-      var size = prefixes.size();
-      var appliedArg = Math.min(size, argc);
-      var applied = IntStream.range(0, appliedArg)
-        .mapToObj(i -> prefixes.dequeue())
-        .collect(ImmutableSeq.factory()).reversed()
-        .foldLeft(op, (app, arg) -> makeBinApp(appOp(), arg, app));
-
-      // mixfix section
-      var ref = new Ref<>(applied);
-      for (int i = appliedArg; i < argc; i++)
-        ref.value = makeSectionApp(applied.sourcePos(), op, elem -> makeBinApp(appOp(), elem, ref.value).expr());
-      return ref.value;
     }
 
     throw new UnsupportedOperationException("TODO?");
@@ -212,6 +213,10 @@ public abstract class BinOpParser<
 
   private @NotNull SourcePos union(@NotNull Arg a, @NotNull Arg b) {
     return a.sourcePos().union(b.sourcePos());
+  }
+
+  public static @NotNull ImmutableSeq<String> nameParts(@NotNull String name) {
+    return ImmutableSeq.of(name.split("_")).filterNot(String::isEmpty);
   }
 
   enum AppliedSide {

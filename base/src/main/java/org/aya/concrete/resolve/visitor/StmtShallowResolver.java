@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple2;
+import org.aya.concrete.desugar.error.OperatorProblem;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
@@ -17,7 +18,7 @@ import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.*;
 import org.aya.generic.ref.BinOpCollector;
 import org.aya.util.binop.Assoc;
-import org.aya.util.error.SourcePos;
+import org.aya.util.binop.BinOpParser;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -104,18 +105,18 @@ public record StmtShallowResolver(
           decl.sourcePos()
         );
         decl.ctx = dataInnerCtx;
-        resolveOpInfo(decl, dataInnerCtx, decl.accessibility, decl.sourcePos);
+        resolveOpInfo(decl, dataInnerCtx, decl.accessibility);
       }
       case Decl.StructDecl decl -> {
         resolveDecl(decl, context);
         var structInnerCtx = context.derive(decl.ref().name());
         decl.fields.forEach(field -> resolveField(field, structInnerCtx));
         decl.ctx = structInnerCtx;
-        resolveOpInfo(decl, structInnerCtx, decl.accessibility, decl.sourcePos);
+        resolveOpInfo(decl, structInnerCtx, decl.accessibility);
       }
       case Decl.FnDecl decl -> {
         resolveDecl(decl, context);
-        resolveOpInfo(decl, context, decl.accessibility, decl.sourcePos);
+        resolveOpInfo(decl, context, decl.accessibility);
       }
       case Decl.PrimDecl decl -> resolveDecl(decl, context);
     }
@@ -124,19 +125,20 @@ public record StmtShallowResolver(
   private void resolveOpInfo(
     @NotNull Signatured signatured,
     @NotNull ModuleContext context,
-    @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
+    @NotNull Stmt.Accessibility accessibility
   ) {
+    var sourcePos = signatured.sourcePos;
     var bind = signatured.bindBlock;
     if (bind != BindBlock.EMPTY) bind.context().value = context;
     var opInfo = signatured.opInfo;
     if (opInfo != null) {
       var ref = signatured.ref();
       if (opInfo.assoc() == Assoc.Mixfix) {
-        var name = ref.name();
-        var parts = name.split("_");
-        for (var part : parts) context.addGlobal(Context.TOP_LEVEL_MOD_NAME,
-          part, accessibility, ref, sourcePos);
+        var parts = BinOpParser.nameParts(ref.name());
+        if (parts.sizeEquals(1)) context.reportAndThrow(new OperatorProblem.AbusedMixfix(sourcePos));
+        for (var part : parts)
+          context.addGlobal(Context.TOP_LEVEL_MOD_NAME,
+            part, accessibility, ref, sourcePos);
       }
       resolveInfo.opSet().operators.put(ref, signatured);
       BinOpCollector.collect(signatured.ref());
@@ -158,12 +160,12 @@ public record StmtShallowResolver(
   private void resolveCtor(@NotNull Decl.DataCtor ctor, @NotNull ModuleContext context) {
     ctor.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos);
-    resolveOpInfo(ctor, context, Stmt.Accessibility.Public, ctor.sourcePos);
+    resolveOpInfo(ctor, context, Stmt.Accessibility.Public);
   }
 
   private void resolveField(@NotNull Decl.StructField field, @NotNull ModuleContext context) {
     field.ref().module = context.moduleName();
     context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos);
-    resolveOpInfo(field, context, Stmt.Accessibility.Public, field.sourcePos);
+    resolveOpInfo(field, context, Stmt.Accessibility.Public);
   }
 }
