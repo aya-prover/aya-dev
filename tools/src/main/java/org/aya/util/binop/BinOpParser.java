@@ -9,6 +9,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import kala.value.Ref;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -164,13 +165,19 @@ public abstract class BinOpParser<
     }
 
     if (opElem.assoc() == Assoc.Mixfix) {
-      // now the opStack should have (argc - 1) duplicate same op that should be removed
       while (opStack.isNotEmpty() && opStack.peek()._2 == opElem) opStack.pop();
-      if (prefixes.sizeGreaterThanOrEquals(argc)) return IntStream.range(0, argc)
+      var size = prefixes.size();
+      var appliedArg = Math.min(size, argc);
+      var applied = IntStream.range(0, appliedArg)
         .mapToObj(i -> prefixes.dequeue())
         .collect(ImmutableSeq.factory()).reversed()
         .foldLeft(op, (app, arg) -> makeBinApp(appOp(), arg, app));
-      else throw new UnsupportedOperationException("section for mixfix");
+
+      // mixfix section
+      var ref = new Ref<>(applied);
+      for (int i = appliedArg; i < argc; i++)
+        ref.value = makeSectionApp(applied.sourcePos(), op, elem -> makeBinApp(appOp(), elem, ref.value).expr());
+      return ref.value;
     }
 
     throw new UnsupportedOperationException("TODO?");
