@@ -5,13 +5,17 @@ package org.aya.util.binop;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.util.MutableGraph;
+import org.aya.util.MutableTrie;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public abstract class BinOpSet {
   public final @NotNull MutableGraph<BinOP> tighterGraph = MutableGraph.create();
   public final @NotNull MutableSet<BinOP> ops = MutableSet.of(APP_ELEM);
+  public final @NotNull MutableTrie<String, MixfixOP> mixfix = MutableTrie.create();
   public static final @NotNull BinOpSet.BinOP APP_ELEM = BinOP.from(SourcePos.NONE, OpDecl.APPLICATION);
 
   public void bind(@NotNull OpDecl op, @NotNull OpDecl.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
@@ -78,6 +82,23 @@ public abstract class BinOpSet {
         addTighter(fromOp, toOp);
       });
     });
+  }
+
+  public record MixfixOP(
+    @NotNull String currentPart,
+    @NotNull ImmutableSeq<String> nameParts,
+    @NotNull BinOP owner
+  ) {
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MixfixOP that = (MixfixOP) o;
+      return currentPart.equals(that.currentPart);
+    }
+
+    @Override public int hashCode() {
+      return Objects.hash(currentPart);
+    }
   }
 
   public record BinOP(
