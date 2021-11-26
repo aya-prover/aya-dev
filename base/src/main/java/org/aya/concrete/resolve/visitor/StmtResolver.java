@@ -49,9 +49,7 @@ public interface StmtResolver {
           var ctorLocal = bodyResolver.resolveParams(ctor.telescope, localCtxWithPat.value);
           ctor.telescope = ctorLocal._1.toImmutableSeq();
           ctor.clauses = ctor.clauses.map(clause -> matchy(clause, ctorLocal._2, bodyResolver));
-          visitOp(ctor.ref, ctor, info);
         });
-        visitOp(decl.ref, decl, info);
         addReferences(info, decl, local._1);
       }
       case Decl.FnDecl decl -> {
@@ -61,7 +59,6 @@ public interface StmtResolver {
           expr -> expr.accept(bodyResolver, local._2),
           pats -> pats.map(clause -> matchy(clause, local._2, bodyResolver)));
         addReferences(info, decl, local._1);
-        visitOp(decl.ref, decl, info);
       }
       case Decl.StructDecl decl -> {
         var local = resolveDeclSignature(decl, ExprResolver.LAX);
@@ -72,10 +69,8 @@ public interface StmtResolver {
           field.result = field.result.accept(bodyResolver, fieldLocal._2);
           field.body = field.body.map(e -> e.accept(bodyResolver, fieldLocal._2));
           field.clauses = field.clauses.map(clause -> matchy(clause, fieldLocal._2, bodyResolver));
-          visitOp(field.ref, field, info);
         });
         addReferences(info, decl, local._1);
-        visitOp(decl.ref, decl, info);
       }
       case Decl.PrimDecl decl -> addReferences(info, decl,
         resolveDeclSignature(decl, ExprResolver.RESTRICTIVE)._1);
@@ -111,12 +106,6 @@ public interface StmtResolver {
       .toImmutableSeq();
     decl.result = decl.result.accept(resolver, local._2);
     return Tuple.of(resolver, local._2);
-  }
-
-  static void visitOp(@NotNull DefVar<?, ?> selfDef, @NotNull OpDecl self, @NotNull ResolveInfo info) {
-    var opSet = info.opSet();
-    var isOperator = !opSet.isOperand(self);
-    if (isOperator) opSet.operators.put(selfDef, self);
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
