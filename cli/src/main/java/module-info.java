@@ -7,11 +7,11 @@ module org.aya.cli {
   requires org.jline.terminal.jansi;
   requires org.jline.reader;
   requires transitive org.aya;
+  requires transitive org.aya.repl;
 
   exports org.aya.cli;
   exports org.aya.cli.single;
   exports org.aya.cli.utils;
-  exports org.aya.cli.repl.command;
   exports org.aya.cli.library to com.google.gson;
   exports org.aya.cli.library.json to com.google.gson;
   exports org.aya.cli.repl;

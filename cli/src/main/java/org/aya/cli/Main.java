@@ -3,7 +3,7 @@
 package org.aya.cli;
 
 import org.aya.cli.library.LibraryCompiler;
-import org.aya.cli.repl.Repl;
+import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
@@ -27,7 +27,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       System.err.println("Try `aya --help` to see available commands");
       return 1;
     }
-    if (action.repl != null) return Repl.start(action.repl);
+    if (action.repl != null) return AyaRepl.start(action.repl);
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;

@@ -1,12 +1,8 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl.jline.completer;
+package org.aya.repl;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.repl.Repl;
-import org.aya.cli.repl.command.Command;
-import org.aya.cli.repl.command.CommandArg;
-import org.aya.cli.repl.command.CommandManager;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -16,13 +12,12 @@ import org.jline.reader.ParsedLine;
 import java.util.List;
 
 public record CmdCompleter(
-  @NotNull Repl repl,
   @NotNull CommandManager cmd,
-  @NotNull AyaCompleters.Code outerMost,
+  @NotNull Completer outerMost,
   @NotNull ImmutableSeq<Candidate> cmdNames
 ) implements Completer {
-  public CmdCompleter(@NotNull Repl repl, @NotNull CommandManager cmd) {
-    this(repl, cmd, new AyaCompleters.Code(repl),
+  public CmdCompleter(@NotNull CommandManager cmd, @NotNull Completer outerMost) {
+    this(cmd, outerMost,
       cmd.cmd.view().flatMap(c -> c.owner().names()).map(c -> Command.PREFIX + c)
         .map(Candidate::new).toImmutableSeq());
   }

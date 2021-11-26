@@ -4,8 +4,9 @@ package org.aya.cli;
 
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.cli.repl.Repl;
+import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
+import org.aya.repl.IO;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -88,7 +89,7 @@ public class PlainReplTest {
     var out = new StringWriter();
     var err = new StringWriter();
     var reader = new StringReader(input + "\n:exit");
-    var repl = new Repl.PlainRepl(config, reader, out, err);
+    var repl = new AyaRepl.PlainRepl(config, new IO(reader, out, err));
     repl.run();
     return Tuple.of(out.toString(), err.toString());
   }

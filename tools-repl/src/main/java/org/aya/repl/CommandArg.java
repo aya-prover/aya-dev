@@ -1,9 +1,8 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl.command;
+package org.aya.repl;
 
 import kala.control.Try;
-import org.aya.cli.repl.jline.completer.AyaCompleters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.Completer;
@@ -14,6 +13,13 @@ public interface CommandArg {
   @NotNull Class<?> type();
   @NotNull Object parse(@NotNull String input) throws IllegalArgumentException;
   @Nullable Completer completer();
+  /**
+   * Affects the repl parser behavior of the argument.
+   *
+   * @return true to parse the argument with the default parser,
+   * otherwise to parse with the antlr-based parser.
+   * @see org.aya.repl.antlr.ReplParser
+   */
   boolean shellLike();
 
   record CommandArgImpl<R>(
@@ -40,13 +46,13 @@ public interface CommandArg {
   }
 
   static <T extends Enum<T>> CommandArg fromEnum(@NotNull Class<T> enumClass) {
-    return from(enumClass, false, new AyaCompleters.EnumCompleter<>(enumClass), input -> Enum.valueOf(enumClass, input));
+    return from(enumClass, false, new ReplCompleters.EnumCompleter<>(enumClass), input -> Enum.valueOf(enumClass, input));
   }
 
   @NotNull CommandArg STRING = from(String.class, null, Function.identity());
   @NotNull CommandArg STRICT_INT = from(Integer.class, null, input ->
     Try.of(() -> Integer.parseInt(input)).getOrThrow(IllegalArgumentException::new));
-  @NotNull CommandArg STRICT_BOOLEAN = from(Boolean.class, AyaCompleters.BOOL, s -> {
+  @NotNull CommandArg STRICT_BOOLEAN = from(Boolean.class, ReplCompleters.BOOL, s -> {
     if (s.equalsIgnoreCase("true")) return true;
     if (s.equalsIgnoreCase("false")) return false;
     if (s.equalsIgnoreCase("yes")) return true;
