@@ -21,7 +21,6 @@ import org.jline.builtins.Completers;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.Scanner;
 
 public abstract class Repl implements Closeable, Runnable {
   public static int start(MainArgs.@NotNull ReplAction replAction) throws IOException {
@@ -35,7 +34,7 @@ public abstract class Repl implements Closeable, Runnable {
   private static Repl makeRepl(MainArgs.@NotNull ReplAction replAction, ReplConfig replConfig) throws IOException {
     return switch (replAction.replType) {
       case jline -> new JlineRepl(replConfig);
-      case plain -> new PlainRepl(replConfig);
+      case plain -> new PlainRepl(replConfig, IO.STDIO);
     };
   }
 
@@ -157,38 +156,23 @@ public abstract class Repl implements Closeable, Runnable {
    * Default repl when jline is unavailable
    */
   public static class PlainRepl extends Repl {
-    private final @NotNull Scanner scanner;
-    private final @NotNull PrintWriter out;
-    private final @NotNull PrintWriter err;
+    private final @NotNull IO io;
 
-    public PlainRepl(@NotNull ReplConfig config) {
-      this(config, new InputStreamReader(System.in), new PrintWriter(System.out), new PrintWriter(System.err));
-    }
-
-    public PlainRepl(
-      @NotNull ReplConfig config,
-      @NotNull Readable input,
-      @NotNull Writer out,
-      @NotNull Writer err
-    ) {
+    public PlainRepl(@NotNull ReplConfig config, @NotNull IO io) {
       super(config);
-      scanner = new Scanner(input);
-      this.out = new PrintWriter(out);
-      this.err = new PrintWriter(err);
+      this.io = io;
     }
 
     @Override protected @NotNull String readLine(@NotNull String prompt) {
-      out.print(prompt);
-      out.flush();
-      return scanner.nextLine();
+      return io.readLine(prompt);
     }
 
     @Override protected void println(@NotNull String x) {
-      out.println(x);
+      io.out().println(x);
     }
 
     @Override protected void errPrintln(@NotNull String x) {
-      err.println(x);
+      io.err().println(x);
     }
 
     @Override protected @Nullable String hintMessage() {

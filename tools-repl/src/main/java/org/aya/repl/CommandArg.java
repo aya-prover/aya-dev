@@ -13,6 +13,13 @@ public interface CommandArg {
   @NotNull Class<?> type();
   @NotNull Object parse(@NotNull String input) throws IllegalArgumentException;
   @Nullable Completer completer();
+  /**
+   * Affects the repl parser behavior of the argument.
+   *
+   * @return true to parse the argument with the default parser,
+   * otherwise to parse with the antlr-based parser.
+   * @see org.aya.repl.antlr.ReplParser
+   */
   boolean shellLike();
 
   record CommandArgImpl<R>(

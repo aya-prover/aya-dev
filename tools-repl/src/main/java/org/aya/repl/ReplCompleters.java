@@ -12,6 +12,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Basic completer for {@link Command}
+ * @see Command
+ * @see CommandManager
+ */
 public interface ReplCompleters {
   @NotNull Completer BOOL = (reader, line, candidates) -> {
     candidates.add(new Candidate("true"));
