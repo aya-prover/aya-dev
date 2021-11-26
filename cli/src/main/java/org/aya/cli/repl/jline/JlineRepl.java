@@ -13,6 +13,7 @@ import org.aya.parser.GeneratedLexerTokens;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.CmdCompleter;
+import org.aya.repl.ReplUtil;
 import org.aya.repl.antlr.AntlrLexer;
 import org.aya.repl.antlr.ReplHighlighter;
 import org.aya.repl.antlr.ReplParser;
@@ -30,8 +31,6 @@ import org.jline.terminal.TerminalBuilder;
 import org.jline.terminal.impl.AbstractWindowsTerminal;
 import org.jline.terminal.impl.DumbTerminal;
 import org.jline.utils.AttributedString;
-import org.jline.utils.AttributedStringBuilder;
-import org.jline.utils.AttributedStyle;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -100,11 +99,7 @@ public final class JlineRepl extends Repl implements AntlrLexer {
 
   // see `eprintln` in https://github.com/JetBrains/Arend/blob/master/cli/src/main/java/org/arend/frontend/repl/jline/JLineCliRepl.java
   @Override protected void errPrintln(@NotNull String x) {
-    println(new AttributedStringBuilder()
-      .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
-      .append(x)
-      .style(AttributedStyle.DEFAULT)
-      .toAnsi());
+    println(ReplUtil.red(x));
   }
 
   @Override protected @Nullable String hintMessage() {

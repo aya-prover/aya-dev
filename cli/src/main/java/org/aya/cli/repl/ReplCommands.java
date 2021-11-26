@@ -5,8 +5,8 @@ package org.aya.cli.repl;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
-import org.aya.pretty.doc.Doc;
 import org.aya.repl.Command;
+import org.aya.repl.ReplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,9 +16,6 @@ import java.nio.file.Path;
 
 public interface ReplCommands {
   record Code(@NotNull String code) {
-  }
-
-  record HelpItem(@NotNull String cmd) {
   }
 
   @NotNull Command CHANGE_PROMPT = new Command(ImmutableSeq.of("prompt"), "Change the REPL prompt text") {
@@ -115,19 +112,8 @@ public interface ReplCommands {
   };
 
   @NotNull Command HELP = new Command(ImmutableSeq.of("?", "help"), "Describe a selected command or show all commands") {
-    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable ReplCommands.HelpItem argument) {
-      if (argument != null && !argument.cmd.isEmpty()) {
-        var cmd = repl.commandManager.cmd.find(c -> c.owner().names().contains(argument.cmd));
-        if (cmd.isDefined()) return Result.ok(cmd.get().owner().help(), true);
-        else return Result.err("No such command: " + argument.cmd, true);
-      }
-      var commands = Doc.vcat(repl.commandManager.cmd.view()
-        .map(command -> Doc.sep(
-          Doc.commaList(command.owner().names().map(name -> Doc.plain(Command.PREFIX + name))),
-          Doc.plain("-"),
-          Doc.english(command.owner().help())
-        )));
-      return new Result(new Output(commands, Doc.empty()), true);
+    @Entry public @NotNull Command.Result execute(@NotNull Repl repl, @Nullable ReplUtil.HelpItem argument) {
+      return ReplUtil.invokeHelp(repl.commandManager, argument);
     }
   };
 }

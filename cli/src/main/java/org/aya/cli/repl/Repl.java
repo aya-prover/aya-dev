@@ -14,10 +14,7 @@ import org.aya.cli.single.CliReporter;
 import org.aya.cli.utils.MainArgs;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.pretty.doc.Doc;
-import org.aya.repl.Command;
-import org.aya.repl.CommandArg;
-import org.aya.repl.CommandManager;
-import org.aya.repl.ReplCompleters;
+import org.aya.repl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.builtins.Completers;
@@ -49,7 +46,7 @@ public abstract class Repl implements Closeable, Runnable {
       CommandArg.STRICT_INT,
       CommandArg.shellLike(Path.class, new Completers.FileNameCompleter(), this::resolveFile),
       CommandArg.from(ReplCommands.Code.class, new AyaCompleters.Code(this), ReplCommands.Code::new),
-      CommandArg.from(ReplCommands.HelpItem.class, new ReplCompleters.Help(() -> commandManager), ReplCommands.HelpItem::new),
+      CommandArg.from(ReplUtil.HelpItem.class, new ReplCompleters.Help(() -> commandManager), ReplUtil.HelpItem::new),
       CommandArg.fromEnum(DistillerOptions.Key.class),
       CommandArg.fromEnum(NormalizeMode.class)
     ), ImmutableSeq.of(
