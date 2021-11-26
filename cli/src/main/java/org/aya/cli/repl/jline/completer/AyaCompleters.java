@@ -16,6 +16,7 @@ import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public interface AyaCompleters {
 
@@ -65,9 +66,9 @@ public interface AyaCompleters {
     }
   }
 
-  record Help(@NotNull CommandManager commandManager) implements Completer {
+  record Help(@NotNull Supplier<CommandManager> commandManager) implements Completer {
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-      commandManager.cmd.view().map(CommandManager.CommandGen::owner)
+      commandManager.get().cmd.view().map(CommandManager.CommandGen::owner)
         .flatMap(Command::names).map(Candidate::new).forEach(candidates::add);
     }
   }
