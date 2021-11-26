@@ -7,6 +7,7 @@ module org.aya.cli {
   requires org.jline.terminal.jansi;
   requires org.jline.reader;
   requires transitive org.aya;
+  requires transitive org.aya.repl;
 
   exports org.aya.cli;
   exports org.aya.cli.single;

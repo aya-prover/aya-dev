@@ -3,7 +3,7 @@
 package org.aya.cli.repl.command;
 
 import kala.control.Try;
-import org.aya.cli.repl.jline.completer.AyaCompleters;
+import org.aya.repl.Completers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.Completer;
@@ -40,13 +40,13 @@ public interface CommandArg {
   }
 
   static <T extends Enum<T>> CommandArg fromEnum(@NotNull Class<T> enumClass) {
-    return from(enumClass, false, new AyaCompleters.EnumCompleter<>(enumClass), input -> Enum.valueOf(enumClass, input));
+    return from(enumClass, false, new Completers.EnumCompleter<>(enumClass), input -> Enum.valueOf(enumClass, input));
   }
 
   @NotNull CommandArg STRING = from(String.class, null, Function.identity());
   @NotNull CommandArg STRICT_INT = from(Integer.class, null, input ->
     Try.of(() -> Integer.parseInt(input)).getOrThrow(IllegalArgumentException::new));
-  @NotNull CommandArg STRICT_BOOLEAN = from(Boolean.class, AyaCompleters.BOOL, s -> {
+  @NotNull CommandArg STRICT_BOOLEAN = from(Boolean.class, Completers.BOOL, s -> {
     if (s.equalsIgnoreCase("true")) return true;
     if (s.equalsIgnoreCase("false")) return false;
     if (s.equalsIgnoreCase("yes")) return true;

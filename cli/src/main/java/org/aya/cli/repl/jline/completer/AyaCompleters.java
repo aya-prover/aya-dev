@@ -15,24 +15,13 @@ import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;
 
-import java.util.Arrays;
 import java.util.List;
 
 public interface AyaCompleters {
-  @NotNull Completer BOOL = (reader, line, candidates) -> {
-    candidates.add(new Candidate("true"));
-    candidates.add(new Candidate("false"));
-  };
 
   @NotNull List<Candidate> KEYWORDS = GeneratedLexerTokens.KEYWORDS
     .values().stream().map(Candidate::new).toList();
   @NotNull Completer KW = (reader, line, candidates) -> candidates.addAll(KEYWORDS);
-
-  record EnumCompleter<T extends Enum<T>>(Class<T> enumClass) implements Completer {
-    @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-      Arrays.stream(enumClass.getEnumConstants()).map(Enum::name).map(Candidate::new).forEach(candidates::add);
-    }
-  }
 
   class Context implements Completer {
     private final @NotNull Repl repl;
@@ -76,9 +65,9 @@ public interface AyaCompleters {
     }
   }
 
-  record Help(@NotNull Repl repl) implements Completer {
+  record Help(@NotNull CommandManager commandManager) implements Completer {
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-      repl.commandManager.cmd.view().map(CommandManager.CommandGen::owner)
+      commandManager.cmd.view().map(CommandManager.CommandGen::owner)
         .flatMap(Command::names).map(Candidate::new).forEach(candidates::add);
     }
   }
