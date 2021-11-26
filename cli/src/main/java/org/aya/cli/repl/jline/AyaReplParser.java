@@ -71,12 +71,11 @@ public record AyaReplParser(@NotNull CommandManager cmd, @NotNull DefaultParser 
     }
     var trim = line.trim();
     if (trim.startsWith(Command.PREFIX)) {
-      var shellLike = cmd.parse(trim.substring(1)).command().view()
+      var shellAlike = cmd.parse(trim.substring(1)).command().view()
         .mapNotNull(CommandManager.CommandGen::argFactory)
-        .map(CommandArg::shellLike)
-        .fold(false, Boolean::logicalOr);
+        .anyMatch(CommandArg::shellLike);
       // ^ if anything matches
-      if (shellLike) return shellLike().parse(line, cursor, context);
+      if (shellAlike) return shellLike.parse(line, cursor, context);
     }
     // Drop whitespaces
     var tokens = tokensNoEOF(line)

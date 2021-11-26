@@ -18,7 +18,7 @@ public interface ReplCompleters {
     candidates.add(new Candidate("false"));
   };
 
-  record EnumCompleter<T extends Enum<T>>(Class<T> enumClass) implements Completer {
+  record EnumCompleter<T extends Enum<T>>(@NotNull Class<T> enumClass) implements Completer {
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       Arrays.stream(enumClass.getEnumConstants()).map(Enum::name).map(Candidate::new).forEach(candidates::add);
     }

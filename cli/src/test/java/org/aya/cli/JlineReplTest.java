@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
+import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.AyaReplParser;
 import org.aya.cli.repl.jline.JlineRepl;
-import org.aya.cli.repl.jline.completer.AyaCompleters;
 import org.aya.pretty.doc.Doc;
 import org.jline.reader.Candidate;
 import org.junit.jupiter.api.BeforeAll;
