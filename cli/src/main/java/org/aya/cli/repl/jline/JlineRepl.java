@@ -8,10 +8,13 @@ import org.aya.api.util.AyaHome;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.distill.BaseDistiller;
+import org.aya.parser.GeneratedLexerTokens;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.CmdCompleter;
 import org.aya.repl.antlr.AntlrLexer;
+import org.aya.repl.antlr.ReplHighlighter;
 import org.aya.repl.antlr.ReplParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +52,13 @@ public final class JlineRepl extends Repl implements AntlrLexer {
       .terminal(terminal)
       .history(new DefaultHistory())
       .parser(new ReplParser(commandManager, this))
-      .highlighter(new AyaReplHighlighter(this))
+      .highlighter(new ReplHighlighter(this) {
+        @Override protected @NotNull Doc highlight(@NotNull Token t) {
+          return GeneratedLexerTokens.KEYWORDS.containsKey(t.getType())
+            ? Doc.styled(BaseDistiller.KEYWORD, t.getText())
+            : Doc.plain(t.getText());
+        }
+      })
       .completer(new AggregateCompleter(
         new CmdCompleter(commandManager, new AyaCompleters.Code(this))
       ))
