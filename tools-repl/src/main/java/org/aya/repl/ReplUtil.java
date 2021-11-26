@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
+import java.nio.file.Path;
+
 public interface ReplUtil {
   static @NotNull Command.Result invokeHelp(CommandManager commandManager, @Nullable HelpItem argument) {
     if (argument != null && !argument.cmd.isEmpty()) {
@@ -25,6 +27,12 @@ public interface ReplUtil {
   }
 
   record HelpItem(@NotNull String cmd) {
+  }
+
+  static @NotNull Path resolveFile(@NotNull String arg, Path cwd) {
+    var homeAware = arg.replaceFirst("^~", System.getProperty("user.home"));
+    var path = Path.of(homeAware);
+    return path.isAbsolute() ? path.normalize() : cwd.resolve(homeAware).toAbsolutePath().normalize();
   }
 
   static @NotNull String red(@NotNull String x) {

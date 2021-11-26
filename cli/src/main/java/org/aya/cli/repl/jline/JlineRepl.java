@@ -5,7 +5,7 @@ package org.aya.cli.repl.jline;
 import kala.collection.SeqView;
 import org.antlr.v4.runtime.Token;
 import org.aya.api.util.AyaHome;
-import org.aya.cli.repl.Repl;
+import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.concrete.parse.AyaParsing;
 import org.aya.distill.BaseDistiller;
@@ -32,10 +32,9 @@ import org.jline.terminal.impl.AbstractWindowsTerminal;
 import org.jline.terminal.impl.DumbTerminal;
 import org.jline.utils.AttributedString;
 
-import java.io.EOFException;
 import java.io.IOException;
 
-public final class JlineRepl extends Repl implements AntlrLexer {
+public final class JlineRepl extends AyaRepl implements AntlrLexer {
   private final @NotNull Terminal terminal;
   @VisibleForTesting
   public final @NotNull LineReader lineReader;
@@ -77,28 +76,23 @@ public final class JlineRepl extends Repl implements AntlrLexer {
     return terminal.getWidth();
   }
 
-  @Override protected @NotNull String readLine(@NotNull String prompt) throws EOFException, InterruptedException {
-    try {
-      return lineReader.readLine(prompt);
-    } catch (EndOfFileException ignored) {
-      throw new EOFException();
-    } catch (UserInterruptException ignored) {
-      throw new InterruptedException();
-    }
+  @Override @NotNull public String readLine(@NotNull String prompt)
+    throws EndOfFileException, UserInterruptException {
+    return lineReader.readLine(prompt);
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
     return doc.renderToString(StringPrinterConfig.unixTerminal(prettyPrintWidth, config.enableUnicode));
   }
 
-  @Override protected void println(@NotNull String x) {
+  @Override public void println(@NotNull String x) {
     if (terminal instanceof AbstractWindowsTerminal) terminal.writer().println(AttributedString.fromAnsi(x));
     else terminal.writer().println(x);
     terminal.flush();
   }
 
   // see `eprintln` in https://github.com/JetBrains/Arend/blob/master/cli/src/main/java/org/arend/frontend/repl/jline/JLineCliRepl.java
-  @Override protected void errPrintln(@NotNull String x) {
+  @Override public void errPrintln(@NotNull String x) {
     println(ReplUtil.red(x));
   }
 

@@ -4,7 +4,7 @@ package org.aya.cli.repl.jline;
 
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.cli.repl.Repl;
+import org.aya.cli.repl.AyaRepl;
 import org.aya.generic.Constants;
 import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
@@ -21,9 +21,9 @@ public interface AyaCompleters {
   @NotNull Completer KW = (reader, line, candidates) -> candidates.addAll(KEYWORDS);
 
   class Context implements Completer {
-    private final @NotNull Repl repl;
+    private final @NotNull AyaRepl repl;
 
-    public Context(@NotNull Repl repl) {
+    public Context(@NotNull AyaRepl repl) {
       this.repl = repl;
     }
 
@@ -52,7 +52,7 @@ public interface AyaCompleters {
   }
 
   class Code extends Context {
-    public Code(@NotNull Repl repl) {
+    public Code(@NotNull AyaRepl repl) {
       super(repl);
     }
 
