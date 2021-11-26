@@ -7,4 +7,6 @@ dependencies {
   api(project(":pretty"))
   val jlineVersion = deps.getProperty("version.jline")
   api("org.jline", "jline-reader", version = jlineVersion)
+  api("org.jline", "jline-terminal", version = jlineVersion)
+  api("org.antlr", "antlr4-runtime", version = deps.getProperty("version.antlr"))
 }

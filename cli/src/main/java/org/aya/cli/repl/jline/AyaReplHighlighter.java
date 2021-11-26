@@ -8,15 +8,22 @@ import org.aya.distill.BaseDistiller;
 import org.aya.parser.GeneratedLexerTokens;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
+import org.aya.repl.antlr.AntlrLexer;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.LineReader;
 import org.jline.reader.impl.DefaultHighlighter;
 import org.jline.utils.AttributedString;
 
-public class AyaReplHighlighter extends DefaultHighlighter {
+public final class AyaReplHighlighter extends DefaultHighlighter {
+  private final @NotNull AntlrLexer lexer;
+
+  public AyaReplHighlighter(@NotNull AntlrLexer lexer) {
+    this.lexer = lexer;
+  }
+
   @Override
   public AttributedString highlight(LineReader reader, String buffer) {
-    var tokens = AyaReplParser.tokensNoEOF(buffer);
+    var tokens = lexer.tokensNoEOF(buffer);
     return AttributedString.fromAnsi(tokensToDoc(tokens)
       .renderToString(StringPrinterConfig.unixTerminal()));
   }

@@ -16,7 +16,6 @@ import org.jline.reader.ParsedLine;
 import java.util.List;
 
 public interface AyaCompleters {
-
   @NotNull List<Candidate> KEYWORDS = GeneratedLexerTokens.KEYWORDS
     .values().stream().map(Candidate::new).toList();
   @NotNull Completer KW = (reader, line, candidates) -> candidates.addAll(KEYWORDS);

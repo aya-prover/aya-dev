@@ -12,7 +12,6 @@ dependencies {
   api("info.picocli", "picocli", version = deps.getProperty("version.picocli"))
   annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
   val jlineVersion = deps.getProperty("version.jline")
-  implementation("org.jline", "jline-terminal", version = jlineVersion)
   implementation("org.jline", "jline-terminal-jansi", version = jlineVersion)
   implementation("org.jline", "jline-builtins", version = jlineVersion)
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))

@@ -3,9 +3,9 @@
 package org.aya.cli;
 
 import org.aya.cli.repl.jline.AyaCompleters;
-import org.aya.cli.repl.jline.AyaReplParser;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.pretty.doc.Doc;
+import org.aya.repl.antlr.ReplParser;
 import org.jline.reader.Candidate;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -17,12 +17,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class JlineReplTest {
-  private static AyaReplParser parser;
+  private static ReplParser parser;
   private static JlineRepl repl;
 
   @BeforeAll public static void setup() throws IOException {
     repl = new JlineRepl(PlainReplTest.config);
-    parser = new AyaReplParser(repl.commandManager);
+    parser = new ReplParser(repl.commandManager, repl);
   }
 
   @Test public void sanity() {

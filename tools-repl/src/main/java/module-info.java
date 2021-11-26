@@ -5,5 +5,6 @@ module org.aya.repl {
   requires org.aya.pretty;
   requires org.jline.reader;
 
+  exports org.aya.repl.antlr;
   exports org.aya.repl;
 }

@@ -2,12 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
+import kala.collection.SeqView;
+import org.antlr.v4.runtime.Token;
 import org.aya.api.util.AyaHome;
 import org.aya.cli.repl.Repl;
 import org.aya.cli.repl.ReplConfig;
+import org.aya.concrete.parse.AyaParsing;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.CmdCompleter;
+import org.aya.repl.antlr.AntlrLexer;
+import org.aya.repl.antlr.ReplParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -28,7 +33,7 @@ import org.jline.utils.AttributedStyle;
 import java.io.EOFException;
 import java.io.IOException;
 
-public final class JlineRepl extends Repl {
+public final class JlineRepl extends Repl implements AntlrLexer {
   private final @NotNull Terminal terminal;
   @VisibleForTesting
   public final @NotNull LineReader lineReader;
@@ -43,8 +48,8 @@ public final class JlineRepl extends Repl {
       .appName("Aya REPL")
       .terminal(terminal)
       .history(new DefaultHistory())
-      .parser(new AyaReplParser(commandManager))
-      .highlighter(new AyaReplHighlighter())
+      .parser(new ReplParser(commandManager, this))
+      .highlighter(new AyaReplHighlighter(this))
       .completer(new AggregateCompleter(
         new CmdCompleter(commandManager, new AyaCompleters.Code(this))
       ))
@@ -53,6 +58,10 @@ public final class JlineRepl extends Repl {
       .build();
     prettyPrintWidth = widthOf(terminal);
     terminal.handle(Terminal.Signal.WINCH, signal -> prettyPrintWidth = widthOf(terminal));
+  }
+
+  @Override public @NotNull SeqView<Token> tokensNoEOF(String line) {
+    return AyaParsing.tokens(line).view().dropLast(1);
   }
 
   private int widthOf(@NotNull Terminal terminal) {
