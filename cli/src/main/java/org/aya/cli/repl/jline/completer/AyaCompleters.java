@@ -5,8 +5,6 @@ package org.aya.cli.repl.jline.completer;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.repl.Repl;
-import org.aya.cli.repl.command.Command;
-import org.aya.cli.repl.command.CommandManager;
 import org.aya.generic.Constants;
 import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +14,6 @@ import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 public interface AyaCompleters {
 
@@ -63,13 +60,6 @@ public interface AyaCompleters {
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       KW.complete(reader, line, candidates);
       super.complete(reader, line, candidates);
-    }
-  }
-
-  record Help(@NotNull Supplier<CommandManager> commandManager) implements Completer {
-    @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-      commandManager.get().cmd.view().map(CommandManager.CommandGen::owner)
-        .flatMap(Command::names).map(Candidate::new).forEach(candidates::add);
     }
   }
 }

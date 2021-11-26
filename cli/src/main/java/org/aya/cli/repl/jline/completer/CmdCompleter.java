@@ -4,9 +4,9 @@ package org.aya.cli.repl.jline.completer;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.Repl;
-import org.aya.cli.repl.command.Command;
-import org.aya.cli.repl.command.CommandManager;
+import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
+import org.aya.repl.CommandManager;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;

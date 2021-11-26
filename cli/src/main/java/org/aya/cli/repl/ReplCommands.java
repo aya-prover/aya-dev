@@ -5,8 +5,8 @@ package org.aya.cli.repl;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.util.NormalizeMode;
-import org.aya.cli.repl.command.Command;
 import org.aya.pretty.doc.Doc;
+import org.aya.repl.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

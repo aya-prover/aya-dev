@@ -10,8 +10,9 @@ import org.jline.reader.ParsedLine;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
-public interface Completers {
+public interface ReplCompleters {
   @NotNull Completer BOOL = (reader, line, candidates) -> {
     candidates.add(new Candidate("true"));
     candidates.add(new Candidate("false"));
@@ -20,6 +21,13 @@ public interface Completers {
   record EnumCompleter<T extends Enum<T>>(Class<T> enumClass) implements Completer {
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       Arrays.stream(enumClass.getEnumConstants()).map(Enum::name).map(Candidate::new).forEach(candidates::add);
+    }
+  }
+
+  record Help(@NotNull Supplier<CommandManager> commandManager) implements Completer {
+    @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+      commandManager.get().cmd.view().map(CommandManager.CommandGen::owner)
+        .flatMap(Command::names).map(Candidate::new).forEach(candidates::add);
     }
   }
 }

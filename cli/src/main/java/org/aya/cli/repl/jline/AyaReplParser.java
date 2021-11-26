@@ -4,10 +4,10 @@ package org.aya.cli.repl.jline;
 
 import kala.collection.SeqView;
 import org.antlr.v4.runtime.Token;
-import org.aya.cli.repl.command.Command;
-import org.aya.cli.repl.command.CommandManager;
 import org.aya.concrete.parse.AyaParsing;
+import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
+import org.aya.repl.CommandManager;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
