@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
+import org.aya.core.def.FieldDef;
 import org.aya.value.visitor.Visitor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,11 @@ public sealed interface RefValue extends Value {
     public @NotNull Neu projR() {
       return new Neu(var, spine.appended(new Segment.ProjR()));
     }
+
+    @Contract("_ -> new") @Override
+    public @NotNull Neu access(FieldDef field) {
+      return new Neu(var, spine.appended(new Segment.Access(field)));
+    }
   }
 
   record Flex(Var var, ImmutableSeq<Segment> spine, LazyValue<Value> result) implements RefValue {
@@ -62,6 +68,11 @@ public sealed interface RefValue extends Value {
     @Contract(" -> new") @Override
     public @NotNull Flex projR() {
       return new Flex(var, spine.appended(new Segment.ProjR()), result.map(Value::projR));
+    }
+
+    @Contract("_ -> new") @Override
+    public @NotNull Flex access(FieldDef field) {
+      return new Flex(var, spine.appended(new Segment.Access(field)), result.map(res -> res.access(field)));
     }
   }
 }

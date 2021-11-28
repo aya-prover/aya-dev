@@ -5,8 +5,10 @@ package org.aya.core.visitor;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
+import kala.tuple.Tuple;
 import org.aya.api.util.Arg;
 import org.aya.core.Matching;
+import org.aya.core.def.FieldDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.generic.Environment;
@@ -46,7 +48,7 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
   private boolean matchPat(@NotNull Pat pattern, @NotNull Value value, @NotNull DynamicSeq<Matchy> out) {
     return switch (pattern) {
       case Pat.Bind bind -> {
-        out.append(new Matchy(value, new Term.Param(bind.as(), bind.type(), bind.explicit())));
+        out.append(new Matchy(value, new Term.Param(bind.bind(), bind.type(), bind.explicit())));
         yield true;
       }
       case Pat.Tuple tuple -> {
@@ -56,14 +58,17 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
           if (!matchPat(pat, pair.left(), out)) yield false;
           tailValue = pair.right();
         }
-        if (tuple.as() != null) {
-          out.append(new Matchy(value, new Term.Param(tuple.as(), tuple.type(), tuple.explicit())));
-        }
         yield true;
       }
-      // TODO: Handle prim/ctor call
+      // TODO: Handle prim call and meta
       case Pat.Prim prim -> false;
-      case Pat.Ctor ctor -> false;
+      case Pat.Ctor ctor -> {
+        if (!(value instanceof IntroValue.Ctor con)) yield false;
+        if (ctor.ref().core != con.def()) yield false;
+        // TODO: unify the data types?
+        yield ctor.params().zip(con.args()).allMatch(pair -> matchPat(pair._1, pair._2.value(), out));
+      }
+      case Pat.Meta meta -> false;
       case Pat.Absurd ignore -> false;
     };
   }
@@ -146,17 +151,26 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
 
   @Override
   public Value visitDataCall(@NotNull CallTerm.Data dataCall, Environment env) {
-    return null;
+    var def = dataCall.ref().core;
+    var args = dataCall.args().map(arg -> eval(arg, env));
+    return new FormValue.Data(def, args);
   }
 
   @Override
   public Value visitConCall(@NotNull CallTerm.Con conCall, Environment env) {
-    return null;
+    var def = conCall.ref().core;
+    var args = conCall.conArgs().map(arg -> eval(arg, env));
+    var dataDef = conCall.head().dataRef().core;
+    var dataArgs = conCall.head().dataArgs().map(arg -> eval(arg, env));
+    var data = new FormValue.Data(dataDef, dataArgs);
+    return new IntroValue.Ctor(def, args, data);
   }
 
   @Override
   public Value visitStructCall(@NotNull CallTerm.Struct structCall, Environment env) {
-    return null;
+    var def = structCall.ref().core;
+    var args = structCall.args().map(arg -> eval(arg, env));
+    return new FormValue.Struct(def, args);
   }
 
   @Override
@@ -172,7 +186,10 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
 
   @Override
   public Value visitNew(IntroTerm.@NotNull New newTerm, Environment env) {
-    return null;
+    var struct = (FormValue.Struct) newTerm.struct().accept(this, env);
+    var params = newTerm.params().view()
+      .map((fieldVar, term) -> Tuple.of(fieldVar.core, term.accept(this, env))).<FieldDef, Value>toImmutableMap();
+    return new IntroValue.New(params, struct);
   }
 
   @Override
@@ -186,7 +203,9 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
 
   @Override
   public Value visitAccess(CallTerm.@NotNull Access access, Environment env) {
-    return null;
+    var struct = access.of().accept(this, env);
+    var fieldApps = access.fieldArgs().map(arg -> (Value.Segment) new Value.Segment.Apply(eval(arg, env)));
+    return struct.access(access.ref().core).elim(fieldApps);
   }
 
   @Override
@@ -201,6 +220,11 @@ public class Evaluator implements Term.Visitor<Environment, Value> {
 
   @Override
   public Value visitError(@NotNull ErrorTerm error, Environment env) {
+    return null;
+  }
+
+  @Override
+  public Value visitMetaPat(RefTerm.@NotNull MetaPat metaPat, Environment environment) {
     return null;
   }
 }

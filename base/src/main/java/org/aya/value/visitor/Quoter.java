@@ -28,6 +28,16 @@ public class Quoter implements Visitor<Unit, Term> {
   }
 
   @Override
+  public Term visitData(FormValue.@NotNull Data data, Unit unit) {
+    return null;
+  }
+
+  @Override
+  public Term visitStruct(FormValue.@NotNull Struct struct, Unit unit) {
+    return null;
+  }
+
+  @Override
   public Term visitSigma(FormValue.@NotNull Sigma sigma, Unit u) {
     var param = quote(sigma.param(), u);
     var body = sigma.func().apply(new RefValue.Neu(param.ref())).accept(this, u);
@@ -55,6 +65,16 @@ public class Quoter implements Visitor<Unit, Term> {
     var param = quote(lam.param(), u);
     var body = lam.func().apply(new RefValue.Neu(param.ref())).accept(this, u);
     return new IntroTerm.Lambda(param, body);
+  }
+
+  @Override
+  public Term visitCtor(IntroValue.@NotNull Ctor ctor, Unit unit) {
+    return null;
+  }
+
+  @Override
+  public Term visitNew(IntroValue.@NotNull New newVal, Unit unit) {
+    return null;
   }
 
   @Override
