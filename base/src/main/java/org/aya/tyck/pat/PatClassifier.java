@@ -38,7 +38,7 @@ public record PatClassifier(
   @NotNull PatTree.Builder builder
 ) {
   public static @NotNull ImmutableSeq<PatClass> classify(
-    @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
+    @NotNull ImmutableSeq<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     boolean coverage
@@ -60,6 +60,7 @@ public record PatClassifier(
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     @NotNull ImmutableSeq<PatClass> classification
   ) {
+    if (classification.isEmpty()) return;
     // Google says they're initialized to false
     var numbers = new boolean[clauses.size()];
     for (var results : classification) numbers[results.contents().min()] = true;
@@ -69,13 +70,14 @@ public record PatClassifier(
   }
 
   public static void confluence(
-    @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
+    @NotNull PatTycker.PatResult clauses,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos,
-    @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
+    @NotNull ImmutableSeq<PatClass> classification
   ) {
+    var result = clauses.result();
     for (var results : classification) {
       var contents = results.contents()
-        .flatMap(i -> Pat.Preclause.lift(clauses.get(i))
+        .flatMap(i -> Pat.Preclause.lift(clauses.clauses().get(i))
           .map(matching -> IntObjTuple2.of(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++) {
         var lhsInfo = contents.get(i - 1);

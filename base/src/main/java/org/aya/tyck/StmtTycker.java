@@ -11,7 +11,6 @@ import org.aya.api.error.Reporter;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
-import org.aya.core.Matching;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
@@ -89,11 +88,17 @@ public record StmtTycker(
           clauses -> {
             var patTycker = new PatTycker(tycker);
             var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
-            var matchings = result._2.flatMap(Pat.Preclause::lift);
-            var def = factory.apply(result._1, Either.right(matchings));
+            var def = factory.apply(result.result(), Either.right(result.matchings()));
             if (patTycker.noError()) {
-              var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
-              ensureConfluent(tycker, signature, result._2, matchings, decl.sourcePos, true, orderIndependent);
+              if (decl.modifiers.contains(Modifier.Overlap)) {
+                // Order-independent.
+                ensureConfluent(tycker, signature, result, decl.sourcePos, true);
+              } else {
+                var classification = PatClassifier.classify(result.clauses(), signature.param(),
+                  tycker.state, tycker.reporter, decl.sourcePos, true);
+                // First-match semantics.
+                PatClassifier.firstMatchDomination(result.clauses(), tycker.reporter, decl.sourcePos, classification);
+              }
             }
             return def;
           }
@@ -196,27 +201,24 @@ public record StmtTycker(
         dataTeleView.map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
     }
     ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
-    var elabClauses = patTycker.elabClauses(ctor.clauses, signature, ctor.sourcePos)._2;
-    var matchings = elabClauses.flatMap(Pat.Preclause::lift);
-    var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, matchings, dataCall, ctor.coerce);
+    var elabClauses = patTycker.elabClauses(ctor.clauses, signature, ctor.sourcePos);
+    var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
     if (patTycker.noError())
-      ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false, true);
+      ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
     return elaborated;
   }
 
   private void ensureConfluent(
-    ExprTycker tycker, Def.Signature signature, ImmutableSeq<Pat.Preclause<Term>> elabClauses,
-    ImmutableSeq<@NotNull Matching> matchings, @NotNull SourcePos pos,
-    boolean coverage, boolean orderIndependent
+    ExprTycker tycker, Def.Signature signature,
+    PatTycker.PatResult elabClauses, SourcePos pos,
+    boolean coverage
   ) {
-    if (!matchings.isNotEmpty()) return;
+    if (!coverage && elabClauses.matchings().isEmpty()) return;
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
-    var classification = PatClassifier.classify(elabClauses, signature.param(),
-      tycker.state, tycker.reporter, pos, coverage);
-    if (orderIndependent) PatClassifier.confluence(elabClauses, tycker, pos, signature.result(), classification);
-    else if (classification.isNotEmpty())
-      PatClassifier.firstMatchDomination(elabClauses, reporter, pos, classification);
-    Conquer.against(matchings, orderIndependent, tycker, pos, signature);
+    PatClassifier.confluence(elabClauses, tycker, pos,
+      PatClassifier.classify(elabClauses.clauses(), signature.param(),
+        tycker.state, tycker.reporter, pos, coverage));
+    Conquer.against(elabClauses.matchings(), true, tycker, pos, signature);
     tycker.solveMetas();
     tracing(TreeBuilder::reduce);
   }
@@ -230,12 +232,11 @@ public record StmtTycker(
     var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
-    var elabClauses = patTycker.elabClauses(field.clauses, field.signature, field.result.sourcePos())._2;
-    var matchings = elabClauses.flatMap(Pat.Preclause::lift);
+    var clauses = patTycker.elabClauses(field.clauses, field.signature, field.result.sourcePos());
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
-    var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
+    var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, clauses.matchings(), body, field.coerce);
     if (patTycker.noError())
-      ensureConfluent(tycker, field.signature, elabClauses, matchings, field.sourcePos, false, true);
+      ensureConfluent(tycker, field.signature, clauses, field.sourcePos, false);
     return elaborated;
   }
 

@@ -19,6 +19,7 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
+import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -73,10 +74,16 @@ public final class PatTycker {
     this(exprTycker, new Substituter.TermSubst(MutableMap.create()), exprTycker.traceBuilder);
   }
 
-  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.Preclause<Term>>>
-  elabClauses(
+  public record PatResult(
+    @NotNull Term result,
+    @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
+    @NotNull ImmutableSeq<Matching> matchings
+  ) {
+  }
+
+  public @NotNull PatResult elabClauses(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature, @Nullable SourcePos resultPos
+    @NotNull Def.Signature signature, @NotNull SourcePos resultPos
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
@@ -86,10 +93,11 @@ public final class PatTycker {
     });
     exprTycker.solveMetas();
     var zonker = exprTycker.newZonker();
-    return Tuple.of(zonker.zonk(signature.result(), resultPos),
-      res.map(c -> new Pat.Preclause<>(
-        c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
-        c.expr().map(e -> zonker.zonk(e, c.sourcePos())))));
+    var preclauses = res.map(c -> new Pat.Preclause<>(
+      c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
+      c.expr().map(e -> zonker.zonk(e, c.sourcePos()))));
+    return new PatResult(zonker.zonk(signature.result(), resultPos), preclauses,
+      preclauses.flatMap(Pat.Preclause::lift));
   }
 
   @SuppressWarnings("unchecked") private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
