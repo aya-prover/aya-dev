@@ -18,6 +18,6 @@ public record Matching(
   @NotNull Term body
 ) implements AyaDocile {
   @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
-    return Pat.PrototypeClause.prototypify(this).toDoc(options);
+    return Pat.Preclause.weaken(this).toDoc(options);
   }
 }

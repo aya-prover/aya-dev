@@ -38,7 +38,7 @@ public record PatClassifier(
   @NotNull PatTree.Builder builder
 ) {
   public static @NotNull ImmutableSeq<PatClass> classify(
-    @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
+    @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     boolean coverage
@@ -56,7 +56,7 @@ public record PatClassifier(
   }
 
   public static void firstMatchDomination(
-    @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
+    @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     @NotNull ImmutableSeq<PatClass> classification
   ) {
@@ -69,13 +69,13 @@ public record PatClassifier(
   }
 
   public static void confluence(
-    @NotNull ImmutableSeq<Pat.@NotNull PrototypeClause> clauses,
+    @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos,
     @NotNull Term result, @NotNull ImmutableSeq<PatClass> classification
   ) {
     for (var results : classification) {
       var contents = results.contents()
-        .flatMap(i -> Pat.PrototypeClause.deprototypify(clauses.get(i))
+        .flatMap(i -> Pat.Preclause.lift(clauses.get(i))
           .map(matching -> IntObjTuple2.of(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++) {
         var lhsInfo = contents.get(i - 1);

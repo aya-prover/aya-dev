@@ -89,7 +89,7 @@ public record StmtTycker(
           clauses -> {
             var patTycker = new PatTycker(tycker);
             var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
-            var matchings = result._2.flatMap(Pat.PrototypeClause::deprototypify);
+            var matchings = result._2.flatMap(Pat.Preclause::lift);
             var def = factory.apply(result._1, Either.right(matchings));
             if (patTycker.noError()) {
               var orderIndependent = decl.modifiers.contains(Modifier.Overlap);
@@ -197,7 +197,7 @@ public record StmtTycker(
     }
     ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elabClauses = patTycker.elabClauses(ctor.clauses, signature, ctor.sourcePos)._2;
-    var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
+    var matchings = elabClauses.flatMap(Pat.Preclause::lift);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, matchings, dataCall, ctor.coerce);
     if (patTycker.noError())
       ensureConfluent(tycker, signature, elabClauses, matchings, ctor.sourcePos, false, true);
@@ -205,7 +205,7 @@ public record StmtTycker(
   }
 
   private void ensureConfluent(
-    ExprTycker tycker, Def.Signature signature, ImmutableSeq<Pat.PrototypeClause> elabClauses,
+    ExprTycker tycker, Def.Signature signature, ImmutableSeq<Pat.Preclause<Term>> elabClauses,
     ImmutableSeq<@NotNull Matching> matchings, @NotNull SourcePos pos,
     boolean coverage, boolean orderIndependent
   ) {
@@ -231,7 +231,7 @@ public record StmtTycker(
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
     var elabClauses = patTycker.elabClauses(field.clauses, field.signature, field.result.sourcePos())._2;
-    var matchings = elabClauses.flatMap(Pat.PrototypeClause::deprototypify);
+    var matchings = elabClauses.flatMap(Pat.Preclause::lift);
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, matchings, body, field.coerce);
     if (patTycker.noError())

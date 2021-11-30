@@ -73,7 +73,7 @@ public final class PatTycker {
     this(exprTycker, new Substituter.TermSubst(MutableMap.create()), exprTycker.traceBuilder);
   }
 
-  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
+  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.Preclause<Term>>>
   elabClauses(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature signature, @Nullable SourcePos resultPos
@@ -87,7 +87,7 @@ public final class PatTycker {
     exprTycker.solveMetas();
     var zonker = exprTycker.newZonker();
     return Tuple.of(zonker.zonk(signature.result(), resultPos),
-      res.map(c -> new Pat.PrototypeClause(
+      res.map(c -> new Pat.Preclause<>(
         c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
         c.expr().map(e -> zonker.zonk(e, c.sourcePos())))));
   }
@@ -155,7 +155,7 @@ public final class PatTycker {
     };
   }
 
-  private Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
+  private Pat.Preclause<Term> visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
     exprTycker.localCtx = exprTycker.localCtx.derive();
     currentClause = match;
     var patResult = visitPatterns(signature, match.patterns.view());
@@ -176,7 +176,7 @@ public final class PatTycker {
     var parent = exprTycker.localCtx.parent();
     assert parent != null;
     exprTycker.localCtx = parent;
-    return new Pat.PrototypeClause(match.sourcePos, patterns, result);
+    return new Pat.Preclause<>(match.sourcePos, patterns, result);
   }
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>
