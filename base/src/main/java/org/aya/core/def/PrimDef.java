@@ -132,7 +132,7 @@ public final class PrimDef extends TopLevelDef {
       var universe = new Sort.LvlVar("u", null);
       var result = new FormTerm.Univ(new Sort(new Level.Reference<>(universe)));
       var paramATy = new FormTerm.Pi(paramIToATy, result);
-      var aRef = new RefTerm(paramA, paramATy);
+      var aRef = new RefTerm(paramA);
       var left = Factory.INSTANCE.getOrCreate(ID.LEFT);
       var baseAtLeft = new ElimTerm.App(aRef, new Arg<>(new CallTerm.Prim(left.ref, ImmutableSeq.empty(), ImmutableSeq.empty()), true));
       return new PrimDef(
@@ -142,7 +142,7 @@ public final class PrimDef extends TopLevelDef {
           new Term.Param(paramI, intervalCall(), true)
         ),
         ImmutableSeq.of(universe),
-        new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI, intervalCall()), true)),
+        new ElimTerm.App(aRef, new Arg<>(new RefTerm(paramI), true)),
         ID.ARCOE
       );
     }, ImmutableSeq.empty());

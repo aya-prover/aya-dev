@@ -9,7 +9,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kiva, ice1000
@@ -26,5 +25,4 @@ public interface CoreTerm extends AyaDocile {
    * @return the variables in this term that are not allowed.
    */
   @NotNull DynamicSeq<LocalVar> scopeCheck(@NotNull ImmutableSeq<LocalVar> allowed);
-  @Nullable CorePat toPat(boolean explicit);
 }

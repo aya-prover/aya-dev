@@ -40,7 +40,7 @@ public final class Renamer implements TermFixpoint<Unit> {
   private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {
     var v = param.renameVar();
     var type = param.type().accept(this, Unit.unit());
-    subst.addDirectly(param.ref(), new RefTerm(v, type));
+    subst.addDirectly(param.ref(), new RefTerm(v));
     return new Term.Param(v, type, param.pattern(), param.explicit());
   }
 

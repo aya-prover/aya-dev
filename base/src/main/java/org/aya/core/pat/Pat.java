@@ -68,7 +68,7 @@ public sealed interface Pat extends CorePat {
     public @NotNull Pat rename(Substituter.@NotNull TermSubst subst, @NotNull LocalCtx localCtx, boolean explicit) {
       var newName = new LocalVar(bind.name(), bind.definition());
       var newBind = new Bind(explicit, newName, type.subst(subst));
-      subst.addDirectly(bind, new RefTerm(newName, type));
+      subst.addDirectly(bind, new RefTerm(newName));
       localCtx.put(newName, type);
       return newBind;
     }

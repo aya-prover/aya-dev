@@ -101,9 +101,7 @@ public interface TermFixpoint<P> extends Term.Visitor<P, @NotNull Term> {
   }
 
   @Override default @NotNull Term visitRef(@NotNull RefTerm term, P p) {
-    var ty = term.type().accept(this, p);
-    if (ty == term.type()) return term;
-    return new RefTerm(term.var(), ty);
+    return term;
   }
 
   default @NotNull Arg<Term> visitArg(@NotNull Arg<Term> arg, P p) {

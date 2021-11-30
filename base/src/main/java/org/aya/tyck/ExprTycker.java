@@ -79,7 +79,7 @@ public final class ExprTycker {
       case Expr.RefExpr ref -> switch (ref.resolvedVar()) {
         case LocalVar loc -> {
           var ty = localCtx.get(loc);
-          yield new Result(new RefTerm(loc, ty), ty);
+          yield new Result(new RefTerm(loc), ty);
         }
         case DefVar<?, ?> defVar -> inferRef(ref.sourcePos(), defVar);
         default -> throw new IllegalStateException("Unknown var: " + ref.resolvedVar().getClass());
