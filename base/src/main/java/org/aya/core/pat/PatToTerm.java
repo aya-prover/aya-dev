@@ -23,10 +23,10 @@ public class PatToTerm {
 
   public Term visit(@NotNull Pat pat) {
     return switch (pat) {
-      case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"), absurd.type());
+      case Pat.Absurd absurd -> new RefTerm(new LocalVar("()"));
       case Pat.Prim prim -> new CallTerm.Prim(prim.ref(), ImmutableSeq.empty(), ImmutableSeq.empty());
       case Pat.Ctor ctor -> visitCtor(ctor);
-      case Pat.Bind bind -> new RefTerm(bind.bind(), bind.type());
+      case Pat.Bind bind -> new RefTerm(bind.bind());
       case Pat.Tuple tuple -> new IntroTerm.Tuple(tuple.pats().map(this::visit));
       case Pat.Meta meta -> new RefTerm.MetaPat(meta);
     };

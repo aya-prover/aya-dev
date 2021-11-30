@@ -30,16 +30,5 @@ Error: Unsolved meta _
        in `_`
        in `Eq {_} a b`
 
-In file $FILE:15:14 ->
-
-  13 | 
-  14 | -- https://cstheory.stackexchange.com/a/49160/50892
-  15 | def test (a : _) (B : Type) (b : B) (p : Eq a b) : I => left
-                     ^^
-
-Error: Unsolved meta _
-       in `a` (in the type)
-       in `Eq {_} a b`
-
-4 error(s), 0 warning(s).
+3 error(s), 0 warning(s).
 What are you doing?

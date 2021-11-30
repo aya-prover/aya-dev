@@ -230,7 +230,7 @@ public final class DefEq {
           var dummyVars = fieldSig.selfTele.map(par ->
             new LocalVar(par.ref().name(), par.ref().definition()));
           var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
-            new Arg<Term>(new RefTerm(vpa._1, vpa._2.type()), vpa._2.explicit()));
+            new Arg<Term>(new RefTerm(vpa._1), vpa._2.explicit()));
           var l = new CallTerm.Access(lhs, fieldSig.ref(), type1.sortArgs(), type1.args(), dummy);
           var r = new CallTerm.Access(rhs, fieldSig.ref(), type1.sortArgs(), type1.args(), dummy);
           fieldSubst.add(fieldSig.ref(), l);
@@ -258,7 +258,7 @@ public final class DefEq {
       case FormTerm.Pi pi -> {
         var dummyVar = new LocalVar("dummy");
         var ty = pi.param().type();
-        var dummy = new RefTerm(dummyVar, ty);
+        var dummy = new RefTerm(dummyVar);
         var dummyArg = new Arg<Term>(dummy, pi.param().explicit());
         yield ctx.with(dummyVar, ty, () -> compare(
           CallTerm.make(lhs, dummyArg), CallTerm.make(rhs, dummyArg), pi.substBody(dummy)));

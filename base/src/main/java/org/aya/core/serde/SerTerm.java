@@ -103,9 +103,9 @@ public sealed interface SerTerm extends Serializable {
     }
   }
 
-  record Ref(@NotNull SimpVar var, @NotNull SerTerm type) implements SerTerm {
+  record Ref(@NotNull SimpVar var) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new RefTerm(state.var(var), type.de(state));
+      return new RefTerm(state.var(var));
     }
   }
 

@@ -15,8 +15,6 @@ import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.Arg;
 import org.aya.api.util.NormalizeMode;
-import org.aya.core.ops.TermToPat;
-import org.aya.core.pat.Pat;
 import org.aya.core.sort.LevelSubst;
 import org.aya.core.sort.Sort;
 import org.aya.core.visitor.*;
@@ -45,10 +43,6 @@ public sealed interface Term extends CoreTerm permits
     var ret = doAccept(visitor, p);
     visitor.traceExit(ret);
     return ret;
-  }
-
-  @Override default @Nullable Pat toPat(boolean explicit) {
-    return TermToPat.toPat(this, explicit);
   }
 
   default @NotNull Term subst(@NotNull Var var, @NotNull Term term) {
@@ -173,7 +167,7 @@ public sealed interface Term extends CoreTerm permits
     }
 
     @Contract(" -> new") public @NotNull RefTerm toTerm() {
-      return new RefTerm(ref, type);
+      return new RefTerm(ref);
     }
 
     public @NotNull Param subst(@NotNull Var var, @NotNull Term term) {

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public record RefTerm(@NotNull LocalVar var, @NotNull Term type) implements Term {
+public record RefTerm(@NotNull LocalVar var) implements Term {
   @Override public <P, R> R doAccept(@NotNull Visitor<P, R> visitor, P p) {
     return visitor.visitRef(this, p);
   }

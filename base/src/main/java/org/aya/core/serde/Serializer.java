@@ -97,7 +97,7 @@ public record Serializer(@NotNull Serializer.State state) implements
   }
 
   @Override public SerTerm visitRef(@NotNull RefTerm term, Unit unit) {
-    return new SerTerm.Ref(state.local(term.var()), serialize(term.type()));
+    return new SerTerm.Ref(state.local(term.var()));
   }
 
   @Override public SerTerm visitLam(IntroTerm.@NotNull Lambda term, Unit unit) {
