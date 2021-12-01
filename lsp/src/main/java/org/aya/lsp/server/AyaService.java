@@ -80,11 +80,21 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       aya -> WsLibrary.from(reporter, FileUtil.canonicalize(aya))));
   }
 
+  private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
+    var sources = owner.librarySourceFiles();
+    var found = sources.find(src -> src.file().equals(moduleFile));
+    if (found.isDefined()) return found.get();
+    for (var dep : owner.libraryDeps()) {
+      var foundDep = find(dep, moduleFile);
+      if (foundDep != null) return foundDep;
+    }
+    return null;
+  }
+
   private @Nullable LibrarySource find(@NotNull Path moduleFile) {
     for (var lib : libraries) {
-      var sources = lib.librarySourceFiles();
-      var found = sources.find(src -> src.file().equals(moduleFile));
-      if (found.isDefined()) return found.get();
+      var found = find(lib, moduleFile);
+      if (found != null) return found;
     }
     return null;
   }

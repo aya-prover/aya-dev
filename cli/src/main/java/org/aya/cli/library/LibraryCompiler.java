@@ -118,7 +118,7 @@ public class LibraryCompiler {
 
     reporter.reportString("Compiling " + library.name());
     var startTime = System.currentTimeMillis();
-    if (anyDepChanged) FileUtil.deleteRecursively(library.libraryOutRoot());
+    if (anyDepChanged || flags.remake()) cleanReused();
 
     var srcRoot = library.librarySrcRoot();
     owner.registerModulePath(srcRoot);
@@ -130,12 +130,25 @@ public class LibraryCompiler {
     return make;
   }
 
+  private void cleanReused(@NotNull LibraryOwner owner) {
+    owner.librarySourceFiles().forEach(src -> {
+      src.program().value = null;
+      src.tycked().value = null;
+      src.resolveInfo().value = null;
+    });
+    for (var dep : owner.libraryDeps()) cleanReused(dep);
+  }
+
+  private void cleanReused() throws IOException {
+    cleanReused(owner);
+    FileUtil.deleteRecursively(owner.underlyingLibrary().libraryOutRoot());
+  }
+
   /**
    * @return whether the library is up-to-date.
    */
   private boolean make(@NotNull MutableGraph<LibrarySource> depGraph) throws IOException {
     var changed = buildIncremental(depGraph);
-
     var SCCs = changed.topologicalOrder().view()
       .reversed().toImmutableSeq();
     // ^ top order generated from usage graph should be reversed
@@ -168,7 +181,6 @@ public class LibraryCompiler {
 
   private @NotNull MutableGraph<LibrarySource> buildIncremental(@NotNull MutableGraph<LibrarySource> depGraph) {
     var usage = depGraph.transpose();
-    if (flags.remake()) return usage;
     var changed = MutableGraph.<LibrarySource>create();
     depGraph.E().keysView().forEach(s -> {
       if (Timestamp.sourceModified(s))
