@@ -64,14 +64,13 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
       Log.e("Cannot load library. Stack trace:\n%s", s.toString());
-    } else mockLibraries(path);
+    }
+    else mockLibraries(path);
   }
 
   private void mockLibraries(@NotNull Path path) {
-    FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1).forEach(aya -> {
-      var library = WsLibrary.from(reporter, FileUtil.canonicalize(aya));
-      libraries.append(library);
-    });
+    libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1).map(
+      aya -> WsLibrary.from(reporter, FileUtil.canonicalize(aya))));
   }
 
   private @Nullable LibrarySource find(@NotNull Path moduleFile) {
@@ -128,7 +127,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe(options).debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints(options).stream().map(t -> new InlineHintProblem(p, t))))
-      .flatMap(p -> p.sourcePos().file().path().stream().map(uri -> Tuple.of(uri, p)))
+      .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
         t -> t._1,
         Collectors.mapping(t -> t._2, Seq.factory())

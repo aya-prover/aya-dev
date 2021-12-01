@@ -6,23 +6,20 @@ import kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.Objects;
 
-public record SourceFile(@NotNull Option<Path> path, @NotNull String sourceCode) {
-  public SourceFile(@NotNull Path path, @NotNull String sourceCode) {
-    this(Option.some(path), sourceCode);
+public record SourceFile(
+  @NotNull String display,
+  @NotNull Option<Path> underlying,
+  @NotNull String sourceCode
+) {
+  public SourceFile(@NotNull String display, @NotNull Path underlying, @NotNull String sourceCode) {
+    this(display, Option.some(underlying), sourceCode);
   }
 
-  public static final SourceFile NONE = new SourceFile(Option.none(), "");
-  public static final SourceFile SER = new SourceFile(Option.none(), "");
+  public static final SourceFile NONE = new SourceFile("<unknown-file>", Option.none(), "");
+  public static final SourceFile SER = new SourceFile("<serialized-core>", Option.none(), "");
 
   public boolean isSomeFile() {
-    return this != SourceFile.NONE && path.isDefined();
-  }
-
-  public @NotNull String name() {
-    if (this == NONE) return "<unknown-file>";
-    if (this == SER) return "<serialized-core>";
-    return path.map(Objects::toString).getOrDefault("<unknown-file>");
+    return underlying.isDefined();
   }
 }

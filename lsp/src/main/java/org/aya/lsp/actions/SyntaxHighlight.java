@@ -159,9 +159,11 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
 
   private void visitBind(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull BindBlock bindBlock) {
     if (bindBlock == BindBlock.EMPTY) return;
-    bindBlock.loosers().view().zip(bindBlock.resolvedLoosers().value.view())
+    var loosers = bindBlock.resolvedLoosers().value;
+    var tighters = bindBlock.resolvedTighters().value;
+    if (loosers != null) bindBlock.loosers().view().zip(loosers.view())
       .forEach(tup -> visitOperator(buffer, tup._1.sourcePos(), tup._2));
-    bindBlock.tighters().view().zip(bindBlock.resolvedTighters().value.view())
+    if (tighters != null) bindBlock.tighters().view().zip(tighters.view())
       .forEach(tup -> visitOperator(buffer, tup._1.sourcePos(), tup._2));
   }
   // endregion
