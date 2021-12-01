@@ -28,17 +28,17 @@ public record WsLibrary(
   @NotNull LibraryConfig mockConfig,
   @NotNull Path workspace
 ) implements LibraryOwner {
-  public static @NotNull WsLibrary from(@NotNull Reporter outReporter, @NotNull Path ayaSource) {
+  public static @NotNull WsLibrary mock(@NotNull Reporter outReporter, @NotNull Path ayaSource) {
     var parent = ayaSource.getParent();
     var reporter = CountingReporter.of(outReporter);
-    var mockConfig = makeConfig(parent);
+    var mockConfig = mockConfig(parent);
     var locator = new SourceFileLocator.Module(SeqView.of(parent));
     var owner = new WsLibrary(reporter, locator, DynamicSeq.create(), mockConfig, parent);
     owner.sources.append(new LibrarySource(owner, ayaSource));
     return owner;
   }
 
-  private static @NotNull LibraryConfig makeConfig(@NotNull Path folder) {
+  private static @NotNull LibraryConfig mockConfig(@NotNull Path folder) {
     return new LibraryConfig(
       GeneratedVersion.VERSION,
       folder.getFileName().toString(),

@@ -60,7 +60,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   private boolean tryAyaLibrary(@Nullable Path path) {
     if (path == null) return false;
-    var ayaJson = path.resolve("aya.json");
+    var ayaJson = path.resolve(Constants.AYA_JSON);
     if (!Files.exists(ayaJson)) return tryAyaLibrary(path.getParent());
     try {
       var config = LibraryConfigData.fromLibraryRoot(path);
@@ -77,7 +77,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   private void mockLibraries(@NotNull Path path) {
     libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1).map(
-      aya -> WsLibrary.from(reporter, FileUtil.canonicalize(aya))));
+      aya -> WsLibrary.mock(reporter, FileUtil.canonicalize(aya))));
   }
 
   private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
