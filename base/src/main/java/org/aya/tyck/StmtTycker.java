@@ -97,13 +97,11 @@ public record StmtTycker(
                 ensureConfluent(tycker, signature, result, pos, true);
             } else {
               // First-match semantics.
-              var result = patTycker.elabClausesDirectly(clauses, signature, decl.result.sourcePos());
-              def = factory.apply(result.result(), Either.right(result.matchings()));
+              var result = patTycker.elabClausesClassified(clauses, signature, decl.result.sourcePos(), pos);
+              def = factory.apply(result._1.result(), Either.right(result._1.matchings()));
               if (patTycker.noError()) {
-                var classification = PatClassifier.classify(result.clauses(), signature.param(),
-                  tycker.state, tycker.reporter, pos, true);
-                PatClassifier.firstMatchDomination(result.clauses(), tycker.reporter, pos, classification);
-                Conquer.against(result.matchings(), true, tycker, pos, signature);
+                PatClassifier.firstMatchDomination(result._1.clauses(), tycker.reporter, pos, result._2);
+                Conquer.against(result._1.matchings(), true, tycker, pos, signature);
               }
             }
             return def;
@@ -222,8 +220,7 @@ public record StmtTycker(
     if (!coverage && elabClauses.matchings().isEmpty()) return;
     tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
     PatClassifier.confluence(elabClauses, tycker, pos,
-      PatClassifier.classify(elabClauses.clauses(), signature.param(),
-        tycker.state, tycker.reporter, pos, coverage));
+      PatClassifier.classify(elabClauses.clauses(), signature.param(), tycker, pos, coverage));
     Conquer.against(elabClauses.matchings(), true, tycker, pos, signature);
     tycker.solveMetas();
     tracing(TreeBuilder::reduce);

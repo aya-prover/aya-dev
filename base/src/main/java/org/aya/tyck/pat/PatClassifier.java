@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
@@ -9,10 +10,10 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
+import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
-import org.aya.concrete.Pattern;
 import org.aya.core.Matching;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
@@ -24,7 +25,6 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,33 +37,43 @@ public record PatClassifier(
   @NotNull TyckState state,
   @NotNull PatTree.Builder builder
 ) {
-  public static @NotNull ImmutableSeq<PatClass> classify(
-    @NotNull ImmutableSeq<? extends Pat.@NotNull Preclause<?>> clauses,
+  public static @NotNull MCT classify(
+    @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ExprTycker tycker,
+    @NotNull SourcePos pos, boolean coverage
+  ) {
+    return classify(clauses, telescope, tycker.state, tycker.reporter, pos, coverage);
+  }
+
+  public static @NotNull MCT classify(
+    @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, state, new PatTree.Builder());
-    var classification = classifier.classifySub(telescope, clauses
-      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), coverage, 5);
-    for (var pats : classification) {
-      if (pats instanceof PatClass.Err err) {
-        reporter.report(new ClausesProblem.MissingCase(pos, err.errorMessage));
-        return ImmutableSeq.empty();
+    var classification = classifier.classifySub(telescope.view(), clauses.view()
+      .mapIndexed((index, clause) -> new MCT.SubPats(clause.patterns().view(), index))
+      .toImmutableSeq(), coverage, 5);
+    var errRef = new Ref<MCT.Error>();
+    classification.forEach(pats -> {
+      if (errRef.value == null && pats instanceof MCT.Error error) {
+        reporter.report(new ClausesProblem.MissingCase(pos, error.errorMessage()));
+        errRef.value = error;
       }
-    }
-    return classification;
+    });
+    // Return empty case tree on error
+    return errRef.value != null ? errRef.value : classification;
   }
 
   public static void firstMatchDomination(
     @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos,
-    @NotNull ImmutableSeq<PatClass> classification
+    @NotNull Reporter reporter, @NotNull SourcePos pos, @NotNull MCT mct
   ) {
-    if (classification.isEmpty()) return;
+    if (mct instanceof MCT.Error) return;
     // Google says they're initialized to false
     var numbers = new boolean[clauses.size()];
-    for (var results : classification) numbers[results.contents().min()] = true;
+    mct.forEach(results -> numbers[results.contents().min()] = true);
     // ^ The minimum is supposed to be the first one, but why not be robust?
     for (int i = 0; i < numbers.length; i++)
       if (!numbers[i]) reporter.report(new ClausesProblem.FMDomination(i + 1, pos));
@@ -71,11 +81,10 @@ public record PatClassifier(
 
   public static void confluence(
     @NotNull PatTycker.PatResult clauses,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos,
-    @NotNull ImmutableSeq<PatClass> classification
+    @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull MCT mct
   ) {
     var result = clauses.result();
-    for (var results : classification) {
+    mct.forEach(results -> {
       var contents = results.contents()
         .flatMap(i -> Pat.Preclause.lift(clauses.clauses().get(i))
           .map(matching -> IntObjTuple2.of(i, matching)));
@@ -101,7 +110,7 @@ public record PatClassifier(
             lhsTerm, rhsTerm, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
         }
       }
-    }
+    });
   }
 
   private static void domination(Substituter.TermSubst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching matching) {
@@ -117,9 +126,9 @@ public record PatClassifier(
    * @param coverage   if true, in uncovered cases an error will be reported
    * @return pattern classes
    */
-  private @NotNull ImmutableSeq<PatClass> classifySub(
-    @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<SubPats> subPatsSeq,
+  private @NotNull MCT classifySub(
+    @NotNull SeqView<Term.Param> telescope,
+    @NotNull ImmutableSeq<MCT.SubPats> subPatsSeq,
     boolean coverage, int fuel
   ) {
     while (telescope.isNotEmpty()) {
@@ -127,20 +136,20 @@ public record PatClassifier(
       if (res != null) return res;
       else {
         telescope = telescope.drop(1);
-        subPatsSeq = subPatsSeq.map(SubPats::drop);
+        subPatsSeq = subPatsSeq.map(MCT.SubPats::drop);
       }
     }
     // Done
-    return ImmutableSeq.of(new PatClass.Ok(subPatsSeq.map(SubPats::ix)));
+    return new MCT.Leaf(subPatsSeq.map(MCT.SubPats::ix));
   }
 
   /**
    * @param telescope must be nonempty
-   * @see #classifySub(ImmutableSeq, ImmutableSeq, boolean, int)
+   * @see #classifySub(SeqView, ImmutableSeq, boolean, int)
    */
-  private @Nullable ImmutableSeq<PatClass> classifySubImpl(
-    @NotNull ImmutableSeq<Term.Param> telescope,
-    @NotNull ImmutableSeq<SubPats> subPatsSeq,
+  private @Nullable MCT classifySubImpl(
+    @NotNull SeqView<Term.Param> telescope,
+    @NotNull ImmutableSeq<MCT.SubPats> subPatsSeq,
     boolean coverage, int fuel
   ) {
     // We're gonna split on this type
@@ -155,7 +164,7 @@ public record PatClassifier(
       case FormTerm.Sigma sigma -> {
         var hasTuple = subPatsSeq
           .mapIndexedNotNull((index, subPats) -> subPats.head() instanceof Pat.Tuple tuple
-            ? new SubPats(tuple.pats().view(), index) : null);
+            ? new MCT.SubPats(tuple.pats().view(), index) : null);
         // In case we do,
         if (hasTuple.isNotEmpty()) {
           // Add a catchall pattern to the pattern tree builder since tuple patterns are irrefutable
@@ -163,16 +172,14 @@ public record PatClassifier(
           // We will subst the telescope with this fake tuple term
           var thatTuple = new IntroTerm.Tuple(sigma.params().map(Term.Param::toTerm));
           // Do it!! Just do it!!
-          var newTele = telescope.view()
-            .drop(1)
+          var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), thatTuple))
-            .toImmutableSeq();
+            .toImmutableSeq().view();
           // Classify according to the tuple elements
           var fuelCopy = fuel;
-          return classifySub(sigma.params(), hasTuple, coverage, fuel)
-            .flatMap(pat -> mapClass(pat,
-              // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
-              classifySub(newTele, PatClass.extract(pat, subPatsSeq).map(SubPats::drop), coverage, fuelCopy)));
+          return classifySub(sigma.params().view(), hasTuple, coverage, fuel).flatMap(pat -> pat.propagate(
+            // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
+            classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats::drop), coverage, fuelCopy)));
         }
       }
       // Only `I` might be split, we just assume that
@@ -183,7 +190,7 @@ public record PatClassifier(
           .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
           .firstOption();
         if (lrSplit.isDefined()) {
-          var buffer = DynamicSeq.<PatClass>create();
+          var buffer = DynamicSeq.<MCT>create();
           // Interval pattern matching is only available in conditions,
           // so in case we need coverage, report an error on this pattern matching
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
@@ -191,41 +198,40 @@ public record PatClassifier(
           for (var primName : PrimDef.Factory.LEFT_RIGHT) {
             builder.append(new PatTree(primName.id, explicit, 0));
             var prim = PrimDef.Factory.INSTANCE.getOption(primName);
-            var patClass = new PatClass.Ok(subPatsSeq.view()
+            var patClass = new MCT.Leaf(subPatsSeq.view()
               // Filter out all patterns that matches it,
-              .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, prim)).map(SubPats::ix).toImmutableSeq());
+              .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, prim)).map(MCT.SubPats::ix).toImmutableSeq());
             // We extract the corresponding clauses and drop the current pattern
-            var classes = PatClass.extract(patClass, subPatsSeq).map(SubPats::drop);
+            var classes = MCT.extract(patClass, subPatsSeq).map(MCT.SubPats::drop);
             // Probably nonempty, and in this case, prim is defined, so we can safely call `.get`
             if (classes.isNotEmpty()) {
               // We're gonna instantiate the telescope with this term!
               var lrCall = new CallTerm.Prim(prim.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-              var newTele = telescope.view()
-                .drop(1)
+              var newTele = telescope.drop(1)
                 .map(param -> param.subst(target.ref(), lrCall))
-                .toImmutableSeq();
+                .toImmutableSeq().view();
               // Classify according the rest of the patterns
               var rest = classifySub(newTele, classes, false, fuel);
               // We have some new classes!
-              buffer.appendAll(rest);
+              buffer.append(rest);
             }
             builder.unshift();
           }
-          return buffer.toImmutableSeq();
+          return new MCT.Node(buffer.toImmutableSeq());
         }
       }
       // THE BIG GAME
       case CallTerm.Data dataCall -> {
         // If there are no remaining clauses, probably it's due to a previous `impossible` clause,
         // but since we're gonna remove this keyword, this check may not be needed in the future? LOL
-        if (subPatsSeq.anyMatch(subPats -> subPats.pats.isNotEmpty()) &&
+        if (subPatsSeq.anyMatch(subPats -> subPats.pats().isNotEmpty()) &&
           // there are no clauses starting with a constructor pattern -- we don't need a split!
           subPatsSeq.noneMatch(subPats -> subPats.head() instanceof Pat.Ctor)
         ) break;
-        var buffer = DynamicSeq.<PatClass>create();
+        var buffer = DynamicSeq.<MCT>create();
         // For all constructors,
         for (var ctor : dataCall.ref().core.body) {
-          var conTele = ctor.selfTele;
+          var conTele = ctor.selfTele.view();
           // Check if this constructor is available by doing the obvious thing
           if (ctor.pats.isNotEmpty()) {
             var matchy = PatMatcher.tryBuildSubstArgs(null, ctor.pats, dataCall.args());
@@ -246,44 +252,42 @@ public record PatClassifier(
             } else conTele = conTele.map(param -> param.subst(matchy.get()));
           }
           // Java wants a final local variable, let's alias it
-          var conTeleCapture = conTele;
+          var conTele2 = conTele.toImmutableSeq();
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
           var matches = subPatsSeq
-            .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
+            .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTele2, ctor.ref()));
           // Push this constructor to the error message builder
-          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
+          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele2.count(Term.Param::explicit)));
           // In case no pattern matches this constructor,
           var matchesEmpty = matches.isEmpty();
           // we consume one unit of fuel and,
           if (matchesEmpty) fuel--;
           // if the pattern has no arguments and no clause matches,
-          var definitely = matchesEmpty && conTele.isEmpty() && telescope.sizeEquals(1);
+          var definitely = matchesEmpty && conTele2.isEmpty() && telescope.sizeEquals(1);
           // we report an error.
           // If we're running out of fuel, we also report an error.
           if (definitely || fuel <= 0) {
             // for non-coverage case, we don't bother
-            if (coverage) buffer.append(new PatClass.Err(ImmutableSeq.empty(),
+            if (coverage) buffer.append(new MCT.Error(ImmutableSeq.empty(),
               builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
             builder.reduce();
             builder.unshift();
             continue;
           }
-          var classified = classifySub(conTele, matches, coverage, fuel);
+          var classified = classifySub(conTele2.view(), matches, coverage, fuel);
           builder.reduce();
-          var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTeleCapture.map(Term.Param::toArg));
-          var newTele = telescope.view()
-            .drop(1)
+          var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
+          var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), conCall))
-            .toImmutableSeq();
+            .toImmutableSeq().view();
           var fuelCopy = fuel;
-          var rest = classified.flatMap(pat ->
-            mapClass(pat, classifySub(newTele, PatClass.extract(pat, subPatsSeq)
-              .map(SubPats::drop), coverage, fuelCopy)));
+          var rest = classified.flatMap(pat -> pat.propagate(
+            classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats::drop), coverage, fuelCopy)));
           builder.unshift();
-          buffer.appendAll(rest);
+          buffer.append(rest);
         }
-        return buffer.toImmutableSeq();
+        return new MCT.Node(buffer.toImmutableSeq());
       }
     }
     // Progress without pattern matching
@@ -292,57 +296,18 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private ImmutableSeq<PatClass> mapClass(@NotNull PatClass pat, @NotNull ImmutableSeq<PatClass> classes) {
-    return switch (pat) {
-      case PatClass.Ok ok -> classes;
-      case PatClass.Err err -> classes.map(newClz -> new PatClass.Err(newClz.contents(), err.errorMessage));
-    };
-  }
-
-  private static @Nullable SubPats matches(SubPats subPats, int ix, Option<PrimDef> existedPrim) {
+  private static @Nullable MCT.SubPats matches(MCT.SubPats subPats, int ix, Option<PrimDef> existedPrim) {
     var head = subPats.head();
     return head instanceof Pat.Prim prim && existedPrim.isNotEmpty() && prim.ref() == existedPrim.get().ref()
-      || head instanceof Pat.Bind ? new SubPats(subPats.pats, ix) : null;
+      || head instanceof Pat.Bind ? new MCT.SubPats(subPats.pats(), ix) : null;
   }
 
-  private static @Nullable SubPats matches(SubPats subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {
+  private static @Nullable MCT.SubPats matches(MCT.SubPats subPats, int ix, ImmutableSeq<Term.Param> conTele, Var ctorRef) {
     var head = subPats.head();
     if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
-      return new SubPats(ctorPat.params().view(), ix);
+      return new MCT.SubPats(ctorPat.params().view(), ix);
     if (head instanceof Pat.Bind)
-      return new SubPats(conTele.view().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
+      return new MCT.SubPats(conTele.view().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
     return null;
-  }
-
-  /**
-   * @author ice1000
-   */
-  public sealed interface PatClass {
-    @NotNull ImmutableSeq<Integer> contents();
-    record Ok(@NotNull ImmutableSeq<Integer> contents) implements PatClass {
-    }
-
-    record Err(
-      @NotNull ImmutableSeq<Integer> contents,
-      @NotNull ImmutableSeq<Pattern> errorMessage
-    ) implements PatClass {
-    }
-
-    private @NotNull static ImmutableSeq<SubPats> extract(PatClass pats, @NotNull ImmutableSeq<SubPats> subPatsSeq) {
-      return pats.contents().map(subPatsSeq::get);
-    }
-  }
-
-  private record SubPats(@NotNull SeqView<Pat> pats, int ix) {
-    @Contract(pure = true) public @NotNull Pat head() {
-      if (pats.isEmpty()) {
-        throw new IllegalStateException("Empty pattern list");
-      }
-      return pats.first();
-    }
-
-    @Contract(pure = true) public @NotNull SubPats drop() {
-      return new SubPats(pats.drop(1), ix);
-    }
   }
 }

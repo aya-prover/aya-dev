@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.test.ThrowingReporter;
+import org.aya.tyck.pat.MCT;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * CC = coverage and confluence
  */
 public class PatCCTest {
-  public static @NotNull ImmutableSeq<PatClassifier.PatClass> testClassify(@NotNull FnDef fnDef) {
+  public static @NotNull ImmutableSeq<MCT.PatClass> testClassify(@NotNull FnDef fnDef) {
     var clauses = fnDef.body.getRightValue().map(Pat.Preclause::weaken);
-    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(), ThrowingReporter.INSTANCE, SourcePos.NONE, true);
+    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(), ThrowingReporter.INSTANCE, SourcePos.NONE, true).toSeq();
   }
 
   @Test public void addCC() {
