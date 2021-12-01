@@ -98,7 +98,7 @@ public final class PatTycker {
     return checkAllRhs(checkAllLhs(clauses, signature), resultPos, signature.result());
   }
 
-  public @NotNull Tuple2<PatResult, MCT> elabClausesClassified(
+  public @NotNull PatResult elabClausesClassified(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature signature,
     @NotNull SourcePos resultPos, @NotNull SourcePos overallPos
@@ -106,7 +106,11 @@ public final class PatTycker {
     var lhsResults = checkAllLhs(clauses, signature);
     var classes = PatClassifier.classify(lhsResults.view().map(LhsResult::preclause),
       signature.param(), exprTycker, overallPos, true);
-    return Tuple.of(checkAllRhs(lhsResults, resultPos, signature.result()), classes);
+    if (noError()) {
+      var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
+      // refinePatterns(lhsResults, usages, classes);
+    }
+    return checkAllRhs(lhsResults, resultPos, signature.result());
   }
 
   private @NotNull ImmutableSeq<LhsResult>
@@ -207,15 +211,21 @@ public final class PatTycker {
   private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
     var parent = exprTycker.localCtx;
     exprTycker.localCtx = lhsResult.gamma;
-    var result = lhsResult.preclause.map(e -> lhsResult.hasError
+    var patterns = lhsResult.preclause.patterns().map(Pat::inline);
+    var type = lhsResult.type.accept(new TermFixpoint<>() {
+      @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
+        return metaPat.inline();
+      }
+    }, Unit.unit());
+    var term = lhsResult.preclause.expr().map(e -> lhsResult.hasError
       // In case the patterns are malformed, do not check the body
       // as we bind local variables in the pattern checker,
       // and in case the patterns are malformed, some bindings may
       // not be added to the localCtx of tycker, causing assertion errors
       ? new ErrorTerm(e, false)
-      : exprTycker.inherit(e, lhsResult.type).wellTyped().subst(lhsResult.subst));
+      : exprTycker.inherit(e, type).wellTyped().subst(lhsResult.subst));
     exprTycker.localCtx = parent;
-    return result;
+    return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), patterns, term);
   }
 
   private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
@@ -223,17 +233,12 @@ public final class PatTycker {
     exprTycker.localCtx = parent.derive();
     currentClause = match;
     var patResult = visitPatterns(signature, match.patterns.view());
-    var patterns = patResult._1.map(Pat::inline);
-    var type = patResult._2.accept(new TermFixpoint<>() {
-      @Override public @NotNull Term visitMetaPat(@NotNull RefTerm.MetaPat metaPat, Unit unit) {
-        return metaPat.inline();
-      }
-    }, Unit.unit());
     var subst = termSubst.replicate();
     termSubst.clear();
     var gamma = exprTycker.localCtx;
     exprTycker.localCtx = parent;
-    return new LhsResult(gamma, type, subst, match.hasError, new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
+    return new LhsResult(gamma, patResult._2, subst, match.hasError,
+      new Pat.Preclause<>(match.sourcePos, patResult._1, match.expr));
   }
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>

@@ -14,6 +14,7 @@ import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
+import org.aya.concrete.Pattern;
 import org.aya.core.Matching;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
@@ -66,17 +67,19 @@ public record PatClassifier(
     return errRef.value != null ? errRef.value : classification;
   }
 
-  public static void firstMatchDomination(
-    @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos, @NotNull MCT mct
+  public static int[] firstMatchDomination(
+    @NotNull ImmutableSeq<Pattern.Clause> clauses,
+    @NotNull Reporter reporter, @NotNull MCT mct
   ) {
-    if (mct instanceof MCT.Error) return;
-    // Google says they're initialized to false
-    var numbers = new boolean[clauses.size()];
-    mct.forEach(results -> numbers[results.contents().min()] = true);
+    if (mct instanceof MCT.Error) return new int[0];
+    // StackOverflow says they're initialized to zero
+    var numbers = new int[clauses.size()];
+    mct.forEach(results -> numbers[results.contents().min()]++);
     // ^ The minimum is supposed to be the first one, but why not be robust?
     for (int i = 0; i < numbers.length; i++)
-      if (!numbers[i]) reporter.report(new ClausesProblem.FMDomination(i + 1, pos));
+      if (0 == numbers[i]) reporter.report(
+        new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
+    return numbers;
   }
 
   public static void confluence(
@@ -217,7 +220,7 @@ public record PatClassifier(
             }
             builder.unshift();
           }
-          return new MCT.Node(buffer.toImmutableSeq());
+          return new MCT.Node(primCall, buffer.toImmutableSeq());
         }
       }
       // THE BIG GAME
@@ -287,7 +290,7 @@ public record PatClassifier(
           builder.unshift();
           buffer.append(rest);
         }
-        return new MCT.Node(buffer.toImmutableSeq());
+        return new MCT.Node(dataCall, buffer.toImmutableSeq());
       }
     }
     // Progress without pattern matching
