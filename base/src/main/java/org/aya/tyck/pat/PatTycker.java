@@ -98,7 +98,7 @@ public final class PatTycker {
     return checkAllRhs(checkAllLhs(clauses, signature), resultPos, signature.result());
   }
 
-  public @NotNull Tuple2<PatResult, PatClassifier.CaseTree> elabClausesClassified(
+  public @NotNull Tuple2<PatResult, MCT> elabClausesClassified(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature signature,
     @NotNull SourcePos resultPos, @NotNull SourcePos overallPos

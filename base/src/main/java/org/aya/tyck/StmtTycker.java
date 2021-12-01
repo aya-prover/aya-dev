@@ -23,6 +23,7 @@ import org.aya.generic.Level;
 import org.aya.generic.Modifier;
 import org.aya.tyck.error.PrimProblem;
 import org.aya.tyck.pat.Conquer;
+import org.aya.tyck.pat.MCT;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatTycker;
 import org.aya.tyck.trace.Trace;
@@ -99,7 +100,7 @@ public record StmtTycker(
               // First-match semantics.
               var result = patTycker.elabClausesClassified(clauses, signature, decl.result.sourcePos(), pos);
               def = factory.apply(result._1.result(), Either.right(result._1.matchings()));
-              if (patTycker.noError()) {
+              if (patTycker.noError() && !(result._2 instanceof MCT.Error)) {
                 PatClassifier.firstMatchDomination(result._1.clauses(), tycker.reporter, pos, result._2.toSeq());
                 Conquer.against(result._1.matchings(), true, tycker, pos, signature);
               }
