@@ -32,9 +32,8 @@ import java.nio.file.Path;
  * @author kiva
  */
 public class LibraryCompiler {
-  final @NotNull LibraryOwner owner;
-  final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
-
+  private final @NotNull LibraryOwner owner;
+  private final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
   private final @NotNull CountingReporter reporter;
   private final @NotNull CompilerFlags flags;
 
@@ -50,8 +49,8 @@ public class LibraryCompiler {
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
-    var config = LibraryConfigData.fromLibraryRoot(LibrarySource.canonicalize(libraryRoot));
-    var compiler = new LibraryCompiler(flags,  DiskLibraryOwner.from(reporter,config), new LibraryModuleLoader.United());
+    var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
+    var compiler = new LibraryCompiler(flags, DiskLibraryOwner.from(reporter, config), new LibraryModuleLoader.United());
     return compiler.start();
   }
 

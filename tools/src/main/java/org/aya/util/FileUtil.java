@@ -15,6 +15,14 @@ import java.nio.file.Path;
 import java.util.Comparator;
 
 public interface FileUtil {
+  static @NotNull Path canonicalize(@NotNull Path path) {
+    try {
+      return path.toRealPath();
+    } catch (IOException ignored) {
+      return path.toAbsolutePath().normalize();
+    }
+  }
+
   static void deleteRecursively(@NotNull Path path) throws IOException {
     if (!Files.exists(path)) return;
     try (var walk = Files.walk(path)) {

@@ -12,7 +12,6 @@ import org.aya.util.FileUtil;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -32,7 +31,7 @@ public record LibrarySource(
   @NotNull Ref<ResolveInfo> resolveInfo
 ) {
   public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {
-    this(owner, canonicalize(file), DynamicSeq.create(), new Ref<>(), new Ref<>());
+    this(owner, FileUtil.canonicalize(file), DynamicSeq.create(), new Ref<>(), new Ref<>());
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {
@@ -62,13 +61,5 @@ public record LibrarySource(
 
   @Override public int hashCode() {
     return Objects.hash(owner.underlyingLibrary(), file);
-  }
-
-  public static @NotNull Path canonicalize(@NotNull Path path) {
-    try {
-      return path.toRealPath();
-    } catch (IOException ignored) {
-      return path.toAbsolutePath().normalize();
-    }
   }
 }
