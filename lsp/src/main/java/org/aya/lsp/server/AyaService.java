@@ -100,15 +100,15 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   }
 
   private @Nullable LibrarySource find(@NotNull String uri) {
-    var path = toPath(uri);
+    var path = FileUtil.canonicalize(Path.of(URI.create(uri)));
     return find(path);
   }
 
-  public @NotNull HighlightResult loadFile(@NotNull String uri) {
+  public @NotNull List<HighlightResult> loadFile(@NotNull String uri) {
     Log.d("Loading vscode uri: %s", uri);
     // find the owner library
     var source = find(uri);
-    if (source == null) return new HighlightResult(uri, Collections.emptyList());
+    if (source == null) return Collections.emptyList();
     var owner = source.owner();
     Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
       owner.underlyingLibrary().name(), owner.underlyingLibrary().libraryRoot());
@@ -127,14 +127,21 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     }
     reportErrors(reporter, DistillerOptions.pretty());
     // build highlight
+    var symbols = DynamicSeq.<HighlightResult>create();
+    highlight(owner, symbols);
+    return symbols.asJava();
+  }
+
+  private void highlight(@NotNull LibraryOwner owner, @NotNull DynamicSeq<HighlightResult> result) {
+    owner.librarySourceFiles().forEach(src -> result.append(highlightOne(src)));
+    for (var dep : owner.libraryDeps()) highlight(dep, result);
+  }
+
+  private @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
     var symbols = DynamicSeq.<HighlightResult.Symbol>create();
     var program = source.program().value;
     if (program != null) program.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
-    return new HighlightResult(uri, symbols.view().filter(t -> t.range() != LspRange.NONE));
-  }
-
-  @NotNull private Path toPath(@NotNull String uri) {
-    return FileUtil.canonicalize(Path.of(URI.create(uri)));
+    return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
   public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {

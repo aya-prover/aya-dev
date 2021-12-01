@@ -15,13 +15,14 @@ import org.jetbrains.annotations.NotNull;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class AyaServer implements LanguageClientAware, LanguageServer {
   private final AyaService service = new AyaService();
 
   @JsonRequest("aya/load")
-  public @NotNull CompletableFuture<@NotNull HighlightResult> load(Object uri) {
+  public @NotNull CompletableFuture<@NotNull List<HighlightResult>> load(Object uri) {
     var uriString = (String) uri; // see JavaDoc of JsonRequest
     return CompletableFuture.supplyAsync(() -> service.loadFile(uriString));
   }
