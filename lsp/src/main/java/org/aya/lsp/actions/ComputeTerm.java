@@ -4,10 +4,10 @@ package org.aya.lsp.actions;
 
 import kala.tuple.Unit;
 import org.aya.api.util.NormalizeMode;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.core.term.Term;
 import org.aya.lsp.models.ComputeTermResult;
-import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.XY;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.error.WithPos;
@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 public final class ComputeTerm implements SyntaxNodeAction {
   private @Nullable WithPos<Term> result = null;
-  private final @NotNull AyaService.AyaFile loadedFile;
+  private final @NotNull LibrarySource loadedFile;
   private final @NotNull Kind kind;
 
   public enum Kind {
@@ -34,13 +34,15 @@ public final class ComputeTerm implements SyntaxNodeAction {
     }
   }
 
-  public ComputeTerm(AyaService.@NotNull AyaFile loadedFile, @NotNull Kind kind) {
+  public ComputeTerm(@NotNull LibrarySource loadedFile, @NotNull Kind kind) {
     this.loadedFile = loadedFile;
     this.kind = kind;
   }
 
   public @NotNull ComputeTermResult invoke(ComputeTermResult.Params params) {
-    visitAll(loadedFile.concrete(), new XY(params.position));
+    var program = loadedFile.program().value;
+    if (program == null) return ComputeTermResult.bad(params);
+    visitAll(program, new XY(params.position));
     return result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, result);
   }
 
