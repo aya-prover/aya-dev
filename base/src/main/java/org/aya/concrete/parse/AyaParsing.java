@@ -63,8 +63,8 @@ public interface AyaParsing {
     @NotNull SourceFileLocator locator,
     @NotNull Reporter reporter, @NotNull Path path
   ) throws IOException {
-    return program(reporter, new SourceFile(locator.displayName(path),
-      Files.readString(path)));
+    var sourceFile = new SourceFile(locator.displayName(path).toString(), path, Files.readString(path));
+    return program(reporter, sourceFile);
   }
 
   static @NotNull ImmutableSeq<Stmt> program(@NotNull Reporter reporter, SourceFile sourceFile) {
@@ -76,7 +76,7 @@ public interface AyaParsing {
     @NotNull Reporter reporter, @NotNull String text,
     @NotNull BiFunction<AyaProducer, AyaParser, T> tree
   ) {
-    var sourceFile = new SourceFile(Path.of("stdin"), text);
+    var sourceFile = new SourceFile("<stdin>", Path.of("stdin"), text);
     var parser = parser(sourceFile, reporter);
     return tree.apply(new AyaProducer(sourceFile, reporter), parser);
   }

@@ -3,6 +3,7 @@ module org.aya.lsp {
   requires org.aya;
   requires org.aya.cli;
   requires org.eclipse.lsp4j;
+  requires org.eclipse.lsp4j.jsonrpc;
   requires info.picocli;
 
   exports org.aya.lsp.models;

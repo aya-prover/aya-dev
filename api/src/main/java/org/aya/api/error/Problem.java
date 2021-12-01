@@ -56,7 +56,7 @@ public interface Problem {
   default @NotNull PrettyError toPrettyError(@NotNull DistillerOptions options) {
     var sourcePos = sourcePos();
     return new PrettyError(
-      sourcePos.file().name(),
+      sourcePos.file().display(),
       sourcePos.toSpan(),
       brief(options),
       inlineHints(options).stream()

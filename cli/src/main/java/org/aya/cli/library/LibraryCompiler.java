@@ -2,17 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.DynamicSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.DelayedReporter;
 import org.aya.api.error.Reporter;
-import org.aya.api.error.SourceFileLocator;
-import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
-import org.aya.cli.library.json.LibraryDependency;
+import org.aya.cli.library.source.DiskLibraryOwner;
+import org.aya.cli.library.source.LibraryOwner;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.parse.AyaParsing;
@@ -25,7 +23,6 @@ import org.aya.util.StringUtil;
 import org.aya.util.tyck.OrgaTycker;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,29 +31,22 @@ import java.nio.file.Path;
 /**
  * @author kiva
  */
-public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwner {
-  final @NotNull LibraryConfig library;
-  final @NotNull SourceFileLocator locator;
-  final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
-
+public class LibraryCompiler {
+  private final @NotNull LibraryOwner owner;
+  private final @NotNull CachedModuleLoader<LibraryModuleLoader> moduleLoader;
   private final @NotNull CountingReporter reporter;
   private final @NotNull CompilerFlags flags;
-  private final @NotNull DynamicSeq<Path> thisModulePath = DynamicSeq.create();
-  private final @NotNull DynamicSeq<LibraryCompiler> deps = DynamicSeq.create();
-  private final @NotNull ImmutableSeq<LibrarySource> sources;
 
-  @Override public @NotNull SeqView<Path> modulePath() {
-    return thisModulePath.view();
+  private LibraryCompiler(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull LibraryModuleLoader.United states) {
+    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(owner, states));
+    this.reporter = owner.reporter();
+    this.flags = flags;
+    this.owner = owner;
   }
 
-  private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryConfig library, @NotNull LibraryModuleLoader.United states) {
-    this.reporter = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
-    this.flags = flags;
-    this.library = library;
-    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(this, states));
-    var srcRoot = library.librarySrcRoot();
-    this.locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
-    this.sources = FileUtil.collectSource(srcRoot, ".aya").map(p -> new LibrarySource(this, p));
+  public static int compileExisting(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner) throws IOException {
+    var compiler = new LibraryCompiler(flags, owner, new LibraryModuleLoader.United());
+    return compiler.start();
   }
 
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
@@ -64,28 +54,26 @@ public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwne
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
-    var config = LibraryConfigData.fromLibraryRoot(LibrarySource.canonicalize(libraryRoot));
-    var compiler = new LibraryCompiler(reporter, flags, config, new LibraryModuleLoader.United());
-    return compiler.start();
-  }
-
-  private @Nullable LibraryConfig depConfig(@NotNull LibraryDependency dep) throws IOException {
-    // TODO: test only: dependency resolving should be done in package manager
-    if (dep instanceof LibraryDependency.DepFile file)
-      return LibraryConfigData.fromDependencyRoot(file.depRoot(), version -> depBuildRoot(dep.depName(), version));
-    return null;
-  }
-
-  private @NotNull Path depBuildRoot(@NotNull String depName, @NotNull String version) {
-    return library.libraryBuildRoot().resolve("deps").resolve(depName + "_" + version);
+    var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
+    var owner = DiskLibraryOwner.from(reporter, config);
+    return compileExisting(flags, owner);
   }
 
   private void resolveImports(@NotNull LibrarySource source) throws IOException {
     if (source.program().value != null) return; // already parsed
     var owner = source.owner();
-    var program = AyaParsing.program(owner.locator, owner.reporter, source.file());
+    var program = AyaParsing.program(owner.locator(), owner.reporter(), source.file());
     source.program().value = program;
-    var finder = new ImportResolver(owner, source);
+    var finder = new ImportResolver(mod -> {
+      var file = owner.findModule(mod);
+      if (file == null) throw new IllegalStateException("no library owns module: " + mod);
+      try {
+        resolveImports(file);
+      } catch (IOException e) {
+        throw new RuntimeException("Cannot load imported module " + mod, e);
+      }
+      return file;
+    }, source);
     finder.resolveStmt(program);
   }
 
@@ -93,7 +81,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwne
     var graph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
     var startTime = System.currentTimeMillis();
-    for (var file : sources) {
+    for (var file : owner.librarySourceFiles()) {
       resolveImports(file);
       collectDep(graph, file);
     }
@@ -119,33 +107,21 @@ public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwne
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
   private boolean make() throws IOException {
+    var library = owner.underlyingLibrary();
     var anyDepChanged = false;
-    // note[kiva]: the code below creates separate compiler for each dependency, which
-    // should be done in the constructor. Since `depConfig` may throw IOException,
-    // I decide to put them here because throwing exceptions in constructor is not a good idea.
-    for (var dep : library.deps()) {
-      var depConfig = depConfig(dep);
-      // TODO[kiva]: should not be null if we have a proper package manager
-      if (depConfig == null) {
-        reporter.reportString("Skipping " + dep.depName());
-        continue;
-      }
-      var depCompiler = new LibraryCompiler(reporter, flags, depConfig, moduleLoader.loader.states());
-      deps.append(depCompiler);
-    }
-
-    for (var dep : deps) {
-      var upToDate = dep.make();
+    for (var dep : owner.libraryDeps()) {
+      var depCompiler = new LibraryCompiler(flags, dep, moduleLoader.loader.states());
+      var upToDate = depCompiler.make();
       anyDepChanged = anyDepChanged || !upToDate;
-      thisModulePath.append(dep.library.libraryOutRoot());
+      owner.registerModulePath(dep.outDir());
     }
 
     reporter.reportString("Compiling " + library.name());
     var startTime = System.currentTimeMillis();
-    if (anyDepChanged) FileUtil.deleteRecursively(library.libraryOutRoot());
+    if (anyDepChanged || flags.remake()) cleanReused();
 
     var srcRoot = library.librarySrcRoot();
-    thisModulePath.append(srcRoot);
+    owner.registerModulePath(srcRoot);
 
     var depGraph = resolveLibraryImports();
     var make = make(depGraph);
@@ -154,17 +130,20 @@ public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwne
     return make;
   }
 
+  private void cleanReused() throws IOException {
+    owner.librarySourceFiles().forEach(src -> {
+      src.program().value = null;
+      src.tycked().value = null;
+      src.resolveInfo().value = null;
+    });
+    FileUtil.deleteRecursively(owner.underlyingLibrary().libraryOutRoot());
+  }
+
   /**
    * @return whether the library is up-to-date.
    */
   private boolean make(@NotNull MutableGraph<LibrarySource> depGraph) throws IOException {
-    var changed = MutableGraph.<LibrarySource>create();
-    var usage = depGraph.transpose();
-    depGraph.E().keysView().forEach(s -> {
-      if (Timestamp.sourceModified(s))
-        collectChanged(usage, s, changed);
-    });
-
+    var changed = buildIncremental(depGraph);
     var SCCs = changed.topologicalOrder().view()
       .reversed().toImmutableSeq();
     // ^ top order generated from usage graph should be reversed
@@ -177,7 +156,7 @@ public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwne
       return true;
     }
 
-    Files.createDirectories(outDir());
+    Files.createDirectories(owner.outDir());
     var delayedReporter = new DelayedReporter(reporter);
     var tycker = new LibraryOrgaTycker(new LibrarySccTycker(delayedReporter, moduleLoader), changed);
     // use delayed reporter to avoid showing errors in the middle of compilation.
@@ -195,12 +174,14 @@ public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwne
     return false;
   }
 
-  @Override public @NotNull Path outDir() {
-    return library.libraryOutRoot();
-  }
-
-  @Override public @NotNull CountingReporter reporter() {
-    return reporter;
+  private @NotNull MutableGraph<LibrarySource> buildIncremental(@NotNull MutableGraph<LibrarySource> depGraph) {
+    var usage = depGraph.transpose();
+    var changed = MutableGraph.<LibrarySource>create();
+    depGraph.E().keysView().forEach(s -> {
+      if (Timestamp.sourceModified(s))
+        collectChanged(usage, s, changed);
+    });
+    return changed;
   }
 
   record LibraryOrgaTycker(
@@ -242,13 +223,6 @@ public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwne
     }
   }
 
-  private @Nullable LibrarySource findModuleFileHere(@NotNull ImmutableSeq<String> mod) {
-    return sources.find(s -> {
-      var checkMod = s.moduleName();
-      return checkMod.equals(mod);
-    }).getOrNull();
-  }
-
   private void reportNest(@NotNull String text) {
     reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT);
   }
@@ -266,25 +240,5 @@ public class LibraryCompiler implements ImportResolver.ImportLoader, LibraryOwne
     if (changedGraph.E().containsKey(changed)) return;
     changedGraph.suc(changed).appendAll(usage.suc(changed));
     usage.suc(changed).forEach(dep -> collectChanged(usage, dep, changedGraph));
-  }
-
-  @Override public @NotNull LibrarySource load(@NotNull ImmutableSeq<String> mod) {
-    var file = findModuleFile(mod);
-    try {
-      resolveImports(file);
-    } catch (IOException e) {
-      throw new RuntimeException("Cannot load imported module " + mod, e);
-    }
-    return file;
-  }
-
-  @Override public @NotNull LibrarySource findModuleFile(@NotNull ImmutableSeq<String> mod) {
-    var file = findModuleFileHere(mod);
-    if (file == null) for (var dep : deps) {
-      file = dep.findModuleFileHere(mod);
-      if (file != null) break;
-    }
-    if (file == null) throw new IllegalArgumentException("No library owns module: " + mod);
-    return file;
   }
 }

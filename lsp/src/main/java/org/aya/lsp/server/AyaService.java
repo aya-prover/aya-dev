@@ -3,26 +3,29 @@
 package org.aya.lsp.server;
 
 import kala.collection.Seq;
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.SeqView;
 import kala.collection.mutable.DynamicSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.BufferReporter;
 import org.aya.api.error.Problem;
-import org.aya.api.error.SourceFileLocator;
+import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.json.LibraryConfigData;
+import org.aya.cli.library.source.DiskLibraryOwner;
+import org.aya.cli.library.source.LibraryOwner;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.cli.single.SingleFileCompiler;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.Def;
+import org.aya.generic.Constants;
 import org.aya.lsp.actions.ComputeTerm;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.actions.SyntaxHighlight;
+import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.pretty.doc.Doc;
+import org.aya.util.FileUtil;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.*;
@@ -33,7 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -43,39 +49,99 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AyaService implements WorkspaceService, TextDocumentService {
-  private final LspLibraryManager libraryManager = new LspLibraryManager(MutableHashMap.create(), DynamicSeq.create());
+  private final BufferReporter reporter = new BufferReporter();
+  private final @NotNull DynamicSeq<LibraryOwner> libraries = DynamicSeq.create();
   private Set<Path> lastErrorReportedFiles = Collections.emptySet();
 
   public void registerLibrary(@NotNull Path path) {
-    // TODO[kiva]: work with Library System when it is finished
     Log.i("Adding library path %s", path);
-    libraryManager.modulePath.append(path);
+    if (!tryAyaLibrary(path)) mockLibraries(path);
   }
 
-  public @NotNull HighlightResult loadFile(@NotNull String uri) {
-    var filePath = Path.of(URI.create(uri));
-    Log.d("Loading %s (vscode: %s)", filePath, uri);
-
-    var reporter = new BufferReporter();
-    var compiler = new SingleFileCompiler(reporter, libraryManager, null);
-    var compilerFlags = new CompilerFlags(
-      CompilerFlags.Message.EMOJI, false, null,
-      libraryManager.modulePath.view(), null);
-    var symbols = DynamicSeq.<HighlightResult.Symbol>create();
-    libraryManager.loadedFiles.remove(filePath);
+  private boolean tryAyaLibrary(@Nullable Path path) {
+    if (path == null) return false;
+    var ayaJson = path.resolve(Constants.AYA_JSON);
+    if (!Files.exists(ayaJson)) return tryAyaLibrary(path.getParent());
     try {
-      compiler.compile(filePath, compilerFlags,
-        (moduleResolve, defs) -> {
-          var sourcePath = moduleResolve.thisModule().underlyingFile();
-          var stmts = moduleResolve.program();
-          libraryManager.loadedFiles.put(sourcePath, new AyaFile(defs, stmts));
-          if (sourcePath.equals(filePath)) stmts.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
-        });
+      var config = LibraryConfigData.fromLibraryRoot(path);
+      var owner = DiskLibraryOwner.from(reporter, config);
+      libraries.append(owner);
     } catch (IOException e) {
-      Log.e("Unable to read file %s", filePath.toAbsolutePath());
+      var s = new StringWriter();
+      e.printStackTrace(new PrintWriter(s));
+      Log.e("Cannot load library. Stack trace:\n%s", s.toString());
+    }
+    // stop retrying and mocking
+    return true;
+  }
+
+  private void mockLibraries(@NotNull Path path) {
+    libraries.appendAll(FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1).map(
+      aya -> WsLibrary.mock(reporter, FileUtil.canonicalize(aya))));
+  }
+
+  private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
+    var sources = owner.librarySourceFiles();
+    var found = sources.find(src -> src.file().equals(moduleFile));
+    if (found.isDefined()) return found.get();
+    for (var dep : owner.libraryDeps()) {
+      var foundDep = find(dep, moduleFile);
+      if (foundDep != null) return foundDep;
+    }
+    return null;
+  }
+
+  private @Nullable LibrarySource find(@NotNull Path moduleFile) {
+    for (var lib : libraries) {
+      var found = find(lib, moduleFile);
+      if (found != null) return found;
+    }
+    return null;
+  }
+
+  private @Nullable LibrarySource find(@NotNull String uri) {
+    var path = FileUtil.canonicalize(Path.of(URI.create(uri)));
+    return find(path);
+  }
+
+  public @NotNull List<HighlightResult> loadFile(@NotNull String uri) {
+    Log.d("Loading vscode uri: %s", uri);
+    // find the owner library
+    var source = find(uri);
+    if (source == null) return Collections.emptyList();
+    var owner = source.owner();
+    Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
+      owner.underlyingLibrary().name(), owner.underlyingLibrary().libraryRoot());
+
+    // start compiling
+    reporter.clear();
+    var flags = new CompilerFlags(
+      CompilerFlags.Message.EMOJI, false, true, null,
+      SeqView.empty(), null);
+    try {
+      LibraryCompiler.compileExisting(flags, owner);
+    } catch (IOException e) {
+      var s = new StringWriter();
+      e.printStackTrace(new PrintWriter(s));
+      Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
     }
     reportErrors(reporter, DistillerOptions.pretty());
-    return new HighlightResult(uri, symbols.view().filter(t -> t.range() != LspRange.NONE));
+    // build highlight
+    var symbols = DynamicSeq.<HighlightResult>create();
+    highlight(owner, symbols);
+    return symbols.asJava();
+  }
+
+  private void highlight(@NotNull LibraryOwner owner, @NotNull DynamicSeq<HighlightResult> result) {
+    owner.librarySourceFiles().forEach(src -> result.append(highlightOne(src)));
+    for (var dep : owner.libraryDeps()) highlight(dep, result);
+  }
+
+  private @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
+    var symbols = DynamicSeq.<HighlightResult.Symbol>create();
+    var program = source.program().value;
+    if (program != null) program.forEach(d -> d.accept(SyntaxHighlight.INSTANCE, symbols));
+    return new HighlightResult(source.file().toUri().toString(), symbols.view().filter(t -> t.range() != LspRange.NONE));
   }
 
   public void reportErrors(@NotNull BufferReporter reporter, @NotNull DistillerOptions options) {
@@ -85,7 +151,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       .filter(p -> p.sourcePos().belongsToSomeFile())
       .peek(p -> Log.d(p.describe(options).debugRender()))
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints(options).stream().map(t -> new InlineHintProblem(p, t))))
-      .flatMap(p -> p.sourcePos().file().path().stream().map(uri -> Tuple.of(uri, p)))
+      .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
         t -> t._1,
         Collectors.mapping(t -> t._2, Seq.factory())
@@ -155,36 +221,16 @@ public class AyaService implements WorkspaceService, TextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
     return CompletableFuture.supplyAsync(() -> {
-      var loadedFile = getLoadedFile(params.getTextDocument().getUri());
+      var loadedFile = find(params.getTextDocument().getUri());
       if (loadedFile == null) return Either.forLeft(Collections.emptyList());
       return Either.forRight(GotoDefinition.invoke(params, loadedFile));
     });
   }
 
-  private @Nullable AyaFile getLoadedFile(@NotNull String uri) {
-    return libraryManager.loadedFiles.getOrNull(Path.of(URI.create(uri)));
-  }
-
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params input, ComputeTerm.Kind type) {
-    var loadedFile = getLoadedFile(input.uri);
+    var loadedFile = find(input.uri);
     if (loadedFile == null) return ComputeTermResult.bad(input);
     return new ComputeTerm(loadedFile, type).invoke(input);
-  }
-
-  public record AyaFile(
-    @NotNull ImmutableSeq<Def> core,
-    @NotNull ImmutableSeq<Stmt> concrete
-  ) {
-  }
-
-  public record LspLibraryManager(
-    @NotNull MutableHashMap<@NotNull Path, AyaFile> loadedFiles,
-    @NotNull DynamicSeq<Path> modulePath
-  ) implements SourceFileLocator {
-    @Override public @NotNull Path displayName(@NotNull Path path) {
-      // vscode needs absolute path
-      return path.toAbsolutePath();
-    }
   }
 
   public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {

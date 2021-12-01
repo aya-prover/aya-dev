@@ -15,6 +15,14 @@ import java.nio.file.Path;
 import java.util.Comparator;
 
 public interface FileUtil {
+  static @NotNull Path canonicalize(@NotNull Path path) {
+    try {
+      return path.toRealPath();
+    } catch (IOException ignored) {
+      return path.toAbsolutePath().normalize();
+    }
+  }
+
   static void deleteRecursively(@NotNull Path path) throws IOException {
     if (!Files.exists(path)) return;
     try (var walk = Files.walk(path)) {
@@ -25,7 +33,11 @@ public interface FileUtil {
   }
 
   static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull String postfix) {
-    try (var walk = Files.walk(srcRoot)) {
+    return collectSource(srcRoot, postfix, Integer.MAX_VALUE);
+  }
+
+  static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull String postfix, int maxDepth) {
+    try (var walk = Files.walk(srcRoot, maxDepth)) {
       return walk.filter(Files::isRegularFile)
         .filter(path -> path.getFileName().toString().endsWith(postfix))
         .collect(ImmutableSeq.factory());

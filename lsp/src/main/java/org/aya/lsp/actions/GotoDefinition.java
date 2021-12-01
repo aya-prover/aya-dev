@@ -7,10 +7,10 @@ import kala.tuple.Unit;
 import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.visitor.StmtConsumer;
-import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.lsp.utils.XY;
@@ -20,6 +20,7 @@ import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.LocationLink;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,12 +31,15 @@ public class GotoDefinition implements StmtConsumer<XY> {
   public final @NotNull DynamicSeq<WithPos<Var>> locations = DynamicSeq.create();
 
   @NotNull
-  public static List<LocationLink> invoke(@NotNull DefinitionParams params, @NotNull AyaService.AyaFile loadedFile) {
+  public static List<LocationLink> invoke(@NotNull DefinitionParams params, @NotNull LibrarySource loadedFile) {
     var locator = new GotoDefinition();
-    locator.visitAll(loadedFile.concrete(), new XY(params.getPosition()));
+    var program = loadedFile.program().value;
+    if (program == null) return Collections.emptyList();
+
+    locator.visitAll(program, new XY(params.getPosition()));
     return locator.locations.view().mapNotNull(pos -> {
       var target = switch (pos.data()) {
-        case DefVar<?, ?> defVar -> defVar.concrete.sourcePos();
+        case DefVar<?, ?> defVar && defVar.concrete != null -> defVar.concrete.sourcePos();
         case LocalVar localVar -> localVar.definition();
         case default -> null;
       };
