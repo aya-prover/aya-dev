@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
@@ -38,14 +39,23 @@ public record PatClassifier(
   @NotNull PatTree.Builder builder
 ) {
   public static @NotNull ImmutableSeq<PatClass> classify(
-    @NotNull ImmutableSeq<? extends Pat.@NotNull Preclause<?>> clauses,
+    @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ExprTycker tycker,
+    @NotNull SourcePos pos, boolean coverage
+  ) {
+    return classify(clauses, telescope, tycker.state, tycker.reporter, pos, coverage);
+  }
+
+  public static @NotNull ImmutableSeq<PatClass> classify(
+    @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
     boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, state, new PatTree.Builder());
-    var classification = classifier.classifySub(telescope, clauses
-      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index)), coverage, 5);
+    var classification = classifier.classifySub(telescope, clauses.view()
+      .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index))
+      .toImmutableSeq(), coverage, 5);
     for (var pats : classification) {
       if (pats instanceof PatClass.Err err) {
         reporter.report(new ClausesProblem.MissingCase(pos, err.errorMessage));
@@ -335,10 +345,8 @@ public record PatClassifier(
 
   private record SubPats(@NotNull SeqView<Pat> pats, int ix) {
     @Contract(pure = true) public @NotNull Pat head() {
-      if (pats.isEmpty()) {
-        throw new IllegalStateException("Empty pattern list");
-      }
-      return pats.first();
+      // This 'inline' is actually a 'dereference'
+      return pats.first().inline();
     }
 
     @Contract(pure = true) public @NotNull SubPats drop() {
