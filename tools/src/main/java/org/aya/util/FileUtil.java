@@ -33,7 +33,11 @@ public interface FileUtil {
   }
 
   static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull String postfix) {
-    try (var walk = Files.walk(srcRoot)) {
+    return collectSource(srcRoot, postfix, Integer.MAX_VALUE);
+  }
+
+  static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull String postfix, int maxDepth) {
+    try (var walk = Files.walk(srcRoot, maxDepth)) {
       return walk.filter(Files::isRegularFile)
         .filter(path -> path.getFileName().toString().endsWith(postfix))
         .collect(ImmutableSeq.factory());

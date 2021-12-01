@@ -3,7 +3,6 @@
 package org.aya.cli.library.source;
 
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
@@ -11,6 +10,7 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
+import org.aya.generic.Constants;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +20,7 @@ import java.nio.file.Path;
 
 /**
  * A library that lives in the file system.
+ *
  * @author kiva
  */
 public record DiskLibraryOwner(
@@ -41,13 +42,14 @@ public record DiskLibraryOwner(
     return config.libraryBuildRoot().resolve("deps").resolve(depName + "_" + version);
   }
 
-  public static @NotNull DiskLibraryOwner from(@NotNull Reporter reporter, @NotNull LibraryConfig config) throws IOException {
-    var rep = reporter instanceof CountingReporter counting ? counting : new CountingReporter(reporter);
+  public static @NotNull DiskLibraryOwner from(@NotNull Reporter outReporter, @NotNull LibraryConfig config) throws IOException {
+    var reporter = CountingReporter.of(outReporter);
     var srcRoot = config.librarySrcRoot();
     var locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
-    var owner = new DiskLibraryOwner(rep, locator, DynamicSeq.of(),
+    var owner = new DiskLibraryOwner(reporter, locator, DynamicSeq.of(),
       DynamicSeq.of(), DynamicSeq.of(), config);
-    owner.sources.appendAll(FileUtil.collectSource(srcRoot, ".aya").map(p -> new LibrarySource(owner, p)));
+    owner.sources.appendAll(FileUtil.collectSource(srcRoot, Constants.AYA_POSTFIX)
+      .map(p -> new LibrarySource(owner, p)));
     for (var dep : config.deps()) {
       var depConfig = depConfig(config, dep);
       // TODO[kiva]: should not be null if we have a proper package manager
@@ -55,7 +57,7 @@ public record DiskLibraryOwner(
         reporter.reportString("Skipping " + dep.depName());
         continue;
       }
-      var depCompiler = DiskLibraryOwner.from(rep, depConfig);
+      var depCompiler = DiskLibraryOwner.from(reporter, depConfig);
       owner.dependencies.append(depCompiler);
     }
     return owner;
@@ -75,25 +77,5 @@ public record DiskLibraryOwner(
 
   @Override public void registerModulePath(@NotNull Path newPath) {
     thisModulePath.append(newPath);
-  }
-
-  @Override public @NotNull Path outDir() {
-    return underlyingLibrary.libraryOutRoot();
-  }
-
-  private @Nullable LibrarySource findModuleHere(@NotNull ImmutableSeq<String> mod) {
-    return sources.find(s -> {
-      var checkMod = s.moduleName();
-      return checkMod.equals(mod);
-    }).getOrNull();
-  }
-
-  @Override public @Nullable LibrarySource findModule(@NotNull ImmutableSeq<String> mod) {
-    var file = findModuleHere(mod);
-    if (file == null) for (var dep : dependencies) {
-      file = dep.findModule(mod);
-      if (file != null) break;
-    }
-    return file;
   }
 }

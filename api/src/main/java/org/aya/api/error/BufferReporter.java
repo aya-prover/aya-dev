@@ -13,4 +13,8 @@ public record BufferReporter(@NotNull DynamicSeq<@NotNull Problem> problems) imp
   @Override public void report(@NotNull Problem problem) {
     problems.append(problem);
   }
+
+  public void clear() {
+    problems.clear();
+  }
 }

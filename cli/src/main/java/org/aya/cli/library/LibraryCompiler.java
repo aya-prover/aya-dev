@@ -44,14 +44,19 @@ public class LibraryCompiler {
     this.owner = owner;
   }
 
+  public static int compileExisting(@NotNull CompilerFlags flags, @NotNull LibraryOwner owner) throws IOException {
+    var compiler = new LibraryCompiler(flags, owner, new LibraryModuleLoader.United());
+    return compiler.start();
+  }
+
   public static int compile(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull Path libraryRoot) throws IOException {
     if (!Files.exists(libraryRoot)) {
       reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
     var config = LibraryConfigData.fromLibraryRoot(FileUtil.canonicalize(libraryRoot));
-    var compiler = new LibraryCompiler(flags, DiskLibraryOwner.from(reporter, config), new LibraryModuleLoader.United());
-    return compiler.start();
+    var owner = DiskLibraryOwner.from(reporter, config);
+    return compileExisting(flags, owner);
   }
 
   private void resolveImports(@NotNull LibrarySource source) throws IOException {

@@ -7,6 +7,7 @@ import kala.collection.mutable.DynamicSeq;
 import kala.value.Ref;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.core.def.Def;
 import org.aya.generic.Constants;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.Debug;
@@ -21,6 +22,7 @@ import java.util.stream.IntStream;
  *
  * @param program     initialized after parse
  * @param resolveInfo initialized after resolve
+ * @param tycked      initialized after tyck
  */
 @Debug.Renderer(text = "file")
 public record LibrarySource(
@@ -28,10 +30,11 @@ public record LibrarySource(
   @NotNull Path file,
   @NotNull DynamicSeq<LibrarySource> imports,
   @NotNull Ref<ImmutableSeq<Stmt>> program,
+  @NotNull Ref<ImmutableSeq<Def>> tycked,
   @NotNull Ref<ResolveInfo> resolveInfo
 ) {
   public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {
-    this(owner, FileUtil.canonicalize(file), DynamicSeq.create(), new Ref<>(), new Ref<>());
+    this(owner, FileUtil.canonicalize(file), DynamicSeq.create(), new Ref<>(), new Ref<>(), new Ref<>());
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {

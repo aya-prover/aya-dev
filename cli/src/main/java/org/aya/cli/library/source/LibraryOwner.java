@@ -15,8 +15,9 @@ import java.nio.file.Path;
 /**
  * Common interfaces for library, for supporting both
  * library in file system and library in memory.
- * @see DiskLibraryOwner
+ *
  * @author ice1000, kiva
+ * @see DiskLibraryOwner
  */
 public interface LibraryOwner {
   int DEFAULT_INDENT = 2;
@@ -24,12 +25,30 @@ public interface LibraryOwner {
   @NotNull SeqView<Path> modulePath();
   @NotNull SeqView<LibrarySource> librarySourceFiles();
   @NotNull SeqView<LibraryOwner> libraryDeps();
-  /** @return Out dir of this module. */
-  @NotNull Path outDir();
   @NotNull CountingReporter reporter();
-  @Nullable LibrarySource findModule(@NotNull ImmutableSeq<String> mod);
   @NotNull SourceFileLocator locator();
   @NotNull LibraryConfig underlyingLibrary();
 
   void registerModulePath(@NotNull Path newPath);
+
+  /** @return Out dir of this module. */
+  default @NotNull Path outDir() {
+    return underlyingLibrary().libraryOutRoot();
+  }
+
+  default @Nullable LibrarySource findModule(@NotNull ImmutableSeq<String> mod) {
+    var file = findModuleHere(mod);
+    if (file == null) for (var dep : libraryDeps()) {
+      file = dep.findModule(mod);
+      if (file != null) break;
+    }
+    return file;
+  }
+
+  private @Nullable LibrarySource findModuleHere(@NotNull ImmutableSeq<String> mod) {
+    return librarySourceFiles().find(s -> {
+      var checkMod = s.moduleName();
+      return checkMod.equals(mod);
+    }).getOrNull();
+  }
 }

@@ -85,6 +85,7 @@ record LibraryModuleLoader(
     assert program != null;
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
     return tyckModule(null, resolveModule(context, program, recurseLoader), (moduleResolve, defs) -> {
+      source.tycked().value = defs;
       if (reporter().noError()) saveCompiledCore(source, moduleResolve, defs);
     });
   }

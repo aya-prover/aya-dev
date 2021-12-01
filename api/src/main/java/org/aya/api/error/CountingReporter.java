@@ -41,4 +41,9 @@ public final class CountingReporter implements Reporter {
     }
     delegated.report(problem);
   }
+
+  public static @NotNull CountingReporter of(@NotNull Reporter reporter) {
+    return reporter instanceof CountingReporter counting
+      ? counting : new CountingReporter(reporter);
+  }
 }
