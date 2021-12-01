@@ -17,6 +17,7 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
+import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
@@ -33,6 +34,7 @@ import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.LocalCtx;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
@@ -87,7 +89,7 @@ public final class PatTycker {
   ) {
     var res = clauses.mapIndexed((index, clause) -> {
       tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
-      var elabClause = visitMatch(clause, signature);
+      var elabClause = checkRhs(checkLhs(clause, signature));
       tracing(TreeBuilder::reduce);
       return elabClause;
     });
@@ -163,8 +165,32 @@ public final class PatTycker {
     };
   }
 
-  private Pat.Preclause<Term> visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
-    exprTycker.localCtx = exprTycker.localCtx.derive();
+  public record LhsResult(
+    @NotNull LocalCtx gamma,
+    @NotNull Term type,
+    @NotNull Substituter.TermSubst subst,
+    boolean hasError,
+    @NotNull Pat.Preclause<Expr> preclause
+  ) {
+  }
+
+  private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
+    var parent = exprTycker.localCtx;
+    exprTycker.localCtx = lhsResult.gamma;
+    var result = lhsResult.preclause.map(e -> lhsResult.hasError
+      // In case the patterns are malformed, do not check the body
+      // as we bind local variables in the pattern checker,
+      // and in case the patterns are malformed, some bindings may
+      // not be added to the localCtx of tycker, causing assertion errors
+      ? new ErrorTerm(e, false)
+      : exprTycker.inherit(e, lhsResult.type).wellTyped().subst(lhsResult.subst));
+    exprTycker.localCtx = parent;
+    return result;
+  }
+
+  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
+    var parent = exprTycker.localCtx;
+    exprTycker.localCtx = parent.derive();
     currentClause = match;
     var patResult = visitPatterns(signature, match.patterns.view());
     var patterns = patResult._1.map(Pat::inline);
@@ -173,18 +199,11 @@ public final class PatTycker {
         return metaPat.inline();
       }
     }, Unit.unit());
-    var result = match.hasError
-      // In case the patterns are malformed, do not check the body
-      // as we bind local variables in the pattern checker,
-      // and in case the patterns are malformed, some bindings may
-      // not be added to the localCtx of tycker, causing assertion errors
-      ? match.expr.<Term>map(e -> new ErrorTerm(e, false))
-      : match.expr.map(e -> exprTycker.inherit(e, type).wellTyped().subst(termSubst));
+    var subst = termSubst.replicate();
     termSubst.clear();
-    var parent = exprTycker.localCtx.parent();
-    assert parent != null;
+    var gamma = exprTycker.localCtx;
     exprTycker.localCtx = parent;
-    return new Pat.Preclause<>(match.sourcePos, patterns, result);
+    return new LhsResult(gamma, type, subst, match.hasError, new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
   }
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>

@@ -87,17 +87,23 @@ public record StmtTycker(
           },
           clauses -> {
             var patTycker = new PatTycker(tycker);
-            var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
-            var def = factory.apply(result.result(), Either.right(result.matchings()));
-            if (patTycker.noError()) {
-              if (decl.modifiers.contains(Modifier.Overlap)) {
-                // Order-independent.
-                ensureConfluent(tycker, signature, result, decl.sourcePos, true);
-              } else {
+            FnDef def;
+            var pos = decl.sourcePos;
+            if (decl.modifiers.contains(Modifier.Overlap)) {
+              // Order-independent.
+              var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
+              def = factory.apply(result.result(), Either.right(result.matchings()));
+              if (patTycker.noError())
+                ensureConfluent(tycker, signature, result, pos, true);
+            } else {
+              // First-match semantics.
+              var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
+              def = factory.apply(result.result(), Either.right(result.matchings()));
+              if (patTycker.noError()) {
                 var classification = PatClassifier.classify(result.clauses(), signature.param(),
-                  tycker.state, tycker.reporter, decl.sourcePos, true);
-                // First-match semantics.
-                PatClassifier.firstMatchDomination(result.clauses(), tycker.reporter, decl.sourcePos, classification);
+                  tycker.state, tycker.reporter, pos, true);
+                PatClassifier.firstMatchDomination(result.clauses(), tycker.reporter, pos, classification);
+                Conquer.against(result.matchings(), true, tycker, pos, signature);
               }
             }
             return def;
