@@ -14,6 +14,7 @@ import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
+import org.aya.concrete.Pattern;
 import org.aya.core.Matching;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
@@ -67,8 +68,8 @@ public record PatClassifier(
   }
 
   public static void firstMatchDomination(
-    @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos, @NotNull MCT mct
+    @NotNull ImmutableSeq<Pattern.Clause> clauses,
+    @NotNull Reporter reporter, @NotNull MCT mct
   ) {
     if (mct instanceof MCT.Error) return;
     // Google says they're initialized to false
@@ -76,7 +77,7 @@ public record PatClassifier(
     mct.forEach(results -> numbers[results.contents().min()] = true);
     // ^ The minimum is supposed to be the first one, but why not be robust?
     for (int i = 0; i < numbers.length; i++)
-      if (!numbers[i]) reporter.report(new ClausesProblem.FMDomination(i + 1, pos));
+      if (!numbers[i]) reporter.report(new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
   }
 
   public static void confluence(

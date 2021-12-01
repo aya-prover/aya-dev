@@ -100,7 +100,7 @@ public record StmtTycker(
               var result = patTycker.elabClausesClassified(clauses, signature, decl.result.sourcePos(), pos);
               def = factory.apply(result._1.result(), Either.right(result._1.matchings()));
               if (patTycker.noError()) {
-                PatClassifier.firstMatchDomination(result._1.clauses(), tycker.reporter, pos, result._2);
+                PatClassifier.firstMatchDomination(clauses, tycker.reporter, result._2);
                 Conquer.against(result._1.matchings(), true, tycker, pos, signature);
               }
             }
