@@ -17,8 +17,10 @@ import org.aya.api.ref.DefVar;
 import org.aya.api.ref.LocalVar;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
+import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
+import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -32,6 +34,7 @@ import org.aya.core.visitor.Unfolder;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.LocalCtx;
 import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.TreeBuilder;
@@ -40,14 +43,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @author ice1000
  */
 public final class PatTycker {
   private final @NotNull ExprTycker exprTycker;
-  private final Substituter.@NotNull TermSubst termSubst;
-  private final Trace.@Nullable Builder traceBuilder;
+  private final @NotNull Substituter.TermSubst termSubst;
+  private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
   private Pattern.Clause currentClause = null;
 
@@ -65,6 +69,13 @@ public final class PatTycker {
     this.traceBuilder = traceBuilder;
   }
 
+  private <R> R traced(@NotNull Supplier<Trace> trace, @NotNull Supplier<R> computation) {
+    tracing(builder -> builder.shift(trace.get()));
+    var res = computation.get();
+    tracing(TreeBuilder::reduce);
+    return res;
+  }
+
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
@@ -73,23 +84,41 @@ public final class PatTycker {
     this(exprTycker, new Substituter.TermSubst(MutableMap.create()), exprTycker.traceBuilder);
   }
 
-  public @NotNull Tuple2<@NotNull Term, @NotNull ImmutableSeq<Pat.PrototypeClause>>
-  elabClauses(
-    @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature signature, @Nullable SourcePos resultPos
+  public record PatResult(
+    @NotNull Term result,
+    @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
+    @NotNull ImmutableSeq<Matching> matchings
   ) {
-    var res = clauses.mapIndexed((index, clause) -> {
-      tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
-      var elabClause = visitMatch(clause, signature);
-      tracing(TreeBuilder::reduce);
-      return elabClause;
-    });
+  }
+
+  public @NotNull PatResult elabClausesDirectly(
+    @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
+    @NotNull Def.Signature signature, @NotNull SourcePos resultPos
+  ) {
+    return checkAllRhs(checkAllLhs(clauses, signature), resultPos, signature.result());
+  }
+
+  private @NotNull ImmutableSeq<LhsResult>
+  checkAllLhs(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, @NotNull Def.Signature signature) {
+    return clauses.mapIndexed((index, clause) -> traced(
+      () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
+      () -> checkLhs(clause, signature)));
+  }
+
+  private @NotNull PatResult checkAllRhs(
+    @NotNull ImmutableSeq<LhsResult> clauses,
+    @NotNull SourcePos resultPos, @NotNull Term result
+  ) {
+    var res = clauses.mapIndexed((index, lhs) -> traced(
+      () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
+      () -> checkRhs(lhs)));
     exprTycker.solveMetas();
     var zonker = exprTycker.newZonker();
-    return Tuple.of(zonker.zonk(signature.result(), resultPos),
-      res.map(c -> new Pat.PrototypeClause(
-        c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
-        c.expr().map(e -> zonker.zonk(e, c.sourcePos())))));
+    var preclauses = res.map(c -> new Pat.Preclause<>(
+      c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
+      c.expr().map(e -> zonker.zonk(e, c.sourcePos()))));
+    return new PatResult(zonker.zonk(result, resultPos), preclauses,
+      preclauses.flatMap(Pat.Preclause::lift));
   }
 
   @SuppressWarnings("unchecked") private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
@@ -155,8 +184,32 @@ public final class PatTycker {
     };
   }
 
-  private Pat.PrototypeClause visitMatch(Pattern.@NotNull Clause match, Def.@NotNull Signature signature) {
-    exprTycker.localCtx = exprTycker.localCtx.derive();
+  public record LhsResult(
+    @NotNull LocalCtx gamma,
+    @NotNull Term type,
+    @NotNull Substituter.TermSubst subst,
+    boolean hasError,
+    @NotNull Pat.Preclause<Expr> preclause
+  ) {
+  }
+
+  private Pat.Preclause<Term> checkRhs(LhsResult lhsResult) {
+    var parent = exprTycker.localCtx;
+    exprTycker.localCtx = lhsResult.gamma;
+    var result = lhsResult.preclause.map(e -> lhsResult.hasError
+      // In case the patterns are malformed, do not check the body
+      // as we bind local variables in the pattern checker,
+      // and in case the patterns are malformed, some bindings may
+      // not be added to the localCtx of tycker, causing assertion errors
+      ? new ErrorTerm(e, false)
+      : exprTycker.inherit(e, lhsResult.type).wellTyped().subst(lhsResult.subst));
+    exprTycker.localCtx = parent;
+    return result;
+  }
+
+  private LhsResult checkLhs(Pattern.Clause match, Def.Signature signature) {
+    var parent = exprTycker.localCtx;
+    exprTycker.localCtx = parent.derive();
     currentClause = match;
     var patResult = visitPatterns(signature, match.patterns.view());
     var patterns = patResult._1.map(Pat::inline);
@@ -165,18 +218,11 @@ public final class PatTycker {
         return metaPat.inline();
       }
     }, Unit.unit());
-    var result = match.hasError
-      // In case the patterns are malformed, do not check the body
-      // as we bind local variables in the pattern checker,
-      // and in case the patterns are malformed, some bindings may
-      // not be added to the localCtx of tycker, causing assertion errors
-      ? match.expr.<Term>map(e -> new ErrorTerm(e, false))
-      : match.expr.map(e -> exprTycker.inherit(e, type).wellTyped().subst(termSubst));
+    var subst = termSubst.replicate();
     termSubst.clear();
-    var parent = exprTycker.localCtx.parent();
-    assert parent != null;
+    var gamma = exprTycker.localCtx;
     exprTycker.localCtx = parent;
-    return new Pat.PrototypeClause(match.sourcePos, patterns, result);
+    return new LhsResult(gamma, type, subst, match.hasError, new Pat.Preclause<>(match.sourcePos, patterns, match.expr));
   }
 
   public @NotNull Tuple2<ImmutableSeq<Pat>, Term>

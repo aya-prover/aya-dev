@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * @author kiva, ice1000
  */
@@ -204,12 +206,14 @@ public sealed interface Pat extends CorePat {
   }
 
   /**
+   * It's 'pre' because there are also impossible clauses, which are removed after tycking.
+   *
    * @author ice1000
    */
-  record PrototypeClause(
+  record Preclause<T extends AyaDocile>(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pat> patterns,
-    @NotNull Option<Term> expr
+    @NotNull Option<T> expr
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       var distiller = new CoreDistiller(options);
@@ -220,11 +224,15 @@ public sealed interface Pat extends CorePat {
       else return doc;
     }
 
-    public static @NotNull PrototypeClause prototypify(@NotNull Matching clause) {
-      return new PrototypeClause(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
+    public <R extends AyaDocile> @NotNull Preclause<R> map(@NotNull Function<T, R> f) {
+      return new Preclause<>(sourcePos, patterns, expr.map(f));
     }
 
-    public static @NotNull Option<@NotNull Matching> deprototypify(@NotNull PrototypeClause clause) {
+    public static @NotNull Preclause<Term> weaken(@NotNull Matching clause) {
+      return new Preclause<>(clause.sourcePos(), clause.patterns(), Option.some(clause.body()));
+    }
+
+    public static @NotNull Option<@NotNull Matching> lift(@NotNull Preclause<Term> clause) {
       return clause.expr.map(term -> new Matching(clause.sourcePos, clause.patterns, term));
     }
   }

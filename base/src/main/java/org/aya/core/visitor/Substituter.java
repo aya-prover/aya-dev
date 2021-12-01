@@ -96,6 +96,10 @@ public record Substituter(
       return map.isEmpty();
     }
 
+    public @NotNull TermSubst replicate() {
+      return new TermSubst(MutableMap.from(map));
+    }
+
     @Override
     public @NotNull Doc toDoc(@NotNull DistillerOptions options) {
       return Doc.commaList(
