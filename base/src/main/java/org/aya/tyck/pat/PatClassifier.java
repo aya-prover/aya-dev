@@ -67,17 +67,19 @@ public record PatClassifier(
     return errRef.value != null ? errRef.value : classification;
   }
 
-  public static void firstMatchDomination(
+  public static int[] firstMatchDomination(
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
     @NotNull Reporter reporter, @NotNull MCT mct
   ) {
-    if (mct instanceof MCT.Error) return;
-    // Google says they're initialized to false
-    var numbers = new boolean[clauses.size()];
-    mct.forEach(results -> numbers[results.contents().min()] = true);
+    if (mct instanceof MCT.Error) return new int[0];
+    // StackOverflow says they're initialized to zero
+    var numbers = new int[clauses.size()];
+    mct.forEach(results -> numbers[results.contents().min()]++);
     // ^ The minimum is supposed to be the first one, but why not be robust?
     for (int i = 0; i < numbers.length; i++)
-      if (!numbers[i]) reporter.report(new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
+      if (0 == numbers[i]) reporter.report(
+        new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
+    return numbers;
   }
 
   public static void confluence(

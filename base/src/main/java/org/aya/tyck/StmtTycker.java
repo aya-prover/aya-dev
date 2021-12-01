@@ -98,11 +98,8 @@ public record StmtTycker(
             } else {
               // First-match semantics.
               var result = patTycker.elabClausesClassified(clauses, signature, decl.result.sourcePos(), pos);
-              def = factory.apply(result._1.result(), Either.right(result._1.matchings()));
-              if (patTycker.noError()) {
-                PatClassifier.firstMatchDomination(clauses, tycker.reporter, result._2);
-                Conquer.against(result._1.matchings(), true, tycker, pos, signature);
-              }
+              def = factory.apply(result.result(), Either.right(result.matchings()));
+              if (patTycker.noError()) Conquer.against(result.matchings(), true, tycker, pos, signature);
             }
             return def;
           }

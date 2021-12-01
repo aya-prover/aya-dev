@@ -98,7 +98,7 @@ public final class PatTycker {
     return checkAllRhs(checkAllLhs(clauses, signature), resultPos, signature.result());
   }
 
-  public @NotNull Tuple2<PatResult, MCT> elabClausesClassified(
+  public @NotNull PatResult elabClausesClassified(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature signature,
     @NotNull SourcePos resultPos, @NotNull SourcePos overallPos
@@ -106,7 +106,11 @@ public final class PatTycker {
     var lhsResults = checkAllLhs(clauses, signature);
     var classes = PatClassifier.classify(lhsResults.view().map(LhsResult::preclause),
       signature.param(), exprTycker, overallPos, true);
-    return Tuple.of(checkAllRhs(lhsResults, resultPos, signature.result()), classes);
+    if (noError()) {
+      var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
+      // refinePatterns(lhsResults, usages, classes);
+    }
+    return checkAllRhs(lhsResults, resultPos, signature.result());
   }
 
   private @NotNull ImmutableSeq<LhsResult>
