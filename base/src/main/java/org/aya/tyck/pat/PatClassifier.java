@@ -68,13 +68,12 @@ public record PatClassifier(
 
   public static void firstMatchDomination(
     @NotNull ImmutableSeq<Pat.@NotNull Preclause<Term>> clauses,
-    @NotNull Reporter reporter, @NotNull SourcePos pos,
-    @NotNull ImmutableSeq<MCT.PatClass> classification
+    @NotNull Reporter reporter, @NotNull SourcePos pos, @NotNull MCT mct
   ) {
-    if (classification.isEmpty()) return;
+    if (mct instanceof MCT.Error) return;
     // Google says they're initialized to false
     var numbers = new boolean[clauses.size()];
-    for (var results : classification) numbers[results.contents().min()] = true;
+    mct.forEach(results -> numbers[results.contents().min()] = true);
     // ^ The minimum is supposed to be the first one, but why not be robust?
     for (int i = 0; i < numbers.length; i++)
       if (!numbers[i]) reporter.report(new ClausesProblem.FMDomination(i + 1, pos));
@@ -82,11 +81,10 @@ public record PatClassifier(
 
   public static void confluence(
     @NotNull PatTycker.PatResult clauses,
-    @NotNull ExprTycker tycker, @NotNull SourcePos pos,
-    @NotNull MCT classification
+    @NotNull ExprTycker tycker, @NotNull SourcePos pos, @NotNull MCT mct
   ) {
     var result = clauses.result();
-    classification.forEach(results -> {
+    mct.forEach(results -> {
       var contents = results.contents()
         .flatMap(i -> Pat.Preclause.lift(clauses.clauses().get(i))
           .map(matching -> IntObjTuple2.of(i, matching)));
@@ -179,10 +177,9 @@ public record PatClassifier(
             .toImmutableSeq().view();
           // Classify according to the tuple elements
           var fuelCopy = fuel;
-          return classifySub(sigma.params().view(), hasTuple, coverage, fuel)
-            .flatMap(pat -> MCT.mapClass(pat,
-              // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
-              classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats::drop), coverage, fuelCopy)));
+          return classifySub(sigma.params().view(), hasTuple, coverage, fuel).flatMap(pat -> pat.propagate(
+            // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
+            classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats::drop), coverage, fuelCopy)));
         }
       }
       // Only `I` might be split, we just assume that
@@ -285,9 +282,8 @@ public record PatClassifier(
             .map(param -> param.subst(target.ref(), conCall))
             .toImmutableSeq().view();
           var fuelCopy = fuel;
-          var rest = classified.flatMap(pat ->
-            MCT.mapClass(pat, classifySub(newTele, MCT.extract(pat, subPatsSeq)
-              .map(MCT.SubPats::drop), coverage, fuelCopy)));
+          var rest = classified.flatMap(pat -> pat.propagate(
+            classifySub(newTele, MCT.extract(pat, subPatsSeq).map(MCT.SubPats::drop), coverage, fuelCopy)));
           builder.unshift();
           buffer.append(rest);
         }

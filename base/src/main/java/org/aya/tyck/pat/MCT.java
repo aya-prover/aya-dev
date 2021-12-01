@@ -19,13 +19,6 @@ import java.util.function.Function;
  * @author ice1000
  */
 public sealed interface MCT {
-  static @NotNull MCT mapClass(@NotNull PatClass pat, @NotNull MCT classes) {
-    return switch (pat) {
-      case Leaf leaf -> classes;
-      case Error error -> classes.map(newClz -> new Error(newClz.contents(), error.errorMessage));
-    };
-  }
-
   static @NotNull ImmutableSeq<SubPats> extract(PatClass pats, @NotNull ImmutableSeq<SubPats> subPatsSeq) {
     return pats.contents().map(subPatsSeq::get);
   }
@@ -42,6 +35,8 @@ public sealed interface MCT {
   sealed interface PatClass extends MCT {
     @NotNull ImmutableSeq<Integer> contents();
 
+    @NotNull MCT propagate(@NotNull MCT mct);
+
     @Override default void forEach(@NotNull Consumer<PatClass> f) {
       f.accept(this);
     }
@@ -53,16 +48,21 @@ public sealed interface MCT {
     @Override default @NotNull MCT flatMap(@NotNull Function<PatClass, MCT> f) {
       return f.apply(this);
     }
-
   }
 
   record Leaf(@NotNull ImmutableSeq<Integer> contents) implements PatClass {
+    @Override public @NotNull MCT propagate(@NotNull MCT mct) {
+      return mct;
+    }
   }
 
   record Error(
     @NotNull ImmutableSeq<Integer> contents,
     @NotNull ImmutableSeq<Pattern> errorMessage
   ) implements PatClass {
+    @Override public @NotNull MCT propagate(@NotNull MCT mct) {
+      return mct.map(newClz -> new Error(newClz.contents(), errorMessage));
+    }
   }
 
   record Node(@NotNull ImmutableSeq<MCT> children) implements MCT {
@@ -76,19 +76,6 @@ public sealed interface MCT {
 
     @Override public @NotNull Node flatMap(@NotNull Function<PatClass, MCT> f) {
       return new Node(children.map(child -> child.flatMap(f)));
-    }
-  }
-
-  record CaseError() implements MCT {
-    @Override public void forEach(@NotNull Consumer<PatClass> f) {
-    }
-
-    @Override public @NotNull CaseError map(@NotNull Function<PatClass, PatClass> f) {
-      return this;
-    }
-
-    @Override public @NotNull MCT flatMap(@NotNull Function<PatClass, MCT> f) {
-      return this;
     }
   }
 
