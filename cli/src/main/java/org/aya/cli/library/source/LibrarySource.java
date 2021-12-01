@@ -55,6 +55,10 @@ public record LibrarySource(
     return FileUtil.resolveFile(owner.outDir(), mod, Constants.AYAC_POSTFIX);
   }
 
+  @Override public String toString() {
+    return file.toString();
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

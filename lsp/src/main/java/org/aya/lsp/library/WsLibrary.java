@@ -11,9 +11,7 @@ import org.aya.api.error.SourceFileLocator;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.generic.Constants;
 import org.aya.prelude.GeneratedVersion;
-import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -25,16 +23,18 @@ import java.nio.file.Path;
  */
 public record WsLibrary(
   @NotNull CountingReporter reporter,
+  @NotNull SourceFileLocator locator,
   @NotNull DynamicSeq<LibrarySource> sources,
   @NotNull LibraryConfig mockConfig,
   @NotNull Path workspace
-) implements LibraryOwner, SourceFileLocator {
-  public static @NotNull WsLibrary from(@NotNull Reporter outReporter, @NotNull Path folder) {
+) implements LibraryOwner {
+  public static @NotNull WsLibrary from(@NotNull Reporter outReporter, @NotNull Path ayaSource) {
+    var parent = ayaSource.getParent();
     var reporter = CountingReporter.of(outReporter);
-    var mockConfig = makeConfig(folder);
-    var owner = new WsLibrary(reporter, DynamicSeq.create(), mockConfig, folder);
-    owner.sources.appendAll(FileUtil.collectSource(folder, Constants.AYA_POSTFIX, 1)
-      .map(path -> new LibrarySource(owner, folder)));
+    var mockConfig = makeConfig(parent);
+    var locator = new SourceFileLocator.Module(SeqView.of(parent));
+    var owner = new WsLibrary(reporter, locator, DynamicSeq.create(), mockConfig, parent);
+    owner.sources.append(new LibrarySource(owner, ayaSource));
     return owner;
   }
 
@@ -51,10 +51,6 @@ public record WsLibrary(
     );
   }
 
-  @Override public @NotNull Path displayName(@NotNull Path path) {
-    return path.toAbsolutePath();
-  }
-
   @Override public @NotNull SeqView<Path> modulePath() {
     return SeqView.of(workspace);
   }
@@ -65,10 +61,6 @@ public record WsLibrary(
 
   @Override public @NotNull SeqView<LibraryOwner> libraryDeps() {
     return SeqView.empty();
-  }
-
-  @Override public @NotNull SourceFileLocator locator() {
-    return this;
   }
 
   @Override public @NotNull LibraryConfig underlyingLibrary() {

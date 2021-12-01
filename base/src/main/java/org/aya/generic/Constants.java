@@ -14,6 +14,7 @@ public interface Constants {
   @NotNull @NonNls String SCOPE_SEPARATOR = "::";
   @NotNull @NonNls String AYA_POSTFIX = ".aya";
   @NotNull @NonNls String AYAC_POSTFIX = ".ayac";
+  @NotNull @NonNls String AYA_JSON = "aya.json";
 
   static @NotNull LocalVar anonymous() {
     return new LocalVar(ANONYMOUS_PREFIX, SourcePos.NONE);

@@ -5,6 +5,7 @@ package org.aya.cli.library.json;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.Constants;
 import org.aya.util.Version;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +64,7 @@ public final class LibraryConfigData {
   }
 
   private static @NotNull LibraryConfigData of(@NotNull Path root) throws IOException {
-    var descriptionFile = root.resolve("aya.json");
+    var descriptionFile = root.resolve(Constants.AYA_JSON);
     return fromJson(Files.newBufferedReader(descriptionFile));
   }
 

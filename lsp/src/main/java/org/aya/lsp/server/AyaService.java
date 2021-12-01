@@ -10,9 +10,12 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.BufferReporter;
 import org.aya.api.error.Problem;
 import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.json.LibraryConfigData;
+import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.generic.Constants;
 import org.aya.lsp.actions.ComputeTerm;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.actions.SyntaxHighlight;
@@ -36,6 +39,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -51,8 +55,23 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public void registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
-    var library = WsLibrary.from(reporter, path);
-    libraries.append(library);
+    var ayaJson = path.resolve("aya.json");
+    if (Files.exists(ayaJson)) try {
+      var config = LibraryConfigData.fromLibraryRoot(path);
+      var owner = DiskLibraryOwner.from(reporter, config);
+      libraries.append(owner);
+    } catch (IOException e) {
+      var s = new StringWriter();
+      e.printStackTrace(new PrintWriter(s));
+      Log.e("Cannot load library. Stack trace:\n%s", s.toString());
+    } else mockLibraries(path);
+  }
+
+  private void mockLibraries(@NotNull Path path) {
+    FileUtil.collectSource(path, Constants.AYA_POSTFIX, 1).forEach(aya -> {
+      var library = WsLibrary.from(reporter, FileUtil.canonicalize(aya));
+      libraries.append(library);
+    });
   }
 
   private @Nullable LibrarySource find(@NotNull Path moduleFile) {
