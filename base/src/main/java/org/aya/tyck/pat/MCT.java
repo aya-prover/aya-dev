@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
 import org.aya.concrete.Pattern;
 import org.aya.core.pat.Pat;
+import org.aya.core.term.Term;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,17 +66,17 @@ public sealed interface MCT {
     }
   }
 
-  record Node(@NotNull ImmutableSeq<MCT> children) implements MCT {
+  record Node(@NotNull Term type, @NotNull ImmutableSeq<MCT> children) implements MCT {
     @Override public void forEach(@NotNull Consumer<PatClass> f) {
       children.forEach(child -> child.forEach(f));
     }
 
     @Override public @NotNull Node map(@NotNull Function<PatClass, PatClass> f) {
-      return new Node(children.map(child -> child.map(f)));
+      return new Node(type, children.map(child -> child.map(f)));
     }
 
     @Override public @NotNull Node flatMap(@NotNull Function<PatClass, MCT> f) {
-      return new Node(children.map(child -> child.flatMap(f)));
+      return new Node(type, children.map(child -> child.flatMap(f)));
     }
   }
 

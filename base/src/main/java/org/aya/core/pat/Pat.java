@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
-
 /**
  * @author kiva, ice1000
  */
@@ -222,10 +220,6 @@ public sealed interface Pat extends CorePat {
         pats.view().map(p -> distiller.visitPat(p, BaseDistiller.Outer.Free)))));
       if (expr.isDefined()) return Doc.sep(doc, Doc.symbol("=>"), expr.get().toDoc(options));
       else return doc;
-    }
-
-    public <R extends AyaDocile> @NotNull Preclause<R> map(@NotNull Function<T, R> f) {
-      return new Preclause<>(sourcePos, patterns, expr.map(f));
     }
 
     public static @NotNull Preclause<Term> weaken(@NotNull Matching clause) {

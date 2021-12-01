@@ -218,7 +218,7 @@ public record PatClassifier(
             }
             builder.unshift();
           }
-          return new MCT.Node(buffer.toImmutableSeq());
+          return new MCT.Node(primCall, buffer.toImmutableSeq());
         }
       }
       // THE BIG GAME
@@ -288,7 +288,7 @@ public record PatClassifier(
           builder.unshift();
           buffer.append(rest);
         }
-        return new MCT.Node(buffer.toImmutableSeq());
+        return new MCT.Node(dataCall, buffer.toImmutableSeq());
       }
     }
     // Progress without pattern matching
