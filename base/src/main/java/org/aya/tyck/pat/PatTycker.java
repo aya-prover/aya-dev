@@ -43,14 +43,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @author ice1000
  */
 public final class PatTycker {
   private final @NotNull ExprTycker exprTycker;
-  private final Substituter.@NotNull TermSubst termSubst;
-  private final Trace.@Nullable Builder traceBuilder;
+  private final @NotNull Substituter.TermSubst termSubst;
+  private final @Nullable Trace.Builder traceBuilder;
   private boolean hasError = false;
   private Pattern.Clause currentClause = null;
 
@@ -68,6 +69,13 @@ public final class PatTycker {
     this.traceBuilder = traceBuilder;
   }
 
+  private <R> R traced(@NotNull Supplier<Trace> trace, @NotNull Supplier<R> computation) {
+    tracing(builder -> builder.shift(trace.get()));
+    var res = computation.get();
+    tracing(TreeBuilder::reduce);
+    return res;
+  }
+
   private void tracing(@NotNull Consumer<Trace.@NotNull Builder> consumer) {
     if (traceBuilder != null) consumer.accept(traceBuilder);
   }
@@ -83,22 +91,33 @@ public final class PatTycker {
   ) {
   }
 
-  public @NotNull PatResult elabClauses(
+  public @NotNull PatResult elabClausesDirectly(
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature signature, @NotNull SourcePos resultPos
   ) {
-    var res = clauses.mapIndexed((index, clause) -> {
-      tracing(builder -> builder.shift(new Trace.LabelT(clause.sourcePos, "clause " + (1 + index))));
-      var elabClause = checkRhs(checkLhs(clause, signature));
-      tracing(TreeBuilder::reduce);
-      return elabClause;
-    });
+    return checkAllRhs(checkAllLhs(clauses, signature), resultPos, signature.result());
+  }
+
+  private @NotNull ImmutableSeq<LhsResult>
+  checkAllLhs(@NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses, @NotNull Def.Signature signature) {
+    return clauses.mapIndexed((index, clause) -> traced(
+      () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
+      () -> checkLhs(clause, signature)));
+  }
+
+  private @NotNull PatResult checkAllRhs(
+    @NotNull ImmutableSeq<LhsResult> clauses,
+    @NotNull SourcePos resultPos, @NotNull Term result
+  ) {
+    var res = clauses.mapIndexed((index, lhs) -> traced(
+      () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
+      () -> checkRhs(lhs)));
     exprTycker.solveMetas();
     var zonker = exprTycker.newZonker();
     var preclauses = res.map(c -> new Pat.Preclause<>(
       c.sourcePos(), c.patterns().map(p -> p.zonk(zonker)),
       c.expr().map(e -> zonker.zonk(e, c.sourcePos()))));
-    return new PatResult(zonker.zonk(signature.result(), resultPos), preclauses,
+    return new PatResult(zonker.zonk(result, resultPos), preclauses,
       preclauses.flatMap(Pat.Preclause::lift));
   }
 

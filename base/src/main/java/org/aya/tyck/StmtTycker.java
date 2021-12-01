@@ -91,13 +91,13 @@ public record StmtTycker(
             var pos = decl.sourcePos;
             if (decl.modifiers.contains(Modifier.Overlap)) {
               // Order-independent.
-              var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
+              var result = patTycker.elabClausesDirectly(clauses, signature, decl.result.sourcePos());
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (patTycker.noError())
                 ensureConfluent(tycker, signature, result, pos, true);
             } else {
               // First-match semantics.
-              var result = patTycker.elabClauses(clauses, signature, decl.result.sourcePos());
+              var result = patTycker.elabClausesDirectly(clauses, signature, decl.result.sourcePos());
               def = factory.apply(result.result(), Either.right(result.matchings()));
               if (patTycker.noError()) {
                 var classification = PatClassifier.classify(result.clauses(), signature.param(),
@@ -207,7 +207,7 @@ public record StmtTycker(
         dataTeleView.map(Term.Param::ref).zip(pat.view().map(Pat::toTerm))));
     }
     ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
-    var elabClauses = patTycker.elabClauses(ctor.clauses, signature, ctor.sourcePos);
+    var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature, ctor.sourcePos);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
     if (patTycker.noError())
       ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
@@ -238,7 +238,7 @@ public record StmtTycker(
     var result = tycker.zonk(field.result, tycker.inherit(field.result, new FormTerm.Univ(structSort))).wellTyped();
     field.signature = new Def.Signature(structSig.sortParam(), tele, result);
     var patTycker = new PatTycker(tycker);
-    var clauses = patTycker.elabClauses(field.clauses, field.signature, field.result.sourcePos());
+    var clauses = patTycker.elabClausesDirectly(field.clauses, field.signature, field.result.sourcePos());
     var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
     var elaborated = new FieldDef(structRef, field.ref, structSig.param(), tele, result, clauses.matchings(), body, field.coerce);
     if (patTycker.noError())
