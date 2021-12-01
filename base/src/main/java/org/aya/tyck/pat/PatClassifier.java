@@ -10,6 +10,7 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
+import kala.value.Ref;
 import org.aya.api.error.Reporter;
 import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
@@ -29,6 +30,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 /**
  * @author ice1000, kiva
  */
@@ -38,7 +42,7 @@ public record PatClassifier(
   @NotNull TyckState state,
   @NotNull PatTree.Builder builder
 ) {
-  public static @NotNull ImmutableSeq<PatClass> classify(
+  public static @NotNull CaseTree classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull ExprTycker tycker,
     @NotNull SourcePos pos, boolean coverage
@@ -46,7 +50,7 @@ public record PatClassifier(
     return classify(clauses, telescope, tycker.state, tycker.reporter, pos, coverage);
   }
 
-  public static @NotNull ImmutableSeq<PatClass> classify(
+  public static @NotNull CaseTree classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos,
@@ -56,13 +60,15 @@ public record PatClassifier(
     var classification = classifier.classifySub(telescope.view(), clauses.view()
       .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index))
       .toImmutableSeq(), coverage, 5);
-    for (var pats : classification) {
-      if (pats instanceof PatClass.Err err) {
+    var hasError = new Ref<>(false);
+    classification.forEach(pats -> {
+      if (!hasError.value && pats instanceof PatClass.Err err) {
         reporter.report(new ClausesProblem.MissingCase(pos, err.errorMessage));
-        return ImmutableSeq.empty();
+        hasError.value = true;
       }
-    }
-    return classification;
+    });
+    // Return empty case tree on error
+    return hasError.value ? new CaseNode(ImmutableSeq.empty()) : classification;
   }
 
   public static void firstMatchDomination(
@@ -82,10 +88,10 @@ public record PatClassifier(
   public static void confluence(
     @NotNull PatTycker.PatResult clauses,
     @NotNull ExprTycker tycker, @NotNull SourcePos pos,
-    @NotNull ImmutableSeq<PatClass> classification
+    @NotNull CaseTree classification
   ) {
     var result = clauses.result();
-    for (var results : classification) {
+    classification.forEach(results -> {
       var contents = results.contents()
         .flatMap(i -> Pat.Preclause.lift(clauses.clauses().get(i))
           .map(matching -> IntObjTuple2.of(i, matching)));
@@ -111,7 +117,7 @@ public record PatClassifier(
             lhsTerm, rhsTerm, lhsInfo._2.sourcePos(), rhsInfo._2.sourcePos()));
         }
       }
-    }
+    });
   }
 
   private static void domination(Substituter.TermSubst rhsSubst, Reporter reporter, int lhsIx, int rhsIx, Matching matching) {
@@ -127,7 +133,7 @@ public record PatClassifier(
    * @param coverage   if true, in uncovered cases an error will be reported
    * @return pattern classes
    */
-  private @NotNull ImmutableSeq<PatClass> classifySub(
+  private @NotNull CaseTree classifySub(
     @NotNull SeqView<Term.Param> telescope,
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
     boolean coverage, int fuel
@@ -141,14 +147,14 @@ public record PatClassifier(
       }
     }
     // Done
-    return ImmutableSeq.of(new PatClass.Ok(subPatsSeq.map(SubPats::ix)));
+    return new CaseLeaf(new PatClass.Ok(subPatsSeq.map(SubPats::ix)));
   }
 
   /**
    * @param telescope must be nonempty
    * @see #classifySub(SeqView, ImmutableSeq, boolean, int)
    */
-  private @Nullable ImmutableSeq<PatClass> classifySubImpl(
+  private @Nullable CaseTree classifySubImpl(
     @NotNull SeqView<Term.Param> telescope,
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
     boolean coverage, int fuel
@@ -192,7 +198,7 @@ public record PatClassifier(
           .mapNotNull(subPats -> subPats.head() instanceof Pat.Prim prim ? prim : null)
           .firstOption();
         if (lrSplit.isDefined()) {
-          var buffer = DynamicSeq.<PatClass>create();
+          var buffer = DynamicSeq.<CaseTree>create();
           // Interval pattern matching is only available in conditions,
           // so in case we need coverage, report an error on this pattern matching
           if (coverage) reporter.report(new ClausesProblem.SplitInterval(pos, lrSplit.get()));
@@ -215,11 +221,11 @@ public record PatClassifier(
               // Classify according the rest of the patterns
               var rest = classifySub(newTele, classes, false, fuel);
               // We have some new classes!
-              buffer.appendAll(rest);
+              buffer.append(rest);
             }
             builder.unshift();
           }
-          return buffer.toImmutableSeq();
+          return new CaseNode(buffer.toImmutableSeq());
         }
       }
       // THE BIG GAME
@@ -230,7 +236,7 @@ public record PatClassifier(
           // there are no clauses starting with a constructor pattern -- we don't need a split!
           subPatsSeq.noneMatch(subPats -> subPats.head() instanceof Pat.Ctor)
         ) break;
-        var buffer = DynamicSeq.<PatClass>create();
+        var buffer = DynamicSeq.<CaseTree>create();
         // For all constructors,
         for (var ctor : dataCall.ref().core.body) {
           var conTele = ctor.selfTele.view();
@@ -271,8 +277,8 @@ public record PatClassifier(
           // If we're running out of fuel, we also report an error.
           if (definitely || fuel <= 0) {
             // for non-coverage case, we don't bother
-            if (coverage) buffer.append(new PatClass.Err(ImmutableSeq.empty(),
-              builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
+            if (coverage) buffer.append(new CaseLeaf(new PatClass.Err(ImmutableSeq.empty(),
+              builder.root().view().map(PatTree::toPattern).toImmutableSeq())));
             builder.reduce();
             builder.unshift();
             continue;
@@ -288,9 +294,9 @@ public record PatClassifier(
             mapClass(pat, classifySub(newTele, PatClass.extract(pat, subPatsSeq)
               .map(SubPats::drop), coverage, fuelCopy)));
           builder.unshift();
-          buffer.appendAll(rest);
+          buffer.append(rest);
         }
-        return buffer.toImmutableSeq();
+        return new CaseNode(buffer.toImmutableSeq());
       }
     }
     // Progress without pattern matching
@@ -299,7 +305,46 @@ public record PatClassifier(
     return null; // Proceed loop
   }
 
-  private ImmutableSeq<PatClass> mapClass(@NotNull PatClass pat, @NotNull ImmutableSeq<PatClass> classes) {
+  public sealed interface CaseTree {
+    default @NotNull ImmutableSeq<PatClass> toSeq() {
+      var buffer = DynamicSeq.<PatClass>create();
+      forEach(buffer::append);
+      return buffer.toImmutableSeq();
+    }
+    void forEach(@NotNull Consumer<PatClass> f);
+    @NotNull CaseTree map(@NotNull Function<PatClass, PatClass> f);
+    @NotNull CaseTree flatMap(@NotNull Function<PatClass, CaseTree> f);
+  }
+
+  public record CaseNode(@NotNull ImmutableSeq<CaseTree> children) implements CaseTree {
+    @Override public void forEach(@NotNull Consumer<PatClass> f) {
+      children.forEach(child -> child.forEach(f));
+    }
+
+    @Override public @NotNull CaseNode map(@NotNull Function<PatClass, PatClass> f) {
+      return new CaseNode(children.map(child -> child.map(f)));
+    }
+
+    @Override public @NotNull CaseTree flatMap(@NotNull Function<PatClass, CaseTree> f) {
+      return new CaseNode(children.map(child -> child.flatMap(f)));
+    }
+  }
+
+  public record CaseLeaf(@NotNull PatClass clz) implements CaseTree {
+    @Override public void forEach(@NotNull Consumer<PatClass> f) {
+      f.accept(clz);
+    }
+
+    @Override public @NotNull CaseLeaf map(@NotNull Function<PatClass, PatClass> f) {
+      return new CaseLeaf(f.apply(clz));
+    }
+
+    @Override public @NotNull CaseTree flatMap(@NotNull Function<PatClass, CaseTree> f) {
+      return f.apply(clz);
+    }
+  }
+
+  private @NotNull CaseTree mapClass(@NotNull PatClass pat, @NotNull CaseTree classes) {
     return switch (pat) {
       case PatClass.Ok ok -> classes;
       case PatClass.Err err -> classes.map(newClz -> new PatClass.Err(newClz.contents(), err.errorMessage));

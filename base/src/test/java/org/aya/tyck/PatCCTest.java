@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PatCCTest {
   public static @NotNull ImmutableSeq<PatClassifier.PatClass> testClassify(@NotNull FnDef fnDef) {
     var clauses = fnDef.body.getRightValue().map(Pat.Preclause::weaken);
-    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(), ThrowingReporter.INSTANCE, SourcePos.NONE, true);
+    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(), ThrowingReporter.INSTANCE, SourcePos.NONE, true).toSeq();
   }
 
   @Test public void addCC() {
