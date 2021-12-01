@@ -97,7 +97,7 @@ public record StmtTycker(
                 ensureConfluent(tycker, signature, result, pos, true);
             } else {
               // First-match semantics.
-              var result = patTycker.elabClausesClassified(clauses, signature, decl.result.sourcePos());
+              var result = patTycker.elabClausesClassified(clauses, signature, decl.result.sourcePos(), pos);
               def = factory.apply(result._1.result(), Either.right(result._1.matchings()));
               if (patTycker.noError()) {
                 PatClassifier.firstMatchDomination(result._1.clauses(), tycker.reporter, pos, result._2);

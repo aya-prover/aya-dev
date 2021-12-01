@@ -53,7 +53,7 @@ public record PatClassifier(
     boolean coverage
   ) {
     var classifier = new PatClassifier(reporter, pos, state, new PatTree.Builder());
-    var classification = classifier.classifySub(telescope, clauses.view()
+    var classification = classifier.classifySub(telescope.view(), clauses.view()
       .mapIndexed((index, clause) -> new SubPats(clause.patterns().view(), index))
       .toImmutableSeq(), coverage, 5);
     for (var pats : classification) {
@@ -128,7 +128,7 @@ public record PatClassifier(
    * @return pattern classes
    */
   private @NotNull ImmutableSeq<PatClass> classifySub(
-    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull SeqView<Term.Param> telescope,
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
     boolean coverage, int fuel
   ) {
@@ -146,10 +146,10 @@ public record PatClassifier(
 
   /**
    * @param telescope must be nonempty
-   * @see #classifySub(ImmutableSeq, ImmutableSeq, boolean, int)
+   * @see #classifySub(SeqView, ImmutableSeq, boolean, int)
    */
   private @Nullable ImmutableSeq<PatClass> classifySubImpl(
-    @NotNull ImmutableSeq<Term.Param> telescope,
+    @NotNull SeqView<Term.Param> telescope,
     @NotNull ImmutableSeq<SubPats> subPatsSeq,
     boolean coverage, int fuel
   ) {
@@ -173,13 +173,12 @@ public record PatClassifier(
           // We will subst the telescope with this fake tuple term
           var thatTuple = new IntroTerm.Tuple(sigma.params().map(Term.Param::toTerm));
           // Do it!! Just do it!!
-          var newTele = telescope.view()
-            .drop(1)
+          var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), thatTuple))
-            .toImmutableSeq();
+            .toImmutableSeq().view();
           // Classify according to the tuple elements
           var fuelCopy = fuel;
-          return classifySub(sigma.params(), hasTuple, coverage, fuel)
+          return classifySub(sigma.params().view(), hasTuple, coverage, fuel)
             .flatMap(pat -> mapClass(pat,
               // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
               classifySub(newTele, PatClass.extract(pat, subPatsSeq).map(SubPats::drop), coverage, fuelCopy)));
@@ -210,10 +209,9 @@ public record PatClassifier(
             if (classes.isNotEmpty()) {
               // We're gonna instantiate the telescope with this term!
               var lrCall = new CallTerm.Prim(prim.get().ref, ImmutableSeq.empty(), ImmutableSeq.empty());
-              var newTele = telescope.view()
-                .drop(1)
+              var newTele = telescope.drop(1)
                 .map(param -> param.subst(target.ref(), lrCall))
-                .toImmutableSeq();
+                .toImmutableSeq().view();
               // Classify according the rest of the patterns
               var rest = classifySub(newTele, classes, false, fuel);
               // We have some new classes!
@@ -235,7 +233,7 @@ public record PatClassifier(
         var buffer = DynamicSeq.<PatClass>create();
         // For all constructors,
         for (var ctor : dataCall.ref().core.body) {
-          var conTele = ctor.selfTele;
+          var conTele = ctor.selfTele.view();
           // Check if this constructor is available by doing the obvious thing
           if (ctor.pats.isNotEmpty()) {
             var matchy = PatMatcher.tryBuildSubstArgs(null, ctor.pats, dataCall.args());
@@ -256,19 +254,19 @@ public record PatClassifier(
             } else conTele = conTele.map(param -> param.subst(matchy.get()));
           }
           // Java wants a final local variable, let's alias it
-          var conTeleCapture = conTele;
+          var conTele2 = conTele.toImmutableSeq();
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
           var matches = subPatsSeq
-            .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTeleCapture, ctor.ref()));
+            .mapIndexedNotNull((ix, subPats) -> matches(subPats, ix, conTele2, ctor.ref()));
           // Push this constructor to the error message builder
-          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
+          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele2.count(Term.Param::explicit)));
           // In case no pattern matches this constructor,
           var matchesEmpty = matches.isEmpty();
           // we consume one unit of fuel and,
           if (matchesEmpty) fuel--;
           // if the pattern has no arguments and no clause matches,
-          var definitely = matchesEmpty && conTele.isEmpty() && telescope.sizeEquals(1);
+          var definitely = matchesEmpty && conTele2.isEmpty() && telescope.sizeEquals(1);
           // we report an error.
           // If we're running out of fuel, we also report an error.
           if (definitely || fuel <= 0) {
@@ -279,13 +277,12 @@ public record PatClassifier(
             builder.unshift();
             continue;
           }
-          var classified = classifySub(conTele, matches, coverage, fuel);
+          var classified = classifySub(conTele2.view(), matches, coverage, fuel);
           builder.reduce();
-          var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTeleCapture.map(Term.Param::toArg));
-          var newTele = telescope.view()
-            .drop(1)
+          var conCall = new CallTerm.Con(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
+          var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), conCall))
-            .toImmutableSeq();
+            .toImmutableSeq().view();
           var fuelCopy = fuel;
           var rest = classified.flatMap(pat ->
             mapClass(pat, classifySub(newTele, PatClass.extract(pat, subPatsSeq)
