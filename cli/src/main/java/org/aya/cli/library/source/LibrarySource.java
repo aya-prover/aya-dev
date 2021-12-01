@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.library;
+package org.aya.cli.library.source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
@@ -25,13 +25,13 @@ import java.util.stream.IntStream;
  */
 @Debug.Renderer(text = "file")
 public record LibrarySource(
-  @NotNull LibraryCompiler owner,
+  @NotNull LibraryOwner owner,
   @NotNull Path file,
   @NotNull DynamicSeq<LibrarySource> imports,
   @NotNull Ref<ImmutableSeq<Stmt>> program,
   @NotNull Ref<ResolveInfo> resolveInfo
 ) {
-  public LibrarySource(@NotNull LibraryCompiler owner, @NotNull Path file) {
+  public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {
     this(owner, canonicalize(file), DynamicSeq.create(), new Ref<>(), new Ref<>());
   }
 
@@ -45,23 +45,23 @@ public record LibrarySource(
   }
 
   public @NotNull Path displayPath() {
-    return owner.locator.displayName(file);
+    return owner.locator().displayName(file);
   }
 
   public @NotNull Path coreFile() {
     var mod = moduleName();
-    return FileUtil.resolveFile(owner.library.libraryOutRoot(), mod, Constants.AYAC_POSTFIX);
+    return FileUtil.resolveFile(owner.outDir(), mod, Constants.AYAC_POSTFIX);
   }
 
   @Override public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     LibrarySource that = (LibrarySource) o;
-    return owner.library == that.owner.library && file.equals(that.file);
+    return owner.underlyingLibrary() == that.owner.underlyingLibrary() && file.equals(that.file);
   }
 
   @Override public int hashCode() {
-    return Objects.hash(owner.library, file);
+    return Objects.hash(owner.underlyingLibrary(), file);
   }
 
   public static @NotNull Path canonicalize(@NotNull Path path) {

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
+import org.aya.cli.library.source.LibrarySource;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
