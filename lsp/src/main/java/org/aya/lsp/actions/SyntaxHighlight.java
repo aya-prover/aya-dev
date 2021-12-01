@@ -153,7 +153,7 @@ public final class SyntaxHighlight implements StmtConsumer<@NotNull DynamicSeq<H
   }
 
   private void visitOperator(@NotNull DynamicSeq<HighlightResult.Symbol> buffer, @NotNull SourcePos sourcePos, @Nullable DefVar<?, ?> op) {
-    if (op == null) return;
+    if (op == null || op.concrete == null) return;
     buffer.append(new HighlightResult.Symbol(LspRange.toRange(sourcePos), kindOf(op.concrete)));
   }
 

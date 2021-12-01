@@ -130,17 +130,12 @@ public class LibraryCompiler {
     return make;
   }
 
-  private void cleanReused(@NotNull LibraryOwner owner) {
+  private void cleanReused() throws IOException {
     owner.librarySourceFiles().forEach(src -> {
       src.program().value = null;
       src.tycked().value = null;
       src.resolveInfo().value = null;
     });
-    for (var dep : owner.libraryDeps()) cleanReused(dep);
-  }
-
-  private void cleanReused() throws IOException {
-    cleanReused(owner);
     FileUtil.deleteRecursively(owner.underlyingLibrary().libraryOutRoot());
   }
 

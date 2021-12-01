@@ -39,7 +39,7 @@ public class GotoDefinition implements StmtConsumer<XY> {
     locator.visitAll(program, new XY(params.getPosition()));
     return locator.locations.view().mapNotNull(pos -> {
       var target = switch (pos.data()) {
-        case DefVar<?, ?> defVar -> defVar.concrete.sourcePos();
+        case DefVar<?, ?> defVar && defVar.concrete != null -> defVar.concrete.sourcePos();
         case LocalVar localVar -> localVar.definition();
         case default -> null;
       };
