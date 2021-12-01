@@ -55,8 +55,14 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public void registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
+    if (!tryAyaLibrary(path)) mockLibraries(path);
+  }
+
+  private boolean tryAyaLibrary(@Nullable Path path) {
+    if (path == null) return false;
     var ayaJson = path.resolve("aya.json");
-    if (Files.exists(ayaJson)) try {
+    if (!Files.exists(ayaJson)) return tryAyaLibrary(path.getParent());
+    try {
       var config = LibraryConfigData.fromLibraryRoot(path);
       var owner = DiskLibraryOwner.from(reporter, config);
       libraries.append(owner);
@@ -65,7 +71,8 @@ public class AyaService implements WorkspaceService, TextDocumentService {
       e.printStackTrace(new PrintWriter(s));
       Log.e("Cannot load library. Stack trace:\n%s", s.toString());
     }
-    else mockLibraries(path);
+    // stop retrying and mocking
+    return true;
   }
 
   private void mockLibraries(@NotNull Path path) {
@@ -94,12 +101,12 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     if (source == null) return new HighlightResult(uri, Collections.emptyList());
     var owner = source.owner();
     Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
-      owner.underlyingLibrary().name(), owner.underlyingLibrary().librarySrcRoot());
+      owner.underlyingLibrary().name(), owner.underlyingLibrary().libraryRoot());
 
     // start compiling
     reporter.clear();
     var flags = new CompilerFlags(
-      CompilerFlags.Message.EMOJI, false, null,
+      CompilerFlags.Message.EMOJI, false, true, null,
       SeqView.empty(), null);
     try {
       LibraryCompiler.compileExisting(flags, owner);

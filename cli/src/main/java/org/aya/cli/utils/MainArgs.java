@@ -29,6 +29,8 @@ public class MainArgs {
   public static class CompileAction {
     @Option(names = {"--make"}, description = "Treat input file as a library root")
     public boolean isLibrary;
+    @Option(names = {"--remake"}, description = "Treat input file as a library root and remake all")
+    public boolean isRemake;
     @Parameters(paramLabel = "<input-file>", description = "File to compile")
     public String inputFile;
     @Option(names = {"-o", "--output"}, description = "Set output file")

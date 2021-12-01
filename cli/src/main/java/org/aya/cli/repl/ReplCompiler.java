@@ -55,7 +55,7 @@ public class ReplCompiler {
   /** @see ReplCompiler#compileExpr(String, NormalizeMode) */
   public int loadToContext(@NotNull Path file) throws IOException {
     return new SingleFileCompiler(reporter, null, null)
-      .compile(file, r -> context, new CompilerFlags(CompilerFlags.Message.EMOJI, false, null,
+      .compile(file, r -> context, new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null,
         modulePaths.view(), null), null);
   }
 

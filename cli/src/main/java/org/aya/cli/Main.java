@@ -42,10 +42,12 @@ public class Main extends MainArgs implements Callable<Integer> {
       prettyFormat,
       Paths.get(prettyDir != null ? prettyDir : ".")
     ) : null;
-    var flags = new CompilerFlags(message, interruptedTrace, distillation,
-      modulePaths().view().map(Paths::get), outputPath);
+    var flags = new CompilerFlags(message, interruptedTrace,
+      action.compile.isRemake, distillation,
+      modulePaths().view().map(Paths::get),
+      outputPath);
 
-    if (action.compile.isLibrary) {
+    if (action.compile.isLibrary || action.compile.isRemake) {
       // TODO: move to a new tool
       return LibraryCompiler.compile(reporter, flags, filePath);
     }

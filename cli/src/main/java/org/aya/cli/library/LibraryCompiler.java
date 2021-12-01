@@ -134,12 +134,7 @@ public class LibraryCompiler {
    * @return whether the library is up-to-date.
    */
   private boolean make(@NotNull MutableGraph<LibrarySource> depGraph) throws IOException {
-    var changed = MutableGraph.<LibrarySource>create();
-    var usage = depGraph.transpose();
-    depGraph.E().keysView().forEach(s -> {
-      if (Timestamp.sourceModified(s))
-        collectChanged(usage, s, changed);
-    });
+    var changed = buildIncremental(depGraph);
 
     var SCCs = changed.topologicalOrder().view()
       .reversed().toImmutableSeq();
@@ -169,6 +164,17 @@ public class LibraryCompiler {
       reporter.reportString("I like these modules :)");
     }
     return false;
+  }
+
+  private @NotNull MutableGraph<LibrarySource> buildIncremental(@NotNull MutableGraph<LibrarySource> depGraph) {
+    var usage = depGraph.transpose();
+    if (flags.remake()) return usage;
+    var changed = MutableGraph.<LibrarySource>create();
+    depGraph.E().keysView().forEach(s -> {
+      if (Timestamp.sourceModified(s))
+        collectChanged(usage, s, changed);
+    });
+    return changed;
   }
 
   record LibraryOrgaTycker(

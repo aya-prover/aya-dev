@@ -90,7 +90,7 @@ public class TestRunner {
   }
 
   public static @NotNull CompilerFlags flags() {
-    return new CompilerFlags(CompilerFlags.Message.ASCII, false, null, ImmutableSeq.empty(), null);
+    return new CompilerFlags(CompilerFlags.Message.ASCII, false, false, null, ImmutableSeq.empty(), null);
   }
 
   private void postRun(@NotNull Path file, boolean expectSuccess, String output, CountingReporter reporter) {
