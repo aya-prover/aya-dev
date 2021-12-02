@@ -41,7 +41,6 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -335,15 +334,14 @@ public final class PatTycker {
       return null;
     }
     var dataRef = dataCall.ref();
-    var core = dataRef.core;
     // We are checking an absurd pattern, but the data is not yet fully checked
+    var core = dataRef.core;
     if (core == null && name == null) {
       foundError(new NotYetTyckedError(pos.sourcePos(), dataRef));
       return null;
     }
-    var concrete = dataRef.concrete;
-    var body = core != null ? core.body : concrete.checkedBody;
-    var telescope = core != null ? core.telescope : Objects.requireNonNull(concrete.signature).param();
+    var body = Def.dataBody(dataRef);
+    var telescope = Def.defTele(dataRef);
     for (var ctor : body) {
       if (name != null && ctor.ref() != name) continue;
       var matchy = mischa(dataCall, ctor, telescope);
@@ -352,7 +350,7 @@ public final class PatTycker {
       if (name == null) {
         // Is blocked
         if (matchy.getErr()) {
-          exprTycker.reporter.report(new PatternProblem.BlockedEval(pos, dataCall));
+          foundError(new PatternProblem.BlockedEval(pos, dataCall));
           return null;
         }
         continue;

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
+import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
@@ -9,6 +10,7 @@ import org.aya.api.core.CoreDef;
 import org.aya.api.distill.AyaDocile;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.ref.DefVar;
+import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Signatured;
 import org.aya.core.sort.Sort;
 import org.aya.core.term.FormTerm;
@@ -33,6 +35,11 @@ public sealed interface Def extends CoreDef permits SubLevelDef, TopLevelDef {
     if (defVar.core != null) return defVar.core.telescope();
       // guaranteed as this is already a core term
     else return Objects.requireNonNull(defVar.concrete.signature).param;
+  }
+  static @NotNull Seq<CtorDef> dataBody(@NotNull DefVar<? extends DataDef, ? extends Decl.DataDecl> defVar) {
+    if (defVar.core != null) return defVar.core.body;
+      // guaranteed as this is already a core term
+    else return defVar.concrete.checkedBody;
   }
   static @NotNull ImmutableSeq<Sort.LvlVar> defLevels(@NotNull DefVar<? extends Def, ? extends Signatured> defVar) {
     return switch (defVar.core) {

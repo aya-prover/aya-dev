@@ -16,6 +16,7 @@ import org.aya.api.ref.Var;
 import org.aya.api.util.NormalizeMode;
 import org.aya.concrete.Pattern;
 import org.aya.core.Matching;
+import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
@@ -234,7 +235,7 @@ public record PatClassifier(
         ) break;
         var buffer = DynamicSeq.<MCT>create();
         var data = dataCall.ref();
-        var body = data.core != null ? data.core.body : data.concrete.checkedBody;
+        var body = Def.dataBody(data);
         if (coverage && data.core == null) reporter.report(new NotYetTyckedError(pos, data));
         // For all constructors,
         for (var ctor : body) {
