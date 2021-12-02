@@ -20,8 +20,8 @@ def infix !! (l : List A) (i : Fin (length l)) : A
 def overlap infixr ++ (xs ys : List A) : List A
 | nil, ys => ys
 | xs, nil => xs
-| a cons xs, ys => a cons xs ++ ys
-bind tighter cons
+| a cons xs, ys => a cons (xs ++ ys)
+bind tighter =
 
 def ++-assoc {xs ys zs : List A} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
 | {A}, {nil} => idp

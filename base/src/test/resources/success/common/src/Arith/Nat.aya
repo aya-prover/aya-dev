@@ -11,11 +11,12 @@ def overlap infixl + (a b : Nat) : Nat
 | a, suc b => suc (a + b)
 bind tighter =
 
-def overlap +-assoc (a b c : Nat) : (a + b) + c = a + (b + c)
+def overlap +-assoc-lemma (a b c : Nat) : (a + b) + c = a + (b + c)
 | zero, b, c => idp
 | a, zero, c => idp
 | a, b, zero => idp
-| suc a, b, c => pmap suc (+-assoc a b c)
+| suc a, b, c => pmap suc (+-assoc-lemma a b c)
+def +-assoc {a b c : Nat} => +-assoc-lemma a b c
 
 def overlap +-comm (a b : Nat) : a + b = b + a
 | zero, a => idp
@@ -38,18 +39,15 @@ bind tighter +
 def *-suc (m n : Nat) : m * suc n = m + m * n
 | zero, n => idp
 | suc m, n => pmap suc (pmap (n +) (*-suc m n)
-  <==> sym (+-assoc n m (m * n))
-  <==> pmap (+ m * n) (+-comm n m)
-  <==> +-assoc m n (m * n))
+  <==> sym +-assoc <==> pmap (+ m * n) (+-comm n m) <==> +-assoc)
 
 def overlap +-*-distl (n m k : Nat) : (m + k) * n = k * n + m * n
 | n, m, zero => idp
-| n, m, suc k => pmap (n +) (+-*-distl n m k) <==> sym (+-assoc _ _ _)
+| n, m, suc k => pmap (n +) (+-*-distl n m k) <==> sym +-assoc
 
 def *-suc-suc (m n : Nat) : suc m * suc n = suc (m + n + m * n)
   => pmap suc (pmap (n +) (*-suc m n)
-    <==> sym (+-assoc n m (m * n))
-    <==> pmap (+ m * n) (+-comm n m))
+    <==> sym +-assoc <==> pmap (+ m * n) (+-comm n m))
 
 def overlap *'-*-iso (m n : Nat) : m *' n = m * n
 | zero, n => idp

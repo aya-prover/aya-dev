@@ -22,6 +22,9 @@ def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b p =>
       arcoe (\ i => B (p.at i) (psqueeze p i)) r right
 
+def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
+  => J (\b' p' => B b') x p
+
 def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
         (r : B a idp) : J B r idp = r => idp
 

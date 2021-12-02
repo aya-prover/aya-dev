@@ -1,11 +1,13 @@
 open import Arith::Nat
+open import Data::Fin
+open import Paths
 
 open data Vec (A : Type) (n : Nat) : Type
 | A, zero => vnil
 | A, suc m => infixr vcons A (Vec A m)
 
 variable A B : Type
-variable n m : Nat
+variable n m o : Nat
 
 def map (f : Pi A -> B) (xs : Vec A n) : Vec B n
 | f, vnil => vnil
@@ -15,6 +17,18 @@ def overlap infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 | vnil, ys => ys
 | xs, vnil => xs
 | x vcons xs, ys => x vcons (xs ++ ys)
+bind tighter =
+
+def overlap ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
+  : transport (Vec A) +-assoc ((xs ++ ys) ++ zs) = xs ++ (ys ++ zs)
+| vnil, ys, zs => idp
+| xs, vnil, zs => idp
+| xs, ys, vnil => idp
+| x vcons xs, ys, zs => pmap (x vcons) (++-assoc xs ys zs)
+
+def infix !! (l : Vec A n) (i : Fin n) : A
+| a vcons l, fzero => a
+| a vcons l, fsuc i => l !! i
 
 def fold (f : Pi B A -> B) (init : B) (xs : Vec A n) : B
 | f, init, vnil => init
