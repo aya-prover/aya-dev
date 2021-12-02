@@ -310,7 +310,7 @@ public record PatClassifier(
     if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
       return new MCT.SubPats(ctorPat.params().view(), ix);
     if (head instanceof Pat.Bind)
-      return new MCT.SubPats(conTele.view().map(p -> new Pat.Bind(p.explicit(), p.ref(), p.type())), ix);
+      return new MCT.SubPats(conTele.view().map(Term.Param::toPat), ix);
     return null;
   }
 }
