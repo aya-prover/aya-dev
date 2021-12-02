@@ -22,6 +22,9 @@ def J {a : A} (B : Pi (b : A) -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b p =>
       arcoe (\ i => B (p.at i) (psqueeze p i)) r right
 
+def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
+  => J (\b' p' => B b') x p
+
 def Jβ {a : A} (B : Pi (b : A) -> a = b -> Type)
         (r : B a idp) : J B r idp = r => idp
 
@@ -35,8 +38,7 @@ def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
 def pmap (f : A -> B) {a b : A} (p : a = b)
   : f a = f b => path (\ i => f (p.at i))
 
-prim arcoe -- (A : I -> Type) (A left) (i : I) : A i
--- TODO[ice]: uncomment causes level solver error. ???
+prim arcoe (A : I -> Type) (A left) (i : I) : A i
 def hfill2d
   {a b c d : A}
   (p : a = b)

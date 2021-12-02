@@ -12,7 +12,7 @@ struct Monoid { A : Type } ( op : A -> A -> A ): Type
 def idpath {A : Type} (a : A) => idp {A} {a}
 def +-monoid => new Monoid (+) {
   | id x => zero
-  | assoc => +-assoc
+  | assoc => +-assoc-lemma
   | id_r => idpath
   | id_l => idpath
 }
