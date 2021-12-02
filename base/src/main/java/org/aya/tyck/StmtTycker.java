@@ -157,18 +157,21 @@ public record StmtTycker(
           }
           var result = tycker.synthesize(prim.result).wellTyped();
           var levelSubst = new LevelSubst.Simple(MutableMap.create());
-          // Homotopy level goes first
           var levels = tycker.extractLevels();
+          // We assume that there aren't many level parameters in prims (at most 1).
           for (var lvl : core.levels.zip(levels))
-            levelSubst.solution().put(lvl._1, new Sort(new Level.Reference<>(lvl._2)));
-          var target = FormTerm.Pi.make(core.telescope(), core.result())
-            .subst(Substituter.TermSubst.EMPTY, levelSubst);
-          tycker.unifyTyReported(FormTerm.Pi.make(tele, result), target, prim.result);
-          prim.signature = new Def.Signature(levels, tele, result);
+            levelSubst.solution().put(lvl._2, new Sort(new Level.Reference<>(lvl._1)));
+          result = result.subst(Substituter.TermSubst.EMPTY, levelSubst);
+          tele = Term.Param.subst(tele, levelSubst);
+          tycker.unifyTyReported(
+            FormTerm.Pi.make(tele, result),
+            FormTerm.Pi.make(core.telescope, core.result),
+            prim.result);
+          prim.signature = new Def.Signature(core.levels, tele, result);
         } else if (!(prim.result instanceof Expr.ErrorExpr)) {
           var result = tycker.synthesize(prim.result).wellTyped();
-          tycker.unifyTyReported(result, core.result(), prim.result);
-        } else prim.signature = new Def.Signature(ImmutableSeq.empty(), core.telescope(), core.result());
+          tycker.unifyTyReported(result, core.result, prim.result);
+        } else prim.signature = new Def.Signature(core.levels, core.telescope, core.result);
         tycker.solveMetas();
       }
     }
