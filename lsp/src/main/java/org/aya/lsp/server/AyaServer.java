@@ -56,6 +56,8 @@ public class AyaServer implements LanguageClientAware, LanguageServer {
       cap.setWorkspace(workCap);
 
       var folders = params.getWorkspaceFolders();
+      // In case we open a single file, this value will be null, so be careful.
+      // Make sure the library to be initialized when loading files.
       if (folders != null) folders.forEach(f ->
         service.registerLibrary(Path.of(URI.create(f.getUri()))));
 
