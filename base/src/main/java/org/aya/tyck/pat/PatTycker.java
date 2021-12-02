@@ -22,7 +22,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Decl;
 import org.aya.core.Matching;
 import org.aya.core.def.CtorDef;
-import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
@@ -42,6 +41,7 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -339,15 +339,20 @@ public final class PatTycker {
       foundError();
       return null;
     }
-    var core = dataCall.ref().core;
-    if (core == null) {
-      exprTycker.reporter.report(new NotYetTyckedError(pos.sourcePos(), dataCall.ref()));
+    var dataRef = dataCall.ref();
+    var core = dataRef.core;
+    // We are checking an absurd pattern, but the data is not yet fully checked
+    if (core == null && name == null) {
+      exprTycker.reporter.report(new NotYetTyckedError(pos.sourcePos(), dataRef));
       foundError();
       return null;
     }
-    for (var ctor : core.body) {
+    var concrete = dataRef.concrete;
+    var body = core != null ? core.body : concrete.checkedBody;
+    var telescope = core != null ? core.telescope : Objects.requireNonNull(concrete.signature).param();
+    for (var ctor : body) {
       if (name != null && ctor.ref() != name) continue;
-      var matchy = mischa(dataCall, core, ctor);
+      var matchy = mischa(dataCall, ctor, telescope);
       if (matchy.isOk()) return Tuple.of(dataCall, matchy.get(), dataCall.conHead(ctor.ref()));
       // For absurd pattern, we look at the next constructor
       if (name == null) {
@@ -365,11 +370,17 @@ public final class PatTycker {
       foundError();
       return null;
     }
+    // Here, name != null, and is not checked
+    if (core == null) {
+      exprTycker.reporter.report(new NotYetTyckedError(pos.sourcePos(), name));
+      foundError();
+      return null;
+    }
     return null;
   }
 
-  private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, DataDef core, CtorDef ctor) {
+  private Result<Substituter.TermSubst, Boolean> mischa(CallTerm.Data dataCall, CtorDef ctor, @NotNull ImmutableSeq<Term.Param> telescope) {
     if (ctor.pats.isNotEmpty()) return PatMatcher.tryBuildSubstArgs(exprTycker.localCtx, ctor.pats, dataCall.args());
-    else return Result.ok(Unfolder.buildSubst(core.telescope(), dataCall.args()));
+    else return Result.ok(Unfolder.buildSubst(telescope, dataCall.args()));
   }
 }
