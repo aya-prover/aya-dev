@@ -20,11 +20,14 @@ def overlap infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 bind tighter =
 
 def overlap ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
-  : transport (Vec A) +-assoc ((xs ++ ys) ++ zs) = xs ++ (ys ++ zs)
+  : Path (\i => Vec A ((+-assoc {n} {m} {o}).at i)) ((xs ++ ys) ++ zs) (xs ++ (ys ++ zs))
+-- ^ Cannot write `+-assoc.at` need eager insertion of metas
 | vnil, ys, zs => idp
 | xs, vnil, zs => idp
 | xs, ys, vnil => idp
-| x vcons xs, ys, zs => pmap (x vcons) (++-assoc xs ys zs)
+-- | x vcons xs, ys, zs => pmap (x vcons) (++-assoc xs ys zs)
+-- ^ Scope check and universe level check failed
+| x vcons xs, ys, zs => path (\i => x vcons (++-assoc xs ys zs).at i)
 
 def infix !! (l : Vec A n) (i : Fin n) : A
 | a vcons l, fzero => a
