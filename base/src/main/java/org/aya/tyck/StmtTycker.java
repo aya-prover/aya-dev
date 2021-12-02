@@ -177,8 +177,9 @@ public record StmtTycker(
 
   private @NotNull CtorDef visitCtor(Decl.@NotNull DataCtor ctor, ExprTycker tycker) {
     var dataRef = ctor.dataRef;
-    var dataSig = dataRef.concrete.signature;
-    var dataSort = dataRef.concrete.sort;
+    var dataConcrete = dataRef.concrete;
+    var dataSig = dataConcrete.signature;
+    var dataSort = dataConcrete.sort;
     assert dataSig != null;
     var dataArgs = dataSig.param().map(Term.Param::toArg);
     var sortParam = dataSig.sortParam();
@@ -204,6 +205,7 @@ public record StmtTycker(
     ctor.patternTele = pat.isEmpty() ? dataTeleView.map(Term.Param::implicitify).toImmutableSeq() : Pat.extractTele(pat);
     var elabClauses = patTycker.elabClausesDirectly(ctor.clauses, signature, ctor.sourcePos);
     var elaborated = new CtorDef(dataRef, ctor.ref, pat, ctor.patternTele, tele, elabClauses.matchings(), dataCall, ctor.coerce);
+    dataConcrete.checkedBody.append(elaborated);
     if (patTycker.noError())
       ensureConfluent(tycker, signature, elabClauses, ctor.sourcePos, false);
     return elaborated;

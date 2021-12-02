@@ -3,6 +3,7 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.DynamicSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.api.concrete.ConcreteDecl;
@@ -167,6 +168,8 @@ public sealed abstract class Decl extends Signatured implements Stmt, ConcreteDe
   public static final class DataDecl extends Decl implements OpDecl {
     public final @NotNull DefVar<DataDef, DataDecl> ref;
     public final @NotNull ImmutableSeq<DataCtor> body;
+    /** Yet type-checked constructors */
+    public final @NotNull DynamicSeq<@NotNull CtorDef> checkedBody = DynamicSeq.create();
     public Sort sort;
 
     public DataDecl(
