@@ -106,9 +106,14 @@ public class AyaService implements WorkspaceService, TextDocumentService {
 
   public @NotNull List<HighlightResult> loadFile(@NotNull String uri) {
     Log.d("Loading vscode uri: %s", uri);
+    var path = FileUtil.canonicalize(Path.of(URI.create(uri)));
+    if (libraries.isEmpty()) registerLibrary(path.getParent());
     // find the owner library
-    var source = find(uri);
-    if (source == null) return Collections.emptyList();
+    var source = find(path);
+    if (source == null) {
+      Log.w("Cannot find source");
+      return Collections.emptyList();
+    }
     var owner = source.owner();
     Log.d("Found source file (%s) in library %s (root: %s): ", source.file(),
       owner.underlyingLibrary().name(), owner.underlyingLibrary().libraryRoot());
