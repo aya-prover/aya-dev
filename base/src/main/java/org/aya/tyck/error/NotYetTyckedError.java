@@ -4,16 +4,16 @@ package org.aya.tyck.error;
 
 import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.Problem;
-import org.aya.util.error.SourcePos;
 import org.aya.api.ref.Var;
 import org.aya.distill.BaseDistiller;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record NotYetTyckedError(@Override @NotNull SourcePos sourcePos, @NotNull Var var) implements Problem {
   @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
-    return Doc.cat(Doc.english("Attempting to use a definition"),
+    return Doc.sep(Doc.english("Attempting to use a definition"),
       Doc.styled(Style.code(), BaseDistiller.varDoc(var)),
       Doc.english("which is not yet typechecked"));
   }
