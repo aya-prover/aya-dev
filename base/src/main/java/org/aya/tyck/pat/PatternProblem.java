@@ -98,7 +98,7 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record NotEnoughPattern(@Override @NotNull Pattern pattern, @NotNull Term.Param param) implements PatternProblem {
+  record InsufficientPattern(@Override @NotNull Pattern pattern, @NotNull Term.Param param) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull DistillerOptions options) {
       return Doc.vcat(
         Doc.english("There is no pattern for the parameter"),

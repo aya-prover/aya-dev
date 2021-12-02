@@ -141,8 +141,7 @@ public final class PatTycker {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
         if (selection != null) {
-          foundError();
-          exprTycker.reporter.report(new PatternProblem.PossiblePat(absurd, selection._3));
+          foundError(new PatternProblem.PossiblePat(absurd, selection._3));
         }
         yield new Pat.Absurd(absurd.explicit(), term);
       }
@@ -251,15 +250,13 @@ public final class PatTycker {
       Pattern pat;
       if (param.explicit()) {
         if (stream.isEmpty()) {
-          foundError();
-          exprTycker.reporter.report(new PatternProblem.NotEnoughPattern(last_pat, param));
+          foundError(new PatternProblem.InsufficientPattern(last_pat, param));
           return Tuple.of(results.toImmutableSeq(), sig.result());
         }
         pat = stream.first();
         stream = stream.drop(1);
         if (!pat.explicit()) {
-          foundError();
-          exprTycker.reporter.report(new PatternProblem.TooManyImplicitPattern(pat, param));
+          foundError(new PatternProblem.TooManyImplicitPattern(pat, param));
           return Tuple.of(results.toImmutableSeq(), sig.result());
         }
       } else {
@@ -279,8 +276,7 @@ public final class PatTycker {
       sig = updateSig(new PatData(sig, results, param), pat);
     }
     if (stream.isNotEmpty()) {
-      foundError();
-      exprTycker.reporter.report(new PatternProblem
+      foundError(new PatternProblem
         .TooManyPattern(stream.first(), sig.result().freezeHoles(exprTycker.state)));
     }
     return Tuple.of(results.toImmutableSeq(), sig.result());
@@ -312,14 +308,14 @@ public final class PatTycker {
     return data.sig.inst(termSubst);
   }
 
-  private void foundError() {
+  private void foundError(@Nullable Problem problem) {
     hasError = true;
     if (currentClause != null) currentClause.hasError = true;
+    if (problem != null) exprTycker.reporter.report(problem);
   }
 
   private @NotNull Pat withError(Problem problem, Pattern pattern, Term param) {
-    exprTycker.reporter.report(problem);
-    foundError();
+    foundError(problem);
     // In case something's wrong, produce a random pattern
     return randomPat(pattern, param);
   }
@@ -335,16 +331,14 @@ public final class PatTycker {
   private @Nullable Tuple3<CallTerm.Data, Substituter.TermSubst, CallTerm.ConHead>
   selectCtor(Term param, @Nullable Var name, @NotNull Pattern pos) {
     if (!(param.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof CallTerm.Data dataCall)) {
-      exprTycker.reporter.report(new PatternProblem.SplittingOnNonData(pos, param));
-      foundError();
+      foundError(new PatternProblem.SplittingOnNonData(pos, param));
       return null;
     }
     var dataRef = dataCall.ref();
     var core = dataRef.core;
     // We are checking an absurd pattern, but the data is not yet fully checked
     if (core == null && name == null) {
-      exprTycker.reporter.report(new NotYetTyckedError(pos.sourcePos(), dataRef));
-      foundError();
+      foundError(new NotYetTyckedError(pos.sourcePos(), dataRef));
       return null;
     }
     var concrete = dataRef.concrete;
@@ -366,14 +360,12 @@ public final class PatTycker {
       // Since we cannot have two constructors of the same name,
       // if the name-matching constructor mismatches the type,
       // we get an error.
-      exprTycker.reporter.report(new PatternProblem.UnavailableCtor(pos, dataCall));
-      foundError();
+      foundError(new PatternProblem.UnavailableCtor(pos, dataCall));
       return null;
     }
-    // Here, name != null, and is not checked
+    // Here, name != null, and is not in the list of checked body
     if (core == null) {
-      exprTycker.reporter.report(new NotYetTyckedError(pos.sourcePos(), name));
-      foundError();
+      foundError(new NotYetTyckedError(pos.sourcePos(), name));
       return null;
     }
     return null;
