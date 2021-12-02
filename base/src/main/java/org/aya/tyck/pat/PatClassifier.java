@@ -24,6 +24,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.Substituter;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
+import org.aya.tyck.error.NotYetTyckedError;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -232,8 +233,11 @@ public record PatClassifier(
           subPatsSeq.noneMatch(subPats -> subPats.head() instanceof Pat.Ctor)
         ) break;
         var buffer = DynamicSeq.<MCT>create();
+        var data = dataCall.ref();
+        var body = data.core != null ? data.core.body : data.concrete.checkedBody;
+        if (coverage && data.core == null) reporter.report(new NotYetTyckedError(pos, data));
         // For all constructors,
-        for (var ctor : dataCall.ref().core.body) {
+        for (var ctor : body) {
           var conTele = ctor.selfTele.view();
           // Check if this constructor is available by doing the obvious thing
           if (ctor.pats.isNotEmpty()) {
