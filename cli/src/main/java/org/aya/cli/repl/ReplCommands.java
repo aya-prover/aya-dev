@@ -33,12 +33,12 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command LOAD_FILE = new Command(ImmutableSeq.of("load"), "Load file into REPL") {
+  @NotNull Command LOAD = new Command(ImmutableSeq.of("load"), "Load a file or library into REPL") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Path path) {
       try {
         repl.replCompiler.loadToContext(path);
       } catch (IOException e) {
-        return Result.err("Unable to read file: " + e.getLocalizedMessage(), true);
+        return Result.err("Unable to load file or library: " + e.getLocalizedMessage(), true);
       }
       // SingleFileCompiler would print result to REPL.
       return new Result(Output.empty(), true);

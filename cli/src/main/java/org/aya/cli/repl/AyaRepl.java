@@ -59,7 +59,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.TOGGLE_UNICODE,
       ReplCommands.CHANGE_CWD,
       ReplCommands.PRINT_CWD,
-      ReplCommands.LOAD_FILE
+      ReplCommands.LOAD
     ));
   }
 
@@ -71,7 +71,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
 
   public AyaRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) {
     this.config = config;
-    replCompiler = new ReplCompiler(new CliReporter(true,
+    replCompiler = new ReplCompiler(modulePaths, new CliReporter(true,
       () -> config.enableUnicode, () -> config.distillerOptions,
       Problem.Severity.INFO, this::println, this::errPrintln), null);
   }
