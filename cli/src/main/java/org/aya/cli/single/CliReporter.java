@@ -11,19 +11,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @author ice1000
  */
 public record CliReporter(
   @NotNull BooleanSupplier unicode,
+  @NotNull Supplier<DistillerOptions> options,
   @NotNull Problem.Severity minimum,
   @NotNull Consumer<String> out,
   @NotNull Consumer<String> err
 ) implements Reporter {
-  @Contract(pure = true, value = "_, _ -> new")
-  public static @NotNull CliReporter stdio(boolean unicode, @NotNull Problem.Severity minimum) {
-    return new CliReporter(() -> unicode, minimum, System.out::println, System.err::println);
+  @Contract(pure = true, value = "_, _, _ -> new")
+  public static @NotNull CliReporter stdio(boolean unicode, @NotNull DistillerOptions options, @NotNull Problem.Severity minimum) {
+    return new CliReporter(() -> unicode, () -> options, minimum, System.out::println, System.err::println);
   }
 
   @Override public void report(@NotNull Problem problem) {
@@ -31,7 +33,7 @@ public record CliReporter(
     if (level.ordinal() > minimum.ordinal()
       // If it's `SourcePos.NONE`, it's a compiler output!
       && problem.sourcePos() != SourcePos.NONE) return;
-    var errorMsg = problem.computeFullErrorMessage(DistillerOptions.informative(), unicode.getAsBoolean());
+    var errorMsg = problem.computeFullErrorMessage(options.get(), unicode.getAsBoolean());
     if (level == Problem.Severity.ERROR || level == Problem.Severity.WARN) err.accept(errorMsg);
     else out.accept(errorMsg);
   }
