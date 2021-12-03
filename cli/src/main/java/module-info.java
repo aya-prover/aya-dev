@@ -6,6 +6,7 @@ module org.aya.cli {
   requires org.jline.builtins;
   requires org.jline.terminal.jansi;
   requires org.jline.reader;
+  requires org.fusesource.jansi;
   requires transitive org.aya;
   requires transitive org.aya.repl;
 

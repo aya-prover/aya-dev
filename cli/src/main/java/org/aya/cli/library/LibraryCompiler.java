@@ -204,7 +204,7 @@ public class LibraryCompiler {
   ) implements SCCTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
-      var reporter = new CountingReporter(outerReporter);
+      var reporter = CountingReporter.delegate(outerReporter);
       for (var f : order) Files.deleteIfExists(f.coreFile());
       for (var f : order) {
         tyckOne(reporter, f);

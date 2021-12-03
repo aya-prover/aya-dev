@@ -38,6 +38,8 @@ public class UnixTermStylist extends ClosingStylist {
         case Overline -> new StyleToken("\033[53m", "\033[55m", false);
         case Blink -> new StyleToken("\033[5m", "\033[25m", false);
         case Reverse -> new StyleToken("\033[7m", "\033[27m", false);
+        case TerminalRed -> new StyleToken("\033[31m", "\033[39m", false);
+        case TerminalGreen -> new StyleToken("\033[32m", "\033[39m", false);
       };
     }
     return StyleToken.NULL;
