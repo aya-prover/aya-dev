@@ -13,15 +13,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Reporter {
   /**
-   * Report an problem
+   * Report a problem
    *
    * @param problem problem to report
    */
   void report(@NotNull Problem problem);
-
-  default @NotNull String countToString() {
-    return "error(s).";
-  }
 
   @ApiStatus.Internal
   default void reportString(@NotNull String s) {

@@ -58,8 +58,7 @@ public record SingleFileCompiler(
     @NotNull CompilerFlags flags,
     @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
-    var reporter = this.reporter instanceof CountingReporter countingReporter
-      ? countingReporter : new CountingReporter(this.reporter);
+    var reporter = CountingReporter.of(this.reporter);
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     return AyaCompiler.catching(reporter, flags, () -> {

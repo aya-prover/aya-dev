@@ -5,11 +5,19 @@ package org.aya.api.error;
 import kala.collection.mutable.DynamicSeq;
 import org.jetbrains.annotations.NotNull;
 
-public interface CollectingReporter extends Reporter {
+public interface CollectingReporter extends CountingReporter {
   @NotNull DynamicSeq<Problem> problems();
 
+  @Override default int problemSize(Problem.@NotNull Severity severity) {
+    return problems().count(it -> it.level() == severity);
+  }
+
+  @Override default void clear() {
+    problems().clear();
+  }
+
   default boolean anyError() {
-    return problems().anyMatch(problem -> problem.level() == Problem.Severity.ERROR);
+    return errorSize() > 0;
   }
 
   default boolean anyProblem() {

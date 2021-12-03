@@ -10,11 +10,8 @@ import org.jetbrains.annotations.TestOnly;
 import org.junit.jupiter.api.Assertions;
 
 @TestOnly
-public final class ThrowingReporter implements Reporter {
+public record ThrowingReporter() implements Reporter {
   public static final @NotNull ThrowingReporter INSTANCE = new ThrowingReporter();
-
-  private ThrowingReporter() {
-  }
 
   @Override public void report(@NotNull Problem problem) {
     var render = problem.computeFullErrorMessage(DistillerOptions.informative(), false);

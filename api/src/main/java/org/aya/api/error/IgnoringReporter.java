@@ -7,11 +7,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public final class IgnoringReporter implements Reporter {
+public record IgnoringReporter() implements Reporter {
   public static final @NotNull IgnoringReporter INSTANCE = new IgnoringReporter();
-  private IgnoringReporter() {
-  }
-
   @Override public void report(@NotNull Problem problem) {
   }
 }

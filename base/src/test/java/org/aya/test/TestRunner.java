@@ -5,7 +5,6 @@ package org.aya.test;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.SourceFileLocator;
-import org.aya.api.error.StreamReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
@@ -76,7 +75,7 @@ public class TestRunner {
   private void runFile(@NotNull Path file, boolean expectSuccess) {
     try {
       var hookOut = new ByteArrayOutputStream();
-      var reporter = new CountingReporter(new StreamReporter(new PrintStream(
+      var reporter = CountingReporter.delegate(new StreamReporter(new PrintStream(
         hookOut, true, StandardCharsets.UTF_8)));
 
       System.out.print(file.getFileName() + " ---> ");

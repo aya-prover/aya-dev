@@ -37,7 +37,7 @@ public class ReplCompiler {
   private final @NotNull DynamicSeq<Path> modulePaths;
 
   ReplCompiler(@NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
-    this.reporter = new CountingReporter(reporter);
+    this.reporter = CountingReporter.delegate(reporter);
     this.locator = locator;
     this.modulePaths = DynamicSeq.create();
     this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
