@@ -8,7 +8,10 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.backend.string.custom.UnixTermStyle;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
+import org.aya.pretty.doc.Styles;
 import org.aya.pretty.error.PrettyError;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -21,6 +24,10 @@ import java.util.stream.Collectors;
  * @author ice1000
  */
 public interface Problem {
+  @NotNull Styles ERROR = Style.bold().and().custom(UnixTermStyle.TerminalRed);
+  @NotNull Styles NOTE = Style.bold().and().custom(UnixTermStyle.TerminalGreen);
+  @NotNull Styles TEXT = Style.bold().and();
+
   enum Severity {
     ERROR,
     GOAL,
@@ -76,13 +83,13 @@ public interface Problem {
       case WARN -> Doc.plain("Warning:");
       case GOAL -> Doc.plain("Goal:");
       case INFO -> Doc.plain("Info:");
-      case ERROR -> Doc.plain("Error:");
+      case ERROR -> Doc.styled(ERROR, "Error:");
     };
-    var doc = Doc.sep(tag, Doc.align(describe(options)));
+    var doc = Doc.sep(tag, Doc.styled(TEXT, Doc.align(describe(options))));
     var hint = hint();
     return hint instanceof Doc.Empty ? doc : Doc.vcat(
       doc,
-      Doc.sep(Doc.plain("note:"), Doc.align(hint))
+      Doc.sep(Doc.styled(NOTE, "note:"), Doc.styled(TEXT, Doc.align(hint)))
     );
   }
 

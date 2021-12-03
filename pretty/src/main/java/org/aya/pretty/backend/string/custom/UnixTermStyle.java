@@ -11,4 +11,6 @@ public enum UnixTermStyle implements Style.CustomStyle {
   Blink,
   Overline,
   Reverse,
+  TerminalRed,
+  TerminalGreen,
 }
