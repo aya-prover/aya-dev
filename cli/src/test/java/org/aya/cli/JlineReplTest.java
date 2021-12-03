@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.pretty.doc.Doc;
@@ -21,7 +22,7 @@ public class JlineReplTest {
   private static JlineRepl repl;
 
   @BeforeAll public static void setup() throws IOException {
-    repl = new JlineRepl(PlainReplTest.config);
+    repl = new JlineRepl(ImmutableSeq.empty(), PlainReplTest.config);
     parser = new ReplParser(repl.commandManager, repl);
   }
 

@@ -23,18 +23,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public abstract class AyaRepl implements Closeable, Runnable, Repl {
-  public static int start(MainArgs.@NotNull ReplAction replAction) throws IOException {
-    try (var repl = makeRepl(replAction, ReplConfig.loadFromDefault())) {
+  public static int start(@NotNull ImmutableSeq<Path> modulePaths, MainArgs.@NotNull ReplAction replAction) throws IOException {
+    try (var repl = makeRepl(modulePaths, replAction, ReplConfig.loadFromDefault())) {
       repl.run();
     }
     return 0;
   }
 
   @NotNull
-  private static AyaRepl makeRepl(MainArgs.@NotNull ReplAction replAction, ReplConfig replConfig) throws IOException {
+  private static AyaRepl makeRepl(@NotNull ImmutableSeq<Path> modulePaths, MainArgs.@NotNull ReplAction replAction, ReplConfig replConfig) throws IOException {
     return switch (replAction.replType) {
-      case jline -> new JlineRepl(replConfig);
-      case plain -> new PlainRepl(replConfig, IO.STDIO);
+      case jline -> new JlineRepl(modulePaths, replConfig);
+      case plain -> new PlainRepl(modulePaths, replConfig, IO.STDIO);
     };
   }
 
@@ -69,7 +69,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   public final @NotNull ReplCompiler replCompiler;
   public final @NotNull CommandManager commandManager = makeCommand();
 
-  public AyaRepl(@NotNull ReplConfig config) {
+  public AyaRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) {
     this.config = config;
     replCompiler = new ReplCompiler(new CliReporter(true,
       () -> config.enableUnicode, () -> config.distillerOptions,
@@ -127,8 +127,8 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   public static class PlainRepl extends AyaRepl {
     private final @NotNull IO io;
 
-    public PlainRepl(@NotNull ReplConfig config, @NotNull IO io) {
-      super(config);
+    public PlainRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config, @NotNull IO io) {
+      super(modulePaths, config);
       this.io = io;
     }
 
