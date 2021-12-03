@@ -139,7 +139,7 @@ public class LibraryCompiler {
       src.tycked().value = null;
       src.resolveInfo().value = null;
     });
-    FileUtil.deleteRecursively(owner.underlyingLibrary().libraryOutRoot());
+    FileUtil.deleteRecursively(owner.outDir());
   }
 
   /**
@@ -219,8 +219,8 @@ public class LibraryCompiler {
     private void tyckOne(CountingReporter reporter, LibrarySource file) {
       var moduleName = file.moduleName();
       var mod = moduleLoader.load(moduleName);
-      if (mod == null) throw new IllegalStateException("Unable to load module: " + moduleName);
-      file.resolveInfo().value = mod;
+      if (mod == null || file.resolveInfo().value == null)
+        throw new IllegalStateException("Unable to load module: " + moduleName);
       outerReporter.reportNest("[Tyck] %s (%s)".formatted(
         QualifiedID.join(mod.thisModule().moduleName()), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
     }

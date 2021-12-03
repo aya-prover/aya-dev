@@ -71,20 +71,23 @@ record LibraryModuleLoader(
       return loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
     }
 
+    var source = owner.findModule(mod);
+    assert source != null;
+
     // we are loading a module belonging to this library, try finding compiled core first.
     // If found, check modifications and decide whether to proceed with compiled core.
     var corePath = FileUtil.resolveFile(owner.outDir(), mod, Constants.AYAC_POSTFIX);
     if (Files.exists(corePath)) {
-      return loadCompiledCore(mod, corePath, sourcePath, recurseLoader);
+      return source.resolveInfo().value = loadCompiledCore(mod, corePath, sourcePath, recurseLoader);
     }
 
     // No compiled core is found, or source file is modified, compile it from source.
-    var source = owner.findModule(mod);
-    assert source != null;
     var program = source.program().value;
     assert program != null;
     var context = new EmptyContext(reporter(), sourcePath).derive(mod);
-    return tyckModule(null, resolveModule(context, program, recurseLoader), (moduleResolve, defs) -> {
+    var resolveInfo = resolveModule(context, program, recurseLoader);
+    source.resolveInfo().value = resolveInfo;
+    return tyckModule(null, resolveInfo, (moduleResolve, defs) -> {
       source.tycked().value = defs;
       if (reporter().noError()) saveCompiledCore(source, moduleResolve, defs);
     });
