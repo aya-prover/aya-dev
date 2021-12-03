@@ -6,7 +6,7 @@ dependencies {
   api(project(":pretty"))
   api(project(":parser"))
   val deps: java.util.Properties by rootProject.ext
-  implementation("org.commonmark", "commonmark", version = deps.getProperty("version.commonmark"))
+  implementation("org.aya-prover", "commonmark", version = deps.getProperty("version.commonmark"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
   testImplementation(project(":cli"))
