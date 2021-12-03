@@ -71,7 +71,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
 
   public AyaRepl(@NotNull ReplConfig config) {
     this.config = config;
-    replCompiler = new ReplCompiler(new CliReporter(
+    replCompiler = new ReplCompiler(new CliReporter(true,
       () -> config.enableUnicode, () -> config.distillerOptions,
       Problem.Severity.INFO, this::println, this::errPrintln), null);
   }

@@ -7,6 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.api.distill.DistillerOptions;
+import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.error.PrettyError;
 import org.aya.util.error.SourcePos;
@@ -36,7 +37,7 @@ public interface Problem {
   }
 
   @NotNull SourcePos sourcePos();
-  /** @see Problem#computeFullErrorMessage(DistillerOptions, boolean) */
+  /** @see Problem#computeFullErrorMessage(DistillerOptions, boolean, boolean, int)  */
   @NotNull Doc describe(@NotNull DistillerOptions options);
   @NotNull Severity level();
   default @NotNull Stage stage() {
@@ -85,13 +86,12 @@ public interface Problem {
     );
   }
 
-  int PAGE_WIDTH = 80;
-  default @NotNull String computeFullErrorMessage(@NotNull DistillerOptions options, boolean unicode) {
-    if (sourcePos() == SourcePos.NONE) return describe(options).renderWithPageWidth(PAGE_WIDTH, unicode);
-    return toPrettyError(options).toDoc().renderWithPageWidth(PAGE_WIDTH, unicode);
-  }
-
-  default @NotNull String computeBriefErrorMessage(@NotNull DistillerOptions options) {
-    return brief(options).commonRender();
+  default @NotNull String computeFullErrorMessage(
+    @NotNull DistillerOptions options, boolean unicode,
+    boolean supportAnsi, int pageWidth
+  ) {
+    var doc = sourcePos() == SourcePos.NONE ? describe(options) : toPrettyError(options).toDoc();
+    if (supportAnsi) return doc.renderToString(StringPrinterConfig.unixTerminal(pageWidth, unicode));
+    return doc.renderWithPageWidth(pageWidth, unicode);
   }
 }

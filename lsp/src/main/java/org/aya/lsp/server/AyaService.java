@@ -182,7 +182,7 @@ public class AyaService implements WorkspaceService, TextDocumentService {
     var msgBuilder = new StringBuilder();
     var severity = DiagnosticSeverity.Hint;
     for (var p : problems) {
-      msgBuilder.append(p.computeBriefErrorMessage(options)).append('\n');
+      msgBuilder.append(p.brief(options).commonRender()).append('\n');
       var ps = severityOf(p);
       if (ps.getValue() < severity.getValue()) severity = ps;
     }

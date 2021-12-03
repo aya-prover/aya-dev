@@ -16,6 +16,6 @@ import java.io.PrintStream;
 @TestOnly
 public record StreamReporter(@NotNull PrintStream stream) implements Reporter {
   @Override public void report(@NotNull Problem problem) {
-    stream.println(problem.computeFullErrorMessage(DistillerOptions.informative(), false));
+    stream.println(problem.computeFullErrorMessage(DistillerOptions.informative(), false, false, 80));
   }
 }
