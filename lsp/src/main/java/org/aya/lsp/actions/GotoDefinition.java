@@ -41,7 +41,7 @@ public class GotoDefinition implements StmtConsumer<XY> {
       var target = switch (pos.data()) {
         case DefVar<?, ?> defVar && defVar.concrete != null -> defVar.concrete.sourcePos();
         case LocalVar localVar -> localVar.definition();
-        case default -> null;
+        case null, default -> null;
       };
       if (target == null) return null;
       var res = LspRange.toLoc(pos.sourcePos(), target);

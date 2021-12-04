@@ -20,8 +20,7 @@ def overlap infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 bind tighter =
 
 def overlap ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
-  : Path (\i => Vec A ((+-assoc {n} {m} {o}).at i)) ((xs ++ ys) ++ zs) (xs ++ (ys ++ zs))
--- ^ Cannot write `+-assoc.at` need eager insertion of metas
+  : Path (\i => Vec A (+-assoc.at i)) ((xs ++ ys) ++ zs) (xs ++ (ys ++ zs))
 | vnil, ys, zs => idp
 | xs, vnil, zs => idp
 | xs, ys, vnil => idp
