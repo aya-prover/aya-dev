@@ -87,13 +87,10 @@ public final class ExprTycker {
       case Expr.PiExpr pi -> inherit(pi, FormTerm.freshUniv(pi.sourcePos()));
       case Expr.SigmaExpr sigma -> inherit(sigma, FormTerm.freshUniv(sigma.sourcePos()));
       case Expr.NewExpr newExpr -> {
-        var struct = synthesize(newExpr.struct()).wellTyped;
-        while (struct.normalize(state, NormalizeMode.WHNF) instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
-          var holeApp = mockTerm(intro.param(), newExpr.struct().sourcePos());
-          struct = CallTerm.make(intro, new Arg<>(holeApp, false));
-        }
+        var structExpr = newExpr.struct();
+        var struct = instImplicits(synthesize(structExpr).wellTyped, structExpr.sourcePos());
         if (!(struct instanceof CallTerm.Struct structCall))
-          yield fail(newExpr.struct(), struct, BadTypeError.structCon(newExpr, struct));
+          yield fail(structExpr, struct, BadTypeError.structCon(newExpr, struct));
         var structRef = structCall.ref();
 
         var subst = new Substituter.TermSubst(MutableMap.from(
@@ -143,11 +140,10 @@ public final class ExprTycker {
       }
       case Expr.ProjExpr proj -> {
         var struct = proj.tup();
-        var projectee = synthesize(struct);
-        var whnf = projectee.type.normalize(state, NormalizeMode.WHNF);
+        var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
-            if (!(whnf instanceof FormTerm.Sigma sigma))
-              return fail(struct, whnf, BadTypeError.sigmaAcc(struct, ix, whnf));
+            if (!(projectee.type instanceof FormTerm.Sigma sigma))
+              return fail(struct, projectee.type, BadTypeError.sigmaAcc(struct, ix, projectee.type));
             var telescope = sigma.params();
             var index = ix - 1;
             if (index < 0 || index >= telescope.size())
@@ -157,8 +153,8 @@ public final class ExprTycker {
             return new Result(new ElimTerm.Proj(projectee.wellTyped, ix), type.subst(subst));
           }, sp -> {
             var fieldName = sp.data();
-            if (!(whnf instanceof CallTerm.Struct structCall))
-              return fail(struct, ErrorTerm.unexpected(whnf), BadTypeError.structAcc(struct, fieldName, whnf));
+            if (!(projectee.type instanceof CallTerm.Struct structCall))
+              return fail(struct, ErrorTerm.unexpected(projectee.type), BadTypeError.structAcc(struct, fieldName, projectee.type));
             var structCore = structCall.ref().core;
             if (structCore == null) throw new UnsupportedOperationException("TODO");
             var projected = structCore.fields.find(field -> Objects.equals(field.ref().name(), fieldName));
@@ -211,9 +207,9 @@ public final class ExprTycker {
             argument.name() != null && !Objects.equals(pi.param().ref().name(), argument.name())) {
             if (argLicit || argument.name() != null) {
               // that implies paramLicit == false
-              var holeApp = mockTerm(pi.param().subst(subst), argument.expr().sourcePos());
-              app = CallTerm.make(app, new Arg<>(holeApp, false));
-              subst.addDirectly(pi.param().ref(), holeApp);
+              var holeApp = mockArg(pi.param().subst(subst), argument.expr().sourcePos());
+              app = CallTerm.make(app, holeApp);
+              subst.addDirectly(pi.param().ref(), holeApp.term());
               pi = ensurePiOrThrow(pi.body());
             } else yield fail(appE, new ErrorTerm(pi.body()), new LicitProblem.UnexpectedImplicitArgError(argument));
           }
@@ -230,6 +226,25 @@ public final class ExprTycker {
         FormTerm.freshUniv(hole.sourcePos()), Constants.randomName(hole), hole.sourcePos())._2);
       default -> new Result(ErrorTerm.unexpected(expr), new ErrorTerm(Doc.english("no rule"), false));
     };
+  }
+
+  private Term instImplicits(@NotNull Term term, @NotNull SourcePos pos) {
+    term = term.normalize(state, NormalizeMode.WHNF);
+    while (term instanceof IntroTerm.Lambda intro && !intro.param().explicit()) {
+      term = CallTerm.make(intro, mockArg(intro.param(), pos)).normalize(state, NormalizeMode.WHNF);
+    }
+    return term;
+  }
+
+  private Result instImplicits(@NotNull Result result, @NotNull SourcePos pos) {
+    var type = result.type.normalize(state, NormalizeMode.WHNF);
+    var term = result.wellTyped;
+    while (type instanceof FormTerm.Pi pi && !pi.param().explicit()) {
+      var holeApp = mockArg(pi.param(), pos);
+      term = CallTerm.make(term, holeApp);
+      type = pi.substBody(holeApp.term()).normalize(state, NormalizeMode.WHNF);
+    }
+    return new Result(term, type);
   }
 
   private static final class NotPi extends Exception {
@@ -565,9 +580,9 @@ public final class ExprTycker {
     var lower = result.type;
     var term = result.wellTyped;
     while (lower.normalize(state, NormalizeMode.WHNF) instanceof FormTerm.Pi pi && !pi.param().explicit()) {
-      var mock = mockTerm(pi.param(), loc.sourcePos());
-      term = CallTerm.make(term, new Arg<>(mock, false));
-      lower = pi.substBody(mock);
+      var mock = mockArg(pi.param(), loc.sourcePos());
+      term = CallTerm.make(term, mock);
+      lower = pi.substBody(mock.term());
     }
     if (unifyTy(upper, lower, loc.sourcePos())) return new Result(term, lower);
     return fail(term.freezeHoles(state), upper, new UnifyError(loc,
@@ -585,6 +600,10 @@ public final class ExprTycker {
     //  in case we can synthesize this term via its type only
     var genName = param.ref().name().concat(Constants.GENERATED_POSTFIX);
     return localCtx.freshHole(param.type(), genName, pos)._2;
+  }
+
+  private @NotNull Arg<Term> mockArg(Term.Param param, SourcePos pos) {
+    return new Arg<>(mockTerm(param, pos), param.explicit());
   }
 
   public static class TyckerException extends InternalException {
