@@ -21,6 +21,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.StructDef;
+import org.aya.generic.ref.BinOpCollector;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -148,6 +149,7 @@ public record CompiledAya(
       var defVar = state.resolve(serOp.name());
       var opInfo = new OpDecl.OpInfo(serOp.name().name(), serOp.assoc(), serOp.argc());
       var opDecl = new SerDef.SerOpDecl(opInfo);
+      BinOpCollector.collect(defVar);
       opSet.operators.put(defVar, opDecl);
     });
     serOps.view().forEach(serOp -> {

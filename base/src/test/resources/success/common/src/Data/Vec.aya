@@ -35,3 +35,12 @@ def infix !! (l : Vec A n) (i : Fin n) : A
 def fold (f : Pi B A -> B) (init : B) (xs : Vec A n) : B
 | f, init, vnil => init
 | f, acc, x vcons xs => fold f (f acc x) xs
+
+def last (Vec A (suc n)) : A
+| x vcons vnil => x
+-- | _ vcons xs => last xs
+-- ^ The purpose of #243 is to make this work
+| _ vcons (x vcons xs) => last (x vcons xs)
+
+def tail (Vec A (suc n)) : Vec A n
+| _ vcons xs => xs
