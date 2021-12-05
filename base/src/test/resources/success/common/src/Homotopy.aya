@@ -1,14 +1,14 @@
 open import Paths
 
-data S1 : Type
+open data S1 : Type
 | base
 | loop I { | left => base | right => base }
 
 data Seg : Type
 | p1 | p2
-| loop I { | left => p1 | right => p2 }
+| seg I { | left => p1 | right => p2 }
 
-data Torus : Type
+open data Torus : Type
 | point
 | line1 I { | left => point | right => point }
 | line2 I { | left => point | right => point }
@@ -18,4 +18,12 @@ data Torus : Type
              | i, right => line1 i }
 
 def idpath {A : Type} (a : A) (i : I) : A
- | a, i => a
+| a, i => a
+
+-- def S1-Torus (s1 s2 : S1) : Torus
+-- | base, base => point
+-- | base, loop i => line1 i
+-- | loop i, base => line2 i
+-- | loop i, loop j => face i j
+
+-- def Torus-S1 (t : Torus) : Sig S1 S1
