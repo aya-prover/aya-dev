@@ -3,14 +3,13 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.desugar.AyaBinOpSet;
-import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
 import org.aya.concrete.resolve.module.EmptyModuleLoader;
-import org.aya.concrete.resolve.module.ModuleLoader;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.Def;
@@ -38,7 +37,7 @@ public class TyckDeclTest {
   private FnDef successTyckFn(@NotNull @NonNls @Language("TEXT") String code) {
     var decl = ParseTest.parseDecl(code)._1;
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
-    resolve(ImmutableSeq.of(decl), ctx, EmptyModuleLoader.INSTANCE);
+    resolve(ImmutableSeq.of(decl), ctx);
     var def = tyck(decl, null);
     assertNotNull(def);
     assertTrue(def instanceof FnDef);
@@ -46,14 +45,14 @@ public class TyckDeclTest {
   }
 
   public static @NotNull ImmutableSeq<Stmt> successDesugarDecls(@Language("TEXT") @NonNls @NotNull String text) {
-    var decls = AyaParsing.program(ThrowingReporter.INSTANCE, new SourceFile("114514", Path.of("114514"), text));
+    var decls = new AyaParserImpl(ThrowingReporter.INSTANCE).program(new SourceFile("114514", Path.of("114514"), text));
     var ctx = new EmptyContext(ThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
-    resolve(decls, ctx, EmptyModuleLoader.INSTANCE);
+    resolve(decls, ctx);
     return decls;
   }
 
-  private static void resolve(@NotNull ImmutableSeq<Stmt> decls, @NotNull ModuleContext module, @NotNull ModuleLoader loader) {
-    Stmt.resolve(decls, new ResolveInfo(module, decls, new AyaBinOpSet(ThrowingReporter.INSTANCE)), loader);
+  private static void resolve(@NotNull ImmutableSeq<Stmt> decls, @NotNull ModuleContext module) {
+    Stmt.resolve(decls, new ResolveInfo(module, decls, new AyaBinOpSet(ThrowingReporter.INSTANCE)), EmptyModuleLoader.INSTANCE);
     assertNotNull(module.underlyingFile());
   }
 

@@ -5,6 +5,12 @@ public open data Int
 | pos Nat
 | neg Nat { | zero => pos zero }
 
+struct IntElimData (R : Int -> Type) : Type
+| posElim (x : Nat) : R (pos x)
+| negElim (x : Nat) : R (neg x) {
+  | zero => posElim zero
+}
+
 def overlap subNI (a b : Nat) : Int
 | zero, a => neg a
 | a, zero => pos a

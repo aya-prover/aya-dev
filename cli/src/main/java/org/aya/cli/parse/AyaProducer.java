@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.parse;
+package org.aya.cli.parse;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -20,7 +20,7 @@ import org.aya.api.error.Reporter;
 import org.aya.api.ref.LocalVar;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.parse.error.*;
+import org.aya.concrete.error.*;
 import org.aya.concrete.remark.Remark;
 import org.aya.concrete.stmt.*;
 import org.aya.core.def.PrimDef;
@@ -49,12 +49,11 @@ import java.util.stream.Stream;
  * @author ice1000, kiva
  */
 public final class AyaProducer {
-  public final @NotNull SourceFile sourceFile;
+  public final @NotNull Either<SourceFile, SourcePos> source;
   public final @NotNull Reporter reporter;
-  private @Nullable SourcePos overridingSourcePos;
 
-  public AyaProducer(@NotNull SourceFile sourceFile, @NotNull Reporter reporter) {
-    this.sourceFile = sourceFile;
+  public AyaProducer(@NotNull Either<SourceFile, SourcePos> source, @NotNull Reporter reporter) {
+    this.source = source;
     this.reporter = reporter;
   }
 
@@ -122,16 +121,11 @@ public final class AyaProducer {
   }
 
   @NotNull private Remark visitRemark(AyaParser.RemarkContext remark) {
-    assert overridingSourcePos == null : "Doc comments shall not nest";
-    var pos = sourcePosOf(remark);
-    overridingSourcePos = pos;
     var sb = new StringBuilder();
     for (var docComment : remark.DOC_COMMENT()) {
       sb.append(docComment.getText().substring(3)).append("\n");
     }
-    var core = Remark.make(sb.toString(), pos, this);
-    overridingSourcePos = null;
-    return core;
+    return Remark.make(sb.toString(), sourcePosOf(remark), new AyaParserImpl(reporter));
   }
 
   public Generalize visitGeneralize(AyaParser.GeneralizeContext ctx) {
@@ -848,32 +842,34 @@ public final class AyaProducer {
   }
 
   private @NotNull SourcePos sourcePosOf(ParserRuleContext ctx) {
-    if (overridingSourcePos != null) return overridingSourcePos;
-    var start = ctx.getStart();
-    var end = ctx.getStop();
-    return new SourcePos(
-      sourceFile,
-      start.getStartIndex(),
-      end.getStopIndex(),
-      start.getLine(),
-      start.getCharPositionInLine(),
-      end.getLine(),
-      end.getCharPositionInLine() + end.getText().length() - 1
-    );
+    return source.fold(sourceFile -> {
+      var start = ctx.getStart();
+      var end = ctx.getStop();
+      return new SourcePos(
+        sourceFile,
+        start.getStartIndex(),
+        end.getStopIndex(),
+        start.getLine(),
+        start.getCharPositionInLine(),
+        end.getLine(),
+        end.getCharPositionInLine() + end.getText().length() - 1
+      );
+    }, pos -> pos);
   }
 
   private @NotNull SourcePos sourcePosOf(TerminalNode node) {
-    if (overridingSourcePos != null) return overridingSourcePos;
-    var token = node.getSymbol();
-    var line = token.getLine();
-    return new SourcePos(
-      sourceFile,
-      token.getStartIndex(),
-      token.getStopIndex(),
-      line,
-      token.getCharPositionInLine(),
-      line,
-      token.getCharPositionInLine() + token.getText().length() - 1
-    );
+    return source.fold(sourceFile -> {
+      var token = node.getSymbol();
+      var line = token.getLine();
+      return new SourcePos(
+        sourceFile,
+        token.getStartIndex(),
+        token.getStopIndex(),
+        line,
+        token.getCharPositionInLine(),
+        line,
+        token.getCharPositionInLine() + token.getText().length() - 1
+      );
+    }, pos -> pos);
   }
 }

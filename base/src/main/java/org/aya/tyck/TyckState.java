@@ -42,11 +42,14 @@ public record TyckState(
     this(DynamicSeq.create(), DynamicSeq.create(), new LevelEqnSet(), MutableMap.create());
   }
 
+  /**
+   * @param trying whether to solve in a yasashi manner.
+   */
   public void solveEqn(
     @NotNull Reporter reporter, Trace.@Nullable Builder tracer,
-    @NotNull Eqn eqn, boolean allowVague
+    @NotNull Eqn eqn, boolean trying
   ) {
-    new DefEq(eqn.cmp, reporter, allowVague, false, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
+    new DefEq(eqn.cmp, reporter, !trying, trying, tracer, this, eqn.pos, eqn.localCtx).checkEqn(eqn);
   }
 
   /** @return true if <code>this.eqns</code> and <code>this.activeMetas</code> are mutated. */
@@ -60,7 +63,7 @@ public record TyckState(
           var usageCounter = new VarConsumer.UsageCounter(activeMeta.data());
           eqn.accept(usageCounter, Unit.unit());
           if (usageCounter.usageCount() > 0) {
-            solveEqn(reporter, tracer, eqn, false);
+            solveEqn(reporter, tracer, eqn, true);
             return false;
           } else return true;
         });
@@ -78,7 +81,7 @@ public record TyckState(
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
       var eqns = this.eqns.toImmutableSeq();
       if (eqns.isNotEmpty()) {
-        for (var eqn : eqns) solveEqn(reporter, traceBuilder, eqn, true);
+        for (var eqn : eqns) solveEqn(reporter, traceBuilder, eqn, false);
         reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
       }
     }

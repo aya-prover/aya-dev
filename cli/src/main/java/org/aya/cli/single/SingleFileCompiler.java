@@ -9,9 +9,9 @@ import org.aya.api.distill.DistillerOptions;
 import org.aya.api.error.CountingReporter;
 import org.aya.api.error.Reporter;
 import org.aya.api.error.SourceFileLocator;
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.MainArgs;
-import org.aya.concrete.parse.AyaParsing;
 import org.aya.concrete.resolve.ModuleCallback;
 import org.aya.concrete.resolve.context.EmptyContext;
 import org.aya.concrete.resolve.context.ModuleContext;
@@ -62,11 +62,12 @@ public record SingleFileCompiler(
     var ctx = context.apply(reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     return AyaCompiler.catching(reporter, flags, () -> {
-      var program = AyaParsing.program(locator, reporter, sourceFile);
+      var ayaParser = new AyaParserImpl(reporter);
+      var program = ayaParser.program(locator, sourceFile);
       var distillInfo = flags.distillInfo();
       distill(sourceFile, distillInfo, program, MainArgs.DistillStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
-        new FileModuleLoader(locator, path, reporter, builder)).toImmutableSeq()));
+        new FileModuleLoader(locator, path, reporter, ayaParser, builder)).toImmutableSeq()));
       loader.tyckModule(ctx, program, builder, (moduleResolve, defs) -> {
         distill(sourceFile, distillInfo, program, MainArgs.DistillStage.scoped);
         distill(sourceFile, distillInfo, defs, MainArgs.DistillStage.typed);

@@ -1,22 +1,27 @@
 module org.aya.cli {
+  requires static org.jetbrains.annotations;
+
+  requires org.antlr.antlr4.runtime;
   requires info.picocli;
   requires com.google.gson;
-  requires org.jetbrains.annotations;
-  requires org.jline.terminal;
-  requires org.jline.builtins;
-  requires org.jline.terminal.jansi;
-  requires org.jline.reader;
   requires org.fusesource.jansi;
-  requires transitive org.aya;
-  requires transitive org.aya.repl;
+  requires org.jline.builtins;
+  requires org.jline.reader;
+  requires org.jline.terminal.jansi;
+  requires org.jline.terminal;
 
-  exports org.aya.cli;
+  requires transitive org.aya.parser;
+  requires transitive org.aya.repl;
+  requires transitive org.aya;
+
+  exports org.aya.cli.library.json;
+  exports org.aya.cli.library.source;
+  exports org.aya.cli.library;
+  exports org.aya.cli.parse;
+  exports org.aya.cli.repl;
   exports org.aya.cli.single;
   exports org.aya.cli.utils;
-  exports org.aya.cli.repl;
-  exports org.aya.cli.library;
-  exports org.aya.cli.library.source;
-  exports org.aya.cli.library.json;
+  exports org.aya.cli;
 
   opens org.aya.cli.library.json to com.google.gson;
 }

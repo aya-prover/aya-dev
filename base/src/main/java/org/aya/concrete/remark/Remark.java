@@ -4,7 +4,7 @@ package org.aya.concrete.remark;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.DynamicSeq;
-import org.aya.concrete.parse.AyaProducer;
+import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.resolve.ResolveInfo;
 import org.aya.concrete.resolve.context.Context;
 import org.aya.concrete.stmt.Stmt;
@@ -32,15 +32,15 @@ public final class Remark implements Stmt {
     this.sourcePos = sourcePos;
   }
 
-  public static @NotNull Remark make(@NotNull String raw, @NotNull SourcePos pos, @NotNull AyaProducer producer) {
-    var parser = Parser.builder().customDelimiterProcessor(CodeAttrProcessor.INSTANCE).build();
-    var ast = parser.parse(raw);
-    return new Remark(mapAST(ast, pos, producer), raw, pos);
+  public static @NotNull Remark make(@NotNull String raw, @NotNull SourcePos pos, @NotNull GenericAyaParser ayaParser) {
+    var mdParser = Parser.builder().customDelimiterProcessor(CodeAttrProcessor.INSTANCE).build();
+    var ast = mdParser.parse(raw);
+    return new Remark(mapAST(ast, pos, ayaParser), raw, pos);
   }
 
   private static @NotNull ImmutableSeq<Literate> mapChildren(
     @NotNull Node parent, @NotNull SourcePos pos,
-    @NotNull AyaProducer producer
+    @NotNull GenericAyaParser producer
   ) {
     Node next;
     var children = DynamicSeq.<Literate>create();
@@ -56,10 +56,10 @@ public final class Remark implements Stmt {
 
   private static @Nullable Literate mapAST(
     @NotNull Node node, @NotNull SourcePos pos,
-    @NotNull AyaProducer producer
+    @NotNull GenericAyaParser producer
   ) {
     if (node instanceof Code code) {
-      return CodeOptions.analyze(code, producer);
+      return CodeOptions.analyze(code, producer.expr(code.getLiteral(), pos));
     } else if (node instanceof Text text) {
       return new Literate.Raw(Doc.plain(text.getLiteral()));
     } else if (node instanceof Emphasis emphasis) {
@@ -75,7 +75,7 @@ public final class Remark implements Stmt {
       if (children.sizeEquals(1)) return children.first();
       else return new Literate.Many(null, children);
     } else {
-      producer.reporter.report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
+      producer.reporter().report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
       return null;
     }
   }

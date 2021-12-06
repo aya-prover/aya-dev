@@ -1,10 +1,10 @@
 // Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.parse;
+package org.aya.cli.parse;
 
 import org.antlr.v4.runtime.*;
 import org.aya.api.error.Reporter;
-import org.aya.concrete.parse.error.ParseError;
+import org.aya.concrete.error.ParseError;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;

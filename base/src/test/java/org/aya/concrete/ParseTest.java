@@ -7,8 +7,8 @@ import kala.control.Either;
 import kala.tuple.Tuple2;
 import kala.value.Ref;
 import org.aya.api.distill.DistillerOptions;
-import org.aya.concrete.parse.AyaParsing;
-import org.aya.concrete.parse.AyaProducer;
+import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParseTest {
-  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(SourceFile.NONE,
+  public static final @NotNull AyaProducer INSTANCE = new AyaProducer(Either.left(SourceFile.NONE),
     ThrowingReporter.INSTANCE);
 
   @BeforeAll public static void enableTest() {
@@ -42,19 +42,19 @@ public class ParseTest {
   }
 
   private static @NotNull Expr parseExpr(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitExpr(AyaParsing.parser(code).expr());
+    return INSTANCE.visitExpr(AyaParserImpl.parser(code).expr());
   }
 
   public static @NotNull ImmutableSeq<Stmt> parseStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitStmt(AyaParsing.parser(code).stmt()).toImmutableSeq();
+    return INSTANCE.visitStmt(AyaParserImpl.parser(code).stmt()).toImmutableSeq();
   }
 
   public static @NotNull ImmutableSeq<Stmt> parseManyStmt(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitProgram(AyaParsing.parser(code).program());
+    return INSTANCE.visitProgram(AyaParserImpl.parser(code).program());
   }
 
   public static @NotNull Tuple2<Decl, ImmutableSeq<Stmt>> parseDecl(@NotNull @NonNls @Language("TEXT") String code) {
-    return INSTANCE.visitDecl(AyaParsing.parser(code).decl());
+    return INSTANCE.visitDecl(AyaParserImpl.parser(code).decl());
   }
 
   @Test

@@ -16,6 +16,8 @@ def overlap +-assoc-lemma (a b c : Nat) : (a + b) + c = a + (b + c)
 | a, zero, c => idp
 | a, b, zero => idp
 | suc a, b, c => pmap suc (+-assoc-lemma a b c)
+| a, suc b, c => pmap suc (+-assoc-lemma a b c)
+| a, b, suc c => pmap suc (+-assoc-lemma a b c)
 def +-assoc {a b c : Nat} => +-assoc-lemma a b c
 
 def overlap +-comm (a b : Nat) : a + b = b + a
